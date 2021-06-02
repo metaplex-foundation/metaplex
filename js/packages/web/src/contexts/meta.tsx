@@ -42,7 +42,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import BN from 'bn.js';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   AuctionManager,
   AuctionManagerStatus,
@@ -172,6 +172,19 @@ export function MetaProvider({ children = null as any }) {
     setSafetyDepositBoxesByVaultAndIndex,
   ] = useState<Record<string, ParsedAccount<SafetyDepositBox>>>({});
 
+  const updateMints = useCallback(async (metadataByMint) => {
+    try {
+      const m = await queryExtendedMetadata(
+        connection,
+        metadataByMint,
+      );
+      setMetadata(m.metadata);
+      setMetadataByMint(m.mintToMetadata);
+    } catch (er) {
+      console.error(er);
+    }
+  }, [setMetadata, setMetadataByMint]);
+
   useEffect(() => {
     let dispose = () => {};
     (async () => {
@@ -289,16 +302,7 @@ export function MetaProvider({ children = null as any }) {
       setWhitelistedCreatorsByCreator(tempCache.whitelistedCreatorsByCreator);
       setIsLoading(false);
 
-      try {
-        const m = await queryExtendedMetadata(
-          connection,
-          tempCache.metadataByMint,
-        );
-        setMetadata(m.metadata);
-        setMetadataByMint(m.mintToMetadata);
-      } catch (er) {
-        console.error(er);
-      }
+      updateMints(tempCache.metadataByMint);
     })();
 
     return () => {
@@ -322,6 +326,7 @@ export function MetaProvider({ children = null as any }) {
     setPayoutTickets,
     setStore,
     setWhitelistedCreatorsByCreator,
+    updateMints,
   ]);
 
   useEffect(() => {
@@ -384,13 +389,10 @@ export function MetaProvider({ children = null as any }) {
           setMasterEditionsByOneTimeAuthMint,
         );
 
-        // setMetadataByMint(latest => {
-        //   queryExtendedMetadata(
-        //     connection,
-        //     latest,
-        //   );
-        //   return latest;
-        // });
+        setMetadataByMint(latest => {
+          updateMints(latest);
+          return latest;
+        });
       },
     );
 
@@ -437,6 +439,7 @@ export function MetaProvider({ children = null as any }) {
     setPayoutTickets,
     setStore,
     setWhitelistedCreatorsByCreator,
+    updateMints
   ]);
 
   const filteredMetadata = useMemo(
