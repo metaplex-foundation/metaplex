@@ -175,12 +175,14 @@ export function MetaProvider({ children = null as any }) {
   useEffect(() => {
     let dispose = () => {};
     (async () => {
-      const accounts = (await Promise.all([
-        connection.getProgramAccounts(programIds().vault),
-        connection.getProgramAccounts(programIds().auction),
-        connection.getProgramAccounts(programIds().metadata),
-        connection.getProgramAccounts(programIds().metaplex),
-      ])).flat();
+      const accounts = (
+        await Promise.all([
+          connection.getProgramAccounts(programIds().vault),
+          connection.getProgramAccounts(programIds().auction),
+          connection.getProgramAccounts(programIds().metadata),
+          connection.getProgramAccounts(programIds().metaplex),
+        ])
+      ).flat();
 
       const tempCache = {
         metadata: {},
@@ -200,53 +202,86 @@ export function MetaProvider({ children = null as any }) {
         bidderMetadataByAuctionAndBidder: {},
         bidderPotsByAuctionAndBidder: {},
         safetyDepositBoxesByVaultAndIndex: {},
-      }
+      };
 
       for (let i = 0; i < accounts.length; i++) {
         processVaultData(
           accounts[i],
-          (cb: any) => tempCache.safetyDepositBoxesByVaultAndIndex = cb(tempCache.safetyDepositBoxesByVaultAndIndex),
-          (cb: any) => tempCache.vaults = cb(tempCache.vaults),
+          (cb: any) =>
+            (tempCache.safetyDepositBoxesByVaultAndIndex = cb(
+              tempCache.safetyDepositBoxesByVaultAndIndex,
+            )),
+          (cb: any) => (tempCache.vaults = cb(tempCache.vaults)),
         );
 
         processAuctions(
           accounts[i],
-          (cb: any) => tempCache.auctions = cb(tempCache.auctions),
-          (cb: any) => tempCache.bidderMetadataByAuctionAndBidder = cb(tempCache.bidderMetadataByAuctionAndBidder),
-          (cb: any) => tempCache.bidderPotsByAuctionAndBidder = cb(tempCache.bidderPotsByAuctionAndBidder),
+          (cb: any) => (tempCache.auctions = cb(tempCache.auctions)),
+          (cb: any) =>
+            (tempCache.bidderMetadataByAuctionAndBidder = cb(
+              tempCache.bidderMetadataByAuctionAndBidder,
+            )),
+          (cb: any) =>
+            (tempCache.bidderPotsByAuctionAndBidder = cb(
+              tempCache.bidderPotsByAuctionAndBidder,
+            )),
         );
 
         await processMetaData(
           accounts[i],
-          (cb: any) => tempCache.metadataByMint = cb(tempCache.metadataByMint),
-          (cb: any) => tempCache.metadataByMasterEdition = cb(tempCache.metadataByMasterEdition),
-          (cb: any) => tempCache.editions = cb(tempCache.editions),
-          (cb: any) => tempCache.masterEditions = cb(tempCache.masterEditions),
-          (cb: any) => tempCache.masterEditionsByPrintingMint = cb(tempCache.masterEditionsByPrintingMint),
-          (cb: any) => tempCache.masterEditionsByOneTimeAuthMint = cb(tempCache.masterEditionsByOneTimeAuthMint),
+          (cb: any) =>
+            (tempCache.metadataByMint = cb(tempCache.metadataByMint)),
+          (cb: any) =>
+            (tempCache.metadataByMasterEdition = cb(
+              tempCache.metadataByMasterEdition,
+            )),
+          (cb: any) => (tempCache.editions = cb(tempCache.editions)),
+          (cb: any) =>
+            (tempCache.masterEditions = cb(tempCache.masterEditions)),
+          (cb: any) =>
+            (tempCache.masterEditionsByPrintingMint = cb(
+              tempCache.masterEditionsByPrintingMint,
+            )),
+          (cb: any) =>
+            (tempCache.masterEditionsByOneTimeAuthMint = cb(
+              tempCache.masterEditionsByOneTimeAuthMint,
+            )),
         );
 
         await processMetaplexAccounts(
           accounts[i],
-          (cb: any) => tempCache.auctionManagersByAuction = cb(tempCache.auctionManagersByAuction),
-          (cb: any) => tempCache.bidRedemptions = cb(tempCache.bidRedemptions),
-          (cb: any) => tempCache.payoutTickets = cb(tempCache.payoutTickets),
-          (cb: any) => tempCache.store = cb(tempCache.store),
-          (cb: any) => tempCache.whitelistedCreatorsByCreator = cb(tempCache.whitelistedCreatorsByCreator),
+          (cb: any) =>
+            (tempCache.auctionManagersByAuction = cb(
+              tempCache.auctionManagersByAuction,
+            )),
+          (cb: any) =>
+            (tempCache.bidRedemptions = cb(tempCache.bidRedemptions)),
+          (cb: any) => (tempCache.payoutTickets = cb(tempCache.payoutTickets)),
+          (obj: any) => (tempCache.store = obj),
+          (cb: any) =>
+            (tempCache.whitelistedCreatorsByCreator = cb(
+              tempCache.whitelistedCreatorsByCreator,
+            )),
         );
       }
 
-      setSafetyDepositBoxesByVaultAndIndex(tempCache.safetyDepositBoxesByVaultAndIndex);
+      setSafetyDepositBoxesByVaultAndIndex(
+        tempCache.safetyDepositBoxesByVaultAndIndex,
+      );
       setVaults(tempCache.vaults);
       setAuctions(tempCache.auctions);
-      setBidderMetadataByAuctionAndBidder(tempCache.bidderMetadataByAuctionAndBidder);
+      setBidderMetadataByAuctionAndBidder(
+        tempCache.bidderMetadataByAuctionAndBidder,
+      );
       setBidderPotsByAuctionAndBidder(tempCache.bidderPotsByAuctionAndBidder);
       setMetadataByMint(tempCache.metadataByMint);
       setMetadataByMasterEdition(tempCache.metadataByMasterEdition);
       setEditions(tempCache.editions);
       setMasterEditions(tempCache.masterEditions);
       setmasterEditionsByPrintingMint(tempCache.masterEditionsByPrintingMint);
-      setMasterEditionsByOneTimeAuthMint(tempCache.masterEditionsByOneTimeAuthMint);
+      setMasterEditionsByOneTimeAuthMint(
+        tempCache.masterEditionsByOneTimeAuthMint,
+      );
       setAuctionManagersByAuction(tempCache.auctionManagersByAuction);
       setBidRedemptions(tempCache.bidRedemptions);
       setPayoutTickets(tempCache.payoutTickets);
@@ -261,15 +296,16 @@ export function MetaProvider({ children = null as any }) {
         );
         setMetadata(m.metadata);
         setMetadataByMint(m.mintToMetadata);
-      } catch(er) {
-        console.error(er)
+      } catch (er) {
+        console.error(er);
       }
     })();
 
     return () => {
       dispose();
     };
-  }, [connection,
+  }, [
+    connection,
     setSafetyDepositBoxesByVaultAndIndex,
     setVaults,
     setAuctions,
@@ -285,7 +321,8 @@ export function MetaProvider({ children = null as any }) {
     setBidRedemptions,
     setPayoutTickets,
     setStore,
-    setWhitelistedCreatorsByCreator]);
+    setWhitelistedCreatorsByCreator,
+  ]);
 
   useEffect(() => {
     let vaultSubId = connection.onProgramAccountChange(
@@ -301,7 +338,8 @@ export function MetaProvider({ children = null as any }) {
             account: info.accountInfo,
           },
           setSafetyDepositBoxesByVaultAndIndex,
-          setVaults);
+          setVaults,
+        );
       },
     );
 
@@ -313,15 +351,16 @@ export function MetaProvider({ children = null as any }) {
             ? new PublicKey(info.accountId as unknown as string)
             : info.accountId;
         await processMetaplexAccounts(
-            {
-              pubkey,
-              account: info.accountInfo,
-            },
-            setAuctionManagersByAuction,
-            setBidRedemptions,
-            setPayoutTickets,
-            setStore,
-            setWhitelistedCreatorsByCreator);
+          {
+            pubkey,
+            account: info.accountInfo,
+          },
+          setAuctionManagersByAuction,
+          setBidRedemptions,
+          setPayoutTickets,
+          setStore,
+          setWhitelistedCreatorsByCreator,
+        );
       },
     );
 
@@ -342,7 +381,8 @@ export function MetaProvider({ children = null as any }) {
           setEditions,
           setMasterEditions,
           setmasterEditionsByPrintingMint,
-          setMasterEditionsByOneTimeAuthMint);
+          setMasterEditionsByOneTimeAuthMint,
+        );
 
         // setMetadataByMint(latest => {
         //   queryExtendedMetadata(
@@ -368,7 +408,8 @@ export function MetaProvider({ children = null as any }) {
           },
           setAuctions,
           setBidderMetadataByAuctionAndBidder,
-          setBidderPotsByAuctionAndBidder);
+          setBidderPotsByAuctionAndBidder,
+        );
       },
     );
 
@@ -395,7 +436,7 @@ export function MetaProvider({ children = null as any }) {
     setBidRedemptions,
     setPayoutTickets,
     setStore,
-    setWhitelistedCreatorsByCreator
+    setWhitelistedCreatorsByCreator,
   ]);
 
   const filteredMetadata = useMemo(
@@ -403,7 +444,9 @@ export function MetaProvider({ children = null as any }) {
       metadata.filter(m =>
         m?.info?.data?.creators?.find(
           c =>
-            c.verified && store && store.info &&
+            c.verified &&
+            store &&
+            store.info &&
             (store.info.public ||
               whitelistedCreatorsByCreator[c.address.toBase58()]?.info
                 ?.activated),
@@ -508,7 +551,7 @@ const queryExtendedMetadata = async (
   return {
     metadata,
     mintToMetadata,
-  }
+  };
 };
 
 export const useMeta = () => {
@@ -532,8 +575,8 @@ const processAuctions = (
   a: PublicKeyAndAccount<Buffer>,
   setAuctions: any,
   setBidderMetadataByAuctionAndBidder: any,
-  setBidderPotsByAuctionAndBidder: any
-  ) => {
+  setBidderPotsByAuctionAndBidder: any,
+) => {
   try {
     const account = cache.add(
       a.pubkey,
@@ -588,7 +631,6 @@ const processAuctions = (
   }
 };
 
-
 const processMetaplexAccounts = async (
   a: PublicKeyAndAccount<Buffer>,
   setAuctionManagersByAuction: any,
@@ -604,9 +646,7 @@ const processMetaplexAccounts = async (
         const auctionManager = decodeAuctionManager(a.account.data);
         // An initialized auction manager hasnt been validated, so we cant show it to users.
         // Could have any kind of pictures in it.
-        if (
-          auctionManager.state.status !== AuctionManagerStatus.Initialized
-        ) {
+        if (auctionManager.state.status !== AuctionManagerStatus.Initialized) {
           const account: ParsedAccount<AuctionManager> = {
             pubkey: a.pubkey,
             account: a.account,
@@ -642,22 +682,22 @@ const processMetaplexAccounts = async (
       }));
     } else if (a.account.data[0] === MetaplexKey.StoreV1) {
       const store = decodeStore(a.account.data);
+      console.log('Found store', store);
       const account: ParsedAccount<Store> = {
         pubkey: a.pubkey,
         account: a.account,
         info: store,
       };
-      if (a.pubkey.toBase58() === programIds().store.toBase58())
+      if (a.pubkey.toBase58() === programIds().store.toBase58()) {
         setStore(account);
+      }
     } else if (a.account.data[0] === MetaplexKey.WhitelistedCreatorV1) {
-      const whitelistedCreator = decodeWhitelistedCreator(
-        a.account.data,
+      const whitelistedCreator = decodeWhitelistedCreator(a.account.data);
+      const creatorKeyIfCreatorWasPartOfThisStore = await getWhitelistedCreator(
+        whitelistedCreator.address,
       );
-      const creatorKeyIfCreatorWasPartOfThisStore =
-        await getWhitelistedCreator(whitelistedCreator.address);
       if (
-        creatorKeyIfCreatorWasPartOfThisStore.toBase58() ==
-        a.pubkey.toBase58()
+        creatorKeyIfCreatorWasPartOfThisStore.toBase58() == a.pubkey.toBase58()
       ) {
         const account = cache.add(
           a.pubkey,
@@ -684,7 +724,6 @@ const processMetaplexAccounts = async (
   }
 };
 
-
 const processMetaData = async (
   meta: PublicKeyAndAccount<Buffer>,
   setMetadataByMint: any,
@@ -693,7 +732,7 @@ const processMetaData = async (
   setMasterEditions: any,
   setmasterEditionsByPrintingMint: any,
   setMasterEditionsByOneTimeAuthMint: any,
-  ) => {
+) => {
   try {
     if (meta.account.data[0] === MetadataKey.MetadataV1) {
       const metadata = await decodeMetadata(meta.account.data);
@@ -741,8 +780,7 @@ const processMetaData = async (
       }));
       setMasterEditionsByOneTimeAuthMint((e: any) => ({
         ...e,
-        [masterEdition.oneTimePrintingAuthorizationMint.toBase58()]:
-          account,
+        [masterEdition.oneTimePrintingAuthorizationMint.toBase58()]: account,
       }));
     }
   } catch {
@@ -755,7 +793,7 @@ const processVaultData = (
   a: PublicKeyAndAccount<Buffer>,
   setSafetyDepositBoxesByVaultAndIndex: any,
   setVaults: any,
-  ) => {
+) => {
   try {
     if (a.account.data[0] === VaultKey.SafetyDepositBoxV1) {
       const safetyDeposit = decodeSafetyDeposit(a.account.data);
@@ -766,8 +804,7 @@ const processVaultData = (
       };
       setSafetyDepositBoxesByVaultAndIndex((e: any) => ({
         ...e,
-        [safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order]:
-          account,
+        [safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order]: account,
       }));
     } else if (a.account.data[0] === VaultKey.VaultV1) {
       const vault = decodeVault(a.account.data);
