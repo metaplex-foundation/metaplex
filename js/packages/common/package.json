@@ -1,0 +1,80 @@
+{
+  "name": "@oyster/common",
+  "version": "0.0.1",
+  "description": "Oyster common utilities",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib/"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build-css": "less-watch-compiler src/ dist/lib/ --run-once",
+    "start": "npm-run-all --parallel watch watch-css watch-css-src",
+    "watch-css": "less-watch-compiler src/ dist/lib/",
+    "watch-css-src": "less-watch-compiler src/ src/",
+    "watch": "tsc --watch",
+    "test": "jest test",
+    "clean": "rm -rf dist",
+    "prepare": "run-s clean build"
+  },
+  "dependencies": {
+    "@project-serum/serum": "^0.13.34",
+    "@project-serum/sol-wallet-adapter": "^0.2.0",
+    "@solana/spl-token": "0.1.4",
+    "@solana/spl-token-swap": "0.1.0",
+    "@solana/wallet-base": "0.0.1",
+    "@solana/wallet-ledger": "0.0.1",
+    "@solana/web3.js": "^1.10.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@types/chart.js": "^2.9.29",
+    "@types/echarts": "^4.9.0",
+    "@types/react-router-dom": "^5.1.6",
+    "@welldone-software/why-did-you-render": "^6.0.5",
+    "antd": "^4.6.6",
+    "bignumber.js": "^9.0.1",
+    "bn.js": "^5.1.3",
+    "borsh": "^0.4.0",
+    "bs58": "^4.0.1",
+    "buffer-layout": "^1.2.0",
+    "eventemitter3": "^4.0.7",
+    "identicon.js": "^2.3.3",
+    "jazzicon": "^1.5.0",
+    "lodash": "^4.17.20",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "typescript": "^4.1.3"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/bs58": "^4.0.1",
+    "@types/identicon.js": "^2.3.0",
+    "@types/jest": "^24.9.1",
+    "@types/node": "^12.12.62",
+    "arweave-deploy": "^1.9.1",
+    "gh-pages": "^3.1.0",
+    "less": "^4.1.1",
+    "less-watch-compiler": "v1.14.6",
+    "prettier": "^2.1.2"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  },
+  "resolutions": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
+}

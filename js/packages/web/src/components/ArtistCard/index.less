@@ -1,0 +1,39 @@
+
+.artist-card {
+  min-width: 200px;
+  filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.1));
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+
+  .ant-card-body {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0;
+    text-align: left;
+
+    /* gradients/metal */
+    background: #282828;
+    box-shadow: inset 0px 4px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 0px 0px 8px 8px;
+  }
+
+  .ant-avatar {
+    width: 64px;
+    height: 64px;
+    margin-top: -32px;
+    margin-left: 16px;
+  }
+
+  .artist-card-name {
+    font-size: 20px;
+    font-weight: 600;
+    padding: 24px;
+  }
+}
+
+.artist-card img {
+  border-radius: 50%;
+  cursor: pointer;
+}

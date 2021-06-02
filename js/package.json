@@ -1,0 +1,77 @@
+{
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "keywords": [],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "bootstrap": "lerna link && lerna bootstrap",
+    "build": "lerna run build",
+    "start": "CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
+    "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.ts'",
+    "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
+    "deploy:docs": "lerna run docs",
+    "deploy:apps": "lerna run deploy:app",
+    "test": "lerna run test --concurrency 1 --stream"
+  },
+  "lint-staged": {
+    "packages/*/{src,test}/**/*.ts": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "prettier": {
+    "arrowParens": "avoid",
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "dependencies": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^8.2.0",
+    "@commitlint/config-conventional": "^8.2.0",
+    "@types/animejs": "^3.1.3",
+    "@types/jest": "^24.0.0",
+    "@types/react": "^16.9.50",
+    "@types/react-dom": "^16.9.8",
+    "@typescript-eslint/eslint-plugin": "^4.6.0",
+    "@typescript-eslint/parser": "^4.6.0",
+    "eslint": "^6.6.0",
+    "eslint-config-prettier": "^6.15.0",
+    "gh-pages": "^3.1.0",
+    "husky": "^4.3.0",
+    "jest": "24.9.0",
+    "jest-config": "24.9.0",
+    "lerna": "3.22.1",
+    "lint-staged": "^10.5.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.1.2",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^24.0.0",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.1.3"
+  },
+  "resolutions": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
+}

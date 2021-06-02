@@ -1,0 +1,22 @@
+{
+  "lerna": "3.4.3",
+  "version": "independent",
+  "packages": ["packages/*"],
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "ignoreChanges": [
+    "**/__tests__/**",
+    "**/*.md"
+  ],
+  "command": {
+    "publish": {
+      "conventionalCommits": true,
+      "allowBranch": ["master", "next"],
+      "message": "chore(release): Publish"
+    }
+  }
+}
