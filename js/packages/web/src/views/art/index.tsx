@@ -4,8 +4,6 @@ import { useParams } from 'react-router-dom';
 import { useArt } from './../../hooks';
 
 import './index.less';
-import { Artist } from '../../types';
-import { sampleArtist } from '../home/sampleData';
 import { ArtContent } from '../../components/ArtContent';
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
@@ -15,7 +13,6 @@ const { Content } = Layout;
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const art = useArt(id);
-  const artist: Artist = sampleArtist;
 
   return (
     <Content>
@@ -66,8 +63,12 @@ export const ArtView = () => {
             <div className="info-header">ABOUT THE CREATION</div>
             <div className="info-content">{art.about}</div>
             <br />
+            {/*
+              TODO: add info about artist
+
+
             <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{artist.about}</div>
+            <div className="info-content">{art.about}</div> */}
           </Col>
         </Row>
       </Col>
