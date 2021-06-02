@@ -286,6 +286,8 @@ export class WhitelistedCreator {
   twitter?: string;
   name?: string;
   image?: string;
+  description?: string;
+  background?: string;
 
   constructor(args: { address: PublicKey; activated: boolean }) {
     this.address = args.address;

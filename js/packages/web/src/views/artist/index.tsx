@@ -61,7 +61,7 @@ export const ArtistView = () => {
       </div>
           <br />
           <div className="info-header">ABOUT THE CREATOR</div>
-          <div className="info-content">about section</div>
+          <div className="info-content">{creator?.info.background || "" }</div>
         </Col>
       </Row>
     </Col>
