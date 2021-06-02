@@ -136,7 +136,7 @@ export const useArt = (id?: PublicKey | string) => {
   );
 
   useEffect(() => {
-    const USE_CDN = true;
+    const USE_CDN = false;
     const routeCDN = (uri: string) => {
       let result = uri;
       if (USE_CDN) {
