@@ -444,7 +444,7 @@ export async function activateVault(
 
   const fractionMintAuthority = (
     await PublicKey.findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer()],
+      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
   )[0];
@@ -510,7 +510,7 @@ export async function combineVault(
 
   const burnAuthority = (
     await PublicKey.findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer()],
+      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
   )[0];
@@ -602,7 +602,7 @@ export async function withdrawTokenFromSafetyDepositBox(
 
   const transferAuthority = (
     await PublicKey.findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer()],
+      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
   )[0];

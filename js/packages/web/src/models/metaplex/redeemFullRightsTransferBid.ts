@@ -37,7 +37,11 @@ export async function redeemFullRightsTransferBid(
 
   const transferAuthority: PublicKey = (
     await PublicKey.findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), PROGRAM_IDS.vault.toBuffer()],
+      [
+        Buffer.from(VAULT_PREFIX),
+        PROGRAM_IDS.vault.toBuffer(),
+        vault.toBuffer(),
+      ],
       PROGRAM_IDS.vault,
     )
   )[0];
