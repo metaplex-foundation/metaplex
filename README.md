@@ -23,6 +23,11 @@ $ cd js
 $ ./deploy-web.sh
 ```
 
+## Rust Programs
+
+The Rust programs will soon be added to this repo with JavaScript
+bindings that allow interactivity.
+
 ## Community
 
 We have a few channels for contact:
