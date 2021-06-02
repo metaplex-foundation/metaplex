@@ -102,6 +102,7 @@ export const HomeView = () => {
                 </TabPane>
               </Tabs>
             </Row>)}
+            {auctionsEnded.length > 0 && (
             <Row>
               <Tabs>
                 <TabPane>
@@ -111,6 +112,7 @@ export const HomeView = () => {
               </Tabs>
               <br />
             </Row>
+            )}
           </Col>
         </Content>
       </Layout>
