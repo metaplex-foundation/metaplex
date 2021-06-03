@@ -7,6 +7,7 @@ import { ArtCard } from '../../components/ArtCard';
 import { useCreatorArts } from "../../hooks";
 import { Link } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
+// import { MetaAvatar } from '../../components/MetaAvatar';
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ export const ArtistView = () => {
       >
         <Col span={24}>
       <h2>
+      {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
       {creator?.info.name || creator?.info.address.toBase58()}
       </h2>
       <br />
@@ -61,7 +63,7 @@ export const ArtistView = () => {
       </div>
           <br />
           <div className="info-header">ABOUT THE CREATOR</div>
-          <div className="info-content">about section</div>
+          <div className="info-content">{creator?.info.description}</div>
         </Col>
       </Row>
     </Col>
