@@ -86,25 +86,6 @@ export const AuctionView = () => {
       <Row justify="space-around">
         <Col span={24} md={12} className="pr-4">
           <div className="">
-            <Image.PreviewGroup>
-              {[...(auction?.items.flat() || []), auction?.participationItem]
-                .filter((item, index, arr) => index < 9)
-                .map((item, index, arr) => {
-                  if (!item || !item?.metadata || !item.metadata?.pubkey) {
-                    return null;
-                  }
-
-                  return (
-                    <Carousel autoplay>
-                      <AuctionItem
-                        item={item}
-                        index={index}
-                        size={arr.length}
-                      ></AuctionItem>
-                    </Carousel>
-                  );
-                })}
-            </Image.PreviewGroup>
           <Carousel autoplay={false}>
               {[
                 ...(auction?.items.flat() || []),
