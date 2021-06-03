@@ -76,7 +76,13 @@ export const ArtCard = (props: ArtCardProps) => {
               X
             </Button>
           )}
-          <ArtContent category={category} extension={file || image} uri={image} preview={preview} />
+          <ArtContent
+            category={category}
+            extension={file || image}
+            files={art.files}
+            uri={image}
+            preview={preview}
+          />
         </>
       }
       {...rest}

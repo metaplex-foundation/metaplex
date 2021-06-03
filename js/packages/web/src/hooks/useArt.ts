@@ -49,6 +49,7 @@ const metadataToArt = (
     mint: info?.mint.toBase58(),
     category: info?.extended?.properties?.category,
     title: info?.data.name,
+    files: info?.extended?.properties.files,
     about: info?.extended?.description,
     creators: (info?.data.creators || []).map(creator => {
       const knownCreator =

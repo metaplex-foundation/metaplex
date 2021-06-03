@@ -396,6 +396,7 @@ export const InnerBillingView = ({
               category={art.category}
               uri={art.image}
               extension={art.image}
+              files={art.files}
               className="artwork-image"
             />
           </Col>
