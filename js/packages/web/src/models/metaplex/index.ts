@@ -700,6 +700,24 @@ export async function getWhitelistedCreator(creator: PublicKey) {
   )[0];
 }
 
+export async function getSafetyDepositBoxValidationTicket(
+  auctionManager: PublicKey,
+  safetyDepositBox: PublicKey,
+) {
+  const PROGRAM_IDS = programIds();
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        PROGRAM_IDS.metaplex.toBuffer(),
+        auctionManager.toBuffer(),
+        safetyDepositBox.toBuffer(),
+      ],
+      PROGRAM_IDS.metaplex,
+    )
+  )[0];
+}
+
 export async function getPayoutTicket(
   auctionManager: PublicKey,
   winnerConfigIndex: number | null | undefined,
