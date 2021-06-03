@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
 
 export const STORE = new PublicKey(
-  'rdqczuXQfpAJiboC36wPb6ZMexmxZfJuSeHtpSJN3bv',
+  '7KwpjEy7KBpZTBErE3niBUNxWGAQTPo9kZzkgEoP6dfR',
 );
 
 export const WRAPPED_SOL_MINT = new PublicKey(
