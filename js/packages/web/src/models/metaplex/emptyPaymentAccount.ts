@@ -83,6 +83,11 @@ export async function emptyPaymentAccount(
       isWritable: false,
     },
     {
+      pubkey: PROGRAM_IDS.store,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
       pubkey: vault,
       isSigner: false,
       isWritable: false,
