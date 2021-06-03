@@ -1,4 +1,0 @@
-/*!
- * html-attributes
- * https://github.com/alexmingoia/html-attributes
- */
