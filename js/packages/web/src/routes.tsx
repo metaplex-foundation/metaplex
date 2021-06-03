@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Route, Switch } from 'react-router-dom';
+import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { contexts } from '@oyster/common';
 import { MetaProvider } from './contexts';
 import { AppLayout } from './components/Layout';
@@ -81,7 +81,8 @@ export function Routes() {
                             path="/auction/:id/billing"
                             component={() => <BillingView />}
                           />
-                          <Route path="/" component={() => <HomeView />} />
+                          <Route path="/home" exact component={() => <HomeView />} />
+                          <Route path="/" component={() => <Redirect to="/auction/CE9VZmudNXFWwk4UZwjcmjmEonw4Bn7n42yz8ak8zPsV" />} />
                         </Switch>
                       </AppLayout>
                     </ConfettiProvider>
