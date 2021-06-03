@@ -187,7 +187,7 @@ const abbreviateNumber = (number: number, precision: number) => {
 
 export const formatAmount = (
   val: number,
-  precision: number = 6,
+  precision: number = 2,
   abbr: boolean = true,
 ) => (abbr ? abbreviateNumber(val, precision) : val.toFixed(precision));
 
@@ -197,7 +197,7 @@ export function formatTokenAmount(
   rate: number = 1.0,
   prefix = '',
   suffix = '',
-  precision = 6,
+  precision = 2,
   abbr = false,
 ): string {
   if (!account) {
