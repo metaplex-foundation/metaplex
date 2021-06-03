@@ -197,7 +197,7 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <img src="/ono.svg" />
+      <img src="/helium.svg" />
     </Popover>
   );
 
