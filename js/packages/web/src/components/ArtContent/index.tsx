@@ -7,6 +7,8 @@ import { useCachedImage } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 
 const HACK_LOOKUP: Record<string, string> = {
+  'https://arweave.net/DZQLWAoc6MhpGoooFMrFF5okwUUwp034mtyrkzdFGfg':
+  '9a800738aac474388b998c04f8775ad6',
   'https://arweave.net/BPJbVgBUCwDLALLruex_5cmXvffXvcCwwweoiJ45BUM':
     '01c2892dc406033a0dfbaf4ab883e448',
   'https://arweave.net/__2eOiYv0w-2_ayLUxqiSBQZeC9z5qcJPbeSE657Dcw':
@@ -62,20 +64,20 @@ export const ArtContent = ({
 
   return category === 'video' ? (
     HACK_LOOKUP[likelyVideo] ? (
-      <div className={`${className}`}>
+      <div className={`${className} square`}>
         <Stream
           streamRef={playerApiRef}
           src={HACK_LOOKUP[likelyVideo]}
           muted={true}
           loop={true}
-          height={300}
-          width={300}
+          height={600}
+          width={600}
           videoDimensions={{
-            videoHeight: 300,
-            videoWidth: 300,
+            videoHeight: 600,
+            videoWidth: 600,
           }}
           controls={false}
-          responsive={true}
+          // responsive={true}
           autoplay={true}
         />
       </div>
