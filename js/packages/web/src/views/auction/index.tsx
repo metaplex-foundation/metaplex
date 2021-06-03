@@ -105,6 +105,24 @@ export const AuctionView = () => {
                   );
                 })}
             </Image.PreviewGroup>
+          <Carousel autoplay={false}>
+              {[
+                ...(auction?.items.flat() || []),
+                auction?.participationItem,
+              ].filter((item, index, arr) => index < 9).map((item, index, arr) => {
+                if (!item || !item?.metadata || !item.metadata?.pubkey) {
+                  return null;
+                }
+
+                return (
+                    <AuctionItem
+                      item={item}
+                      index={index}
+                      size={arr.length}
+                    ></AuctionItem>
+                );
+              })}
+              </Carousel>
           </div>
           <h6>NUMBER OF WINNERS</h6>
           <h1>{winnerCount}</h1>
