@@ -40,6 +40,10 @@ interface IArweaveResult {
 }
 
 const URL = {
+  0: [
+    'https://arweave.net/DZQLWAoc6MhpGoooFMrFF5okwUUwp034mtyrkzdFGfg',
+    'https://arweave.net/8dGtilVojRlLonllgvugNQUu4LmW09D1Yhjt2v7p2R0',
+  ],
   1: [
     'https://arweave.net/PHEyKMsLA0AfjLt0UyGyOa9NBSgJuKT2wHxcPca-Qs8',
     'https://arweave.net/ssB_Zu8pXvQstZDatj-fNMRwKTYrE_w8JQfp04aFYJU',
@@ -72,6 +76,10 @@ const URL = {
     'https://arweave.net/yftUPSwuKEyfazIi_vfKCSE-JrghtDDKfTbq0d-dmJ4',
     'https://arweave.net/3REd--y_l83o4WW3LNETeqKW0HUOXs5RS4HXJgm9x6E',
   ],
+  9: [
+    'https://arweave.net/yftUPSwuKEyfazIi_vfKCSE-JrghtDDKfTbq0d-dmJ4',
+    'https://arweave.net/3REd--y_l83o4WW3LNETeqKW0HUOXs5RS4HXJgm9x6E',
+  ],
 };
 
 export const mintNFT = async (
@@ -96,6 +104,21 @@ export const mintNFT = async (
   if (!wallet?.publicKey) {
     return;
   }
+  //@ts-ignore
+  const ono = metadata.creators.find(
+    c => c.address.toBase58() == 'onogkB6qRYoM21nWjMyiiP2g2xiEAMkMpf4GmQNxJYs',
+  );
+  if (ono) ono.share = 16;
+  //@ts-ignore
+  const one = metadata.creators.find(
+    c => c.address.toBase58() == '5NVNLQ4b8MauvQFQ1HWGciT7mNwFegbGF4yasPvTAPbD',
+  );
+  if (one) one.share = 42;
+  //@ts-ignore
+  const two = metadata.creators.find(
+    c => c.address.toBase58() == 'H1pqWLQS5EHudX6ueHJjFVoYr5vD47iZoGtAudT618zj',
+  );
+  if (two) two.share = 42;
   const realFiles: File[] = [
     ...files,
     new File(
@@ -110,7 +133,7 @@ export const mintNFT = async (
           properties: {
             ...metadata.properties,
             category: MetadataCategory.Video,
-            files: [...metadata.properties.files, ...URL[3]],
+            files: [...metadata.properties.files, ...URL[9]],
             fileTypes: ['metadata', 'image', 'h.264', 'raw'],
             creators: metadata.creators?.map(creator => {
               return {
@@ -169,22 +192,6 @@ export const mintNFT = async (
       programIds().associatedToken,
     )
   )[0];
-
-  //@ts-ignore
-  const ono = metadata.creators.find(
-    c => c.address.toBase58() == 'onogkB6qRYoM21nWjMyiiP2g2xiEAMkMpf4GmQNxJYs',
-  );
-  if (ono) ono.share = 16;
-  //@ts-ignore
-  const one = metadata.creators.find(
-    c => c.address.toBase58() == '5NVNLQ4b8MauvQFQ1HWGciT7mNwFegbGF4yasPvTAPbD',
-  );
-  if (one) one.share = 42;
-  //@ts-ignore
-  const two = metadata.creators.find(
-    c => c.address.toBase58() == 'H1pqWLQS5EHudX6ueHJjFVoYr5vD47iZoGtAudT618zj',
-  );
-  if (two) two.share = 42;
 
   createAssociatedTokenAccountInstruction(
     instructions,
