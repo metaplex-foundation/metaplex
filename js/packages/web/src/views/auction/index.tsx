@@ -84,7 +84,7 @@ export const AuctionView = () => {
       <Row justify="space-around">
         <Col span={24} md={12} className="pr-4">
           <div className="">
-            <Image.PreviewGroup>
+          <Carousel autoplay={false}>
               {[
                 ...(auction?.items.flat() || []),
                 auction?.participationItem,
@@ -94,16 +94,14 @@ export const AuctionView = () => {
                 }
 
                 return (
-                  <Carousel autoplay>
-                  <AuctionItem
-                    item={item}
-                    index={index}
-                    size={arr.length}
-                  ></AuctionItem>
-                  </Carousel>
+                    <AuctionItem
+                      item={item}
+                      index={index}
+                      size={arr.length}
+                    ></AuctionItem>
                 );
               })}
-            </Image.PreviewGroup>
+              </Carousel>
           </div>
           <h6>NUMBER OF WINNERS</h6>
           <h1>{winnerCount}</h1>
