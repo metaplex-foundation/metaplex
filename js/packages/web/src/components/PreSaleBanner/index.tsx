@@ -22,7 +22,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
 
   return (
     <Row style={{ height: 400 }}>
-      <Col span={12} style={{ display: 'flex' }} className="explore">
+      <Col md={12} className="explore">
         <ArtContent
           category={art.category}
           uri={art.image}
@@ -32,41 +32,36 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
         />
       </Col>
       <Col
-        span={12}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
+        md={12}
       >
-        <h2 className="art-title">{art.title}</h2>
-        <MetaAvatar creators={art.creators} showMultiple={true} />
-        {auction && (
-          <AuctionCard
-            auctionView={auction}
-            style={{
-              background: 'transparent',
-              width: '100%',
-              padding: 0,
-              margin: 0,
-            }}
-            hideDefaultAction={true}
-            action={
-              <>
-                <Link to={`/auction/${auction.auction.pubkey.toBase58()}`}>
-                  <Button
-                    type="primary"
-                    size="large"
-                    className="action-btn"
-                    style={{ maxWidth: 290 }}
-                  >
-                    Go to auction
-                  </Button>
-                </Link>
-              </>
-            }
-          />
-        )}
+          <h2 className="art-title">{art.title}</h2>
+          <MetaAvatar creators={art.creators} showMultiple={true} />
+          {auction && (
+            <AuctionCard
+              auctionView={auction}
+              style={{
+                background: 'transparent',
+                width: '100%',
+                padding: 0,
+                margin: 0,
+              }}
+              hideDefaultAction={true}
+              action={
+                <>
+                  <Link to={`/auction/${auction.auction.pubkey.toBase58()}`}>
+                    <Button
+                      type="primary"
+                      size="large"
+                      className="action-btn"
+                      style={{ maxWidth: 290 }}
+                    >
+                      Go to auction
+                    </Button>
+                  </Link>
+                </>
+              }
+            />
+          )}
       </Col>
     </Row>
   );

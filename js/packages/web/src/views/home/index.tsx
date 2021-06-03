@@ -94,7 +94,7 @@ export const HomeView = () => {
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length > 0 && (<Row>
+            {liveAuctions.length > 1 && (<Row>
               <Tabs>
                 <TabPane>
                   <h2>Live Auctions</h2>

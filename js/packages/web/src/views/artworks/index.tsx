@@ -21,7 +21,7 @@ export enum ArtworkViewState {
 export const ArtworksView = () => {
   const { connected } = useWallet();
   const ownedMetadata = useUserArts();
-  const { metadata } = useMeta();
+  const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Owned);
   const breakpointColumnsObj = {
     default: 4,
@@ -49,7 +49,7 @@ export const ArtworksView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {items.length > 0
+      {!isLoading
         ? items.map((m, idx) => {
             const id = m.pubkey.toBase58();
             return (
