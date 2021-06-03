@@ -22,7 +22,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
 
   return (
     <Row style={{ height: 400 }}>
-      <Col span={12} style={{ display: 'flex' }}>
+      <Col span={12} style={{ display: 'flex' }} className="explore">
         <ArtContent
           category={art.category}
           uri={art.image}
