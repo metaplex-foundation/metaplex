@@ -197,7 +197,7 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <img src="%PUBLIC_URL%/ono.svg" />
+      <img src="/ono.svg" />
     </Popover>
   );
 
