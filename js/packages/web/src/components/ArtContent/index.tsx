@@ -33,7 +33,7 @@ export const ArtContent = ({
     <video
       className={className}
       playsInline={true}
-      autoPlay={true}
+      autoPlay={false}
       muted={true}
       controls={true}
       controlsList="nodownload"
@@ -41,9 +41,12 @@ export const ArtContent = ({
       loop={true}
       poster={extension}
     >
-      {(files || []).map(f => (
-        <source src={f} type="video/mp4" />
-      ))}
+      {(files || []).filter((f, index, arr) => {
+        // TODO: filter by fileType
+        return (arr.length >= 2 ? index === 1 : index === 0);
+      }).map((f, index, arr) => {
+          return <source src={f} type="video/mp4" />;
+      })}
     </video>
   ) : (
     <Image

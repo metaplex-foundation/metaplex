@@ -21,6 +21,8 @@ export interface Artist {
   itemsSold?: number;
   about?: string;
   verified?: boolean;
+
+  share?: number;
 }
 
 export enum ArtType {

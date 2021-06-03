@@ -31,7 +31,7 @@ export const useCreators = (auction?: AuctionView) => {
           address: creator,
           verified: true,
           // not exact share of royalties
-          share: ((1 / arr.length) * 100).toFixed(2),
+          share: (1 / arr.length) * 100,
           image: knownCreator?.info.image || '',
           name: knownCreator?.info.name || '',
           link: knownCreator?.info.twitter || '',
