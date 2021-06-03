@@ -24,6 +24,8 @@ export interface ArtCardProps extends CardProps {
   small?: boolean;
   close?: () => void;
   endAuctionAt?: number;
+  height?: number;
+  width?: number;
 }
 
 export const ArtCard = (props: ArtCardProps) => {
@@ -39,6 +41,8 @@ export const ArtCard = (props: ArtCardProps) => {
     description,
     close,
     pubkey,
+    height,
+    width,
     ...rest
   } = props;
   const art = useArt(pubkey);
@@ -82,6 +86,8 @@ export const ArtCard = (props: ArtCardProps) => {
             files={art.files}
             uri={image}
             preview={preview}
+            height={height}
+            width={width}
           />
         </>
       }
@@ -103,7 +109,9 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            {art.type === ArtType.Print ? <div className="edition-badge">{badge}</div> : null}
+            {art.type === ArtType.Print ? (
+              <div className="edition-badge">{badge}</div>
+            ) : null}
           </>
         }
       />

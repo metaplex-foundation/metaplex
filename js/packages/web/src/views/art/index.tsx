@@ -50,7 +50,10 @@ export const ArtView = () => {
               extension={art.image}
               uri={art.image}
               style={{ width: 500 }}
+              height={500}
+              width={500}
               className="artwork-image"
+              files={art.files}
             />
           </Col>
           {/* <Divider /> */}
@@ -103,9 +106,9 @@ export const ArtView = () => {
                 );
               })}
             </div>
-            </Col>
-            <Col span="24">
-              <Divider />
+          </Col>
+          <Col span="24">
+            <Divider />
             <br />
             {art.creators?.find(c => !c.verified) && unverified}
             <div className="info-header">CREATOR ROYALTIES</div>

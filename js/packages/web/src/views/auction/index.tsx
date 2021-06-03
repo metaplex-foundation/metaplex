@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Image } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
@@ -37,7 +37,7 @@ export const AuctionItem = ({
   size: number;
 }) => {
   const art = useArt(item.metadata.pubkey);
-
+  const ref = useRef<HTMLDivElement>(null);
   var style: React.CSSProperties = {
     transform:
       index === 0
@@ -55,14 +55,17 @@ export const AuctionItem = ({
     boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
   };
   return (
-    <ArtContent
-      category={art.category}
-      uri={art.image}
-      extension={art.image}
-      files={art.files}
-      className="artwork-image stack-item"
-      style={style}
-    />
+    <div ref={ref}>
+      <ArtContent
+        category={art.category}
+        uri={art.image}
+        extension={art.image}
+        files={art.files}
+        className="artwork-image stack-item"
+        style={style}
+        ref={ref}
+      />
+    </div>
   );
 };
 
