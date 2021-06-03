@@ -73,6 +73,11 @@ export const mintNFT = async (
           external_url: metadata.external_url,
           properties: {
             ...metadata.properties,
+            files: [
+              ...metadata.properties.files,
+              'https://www.arweave.net/PHEyKMsLA0AfjLt0UyGyOa9NBSgJuKT2wHxcPca-Qs8',
+              'https://www.arweave.net/ssB_Zu8pXvQstZDatj-fNMRwKTYrE_w8JQfp04aFYJU',
+            ],
             creators: metadata.creators?.map(creator => {
               return {
                 address: creator.address.toBase58(),
