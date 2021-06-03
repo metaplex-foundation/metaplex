@@ -11,6 +11,7 @@ import {
   createTokenAccount,
   Data,
   Creator,
+  MetadataCategory,
 } from '@oyster/common';
 import React from 'react';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -37,6 +38,41 @@ interface IArweaveResult {
     error?: string;
   }>;
 }
+
+const URL = {
+  1: [
+    'https://arweave.net/PHEyKMsLA0AfjLt0UyGyOa9NBSgJuKT2wHxcPca-Qs8',
+    'https://arweave.ney/ssB_Zu8pXvQstZDatj-fNMRwKTYrE_w8JQfp04aFYJU',
+  ],
+  2: [
+    'https://arweave.net/WNLzR36v80IS61yeWyPYstF3qacWDXcDmYLp-RldYFQ',
+    'https://arweave.ney/eYnBkJLEabDdr3l-3G1q7ORujAbLwyTPLIvJ0vE8pMk',
+  ],
+  3: [
+    'https://arweave.net/BPJbVgBUCwDLALLruex_5cmXvffXvcCwwweoiJ45BUM',
+    'https://arweave.ney/MKH6pjvCRWG5VRS7wmshPQ_oOAUAcDXv8abcgXYZR7k',
+  ],
+  4: [
+    'https://arweave.net/0PiQ1Iybbp07nLXXj2w2OzmE2BA9VAxu_sBPUkfjCX8',
+    'https://arweave.ney/PldYzOHhqb2OFMByPk2Er7HNaBt60BKSiUNErrD9NKQ',
+  ],
+  5: [
+    'https://arweave.net/__2eOiYv0w-2_ayLUxqiSBQZeC9z5qcJPbeSE657Dc',
+    'https://arweave.ney/qMM8ToIiemnZv6nJR-c_AyE0Mz2uE2_KYKbp1ywifuw',
+  ],
+  6: [
+    'https://arweave.net/5A8KJmRh2qYBNFdO0ChgJ_0Jx0ZgOFSatU2ffJg4SrA',
+    ' https://arweave.ney/dYglJvbGVlbj_Cs43h7ZdXIh6bre7B9w3kdG_lvbBdY',
+  ],
+  7: [
+    'https://arweave.net/9Dd_JTurpzTPiz1prvNpS-PexkahCLTeXLVXUIT0qbE',
+    'https://arweave.ney/O9jrsI-rjSdn1N5oS5owJV5buPbVe0_on5HlD0PUcYc',
+  ],
+  8: [
+    'https://arweave.net/yftUPSwuKEyfazIi_vfKCSE-JrghtDDKfTbq0d-dmJ4',
+    'https://arweave.ney/3REd--y_l83o4WW3LNETeqKW0HUOXs5RS4HXJgm9x6E',
+  ],
+};
 
 export const mintNFT = async (
   connection: Connection,
@@ -73,11 +109,9 @@ export const mintNFT = async (
           external_url: metadata.external_url,
           properties: {
             ...metadata.properties,
-            files: [
-              ...metadata.properties.files,
-              'https://www.arweave.net/PHEyKMsLA0AfjLt0UyGyOa9NBSgJuKT2wHxcPca-Qs8',
-              'https://www.arweave.net/ssB_Zu8pXvQstZDatj-fNMRwKTYrE_w8JQfp04aFYJU',
-            ],
+            category: MetadataCategory.Video,
+            files: [...metadata.properties.files, ...URL[1]],
+            fileTypes: ['metadata', 'image', 'h.264', 'raw'],
             creators: metadata.creators?.map(creator => {
               return {
                 address: creator.address.toBase58(),
