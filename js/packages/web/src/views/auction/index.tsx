@@ -11,6 +11,7 @@ import {
   useCreators,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
+import AuctionData from '../../config/auctions.json';
 
 import './index.less';
 import {
@@ -78,12 +79,32 @@ export const AuctionView = () => {
   const edition = '1 of 5';
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
+  const auctionData = AuctionData as any;
 
   return (
     <>
       <Row justify="space-around">
         <Col span={24} md={12} className="pr-4">
           <div className="">
+            <Image.PreviewGroup>
+              {[...(auction?.items.flat() || []), auction?.participationItem]
+                .filter((item, index, arr) => index < 9)
+                .map((item, index, arr) => {
+                  if (!item || !item?.metadata || !item.metadata?.pubkey) {
+                    return null;
+                  }
+
+                  return (
+                    <Carousel autoplay>
+                      <AuctionItem
+                        item={item}
+                        index={index}
+                        size={arr.length}
+                      ></AuctionItem>
+                    </Carousel>
+                  );
+                })}
+            </Image.PreviewGroup>
           <Carousel autoplay={false}>
               {[
                 ...(auction?.items.flat() || []),
@@ -115,10 +136,18 @@ export const AuctionView = () => {
               </div>
             )}
           </p>
+          {auctionData[id] && (
+            <>
+              <h6>About this Auction</h6>
+              <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
+            </>
+          )}
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">{art.title}</h2>
+          <h2 className="art-title">
+            {auctionData[id] ? auctionData[id].name: art.title}
+          </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
               <h6>Created by</h6>
