@@ -24,8 +24,9 @@ export const AuctionItem = ({ item, index, size, children }: { item: AuctionView
   const art = useArt(item.metadata.pubkey);
 
   var style: React.CSSProperties = {
-    transform: index === 0 ? '' :`translate(${index*15}px, ${-40*index}px) scale(${Math.max(1-0.2*index, 0)})`,
+    transform: index === 0 ? '' :`translate(${index*45}px, ${-40*index}px) scale(${Math.max(1-0.2*index, 0)})`,
     transformOrigin: 'right bottom',
+    opacity: `${1-0.2*index}`, 
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1*index,
     border: size > 1 ? '1px solid #282828' : '',
