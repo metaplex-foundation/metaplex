@@ -8,7 +8,7 @@ import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 
 const HACK_LOOKUP: Record<string, string> = {
   'https://arweave.net/DZQLWAoc6MhpGoooFMrFF5okwUUwp034mtyrkzdFGfg':
-  '9a800738aac474388b998c04f8775ad6',
+  '482677586108c3ffba33204d9dfd8562',
   'https://arweave.net/BPJbVgBUCwDLALLruex_5cmXvffXvcCwwweoiJ45BUM':
     '01c2892dc406033a0dfbaf4ab883e448',
   'https://arweave.net/__2eOiYv0w-2_ayLUxqiSBQZeC9z5qcJPbeSE657Dcw':
