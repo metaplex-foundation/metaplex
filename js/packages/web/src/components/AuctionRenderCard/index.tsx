@@ -57,6 +57,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         <>
           <ArtContent
             category={category}
+            className="auction-image no-events"
             extension={image}
             uri={image}
             preview={false}

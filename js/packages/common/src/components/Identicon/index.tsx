@@ -16,7 +16,7 @@ export const Identicon = (props: {
     typeof props.address === 'string'
       ? props.address
       : props.address?.toBase58();
-  const ref = useRef<HTMLDivElement>(React.createRef<HTMLDivElement>());
+  const ref = useRef<HTMLDivElement>();
 
   useEffect(() => {
     if (address && ref.current) {
