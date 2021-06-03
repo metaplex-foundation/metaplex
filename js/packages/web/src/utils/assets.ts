@@ -59,7 +59,6 @@ export async function getAssetCostToStore(files: File[]) {
   const arMultiplier =
     conversionRates.value.arweave.usd / conversionRates.value.solana.usd;
   console.log('Ar mult', arMultiplier);
-  // Add 10% padding for safety and slippage in price.
   // We also always make a manifest file, which, though tiny, needs payment.
   return LAMPORT_MULTIPLIER * totalArCost * arMultiplier * 1.1;
 }
