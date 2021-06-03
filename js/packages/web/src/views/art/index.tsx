@@ -5,14 +5,17 @@ import { useArt } from './../../hooks';
 
 import './index.less';
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useWallet } from '@oyster/common';
+import { shortenAddress, useConnection, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
+import { sendSignMetadata } from '../../actions/sendSignMetadata'
+import { PublicKey } from '@solana/web3.js';
 
 const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const { wallet } = useWallet();
+  const connection = useConnection();
   const art = useArt(id);
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
@@ -60,7 +63,17 @@ export const ArtView = () => {
                     <MetaAvatar creators={[creator]} size={64} />
                     <div>
                       <span className="creator-name">{creator.name || shortenAddress(creator.address || '')}</span>
-                      <div style={{ marginLeft: 10 }}>{!creator.verified && (creator.address !== pubkey ? <Button>Approve</Button> : tag)}</div>
+                      <div style={{ marginLeft: 10 }}>{!creator.verified && (creator.address === pubkey ?
+                      <Button onClick={async () => {
+                        try {
+                          await sendSignMetadata(connection, wallet, new PublicKey(id));
+                        } catch (e) {
+                          console.error(e);
+                          return false;
+                        }
+                        return true;
+                      }}>Approve</Button> :
+                      tag)}</div>
                     </div>
                   </div>
                 );

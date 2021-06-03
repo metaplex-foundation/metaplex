@@ -1,25 +1,19 @@
 {
   "EDshWM3jBy2YUszMiFLAFLx3WkbtqR9An7JZzvg22R1P": {
     "name": "onogkB6qRYoM21nWjMyiiP2g2xiEAMkMpf4GmQNxJYs",
-    "image": "http://localhost:3000/ono.svg",
+    "image": "/ono.svg",
     "description": "",
     "background": ""
   },
   "5NVNLQ4b8MauvQFQ1HWGciT7mNwFegbGF4yasPvTAPbD": {
     "name": "Blond:ish",
-    "image": "https://d1fdloi71mui9q.cloudfront.net/HgM2uvR7OOjUJ7JUqPA3_xoz40R68kIpT1gbF",
-    "description": "",
+    "image": "/blondish.jped",
+    "description": "not all dumbs are blonde",
     "background": ""
   },
   "H1pqWLQS5EHudX6ueHJjFVoYr5vD47iZoGtAudT618zj": {
     "name": "Known For",
     "image": "",
-    "description": "",
-    "background": ""
-  },
-  "3yp9iTsCgZoBsXhtRLB8cWHNcTDeR6VJniRuDrHNTuxU": {
-    "name": "James Madison",
-    "image": "https://pbs.twimg.com/profile_images/1393353972371623938/ZMWvvptg_400x400.jpg",
     "description": "",
     "background": ""
   }
