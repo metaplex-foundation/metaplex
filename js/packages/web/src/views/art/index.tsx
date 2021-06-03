@@ -1,55 +1,67 @@
 import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Badge } from 'antd';
+import { Row, Col, Divider, Layout, Tag, Button } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt } from './../../hooks';
 
 import './index.less';
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress } from '@oyster/common';
+import { shortenAddress, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 
 const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
+  const { wallet } = useWallet();
   const art = useArt(id);
+
+  const pubkey = wallet?.publicKey?.toBase58() || '';
+
+  const tag = <div className="info-header">
+    <Tag color="blue">UNVERIFIED</Tag>
+  </div>;
+
+  const unverified = ( <>
+    {tag}
+    <div style={{ fontSize: 12 }}>
+      <i>
+        This artwork is still missing verification from{' '}
+        {art.creators?.filter(c => !c.verified).length} contributors
+        before it can be considered verified and sellable on the
+        platform.
+      </i>
+    </div>
+    <br />
+  </>);
 
   return (
     <Content>
       <Col>
         <Row>
-          <ArtContent category={art.category} extension={art.image} uri={art.image} className="artwork-image" />
+          <ArtContent category={art.category}
+            extension={art.image}
+            uri={art.image}
+            style={{ width: 500 }}
+            className="artwork-image" />
         </Row>
         <Divider />
         <Row
           style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
         >
           <Col span={24}>
-            {art.creators?.find(c => !c.verified) && (
-              <>
-                <div className="info-header">
-                  <Tag color="blue">UNVERIFIED</Tag>
-                </div>
-                <div style={{ fontSize: 12 }}>
-                  <i>
-                    This artwork is still missing verification from{' '}
-                    {art.creators?.filter(c => !c.verified).length} contributors
-                    before it can be considered verified and sellable on the
-                    platform.
-                  </i>
-                </div>
-                <br />
-              </>
-            )}
+            {art.creators?.find(c => !c.verified) && (unverified)}
             <div style={{ fontWeight: 700 }}>{art.title}</div>
             <br />
             <div className="info-header">CREATED BY</div>
             <div className="creators">
               {(art.creators || []).map(creator => {
                 return (
-                  <div className="info-content">
+                  <div className="info-content" style={{ display: 'flex', alignItems: 'center' }}>
                     <MetaAvatar creators={[creator]} size={64} />
-                    <span className="creator-name">{creator.name || shortenAddress(creator.address || '')}</span>
+                    <div>
+                      <span className="creator-name">{creator.name || shortenAddress(creator.address || '')}</span>
+                      <div style={{ marginLeft: 10 }}>{!creator.verified && (creator.address !== pubkey ? <Button>Approve</Button> : tag)}</div>
+                    </div>
                   </div>
                 );
               })}
