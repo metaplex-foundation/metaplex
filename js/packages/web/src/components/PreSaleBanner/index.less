@@ -11,9 +11,14 @@
 }
 
 .explore .square {
-    max-width: 365px;
-    min-width: 365px;
-  }
+    max-width: 382px;
+    min-width: 382px;
+    @media (max-width: 375px) {
+      max-width: 355px;
+      min-width: 355px;
+    }
+}
+
 .presale-title {
   font-weight: bolder;
   font-size: 1.7rem;
@@ -29,7 +34,7 @@
 }
 
 .presale {
-  @media (min-width: 400px) {
+  @media (min-width: 768px) {
     height: 400px;
   }
 }
