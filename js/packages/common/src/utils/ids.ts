@@ -95,7 +95,7 @@ export const setProgramIds = async (envName: string) => {
 };
 
 const DEFAULT_STORE = new PublicKey(
-  'rdqczuXQfpAJiboC36wPb6ZMexmxZfJuSeHtpSJN3bv',
+  'F5hSxbvP1FjtjSFyFF1VqkfkYRN4zMrWfeqjqSMrSUKC',
 );
 
 let STORE: PublicKey;

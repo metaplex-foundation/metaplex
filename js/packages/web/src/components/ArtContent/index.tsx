@@ -12,6 +12,7 @@ export const ArtContent = ({
   className,
   preview,
   style,
+  files,
 }: {
   category?: MetadataCategory;
   extension?: string;
@@ -19,6 +20,7 @@ export const ArtContent = ({
   className?: string;
   preview?: boolean;
   style?: React.CSSProperties;
+  files?: string[];
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const src = useCachedImage(uri || '');
@@ -37,9 +39,11 @@ export const ArtContent = ({
       controlsList="nodownload"
       style={style}
       loop={true}
+      poster={extension}
     >
-      <source src={extension} type="video/mp4"></source>
-      <img src={extension} />
+      {(files || []).map(f => (
+        <source src={f} type="video/mp4" />
+      ))}
     </video>
   ) : (
     <Image

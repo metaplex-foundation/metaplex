@@ -18,7 +18,13 @@ export const ArtView = () => {
     <Content>
       <Col>
         <Row>
-          <ArtContent category={art.category} extension={art.image} uri={art.image} className="artwork-image" />
+          <ArtContent
+            category={art.category}
+            extension={art.image}
+            uri={art.image}
+            files={art.files}
+            className="artwork-image"
+          />
         </Row>
         <Divider />
         <Row
@@ -49,7 +55,9 @@ export const ArtView = () => {
                 return (
                   <div className="info-content">
                     <MetaAvatar creators={[creator]} size={64} />
-                    <span className="creator-name">{creator.name || shortenAddress(creator.address || '')}</span>
+                    <span className="creator-name">
+                      {creator.name || shortenAddress(creator.address || '')}
+                    </span>
                   </div>
                 );
               })}
