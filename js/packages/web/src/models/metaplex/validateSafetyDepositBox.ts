@@ -10,6 +10,7 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getOriginalAuthority,
+  getSafetyDepositBoxValidationTicket,
   SCHEMA,
   ValidateSafetyDepositBoxArgs,
 } from '.';
@@ -43,6 +44,14 @@ export async function validateSafetyDepositBox(
 
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
+    {
+      pubkey: await getSafetyDepositBoxValidationTicket(
+        auctionManagerKey,
+        safetyDepositBox,
+      ),
+      isSigner: false,
+      isWritable: true,
+    },
     {
       pubkey: auctionManagerKey,
       isSigner: false,
