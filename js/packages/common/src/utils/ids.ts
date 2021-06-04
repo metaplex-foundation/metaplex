@@ -1,11 +1,10 @@
 import { PublicKey } from '@solana/web3.js';
-import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
 
 export const STORE_OWNER_ADDRESS = process.env
   .REACT_APP_STORE_OWNER_ADDRESS_ADDRESS
   ? new PublicKey(`${process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS}`)
-  : // ONO STORE
-    new PublicKey('onogkB6qRYoM21nWjMyiiP2g2xiEAMkMpf4GmQNxJYs');
+  : // Helium STORE
+    new PublicKey('zod4Zx4GMH5wED6qYQLW53hta5HHEzDTm9UKAWJEcxw');
 console.debug(`Store owner address: ${STORE_OWNER_ADDRESS?.toBase58()}`);
 
 export const WRAPPED_SOL_MINT = new PublicKey(
