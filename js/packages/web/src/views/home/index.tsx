@@ -38,8 +38,7 @@ export const HomeView = () => {
   );
 
   const liveAuctions = auctions
-  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
-  .filter((m, idx) => idx < 10);
+  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0);
 
   const liveAuctionsView = (
     <Masonry
