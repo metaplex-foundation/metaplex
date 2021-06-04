@@ -282,7 +282,7 @@ export const AuctionCard = ({
                   <div
                     style={{
                       width: '100%',
-                      background: '#242424',
+                      background: '#212121',
                       borderRadius: 14,
                       color: 'rgba(0, 0, 0, 0.5);',
                     }}
@@ -361,7 +361,7 @@ export const AuctionCard = ({
               <div
                 style={{
                   width: '100%',
-                  background: '#242424',
+                  background: '#212121',
                   borderRadius: 12,
                   marginBottom: 10,
                   height: 50,
