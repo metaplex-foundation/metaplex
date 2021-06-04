@@ -53,7 +53,6 @@ export const PROGRAM_IDS = [
   {
     name: 'testnet',
   },
-
   {
     name: 'devnet',
   },
