@@ -70,8 +70,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         title={`${name}`}
         description={
           <>
-            <h4>Creators</h4>
-            <MetaAvatar creators={creators} showMultiple={true} size={32} />
             <h4 style={{ marginBottom: 0 }}>
               {ended ? 'Winning bid' : 'Current bid'}
             </h4>
