@@ -112,10 +112,10 @@ export const ArtView = () => {
             <Divider />
             <br />
             {art.creators?.find(c => !c.verified) && unverified}
-            <div className="info-header">CREATOR ROYALTIES</div>
+            {/* <div className="info-header">CREATOR ROYALTIES</div>
             <div className="royalties">
               {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
-            </div>
+            </div> */}
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
             <div className="info-content">{art.about}</div>
