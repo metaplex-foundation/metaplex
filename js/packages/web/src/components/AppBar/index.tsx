@@ -43,7 +43,7 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       display: "flex",
       flexDirection: vertical ? "column" : "row",
     }}>
-      <Link to={`/home`}>
+      <Link to={`/`}>
         <Button className="app-btn">Explore</Button>
       </Link>
       <Link to={`/artworks`}>

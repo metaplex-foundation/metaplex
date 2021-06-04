@@ -39,7 +39,6 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
             ? auctionData[auction.auction.pubkey.toBase58()].name
             : art.title}
         </h2>
-        <MetaAvatar creators={art.creators} showMultiple={true} />
         {auction && (
           <AuctionCard
             auctionView={auction}

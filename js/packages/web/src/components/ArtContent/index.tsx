@@ -1,4 +1,4 @@
-import React, { Ref, useEffect, useState } from 'react';
+import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
 import { MetadataCategory } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
@@ -29,26 +29,30 @@ export const ArtContent = ({
   active?: boolean;
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
-  const playerApiRef = React.useRef<StreamPlayerApi>(null);
+  const [playerApi, setPlayerApi] = useState<StreamPlayerApi>();
   const src = useCachedImage(uri || '');
 
+  const playerRef = useCallback((ref) => {
+    setPlayerApi(ref);
+  }, [setPlayerApi]);
+
   useEffect(() => {
-    if (playerApiRef.current) {
-      playerApiRef.current.currentTime = 0;
+    if (playerApi) {
+      playerApi.currentTime = 0;
 
       if (active === undefined) {
-        playerApiRef.current.muted = true;
-        playerApiRef.current?.play();
+        playerApi.muted = true;
+        playerApi?.play();
       } else {
         if (active) {
-          playerApiRef.current.muted = false;
-          playerApiRef.current.play();
+          playerApi.muted = false;
+          playerApi.play();
         } else {
-          playerApiRef.current.pause();
+          playerApi.pause();
         }
       }
     }
-  }, [active]);
+  }, [active, playerApi]);
 
   if (extension?.endsWith('.glb') || category === 'vr') {
     return <MeshViewer url={uri} className={className} style={style} />;
@@ -62,7 +66,7 @@ export const ArtContent = ({
     likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
-          streamRef={playerApiRef}
+          streamRef={playerRef}
           src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
           loop={true}
           height={600}

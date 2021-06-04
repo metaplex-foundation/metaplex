@@ -141,13 +141,6 @@ export const AuctionView = () => {
           </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
-              <h6>Created by</h6>
-              <p>
-                <MetaAvatar creators={creators} showMultiple={true} />
-              </p>
-            </Col>
-
-            <Col>
               <h6>Edition</h6>
               <p>{(auction?.items.length || 0) > 1 ? 'Multiple' : edition}</p>
             </Col>
