@@ -83,18 +83,19 @@ export const ArtCreateView = () => {
 
   // store files
   const mint = async () => {
-    const fileNames = (attributes?.properties?.files || []).map(f => typeof f === 'string' ? f : f.name);
-    const files = (attributes?.properties?.files || []).filter(f => typeof f !== 'string') as File[];
+    const fileNames = (attributes?.properties?.files || []).map(f =>
+      typeof f === 'string' ? f : f.name,
+    );
+    const files = (attributes?.properties?.files || []).filter(
+      f => typeof f !== 'string',
+    ) as File[];
     const metadata = {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
       description: attributes.description,
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
-      image:
-        fileNames &&
-        fileNames?.[0] &&
-        fileNames[0],
+      image: fileNames && fileNames?.[0] && fileNames[0],
       external_url: attributes.external_url,
       properties: {
         files: fileNames,
@@ -321,7 +322,7 @@ const UploadStep = (props: {
       case MetadataCategory.Image:
         return '.png,.jpg,.gif';
       case MetadataCategory.Video:
-        return '.mp4,.mov';
+        return '.mp4,.mov,.webm';
       case MetadataCategory.VR:
         return '.glb';
       default:
@@ -382,7 +383,12 @@ const UploadStep = (props: {
         </Dragger>
       </Row>
       <Form.Item
-        style={{ width: '100%', flexDirection: 'column', paddingTop: 30, marginBottom: 4 }}
+        style={{
+          width: '100%',
+          flexDirection: 'column',
+          paddingTop: 30,
+          marginBottom: 4,
+        }}
         label={<h3>OR use absolute URL to content</h3>}
         labelAlign="left"
         colon={false}
@@ -393,7 +399,7 @@ const UploadStep = (props: {
           disabled={!!mainFile}
           placeholder="http://example.com/path/to/image"
           value={imageURL}
-          onChange={(ev) => setImageURL(ev.target.value)}
+          onChange={ev => setImageURL(ev.target.value)}
           onFocus={() => setImageURLErr('')}
           onBlur={() => {
             if (!imageURL) {
@@ -412,49 +418,47 @@ const UploadStep = (props: {
           }}
         />
       </Form.Item>
-      {
-        props.attributes.properties?.category === MetadataCategory.Audio && (
-          <Row className="content-action">
-            <h3>
-              Optionally, you can upload a cover image or video (PNG, JPG, GIF,
-              MP4)
+      {props.attributes.properties?.category === MetadataCategory.Audio && (
+        <Row className="content-action">
+          <h3>
+            Optionally, you can upload a cover image or video (PNG, JPG, GIF,
+            MP4)
           </h3>
-            <Dragger
-              accept=".png,.jpg,.gif,.mp4"
-              style={{ padding: 20 }}
-              multiple={false}
-              customRequest={info => {
-                // dont upload files here, handled outside of the control
-                info?.onSuccess?.({}, null as any);
-              }}
-              fileList={coverFile ? [coverFile] : []}
-              onChange={async info => {
-                const file = info.file.originFileObj;
-                if (file) setCoverFile(file);
-                if (
-                  props.attributes.properties?.category === MetadataCategory.Audio
-                ) {
-                  const reader = new FileReader();
-                  reader.onload = function (event) {
-                    setImage((event.target?.result as string) || '');
-                  };
-                  if (file) reader.readAsDataURL(file);
-                }
-              }}
-            >
-              <div className="ant-upload-drag-icon">
-                <h3 style={{ fontWeight: 700 }}>
-                  Upload your cover image or video (PNG, JPG, GIF, MP4)
+          <Dragger
+            accept=".png,.jpg,.gif,.mp4"
+            style={{ padding: 20 }}
+            multiple={false}
+            customRequest={info => {
+              // dont upload files here, handled outside of the control
+              info?.onSuccess?.({}, null as any);
+            }}
+            fileList={coverFile ? [coverFile] : []}
+            onChange={async info => {
+              const file = info.file.originFileObj;
+              if (file) setCoverFile(file);
+              if (
+                props.attributes.properties?.category === MetadataCategory.Audio
+              ) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                  setImage((event.target?.result as string) || '');
+                };
+                if (file) reader.readAsDataURL(file);
+              }
+            }}
+          >
+            <div className="ant-upload-drag-icon">
+              <h3 style={{ fontWeight: 700 }}>
+                Upload your cover image or video (PNG, JPG, GIF, MP4)
               </h3>
-              </div>
-              <p className="ant-upload-text">Drag and drop, or click to browse</p>
-            </Dragger>
-            <h3 style={{ marginTop: 30 }}>OR use absolute URL to content</h3>
-            <Input />
-          </Row>
-        )
-      }
-      < Row >
+            </div>
+            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+          </Dragger>
+          <h3 style={{ marginTop: 30 }}>OR use absolute URL to content</h3>
+          <Input />
+        </Row>
+      )}
+      <Row>
         <Button
           type="primary"
           size="large"
@@ -467,8 +471,10 @@ const UploadStep = (props: {
                 files: imageURL
                   ? [imageURL]
                   : [mainFile, coverFile]
-                    .filter(f => f)
-                    .map(f => new File([f], cleanName(f.name), { type: f.type })),
+                      .filter(f => f)
+                      .map(
+                        f => new File([f], cleanName(f.name), { type: f.type }),
+                      ),
               },
               image: imageURL || image,
             });
@@ -479,7 +485,7 @@ const UploadStep = (props: {
         >
           Continue to Mint
         </Button>
-      </Row >
+      </Row>
     </>
   );
 };
@@ -776,21 +782,32 @@ const RoyaltiesStep = (props: {
         </Row>
       )}
       <Row>
-        <span onClick={() => setShowCreatorsModal(true)} style={{ padding: 10, marginBottom: 10 }}>
-          <span style={{
-            color: "white",
-            fontSize: 25,
-            padding: "0px 8px 3px 8px",
-            background: "rgb(57, 57, 57)",
-            borderRadius: "50%",
-            marginRight: 5,
-            verticalAlign: "middle",
-          }}>+</span>
-          <span style={{
-            color: "rgba(255, 255, 255, 0.7)",
-            verticalAlign: "middle",
-            lineHeight: 1,
-          }}>Add another creator</span>
+        <span
+          onClick={() => setShowCreatorsModal(true)}
+          style={{ padding: 10, marginBottom: 10 }}
+        >
+          <span
+            style={{
+              color: 'white',
+              fontSize: 25,
+              padding: '0px 8px 3px 8px',
+              background: 'rgb(57, 57, 57)',
+              borderRadius: '50%',
+              marginRight: 5,
+              verticalAlign: 'middle',
+            }}
+          >
+            +
+          </span>
+          <span
+            style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              verticalAlign: 'middle',
+              lineHeight: 1,
+            }}
+          >
+            Add another creator
+          </span>
         </span>
         <MetaplexModal
           visible={showCreatorsModal}
@@ -848,8 +865,12 @@ const LaunchStep = (props: {
   attributes: IMetadataExtension;
   connection: Connection;
 }) => {
-  const files = (props.attributes.properties?.files || []).filter(f => typeof f !== 'string') as File[];
-  const fileNames = (props.attributes.properties?.files || []).map(f => typeof f === 'string' ? f : f?.name);
+  const files = (props.attributes.properties?.files || []).filter(
+    f => typeof f !== 'string',
+  ) as File[];
+  const fileNames = (props.attributes.properties?.files || []).map(f =>
+    typeof f === 'string' ? f : f?.name,
+  );
   const metadata = {
     ...(props.attributes as any),
     files: fileNames,
@@ -983,8 +1004,9 @@ const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
-      url: `${window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
+      url: `${
+        window.location.origin
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
@@ -995,9 +1017,7 @@ const Congrats = (props: {
 
   return (
     <>
-      <div className="waiting-title">
-        Congratulations, you created an NFT!
-      </div>
+      <div className="waiting-title">Congratulations, you created an NFT!</div>
       <div className="congrats-button-container">
         <Button
           className="metaplex-button"

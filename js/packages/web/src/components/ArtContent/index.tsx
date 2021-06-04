@@ -14,7 +14,7 @@ export const ArtContent = ({
   preview,
   style,
   files,
-  active
+  active,
 }: {
   category?: MetadataCategory;
   extension?: string;
@@ -32,9 +32,12 @@ export const ArtContent = ({
   const [playerApi, setPlayerApi] = useState<StreamPlayerApi>();
   const src = useCachedImage(uri || '');
 
-  const playerRef = useCallback((ref) => {
-    setPlayerApi(ref);
-  }, [setPlayerApi]);
+  const playerRef = useCallback(
+    ref => {
+      setPlayerApi(ref);
+    },
+    [setPlayerApi],
+  );
 
   useEffect(() => {
     if (playerApi) {

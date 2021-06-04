@@ -40,45 +40,53 @@ interface IArweaveResult {
 }
 
 const URL = {
-  0: [
-    'https://arweave.net/DZQLWAoc6MhpGoooFMrFF5okwUUwp034mtyrkzdFGfg',
-    'https://arweave.net/8dGtilVojRlLonllgvugNQUu4LmW09D1Yhjt2v7p2R0',
+  snail: [
+    'https://www.arweave.net/n8e1p5kS5Q7L9jxQZtTodKZoGFWwFmyusXFJbM8vvIA',
+    'https://watch.videodelivery.net/52a52c4a261c88f19d267931426c9be6',
   ],
-  1: [
-    'https://arweave.net/PHEyKMsLA0AfjLt0UyGyOa9NBSgJuKT2wHxcPca-Qs8',
-    'https://arweave.net/ssB_Zu8pXvQstZDatj-fNMRwKTYrE_w8JQfp04aFYJU',
+  bull: [
+    'https://www.arweave.net/3vWxrmANPU95g8rDa2b7gHjrYTa7lbV-bXpuELYhbEk',
+    'https://watch.videodelivery.net/99b858950e88a0c05c3cb245ad08961d',
   ],
-  2: [
-    'https://arweave.net/WNLzR36v80IS61yeWyPYstF3qacWDXcDmYLp-RldYFQ',
-    'https://arweave.net/eYnBkJLEabDdr3l-3G1q7ORujAbLwyTPLIvJ0vE8pMk',
+  bison: [
+    'https://www.arweave.net/nKgdQEaQ1wAbg4ZsY7G4vjWWvE9kNCrVtceXoRf6_q4',
+    'https://watch.videodelivery.net/6c94202d68d6583aa44d724b329a1bb6',
   ],
-  3: [
-    'https://arweave.net/BPJbVgBUCwDLALLruex_5cmXvffXvcCwwweoiJ45BUM',
-    'https://arweave.net/MKH6pjvCRWG5VRS7wmshPQ_oOAUAcDXv8abcgXYZR7k',
+  ape: [
+    'https://www.arweave.net/E8yXvWKiYzDid4IVzXWvE7dIHxMSHWRIQ3GBcMS2Rx8',
+    'https://watch.videodelivery.net/4e43cdf136b01d071fc08d5a4330e887',
   ],
-  4: [
-    'https://arweave.net/0PiQ1Iybbp07nLXXj2w2OzmE2BA9VAxu_sBPUkfjCX8',
-    'https://arweave.net/PldYzOHhqb2OFMByPk2Er7HNaBt60BKSiUNErrD9NKQ',
+  llama: [
+    'https://www.arweave.net/uNZIcaBWTwQINHMGsPaBcXZh8vQDxPGcTS466uiL8aE',
+    'https://watch.videodelivery.net/4598604231a5035ca7b6c676c90bdb03',
   ],
-  5: [
-    'https://arweave.net/__2eOiYv0w-2_ayLUxqiSBQZeC9z5qcJPbeSE657Dcw',
-    'https://arweave.net/qMM8ToIiemnZv6nJR-c_AyE0Mz2uE2_KYKbp1ywifuw',
+  snake: [
+    'https://www.arweave.net/aJmwR4D9PxjQFsa3qlTrZJJM2Hkhw4JAcEvf6BZrXGs',
+    'https://watch.videodelivery.net/a6997bf226e423d41e999381a4aeab38',
   ],
-  6: [
-    'https://arweave.net/5A8KJmRh2qYBNFdO0ChgJ_0Jx0ZgOFSatU2ffJg4SrA',
-    'https://arweave.net/dYglJvbGVlbj_Cs43h7ZdXIh6bre7B9w3kdG_lvbBdY',
+  griffin: [
+    'https://www.arweave.net/sFmH3mfNNX1mggKgkRQ7W_cBinOJx6pNBsKOFx9bj9A',
+    'https://watch.videodelivery.net/0bd66c8db2e24b760fa56d68ced6610f',
   ],
-  7: [
-    'https://arweave.net/9Dd_JTurpzTPiz1prvNpS-PexkahCLTeXLVXUIT0qbE',
-    'https://arweave.net/O9jrsI-rjSdn1N5oS5owJV5buPbVe0_on5HlD0PUcYc',
+  kestrel: [
+    'https://www.arweave.net/OWtQMhtICzAwPw2RcJZE_vYwcRzG3pNGA--_u-op7NQ',
+    'https://watch.videodelivery.net/51159cf3dbc65ef5267093f922766d1e',
   ],
-  8: [
-    'https://arweave.net/yftUPSwuKEyfazIi_vfKCSE-JrghtDDKfTbq0d-dmJ4',
-    'https://arweave.net/3REd--y_l83o4WW3LNETeqKW0HUOXs5RS4HXJgm9x6E',
+  mandrill: [
+    'https://www.arweave.net/bTuy1ap150TRPUrGHJNomHtNLcYeXWJZhYBfYtyivPo',
+    'https://watch.videodelivery.net/84521704ac3417d94c02eae43caef941',
   ],
-  9: [
-    'https://arweave.net/yftUPSwuKEyfazIi_vfKCSE-JrghtDDKfTbq0d-dmJ4',
-    'https://arweave.net/3REd--y_l83o4WW3LNETeqKW0HUOXs5RS4HXJgm9x6E',
+  albatross: [
+    'https://www.arweave.net/gD-9zKTpnrgd8lR7ExOG1Q_Ge4dFmXsR4aLsiyO1Jw4',
+    'https://watch.videodelivery.net/17b926769afc3aca2725f5b80d9d9b81',
+  ],
+  lobster: [
+    'https://www.arweave.net/HBpSaWkb4lk9_uKqLX-Z9opEXsg6MuLQ6o2IOoDMO9w',
+    'https://watch.videodelivery.net/5d9df44658642db32afcce0dc8151c83',
+  ],
+  hamster: [
+    'https://www.arweave.net/d_jHCPSKRhrjsl0uq2eSel2IVgrJh8T9L4RTDNtErjM',
+    'https://watch.videodelivery.net/d01a7a2d72e046e13bc6f11b76f3b647',
   ],
 };
 
@@ -104,21 +112,7 @@ export const mintNFT = async (
   if (!wallet?.publicKey) {
     return;
   }
-  //@ts-ignore
-  const ono = metadata.creators.find(
-    c => c.address.toBase58() == 'onogkB6qRYoM21nWjMyiiP2g2xiEAMkMpf4GmQNxJYs',
-  );
-  if (ono) ono.share = 16;
-  //@ts-ignore
-  const one = metadata.creators.find(
-    c => c.address.toBase58() == '5NVNLQ4b8MauvQFQ1HWGciT7mNwFegbGF4yasPvTAPbD',
-  );
-  if (one) one.share = 42;
-  //@ts-ignore
-  const two = metadata.creators.find(
-    c => c.address.toBase58() == 'H1pqWLQS5EHudX6ueHJjFVoYr5vD47iZoGtAudT618zj',
-  );
-  if (two) two.share = 42;
+
   const realFiles: File[] = [
     ...files,
     new File(
@@ -133,8 +127,8 @@ export const mintNFT = async (
           properties: {
             ...metadata.properties,
             category: MetadataCategory.Video,
-            files: [...metadata.properties.files, ...URL[9]],
-            fileTypes: ['metadata', 'image', 'h.264', 'raw'],
+            files: [...metadata.properties.files],
+            fileTypes: ['metadata', 'image'],
             creators: metadata.creators?.map(creator => {
               return {
                 address: creator.address.toBase58(),
