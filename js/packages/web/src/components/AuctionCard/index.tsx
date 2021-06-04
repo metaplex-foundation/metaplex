@@ -320,7 +320,7 @@ export const AuctionCard = ({
                       style={{
                         float: 'right',
                         margin: '5px 20px',
-                        color: '#5870EE',
+                        color: '#A334FB',
                       }}
                     >
                       Add funds

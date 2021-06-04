@@ -46,7 +46,7 @@ module.exports = {
         lessLoaderOptions: {
           lessOptions: {
             modifyVars: {
-              '@primary-color': '#768BF9',
+              '@primary-color': '#A334FB',
               '@text-color': 'rgba(255, 255, 255)'
             },
             javascriptEnabled: true,

@@ -33,7 +33,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
           className="artwork-image"
         />
       </Col>
-      <Col md={12}>
+      <Col md={12} className="presale-info">
         <h2 className="art-title">
           {auctionData[auction.auction.pubkey.toBase58()]
             ? auctionData[auction.auction.pubkey.toBase58()].name
