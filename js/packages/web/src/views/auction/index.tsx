@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Image, Carousel } from 'antd';
+import { Row, Col, Button, Image, Tooltip, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import {
   AuctionView as Auction,
@@ -20,6 +20,7 @@ import {
   MetaplexModal,
   shortenAddress,
   useConnectionConfig,
+  fromLamports,
   useMint,
   useWallet,
 } from '@oyster/common';
@@ -242,7 +243,9 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
         </Row>
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
+        <span title={fromLamports(bid.info.lastBid, mint).toString()}>
         ◎{formatTokenAmount(bid.info.lastBid, mint)}
+        </span>
       </Col>
     </Row>
   );
