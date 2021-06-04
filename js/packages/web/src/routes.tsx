@@ -81,8 +81,7 @@ export function Routes() {
                             path="/auction/:id/billing"
                             component={() => <BillingView />}
                           />
-                          <Route path="/home" exact component={() => <HomeView />} />
-                          <Route path="/" component={() => <Redirect to="/auction/CE9VZmudNXFWwk4UZwjcmjmEonw4Bn7n42yz8ak8zPsV" />} />
+                          <Route path="/" exact component={() => <HomeView />} />
                         </Switch>
                       </AppLayout>
                     </ConfettiProvider>
