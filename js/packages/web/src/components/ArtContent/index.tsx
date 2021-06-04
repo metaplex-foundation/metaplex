@@ -1,4 +1,4 @@
-import React, { Ref, useState } from 'react';
+import React, { Ref, useEffect, useState } from 'react';
 import { Image } from 'antd';
 import { MetadataCategory } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
@@ -8,7 +8,7 @@ import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 
 const HACK_LOOKUP: Record<string, string> = {
   'https://arweave.net/DZQLWAoc6MhpGoooFMrFF5okwUUwp034mtyrkzdFGfg':
-  '9a800738aac474388b998c04f8775ad6',
+  '482677586108c3ffba33204d9dfd8562',
   'https://arweave.net/BPJbVgBUCwDLALLruex_5cmXvffXvcCwwweoiJ45BUM':
     '01c2892dc406033a0dfbaf4ab883e448',
   'https://arweave.net/__2eOiYv0w-2_ayLUxqiSBQZeC9z5qcJPbeSE657Dcw':
@@ -35,9 +35,7 @@ export const ArtContent = ({
   preview,
   style,
   files,
-  width,
-  height,
-  ref,
+  active
 }: {
   category?: MetadataCategory;
   extension?: string;
@@ -49,10 +47,29 @@ export const ArtContent = ({
   height?: number;
   files?: string[];
   ref?: Ref<HTMLDivElement>;
+  active?: boolean;
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const playerApiRef = React.useRef<StreamPlayerApi>(null);
   const src = useCachedImage(uri || '');
+
+  useEffect(() => {
+    if (playerApiRef.current) {
+      playerApiRef.current.currentTime = 0;
+
+      if (active === undefined) {
+        playerApiRef.current.muted = true;
+        playerApiRef.current?.play();
+      } else {
+        if (active) {
+          playerApiRef.current.muted = false;
+          playerApiRef.current.play();
+        } else {
+          playerApiRef.current.pause();
+        }
+      }
+    }
+  }, [active]);
 
   if (extension?.endsWith('.glb') || category === 'vr') {
     return <MeshViewer url={uri} className={className} style={style} />;
@@ -68,17 +85,14 @@ export const ArtContent = ({
         <Stream
           streamRef={playerApiRef}
           src={HACK_LOOKUP[likelyVideo]}
-          muted={true}
           loop={true}
           height={600}
           width={600}
+          controls={false}
           videoDimensions={{
             videoHeight: 600,
             videoWidth: 600,
           }}
-          controls={false}
-          // responsive={true}
-          autoplay={true}
         />
       </div>
     ) : (

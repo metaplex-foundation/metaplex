@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Image, Carousel } from 'antd';
+import { Row, Col, Button, Image, Tooltip, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import {
   AuctionView as Auction,
@@ -20,6 +20,7 @@ import {
   MetaplexModal,
   shortenAddress,
   useConnectionConfig,
+  fromLamports,
   useMint,
   useWallet,
 } from '@oyster/common';
@@ -32,10 +33,12 @@ export const AuctionItem = ({
   item,
   index,
   size,
+  active,
 }: {
   item: AuctionViewItem;
   index: number;
   size: number;
+  active?: boolean;
 }) => {
   const art = useArt(item.metadata.pubkey);
   const ref = useRef<HTMLDivElement>(null);
@@ -65,6 +68,7 @@ export const AuctionItem = ({
         className="artwork-image stack-item"
         style={style}
         ref={ref}
+        active={active}
       />
     </div>
   );
@@ -74,6 +78,7 @@ export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
   const edition = '-';
@@ -86,11 +91,15 @@ export const AuctionView = () => {
       <Row justify="space-around">
         <Col span={24} md={12} className="pr-4">
           <div className="">
-          <Carousel autoplay={false}>
+          <Carousel autoplay={false} afterChange={(index) => setCurrentIndex(index)}>
               {[
-                ...(auction?.items.flat() || []),
+                ...(auction?.items.flat()
+                  .reduce((agg, item) => {
+                      agg.set(item.metadata.pubkey.toBase58(), item);
+                      return agg;
+                    }, new Map<string, AuctionViewItem>()).values() || []),
                 auction?.participationItem,
-              ].filter((item, index, arr) => index < 9).map((item, index, arr) => {
+              ].map((item, index, arr) => {
                 if (!item || !item?.metadata || !item.metadata?.pubkey) {
                   return null;
                 }
@@ -100,6 +109,7 @@ export const AuctionView = () => {
                       item={item}
                       index={index}
                       size={arr.length}
+                      active={index === currentIndex}
                     ></AuctionItem>
                 );
               })}
@@ -233,7 +243,9 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
         </Row>
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
+        <span title={fromLamports(bid.info.lastBid, mint).toString()}>
         ◎{formatTokenAmount(bid.info.lastBid, mint)}
+        </span>
       </Col>
     </Row>
   );
