@@ -22,7 +22,6 @@ import {
   getMetadata,
   getReservationList,
   AuctionState,
-  placeBid,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -33,7 +32,6 @@ import {
   redeemBid,
   redeemFullRightsTransferBid,
   redeemParticipationBid,
-  WinningConfig,
   WinningConstraint,
   WinningConfigItem,
   WinningConfigStateItem,
@@ -41,8 +39,7 @@ import {
 import { claimBid } from '../models/metaplex/claimBid';
 import { setupCancelBid } from './cancelBid';
 import { populateParticipationPrintingAccount } from '../models/metaplex/populateParticipationPrintingAccount';
-import BN from 'bn.js';
-import { sendPlaceBid, setupPlaceBid } from './sendPlaceBid';
+import { setupPlaceBid } from './sendPlaceBid';
 const { createTokenAccount } = actions;
 const { approve } = models;
 

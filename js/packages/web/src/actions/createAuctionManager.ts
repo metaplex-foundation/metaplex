@@ -18,7 +18,6 @@ import {
   programIds,
   Creator,
   getSafetyDepositBoxAddress,
-  TokenAccount,
   createAssociatedTokenAccountInstruction,
   sendTransactionWithRetry,
 } from '@oyster/common';

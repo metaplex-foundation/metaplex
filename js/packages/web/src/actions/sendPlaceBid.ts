@@ -14,11 +14,10 @@ import {
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
-  AuctionState,
 } from '@oyster/common';
 
 import { AccountLayout, MintInfo } from '@solana/spl-token';
-import { AuctionView, AuctionViewState } from '../hooks';
+import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 const { createTokenAccount } = actions;
