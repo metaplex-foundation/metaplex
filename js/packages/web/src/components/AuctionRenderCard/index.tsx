@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Avatar, Col, Row, CardProps, Button, Badge } from 'antd';
-import { Creator, MetadataCategory, shortenAddress, useConnection, formatTokenAmount, CountdownState } from '@oyster/common';
+import React, { useEffect, useState } from 'react';
+import { Card, CardProps } from 'antd';
+import { formatTokenAmount, CountdownState } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
 import './index.less';
 import { AuctionView, useArt, useCreators } from '../../hooks';
-import { PublicKey } from '@solana/web3.js';
-import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';

@@ -3,7 +3,6 @@ import { Row, Col } from 'antd';
 
 import './../AuctionCard/index.less';
 import {
-  contexts,
   formatTokenAmount,
   useMint,
   fromLamports,

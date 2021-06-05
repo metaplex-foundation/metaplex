@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Button, InputNumber, Spin } from 'antd';
+import React, { useState } from 'react';
+import { Col, Button, InputNumber, Spin } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
 import './index.less';
@@ -11,14 +11,10 @@ import {
   MetaplexOverlay,
   formatAmount,
   formatTokenAmount,
-  useMint,
-  fromLamports,
-  CountdownState,
+  useMint
 } from '@oyster/common';
 import {
   AuctionView,
-  AuctionViewState,
-  useBidsForAuction,
   useUserBalance,
 } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -27,7 +23,6 @@ import {
   sendRedeemBid,
   eligibleForParticipationPrizeGivenWinningIndex,
 } from '../../actions/sendRedeemBid';
-import { AmountLabel } from '../AmountLabel';
 import { sendCancelBid } from '../../actions/cancelBid';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';

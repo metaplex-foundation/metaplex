@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef } from "react";
 import confetti from 'canvas-confetti';
 
 export interface ConfettiContextState {
@@ -12,7 +12,6 @@ const ConfettiContext = React.createContext<ConfettiContextState | null>(
 export const ConfettiProvider = ({ children = null as any }) => {
   const canvasRef = useRef<HTMLCanvasElement>();
   const confettiRef = useRef<confetti.CreateTypes>();
-  const [visible, setVisible] = useState(false);
 
   const dropConfetti = useMemo(() => (() => {
     if(confettiRef.current && canvasRef.current){

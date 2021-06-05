@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory } from '@oyster/common';
 import { ArtContent } from './../ArtContent';
