@@ -10,7 +10,6 @@ import {
   MasterEdition,
   useWallet,
 } from '@oyster/common';
-import { WalletAdapter } from '@solana/wallet-base';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { useEffect, useState } from 'react';

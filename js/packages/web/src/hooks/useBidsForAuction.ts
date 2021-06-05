@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import {
-  AuctionData,
   BidderMetadata,
   BidderMetadataParser,
   cache,
   ParsedAccount,
 } from '@oyster/common';
-import { useAuction } from './useAuction';
 
 export const useHighestBidForAuction = (auctionPubkey: PublicKey | string) => {
   const bids = useBidsForAuction(auctionPubkey);

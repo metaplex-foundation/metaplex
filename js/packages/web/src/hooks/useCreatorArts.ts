@@ -1,5 +1,3 @@
-import { TokenAccount, useUserAccounts, useWallet } from '@oyster/common';
-import { SafetyDepositDraft } from '../actions/createAuctionManager';
 import { useMeta } from '../contexts';
 import { PublicKey } from '@solana/web3.js';
 

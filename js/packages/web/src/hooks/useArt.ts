@@ -3,7 +3,6 @@ import { PublicKey } from '@solana/web3.js';
 import { useMeta } from '../contexts';
 import { Art, Artist, ArtType } from '../types';
 import {
-  Creator,
   Edition,
   MasterEdition,
   Metadata,

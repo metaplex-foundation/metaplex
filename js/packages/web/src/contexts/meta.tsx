@@ -28,20 +28,11 @@ import {
   setProgramIds,
   useConnectionConfig,
 } from '@oyster/common';
-import { MintInfo, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  NAME_PROGRAM_ID,
-  VERIFICATION_AUTHORITY_OFFSET,
-  TWITTER_VERIFICATION_AUTHORITY,
-  TWITTER_ACCOUNT_LENGTH,
-  NameRegistryState,
-} from '@solana/spl-name-service';
+import { MintInfo } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
-  PublicKeyAndAccount,
-  Transaction,
-  TransactionInstruction,
+  PublicKeyAndAccount
 } from '@solana/web3.js';
 import BN from 'bn.js';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
