@@ -1,9 +1,4 @@
-import {
-  TokenAccount,
-  useConnection,
-  useUserAccounts,
-  useWallet,
-} from '@oyster/common';
+import { useWallet } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import {

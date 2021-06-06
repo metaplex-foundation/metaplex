@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Select } from 'antd';
 import { contexts } from '@oyster/common';
 
-const { useWallet, WALLET_PROVIDERS } = contexts.Wallet;
+const { useWallet } = contexts.Wallet;
 const { ENDPOINTS, useConnectionConfig } = contexts.Connection;
 
 export const Settings = () => {

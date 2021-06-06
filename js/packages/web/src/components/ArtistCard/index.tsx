@@ -1,14 +1,13 @@
 import React, { useState } from 'react'
-import { Card, Avatar } from 'antd'
+import { Card } from 'antd'
 
 import { Artist } from '../../types'
 
 import './index.less'
-import { Identicon, shortenAddress } from '@oyster/common'
+import { shortenAddress } from '@oyster/common'
 import { MetaAvatar } from '../MetaAvatar';
 
 export const ArtistCard = ({artist}: {artist: Artist}) => {
-  const [noImage, setNoImage] = useState(false);
 
   return (
     <Card

@@ -1,12 +1,10 @@
-import { TokenAccount, useUserAccounts, useWallet } from '@oyster/common';
+import { TokenAccount, useUserAccounts } from '@oyster/common';
 import { SafetyDepositDraft } from '../actions/createAuctionManager';
 import { useMeta } from './../contexts';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
-  const { metadata, masterEditions, editions, whitelistedCreatorsByCreator } =
-    useMeta();
+  const { metadata, masterEditions, editions } = useMeta();
   const { userAccounts } = useUserAccounts();
-  const { wallet } = useWallet();
 
   const accountByMint = userAccounts.reduce((prev, acc) => {
     prev.set(acc.info.mint.toBase58(), acc);

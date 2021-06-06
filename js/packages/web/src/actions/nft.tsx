@@ -8,7 +8,6 @@ import {
   updateMetadata,
   createMasterEdition,
   sendTransactionWithRetry,
-  createTokenAccount,
   Data,
   Creator,
 } from '@oyster/common';

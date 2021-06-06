@@ -9,13 +9,8 @@ import { utils, actions, models } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { METAPLEX_PREFIX } from '../models/metaplex';
-const {
-  createTokenAccount,
-  activateVault,
-  combineVault,
-  VAULT_PREFIX,
-  AUCTION_PREFIX,
-} = actions;
+const { createTokenAccount, activateVault, combineVault, AUCTION_PREFIX } =
+  actions;
 const { approve } = models;
 
 // This command "closes" the vault, by activating & combining it in one go, handing it over to the auction manager
