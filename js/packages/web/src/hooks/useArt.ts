@@ -48,20 +48,30 @@ const metadataToArt = (
     mint: info?.mint.toBase58(),
     category: info?.extended?.properties?.category,
     title: info?.data.name,
+    files: info?.extended?.properties.files,
     about: info?.extended?.description,
-    creators: (info?.data.creators || []).map(creator => {
-      const knownCreator =
-        whitelistedCreatorsByCreator[creator.address.toBase58()];
+    creators: (info?.data.creators || [])
+      .map(creator => {
+        const knownCreator =
+          whitelistedCreatorsByCreator[creator.address.toBase58()];
 
-      return {
-        address: creator.address.toBase58(),
-        verified: creator.verified,
-        share: creator.share,
-        image: knownCreator?.info.image || '',
-        name: knownCreator?.info.name || '',
-        link: knownCreator?.info.twitter || '',
-      } as Artist;
-    }),
+        return {
+          address: creator.address.toBase58(),
+          verified: creator.verified,
+          share: creator.share,
+          image: knownCreator?.info.image || '',
+          name: knownCreator?.info.name || '',
+          link: knownCreator?.info.twitter || '',
+        } as Artist;
+      })
+      .sort((a, b) => {
+        const share = (b.share || 0) - (a.share || 0);
+        if (share === 0) {
+          return a.name.localeCompare(b.name);
+        }
+
+        return share;
+      }),
     seller_fee_basis_points: info?.extended?.seller_fee_basis_points || 0,
     edition: editionNumber,
     maxSupply,

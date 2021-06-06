@@ -2,7 +2,11 @@
   font-style: normal;
   font-weight: 600;
   font-size: 3rem;
+  @media (max-width: 375px) {
+    font-size: 2.8rem;
+  }
 
+  line-height: 1em;
   letter-spacing: -0.02em;
   color: #FFFFFF;
 }
@@ -40,7 +44,7 @@ h6 {
   align-items: center;
   padding: 6px 10px;
 
-  background: #2C2C2C;
+  background: #212121;
   border-radius: 20px;
   margin: 0 5px;
   border-color: transparent;
@@ -48,4 +52,20 @@ h6 {
 
 .pr-4 {
   padding-right: 32px;
+}
+
+.artwork-image-lg {
+  display: flex;
+  // width: 70%;
+  margin: auto;
+  max-height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-carousel {
+  padding-bottom: 16px;
 }

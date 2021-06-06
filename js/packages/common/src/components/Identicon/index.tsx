@@ -21,7 +21,6 @@ export const Identicon = (props: {
   useEffect(() => {
     if (address && ref.current) {
       try {
-
         ref.current.innerHTML = '';
         ref.current.className = className || '';
         ref.current.appendChild(
@@ -30,14 +29,18 @@ export const Identicon = (props: {
             parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16),
           ),
         );
-
       } catch (err) {
-       // TODO
+        // TODO
       }
     }
   }, [address, style, className]);
 
   return (
-    <div className="identicon-wrapper" title={alt} ref={ref as any} style={props.style} />
+    <div
+      className="identicon-wrapper"
+      title={alt}
+      ref={ref as any}
+      style={props.style}
+    />
   );
 };

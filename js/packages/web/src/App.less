@@ -15,6 +15,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.no-events {
+  pointer-events: none;
+}
+
 .ant-layout {
   background: transparent !important;
 }
@@ -37,6 +41,14 @@ img:not([src]) {
   }
 }
 
+
+.square div {
+  position: relative;
+  padding-top: 100% !important;
+  transform: scale(1.3);
+  pointer-events: none;
+  width: 100%;
+}
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -125,12 +137,27 @@ code {
   border: 1px solid #434343;
 }
 
+.ant-avatar-group {
+  padding-bottom: 16px;
+}
+
+.ant-avatar-group .ant-avatar-image:not(:first-child) {
+  margin-left: -12px !important;
+}
+
 .creator-name {
   padding-left: 10px;
 }
 
 .creators .info-content:not(:last-child) {
   padding-bottom: 10px;
+}
+
+.creators {
+  // display: flex;
+  @media (max-width: 475px) {
+  flex-wrap: wrap;
+  }
 }
 
 .ant-tabs-tab-active {

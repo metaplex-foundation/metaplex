@@ -4,6 +4,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
+    "@cloudflare/stream-react": "^1.1.0",
     "@craco/craco": "^5.7.0",
     "@oyster/common": "0.0.1",
     "@project-serum/serum": "^0.13.34",

@@ -38,8 +38,7 @@ export const HomeView = () => {
   );
 
   const liveAuctions = auctions
-  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
-  .filter((m, idx) => idx < 10);
+  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0);
 
   const liveAuctionsView = (
     <Masonry
@@ -94,7 +93,7 @@ export const HomeView = () => {
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length > 0 && (<Row>
+            {liveAuctions.length > 1 && (<Row>
               <Tabs>
                 <TabPane>
                   <h2>Live Auctions</h2>
@@ -103,12 +102,14 @@ export const HomeView = () => {
               </Tabs>
             </Row>)}
             <Row>
+              {auctionsEnded.length > 0 && (
               <Tabs>
                 <TabPane>
                   <h2>Ended Auctions</h2>
                   {endedAuctions}
                 </TabPane>
               </Tabs>
+              )}
               <br />
             </Row>
           </Col>

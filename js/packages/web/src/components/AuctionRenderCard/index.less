@@ -5,6 +5,20 @@
   border-radius: 8px;
   margin-top: 30px;
 }
+
+.auction-image {
+  margin-left: -30px;
+  width: 300px;
+  height: 300px;
+  @media (max-width: 1100px) {
+    margin-left: 0;
+  }
+  @media (max-width: 500px) {
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .limited-master-record {
   padding: 10px;
   margin: 5px;
@@ -18,10 +32,10 @@
 }
 
 .edition-badge {
-  background: #3E3E3E;
+  background: #3e3e3e;
   border-radius: 8px;
   margin: 24px 0px 24px 20px;
-  color: #FFFFFF;
+  color: #ffffff;
   padding: 4px 8px;
   text-align: center;
   display: inline-block;
@@ -73,19 +87,19 @@
     min-height: 44px;
   }
 
-
   .ant-card-meta-title {
     font-size: 20px;
     font-weight: 600;
-    padding: 24px 24px 0 24px;
+    padding: 24px 24px 0px 24px;
+    white-space: normal !important;
+    min-height: 62px;
   }
 
-
-  .ant-avatar.ant-avatar-circle, h4 {
+  .ant-avatar.ant-avatar-circle,
+  h4 {
     margin-left: 24px;
     margin-bottom: 8px;
   }
-
 
   .ant-card-meta-description {
     // padding-bottom: 10px;
@@ -93,9 +107,9 @@
 
   .ant-card-meta {
     width: 100%;
-  h4 {
-    opacity: 0.7;
-  }
+    h4 {
+      opacity: 0.7;
+    }
   }
 
   .ant-image {

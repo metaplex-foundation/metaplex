@@ -14,9 +14,7 @@ export interface AuctionCard extends CardProps {
 }
 
 export const AuctionRenderCard = (props: AuctionCard) => {
-  let {
-    auctionView
-  } = props;
+  let { auctionView } = props;
   const art = useArt(auctionView.thumbnail.metadata.pubkey);
   const category = art?.category;
   const image = art?.image;
@@ -26,7 +24,8 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const [state, setState] = useState<CountdownState>();
 
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
-  const ended = state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
+  const ended =
+    state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
   const auction = auctionView.auction.info;
   useEffect(() => {
     const calc = () => {
@@ -47,7 +46,14 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       className={`art-card`}
       cover={
         <>
-          <ArtContent category={category} extension={image} uri={image} preview={false} />
+          <ArtContent
+            category={category}
+            className="auction-image no-events"
+            extension={image}
+            uri={image}
+            preview={false}
+            files={art.files}
+          />
         </>
       }
     >
@@ -55,16 +61,21 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         title={`${name}`}
         description={
           <>
-            <h4>Creators</h4>
-            <MetaAvatar creators={creators} showMultiple={true} size={32} />
-            <h4 style={{ marginBottom: 0 }}>{ended ? "Winning bid" : "Current bid"}</h4>
+            <h4 style={{ marginBottom: 0 }}>
+              {ended ? 'Winning bid' : 'Current bid'}
+            </h4>
             <div className="bids">
-            <AmountLabel
-              style={{ marginBottom: 10 }}
-              containerStyle={{ flexDirection: 'row' }}
-              title={ended ? "Winning bid" : "Highest bid"}
-              amount={winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber()) ? formatTokenAmount(winningBid.info.lastBid) : 'No Bid'}
-            />
+              <AmountLabel
+                style={{ marginBottom: 10 }}
+                containerStyle={{ flexDirection: 'row' }}
+                title={ended ? 'Winning bid' : 'Highest bid'}
+                amount={
+                  winningBid &&
+                  Number.isFinite(winningBid.info.lastBid?.toNumber())
+                    ? formatTokenAmount(winningBid.info.lastBid)
+                    : 'No Bid'
+                }
+              />
             </div>
             {/* {endAuctionAt && hasTimer && (
               <div className="cd-container">

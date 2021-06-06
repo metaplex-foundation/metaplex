@@ -257,7 +257,7 @@ export const AuctionCard = ({
               return (
                 <>
                   <h2 className="modal-title">Place a bid</h2>
-                  {gapTime && (
+                  {!!gapTime && (
                     <div
                       className="info-content"
                       style={{

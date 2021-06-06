@@ -21,6 +21,8 @@ export interface Artist {
   itemsSold?: number;
   about?: string;
   verified?: boolean;
+
+  share?: number;
 }
 
 export enum ArtType {
@@ -45,6 +47,7 @@ export interface Art {
   edition?: number;
   supply?: number;
   maxSupply?: number;
+  files?: string[];
 }
 
 export interface Presale {

@@ -10,6 +10,16 @@
   background-size: auto 240px;
 }
 
+.explore .square {
+    max-width: 355px;
+    min-width: 355px;
+    border: 1px #303030 solid;
+    @media (max-width: 375px) {
+      max-width: 355px;
+      min-width: 355px;
+    }
+}
+
 .presale-title {
   font-weight: bolder;
   font-size: 1.7rem;
@@ -22,4 +32,10 @@
 .cd-number {
   font-size: 1.4rem;
   font-weight: 600;
+}
+
+.presale-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
