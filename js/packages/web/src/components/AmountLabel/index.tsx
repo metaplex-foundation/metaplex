@@ -5,11 +5,11 @@ import { formatUSD } from '@oyster/common'
 import './index.less';
 
 interface IAmountLabel {
-  amount: number | string,
-  displayUSD?: boolean,
-  title?: string,
-  style?: object,
-  containerStyle?: object,
+  amount: number | string;
+  displayUSD?: boolean;
+  title?: string;
+  style?: object;
+  containerStyle?: object;
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
