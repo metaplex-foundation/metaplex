@@ -28,23 +28,16 @@ import {
   setProgramIds,
   useConnectionConfig,
 } from '@oyster/common';
-import { MintInfo, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import {
-  NAME_PROGRAM_ID,
-  VERIFICATION_AUTHORITY_OFFSET,
-  TWITTER_VERIFICATION_AUTHORITY,
-  TWITTER_ACCOUNT_LENGTH,
-  NameRegistryState,
-} from '@solana/spl-name-service';
-import {
-  Connection,
-  PublicKey,
-  PublicKeyAndAccount,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { MintInfo } from '@solana/spl-token';
+import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
 import BN from 'bn.js';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   AuctionManager,
   AuctionManagerStatus,
@@ -174,18 +167,18 @@ export function MetaProvider({ children = null as any }) {
     setSafetyDepositBoxesByVaultAndIndex,
   ] = useState<Record<string, ParsedAccount<SafetyDepositBox>>>({});
 
-  const updateMints = useCallback(async (metadataByMint) => {
-    try {
-      const m = await queryExtendedMetadata(
-        connection,
-        metadataByMint,
-      );
-      setMetadata(m.metadata);
-      setMetadataByMint(m.mintToMetadata);
-    } catch (er) {
-      console.error(er);
-    }
-  }, [setMetadata, setMetadataByMint]);
+  const updateMints = useCallback(
+    async metadataByMint => {
+      try {
+        const m = await queryExtendedMetadata(connection, metadataByMint);
+        setMetadata(m.metadata);
+        setMetadataByMint(m.mintToMetadata);
+      } catch (er) {
+        console.error(er);
+      }
+    },
+    [setMetadata, setMetadataByMint],
+  );
 
   useEffect(() => {
     let dispose = () => {};
@@ -444,7 +437,7 @@ export function MetaProvider({ children = null as any }) {
     setPayoutTickets,
     setStore,
     setWhitelistedCreatorsByCreator,
-    updateMints
+    updateMints,
   ]);
 
   const filteredMetadata = useMemo(
@@ -648,8 +641,12 @@ const processMetaplexAccounts = async (
   setWhitelistedCreatorsByCreator: any,
 ) => {
   try {
-    const STORE_ID = programIds().store.toBase58()
-    if (a.account.data[0] === MetaplexKey.AuctionManagerV1) {
+    const STORE_ID = programIds().store.toBase58();
+
+    if (
+      a.account.data[0] === MetaplexKey.AuctionManagerV1 ||
+      a.account.data[0] === 0
+    ) {
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
       if (storeKey.toBase58() === STORE_ID) {
         const auctionManager = decodeAuctionManager(a.account.data);
@@ -744,7 +741,10 @@ const processMetaData = async (
   setMasterEditionsByOneTimeAuthMint: any,
 ) => {
   try {
-    if (meta.account.data[0] === MetadataKey.MetadataV1) {
+    if (
+      meta.account.data[0] === MetadataKey.MetadataV1 ||
+      meta.account.data[0] === 0
+    ) {
       const metadata = await decodeMetadata(meta.account.data);
 
       if (
@@ -816,7 +816,10 @@ const processVaultData = (
         ...e,
         [safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order]: account,
       }));
-    } else if (a.account.data[0] === VaultKey.VaultV1) {
+    } else if (
+      a.account.data[0] === VaultKey.VaultV1 ||
+      a.account.data[0] === 0
+    ) {
       const vault = decodeVault(a.account.data);
       const account: ParsedAccount<Vault> = {
         pubkey: a.pubkey,
