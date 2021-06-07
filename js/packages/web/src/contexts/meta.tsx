@@ -578,6 +578,8 @@ const processAuctions = (
   setBidderMetadataByAuctionAndBidder: any,
   setBidderPotsByAuctionAndBidder: any,
 ) => {
+  if (a.account.owner.toBase58() != programIds().auction.toBase58()) return;
+
   try {
     const account = cache.add(
       a.pubkey,
@@ -640,6 +642,8 @@ const processMetaplexAccounts = async (
   setStore: any,
   setWhitelistedCreatorsByCreator: any,
 ) => {
+  if (a.account.owner.toBase58() != programIds().metaplex.toBase58()) return;
+
   try {
     const STORE_ID = programIds().store.toBase58();
 
@@ -740,6 +744,8 @@ const processMetaData = async (
   setmasterEditionsByPrintingMint: any,
   setMasterEditionsByOneTimeAuthMint: any,
 ) => {
+  if (meta.account.owner.toBase58() != programIds().metadata.toBase58()) return;
+
   try {
     if (
       meta.account.data[0] === MetadataKey.MetadataV1 ||
@@ -804,6 +810,7 @@ const processVaultData = (
   setSafetyDepositBoxesByVaultAndIndex: any,
   setVaults: any,
 ) => {
+  if (a.account.owner.toBase58() != programIds().vault.toBase58()) return;
   try {
     if (a.account.data[0] === VaultKey.SafetyDepositBoxV1) {
       const safetyDeposit = decodeSafetyDeposit(a.account.data);
