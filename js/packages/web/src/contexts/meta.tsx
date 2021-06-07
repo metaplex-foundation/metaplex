@@ -697,7 +697,7 @@ const processMetaplexAccounts = async (
         whitelistedCreator.address,
       );
       if (
-        creatorKeyIfCreatorWasPartOfThisStore.toBase58() == a.pubkey.toBase58()
+        creatorKeyIfCreatorWasPartOfThisStore.toBase58() === a.pubkey.toBase58()
       ) {
         const account = cache.add(
           a.pubkey,

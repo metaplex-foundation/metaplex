@@ -103,7 +103,7 @@ export async function addTokensToVault(
     }
   }
 
-  if (instructions[instructions.length - 1] != currInstructions) {
+  if (instructions[instructions.length - 1] !== currInstructions) {
     signers.push(currSigners);
     instructions.push(currInstructions);
   }

@@ -29,7 +29,7 @@ export async function sendCancelBid(
   let instructions: Array<TransactionInstruction[]> = [];
   if (
     auctionView.auction.info.ended() &&
-    auctionView.auction.info.state != AuctionState.Ended
+    auctionView.auction.info.state !== AuctionState.Ended
   ) {
     await setupPlaceBid(
       connection,

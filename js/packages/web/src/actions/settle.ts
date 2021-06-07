@@ -117,11 +117,11 @@ async function emptyPaymentAccountForAllTokens(
           auctionView.auction.pubkey,
           wallet.publicKey,
           addresses[k],
-          item == auctionView.participationItem ? null : i,
-          item == auctionView.participationItem ? null : j,
+          item === auctionView.participationItem ? null : i,
+          item === auctionView.participationItem ? null : j,
           creatorIndex === -1 ||
             creatorIndex === null ||
-            (edgeCaseWhereCreatorIsAuctioneer && k == addresses.length - 1)
+            (edgeCaseWhereCreatorIsAuctioneer && k === addresses.length - 1)
             ? null
             : creatorIndex,
           settleInstructions,
@@ -134,7 +134,7 @@ async function emptyPaymentAccountForAllTokens(
           settleInstructions = [];
         }
 
-        if (currInstrBatch.length == BATCH_SIZE) {
+        if (currInstrBatch.length === BATCH_SIZE) {
           signers.push(currSignerBatch);
           instructions.push(currInstrBatch);
           currSignerBatch = [];
@@ -213,14 +213,14 @@ async function claimAllBids(
       claimBidInstructions,
     );
 
-    if (claimBidInstructions.length == CLAIM_TRANSACTION_SIZE) {
+    if (claimBidInstructions.length === CLAIM_TRANSACTION_SIZE) {
       currSignerBatch.push(claimBidSigners);
       currInstrBatch.push(claimBidInstructions);
       claimBidSigners = [];
       claimBidInstructions = [];
     }
 
-    if (currInstrBatch.length == BATCH_SIZE) {
+    if (currInstrBatch.length === BATCH_SIZE) {
       signers.push(currSignerBatch);
       instructions.push(currInstrBatch);
       currSignerBatch = [];
