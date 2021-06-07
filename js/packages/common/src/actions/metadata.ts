@@ -36,7 +36,8 @@ export const MAX_METADATA_LEN =
 export const MAX_MASTER_EDITION_KEN = 1 + 9 + 8 + 32 + 32;
 
 export enum MetadataKey {
-  MetadataV1 = 0,
+  Uninitialized = 0,
+  MetadataV1 = 4,
   EditionV1 = 1,
   MasterEditionV1 = 2,
   ReservationListV1 = 3,

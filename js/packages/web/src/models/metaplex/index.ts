@@ -19,12 +19,14 @@ export const METAPLEX_PREFIX = 'metaplex';
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
 
 export enum MetaplexKey {
-  AuctionManagerV1 = 0,
+  Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
   BidRedemptionTicketV1 = 2,
   StoreV1 = 3,
   WhitelistedCreatorV1 = 4,
   PayoutTicketV1 = 5,
+  SafetyDepositValidationTicketV1 = 6,
+  AuctionManagerV1 = 7,
 }
 
 export class PayoutTicket {
