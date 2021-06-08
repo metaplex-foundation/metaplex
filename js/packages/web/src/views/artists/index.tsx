@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import { Layout, Row, Col, Tabs } from 'antd';
+import { Col, Layout } from 'antd';
+import React from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
-import { useUserArts } from '../../hooks';
-import { useMeta } from '../../contexts';
 import { ArtistCard } from '../../components/ArtistCard';
-
-const { TabPane } = Tabs;
+import { useMeta } from '../../contexts';
 
 const { Content } = Layout;
 
 export const ArtistsView = () => {
-  const ownedMetadata = useUserArts();
   const { whitelistedCreatorsByCreator } = useMeta();
   const breakpointColumnsObj = {
     default: 4,

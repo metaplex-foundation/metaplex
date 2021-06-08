@@ -69,7 +69,7 @@ export async function sendRedeemBid(
 
   if (
     auctionView.auction.info.ended() &&
-    auctionView.auction.info.state != AuctionState.Ended
+    auctionView.auction.info.state !== AuctionState.Ended
   ) {
     await setupPlaceBid(
       connection,
@@ -112,7 +112,7 @@ export async function sendRedeemBid(
         const winningConfigItem = winningConfig.items[j];
 
         if (
-          winningConfigItem.safetyDepositBoxIndex == safetyDeposit.info.order
+          winningConfigItem.safetyDepositBoxIndex === safetyDeposit.info.order
         ) {
           const stateItem =
             auctionView.auctionManager.info.state.winningConfigStates[
@@ -232,7 +232,7 @@ export async function sendRedeemBid(
     instructions = instructions.slice(stopPoint, instructions.length);
     filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);
 
-    if (instructions.length == lastInstructionsLength) tries = tries + 1;
+    if (instructions.length === lastInstructionsLength) tries = tries + 1;
     else tries = 0;
 
     try {
@@ -575,8 +575,8 @@ async function setupRedeemParticipationInstructions(
   );
 
   if (
-    participationBalance.value.uiAmount == 0 &&
-    tokenBalance.value.uiAmount == 1
+    participationBalance.value.uiAmount === 0 &&
+    tokenBalance.value.uiAmount === 1
   ) {
     // I'm the first, I need to populate for the others with a crank turn.
     let fillParticipationStashSigners: Keypair[] = [];
@@ -694,7 +694,7 @@ async function setupRedeemParticipationInstructions(
     }
   }
 
-  if (newTokenAccount && newTokenBalance == 1) {
+  if (newTokenAccount && newTokenBalance === 1) {
     await redeemPrintingToken(
       wallet,
       updateAuth,

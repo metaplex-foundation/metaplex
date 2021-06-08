@@ -308,7 +308,7 @@ export async function createAuctionManager(
     instructions = instructions.slice(stopPoint, instructions.length);
     filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);
 
-    if (instructions.length == lastInstructionsLength) tries = tries + 1;
+    if (instructions.length === lastInstructionsLength) tries = tries + 1;
     else tries = 0;
 
     try {
