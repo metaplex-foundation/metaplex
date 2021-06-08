@@ -131,8 +131,17 @@ export const AuctionView = () => {
             <>
               <h6>About this Auction</h6>
               <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
+              <p>Auction Mechanics: This is a tiered auction with pieces going to the 15 highest bidders.</p>
+              <ul>
+                <li>Top Bidder - Unique 'Alignment' NFT 1/1, All 7 Chakra A/V NFTs + A Sound Journey in a Crystal Mountain (USA) curated & with BLOND:ISH</li>
+                <li>Bidders 2-5th - All 7 Chakra Pieces</li>
+                <li>Bidders 6-10th - 4 Chakra Pieces (Heart, Crown, Solar Plexus, Third Eye)</li>
+                <li>Bidders 11-15th - 2 Chakra Pieces (Solar Plexus, Third Eye)</li>
+                <li>All bidders will receive the 'Acknowledge' NFT complete with gong sounds to ground us all together</li>
+              </ul>
             </>
           )}
+          <img src="/chakratastic-tier-breakdown.jpg" style={{ width: '100%' }} />
         </Col>
 
         <Col span={24} md={12}>
