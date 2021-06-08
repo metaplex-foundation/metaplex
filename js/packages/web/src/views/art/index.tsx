@@ -54,6 +54,7 @@ export const ArtView = () => {
               width={500}
               className="artwork-image"
               files={art.files}
+              active={true}
             />
           </Col>
           {/* <Divider /> */}
