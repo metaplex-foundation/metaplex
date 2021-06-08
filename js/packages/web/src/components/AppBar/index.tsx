@@ -2,14 +2,17 @@ import React, { useMemo } from 'react';
 import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
+import { ConnectButton, CurrentUserBadge, useConnection, useWallet } from '@oyster/common';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { saveAdmin } from '../../actions/saveAdmin';
+import { WhitelistedCreator } from '../../models/metaplex';
 
 const UserActions = () => {
   const { wallet } = useWallet();
+  const connection = useConnection();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
@@ -23,6 +26,19 @@ const UserActions = () => {
 
   return (
     <>
+      {!store?.info && wallet?.publicKey && <Button className="app-btn" onClick={async () => {
+        if(!wallet?.publicKey) {
+          return;
+        }
+
+        await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
+          address: wallet?.publicKey,
+          activated: true,
+        })]);
+
+        window.location.reload();
+      }}>Init Store</Button>}
+
       {/* <Link to={`#`}>
         <Button className="app-btn">Bids</Button>
       </Link> */}

@@ -25,6 +25,10 @@ export async function populateParticipationPrintingAccount(
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
 
   const transferAuthority: PublicKey = (
     await PublicKey.findProgramAddress(
@@ -115,7 +119,7 @@ export async function populateParticipationPrintingAccount(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.store,
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
