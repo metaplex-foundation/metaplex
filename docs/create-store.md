@@ -16,7 +16,7 @@ store information, such as who to whitelist as creators.
 
 To create a store, you must first derive the store ID given your public address. The Metaplex devs have already created
 an environment variable for you to utilize - `REACT_APP_STORE_OWNER_ADDRESS_ADDRESS` - which you should set to be your
-wallet public address. To do this, you can create a `.env` file in the `packages/web folder`, and set
+wallet public address. To do this, you can create a `.env` file in `packages/web`, and set
 `REACT_APP_STORE_OWNER_ADDRESS_ADDRESS` to be your wallet public address in there.
 
 ```
