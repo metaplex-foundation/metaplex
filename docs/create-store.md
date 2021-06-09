@@ -4,7 +4,7 @@ To create a storefront powered by Metaplex, you need to create a store on the Me
 steps you need to take to create your store. After creating your store, this guide will show you how to manage your
 store information, such as who to whitelist as creators.
 
-## Prerequisuites
+## Prerequisites
 * You should have an understanding of `React` concepts such as hooks. Please refer to the React documentation
   [here](https://reactjs.org/docs/getting-started.html).
 * To create your store, you will need to have a wallet that contains token to perform your transactions.
