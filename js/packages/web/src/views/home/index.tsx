@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Row, Col, Tabs } from 'antd';
+import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 
 import { PreSaleBanner } from '../../components/PreSaleBanner';
@@ -7,10 +7,13 @@ import { AuctionViewState, useAuctions } from '../../hooks';
 
 import './index.less';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
 import BN from 'bn.js';
+import { useConnection, useWallet } from '@oyster/common';
+import { saveAdmin } from '../../actions/saveAdmin';
+import { WhitelistedCreator } from '../../models/metaplex';
 
 const { TabPane } = Tabs;
 
@@ -18,7 +21,10 @@ const { Content } = Layout;
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
-  const { isLoading } = useMeta();
+  const { isLoading, store } = useMeta();
+  const connection = useConnection();
+  const history = useHistory();
+  const { wallet, connect } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -88,7 +94,27 @@ export const HomeView = () => {
   );
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30 }}>
+    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
+      {!store && <>
+        {!wallet?.publicKey && <p>Store has not been configure please <Button type="primary" className="app-btn" onClick={connect}>Connect</Button> Wallet and follow instructions to configure store.</p>}
+        {wallet?.publicKey && <>
+          <p>Initializing store will allow you to control </p>
+          <Button className="app-btn" onClick={async () => {
+            if(!wallet?.publicKey) {
+              return;
+            }
+
+            // await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
+            //   address: wallet?.publicKey,
+            //   activated: true,
+            // })]);
+
+            history.push('/admin');
+
+            window.location.reload();
+          }}>Init Store</Button>
+        </>}
+      </>}
       <PreSaleBanner auction={heroAuction} />
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
