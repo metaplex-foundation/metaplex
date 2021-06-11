@@ -207,7 +207,7 @@ export function MetaProvider({ children = null as any }) {
         auctions: {},
         vaults: {},
         payoutTickets: {},
-        store: {},
+        store: undefined,
         whitelistedCreatorsByCreator: {},
         bidderMetadataByAuctionAndBidder: {},
         bidderPotsByAuctionAndBidder: {},
@@ -295,7 +295,9 @@ export function MetaProvider({ children = null as any }) {
       setAuctionManagersByAuction(tempCache.auctionManagersByAuction);
       setBidRedemptions(tempCache.bidRedemptions);
       setPayoutTickets(tempCache.payoutTickets);
-      setStore(tempCache.store as any);
+      if (tempCache.store) {
+        setStore(tempCache.store as any);
+      }
       setWhitelistedCreatorsByCreator(tempCache.whitelistedCreatorsByCreator);
       setIsLoading(false);
 
@@ -645,7 +647,7 @@ const processMetaplexAccounts = async (
   if (a.account.owner.toBase58() != programIds().metaplex.toBase58()) return;
 
   try {
-    const STORE_ID = programIds().store.toBase58();
+    const STORE_ID = programIds().store?.toBase58() || '';
 
     if (
       a.account.data[0] === MetaplexKey.AuctionManagerV1 ||
@@ -692,7 +694,6 @@ const processMetaplexAccounts = async (
       }));
     } else if (a.account.data[0] === MetaplexKey.StoreV1) {
       const store = decodeStore(a.account.data);
-      console.log('Found store', store);
       const account: ParsedAccount<Store> = {
         pubkey: a.pubkey,
         account: a.account,

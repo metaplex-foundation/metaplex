@@ -7,7 +7,7 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { getAuctionKeys, SCHEMA, ValidateParticipationArgs } from '.';
+import { SCHEMA, ValidateParticipationArgs } from '.';
 
 export async function validateParticipation(
   auctionManager: PublicKey,

@@ -690,12 +690,17 @@ export async function getOriginalAuthority(
 
 export async function getWhitelistedCreator(creator: PublicKey) {
   const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
+
   return (
     await PublicKey.findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
-        PROGRAM_IDS.store.toBuffer(),
+        store.toBuffer(),
         creator.toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
