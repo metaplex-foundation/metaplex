@@ -16,7 +16,7 @@ export const ArtistsView = () => {
     500: 1,
   };
 
-  const items = Object.values(whitelistedCreatorsByCreator);
+  const items = Object.values(whitelistedCreatorsByCreator).filter(c => c.info.address.toBase58() !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB');
 
   const artistGrid = (
     <Masonry

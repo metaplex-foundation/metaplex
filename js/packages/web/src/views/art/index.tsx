@@ -68,6 +68,7 @@ export const ArtView = () => {
             <div className="info-header">CREATED BY</div>
             <div className="creators">
               {(art.creators || [])
+                .filter(creator => creator.address !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB')
                 .map(creator => {
                 return (
                   <div
