@@ -117,10 +117,15 @@ function InnerAdminView({
   connection: Connection;
   wallet: WalletAdapter;
 }) {
-  const [newStore, setNewStore] = useState(new Store(store.info));
+  const [newStore, setNewStore] = useState(store && store.info && new Store(store.info));
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
+
+
+  if (!store || !newStore) {
+    return <p>Store is not defined</p>;
+  }
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {

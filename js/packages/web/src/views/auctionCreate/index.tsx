@@ -9,7 +9,6 @@ import {
   Statistic,
   Progress,
   Spin,
-  InputNumber,
   Radio,
   Card,
   Select,
@@ -42,7 +41,6 @@ import {
   WinningConstraint,
   ParticipationConfig,
   WinningConfigItem,
-  WinningConfigState,
 } from '../../models/metaplex';
 import moment from 'moment';
 import {
@@ -59,7 +57,6 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Step } = Steps;
-const { TextArea } = Input;
 
 export enum AuctionCategory {
   Limited,
