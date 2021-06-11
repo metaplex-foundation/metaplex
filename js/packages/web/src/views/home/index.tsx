@@ -11,7 +11,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
 import BN from 'bn.js';
-import { useConnection, useWallet } from '@oyster/common';
+import { programIds, useConnection, useWallet } from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 
@@ -22,6 +22,7 @@ export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const { isLoading, store } = useMeta();
+  const [isInitalizingStore, setIsInitalizingStore] = useState(false);
   const connection = useConnection();
   const history = useHistory();
   const { wallet, connect } = useWallet();
@@ -93,21 +94,27 @@ export const HomeView = () => {
     </Masonry>
   );
 
+  const CURRENT_STORE = programIds().store;
+
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {!store && <>
-        {!wallet?.publicKey && <p>Store has not been configure please <Button type="primary" className="app-btn" onClick={connect}>Connect</Button> Wallet and follow instructions to configure store.</p>}
-        {wallet?.publicKey && <>
-          <p>Initializing store will allow you to control </p>
-          <Button className="app-btn" onClick={async () => {
+      {!store && !isLoading && <>
+        {!CURRENT_STORE && <p>Store has not been configured please set <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet inside <em>packages/web/.env</em> and restart yarn</p>}
+        {CURRENT_STORE && !wallet?.publicKey && <p><Button type="primary" className="app-btn" onClick={connect}>Connect</Button> to configure store.</p>}
+        {CURRENT_STORE && wallet?.publicKey && <>
+          <p>Initializing store will allow you to control list of creators.</p>
+
+          <Button className="app-btn" type="primary" loading={isInitalizingStore} disabled={!CURRENT_STORE} onClick={async () => {
             if(!wallet?.publicKey) {
               return;
             }
 
-            // await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
-            //   address: wallet?.publicKey,
-            //   activated: true,
-            // })]);
+            setIsInitalizingStore(true);
+
+            await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
+              address: wallet?.publicKey,
+              activated: true,
+            })]);
 
             history.push('/admin');
 

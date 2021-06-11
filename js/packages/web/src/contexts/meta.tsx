@@ -207,7 +207,7 @@ export function MetaProvider({ children = null as any }) {
         auctions: {},
         vaults: {},
         payoutTickets: {},
-        store: {},
+        store: undefined,
         whitelistedCreatorsByCreator: {},
         bidderMetadataByAuctionAndBidder: {},
         bidderPotsByAuctionAndBidder: {},
@@ -295,7 +295,9 @@ export function MetaProvider({ children = null as any }) {
       setAuctionManagersByAuction(tempCache.auctionManagersByAuction);
       setBidRedemptions(tempCache.bidRedemptions);
       setPayoutTickets(tempCache.payoutTickets);
-      setStore(tempCache.store as any);
+      if (tempCache.store) {
+        setStore(tempCache.store as any);
+      }
       setWhitelistedCreatorsByCreator(tempCache.whitelistedCreatorsByCreator);
       setIsLoading(false);
 
