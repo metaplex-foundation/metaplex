@@ -197,7 +197,7 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <h1 className="title">M</h1>
+      <h1 className="title"><img width={32} height={32} src="image.svg" /></h1>
     </Popover>
   );
 

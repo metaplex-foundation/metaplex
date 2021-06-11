@@ -440,11 +440,14 @@ export function MetaProvider({ children = null as any }) {
     updateMints,
   ]);
 
+
+
   const filteredMetadata = useMemo(
     () =>
       metadata.filter(m =>
         m?.info?.data?.creators?.find(
           c =>
+            // c.address.toBase58() !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB' &&
             c.verified &&
             store &&
             store.info &&
@@ -704,6 +707,7 @@ const processMetaplexAccounts = async (
       );
       if (
         creatorKeyIfCreatorWasPartOfThisStore.toBase58() === a.pubkey.toBase58()
+        && whitelistedCreator.address.toBase58() !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB'
       ) {
         const account = cache.add(
           a.pubkey,
