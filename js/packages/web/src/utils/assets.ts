@@ -60,5 +60,5 @@ export async function getAssetCostToStore(files: File[]) {
     conversionRates.value.arweave.usd / conversionRates.value.solana.usd;
   console.log('Ar mult', arMultiplier);
   // We also always make a manifest file, which, though tiny, needs payment.
-  return LAMPORT_MULTIPLIER * totalArCost * arMultiplier * 1.2;
+  return LAMPORT_MULTIPLIER * totalArCost * arMultiplier * 1.1;
 }
