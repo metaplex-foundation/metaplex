@@ -44,7 +44,7 @@
     "test": "craco test",
     "eject": "react-scripts eject",
     "deploy:ar": "arweave deploy-dir  ../../build/web --key-file ",
-    "deploy": "gh-pages -d ../../build/web --repo https://github.com/solana-labs/oyster-meta",
+    "deploy": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
@@ -64,7 +64,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/solana-labs/oyster"
+    "url": "https://github.com/metaplex-foundation/metaplex"
   },
   "homepage": ".",
   "devDependencies": {

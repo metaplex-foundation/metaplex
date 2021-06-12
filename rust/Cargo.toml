@@ -1,0 +1,9 @@
+[workspace]
+members = [
+  "auction/program",
+  "metaplex/program",
+  "token-vault/program",
+  "token-metadata/program",
+]
+exclude = [
+]

@@ -1,0 +1,19 @@
+{
+  "winning_configs": {
+    "items": [
+      {
+        "safety_deposit_box_index": 0,
+        "amount": 1,
+        "winning_config_type": 0
+      }
+    ]
+  },
+  "participation_config": {
+    "winner_constraint": 1,
+
+    "non_winning_constraint": 2,
+
+    "fixed_price": null,
+    "safety_deposit_box_index": 1
+  }
+}

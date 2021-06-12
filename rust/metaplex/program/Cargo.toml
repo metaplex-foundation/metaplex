@@ -1,0 +1,28 @@
+[package]
+name = "spl-metaplex"
+version = "0.0.1"
+description = "Metaplex"
+authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/metaplex"
+license = "Apache-2.0"
+edition = "2018"
+exclude = ["js/**"]
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+spl-auction = { path = "../../auction/program", features = [ "no-entrypoint" ] }
+num-derive = "0.3"
+num-traits = "0.2"
+arrayref = "0.3.6"
+solana-program = "1.6.10"
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
+spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
+spl-token-metadata = { path = "../../token-metadata/program", features = [ "no-entrypoint" ] }
+thiserror = "1.0"
+borsh = "0.8.2"
+
+[lib]
+crate-type = ["cdylib", "lib"]

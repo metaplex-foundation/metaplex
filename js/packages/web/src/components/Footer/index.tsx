@@ -10,7 +10,7 @@ export const Footer = () => {
       <Button
         shape={'circle'}
         target={'_blank'}
-        href={'https://github.com/solana-labs/oyster'}
+        href={'https://github.com/metaplex-foundation/metaplex'}
         icon={<GithubOutlined />}
         style={{ marginRight: '20px' }}
       ></Button>
