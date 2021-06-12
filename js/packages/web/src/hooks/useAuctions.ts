@@ -131,6 +131,14 @@ export const useAuctions = (state?: AuctionViewState) => {
         state,
         existingAuctionView,
       );
+
+      if (
+        nextAuctionView?.auction.pubkey.toBase58() ===
+        'FxXEav7X2iFAT78gBYTTE7b4C4TLzvA1UJ1xMkWaAdRR'
+      ) {
+        return;
+      }
+
       setAuctionViews(nA => ({ ...nA, [a]: nextAuctionView }));
     });
   }, [
