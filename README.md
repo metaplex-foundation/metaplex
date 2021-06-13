@@ -12,6 +12,12 @@ Metaplex is a protocol built on top of Solana that allows:
 
 Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web2 application.
 
+## In Depth Developer's Guide
+
+If you want to deep dive on the Architecture, you can do so here:
+
+https://www.notion.so/Metaplex-Developer-Guide-afefbc19841744c28587ab948a08cfac
+
 ## Installing
 
 Clone the repo, and run `deploy-web.sh`.
