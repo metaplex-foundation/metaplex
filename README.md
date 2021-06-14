@@ -20,6 +20,7 @@ Clone the repo, and run `deploy-web.sh`.
 $ git clone https://github.com/metaplex-foundation/metaplex.git
 $ cd metaplex
 $ cd js
+$ yarn install
 $ ./deploy-web.sh
 ```
 
