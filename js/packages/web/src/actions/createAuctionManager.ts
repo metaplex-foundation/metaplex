@@ -20,6 +20,7 @@ import {
   getSafetyDepositBoxAddress,
   createAssociatedTokenAccountInstruction,
   sendTransactionWithRetry,
+  PriceFloor,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -104,6 +105,7 @@ export async function createAuctionManager(
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
   paymentMint: PublicKey,
+  priceFloor: PriceFloor,
 ): Promise<{
   vault: PublicKey;
   auction: PublicKey;
@@ -140,6 +142,7 @@ export async function createAuctionManager(
     endAuctionAt,
     auctionGap,
     paymentMint,
+    priceFloor,
   );
 
   let safetyDepositConfigsWithPotentiallyUnsetTokens =

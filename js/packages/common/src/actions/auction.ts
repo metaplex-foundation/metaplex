@@ -117,11 +117,11 @@ export enum PriceFloorType {
 }
 export class PriceFloor {
   type: PriceFloorType;
-  // It's an array of 32 u8s, when minimum, only first 4 are used (a u64), when blinded price, the entire
+  // It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
   // thing is a hash and not actually a public key, and none is all zeroes
-  hash: PublicKey;
+  hash: U832ArrayBorshHack;
 
-  constructor(args: { type: PriceFloorType; hash: PublicKey }) {
+  constructor(args: { type: PriceFloorType; hash: U832ArrayBorshHack }) {
     this.type = args.type;
     this.hash = args.hash;
   }
@@ -306,6 +306,104 @@ export class WinnerLimit {
   }
 }
 
+// There is no good way to just send up an array of u8s. Borsh always messes it up. Sorry, this is only way
+// I could think of to intelligently send up u8s without borsh sending up a size param before the array which
+// borsh-rs cant handle
+export class U832ArrayBorshHack {
+  0: number;
+  1: number;
+  2: number;
+  3: number;
+  4: number;
+  5: number;
+  6: number;
+  7: number;
+  8: number;
+  9: number;
+  10: number;
+  11: number;
+  12: number;
+  13: number;
+  14: number;
+  15: number;
+  16: number;
+  17: number;
+  18: number;
+  19: number;
+  20: number;
+  21: number;
+  22: number;
+  23: number;
+  24: number;
+  25: number;
+  26: number;
+  27: number;
+  28: number;
+  29: number;
+  30: number;
+  31: number;
+  constructor(args: {
+    0?: number;
+    1?: number;
+    2?: number;
+    3?: number;
+    4?: number;
+    5?: number;
+    6?: number;
+    7?: number;
+    8?: number;
+    9?: number;
+    10?: number;
+    11?: number;
+    12?: number;
+    13?: number;
+    14?: number;
+    15?: number;
+    16?: number;
+    17?: number;
+    18?: number;
+    19?: number;
+    20?: number;
+    21?: number;
+    22?: number;
+    23?: number;
+    24?: number;
+    25?: number;
+    26?: number;
+    27?: number;
+    28?: number;
+    29?: number;
+    30?: number;
+    31?: number;
+    array?: number[];
+  }) {
+    for (let i = 0; i < 32; i++) {
+      //@ts-ignore
+      if (args.array) this[i] = args.array[i];
+      //@ts-ignore
+      else this[i] = args[i];
+    }
+  }
+
+  asArray(): Array<number> {
+    let arr = [];
+    for (let i = 0; i < 32; i++) {
+      //@ts-ignore
+      arr.push(this[i]);
+    }
+    return arr;
+  }
+
+  asBNs(): Array<BN> {
+    let arr = this.asArray();
+    let bn1 = new BN(arr.slice(0, 8), 'le');
+    let bn2 = new BN(arr.slice(8, 16), 'le');
+    let bn3 = new BN(arr.slice(16, 24), 'le');
+    let bn4 = new BN(arr.slice(24, 32), 'le');
+    return [bn1, bn2, bn3, bn4];
+  }
+}
+
 class CreateAuctionArgs {
   instruction: number = 1;
   /// How many winners are allowed for this auction. See AuctionData.
@@ -463,8 +561,18 @@ export const AUCTION_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['type', 'u8'],
-        ['hash', 'pubkey'],
+        ['hash', U832ArrayBorshHack],
       ],
+    },
+  ],
+  [
+    U832ArrayBorshHack,
+    {
+      kind: 'struct',
+      fields: [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+      ].map(n => [n.toString(), 'u8']),
     },
   ],
   [
@@ -528,6 +636,7 @@ export async function createAuction(
   resource: PublicKey,
   endAuctionAt: BN | null,
   auctionGap: BN | null,
+  priceFloor: PriceFloor,
   tokenMint: PublicKey,
   authority: PublicKey,
   creator: PublicKey,
@@ -545,10 +654,7 @@ export async function createAuction(
         auctionGap,
         tokenMint,
         authority,
-        priceFloor: new PriceFloor({
-          type: PriceFloorType.None,
-          hash: SystemProgram.programId,
-        }),
+        priceFloor,
       }),
     ),
   );

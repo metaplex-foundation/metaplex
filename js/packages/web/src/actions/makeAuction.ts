@@ -1,5 +1,5 @@
 import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { utils, actions, WinnerLimit } from '@oyster/common';
+import { utils, actions, WinnerLimit, PriceFloor } from '@oyster/common';
 
 import BN from 'bn.js';
 import { METAPLEX_PREFIX } from '../models/metaplex';
@@ -13,6 +13,7 @@ export async function makeAuction(
   endAuctionAt: BN,
   auctionGap: BN,
   paymentMint: PublicKey,
+  priceFloor: PriceFloor,
 ): Promise<{
   auction: PublicKey;
   instructions: TransactionInstruction[];
@@ -45,6 +46,7 @@ export async function makeAuction(
     vault,
     endAuctionAt,
     auctionGap,
+    priceFloor,
     paymentMint,
     auctionManagerKey,
     wallet.publicKey,
