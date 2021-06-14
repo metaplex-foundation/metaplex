@@ -31,7 +31,6 @@ import {
   Creator,
   PriceFloor,
   PriceFloorType,
-  U832ArrayBorshHack,
 } from '@oyster/common';
 import {
   Connection,
@@ -310,11 +309,6 @@ export const AuctionCreateView = () => {
       console.log('Tiered settings', settings);
     }
 
-    const asBuffer = new BN(
-      (attributes.priceFloor || 0) * LAMPORTS_PER_SOL,
-    ).toArrayLike(Buffer, 'le', 8);
-    const asArray = [...asBuffer];
-
     const _auctionObj = await createAuctionManager(
       connection,
       wallet,
@@ -336,35 +330,7 @@ export const AuctionCreateView = () => {
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
           : PriceFloorType.None,
-        hash: new U832ArrayBorshHack({
-          array: [
-            ...asArray,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-          ],
-        }),
+        minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
       }),
     );
     setAuctionObj(_auctionObj);

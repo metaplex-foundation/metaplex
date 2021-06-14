@@ -24,7 +24,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
     auctionView.auctionManager.info.settings.winningConfigs.length == 0;
   const priceFloor =
     auctionView.auction.info.priceFloor.type == PriceFloorType.Minimum
-      ? auctionView.auction.info.priceFloor.hash.asBNs()[0].toNumber()
+      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;

@@ -119,11 +119,22 @@ export class PriceFloor {
   type: PriceFloorType;
   // It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
   // thing is a hash and not actually a public key, and none is all zeroes
-  hash: U832ArrayBorshHack;
+  hash: Uint8Array;
 
-  constructor(args: { type: PriceFloorType; hash: U832ArrayBorshHack }) {
+  minPrice?: BN;
+
+  constructor(args: {
+    type: PriceFloorType;
+    hash?: Uint8Array;
+    minPrice?: BN;
+  }) {
     this.type = args.type;
-    this.hash = args.hash;
+    this.hash = args.hash || new Uint8Array(32);
+    if (this.type === PriceFloorType.Minimum) {
+      if (args.minPrice) {
+        this.hash.set(args.minPrice.toArrayLike(Buffer, 'le', 8), 0);
+      }
+    }
   }
 }
 
@@ -306,38 +317,6 @@ export class WinnerLimit {
   }
 }
 
-// There is no good way to just send up an array of u8s. Borsh always messes it up. Sorry, this is only way
-// I could think of to intelligently send up u8s without borsh sending up a size param before the array which
-// borsh-rs cant handle
-export class U832ArrayBorshHack {
-  constructor(args: any) {
-    for (let i = 0; i < 32; i++) {
-      //@ts-ignore
-      if (args.array) this[i] = args.array[i];
-      //@ts-ignore
-      else this[i] = args[i];
-    }
-  }
-
-  asArray(): Array<number> {
-    let arr = [];
-    for (let i = 0; i < 32; i++) {
-      //@ts-ignore
-      arr.push(this[i]);
-    }
-    return arr;
-  }
-
-  asBNs(): Array<BN> {
-    let arr = this.asArray();
-    let bn1 = new BN(arr.slice(0, 8), 'le');
-    let bn2 = new BN(arr.slice(8, 16), 'le');
-    let bn3 = new BN(arr.slice(16, 24), 'le');
-    let bn4 = new BN(arr.slice(24, 32), 'le');
-    return [bn1, bn2, bn3, bn4];
-  }
-}
-
 class CreateAuctionArgs {
   instruction: number = 1;
   /// How many winners are allowed for this auction. See AuctionData.
@@ -495,18 +474,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['type', 'u8'],
-        ['hash', U832ArrayBorshHack],
+        ['hash', [32]],
       ],
-    },
-  ],
-  [
-    U832ArrayBorshHack,
-    {
-      kind: 'struct',
-      fields: [
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-      ].map(n => [n.toString(), 'u8']),
     },
   ],
   [
