@@ -79,7 +79,6 @@ export class TorusWalletAdapter extends EventEmitter implements WalletAdapter {
     }
 
     console.log(this.account?.publicKey.toBase58());
-
     this.name = this._provider?.state.store.get('name');;
     this.image = this._provider?.state.store.get('profileImage');;
 
