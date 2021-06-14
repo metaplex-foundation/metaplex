@@ -11,6 +11,7 @@ import { useLocation } from "react-router";
 import { MetaplexModal } from "../components/MetaplexModal";
 
 import './wallet.css'
+import { TorusWalletAdapter } from "../wallet-adapters/torus";
 
 
 const ASSETS_URL = 'https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/';
@@ -31,12 +32,12 @@ export const WALLET_PROVIDERS = [
     url: "https://mathwallet.org",
     icon: `${ASSETS_URL}mathwallet.svg`,
   },
-  // {
-  //   name: 'Torus',
-  //   url: 'https://tor.us',
-  //   icon: `${ASSETS_URL}torus.svg`,
-  //   adapter: TorusWalletAdapter,
-  // }
+  {
+    name: 'Torus',
+    url: 'https://tor.us',
+    icon: `${ASSETS_URL}torus.svg`,
+    adapter: TorusWalletAdapter,
+  }
 ];
 
 const WalletContext = React.createContext<{
