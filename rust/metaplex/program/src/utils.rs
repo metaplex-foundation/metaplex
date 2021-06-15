@@ -358,6 +358,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub store_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
     pub is_participation: bool,
+    pub overwrite_win_index: Option<usize>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -381,6 +382,7 @@ pub fn common_redeem_checks(
         rent_info,
         store_info,
         is_participation,
+        overwrite_win_index,
     } = args;
 
     let rent = &Rent::from_account_info(&rent_info)?;
@@ -389,8 +391,34 @@ pub fn common_redeem_checks(
         AuctionManager::from_account_info(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
     let store_data = store_info.data.borrow();
-    let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
-    let win_index = auction.is_winner(bidder_info.key);
+    let bidder_metadata: BidderMetadata;
+
+    if overwrite_win_index.is_some() {
+        // Auctioneer coming through, need to stub bidder metadata since it will not exist.
+        bidder_metadata = BidderMetadata {
+            bidder_pubkey: *bidder_info.key,
+            auction_pubkey: *auction_info.key,
+            last_bid: 0,
+            last_bid_timestamp: 0,
+            cancelled: false,
+        };
+
+        if *bidder_info.key != auction_manager.authority {
+            return Err(MetaplexError::MustBeAuctioneer.into());
+        }
+    } else {
+        bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
+    }
+
+    let mut win_index = auction.is_winner(bidder_info.key);
+
+    if win_index.is_some() && overwrite_win_index.is_some() {
+        // Do not allow the auctioneer to claim a prize that actually has been won by someone else.
+        return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
+    } else if win_index.is_none() && overwrite_win_index.is_some() {
+        // Auctioneer can claim a prize that has no winner because it belongs to them anyway.
+        win_index = overwrite_win_index
+    }
 
     if !bid_redemption_info.data_is_empty() {
         let bid_redemption: BidRedemptionTicket =

@@ -28,6 +28,16 @@ pub struct EmptyPaymentAccountArgs {
     /// index in the metadata creator list, can be None if metadata has no creator list.
     pub creator_index: Option<u8>,
 }
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub enum ProxyCallAddress {
+    RedeemBid,
+    RedeemFullRightsTransferBid,
+}
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
+    pub winning_config_item_index: u8,
+    pub proxy_call: ProxyCallAddress,
+}
 
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
@@ -318,6 +328,19 @@ pub enum MetaplexInstruction {
     ///   16. `[]` Payer who wishes to receive refund for closing of one time transient account once we're done here
     ///   17. `[]` Rent
     PopulateParticipationPrintingAccount,
+
+    /// If you are an auctioneer, redeem an unused winning config entry. You provide the winning index, and if the winning
+    /// index has no winner, then the correct redemption method is called with a special flag set to ignore bidder_metadata checks
+    /// and a hardcoded winner index to empty this win to you.
+    ///
+    /// All the keys, in exact sequence, should follow the expected call you wish to proxy to, because these will be passed
+    /// to the process_ method of the next call. This method exists primarily to pass in an additional
+    /// argument to the other redemption methods that subtly changes their behavior. We made this additional call so that if the auctioneer
+    /// calls those methods directly, they still act the same as if the auctioneer were a normal bidder, which is be desirable behavior.
+    ///
+    /// An auctioneer should never be in the position where the auction can never work the same for them simply because they are an auctioneer.
+    /// This special endpoint exists to give them the "out" to unload items via a proxy call once the auction is over.
+    RedeemUnusedWinningConfigItemsAsAuctioneer(RedeemUnusedWinningConfigItemsAsAuctioneerArgs),
 }
 
 /// Creates an InitAuctionManager instruction

@@ -8,6 +8,7 @@ use {
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     redeem_participation_bid::process_redeem_participation_bid,
+    redeem_unused_winning_config_items_as_auctioneer::process_redeem_unused_winning_config_items_as_auctioneer,
     set_store::process_set_store,
     set_whitelisted_creator::process_set_whitelisted_creator,
     solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey},
@@ -23,6 +24,7 @@ pub mod populate_participation_printing_account;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
 pub mod redeem_participation_bid;
+pub mod redeem_unused_winning_config_items_as_auctioneer;
 pub mod set_store;
 pub mod set_whitelisted_creator;
 pub mod start_auction;
@@ -46,11 +48,11 @@ pub fn process_instruction<'a>(
         }
         MetaplexInstruction::RedeemBid => {
             msg!("Instruction: Redeem Normal Token Bid");
-            process_redeem_bid(program_id, accounts)
+            process_redeem_bid(program_id, accounts, None)
         }
         MetaplexInstruction::RedeemFullRightsTransferBid => {
             msg!("Instruction: Redeem Full Rights Transfer Bid");
-            process_full_rights_transfer_bid(program_id, accounts)
+            process_full_rights_transfer_bid(program_id, accounts, None)
         }
         MetaplexInstruction::RedeemParticipationBid => {
             msg!("Instruction: Redeem Participation Bid");
@@ -83,6 +85,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::PopulateParticipationPrintingAccount => {
             msg!("Instruction: Populate Participation Printing Account");
             process_populate_participation_printing_account(program_id, accounts)
+        }
+        MetaplexInstruction::RedeemUnusedWinningConfigItemsAsAuctioneer(args) => {
+            msg!("Instruction: Redeem Unused Winning Config Items As Auctioneer");
+            process_redeem_unused_winning_config_items_as_auctioneer(program_id, accounts, args)
         }
     }
 }

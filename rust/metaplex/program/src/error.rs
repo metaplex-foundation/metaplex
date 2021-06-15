@@ -374,6 +374,14 @@ pub enum MetaplexError {
     /// Data type mismatch
     #[error("Data type mismatch")]
     DataTypeMismatch,
+
+    /// Auctioneer can't claim a won prize
+    #[error("Auctioneer can't claim a won prize")]
+    AuctioneerCantClaimWonPrize,
+
+    /// Auctioneer is the only one who can override win indices
+    #[error("Auctioneer is the only one who can override win indices")]
+    MustBeAuctioneer,
 }
 
 impl PrintProgramError for MetaplexError {
