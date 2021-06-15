@@ -12,6 +12,7 @@ import {
   Spin,
   InputNumber,
   Form,
+  Typography,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
@@ -40,6 +41,7 @@ import useWindowDimensions from '../../utils/layout';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
+const { Text } = Typography;
 
 export const ArtCreateView = () => {
   const connection = useConnection();
@@ -624,77 +626,74 @@ const InfoStep = (props: {
   );
 };
 
-const shuffle = (array: Array<any>) => {
-  array.sort(() => Math.random() - 0.5);
-};
-
 const RoyaltiesSplitter = (props: {
   creators: Array<UserValue>;
   royalties: Array<Royalty>;
   setRoyalties: Function;
+  isShowErrors?: boolean;
 }) => {
   return (
     <Col>
-      {props.creators.map((creator, idx) => {
-        const royalty = props.royalties.find(
-          royalty => royalty.creatorKey === creator.key,
-        );
-        if (!royalty) return null;
-
-        const amt = royalty.amount;
-        const handleSlide = (newAmt: number) => {
-          const othersRoyalties = props.royalties.filter(
-            _royalty => _royalty.creatorKey !== royalty.creatorKey,
+      <Row gutter={[0, 24]}>
+        {props.creators.map((creator, idx) => {
+          const royalty = props.royalties.find(
+            royalty => royalty.creatorKey === creator.key,
           );
-          if (othersRoyalties.length < 1) return;
-          shuffle(othersRoyalties);
-          const others_n = props.royalties.length - 1;
-          const sign = Math.sign(newAmt - amt);
-          let remaining = Math.abs(newAmt - amt);
-          let count = 0;
-          while (remaining > 0 && count < 100) {
-            const idx = count % others_n;
-            const _royalty = othersRoyalties[idx];
-            if (
-              (0 < _royalty.amount && _royalty.amount < 100) || // Normal
-              (_royalty.amount === 0 && sign < 0) || // Low limit
-              (_royalty.amount === 100 && sign > 0) // High limit
-            ) {
-              _royalty.amount -= sign;
-              remaining -= 1;
-            }
-            count += 1;
-          }
+          if (!royalty) return null;
 
-          props.setRoyalties(
-            props.royalties.map(_royalty => {
-              const computed_amount = othersRoyalties.find(
-                newRoyalty => newRoyalty.creatorKey === _royalty.creatorKey,
-              )?.amount;
-              return {
-                ..._royalty,
-                amount:
-                  _royalty.creatorKey === royalty.creatorKey
-                    ? newAmt
-                    : computed_amount,
-              };
-            }),
+          const amt = royalty.amount;
+
+          const handleChangeShare = (newAmt: number) => {
+            props.setRoyalties(
+              props.royalties.map(_royalty => {
+                return {
+                  ..._royalty,
+                  amount:
+                    _royalty.creatorKey === royalty.creatorKey
+                      ? newAmt
+                      : _royalty.amount,
+                };
+              }),
+            );
+          };
+
+          return (
+            <Col span={24}>
+              <Row
+                key={idx}
+                align="middle"
+                gutter={[0, 16]}
+                style={{ margin: '5px auto' }}
+              >
+                <Col span={4} style={{ padding: 10 }}>
+                  {creator.label}
+                </Col>
+                <Col span={3}>
+                  <InputNumber<number>
+                    min={0}
+                    max={100}
+                    formatter={value => `${value}%`}
+                    value={amt}
+                    parser={value => parseInt(value?.replace('%', '') ?? '0')}
+                    onChange={handleChangeShare}
+                    className="royalties-input"
+                  />
+                </Col>
+                <Col span={4} style={{ paddingLeft: 12 }}>
+                  <Slider value={amt} onChange={handleChangeShare} />
+                </Col>
+                {props.isShowErrors && amt === 0 && (
+                  <Col style={{ paddingLeft: 12 }}>
+                    <Text type="danger">
+                      The split percentage for this creator cannot be 0%.
+                    </Text>
+                  </Col>
+                )}
+              </Row>
+            </Col>
           );
-        };
-        return (
-          <Row key={idx} style={{ margin: '5px auto' }}>
-            <Col span={4} style={{ padding: 10 }}>
-              {creator.label}
-            </Col>
-            <Col span={2} className="slider-elem">
-              {amt}%
-            </Col>
-            <Col span={4}>
-              <Slider value={amt} onChange={handleSlide} />
-            </Col>
-          </Row>
-        );
-      })}
+        })}
+      </Row>
     </Col>
   );
 };
@@ -710,7 +709,9 @@ const RoyaltiesStep = (props: {
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [fixedCreators, setFixedCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
+  const [totalRoyaltyShares, setTotalRoyaltiesShare] = useState<number>(0);
   const [showCreatorsModal, setShowCreatorsModal] = useState<boolean>(false);
+  const [isShowErrors, setIsShowErrors] = useState<boolean>(false);
 
   useEffect(() => {
     if (wallet?.publicKey) {
@@ -733,6 +734,15 @@ const RoyaltiesStep = (props: {
       })),
     );
   }, [creators, fixedCreators]);
+
+  useEffect(() => {
+    // When royalties changes, sum up all the amounts.
+    const total = royalties.reduce((totalShares, royalty) => {
+      return totalShares + royalty.amount;
+    }, 0);
+
+    setTotalRoyaltiesShare(total);
+  }, [royalties]);
 
   return (
     <>
@@ -777,6 +787,7 @@ const RoyaltiesStep = (props: {
               creators={[...fixedCreators, ...creators]}
               royalties={royalties}
               setRoyalties={setRoyalties}
+              isShowErrors={isShowErrors}
             />
           </label>
         </Row>
@@ -819,11 +830,30 @@ const RoyaltiesStep = (props: {
           </label>
         </MetaplexModal>
       </Row>
+      {isShowErrors && totalRoyaltyShares !== 100 && (
+        <Row>
+          <Text type="danger" style={{ paddingBottom: 14 }}>
+            The split percentages for each creator must add up to 100%. Current
+            total split percentage is {totalRoyaltyShares}%.
+          </Text>
+        </Row>
+      )}
       <Row>
         <Button
           type="primary"
           size="large"
           onClick={() => {
+            // Find all royalties that are invalid (0)
+            const zeroedRoyalties = royalties.filter(
+              royalty => royalty.amount === 0,
+            );
+
+            if (zeroedRoyalties.length !== 0 || totalRoyaltyShares !== 100) {
+              // Contains a share that is 0 or total shares does not equal 100, show errors.
+              setIsShowErrors(true);
+              return;
+            }
+
             const creatorStructs: Creator[] = [
               ...fixedCreators,
               ...creators,
