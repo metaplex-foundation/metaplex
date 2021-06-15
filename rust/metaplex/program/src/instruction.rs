@@ -673,3 +673,49 @@ pub fn create_set_store_instruction(
             .unwrap(),
     }
 }
+
+pub fn create_populate_participation_printing_account_instruction(
+    program_id: Pubkey,
+    safety_deposit_token_store: Pubkey,
+    transient_one_time_mint_account: Pubkey,
+    participation_state_printing_account: Pubkey,
+    one_time_printing_authorization_mint: Pubkey,
+    printing_mint: Pubkey,
+    participation_safety_deposit_box: Pubkey,
+    vault: Pubkey,
+    fraction_mint: Pubkey,
+    auction: Pubkey,
+    auction_manager: Pubkey,
+    store: Pubkey,
+    master_edition: Pubkey,
+    transfer_authority: Pubkey,
+    payer: Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(safety_deposit_token_store, false),
+        AccountMeta::new(transient_one_time_mint_account, false),
+        AccountMeta::new(participation_state_printing_account, false),
+        AccountMeta::new(one_time_printing_authorization_mint, false),
+        AccountMeta::new(printing_mint, false),
+        AccountMeta::new(participation_safety_deposit_box, false),
+        AccountMeta::new(vault, false),
+        AccountMeta::new_readonly(fraction_mint, false),
+        AccountMeta::new_readonly(auction, false),
+        AccountMeta::new_readonly(auction_manager, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_token_vault::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(store, false),
+        AccountMeta::new_readonly(master_edition, false),
+        AccountMeta::new_readonly(transfer_authority, false),
+        AccountMeta::new_readonly(payer, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+    Instruction {
+        program_id,
+        accounts,
+        data: MetaplexInstruction::PopulateParticipationPrintingAccount
+            .try_to_vec()
+            .unwrap(),
+    }
+}
