@@ -224,6 +224,7 @@ pub fn process_redeem_bid<'a>(
         bid_redeemed: true,
         participation_redeemed: false,
         winning_item_index,
+        overwrite_win_index,
     })?;
     Ok(())
 }

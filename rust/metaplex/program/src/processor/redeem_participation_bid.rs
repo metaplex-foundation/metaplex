@@ -201,6 +201,7 @@ pub fn process_redeem_participation_bid<'a>(
         bid_redeemed: false,
         participation_redeemed: true,
         winning_item_index: None,
+        overwrite_win_index: None,
     })?;
     Ok(())
 }

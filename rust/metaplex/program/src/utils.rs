@@ -393,6 +393,12 @@ pub fn common_redeem_checks(
     let store_data = store_info.data.borrow();
     let bidder_metadata: BidderMetadata;
 
+    let auction_program = Pubkey::new_from_array(*array_ref![store_data, 2, 32]);
+    let token_vault_program = Pubkey::new_from_array(*array_ref![store_data, 34, 32]);
+    let token_metadata_program = Pubkey::new_from_array(*array_ref![store_data, 66, 32]);
+    let token_program = Pubkey::new_from_array(*array_ref![store_data, 98, 32]);
+
+    let mut redemption_bump_seed: u8 = 0;
     if overwrite_win_index.is_some() {
         // Auctioneer coming through, need to stub bidder metadata since it will not exist.
         bidder_metadata = BidderMetadata {
@@ -408,6 +414,34 @@ pub fn common_redeem_checks(
         }
     } else {
         bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
+        assert_owned_by(bidder_metadata_info, &auction_program)?;
+        assert_derivation(
+            &auction_program,
+            bidder_metadata_info,
+            &[
+                spl_auction::PREFIX.as_bytes(),
+                auction_program.as_ref(),
+                auction_info.key.as_ref(),
+                bidder_info.key.as_ref(),
+                "metadata".as_bytes(),
+            ],
+        )?;
+
+        if bidder_metadata.bidder_pubkey != *bidder_info.key {
+            return Err(MetaplexError::BidderMetadataBidderMismatch.into());
+        }
+        let redemption_path = [
+            PREFIX.as_bytes(),
+            auction_manager.auction.as_ref(),
+            bidder_metadata_info.key.as_ref(),
+        ];
+        let (redemption_key, actual_redemption_bump_seed) =
+            Pubkey::find_program_address(&redemption_path, &program_id);
+
+        redemption_bump_seed = actual_redemption_bump_seed;
+        if redemption_key != *bid_redemption_info.key {
+            return Err(MetaplexError::BidRedemptionMismatch.into());
+        }
     }
 
     let mut win_index = auction.is_winner(bidder_info.key);
@@ -435,11 +469,6 @@ pub fn common_redeem_checks(
         }
     }
 
-    let auction_program = Pubkey::new_from_array(*array_ref![store_data, 2, 32]);
-    let token_vault_program = Pubkey::new_from_array(*array_ref![store_data, 34, 32]);
-    let token_metadata_program = Pubkey::new_from_array(*array_ref![store_data, 66, 32]);
-    let token_program = Pubkey::new_from_array(*array_ref![store_data, 98, 32]);
-
     assert_signer(bidder_info)?;
     assert_owned_by(&destination_info, token_program_info.key)?;
     assert_owned_by(&auction_manager_info, &program_id)?;
@@ -450,7 +479,6 @@ pub fn common_redeem_checks(
     assert_owned_by(safety_deposit_info, &token_vault_program)?;
     assert_owned_by(vault_info, &token_vault_program)?;
     assert_owned_by(auction_info, &auction_program)?;
-    assert_owned_by(bidder_metadata_info, &auction_program)?;
     assert_owned_by(store_info, &program_id)?;
 
     assert_store_safety_vault_manager_match(
@@ -489,34 +517,6 @@ pub fn common_redeem_checks(
     // No-op if already set.
     auction_manager.state.status = AuctionManagerStatus::Disbursing;
 
-    let redemption_path = [
-        PREFIX.as_bytes(),
-        auction_manager.auction.as_ref(),
-        bidder_metadata_info.key.as_ref(),
-    ];
-    let (redemption_key, redemption_bump_seed) =
-        Pubkey::find_program_address(&redemption_path, &program_id);
-
-    if redemption_key != *bid_redemption_info.key {
-        return Err(MetaplexError::BidRedemptionMismatch.into());
-    }
-
-    assert_derivation(
-        &auction_program,
-        bidder_metadata_info,
-        &[
-            spl_auction::PREFIX.as_bytes(),
-            auction_program.as_ref(),
-            auction_info.key.as_ref(),
-            bidder_info.key.as_ref(),
-            "metadata".as_bytes(),
-        ],
-    )?;
-
-    if bidder_metadata.bidder_pubkey != *bidder_info.key {
-        return Err(MetaplexError::BidderMetadataBidderMismatch.into());
-    }
-
     Ok(CommonRedeemReturn {
         redemption_bump_seed,
         auction_manager,
@@ -542,6 +542,7 @@ pub struct CommonRedeemFinishArgs<'a> {
     pub bid_redeemed: bool,
     pub participation_redeemed: bool,
     pub winning_item_index: Option<usize>,
+    pub overwrite_win_index: Option<usize>,
 }
 #[allow(clippy::too_many_arguments)]
 pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
@@ -559,6 +560,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         bid_redeemed,
         participation_redeemed,
         winning_item_index,
+        overwrite_win_index,
     } = args;
 
     if bid_redeemed {
@@ -570,7 +572,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     }
 
     let mut bid_redemption: BidRedemptionTicket;
-    if bid_redeemed || participation_redeemed {
+    if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
         let redemption_seeds = &[
             PREFIX.as_bytes(),
             auction_manager.auction.as_ref(),
