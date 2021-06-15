@@ -7,12 +7,9 @@ import {
   useMint,
   fromLamports,
   CountdownState,
+  PriceFloorType,
 } from '@oyster/common';
-import {
-  AuctionView,
-  AuctionViewState,
-  useBidsForAuction,
-} from '../../hooks';
+import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 
 export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
@@ -23,6 +20,12 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
   const participationFixedPrice =
     auctionView.auctionManager.info.settings.participationConfig?.fixedPrice ||
     0;
+  const participationOnly =
+    auctionView.auctionManager.info.settings.winningConfigs.length == 0;
+  const priceFloor =
+    auctionView.auction.info.priceFloor.type == PriceFloorType.Minimum
+      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
+      : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
 
@@ -56,7 +59,10 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
                 style={{ marginBottom: 10 }}
                 containerStyle={{ flexDirection: 'column' }}
                 title="Starting bid"
-                amount={fromLamports(participationFixedPrice, mintInfo)}
+                amount={fromLamports(
+                  participationOnly ? participationFixedPrice : priceFloor,
+                  mintInfo,
+                )}
               />
             )}
             {isStarted && bids.length > 0 && (
@@ -98,56 +104,62 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
           >
             Time left
           </div>
-          {state && (isEnded(state) ? (
-            <Row style={{ width: '100%' }}>
-              <div className="cd-number">This auction has ended</div>
-            </Row>
-          ) : (
-            <Row style={{ width: '100%', flexWrap: 'nowrap' }}>
-              {state && state.days > 0 && (
+          {state &&
+            (isEnded(state) ? (
+              <Row style={{ width: '100%' }}>
+                <div className="cd-number">This auction has ended</div>
+              </Row>
+            ) : (
+              <Row style={{ width: '100%', flexWrap: 'nowrap' }}>
+                {state && state.days > 0 && (
+                  <Col>
+                    <div className="cd-number">
+                      {state.days < 10 && (
+                        <span style={{ opacity: 0.2 }}>0</span>
+                      )}
+                      {state.days}
+                      <span style={{ opacity: 0.2 }}>:</span>
+                    </div>
+                    <div className="cd-label">days</div>
+                  </Col>
+                )}
                 <Col>
                   <div className="cd-number">
-                    {state.days < 10 && <span style={{ opacity: 0.2 }}>0</span>}
-                    {state.days}
-                    <span style={{ opacity: 0.2 }}>:</span>
-                  </div>
-                  <div className="cd-label">days</div>
-                </Col>
-              )}
-              <Col>
-                <div className="cd-number">
-                  {state.hours < 10 && <span style={{ opacity: 0.2 }}>0</span>}
-                  {state.hours}
-                  <span style={{ opacity: 0.2 }}>:</span>
-                </div>
-                <div className="cd-label">hour</div>
-              </Col>
-              <Col>
-                <div className="cd-number">
-                  {state.minutes < 10 && (
-                    <span style={{ opacity: 0.2 }}>0</span>
-                  )}
-                  {state.minutes}
-                  {state.days === 0 && <span style={{ opacity: 0.2 }}>:</span>}
-                </div>
-                <div className="cd-label">mins</div>
-              </Col>
-              {!state.days && (
-                <Col>
-                  <div className="cd-number">
-                    {state.seconds < 10 && (
+                    {state.hours < 10 && (
                       <span style={{ opacity: 0.2 }}>0</span>
                     )}
-                    {state.seconds}
+                    {state.hours}
+                    <span style={{ opacity: 0.2 }}>:</span>
                   </div>
-                  <div className="cd-label">secs</div>
+                  <div className="cd-label">hour</div>
                 </Col>
-              )}
-            </Row>
-          ))}
+                <Col>
+                  <div className="cd-number">
+                    {state.minutes < 10 && (
+                      <span style={{ opacity: 0.2 }}>0</span>
+                    )}
+                    {state.minutes}
+                    {state.days === 0 && (
+                      <span style={{ opacity: 0.2 }}>:</span>
+                    )}
+                  </div>
+                  <div className="cd-label">mins</div>
+                </Col>
+                {!state.days && (
+                  <Col>
+                    <div className="cd-number">
+                      {state.seconds < 10 && (
+                        <span style={{ opacity: 0.2 }}>0</span>
+                      )}
+                      {state.seconds}
+                    </div>
+                    <div className="cd-label">secs</div>
+                  </Col>
+                )}
+              </Row>
+            ))}
         </>
       </div>
     </>
   );
 };
-

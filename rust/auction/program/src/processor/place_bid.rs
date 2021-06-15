@@ -235,7 +235,7 @@ pub fn place_bid<'r, 'b: 'r>(
             args.amount,
             min[0]
         );
-        if args.amount <= min[0] {
+        if args.amount < min[0] {
             return Err(AuctionError::BidTooSmall.into());
         }
     }
