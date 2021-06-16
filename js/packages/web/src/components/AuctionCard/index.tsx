@@ -11,12 +11,9 @@ import {
   MetaplexOverlay,
   formatAmount,
   formatTokenAmount,
-  useMint
+  useMint,
 } from '@oyster/common';
-import {
-  AuctionView,
-  useUserBalance,
-} from '../../hooks';
+import { AuctionView, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
@@ -94,7 +91,9 @@ export const AuctionCard = ({
             className="action-btn"
             disabled={
               !myPayingAccount ||
-              !auctionView.myBidderMetadata ||
+              (!auctionView.myBidderMetadata &&
+                auctionView.auctionManager.info.authority.toBase58() !=
+                  wallet?.publicKey?.toBase58()) ||
               loading ||
               !!auctionView.items.find(i => i.find(it => !it.metadata))
             }

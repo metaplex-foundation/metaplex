@@ -10,7 +10,9 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
+  ProxyCallAddress,
   RedeemFullRightsTransferBidArgs,
+  RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
   SCHEMA,
 } from '.';
 
@@ -25,6 +27,10 @@ export async function redeemFullRightsTransferBid(
   instructions: TransactionInstruction[],
   masterMetadata: PublicKey,
   newAuthority: PublicKey,
+  // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
+  // and this will instead call the proxy route instead of the real one, wrapping the original
+  // redemption call in an override call that forces the winning index if the auctioneer is authorized.
+  auctioneerReclaimIndex?: number,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -50,7 +56,13 @@ export async function redeemFullRightsTransferBid(
     )
   )[0];
 
-  const value = new RedeemFullRightsTransferBidArgs();
+  const value =
+    auctioneerReclaimIndex != undefined
+      ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
+          winningConfigItemIndex: auctioneerReclaimIndex,
+          proxyCall: ProxyCallAddress.RedeemFullRightsTransferBid,
+        })
+      : new RedeemFullRightsTransferBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {

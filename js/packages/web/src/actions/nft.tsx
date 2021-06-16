@@ -300,6 +300,7 @@ export const mintNFT = async (
       payerPublicKey,
       maxSupply !== undefined ? payerPublicKey : undefined,
     );
+
     // TODO: enable when using payer account to avoid 2nd popup
     /*  if (maxSupply !== undefined)
       updateInstructions.push(
