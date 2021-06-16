@@ -446,15 +446,16 @@ pub fn common_redeem_checks(
 
     let mut win_index = auction.is_winner(bidder_info.key);
 
-    if win_index.is_some() && overwrite_win_index.is_some() {
-        // Do not allow the auctioneer to claim a prize that actually has been won by someone else.
-        return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
-    } else if win_index.is_none() && overwrite_win_index.is_some() {
-        // Auctioneer can claim a prize that has no winner because it belongs to them anyway.
-        win_index = overwrite_win_index
+    if let Some(index) = overwrite_win_index {
+        let winner_at = auction.winner_at(index);
+        if winner_at.is_some() {
+            return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
+        } else {
+            win_index = overwrite_win_index
+        }
     }
 
-    if !bid_redemption_info.data_is_empty() {
+    if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
         let bid_redemption: BidRedemptionTicket =
             BidRedemptionTicket::from_account_info(bid_redemption_info)?;
         let possible_items_to_redeem = match win_index {
@@ -571,7 +572,6 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         }
     }
 
-    let mut bid_redemption: BidRedemptionTicket;
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
         let redemption_seeds = &[
             PREFIX.as_bytes(),
@@ -590,10 +590,8 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 MAX_BID_REDEMPTION_TICKET_SIZE,
                 redemption_seeds,
             )?;
-            bid_redemption = BidRedemptionTicket::from_account_info(bid_redemption_info)?;
-        } else {
-            bid_redemption = BidRedemptionTicket::from_account_info(bid_redemption_info)?;
         }
+        let mut bid_redemption = BidRedemptionTicket::from_account_info(bid_redemption_info)?;
 
         bid_redemption.key = Key::BidRedemptionTicketV1;
 
