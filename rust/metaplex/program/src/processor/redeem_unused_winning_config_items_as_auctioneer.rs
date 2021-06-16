@@ -11,6 +11,12 @@ pub fn process_redeem_unused_winning_config_items_as_auctioneer<'a>(
     accounts: &'a [AccountInfo<'a>],
     args: RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
 ) -> ProgramResult {
+    // Be aware, we actually take this overwrite win index, pass it in, and do all sorts of checks with it
+    // in the common_redeem_checks method. Specifically, if it is present, we bypass doing anything
+    // with bidder metadata or bid redemption structs as we know those wont exist, but we DO check if
+    // there are any winners for this index and blow up if there are. If there arent, then we sure as HECK
+    // check that you ARE the auction authority, because nobody else should be claiming this unused prize.
+    // We also still make sure this prize hasnt been claimed more than once.
     match args.proxy_call {
         crate::instruction::ProxyCallAddress::RedeemBid => process_redeem_bid(
             program_id,
