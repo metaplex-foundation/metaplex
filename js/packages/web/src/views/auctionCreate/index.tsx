@@ -755,12 +755,6 @@ const SaleTypeStep = (props: {
               <div className="radio-subtitle">
                 Allow bidding on your NFT(s).
               </div>
-              <Radio className="radio-field" value="sale">
-                Instant Sale
-              </Radio>
-              <div className="radio-subtitle">
-                Allow buyers to purchase your NFT(s) at a fixed price.
-              </div>
             </Radio.Group>
           </label>
         </Col>
