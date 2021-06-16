@@ -133,6 +133,11 @@ export class PriceFloor {
     if (this.type === PriceFloorType.Minimum) {
       if (args.minPrice) {
         this.hash.set(args.minPrice.toArrayLike(Buffer, 'le', 8), 0);
+      } else {
+        this.minPrice = new BN(
+          (args.hash || new Uint8Array(0)).slice(0, 8),
+          'le',
+        );
       }
     }
   }
