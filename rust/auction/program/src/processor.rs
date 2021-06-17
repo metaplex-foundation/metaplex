@@ -168,6 +168,10 @@ impl AuctionData {
         self.bid_state.num_winners(minimum)
     }
 
+    pub fn num_possible_winners(&self) -> u64 {
+        self.bid_state.num_possible_winners()
+    }
+
     pub fn winner_at(&self, idx: usize) -> Option<Pubkey> {
         let minimum = match self.price_floor {
             PriceFloor::MinimumPrice(min) => min[0],
@@ -375,6 +379,13 @@ impl BidState {
                     .len(),
                 *max,
             ) as u64,
+            BidState::OpenEdition { bids, max } => 0,
+        }
+    }
+
+    pub fn num_possible_winners(&self) -> u64 {
+        match self {
+            BidState::EnglishAuction { bids, max } => *max as u64,
             BidState::OpenEdition { bids, max } => 0,
         }
     }

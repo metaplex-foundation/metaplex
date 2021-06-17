@@ -382,6 +382,10 @@ pub enum MetaplexError {
     /// Auctioneer is the only one who can override win indices
     #[error("Auctioneer is the only one who can override win indices")]
     MustBeAuctioneer,
+
+    /// The auction provided has a different amount of winners set than does the auction manager settings
+    #[error("The auction provided has a different amount of winners set than does the auction manager settings")]
+    WinnerAmountMismatch,
 }
 
 impl PrintProgramError for MetaplexError {
