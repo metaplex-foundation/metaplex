@@ -596,7 +596,7 @@ const processAuctions = (
       a.pubkey,
       a.account,
       AuctionParser,
-      (auction: ParsedAccount<AuctionData>) => !auction.info.ended(),
+      false,
     ) as ParsedAccount<AuctionData>;
 
     setAuctions((e: any) => ({
@@ -613,8 +613,7 @@ const processAuctions = (
         a.pubkey,
         a.account,
         BidderMetadataParser,
-        (parsed: ParsedAccount<BidderMetadata>) =>
-          parsed.info.bidderPubkey.toBase58() == wallet.publicKey.toBase58(),
+        false,
       ) as ParsedAccount<BidderMetadata>;
       setBidderMetadataByAuctionAndBidder((e: any) => ({
         ...e,
@@ -633,8 +632,7 @@ const processAuctions = (
         a.pubkey,
         a.account,
         BidderPotParser,
-        (parsed: ParsedAccount<BidderPot>) =>
-          parsed.info.bidderAct.toBase58() == wallet.publicKey.toBase58(),
+        false,
       ) as ParsedAccount<BidderPot>;
 
       setBidderPotsByAuctionAndBidder((e: any) => ({
@@ -728,7 +726,7 @@ const processMetaplexAccounts = async (
           a.pubkey,
           a.account,
           WhitelistedCreatorParser,
-          true,
+          false,
         ) as ParsedAccount<WhitelistedCreator>;
 
         const nameInfo = (names as any)[account.info.address.toBase58()];
