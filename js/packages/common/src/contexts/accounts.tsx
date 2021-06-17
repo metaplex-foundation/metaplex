@@ -104,8 +104,6 @@ export const keyToAccountParser = new Map<string, AccountParser>();
 
 export const cache = {
   emitter: new EventEmitter(),
-  totalSubs: 0,
-  totalObjects: 0,
   query: async (
     connection: Connection,
     pubKey: string | PublicKey,
@@ -409,10 +407,7 @@ export function AccountsProvider({ children = null as any }) {
   useEffect(() => {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
-      cache.totalObjects += 1;
-
       if (args.isNew && args.isActive) {
-        cache.totalSubs += 1;
         let id = args.id;
         let deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
