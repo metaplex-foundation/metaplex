@@ -563,7 +563,7 @@ fn main() {
                 .takes_value(true)
                 .global(true)
                 .validator(is_url)
-                .help("JSON RPC URL for the cluster [default: devnet]"),
+                .help("JSON RPC URL for the cluster [default: testnet]"),
         )
         .subcommand(
             SubCommand::with_name("create")
@@ -1085,7 +1085,7 @@ fn main() {
     let client = RpcClient::new(
         app_matches
             .value_of("json_rpc_url")
-            .unwrap_or(&"https://testnet.solana.com".to_owned())
+            .unwrap_or(&"https://api.testnet.solana.com".to_owned())
             .to_owned(),
     );
 
