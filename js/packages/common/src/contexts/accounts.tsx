@@ -13,10 +13,8 @@ import { TokenAccount } from '../models';
 import { chunks } from '../utils/utils';
 import { EventEmitter } from '../utils/eventEmitter';
 import { useUserAccounts } from '../hooks/useUserAccounts';
-import {
-  WRAPPED_SOL_MINT,
-  programIds,
-} from '../utils/ids';
+import { WRAPPED_SOL_MINT, programIds } from '../utils/ids';
+import { AuctionParser } from '../actions';
 
 const AccountsContext = React.createContext<any>(null);
 
@@ -106,6 +104,8 @@ export const keyToAccountParser = new Map<string, AccountParser>();
 
 export const cache = {
   emitter: new EventEmitter(),
+  totalSubs: 0,
+  totalObjects: 0,
   query: async (
     connection: Connection,
     pubKey: string | PublicKey,
@@ -146,6 +146,7 @@ export const cache = {
     id: PublicKey | string,
     obj: AccountInfo<Buffer>,
     parser?: AccountParser,
+    isEligibleForSub?: boolean | undefined | ((parsed: any) => boolean),
   ) => {
     if (obj.data.length === 0) {
       return;
@@ -166,10 +167,19 @@ export const cache = {
       return;
     }
 
+    if (isEligibleForSub == undefined) isEligibleForSub = true;
+    else if (isEligibleForSub instanceof Function)
+      isEligibleForSub = isEligibleForSub(account);
+
     const isNew = !genericCache.has(address);
 
     genericCache.set(address, account);
-    cache.emitter.raiseCacheUpdated(address, isNew, deserialize);
+    cache.emitter.raiseCacheUpdated(
+      address,
+      isNew,
+      deserialize,
+      isEligibleForSub,
+    );
     return account;
   },
   get: (pubKey: string | PublicKey) => {
@@ -320,7 +330,7 @@ const UseNativeAccount = () => {
           const id = wallet.publicKey?.toBase58();
           cache.registerParser(id, TokenAccountParser);
           genericCache.set(id, wrapped as TokenAccount);
-          cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser);
+          cache.emitter.raiseCacheUpdated(id, false, TokenAccountParser, true);
         }
       }
     },
@@ -341,7 +351,7 @@ const UseNativeAccount = () => {
         return;
       }
 
-      const account = await connection.getAccountInfo(wallet.publicKey)
+      const account = await connection.getAccountInfo(wallet.publicKey);
       updateAccount(account);
 
       subId = connection.onAccountChange(wallet.publicKey, updateAccount);
@@ -351,7 +361,7 @@ const UseNativeAccount = () => {
       if (subId) {
         connection.removeAccountChangeListener(subId);
       }
-    }
+    };
   }, [setNativeAccount, wallet, wallet?.publicKey, connection, updateCache]);
 
   return { nativeAccount };
@@ -405,7 +415,10 @@ export function AccountsProvider({ children = null as any }) {
   useEffect(() => {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
-      if (args.isNew) {
+      cache.totalObjects += 1;
+
+      if (args.isNew && args.isEligibleForSub) {
+        cache.totalSubs += 1;
         let id = args.id;
         let deserialize = args.parser;
         connection.onAccountChange(new PublicKey(id), info => {
@@ -435,7 +448,7 @@ export function AccountsProvider({ children = null as any }) {
         programIds().token,
         info => {
           // TODO: fix type in web3.js
-          const id = (info.accountId as unknown) as string;
+          const id = info.accountId as unknown as string;
           // TODO: do we need a better way to identify layout (maybe a enum identifing type?)
           if (info.accountInfo.data.length === AccountLayout.span) {
             const data = deserializeAccount(info.accountInfo.data);

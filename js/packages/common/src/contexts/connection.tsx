@@ -63,7 +63,6 @@ const DEFAULT = ENDPOINTS[0].endpoint;
 
 interface ConnectionConfig {
   connection: Connection;
-  sendConnection: Connection;
   endpoint: string;
   env: ENV;
   setEndpoint: (val: string) => void;
@@ -75,7 +74,6 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
   setEndpoint: () => {},
   connection: new Connection(DEFAULT, 'recent'),
-  sendConnection: new Connection(DEFAULT, 'recent'),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -88,10 +86,6 @@ export function ConnectionProvider({ children = undefined as any }) {
   );
 
   const connection = useMemo(
-    () => new Connection(endpoint, 'recent'),
-    [endpoint],
-  );
-  const sendConnection = useMemo(
     () => new Connection(endpoint, 'recent'),
     [endpoint],
   );
@@ -144,30 +138,12 @@ export function ConnectionProvider({ children = undefined as any }) {
     };
   }, [connection]);
 
-  useEffect(() => {
-    const id = sendConnection.onAccountChange(
-      Keypair.generate().publicKey,
-      () => {},
-    );
-    return () => {
-      sendConnection.removeAccountChangeListener(id);
-    };
-  }, [sendConnection]);
-
-  useEffect(() => {
-    const id = sendConnection.onSlotChange(() => null);
-    return () => {
-      sendConnection.removeSlotChangeListener(id);
-    };
-  }, [sendConnection]);
-
   return (
     <ConnectionContext.Provider
       value={{
         endpoint,
         setEndpoint,
         connection,
-        sendConnection,
         tokens,
         tokenMap,
         env,
@@ -180,10 +156,6 @@ export function ConnectionProvider({ children = undefined as any }) {
 
 export function useConnection() {
   return useContext(ConnectionContext).connection as Connection;
-}
-
-export function useSendConnection() {
-  return useContext(ConnectionContext)?.sendConnection;
 }
 
 export function useConnectionConfig() {

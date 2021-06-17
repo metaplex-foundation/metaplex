@@ -27,6 +27,9 @@ import {
   Vault,
   setProgramIds,
   useConnectionConfig,
+  useWallet,
+  walletAdapters,
+  AuctionState,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
@@ -112,6 +115,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
+  const { wallet } = useWallet();
   const { env } = useConnectionConfig();
 
   const [metadata, setMetadata] = useState<ParsedAccount<Metadata>[]>([]);
@@ -226,6 +230,7 @@ export function MetaProvider({ children = null as any }) {
 
         processAuctions(
           accounts[i],
+          wallet,
           (cb: any) => (tempCache.auctions = cb(tempCache.auctions)),
           (cb: any) =>
             (tempCache.bidderMetadataByAuctionAndBidder = cb(
@@ -327,6 +332,7 @@ export function MetaProvider({ children = null as any }) {
     setWhitelistedCreatorsByCreator,
     updateMints,
     env,
+    wallet,
   ]);
 
   useEffect(() => {
@@ -408,6 +414,7 @@ export function MetaProvider({ children = null as any }) {
             pubkey,
             account: info.accountInfo,
           },
+          wallet,
           setAuctions,
           setBidderMetadataByAuctionAndBidder,
           setBidderPotsByAuctionAndBidder,
@@ -537,6 +544,7 @@ const queryExtendedMetadata = async (
         key,
         mintAccount,
         MintParser,
+        false,
       ) as ParsedAccount<MintInfo>;
       if (mint.info.supply.gt(new BN(1)) || mint.info.decimals !== 0) {
         // naive not NFT check
@@ -576,6 +584,7 @@ function isValidHttpUrl(text: string) {
 
 const processAuctions = (
   a: PublicKeyAndAccount<Buffer>,
+  wallet: any,
   setAuctions: any,
   setBidderMetadataByAuctionAndBidder: any,
   setBidderPotsByAuctionAndBidder: any,
@@ -587,6 +596,7 @@ const processAuctions = (
       a.pubkey,
       a.account,
       AuctionParser,
+      (auction: ParsedAccount<AuctionData>) => !auction.info.ended(),
     ) as ParsedAccount<AuctionData>;
 
     setAuctions((e: any) => ({
@@ -603,6 +613,8 @@ const processAuctions = (
         a.pubkey,
         a.account,
         BidderMetadataParser,
+        (parsed: ParsedAccount<BidderMetadata>) =>
+          parsed.info.bidderPubkey.toBase58() == wallet.publicKey.toBase58(),
       ) as ParsedAccount<BidderMetadata>;
       setBidderMetadataByAuctionAndBidder((e: any) => ({
         ...e,
@@ -621,6 +633,8 @@ const processAuctions = (
         a.pubkey,
         a.account,
         BidderPotParser,
+        (parsed: ParsedAccount<BidderPot>) =>
+          parsed.info.bidderAct.toBase58() == wallet.publicKey.toBase58(),
       ) as ParsedAccount<BidderPot>;
 
       setBidderPotsByAuctionAndBidder((e: any) => ({
@@ -714,6 +728,7 @@ const processMetaplexAccounts = async (
           a.pubkey,
           a.account,
           WhitelistedCreatorParser,
+          true,
         ) as ParsedAccount<WhitelistedCreator>;
 
         const nameInfo = (names as any)[account.info.address.toBase58()];
