@@ -146,7 +146,7 @@ export const cache = {
     id: PublicKey | string,
     obj: AccountInfo<Buffer>,
     parser?: AccountParser,
-    isEligibleForSub?: boolean | undefined | ((parsed: any) => boolean),
+    isActive?: boolean | undefined | ((parsed: any) => boolean),
   ) => {
     if (obj.data.length === 0) {
       return;
@@ -167,19 +167,13 @@ export const cache = {
       return;
     }
 
-    if (isEligibleForSub == undefined) isEligibleForSub = true;
-    else if (isEligibleForSub instanceof Function)
-      isEligibleForSub = isEligibleForSub(account);
+    if (isActive == undefined) isActive = true;
+    else if (isActive instanceof Function) isActive = isActive(account);
 
     const isNew = !genericCache.has(address);
 
     genericCache.set(address, account);
-    cache.emitter.raiseCacheUpdated(
-      address,
-      isNew,
-      deserialize,
-      isEligibleForSub,
-    );
+    cache.emitter.raiseCacheUpdated(address, isNew, deserialize, isActive);
     return account;
   },
   get: (pubKey: string | PublicKey) => {
@@ -417,7 +411,7 @@ export function AccountsProvider({ children = null as any }) {
     cache.emitter.onCache(args => {
       cache.totalObjects += 1;
 
-      if (args.isNew && args.isEligibleForSub) {
+      if (args.isNew && args.isActive) {
         cache.totalSubs += 1;
         let id = args.id;
         let deserialize = args.parser;

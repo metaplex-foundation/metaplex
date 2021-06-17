@@ -5,17 +5,12 @@ export class CacheUpdateEvent {
   id: string;
   parser: any;
   isNew: boolean;
-  isEligibleForSub: boolean;
-  constructor(
-    id: string,
-    isNew: boolean,
-    parser: any,
-    isEligibleForSub: boolean,
-  ) {
+  isActive: boolean;
+  constructor(id: string, isNew: boolean, parser: any, isActive: boolean) {
     this.id = id;
     this.parser = parser;
     this.isNew = isNew;
-    this.isEligibleForSub = isEligibleForSub;
+    this.isActive = isActive;
   }
 }
 
@@ -58,11 +53,11 @@ export class EventEmitter {
     id: string,
     isNew: boolean,
     parser: any,
-    isEligibleForSub: boolean,
+    isActive: boolean,
   ) {
     this.emitter.emit(
       CacheUpdateEvent.type,
-      new CacheUpdateEvent(id, isNew, parser, isEligibleForSub),
+      new CacheUpdateEvent(id, isNew, parser, isActive),
     );
   }
 
