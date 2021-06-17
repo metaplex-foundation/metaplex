@@ -28,6 +28,16 @@ pub struct EmptyPaymentAccountArgs {
     /// index in the metadata creator list, can be None if metadata has no creator list.
     pub creator_index: Option<u8>,
 }
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub enum ProxyCallAddress {
+    RedeemBid,
+    RedeemFullRightsTransferBid,
+}
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
+    pub winning_config_item_index: u8,
+    pub proxy_call: ProxyCallAddress,
+}
 
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
@@ -318,6 +328,19 @@ pub enum MetaplexInstruction {
     ///   16. `[]` Payer who wishes to receive refund for closing of one time transient account once we're done here
     ///   17. `[]` Rent
     PopulateParticipationPrintingAccount,
+
+    /// If you are an auctioneer, redeem an unused winning config entry. You provide the winning index, and if the winning
+    /// index has no winner, then the correct redemption method is called with a special flag set to ignore bidder_metadata checks
+    /// and a hardcoded winner index to empty this win to you.
+    ///
+    /// All the keys, in exact sequence, should follow the expected call you wish to proxy to, because these will be passed
+    /// to the process_ method of the next call. This method exists primarily to pass in an additional
+    /// argument to the other redemption methods that subtly changes their behavior. We made this additional call so that if the auctioneer
+    /// calls those methods directly, they still act the same as if the auctioneer were a normal bidder, which is be desirable behavior.
+    ///
+    /// An auctioneer should never be in the position where the auction can never work the same for them simply because they are an auctioneer.
+    /// This special endpoint exists to give them the "out" to unload items via a proxy call once the auction is over.
+    RedeemUnusedWinningConfigItemsAsAuctioneer(RedeemUnusedWinningConfigItemsAsAuctioneerArgs),
 }
 
 /// Creates an InitAuctionManager instruction
@@ -646,6 +669,52 @@ pub fn create_set_store_instruction(
         program_id,
         accounts,
         data: MetaplexInstruction::SetStore(SetStoreArgs { public })
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+pub fn create_populate_participation_printing_account_instruction(
+    program_id: Pubkey,
+    safety_deposit_token_store: Pubkey,
+    transient_one_time_mint_account: Pubkey,
+    participation_state_printing_account: Pubkey,
+    one_time_printing_authorization_mint: Pubkey,
+    printing_mint: Pubkey,
+    participation_safety_deposit_box: Pubkey,
+    vault: Pubkey,
+    fraction_mint: Pubkey,
+    auction: Pubkey,
+    auction_manager: Pubkey,
+    store: Pubkey,
+    master_edition: Pubkey,
+    transfer_authority: Pubkey,
+    payer: Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(safety_deposit_token_store, false),
+        AccountMeta::new(transient_one_time_mint_account, false),
+        AccountMeta::new(participation_state_printing_account, false),
+        AccountMeta::new(one_time_printing_authorization_mint, false),
+        AccountMeta::new(printing_mint, false),
+        AccountMeta::new(participation_safety_deposit_box, false),
+        AccountMeta::new(vault, false),
+        AccountMeta::new_readonly(fraction_mint, false),
+        AccountMeta::new_readonly(auction, false),
+        AccountMeta::new_readonly(auction_manager, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(spl_token_vault::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(store, false),
+        AccountMeta::new_readonly(master_edition, false),
+        AccountMeta::new_readonly(transfer_authority, false),
+        AccountMeta::new_readonly(payer, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+    Instruction {
+        program_id,
+        accounts,
+        data: MetaplexInstruction::PopulateParticipationPrintingAccount
             .try_to_vec()
             .unwrap(),
     }

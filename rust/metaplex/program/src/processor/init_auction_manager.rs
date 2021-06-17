@@ -101,6 +101,10 @@ pub fn process_init_auction_manager(
         return Err(MetaplexError::VaultCannotEmpty.into());
     }
 
+    if auction_manager_settings.winning_configs.len() != auction.num_possible_winners() as usize {
+        return Err(MetaplexError::WinnerAmountMismatch.into());
+    }
+
     let mut winning_config_states: Vec<WinningConfigState> = vec![];
     let mut winning_item_count: u8 = 0;
     for winning_config in &auction_manager_settings.winning_configs {

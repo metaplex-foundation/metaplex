@@ -233,6 +233,68 @@ export enum SequenceType {
   StopOnFailure,
 }
 
+export async function sendTransactionsWithManualRetry(
+  connection: Connection,
+  wallet: any,
+  instructions: TransactionInstruction[][],
+  signers: Keypair[][],
+) {
+  let stopPoint = 0;
+  let tries = 0;
+  let lastInstructionsLength = null;
+  let toRemoveSigners: Record<number, boolean> = {};
+  instructions = instructions.filter((instr, i) => {
+    if (instr.length > 0) {
+      return true;
+    } else {
+      toRemoveSigners[i] = true;
+      return false;
+    }
+  });
+  let filteredSigners = signers.filter((_, i) => !toRemoveSigners[i]);
+
+  while (stopPoint < instructions.length && tries < 3) {
+    instructions = instructions.slice(stopPoint, instructions.length);
+    filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);
+
+    if (instructions.length === lastInstructionsLength) tries = tries + 1;
+    else tries = 0;
+
+    try {
+      if (instructions.length === 1) {
+        await sendTransactionWithRetry(
+          connection,
+          wallet,
+          instructions[0],
+          filteredSigners[0],
+          'single',
+        );
+        stopPoint = 1;
+      } else {
+        stopPoint = await sendTransactions(
+          connection,
+          wallet,
+          instructions,
+          filteredSigners,
+          SequenceType.StopOnFailure,
+          'single',
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    console.log(
+      'Died on ',
+      stopPoint,
+      'retrying from instruction',
+      instructions[stopPoint],
+      'instructions length is',
+      instructions.length,
+    );
+    lastInstructionsLength = instructions.length;
+  }
+}
+
 export const sendTransactions = async (
   connection: Connection,
   wallet: any,

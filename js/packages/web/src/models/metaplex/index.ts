@@ -106,6 +106,23 @@ export class PopulateParticipationPrintingAccountArgs {
   instruction = 11;
 }
 
+export enum ProxyCallAddress {
+  RedeemBid = 0,
+  RedeemFullRightsTransferBid = 1,
+}
+export class RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
+  instruction = 12;
+  winningConfigItemIndex: number;
+  proxyCall: ProxyCallAddress;
+  constructor(args: {
+    winningConfigItemIndex: number;
+    proxyCall: ProxyCallAddress;
+  }) {
+    this.winningConfigItemIndex = args.winningConfigItemIndex;
+    this.proxyCall = args.proxyCall;
+  }
+}
+
 export class EmptyPaymentAccountArgs {
   instruction = 7;
   winningConfigIndex: number | null;
@@ -507,6 +524,17 @@ export const SCHEMA = new Map<any, any>([
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['winningConfigItemIndex', 'u8'],
+        ['proxyCall', 'u8'],
+      ],
     },
   ],
   [

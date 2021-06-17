@@ -18,6 +18,9 @@ use {
 pub fn process_full_rights_transfer_bid<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
+    // If present, means an auctioneer is collecting this bid and we should disregard bidder metadata
+    // and just collect the prize. Can only be set through an inner call with redeem_unused_winning_config_items.
+    overwrite_win_index: Option<usize>,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -68,6 +71,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         store_info,
         rent_info,
         is_participation: false,
+        overwrite_win_index,
     })?;
 
     assert_owned_by(metadata_info, &token_metadata_program)?;
@@ -142,6 +146,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         bid_redeemed: true,
         participation_redeemed: false,
         winning_item_index,
+        overwrite_win_index,
     })?;
 
     Ok(())

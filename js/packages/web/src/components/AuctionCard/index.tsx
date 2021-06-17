@@ -96,7 +96,9 @@ export const AuctionCard = ({
             className="action-btn"
             disabled={
               !myPayingAccount ||
-              !auctionView.myBidderMetadata ||
+              (!auctionView.myBidderMetadata &&
+                auctionView.auctionManager.info.authority.toBase58() !=
+                  wallet?.publicKey?.toBase58()) ||
               loading ||
               !!auctionView.items.find(i => i.find(it => !it.metadata))
             }

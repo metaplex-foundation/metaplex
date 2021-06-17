@@ -73,6 +73,7 @@ pub fn process_redeem_participation_bid<'a>(
         rent_info,
         store_info,
         is_participation: true,
+        overwrite_win_index: None,
     })?;
 
     assert_owned_by(accept_payment_info, token_program_info.key)?;
@@ -200,6 +201,7 @@ pub fn process_redeem_participation_bid<'a>(
         bid_redeemed: false,
         participation_redeemed: true,
         winning_item_index: None,
+        overwrite_win_index: None,
     })?;
     Ok(())
 }
