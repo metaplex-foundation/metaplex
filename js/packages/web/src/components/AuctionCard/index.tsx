@@ -12,6 +12,7 @@ import {
   formatAmount,
   formatTokenAmount,
   useMint,
+  PriceFloorType,
 } from '@oyster/common';
 import { AuctionView, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -24,6 +25,7 @@ import { sendCancelBid } from '../../actions/cancelBid';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const { useWallet } = contexts.Wallet;
 
@@ -64,7 +66,10 @@ export const AuctionCard = ({
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
     );
-
+  const priceFloor =
+    auctionView.auction.info.priceFloor.type == PriceFloorType.Minimum
+      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
+      : 0;
   const eligibleForOpenEdition = eligibleForParticipationPrizeGivenWinningIndex(
     winnerIndex,
     auctionView,
@@ -330,6 +335,7 @@ export const AuctionCard = ({
                     disabled={
                       !myPayingAccount ||
                       value === undefined ||
+                      value * LAMPORTS_PER_SOL < priceFloor ||
                       loading ||
                       !accountByMint.get(QUOTE_MINT.toBase58())
                     }

@@ -117,13 +117,29 @@ export enum PriceFloorType {
 }
 export class PriceFloor {
   type: PriceFloorType;
-  // It's an array of 32 u8s, when minimum, only first 4 are used (a u64), when blinded price, the entire
+  // It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
   // thing is a hash and not actually a public key, and none is all zeroes
-  hash: PublicKey;
+  hash: Uint8Array;
 
-  constructor(args: { type: PriceFloorType; hash: PublicKey }) {
+  minPrice?: BN;
+
+  constructor(args: {
+    type: PriceFloorType;
+    hash?: Uint8Array;
+    minPrice?: BN;
+  }) {
     this.type = args.type;
-    this.hash = args.hash;
+    this.hash = args.hash || new Uint8Array(32);
+    if (this.type === PriceFloorType.Minimum) {
+      if (args.minPrice) {
+        this.hash.set(args.minPrice.toArrayLike(Buffer, 'le', 8), 0);
+      } else {
+        this.minPrice = new BN(
+          (args.hash || new Uint8Array(0)).slice(0, 8),
+          'le',
+        );
+      }
+    }
   }
 }
 
@@ -463,7 +479,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['type', 'u8'],
-        ['hash', 'pubkey'],
+        ['hash', [32]],
       ],
     },
   ],
@@ -528,6 +544,7 @@ export async function createAuction(
   resource: PublicKey,
   endAuctionAt: BN | null,
   auctionGap: BN | null,
+  priceFloor: PriceFloor,
   tokenMint: PublicKey,
   authority: PublicKey,
   creator: PublicKey,
@@ -545,10 +562,7 @@ export async function createAuction(
         auctionGap,
         tokenMint,
         authority,
-        priceFloor: new PriceFloor({
-          type: PriceFloorType.None,
-          hash: SystemProgram.programId,
-        }),
+        priceFloor,
       }),
     ),
   );
