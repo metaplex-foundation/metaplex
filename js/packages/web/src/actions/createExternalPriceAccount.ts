@@ -5,10 +5,10 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, createMint } from '@oyster/common';
+import { utils, actions } from '@oyster/common';
 
-import { MintLayout } from '@solana/spl-token';
 import BN from 'bn.js';
+import { QUOTE_MINT } from '../constants';
 const {
   updateExternalPriceAccount,
   ExternalPriceAccount,
@@ -30,29 +30,15 @@ export async function createExternalPriceAccount(
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
 
-  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
-
   const epaRentExempt = await connection.getMinimumBalanceForRentExemption(
     MAX_EXTERNAL_ACCOUNT_SIZE,
   );
 
   let externalPriceAccount = Keypair.generate();
 
-  const priceMint = createMint(
-    instructions,
-    wallet.publicKey,
-    mintRentExempt,
-    0,
-    wallet.publicKey,
-    wallet.publicKey,
-    signers,
-  );
-
   let epaStruct = new ExternalPriceAccount({
     pricePerShare: new BN(0),
-    priceMint: priceMint,
+    priceMint: QUOTE_MINT,
     allowedToCombine: true,
   });
 
@@ -74,7 +60,7 @@ export async function createExternalPriceAccount(
 
   return {
     externalPriceAccount: externalPriceAccount.publicKey,
-    priceMint,
+    priceMint: QUOTE_MINT,
     instructions,
     signers,
   };
