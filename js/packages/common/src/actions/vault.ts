@@ -220,7 +220,7 @@ export const VAULT_SCHEMA = new Map<any, any>([
         ['fractionTreasury', 'pubkey'],
         ['redeemTreasury', 'pubkey'],
         ['allowFurtherShareCreation', 'u8'],
-        ['pricingLookupAddress', 'u8'],
+        ['pricingLookupAddress', 'pubkey'],
         ['tokenTypeCount', 'u8'],
         ['state', 'u8'],
         ['lockedPricePerShare', 'u64'],
@@ -256,6 +256,14 @@ export const VAULT_SCHEMA = new Map<any, any>([
 
 export const decodeVault = (buffer: Buffer) => {
   return deserializeUnchecked(VAULT_SCHEMA, Vault, buffer) as Vault;
+};
+
+export const decodeExternalPriceAccount = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    VAULT_SCHEMA,
+    ExternalPriceAccount,
+    buffer,
+  ) as ExternalPriceAccount;
 };
 
 export const decodeSafetyDeposit = (buffer: Buffer) => {

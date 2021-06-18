@@ -24,6 +24,7 @@ export async function closeVault(
   redeemTreasury: PublicKey,
   priceMint: PublicKey,
   externalPriceAccount: PublicKey,
+  setAuthorityToAuctionManager: boolean,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -116,7 +117,7 @@ export async function closeVault(
     fractionMint,
     fractionTreasury,
     redeemTreasury,
-    auctionManagerKey,
+    setAuthorityToAuctionManager ? auctionManagerKey : wallet.publicKey,
     wallet.publicKey,
     transferAuthority.publicKey,
     externalPriceAccount,

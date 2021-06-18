@@ -655,10 +655,7 @@ const processMetaplexAccounts = async (
   try {
     const STORE_ID = programIds().store?.toBase58() || '';
 
-    if (
-      a.account.data[0] === MetaplexKey.AuctionManagerV1 ||
-      a.account.data[0] === 0
-    ) {
+    if (a.account.data[0] === MetaplexKey.AuctionManagerV1) {
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
       if (storeKey.toBase58() === STORE_ID) {
         const auctionManager = decodeAuctionManager(a.account.data);
@@ -755,10 +752,7 @@ const processMetaData = async (
   if (meta.account.owner.toBase58() != programIds().metadata.toBase58()) return;
 
   try {
-    if (
-      meta.account.data[0] === MetadataKey.MetadataV1 ||
-      meta.account.data[0] === 0
-    ) {
+    if (meta.account.data[0] === MetadataKey.MetadataV1) {
       const metadata = await decodeMetadata(meta.account.data);
 
       if (
@@ -831,10 +825,7 @@ const processVaultData = (
         ...e,
         [safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order]: account,
       }));
-    } else if (
-      a.account.data[0] === VaultKey.VaultV1 ||
-      a.account.data[0] === 0
-    ) {
+    } else if (a.account.data[0] === VaultKey.VaultV1) {
       const vault = decodeVault(a.account.data);
       const account: ParsedAccount<Vault> = {
         pubkey: a.pubkey,

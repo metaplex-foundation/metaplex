@@ -211,6 +211,7 @@ export async function createAuctionManager(
       redeemTreasury,
       priceMint,
       externalPriceAccount,
+      true,
     ),
     addTokens: { instructions: addTokenInstructions, signers: addTokenSigners },
     createReservationList: {

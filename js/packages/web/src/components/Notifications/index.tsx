@@ -8,15 +8,18 @@ import {
   useConnection,
   useUserAccounts,
   useWallet,
+  VaultState,
 } from '@oyster/common';
 import { Badge, Popover, List } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
+import { unwindVault } from '../../actions/unwindVault';
 
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
+import { AuctionManagerStatus } from '../../models/metaplex';
 import './index.less';
 interface NotificationCard {
   title: string;
@@ -84,7 +87,14 @@ function RunAction({
 
 export function Notifications() {
   const { userAccounts } = useUserAccounts();
-  const { metadata, whitelistedCreatorsByCreator, store } = useMeta();
+  const {
+    metadata,
+    whitelistedCreatorsByCreator,
+    store,
+    vaults,
+    safetyDepositBoxesByVaultAndIndex,
+    auctionManagersByAuction,
+  } = useMeta();
   const connection = useConnection();
   const { wallet } = useWallet();
 
@@ -115,6 +125,53 @@ export function Notifications() {
   });
 
   const walletPubkey = wallet?.publicKey?.toBase58() || '';
+  const vaultsNeedUnwinding = useMemo(
+    () =>
+      Object.values(vaults).filter(
+        v =>
+          v.info.authority.toBase58() == walletPubkey &&
+          v.info.state != VaultState.Deactivated &&
+          v.info.tokenTypeCount > 0,
+      ),
+    [vaults, walletPubkey],
+  );
+  /*
+  Adding this later - needs to be coupled with new contract endpoint
+  const auctionManagersNeedingUnwinding = useMemo(
+    () =>
+      Object.values(auctionManagersByAuction).filter(
+        v =>
+          v.info.authority.toBase58() == walletPubkey &&
+          v.info.state.status == AuctionManagerStatus.Initialized,
+      ),
+    [auctionManagersByAuction, walletPubkey],
+  );*/
+  vaultsNeedUnwinding.forEach(v => {
+    notifications.push({
+      title: 'You have items locked in a defective auction!',
+      description: (
+        <span>
+          During an auction creation process that probably had some issues, you
+          lost an item. Reclaim it now.
+        </span>
+      ),
+      action: async () => {
+        try {
+          await unwindVault(
+            connection,
+            wallet,
+            v,
+            safetyDepositBoxesByVaultAndIndex,
+          );
+        } catch (e) {
+          console.error(e);
+          return false;
+        }
+        return true;
+      },
+    });
+  });
+
   const metaNeedsApproving = useMemo(
     () =>
       metadata.filter(m => {
