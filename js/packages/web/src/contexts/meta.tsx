@@ -27,6 +27,7 @@ import {
   Vault,
   setProgramIds,
   useConnectionConfig,
+  useWallet,
   walletAdapters,
   AuctionState,
 } from '@oyster/common';
