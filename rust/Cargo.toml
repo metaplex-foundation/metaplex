@@ -6,7 +6,7 @@ members = [
   "token-metadata/program",
   "auction/cli",
   "metaplex/test",
-  "token-valut/test",
+  "token-vault/test",
   "token-metadata/test",
 ]
 exclude = [
