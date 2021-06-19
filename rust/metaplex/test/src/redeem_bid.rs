@@ -29,7 +29,7 @@ use {
         state::Account,
     },
     spl_token_metadata::state::{MasterEdition, EDITION},
-    spl_token_vault::state::{SafetyDepositBox, Vault, Key},
+    spl_token_vault::state::{Key, SafetyDepositBox, Vault},
     std::{collections::HashMap, str::FromStr},
 };
 

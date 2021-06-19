@@ -15,7 +15,7 @@ use {
         state::{AuctionManager, WinningConfig},
     },
     spl_token_metadata::state::{Key, MasterEdition, EDITION},
-    spl_token_vault::state::{SafetyDepositBox, Key as VaultKey},
+    spl_token_vault::state::{Key as VaultKey, SafetyDepositBox},
     std::{collections::HashMap, str::FromStr},
 };
 
