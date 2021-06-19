@@ -12,8 +12,10 @@ use {
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
+        msg,
         pubkey::Pubkey,
     },
+    spl_token_metadata::state::Metadata,
 };
 pub fn process_full_rights_transfer_bid<'a>(
     program_id: &'a Pubkey,
@@ -107,13 +109,20 @@ pub fn process_full_rights_transfer_bid<'a>(
                     &[auction_bump_seed],
                 ];
 
-                transfer_metadata_ownership(
-                    token_metadata_program_info.clone(),
-                    metadata_info.clone(),
-                    auction_manager_info.clone(),
-                    new_metadata_authority_info.clone(),
-                    auction_authority_seeds,
-                )?;
+                let metadata = Metadata::from_account_info(metadata_info)?;
+                if metadata.update_authority == *auction_manager_info.key {
+                    // If this is a call for a broken auction manager that was forced to disbursing
+                    // by a distressed auctioneer, the metadata transfer may not have happened, so
+                    // we wrap in an if statement to avoid a fallout here.
+                    msg!("Transferring metadata authority!");
+                    transfer_metadata_ownership(
+                        token_metadata_program_info.clone(),
+                        metadata_info.clone(),
+                        auction_manager_info.clone(),
+                        new_metadata_authority_info.clone(),
+                        auction_authority_seeds,
+                    )?;
+                }
 
                 transfer_safety_deposit_box_items(
                     token_vault_program_info.clone(),

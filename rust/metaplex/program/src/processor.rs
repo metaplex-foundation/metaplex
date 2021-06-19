@@ -2,6 +2,7 @@ use {
     crate::instruction::MetaplexInstruction,
     borsh::BorshDeserialize,
     claim_bid::process_claim_bid,
+    decommission_auction_manager::process_decommission_auction_manager,
     empty_payment_account::process_empty_payment_account,
     init_auction_manager::process_init_auction_manager,
     populate_participation_printing_account::process_populate_participation_printing_account,
@@ -18,6 +19,7 @@ use {
 };
 
 pub mod claim_bid;
+pub mod decommission_auction_manager;
 pub mod empty_payment_account;
 pub mod init_auction_manager;
 pub mod populate_participation_printing_account;
@@ -89,6 +91,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::RedeemUnusedWinningConfigItemsAsAuctioneer(args) => {
             msg!("Instruction: Redeem Unused Winning Config Items As Auctioneer");
             process_redeem_unused_winning_config_items_as_auctioneer(program_id, accounts, args)
+        }
+        MetaplexInstruction::DecommissionAuctionManager => {
+            msg!("Instruction: Decomission Auction Manager");
+            process_decommission_auction_manager(program_id, accounts)
         }
     }
 }

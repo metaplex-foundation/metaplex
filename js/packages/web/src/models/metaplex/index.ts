@@ -159,6 +159,10 @@ export class ValidateParticipationArgs {
   instruction = 10;
 }
 
+export class DecommissionAuctionManagerArgs {
+  instruction = 13;
+}
+
 export enum WinningConstraint {
   NoParticipationPrize = 0,
   ParticipationPrizeGiven = 1,
@@ -535,6 +539,13 @@ export const SCHEMA = new Map<any, any>([
         ['winningConfigItemIndex', 'u8'],
         ['proxyCall', 'u8'],
       ],
+    },
+  ],
+  [
+    DecommissionAuctionManagerArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
     },
   ],
   [

@@ -207,6 +207,7 @@ impl AuctionState {
     pub fn end(self) -> Result<Self, ProgramError> {
         match self {
             AuctionState::Started => Ok(AuctionState::Ended),
+            AuctionState::Created => Ok(AuctionState::Ended),
             _ => Err(AuctionError::AuctionTransitionInvalid.into()),
         }
     }

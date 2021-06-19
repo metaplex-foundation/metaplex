@@ -386,6 +386,10 @@ pub enum MetaplexError {
     /// The auction provided has a different amount of winners set than does the auction manager settings
     #[error("The auction provided has a different amount of winners set than does the auction manager settings")]
     WinnerAmountMismatch,
+
+    /// Invalid Auction Manager Status
+    #[error("Invalid Auction Manager Status")]
+    InvalidStatus,
 }
 
 impl PrintProgramError for MetaplexError {
