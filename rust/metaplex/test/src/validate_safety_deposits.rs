@@ -15,7 +15,7 @@ use {
         state::{AuctionManager, WinningConfig},
     },
     spl_token_metadata::state::{Key, MasterEdition, EDITION},
-    spl_token_vault::state::{SafetyDepositBox, SAFETY_DEPOSIT_KEY},
+    spl_token_vault::state::{Key as VaultKey, SafetyDepositBox},
     std::{collections::HashMap, str::FromStr},
 };
 
@@ -64,7 +64,7 @@ pub fn validate_safety_deposits(app_matches: &ArgMatches, payer: Keypair, client
         let obj_key = &acc.0;
         let type_of_obj = obj.data[0];
 
-        if type_of_obj == SAFETY_DEPOSIT_KEY {
+        if type_of_obj == VaultKey::SafetyDepositBoxV1 as u8 {
             let pubkey_arr = array_ref![obj.data, 1, 32];
             let pubkey = Pubkey::new_from_array(*pubkey_arr);
             if pubkey == manager.vault {

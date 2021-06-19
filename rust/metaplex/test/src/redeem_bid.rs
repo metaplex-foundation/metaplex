@@ -29,7 +29,7 @@ use {
         state::Account,
     },
     spl_token_metadata::state::{MasterEdition, EDITION},
-    spl_token_vault::state::{SafetyDepositBox, Vault, SAFETY_DEPOSIT_KEY},
+    spl_token_vault::state::{Key, SafetyDepositBox, Vault},
     std::{collections::HashMap, str::FromStr},
 };
 
@@ -400,7 +400,7 @@ pub fn redeem_bid_wrapper(app_matches: &ArgMatches, payer: Keypair, client: RpcC
         let obj_key = &acc.0;
         let type_of_obj = obj.data[0];
 
-        if type_of_obj == SAFETY_DEPOSIT_KEY {
+        if type_of_obj == Key::SafetyDepositBoxV1 as u8 {
             let pubkey_arr = array_ref![obj.data, 1, 32];
             let pubkey = Pubkey::new_from_array(*pubkey_arr);
             if pubkey == manager.vault {
