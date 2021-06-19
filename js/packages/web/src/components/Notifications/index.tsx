@@ -141,7 +141,6 @@ export function Notifications() {
     [vaults, walletPubkey],
   );
 
-  //console.log('Bad Auction Managers, ', possiblyBrokenAuctionManagerSetups);
   vaultsNeedUnwinding.forEach(v => {
     notifications.push({
       title: 'You have items locked in a defective auction!',
