@@ -18,7 +18,6 @@ import {
 
 import BN from 'bn.js';
 import { closeVault } from './closeVault';
-import { QUOTE_MINT } from '../constants';
 
 const BATCH_SIZE = 1;
 

@@ -341,6 +341,26 @@ pub enum MetaplexInstruction {
     /// An auctioneer should never be in the position where the auction can never work the same for them simply because they are an auctioneer.
     /// This special endpoint exists to give them the "out" to unload items via a proxy call once the auction is over.
     RedeemUnusedWinningConfigItemsAsAuctioneer(RedeemUnusedWinningConfigItemsAsAuctioneerArgs),
+
+    /// If you have an auction manager in an Initialized state and for some reason you can't validate it, you want to retrieve
+    /// The items inside of it. This will allow you to move it straight to Disbursing, and then you can, as Auctioneer,
+    /// Redeem those items using the RedeemUnusedWinningConfigItemsAsAuctioneer endpoint.
+    ///
+    /// Be WARNED: Because the boxes have not been validated, the logic for redemptions may not work quite right. For instance,
+    /// if your validation step failed because you provided an empty box but said there was a token in it, when you go
+    /// and try to redeem it, you yourself will experience quite the explosion. It will be up to you to tactfully
+    /// request the bids that can be properly redeemed from the ones that cannot.
+    ///
+    /// If you had a FullRightsTransfer token, and you never validated (and thus transferred) ownership, when the redemption happens
+    /// it will skip trying to transfer it to you, so that should work fine.
+    ///
+    /// 0. `[writable]` Auction Manager
+    /// 1. `[writable]` Auction
+    /// 2. `[Signer]` Authority of the Auction Manager
+    /// 3. `[]` Store
+    /// 4. `[]` Auction program
+    /// 5. `[]` Clock sysvar
+    DecommissionAuctionManager,
 }
 
 /// Creates an InitAuctionManager instruction

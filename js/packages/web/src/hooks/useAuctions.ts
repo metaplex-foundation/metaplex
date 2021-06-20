@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 import { useMeta } from '../contexts';
 import {
   AuctionManager,
+  AuctionManagerStatus,
   BidRedemptionTicket,
   getBidderKeys,
 } from '../models/metaplex';
@@ -25,6 +26,7 @@ export enum AuctionViewState {
   Upcoming = '1',
   Ended = '2',
   BuyNow = '3',
+  Defective = '-1',
 }
 
 export interface AuctionViewItem {
@@ -198,11 +200,30 @@ export function processAccountsIntoAuctionView(
     state = AuctionViewState.BuyNow;
   }
 
-  if (desiredState && desiredState !== state) return undefined;
-
   const auctionManager =
     auctionManagersByAuction[auction.pubkey.toBase58() || ''];
+
+  // The defective auction view state really applies to auction managers, not auctions, so we ignore it here
+  if (
+    desiredState &&
+    desiredState != AuctionViewState.Defective &&
+    desiredState !== state
+  )
+    return undefined;
+
   if (auctionManager) {
+    // instead we apply defective state to auction managers
+    if (
+      desiredState == AuctionViewState.Defective &&
+      auctionManager.info.state.status != AuctionManagerStatus.Initialized
+    )
+      return undefined;
+    // Generally the only way an initialized auction manager can get through is if you are asking for defective ones.
+    else if (
+      desiredState != AuctionViewState.Defective &&
+      auctionManager.info.state.status == AuctionManagerStatus.Initialized
+    )
+      return undefined;
     const boxesExpected = auctionManager.info.state.winningConfigItemsValidated;
 
     let bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =

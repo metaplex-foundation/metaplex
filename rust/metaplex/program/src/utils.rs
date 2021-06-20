@@ -21,7 +21,10 @@ use {
         system_instruction,
         sysvar::{rent::Rent, Sysvar},
     },
-    spl_auction::processor::{AuctionData, AuctionState, BidderMetadata},
+    spl_auction::{
+        instruction::end_auction_instruction,
+        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState, BidderMetadata},
+    },
     spl_token::instruction::{set_authority, AuthorityType},
     spl_token_metadata::{
         instruction::update_metadata_accounts,
@@ -805,4 +808,28 @@ pub fn try_from_slice_checked<T: BorshDeserialize>(
     let result: T = try_from_slice_unchecked(data)?;
 
     Ok(result)
+}
+
+pub fn end_auction<'a: 'b, 'b>(
+    resource: Pubkey,
+    auction: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    auction_program: AccountInfo<'a>,
+    clock: AccountInfo<'a>,
+    authority_signer_seeds: &'b [&'b [u8]],
+) -> ProgramResult {
+    invoke_signed(
+        &end_auction_instruction(
+            *auction_program.key,
+            *authority.key,
+            EndAuctionArgs {
+                resource,
+                reveal: None,
+            },
+        ),
+        &[auction, authority, auction_program, clock],
+        &[authority_signer_seeds],
+    )?;
+
+    Ok(())
 }

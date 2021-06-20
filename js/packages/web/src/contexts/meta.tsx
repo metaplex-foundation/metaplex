@@ -29,6 +29,7 @@ import {
   useConnectionConfig,
   walletAdapters,
   AuctionState,
+  useWallet,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
@@ -114,6 +115,8 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
+  const { wallet } = useWallet();
+  const walletPublicKey = wallet?.publicKey?.toBase58() || '';
   const { env } = useConnectionConfig();
 
   const [metadata, setMetadata] = useState<ParsedAccount<Metadata>[]>([]);
@@ -274,6 +277,7 @@ export function MetaProvider({ children = null as any }) {
             (tempCache.whitelistedCreatorsByCreator = cb(
               tempCache.whitelistedCreatorsByCreator,
             )),
+          walletPublicKey,
         );
       }
 
@@ -329,6 +333,7 @@ export function MetaProvider({ children = null as any }) {
     setWhitelistedCreatorsByCreator,
     updateMints,
     env,
+    walletPublicKey,
   ]);
 
   useEffect(() => {
@@ -367,6 +372,7 @@ export function MetaProvider({ children = null as any }) {
           setPayoutTickets,
           setStore,
           setWhitelistedCreatorsByCreator,
+          walletPublicKey,
         );
       },
     );
@@ -442,6 +448,7 @@ export function MetaProvider({ children = null as any }) {
     setStore,
     setWhitelistedCreatorsByCreator,
     updateMints,
+    walletPublicKey,
   ]);
 
   const filteredMetadata = useMemo(
@@ -649,6 +656,7 @@ const processMetaplexAccounts = async (
   setPayoutTickets: any,
   setStore: any,
   setWhitelistedCreatorsByCreator: any,
+  walletPublicKey: string,
 ) => {
   if (a.account.owner.toBase58() != programIds().metaplex.toBase58()) return;
 
@@ -659,9 +667,15 @@ const processMetaplexAccounts = async (
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
       if (storeKey.toBase58() === STORE_ID) {
         const auctionManager = decodeAuctionManager(a.account.data);
-        // An initialized auction manager hasnt been validated, so we cant show it to users.
+        // An initialized auction manager hasnt been validated, so we cant show it to users unless you're
+        // the one who made it, in which case we want it in memory so we can serve it as part of the Defective
+        // type of view for use in unwinding.
         // Could have any kind of pictures in it.
-        if (auctionManager.state.status !== AuctionManagerStatus.Initialized) {
+        if (
+          auctionManager.state.status !== AuctionManagerStatus.Initialized ||
+          (auctionManager.state.status == AuctionManagerStatus.Initialized &&
+            auctionManager.authority.toBase58() == walletPublicKey)
+        ) {
           const account: ParsedAccount<AuctionManager> = {
             pubkey: a.pubkey,
             account: a.account,

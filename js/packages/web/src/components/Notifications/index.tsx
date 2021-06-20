@@ -14,11 +14,13 @@ import { Badge, Popover, List } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
+import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { unwindVault } from '../../actions/unwindVault';
 
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
+import { useAuctions, AuctionViewState } from '../../hooks';
 import { AuctionManagerStatus } from '../../models/metaplex';
 import './index.less';
 interface NotificationCard {
@@ -93,10 +95,13 @@ export function Notifications() {
     store,
     vaults,
     safetyDepositBoxesByVaultAndIndex,
-    auctionManagersByAuction,
   } = useMeta();
+  const possiblyBrokenAuctionManagerSetups = useAuctions(
+    AuctionViewState.Defective,
+  );
   const connection = useConnection();
   const { wallet } = useWallet();
+  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
@@ -135,17 +140,7 @@ export function Notifications() {
       ),
     [vaults, walletPubkey],
   );
-  /*
-  Adding this later - needs to be coupled with new contract endpoint
-  const auctionManagersNeedingUnwinding = useMemo(
-    () =>
-      Object.values(auctionManagersByAuction).filter(
-        v =>
-          v.info.authority.toBase58() == walletPubkey &&
-          v.info.state.status == AuctionManagerStatus.Initialized,
-      ),
-    [auctionManagersByAuction, walletPubkey],
-  );*/
+
   vaultsNeedUnwinding.forEach(v => {
     notifications.push({
       title: 'You have items locked in a defective auction!',
@@ -162,6 +157,32 @@ export function Notifications() {
             wallet,
             v,
             safetyDepositBoxesByVaultAndIndex,
+          );
+        } catch (e) {
+          console.error(e);
+          return false;
+        }
+        return true;
+      },
+    });
+  });
+
+  possiblyBrokenAuctionManagerSetups.forEach(v => {
+    notifications.push({
+      title: 'You have items locked in a defective auction!',
+      description: (
+        <span>
+          During an auction creation process that probably had some issues, you
+          lost an item. Reclaim it now.
+        </span>
+      ),
+      action: async () => {
+        try {
+          await decommAuctionManagerAndReturnPrizes(
+            connection,
+            wallet,
+            v,
+            accountByMint,
           );
         } catch (e) {
           console.error(e);
