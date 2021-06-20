@@ -5,11 +5,20 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  programIds,
+  PROGRAM_IDS,
+  TokenAccount,
   useConnection,
   useUserAccounts,
   useWallet,
   VaultState,
 } from '@oyster/common';
+import {
+  Connection,
+  PublicKey,
+  RpcResponseAndContext,
+  TokenAmount,
+} from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -17,13 +26,22 @@ import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { unwindVault } from '../../actions/unwindVault';
+import { settle } from '../../actions/settle';
 
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
-import { useAuctions, AuctionViewState } from '../../hooks';
+import {
+  AuctionView,
+  AuctionViewState,
+  useAuctions,
+  useUserBalance,
+} from '../../hooks';
 import { AuctionManagerStatus } from '../../models/metaplex';
 import './index.less';
+import { useBillingInfo } from '../../views/auction/billing';
+import { WalletAdapter } from '@solana/wallet-base';
 interface NotificationCard {
+  id: string;
   title: string;
   description: string | JSX.Element;
   action: () => Promise<boolean>;
@@ -87,8 +105,133 @@ function RunAction({
   return component;
 }
 
+const CALLING_MUTEX: Record<string, boolean> = {};
+export function useSettlementAuctions({
+  connection,
+  wallet,
+  notifications,
+  quoteAccts,
+}: {
+  connection: Connection;
+  wallet: WalletAdapter | undefined;
+  notifications: NotificationCard[];
+  quoteAccts: TokenAccount[];
+}) {
+  const { accountByMint } = useUserAccounts();
+  const walletPubkey = wallet?.publicKey?.toBase58() || '';
+  const { bidderPotsByAuctionAndBidder } = useMeta();
+  const auctionsNeedingSettling = useAuctions(AuctionViewState.Ended);
+
+  const [validDiscoveredEndedAuctions, setValidDiscoveredEndedAuctions] =
+    useState<Record<string, boolean>>({});
+  useMemo(() => {
+    const f = async () => {
+      const nextBatch = auctionsNeedingSettling
+        .filter(
+          a =>
+            a.auctionManager.info.authority.toBase58() == walletPubkey &&
+            a.auction.info.ended(),
+        )
+        .sort(
+          (a, b) =>
+            (b.auction.info.endedAt?.toNumber() || 0) -
+            (a.auction.info.endedAt?.toNumber() || 0),
+        );
+      console.log('new loop', nextBatch);
+      for (let i = 0; i < nextBatch.length; i++) {
+        const av = nextBatch[i];
+        if (!CALLING_MUTEX[av.auctionManager.pubkey.toBase58()]) {
+          CALLING_MUTEX[av.auctionManager.pubkey.toBase58()] = true;
+          console.log('About call', i);
+          const balance = await connection.getTokenAccountBalance(
+            av.auctionManager.info.acceptPayment,
+          );
+          console.log('Called', balance.value.uiAmount);
+          if (
+            ((balance.value.uiAmount || 0) == 0 &&
+              av.auction.info.bidState.bids
+                .map(b => b.amount.toNumber())
+                .reduce((acc, r) => (acc += r), 0) > 0) ||
+            (balance.value.uiAmount || 0) > 0.01
+          )
+            setValidDiscoveredEndedAuctions(old => ({
+              ...old,
+              [av.auctionManager.pubkey.toBase58()]: true,
+            }));
+        }
+      }
+    };
+    f();
+  }, [auctionsNeedingSettling.length, walletPubkey]);
+
+  Object.keys(validDiscoveredEndedAuctions).forEach(auctionViewKey => {
+    const auctionView = auctionsNeedingSettling.find(
+      a => a.auctionManager.pubkey.toBase58() == auctionViewKey,
+    );
+    if (!auctionView) return;
+    const winners = [...auctionView.auction.info.bidState.bids]
+      .reverse()
+      .slice(0, auctionView.auctionManager.info.settings.winningConfigs.length)
+      .reduce((acc: Record<string, boolean>, r) => {
+        acc[r.key.toBase58()] = true;
+        return acc;
+      }, {});
+
+    const myPayingAccount = accountByMint.get(
+      auctionView.auction.info.tokenMint.toBase58(),
+    );
+    const auctionKey = auctionView.auction.pubkey.toBase58();
+    const bidsToClaim = Object.values(bidderPotsByAuctionAndBidder).filter(
+      b =>
+        winners[b.info.bidderAct.toBase58()] &&
+        !b.info.emptied &&
+        b.info.auctionAct.toBase58() == auctionKey,
+    );
+    notifications.push({
+      title: 'You have an ended auction that needs settling!',
+      description: (
+        <span>
+          One of your auctions ended and it has monies that can be claimed.
+        </span>
+      ),
+      action: async () => {
+        try {
+          await settle(
+            connection,
+            wallet,
+            auctionView,
+            // Just claim all bidder pots
+            bidsToClaim,
+            myPayingAccount?.pubkey,
+            accountByMint,
+          );
+          const PROGRAM_IDS = programIds();
+          if (wallet?.publicKey) {
+            const ata = (
+              await PublicKey.findProgramAddress(
+                [
+                  wallet.publicKey.toBuffer(),
+                  PROGRAM_IDS.token.toBuffer(),
+                  QUOTE_MINT.toBuffer(),
+                ],
+                PROGRAM_IDS.associatedToken,
+              )
+            )[0];
+            await closePersonalEscrow(connection, wallet, ata);
+          }
+        } catch (e) {
+          console.error(e);
+          return false;
+        }
+        return true;
+      },
+    });
+  });
+}
+
 export function Notifications() {
   const { userAccounts } = useUserAccounts();
+
   const {
     metadata,
     whitelistedCreatorsByCreator,
@@ -130,6 +273,9 @@ export function Notifications() {
   });
 
   const walletPubkey = wallet?.publicKey?.toBase58() || '';
+
+  useSettlementAuctions({ connection, wallet, notifications, quoteAccts });
+
   const vaultsNeedUnwinding = useMemo(
     () =>
       Object.values(vaults).filter(
@@ -242,7 +388,7 @@ export function Notifications() {
           <List.Item
             extra={
               <>
-                <RunAction action={item.action} icon={<PlayCircleOutlined />} />
+                <RunAction id={item.action={item.action} icon={<PlayCircleOutlined />} />
                 {item.dismiss && (
                   <RunAction
                     action={item.dismiss}

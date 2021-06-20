@@ -375,10 +375,12 @@ export function processAccountsIntoAuctionView(
         view.thumbnail &&
         boxesExpected ===
           (view.items || []).length +
-            (auctionManager.info.settings.participationConfig === null
+            (auctionManager.info.settings.participationConfig === null ||
+            auctionManager.info.settings.participationConfig === undefined
               ? 0
               : 1) &&
         (auctionManager.info.settings.participationConfig === null ||
+          auctionManager.info.settings.participationConfig === undefined ||
           (auctionManager.info.settings.participationConfig !== null &&
             view.participationItem)) &&
         view.vault
