@@ -52,7 +52,12 @@ export async function settle(
       signers,
     );
 
-    sendTransactionWithRetry(connection, wallet, instructions[0], signers[0]);
+    await sendTransactionWithRetry(
+      connection,
+      wallet,
+      instructions[0],
+      signers[0],
+    );
   }
 
   await claimAllBids(connection, wallet, auctionView, bidsToClaim);

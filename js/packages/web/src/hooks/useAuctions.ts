@@ -190,7 +190,7 @@ export function processAccountsIntoAuctionView(
   existingAuctionView?: AuctionView,
 ): AuctionView | undefined {
   let state: AuctionViewState;
-  if (auction.info.state === AuctionState.Ended) {
+  if (auction.info.ended()) {
     state = AuctionViewState.Ended;
   } else if (auction.info.state === AuctionState.Started) {
     state = AuctionViewState.Live;
