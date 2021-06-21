@@ -4,7 +4,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, models } from '@oyster/common';
+import { utils, actions, models, findProgramAddress } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
@@ -38,7 +38,7 @@ export async function closeVault(
   let instructions: TransactionInstruction[] = [];
 
   const auctionKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         PROGRAM_IDS.auction.toBuffer(),
@@ -49,7 +49,7 @@ export async function closeVault(
   )[0];
 
   const auctionManagerKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(METAPLEX_PREFIX), auctionKey.toBuffer()],
       PROGRAM_IDS.metaplex,
     )

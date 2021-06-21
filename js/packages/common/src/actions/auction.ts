@@ -11,6 +11,7 @@ import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
 import { AccountParser } from '../contexts';
 import moment from 'moment';
+import { findProgramAddress } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
@@ -568,7 +569,7 @@ export async function createAuction(
   );
 
   const auctionKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -631,7 +632,7 @@ export async function startAuction(
   );
 
   const auctionKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -691,7 +692,7 @@ export async function placeBid(
   );
 
   const auctionKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -708,7 +709,7 @@ export async function placeBid(
   });
 
   const bidderMetaKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -815,7 +816,7 @@ export async function getBidderPotKey({
   bidderPubkey: PublicKey;
 }): Promise<PublicKey> {
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -835,7 +836,7 @@ export async function getAuctionExtended({
   resource: PublicKey;
 }): Promise<PublicKey> {
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -867,7 +868,7 @@ export async function cancelBid(
   );
 
   const auctionKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),
@@ -884,7 +885,7 @@ export async function cancelBid(
   });
 
   const bidderMetaKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         auctionProgramId.toBuffer(),

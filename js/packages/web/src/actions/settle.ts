@@ -12,6 +12,7 @@ import {
   BidderPot,
   createAssociatedTokenAccountInstruction,
   programIds,
+  findProgramAddress,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -77,7 +78,7 @@ async function emptyPaymentAccountForAllTokens(
 
       for (let k = 0; k < addresses.length; k++) {
         const ata = (
-          await PublicKey.findProgramAddress(
+          await findProgramAddress(
             [
               addresses[k].toBuffer(),
               PROGRAM_IDS.token.toBuffer(),

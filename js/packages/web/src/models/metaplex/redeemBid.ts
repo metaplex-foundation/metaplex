@@ -1,4 +1,4 @@
-import { getReservationList, programIds, VAULT_PREFIX } from '@oyster/common';
+import { findProgramAddress, programIds, VAULT_PREFIX } from '@oyster/common';
 import {
   PublicKey,
   SystemProgram,
@@ -47,7 +47,7 @@ export async function redeemBid(
   );
 
   const transferAuthority: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
         PROGRAM_IDS.vault.toBuffer(),

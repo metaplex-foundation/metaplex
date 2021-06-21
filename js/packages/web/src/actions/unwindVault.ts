@@ -14,6 +14,7 @@ import {
   VaultState,
   sendTransactionsWithManualRetry,
   decodeExternalPriceAccount,
+  findProgramAddress,
 } from '@oyster/common';
 
 import BN from 'bn.js';
@@ -82,7 +83,7 @@ export async function unwindVault(
   for (let i = 0; i < boxes.length; i++) {
     let nft = boxes[i];
     const ata = (
-      await PublicKey.findProgramAddress(
+      await findProgramAddress(
         [
           wallet.publicKey.toBuffer(),
           PROGRAM_IDS.token.toBuffer(),

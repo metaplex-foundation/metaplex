@@ -44,6 +44,41 @@ export function useLocalStorageState(key: string, defaultState?: string) {
   return [state, setLocalStorageState];
 }
 
+let count = 0;
+export const findProgramAddress = async (
+  seeds: (Buffer | Uint8Array)[],
+  programId: PublicKey,
+) => {
+  count++;
+  console.trace('calls to find program address', count);
+
+  const key =
+    'pda-' +
+    seeds.reduce((agg, item) => agg + item.toString('hex'), '') +
+    programId.toString();
+  let cached = localStorage.getItem(key);
+  if (cached) {
+    const value = JSON.parse(cached);
+
+    return [new PublicKey(value.key), parseInt(value.nonce)] as [
+      PublicKey,
+      number,
+    ];
+  }
+
+  const result = await PublicKey.findProgramAddress(seeds, programId);
+
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      key: result[0].toBase58(),
+      nonce: result[1],
+    }),
+  );
+
+  return result;
+};
+
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;

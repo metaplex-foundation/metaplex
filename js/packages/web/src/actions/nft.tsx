@@ -10,6 +10,7 @@ import {
   sendTransactionWithRetry,
   Data,
   Creator,
+  findProgramAddress,
 } from '@oyster/common';
 import React from 'react';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -120,7 +121,7 @@ export const mintNFT = async (
   );
 
   const recipientKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),
@@ -269,7 +270,7 @@ export const mintNFT = async (
     if (maxSupply !== undefined) {
       // make this so we can use it later.
       const authTokenAccount: PublicKey = (
-        await PublicKey.findProgramAddress(
+        await findProgramAddress(
           [
             wallet.publicKey.toBuffer(),
             programIds().token.toBuffer(),
