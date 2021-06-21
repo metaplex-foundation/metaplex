@@ -9,6 +9,7 @@ import {
   ParsedAccount,
 } from '@oyster/common';
 import { WhitelistedCreator } from '../models/metaplex';
+import { Cache } from 'three';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -81,8 +82,9 @@ const metadataToArt = (
 };
 
 const cachedImages = new Map<string, string>();
-export const useCachedImage = (uri: string) => {
+export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
   const [cachedBlob, setCachedBlob] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!uri) {
@@ -107,18 +109,25 @@ export const useCachedImage = (uri: string) => {
           if (uri?.startsWith('http')) {
             setCachedBlob(uri);
           }
+          setIsLoading(false);
           return;
         }
       }
 
       const blob = await response.blob();
+      if (cacheMesh) {
+        // extra caching for meshviewer
+        Cache.enabled = true;
+        Cache.add(uri, await blob.arrayBuffer());
+      }
       const blobURI = URL.createObjectURL(blob);
       cachedImages.set(uri, blobURI);
       setCachedBlob(blobURI);
+      setIsLoading(false);
     })();
-  }, [uri, setCachedBlob]);
+  }, [uri, setCachedBlob, setIsLoading]);
 
-  return cachedBlob;
+  return { cachedBlob, isLoading };
 };
 
 export const useArt = (id?: PublicKey | string) => {
