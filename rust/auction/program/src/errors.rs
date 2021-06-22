@@ -130,6 +130,10 @@ pub enum AuctionError {
     /// During the gap window, gap between next lowest bid must be of a certain percentage
     #[error("During the gap window, gap between next lowest bid must be of a certain percentage")]
     GapBetweenBidsTooSmall,
+
+    /// Gap tick size percentage must be between 0 and 100
+    #[error("Gap tick size percentage must be between 0 and 100")]
+    InvalidGapTickSizePercentage,
 }
 
 impl PrintProgramError for AuctionError {

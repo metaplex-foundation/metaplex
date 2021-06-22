@@ -8,7 +8,6 @@ import {
   actions,
   Metadata,
   ParsedAccount,
-  WinnerLimit,
   MasterEdition,
   SequenceType,
   sendTransactions,
@@ -20,8 +19,8 @@ import {
   getSafetyDepositBoxAddress,
   createAssociatedTokenAccountInstruction,
   sendTransactionWithRetry,
-  PriceFloor,
   findProgramAddress,
+  IPartialCreateAuctionArgs,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -100,13 +99,10 @@ export async function createAuctionManager(
     ParsedAccount<WhitelistedCreator>
   >,
   settings: AuctionManagerSettings,
-  winnerLimit: WinnerLimit,
-  endAuctionAt: BN,
-  auctionGap: BN,
+  auctionSettings: IPartialCreateAuctionArgs,
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
   paymentMint: PublicKey,
-  priceFloor: PriceFloor,
 ): Promise<{
   vault: PublicKey;
   auction: PublicKey;
@@ -136,15 +132,7 @@ export async function createAuctionManager(
     instructions: makeAuctionInstructions,
     signers: makeAuctionSigners,
     auction,
-  } = await makeAuction(
-    wallet,
-    winnerLimit,
-    vault,
-    endAuctionAt,
-    auctionGap,
-    paymentMint,
-    priceFloor,
-  );
+  } = await makeAuction(wallet, vault, auctionSettings);
 
   let safetyDepositConfigsWithPotentiallyUnsetTokens =
     await buildSafetyDepositArray(
