@@ -21,6 +21,43 @@ use {
     },
 };
 
+fn set_reservation_list_wrapper<'a>(
+    program_id: &'a Pubkey,
+    master_edition_info: &AccountInfo<'a>,
+    reservation_list_info: &AccountInfo<'a>,
+    auction_manager_info: &AccountInfo<'a>,
+    signer_seeds: &[&[u8]],
+    reservations: Vec<Reservation>,
+    first_push: bool,
+    total_reservation_spots: u64,
+) -> ProgramResult {
+    let total_reservation_spot_opt: Option<u64>;
+
+    if first_push {
+        total_reservation_spot_opt = Some(total_reservation_spots)
+    } else {
+        total_reservation_spot_opt = None
+    }
+    invoke_signed(
+        &set_reservation_list(
+            *program_id,
+            *master_edition_info.key,
+            *reservation_list_info.key,
+            *auction_manager_info.key,
+            reservations,
+            total_reservation_spot_opt,
+        ),
+        &[
+            master_edition_info.clone(),
+            reservation_list_info.clone(),
+            auction_manager_info.clone(),
+        ],
+        &[&signer_seeds],
+    )?;
+
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn reserve_list_if_needed<'a>(
     program_id: &'a Pubkey,
@@ -42,7 +79,7 @@ pub fn reserve_list_if_needed<'a>(
         // but may be invocation someday. It's inefficient style but better for the interface maintenance
         // in the long run if we move to better storage solutions (so that this action doesnt need to change if
         // storage does.)
-
+        let mut total_reservation_spots: u64 = 0;
         for n in 0..auction_manager.settings.winning_configs.len() {
             match auction.winner_at(n) {
                 Some(address) => {
@@ -55,6 +92,9 @@ pub fn reserve_list_if_needed<'a>(
                         })
                         .map(|i| i.amount as u64)
                         .sum();
+                    total_reservation_spots = total_reservation_spots
+                        .checked_add(spots)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
                     reservations.push(Reservation {
                         address,
                         // Select all items in a winning config matching the same safety deposit box
@@ -62,27 +102,45 @@ pub fn reserve_list_if_needed<'a>(
                         // and then sum them to get the total spots to reserve for this winner
                         spots_remaining: spots,
                         total_spots: spots,
-                    })
+                    });
                 }
                 None => break,
             }
         }
 
-        invoke_signed(
-            &set_reservation_list(
-                *program_id,
-                *master_edition_info.key,
-                *reservation_list_info.key,
-                *auction_manager_info.key,
-                reservations,
-            ),
-            &[
-                master_edition_info.clone(),
-                reservation_list_info.clone(),
-                auction_manager_info.clone(),
-            ],
-            &[&signer_seeds],
-        )?;
+        let mut first_push = true;
+        let mut reservation_queue: Vec<Reservation> = vec![];
+        for reservation in reservations {
+            reservation_queue.push(reservation);
+            if reservation_queue.len().checked_rem(30) == Some(0) && reservation_queue.len() > 0 {
+                set_reservation_list_wrapper(
+                    program_id,
+                    master_edition_info,
+                    reservation_list_info,
+                    auction_manager_info,
+                    signer_seeds,
+                    reservation_queue,
+                    first_push,
+                    total_reservation_spots,
+                )?;
+
+                first_push = false;
+                reservation_queue = vec![]; // start over with new list.
+            }
+        }
+
+        if reservation_queue.len() > 0 {
+            set_reservation_list_wrapper(
+                program_id,
+                master_edition_info,
+                reservation_list_info,
+                auction_manager_info,
+                signer_seeds,
+                reservation_queue,
+                first_push,
+                total_reservation_spots,
+            )?;
+        }
     }
 
     Ok(())
