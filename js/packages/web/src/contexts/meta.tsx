@@ -135,8 +135,6 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
-  const { wallet } = useWallet();
-  const walletPublicKey = wallet?.publicKey?.toBase58() || '';
   const { env } = useConnectionConfig();
 
   const [state, setState] = useState<MetaState>({
@@ -232,7 +230,6 @@ export function MetaProvider({ children = null as any }) {
         await processMetaplexAccounts(
           account,
           updateTemp,
-          walletPublicKey,
         );
       }
 
@@ -267,7 +264,6 @@ export function MetaProvider({ children = null as any }) {
     setState,
     updateMints,
     env,
-    walletPublicKey,
   ]);
 
   const updateStateValue = useMemo(() => (prop: keyof MetaState, key: string, value: any) => {
@@ -326,7 +322,6 @@ export function MetaProvider({ children = null as any }) {
             account: info.accountInfo,
           },
           updateStateValue,
-          walletPublicKey,
         );
       },
     );
@@ -388,7 +383,6 @@ export function MetaProvider({ children = null as any }) {
     updateMints,
     store,
     whitelistedCreatorsByCreator,
-    walletPublicKey,
     isLoading,
   ]);
 
@@ -569,7 +563,6 @@ const processAuctions = (
 const processMetaplexAccounts = async (
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
-  walletPublicKey: string,
 ) => {
   if (a.account.owner.toBase58() !== programIds().metaplex.toBase58()) return;
 
@@ -586,8 +579,7 @@ const processMetaplexAccounts = async (
         // Could have any kind of pictures in it.
         if (
           auctionManager.state.status !== AuctionManagerStatus.Initialized ||
-          (auctionManager.state.status === AuctionManagerStatus.Initialized &&
-            auctionManager.authority.toBase58() === walletPublicKey)
+          auctionManager.state.status === AuctionManagerStatus.Initialized)
         ) {
           const account: ParsedAccount<AuctionManager> = {
             pubkey: a.pubkey,
