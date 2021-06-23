@@ -1,4 +1,4 @@
-import { programIds, VAULT_PREFIX, getMetadata } from '@oyster/common';
+import { programIds, VAULT_PREFIX, findProgramAddress } from '@oyster/common';
 import {
   PublicKey,
   SystemProgram,
@@ -46,7 +46,7 @@ export async function redeemFullRightsTransferBid(
   );
 
   const transferAuthority: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
         PROGRAM_IDS.vault.toBuffer(),
@@ -57,7 +57,7 @@ export async function redeemFullRightsTransferBid(
   )[0];
 
   const value =
-    auctioneerReclaimIndex != undefined
+    auctioneerReclaimIndex !== undefined
       ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
           winningConfigItemIndex: auctioneerReclaimIndex,
           proxyCall: ProxyCallAddress.RedeemFullRightsTransferBid,

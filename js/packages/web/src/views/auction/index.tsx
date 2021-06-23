@@ -100,6 +100,7 @@ export const AuctionView = () => {
 
     return (
       <AuctionItem
+        key={item.metadata.pubkey.toBase58()}
         item={item}
         index={index}
         size={arr.length}
@@ -118,7 +119,6 @@ export const AuctionView = () => {
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
             >
-
               {items}
             </Carousel>
           </div>

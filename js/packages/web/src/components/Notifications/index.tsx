@@ -319,8 +319,8 @@ export function Notifications() {
     () =>
       Object.values(vaults).filter(
         v =>
-          v.info.authority.toBase58() == walletPubkey &&
-          v.info.state != VaultState.Deactivated &&
+          v.info.authority.toBase58() === walletPubkey &&
+          v.info.state !== VaultState.Deactivated &&
           v.info.tokenTypeCount > 0,
       ),
     [vaults, walletPubkey],
