@@ -579,7 +579,7 @@ const processMetaplexAccounts = async (
         // Could have any kind of pictures in it.
         if (
           auctionManager.state.status !== AuctionManagerStatus.Initialized ||
-          auctionManager.state.status === AuctionManagerStatus.Initialized)
+          auctionManager.state.status === AuctionManagerStatus.Initialized
         ) {
           const account: ParsedAccount<AuctionManager> = {
             pubkey: a.pubkey,
