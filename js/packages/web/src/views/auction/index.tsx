@@ -104,6 +104,7 @@ export const AuctionView = () => {
 
                 return (
                     <AuctionItem
+                      key={item.metadata.pubkey.toBase58()}
                       item={item}
                       index={index}
                       size={arr.length}

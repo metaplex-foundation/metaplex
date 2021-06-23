@@ -165,7 +165,7 @@ export const cache = {
       return;
     }
 
-    if (isActive == undefined) isActive = true;
+    if (isActive === undefined) isActive = true;
     else if (isActive instanceof Function) isActive = isActive(account);
 
     const isNew = !genericCache.has(address);

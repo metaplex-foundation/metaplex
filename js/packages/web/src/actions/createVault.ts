@@ -5,7 +5,7 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, createMint } from '@oyster/common';
+import { utils, actions, createMint, findProgramAddress } from '@oyster/common';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 const { createTokenAccount, initVault, MAX_VAULT_SIZE, VAULT_PREFIX } = actions;
@@ -45,7 +45,7 @@ export async function createVault(
   let vault = Keypair.generate();
 
   const vaultAuthority = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
         PROGRAM_IDS.vault.toBuffer(),

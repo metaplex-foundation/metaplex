@@ -21,6 +21,7 @@ import {
   createAssociatedTokenAccountInstruction,
   sendTransactionWithRetry,
   PriceFloor,
+  findProgramAddress,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -410,7 +411,7 @@ async function buildSafetyDepositArray(
   ) {
     safetyDepositConfig.push({
       tokenAccount: (
-        await PublicKey.findProgramAddress(
+        await findProgramAddress(
           [
             wallet.publicKey.toBuffer(),
             programIds().token.toBuffer(),
@@ -671,7 +672,7 @@ async function buildAndPopulateOneTimeAuthorizationAccount(
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
   const recipientKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),

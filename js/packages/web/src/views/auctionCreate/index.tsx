@@ -876,7 +876,7 @@ const PriceAuction = (props: {
               />
             </label>
           )}
-          {props.attributes.category != AuctionCategory.Open && (
+          {props.attributes.category !== AuctionCategory.Open && (
             <label className="action-field">
               <span className="field-title">Price Floor</span>
               <span className="field-info">

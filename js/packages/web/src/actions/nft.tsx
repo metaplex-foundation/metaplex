@@ -10,9 +10,10 @@ import {
   sendTransactionWithRetry,
   Data,
   Creator,
+  findProgramAddress,
 } from '@oyster/common';
 import React from 'react';
-import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
+import { MintLayout, Token } from '@solana/spl-token';
 import { WalletAdapter } from '@solana/wallet-base';
 import {
   Keypair,
@@ -95,9 +96,9 @@ export const mintNFT = async (
   const mintRent = await connection.getMinimumBalanceForRentExemption(
     MintLayout.span,
   );
-  const accountRent = await connection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
-  );
+  // const accountRent = await connection.getMinimumBalanceForRentExemption(
+  //   AccountLayout.span,
+  // );
 
   // This owner is a temporary signer and owner of metadata we use to circumvent requesting signing
   // twice post Arweave. We store in an account (payer) and use it post-Arweave to update MD with new link
@@ -120,7 +121,7 @@ export const mintNFT = async (
   );
 
   const recipientKey: PublicKey = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),
@@ -269,7 +270,7 @@ export const mintNFT = async (
     if (maxSupply !== undefined) {
       // make this so we can use it later.
       const authTokenAccount: PublicKey = (
-        await PublicKey.findProgramAddress(
+        await findProgramAddress(
           [
             wallet.publicKey.toBuffer(),
             programIds().token.toBuffer(),

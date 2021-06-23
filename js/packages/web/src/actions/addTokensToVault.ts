@@ -4,7 +4,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, models } from '@oyster/common';
+import { utils, actions, models, findProgramAddress } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
@@ -39,7 +39,7 @@ export async function addTokensToVault(
   );
 
   const vaultAuthority = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
         PROGRAM_IDS.vault.toBuffer(),
