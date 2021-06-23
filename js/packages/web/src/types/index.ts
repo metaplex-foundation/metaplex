@@ -31,7 +31,6 @@ export enum ArtType {
   NFT,
 }
 export interface Art {
-  image: string;
   uri: string | undefined;
   mint: string | undefined;
   category: MetadataCategory;
@@ -42,12 +41,14 @@ export interface Art {
   endingTS?: number;
   seller_fee_basis_points?: number;
   creators?: Artist[];
-  about?: string;
   type: ArtType;
   edition?: number;
   supply?: number;
   maxSupply?: number;
-  files?: string[];
+
+  // files?: string[];
+  // image: string;
+  // about?: string;
 }
 
 export interface Presale {

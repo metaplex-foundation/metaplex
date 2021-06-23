@@ -6,6 +6,7 @@ import { ThreeDots } from '../MyLoader';
 import { useCachedImage } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { useOnScreen } from './../../hooks/useOnScreen';
+import { PublicKey } from '@solana/web3.js';
 
 const MeshArtContent = ({
   uri,
@@ -144,6 +145,7 @@ export const ArtContent = ({
   files,
   active,
   allowMeshRender,
+  pubkey,
 }: {
   category?: MetadataCategory;
   extension?: string;
@@ -157,11 +159,17 @@ export const ArtContent = ({
   ref?: Ref<HTMLDivElement>;
   active?: boolean;
   allowMeshRender?: boolean;
+  pubkey?: PublicKey | string,
 }) => {
+  if (pubkey) {
+    // TODO: query for data if on screen
+  }
 
   const ref = useRef();
 
   const isVisible = useOnScreen(ref);
+
+
 
   if (allowMeshRender&& (extension?.endsWith('.glb') || category === 'vr')) {
     return <MeshArtContent

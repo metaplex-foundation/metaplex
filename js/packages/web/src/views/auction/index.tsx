@@ -39,7 +39,8 @@ export const AuctionItem = ({
   size: number;
   active?: boolean;
 }) => {
-  const art = useArt(item.metadata.pubkey);
+  const id = item.metadata.pubkey;
+  const art = useArt(id);
   const ref = useRef<HTMLDivElement>(null);
   var style: React.CSSProperties = {
     transform:
@@ -61,9 +62,7 @@ export const AuctionItem = ({
     <div ref={ref}>
       <ArtContent
         category={art.category}
-        uri={art.image}
-        extension={art.image}
-        files={art.files}
+        pubkey={id}
         className="artwork-image stack-item"
         style={style}
         ref={ref}
@@ -83,6 +82,10 @@ export const AuctionView = () => {
   const edition = '1 of 1';
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
+
+  // TODO: BL
+  const hasDescription = false; // art === undefined || art.about === undefined
+  const description = ''; // art.about
 
   const items = [
     ...(auction?.items
@@ -128,8 +131,8 @@ export const AuctionView = () => {
           <h1>{nftCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : nftCount}</h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
           <p>
-            {(art === undefined || art.about === undefined) && <Skeleton paragraph={{ rows: 3 }} />}
-            {art.about || (
+            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+            {description || (
               winnerCount !== undefined && <div style={{ fontStyle: 'italic' }}>
                 No description provided.
               </div>

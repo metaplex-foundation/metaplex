@@ -18,6 +18,9 @@ export const ArtView = () => {
   const connection = useConnection();
   const art = useArt(id);
 
+  // TODO: BL
+  const description = ''; // art.about;
+
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
   const tag = (
@@ -47,13 +50,11 @@ export const ArtView = () => {
           <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
             <ArtContent
               category={art.category}
-              extension={art.image}
-              uri={art.image}
               style={{ width: 300 }}
               height={300}
               width={300}
               className="artwork-image"
-              files={art.files}
+              pubkey={id}
               active={true}
             />
           </Col>
@@ -119,7 +120,7 @@ export const ArtView = () => {
             </div>
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
-            <div className="info-content">{art.about}</div>
+            <div className="info-content">{description}</div>
             <br />
             {/*
               TODO: add info about artist
