@@ -201,7 +201,7 @@ export function processAccountsIntoAuctionView(
   existingAuctionView?: AuctionView,
 ): AuctionView | undefined {
   let state: AuctionViewState;
-  if (auction.info.state === AuctionState.Ended) {
+  if (auction.info.ended()) {
     state = AuctionViewState.Ended;
   } else if (auction.info.state === AuctionState.Started) {
     state = AuctionViewState.Live;
@@ -386,10 +386,12 @@ export function processAccountsIntoAuctionView(
         view.thumbnail &&
         boxesExpected ===
           (view.items || []).length +
-            (auctionManager.info.settings.participationConfig === null
+            (auctionManager.info.settings.participationConfig === null ||
+            auctionManager.info.settings.participationConfig === undefined
               ? 0
               : 1) &&
         (auctionManager.info.settings.participationConfig === null ||
+          auctionManager.info.settings.participationConfig === undefined ||
           (auctionManager.info.settings.participationConfig !== null &&
             view.participationItem)) &&
         view.vault

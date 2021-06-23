@@ -20,13 +20,14 @@ import { AccountLayout, MintInfo } from '@solana/spl-token';
 import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
+import { QUOTE_MINT } from '../constants';
 const { createTokenAccount } = actions;
 const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
   wallet: any,
-  bidderTokenAccount: PublicKey,
+  bidderTokenAccount: PublicKey | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
@@ -61,7 +62,7 @@ export async function sendPlaceBid(
 export async function setupPlaceBid(
   connection: Connection,
   wallet: any,
-  bidderTokenAccount: PublicKey,
+  bidderTokenAccount: PublicKey | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
@@ -77,8 +78,12 @@ export async function setupPlaceBid(
     AccountLayout.span,
   );
 
-  const tokenAccount = cache.get(bidderTokenAccount) as TokenAccount;
-  const mint = cache.get(tokenAccount.info.mint) as ParsedAccount<MintInfo>;
+  const tokenAccount = bidderTokenAccount
+    ? (cache.get(bidderTokenAccount) as TokenAccount)
+    : undefined;
+  const mint = cache.get(
+    tokenAccount ? tokenAccount.info.mint : QUOTE_MINT,
+  ) as ParsedAccount<MintInfo>;
   let lamports = toLamports(amount, mint.info) + accountRentExempt;
 
   let bidderPotTokenAccount: PublicKey;
