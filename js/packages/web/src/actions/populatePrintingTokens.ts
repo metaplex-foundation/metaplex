@@ -26,8 +26,6 @@ export async function populatePrintingTokens(
   signers: Array<Keypair[]>;
   safetyDepositConfigs: SafetyDepositInstructionConfig[];
 }> {
-  debugger;
-
   const PROGRAM_IDS = utils.programIds();
 
   let batchCounter = 0;

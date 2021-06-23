@@ -44,14 +44,10 @@ export function useLocalStorageState(key: string, defaultState?: string) {
   return [state, setLocalStorageState];
 }
 
-let count = 0;
 export const findProgramAddress = async (
   seeds: (Buffer | Uint8Array)[],
   programId: PublicKey,
 ) => {
-  count++;
-  console.trace('calls to find program address', count);
-
   const key =
     'pda-' +
     seeds.reduce((agg, item) => agg + item.toString('hex'), '') +

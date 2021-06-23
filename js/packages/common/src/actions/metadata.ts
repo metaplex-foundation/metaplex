@@ -225,8 +225,9 @@ export class Metadata {
   }
 
   public async init() {
-    this.edition = await getEdition(this.mint);
-    this.masterEdition = await getEdition(this.mint);
+    const edition = await getEdition(this.mint);
+    this.edition = edition;
+    this.masterEdition = edition;
   }
 }
 
@@ -408,7 +409,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
   ],
 ]);
 
-export const decodeMetadata = async (buffer: Buffer): Promise<Metadata> => {
+export const decodeMetadata = (buffer: Buffer): Metadata => {
   const metadata = deserializeUnchecked(
     METADATA_SCHEMA,
     Metadata,
