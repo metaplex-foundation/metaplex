@@ -21,6 +21,7 @@ import {
   getBidderPotKey,
   programIds,
   Bid,
+  useUserAccounts,
 } from '@oyster/common';
 import { useMeta } from '../../contexts';
 import {
