@@ -15,7 +15,8 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "run-s build-ts build-css",
+    "build-ts": "tsc",
     "build-css": "less-watch-compiler src/ dist/lib/ --run-once",
     "start": "npm-run-all --parallel watch watch-css watch-css-src",
     "watch-css": "less-watch-compiler src/ dist/lib/",
@@ -46,6 +47,7 @@
     "borsh": "^0.4.0",
     "bs58": "^4.0.1",
     "buffer-layout": "^1.2.0",
+    "crypto-hash": "^1.3.0",
     "eventemitter3": "^4.0.7",
     "identicon.js": "^2.3.3",
     "jazzicon": "^1.5.0",

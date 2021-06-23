@@ -7,6 +7,7 @@ import {
 import { programIds } from '../utils/ids';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
+import { findProgramAddress } from '../utils';
 
 export const VAULT_PREFIX = 'vault';
 export enum VaultKey {
@@ -349,7 +350,7 @@ export async function getSafetyDepositBox(
   const vaultProgramId = programIds().vault;
 
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(VAULT_PREFIX), vault.toBuffer(), tokenMint.toBuffer()],
       vaultProgramId,
     )
@@ -452,7 +453,7 @@ export async function activateVault(
   const vaultProgramId = programIds().vault;
 
   const fractionMintAuthority = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
@@ -518,7 +519,7 @@ export async function combineVault(
   const vaultProgramId = programIds().vault;
 
   const burnAuthority = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
@@ -610,7 +611,7 @@ export async function withdrawTokenFromSafetyDepositBox(
   const vaultProgramId = programIds().vault;
 
   const transferAuthority = (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
       vaultProgramId,
     )
@@ -708,7 +709,7 @@ export async function getSafetyDepositBoxAddress(
 ): Promise<PublicKey> {
   const PROGRAM_IDS = programIds();
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [Buffer.from(VAULT_PREFIX), vault.toBuffer(), tokenMint.toBuffer()],
       PROGRAM_IDS.vault,
     )

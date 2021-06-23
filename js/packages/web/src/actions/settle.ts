@@ -12,6 +12,9 @@ import {
   BidderPot,
   createAssociatedTokenAccountInstruction,
   programIds,
+  findProgramAddress,
+  AuctionState,
+  TokenAccount,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -19,6 +22,7 @@ import { AuctionView } from '../hooks';
 import { claimBid } from '../models/metaplex/claimBid';
 import { emptyPaymentAccount } from '../models/metaplex/emptyPaymentAccount';
 import { QUOTE_MINT } from '../constants';
+import { setupPlaceBid } from './sendPlaceBid';
 
 const BATCH_SIZE = 10;
 const SETTLE_TRANSACTION_SIZE = 7;
@@ -28,7 +32,35 @@ export async function settle(
   wallet: any,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
+  payingAccount: PublicKey | undefined,
+  accountsByMint: Map<string, TokenAccount>,
 ) {
+  if (
+    auctionView.auction.info.ended() &&
+    auctionView.auction.info.state !== AuctionState.Ended
+  ) {
+    let signers: Keypair[][] = [];
+    let instructions: TransactionInstruction[][] = [];
+
+    await setupPlaceBid(
+      connection,
+      wallet,
+      payingAccount,
+      auctionView,
+      accountsByMint,
+      0,
+      instructions,
+      signers,
+    );
+
+    await sendTransactionWithRetry(
+      connection,
+      wallet,
+      instructions[0],
+      signers[0],
+    );
+  }
+
   await claimAllBids(connection, wallet, auctionView, bidsToClaim);
   await emptyPaymentAccountForAllTokens(connection, wallet, auctionView);
 }
@@ -66,7 +98,7 @@ async function emptyPaymentAccountForAllTokens(
         ?.map(c => c.address)
         .find(
           c =>
-            c.toBase58() ==
+            c.toBase58() ===
             auctionView.auctionManager.info.authority.toBase58(),
         );
 
@@ -77,7 +109,7 @@ async function emptyPaymentAccountForAllTokens(
 
       for (let k = 0; k < addresses.length; k++) {
         const ata = (
-          await PublicKey.findProgramAddress(
+          await findProgramAddress(
             [
               addresses[k].toBuffer(),
               PROGRAM_IDS.token.toBuffer(),
