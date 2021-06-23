@@ -64,26 +64,37 @@ export function useCachedRedemptionKeysByWallet() {
   >({});
 
   useEffect(() => {
-    if (wallet && wallet.publicKey)
-      Object.keys(auctions).forEach(a => {
-        if (!cachedRedemptionKeys[a])
-          //@ts-ignore
-          getBidderKeys(auctions[a].pubkey, wallet.publicKey).then(key =>
-            setCachedRedemptionKeys(vals => ({
-              ...vals,
-              [a]: bidRedemptions[key.bidRedemption.toBase58()]
-                ? bidRedemptions[key.bidRedemption.toBase58()]
-                : { pubkey: key.bidRedemption, info: null },
-            })),
-          );
-        else if (!cachedRedemptionKeys[a].info)
-          setCachedRedemptionKeys(vals => ({
-            ...vals,
-            [a]:
+    (async () => {
+      if (wallet && wallet.publicKey) {
+        const temp: Record<
+          string,
+          ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
+        > = {};
+        const keys = Object.keys(auctions);
+        const tasks = [];
+        for (let i = 0; i < keys.length; i++) {
+          const a = keys[i];
+          if (!cachedRedemptionKeys[a])
+            //@ts-ignore
+            tasks.push(
+              getBidderKeys(auctions[a].pubkey, wallet.publicKey).then(key => {
+                temp[a] = bidRedemptions[key.bidRedemption.toBase58()]
+                  ? bidRedemptions[key.bidRedemption.toBase58()]
+                  : { pubkey: key.bidRedemption, info: null };
+              }),
+            );
+          else if (!cachedRedemptionKeys[a].info) {
+            temp[a] =
               bidRedemptions[cachedRedemptionKeys[a].pubkey.toBase58()] ||
-              cachedRedemptionKeys[a],
-          }));
-      });
+              cachedRedemptionKeys[a];
+          }
+        }
+
+        await Promise.all(tasks);
+
+        setCachedRedemptionKeys(temp);
+      }
+    })();
   }, [auctions, bidRedemptions, wallet?.publicKey]);
 
   return cachedRedemptionKeys;
