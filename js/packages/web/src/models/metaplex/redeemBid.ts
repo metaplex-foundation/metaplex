@@ -58,7 +58,7 @@ export async function redeemBid(
   )[0];
 
   const value =
-    auctioneerReclaimIndex != undefined
+    auctioneerReclaimIndex !== undefined
       ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
           winningConfigItemIndex: auctioneerReclaimIndex,
           proxyCall: ProxyCallAddress.RedeemBid,

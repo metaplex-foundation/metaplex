@@ -67,7 +67,7 @@ async function emptyPaymentAccountForAllTokens(
         ?.map(c => c.address)
         .find(
           c =>
-            c.toBase58() ==
+            c.toBase58() ===
             auctionView.auctionManager.info.authority.toBase58(),
         );
 

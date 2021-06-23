@@ -67,7 +67,7 @@ export const AuctionCard = ({
       auctionView.myBidderPot?.info.bidderAct,
     );
   const priceFloor =
-    auctionView.auction.info.priceFloor.type == PriceFloorType.Minimum
+    auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
   const eligibleForOpenEdition = eligibleForParticipationPrizeGivenWinningIndex(

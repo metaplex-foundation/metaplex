@@ -40,7 +40,7 @@ export async function unwindVault(
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
 
-  if (vault.info.state == VaultState.Inactive) {
+  if (vault.info.state === VaultState.Inactive) {
     console.log('Vault is inactive, combining');
     const epa = await connection.getAccountInfo(
       vault.info.pricingLookupAddress,

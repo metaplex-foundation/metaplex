@@ -52,7 +52,7 @@ export async function claimUnusedPrizes(
         safetyDeposit.info.store,
       );
       // If box is empty, we cant redeem this. Could be broken AM we are claiming against.
-      if (tokenBalance.value.uiAmount == 0) continue;
+      if (tokenBalance.value.uiAmount === 0) continue;
       // In principle it is possible to have two winning config items of same safety deposit box
       // so we cover for that possibility by doing an array not a find
       for (let j = 0; j < winningConfig.items.length; j++) {

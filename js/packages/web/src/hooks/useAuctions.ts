@@ -206,7 +206,7 @@ export function processAccountsIntoAuctionView(
   // The defective auction view state really applies to auction managers, not auctions, so we ignore it here
   if (
     desiredState &&
-    desiredState != AuctionViewState.Defective &&
+    desiredState !== AuctionViewState.Defective &&
     desiredState !== state
   )
     return undefined;
@@ -214,14 +214,14 @@ export function processAccountsIntoAuctionView(
   if (auctionManager) {
     // instead we apply defective state to auction managers
     if (
-      desiredState == AuctionViewState.Defective &&
-      auctionManager.info.state.status != AuctionManagerStatus.Initialized
+      desiredState === AuctionViewState.Defective &&
+      auctionManager.info.state.status !== AuctionManagerStatus.Initialized
     )
       return undefined;
     // Generally the only way an initialized auction manager can get through is if you are asking for defective ones.
     else if (
-      desiredState != AuctionViewState.Defective &&
-      auctionManager.info.state.status == AuctionManagerStatus.Initialized
+      desiredState !== AuctionViewState.Defective &&
+      auctionManager.info.state.status === AuctionManagerStatus.Initialized
     )
       return undefined;
     const boxesExpected = auctionManager.info.state.winningConfigItemsValidated;

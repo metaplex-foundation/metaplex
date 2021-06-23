@@ -4,7 +4,6 @@ import { formatTokenAmount, CountdownState } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
 import './index.less';
 import { AuctionView, useArt, useCreators } from '../../hooks';
-import { MetaAvatar } from '../MetaAvatar';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
 
@@ -20,7 +19,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const image = art?.image;
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
-  const description = art?.about;
   const [state, setState] = useState<CountdownState>();
 
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
