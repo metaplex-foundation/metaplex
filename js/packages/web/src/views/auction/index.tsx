@@ -9,6 +9,7 @@ import {
   useAuction,
   useBidsForAuction,
   useCreators,
+  useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
 
@@ -40,8 +41,6 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  const art = useArt(id);
-  const ref = useRef<HTMLDivElement>(null);
   var style: React.CSSProperties = {
     transform:
       index === 0
@@ -59,13 +58,11 @@ export const AuctionItem = ({
     height: 300,
   };
   return (
-    <div ref={ref}>
+    <div>
       <ArtContent
-        category={art.category}
         pubkey={id}
         className="artwork-image stack-item"
         style={style}
-        ref={ref}
         active={active}
       />
     </div>
@@ -78,14 +75,15 @@ export const AuctionView = () => {
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
+  const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
   const edition = '1 of 1';
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
-  // TODO: BL
-  const hasDescription = false; // art === undefined || art.about === undefined
-  const description = ''; // art.about
+
+  const hasDescription = data === undefined || data.description === undefined
+  const description = data?.description;
 
   const items = [
     ...(auction?.items
@@ -114,7 +112,7 @@ export const AuctionView = () => {
 
   return (
     <>
-      <Row justify="space-around">
+      <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
 

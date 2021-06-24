@@ -23,7 +23,6 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
     <Row className="presale">
       <Col md={12} className="explore">
         <ArtContent
-          category={art.category}
           pubkey={id}
           className="artwork-image"
         />

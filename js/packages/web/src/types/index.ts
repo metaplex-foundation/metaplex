@@ -8,8 +8,6 @@ export interface Auction {
   solAmt: number;
   link: string;
   image: string;
-
-  endingTS: number;
 }
 
 export interface Artist {
@@ -33,26 +31,18 @@ export enum ArtType {
 export interface Art {
   uri: string | undefined;
   mint: string | undefined;
-  category: MetadataCategory;
   link: string;
   title: string;
   artist: string;
-  priceSOL: number;
-  endingTS?: number;
   seller_fee_basis_points?: number;
   creators?: Artist[];
   type: ArtType;
   edition?: number;
   supply?: number;
   maxSupply?: number;
-
-  // files?: string[];
-  // image: string;
-  // about?: string;
 }
 
 export interface Presale {
-  endingTS: number;
   targetPricePerShare?: number;
   pricePerShare?: number;
   marketCap?: number;

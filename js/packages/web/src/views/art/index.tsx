@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Divider, Layout, Tag, Button } from 'antd';
 import { useParams } from 'react-router-dom';
-import { useArt } from './../../hooks';
+import { useArt, useExtendedArt } from './../../hooks';
 
 import './index.less';
 import { ArtContent } from '../../components/ArtContent';
@@ -17,9 +17,9 @@ export const ArtView = () => {
   const { wallet } = useWallet();
   const connection = useConnection();
   const art = useArt(id);
+  const { ref, data } = useExtendedArt(id);
 
-  // TODO: BL
-  const description = ''; // art.about;
+  const description = data?.description;
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
@@ -46,10 +46,9 @@ export const ArtView = () => {
   return (
     <Content>
       <Col>
-        <Row>
+        <Row ref={ref}>
           <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
             <ArtContent
-              category={art.category}
               style={{ width: 300 }}
               height={300}
               width={300}

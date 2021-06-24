@@ -16,7 +16,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   let { auctionView } = props;
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
-  const category = art?.category;
   const name = art?.title || ' ';
   const [state, setState] = useState<CountdownState>();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
@@ -77,7 +76,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       cover={
         <>
           <ArtContent
-            category={category}
             className="auction-image no-events"
             preview={false}
 

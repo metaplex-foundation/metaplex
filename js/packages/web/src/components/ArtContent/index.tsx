@@ -3,9 +3,9 @@ import { Image } from 'antd';
 import { MetadataCategory } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
-import { useCachedImage } from '../../hooks';
+import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
-import { useOnScreen } from './../../hooks/useOnScreen';
+import { useInView } from 'react-intersection-observer';
 import { PublicKey } from '@solana/web3.js';
 
 const MeshArtContent = ({
@@ -95,7 +95,7 @@ const VideoArtContent = ({
   })[0];
 
   const content = (
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo && likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -136,40 +136,42 @@ const VideoArtContent = ({
 
 
 export const ArtContent = ({
-  uri,
-  extension,
   category,
   className,
   preview,
   style,
-  files,
   active,
   allowMeshRender,
   pubkey,
+
+  uri,
+  extension,
+  files,
 }: {
   category?: MetadataCategory;
-  extension?: string;
-  uri?: string;
   className?: string;
   preview?: boolean;
   style?: React.CSSProperties;
   width?: number;
   height?: number;
-  files?: string[];
   ref?: Ref<HTMLDivElement>;
   active?: boolean;
   allowMeshRender?: boolean;
   pubkey?: PublicKey | string,
+
+  extension?: string;
+  uri?: string;
+  files?: string[];
 }) => {
-  if (pubkey) {
-    // TODO: query for data if on screen
+  const id = typeof pubkey === 'string' ? pubkey : pubkey?.toBase58() || '';
+
+  const { ref, data } = useExtendedArt(id);
+
+  if(pubkey && data) {
+    files = data.properties.files?.filter(f => typeof f === 'string') as string[];
+    uri = data.image;
+    category = data.properties.category;
   }
-
-  const ref = useRef();
-
-  const isVisible = useOnScreen(ref);
-
-
 
   if (allowMeshRender&& (extension?.endsWith('.glb') || category === 'vr')) {
     return <MeshArtContent

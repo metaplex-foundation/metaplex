@@ -414,7 +414,6 @@ export const InnerBillingView = ({
         >
           <Col span={12}>
             <ArtContent
-              category={art.category}
               pubkey={id}
               className="artwork-image"
             />

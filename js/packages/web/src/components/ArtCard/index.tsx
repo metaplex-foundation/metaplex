@@ -45,13 +45,8 @@ export const ArtCard = (props: ArtCardProps) => {
     ...rest
   } = props;
   const art = useArt(pubkey);
-  category = art?.category || category;
   creators = art?.creators || creators || [];
   name = art?.title || name || ' ';
-
-  // TODO: BL
-  // image = art?.image || image;
-  // description = art?.about || description;
 
   let badge = '';
   if (art.type === ArtType.NFT) {
@@ -87,6 +82,7 @@ export const ArtCard = (props: ArtCardProps) => {
             extension={file || image}
             uri={image}
             category={category}
+
             preview={preview}
             height={height}
             width={width}
