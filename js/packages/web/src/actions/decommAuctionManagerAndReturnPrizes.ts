@@ -1,9 +1,5 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
-import {
-  programIds,
-  sendTransactionsWithManualRetry,
-  TokenAccount,
-} from '@oyster/common';
+import { sendTransactionsWithManualRetry, TokenAccount } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
 import { AuctionManagerStatus } from '../models/metaplex';
@@ -20,7 +16,7 @@ export async function decommAuctionManagerAndReturnPrizes(
   let instructions: Array<TransactionInstruction[]> = [];
 
   if (
-    auctionView.auctionManager.info.state.status ==
+    auctionView.auctionManager.info.state.status ===
     AuctionManagerStatus.Initialized
   ) {
     let decomSigners: Keypair[] = [];

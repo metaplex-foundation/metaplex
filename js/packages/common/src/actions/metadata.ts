@@ -203,8 +203,6 @@ export class Metadata {
   primarySaleHappened: boolean;
   isMutable: boolean;
 
-  extended?: IMetadataExtension;
-
   // set lazy
   masterEdition?: PublicKey;
   edition?: PublicKey;
