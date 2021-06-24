@@ -37,9 +37,8 @@ export async function populatePrintingTokens(
   let currInstructions: TransactionInstruction[] = [];
   for (let i = 0; i < safetyDepositConfigs.length; i++) {
     let nft = safetyDepositConfigs[i];
-    console.log('NFT', nft);
     if (
-      nft.tokenMint.toBase58() ==
+      nft.tokenMint.toBase58() ===
         nft.draft.masterEdition?.info.printingMint.toBase58() &&
       !nft.tokenAccount
     ) {
@@ -68,7 +67,7 @@ export async function populatePrintingTokens(
     }
     if (
       nft.tokenAccount &&
-      nft.tokenMint.toBase58() ==
+      nft.tokenMint.toBase58() ===
         nft.draft.masterEdition?.info.printingMint.toBase58()
     ) {
       let balance = 0;
