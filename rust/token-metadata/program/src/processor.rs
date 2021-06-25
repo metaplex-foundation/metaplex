@@ -582,10 +582,28 @@ pub fn process_set_reservation_list(
         return Err(MetadataError::ReservationAlreadyMade.into());
     }
 
-    let mut total_len: u64 = reservation_list.total_reservation_spots();
-    let mut total_len_check: u64 = reservation_list.total_reservation_spots();
+    reservation_list.add_reservations(reservations);
 
-    for reservation in &reservations {
+    if let Some(total) = total_reservation_spots {
+        reservation_list.set_supply_snapshot(Some(master_edition.supply));
+        reservation_list.set_total_reservation_spots(total);
+        master_edition.supply = master_edition
+            .supply
+            .checked_add(total as u64)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+
+        if let Some(max_supply) = master_edition.max_supply {
+            if master_edition.supply > max_supply {
+                return Err(MetadataError::ReservationBreachesMaximumSupply.into());
+            }
+        }
+        master_edition.serialize(&mut *master_edition_info.data.borrow_mut())?;
+    }
+
+    let mut total_len: u64 = 0;
+    let mut total_len_check: u64 = 0;
+
+    for reservation in reservation_list.reservations() {
         total_len = total_len
             .checked_add(reservation.spots_remaining)
             .ok_or(MetadataError::NumericalOverflowError)?;
@@ -601,25 +619,6 @@ pub fn process_set_reservation_list(
 
     if total_len_check != total_len {
         return Err(MetadataError::SpotMismatch.into());
-    }
-
-    reservation_list.add_reservations(reservations);
-
-    if let Some(total) = total_reservation_spots {
-        msg!("Total new spots allocated: {:?}", total);
-        reservation_list.set_supply_snapshot(Some(master_edition.supply));
-        reservation_list.set_total_reservation_spots(total);
-        master_edition.supply = master_edition
-            .supply
-            .checked_add(total as u64)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-
-        if let Some(max_supply) = master_edition.max_supply {
-            if master_edition.supply > max_supply {
-                return Err(MetadataError::ReservationBreachesMaximumSupply.into());
-            }
-        }
-        master_edition.serialize(&mut *master_edition_info.data.borrow_mut())?;
     }
 
     if total_len > reservation_list.total_reservation_spots() {

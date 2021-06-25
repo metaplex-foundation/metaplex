@@ -112,7 +112,7 @@ pub fn reserve_list_if_needed<'a>(
         let mut reservation_queue: Vec<Reservation> = vec![];
         for reservation in reservations {
             reservation_queue.push(reservation);
-            if reservation_queue.len().checked_rem(30) == Some(0) && reservation_queue.len() > 0 {
+            if reservation_queue.len().checked_rem(20) == Some(0) && reservation_queue.len() > 0 {
                 set_reservation_list_wrapper(
                     program_id,
                     master_edition_info,
