@@ -582,6 +582,24 @@ pub fn process_set_reservation_list(
         return Err(MetadataError::ReservationAlreadyMade.into());
     }
 
+    let mut total_len: u64 = reservation_list.current_reservation_spots();
+    let mut total_len_check: u64 = reservation_list.current_reservation_spots();
+
+    for reservation in &reservations {
+        total_len = total_len
+            .checked_add(reservation.spots_remaining)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+        total_len_check = total_len_check
+            .checked_add(reservation.total_spots)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+        if reservation.spots_remaining != reservation.total_spots {
+            return Err(
+                MetadataError::ReservationSpotsRemainingShouldMatchTotalSpotsAtStart.into(),
+            );
+        }
+    }
+    reservation_list.set_current_reservation_spots(total_len);
+
     reservation_list.add_reservations(reservations);
 
     if let Some(total) = total_reservation_spots {
@@ -598,23 +616,6 @@ pub fn process_set_reservation_list(
             }
         }
         master_edition.serialize(&mut *master_edition_info.data.borrow_mut())?;
-    }
-
-    let mut total_len: u64 = 0;
-    let mut total_len_check: u64 = 0;
-
-    for reservation in reservation_list.reservations() {
-        total_len = total_len
-            .checked_add(reservation.spots_remaining)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-        total_len_check = total_len_check
-            .checked_add(reservation.total_spots)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-        if reservation.spots_remaining != reservation.total_spots {
-            return Err(
-                MetadataError::ReservationSpotsRemainingShouldMatchTotalSpotsAtStart.into(),
-            );
-        }
     }
 
     if total_len_check != total_len {
