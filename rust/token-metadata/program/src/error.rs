@@ -266,6 +266,14 @@ pub enum MetadataError {
     /// Data type mismatch
     #[error("Data type mismatch")]
     DataTypeMismatch,
+
+    /// Beyond alotted address size in reservation!
+    #[error("Beyond alotted address size in reservation!")]
+    BeyondAlottedAddressSize,
+
+    /// The reservation has only been partially alotted
+    #[error("The reservation has only been partially alotted")]
+    ReservationNotComplete,
 }
 
 impl PrintProgramError for MetadataError {

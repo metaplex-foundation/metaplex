@@ -45,6 +45,8 @@ pub struct MintPrintingTokensViaTokenArgs {
 pub struct SetReservationListArgs {
     /// If set, means that no more than this number of editions can ever be minted. This is immutable.
     pub reservations: Vec<Reservation>,
+    /// should only be present on the very first call to set reservation list.
+    pub total_reservation_spots: Option<u64>,
 }
 
 /// Instructions supported by the Metadata program.
@@ -123,6 +125,10 @@ pub enum MetadataInstruction {
     /// of winners in order and then each winner when they get their token submits their mint and account
     /// with the pda that was created by that first bidder - the token metadata can then cross reference
     /// these people with the list and see that bidder A gets edition #2, so on and so forth.
+    ///
+    /// NOTE: If you have more than 30 addresses in a reservation list, this may be called multiple times to build up the list,
+    /// otherwise, it simply wont fit in one transaction. Only provide a total_reservation argument on the first call, which will
+    /// allocate the edition space, and in follow up calls this will specifically be unnecessary (and indeed will error.)
     ///
     ///   0. `[writable]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
     ///   1. `[writable]` PDA for ReservationList of ['metadata', program id, master edition key, 'reservation', resource-key]
@@ -363,6 +369,7 @@ pub fn set_reservation_list(
     reservation_list: Pubkey,
     resource: Pubkey,
     reservations: Vec<Reservation>,
+    total_reservation_spots: Option<u64>,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -371,9 +378,12 @@ pub fn set_reservation_list(
             AccountMeta::new(reservation_list, false),
             AccountMeta::new_readonly(resource, true),
         ],
-        data: MetadataInstruction::SetReservationList(SetReservationListArgs { reservations })
-            .try_to_vec()
-            .unwrap(),
+        data: MetadataInstruction::SetReservationList(SetReservationListArgs {
+            reservations,
+            total_reservation_spots,
+        })
+        .try_to_vec()
+        .unwrap(),
     }
 }
 
