@@ -1,0 +1,32 @@
+name: Deploy Holaplex Storefront
+
+on:
+  push:
+    branches: [master]
+
+defaults:
+  run:
+    working-directory: js
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '15.x'
+      - run: yarn
+      - run: yarn build
+        env:
+          CI: "false"
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      - run: |
+          aws s3 sync build/web s3://${{ secrets.S3_BUCKET }}/
+      - run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/index.html"
