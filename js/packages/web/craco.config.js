@@ -12,9 +12,8 @@ const resolvePackage = relativePath => path.resolve(appDirectory, relativePath);
 module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
-      paths.appBuild = webpackConfig.output.path = path.resolve(
-        './../../build/web',
-      );
+      paths.appBuild = webpackConfig.output.path =
+        path.resolve('./../../build/web');
       return webpackConfig;
     },
   },
@@ -46,7 +45,7 @@ module.exports = {
           lessOptions: {
             modifyVars: {
               '@primary-color': '#768BF9',
-              '@text-color': 'rgba(255, 255, 255)'
+              '@text-color': 'rgba(255, 255, 255)',
             },
             javascriptEnabled: true,
           },

@@ -2,12 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { findProgramAddress } from '../utils';
 import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
 
-export const STORE_OWNER_ADDRESS = process.env
-  .REACT_APP_STORE_OWNER_ADDRESS_ADDRESS
-  ? new PublicKey(`${process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS}`)
-  : // DEFAULT STORE FRONT OWNER FOR METAPLEX
-    undefined;
-console.debug(`Store owner address: ${STORE_OWNER_ADDRESS?.toBase58()}`);
+const STOREFRONT_API_URL = process.env.STOREFRONT_API_URL;
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
@@ -68,18 +63,35 @@ export const PROGRAM_IDS = [
   },
 ];
 
+const fetchStoreOwnerPublicKey = async (subdomain: String) => {
+  try {
+    const response = await fetch(
+      `${STOREFRONT_API_URL}/api/storefronts/${subdomain}`,
+    );
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const json = await response.json();
+
+    return new PublicKey(json.pubkey);
+  } catch {
+    return undefined;
+  }
+};
+
 const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
-  if (!STORE_OWNER_ADDRESS) {
+  const publicKey = await fetchStoreOwnerPublicKey(
+    window.location.hostname.split('.')[0],
+  );
+
+  if (!publicKey) {
     return undefined;
   }
 
   const programs = await findProgramAddress(
-    [
-      Buffer.from('metaplex'),
-      METAPLEX_ID.toBuffer(),
-      STORE_OWNER_ADDRESS.toBuffer(),
-    ],
+    [Buffer.from('metaplex'), METAPLEX_ID.toBuffer(), publicKey.toBuffer()],
     METAPLEX_ID,
   );
   const CUSTOM = programs[0];
