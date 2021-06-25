@@ -9,7 +9,7 @@ defaults:
     working-directory: js
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
