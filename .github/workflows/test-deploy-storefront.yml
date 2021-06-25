@@ -19,6 +19,8 @@ jobs:
           node-version: '15.x'
       - run: yarn
       - run: yarn build
+        env:
+          CI: "false"
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
