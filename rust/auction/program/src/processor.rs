@@ -281,6 +281,45 @@ impl BidState {
         real_max
     }
 
+    fn assert_valid_tick_size_bid(bid: &Bid, tick_size: Option<u64>) -> ProgramResult {
+        if let Some(tick) = tick_size {
+            if bid.1.checked_rem(tick) != Some(0) {
+                msg!(
+                    "This bid {:?} is not a multiple of tick size {:?}, throw it out.",
+                    bid.1,
+                    tick_size
+                );
+                return Err(AuctionError::BidMustBeMultipleOfTickSize.into());
+            }
+        } else {
+            msg!("No tick size on this auction")
+        }
+
+        Ok(())
+    }
+
+    fn assert_valid_gap_insertion(
+        gap_tick: u8,
+        beaten_bid: &Bid,
+        beating_bid: &Bid,
+    ) -> ProgramResult {
+        // Use u128 to avoid potential overflow due to temporary mult of 100x since
+        // we haven't divided yet.
+        let mut minimum_bid_amount: u128 = (beaten_bid.1 as u128)
+            .checked_mul((100 + gap_tick) as u128)
+            .ok_or(AuctionError::NumericalOverflowError)?;
+        minimum_bid_amount = minimum_bid_amount
+            .checked_div(100u128)
+            .ok_or(AuctionError::NumericalOverflowError)?;
+
+        if minimum_bid_amount > beating_bid.1 as u128 {
+            msg!("Rejecting inserting this bid due to gap tick size of {:?} which causes min bid of {:?} from {:?} which is the bid it is trying to beat", gap_tick, minimum_bid_amount.to_string(), beaten_bid.1);
+            return Err(AuctionError::GapBetweenBidsTooSmall.into());
+        }
+
+        Ok(())
+    }
+
     /// Push a new bid into the state, this succeeds only if the bid is larger than the current top
     /// winner stored. Crappy list information to start with.
     pub fn place_bid(
@@ -290,6 +329,7 @@ impl BidState {
         gap_tick_size_percentage: Option<u8>,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
+        BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
 
         match self {
             // In a capped auction, track the limited number of winners.
@@ -298,36 +338,11 @@ impl BidState {
                     Some(top) => {
                         msg!("Looking to go over the loop, but check tick size first");
 
-                        if let Some(tick) = tick_size {
-                            if bid.1.checked_rem(tick).is_some() {
-                                msg!(
-                                "This bid {:?} is not a multiple of tick size {:?}, throw it out.",
-                                bid.1,
-                                tick_size
-                            );
-                                return Err(AuctionError::BidMustBeMultipleOfTickSize.into());
-                            }
-                        } else {
-                            msg!("No tick size on this auction")
-                        }
-
                         for i in (0..bids.len()).rev() {
                             msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
                             if bids[i].1 < bid.1 {
                                 if let Some(gap_tick) = gap_tick_size_percentage {
-                                    // Use u128 to avoid potential overflow due to temporary mult of 100x since
-                                    // we haven't divided yet.
-                                    let mut minimum_bid_amount: u128 = (bids[i].1 as u128)
-                                        .checked_mul((100 + gap_tick) as u128)
-                                        .ok_or(AuctionError::NumericalOverflowError)?;
-                                    minimum_bid_amount = minimum_bid_amount
-                                        .checked_div(100u128)
-                                        .ok_or(AuctionError::NumericalOverflowError)?;
-
-                                    if minimum_bid_amount > bid.1 as u128 {
-                                        msg!("Rejecting inserting this bid above entry {:?} due to gap tick size of {:?} which causes min bid of {:?}", i, gap_tick, minimum_bid_amount.to_string());
-                                        return Err(AuctionError::GapBetweenBidsTooSmall.into());
-                                    }
+                                    BidState::assert_valid_gap_insertion(gap_tick, &bids[i], &bid)?
                                 }
 
                                 msg!("Ok we can do an insert");

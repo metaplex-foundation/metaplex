@@ -314,7 +314,9 @@ export const AuctionCreateView = () => {
       }),
       tokenMint: QUOTE_MINT,
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
-      tickSize: attributes.priceTick ? new BN(attributes.priceTick) : null,
+      tickSize: attributes.priceTick
+        ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
+        : null,
     };
 
     const _auctionObj = await createAuctionManager(
