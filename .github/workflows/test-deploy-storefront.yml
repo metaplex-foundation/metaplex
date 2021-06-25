@@ -2,7 +2,7 @@ name: Deploy Holaplex Storefront
 
 on:
   push:
-    branches: [master]
+    branches: [storefront-deploy-workflow]
 
 defaults:
   run:
