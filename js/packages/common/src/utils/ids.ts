@@ -2,7 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { findProgramAddress } from '../utils';
 import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
 
-const STOREFRONT_API_URL = process.env.STOREFRONT_API_URL;
+const REACT_APP_STOREFRONT_API_URL = process.env.REACT_APP_STOREFRONT_API_URL;
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
@@ -66,7 +66,7 @@ export const PROGRAM_IDS = [
 const fetchStoreOwnerPublicKey = async (subdomain: String) => {
   try {
     const response = await fetch(
-      `${STOREFRONT_API_URL}/api/storefronts/${subdomain}`,
+      `${REACT_APP_STOREFRONT_API_URL}/api/storefronts/${subdomain}`,
     );
 
     if (!response.ok) {
