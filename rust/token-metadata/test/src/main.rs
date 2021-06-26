@@ -100,6 +100,10 @@ fn show_reservation_list(app_matches: &ArgMatches, _payer: Keypair, client: RpcC
 
     let res_list = get_reservation_list(&account_info).unwrap();
     println!("Res list {:?}", res_list.reservations());
+    println!(
+        "current res spots: {:?}",
+        res_list.current_reservation_spots()
+    );
 }
 
 fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {

@@ -46,7 +46,7 @@ pub const MAX_RESERVATIONS: usize = 200;
 pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 34 + 100;
 
 // can hold up to 200 keys per reservation, note: the extra 8 is for number of elements in the vec
-pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 92;
+pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -171,11 +171,13 @@ pub trait ReservationList {
     fn supply_snapshot(&self) -> Option<u64>;
     fn reservations(&self) -> Vec<Reservation>;
     fn total_reservation_spots(&self) -> u64;
+    fn current_reservation_spots(&self) -> u64;
     fn set_master_edition(&mut self, key: Pubkey);
     fn set_supply_snapshot(&mut self, supply: Option<u64>);
     fn set_reservations(&mut self, reservations: Vec<Reservation>);
     fn add_reservations(&mut self, reservations: Vec<Reservation>);
     fn set_total_reservation_spots(&mut self, total_reservation_spots: u64);
+    fn set_current_reservation_spots(&mut self, current_reservation_spots: u64);
     fn save(&self, account: &AccountInfo) -> ProgramResult;
 }
 
@@ -204,6 +206,8 @@ pub struct ReservationListV2 {
     pub reservations: Vec<Reservation>,
     /// How many reservations there are going to be, given on first set_reservation call
     pub total_reservation_spots: u64,
+    /// Cached count of reservation spots in the reservation vec to save on CPU.
+    pub current_reservation_spots: u64,
 }
 
 impl ReservationList for ReservationListV2 {
@@ -246,6 +250,14 @@ impl ReservationList for ReservationListV2 {
 
     fn set_total_reservation_spots(&mut self, total_reservation_spots: u64) {
         self.total_reservation_spots = total_reservation_spots;
+    }
+
+    fn current_reservation_spots(&self) -> u64 {
+        self.current_reservation_spots
+    }
+
+    fn set_current_reservation_spots(&mut self, current_reservation_spots: u64) {
+        self.current_reservation_spots = current_reservation_spots;
     }
 }
 
@@ -331,10 +343,16 @@ impl ReservationList for ReservationListV1 {
     }
 
     fn total_reservation_spots(&self) -> u64 {
-        self.reservations.len() as u64
+        self.reservations.iter().map(|r| r.total_spots as u64).sum()
     }
 
     fn set_total_reservation_spots(&mut self, _: u64) {}
+
+    fn current_reservation_spots(&self) -> u64 {
+        self.reservations.iter().map(|r| r.total_spots as u64).sum()
+    }
+
+    fn set_current_reservation_spots(&mut self, _: u64) {}
 }
 
 impl ReservationListV1 {
