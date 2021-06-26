@@ -1,6 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 import { findProgramAddress } from '../utils';
 import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
+import { Storefront } from '@holaplex/storefront';
+import { Store } from 'antd/lib/form/interface';
 
 const REACT_APP_STOREFRONT_API_URL = process.env.REACT_APP_STOREFRONT_API_URL;
 
@@ -63,32 +65,32 @@ export const PROGRAM_IDS = [
   },
 ];
 
-const fetchStoreOwnerPublicKey = async (subdomain: String) => {
+export const fetchStorefront = async (subdomain: String) => {
   try {
     const response = await fetch(
       `${REACT_APP_STOREFRONT_API_URL}/api/storefronts/${subdomain}`,
     );
 
     if (!response.ok) {
-      return undefined;
+      return null;
     }
 
     const json = await response.json();
 
-    return new PublicKey(json.pubkey);
+    return json;
   } catch {
-    return undefined;
+    return null;
   }
 };
 
-const getStoreID = async () => {
-  const publicKey = await fetchStoreOwnerPublicKey(
-    window.location.hostname.split('.')[0],
-  );
-
-  if (!publicKey) {
+const getStoreID = async (storefront: Storefront | void) => {
+  if (!storefront) {
     return undefined;
   }
+
+  const { pubkey } = storefront;
+
+  const publicKey = new PublicKey(pubkey);
 
   const programs = await findProgramAddress(
     [Buffer.from('metaplex'), METAPLEX_ID.toBuffer(), publicKey.toBuffer()],
@@ -100,14 +102,17 @@ const getStoreID = async () => {
   return CUSTOM;
 };
 
-export const setProgramIds = async (envName: string) => {
+export const setProgramIds = async (
+  envName: string,
+  storefront: Storefront | void,
+) => {
   let instance = PROGRAM_IDS.find(env => envName.indexOf(env.name) >= 0);
   if (!instance) {
     return;
   }
 
   if (!STORE) {
-    STORE = await getStoreID();
+    STORE = await getStoreID(storefront);
   }
 };
 

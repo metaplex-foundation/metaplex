@@ -21,6 +21,7 @@ import {
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
+import { StorefrontContext } from './storefront';
 
 export type ENV =
   | 'mainnet-beta'
@@ -116,7 +117,10 @@ export function ConnectionProvider({ children = undefined as any }) {
     });
   }, [env]);
 
-  setProgramIds(env);
+
+  const { storefront } = useContext(StorefrontContext);
+
+  setProgramIds(env, storefront);
 
   // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
   // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
