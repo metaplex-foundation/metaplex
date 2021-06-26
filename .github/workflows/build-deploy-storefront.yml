@@ -21,6 +21,7 @@ jobs:
       - run: yarn build
         env:
           CI: "false"
+          REACT_APP_STOREFRONT_API_URL: " https://holaplex-builder.herokuapp.com"
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
