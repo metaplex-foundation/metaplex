@@ -15,6 +15,7 @@ import { findProgramAddress } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
+export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 200;
 
 export enum AuctionState {
   Created = 0,
@@ -89,6 +90,23 @@ export const BidderPotParser: AccountParser = (
 
 export const decodeBidderPot = (buffer: Buffer) => {
   return deserializeUnchecked(AUCTION_SCHEMA, BidderPot, buffer) as BidderPot;
+};
+
+export const AuctionDataExtendedParser: AccountParser = (
+  pubkey: PublicKey,
+  account: AccountInfo<Buffer>,
+) => ({
+  pubkey,
+  account,
+  info: decodeAuctionDataExtended(account.data),
+});
+
+export const decodeAuctionDataExtended = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    AUCTION_SCHEMA,
+    AuctionDataExtended,
+    buffer,
+  ) as AuctionDataExtended;
 };
 
 export const BidderMetadataParser: AccountParser = (

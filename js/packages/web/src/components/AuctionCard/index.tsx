@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Col, Button, InputNumber, Spin } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
@@ -13,6 +13,10 @@ import {
   formatTokenAmount,
   useMint,
   PriceFloorType,
+  AuctionDataExtended,
+  ParsedAccount,
+  getAuctionExtended,
+  programIds,
 } from '@oyster/common';
 import { AuctionView, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -26,9 +30,78 @@ import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useMeta } from '../../contexts';
+import moment from 'moment';
 
 const { useWallet } = contexts.Wallet;
 
+function useGapTickCheck(
+  value: number | undefined,
+  gapTick: number | null,
+  gapTime: number,
+  auctionView: AuctionView,
+): boolean {
+  return !!useMemo(() => {
+    if (gapTick && value && gapTime && !auctionView.auction.info.ended()) {
+      // so we have a gap tick percentage, and a gap tick time, and a value, and we're not ended - are we within gap time?
+      const now = moment().unix();
+      const endedAt = auctionView.auction.info.endedAt;
+      if (endedAt) {
+        const ended = endedAt.toNumber();
+        if (now > ended) {
+          const toLamportVal = value * LAMPORTS_PER_SOL;
+          // Ok, we are in gap time, since now is greater than ended and we're not actually an ended auction yt.
+          // Check that the bid is at least gapTick % bigger than the next biggest one in the stack.
+          for (
+            let i = auctionView.auction.info.bidState.bids.length - 1;
+            i > -1;
+            i--
+          ) {
+            const bid = auctionView.auction.info.bidState.bids[i];
+            const expected = bid.amount.toNumber();
+            if (expected < toLamportVal) {
+              const higherExpectedAmount = expected * ((100 + gapTick) / 100);
+
+              return higherExpectedAmount > toLamportVal;
+            } else if (expected == toLamportVal) {
+              // If gap tick is set, no way you can bid in this case - you must bid higher.
+              return true;
+            }
+          }
+          return false;
+        } else {
+          return false;
+        }
+      }
+      return false;
+    }
+  }, [value, gapTick, gapTime, auctionView]);
+}
+
+function useAuctionExtended(
+  auctionView: AuctionView,
+): ParsedAccount<AuctionDataExtended> | undefined {
+  const [auctionExtended, setAuctionExtended] =
+    useState<ParsedAccount<AuctionDataExtended>>();
+  const { auctionDataExtended } = useMeta();
+
+  useMemo(() => {
+    const fn = async () => {
+      if (!auctionExtended) {
+        const PROGRAM_IDS = programIds();
+        const extendedKey = await getAuctionExtended({
+          auctionProgramId: PROGRAM_IDS.auction,
+          resource: auctionView.vault.pubkey,
+        });
+        const extendedValue = auctionDataExtended[extendedKey.toBase58()];
+        if (extendedValue) setAuctionExtended(extendedValue);
+      }
+    };
+    fn();
+  }, [auctionDataExtended, auctionExtended, setAuctionExtended]);
+
+  return auctionExtended;
+}
 export const AuctionCard = ({
   auctionView,
   style,
@@ -74,9 +147,21 @@ export const AuctionCard = ({
     winnerIndex,
     auctionView,
   );
+  const auctionExtended = useAuctionExtended(auctionView);
 
   const eligibleForAnything = winnerIndex !== null || eligibleForOpenEdition;
   const gapTime = (auctionView.auction.info.auctionGap?.toNumber() || 0) / 60;
+  const gapTick = auctionExtended
+    ? auctionExtended.info.gapTickSizePercentage
+    : 0;
+  const tickSize = auctionExtended ? auctionExtended.info.tickSize : 0;
+  const tickSizeInvalid = !!(
+    tickSize &&
+    value &&
+    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
+  );
+
+  const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   return (
     <div className="auction-container" style={style}>
@@ -270,13 +355,32 @@ export const AuctionCard = ({
                       }}
                     >
                       Bids placed in the last {gapTime} minutes will extend
-                      bidding for another {gapTime} minutes.
+                      bidding for another {gapTime} minutes beyond the point in
+                      time that bid was made.{' '}
+                      {gapTick && (
+                        <span>
+                          Additionally, once the official auction end time has
+                          passed, only bids {gapTick}% larger than an existing
+                          bid will be accepted.
+                        </span>
+                      )}
                     </div>
                   )}
                   <br />
                   <AuctionNumbers auctionView={auctionView} />
 
                   <br />
+                  {tickSizeInvalid && tickSize && (
+                    <span style={{ color: 'red' }}>
+                      Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
+                    </span>
+                  )}
+                  {gapBidInvalid && (
+                    <span style={{ color: 'red' }}>
+                      Your bid needs to be at least {gapTick}% larger than an
+                      existing bid during gap periods to be eligible.
+                    </span>
+                  )}
 
                   <div
                     style={{
@@ -333,6 +437,8 @@ export const AuctionCard = ({
                     className="action-btn"
                     onClick={placeBid}
                     disabled={
+                      tickSizeInvalid ||
+                      gapBidInvalid ||
                       !myPayingAccount ||
                       value === undefined ||
                       value * LAMPORTS_PER_SOL < priceFloor ||
