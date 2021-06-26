@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Layout } from 'antd';
+import { contexts } from '@oyster/common';
 
 import './../../App.less';
 import './index.less';
@@ -7,6 +8,7 @@ import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
 import useWindowDimensions from '../../utils/layout';
 
+const { StorefrontContext } = contexts.Storefront;
 const { Header, Content } = Layout;
 
 const paddingForLayout = (width: number) => {
@@ -16,6 +18,7 @@ const paddingForLayout = (width: number) => {
 
 export const AppLayout = React.memo((props: any) => {
   const { width } = useWindowDimensions();
+  const { storefront } = useContext(StorefrontContext);
 
   return (
     <>
@@ -29,6 +32,7 @@ export const AppLayout = React.memo((props: any) => {
         <Content style={{ overflow: 'scroll', paddingBottom: 50 }}>
           {props.children}
         </Content>
+        {storefront && <link rel="stylesheet" href={storefront.themeUrl} />}
       </Layout>
     </>
   );

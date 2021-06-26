@@ -55,7 +55,9 @@ import {
   PayoutTicket,
   decodePayoutTicket,
 } from '../models/metaplex';
+import { contexts } from '@oyster/common';
 import names from './../config/userNames.json';
+const { StorefrontContext } = contexts.Storefront;
 
 interface MetaState {
   metadata: ParsedAccount<Metadata>[];
@@ -158,6 +160,7 @@ export function MetaProvider({ children = null as any }) {
   })
 
   const [isLoading, setIsLoading] = useState(true);
+  const { storefront } = useContext(StorefrontContext);
 
   const updateMints = useCallback(
     async metadataByMint => {
@@ -188,7 +191,7 @@ export function MetaProvider({ children = null as any }) {
         ])
       ).flat();
 
-      await setProgramIds(env);
+      await setProgramIds(env, storefront);
 
       console.log('------->Query finished');
 
