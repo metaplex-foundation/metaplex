@@ -36,7 +36,7 @@ import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { cleanName } from '../../utils/utils';
+import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 
@@ -457,8 +457,7 @@ const UploadStep = (props: {
                       .map(
                         f => {
                           const uri = typeof f === 'string' ? f : (cleanName(f?.name) || '');
-                          // TODO extract type from uri
-                          const type = typeof f === 'string' || !f ? 'custom'  : f.type || f.name.split('.');
+                          const type = typeof f === 'string' || !f ? 'unknown'  : f.type || (getLast(f.name.split('.')) || 'unknown');
 
                           return ({
                             uri,
