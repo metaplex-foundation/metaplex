@@ -27,7 +27,6 @@ import {
   Vault,
   setProgramIds,
   useConnectionConfig,
-  useWallet,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';

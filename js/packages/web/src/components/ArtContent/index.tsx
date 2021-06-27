@@ -176,7 +176,7 @@ export const ArtContent = ({
     category = data.properties.category;
   }
 
-  if (allowMeshRender&& (extension?.endsWith('.glb') || category === 'vr')) {
+  if (allowMeshRender && (extension?.endsWith('.glb') || category === 'vr')) {
     return <MeshArtContent
       uri={uri}
       className={className}
