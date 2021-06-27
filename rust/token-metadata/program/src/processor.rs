@@ -75,6 +75,8 @@ pub fn process_instruction(
                 accounts,
                 args.reservations,
                 args.total_reservation_spots,
+                args.offset,
+                args.total_spot_offset,
             )
         }
         MetadataInstruction::CreateReservationList => {
@@ -547,6 +549,8 @@ pub fn process_set_reservation_list(
     accounts: &[AccountInfo],
     reservations: Vec<Reservation>,
     total_reservation_spots: Option<u64>,
+    offset: u64,
+    total_spot_offset: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -600,7 +604,7 @@ pub fn process_set_reservation_list(
     }
     reservation_list.set_current_reservation_spots(total_len);
 
-    reservation_list.add_reservations(reservations);
+    reservation_list.add_reservations(reservations, offset, total_spot_offset)?;
 
     if let Some(total) = total_reservation_spots {
         reservation_list.set_supply_snapshot(Some(master_edition.supply));

@@ -47,6 +47,13 @@ pub struct SetReservationListArgs {
     pub reservations: Vec<Reservation>,
     /// should only be present on the very first call to set reservation list.
     pub total_reservation_spots: Option<u64>,
+    /// Where in the reservation list you want to insert this slice of reservations
+    pub offset: u64,
+    /// What the total spot offset is in the reservation list from the beginning to your slice of reservations.
+    /// So if is going to be 4 total editions eventually reserved between your slice and the beginning of the array,
+    /// split between 2 reservation entries, the offset variable above would be "2" since you start at entry 2 in 0 indexed array
+    /// (first 2 taking 0 and 1) and because they each have 2 spots taken, this variable would be 4.
+    pub total_spot_offset: u64,
 }
 
 /// Instructions supported by the Metadata program.
@@ -126,13 +133,13 @@ pub enum MetadataInstruction {
     /// with the pda that was created by that first bidder - the token metadata can then cross reference
     /// these people with the list and see that bidder A gets edition #2, so on and so forth.
     ///
-    /// NOTE: If you have more than 30 addresses in a reservation list, this may be called multiple times to build up the list,
+    /// NOTE: If you have more than 20 addresses in a reservation list, this may be called multiple times to build up the list,
     /// otherwise, it simply wont fit in one transaction. Only provide a total_reservation argument on the first call, which will
     /// allocate the edition space, and in follow up calls this will specifically be unnecessary (and indeed will error.)
     ///
     ///   0. `[writable]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
     ///   1. `[writable]` PDA for ReservationList of ['metadata', program id, master edition key, 'reservation', resource-key]
-    ///   3. `[signer]` The resource you tied the reservation list too
+    ///   2. `[signer]` The resource you tied the reservation list too
     SetReservationList(SetReservationListArgs),
 
     /// Create an empty reservation list for a resource who can come back later as a signer and fill the reservation list
@@ -370,6 +377,8 @@ pub fn set_reservation_list(
     resource: Pubkey,
     reservations: Vec<Reservation>,
     total_reservation_spots: Option<u64>,
+    offset: u64,
+    total_spot_offset: u64,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -381,6 +390,8 @@ pub fn set_reservation_list(
         data: MetadataInstruction::SetReservationList(SetReservationListArgs {
             reservations,
             total_reservation_spots,
+            offset,
+            total_spot_offset,
         })
         .try_to_vec()
         .unwrap(),
