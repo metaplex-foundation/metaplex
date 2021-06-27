@@ -471,7 +471,7 @@ const queryExtendedMetadata = async (
         MintParser,
         false,
       ) as ParsedAccount<MintInfo>;
-      if (mint.info.supply.gt(new BN(1)) || mint.info.decimals !== 0) {
+      if (!mint.info.supply.eqn(1) || mint.info.decimals !== 0) {
         // naive not NFT check
         delete mintToMetadata[key];
       } else {
