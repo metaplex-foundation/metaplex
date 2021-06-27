@@ -206,7 +206,7 @@ export const mintNFT = async (
     await fetch(
       // TODO: add CNAME
       env.startsWith('mainnet-beta')
-        ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd-1'
+        ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
         : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
       {
         method: 'POST',
