@@ -343,14 +343,19 @@ export function MetaProvider({ children = null as any }) {
 
         if(result && isMetadataPartOfStore(result, store, whitelistedCreatorsByCreator)) {
           await result.info.init();
-          updateStateValue('metadataByMasterEdition', result.info.masterEdition?.toBase58() || '', result);
+          setState((data) => ({
+            ...data,
+            metadata: [...data.metadata.filter(m => m.pubkey.equals(pubkey)), result],
+            metadataByMasterEdition: {
+              ...data.metadataByMasterEdition,
+              [result.info.masterEdition?.toBase58() || '']: result,
+            },
+            metadataByMint: {
+              ...data.metadataByMint,
+              [result.info.mint.toBase58()]: result
+            }
+          }));
         }
-
-        // TODO: BL
-        // setMetadataByMint(latest => {
-        //   updateMints(latest);
-        //   return latest;
-        // });
       },
     );
 
@@ -380,6 +385,7 @@ export function MetaProvider({ children = null as any }) {
   }, [
     connection,
     updateStateValue,
+    setState,
     updateMints,
     store,
     whitelistedCreatorsByCreator,

@@ -145,6 +145,7 @@ export const ArtContent = ({
   pubkey,
 
   uri,
+  animationURL,
   extension,
   files,
 }: {
@@ -161,6 +162,7 @@ export const ArtContent = ({
 
   extension?: string;
   uri?: string;
+  animationURL?: string;
   files?: string[];
 }) => {
   const id = typeof pubkey === 'string' ? pubkey : pubkey?.toBase58() || '';
@@ -170,6 +172,7 @@ export const ArtContent = ({
   if(pubkey && data) {
     files = data.properties.files?.filter(f => typeof f === 'string') as string[];
     uri = data.image;
+    animationURL = data.animation_url;
     category = data.properties.category;
   }
 

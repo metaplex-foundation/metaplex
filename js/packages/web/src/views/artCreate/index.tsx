@@ -30,6 +30,7 @@ import {
   shortenAddress,
   MetaplexModal,
   MetaplexOverlay,
+  MetadataFile,
 } from '@oyster/common';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -56,12 +57,14 @@ export const ArtCreateView = () => {
   const [progress, setProgress] = useState<number>(0);
   const [nft, setNft] =
     useState<{ metadataAccount: PublicKey } | undefined>(undefined);
+  const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
     description: '',
     external_url: '',
     image: '',
+    animation_url: undefined,
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
@@ -85,22 +88,17 @@ export const ArtCreateView = () => {
 
   // store files
   const mint = async () => {
-    const fileNames = (attributes?.properties?.files || []).map(f =>
-      typeof f === 'string' ? f : f.name,
-    );
-    const files = (attributes?.properties?.files || []).filter(
-      f => typeof f !== 'string',
-    ) as File[];
     const metadata = {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
       description: attributes.description,
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
-      image: fileNames && fileNames?.[0] && fileNames[0],
+      image: attributes.image,
+      animation_url: attributes.animation_url,
       external_url: attributes.external_url,
       properties: {
-        files: fileNames,
+        files: attributes.properties.files,
         category: attributes.properties?.category,
       },
     };
@@ -165,6 +163,8 @@ export const ArtCreateView = () => {
             <UploadStep
               attributes={attributes}
               setAttributes={setAttributes}
+              files={files}
+              setFiles={setFiles}
               confirm={() => gotoStep(2)}
             />
           )}
@@ -172,6 +172,7 @@ export const ArtCreateView = () => {
           {step === 2 && (
             <InfoStep
               attributes={attributes}
+              files={files}
               setAttributes={setAttributes}
               confirm={() => gotoStep(3)}
             />
@@ -186,6 +187,7 @@ export const ArtCreateView = () => {
           {step === 4 && (
             <LaunchStep
               attributes={attributes}
+              files={files}
               confirm={() => gotoStep(5)}
               connection={connection}
             />
@@ -283,14 +285,16 @@ const CategoryStep = (props: {
 const UploadStep = (props: {
   attributes: IMetadataExtension;
   setAttributes: (attr: IMetadataExtension) => void;
+  files: File[],
+  setFiles: (files: File[]) => void,
   confirm: () => void;
 }) => {
-  const [mainFile, setMainFile] = useState<any>();
-  const [coverFile, setCoverFile] = useState<any>();
-  const [image, setImage] = useState<string>('');
-  const [imageURL, setImageURL] = useState<string>('');
-  const [imageURLErr, setImageURLErr] = useState<string>('');
-  const disableContinue = (!mainFile && !image) || !!imageURLErr;
+  const [coverFile, setCoverFile] = useState<File | undefined>(props.files?.[0]);
+  const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
+
+  const [customURL, setCustomURL] = useState<string>('');
+  const [customURLErr, setCustomURLErr] = useState<string>('');
+  const disableContinue = (!coverFile) || !!customURLErr;
 
   useEffect(() => {
     props.setAttributes({
@@ -344,46 +348,63 @@ const UploadStep = (props: {
           very first time.
         </p>
       </Row>
-      <Row className="content-action" style={{ marginBottom: 5 }}>
-        <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
-        <Dragger
-          accept={acceptableFiles(props.attributes.properties?.category)}
-          style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
-          multiple={false}
-          customRequest={info => {
-            // dont upload files here, handled outside of the control
-            info?.onSuccess?.({}, null as any);
-          }}
-          fileList={mainFile ? [mainFile] : []}
-          onChange={async info => {
-            const file = info.file.originFileObj;
+      <Row className="content-action">
+          <h3>
+            Upload a cover image (PNG, JPG, GIF)
+          </h3>
+          <Dragger
+            accept=".png,.jpg,.gif,.mp4"
+            style={{ padding: 20 }}
+            multiple={false}
+            customRequest={info => {
+              // dont upload files here, handled outside of the control
+              info?.onSuccess?.({}, null as any);
+            }}
+            fileList={coverFile ? [coverFile as any] : []}
+            onChange={async info => {
+              const file = info.file.originFileObj;
+              if (file) setCoverFile(file);
+            }}
+          >
+            <div className="ant-upload-drag-icon">
+              <h3 style={{ fontWeight: 700 }}>
+                Upload your cover image (PNG, JPG, GIF)
+              </h3>
+            </div>
+            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+          </Dragger>
+        </Row>
+        {(props.attributes.properties?.category !== MetadataCategory.Image) && (
+          <Row className="content-action" style={{ marginBottom: 5, marginTop: 30 }}>
+            <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
+            <Dragger
+              accept={acceptableFiles(props.attributes.properties?.category)}
+              style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
+              multiple={false}
+              customRequest={info => {
+                // dont upload files here, handled outside of the control
+                info?.onSuccess?.({}, null as any);
+              }}
+              fileList={mainFile ? [mainFile as any] : []}
+              onChange={async info => {
+                const file = info.file.originFileObj;
 
-            // Reset image URL
-            setImageURL('');
-            setImageURLErr('');
+                // Reset image URL
+                setCustomURL('');
+                setCustomURLErr('');
 
-            if (file) setMainFile(file);
-            if (
-              props.attributes.properties?.category !== MetadataCategory.Audio
-            ) {
-              const reader = new FileReader();
-              reader.onload = function (event) {
-                setImage((event.target?.result as string) || '');
-              };
-              if (file) reader.readAsDataURL(file);
-            }
-          }}
-          onRemove={() => {
-            setMainFile(null);
-            setImage('');
-          }}
-        >
-          <div className="ant-upload-drag-icon">
-            <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
-          </div>
-          <p className="ant-upload-text">Drag and drop, or click to browse</p>
-        </Dragger>
-      </Row>
+                if (file) setMainFile(file);
+              }}
+              onRemove={() => {
+                setMainFile(undefined);
+              }}
+            >
+              <div className="ant-upload-drag-icon">
+                <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
+              </div>
+              <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            </Dragger>
+        </Row>)}
       <Form.Item
         style={{
           width: '100%',
@@ -394,72 +415,33 @@ const UploadStep = (props: {
         label={<h3>OR use absolute URL to content</h3>}
         labelAlign="left"
         colon={false}
-        validateStatus={imageURLErr ? 'error' : 'success'}
-        help={imageURLErr}
+        validateStatus={customURLErr ? 'error' : 'success'}
+        help={customURLErr}
       >
         <Input
           disabled={!!mainFile}
           placeholder="http://example.com/path/to/image"
-          value={imageURL}
-          onChange={ev => setImageURL(ev.target.value)}
-          onFocus={() => setImageURLErr('')}
+          value={customURL}
+          onChange={ev => setCustomURL(ev.target.value)}
+          onFocus={() => setCustomURLErr('')}
           onBlur={() => {
-            if (!imageURL) {
-              setImageURLErr('');
+            if (!customURL) {
+              setCustomURLErr('');
               return;
             }
 
             try {
               // Validate URL and save
-              new URL(imageURL);
-              setImage(imageURL);
+              new URL(customURL);
+              setCustomURL(customURL);
+              setCustomURLErr('');
             } catch (e) {
               console.error(e);
-              setImageURLErr('Please enter a valid absolute URL');
+              setCustomURLErr('Please enter a valid absolute URL');
             }
           }}
         />
       </Form.Item>
-      {props.attributes.properties?.category === MetadataCategory.Audio && (
-        <Row className="content-action">
-          <h3>
-            Optionally, you can upload a cover image or video (PNG, JPG, GIF,
-            MP4)
-          </h3>
-          <Dragger
-            accept=".png,.jpg,.gif,.mp4"
-            style={{ padding: 20 }}
-            multiple={false}
-            customRequest={info => {
-              // dont upload files here, handled outside of the control
-              info?.onSuccess?.({}, null as any);
-            }}
-            fileList={coverFile ? [coverFile] : []}
-            onChange={async info => {
-              const file = info.file.originFileObj;
-              if (file) setCoverFile(file);
-              if (
-                props.attributes.properties?.category === MetadataCategory.Audio
-              ) {
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                  setImage((event.target?.result as string) || '');
-                };
-                if (file) reader.readAsDataURL(file);
-              }
-            }}
-          >
-            <div className="ant-upload-drag-icon">
-              <h3 style={{ fontWeight: 700 }}>
-                Upload your cover image or video (PNG, JPG, GIF, MP4)
-              </h3>
-            </div>
-            <p className="ant-upload-text">Drag and drop, or click to browse</p>
-          </Dragger>
-          <h3 style={{ marginTop: 30 }}>OR use absolute URL to content</h3>
-          <Input />
-        </Row>
-      )}
       <Row>
         <Button
           type="primary"
@@ -470,16 +452,25 @@ const UploadStep = (props: {
               ...props.attributes,
               properties: {
                 ...props.attributes.properties,
-                files: imageURL
-                  ? [imageURL]
-                  : [mainFile, coverFile]
+                files: [coverFile, mainFile, customURL]
                       .filter(f => f)
                       .map(
-                        f => new File([f], cleanName(f.name), { type: f.type }),
+                        f => {
+                          const uri = typeof f === 'string' ? f : (cleanName(f?.name) || '');
+                          // TODO extract type from uri
+                          const type = typeof f === 'string' || !f ? 'custom'  : f.type || f.name.split('.');
+
+                          return ({
+                            uri,
+                            type
+                          }) as MetadataFile;
+                        },
                       ),
               },
-              image: imageURL || image,
+              image: cleanName(coverFile?.name) || '',
+              animation_url: cleanName(mainFile && mainFile.name),
             });
+            props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
             props.confirm();
           }}
           style={{ marginTop: 24 }}
@@ -497,17 +488,55 @@ interface Royalty {
   amount: number;
 }
 
+const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
+  const [data, setData] = useState<{ image: string, animation_url: string }>({ image: '', animation_url: '' });
+
+  useEffect(() => {
+    if(attributes.image) {
+      const file = files.find(f => f.name === attributes.image);
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          setData((data: any) => {
+            return {
+              ...(data || {}),
+              image: (event.target?.result as string) || '',
+            }
+          });
+        };
+        if (file) reader.readAsDataURL(file);
+      }
+    }
+
+    if(attributes.animation_url) {
+      const file = files.find(f => f.name === attributes.animation_url);
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          setData((data: any) => {
+            return {
+              ...(data || {}),
+              animation_url: (event.target?.result as string) || '',
+            }
+          });
+        };
+        if (file) reader.readAsDataURL(file);
+      }
+    }
+  }, [files, attributes]);
+
+  return data;
+}
+
 const InfoStep = (props: {
   attributes: IMetadataExtension;
+  files: File[],
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
-  const { wallet } = useWallet();
-
-  const file = props.attributes.properties.files?.[0];
-  const fileName = typeof file === 'string' ? file : file?.name;
+  const { image, animation_url } = useArtworkFiles(props.files, props.attributes);
 
   useEffect(() => {
     setRoyalties(
@@ -530,8 +559,8 @@ const InfoStep = (props: {
         <Col>
           {props.attributes.image && (
             <ArtCard
-              image={props.attributes.image}
-              file={fileName || ''}
+              image={image}
+              animationURL={animation_url}
               category={props.attributes.properties?.category}
               name={props.attributes.name}
               symbol={props.attributes.symbol}
@@ -893,19 +922,13 @@ const RoyaltiesStep = (props: {
 const LaunchStep = (props: {
   confirm: () => void;
   attributes: IMetadataExtension;
+  files: File[],
   connection: Connection;
 }) => {
-  const files = (props.attributes.properties?.files || []).filter(
-    f => typeof f !== 'string',
-  ) as File[];
-  const fileNames = (props.attributes.properties?.files || []).map(f =>
-    typeof f === 'string' ? f : f?.name,
-  );
-  const metadata = {
-    ...(props.attributes as any),
-    files: fileNames,
-  };
   const [cost, setCost] = useState(0);
+  const { image, animation_url } = useArtworkFiles(props.files, props.attributes);
+  const files = props.files;
+  const metadata = props.attributes;
   useEffect(() => {
     const rentCall = Promise.all([
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
@@ -932,7 +955,7 @@ const LaunchStep = (props: {
         // TODO: add fees based on number of transactions and signers
         setCost(sol + additionalSol);
       });
-  }, [files, setCost]);
+  }, [files, metadata, setCost]);
 
   return (
     <>
@@ -947,8 +970,8 @@ const LaunchStep = (props: {
         <Col>
           {props.attributes.image && (
             <ArtCard
-              image={props.attributes.image}
-              file={fileNames?.[0] || ''}
+              image={image}
+              animationURL={animation_url}
               category={props.attributes.properties?.category}
               name={props.attributes.name}
               symbol={props.attributes.symbol}

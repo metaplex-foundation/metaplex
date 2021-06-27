@@ -51,7 +51,12 @@ export enum MetadataCategory {
   VR = 'vr',
 }
 
-type FileOrString = File | string;
+export type MetadataFile = {
+  uri: string;
+  type: string;
+};
+
+export type FileOrString = MetadataFile | string;
 
 export interface IMetadataExtension {
   name: string;
@@ -61,6 +66,8 @@ export interface IMetadataExtension {
   description: string;
   // preview image absolute URI
   image: string;
+  animation_url?: string;
+
   // stores link to item on meta
   external_url: string;
 
@@ -72,7 +79,6 @@ export interface IMetadataExtension {
     maxSupply?: number;
     creators?: {
       address: string;
-      verified: boolean;
       shares: number;
     }[];
   };
