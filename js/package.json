@@ -11,6 +11,7 @@
     "node": ">=6.0.0"
   },
   "scripts": {
+    "build:vercel": "sh ./deploy-web.sh",
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
     "start": "CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
