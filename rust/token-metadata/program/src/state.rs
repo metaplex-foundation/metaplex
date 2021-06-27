@@ -48,6 +48,8 @@ pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATION
 // can hold up to 200 keys per reservation, note: the extra 8 is for number of elements in the vec
 pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
+pub const MASTER_EDITION_SPOT_AUTHORITY_SIZE: usize = 1 + 32 + 9 + 8 + 8;
+
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum Key {
@@ -57,6 +59,7 @@ pub enum Key {
     ReservationListV1,
     MetadataV1,
     ReservationListV2,
+    MasterEditionSpotAuthority,
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -426,4 +429,26 @@ pub struct ReservationV1 {
     pub address: Pubkey,
     pub spots_remaining: u8,
     pub total_spots: u8,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MasterEditionSpotAuthority {
+    pub key: Key,
+    pub authority: Pubkey,
+    pub supply_snapshot: Option<u64>,
+    pub spots_remaining: u64,
+    pub total_spots: u64,
+}
+
+impl MasterEditionSpotAuthority {
+    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEditionSpotAuthority, ProgramError> {
+        let res: MasterEditionSpotAuthority = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::MasterEditionSpotAuthority,
+            MASTER_EDITION_SPOT_AUTHORITY_SIZE,
+        )?;
+
+        Ok(res)
+    }
 }

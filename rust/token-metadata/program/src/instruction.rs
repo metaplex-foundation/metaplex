@@ -56,6 +56,12 @@ pub struct SetReservationListArgs {
     pub total_spot_offset: u64,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MasterEditionSpotAuthorityArgs {
+    pub total_spots: Option<u64>,
+}
+
 /// Instructions supported by the Metadata program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetadataInstruction {
@@ -186,6 +192,18 @@ pub enum MetadataInstruction {
     ///   5. `[]` Token program
     ///   6. `[]` Rent
     MintPrintingTokens(MintPrintingTokensViaTokenArgs),
+
+    /// Assign to an authority the right to request an alotment of spots in a master edition (one time)
+    /// and then to assign addresses to those spots.
+    ///
+    ///   0. `[writable]` Master edition spot authority account pda of ['metadata', program id, master edition key, authority]
+    ///   1. `[signer]` Update authority of metadata
+    ///   2. `[signer]` Payer
+    ///   3. `[]` Metadata key (pda of ['metadata', program id, mint id])
+    ///   4. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   5. `[]` System program
+    ///   6. `[]` Rent info
+    SetMasterEditionSpotAuthority(MasterEditionSpotAuthorityArgs),
 }
 
 /// Creates an CreateMetadataAccounts instruction
