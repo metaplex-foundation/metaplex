@@ -53,14 +53,6 @@ pub fn process_init_auction_manager(
         return Err(MetaplexError::AuctionMustBeCreated.into());
     }
 
-    if vault.authority != *auction_manager_info.key {
-        return Err(MetaplexError::VaultAuthorityMismatch.into());
-    }
-
-    if auction.authority != *auction_manager_info.key {
-        return Err(MetaplexError::AuctionAuthorityMismatch.into());
-    }
-
     let bump_seed = assert_derivation(
         program_id,
         auction_manager_info,
