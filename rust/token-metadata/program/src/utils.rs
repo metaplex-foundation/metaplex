@@ -424,6 +424,7 @@ pub fn mint_limited_edition<'a>(
                 let mut reservations = reservation_list.reservations();
                 for i in 0..reservations.len() {
                     let mut reservation = &mut reservations[i];
+
                     if reservation.address == *mint_authority_info.key {
                         offset = Some(
                             prev_total_offsets
@@ -436,13 +437,21 @@ pub fn mint_limited_edition<'a>(
                             .checked_sub(1)
                             .ok_or(MetadataError::NumericalOverflowError)?;
 
-                        reservation_list.set_reservations(reservations);
+                        reservation_list.set_reservations(reservations)?;
                         reservation_list.save(account)?;
                         break;
                     }
-                    prev_total_offsets = prev_total_offsets
-                        .checked_add(reservation.total_spots)
-                        .ok_or(MetadataError::NumericalOverflowError)?;
+
+                    if reservation.address == solana_program::system_program::id() {
+                        // This is an anchor point in the array...it means we reset our math to
+                        // this offset because we may be missing information in between this point and
+                        // the points before it.
+                        prev_total_offsets = reservation.total_spots;
+                    } else {
+                        prev_total_offsets = prev_total_offsets
+                            .checked_add(reservation.total_spots)
+                            .ok_or(MetadataError::NumericalOverflowError)?;
+                    }
                 }
 
                 match offset {

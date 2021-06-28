@@ -4,11 +4,14 @@ import { useMeta } from '../contexts';
 import { Art, Artist, ArtType } from '../types';
 import {
   Edition,
+  IMetadataExtension,
   MasterEdition,
   Metadata,
   ParsedAccount,
 } from '@oyster/common';
 import { WhitelistedCreator } from '../models/metaplex';
+import { Cache } from 'three';
+import { useInView } from 'react-intersection-observer';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -43,13 +46,9 @@ const metadataToArt = (
   }
 
   return {
-    image: info?.extended?.image,
     uri: info?.data.uri || '',
     mint: info?.mint.toBase58(),
-    category: info?.extended?.properties?.category,
     title: info?.data.name,
-    files: info?.extended?.properties.files,
-    about: info?.extended?.description,
     creators: (info?.data.creators || [])
       .map(creator => {
         const knownCreator =
@@ -72,7 +71,7 @@ const metadataToArt = (
 
         return share;
       }),
-    seller_fee_basis_points: info?.extended?.seller_fee_basis_points || 0,
+    seller_fee_basis_points: info?.data.sellerFeeBasisPoints || 0,
     edition: editionNumber,
     maxSupply,
     supply,
@@ -81,8 +80,9 @@ const metadataToArt = (
 };
 
 const cachedImages = new Map<string, string>();
-export const useCachedImage = (uri: string) => {
+export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
   const [cachedBlob, setCachedBlob] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!uri) {
@@ -107,18 +107,25 @@ export const useCachedImage = (uri: string) => {
           if (uri?.startsWith('http')) {
             setCachedBlob(uri);
           }
+          setIsLoading(false);
           return;
         }
       }
 
       const blob = await response.blob();
+      if (cacheMesh) {
+        // extra caching for meshviewer
+        Cache.enabled = true;
+        Cache.add(uri, await blob.arrayBuffer());
+      }
       const blobURI = URL.createObjectURL(blob);
       cachedImages.set(uri, blobURI);
       setCachedBlob(blobURI);
+      setIsLoading(false);
     })();
-  }, [uri, setCachedBlob]);
+  }, [uri, setCachedBlob, setIsLoading]);
 
-  return cachedBlob;
+  return { cachedBlob, isLoading };
 };
 
 export const useArt = (id?: PublicKey | string) => {
@@ -132,86 +139,92 @@ export const useArt = (id?: PublicKey | string) => {
     [key, metadata],
   );
 
-  const [art, setArt] = useState(
-    metadataToArt(
-      account?.info,
-      editions,
-      masterEditions,
-      whitelistedCreatorsByCreator,
-    ),
+  const art = useMemo(
+    () =>
+      metadataToArt(
+        account?.info,
+        editions,
+        masterEditions,
+        whitelistedCreatorsByCreator,
+      ),
+    [account, editions, masterEditions, whitelistedCreatorsByCreator],
   );
 
-  // TODO: BL -> move to lazy load on display
+  return art;
+};
+
+export const useExtendedArt = (id?: PublicKey | string) => {
+  const { metadata } = useMeta();
+
+  const [data, setData] = useState<IMetadataExtension>();
+  const { ref, inView } = useInView();
+
+  const key = typeof id === 'string' ? id : id?.toBase58() || '';
+
+  const account = useMemo(
+    () => metadata.find(a => a.pubkey.toBase58() === key),
+    [key, metadata],
+  );
+
   useEffect(() => {
-    const USE_CDN = false;
-    const routeCDN = (uri: string) => {
-      let result = uri;
-      if (USE_CDN) {
-        result = uri.replace(
-          'https://arweave.net/',
-          'https://coldcdn.com/api/cdn/bronil/',
-        );
-      }
-
-      return result;
-    };
-
-    if (account && account.info.data.uri) {
-      const uri = routeCDN(account.info.data.uri);
-
-      const processJson = (data: any) => {
-        account.info.extended = data;
-
-        if (
-          !account.info.extended ||
-          account.info.extended?.properties?.files?.length === 0
-        ) {
-          return;
-        }
-
-        if (account.info.extended?.image) {
-          const file = account.info.extended.image.startsWith('http')
-            ? account.info.extended.image
-            : `${account.info.data.uri}/${account.info.extended.image}`;
-          account.info.extended.image = routeCDN(file);
-          setArt(
-            metadataToArt(
-              account?.info,
-              editions,
-              masterEditions,
-              whitelistedCreatorsByCreator,
-            ),
+    if (inView && id && !data) {
+      const USE_CDN = false;
+      const routeCDN = (uri: string) => {
+        let result = uri;
+        if (USE_CDN) {
+          result = uri.replace(
+            'https://arweave.net/',
+            'https://coldcdn.com/api/cdn/bronil/',
           );
         }
+
+        return result;
       };
 
-      try {
-        const cached = localStorage.getItem(uri);
-        if (cached) {
-          processJson(JSON.parse(cached));
-        }
-      } catch (ex) {
-        console.error(ex);
-      }
+      if (account && account.info.data.uri) {
+        const uri = routeCDN(account.info.data.uri);
 
-      if (!account.info.extended) {
-        // try to query if not in local cache
-        fetch(uri)
-          .then(async _ => {
-            try {
-              const data = await _.json();
-              localStorage.setItem(uri, JSON.stringify(data));
-              processJson(data);
-            } catch {
-              return undefined;
-            }
-          })
-          .catch(() => {
-            return undefined;
-          });
+        const processJson = (extended: any) => {
+          if (!extended || extended?.properties?.files?.length === 0) {
+            return;
+          }
+
+          if (extended?.image) {
+            const file = extended.image.startsWith('http')
+              ? extended.image
+              : `${account.info.data.uri}/${extended.image}`;
+            extended.image = routeCDN(file);
+          }
+
+          return extended;
+        };
+
+        try {
+          const cached = localStorage.getItem(uri);
+          if (cached) {
+            setData(processJson(JSON.parse(cached)));
+          } else {
+            // TODO: BL handle concurrent calls to avoid double query
+            fetch(uri)
+              .then(async _ => {
+                try {
+                  const data = await _.json();
+                  localStorage.setItem(uri, JSON.stringify(data));
+                  setData(processJson(data));
+                } catch {
+                  return undefined;
+                }
+              })
+              .catch(() => {
+                return undefined;
+              });
+          }
+        } catch (ex) {
+          console.error(ex);
+        }
       }
     }
-  }, [account, setArt]);
+  }, [inView, id, data, setData, account]);
 
-  return art;
+  return { ref, data };
 };

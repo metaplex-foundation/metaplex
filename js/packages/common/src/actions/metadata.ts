@@ -51,7 +51,12 @@ export enum MetadataCategory {
   VR = 'vr',
 }
 
-type FileOrString = File | string;
+export type MetadataFile = {
+  uri: string;
+  type: string;
+};
+
+export type FileOrString = MetadataFile | string;
 
 export interface IMetadataExtension {
   name: string;
@@ -61,6 +66,8 @@ export interface IMetadataExtension {
   description: string;
   // preview image absolute URI
   image: string;
+  animation_url?: string;
+
   // stores link to item on meta
   external_url: string;
 
@@ -72,7 +79,6 @@ export interface IMetadataExtension {
     maxSupply?: number;
     creators?: {
       address: string;
-      verified: boolean;
       shares: number;
     }[];
   };
@@ -148,17 +154,20 @@ export class ReservationList {
   /// What supply counter was on master_edition when this reservation was created.
   supplySnapshot: BN | null;
   reservations: Reservation[];
+  totalReservationSpots: BN;
 
   constructor(args: {
     key: MetadataKey;
     masterEdition: PublicKey;
     supplySnapshot: BN | null;
     reservations: Reservation[];
+    totalReservationSpots: BN;
   }) {
     this.key = MetadataKey.EditionV1;
     this.masterEdition = args.masterEdition;
     this.supplySnapshot = args.supplySnapshot;
     this.reservations = args.reservations;
+    this.totalReservationSpots = args.totalReservationSpots;
   }
 }
 
@@ -202,8 +211,6 @@ export class Metadata {
   data: Data;
   primarySaleHappened: boolean;
   isMutable: boolean;
-
-  extended?: IMetadataExtension;
 
   // set lazy
   masterEdition?: PublicKey;
@@ -404,6 +411,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['masterEdition', 'pubkey'],
         ['supplySnapshot', { kind: 'option', type: 'u64' }],
         ['reservations', [Reservation]],
+        ['totalReservationSpots', 'u64'],
       ],
     },
   ],

@@ -40,6 +40,10 @@ pub struct CreateAuctionArgs {
     pub resource: Pubkey,
     /// Set a price floor.
     pub price_floor: PriceFloor,
+    /// Add a tick size increment
+    pub tick_size: Option<u64>,
+    /// Add a minimum percentage increase each bid must meet.
+    pub gap_tick_size_percentage: Option<u8>,
 }
 
 struct Accounts<'a, 'b: 'a> {
@@ -98,6 +102,12 @@ pub fn create_auction(
         WinnerLimit::Unlimited(_) => BidState::new_open_edition(),
     };
 
+    if let Some(gap_tick) = args.gap_tick_size_percentage {
+        if gap_tick > 100 {
+            return Err(AuctionError::InvalidGapTickSizePercentage.into());
+        }
+    }
+
     // Create auction account with enough space for a winner tracking.
     create_or_allocate_account_raw(
         *program_id,
@@ -140,6 +150,14 @@ pub fn create_auction(
             &[auction_ext_bump],
         ],
     )?;
+
+    // Configure extended
+    AuctionDataExtended {
+        total_uncancelled_bids: 0,
+        tick_size: args.tick_size,
+        gap_tick_size_percentage: args.gap_tick_size_percentage,
+    }
+    .serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 
     // Configure Auction.
     AuctionData {

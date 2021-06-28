@@ -1,11 +1,11 @@
 import React from 'react';
 import { Row, Col, Divider, Layout, Tag, Button } from 'antd';
 import { useParams } from 'react-router-dom';
-import { useArt } from './../../hooks';
+import { useArt, useExtendedArt } from './../../hooks';
 
 import './index.less';
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection, useWallet } from '@oyster/common';
+import { shortenAddress, TokenAccount, useConnection, useUserAccounts, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { PublicKey } from '@solana/web3.js';
@@ -15,8 +15,19 @@ const { Content } = Layout;
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const { wallet } = useWallet();
+
   const connection = useConnection();
   const art = useArt(id);
+  const { ref, data } = useExtendedArt(id);
+
+  // const { userAccounts } = useUserAccounts();
+
+  // const accountByMint = userAccounts.reduce((prev, acc) => {
+  //   prev.set(acc.info.mint.toBase58(), acc);
+  //   return prev;
+  // }, new Map<string, TokenAccount>());
+
+  const description = data?.description;
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
@@ -43,18 +54,16 @@ export const ArtView = () => {
   return (
     <Content>
       <Col>
-        <Row>
+        <Row ref={ref}>
           <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
             <ArtContent
-              category={art.category}
-              extension={art.image}
-              uri={art.image}
               style={{ width: 300 }}
               height={300}
               width={300}
               className="artwork-image"
-              files={art.files}
+              pubkey={id}
               active={true}
+              allowMeshRender={true}
             />
           </Col>
           {/* <Divider /> */}
@@ -80,6 +89,31 @@ export const ArtView = () => {
                       <span className="creator-name">
                         {creator.name || shortenAddress(creator.address || '')}
                       </span>
+                      {/* <Button
+                        onClick={async () => {
+                          if(!art.mint) {
+                            return;
+                          }
+                          const mint = new PublicKey(art.mint);
+
+                          const account = accountByMint.get(art.mint);
+                          if(!account) {
+                            return;
+                          }
+
+                          const owner = wallet?.publicKey;
+
+                          if(!owner) {
+                            return;
+                          }
+                          const instructions: any[] = [];
+                          await updateMetadata(undefined, undefined, true, mint, owner, instructions)
+
+                          sendTransaction(connection, wallet, instructions, [], true);
+                        }}
+                      >
+                        Mark as Sold
+                      </Button> */}
                       <div style={{ marginLeft: 10 }}>
                         {!creator.verified &&
                           (creator.address === pubkey ? (
@@ -120,7 +154,7 @@ export const ArtView = () => {
             </div>
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
-            <div className="info-content">{art.about}</div>
+            <div className="info-content">{description}</div>
             <br />
             {/*
               TODO: add info about artist
