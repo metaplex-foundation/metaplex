@@ -357,9 +357,10 @@ pub enum MetaplexInstruction {
     /// 0. `[writable]` Auction Manager
     /// 1. `[writable]` Auction
     /// 2. `[Signer]` Authority of the Auction Manager
-    /// 3. `[]` Store
-    /// 4. `[]` Auction program
-    /// 5. `[]` Clock sysvar
+    /// 3. `[]` Vault
+    /// 4. `[]` Store
+    /// 5. `[]` Auction program
+    /// 6. `[]` Clock sysvar
     DecommissionAuctionManager,
 }
 

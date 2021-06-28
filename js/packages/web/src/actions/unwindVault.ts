@@ -53,7 +53,6 @@ export async function unwindVault(
           vault.info.redeemTreasury,
           decoded.priceMint,
           vault.info.pricingLookupAddress,
-          false,
         );
 
       signers.push(cvSigners);
