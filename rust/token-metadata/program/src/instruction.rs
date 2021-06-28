@@ -194,15 +194,20 @@ pub enum MetadataInstruction {
     MintPrintingTokens(MintPrintingTokensViaTokenArgs),
 
     /// Assign to an authority the right to request an alotment of spots in a master edition (one time)
-    /// and then to assign addresses to those spots.
+    /// and then to assign addresses to those spots. This is a create and/or update command, meaning that
+    /// you can call it when it does not yet exist with update authority as signer OR you can call it with authority
+    /// as signer and leave update authority as read only to update it. A good use case would be if you don't know
+    /// the total spots until later, so you use update authority to create the spot authority, but then do an update
+    /// call later as the authority to set total spots.
     ///
     ///   0. `[writable]` Master edition spot authority account pda of ['metadata', program id, master edition key, authority]
-    ///   1. `[signer]` Update authority of metadata
-    ///   2. `[signer]` Payer
-    ///   3. `[]` Metadata key (pda of ['metadata', program id, mint id])
-    ///   4. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
-    ///   5. `[]` System program
-    ///   6. `[]` Rent info
+    ///   1. `[signer optional XOR with #2]` Authority
+    ///   2. `[signer optional XOR with #1]` Update authority of metadata
+    ///   3. `[signer]` Payer
+    ///   4. `[]` Metadata key (pda of ['metadata', program id, mint id])
+    ///   5. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   6. `[]` System program
+    ///   7. `[]` Rent info
     SetMasterEditionSpotAuthority(MasterEditionSpotAuthorityArgs),
 }
 
