@@ -10,16 +10,18 @@ import { getLast } from '../../utils/utils';
 
 const MeshArtContent = ({
   uri,
+  animationUrl,
   className,
   style,
   files,
 }: {
   uri?: string;
+  animationUrl?: string;
   className?: string;
   style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
 }) => {
-  const renderURL = files && files.length > 0 && typeof files[0] === 'string'  ? files[0] : uri;
+  const renderURL = files && files.length > 0 && typeof files[0] === 'string'  ? files[0] : animationUrl;
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
@@ -187,7 +189,8 @@ export const ArtContent = ({
 
   if (allowMeshRender && (category === 'vr' || animationUrlExt === 'glb' || animationUrlExt === 'gltf')) {
     return <MeshArtContent
-      uri={animationURL}
+      uri={uri}
+      animationUrl={animationURL}
       className={className}
       style={style}
       files={files}/>;
