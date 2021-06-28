@@ -122,6 +122,18 @@ pub enum AuctionError {
     /// Data type mismatch
     #[error("Data type mismatch")]
     DataTypeMismatch,
+
+    /// Bid must be multiple of tick size
+    #[error("Bid must be multiple of tick size")]
+    BidMustBeMultipleOfTickSize,
+
+    /// During the gap window, gap between next lowest bid must be of a certain percentage
+    #[error("During the gap window, gap between next lowest bid must be of a certain percentage")]
+    GapBetweenBidsTooSmall,
+
+    /// Gap tick size percentage must be between 0 and 100
+    #[error("Gap tick size percentage must be between 0 and 100")]
+    InvalidGapTickSizePercentage,
 }
 
 impl PrintProgramError for AuctionError {

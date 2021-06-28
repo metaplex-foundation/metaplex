@@ -134,10 +134,10 @@ impl AuctionData {
             (Some(end), Some(gap)) => {
                 // Check if the bid is within the gap between the last bidder.
                 if let Some(last) = self.last_bid {
-                    let next_bid_time = match last.checked_add(gap) {
-                        Some(val) => val,
-                        None => return Err(AuctionError::NumericalOverflowError.into()),
-                    };
+                    let next_bid_time = last
+                        .checked_add(gap)
+                        .ok_or(AuctionError::NumericalOverflowError)?;
+
                     Ok(now > end && now > next_bid_time)
                 } else {
                     Ok(now > end)
@@ -178,6 +178,28 @@ impl AuctionData {
             _ => 0,
         };
         self.bid_state.winner_at(idx, minimum)
+    }
+
+    pub fn place_bid(
+        &mut self,
+        bid: Bid,
+        tick_size: Option<u64>,
+        gap_tick_size_percentage: Option<u8>,
+        now: UnixTimestamp,
+    ) -> Result<(), ProgramError> {
+        let gap_val = match self.ended_at {
+            Some(end) => {
+                // We use the actual gap tick size perc if we're in gap window,
+                // otherwise we pass in none so the logic isnt used
+                if now > end {
+                    gap_tick_size_percentage
+                } else {
+                    None
+                }
+            }
+            None => None,
+        };
+        self.bid_state.place_bid(bid, tick_size, gap_val)
     }
 }
 
@@ -259,59 +281,120 @@ impl BidState {
         real_max
     }
 
+    fn assert_valid_tick_size_bid(bid: &Bid, tick_size: Option<u64>) -> ProgramResult {
+        if let Some(tick) = tick_size {
+            if bid.1.checked_rem(tick) != Some(0) {
+                msg!(
+                    "This bid {:?} is not a multiple of tick size {:?}, throw it out.",
+                    bid.1,
+                    tick_size
+                );
+                return Err(AuctionError::BidMustBeMultipleOfTickSize.into());
+            }
+        } else {
+            msg!("No tick size on this auction")
+        }
+
+        Ok(())
+    }
+
+    fn assert_valid_gap_insertion(
+        gap_tick: u8,
+        beaten_bid: &Bid,
+        beating_bid: &Bid,
+    ) -> ProgramResult {
+        // Use u128 to avoid potential overflow due to temporary mult of 100x since
+        // we haven't divided yet.
+        let mut minimum_bid_amount: u128 = (beaten_bid.1 as u128)
+            .checked_mul((100 + gap_tick) as u128)
+            .ok_or(AuctionError::NumericalOverflowError)?;
+        minimum_bid_amount = minimum_bid_amount
+            .checked_div(100u128)
+            .ok_or(AuctionError::NumericalOverflowError)?;
+
+        if minimum_bid_amount > beating_bid.1 as u128 {
+            msg!("Rejecting inserting this bid due to gap tick size of {:?} which causes min bid of {:?} from {:?} which is the bid it is trying to beat", gap_tick, minimum_bid_amount.to_string(), beaten_bid.1);
+            return Err(AuctionError::GapBetweenBidsTooSmall.into());
+        }
+
+        Ok(())
+    }
+
     /// Push a new bid into the state, this succeeds only if the bid is larger than the current top
     /// winner stored. Crappy list information to start with.
-    pub fn place_bid(&mut self, bid: Bid) -> Result<(), ProgramError> {
+    pub fn place_bid(
+        &mut self,
+        bid: Bid,
+        tick_size: Option<u64>,
+        gap_tick_size_percentage: Option<u8>,
+    ) -> Result<(), ProgramError> {
+        msg!("Placing bid {:?}", &bid.1.to_string());
+        BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
+
         match self {
             // In a capped auction, track the limited number of winners.
-            BidState::EnglishAuction { ref mut bids, max } => match bids.last() {
-                Some(top) => {
-                    msg!("Looking to go over the loop");
-                    for i in (0..bids.len()).rev() {
-                        msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
-                        if bids[i].1 < bid.1 {
-                            msg!("Ok we can do an insert");
-                            if i + 1 < bids.len() {
-                                msg!("Doing a normal insert");
-                                bids.insert(i + 1, bid);
-                            } else {
-                                msg!("Doing an on the end insert");
-                                bids.push(bid)
-                            }
-                            break;
-                        } else if bids[i].1 == bid.1 {
-                            msg!("Ok we can do an equivalent insert");
-                            if i == 0 {
-                                msg!("Doing a normal insert");
+            BidState::EnglishAuction { ref mut bids, max } => {
+                match bids.last() {
+                    Some(top) => {
+                        msg!("Looking to go over the loop, but check tick size first");
+
+                        for i in (0..bids.len()).rev() {
+                            msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
+                            if bids[i].1 < bid.1 {
+                                if let Some(gap_tick) = gap_tick_size_percentage {
+                                    BidState::assert_valid_gap_insertion(gap_tick, &bids[i], &bid)?
+                                }
+
+                                msg!("Ok we can do an insert");
+                                if i + 1 < bids.len() {
+                                    msg!("Doing a normal insert");
+                                    bids.insert(i + 1, bid);
+                                } else {
+                                    msg!("Doing an on the end insert");
+                                    bids.push(bid)
+                                }
+                                break;
+                            } else if bids[i].1 == bid.1 {
+                                if let Some(gap_tick) = gap_tick_size_percentage {
+                                    if gap_tick > 0 {
+                                        msg!("Rejecting same-bid insert due to gap tick size of {:?}", gap_tick);
+                                        return Err(AuctionError::GapBetweenBidsTooSmall.into());
+                                    }
+                                }
+
+                                msg!("Ok we can do an equivalent insert");
+                                if i == 0 {
+                                    msg!("Doing a normal insert");
+                                    bids.insert(0, bid);
+                                    break;
+                                } else {
+                                    if bids[i - 1].1 != bids[i].1 {
+                                        msg!("Doing an insert just before");
+                                        bids.insert(i, bid);
+                                        break;
+                                    }
+                                    msg!("More duplicates ahead...")
+                                }
+                            } else if i == 0 {
+                                msg!("Inserting at 0");
                                 bids.insert(0, bid);
                                 break;
-                            } else {
-                                if bids[i - 1].1 != bids[i].1 {
-                                    msg!("Doing an insert just before");
-                                    bids.insert(i, bid);
-                                    break;
-                                }
-                                msg!("More duplicates ahead...")
                             }
-                        } else if i == 0 {
-                            msg!("Inserting at 0");
-                            bids.insert(0, bid);
-                            break;
                         }
-                    }
-                    let max_size = BidState::max_array_size_for(*max);
+                        let max_size = BidState::max_array_size_for(*max);
 
-                    if bids.len() > max_size {
-                        bids.remove(0);
+                        if bids.len() > max_size {
+                            bids.remove(0);
+                        }
+                        Ok(())
                     }
-                    Ok(())
+                    _ => {
+                        msg!("Pushing bid onto stack");
+                        bids.push(bid);
+                        Ok(())
+                    }
                 }
-                _ => {
-                    msg!("Pushing bid onto stack");
-                    bids.push(bid);
-                    Ok(())
-                }
-            },
+            }
 
             // In an open auction, bidding simply succeeds.
             BidState::OpenEdition { bids, max } => Ok(()),

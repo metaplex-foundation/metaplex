@@ -30,12 +30,12 @@ import {
   Creator,
   PriceFloor,
   PriceFloorType,
+  IPartialCreateAuctionArgs,
 } from '@oyster/common';
 import {
   Connection,
   LAMPORTS_PER_SOL,
   PublicKey,
-  SystemProgram,
 } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
@@ -306,14 +306,29 @@ export const AuctionCreateView = () => {
       console.log('Tiered settings', settings);
     }
 
+    const auctionSettings: IPartialCreateAuctionArgs = {
+      winners: winnerLimit,
+      endAuctionAt: new BN((attributes.auctionDuration || 0) * 60), // endAuctionAt is actually auction duration, poorly named, in seconds
+      auctionGap: new BN((attributes.gapTime || 0) * 60),
+      priceFloor: new PriceFloor({
+        type: attributes.priceFloor
+          ? PriceFloorType.Minimum
+          : PriceFloorType.None,
+        minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
+      }),
+      tokenMint: QUOTE_MINT,
+      gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
+      tickSize: attributes.priceTick
+        ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
+        : null,
+    };
+
     const _auctionObj = await createAuctionManager(
       connection,
       wallet,
       whitelistedCreatorsByCreator,
       settings,
-      winnerLimit,
-      new BN((attributes.auctionDuration || 0) * 60), // endAuctionAt is actually auction duration, poorly named, in seconds
-      new BN((attributes.gapTime || 0) * 60),
+      auctionSettings,
       attributes.category === AuctionCategory.Open
         ? []
         : attributes.category !== AuctionCategory.Tiered
@@ -323,12 +338,6 @@ export const AuctionCreateView = () => {
         ? attributes.items[0]
         : attributes.participationNFT,
       QUOTE_MINT,
-      new PriceFloor({
-        type: attributes.priceFloor
-          ? PriceFloorType.Minimum
-          : PriceFloorType.None,
-        minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
-      }),
     );
     setAuctionObj(_auctionObj);
   };
