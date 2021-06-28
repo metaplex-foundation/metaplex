@@ -48,6 +48,7 @@ import { createExternalPriceAccount } from './createExternalPriceAccount';
 import { validateParticipation } from '../models/metaplex/validateParticipation';
 import { createReservationListForTokens } from './createReservationListsForTokens';
 import { populatePrintingTokens } from './populatePrintingTokens';
+import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
 const { createTokenAccount } = actions;
 
 interface normalPattern {
@@ -72,6 +73,7 @@ interface byType {
   makeAuction: normalPattern;
   initAuctionManager: normalPattern;
   startAuction: normalPattern;
+  setVaultAndAuctionAuthorities: normalPattern;
   externalPriceAccount: normalPattern;
   validateParticipation?: normalPattern;
   buildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
@@ -200,7 +202,6 @@ export async function createAuctionManager(
       redeemTreasury,
       priceMint,
       externalPriceAccount,
-      true,
     ),
     addTokens: { instructions: addTokenInstructions, signers: addTokenSigners },
     createReservationList: {
@@ -215,6 +216,12 @@ export async function createAuctionManager(
       instructions: auctionManagerInstructions,
       signers: auctionManagerSigners,
     },
+    setVaultAndAuctionAuthorities: await setVaultAndAuctionAuthorities(
+      wallet,
+      vault,
+      auction,
+      auctionManager,
+    ),
     startAuction: await setupStartAuction(wallet, vault),
     validateParticipation: participationSafetyDepositDraft
       ? await validateParticipationHelper(
@@ -265,6 +272,7 @@ export async function createAuctionManager(
     lookup.closeVault.signers,
     lookup.makeAuction.signers,
     lookup.initAuctionManager.signers,
+    lookup.setVaultAndAuctionAuthorities.signers,
     lookup.validateParticipation?.signers || [],
     ...lookup.validateBoxes.signers,
     lookup.startAuction.signers,
@@ -280,6 +288,7 @@ export async function createAuctionManager(
     lookup.closeVault.instructions,
     lookup.makeAuction.instructions,
     lookup.initAuctionManager.instructions,
+    lookup.setVaultAndAuctionAuthorities.instructions,
     lookup.validateParticipation?.instructions || [],
     ...lookup.validateBoxes.instructions,
     lookup.startAuction.instructions,

@@ -104,9 +104,13 @@ pub fn process_validate_safety_deposit_box(
     let metadata = Metadata::from_account_info(metadata_info)?;
     let store = Store::from_account_info(auction_manager_store_info)?;
     // Is it a real vault?
-    let _vault = Vault::from_account_info(vault_info)?;
+    let vault = Vault::from_account_info(vault_info)?;
     // Is it a real mint?
     let _mint: Mint = assert_initialized(mint_info)?;
+
+    if vault.authority != *auction_manager_info.key {
+        return Err(MetaplexError::VaultAuthorityMismatch.into());
+    }
 
     assert_owned_by(auction_manager_info, program_id)?;
     assert_owned_by(metadata_info, &store.token_metadata_program)?;
