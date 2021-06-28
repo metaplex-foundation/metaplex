@@ -154,17 +154,20 @@ export class ReservationList {
   /// What supply counter was on master_edition when this reservation was created.
   supplySnapshot: BN | null;
   reservations: Reservation[];
+  totalReservationSpots: BN;
 
   constructor(args: {
     key: MetadataKey;
     masterEdition: PublicKey;
     supplySnapshot: BN | null;
     reservations: Reservation[];
+    totalReservationSpots: BN;
   }) {
     this.key = MetadataKey.EditionV1;
     this.masterEdition = args.masterEdition;
     this.supplySnapshot = args.supplySnapshot;
     this.reservations = args.reservations;
+    this.totalReservationSpots = args.totalReservationSpots;
   }
 }
 
@@ -408,6 +411,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['masterEdition', 'pubkey'],
         ['supplySnapshot', { kind: 'option', type: 'u64' }],
         ['reservations', [Reservation]],
+        ['totalReservationSpots', 'u64'],
       ],
     },
   ],

@@ -5,7 +5,9 @@ use {
         input_validators::{is_url, is_valid_pubkey, is_valid_signer},
     },
     solana_client::rpc_client::RpcClient,
-    solana_program::{borsh::try_from_slice_unchecked, program_pack::Pack},
+    solana_program::{
+        account_info::AccountInfo, borsh::try_from_slice_unchecked, program_pack::Pack,
+    },
     solana_sdk::{
         pubkey::Pubkey,
         signature::{read_keypair_file, Keypair, Signer},
@@ -22,7 +24,9 @@ use {
             mint_new_edition_from_master_edition_via_token, mint_printing_tokens,
             update_metadata_accounts,
         },
-        state::{Data, Edition, Key, MasterEdition, Metadata, EDITION, PREFIX},
+        state::{
+            get_reservation_list, Data, Edition, Key, MasterEdition, Metadata, EDITION, PREFIX,
+        },
     },
     std::str::FromStr,
 };
@@ -78,6 +82,30 @@ fn mint_coins(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     client.send_and_confirm_transaction(&transaction).unwrap();
 
     println!("Minted {:?} tokens to {:?}.", amount, destination_key);
+}
+fn show_reservation_list(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
+    let key = pubkey_of(app_matches, "key").unwrap();
+    let mut res_data = client.get_account(&key).unwrap();
+    let mut lamports = 0;
+    let account_info = AccountInfo::new(
+        &key,
+        false,
+        false,
+        &mut lamports,
+        &mut res_data.data,
+        &res_data.owner,
+        false,
+        0,
+    );
+
+    let res_list = get_reservation_list(&account_info).unwrap();
+    println!("Res list {:?}", res_list.reservations());
+    println!(
+        "current res spots: {:?}",
+        res_list.current_reservation_spots()
+    );
+    println!("total res spots: {:?}", res_list.total_reservation_spots());
+    println!("supply snapshot: {:?}", res_list.supply_snapshot());
 }
 
 fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
@@ -735,6 +763,18 @@ fn main() {
                         .takes_value(true)
                         .help("Metadata mint"),
                 )
+        ).subcommand(
+            SubCommand::with_name("show_reservation_list")
+                .about("Show Reservation List")
+                .arg(
+                    Arg::with_name("key")
+                        .long("key")
+                        .value_name("KEY")
+                        .required(true)
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .help("Account key of reservation list"),
+                )
         )
         .subcommand(
             SubCommand::with_name("create_master_edition")
@@ -842,6 +882,9 @@ fn main() {
         }
         ("show", Some(arg_matches)) => {
             show(arg_matches, payer, client);
+        }
+        ("show_reservation_list", Some(arg_matches)) => {
+            show_reservation_list(arg_matches, payer, client);
         }
         ("mint_coins", Some(arg_matches)) => {
             mint_coins(arg_matches, payer, client);
