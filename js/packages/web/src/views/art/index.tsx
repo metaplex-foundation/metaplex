@@ -63,6 +63,7 @@ export const ArtView = () => {
               className="artwork-image"
               pubkey={id}
               active={true}
+              allowMeshRender={true}
             />
           </Col>
           {/* <Divider /> */}

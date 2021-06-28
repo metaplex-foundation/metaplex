@@ -82,7 +82,6 @@ export const ArtCard = (props: ArtCardProps) => {
           <ArtContent
             pubkey={pubkey}
 
-            extension={image}
             uri={image}
             animationURL={animationURL}
             category={category}

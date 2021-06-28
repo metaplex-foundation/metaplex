@@ -6,6 +6,7 @@ import { ThreeDots } from '../MyLoader';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
+import { getLast } from '../../utils/utils';
 
 const MeshArtContent = ({
   uri,
@@ -61,16 +62,18 @@ const CachedImageContent = ({
 }
 
 const VideoArtContent = ({
-  extension,
   className,
   style,
   files,
+  uri,
+  animationURL,
   active,
 }: {
-  extension?: string;
   className?: string;
   style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
+  uri?: string;
+  animationURL?: string;
   active?: boolean;
 }) => {
   const [playerApi, setPlayerApi] = useState<StreamPlayerApi>();
@@ -125,9 +128,10 @@ const VideoArtContent = ({
         controlsList="nodownload"
         style={style}
         loop={true}
-        poster={extension}
+        poster={uri}
       >
         {likelyVideo && <source src={likelyVideo} type="video/mp4" style={style} />}
+        {animationURL && <source src={animationURL} type="video/mp4" style={style} />}
         {files?.filter(f => typeof f !== 'string').map((f: any) => <source src={f.uri} type={f.type} style={style} />)}
       </video>
     )
@@ -150,7 +154,6 @@ export const ArtContent = ({
 
   uri,
   animationURL,
-  extension,
   files,
 }: {
   category?: MetadataCategory;
@@ -163,8 +166,6 @@ export const ArtContent = ({
   active?: boolean;
   allowMeshRender?: boolean;
   pubkey?: PublicKey | string,
-
-  extension?: string;
   uri?: string;
   animationURL?: string;
   files?: (MetadataFile | string)[];
@@ -180,9 +181,13 @@ export const ArtContent = ({
     category = data.properties.category;
   }
 
-  if (allowMeshRender && (extension?.endsWith('.glb') || category === 'vr')) {
+  animationURL = animationURL || '';
+
+  const animationUrlExt = new URLSearchParams(getLast(animationURL.split("?"))).get("ext");
+
+  if (allowMeshRender && (category === 'vr' || animationUrlExt === 'glb' || animationUrlExt === 'gltf')) {
     return <MeshArtContent
-      uri={uri}
+      uri={animationURL}
       className={className}
       style={style}
       files={files}/>;
@@ -190,10 +195,11 @@ export const ArtContent = ({
 
   const content = category === 'video' ? (
     <VideoArtContent
-      extension={extension}
       className={className}
       style={style}
       files={files}
+      uri={uri}
+      animationURL={animationURL}
       active={active}
     />
   ) : (
