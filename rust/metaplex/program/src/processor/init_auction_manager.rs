@@ -49,6 +49,14 @@ pub fn process_init_auction_manager(
     assert_owned_by(store_info, program_id)?;
     assert_owned_by(accept_payment_info, &store.token_program)?;
 
+    if auction.authority != *auction_manager_info.key && auction.authority != *authority_info.key {
+        return Err(MetaplexError::AuctionAuthorityMismatch.into());
+    }
+
+    if vault.authority != *auction_manager_info.key && vault.authority != *authority_info.key {
+        return Err(MetaplexError::VaultAuthorityMismatch.into());
+    }
+
     if auction.state != AuctionState::Created {
         return Err(MetaplexError::AuctionMustBeCreated.into());
     }
