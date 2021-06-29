@@ -235,6 +235,7 @@ export function processAccountsIntoAuctionView(
       auctionManager.info.state.status === AuctionManagerStatus.Initialized
     )
       return undefined;
+
     const boxesExpected = auctionManager.info.state.winningConfigItemsValidated;
 
     let bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =

@@ -372,17 +372,20 @@ export function MetaProvider({ children = null as any }) {
           isMetadataPartOfStore(result, store, whitelistedCreatorsByCreator)
         ) {
           await result.info.init();
-          setState((data) => ({
+          setState(data => ({
             ...data,
-            metadata: [...data.metadata.filter(m => m.pubkey.equals(pubkey)), result],
+            metadata: [
+              ...data.metadata.filter(m => m.pubkey.equals(pubkey)),
+              result,
+            ],
             metadataByMasterEdition: {
               ...data.metadataByMasterEdition,
               [result.info.masterEdition?.toBase58() || '']: result,
             },
             metadataByMint: {
               ...data.metadataByMint,
-              [result.info.mint.toBase58()]: result
-            }
+              [result.info.mint.toBase58()]: result,
+            },
           }));
         }
       },
@@ -628,25 +631,17 @@ const processMetaplexAccounts = async (
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
       if (storeKey.toBase58() === STORE_ID) {
         const auctionManager = decodeAuctionManager(a.account.data);
-        // An initialized auction manager hasnt been validated, so we cant show it to users unless you're
-        // the one who made it, in which case we want it in memory so we can serve it as part of the Defective
-        // type of view for use in unwinding.
-        // Could have any kind of pictures in it.
-        if (
-          auctionManager.state.status !== AuctionManagerStatus.Initialized ||
-          auctionManager.state.status === AuctionManagerStatus.Initialized
-        ) {
-          const account: ParsedAccount<AuctionManager> = {
-            pubkey: a.pubkey,
-            account: a.account,
-            info: auctionManager,
-          };
-          setter(
-            'auctionManagersByAuction',
-            auctionManager.auction.toBase58(),
-            account,
-          );
-        }
+
+        const account: ParsedAccount<AuctionManager> = {
+          pubkey: a.pubkey,
+          account: a.account,
+          info: auctionManager,
+        };
+        setter(
+          'auctionManagersByAuction',
+          auctionManager.auction.toBase58(),
+          account,
+        );
       }
     } else if (a.account.data[0] === MetaplexKey.BidRedemptionTicketV1) {
       const ticket = decodeBidRedemptionTicket(a.account.data);

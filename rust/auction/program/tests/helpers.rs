@@ -153,6 +153,8 @@ pub async fn create_auction(
                 token_mint: *mint_keypair,
                 winners: WinnerLimit::Capped(max_winners),
                 price_floor: PriceFloor::None([0u8; 32]),
+                gap_tick_size_percentage: Some(0),
+                tick_size: Some(0),
             },
         )],
         Some(&payer.pubkey()),
