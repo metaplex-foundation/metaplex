@@ -14,6 +14,8 @@ pub const EDITION: &str = "edition";
 
 pub const RESERVATION: &str = "reservation";
 
+pub const LEDGER: &str = "ledger";
+
 pub const MAX_NAME_LENGTH: usize = 32;
 
 pub const MAX_SYMBOL_LENGTH: usize = 10;
@@ -48,7 +50,7 @@ pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATION
 // can hold up to 200 keys per reservation, note: the extra 8 is for number of elements in the vec
 pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
-pub const MASTER_EDITION_SPOT_AUTHORITY_SIZE: usize = 1 + 32 + 9 + 8 + 8;
+pub const MASTER_EDITION_SPOT_AUTHORITY_SIZE: usize = 1 + 32 + 9 + 8 + 8 + 100;
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -60,6 +62,7 @@ pub enum Key {
     MetadataV1,
     ReservationListV2,
     MasterEditionSpotAuthority,
+    MasterEditionSpotAuthorityLedger,
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -447,6 +450,27 @@ impl MasterEditionSpotAuthority {
             &a.data.borrow_mut(),
             Key::MasterEditionSpotAuthority,
             MASTER_EDITION_SPOT_AUTHORITY_SIZE,
+        )?;
+
+        Ok(res)
+    }
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MasterEditionSpotAuthorityLedger {
+    pub key: Key,
+    pub ledger: Vec<bool>,
+}
+
+impl MasterEditionSpotAuthorityLedger {
+    pub fn from_account_info(
+        a: &AccountInfo,
+    ) -> Result<MasterEditionSpotAuthorityLedger, ProgramError> {
+        let res: MasterEditionSpotAuthorityLedger = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::MasterEditionSpotAuthorityLedger,
+            a.data_len(),
         )?;
 
         Ok(res)

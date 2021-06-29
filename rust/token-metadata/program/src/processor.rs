@@ -3,9 +3,10 @@ use {
         error::MetadataError,
         instruction::MetadataInstruction,
         state::{
-            get_reservation_list, Data, Key, MasterEdition, Metadata, Reservation,
-            ReservationListV2, EDITION, MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, MAX_RESERVATIONS,
-            MAX_RESERVATION_LIST_SIZE, PREFIX, RESERVATION,
+            get_reservation_list, Data, Key, MasterEdition, MasterEditionSpotAuthority,
+            MasterEditionSpotAuthorityLedger, Metadata, Reservation, ReservationListV2, EDITION,
+            LEDGER, MASTER_EDITION_SPOT_AUTHORITY_SIZE, MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN,
+            MAX_RESERVATIONS, MAX_RESERVATION_LIST_SIZE, PREFIX, RESERVATION,
         },
         utils::{
             assert_data_valid, assert_derivation, assert_initialized,
@@ -94,6 +95,14 @@ pub fn process_instruction(
         MetadataInstruction::MintPrintingTokens(args) => {
             msg!("Instruction: Mint Printing Tokens");
             process_mint_printing_tokens(program_id, accounts, args.supply)
+        }
+        MetadataInstruction::SetMasterEditionSpotAuthority(args) => {
+            msg!("Instruction: Set Master Edition Spot Authority");
+            process_set_master_edition_spot_authority(program_id, accounts, args.total_spots)
+        }
+        MetadataInstruction::MintNewEditionFromMasterEditionViaAuthority => {
+            msg!("Instruction: Mint New Edition from Master Edition Via Authority");
+            process_mint_new_edition_from_master_edition_via_authority(program_id, accounts)
         }
     }
 }
@@ -830,5 +839,235 @@ pub fn process_mint_printing_tokens(
         token_program: token_program_info.clone(),
     })?;
 
+    Ok(())
+}
+
+pub fn process_set_master_edition_spot_authority(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    total_spots: Option<u64>,
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let spot_authority_info = next_account_info(account_info_iter)?;
+    let spot_authority_ledger_info = next_account_info(account_info_iter)?;
+    let authority_info = next_account_info(account_info_iter)?;
+    let update_authority_info = next_account_info(account_info_iter)?;
+    let payer_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let master_edition_info = next_account_info(account_info_iter)?;
+    let system_program_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter)?;
+
+    let mut spot_authority: MasterEditionSpotAuthority;
+    let mut spot_authority_ledger: MasterEditionSpotAuthorityLedger;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    assert_owned_by(metadata_info, program_id)?;
+    assert_owned_by(master_edition_info, program_id)?;
+    if metadata.update_authority != *update_authority_info.key {
+        return Err(MetadataError::UpdateAuthorityIncorrect.into());
+    }
+
+    assert_derivation(
+        program_id,
+        master_edition_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            metadata.mint.as_ref(),
+            EDITION.as_bytes(),
+        ],
+    )?;
+
+    let bump = assert_derivation(
+        program_id,
+        spot_authority_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_info.key.as_ref(),
+            authority_info.key.as_ref(),
+        ],
+    )?;
+
+    let ledger_bump = assert_derivation(
+        program_id,
+        spot_authority_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_info.key.as_ref(),
+            authority_info.key.as_ref(),
+            LEDGER.as_bytes(),
+        ],
+    )?;
+
+    if spot_authority_info.data_is_empty() {
+        if !update_authority_info.is_signer {
+            return Err(MetadataError::UpdateAuthorityIsNotSigner.into());
+        }
+
+        let seeds = &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_info.key.as_ref(),
+            authority_info.key.as_ref(),
+            &[bump],
+        ];
+
+        create_or_allocate_account_raw(
+            *program_id,
+            spot_authority_info,
+            rent_info,
+            system_program_info,
+            payer_info,
+            MASTER_EDITION_SPOT_AUTHORITY_SIZE,
+            seeds,
+        )?;
+        spot_authority = MasterEditionSpotAuthority::from_account_info(spot_authority_info)?;
+        spot_authority.key = Key::MasterEditionSpotAuthority;
+        spot_authority.authority = *authority_info.key;
+    } else {
+        if !authority_info.is_signer && !update_authority_info.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        spot_authority = MasterEditionSpotAuthority::from_account_info(spot_authority_info)?;
+
+        if spot_authority.authority != *authority_info.key {
+            return Err(MetadataError::UpdateAuthorityIncorrect.into());
+        }
+    }
+
+    if let Some(spots) = total_spots {
+        if spot_authority.supply_snapshot.is_some() {
+            // Reusing some errors from the old system, to be renamed later.
+            return Err(MetadataError::ReservationAlreadyMade.into());
+        }
+        let mut master_edition = MasterEdition::from_account_info(master_edition_info)?;
+
+        spot_authority.supply_snapshot = Some(master_edition.supply);
+        spot_authority.total_spots = spots;
+        spot_authority.spots_remaining = spots;
+        master_edition.supply = master_edition
+            .supply
+            .checked_add(spots as u64)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+
+        if let Some(max_supply) = master_edition.max_supply {
+            if master_edition.supply > max_supply {
+                return Err(MetadataError::ReservationBreachesMaximumSupply.into());
+            }
+        }
+        master_edition.serialize(&mut *master_edition_info.data.borrow_mut())?;
+
+        let ledger_seeds = &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_info.key.as_ref(),
+            authority_info.key.as_ref(),
+            LEDGER.as_bytes(),
+            &[ledger_bump],
+        ];
+
+        create_or_allocate_account_raw(
+            *program_id,
+            spot_authority_ledger_info,
+            rent_info,
+            system_program_info,
+            payer_info,
+            1 + 4 + (spots as usize),
+            ledger_seeds,
+        )?;
+        spot_authority_ledger =
+            MasterEditionSpotAuthorityLedger::from_account_info(spot_authority_ledger_info)?;
+        spot_authority_ledger.key = Key::MasterEditionSpotAuthorityLedger;
+        spot_authority_ledger.serialize(&mut *spot_authority_ledger_info.data.borrow_mut())?;
+    }
+
+    spot_authority.serialize(&mut *spot_authority_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+pub fn process_mint_new_edition_from_master_edition_via_authority(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let new_metadata_account_info = next_account_info(account_info_iter)?;
+    let new_edition_account_info = next_account_info(account_info_iter)?;
+    let master_edition_account_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let mint_authority_info = next_account_info(account_info_iter)?;
+    let spot_authority_info = next_account_info(account_info_iter)?;
+    let spot_authority_ledger_info = next_account_info(account_info_iter)?;
+    let payer_account_info = next_account_info(account_info_iter)?;
+    let authority_info = next_account_info(account_info_iter)?;
+    let update_authority_info = next_account_info(account_info_iter)?;
+    let master_metadata_account_info = next_account_info(account_info_iter)?;
+    let token_program_account_info = next_account_info(account_info_iter)?;
+    let system_account_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter)?;
+
+    assert_token_program_matches_package(token_program_account_info)?;
+    assert_owned_by(mint_info, &spl_token::id())?;
+    assert_owned_by(printing_mint_info, &spl_token::id())?;
+    assert_owned_by(master_token_account_info, &spl_token::id())?;
+
+    if !new_metadata_account_info.data_is_empty() {
+        return Err(MetadataError::AlreadyInitialized.into());
+    }
+
+    if !new_edition_account_info.data_is_empty() {
+        return Err(MetadataError::AlreadyInitialized.into());
+    }
+
+    assert_owned_by(master_edition_account_info, program_id)?;
+    assert_owned_by(master_metadata_account_info, program_id)?;
+    if let Some(acct) = reservation_list_info {
+        assert_owned_by(acct, program_id)?;
+    }
+
+    let token_account: Account = assert_initialized(master_token_account_info)?;
+    let master_edition = MasterEdition::from_account_info(master_edition_account_info)?;
+
+    if master_edition.printing_mint != *printing_mint_info.key {
+        return Err(MetadataError::PrintingMintMismatch.into());
+    }
+
+    if token_account.mint != *printing_mint_info.key {
+        return Err(MetadataError::TokenAccountMintMismatch.into());
+    }
+
+    if token_account.amount < 1 {
+        return Err(MetadataError::NotEnoughTokens.into());
+    }
+
+    spl_token_burn(TokenBurnParams {
+        mint: printing_mint_info.clone(),
+        source: master_token_account_info.clone(),
+        amount: 1,
+        authority: burn_authority.clone(),
+        authority_signer_seeds: None,
+        token_program: token_program_account_info.clone(),
+    })?;
+
+    mint_limited_edition(
+        program_id,
+        new_metadata_account_info,
+        new_edition_account_info,
+        master_edition_account_info,
+        mint_info,
+        mint_authority_info,
+        payer_account_info,
+        update_authority_info,
+        master_metadata_account_info,
+        token_program_account_info,
+        system_account_info,
+        rent_info,
+        reservation_list_info,
+    )?;
     Ok(())
 }
