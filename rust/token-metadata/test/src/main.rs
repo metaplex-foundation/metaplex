@@ -104,6 +104,8 @@ fn show_reservation_list(app_matches: &ArgMatches, _payer: Keypair, client: RpcC
         "current res spots: {:?}",
         res_list.current_reservation_spots()
     );
+    println!("total res spots: {:?}", res_list.total_reservation_spots());
+    println!("supply snapshot: {:?}", res_list.supply_snapshot());
 }
 
 fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {

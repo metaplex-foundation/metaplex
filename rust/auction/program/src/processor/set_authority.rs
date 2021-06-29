@@ -35,6 +35,12 @@ pub fn set_authority(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRe
         return Err(AuctionError::InvalidAuthority.into());
     }
 
+    // Make sure new authority actually exists in some form.
+    if new_authority.data_is_empty() || new_authority.lamports() == 0 {
+        msg!("Disallowing new authority because it does not exist.");
+        return Err(AuctionError::InvalidAuthority.into());
+    }
+
     auction.authority = *new_authority.key;
     auction.serialize(&mut *auction_act.data.borrow_mut())?;
     Ok(())

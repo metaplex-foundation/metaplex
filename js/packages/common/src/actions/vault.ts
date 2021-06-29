@@ -275,6 +275,42 @@ export const decodeSafetyDeposit = (buffer: Buffer) => {
   ) as SafetyDepositBox;
 };
 
+export async function setVaultAuthority(
+  vault: PublicKey,
+  currentAuthority: PublicKey,
+  newAuthority: PublicKey,
+  instructions: TransactionInstruction[],
+) {
+  const vaultProgramId = programIds().vault;
+
+  const data = Buffer.from([10]);
+
+  const keys = [
+    {
+      pubkey: vault,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: currentAuthority,
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: newAuthority,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+  instructions.push(
+    new TransactionInstruction({
+      keys,
+      programId: vaultProgramId,
+      data: data,
+    }),
+  );
+}
+
 export async function initVault(
   allowFurtherShareCreation: boolean,
   fractionalMint: PublicKey,

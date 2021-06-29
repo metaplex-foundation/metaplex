@@ -6,16 +6,18 @@ import { AuctionView, useArt } from '../../hooks';
 import { ArtContent } from '../ArtContent';
 import { AuctionCard } from '../AuctionCard';
 import { Link } from 'react-router-dom';
+import { useMeta } from '../../contexts';
 
 interface IPreSaleBanner {
   auction?: AuctionView;
 }
 
 export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
+  const { isLoading } = useMeta();
   const id = auction?.thumbnail.metadata.pubkey;
   const art = useArt();
 
-  if (!auction) {
+  if (isLoading) {
     return <Skeleton />;
   }
 
@@ -31,7 +33,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
         <h2 className="art-title">
           {art.title}
         </h2>
-        <AuctionCard
+        {auction && <AuctionCard
           auctionView={auction}
           style={{
             background: 'transparent',
@@ -54,7 +56,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
               </Link>
             </>
           }
-        />
+        />}
       </Col>
     </Row>
   );

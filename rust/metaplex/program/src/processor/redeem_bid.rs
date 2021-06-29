@@ -28,16 +28,10 @@ fn set_reservation_list_wrapper<'a>(
     auction_manager_info: &AccountInfo<'a>,
     signer_seeds: &[&[u8]],
     reservations: Vec<Reservation>,
-    first_push: bool,
-    total_reservation_spots: u64,
+    total_reservation_spots: Option<u64>,
+    offset: u64,
+    total_spot_offset: u64,
 ) -> ProgramResult {
-    let total_reservation_spot_opt: Option<u64>;
-
-    if first_push {
-        total_reservation_spot_opt = Some(total_reservation_spots)
-    } else {
-        total_reservation_spot_opt = None
-    }
     invoke_signed(
         &set_reservation_list(
             *program_id,
@@ -45,7 +39,9 @@ fn set_reservation_list_wrapper<'a>(
             *reservation_list_info.key,
             *auction_manager_info.key,
             reservations,
-            total_reservation_spot_opt,
+            total_reservation_spots,
+            offset,
+            total_spot_offset,
         ),
         &[
             master_edition_info.clone(),
@@ -58,12 +54,27 @@ fn set_reservation_list_wrapper<'a>(
     Ok(())
 }
 
+pub fn calc_spots(
+    winning_config_item: &WinningConfigItem,
+    auction_manager: &AuctionManager,
+    n: usize,
+) -> u64 {
+    auction_manager.settings.winning_configs[n]
+        .items
+        .iter()
+        .filter(|i| i.safety_deposit_box_index == winning_config_item.safety_deposit_box_index)
+        .map(|i| i.amount as u64)
+        .sum()
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn reserve_list_if_needed<'a>(
     program_id: &'a Pubkey,
     auction_manager: &AuctionManager,
     auction: &AuctionData,
     winning_config_item: &WinningConfigItem,
+    winning_index: usize,
+    bidder_info: &AccountInfo<'a>,
     master_edition_info: &AccountInfo<'a>,
     reservation_list_info: &AccountInfo<'a>,
     auction_manager_info: &AccountInfo<'a>,
@@ -71,77 +82,55 @@ pub fn reserve_list_if_needed<'a>(
 ) -> ProgramResult {
     let reservation_list = get_reservation_list(reservation_list_info)?;
 
-    if reservation_list.supply_snapshot().is_none() {
-        let mut reservations: Vec<Reservation> = vec![];
+    let total_reservation_spot_opt: Option<u64>;
 
-        // Auction specifically does not expose internal state workings as it may change someday,
-        // but it does expose a point get-winner-at-index method. Right now this is just array access
-        // but may be invocation someday. It's inefficient style but better for the interface maintenance
-        // in the long run if we move to better storage solutions (so that this action doesnt need to change if
-        // storage does.)
-        let mut total_reservation_spots: u64 = 0;
-        for n in 0..auction_manager.settings.winning_configs.len() {
-            match auction.winner_at(n) {
-                Some(address) => {
-                    let spots: u64 = auction_manager.settings.winning_configs[n]
-                        .items
-                        .iter()
-                        .filter(|i| {
-                            i.safety_deposit_box_index
-                                == winning_config_item.safety_deposit_box_index
-                        })
-                        .map(|i| i.amount as u64)
-                        .sum();
-                    total_reservation_spots = total_reservation_spots
+    // Auction specifically does not expose internal state workings as it may change someday,
+    // but it does expose a point get-winner-at-index method. Right now this is just array access
+    // but may be invocation someday. It's inefficient style but better for the interface maintenance
+    // in the long run if we move to better storage solutions (so that this action doesnt need to change if
+    // storage does.)
+
+    let mut total_reservation_spots: u64 = 0;
+    let mut total_spot_offset: u64 = 0;
+    for n in 0..auction_manager.settings.winning_configs.len() {
+        match auction.winner_at(n) {
+            Some(_) => {
+                let spots: u64 = calc_spots(winning_config_item, auction_manager, n);
+                total_reservation_spots = total_reservation_spots
+                    .checked_add(spots)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                if n < winning_index {
+                    total_spot_offset = total_spot_offset
                         .checked_add(spots)
                         .ok_or(MetaplexError::NumericalOverflowError)?;
-                    reservations.push(Reservation {
-                        address,
-                        // Select all items in a winning config matching the same safety deposit box
-                        // as the one being redeemed here (likely only one)
-                        // and then sum them to get the total spots to reserve for this winner
-                        spots_remaining: spots,
-                        total_spots: spots,
-                    });
                 }
-                None => break,
             }
-        }
-
-        let mut first_push = true;
-        let mut reservation_queue: Vec<Reservation> = vec![];
-        for reservation in reservations {
-            reservation_queue.push(reservation);
-            if reservation_queue.len().checked_rem(20) == Some(0) && reservation_queue.len() > 0 {
-                set_reservation_list_wrapper(
-                    program_id,
-                    master_edition_info,
-                    reservation_list_info,
-                    auction_manager_info,
-                    signer_seeds,
-                    reservation_queue,
-                    first_push,
-                    total_reservation_spots,
-                )?;
-
-                first_push = false;
-                reservation_queue = vec![]; // start over with new list.
-            }
-        }
-
-        if reservation_queue.len() > 0 {
-            set_reservation_list_wrapper(
-                program_id,
-                master_edition_info,
-                reservation_list_info,
-                auction_manager_info,
-                signer_seeds,
-                reservation_queue,
-                first_push,
-                total_reservation_spots,
-            )?;
+            None => break,
         }
     }
+
+    if reservation_list.supply_snapshot().is_none() {
+        total_reservation_spot_opt = Some(total_reservation_spots)
+    } else {
+        total_reservation_spot_opt = None
+    }
+
+    let my_spots: u64 = calc_spots(winning_config_item, auction_manager, winning_index);
+    set_reservation_list_wrapper(
+        program_id,
+        master_edition_info,
+        reservation_list_info,
+        auction_manager_info,
+        signer_seeds,
+        vec![Reservation {
+            address: *bidder_info.key,
+            spots_remaining: my_spots,
+            total_spots: my_spots,
+        }],
+        total_reservation_spot_opt,
+        winning_index as u64,
+        total_spot_offset,
+    )?;
 
     Ok(())
 }
@@ -244,6 +233,8 @@ pub fn process_redeem_bid<'a>(
                         &auction_manager,
                         &auction,
                         &winning_config_item,
+                        winning_index,
+                        bidder_info,
                         master_edition_info,
                         reservation_list_info,
                         auction_manager_info,
