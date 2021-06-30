@@ -212,5 +212,5 @@ export const ArtContent = ({
       style={style}/>
   );
 
-  return <div ref={ref as any}>{content}</div>;
+  return <div ref={ref as any} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{content}</div>;
 };

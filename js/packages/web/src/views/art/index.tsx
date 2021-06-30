@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button } from 'antd';
+import { Row, Col, Divider, Layout, Tag, Button, Skeleton } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from './../../hooks';
 
@@ -9,6 +9,7 @@ import { shortenAddress, TokenAccount, useConnection, useUserAccounts, useWallet
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { PublicKey } from '@solana/web3.js';
+import { ViewOn } from './../../components/ViewOn';
 
 const { Content } = Layout;
 
@@ -72,85 +73,96 @@ export const ArtView = () => {
             md={{ span: 12 }}
             style={{ textAlign: 'left', fontSize: '1.4rem' }}
           >
-            <div style={{ fontWeight: 700, fontSize: '4rem' }}>{art.title}</div>
-            <br />
-            <div className="info-header">CREATED BY</div>
-            <div className="creators">
-              {(art.creators || [])
-                .map(creator => {
-                return (
-                  <div
-                    className="info-content"
-                    style={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <MetaAvatar creators={[creator]} size={64} />
-                    <div>
-                      <span className="creator-name">
-                        {creator.name || shortenAddress(creator.address || '')}
-                      </span>
-                      {/* <Button
-                        onClick={async () => {
-                          if(!art.mint) {
-                            return;
-                          }
-                          const mint = new PublicKey(art.mint);
-
-                          const account = accountByMint.get(art.mint);
-                          if(!account) {
-                            return;
-                          }
-
-                          const owner = wallet?.publicKey;
-
-                          if(!owner) {
-                            return;
-                          }
-                          const instructions: any[] = [];
-                          await updateMetadata(undefined, undefined, true, mint, owner, instructions)
-
-                          sendTransaction(connection, wallet, instructions, [], true);
-                        }}
+            <Row>
+              <div style={{ fontWeight: 700, fontSize: '4rem' }}>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</div>
+            </Row>
+            <Row>
+              <Col span={6}>
+                <h6>Royalties</h6>
+                <div className="royalties">
+                  {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
+                </div>
+              </Col>
+              <Col span={12}>
+                <ViewOn  />
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <h6 style={{ marginTop: 5 }}>Created By</h6>
+                <div className="creators">
+                  {(art.creators || [])
+                    .map(creator => {
+                    return (
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}
                       >
-                        Mark as Sold
-                      </Button> */}
-                      <div style={{ marginLeft: 10 }}>
-                        {!creator.verified &&
-                          (creator.address === pubkey ? (
-                            <Button
-                              onClick={async () => {
-                                try {
-                                  await sendSignMetadata(
-                                    connection,
-                                    wallet,
-                                    new PublicKey(id),
-                                  );
-                                } catch (e) {
-                                  console.error(e);
-                                  return false;
-                                }
-                                return true;
-                              }}
-                            >
-                              Approve
-                            </Button>
-                          ) : (
-                            tag
-                          ))}
+                        <MetaAvatar creators={[creator]} size={64} />
+                        <div>
+                          <span className="creator-name">
+                            {creator.name || shortenAddress(creator.address || '')}
+                          </span>
+                          <div style={{ marginLeft: 10 }}>
+                            {!creator.verified &&
+                              (creator.address === pubkey ? (
+                                <Button
+                                  onClick={async () => {
+                                    try {
+                                      await sendSignMetadata(
+                                        connection,
+                                        wallet,
+                                        new PublicKey(id),
+                                      );
+                                    } catch (e) {
+                                      console.error(e);
+                                      return false;
+                                    }
+                                    return true;
+                                  }}
+                                >
+                                  Approve
+                                </Button>
+                              ) : (
+                                tag
+                              ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </Col>
+            </Row>
+
+            {/* <Button
+                  onClick={async () => {
+                    if(!art.mint) {
+                      return;
+                    }
+                    const mint = new PublicKey(art.mint);
+
+                    const account = accountByMint.get(art.mint);
+                    if(!account) {
+                      return;
+                    }
+
+                    const owner = wallet?.publicKey;
+
+                    if(!owner) {
+                      return;
+                    }
+                    const instructions: any[] = [];
+                    await updateMetadata(undefined, undefined, true, mint, owner, instructions)
+
+                    sendTransaction(connection, wallet, instructions, [], true);
+                  }}
+                >
+                  Mark as Sold
+                </Button> */}
           </Col>
           <Col span="24">
             <Divider />
-            <br />
             {art.creators?.find(c => !c.verified) && unverified}
-            <div className="info-header">CREATOR ROYALTIES</div>
-            <div className="royalties">
-              {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
-            </div>
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
             <div className="info-content">{description}</div>

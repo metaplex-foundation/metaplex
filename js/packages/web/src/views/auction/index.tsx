@@ -58,15 +58,13 @@ export const AuctionItem = ({
     height: 300,
   };
   return (
-    <div>
-      <ArtContent
-        pubkey={id}
-        className="artwork-image stack-item"
-        style={style}
-        active={active}
-        allowMeshRender={true}
-      />
-    </div>
+    <ArtContent
+      pubkey={id}
+      className="artwork-image stack-item"
+      style={style}
+      active={active}
+      allowMeshRender={true}
+    />
   );
 };
 
@@ -124,9 +122,9 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
-          <h6>NUMBER OF WINNERS</h6>
+          <h6>Number Of Winners</h6>
           <h1>{winnerCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : winnerCount}</h1>
-          <h6>NUMBER OF NFTs</h6>
+          <h6>Number Of NFTs</h6>
           <h1>{nftCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : nftCount}</h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
           <p>
