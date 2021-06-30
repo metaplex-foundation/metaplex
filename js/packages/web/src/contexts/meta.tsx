@@ -33,7 +33,6 @@ import {
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
-import BN from 'bn.js';
 import React, {
   useCallback,
   useContext,
@@ -43,7 +42,6 @@ import React, {
 } from 'react';
 import {
   AuctionManager,
-  AuctionManagerStatus,
   BidRedemptionTicket,
   decodeAuctionManager,
   decodeBidRedemptionTicket,

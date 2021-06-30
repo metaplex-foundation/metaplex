@@ -1,19 +1,15 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { Row, Col, Button } from 'antd';
+import { Col, Button } from 'antd';
 import {
   useArt,
-  useAuction,
 } from '../../hooks';
 import {
   useConnectionConfig,
 } from '@oyster/common';
 
-export const ViewOn = () => {
-  const { id } = useParams<{ id: string }>();
+export const ViewOn = ({ id }: { id: string }) => {
   const { env } = useConnectionConfig();
-  const auction = useAuction(id);
-  const art = useArt(auction?.thumbnail.metadata.pubkey);
+  const art = useArt(id);
 
   return (
     <>

@@ -5,7 +5,7 @@ import { useArt, useExtendedArt } from './../../hooks';
 
 import './index.less';
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, TokenAccount, useConnection, useUserAccounts, useWallet } from '@oyster/common';
+import { shortenAddress, useConnection, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { PublicKey } from '@solana/web3.js';
@@ -84,7 +84,7 @@ export const ArtView = () => {
                 </div>
               </Col>
               <Col span={12}>
-                <ViewOn  />
+                <ViewOn id={id} />
               </Col>
             </Row>
             <Row>

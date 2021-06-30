@@ -1,4 +1,4 @@
-import React, { Ref, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
 import { MetadataCategory, MetadataFile } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
@@ -47,7 +47,7 @@ const CachedImageContent = ({
   style?: React.CSSProperties;
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
-  const { cachedBlob, isLoading } = useCachedImage(uri || '');
+  const { cachedBlob } = useCachedImage(uri || '');
 
   return <Image
       src={cachedBlob}
