@@ -1,5 +1,5 @@
 use {
-    crate::state::{Creator, Data, Reservation, LEDGER, PREFIX},
+    crate::state::{Creator, Data, Reservation, EDITION, LEDGER, PREFIX},
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         instruction::{AccountMeta, Instruction},
@@ -58,8 +58,14 @@ pub struct SetReservationListArgs {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct MasterEditionSpotAuthorityArgs {
+pub struct SetMasterEditionSpotAuthorityArgs {
     pub total_spots: Option<u64>,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MintNewEditionFromMasterEditionViaAuthorityArgs {
+    pub edition_offset: u64,
 }
 
 /// Instructions supported by the Metadata program.
@@ -104,14 +110,14 @@ pub enum MetadataInstruction {
     /// make a new Metadata + Edition that is a child of the master edition denoted by this authority token.
     ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
     ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
-    ///   2. `[writable]` Master Record Edition (pda of ['metadata', program id, Printing mint id, 'edition'])
+    ///   2. `[writable]` Master Edition of the Master Metadata (pda of ['metadata', program id, master record metadata mint id, 'edition'])
     ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   4. `[signer]` Mint authority of new mint
     ///   5. `[writable]` Printing Mint of master record edition
     ///   6. `[writable]` Token account containing Printing mint token to be transferred
     ///   7. `[signer]` Burn authority for this token
     ///   8. `[signer]` payer
-    ///   9. `[]` update authority info of master metadata account
+    ///   9. `[]` update authority info of new metadata
     ///   10. `[]` Master record metadata account
     ///   11. `[]` Token program
     ///   12. `[]` System program
@@ -209,13 +215,13 @@ pub enum MetadataInstruction {
     ///   6. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
     ///   7. `[]` System program
     ///   8. `[]` Rent info
-    SetMasterEditionSpotAuthority(MasterEditionSpotAuthorityArgs),
+    SetMasterEditionSpotAuthority(SetMasterEditionSpotAuthorityArgs),
 
     /// Given a MasterEditionSpotAuthority PDA, and a brand new non-metadata-ed mint with one token
     /// make a new Metadata + Edition that is a child of the master edition denoted by this authority token.
     ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
     ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
-    ///   2. `[writable]` Master Record Edition (pda of ['metadata', program id, Printing mint id, 'edition'])
+    ///   2. `[writable]` Master Edition of the Master Metadata (pda of ['metadata', program id, master record metadata mint id, 'edition'])
     ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   4. `[signer]` Mint authority of new mint
     ///   5. `[writable]` Master edition spot authority account pda of ['metadata', program id, master edition key, authority]
@@ -224,10 +230,11 @@ pub enum MetadataInstruction {
     ///   8. `[signer]` Authority on spot authority struct
     ///   9. `[]` Update authority of new metadata
     ///   10. `[]` Master record metadata account
-    ///   11. `[]` Token program
-    ///   12. `[]` System program
-    ///   13. `[]` Rent info
-    MintNewEditionFromMasterEditionViaAuthority,
+    ///   11. `[]` Master record metadata mint account
+    ///   12. `[]` Token program
+    ///   13. `[]` System program
+    ///   14. `[]` Rent info
+    MintNewEditionFromMasterEditionViaAuthority(MintNewEditionFromMasterEditionViaAuthorityArgs),
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -577,9 +584,91 @@ pub fn set_master_edition_spot_authority(
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
-        data: MetadataInstruction::SetMasterEditionSpotAuthority(MasterEditionSpotAuthorityArgs {
-            total_spots,
-        })
+        data: MetadataInstruction::SetMasterEditionSpotAuthority(
+            SetMasterEditionSpotAuthorityArgs { total_spots },
+        )
+        .try_to_vec()
+        .unwrap(),
+    }
+}
+
+/// creates a mint_new_edition_from_master_edition instruction
+#[allow(clippy::too_many_arguments)]
+pub fn mint_new_edition_from_master_edition_via_authority(
+    program_id: Pubkey,
+    metadata: Pubkey,
+    edition: Pubkey,
+    mint: Pubkey,
+    mint_authority: Pubkey,
+    authority: Pubkey,
+    payer: Pubkey,
+    new_update_authority: Pubkey,
+    master_metadata_mint: Pubkey,
+    edition_offset: u64,
+) -> Instruction {
+    let (master_metadata, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_metadata_mint.as_ref(),
+        ],
+        &program_id,
+    );
+
+    let (master_edition, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_metadata_mint.as_ref(),
+            EDITION.as_bytes(),
+        ],
+        &program_id,
+    );
+
+    let (spot_authority, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition.as_ref(),
+            authority.as_ref(),
+        ],
+        &program_id,
+    );
+    let (ledger, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition.as_ref(),
+            authority.as_ref(),
+            LEDGER.as_bytes(),
+        ],
+        &program_id,
+    );
+
+    let accounts = vec![
+        AccountMeta::new(metadata, false),
+        AccountMeta::new(edition, false),
+        AccountMeta::new(master_edition, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(mint_authority, true),
+        AccountMeta::new(spot_authority, false),
+        AccountMeta::new(ledger, false),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(authority, true),
+        AccountMeta::new_readonly(new_update_authority, true),
+        AccountMeta::new_readonly(master_metadata, false),
+        AccountMeta::new_readonly(master_metadata_mint, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction {
+        program_id,
+        accounts,
+        data: MetadataInstruction::MintNewEditionFromMasterEditionViaAuthority(
+            MintNewEditionFromMasterEditionViaAuthorityArgs { edition_offset },
+        )
         .try_to_vec()
         .unwrap(),
     }

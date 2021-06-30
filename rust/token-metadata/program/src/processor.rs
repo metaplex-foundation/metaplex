@@ -100,9 +100,13 @@ pub fn process_instruction(
             msg!("Instruction: Set Master Edition Spot Authority");
             process_set_master_edition_spot_authority(program_id, accounts, args.total_spots)
         }
-        MetadataInstruction::MintNewEditionFromMasterEditionViaAuthority => {
+        MetadataInstruction::MintNewEditionFromMasterEditionViaAuthority(args) => {
             msg!("Instruction: Mint New Edition from Master Edition Via Authority");
-            process_mint_new_edition_from_master_edition_via_authority(program_id, accounts)
+            process_mint_new_edition_from_master_edition_via_authority(
+                program_id,
+                accounts,
+                args.edition_offset,
+            )
         }
     }
 }
@@ -397,6 +401,7 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
 
     let token_account: Account = assert_initialized(master_token_account_info)?;
     let master_edition = MasterEdition::from_account_info(master_edition_account_info)?;
+    let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
 
     if master_edition.printing_mint != *printing_mint_info.key {
         return Err(MetadataError::PrintingMintMismatch.into());
@@ -421,6 +426,7 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
 
     mint_limited_edition(
         program_id,
+        &master_metadata,
         new_metadata_account_info,
         new_edition_account_info,
         master_edition_account_info,
@@ -428,11 +434,11 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
         mint_authority_info,
         payer_account_info,
         update_authority_info,
-        master_metadata_account_info,
         token_program_account_info,
         system_account_info,
         rent_info,
         reservation_list_info,
+        None,
     )?;
     Ok(())
 }
@@ -892,7 +898,7 @@ pub fn process_set_master_edition_spot_authority(
 
     let ledger_bump = assert_derivation(
         program_id,
-        spot_authority_info,
+        spot_authority_ledger_info,
         &[
             PREFIX.as_bytes(),
             program_id.as_ref(),
@@ -993,6 +999,7 @@ pub fn process_set_master_edition_spot_authority(
 pub fn process_mint_new_edition_from_master_edition_via_authority(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
+    edition_offset: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -1007,14 +1014,25 @@ pub fn process_mint_new_edition_from_master_edition_via_authority(
     let authority_info = next_account_info(account_info_iter)?;
     let update_authority_info = next_account_info(account_info_iter)?;
     let master_metadata_account_info = next_account_info(account_info_iter)?;
+    let master_metadata_mint_info = next_account_info(account_info_iter)?;
     let token_program_account_info = next_account_info(account_info_iter)?;
     let system_account_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
 
     assert_token_program_matches_package(token_program_account_info)?;
     assert_owned_by(mint_info, &spl_token::id())?;
-    assert_owned_by(printing_mint_info, &spl_token::id())?;
-    assert_owned_by(master_token_account_info, &spl_token::id())?;
+    assert_owned_by(master_metadata_mint_info, &spl_token::id())?;
+    assert_owned_by(spot_authority_info, program_id)?;
+    assert_owned_by(spot_authority_ledger_info, program_id)?;
+    assert_owned_by(master_edition_account_info, program_id)?;
+    assert_owned_by(master_metadata_account_info, program_id)?;
+
+    let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
+    let _master_metadata_mint: Mint = assert_initialized(master_metadata_mint_info)?;
+
+    if master_metadata.mint != *master_metadata_mint_info.key {
+        return Err(MetadataError::MintMismatch.into());
+    }
 
     if !new_metadata_account_info.data_is_empty() {
         return Err(MetadataError::AlreadyInitialized.into());
@@ -1024,50 +1042,83 @@ pub fn process_mint_new_edition_from_master_edition_via_authority(
         return Err(MetadataError::AlreadyInitialized.into());
     }
 
-    assert_owned_by(master_edition_account_info, program_id)?;
-    assert_owned_by(master_metadata_account_info, program_id)?;
-    if let Some(acct) = reservation_list_info {
-        assert_owned_by(acct, program_id)?;
-    }
-
-    let token_account: Account = assert_initialized(master_token_account_info)?;
-    let master_edition = MasterEdition::from_account_info(master_edition_account_info)?;
-
-    if master_edition.printing_mint != *printing_mint_info.key {
-        return Err(MetadataError::PrintingMintMismatch.into());
-    }
-
-    if token_account.mint != *printing_mint_info.key {
-        return Err(MetadataError::TokenAccountMintMismatch.into());
-    }
-
-    if token_account.amount < 1 {
-        return Err(MetadataError::NotEnoughTokens.into());
-    }
-
-    spl_token_burn(TokenBurnParams {
-        mint: printing_mint_info.clone(),
-        source: master_token_account_info.clone(),
-        amount: 1,
-        authority: burn_authority.clone(),
-        authority_signer_seeds: None,
-        token_program: token_program_account_info.clone(),
-    })?;
-
-    mint_limited_edition(
+    assert_derivation(
         program_id,
-        new_metadata_account_info,
-        new_edition_account_info,
-        master_edition_account_info,
-        mint_info,
-        mint_authority_info,
-        payer_account_info,
-        update_authority_info,
         master_metadata_account_info,
-        token_program_account_info,
-        system_account_info,
-        rent_info,
-        reservation_list_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_metadata_mint_info.key.as_ref(),
+        ],
     )?;
-    Ok(())
+
+    assert_derivation(
+        program_id,
+        spot_authority_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_account_info.key.as_ref(),
+            authority_info.key.as_ref(),
+        ],
+    )?;
+
+    assert_derivation(
+        program_id,
+        spot_authority_ledger_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_edition_account_info.key.as_ref(),
+            authority_info.key.as_ref(),
+            LEDGER.as_bytes(),
+        ],
+    )?;
+
+    let spot_authority = MasterEditionSpotAuthority::from_account_info(spot_authority_info)?;
+    let mut spot_authority_ledger =
+        MasterEditionSpotAuthorityLedger::from_account_info(spot_authority_ledger_info)?;
+
+    if let Some(snapshot) = spot_authority.supply_snapshot {
+        // check ledger authority
+        if spot_authority.authority != *authority_info.key {
+            return Err(MetadataError::InvalidAuthority.into());
+        }
+
+        if edition_offset as usize >= spot_authority_ledger.ledger.len() {
+            return Err(MetadataError::InvalidEditionOffset.into());
+        }
+
+        if spot_authority_ledger.ledger[edition_offset as usize] {
+            return Err(MetadataError::EditionTaken.into());
+        }
+
+        spot_authority_ledger.ledger[edition_offset as usize] = true;
+        spot_authority_ledger.serialize(&mut *spot_authority_ledger_info.data.borrow_mut())?;
+
+        let edition_override = snapshot
+            .checked_add(edition_offset)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+
+        mint_limited_edition(
+            program_id,
+            &master_metadata,
+            new_metadata_account_info,
+            new_edition_account_info,
+            master_edition_account_info,
+            mint_info,
+            mint_authority_info,
+            payer_account_info,
+            update_authority_info,
+            token_program_account_info,
+            system_account_info,
+            rent_info,
+            None,
+            Some(edition_override),
+        )?;
+
+        Ok(())
+    } else {
+        return Err(MetadataError::SpotAuthorityNotInitialized.into());
+    }
 }

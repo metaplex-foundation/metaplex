@@ -278,6 +278,22 @@ pub enum MetadataError {
     /// You cannot splice over an existing reservation!
     #[error("You cannot splice over an existing reservation!")]
     TriedToReplaceAnExistingReservation,
+
+    /// Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority,
+
+    /// This edition has been taken
+    #[error("This edition has been taken")]
+    EditionTaken,
+
+    /// This spot authority cannot assign an edition offset this far out
+    #[error("This spot authority cannot assign an edition offset this far out")]
+    InvalidEditionOffset,
+
+    /// Spot authority has not been initialized with a supply snapshot
+    #[error("Spot authority has not been initialized with a supply snapshot")]
+    SpotAuthorityNotInitialized,
 }
 
 impl PrintProgramError for MetadataError {

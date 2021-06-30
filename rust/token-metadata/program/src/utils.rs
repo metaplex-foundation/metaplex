@@ -321,9 +321,87 @@ pub fn assert_edition_valid(
     Ok(())
 }
 
+pub fn extract_edition_number_from_deprecated_reservation_list(
+    account: &AccountInfo,
+    mint_authority_info: &AccountInfo,
+) -> Result<u64, ProgramError> {
+    let mut reservation_list = get_reservation_list(account)?;
+
+    if let Some(supply_snapshot) = reservation_list.supply_snapshot() {
+        let mut prev_total_offsets: u64 = 0;
+        let mut offset: Option<u64> = None;
+        let mut reservations = reservation_list.reservations();
+        for i in 0..reservations.len() {
+            let mut reservation = &mut reservations[i];
+
+            if reservation.address == *mint_authority_info.key {
+                offset = Some(
+                    prev_total_offsets
+                        .checked_add(reservation.spots_remaining)
+                        .ok_or(MetadataError::NumericalOverflowError)?,
+                );
+                // You get your editions in reverse order but who cares, saves a byte
+                reservation.spots_remaining = reservation
+                    .spots_remaining
+                    .checked_sub(1)
+                    .ok_or(MetadataError::NumericalOverflowError)?;
+
+                reservation_list.set_reservations(reservations)?;
+                reservation_list.save(account)?;
+                break;
+            }
+
+            if reservation.address == solana_program::system_program::id() {
+                // This is an anchor point in the array...it means we reset our math to
+                // this offset because we may be missing information in between this point and
+                // the points before it.
+                prev_total_offsets = reservation.total_spots;
+            } else {
+                prev_total_offsets = prev_total_offsets
+                    .checked_add(reservation.total_spots)
+                    .ok_or(MetadataError::NumericalOverflowError)?;
+            }
+        }
+
+        match offset {
+            Some(val) => Ok(supply_snapshot
+                .checked_add(val)
+                .ok_or(MetadataError::NumericalOverflowError)?),
+            None => {
+                return Err(MetadataError::AddressNotInReservation.into());
+            }
+        }
+    } else {
+        return Err(MetadataError::ReservationNotSet.into());
+    }
+}
+
+pub fn calculate_edition_number(
+    master_edition: &MasterEdition,
+    mint_authority_info: &AccountInfo,
+    reservation_list_info: Option<&AccountInfo>,
+    edition_override: Option<u64>,
+) -> Result<u64, ProgramError> {
+    let edition = match reservation_list_info {
+        Some(account) => {
+            extract_edition_number_from_deprecated_reservation_list(account, mint_authority_info)?
+        }
+        None => {
+            if let Some(edit) = edition_override {
+                edit
+            } else {
+                master_edition.supply
+            }
+        }
+    };
+
+    Ok(edition)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn mint_limited_edition<'a>(
     program_id: &Pubkey,
+    master_metadata: &Metadata,
     new_metadata_account_info: &AccountInfo<'a>,
     new_edition_account_info: &AccountInfo<'a>,
     master_edition_account_info: &AccountInfo<'a>,
@@ -331,13 +409,12 @@ pub fn mint_limited_edition<'a>(
     mint_authority_info: &AccountInfo<'a>,
     payer_account_info: &AccountInfo<'a>,
     update_authority_info: &AccountInfo<'a>,
-    master_metadata_account_info: &AccountInfo<'a>,
     token_program_account_info: &AccountInfo<'a>,
     system_account_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     reservation_list_info: Option<&AccountInfo<'a>>,
+    edition_override: Option<u64>,
 ) -> ProgramResult {
-    let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
     let mut master_edition = MasterEdition::from_account_info(master_edition_account_info)?;
     let mint: Mint = assert_initialized(mint_info)?;
 
@@ -387,7 +464,7 @@ pub fn mint_limited_edition<'a>(
             system_account_info.clone(),
             rent_info.clone(),
         ],
-        master_metadata.data,
+        master_metadata.data.clone(),
         true,
         false,
     )?;
@@ -414,60 +491,12 @@ pub fn mint_limited_edition<'a>(
     new_edition.key = Key::EditionV1;
     new_edition.parent = *master_edition_account_info.key;
 
-    new_edition.edition = match reservation_list_info {
-        Some(account) => {
-            let mut reservation_list = get_reservation_list(account)?;
-
-            if let Some(supply_snapshot) = reservation_list.supply_snapshot() {
-                let mut prev_total_offsets: u64 = 0;
-                let mut offset: Option<u64> = None;
-                let mut reservations = reservation_list.reservations();
-                for i in 0..reservations.len() {
-                    let mut reservation = &mut reservations[i];
-
-                    if reservation.address == *mint_authority_info.key {
-                        offset = Some(
-                            prev_total_offsets
-                                .checked_add(reservation.spots_remaining)
-                                .ok_or(MetadataError::NumericalOverflowError)?,
-                        );
-                        // You get your editions in reverse order but who cares, saves a byte
-                        reservation.spots_remaining = reservation
-                            .spots_remaining
-                            .checked_sub(1)
-                            .ok_or(MetadataError::NumericalOverflowError)?;
-
-                        reservation_list.set_reservations(reservations)?;
-                        reservation_list.save(account)?;
-                        break;
-                    }
-
-                    if reservation.address == solana_program::system_program::id() {
-                        // This is an anchor point in the array...it means we reset our math to
-                        // this offset because we may be missing information in between this point and
-                        // the points before it.
-                        prev_total_offsets = reservation.total_spots;
-                    } else {
-                        prev_total_offsets = prev_total_offsets
-                            .checked_add(reservation.total_spots)
-                            .ok_or(MetadataError::NumericalOverflowError)?;
-                    }
-                }
-
-                match offset {
-                    Some(val) => supply_snapshot
-                        .checked_add(val)
-                        .ok_or(MetadataError::NumericalOverflowError)?,
-                    None => {
-                        return Err(MetadataError::AddressNotInReservation.into());
-                    }
-                }
-            } else {
-                return Err(MetadataError::ReservationNotSet.into());
-            }
-        }
-        None => master_edition.supply,
-    };
+    new_edition.edition = calculate_edition_number(
+        &master_edition,
+        mint_authority_info,
+        reservation_list_info,
+        edition_override,
+    )?;
 
     new_edition.serialize(&mut *new_edition_account_info.data.borrow_mut())?;
 
