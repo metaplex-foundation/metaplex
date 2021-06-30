@@ -115,12 +115,8 @@ const isMetadataPartOfStore = (
   return (
     m.info.data.creators.findIndex(
       c =>
-        c.address.toBase58() !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB' &&
-        c.verified &&
-        store &&
-        store.info &&
-        (store.info.public ||
-          whitelistedCreatorsByCreator[c.address.toBase58()]?.info?.activated),
+        // only artworks where dude is co-creator
+        c.address.toBase58() === '3anukDBEijov9oVBNNbvCYsUkBc7yYioiCZiGvuWw61e',
     ) >= 0
   );
 };

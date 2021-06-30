@@ -59,7 +59,7 @@ const CachedImageContent = ({
         setLoaded(true);
       }}
       placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: 200 })}
+      {...(loaded ? {} : { height: 300 })}
     />
 }
 
