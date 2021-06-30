@@ -101,9 +101,7 @@ export function useCachedRedemptionKeysByWallet() {
 }
 
 export const useAuctions = (state?: AuctionViewState) => {
-  const [auctionViews, setAuctionViews] = useState<
-    Record<string, AuctionView | undefined>
-  >({});
+  const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { wallet } = useWallet();
 
   const pubkey = wallet?.publicKey;
@@ -124,9 +122,8 @@ export const useAuctions = (state?: AuctionViewState) => {
   } = useMeta();
 
   useEffect(() => {
-    Object.keys(auctions).forEach(a => {
+    const map = Object.keys(auctions).reduce((agg, a) => {
       const auction = auctions[a];
-      const existingAuctionView = auctionViews[a];
       const nextAuctionView = processAccountsIntoAuctionView(
         pubkey,
         auction,
@@ -142,18 +139,28 @@ export const useAuctions = (state?: AuctionViewState) => {
         metadataByMasterEdition,
         cachedRedemptionKeys,
         state,
-        existingAuctionView,
       );
 
       if (
         nextAuctionView?.auction.pubkey.toBase58() ===
         'FxXEav7X2iFAT78gBYTTE7b4C4TLzvA1UJ1xMkWaAdRR'
       ) {
-        return;
+        return agg;
       }
 
-      setAuctionViews(nA => ({ ...nA, [a]: nextAuctionView }));
-    });
+      agg[a] = nextAuctionView;
+      return agg;
+    }, {} as Record<string, AuctionView | undefined>);
+
+    setAuctionViews(
+      (Object.values(map).filter(v => v) as AuctionView[]).sort((a, b) => {
+        return (
+          b?.auction.info.endedAt
+            ?.sub(a?.auction.info.endedAt || new BN(0))
+            .toNumber() || 0
+        );
+      }),
+    );
   }, [
     state,
     auctions,
@@ -169,17 +176,10 @@ export const useAuctions = (state?: AuctionViewState) => {
     metadataByMasterEdition,
     pubkey,
     cachedRedemptionKeys,
+    setAuctionViews,
   ]);
 
-  return (Object.values(auctionViews).filter(v => v) as AuctionView[]).sort(
-    (a, b) => {
-      return (
-        b?.auction.info.endedAt
-          ?.sub(a?.auction.info.endedAt || new BN(0))
-          .toNumber() || 0
-      );
-    },
-  );
+  return auctionViews;
 };
 
 export function processAccountsIntoAuctionView(

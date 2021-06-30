@@ -1,5 +1,3 @@
-import { Creator, MetadataCategory } from '@oyster/common';
-
 export interface Auction {
   name: string;
   auctionerName: string;
