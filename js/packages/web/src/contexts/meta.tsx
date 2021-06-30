@@ -375,7 +375,7 @@ export function MetaProvider({ children = null as any }) {
           setState(data => ({
             ...data,
             metadata: [
-              ...data.metadata.filter(m => m.pubkey.equals(pubkey)),
+              ...data.metadata.filter(m => !m.pubkey.equals(pubkey)),
               result,
             ],
             metadataByMasterEdition: {
