@@ -13,6 +13,8 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
+    spl_auction::processor::AuctionData,
+    spl_token_vault::state::Vault,
 };
 
 pub fn process_decommission_auction_manager<'a>(
@@ -24,17 +26,28 @@ pub fn process_decommission_auction_manager<'a>(
     let auction_manager_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
+    let vault_info = next_account_info(account_info_iter)?;
     let store_info = next_account_info(account_info_iter)?;
     let auction_program_info = next_account_info(account_info_iter)?;
     let clock_info = next_account_info(account_info_iter)?;
-
     assert_owned_by(auction_manager_info, program_id)?;
     assert_owned_by(store_info, program_id)?;
     assert_signer(authority_info)?;
 
     let mut auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let vault = Vault::from_account_info(vault_info)?;
+    let auction = AuctionData::from_account_info(auction_info)?;
+
     let store = Store::from_account_info(store_info)?;
     assert_authority_correct(&auction_manager, authority_info)?;
+
+    if auction.authority != *auction_manager_info.key {
+        return Err(MetaplexError::AuctionAuthorityMismatch.into());
+    }
+
+    if vault.authority != *auction_manager_info.key {
+        return Err(MetaplexError::VaultAuthorityMismatch.into());
+    }
 
     if auction_manager.state.status != AuctionManagerStatus::Initialized {
         return Err(MetaplexError::InvalidStatus.into());
