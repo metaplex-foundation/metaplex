@@ -342,6 +342,14 @@ export class Store {
   }
 }
 
+export enum AuctionManagerStatus {
+  Initialized,
+  Validated,
+  Running,
+  Disbursing,
+  Finished,
+}
+
 export class AuctionManagerState {
   status: AuctionManagerStatus = AuctionManagerStatus.Initialized;
   winningConfigItemsValidated: number = 0;
@@ -353,14 +361,6 @@ export class AuctionManagerState {
   constructor(args?: AuctionManagerState) {
     Object.assign(this, args);
   }
-}
-
-export enum AuctionManagerStatus {
-  Initialized,
-  Validated,
-  Running,
-  Disbursing,
-  Finished,
 }
 
 export class BidRedemptionTicket {

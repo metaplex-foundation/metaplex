@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import {
   BidderMetadata,
@@ -21,12 +21,34 @@ export const useBidsForAuction = (auctionPubkey: PublicKey | string) => {
   const id = useMemo(
     () =>
       typeof auctionPubkey === 'string'
-        ? auctionPubkey
-        : auctionPubkey.toBase58(),
+        ? auctionPubkey !== ''
+          ? new PublicKey(auctionPubkey)
+          : undefined
+        : auctionPubkey,
     [auctionPubkey],
   );
 
-  const bids = cache
+  const [bids, setBids] = useState<ParsedAccount<BidderMetadata>[]>([]);
+
+  useEffect(() => {
+    const dispose = cache.emitter.onCache(args => {
+      if (args.parser === BidderMetadataParser) {
+        setBids(getBids(id));
+      }
+    });
+
+    setBids(getBids(id));
+
+    return () => {
+      dispose();
+    };
+  }, [id]);
+
+  return bids;
+};
+
+const getBids = (id?: PublicKey) => {
+  return cache
     .byParser(BidderMetadataParser)
     .filter(key => {
       const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
@@ -34,7 +56,7 @@ export const useBidsForAuction = (auctionPubkey: PublicKey | string) => {
         return false;
       }
 
-      return bidder.info.auctionPubkey.toBase58() === id;
+      return id?.equals(bidder.info.auctionPubkey);
     })
     .map(key => {
       const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
@@ -49,10 +71,6 @@ export const useBidsForAuction = (auctionPubkey: PublicKey | string) => {
       return lastBidDiff;
     })
     .map(item => {
-      return {
-        ...item,
-      };
+      return item;
     });
-
-  return bids;
 };
