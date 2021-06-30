@@ -252,6 +252,8 @@ export function MetaProvider({ children = null as any }) {
       const values = Object.values(
         tempCache.metadataByMint,
       ) as ParsedAccount<Metadata>[];
+
+      tempCache.metadata = new Array(values.length);
       for (let i = 0; i < values.length; i++) {
         const metadata = values[i];
         if (
@@ -265,13 +267,16 @@ export function MetaProvider({ children = null as any }) {
           tempCache.metadataByMasterEdition[
             metadata.info?.masterEdition?.toBase58() || ''
           ] = metadata;
+
+          tempCache.metadata.push(metadata);
         } else {
+
           delete tempCache.metadataByMint[metadata.info.mint.toBase58() || ''];
         }
       }
 
       console.log('------->init finished');
-      tempCache.metadata = values;
+      tempCache.metadata = tempCache.metadata.filter(m => m);
       setState({
         ...tempCache,
       });
