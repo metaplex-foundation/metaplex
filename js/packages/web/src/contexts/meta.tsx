@@ -111,6 +111,7 @@ const isMetadataPartOfStore = (
   }
 
   return (
+    m.pubkey.toBase58() === 'faiJvmLWkEBdciXfntk8Wd27Qb6F3rvUg8VgvNhv7PX' ||
     m.info.data.creators.findIndex(
       c =>
         // only artworks where dude is co-creator
