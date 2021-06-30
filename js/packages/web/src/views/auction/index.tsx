@@ -55,7 +55,6 @@ export const AuctionItem = ({
     marginLeft: size > 1 && index === 0 ? '0px' : 'auto',
     background: 'black',
     boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
-    height: 300,
   };
   return (
     <div>
