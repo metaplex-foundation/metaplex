@@ -8,7 +8,8 @@ use {
     solana_clap_utils::input_parsers::pubkey_of,
     solana_client::rpc_client::RpcClient,
     solana_program::{
-        borsh::try_from_slice_unchecked, instruction::Instruction, program_pack::Pack,
+        account_info::AccountInfo, borsh::try_from_slice_unchecked, instruction::Instruction,
+        program_pack::Pack,
     },
     solana_sdk::{
         pubkey::Pubkey,
@@ -18,7 +19,7 @@ use {
     },
     spl_auction::{
         instruction::create_auction_instruction,
-        processor::{create_auction::CreateAuctionArgs, PriceFloor, WinnerLimit},
+        processor::{create_auction::CreateAuctionArgs, AuctionData, PriceFloor, WinnerLimit},
     },
     spl_metaplex::{
         instruction::create_init_auction_manager_instruction,
@@ -32,10 +33,27 @@ use {
     spl_token_metadata::state::{MasterEdition, Metadata, EDITION},
     spl_token_vault::{
         instruction::create_update_external_price_account_instruction,
-        state::MAX_EXTERNAL_ACCOUNT_SIZE,
+        state::{ExternalPriceAccount, MAX_EXTERNAL_ACCOUNT_SIZE},
     },
     std::{convert::TryInto, fs::File, io::Write, str::FromStr},
 };
+
+pub fn to_account_info<'a>(
+    key: &'a Pubkey,
+    a: &'a mut solana_sdk::account::Account,
+    lamports: &'a mut u64,
+) -> AccountInfo<'a> {
+    AccountInfo::new(
+        &key,
+        false,
+        false,
+        lamports,
+        &mut a.data,
+        &a.owner,
+        false,
+        0,
+    )
+}
 
 fn find_or_initialize_external_account<'a>(
     app_matches: &ArgMatches,
@@ -45,7 +63,7 @@ fn find_or_initialize_external_account<'a>(
     client: &RpcClient,
     payer_mint_key: &'a Keypair,
     external_keypair: &'a Keypair,
-) -> Pubkey {
+) -> (Pubkey, ExternalPriceAccount) {
     let external_key: Pubkey;
     if !app_matches.is_present("external_price_account") {
         let mut instructions: Vec<Instruction> = vec![];
@@ -98,8 +116,14 @@ fn find_or_initialize_external_account<'a>(
     } else {
         external_key = pubkey_of(app_matches, "external_price_account").unwrap();
     }
+    let mut external_account_data = client.get_account(&external_key).unwrap();
 
-    external_key
+    let external_account: ExternalPriceAccount = ExternalPriceAccount::from_account_info(
+        &to_account_info(&external_key, &mut external_account_data, &mut 0u64),
+    )
+    .unwrap();
+
+    (external_key, external_account)
 }
 
 fn find_or_initialize_store(
@@ -149,7 +173,7 @@ fn find_or_initialize_auction(
     payer_mint_key: &Pubkey,
     payer: &Keypair,
     client: &RpcClient,
-) -> Pubkey {
+) -> (Pubkey, AuctionData) {
     let auction_key: Pubkey;
     if !app_matches.is_present("auction") {
         let signers: Vec<&Keypair> = vec![&payer];
@@ -204,6 +228,8 @@ fn find_or_initialize_auction(
                 },
                 token_mint: *payer_mint_key,
                 price_floor: PriceFloor::None([0; 32]),
+                gap_tick_size_percentage: Some(0),
+                tick_size: Some(0),
             },
         )];
 
@@ -216,8 +242,12 @@ fn find_or_initialize_auction(
     } else {
         auction_key = pubkey_of(app_matches, "auction").unwrap();
     }
+    let mut data = client.get_account(&auction_key).unwrap();
 
-    auction_key
+    let account: AuctionData =
+        AuctionData::from_account_info(&to_account_info(&auction_key, &mut data, &mut 0u64))
+            .unwrap();
+    (auction_key, account)
 }
 
 fn add_tokens_to_vault_activate_and_return_mints_and_open_edition(
@@ -325,7 +355,7 @@ pub fn initialize_auction_manager(
 
     let payer_mint_key = Keypair::new();
     let external_keypair = Keypair::new();
-    let external_key = find_or_initialize_external_account(
+    let (external_key, external_price_account) = find_or_initialize_external_account(
         app_matches,
         &payer,
         &vault_program_key,
@@ -334,6 +364,7 @@ pub fn initialize_auction_manager(
         &payer_mint_key,
         &external_keypair,
     );
+    let mut payer_mint_pubkey = external_price_account.price_mint;
 
     // Create vault first, so we can use it to make auction, then add stuff to vault.
     if !app_matches.is_present("vault") {
@@ -342,15 +373,19 @@ pub fn initialize_auction_manager(
         vault_key = pubkey_of(app_matches, "vault").unwrap();
     }
 
-    let auction_key = find_or_initialize_auction(
+    let (auction_key, auction) = find_or_initialize_auction(
         app_matches,
         &vault_key,
         &program_key,
         &auction_program_key,
-        &payer_mint_key.pubkey(),
+        &payer_mint_pubkey,
         &payer,
         &client,
     );
+
+    // just in case it was changed because pubkey was set from outside
+    payer_mint_pubkey = auction.token_mint;
+
     let seeds = &[
         spl_metaplex::state::PREFIX.as_bytes(),
         &auction_key.as_ref(),
@@ -387,7 +422,7 @@ pub fn initialize_auction_manager(
         initialize_account(
             &token_key,
             &accept_payment_account_key.pubkey(),
-            &payer_mint_key.pubkey(),
+            &payer_mint_pubkey,
             &auction_manager_key,
         )
         .unwrap(),

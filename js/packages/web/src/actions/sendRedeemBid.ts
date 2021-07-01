@@ -214,7 +214,7 @@ export async function sendRedeemBid(
   }
 
   if (
-    wallet.publicKey.toBase58() ==
+    wallet.publicKey.toBase58() ===
     auctionView.auctionManager.info.authority.toBase58()
   ) {
     await claimUnusedPrizes(

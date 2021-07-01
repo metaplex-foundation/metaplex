@@ -274,6 +274,10 @@ pub enum MetadataError {
     /// The reservation has only been partially alotted
     #[error("The reservation has only been partially alotted")]
     ReservationNotComplete,
+
+    /// You cannot splice over an existing reservation!
+    #[error("You cannot splice over an existing reservation!")]
+    TriedToReplaceAnExistingReservation,
 }
 
 impl PrintProgramError for MetadataError {

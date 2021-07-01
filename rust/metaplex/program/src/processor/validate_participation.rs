@@ -52,6 +52,10 @@ pub fn process_validate_participation(
     let open_edition_metadata = Metadata::from_account_info(open_edition_metadata_info)?;
     let master_edition = MasterEdition::from_account_info(open_master_edition_info)?;
 
+    if vault.authority != *auction_manager_info.key {
+        return Err(MetaplexError::VaultAuthorityMismatch.into());
+    }
+
     // top level authority and ownership check
     assert_authority_correct(&auction_manager, authority_info)?;
     assert_owned_by(auction_manager_info, program_id)?;

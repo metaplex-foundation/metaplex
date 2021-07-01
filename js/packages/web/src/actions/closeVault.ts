@@ -4,13 +4,11 @@ import {
   PublicKey,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, models, findProgramAddress } from '@oyster/common';
+import { actions, models } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
-import { METAPLEX_PREFIX } from '../models/metaplex';
-const { createTokenAccount, activateVault, combineVault, AUCTION_PREFIX } =
-  actions;
+const { createTokenAccount, activateVault, combineVault } = actions;
 const { approve } = models;
 
 // This command "closes" the vault, by activating & combining it in one go, handing it over to the auction manager
@@ -24,36 +22,15 @@ export async function closeVault(
   redeemTreasury: PublicKey,
   priceMint: PublicKey,
   externalPriceAccount: PublicKey,
-  setAuthorityToAuctionManager: boolean,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
-  const PROGRAM_IDS = utils.programIds();
-
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
   );
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
-
-  const auctionKey: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(AUCTION_PREFIX),
-        PROGRAM_IDS.auction.toBuffer(),
-        vault.toBuffer(),
-      ],
-      PROGRAM_IDS.auction,
-    )
-  )[0];
-
-  const auctionManagerKey: PublicKey = (
-    await findProgramAddress(
-      [Buffer.from(METAPLEX_PREFIX), auctionKey.toBuffer()],
-      PROGRAM_IDS.metaplex,
-    )
-  )[0];
 
   await activateVault(
     new BN(0),
@@ -117,7 +94,7 @@ export async function closeVault(
     fractionMint,
     fractionTreasury,
     redeemTreasury,
-    setAuthorityToAuctionManager ? auctionManagerKey : wallet.publicKey,
+    wallet.publicKey,
     wallet.publicKey,
     transferAuthority.publicKey,
     externalPriceAccount,
