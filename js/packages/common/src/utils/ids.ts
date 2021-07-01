@@ -84,11 +84,11 @@ export const fetchStorefront = async (subdomain: String) => {
 };
 
 const getStoreID = async (storefront: Storefront | void) => {
-  if (!storefront) {
+  const { pubkey } = storefront || {};
+
+  if (!pubkey) {
     return undefined;
   }
-
-  const { pubkey } = storefront;
 
   const publicKey = new PublicKey(pubkey);
 

@@ -18,31 +18,29 @@ export function StorefrontProvider({ children = undefined as any }) {
 
     fetchStorefront(subdomain).then(storefront => {
       const head = document.head;
-      const link = document.createElement("link");
+      const link = document.createElement('link');
 
-      link.type = "text/css";
-      link.rel = "stylesheet";
+      link.type = 'text/css';
+      link.rel = 'stylesheet';
       link.href = storefront.themeUrl;
 
       head.appendChild(link);
 
       link.onload = () => {
-        setStorefront(storefront)
-      }
+        setStorefront(storefront);
+      };
     });
-  });
+  }, []);
 
-  return (
-    storefront ? (
-      <StorefrontContext.Provider
-        value={{
-          storefront
-        }}
-      >
-        {children}
-      </StorefrontContext.Provider>
-    ) : (
-      <div />
-    )
-  )
+  return storefront ? (
+    <StorefrontContext.Provider
+      value={{
+        storefront,
+      }}
+    >
+      {children}
+    </StorefrontContext.Provider>
+  ) : (
+    <div />
+  );
 }
