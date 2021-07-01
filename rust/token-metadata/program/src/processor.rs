@@ -60,9 +60,9 @@ pub fn process_instruction(
             msg!("Instruction: Create Master Edition");
             process_create_master_edition(program_id, accounts, args.max_supply)
         }
-        MetadataInstruction::MintNewEditionFromMasterEditionViaToken => {
+        MetadataInstruction::MintNewEditionFromMasterEditionViaPrintingToken => {
             msg!("Instruction: Mint New Edition from Master Edition Via Token");
-            process_mint_new_edition_from_master_edition_via_token(program_id, accounts)
+            process_mint_new_edition_from_master_edition_via_printing_token(program_id, accounts)
         }
         MetadataInstruction::UpdatePrimarySaleHappenedViaToken => {
             msg!("Instruction: Update primary sale via token");
@@ -342,7 +342,7 @@ pub fn process_create_master_edition(
     Ok(())
 }
 
-pub fn process_mint_new_edition_from_master_edition_via_token(
+pub fn process_mint_new_edition_from_master_edition_via_printing_token(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
 ) -> ProgramResult {

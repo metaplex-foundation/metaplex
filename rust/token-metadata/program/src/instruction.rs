@@ -56,6 +56,12 @@ pub struct SetReservationListArgs {
     pub total_spot_offset: u64,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MintNewEditionFromMasterEditionViaTokenArgs {
+    pub edition: u64,
+}
+
 /// Instructions supported by the Metadata program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetadataInstruction {
@@ -71,7 +77,9 @@ pub enum MetadataInstruction {
 
     /// Update a Metadata
     ///   0. `[writable]` Metadata account
-    ///   1. `[signer]` Update authority key
+    ///   1. `[signer]` Update authority key OR signer on optional #2 account
+    ///   2. `[optional]` Optional token account containing the token from the metadata mint. If #1 signer is owner of this account,
+    ///   also works as update authority. If not present, #1 must be update authority.
     UpdateMetadataAccount(UpdateMetadataAccountArgs),
 
     /// Register a Metadata as a Master Edition, which means Editions can be minted.
@@ -83,7 +91,7 @@ pub enum MetadataInstruction {
     ///       master edition via the MintNewEditionFromMasterEditionViaToken endpoint
     ///   3. `[writable]` One time authorization printing mint - A mint you control that prints tokens that gives the bearer permission to mint any
     ///                  number of tokens from the printing mint one time via an endpoint with the token-metadata program for your metadata. Also burns the token.
-    ///   4. `[signer]` Current Update authority key on metadata
+    ///   4. `[signer]` Current Update authority key on metadata OR owner of #14 account
     ///   5. `[signer]`   Printing mint authority - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY.
     ///   6. `[signer]` Mint authority on the metadata's mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   7. `[]` Metadata account
@@ -92,6 +100,8 @@ pub enum MetadataInstruction {
     ///   10. `[]` System program
     ///   11. `[]` Rent info
     ///   13. `[signer]`   One time authorization printing mint authority - must be provided if using max supply. THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY.
+    ///   14. `[optional]` Optional token account containing the token from the metadata mint. If #4 signer is owner of this account,
+    ///   also works as update authority. If not present, #4 must be update authority.
     CreateMasterEdition(CreateMasterEditionArgs),
 
     /// Given an authority token minted by the Printing mint of a master edition, and a brand new non-metadata-ed mint with one token
@@ -105,14 +115,14 @@ pub enum MetadataInstruction {
     ///   6. `[writable]` Token account containing Printing mint token to be transferred
     ///   7. `[signer]` Burn authority for this token
     ///   8. `[signer]` payer
-    ///   9. `[signer]` update authority info of master metadata account
+    ///   9. `[]` update authority info for new metadata account
     ///   10. `[]` Master record metadata account
     ///   11. `[]` Token program
     ///   12. `[]` System program
     ///   13. `[]` Rent info
     ///   14. `[optional/writable]` Reservation List - If present, and you are on this list, you can get
     ///        an edition number given by your position on the list.
-    MintNewEditionFromMasterEditionViaToken,
+    MintNewEditionFromMasterEditionViaPrintingToken,
 
     /// Allows updating the primary sale boolean on Metadata solely through owning an account
     /// containing a token from the metadata's mint and being a signer on this transaction.
@@ -186,6 +196,24 @@ pub enum MetadataInstruction {
     ///   5. `[]` Token program
     ///   6. `[]` Rent
     MintPrintingTokens(MintPrintingTokensViaTokenArgs),
+
+    /// Given a token account containing the master edition token to prove authority, and a brand new non-metadata-ed mint with one token
+    /// make a new Metadata + Edition that is a child of the master edition denoted by this authority token.
+    ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   2. `[writable]` Master Record Edition (pda of ['metadata', program id, Printing mint id, 'edition'])
+    ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   3. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master mint id, edition_number])
+    ///   4. `[signer]` Mint authority of new mint
+    ///   8. `[signer]` payer
+    ///   8. `[signer]` owner of token account containing master token
+    ///   9. `[]` token account containing token from master metadata mint
+    ///   10. `[]` Update authority info for new metadata
+    ///   11. `[]` Master record metadata account
+    ///   11. `[]` Token program
+    ///   12. `[]` System program
+    ///   13. `[]` Rent info
+    MintNewEditionFromMasterEditionViaToken(MintNewEditionFromMasterEditionViaTokenArgs),
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -302,7 +330,7 @@ pub fn create_master_edition(
 
 /// creates a mint_new_edition_from_master_edition instruction
 #[allow(clippy::too_many_arguments)]
-pub fn mint_new_edition_from_master_edition_via_token(
+pub fn mint_new_edition_from_master_edition_via_printing_token(
     program_id: Pubkey,
     metadata: Pubkey,
     edition: Pubkey,
@@ -341,7 +369,7 @@ pub fn mint_new_edition_from_master_edition_via_token(
     Instruction {
         program_id,
         accounts,
-        data: MetadataInstruction::MintNewEditionFromMasterEditionViaToken
+        data: MetadataInstruction::MintNewEditionFromMasterEditionViaPrintingToken
             .try_to_vec()
             .unwrap(),
     }
