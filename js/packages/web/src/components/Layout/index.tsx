@@ -1,6 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { Layout } from 'antd';
-import { contexts } from '@oyster/common';
 
 import './../../App.less';
 import './index.less';
@@ -8,7 +7,6 @@ import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
 import useWindowDimensions from '../../utils/layout';
 
-const { StorefrontContext } = contexts.Storefront;
 const { Header, Content } = Layout;
 
 const paddingForLayout = (width: number) => {
@@ -18,25 +16,6 @@ const paddingForLayout = (width: number) => {
 
 export const AppLayout = React.memo((props: any) => {
   const { width } = useWindowDimensions();
-  const { storefront } = useContext(StorefrontContext);
-
-  useEffect(() => {
-    if(!storefront) {
-      return
-    }
-
-    var head = document.head;
-    var link = document.createElement("link");
-
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    link.href = storefront.themeUrl;
-
-    head.appendChild(link);
-
-    return () => { head.removeChild(link); }
-
-  }, [storefront]);
 
   return (
     <>
