@@ -327,7 +327,7 @@ export const AuctionCreateView = () => {
         : (
           attributes.gapTimeType == "hours"
           ? (60 * 60) // 1 hour in seconds
-          : 60
+          : 60 // 1 minute in seconds
         )
       )),
       priceFloor: new PriceFloor({
@@ -1177,6 +1177,7 @@ const EndingPhaseAuction = (props: {
                   <Option value="days">Days</Option>
                 </Select>
               )}
+              autoFocus
               type="number"
               className="input"
               placeholder="Set the auction duration"
