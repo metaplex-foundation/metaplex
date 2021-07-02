@@ -17,6 +17,10 @@ export function StorefrontProvider({ children = undefined as any }) {
     const subdomain = window.location.hostname.split('.')[0];
 
     fetchStorefront(subdomain).then(storefront => {
+      if (!storefront) {
+        return;
+      }
+
       const head = document.head;
       const link = document.createElement('link');
 
