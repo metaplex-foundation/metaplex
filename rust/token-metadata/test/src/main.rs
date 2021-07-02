@@ -284,7 +284,7 @@ fn mint_edition_via_token_call(
         );
 
         instructions.push(mint_printing_tokens(
-            token_key,
+            program_key,
             new_master_account.pubkey(),
             master_edition.printing_mint,
             update_authority,
