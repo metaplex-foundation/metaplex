@@ -137,6 +137,10 @@ pub enum MetadataError {
     #[error("The mint of the token account does not match the Printing mint!")]
     TokenAccountMintMismatch,
 
+    /// The mint of the token account does not match the master metadata mint!
+    #[error("The mint of the token account does not match the master metadata mint!")]
+    TokenAccountMintMismatchV2,
+
     /// Not enough tokens to mint a limited edition
     #[error("Not enough tokens to mint a limited edition")]
     NotEnoughTokens,
@@ -278,6 +282,14 @@ pub enum MetadataError {
     /// You cannot splice over an existing reservation!
     #[error("You cannot splice over an existing reservation!")]
     TriedToReplaceAnExistingReservation,
+
+    /// Invalid operation
+    #[error("Invalid operation")]
+    InvalidOperation,
+
+    /// Invalid owner
+    #[error("Invalid Owner")]
+    InvalidOwner,
 }
 
 impl PrintProgramError for MetadataError {

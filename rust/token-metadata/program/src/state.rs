@@ -34,7 +34,10 @@ pub const MAX_METADATA_LEN: usize = 1
 
 pub const MAX_EDITION_LEN: usize = 1 + 32 + 8 + 200;
 
-pub const MAX_MASTER_EDITION_LEN: usize = 1 + 9 + 8 + 32 + 32 + 200;
+// Large buffer because the older master editions have two pubkeys in them,
+// need to keep two versions same size because the conversion process actually changes the same account
+// by rewriting it.
+pub const MAX_MASTER_EDITION_LEN: usize = 1 + 9 + 8 + 264;
 
 pub const MAX_CREATOR_LIMIT: usize = 5;
 
@@ -49,7 +52,7 @@ pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATION
 pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
 #[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone, Copy)]
 pub enum Key {
     Uninitialized,
     EditionV1,
@@ -57,6 +60,7 @@ pub enum Key {
     ReservationListV1,
     MetadataV1,
     ReservationListV2,
+    MasterEditionV2,
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -95,9 +99,73 @@ impl Metadata {
     }
 }
 
+pub trait MasterEdition {
+    fn key(&self) -> Key;
+    fn supply(&self) -> u64;
+    fn set_supply(&mut self, supply: u64);
+    fn max_supply(&self) -> Option<u64>;
+    fn save(&self, account: &AccountInfo) -> ProgramResult;
+}
+
+pub fn get_master_edition(account: &AccountInfo) -> Result<Box<dyn MasterEdition>, ProgramError> {
+    let version = account.data.borrow()[0];
+
+    // For some reason when converting Key to u8 here, it becomes unreachable. Use direct constant instead.
+    match version {
+        2 => return Ok(Box::new(MasterEditionV1::from_account_info(account)?)),
+        6 => return Ok(Box::new(MasterEditionV2::from_account_info(account)?)),
+        _ => return Err(MetadataError::DataTypeMismatch.into()),
+    };
+}
+
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
-pub struct MasterEdition {
+pub struct MasterEditionV2 {
+    pub key: Key,
+
+    pub supply: u64,
+
+    pub max_supply: Option<u64>,
+}
+
+impl MasterEdition for MasterEditionV2 {
+    fn key(&self) -> Key {
+        self.key
+    }
+
+    fn supply(&self) -> u64 {
+        self.supply
+    }
+
+    fn set_supply(&mut self, supply: u64) {
+        self.supply = supply;
+    }
+
+    fn max_supply(&self) -> Option<u64> {
+        self.max_supply
+    }
+
+    fn save(&self, account: &AccountInfo) -> ProgramResult {
+        self.serialize(&mut *account.data.borrow_mut())?;
+        Ok(())
+    }
+}
+
+impl MasterEditionV2 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEditionV2, ProgramError> {
+        let me: MasterEditionV2 = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::MasterEditionV2,
+            MAX_MASTER_EDITION_LEN,
+        )?;
+
+        Ok(me)
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+pub struct MasterEditionV1 {
     pub key: Key,
 
     pub supply: u64,
@@ -120,9 +188,32 @@ pub struct MasterEdition {
     pub one_time_printing_authorization_mint: Pubkey,
 }
 
-impl MasterEdition {
-    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEdition, ProgramError> {
-        let me: MasterEdition = try_from_slice_checked(
+impl MasterEdition for MasterEditionV1 {
+    fn key(&self) -> Key {
+        self.key
+    }
+
+    fn supply(&self) -> u64 {
+        self.supply
+    }
+
+    fn max_supply(&self) -> Option<u64> {
+        self.max_supply
+    }
+
+    fn set_supply(&mut self, supply: u64) {
+        self.supply = supply;
+    }
+
+    fn save(&self, account: &AccountInfo) -> ProgramResult {
+        self.serialize(&mut *account.data.borrow_mut())?;
+        Ok(())
+    }
+}
+
+impl MasterEditionV1 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEditionV1, ProgramError> {
+        let me: MasterEditionV1 = try_from_slice_checked(
             &a.data.borrow_mut(),
             Key::MasterEditionV1,
             MAX_MASTER_EDITION_LEN,

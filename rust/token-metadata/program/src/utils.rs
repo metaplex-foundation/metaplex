@@ -3,9 +3,9 @@ use {
         error::MetadataError,
         processor::process_create_metadata_accounts,
         state::{
-            get_reservation_list, Data, Edition, Key, MasterEdition, Metadata, EDITION,
-            MAX_CREATOR_LIMIT, MAX_EDITION_LEN, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
-            PREFIX,
+            get_master_edition, get_reservation_list, Data, Edition, Key, MasterEdition,
+            MasterEditionV1, Metadata, EDITION, MAX_CREATOR_LIMIT, MAX_EDITION_LEN,
+            MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
         },
     },
     borsh::{BorshDeserialize, BorshSerialize},
@@ -224,7 +224,7 @@ pub fn assert_mint_authority_matches_mint(
 }
 
 pub fn assert_supply_invariance(
-    master_edition: &MasterEdition,
+    master_edition: &MasterEditionV1,
     printing_mint: &Mint,
     new_supply: u64,
 ) -> ProgramResult {
@@ -321,9 +321,121 @@ pub fn assert_edition_valid(
     Ok(())
 }
 
+pub fn extract_edition_number_from_deprecated_reservation_list(
+    account: &AccountInfo,
+    mint_authority_info: &AccountInfo,
+) -> Result<u64, ProgramError> {
+    let mut reservation_list = get_reservation_list(account)?;
+
+    if let Some(supply_snapshot) = reservation_list.supply_snapshot() {
+        let mut prev_total_offsets: u64 = 0;
+        let mut offset: Option<u64> = None;
+        let mut reservations = reservation_list.reservations();
+        for i in 0..reservations.len() {
+            let mut reservation = &mut reservations[i];
+
+            if reservation.address == *mint_authority_info.key {
+                offset = Some(
+                    prev_total_offsets
+                        .checked_add(reservation.spots_remaining)
+                        .ok_or(MetadataError::NumericalOverflowError)?,
+                );
+                // You get your editions in reverse order but who cares, saves a byte
+                reservation.spots_remaining = reservation
+                    .spots_remaining
+                    .checked_sub(1)
+                    .ok_or(MetadataError::NumericalOverflowError)?;
+
+                reservation_list.set_reservations(reservations)?;
+                reservation_list.save(account)?;
+                break;
+            }
+
+            if reservation.address == solana_program::system_program::id() {
+                // This is an anchor point in the array...it means we reset our math to
+                // this offset because we may be missing information in between this point and
+                // the points before it.
+                prev_total_offsets = reservation.total_spots;
+            } else {
+                prev_total_offsets = prev_total_offsets
+                    .checked_add(reservation.total_spots)
+                    .ok_or(MetadataError::NumericalOverflowError)?;
+            }
+        }
+
+        match offset {
+            Some(val) => Ok(supply_snapshot
+                .checked_add(val)
+                .ok_or(MetadataError::NumericalOverflowError)?),
+            None => {
+                return Err(MetadataError::AddressNotInReservation.into());
+            }
+        }
+    } else {
+        return Err(MetadataError::ReservationNotSet.into());
+    }
+}
+
+pub fn calculate_edition_number(
+    master_edition: &Box<dyn MasterEdition>,
+    mint_authority_info: &AccountInfo,
+    reservation_list_info: Option<&AccountInfo>,
+    edition_override: Option<u64>,
+) -> Result<u64, ProgramError> {
+    let edition = match reservation_list_info {
+        Some(account) => {
+            extract_edition_number_from_deprecated_reservation_list(account, mint_authority_info)?
+        }
+        None => {
+            if let Some(edit) = edition_override {
+                edit
+            } else {
+                master_edition.supply()
+            }
+        }
+    };
+
+    Ok(edition)
+}
+
+pub fn calculate_supply_change<'a>(
+    master_edition: &mut Box<dyn MasterEdition>,
+    master_edition_account_info: &AccountInfo<'a>,
+    reservation_list_info: Option<&AccountInfo<'a>>,
+    edition_override: Option<u64>,
+) -> ProgramResult {
+    if reservation_list_info.is_none() {
+        let new_supply: u64;
+        if let Some(edition) = edition_override {
+            if edition > master_edition.supply() {
+                new_supply = edition;
+            } else {
+                new_supply = master_edition.supply()
+            }
+        } else {
+            new_supply = master_edition
+                .supply()
+                .checked_add(1)
+                .ok_or(MetadataError::NumericalOverflowError)?;
+        }
+
+        master_edition.set_supply(new_supply);
+
+        if let Some(max) = master_edition.max_supply() {
+            if master_edition.supply() > max {
+                return Err(MetadataError::MaxEditionsMintedAlready.into());
+            }
+        }
+        master_edition.save(master_edition_account_info)?;
+    }
+
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn mint_limited_edition<'a>(
     program_id: &Pubkey,
+    master_metadata: &Metadata,
     new_metadata_account_info: &AccountInfo<'a>,
     new_edition_account_info: &AccountInfo<'a>,
     master_edition_account_info: &AccountInfo<'a>,
@@ -331,14 +443,17 @@ pub fn mint_limited_edition<'a>(
     mint_authority_info: &AccountInfo<'a>,
     payer_account_info: &AccountInfo<'a>,
     update_authority_info: &AccountInfo<'a>,
-    master_metadata_account_info: &AccountInfo<'a>,
     token_program_account_info: &AccountInfo<'a>,
     system_account_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
+    // Only present with MasterEditionV1 calls, if present, use edition based off address in res list,
+    // otherwise, pull off the top
     reservation_list_info: Option<&AccountInfo<'a>>,
+    // Only present with MasterEditionV2 calls, if present, means
+    // directing to a specific version, otherwise just pull off the top
+    edition_override: Option<u64>,
 ) -> ProgramResult {
-    let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
-    let mut master_edition = MasterEdition::from_account_info(master_edition_account_info)?;
+    let mut master_edition = get_master_edition(master_edition_account_info)?;
     let mint: Mint = assert_initialized(mint_info)?;
 
     assert_mint_authority_matches_mint(&mint, mint_authority_info)?;
@@ -360,16 +475,16 @@ pub fn mint_limited_edition<'a>(
         return Err(MetadataError::InvalidEditionKey.into());
     }
 
-    if reservation_list_info.is_none() {
-        if let Some(max) = master_edition.max_supply {
-            if master_edition.supply >= max {
-                return Err(MetadataError::MaxEditionsMintedAlready.into());
-            }
-        }
-
-        master_edition.supply += 1;
-        master_edition.serialize(&mut *master_edition_account_info.data.borrow_mut())?;
+    if reservation_list_info.is_some() && edition_override.is_some() {
+        return Err(MetadataError::InvalidOperation.into());
     }
+
+    calculate_supply_change(
+        &mut master_edition,
+        master_edition_account_info,
+        reservation_list_info,
+        edition_override,
+    )?;
 
     if mint.supply != 1 {
         return Err(MetadataError::EditionsMustHaveExactlyOneToken.into());
@@ -387,7 +502,7 @@ pub fn mint_limited_edition<'a>(
             system_account_info.clone(),
             rent_info.clone(),
         ],
-        master_metadata.data,
+        master_metadata.data.clone(),
         true,
         false,
     )?;
@@ -414,60 +529,12 @@ pub fn mint_limited_edition<'a>(
     new_edition.key = Key::EditionV1;
     new_edition.parent = *master_edition_account_info.key;
 
-    new_edition.edition = match reservation_list_info {
-        Some(account) => {
-            let mut reservation_list = get_reservation_list(account)?;
-
-            if let Some(supply_snapshot) = reservation_list.supply_snapshot() {
-                let mut prev_total_offsets: u64 = 0;
-                let mut offset: Option<u64> = None;
-                let mut reservations = reservation_list.reservations();
-                for i in 0..reservations.len() {
-                    let mut reservation = &mut reservations[i];
-
-                    if reservation.address == *mint_authority_info.key {
-                        offset = Some(
-                            prev_total_offsets
-                                .checked_add(reservation.spots_remaining)
-                                .ok_or(MetadataError::NumericalOverflowError)?,
-                        );
-                        // You get your editions in reverse order but who cares, saves a byte
-                        reservation.spots_remaining = reservation
-                            .spots_remaining
-                            .checked_sub(1)
-                            .ok_or(MetadataError::NumericalOverflowError)?;
-
-                        reservation_list.set_reservations(reservations)?;
-                        reservation_list.save(account)?;
-                        break;
-                    }
-
-                    if reservation.address == solana_program::system_program::id() {
-                        // This is an anchor point in the array...it means we reset our math to
-                        // this offset because we may be missing information in between this point and
-                        // the points before it.
-                        prev_total_offsets = reservation.total_spots;
-                    } else {
-                        prev_total_offsets = prev_total_offsets
-                            .checked_add(reservation.total_spots)
-                            .ok_or(MetadataError::NumericalOverflowError)?;
-                    }
-                }
-
-                match offset {
-                    Some(val) => supply_snapshot
-                        .checked_add(val)
-                        .ok_or(MetadataError::NumericalOverflowError)?,
-                    None => {
-                        return Err(MetadataError::AddressNotInReservation.into());
-                    }
-                }
-            } else {
-                return Err(MetadataError::ReservationNotSet.into());
-            }
-        }
-        None => master_edition.supply,
-    };
+    new_edition.edition = calculate_edition_number(
+        &master_edition,
+        mint_authority_info,
+        reservation_list_info,
+        edition_override,
+    )?;
 
     new_edition.serialize(&mut *new_edition_account_info.data.borrow_mut())?;
 
