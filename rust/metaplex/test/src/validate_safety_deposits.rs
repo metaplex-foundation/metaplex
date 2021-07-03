@@ -14,7 +14,7 @@ use {
         instruction::create_validate_safety_deposit_box_instruction,
         state::{AuctionManager, WinningConfig},
     },
-    spl_token_metadata::state::{Key, MasterEdition, EDITION},
+    spl_token_metadata::state::{Key, MasterEditionV1, EDITION},
     spl_token_vault::state::{Key as VaultKey, SafetyDepositBox},
     std::{collections::HashMap, str::FromStr},
 };
@@ -126,7 +126,7 @@ pub fn validate_safety_deposits(app_matches: &ArgMatches, payer: Keypair, client
             match master_edition_account {
                 Ok(acct) => {
                     if acct.data[0] == Key::MasterEditionV1 as u8 {
-                        let master_edition: MasterEdition =
+                        let master_edition: MasterEditionV1 =
                             try_from_slice_unchecked(&acct.data).unwrap();
                         edition_printing_mint = Some(master_edition.printing_mint);
                         edition_printing_mint_authority = Some(payer.pubkey());

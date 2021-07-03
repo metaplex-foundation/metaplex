@@ -16,7 +16,7 @@ use {
     },
     spl_auction::processor::AuctionData,
     spl_token_metadata::{
-        instruction::set_reservation_list,
+        deprecated_instruction::deprecated_set_reservation_list,
         state::{get_reservation_list, Reservation},
     },
 };
@@ -33,7 +33,7 @@ fn set_reservation_list_wrapper<'a>(
     total_spot_offset: u64,
 ) -> ProgramResult {
     invoke_signed(
-        &set_reservation_list(
+        &deprecated_set_reservation_list(
             *program_id,
             *master_edition_info.key,
             *reservation_list_info.key,
@@ -207,7 +207,7 @@ pub fn process_redeem_bid<'a>(
                 )?;
                 winning_item_index = wii;
                 if winning_config_item.winning_config_type != WinningConfigType::TokenOnlyTransfer
-                    && winning_config_item.winning_config_type != WinningConfigType::Printing
+                    && winning_config_item.winning_config_type != WinningConfigType::PrintingV1
                 {
                     return Err(MetaplexError::WrongBidEndpointForPrize.into());
                 }
@@ -224,7 +224,7 @@ pub fn process_redeem_bid<'a>(
                     &[auction_bump_seed],
                 ];
 
-                if winning_config_item.winning_config_type == WinningConfigType::Printing {
+                if winning_config_item.winning_config_type == WinningConfigType::PrintingV1 {
                     let master_edition_info = next_account_info(account_info_iter)?;
                     let reservation_list_info = next_account_info(account_info_iter)?;
 

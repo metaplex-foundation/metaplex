@@ -193,8 +193,11 @@ pub enum WinningConfigType {
     /// token itself. The other person will be able to mint authorization tokens and make changes to the
     /// artwork.
     FullRightsTransfer,
-    /// Means you are using authorization tokens to print off editions during the auction
-    Printing,
+    /// Means you are using authorization tokens to print off editions during the auction using
+    /// from a MasterEditionV1
+    PrintingV1,
+    /// Means you are using the MasterEditionV2 to print off editions
+    PrintingV2,
 }
 
 #[repr(C)]

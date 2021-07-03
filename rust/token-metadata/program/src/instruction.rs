@@ -215,10 +215,6 @@ pub enum MetadataInstruction {
     ///   0. `[writable]` Master Record Edition V1 (pda of ['metadata', program id, master metadata mint id, 'edition'])
     ///   1. `[writable]` One time authorization mint
     ///   2. `[writable]` Printing mint
-    ///   3. `[writable]` update authority on metadata (will receive proceeds from closing mints)
-    ///   4. `[]` Token program
-    ///   5. `[]` System program
-    ///   6. `[]` Rent info
     ConvertMasterEditionV1ToV2,
 }
 
@@ -408,7 +404,6 @@ pub fn convert_master_edition_v1_to_v2(
     master_edition: Pubkey,
     one_time_auth: Pubkey,
     printing_mint: Pubkey,
-    update_authority: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -416,10 +411,6 @@ pub fn convert_master_edition_v1_to_v2(
             AccountMeta::new(master_edition, false),
             AccountMeta::new(one_time_auth, false),
             AccountMeta::new(printing_mint, false),
-            AccountMeta::new(update_authority, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
         data: MetadataInstruction::ConvertMasterEditionV1ToV2
             .try_to_vec()

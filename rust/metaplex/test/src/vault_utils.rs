@@ -81,19 +81,10 @@ pub fn add_token_to_vault(
         Some(val) => val,
     };
 
-    // The Printing mint needs to be the store type if we're doing limited editions since we're actually
-    // handing out authorization tokens
-    let printing_mint = Keypair::new();
-    let one_time_printing_authorization_mint = Keypair::new();
-    let store_mint_key = match token_supply {
-        Some(_) => printing_mint.pubkey(),
-        None => mint_key,
-    };
-
     let seeds = &[
         spl_token_vault::state::PREFIX.as_bytes(),
         &vault_key.as_ref(),
-        &store_mint_key.as_ref(),
+        &mint_key.as_ref(),
     ];
     let (safety_deposit_box, _) = Pubkey::find_program_address(seeds, &program_key);
     let seeds = &[
@@ -136,70 +127,6 @@ pub fn add_token_to_vault(
                 true,
                 false,
             ));
-            if is_master_edition {
-                let master_signers = [
-                    &payer,
-                    &printing_mint,
-                    &one_time_printing_authorization_mint,
-                ];
-                let master_account_instructions = [
-                    create_account(
-                        &payer.pubkey(),
-                        &printing_mint.pubkey(),
-                        client
-                            .get_minimum_balance_for_rent_exemption(Mint::LEN)
-                            .unwrap(),
-                        Mint::LEN as u64,
-                        &token_key,
-                    ),
-                    initialize_mint(
-                        &token_key,
-                        &printing_mint.pubkey(),
-                        &payer.pubkey(),
-                        Some(&payer.pubkey()),
-                        0,
-                    )
-                    .unwrap(),
-                    create_account(
-                        &payer.pubkey(),
-                        &one_time_printing_authorization_mint.pubkey(),
-                        client
-                            .get_minimum_balance_for_rent_exemption(Mint::LEN)
-                            .unwrap(),
-                        Mint::LEN as u64,
-                        &token_key,
-                    ),
-                    initialize_mint(
-                        &token_key,
-                        &one_time_printing_authorization_mint.pubkey(),
-                        &payer.pubkey(),
-                        Some(&payer.pubkey()),
-                        0,
-                    )
-                    .unwrap(),
-                ];
-
-                let mut master_transaction = Transaction::new_with_payer(
-                    &master_account_instructions,
-                    Some(&payer.pubkey()),
-                );
-                let recent_blockhash = client.get_recent_blockhash().unwrap().0;
-                master_transaction.sign(&master_signers, recent_blockhash);
-                client
-                    .send_and_confirm_transaction(&master_transaction)
-                    .unwrap();
-            }
-
-            let token_account_mint = match token_supply {
-                Some(_) => {
-                    if is_participation {
-                        one_time_printing_authorization_mint.pubkey()
-                    } else {
-                        printing_mint.pubkey()
-                    }
-                }
-                None => mint_key,
-            };
 
             // Due to txn size limits, need to do this in a separate one.
             let mut create_signers = vec![payer, &token_account];
@@ -216,85 +143,41 @@ pub fn add_token_to_vault(
                 initialize_account(
                     &token_key,
                     &token_account.pubkey(),
-                    &token_account_mint,
+                    &mint_key,
                     &payer.pubkey(),
                 )
                 .unwrap(),
             ];
 
-            let extra_real_token_acct = Keypair::new();
-            if token_supply.is_some() {
-                create_signers.push(&extra_real_token_acct);
-                // means the token account above is actually a Printing mint account, we need a separate account to have
-                // at least one of the main token type in it.
-                create_account_instructions.push(create_account(
-                    &payer.pubkey(),
-                    &extra_real_token_acct.pubkey(),
-                    client
-                        .get_minimum_balance_for_rent_exemption(Account::LEN)
-                        .unwrap(),
-                    Account::LEN as u64,
+            // we just need to mint the tokens to this account because we're going to transfer tokens
+            // out of it.
+            create_account_instructions.push(
+                mint_to(
                     &token_key,
-                ));
-                create_account_instructions.push(
-                    initialize_account(
-                        &token_key,
-                        &extra_real_token_acct.pubkey(),
-                        &mint_key,
-                        &payer.pubkey(),
-                    )
-                    .unwrap(),
-                );
-                create_account_instructions.push(
-                    mint_to(
-                        &token_key,
-                        &mint_key,
-                        &extra_real_token_acct.pubkey(),
-                        &payer.pubkey(),
-                        &[&payer.pubkey()],
-                        1,
-                    )
-                    .unwrap(),
-                );
-            } else {
-                // we just need to mint the tokens to this account because we're going to transfer tokens
-                // out of it.
-                create_account_instructions.push(
-                    mint_to(
-                        &token_key,
-                        &mint_key,
-                        &token_account.pubkey(),
-                        &payer.pubkey(),
-                        &[&payer.pubkey()],
-                        amount,
-                    )
-                    .unwrap(),
-                );
-            }
+                    &mint_key,
+                    &token_account.pubkey(),
+                    &payer.pubkey(),
+                    &[&payer.pubkey()],
+                    amount,
+                )
+                .unwrap(),
+            );
+
             let mut transaction =
                 Transaction::new_with_payer(&create_account_instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
             transaction.sign(&create_signers, recent_blockhash);
             client.send_and_confirm_transaction(&transaction).unwrap();
             if is_master_edition {
-                let one_time_printing_authorization_mint_authority: Option<Pubkey> =
-                    match token_supply {
-                        Some(_) => Some(payer.pubkey()),
-                        None => None,
-                    };
                 instructions.push(create_master_edition(
                     spl_token_metadata::id(),
                     edition_key,
                     mint_key,
-                    printing_mint.pubkey(),
-                    one_time_printing_authorization_mint.pubkey(),
-                    payer.pubkey(),
                     payer.pubkey(),
                     payer.pubkey(),
                     metadata_key,
                     payer.pubkey(),
                     token_supply,
-                    one_time_printing_authorization_mint_authority,
                 ));
             }
             token_account.pubkey()
@@ -311,9 +194,8 @@ pub fn add_token_to_vault(
         &token_key,
     ));
 
-    instructions.push(
-        initialize_account(&token_key, &store.pubkey(), &store_mint_key, &authority).unwrap(),
-    );
+    instructions
+        .push(initialize_account(&token_key, &store.pubkey(), &mint_key, &authority).unwrap());
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
     let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 

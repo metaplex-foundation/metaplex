@@ -94,7 +94,7 @@ fn redeem_bid_token_only_type<'a>(
     // For limited editions, we need owner to be payer to be used in token metadata
     let owner_key = match winning_config_item.winning_config_type {
         spl_metaplex::state::WinningConfigType::TokenOnlyTransfer => &bidder,
-        spl_metaplex::state::WinningConfigType::Printing => &payer,
+        spl_metaplex::state::WinningConfigType::PrintingV1 => &payer,
         _ => &bidder,
     };
     instructions.push(

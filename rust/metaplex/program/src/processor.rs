@@ -3,9 +3,10 @@ use {
     borsh::BorshDeserialize,
     claim_bid::process_claim_bid,
     decommission_auction_manager::process_decommission_auction_manager,
+    deprecated_populate_participation_printing_account::process_deprecated_populate_participation_printing_account,
+    deprecated_validate_participation::process_deprecated_validate_participation,
     empty_payment_account::process_empty_payment_account,
     init_auction_manager::process_init_auction_manager,
-    populate_participation_printing_account::process_populate_participation_printing_account,
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     redeem_participation_bid::process_redeem_participation_bid,
@@ -14,15 +15,15 @@ use {
     set_whitelisted_creator::process_set_whitelisted_creator,
     solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey},
     start_auction::process_start_auction,
-    validate_participation::process_validate_participation,
     validate_safety_deposit_box::process_validate_safety_deposit_box,
 };
 
 pub mod claim_bid;
 pub mod decommission_auction_manager;
+pub mod deprecated_populate_participation_printing_account;
+pub mod deprecated_validate_participation;
 pub mod empty_payment_account;
 pub mod init_auction_manager;
-pub mod populate_participation_printing_account;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
 pub mod redeem_participation_bid;
@@ -30,7 +31,6 @@ pub mod redeem_unused_winning_config_items_as_auctioneer;
 pub mod set_store;
 pub mod set_whitelisted_creator;
 pub mod start_auction;
-pub mod validate_participation;
 pub mod validate_safety_deposit_box;
 
 pub fn process_instruction<'a>(
@@ -80,13 +80,13 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Set Whitelisted Creator");
             process_set_whitelisted_creator(program_id, accounts, args.activated)
         }
-        MetaplexInstruction::ValidateParticipation => {
-            msg!("Instruction: Validate Open Edition");
-            process_validate_participation(program_id, accounts)
+        MetaplexInstruction::DeprecatedValidateParticipation => {
+            msg!("Instruction: Deprecated Validate Open Edition");
+            process_deprecated_validate_participation(program_id, accounts)
         }
-        MetaplexInstruction::PopulateParticipationPrintingAccount => {
-            msg!("Instruction: Populate Participation Printing Account");
-            process_populate_participation_printing_account(program_id, accounts)
+        MetaplexInstruction::DeprecatedPopulateParticipationPrintingAccount => {
+            msg!("Instruction: Deprecated Populate Participation Printing Account");
+            process_deprecated_populate_participation_printing_account(program_id, accounts)
         }
         MetaplexInstruction::RedeemUnusedWinningConfigItemsAsAuctioneer(args) => {
             msg!("Instruction: Redeem Unused Winning Config Items As Auctioneer");

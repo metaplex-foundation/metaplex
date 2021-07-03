@@ -23,14 +23,12 @@ use {
     },
     spl_metaplex::{
         instruction::create_init_auction_manager_instruction,
-        instruction::create_set_store_instruction,
-        instruction::create_validate_participation_instruction, state::AuctionManager,
+        instruction::create_set_store_instruction, state::AuctionManager,
     },
     spl_token::{
         instruction::{initialize_account, initialize_mint},
         state::{Account, Mint},
     },
-    spl_token_metadata::state::{MasterEdition, Metadata, EDITION},
     spl_token_vault::{
         instruction::create_update_external_price_account_instruction,
         state::{ExternalPriceAccount, MAX_EXTERNAL_ACCOUNT_SIZE},
@@ -439,66 +437,6 @@ pub fn initialize_auction_manager(
         store_key,
         settings,
     ));
-
-    if let Some(mint_key) = open_edition_mint_key {
-        let metadata_seeds = &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            &token_metadata.as_ref(),
-            &mint_key.as_ref(),
-        ];
-        let (metadata_key, _) =
-            Pubkey::find_program_address(metadata_seeds, &spl_token_metadata::id());
-        let metadata_account = client.get_account(&metadata_key).unwrap();
-        let metadata: Metadata = try_from_slice_unchecked(&metadata_account.data).unwrap();
-
-        let metadata_authority = metadata.update_authority;
-
-        let edition_seeds = &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            token_metadata.as_ref(),
-            mint_key.as_ref(),
-            EDITION.as_bytes(),
-        ];
-        let (edition_key, _) = Pubkey::find_program_address(edition_seeds, &token_metadata);
-        let master_edition_account = client.get_account(&edition_key).unwrap();
-        let master_edition: MasterEdition =
-            try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        let open_edition_printing_mint = master_edition.printing_mint;
-
-        instructions.push(create_account(
-            &payer.pubkey(),
-            &printing_token_account_key.pubkey(),
-            client
-                .get_minimum_balance_for_rent_exemption(Account::LEN)
-                .unwrap(),
-            Account::LEN as u64,
-            &token_key,
-        ));
-        instructions.push(
-            initialize_account(
-                &token_key,
-                &printing_token_account_key.pubkey(),
-                &open_edition_printing_mint,
-                &auction_manager_key,
-            )
-            .unwrap(),
-        );
-        signers.push(&printing_token_account_key);
-
-        instructions.push(create_validate_participation_instruction(
-            program_key,
-            auction_manager_key,
-            metadata_key,
-            edition_key,
-            printing_token_account_key.pubkey(),
-            authority,
-            metadata_authority,
-            store_key,
-            open_edition_safety_deposit.unwrap(),
-            open_edition_store.unwrap(),
-            vault_key,
-        ));
-    }
 
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
     let recent_blockhash = client.get_recent_blockhash().unwrap().0;

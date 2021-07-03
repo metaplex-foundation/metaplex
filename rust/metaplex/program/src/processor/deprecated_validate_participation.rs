@@ -18,11 +18,11 @@ use {
         sysvar::Sysvar,
     },
     spl_token::state::Account,
-    spl_token_metadata::state::{MasterEdition, Metadata},
+    spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::{SafetyDepositBox, Vault},
 };
 
-pub fn process_validate_participation(
+pub fn process_deprecated_validate_participation(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
 ) -> ProgramResult {
@@ -50,7 +50,7 @@ pub fn process_validate_participation(
     let printing_token_account: Account =
         assert_initialized(printing_authorization_token_account_info)?;
     let open_edition_metadata = Metadata::from_account_info(open_edition_metadata_info)?;
-    let master_edition = MasterEdition::from_account_info(open_master_edition_info)?;
+    let master_edition = MasterEditionV1::from_account_info(open_master_edition_info)?;
 
     if vault.authority != *auction_manager_info.key {
         return Err(MetaplexError::VaultAuthorityMismatch.into());

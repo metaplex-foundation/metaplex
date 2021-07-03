@@ -10,15 +10,14 @@ use {
         error::MetadataError,
         instruction::MetadataInstruction,
         state::{
-            Data, Key, MasterEditionV2, Metadata, EDITION, MAX_MASTER_EDITION_LEN,
-            MAX_METADATA_LEN, PREFIX,
+            Data, EditionMarker, Key, MasterEditionV1, MasterEditionV2, Metadata, EDITION,
+            MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, PREFIX,
         },
         utils::{
             assert_data_valid, assert_derivation, assert_initialized,
-            assert_mint_authority_matches_mint, assert_owned_by, assert_rent_exempt, assert_signer,
+            assert_mint_authority_matches_mint, assert_owned_by, assert_signer,
             assert_token_program_matches_package, assert_update_authority_is_correct,
             create_or_allocate_account_raw, mint_limited_edition, transfer_mint_authority,
-            TokenBurnParams,
         },
     },
     borsh::{BorshDeserialize, BorshSerialize},
@@ -28,8 +27,6 @@ use {
         msg,
         program_error::ProgramError,
         pubkey::Pubkey,
-        rent::Rent,
-        sysvar::Sysvar,
     },
     spl_token::state::{Account, Mint},
 };
@@ -442,10 +439,6 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
         return Err(MetadataError::NotEnoughTokens.into());
     }
 
-    if !edition_marker_info.data_is_empty() {
-        return Err(MetadataError::AlreadyInitialized.into());
-    }
-
     let as_string = edition.to_string();
 
     let bump = assert_derivation(
@@ -460,24 +453,35 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
         ],
     )?;
 
-    let seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        master_metadata.mint.as_ref(),
-        EDITION.as_bytes(),
-        as_string.as_bytes(),
-        &[bump],
-    ];
+    if edition_marker_info.data_is_empty() {
+        let seeds = &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            master_metadata.mint.as_ref(),
+            EDITION.as_bytes(),
+            as_string.as_bytes(),
+            &[bump],
+        ];
 
-    create_or_allocate_account_raw(
-        *program_id,
-        edition_marker_info,
-        rent_info,
-        system_account_info,
-        payer_account_info,
-        1,
-        seeds,
-    )?;
+        create_or_allocate_account_raw(
+            *program_id,
+            edition_marker_info,
+            rent_info,
+            system_account_info,
+            payer_account_info,
+            1,
+            seeds,
+        )?;
+    }
+
+    let mut edition_marker = EditionMarker::from_account_info(edition_marker_info)?;
+    edition_marker.key = Key::EditionMarker;
+    if edition_marker.edition_taken(edition)? {
+        return Err(MetadataError::InvalidEditionKey.into());
+    } else {
+        edition_marker.insert_edition(edition)?
+    }
+    edition_marker.serialize(&mut *edition_marker_info.data.borrow_mut())?;
 
     mint_limited_edition(
         program_id,
@@ -504,12 +508,40 @@ pub fn process_convert_master_edition_v1_to_v2(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let master_edition_info = next_account_info(account_info_iter)?;
-    let one_time_printing_auth_info = next_account_info(account_info_iter)?;
+    let one_time_printing_auth_mint_info = next_account_info(account_info_iter)?;
     let printing_mint_info = next_account_info(account_info_iter)?;
-    let update_authority_info = next_account_info(account_info_iter)?;
-    let token_program_account_info = next_account_info(account_info_iter)?;
-    let system_account_info = next_account_info(account_info_iter)?;
-    let rent_info = next_account_info(account_info_iter)?;
+
+    assert_owned_by(master_edition_info, program_id)?;
+    assert_owned_by(one_time_printing_auth_mint_info, &spl_token::id())?;
+    assert_owned_by(printing_mint_info, &spl_token::id())?;
+
+    let master_edition: MasterEditionV1 = MasterEditionV1::from_account_info(master_edition_info)?;
+    let printing_mint: Account = assert_initialized(printing_mint_info)?;
+    let auth_mint: Account = assert_initialized(one_time_printing_auth_mint_info)?;
+
+    if master_edition.one_time_printing_authorization_mint != *one_time_printing_auth_mint_info.key
+    {
+        return Err(MetadataError::OneTimePrintingAuthMintMismatch.into());
+    }
+
+    if master_edition.printing_mint != *printing_mint_info.key {
+        return Err(MetadataError::PrintingMintMismatch.into());
+    }
+
+    if printing_mint.amount != 0 {
+        return Err(MetadataError::PrintingMintSupplyMustBeZeroForConversion.into());
+    }
+
+    if auth_mint.amount != 0 {
+        return Err(MetadataError::OneTimeAuthMintSupplyMustBeZeroForConversion.into());
+    }
+
+    MasterEditionV2 {
+        key: Key::MasterEditionV2,
+        supply: master_edition.supply,
+        max_supply: master_edition.max_supply,
+    }
+    .serialize(&mut *master_edition_info.data.borrow_mut())?;
 
     Ok(())
 }

@@ -51,6 +51,8 @@ pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATION
 // can hold up to 200 keys per reservation, note: the extra 8 is for number of elements in the vec
 pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
+pub const MAX_EDITION_MARKER_SIZE: usize = 32;
+
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone, Copy)]
 pub enum Key {
@@ -61,6 +63,7 @@ pub enum Key {
     MetadataV1,
     ReservationListV2,
     MasterEditionV2,
+    EditionMarker,
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -532,4 +535,86 @@ pub struct ReservationV1 {
     pub address: Pubkey,
     pub spots_remaining: u8,
     pub total_spots: u8,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditionMarker {
+    pub key: Key,
+    pub ledger: [u8; 31],
+}
+
+impl EditionMarker {
+    pub fn from_account_info(a: &AccountInfo) -> Result<EditionMarker, ProgramError> {
+        let res: EditionMarker = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::EditionMarker,
+            MAX_EDITION_MARKER_SIZE,
+        )?;
+
+        Ok(res)
+    }
+
+    fn get_edition_offset_from_starting_index(edition: u64) -> Result<usize, ProgramError> {
+        Ok(edition
+            .checked_rem(248)
+            .ok_or(MetadataError::NumericalOverflowError)? as usize)
+    }
+
+    fn get_index(offset_from_start: usize) -> Result<usize, ProgramError> {
+        let index = offset_from_start
+            .checked_div(8)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+
+        // With only 248 bits, or 31 bytes, we have a max constraint here.
+        if index > 30 {
+            return Err(MetadataError::InvalidEditionIndex.into());
+        }
+
+        Ok(index)
+    }
+
+    fn get_offset_from_right(offset_from_start: usize) -> Result<u32, ProgramError> {
+        // We're saying the left hand side of a u8 is the 0th index so to get a 1 in that 0th index
+        // you need to shift a 1 over 8 spots from the right hand side. To do that you actually
+        // need not 00000001 but 10000000 which you can get by simply multiplying 1 by 2^7, 128 and then ORing
+        // it with the current value.
+        Ok(7 - offset_from_start
+            .checked_rem(8)
+            .ok_or(MetadataError::NumericalOverflowError)? as u32)
+    }
+
+    fn get_index_and_mask(edition: u64) -> Result<(usize, u8), ProgramError> {
+        // How many editions off we are from edition at 0th index
+        let offset_from_start = EditionMarker::get_edition_offset_from_starting_index(edition)?;
+
+        // How many whole u8s we are from the u8 at the 0th index, which basically dividing by 8
+        let index = EditionMarker::get_index(offset_from_start)?;
+
+        // what position in the given u8 bitset are we (remainder math)
+        let my_position_in_index_starting_from_right =
+            EditionMarker::get_offset_from_right(offset_from_start)?;
+
+        Ok((
+            index,
+            u8::pow(2, my_position_in_index_starting_from_right as u32),
+        ))
+    }
+
+    pub fn edition_taken(&self, edition: u64) -> Result<bool, ProgramError> {
+        let (index, mask) = EditionMarker::get_index_and_mask(edition)?;
+
+        // apply mask with bitwise and with a 1 to determine if it is set or not
+        let applied_mask = self.ledger[index] & mask;
+
+        // What remains should not equal 0.
+        Ok(applied_mask != 0)
+    }
+
+    pub fn insert_edition(&mut self, edition: u64) -> ProgramResult {
+        let (index, mask) = EditionMarker::get_index_and_mask(edition)?;
+        // bitwise or a 1 into our position in that position
+        self.ledger[index] = self.ledger[index] | mask;
+        Ok(())
+    }
 }

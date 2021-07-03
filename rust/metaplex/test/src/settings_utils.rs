@@ -59,7 +59,7 @@ pub fn parse_settings(settings_file: &str) -> (AuctionManagerSettings, JsonAucti
                 winning_config_type: match item.winning_config_type {
                     0 => WinningConfigType::TokenOnlyTransfer,
                     1 => WinningConfigType::FullRightsTransfer,
-                    2 => WinningConfigType::Printing,
+                    2 => WinningConfigType::PrintingV2,
                     _ => WinningConfigType::TokenOnlyTransfer,
                 },
             })

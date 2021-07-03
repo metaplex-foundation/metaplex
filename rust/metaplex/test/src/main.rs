@@ -15,7 +15,8 @@ use {
     show::send_show,
     solana_clap_utils::input_validators::{is_url, is_valid_pubkey, is_valid_signer},
     solana_client::rpc_client::RpcClient,
-    solana_sdk::signature::read_keypair_file,
+    solana_program::{account_info::AccountInfo, pubkey::Pubkey},
+    solana_sdk::{account::Account, signature::read_keypair_file},
     start_auction::send_start_auction,
     validate_safety_deposits::validate_safety_deposits,
 };
@@ -26,6 +27,20 @@ pub const AUCTION_PROGRAM_PUBKEY: &str = "auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosM
 pub const PROGRAM_PUBKEY: &str = "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98";
 
 pub const TOKEN_PROGRAM_PUBKEY: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+pub fn make_account_with_data<'a>(key: &'a Pubkey, account: &'a Account) -> AccountInfo<'a> {
+    let mut lamports = 0;
+    AccountInfo::new(
+        key,
+        false,
+        false,
+        &mut lamports,
+        &mut account.data,
+        &account.owner,
+        false,
+        0,
+    )
+}
 
 fn main() {
     let app_matches = App::new(crate_name!())

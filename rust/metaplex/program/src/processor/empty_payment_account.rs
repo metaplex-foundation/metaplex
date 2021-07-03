@@ -22,7 +22,7 @@ use {
     },
     spl_auction::processor::AuctionData,
     spl_token::state::Account,
-    spl_token_metadata::state::{MasterEdition, Metadata},
+    spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::SafetyDepositBox,
     std::str::FromStr,
 };
@@ -362,11 +362,18 @@ pub fn process_empty_payment_account(
 
     // assert that the metadata sent up is the metadata in the safety deposit
     if metadata.mint != safety_deposit.token_mint {
-        // Could be a limited edition, in which case printing tokens or auth tokens were offered, not the original.
-        let master_edition: MasterEdition = MasterEdition::from_account_info(master_edition_info)?;
-        if master_edition.printing_mint != safety_deposit.token_mint
-            && master_edition.one_time_printing_authorization_mint != safety_deposit.token_mint
+        if master_edition_info.data.borrow()[0]
+            == spl_token_metadata::state::Key::MasterEditionV1 as u8
         {
+            // Could be a limited edition, in which case printing tokens or auth tokens were offered, not the original.
+            let master_edition: MasterEditionV1 =
+                MasterEditionV1::from_account_info(master_edition_info)?;
+            if master_edition.printing_mint != safety_deposit.token_mint
+                && master_edition.one_time_printing_authorization_mint != safety_deposit.token_mint
+            {
+                return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
+            }
+        } else {
             return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
         }
     }

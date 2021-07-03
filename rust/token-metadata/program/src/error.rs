@@ -290,6 +290,18 @@ pub enum MetadataError {
     /// Invalid owner
     #[error("Invalid Owner")]
     InvalidOwner,
+
+    /// Printing mint supply must be zero for conversion
+    #[error("Printing mint supply must be zero for conversion")]
+    PrintingMintSupplyMustBeZeroForConversion,
+
+    /// One Time Auth mint supply must be zero for conversion
+    #[error("One Time Auth mint supply must be zero for conversion")]
+    OneTimeAuthMintSupplyMustBeZeroForConversion,
+
+    /// You tried to insert one edition too many into an edition mark pda
+    #[error("You tried to insert one edition too many into an edition mark pda")]
+    InvalidEditionIndex,
 }
 
 impl PrintProgramError for MetadataError {

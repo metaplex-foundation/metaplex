@@ -21,7 +21,7 @@ use {
     },
     spl_token::state::{Account, Mint},
     spl_token_metadata::{
-        state::{MasterEdition, Metadata},
+        state::{MasterEditionV1, MasterEditionV2, Metadata},
         utils::assert_update_authority_is_correct,
     },
     spl_token_vault::state::{SafetyDepositBox, Vault},
@@ -301,17 +301,39 @@ pub fn process_validate_safety_deposit_box(
                 return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
             }
         }
-        WinningConfigType::Printing => {
+        WinningConfigType::PrintingV1 => {
             if edition_key != *edition_info.key {
                 return Err(MetaplexError::InvalidEditionAddress.into());
             }
-            let master_edition = MasterEdition::from_account_info(edition_info)?;
+            let master_edition = MasterEditionV1::from_account_info(edition_info)?;
             if safety_deposit.token_mint != master_edition.printing_mint {
                 return Err(MetaplexError::SafetyDepositBoxMasterMintMismatch.into());
             }
 
             if safety_deposit_token_store.amount != total_amount_requested {
                 return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+            }
+        }
+        WinningConfigType::PrintingV2 => {
+            if edition_key != *edition_info.key {
+                return Err(MetaplexError::InvalidEditionAddress.into());
+            }
+            let master_edition = MasterEditionV2::from_account_info(edition_info)?;
+            if safety_deposit.token_mint != metadata.mint {
+                return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
+            }
+
+            if safety_deposit_token_store.amount != 1 {
+                return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+            }
+
+            if let Some(max) = master_edition.max_supply {
+                let amount_available = max
+                    .checked_sub(master_edition.supply)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                if amount_available < total_amount_requested {
+                    return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+                }
             }
         }
     }

@@ -303,7 +303,7 @@ pub enum MetaplexInstruction {
     ///   8. `[]` Safety deposit token store
     ///   9. `[]` Vault
     ///   10. `[]` Rent sysvar
-    ValidateParticipation,
+    DeprecatedValidateParticipation,
 
     /// Needs to be called by someone at the end of the auction - will use the one time authorization token
     /// to fire up a bunch of printing tokens for use in participation redemptions.
@@ -327,7 +327,7 @@ pub enum MetaplexInstruction {
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
     ///   16. `[]` Payer who wishes to receive refund for closing of one time transient account once we're done here
     ///   17. `[]` Rent
-    PopulateParticipationPrintingAccount,
+    DeprecatedPopulateParticipationPrintingAccount,
 
     /// If you are an auctioneer, redeem an unused winning config entry. You provide the winning index, and if the winning
     /// index has no winner, then the correct redemption method is called with a special flag set to ignore bidder_metadata checks
@@ -398,7 +398,7 @@ pub fn create_init_auction_manager_instruction(
 
 /// Creates an ValidateParticipation instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_validate_participation_instruction(
+pub fn deprecated_create_validate_participation_instruction(
     program_id: Pubkey,
     auction_manager: Pubkey,
     open_edition_metadata: Pubkey,
@@ -426,7 +426,7 @@ pub fn create_validate_participation_instruction(
             AccountMeta::new_readonly(vault, false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
-        data: MetaplexInstruction::ValidateParticipation
+        data: MetaplexInstruction::DeprecatedValidateParticipation
             .try_to_vec()
             .unwrap(),
     }
@@ -695,7 +695,7 @@ pub fn create_set_store_instruction(
     }
 }
 
-pub fn create_populate_participation_printing_account_instruction(
+pub fn deprecated_create_populate_participation_printing_account_instruction(
     program_id: Pubkey,
     safety_deposit_token_store: Pubkey,
     transient_one_time_mint_account: Pubkey,
@@ -735,7 +735,7 @@ pub fn create_populate_participation_printing_account_instruction(
     Instruction {
         program_id,
         accounts,
-        data: MetaplexInstruction::PopulateParticipationPrintingAccount
+        data: MetaplexInstruction::DeprecatedPopulateParticipationPrintingAccount
             .try_to_vec()
             .unwrap(),
     }
