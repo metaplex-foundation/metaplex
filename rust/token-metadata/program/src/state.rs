@@ -269,6 +269,14 @@ impl ReservationList for ReservationListV2 {
                     && self.reservations[usize_offset].address == replaced.address;
                 if !allowable_edgecase {
                     return Err(MetadataError::TriedToReplaceAnExistingReservation.into());
+                } else {
+                    // Since we will have incremented, decrease in advance so we dont blow the spot check.
+                    // Super hacky but this code is to be deprecated.
+                    self.set_current_reservation_spots(
+                        self.current_reservation_spots
+                            .checked_sub(replaced.total_spots)
+                            .ok_or(MetadataError::NumericalOverflowError)?,
+                    );
                 }
             }
         } else {
