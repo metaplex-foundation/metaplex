@@ -11,7 +11,6 @@ import {
   Data,
   Creator,
   findProgramAddress,
-  MetadataCategory,
 } from '@oyster/common';
 import React from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -337,7 +336,7 @@ export const mintNFT = async (
     notify({
       message: 'Art created on Solana',
       description: (
-        <a href={arweaveLink} target="_blank">
+        <a href={arweaveLink} target="_blank" rel="noopener noreferrer">
           Arweave Link
         </a>
       ),

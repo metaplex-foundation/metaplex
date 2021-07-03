@@ -63,7 +63,7 @@ function useGapTickCheck(
               const higherExpectedAmount = expected * ((100 + gapTick) / 100);
 
               return higherExpectedAmount > toLamportVal;
-            } else if (expected == toLamportVal) {
+            } else if (expected === toLamportVal) {
               // If gap tick is set, no way you can bid in this case - you must bid higher.
               return true;
             }

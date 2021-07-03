@@ -33,7 +33,6 @@ import {
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
-import BN from 'bn.js';
 import React, {
   useCallback,
   useContext,
@@ -43,7 +42,6 @@ import React, {
 } from 'react';
 import {
   AuctionManager,
-  AuctionManagerStatus,
   BidRedemptionTicket,
   decodeAuctionManager,
   decodeBidRedemptionTicket,
@@ -254,6 +252,8 @@ export function MetaProvider({ children = null as any }) {
       const values = Object.values(
         tempCache.metadataByMint,
       ) as ParsedAccount<Metadata>[];
+
+      tempCache.metadata = new Array(values.length);
       for (let i = 0; i < values.length; i++) {
         const metadata = values[i];
         if (
@@ -267,13 +267,16 @@ export function MetaProvider({ children = null as any }) {
           tempCache.metadataByMasterEdition[
             metadata.info?.masterEdition?.toBase58() || ''
           ] = metadata;
+
+          tempCache.metadata.push(metadata);
         } else {
+
           delete tempCache.metadataByMint[metadata.info.mint.toBase58() || ''];
         }
       }
 
       console.log('------->init finished');
-      tempCache.metadata = values;
+      tempCache.metadata = tempCache.metadata.filter(m => m);
       setState({
         ...tempCache,
       });
@@ -375,7 +378,7 @@ export function MetaProvider({ children = null as any }) {
           setState(data => ({
             ...data,
             metadata: [
-              ...data.metadata.filter(m => m.pubkey.equals(pubkey)),
+              ...data.metadata.filter(m => !m.pubkey.equals(pubkey)),
               result,
             ],
             metadataByMasterEdition: {
