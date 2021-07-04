@@ -362,6 +362,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub rent_info: &'a AccountInfo<'a>,
     pub is_participation: bool,
     pub overwrite_win_index: Option<usize>,
+    pub assert_bidder_signer: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -386,6 +387,7 @@ pub fn common_redeem_checks(
         store_info,
         is_participation,
         overwrite_win_index,
+        assert_bidder_signer,
     } = args;
 
     let rent = &Rent::from_account_info(&rent_info)?;
@@ -473,7 +475,10 @@ pub fn common_redeem_checks(
         }
     }
 
-    assert_signer(bidder_info)?;
+    if assert_bidder_signer {
+        assert_signer(bidder_info)?;
+    }
+
     assert_owned_by(&destination_info, token_program_info.key)?;
     assert_owned_by(&auction_manager_info, &program_id)?;
     assert_owned_by(safety_deposit_token_store_info, token_program_info.key)?;

@@ -189,6 +189,7 @@ pub fn process_redeem_bid<'a>(
         store_info,
         is_participation: false,
         overwrite_win_index,
+        assert_bidder_signer: true,
     })?;
 
     let mut winning_item_index = None;

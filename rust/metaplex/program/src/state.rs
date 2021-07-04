@@ -42,6 +42,7 @@ pub const MAX_PAYOUT_TICKET_SIZE: usize = 1 + 32 + 8;
 pub const MAX_VALIDATION_TICKET_SIZE: usize = 1 + 32 + 10;
 pub const MAX_BID_REDEMPTION_TICKET_SIZE: usize = 3;
 pub const MAX_AUTHORITY_LOOKUP_SIZE: usize = 33;
+pub const MAX_PRIZE_TRACKING_TICKET_SIZE: usize = 1 + 32 + 8 + 8 + 8 + 50;
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
@@ -54,6 +55,7 @@ pub enum Key {
     PayoutTicketV1,
     SafetyDepositValidationTicketV1,
     AuctionManagerV1,
+    PrizeTrackingTicketV1,
 }
 
 /// An Auction Manager can support an auction that is an English auction and limited edition and open edition
@@ -357,6 +359,28 @@ impl SafetyDepositValidationTicket {
             &a.data.borrow_mut(),
             Key::SafetyDepositValidationTicketV1,
             MAX_VALIDATION_TICKET_SIZE,
+        )?;
+
+        Ok(store)
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
+pub struct PrizeTrackingTicket {
+    pub key: Key,
+    pub metadata: Pubkey,
+    pub supply_snapshot: u64,
+    pub expected_redemptions: u64,
+    pub redemptions: u64,
+}
+
+impl PrizeTrackingTicket {
+    pub fn from_account_info(a: &AccountInfo) -> Result<PrizeTrackingTicket, ProgramError> {
+        let store: PrizeTrackingTicket = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::PrizeTrackingTicketV1,
+            MAX_PRIZE_TRACKING_TICKET_SIZE,
         )?;
 
         Ok(store)

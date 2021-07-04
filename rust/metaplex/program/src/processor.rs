@@ -10,6 +10,7 @@ use {
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     redeem_participation_bid::process_redeem_participation_bid,
+    redeem_printing_v2_bid::process_redeem_printing_v2_bid,
     redeem_unused_winning_config_items_as_auctioneer::process_redeem_unused_winning_config_items_as_auctioneer,
     set_store::process_set_store,
     set_whitelisted_creator::process_set_whitelisted_creator,
@@ -27,6 +28,7 @@ pub mod init_auction_manager;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
 pub mod redeem_participation_bid;
+pub mod redeem_printing_v2_bid;
 pub mod redeem_unused_winning_config_items_as_auctioneer;
 pub mod set_store;
 pub mod set_whitelisted_creator;
@@ -95,6 +97,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::DecommissionAuctionManager => {
             msg!("Instruction: Decomission Auction Manager");
             process_decommission_auction_manager(program_id, accounts)
+        }
+        MetaplexInstruction::RedeemPrintingV2Bid => {
+            msg!("Instruction: Redeem Printing V2 Bid");
+            process_redeem_printing_v2_bid(program_id, accounts)
         }
     }
 }

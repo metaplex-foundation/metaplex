@@ -74,6 +74,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         rent_info,
         is_participation: false,
         overwrite_win_index,
+        assert_bidder_signer: true,
     })?;
 
     assert_owned_by(metadata_info, &token_metadata_program)?;

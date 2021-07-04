@@ -111,7 +111,7 @@ pub enum MetaplexInstruction {
     ///   14. `[]` Store
     ///   15. `[]` System
     ///   16. `[]` Rent sysvar
-    ///   17. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id]
+    ///   17. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
     ///   18. `[optional/writable]` Master edition (if Printing type of WinningConfig)
     ///   19. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
@@ -150,7 +150,7 @@ pub enum MetaplexInstruction {
     ///   18. `[]` New authority for Master Metadata - If you are taking ownership of a Master Edition in and of itself, or a Limited Edition that isn't newly minted for you during this auction
     ///             ie someone else had it minted for themselves in a prior auction or through some other means, this is the account the metadata for these tokens will be delegated to
     ///             after this transaction. Otherwise this account will be ignored.
-    ///   19. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id]
+    ///   19. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
     RedeemFullRightsTransferBid,
 
@@ -362,6 +362,48 @@ pub enum MetaplexInstruction {
     /// 5. `[]` Auction program
     /// 6. `[]` Clock sysvar
     DecommissionAuctionManager,
+
+    /// Note: This requires that auction manager be in a Running state.
+    ///
+    /// If an auction is complete, you can redeem your printing v2 bid for a specific item here. If you are the first to do this,
+    /// The auction manager will switch from Running state to Disbursing state. If you are the last, this may change
+    /// the auction manager state to Finished provided that no authorities remain to be delegated for Master Edition tokens.
+    ///
+    /// NOTE: Please note that it is totally possible to redeem a bid 2x - once for a prize you won and once at the RedeemParticipationBid point for an open edition
+    /// that comes as a 'token of appreciation' for bidding. They are not mutually exclusive unless explicitly set to be that way.
+    ///
+    ///   0. `[writable]` Auction manager
+    ///   1. `[writable]` Safety deposit token storage account
+    ///   2. `[writable]` Destination account.
+    ///       NOTE: As this is a permissionless call, this MUST BE AN Associated Token Account of pda
+    ///       [wallet address, token program id, mint] relative to associated program id.
+    ///   3. `[writable]` Bid redemption key -
+    ///        Just a PDA with seed ['metaplex', auction_key, bidder_metadata_key] that we will allocate to mark that you redeemed your bid
+    ///   4. `[writable]` Safety deposit box account
+    ///   5. `[writable]` Vault account
+    ///   6. `[writable]` Fraction mint of the vault
+    ///   7. `[]` Auction
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[]` Your Bidder account - Only needs to be signer if payer does not own
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
+    ///   18. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   19. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   20. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
+    ///   21. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   22. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/248). PDA is relative to token metadata.
+    ///   23. `[signer]` Mint authority of new mint
+    ///   24. `[]` Metadata account of token in vault
+    ///   25. `[]` PDA-based Vault authority ['vault', program_id, vault key]
+    ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
+    RedeemPrintingV2Bid,
 }
 
 /// Creates an InitAuctionManager instruction

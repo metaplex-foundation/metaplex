@@ -74,6 +74,7 @@ pub fn process_redeem_participation_bid<'a>(
         store_info,
         is_participation: true,
         overwrite_win_index: None,
+        assert_bidder_signer: true,
     })?;
 
     assert_owned_by(accept_payment_info, token_program_info.key)?;
