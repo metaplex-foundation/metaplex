@@ -31,7 +31,6 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-  const isStarted = auctionView.state === AuctionViewState.Live;
 
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
   const ended =
@@ -40,14 +39,14 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   let currentBid: number | string = 0;
   let label = '';
   if(isUpcoming || bids) {
-    label = 'Starting bid';
+    label = ended ? 'Ended' : 'Starting bid';
     currentBid = fromLamports(
       participationOnly ? participationFixedPrice : priceFloor,
       mintInfo,
     )
   }
 
-  if (isStarted && bids.length > 0) {
+  if (!isUpcoming && bids.length > 0) {
     label = ended ? 'Winning bid' : 'Current bid';
     currentBid = winningBid &&
       Number.isFinite(winningBid.info.lastBid?.toNumber())
