@@ -125,3 +125,18 @@ Tag each collaborator, set custom percentages, and you’re off to the races. Ea
 Metaplex's off-chain component allows creators to launch a custom storefront, similar to Shopify or WordPress. This open-source project provides a graphical interface to the on-chain Metaplex program, for creators, buyers, and curators of NFTs. The design and layout of storefronts can be customized to suit the needs of the entity creating it, either as a permanent storefront or an auction hub for a specific auction or collection.
 
 All identification on the Storefront is based on wallet addresses. Creators and store admins sign through their wallets, and users place bids from connected wallets. Custom storefronts allow creators to create unique experiences per auction. Additionally, the Metaplex Foundation is working on multiple partnerships that will enable building immersive storefronts using VR/AR.
+
+
+## Using the CLI
+
+If you have created the master using a wallet (phantom) with metaplex, the mint authority of the master is the wallet address, so this mint authority keypair must be transferred to a file wallet so the CLI can use it.
+
+./target/debug/spl-token-metadata-test-client --keypair ~/.console/solana/id.json mint_new_edition_from_master_edition_via_token --mint <MINT ADDRESS OF MASTER> --url https://api.metaplex.solana.com/
+ ./target/debug/spl-token-metadata-test-client show --keypair ~/.console/solana/id.json  --mint <MINT ADDRESS> --url https://api.metaplex.solana.com/
+
+## Transferring a phantom wallet to the CLI file wallet.
+
+Go to phantom wallet, settings, Export private key (it is base58 :s)
+2. https://www.dcode.fr/base-58-cipher convert to decimal, then insert comma (use python ",".join("107 226 38 36 208 86 37 .. ".split(' ')) )
+3. create keypair file .json with [121, 1, 123, ..., 154]
+4. verify pubkey matches with solana-keygen pubkey <KEYPAIR_FILE>
