@@ -398,6 +398,10 @@ pub enum MetaplexError {
     /// Invalid operation
     #[error("Invalid operation")]
     InvalidOperation,
+
+    /// The provided account needs to contain one token of this mint type
+    #[error("The provided account needs to contain one token of this mint type")]
+    ProvidedAccountDoesNotContainOneToken,
 }
 
 impl PrintProgramError for MetaplexError {

@@ -62,7 +62,7 @@ pub fn process_instruction<'a>(
         }
         MetaplexInstruction::RedeemParticipationBid => {
             msg!("Instruction: Redeem Participation Bid");
-            process_redeem_participation_bid(program_id, accounts)
+            process_redeem_participation_bid(program_id, accounts, true)
         }
         MetaplexInstruction::StartAuction => {
             msg!("Instruction: Start Auction");
@@ -104,14 +104,13 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Redeem Printing V2 Bid");
             process_redeem_printing_v2_bid(program_id, accounts, args.edition_offset)
         }
-        MetaplexInstruction::WithdrawMasterEdition(args) => {
+        MetaplexInstruction::WithdrawMasterEdition => {
             msg!("Instruction: Withdraw Master Edition");
-            process_withdraw_master_edition(
-                program_id,
-                accounts,
-                args.winning_config_index,
-                args.winning_config_item_index,
-            )
+            process_withdraw_master_edition(program_id, accounts)
+        }
+        MetaplexInstruction::RedeemParticipationBidV2 => {
+            msg!("Instruction: Redeem Participation Bid V2");
+            process_redeem_participation_bid(program_id, accounts, false)
         }
     }
 }

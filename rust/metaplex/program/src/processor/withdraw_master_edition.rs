@@ -30,8 +30,6 @@ pub fn process_withdraw_master_edition<'a>(
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
     let fraction_mint_info = next_account_info(account_info_iter)?;
-    let payer_info = next_account_info(account_info_iter)?;
-    let auction_manager_ata_info = next_account_info(account_info_iter)?;
     let prize_tracking_ticket_info = next_account_info(account_info_iter)?;
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
@@ -42,8 +40,7 @@ pub fn process_withdraw_master_edition<'a>(
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let mut auction_manager: AuctionManager =
-        AuctionManager::from_account_info(auction_manager_info)?;
+    let auction_manager: AuctionManager = AuctionManager::from_account_info(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
     let store = Store::from_account_info(store_info)?;
     let safety_deposit_box = SafetyDepositBox::from_account_info(safety_deposit_info)?;

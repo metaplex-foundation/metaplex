@@ -6,9 +6,10 @@ use {
             MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
         },
         utils::{
-            assert_derivation, assert_owned_by, common_redeem_checks, common_redeem_finish,
-            common_winning_config_checks, create_or_allocate_account_raw, CommonRedeemCheckArgs,
-            CommonRedeemFinishArgs, CommonRedeemReturn, CommonWinningConfigCheckReturn,
+            assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
+            common_redeem_checks, common_redeem_finish, common_winning_config_checks,
+            create_or_allocate_account_raw, CommonRedeemCheckArgs, CommonRedeemFinishArgs,
+            CommonRedeemReturn, CommonWinningConfigCheckReturn,
         },
     },
     borsh::BorshSerialize,
@@ -18,6 +19,7 @@ use {
         program::invoke_signed,
         pubkey::Pubkey,
     },
+    spl_token::state::Account,
     spl_token_metadata::state::{get_master_edition, Metadata},
     spl_token_vault::{instruction::mint_edition_proxy, state::SafetyDepositBox},
 };
@@ -38,7 +40,8 @@ fn count_item_amount_by_safety_deposit_order(
         .sum()
 }
 
-fn mint_edition<'a>(
+#[allow(clippy::too_many_arguments)]
+pub fn mint_edition<'a>(
     token_metadata_program_info: &AccountInfo<'a>,
     token_vault_progam_info: &AccountInfo<'a>,
     new_metadata_account_info: &AccountInfo<'a>,
@@ -118,7 +121,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
 
     let auction_manager_info = next_account_info(account_info_iter)?;
     let safety_deposit_token_store_info = next_account_info(account_info_iter)?;
-    let destination_info = next_account_info(account_info_iter)?;
+    let new_edition_token_account_info = next_account_info(account_info_iter)?;
     let bid_redemption_info = next_account_info(account_info_iter)?;
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
@@ -144,28 +147,17 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let metadata_account_info = next_account_info(account_info_iter)?;
     let vault_authority_pda_info = next_account_info(account_info_iter)?;
 
-    let metadata = Metadata::from_account_info(metadata_account_info)?;
-
-    let bump = assert_derivation(
-        program_id,
-        prize_tracking_ticket_info,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            auction_manager_info.key.as_ref(),
-            metadata.mint.as_ref(),
-        ],
+    let new_edition_account: Account = assert_initialized(new_edition_token_account_info)?;
+    assert_is_ata(
+        new_edition_token_account_info,
+        bidder_info.key,
+        token_program_info.key,
+        mint_info.key,
     )?;
 
-    let auction_manager_bump = assert_derivation(
-        auction_manager_info.key,
-        auction_manager_info,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            auction_info.key.as_ref(),
-        ],
-    )?;
+    if new_edition_account.amount != 1 {
+        return Err(MetaplexError::ProvidedAccountDoesNotContainOneToken.into());
+    }
 
     let CommonRedeemReturn {
         auction_manager,
@@ -179,7 +171,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         program_id,
         auction_manager_info,
         safety_deposit_token_store_info,
-        destination_info,
+        destination_info: new_edition_token_account_info,
         bid_redemption_info,
         safety_deposit_info,
         vault_info,
@@ -216,6 +208,28 @@ pub fn process_redeem_printing_v2_bid<'a>(
                 if winning_config_item.winning_config_type != WinningConfigType::PrintingV2 {
                     return Err(MetaplexError::WrongBidEndpointForPrize.into());
                 }
+                let metadata = Metadata::from_account_info(metadata_account_info)?;
+
+                let bump = assert_derivation(
+                    program_id,
+                    prize_tracking_ticket_info,
+                    &[
+                        PREFIX.as_bytes(),
+                        program_id.as_ref(),
+                        auction_manager_info.key.as_ref(),
+                        metadata.mint.as_ref(),
+                    ],
+                )?;
+
+                let auction_manager_bump = assert_derivation(
+                    auction_manager_info.key,
+                    auction_manager_info,
+                    &[
+                        PREFIX.as_bytes(),
+                        program_id.as_ref(),
+                        auction_info.key.as_ref(),
+                    ],
+                )?;
 
                 let master_edition = get_master_edition(master_edition_account_info)?;
 
