@@ -23,11 +23,12 @@ import {
   fromLamports,
   useMint,
   useWallet,
+  AuctionState,
 } from '@oyster/common';
-import { MetaAvatar } from '../../components/MetaAvatar';
 import { MintInfo } from '@solana/spl-token';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
+import { useMemo } from 'react';
 
 export const AuctionItem = ({
   item,
@@ -186,8 +187,8 @@ export const AuctionView = () => {
   );
 };
 
-const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
-  const { bid, index, mint } = props;
+const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?: boolean, isActive?: boolean }) => {
+  const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
   const bidder = bid.info.bidderPubkey.toBase58();
   const isme = wallet?.publicKey?.toBase58() === bidder;
@@ -198,6 +199,8 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
         width: '100%',
         alignItems: 'center',
         padding: '3px 0',
+        position: 'relative',
+        opacity: isActive ? undefined: 0.5,
         ...(isme
           ? {
               backgroundColor: '#ffffff21',
@@ -205,6 +208,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
           : {}),
       }}
     >
+      {isCancelled && <div style={{ position: 'absolute', left: 0, width: '100%', height: 1, background: 'grey', top: 'calc(50% - 1px)', zIndex: 2 }}/>}
       <Col
         span={2}
         style={{
@@ -212,7 +216,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
           paddingRight: 10,
         }}
       >
-        <div
+        {!isCancelled && <div
           style={{
             opacity: 0.8,
             fontWeight: 700,
@@ -225,7 +229,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo }) => {
             </>
           )}
           {index + 1}
-        </div>
+        </div>}
       </Col>
       <Col span={16}>
         <Row>
@@ -257,19 +261,47 @@ export const AuctionBids = ({
   auctionView?: Auction | null;
 }) => {
   const bids = useBidsForAuction(auctionView?.auction.pubkey || '');
+
   const mint = useMint(auctionView?.auction.info.tokenMint);
   const { width } = useWindowDimensions();
 
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
 
-  if (bids.length < 1) return null;
+  const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
+  const activeBids = auctionView?.auction.info.bidState.bids || [];
+  const activeBidders = useMemo(() => {
+    return new Set(activeBids.map(b => b.key.toBase58()))
+  }, [activeBids]);
+
+  const auctionState = auctionView ? auctionView.auction.info.state : AuctionState.Created;
+  const bidLines = useMemo(() => {
+    let activeBidIndex = 0;
+    return bids.map((bid, index) => {
+      let isCancelled = (index < winnersCount  && !!bid.info.cancelled) ||
+        (auctionState !== AuctionState.Ended && !!bid.info.cancelled);
+
+      let line = <BidLine
+        bid={bid}
+        index={activeBidIndex}
+        key={index}
+        mint={mint}
+        isCancelled={isCancelled}
+        isActive={!bid.info.cancelled} />;
+
+      if (!isCancelled) {
+        activeBidIndex++;
+      }
+
+      return line;
+    });
+  }, [auctionState, bids, activeBidders]);
+
+  if (!auctionView || bids.length < 1) return null;
 
   return (
     <Col style={{ width: '100%' }}>
       <h6>Bid History</h6>
-      {bids.slice(0, 10).map((bid, index) => {
-        return <BidLine bid={bid} index={index} key={index} mint={mint} />;
-      })}
+      {bidLines.slice(0, 10)}
       {bids.length > 10 && (
         <div
           className="full-history"
@@ -300,9 +332,7 @@ export const AuctionBids = ({
             width: '100%',
           }}
         >
-          {bids.map((bid, index) => {
-            return <BidLine bid={bid} index={index} key={index} mint={mint} />;
-          })}
+          {bidLines}
         </div>
       </MetaplexModal>
     </Col>
