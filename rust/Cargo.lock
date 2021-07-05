@@ -3427,6 +3427,7 @@ dependencies = [
  "num-traits",
  "solana-program",
  "spl-token",
+ "spl-token-metadata",
  "thiserror",
 ]
 

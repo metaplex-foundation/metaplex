@@ -2,7 +2,8 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            Key, PrizeTrackingTicket, WinningConfigType, MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
+            Key, PrizeTrackingTicket, WinningConfigItem, WinningConfigType,
+            MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
         },
         utils::{
             assert_derivation, assert_owned_by, common_redeem_checks, common_redeem_finish,
@@ -10,20 +11,108 @@ use {
             CommonRedeemFinishArgs, CommonRedeemReturn, CommonWinningConfigCheckReturn,
         },
     },
+    borsh::BorshSerialize,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
+        program::invoke_signed,
         pubkey::Pubkey,
     },
-    spl_token_metadata::{
-        instruction::mint_new_edition_from_master_edition_via_token,
-        state::{get_master_edition, Metadata},
-    },
-    spl_token_vault::state::SafetyDepositBox,
+    spl_token_metadata::state::{get_master_edition, Metadata},
+    spl_token_vault::{instruction::mint_edition_proxy, state::SafetyDepositBox},
 };
+
+fn count_item_amount_by_safety_deposit_order(
+    items: &Vec<WinningConfigItem>,
+    safety_deposit_index: u8,
+) -> u64 {
+    items
+        .iter()
+        .map(|i| {
+            if i.safety_deposit_box_index == safety_deposit_index {
+                return i.amount as u64;
+            } else {
+                return 0 as u64;
+            }
+        })
+        .sum()
+}
+
+fn mint_edition<'a>(
+    token_metadata_program_info: &AccountInfo<'a>,
+    token_vault_progam_info: &AccountInfo<'a>,
+    new_metadata_account_info: &AccountInfo<'a>,
+    new_edition_account_info: &AccountInfo<'a>,
+    master_edition_account_info: &AccountInfo<'a>,
+    edition_marker_info: &AccountInfo<'a>,
+    mint_info: &AccountInfo<'a>,
+    mint_authority_info: &AccountInfo<'a>,
+    payer_info: &AccountInfo<'a>,
+    auction_manager_info: &AccountInfo<'a>,
+    vault_authority_pda_info: &AccountInfo<'a>,
+    safety_deposit_token_store_info: &AccountInfo<'a>,
+    safety_deposit_box_info: &AccountInfo<'a>,
+    vault_info: &AccountInfo<'a>,
+    bidder_info: &AccountInfo<'a>,
+    metadata_account_info: &AccountInfo<'a>,
+    token_program_info: &AccountInfo<'a>,
+    system_program_info: &AccountInfo<'a>,
+    rent_info: &AccountInfo<'a>,
+    actual_edition: u64,
+    signer_seeds: &[&[u8]],
+) -> ProgramResult {
+    invoke_signed(
+        &mint_edition_proxy(
+            *token_vault_progam_info.key,
+            *new_metadata_account_info.key,
+            *new_edition_account_info.key,
+            *master_edition_account_info.key,
+            *mint_info.key,
+            *edition_marker_info.key,
+            *mint_authority_info.key,
+            *payer_info.key,
+            *auction_manager_info.key,
+            *vault_authority_pda_info.key,
+            *safety_deposit_token_store_info.key,
+            *safety_deposit_box_info.key,
+            *vault_info.key,
+            *bidder_info.key,
+            *metadata_account_info.key,
+            *token_program_info.key,
+            *token_metadata_program_info.key,
+            actual_edition,
+        ),
+        &[
+            token_metadata_program_info.clone(),
+            token_vault_progam_info.clone(),
+            new_metadata_account_info.clone(),
+            new_edition_account_info.clone(),
+            master_edition_account_info.clone(),
+            edition_marker_info.clone(),
+            mint_info.clone(),
+            mint_authority_info.clone(),
+            payer_info.clone(),
+            auction_manager_info.clone(),
+            vault_authority_pda_info.clone(),
+            safety_deposit_token_store_info.clone(),
+            safety_deposit_box_info.clone(),
+            vault_info.clone(),
+            bidder_info.clone(),
+            metadata_account_info.clone(),
+            token_program_info.clone(),
+            system_program_info.clone(),
+            rent_info.clone(),
+        ],
+        &[&signer_seeds],
+    )?;
+
+    Ok(())
+}
+
 pub fn process_redeem_printing_v2_bid<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
+    edition_offset: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -53,7 +142,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let edition_marker_info = next_account_info(account_info_iter)?;
     let mint_authority_info = next_account_info(account_info_iter)?;
     let metadata_account_info = next_account_info(account_info_iter)?;
-    let vault_authority_info = next_account_info(account_info_iter)?;
+    let vault_authority_pda_info = next_account_info(account_info_iter)?;
 
     let metadata = Metadata::from_account_info(metadata_account_info)?;
 
@@ -68,13 +157,13 @@ pub fn process_redeem_printing_v2_bid<'a>(
         ],
     )?;
 
-    assert_derivation(
-        token_vault_program_info.key,
-        vault_authority_info,
+    let auction_manager_bump = assert_derivation(
+        auction_manager_info.key,
+        auction_manager_info,
         &[
-            spl_token_vault::state::PREFIX.as_bytes(),
-            token_vault_program_info.key.as_ref(),
-            vault_info.key.as_ref(),
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            auction_info.key.as_ref(),
         ],
     )?;
 
@@ -130,6 +219,8 @@ pub fn process_redeem_printing_v2_bid<'a>(
 
                 let master_edition = get_master_edition(master_edition_account_info)?;
 
+                let safety_deposit_box = SafetyDepositBox::from_account_info(safety_deposit_info)?;
+
                 let mut prize_tracking_ticket: PrizeTrackingTicket;
                 if prize_tracking_ticket_info.data_is_empty() {
                     create_or_allocate_account_raw(
@@ -147,8 +238,6 @@ pub fn process_redeem_printing_v2_bid<'a>(
                             &[bump],
                         ],
                     )?;
-                    let safety_deposit_box =
-                        SafetyDepositBox::from_account_info(safety_deposit_info)?;
                     prize_tracking_ticket =
                         PrizeTrackingTicket::from_account_info(prize_tracking_ticket_info)?;
                     prize_tracking_ticket.key = Key::PrizeTrackingTicketV1;
@@ -160,16 +249,10 @@ pub fn process_redeem_printing_v2_bid<'a>(
                         .winning_configs
                         .iter()
                         .map(|c| {
-                            c.items
-                                .iter()
-                                .map(|i| {
-                                    if i.safety_deposit_box_index == safety_deposit_box.order {
-                                        return i.amount as u64;
-                                    } else {
-                                        return 0 as u64;
-                                    }
-                                })
-                                .sum()
+                            count_item_amount_by_safety_deposit_order(
+                                &c.items,
+                                safety_deposit_box.order,
+                            )
                         })
                         .sum()
                 } else {
@@ -181,20 +264,63 @@ pub fn process_redeem_printing_v2_bid<'a>(
                         .ok_or(MetaplexError::NumericalOverflowError)?
                 }
 
-                mint_new_edition_from_master_edition_via_token(
-                    *token_metadata_program_info.key,
-                    *new_metadata_account_info.key,
-                    *new_edition_account_info.key,
-                    *master_edition_account_info.key,
-                    *mint_info.key,
-                    *mint_authority_info.key,
-                    *payer_info.key,
-                    *vault_authority_info.key,
-                    *safety_deposit_token_store_info.key,
-                    *bidder_info.key,
-                    *metadata_account_info.key,
-                    metadata.mint,
-                    master_edition.supply(),
+                prize_tracking_ticket
+                    .serialize(&mut *prize_tracking_ticket_info.data.borrow_mut())?;
+
+                let mut edition_offset_min: u64 = 0;
+                for n in 0..winning_index - 1 {
+                    let matching = count_item_amount_by_safety_deposit_order(
+                        &auction_manager.settings.winning_configs[n].items,
+                        safety_deposit_box.order,
+                    );
+
+                    edition_offset_min = edition_offset_min
+                        .checked_add(matching)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                }
+                let edition_offset_max = edition_offset_min
+                    .checked_add(count_item_amount_by_safety_deposit_order(
+                        &auction_manager.settings.winning_configs[winning_index].items,
+                        safety_deposit_box.order,
+                    ))
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+
+                if edition_offset < edition_offset_min || edition_offset >= edition_offset_max {
+                    return Err(MetaplexError::InvalidEditionNumber.into());
+                }
+
+                let actual_edition = edition_offset
+                    .checked_add(prize_tracking_ticket.supply_snapshot)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+
+                let signer_seeds = &[
+                    PREFIX.as_bytes(),
+                    program_id.as_ref(),
+                    auction_info.key.as_ref(),
+                    &[auction_manager_bump],
+                ];
+                mint_edition(
+                    token_metadata_program_info,
+                    token_vault_program_info,
+                    new_metadata_account_info,
+                    new_edition_account_info,
+                    master_edition_account_info,
+                    edition_marker_info,
+                    mint_info,
+                    mint_authority_info,
+                    payer_info,
+                    auction_manager_info,
+                    vault_authority_pda_info,
+                    safety_deposit_token_store_info,
+                    safety_deposit_info,
+                    vault_info,
+                    bidder_info,
+                    metadata_account_info,
+                    token_program_info,
+                    system_info,
+                    rent_info,
+                    actual_edition,
+                    signer_seeds,
                 )?;
             }
         }

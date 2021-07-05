@@ -390,6 +390,14 @@ pub enum MetaplexError {
     /// Invalid Auction Manager Status
     #[error("Invalid Auction Manager Status")]
     InvalidStatus,
+
+    /// You are not eligible for this edition offset
+    #[error("You are not eligible for this edition offset")]
+    InvalidEditionNumber,
+
+    /// Invalid operation
+    #[error("Invalid operation")]
+    InvalidOperation,
 }
 
 impl PrintProgramError for MetaplexError {

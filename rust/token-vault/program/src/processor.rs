@@ -7,10 +7,11 @@ use {
             MAX_SAFETY_DEPOSIT_SIZE, PREFIX,
         },
         utils::{
-            assert_initialized, assert_owned_by, assert_rent_exempt, assert_token_matching,
-            assert_token_program_matches_package, assert_vault_authority_correct,
-            create_or_allocate_account_raw, spl_token_burn, spl_token_mint_to, spl_token_transfer,
-            TokenBurnParams, TokenMintToParams, TokenTransferParams,
+            assert_derivation, assert_initialized, assert_owned_by, assert_rent_exempt,
+            assert_token_matching, assert_token_program_matches_package,
+            assert_vault_authority_correct, create_or_allocate_account_raw, mint_edition,
+            spl_token_burn, spl_token_mint_to, spl_token_transfer, TokenBurnParams,
+            TokenMintToParams, TokenTransferParams,
         },
     },
     borsh::{BorshDeserialize, BorshSerialize},
@@ -24,6 +25,7 @@ use {
         sysvar::Sysvar,
     },
     spl_token::state::{Account, Mint},
+    spl_token_metadata::state::Metadata,
 };
 
 pub fn process_instruction(
@@ -87,6 +89,10 @@ pub fn process_instruction(
         VaultInstruction::SetAuthority => {
             msg!("Instruction: Set Authority");
             process_set_authority(program_id, accounts)
+        }
+        VaultInstruction::MintEditionProxy(args) => {
+            msg!("Instruction: Mint Edition Proxy");
+            process_mint_edition_proxy(program_id, accounts, args.edition)
         }
     }
 }
@@ -1046,6 +1052,105 @@ pub fn process_init_vault(
     vault.state = VaultState::Inactive;
 
     vault.serialize(&mut *vault_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+pub fn process_mint_edition_proxy(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    edition: u64,
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let new_metadata_account_info = next_account_info(account_info_iter)?;
+    let new_edition_account_info = next_account_info(account_info_iter)?;
+    let master_edition_account_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let edition_marker_info = next_account_info(account_info_iter)?;
+    let mint_authority_info = next_account_info(account_info_iter)?;
+    let payer_info = next_account_info(account_info_iter)?;
+    let vault_authority_info = next_account_info(account_info_iter)?;
+    let vault_authority_pda_info = next_account_info(account_info_iter)?;
+    let store_info = next_account_info(account_info_iter)?;
+    let safety_deposit_info = next_account_info(account_info_iter)?;
+    let vault_info = next_account_info(account_info_iter)?;
+    let new_update_authority_info = next_account_info(account_info_iter)?;
+    let metadata_account_info = next_account_info(account_info_iter)?;
+    let token_program_info = next_account_info(account_info_iter)?;
+    let token_metadata_program_info = next_account_info(account_info_iter)?;
+    let system_program_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter)?;
+
+    let vault: Vault = Vault::from_account_info(vault_info)?;
+    let safety_deposit: SafetyDepositBox = SafetyDepositBox::from_account_info(vault_info)?;
+    let metadata: Metadata = Metadata::from_account_info(metadata_account_info)?;
+
+    // Since most checks happen next level down in token program, we only need to verify
+    // that the vault authority signer matches what's expected on vault to authorize
+    // use of our pda authority, and that the token store is right for the safety deposit.
+    // Then pass it through.
+    assert_owned_by(vault_info, program_id)?;
+    assert_owned_by(safety_deposit_info, program_id)?;
+    assert_owned_by(store_info, token_program_info.key)?;
+    assert_token_program_matches_package(token_program_info)?;
+    assert_token_matching(&vault, token_program_info)?;
+    assert_vault_authority_correct(&vault, vault_authority_info)?;
+
+    // At least check that this isnt some fake token metadata program by asserting it owns the metadata
+    // and master edition
+    assert_owned_by(metadata_account_info, token_metadata_program_info.key)?;
+    assert_owned_by(master_edition_account_info, token_metadata_program_info.key)?;
+
+    let bump = assert_derivation(
+        program_id,
+        vault_authority_pda_info,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            vault_info.key.as_ref(),
+        ],
+    )?;
+
+    if vault.state != VaultState::Combined {
+        return Err(VaultError::VaultShouldBeCombined.into());
+    }
+
+    if safety_deposit.vault != *vault_info.key {
+        return Err(VaultError::SafetyDepositBoxVaultMismatch.into());
+    }
+
+    if *store_info.key != safety_deposit.store {
+        return Err(VaultError::StoreDoesNotMatchSafetyDepositBox.into());
+    }
+
+    let seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        vault_info.key.as_ref(),
+        &[bump],
+    ];
+
+    mint_edition(
+        token_metadata_program_info,
+        new_metadata_account_info,
+        new_edition_account_info,
+        master_edition_account_info,
+        edition_marker_info,
+        mint_info,
+        mint_authority_info,
+        payer_info,
+        vault_authority_pda_info,
+        store_info,
+        new_update_authority_info,
+        metadata_account_info,
+        token_program_info,
+        system_program_info,
+        rent_info,
+        metadata,
+        edition,
+        seeds,
+    )?;
 
     Ok(())
 }

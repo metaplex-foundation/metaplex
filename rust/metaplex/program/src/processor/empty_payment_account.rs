@@ -6,8 +6,8 @@ use {
         instruction::EmptyPaymentAccountArgs,
         state::{AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE, PREFIX},
         utils::{
-            assert_derivation, assert_initialized, assert_owned_by, assert_rent_exempt,
-            create_or_allocate_account_raw, spl_token_transfer,
+            assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
+            assert_rent_exempt, create_or_allocate_account_raw, spl_token_transfer,
         },
     },
     borsh::BorshSerialize,
@@ -24,7 +24,6 @@ use {
     spl_token::state::Account,
     spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::SafetyDepositBox,
-    std::str::FromStr,
 };
 
 fn assert_winning_config_safety_deposit_validity(
@@ -78,14 +77,11 @@ fn assert_destination_ownership_validity(
 
                 // Let's avoid importing the entire ATA library here just to get a helper and an ID.
                 // Assert destination is, in fact, an ATA.
-                assert_derivation(
-                    &Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap(),
+                assert_is_ata(
                     destination_info,
-                    &[
-                        creator.address.as_ref(),
-                        &store.token_program.as_ref(),
-                        &destination.mint.as_ref(),
-                    ],
+                    &creator.address,
+                    &store.token_program,
+                    &destination.mint,
                 )?;
             } else {
                 return Err(MetaplexError::InvalidCreatorIndex.into());

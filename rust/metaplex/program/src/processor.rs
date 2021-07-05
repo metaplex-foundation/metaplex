@@ -17,6 +17,7 @@ use {
     solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey},
     start_auction::process_start_auction,
     validate_safety_deposit_box::process_validate_safety_deposit_box,
+    withdraw_master_edition::process_withdraw_master_edition,
 };
 
 pub mod claim_bid;
@@ -34,6 +35,7 @@ pub mod set_store;
 pub mod set_whitelisted_creator;
 pub mod start_auction;
 pub mod validate_safety_deposit_box;
+pub mod withdraw_master_edition;
 
 pub fn process_instruction<'a>(
     program_id: &'a Pubkey,
@@ -98,9 +100,18 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Decomission Auction Manager");
             process_decommission_auction_manager(program_id, accounts)
         }
-        MetaplexInstruction::RedeemPrintingV2Bid => {
+        MetaplexInstruction::RedeemPrintingV2Bid(args) => {
             msg!("Instruction: Redeem Printing V2 Bid");
-            process_redeem_printing_v2_bid(program_id, accounts)
+            process_redeem_printing_v2_bid(program_id, accounts, args.edition_offset)
+        }
+        MetaplexInstruction::WithdrawMasterEdition(args) => {
+            msg!("Instruction: Withdraw Master Edition");
+            process_withdraw_master_edition(
+                program_id,
+                accounts,
+                args.winning_config_index,
+                args.winning_config_item_index,
+            )
         }
     }
 }

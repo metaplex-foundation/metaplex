@@ -39,6 +39,17 @@ pub struct RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
     pub proxy_call: ProxyCallAddress,
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct RedeemPrintingV2BidArgs {
+    pub edition_offset: u64,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct WithdrawMasterEditionArgs {
+    pub winning_config_index: u8,
+    pub winning_config_item_index: u8,
+}
+
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetaplexInstruction {
@@ -403,7 +414,27 @@ pub enum MetaplexInstruction {
     ///   24. `[]` Metadata account of token in vault
     ///   25. `[]` PDA-based Vault authority ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
-    RedeemPrintingV2Bid,
+    RedeemPrintingV2Bid(RedeemPrintingV2BidArgs),
+
+    /// Permissionless call to redeem the master edition in a given safety deposit for a PrintingV2 winning config to the
+    /// ATA of the Auctioneer. Can only be called once all redemptions have been met.
+    ///
+    ///   0. `[writable]` Auction manager
+    ///   1. `[writable]` Safety deposit token storage account
+    ///   2. `[writable]` Associated token account owned by auction manager authority of same mint as token storage account
+    ///   3. `[writable]` Safety deposit box account
+    ///   4. `[writable]` Vault account
+    ///   5. `[writable]` Fraction mint of the vault
+    ///   6. `[signer]` Payer
+    ///   7. `[]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
+    ///   8. `[]` PDA-based Vault transfer authority ['vault', program_id, vault key]
+    ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
+    ///   9. `[]` Auction
+    ///   10. `[]` Token program
+    ///   11. `[]` Token Vault program
+    ///   12. `[]` Store
+    ///   13. `[]` Rent sysvar
+    WithdrawMasterEdition(WithdrawMasterEditionArgs),
 }
 
 /// Creates an InitAuctionManager instruction

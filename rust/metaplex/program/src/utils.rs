@@ -31,7 +31,7 @@ use {
         state::{Metadata, EDITION},
     },
     spl_token_vault::instruction::create_withdraw_tokens_instruction,
-    std::convert::TryInto,
+    std::{convert::TryInto, str::FromStr},
 };
 
 /// assert initialized account
@@ -834,6 +834,21 @@ pub fn end_auction<'a: 'b, 'b>(
         ),
         &[auction, authority, auction_program, clock],
         &[authority_signer_seeds],
+    )?;
+
+    Ok(())
+}
+
+pub fn assert_is_ata(
+    account: &AccountInfo,
+    wallet: &Pubkey,
+    token_program: &Pubkey,
+    mint: &Pubkey,
+) -> ProgramResult {
+    assert_derivation(
+        &Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap(),
+        account,
+        &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()],
     )?;
 
     Ok(())
