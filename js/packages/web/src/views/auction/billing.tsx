@@ -230,7 +230,6 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   const {
     bidRedemptions,
     bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
   } = useMeta();
   const auctionKey = auctionView.auction.pubkey.toBase58();
 
