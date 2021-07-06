@@ -26,9 +26,9 @@ const UserActions = () => {
       {/* <Link to={`#`}>
         <Button className="app-btn">Bids</Button>
       </Link> */}
-      {canCreate && (<Link to={`/art/create`}>
+      {canCreate ? (<Link to={`/art/create`}>
         <Button className="app-btn">Create</Button>
-      </Link>)}
+      </Link>) : null}
       <Link to={`/auction/create/0`}>
         <Button className="connector" type="primary" >Sell</Button>
       </Link>
