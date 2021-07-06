@@ -2,8 +2,6 @@ import React from 'react';
 import { GithubOutlined, TwitterOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 
-import './index.less';
-
 export const Footer = () => {
   return (
     <div className={'footer'}>
