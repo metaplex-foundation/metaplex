@@ -194,7 +194,7 @@ pub enum MetaplexInstruction {
     ///   19.  `[writable]` The accept payment account for the auction manager
     ///   20.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
     ///   21. `[writable]` Participation NFT printing holding account (present on participation_state)
-    RedeemParticipationBid,
+    DeprecatedRedeemParticipationBid,
 
     /// If the auction manager is in Validated state, it can invoke the start command via calling this command here.
     ///
@@ -755,7 +755,7 @@ pub fn create_deprecated_redeem_participation_bid_instruction(
             AccountMeta::new(paying_token_account, false),
             AccountMeta::new(printing_authorization_token_account, false),
         ],
-        data: MetaplexInstruction::RedeemParticipationBid
+        data: MetaplexInstruction::DeprecatedRedeemParticipationBid
             .try_to_vec()
             .unwrap(),
     }
@@ -1084,7 +1084,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
     original_mint: Pubkey,
     new_mint: Pubkey,
     new_mint_authority: Pubkey,
-    master_supply_plus_one: u64,
+    desired_edition: u64,
 ) -> Instruction {
     let (prize_tracking_ticket, _) = Pubkey::find_program_address(
         &[
@@ -1096,7 +1096,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
         &program_id,
     );
 
-    let edition_number = master_supply_plus_one.checked_div(248).unwrap();
+    let edition_number = desired_edition.checked_div(248).unwrap();
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[

@@ -12,7 +12,7 @@ import { deserializeUnchecked } from 'borsh';
 export * from './initAuctionManager';
 export * from './redeemBid';
 export * from './redeemFullRightsTransferBid';
-export * from './redeemParticipationBid';
+export * from './deprecatedRedeemParticipationBid';
 export * from './startAuction';
 export * from './validateSafetyDepositBox';
 
@@ -92,7 +92,7 @@ export class RedeemFullRightsTransferBidArgs {
   instruction = 3;
 }
 
-export class RedeemParticipationBidArgs {
+export class DeprecatedRedeemParticipationBidArgs {
   instruction = 4;
 }
 
@@ -103,7 +103,7 @@ export class ClaimBidArgs {
   instruction = 6;
 }
 
-export class PopulateParticipationPrintingAccountArgs {
+export class DeprecatedPopulateParticipationPrintingAccountArgs {
   instruction = 11;
 }
 
@@ -156,12 +156,22 @@ export class SetWhitelistedCreatorArgs {
   }
 }
 
-export class ValidateParticipationArgs {
+export class DeprecatedValidateParticipationArgs {
   instruction = 10;
 }
 
 export class DecommissionAuctionManagerArgs {
   instruction = 13;
+}
+
+export class RedeemPrintingV2BidArgs {
+  instruction = 14;
+}
+export class WithdrawMasterEditionArgs {
+  instruction = 15;
+}
+export class RedeemParticipationBidV2Args {
+  instruction = 16;
 }
 
 export enum WinningConstraint {
@@ -202,8 +212,11 @@ export enum WinningConfigType {
   /// token itself. The other person will be able to mint authorization tokens and make changes to the
   /// artwork.
   FullRightsTransfer,
-  /// Means you are using authorization tokens to print off editions during the auction
-  Printing,
+  /// Means you are using authorization tokens to print off editions during the auction using
+  /// from a MasterEditionV1
+  PrintingV1,
+  /// Means you are using the MasterEditionV2 to print off editions
+  PrintingV2,
 }
 export class ParticipationState {
   collectedToAcceptPayment: BN = new BN(0);
@@ -525,7 +538,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    PopulateParticipationPrintingAccountArgs,
+    DeprecatedPopulateParticipationPrintingAccountArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -544,6 +557,28 @@ export const SCHEMA = new Map<any, any>([
   ],
   [
     DecommissionAuctionManagerArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    RedeemPrintingV2BidArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    WithdrawMasterEditionArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+
+  [
+    RedeemParticipationBidV2Args,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -581,7 +616,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    RedeemParticipationBidArgs,
+    DeprecatedRedeemParticipationBidArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -634,7 +669,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    ValidateParticipationArgs,
+    DeprecatedValidateParticipationArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -742,6 +777,29 @@ export async function getWhitelistedCreator(creator: PublicKey) {
         PROGRAM_IDS.metaplex.toBuffer(),
         store.toBuffer(),
         creator.toBuffer(),
+      ],
+      PROGRAM_IDS.metaplex,
+    )
+  )[0];
+}
+
+export async function getPrizeTrackingTicket(
+  auctionManager: PublicKey,
+  mint: PublicKey,
+) {
+  const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
+
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        PROGRAM_IDS.metaplex.toBuffer(),
+        auctionManager.toBuffer(),
+        mint.toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )

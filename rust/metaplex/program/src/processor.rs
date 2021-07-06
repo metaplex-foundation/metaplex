@@ -60,8 +60,8 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Redeem Full Rights Transfer Bid");
             process_full_rights_transfer_bid(program_id, accounts, None)
         }
-        MetaplexInstruction::RedeemParticipationBid => {
-            msg!("Instruction: Redeem Participation Bid");
+        MetaplexInstruction::DeprecatedRedeemParticipationBid => {
+            msg!("Instruction: Deprecated Redeem Participation Bid");
             process_redeem_participation_bid(program_id, accounts, true)
         }
         MetaplexInstruction::StartAuction => {

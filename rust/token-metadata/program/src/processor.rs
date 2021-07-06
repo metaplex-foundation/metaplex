@@ -11,7 +11,7 @@ use {
         instruction::MetadataInstruction,
         state::{
             Data, EditionMarker, Key, MasterEditionV1, MasterEditionV2, Metadata, EDITION,
-            MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, PREFIX,
+            MAX_EDITION_MARKER_SIZE, MAX_MASTER_EDITION_LEN, MAX_METADATA_LEN, PREFIX,
         },
         utils::{
             assert_data_valid, assert_derivation, assert_initialized,
@@ -104,7 +104,7 @@ pub fn process_instruction(
             process_create_master_edition(program_id, accounts, args.max_supply)
         }
         MetadataInstruction::MintNewEditionFromMasterEditionViaToken(args) => {
-            msg!("Instruction: Create Master Edition");
+            msg!("Instruction: Mint New Edition from Master Edition Via Token");
             process_mint_new_edition_from_master_edition_via_token(
                 program_id,
                 accounts,
@@ -411,6 +411,8 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
     assert_token_program_matches_package(token_program_account_info)?;
     assert_owned_by(mint_info, &spl_token::id())?;
     assert_owned_by(token_account_info, &spl_token::id())?;
+    assert_owned_by(master_edition_account_info, program_id)?;
+    assert_owned_by(master_metadata_account_info, program_id)?;
     assert_signer(owner_account_info)?;
 
     if !new_metadata_account_info.data_is_empty() {
@@ -420,9 +422,6 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
     if !new_edition_account_info.data_is_empty() {
         return Err(MetadataError::AlreadyInitialized.into());
     }
-
-    assert_owned_by(master_edition_account_info, program_id)?;
-    assert_owned_by(master_metadata_account_info, program_id)?;
 
     let token_account: Account = assert_initialized(token_account_info)?;
     let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
@@ -469,7 +468,7 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
             rent_info,
             system_account_info,
             payer_account_info,
-            1,
+            MAX_EDITION_MARKER_SIZE,
             seeds,
         )?;
     }

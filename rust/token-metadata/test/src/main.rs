@@ -211,7 +211,6 @@ fn mint_edition_via_token_call(
     let master_metadata: Metadata =
         try_from_slice_unchecked(&master_metadata_account.data).unwrap();
 
-    let update_authority = master_metadata.update_authority;
     let master_edition_seeds = &[
         PREFIX.as_bytes(),
         &program_key.as_ref(),
@@ -279,7 +278,7 @@ fn mint_edition_via_token_call(
         account_authority.pubkey(),
         existing_token_account,
         account_authority.pubkey(),
-        update_authority,
+        master_metadata_key,
         master_metadata.mint,
         master_edition.supply + 1,
     ));
