@@ -50,7 +50,7 @@ import {
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
 import BN from 'bn.js';
-import { ZERO } from '@oyster/common/dist/lib/constants';
+import { constants } from '@oyster/common';
 import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
 import { useMeta } from '../../contexts';
@@ -59,6 +59,7 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Step } = Steps;
+const { ZERO } = constants;
 
 export enum AuctionCategory {
   Limited,
