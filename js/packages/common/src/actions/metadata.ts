@@ -539,8 +539,8 @@ export async function createMasterEdition(
   mintKey: PublicKey,
   updateAuthorityKey: PublicKey,
   mintAuthorityKey: PublicKey,
-  instructions: TransactionInstruction[],
   payer: PublicKey,
+  instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
 

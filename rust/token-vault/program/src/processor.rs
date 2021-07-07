@@ -1,3 +1,5 @@
+use solana_program::log::sol_log_compute_units;
+
 use {
     crate::{
         error::VaultError,
@@ -1082,10 +1084,14 @@ pub fn process_mint_edition_proxy(
     let system_program_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
 
+    msg!("Before loading in vault");
+    sol_log_compute_units();
     let vault: Vault = Vault::from_account_info(vault_info)?;
-    let safety_deposit: SafetyDepositBox = SafetyDepositBox::from_account_info(vault_info)?;
+    let safety_deposit: SafetyDepositBox =
+        SafetyDepositBox::from_account_info(safety_deposit_info)?;
     let metadata: Metadata = Metadata::from_account_info(metadata_account_info)?;
-
+    msg!("After loading in vault");
+    sol_log_compute_units();
     // Since most checks happen next level down in token program, we only need to verify
     // that the vault authority signer matches what's expected on vault to authorize
     // use of our pda authority, and that the token store is right for the safety deposit.

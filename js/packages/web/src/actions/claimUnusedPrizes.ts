@@ -9,7 +9,12 @@ import {
   ParsedAccount,
   TokenAccount,
   SafetyDepositBox,
-  getReservationList,
+  deprecatedGetReservationList,
+  MasterEditionV1,
+  MasterEditionV2,
+  findProgramAddress,
+  programIds,
+  createAssociatedTokenAccountInstruction,
 } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
@@ -20,6 +25,7 @@ import {
   redeemFullRightsTransferBid,
   WinningConfigStateItem,
   WinningConfigItem,
+  withdrawMasterEdition,
 } from '../models/metaplex';
 const { createTokenAccount } = actions;
 
@@ -66,11 +72,11 @@ export async function claimUnusedPrizes(
               winnerIndex
             ].items[j];
           switch (winningConfigItem.winningConfigType) {
-            case WinningConfigType.Printing:
+            case WinningConfigType.PrintingV1:
               console.log(
-                'Redeeming printing same way we redeem a normal bid because we arent printing it',
+                'Redeeming printing v1 same way we redeem a normal bid because we arent printing it',
               );
-              await setupRedeemPrintingInstructions(
+              await deprecatedSetupRedeemPrintingInstructions(
                 auctionView,
                 accountsByMint,
                 accountRentExempt,
@@ -81,6 +87,18 @@ export async function claimUnusedPrizes(
                 instructions,
                 stateItem,
                 winnerIndex,
+              );
+              break;
+            case WinningConfigType.PrintingV2:
+              console.log('Redeeming printing v2');
+              await setupRedeemPrintingInstructions(
+                connection,
+                auctionView,
+                wallet,
+                safetyDeposit,
+                item,
+                signers,
+                instructions,
               );
               break;
             case WinningConfigType.FullRightsTransfer:
@@ -214,6 +232,58 @@ async function setupRedeemFullRightsTransferInstructions(
 }
 
 async function setupRedeemPrintingInstructions(
+  connection: Connection,
+  auctionView: AuctionView,
+  wallet: any,
+  safetyDeposit: ParsedAccount<SafetyDepositBox>,
+  item: AuctionViewItem,
+  signers: Array<Keypair[]>,
+  instructions: Array<TransactionInstruction[]>,
+) {
+  if (!item.masterEdition || !item.metadata) {
+    return;
+  }
+
+  const myInstructions: TransactionInstruction[] = [];
+  const mySigners: Keypair[] = [];
+  const ata = (
+    await findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        programIds().token.toBuffer(),
+        item.metadata.info.mint.toBuffer(),
+      ],
+      programIds().associatedToken,
+    )
+  )[0];
+
+  const existingAta = await connection.getAccountInfo(ata);
+  console.log('Existing ata?', existingAta);
+  if (!existingAta) {
+    createAssociatedTokenAccountInstruction(
+      myInstructions,
+      ata,
+      wallet.publicKey,
+      wallet.publicKey,
+      item.metadata.info.mint,
+    );
+  }
+
+  await withdrawMasterEdition(
+    auctionView.vault.pubkey,
+    safetyDeposit.info.store,
+    ata,
+    safetyDeposit.pubkey,
+    auctionView.vault.info.fractionMint,
+    item.metadata.info.mint,
+    myInstructions,
+  );
+
+  instructions.push(myInstructions);
+  signers.push(mySigners);
+}
+
+async function deprecatedSetupRedeemPrintingInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
@@ -229,15 +299,13 @@ async function setupRedeemPrintingInstructions(
     return;
   }
   const updateAuth = item.metadata.info.updateAuthority;
-
-  const reservationList = await getReservationList(
+  const me = item.masterEdition as ParsedAccount<MasterEditionV1>;
+  const reservationList = await deprecatedGetReservationList(
     item.masterEdition.pubkey,
     auctionView.auctionManager.pubkey,
   );
 
-  const newTokenAccount = accountsByMint.get(
-    item.masterEdition.info.printingMint.toBase58(),
-  );
+  const newTokenAccount = accountsByMint.get(me.info.printingMint.toBase58());
   let newTokenAccountKey: PublicKey | undefined = newTokenAccount?.pubkey;
 
   if (updateAuth) {
@@ -254,7 +322,7 @@ async function setupRedeemPrintingInstructions(
           winningPrizeInstructions,
           wallet.publicKey,
           accountRentExempt,
-          item.masterEdition.info.printingMint,
+          me.info.printingMint,
           wallet.publicKey,
           winningPrizeSigner,
         );

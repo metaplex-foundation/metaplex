@@ -118,6 +118,7 @@ export const AuctionCard = ({
   const connection = useConnection();
   const { wallet, connected, connect } = useWallet();
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
+  const { prizeTrackingTickets } = useMeta();
 
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -206,6 +207,7 @@ export const AuctionCard = ({
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
+                    prizeTrackingTickets,
                   ).then(() => setShowRedeemedBidModal(true));
                 else
                   await sendCancelBid(

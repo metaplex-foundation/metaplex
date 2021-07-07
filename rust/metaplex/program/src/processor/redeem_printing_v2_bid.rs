@@ -1,3 +1,5 @@
+use solana_program::{log::sol_log_compute_units, msg};
+
 use {
     crate::{
         error::MetaplexError,
@@ -148,6 +150,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let vault_authority_pda_info = next_account_info(account_info_iter)?;
 
     let new_edition_account: Account = assert_initialized(new_edition_token_account_info)?;
+
     assert_is_ata(
         new_edition_token_account_info,
         bidder_info.key,
@@ -222,13 +225,9 @@ pub fn process_redeem_printing_v2_bid<'a>(
                 )?;
 
                 let auction_manager_bump = assert_derivation(
-                    auction_manager_info.key,
+                    program_id,
                     auction_manager_info,
-                    &[
-                        PREFIX.as_bytes(),
-                        program_id.as_ref(),
-                        auction_info.key.as_ref(),
-                    ],
+                    &[PREFIX.as_bytes(), auction_info.key.as_ref()],
                 )?;
 
                 let master_edition = get_master_edition(master_edition_account_info)?;
@@ -239,7 +238,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
                 if prize_tracking_ticket_info.data_is_empty() {
                     create_or_allocate_account_raw(
                         *program_id,
-                        store_info,
+                        prize_tracking_ticket_info,
                         rent_info,
                         system_info,
                         payer_info,
@@ -282,15 +281,17 @@ pub fn process_redeem_printing_v2_bid<'a>(
                     .serialize(&mut *prize_tracking_ticket_info.data.borrow_mut())?;
 
                 let mut edition_offset_min: u64 = 0;
-                for n in 0..winning_index - 1 {
-                    let matching = count_item_amount_by_safety_deposit_order(
-                        &auction_manager.settings.winning_configs[n].items,
-                        safety_deposit_box.order,
-                    );
+                if winning_index > 0 {
+                    for n in 0..winning_index - 1 {
+                        let matching = count_item_amount_by_safety_deposit_order(
+                            &auction_manager.settings.winning_configs[n].items,
+                            safety_deposit_box.order,
+                        );
 
-                    edition_offset_min = edition_offset_min
-                        .checked_add(matching)
-                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                        edition_offset_min = edition_offset_min
+                            .checked_add(matching)
+                            .ok_or(MetaplexError::NumericalOverflowError)?;
+                    }
                 }
                 let edition_offset_max = edition_offset_min
                     .checked_add(count_item_amount_by_safety_deposit_order(
@@ -309,10 +310,12 @@ pub fn process_redeem_printing_v2_bid<'a>(
 
                 let signer_seeds = &[
                     PREFIX.as_bytes(),
-                    program_id.as_ref(),
                     auction_info.key.as_ref(),
                     &[auction_manager_bump],
                 ];
+
+                msg!("Before minting");
+                sol_log_compute_units();
                 mint_edition(
                     token_metadata_program_info,
                     token_vault_program_info,
@@ -339,7 +342,8 @@ pub fn process_redeem_printing_v2_bid<'a>(
             }
         }
     };
-
+    msg!("Here");
+    sol_log_compute_units();
     common_redeem_finish(CommonRedeemFinishArgs {
         program_id,
         auction_manager,

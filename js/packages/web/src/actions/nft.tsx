@@ -83,12 +83,7 @@ export const mintNFT = async (
 
   const realFiles: File[] = [
     ...files,
-    new File(
-      [
-        JSON.stringify(metadataContent),
-      ],
-      'metadata.json',
-    ),
+    new File([JSON.stringify(metadataContent)], 'metadata.json'),
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
@@ -296,14 +291,10 @@ export const mintNFT = async (
     await createMasterEdition(
       maxSupply !== undefined ? new BN(maxSupply) : undefined,
       mintKey,
-      printingMint,
-      oneTimePrintingAuthorizationMint,
+      payerPublicKey,
       payerPublicKey,
       payerPublicKey,
       updateInstructions,
-      payerPublicKey,
-      payerPublicKey,
-      maxSupply !== undefined ? payerPublicKey : undefined,
     );
 
     // TODO: enable when using payer account to avoid 2nd popup

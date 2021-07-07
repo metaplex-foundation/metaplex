@@ -515,7 +515,12 @@ pub fn mint_edition_proxy(
         AccountMeta::new(new_mint, false),
         AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(new_mint_authority, true),
-        AccountMeta::new_readonly(payer, true),
+        // due to weird bug in solana, for a two layer cpi call
+        // that requires a payer at each layer, payer must be writable
+        // because this is through metaplex and it in turn calls metadata, needs to remain
+        // writable in order to avoid an erroneous 'writable priv escalated' bug
+        // Nothing is actually written.
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(vault_authority, true),
         AccountMeta::new_readonly(vault_authority_pda, false),
         AccountMeta::new_readonly(safety_deposit_store, false),

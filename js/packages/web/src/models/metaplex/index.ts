@@ -15,6 +15,9 @@ export * from './redeemFullRightsTransferBid';
 export * from './deprecatedRedeemParticipationBid';
 export * from './startAuction';
 export * from './validateSafetyDepositBox';
+export * from './redeemParticipationBidV2';
+export * from './redeemPrintingV2Bid';
+export * from './withdrawMasterEdition';
 
 export const METAPLEX_PREFIX = 'metaplex';
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
@@ -28,8 +31,28 @@ export enum MetaplexKey {
   PayoutTicketV1 = 5,
   SafetyDepositValidationTicketV1 = 6,
   AuctionManagerV1 = 7,
+  PrizeTrackingTicketV1 = 8,
 }
+export class PrizeTrackingTicket {
+  key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
+  metadata: PublicKey;
+  supplySnapshot: BN;
+  expectedRedemptions: BN;
+  redemptions: BN;
 
+  constructor(args: {
+    metadata: PublicKey;
+    supplySnapshot: BN;
+    expectedRedemptions: BN;
+    redemptions: BN;
+  }) {
+    this.key = MetaplexKey.PrizeTrackingTicketV1;
+    this.metadata = args.metadata;
+    this.supplySnapshot = args.supplySnapshot;
+    this.expectedRedemptions = args.expectedRedemptions;
+    this.redemptions = args.redemptions;
+  }
+}
 export class PayoutTicket {
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
   recipient: PublicKey;
@@ -166,6 +189,10 @@ export class DecommissionAuctionManagerArgs {
 
 export class RedeemPrintingV2BidArgs {
   instruction = 14;
+  editionOffset: BN;
+  constructor(args: { editionOffset: BN }) {
+    this.editionOffset = args.editionOffset;
+  }
 }
 export class WithdrawMasterEditionArgs {
   instruction = 15;
@@ -258,6 +285,14 @@ export class WinningConfigItem {
     Object.assign(this, args);
   }
 }
+
+export const decodePrizeTrackingTicket = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    SCHEMA,
+    PrizeTrackingTicket,
+    buffer,
+  ) as PrizeTrackingTicket;
+};
 
 export const decodeWhitelistedCreator = (buffer: Buffer) => {
   return deserializeUnchecked(
@@ -387,6 +422,19 @@ export class BidRedemptionTicket {
 }
 
 export const SCHEMA = new Map<any, any>([
+  [
+    PrizeTrackingTicket,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['metadata', 'pubkey'],
+        ['supplySnapshot', 'u64'],
+        ['expectedRedemptions', 'u64'],
+        ['redemptions', 'u64'],
+      ],
+    },
+  ],
   [
     AuctionManager,
     {
@@ -566,7 +614,10 @@ export const SCHEMA = new Map<any, any>([
     RedeemPrintingV2BidArgs,
     {
       kind: 'struct',
-      fields: [['instruction', 'u8']],
+      fields: [
+        ['instruction', 'u8'],
+        ['editionOffset', 'u64'],
+      ],
     },
   ],
   [

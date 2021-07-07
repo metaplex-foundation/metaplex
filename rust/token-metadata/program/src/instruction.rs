@@ -376,7 +376,12 @@ pub fn mint_new_edition_from_master_edition_via_token(
         AccountMeta::new(new_mint, false),
         AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(new_mint_authority, true),
-        AccountMeta::new_readonly(payer, true),
+        // due to weird bug in solana, for a two layer cpi call
+        // that requires a payer at each layer, payer must be writable
+        // because this is called by vault through metaplex, needs to remain
+        // writable in order to avoid an erroneous 'writable priv escalated' bug
+        // Nothing is actually written.
+        AccountMeta::new(payer, true),
         AccountMeta::new_readonly(token_account_owner, true),
         AccountMeta::new_readonly(token_account, false),
         AccountMeta::new_readonly(new_metadata_update_authority, false),

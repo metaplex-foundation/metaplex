@@ -36,6 +36,7 @@ export async function redeemPrintingV2Bid(
   originalMint: PublicKey,
   newMint: PublicKey,
   edition: BN,
+  editionOffset: BN,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -72,7 +73,7 @@ export async function redeemPrintingV2Bid(
 
   const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
-  const value = new RedeemPrintingV2BidArgs();
+  const value = new RedeemPrintingV2BidArgs({ editionOffset });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -128,7 +129,13 @@ export async function redeemPrintingV2Bid(
     {
       pubkey: payer,
       isSigner: true,
-      isWritable: false,
+      // due to weird bug in solana, for a two layer cpi call
+      // that requires a payer at each layer, payer must be writable
+      // because this results in a call from metaplex contract to vault contract to metadata contract,
+      /// this needs to remain
+      // writable in order to avoid an erroneous 'writable priv escalated' bug
+      // Nothing is actually written.
+      isWritable: true,
     },
     {
       pubkey: PROGRAM_IDS.token,

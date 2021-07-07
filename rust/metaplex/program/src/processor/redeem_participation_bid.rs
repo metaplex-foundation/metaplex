@@ -127,7 +127,7 @@ fn v2_validation<'a>(
     if accounts.prize_tracking_ticket_info.data_is_empty() {
         create_or_allocate_account_raw(
             *program_id,
-            store_info,
+            accounts.prize_tracking_ticket_info,
             rent_info,
             system_info,
             payer_info,
@@ -173,7 +173,6 @@ fn v2_validation<'a>(
 
 #[allow(clippy::too_many_arguments)]
 fn v2_transfer<'a>(
-    program_id: &'a Pubkey,
     auction_manager_info: &AccountInfo<'a>,
     auction_info: &AccountInfo<'a>,
     vault_info: &AccountInfo<'a>,
@@ -192,11 +191,7 @@ fn v2_transfer<'a>(
     let auction_manager_bump = assert_derivation(
         auction_manager_info.key,
         auction_manager_info,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            auction_info.key.as_ref(),
-        ],
+        &[PREFIX.as_bytes(), auction_info.key.as_ref()],
     )?;
 
     let actual_edition = master_edition
@@ -206,7 +201,6 @@ fn v2_transfer<'a>(
 
     let signer_seeds = &[
         PREFIX.as_bytes(),
-        program_id.as_ref(),
         auction_info.key.as_ref(),
         &[auction_manager_bump],
     ];
@@ -443,7 +437,6 @@ pub fn process_redeem_participation_bid<'a>(
             )?;
 
             v2_transfer(
-                program_id,
                 auction_manager_info,
                 auction_info,
                 vault_info,
