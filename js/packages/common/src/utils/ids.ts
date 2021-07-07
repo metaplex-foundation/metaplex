@@ -4,8 +4,6 @@ import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
 import { Storefront } from '@holaplex/storefront';
 import { Store } from 'antd/lib/form/interface';
 
-const REACT_APP_STOREFRONT_API_URL = process.env.REACT_APP_STOREFRONT_API_URL;
-
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
@@ -64,24 +62,6 @@ export const PROGRAM_IDS = [
     name: 'localnet',
   },
 ];
-
-export const fetchStorefront = async (subdomain: String) => {
-  try {
-    const response = await fetch(
-      `${REACT_APP_STOREFRONT_API_URL}/api/storefronts/${subdomain}`,
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const json = await response.json();
-
-    return json;
-  } catch {
-    return null;
-  }
-};
 
 const getStoreID = async (storefront: Storefront | void) => {
   const { pubkey } = storefront || {};
