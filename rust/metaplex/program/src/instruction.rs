@@ -422,10 +422,11 @@ pub enum MetaplexInstruction {
     ///   7. `[]` PDA-based Vault transfer authority ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
     ///   8. `[]` Auction
-    ///   9. `[]` Token program
-    ///   10. `[]` Token Vault program
-    ///   11. `[]` Store
-    ///   12. `[]` Rent sysvar
+    ///   9. `[]` Auction data extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
+    ///   10. `[]` Token program
+    ///   11. `[]` Token Vault program
+    ///   12. `[]` Store
+    ///   13. `[]` Rent sysvar
     WithdrawMasterEdition,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -1030,6 +1031,16 @@ pub fn create_withdraw_master_edition(
         &spl_token_vault::id(),
     );
 
+    let (auction_data_extended, _) = Pubkey::find_program_address(
+        &[
+            spl_auction::PREFIX.as_bytes(),
+            spl_auction::id().as_ref(),
+            vault.as_ref(),
+            spl_auction::EXTENDED.as_bytes(),
+        ],
+        &spl_auction::id(),
+    );
+
     Instruction {
         program_id,
         accounts: vec![
@@ -1042,6 +1053,7 @@ pub fn create_withdraw_master_edition(
             AccountMeta::new_readonly(prize_tracking_ticket, false),
             AccountMeta::new_readonly(vault_authority, false),
             AccountMeta::new_readonly(auction, false),
+            AccountMeta::new_readonly(auction_data_extended, false),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(spl_token_vault::id(), false),
             AccountMeta::new_readonly(store, false),

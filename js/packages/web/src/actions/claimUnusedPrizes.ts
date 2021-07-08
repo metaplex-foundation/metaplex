@@ -15,6 +15,7 @@ import {
   findProgramAddress,
   programIds,
   createAssociatedTokenAccountInstruction,
+  MetadataKey,
 } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
@@ -40,6 +41,22 @@ export async function claimUnusedPrizes(
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
   );
+
+  if (
+    auctionView.participationItem &&
+    auctionView.participationItem.masterEdition?.info.key ==
+      MetadataKey.MasterEditionV2
+  ) {
+    await setupRedeemPrintingInstructions(
+      connection,
+      auctionView,
+      wallet,
+      auctionView.participationItem.safetyDeposit,
+      auctionView.participationItem,
+      signers,
+      instructions,
+    );
+  }
 
   for (
     let winnerIndex = 0;

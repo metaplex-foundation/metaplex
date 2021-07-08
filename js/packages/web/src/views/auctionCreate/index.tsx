@@ -1533,7 +1533,11 @@ const TierTableStep = (props: {
                         Token Only Transfer
                       </Option>
                       <Option value={WinningConfigType.PrintingV2}>
-                        Printing
+                        Printing V2
+                      </Option>
+
+                      <Option value={WinningConfigType.PrintingV1}>
+                        Printing V1
                       </Option>
                     </Select>
 

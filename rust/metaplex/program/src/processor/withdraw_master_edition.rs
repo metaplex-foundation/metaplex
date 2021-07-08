@@ -14,7 +14,7 @@ use {
         rent::Rent,
         sysvar::Sysvar,
     },
-    spl_auction::processor::{AuctionData, AuctionState},
+    spl_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
     spl_token_vault::state::SafetyDepositBox,
 };
 
@@ -33,6 +33,7 @@ pub fn process_withdraw_master_edition<'a>(
     let prize_tracking_ticket_info = next_account_info(account_info_iter)?;
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter)?;
     let token_program_info = next_account_info(account_info_iter)?;
     let token_vault_program_info = next_account_info(account_info_iter)?;
     let store_info = next_account_info(account_info_iter)?;
@@ -42,6 +43,8 @@ pub fn process_withdraw_master_edition<'a>(
 
     let auction_manager: AuctionManager = AuctionManager::from_account_info(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
+    let auction_data_extended = AuctionDataExtended::from_account_info(auction_extended_info)?;
+
     let store = Store::from_account_info(store_info)?;
     let safety_deposit_box = SafetyDepositBox::from_account_info(safety_deposit_info)?;
 
@@ -66,6 +69,17 @@ pub fn process_withdraw_master_edition<'a>(
     if auction_manager.auction != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
+
+    assert_derivation(
+        &store.auction_program,
+        auction_extended_info,
+        &[
+            spl_auction::PREFIX.as_bytes(),
+            store.auction_program.as_ref(),
+            vault_info.key.as_ref(),
+            spl_auction::EXTENDED.as_bytes(),
+        ],
+    )?;
 
     if *store_info.key != auction_manager.store {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
@@ -92,7 +106,36 @@ pub fn process_withdraw_master_edition<'a>(
     )?;
 
     if prize_tracking_ticket_info.data_is_empty() {
-        return Err(MetaplexError::NotAllBidsClaimed.into());
+        // Nobody has redeemed yet, we need to figure out if SOMEONE could and if we should
+        // stop a withdrawal.
+
+        let mut minimum_required_bids_to_stop_removal = 0;
+        for n in 0..auction_manager.settings.winning_configs.len() {
+            if auction_manager.settings.winning_configs[n]
+                .items
+                .iter()
+                .find(|i| i.safety_deposit_box_index == safety_deposit_box.order)
+                .is_some()
+            {
+                // This means at least n bids must exist for there to be at least one bidder that will be eligible for this prize.
+                minimum_required_bids_to_stop_removal = n;
+                break;
+            }
+        }
+
+        if auction_manager.settings.participation_config.is_some()
+            && minimum_required_bids_to_stop_removal == 0
+        {
+            // Even one bid in a participation based auction will require waiting for a prize tracking ticket.
+            // Dont set it lower than 1 if it is already higher than 1!
+            minimum_required_bids_to_stop_removal = 1
+        }
+
+        if auction_data_extended.total_uncancelled_bids
+            > minimum_required_bids_to_stop_removal as u64
+        {
+            return Err(MetaplexError::NotAllBidsClaimed.into());
+        }
     } else {
         assert_derivation(
             program_id,
@@ -127,9 +170,15 @@ pub fn process_withdraw_master_edition<'a>(
         .is_some();
 
     if !atleast_one_matching {
-        // This means there arent any winning configs listed as PrintingV2 so
-        // this isnt a printing v2 type and isnt a master edition.
-        return Err(MetaplexError::InvalidOperation.into());
+        if let Some(config) = auction_manager.settings.participation_config {
+            if config.safety_deposit_box_index != safety_deposit_box.order {
+                return Err(MetaplexError::InvalidOperation.into());
+            }
+        } else {
+            // This means there arent any winning configs listed as PrintingV2 so
+            // this isnt a printing v2 type and isnt a master edition.
+            return Err(MetaplexError::InvalidOperation.into());
+        }
     }
 
     let auction_bump_seed = assert_derivation(

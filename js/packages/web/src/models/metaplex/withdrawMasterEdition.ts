@@ -1,4 +1,10 @@
-import { findProgramAddress, programIds, VAULT_PREFIX } from '@oyster/common';
+import {
+  AUCTION_PREFIX,
+  EXTENDED,
+  findProgramAddress,
+  programIds,
+  VAULT_PREFIX,
+} from '@oyster/common';
 import {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
@@ -42,6 +48,18 @@ export async function withdrawMasterEdition(
         vault.toBuffer(),
       ],
       PROGRAM_IDS.vault,
+    )
+  )[0];
+
+  const auctionExtended: PublicKey = (
+    await findProgramAddress(
+      [
+        Buffer.from(AUCTION_PREFIX),
+        PROGRAM_IDS.auction.toBuffer(),
+        vault.toBuffer(),
+        Buffer.from(EXTENDED),
+      ],
+      PROGRAM_IDS.auction,
     )
   )[0];
 
@@ -90,6 +108,11 @@ export async function withdrawMasterEdition(
     },
     {
       pubkey: auctionKey,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: auctionExtended,
       isSigner: false,
       isWritable: false,
     },
