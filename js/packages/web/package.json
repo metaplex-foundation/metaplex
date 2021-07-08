@@ -47,6 +47,7 @@
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "next dev",
     "build": "next build",
+    "start:prod": "next start",
     "test": "jest",
     "deploy:ar": "arweave deploy-dir  ../../build/web --key-file ",
     "deploy": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex",

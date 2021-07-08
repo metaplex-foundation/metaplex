@@ -27,6 +27,9 @@ const plugins = [
 
 module.exports = withPlugins(plugins, {
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [
       {
