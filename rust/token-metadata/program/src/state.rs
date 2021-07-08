@@ -53,6 +53,8 @@ pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS *
 
 pub const MAX_EDITION_MARKER_SIZE: usize = 32;
 
+pub const EDITION_MARKER_BIT_SIZE: u64 = 248;
+
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone, Copy)]
 pub enum Key {
@@ -557,7 +559,7 @@ impl EditionMarker {
 
     fn get_edition_offset_from_starting_index(edition: u64) -> Result<usize, ProgramError> {
         Ok(edition
-            .checked_rem(248)
+            .checked_rem(EDITION_MARKER_BIT_SIZE)
             .ok_or(MetadataError::NumericalOverflowError)? as usize)
     }
 
@@ -566,7 +568,7 @@ impl EditionMarker {
             .checked_div(8)
             .ok_or(MetadataError::NumericalOverflowError)?;
 
-        // With only 248 bits, or 31 bytes, we have a max constraint here.
+        // With only EDITION_MARKER_BIT_SIZE bits, or 31 bytes, we have a max constraint here.
         if index > 30 {
             return Err(MetadataError::InvalidEditionIndex.into());
         }

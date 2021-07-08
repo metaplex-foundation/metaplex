@@ -1,18 +1,17 @@
 use {
     crate::{
         error::MetaplexError,
-        processor::redeem_printing_v2_bid::mint_edition,
+        processor::redeem_printing_v2_bid::{create_or_update_prize_tracking, mint_edition},
         state::{
-            AuctionManager, Key, NonWinningConstraint, ParticipationConfig, ParticipationState,
-            PrizeTrackingTicket, Store, WinningConstraint, MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
+            AuctionManager, NonWinningConstraint, ParticipationConfig, ParticipationState, Store,
+            WinningConstraint, PREFIX,
         },
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
-            common_redeem_checks, common_redeem_finish, create_or_allocate_account_raw,
+            common_redeem_checks, common_redeem_finish, get_amount_from_token_account,
             spl_token_transfer, CommonRedeemCheckArgs, CommonRedeemFinishArgs, CommonRedeemReturn,
         },
     },
-    borsh::BorshSerialize,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -21,7 +20,7 @@ use {
     },
     spl_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
     spl_token::state::Account,
-    spl_token_metadata::state::{get_master_edition, MasterEdition, Metadata},
+    spl_token_metadata::state::{get_master_edition, MasterEdition},
 };
 
 struct LegacyAccounts<'a> {
@@ -37,7 +36,6 @@ struct V2Accounts<'a> {
     pub edition_marker_info: &'a AccountInfo<'a>,
     pub mint_authority_info: &'a AccountInfo<'a>,
     pub metadata_account_info: &'a AccountInfo<'a>,
-    pub vault_authority_pda_info: &'a AccountInfo<'a>,
     pub auction_extended_info: &'a AccountInfo<'a>,
 }
 
@@ -85,11 +83,10 @@ fn v2_validation<'a>(
     auction: &AuctionData,
     accounts: &V2Accounts<'a>,
 ) -> Result<Box<dyn MasterEdition>, ProgramError> {
-    let metadata = Metadata::from_account_info(accounts.metadata_account_info)?;
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
     let store = Store::from_account_info(store_info)?;
     let master_edition = get_master_edition(accounts.master_edition_account_info)?;
-    let destination: Account = assert_initialized(destination_info)?;
+    let destination_amount = get_amount_from_token_account(destination_info)?;
     assert_is_ata(
         destination_info,
         bidder_info.key,
@@ -97,20 +94,9 @@ fn v2_validation<'a>(
         accounts.mint_info.key,
     )?;
 
-    if destination.amount != 1 {
+    if destination_amount != 1 {
         return Err(MetaplexError::ProvidedAccountDoesNotContainOneToken.into());
     }
-
-    let bump = assert_derivation(
-        program_id,
-        accounts.prize_tracking_ticket_info,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            auction_manager_info.key.as_ref(),
-            metadata.mint.as_ref(),
-        ],
-    )?;
 
     assert_derivation(
         &store.auction_program,
@@ -123,50 +109,26 @@ fn v2_validation<'a>(
         ],
     )?;
 
-    let mut prize_tracking_ticket: PrizeTrackingTicket;
-    if accounts.prize_tracking_ticket_info.data_is_empty() {
-        create_or_allocate_account_raw(
-            *program_id,
-            accounts.prize_tracking_ticket_info,
-            rent_info,
-            system_info,
-            payer_info,
-            MAX_PRIZE_TRACKING_TICKET_SIZE,
-            &[
-                PREFIX.as_bytes(),
-                program_id.as_ref(),
-                auction_manager_info.key.as_ref(),
-                metadata.mint.as_ref(),
-                &[bump],
-            ],
-        )?;
-        prize_tracking_ticket =
-            PrizeTrackingTicket::from_account_info(accounts.prize_tracking_ticket_info)?;
-        prize_tracking_ticket.key = Key::PrizeTrackingTicketV1;
-        prize_tracking_ticket.metadata = *accounts.metadata_account_info.key;
-        prize_tracking_ticket.supply_snapshot = master_edition.supply();
-        prize_tracking_ticket.redemptions = 0;
-        let mut amount_to_mint = extended.total_uncancelled_bids;
-
-        if config.winner_constraint == WinningConstraint::NoParticipationPrize {
-            amount_to_mint = amount_to_mint
-                .checked_sub(auction.num_winners())
-                .ok_or(MetaplexError::NumericalOverflowError)?;
-        } else if config.non_winning_constraint == NonWinningConstraint::NoParticipationPrize {
-            amount_to_mint = auction.num_winners();
-        }
-
-        prize_tracking_ticket.expected_redemptions = amount_to_mint;
-    } else {
-        prize_tracking_ticket =
-            PrizeTrackingTicket::from_account_info(accounts.prize_tracking_ticket_info)?;
-        prize_tracking_ticket.redemptions = prize_tracking_ticket
-            .redemptions
-            .checked_add(1)
-            .ok_or(MetaplexError::NumericalOverflowError)?
+    let mut amount_to_mint = extended.total_uncancelled_bids;
+    if config.winner_constraint == WinningConstraint::NoParticipationPrize {
+        amount_to_mint = amount_to_mint
+            .checked_sub(auction.num_winners())
+            .ok_or(MetaplexError::NumericalOverflowError)?;
+    } else if config.non_winning_constraint == NonWinningConstraint::NoParticipationPrize {
+        amount_to_mint = auction.num_winners();
     }
 
-    prize_tracking_ticket.serialize(&mut *accounts.prize_tracking_ticket_info.data.borrow_mut())?;
+    create_or_update_prize_tracking(
+        program_id,
+        auction_manager_info,
+        accounts.prize_tracking_ticket_info,
+        accounts.metadata_account_info,
+        payer_info,
+        rent_info,
+        system_info,
+        &master_edition,
+        amount_to_mint,
+    )?;
 
     Ok(master_edition)
 }
@@ -215,7 +177,6 @@ fn v2_transfer<'a>(
         accounts.mint_authority_info,
         payer_info,
         auction_manager_info,
-        accounts.vault_authority_pda_info,
         safety_deposit_token_store_info,
         safety_deposit_info,
         vault_info,
@@ -331,7 +292,6 @@ pub fn process_redeem_participation_bid<'a>(
             edition_marker_info: next_account_info(account_info_iter)?,
             mint_authority_info: next_account_info(account_info_iter)?,
             metadata_account_info: next_account_info(account_info_iter)?,
-            vault_authority_pda_info: next_account_info(account_info_iter)?,
             auction_extended_info: next_account_info(account_info_iter)?,
         })
     }
@@ -339,7 +299,7 @@ pub fn process_redeem_participation_bid<'a>(
     let CommonRedeemReturn {
         mut auction_manager,
         redemption_bump_seed,
-        bidder_metadata,
+        cancelled,
         auction,
         rent: _rent,
         win_index,
@@ -366,6 +326,7 @@ pub fn process_redeem_participation_bid<'a>(
     })?;
 
     let master_edition: Box<dyn MasterEdition>;
+    let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
 
     let config: ParticipationConfig;
     if let Some(part_config) = auction_manager.settings.participation_config.clone() {
@@ -390,7 +351,7 @@ pub fn process_redeem_participation_bid<'a>(
     let mut gets_participation =
         config.non_winning_constraint != NonWinningConstraint::NoParticipationPrize;
 
-    if !bidder_metadata.cancelled {
+    if !cancelled {
         if let Some(winning_index) = auction.is_winner(bidder_info.key) {
             if winning_index < auction_manager.settings.winning_configs.len() {
                 // Okay, so they placed in the auction winning prizes section!

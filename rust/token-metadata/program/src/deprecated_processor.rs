@@ -64,9 +64,15 @@ pub fn process_deprecated_create_master_edition(
     )?;
 
     assert_token_program_matches_package(token_program_info)?;
-    assert_mint_authority_matches_mint(&mint, mint_authority_info)?;
-    assert_mint_authority_matches_mint(&printing_mint, printing_mint_authority_info)?;
-    assert_mint_authority_matches_mint(&one_time_printing_authorization_mint, mint_authority_info)?;
+    assert_mint_authority_matches_mint(&mint.mint_authority, mint_authority_info)?;
+    assert_mint_authority_matches_mint(
+        &printing_mint.mint_authority,
+        printing_mint_authority_info,
+    )?;
+    assert_mint_authority_matches_mint(
+        &one_time_printing_authorization_mint.mint_authority,
+        mint_authority_info,
+    )?;
     assert_owned_by(metadata_account_info, program_id)?;
     assert_owned_by(mint_info, &spl_token::id())?;
     assert_owned_by(printing_mint_info, &spl_token::id())?;

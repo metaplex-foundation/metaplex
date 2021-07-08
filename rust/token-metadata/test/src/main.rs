@@ -26,7 +26,8 @@ use {
             mint_new_edition_from_master_edition_via_token, update_metadata_accounts,
         },
         state::{
-            get_reservation_list, Data, Edition, Key, MasterEditionV2, Metadata, EDITION, PREFIX,
+            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
+            EDITION, PREFIX,
         },
     },
     std::str::FromStr,
@@ -140,6 +141,10 @@ fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
     println!("Metadata: {:#?}", master_metadata);
     println!("Update authority: {:?}", update_authority);
     if master_edition_account.data[0] == Key::MasterEditionV1 as u8 {
+        let master_edition: MasterEditionV1 =
+            try_from_slice_unchecked(&master_edition_account.data).unwrap();
+        println!("Deprecated Master edition {:#?}", master_edition);
+    } else if master_edition_account.data[0] == Key::MasterEditionV2 as u8 {
         let master_edition: MasterEditionV2 =
             try_from_slice_unchecked(&master_edition_account.data).unwrap();
         println!("Master edition {:#?}", master_edition);

@@ -42,7 +42,7 @@ export async function claimUnusedPrizes(
   );
 
   for (
-    let winnerIndex = auctionView.auction.info.bidState.bids.length;
+    let winnerIndex = 0;
     winnerIndex <
     auctionView.auctionManager.info.settings.winningConfigs.length;
     winnerIndex++
@@ -53,6 +53,7 @@ export async function claimUnusedPrizes(
 
     for (let i = 0; i < winningSet.length; i++) {
       const item = winningSet[i];
+
       const safetyDeposit = item.safetyDeposit;
       const tokenBalance = await connection.getTokenAccountBalance(
         safetyDeposit.info.store,
@@ -63,6 +64,12 @@ export async function claimUnusedPrizes(
       // so we cover for that possibility by doing an array not a find
       for (let j = 0; j < winningConfig.items.length; j++) {
         const winningConfigItem = winningConfig.items[j];
+        if (
+          winnerIndex < auctionView.auction.info.bidState.bids.length &&
+          winningConfigItem.winningConfigType != WinningConfigType.PrintingV2
+        ) {
+          continue;
+        }
 
         if (
           winningConfigItem.safetyDepositBoxIndex === safetyDeposit.info.order

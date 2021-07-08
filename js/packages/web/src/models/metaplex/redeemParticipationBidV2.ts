@@ -69,17 +69,6 @@ export async function redeemParticipationBidV2(
 
   const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
-  const vaultAuthority: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
-      ],
-      PROGRAM_IDS.vault,
-    )
-  )[0];
-
   const value = new RedeemParticipationBidV2Args();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
@@ -136,7 +125,7 @@ export async function redeemParticipationBidV2(
     {
       pubkey: payer,
       isSigner: true,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: PROGRAM_IDS.token,
@@ -223,11 +212,7 @@ export async function redeemParticipationBidV2(
       isSigner: false,
       isWritable: false,
     },
-    {
-      pubkey: vaultAuthority,
-      isSigner: false,
-      isWritable: false,
-    },
+
     { pubkey: auctionDataExtended, isSigner: false, isWritable: false },
   ];
 

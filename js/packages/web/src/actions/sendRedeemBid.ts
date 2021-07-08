@@ -465,7 +465,7 @@ async function setupRedeemPrintingV2Instructions(
     const editionBase = myPrizeTrackingTicket
       ? myPrizeTrackingTicket.info.supplySnapshot
       : me.info.supply;
-    let offset = 0;
+    let offset = 1;
     auctionView.auctionManager.info.settings.winningConfigs.forEach(
       (wc, index) =>
         index < winningIndex &&
@@ -504,12 +504,11 @@ async function setupRedeemPrintingV2Instructions(
     );
 
     const metadata = await getMetadata(mint);
-    const edition = await getEdition(mint);
 
     await updatePrimarySaleHappenedViaToken(
       metadata,
       wallet.publicKey,
-      edition,
+      account,
       myInstructions,
     );
     instructions.push(myInstructions);
@@ -766,12 +765,11 @@ async function setupRedeemParticipationInstructions(
     instructions.push([...myInstructions, ...cleanupInstructions]);
     signers.push(mySigners);
     const metadata = await getMetadata(mint);
-    const edition = await getEdition(mint);
 
     await updatePrimarySaleHappenedViaToken(
       metadata,
       wallet.publicKey,
-      edition,
+      account,
       myInstructions,
     );
   } else {

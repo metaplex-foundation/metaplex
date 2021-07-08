@@ -14,8 +14,10 @@ test-bpf = []
 
 [dependencies]
 num-derive = "0.3"
+arrayref = "0.3.6"
 num-traits = "0.2"
 solana-program = "1.6.10"
+spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
 borsh = "0.8.2"

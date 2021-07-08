@@ -6,6 +6,7 @@ use {
         pubkey::Pubkey,
         sysvar,
     },
+    spl_token_metadata::state::EDITION_MARKER_BIT_SIZE,
 };
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct SetStoreArgs {
@@ -402,11 +403,9 @@ pub enum MetaplexInstruction {
     ///   20. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
     ///   21. `[writable]` Mint of new token
     ///   22. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
-    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/248). PDA is relative to token metadata.
+    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
     ///   23. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   24. `[]` Metadata account of token in vault
-    ///   25. `[]` PDA-based Vault authority ['vault', program_id, vault key]
-    ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
     RedeemPrintingV2Bid(RedeemPrintingV2BidArgs),
 
     /// Permissionless call to redeem the master edition in a given safety deposit for a PrintingV2 winning config to the
@@ -472,12 +471,10 @@ pub enum MetaplexInstruction {
     ///   23. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
     ///   24. `[writable]` Mint of new token
     ///   25. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
-    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/248). PDA is relative to token metadata.
+    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
     ///   26. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   27. `[]` Metadata account of token in vault
-    ///   28. `[]` PDA-based Vault authority ['vault', program_id, vault key]
-    ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix'
-    //    29. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
+    //    28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
     RedeemParticipationBidV2,
 }
 
@@ -917,8 +914,8 @@ pub fn create_redeem_printing_v2_bid_instruction(
         &program_id,
     );
 
-    let edition_offset = edition.checked_rem(248).unwrap();
-    let edition_number = edition.checked_div(248).unwrap();
+    let edition_offset = edition.checked_rem(EDITION_MARKER_BIT_SIZE).unwrap();
+    let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
@@ -948,15 +945,6 @@ pub fn create_redeem_printing_v2_bid_instruction(
             spl_token_metadata::state::EDITION.as_bytes(),
         ],
         &spl_token_metadata::id(),
-    );
-
-    let (vault_authority, _) = Pubkey::find_program_address(
-        &[
-            spl_token_vault::state::PREFIX.as_bytes(),
-            spl_token_vault::id().as_ref(),
-            vault.as_ref(),
-        ],
-        &spl_token_vault::id(),
     );
 
     let (new_edition, _) = Pubkey::find_program_address(
@@ -997,7 +985,6 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new(edition_mark_pda, false),
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
-            AccountMeta::new_readonly(vault_authority, false),
         ],
         data: MetaplexInstruction::RedeemPrintingV2Bid(RedeemPrintingV2BidArgs { edition_offset })
             .try_to_vec()
@@ -1096,7 +1083,9 @@ pub fn create_redeem_participation_bid_v2_instruction(
         &program_id,
     );
 
-    let edition_number = desired_edition.checked_div(248).unwrap();
+    let edition_number = desired_edition
+        .checked_div(EDITION_MARKER_BIT_SIZE)
+        .unwrap();
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
@@ -1126,15 +1115,6 @@ pub fn create_redeem_participation_bid_v2_instruction(
             spl_token_metadata::state::EDITION.as_bytes(),
         ],
         &spl_token_metadata::id(),
-    );
-
-    let (vault_authority, _) = Pubkey::find_program_address(
-        &[
-            spl_token_vault::state::PREFIX.as_bytes(),
-            spl_token_vault::id().as_ref(),
-            vault.as_ref(),
-        ],
-        &spl_token_vault::id(),
     );
 
     let (new_edition, _) = Pubkey::find_program_address(
@@ -1188,7 +1168,6 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new(edition_mark_pda, false),
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
-            AccountMeta::new_readonly(vault_authority, false),
             AccountMeta::new_readonly(extended, false),
         ],
         data: MetaplexInstruction::RedeemParticipationBidV2

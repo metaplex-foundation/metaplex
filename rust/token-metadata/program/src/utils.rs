@@ -3,12 +3,13 @@ use {
         error::MetadataError,
         processor::process_create_metadata_accounts,
         state::{
-            get_master_edition, get_reservation_list, Data, Edition, Key, MasterEdition,
-            MasterEditionV1, Metadata, EDITION, MAX_CREATOR_LIMIT, MAX_EDITION_LEN,
-            MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
+            get_master_edition, get_reservation_list, Data, Key, MasterEdition, MasterEditionV1,
+            Metadata, EDITION, MAX_CREATOR_LIMIT, MAX_EDITION_LEN, MAX_NAME_LENGTH,
+            MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
         },
     },
-    borsh::{BorshDeserialize, BorshSerialize},
+    arrayref::{array_mut_ref, array_ref, array_refs, mut_array_refs},
+    borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
         borsh::try_from_slice_unchecked,
@@ -16,6 +17,7 @@ use {
         msg,
         program::{invoke, invoke_signed},
         program_error::ProgramError,
+        program_option::COption,
         program_pack::{IsInitialized, Pack},
         pubkey::Pubkey,
         system_instruction,
@@ -201,16 +203,55 @@ pub fn assert_update_authority_is_correct(
     Ok(())
 }
 
+/// Unpacks COption from a slice, taken from token program
+fn unpack_coption_key(src: &[u8; 36]) -> Result<COption<Pubkey>, ProgramError> {
+    let (tag, body) = array_refs![src, 4, 32];
+    match *tag {
+        [0, 0, 0, 0] => Ok(COption::None),
+        [1, 0, 0, 0] => Ok(COption::Some(Pubkey::new_from_array(*body))),
+        _ => Err(ProgramError::InvalidAccountData),
+    }
+}
+
+/// Cheap method to just grab owner Pubkey from token account, instead of deserializing entire thing
+pub fn get_owner_from_token_account(
+    token_account_info: &AccountInfo,
+) -> Result<Pubkey, ProgramError> {
+    // TokeAccount layout:   mint(32), owner(32), ...
+    let data = token_account_info.try_borrow_data()?;
+    let owner_data = array_ref![data, 32, 32];
+    Ok(Pubkey::new_from_array(*owner_data))
+}
+
+pub fn get_mint_authority(account_info: &AccountInfo) -> Result<COption<Pubkey>, ProgramError> {
+    // In token program, 36, 8, 1, 1 is the layout, where the first 36 is mint_authority
+    // so we start at 0.
+    let data = account_info.try_borrow_data().unwrap();
+    let authority_bytes = array_ref![data, 0, 36];
+
+    Ok(unpack_coption_key(&authority_bytes)?)
+}
+
+/// cheap method to just get supply off a mint without unpacking whole object
+pub fn get_mint_supply(account_info: &AccountInfo) -> Result<u64, ProgramError> {
+    // In token program, 36, 8, 1, 1 is the layout, where the first 8 is supply u64.
+    // so we start at 36.
+    let data = account_info.try_borrow_data().unwrap();
+    let bytes = array_ref![data, 36, 8];
+
+    Ok(u64::from_le_bytes(*bytes))
+}
+
 pub fn assert_mint_authority_matches_mint(
-    mint: &Mint,
+    mint_authority: &COption<Pubkey>,
     mint_authority_info: &AccountInfo,
 ) -> ProgramResult {
-    match mint.mint_authority {
-        solana_program::program_option::COption::None => {
+    match mint_authority {
+        COption::None => {
             return Err(MetadataError::InvalidMintAuthority.into());
         }
-        solana_program::program_option::COption::Some(key) => {
-            if *mint_authority_info.key != key {
+        COption::Some(key) => {
+            if mint_authority_info.key != key {
                 return Err(MetadataError::InvalidMintAuthority.into());
             }
         }
@@ -454,9 +495,9 @@ pub fn mint_limited_edition<'a>(
     edition_override: Option<u64>,
 ) -> ProgramResult {
     let mut master_edition = get_master_edition(master_edition_account_info)?;
-    let mint: Mint = assert_initialized(mint_info)?;
-
-    assert_mint_authority_matches_mint(&mint, mint_authority_info)?;
+    let mint_authority = get_mint_authority(mint_info)?;
+    let mint_supply = get_mint_supply(mint_info)?;
+    assert_mint_authority_matches_mint(&mint_authority, mint_authority_info)?;
 
     assert_edition_valid(
         program_id,
@@ -486,7 +527,7 @@ pub fn mint_limited_edition<'a>(
         edition_override,
     )?;
 
-    if mint.supply != 1 {
+    if mint_supply != 1 {
         return Err(MetadataError::EditionsMustHaveExactlyOneToken.into());
     }
 
@@ -506,7 +547,6 @@ pub fn mint_limited_edition<'a>(
         true,
         false,
     )?;
-
     let edition_authority_seeds = &[
         PREFIX.as_bytes(),
         program_id.as_ref(),
@@ -525,18 +565,22 @@ pub fn mint_limited_edition<'a>(
         edition_authority_seeds,
     )?;
 
-    let mut new_edition = Edition::from_account_info(new_edition_account_info)?;
-    new_edition.key = Key::EditionV1;
-    new_edition.parent = *master_edition_account_info.key;
+    // Doing old school serialization to protect CPU credits.
+    let edition_data = &mut new_edition_account_info.data.borrow_mut();
+    let output = array_mut_ref![edition_data, 0, MAX_EDITION_LEN];
 
-    new_edition.edition = calculate_edition_number(
+    let (key, parent, edition, _padding) = mut_array_refs![output, 1, 32, 8, 200];
+
+    *key = [Key::EditionV1 as u8];
+    parent.copy_from_slice(master_edition_account_info.key.as_ref());
+
+    *edition = calculate_edition_number(
         &master_edition,
         mint_authority_info,
         reservation_list_info,
         edition_override,
-    )?;
-
-    new_edition.serialize(&mut *new_edition_account_info.data.borrow_mut())?;
+    )?
+    .to_le_bytes();
 
     // Now make sure this mint can never be used by anybody else.
     transfer_mint_authority(

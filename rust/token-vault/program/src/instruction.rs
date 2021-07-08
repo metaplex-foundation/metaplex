@@ -153,29 +153,6 @@ pub enum VaultInstruction {
     ///   1. `[signer]` Vault authority
     ///   2. `[]` New authority
     SetAuthority,
-
-    /// Proxy Call to Mint Edition using a Store Token Account as a Vault Authority.
-    ///
-    ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id]) relative to token metadata contract
-    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition']) relative to token metadata contract
-    ///   2. `[writable]` Master Record Edition V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) relative to token metadata contract
-    ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
-    ///   4. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
-    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/248). PDA relative to token metadata contract
-    ///   5. `[signer]` Mint authority of new mint
-    ///   6. `[signer]` payer
-    ///   7. `[signer]` Vault authority
-    ///   8. `[]` Vault authority (pda of ['vault', program id, vault key])
-    ///   9. `[]` Safety deposit token store account
-    ///   10. `[]` Safety deposit box
-    ///   11. `[]` Vault
-    ///   12. `[]` Update authority info for new metadata
-    ///   13. `[]` Master record metadata account
-    ///   14. `[]` Token program
-    ///   15. `[]` Token metadata program
-    ///   16. `[]` System program
-    ///   17. `[]` Rent info
-    MintEditionProxy(MintEditionProxyArgs),
 }
 
 /// Creates an InitVault instruction
@@ -483,62 +460,5 @@ pub fn create_set_authority_instruction(
             AccountMeta::new_readonly(new_authority, false),
         ],
         data: VaultInstruction::SetAuthority.try_to_vec().unwrap(),
-    }
-}
-
-/// creates a mint_edition_proxy instruction
-#[allow(clippy::too_many_arguments)]
-pub fn mint_edition_proxy(
-    program_id: Pubkey,
-    new_metadata: Pubkey,
-    new_edition: Pubkey,
-    master_edition: Pubkey,
-    new_mint: Pubkey,
-    edition_mark_pda: Pubkey,
-    new_mint_authority: Pubkey,
-    payer: Pubkey,
-    vault_authority: Pubkey,
-    vault_authority_pda: Pubkey,
-    safety_deposit_store: Pubkey,
-    safety_deposit_box: Pubkey,
-    vault: Pubkey,
-    new_metadata_update_authority: Pubkey,
-    metadata: Pubkey,
-    token_program: Pubkey,
-    token_metadata_program: Pubkey,
-    edition: u64,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(new_metadata, false),
-        AccountMeta::new(new_edition, false),
-        AccountMeta::new(master_edition, false),
-        AccountMeta::new(new_mint, false),
-        AccountMeta::new(edition_mark_pda, false),
-        AccountMeta::new_readonly(new_mint_authority, true),
-        // due to weird bug in solana, for a two layer cpi call
-        // that requires a payer at each layer, payer must be writable
-        // because this is through metaplex and it in turn calls metadata, needs to remain
-        // writable in order to avoid an erroneous 'writable priv escalated' bug
-        // Nothing is actually written.
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(vault_authority, true),
-        AccountMeta::new_readonly(vault_authority_pda, false),
-        AccountMeta::new_readonly(safety_deposit_store, false),
-        AccountMeta::new_readonly(safety_deposit_box, false),
-        AccountMeta::new_readonly(vault, false),
-        AccountMeta::new_readonly(new_metadata_update_authority, false),
-        AccountMeta::new_readonly(metadata, false),
-        AccountMeta::new_readonly(token_program, false),
-        AccountMeta::new_readonly(token_metadata_program, false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-    ];
-
-    Instruction {
-        program_id,
-        accounts,
-        data: VaultInstruction::MintEditionProxy(MintEditionProxyArgs { edition })
-            .try_to_vec()
-            .unwrap(),
     }
 }

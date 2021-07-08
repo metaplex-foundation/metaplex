@@ -366,7 +366,7 @@ impl SafetyDepositValidationTicket {
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
 pub struct PrizeTrackingTicket {
     pub key: Key,
     pub metadata: Pubkey,

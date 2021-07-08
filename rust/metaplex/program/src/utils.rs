@@ -2,12 +2,11 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, WinningConfigItem,
-            MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
+            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, Store,
+            WhitelistedCreator, WinningConfigItem, MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
         },
     },
-    arrayref::array_ref,
+    arrayref::{array_mut_ref, array_ref, mut_array_refs},
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         account_info::AccountInfo,
@@ -23,7 +22,7 @@ use {
     },
     spl_auction::{
         instruction::end_auction_instruction,
-        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState, BidderMetadata},
+        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState},
     },
     spl_token::instruction::{set_authority, AuthorityType},
     spl_token_metadata::{
@@ -33,6 +32,16 @@ use {
     spl_token_vault::instruction::create_withdraw_tokens_instruction,
     std::{convert::TryInto, str::FromStr},
 };
+
+/// Cheap method to just grab amount from token account, instead of deserializing entire thing
+pub fn get_amount_from_token_account(
+    token_account_info: &AccountInfo,
+) -> Result<u64, ProgramError> {
+    // TokeAccount layout:   mint(32), owner(32), ...
+    let data = token_account_info.try_borrow_data()?;
+    let amount_data = array_ref![data, 64, 8];
+    Ok(u64::from_le_bytes(*amount_data))
+}
 
 /// assert initialized account
 pub fn assert_initialized<T: Pack + IsInitialized>(
@@ -338,7 +347,7 @@ pub struct CommonRedeemReturn {
     pub redemption_bump_seed: u8,
     pub auction_manager: AuctionManager,
     pub auction: AuctionData,
-    pub bidder_metadata: BidderMetadata,
+    pub cancelled: bool,
     pub rent: Rent,
     pub win_index: Option<usize>,
     pub token_metadata_program: Pubkey,
@@ -396,7 +405,7 @@ pub fn common_redeem_checks(
         AuctionManager::from_account_info(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
     let store_data = store_info.data.borrow();
-    let bidder_metadata: BidderMetadata;
+    let cancelled: bool;
 
     let auction_program = Pubkey::new_from_array(*array_ref![store_data, 2, 32]);
     let token_vault_program = Pubkey::new_from_array(*array_ref![store_data, 34, 32]);
@@ -405,20 +414,18 @@ pub fn common_redeem_checks(
 
     let mut redemption_bump_seed: u8 = 0;
     if overwrite_win_index.is_some() {
-        // Auctioneer coming through, need to stub bidder metadata since it will not exist.
-        bidder_metadata = BidderMetadata {
-            bidder_pubkey: *bidder_info.key,
-            auction_pubkey: *auction_info.key,
-            last_bid: 0,
-            last_bid_timestamp: 0,
-            cancelled: false,
-        };
+        cancelled = false;
 
         if *bidder_info.key != auction_manager.authority {
             return Err(MetaplexError::MustBeAuctioneer.into());
         }
     } else {
-        bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
+        let bidder_metadata_data = bidder_metadata_info.data.borrow();
+        if bidder_metadata_data[80] == 0 {
+            cancelled = false
+        } else {
+            cancelled = true;
+        }
         assert_owned_by(bidder_metadata_info, &auction_program)?;
         assert_derivation(
             &auction_program,
@@ -432,7 +439,8 @@ pub fn common_redeem_checks(
             ],
         )?;
 
-        if bidder_metadata.bidder_pubkey != *bidder_info.key {
+        let bidder_pubkey = Pubkey::new_from_array(*array_ref![bidder_metadata_data, 0, 32]);
+        if bidder_pubkey != *bidder_info.key {
             return Err(MetaplexError::BidderMetadataBidderMismatch.into());
         }
         let redemption_path = [
@@ -461,15 +469,28 @@ pub fn common_redeem_checks(
     }
 
     if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
-        let bid_redemption: BidRedemptionTicket =
-            BidRedemptionTicket::from_account_info(bid_redemption_info)?;
+        let bid_redemption_data = bid_redemption_info.data.borrow();
+
+        if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8 {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        let mut participation_redeemed = false;
+        if bid_redemption_data[1] == 1 {
+            participation_redeemed = true;
+        }
+        let items_redeemed = bid_redemption_data[2];
+        msg!(
+            "Items redeemed is {} and participation redemption is {}",
+            items_redeemed,
+            participation_redeemed
+        );
         let possible_items_to_redeem = match win_index {
             Some(val) => auction_manager.settings.winning_configs[val].items.len(),
             None => 0,
         };
-        if (is_participation && bid_redemption.participation_redeemed)
-            || (!is_participation
-                && bid_redemption.items_redeemed == possible_items_to_redeem as u8)
+        if (is_participation && participation_redeemed)
+            || (!is_participation && items_redeemed == possible_items_to_redeem as u8)
         {
             return Err(MetaplexError::BidAlreadyRedeemed.into());
         }
@@ -530,7 +551,7 @@ pub fn common_redeem_checks(
         redemption_bump_seed,
         auction_manager,
         auction,
-        bidder_metadata,
+        cancelled,
         rent: *rent,
         win_index,
         token_metadata_program,
@@ -599,16 +620,25 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 redemption_seeds,
             )?;
         }
-        let mut bid_redemption = BidRedemptionTicket::from_account_info(bid_redemption_info)?;
+        // Saving on CPU in these large actions by avoiding borsh
+        let data = &mut bid_redemption_info.data.borrow_mut();
+        let output = array_mut_ref![data, 0, MAX_BID_REDEMPTION_TICKET_SIZE];
 
-        bid_redemption.key = Key::BidRedemptionTicketV1;
+        let (key, participation_redeemed_ptr, items_redeemed_ptr) =
+            mut_array_refs![output, 1, 1, 1];
+
+        *key = [Key::BidRedemptionTicketV1 as u8];
+
+        let curr_items_redeemed = u8::from_le_bytes(*items_redeemed_ptr);
 
         if participation_redeemed {
-            bid_redemption.participation_redeemed = true
+            *participation_redeemed_ptr = [1];
         } else if bid_redeemed {
-            bid_redemption.items_redeemed += 1;
+            *items_redeemed_ptr = curr_items_redeemed
+                .checked_add(1)
+                .ok_or(MetaplexError::NumericalOverflowError)?
+                .to_le_bytes();
         }
-        bid_redemption.serialize(&mut *bid_redemption_info.data.borrow_mut())?;
     }
 
     let mut open_claims = false;

@@ -57,17 +57,6 @@ export async function redeemPrintingV2Bid(
     originalMint,
   );
 
-  const vaultAuthority: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
-      ],
-      PROGRAM_IDS.vault,
-    )
-  )[0];
-
   const newMetadata = await getMetadata(newMint);
   const newEdition = await getEdition(newMint);
 
@@ -129,12 +118,6 @@ export async function redeemPrintingV2Bid(
     {
       pubkey: payer,
       isSigner: true,
-      // due to weird bug in solana, for a two layer cpi call
-      // that requires a payer at each layer, payer must be writable
-      // because this results in a call from metaplex contract to vault contract to metadata contract,
-      /// this needs to remain
-      // writable in order to avoid an erroneous 'writable priv escalated' bug
-      // Nothing is actually written.
       isWritable: true,
     },
     {
@@ -204,11 +187,6 @@ export async function redeemPrintingV2Bid(
     },
     {
       pubkey: metadata,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: vaultAuthority,
       isSigner: false,
       isWritable: false,
     },

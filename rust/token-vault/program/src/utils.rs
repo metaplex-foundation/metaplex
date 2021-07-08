@@ -16,9 +16,6 @@ use {
         system_instruction,
         sysvar::{rent::Rent, Sysvar},
     },
-    spl_token_metadata::{
-        instruction::mint_new_edition_from_master_edition_via_token, state::Metadata,
-    },
     std::convert::TryInto,
 };
 
@@ -276,63 +273,4 @@ pub fn assert_derivation(
         return Err(VaultError::DerivedKeyInvalid.into());
     }
     Ok(bump)
-}
-
-pub fn mint_edition<'a>(
-    token_metadata_program_info: &AccountInfo<'a>,
-    new_metadata_account_info: &AccountInfo<'a>,
-    new_edition_account_info: &AccountInfo<'a>,
-    master_edition_account_info: &AccountInfo<'a>,
-    edition_marker_info: &AccountInfo<'a>,
-    mint_info: &AccountInfo<'a>,
-    mint_authority_info: &AccountInfo<'a>,
-    payer_info: &AccountInfo<'a>,
-    vault_authority_pda_info: &AccountInfo<'a>,
-    safety_deposit_token_store_info: &AccountInfo<'a>,
-    new_update_authority_info: &AccountInfo<'a>,
-    metadata_account_info: &AccountInfo<'a>,
-    token_program_info: &AccountInfo<'a>,
-    system_program_info: &AccountInfo<'a>,
-    rent_info: &AccountInfo<'a>,
-    metadata: Metadata,
-    actual_edition: u64,
-    signer_seeds: &[&[u8]],
-) -> ProgramResult {
-    invoke_signed(
-        &mint_new_edition_from_master_edition_via_token(
-            *token_metadata_program_info.key,
-            *new_metadata_account_info.key,
-            *new_edition_account_info.key,
-            *master_edition_account_info.key,
-            *mint_info.key,
-            *mint_authority_info.key,
-            *payer_info.key,
-            *vault_authority_pda_info.key,
-            *safety_deposit_token_store_info.key,
-            *new_update_authority_info.key,
-            *metadata_account_info.key,
-            metadata.mint,
-            actual_edition,
-        ),
-        &[
-            token_metadata_program_info.clone(),
-            new_metadata_account_info.clone(),
-            new_edition_account_info.clone(),
-            master_edition_account_info.clone(),
-            mint_info.clone(),
-            mint_authority_info.clone(),
-            payer_info.clone(),
-            vault_authority_pda_info.clone(),
-            safety_deposit_token_store_info.clone(),
-            new_update_authority_info.clone(),
-            metadata_account_info.clone(),
-            token_program_info.clone(),
-            system_program_info.clone(),
-            rent_info.clone(),
-            edition_marker_info.clone(),
-        ],
-        &[&signer_seeds],
-    )?;
-
-    Ok(())
 }

@@ -166,7 +166,7 @@ pub fn process_redeem_bid<'a>(
     let CommonRedeemReturn {
         auction_manager,
         redemption_bump_seed,
-        bidder_metadata,
+        cancelled,
         auction,
         rent: _rent,
         win_index,
@@ -193,7 +193,7 @@ pub fn process_redeem_bid<'a>(
     })?;
 
     let mut winning_item_index = None;
-    if !bidder_metadata.cancelled {
+    if !cancelled {
         if let Some(winning_index) = win_index {
             if winning_index < auction_manager.settings.winning_configs.len() {
                 // Okay, so they placed in the auction winning prizes section!

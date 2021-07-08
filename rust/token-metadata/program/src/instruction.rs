@@ -1,7 +1,7 @@
 use {
     crate::{
         deprecated_instruction::{MintPrintingTokensViaTokenArgs, SetReservationListArgs},
-        state::{Creator, Data, EDITION, PREFIX},
+        state::{Creator, Data, EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
     },
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
@@ -196,7 +196,7 @@ pub enum MetadataInstruction {
     ///   2. `[writable]` Master Record Edition V2 (pda of ['metadata', program id, master metadata mint id, 'edition'])
     ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   4. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
-    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/248).
+    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE).
     ///   5. `[signer]` Mint authority of new mint
     ///   6. `[signer]` payer
     ///   7. `[signer]` owner of token account containing master token (#8)
@@ -216,6 +216,28 @@ pub enum MetadataInstruction {
     ///   1. `[writable]` One time authorization mint
     ///   2. `[writable]` Printing mint
     ConvertMasterEditionV1ToV2,
+
+    /// Proxy Call to Mint Edition using a Store Token Account as a Vault Authority.
+    ///
+    ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   2. `[writable]` Master Record Edition V2 (pda of ['metadata', program id, master metadata mint id, 'edition']
+    ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   4. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE).
+    ///   5. `[signer]` Mint authority of new mint
+    ///   6. `[signer]` payer
+    ///   7. `[signer]` Vault authority
+    ///   8. `[]` Safety deposit token store account
+    ///   9. `[]` Safety deposit box
+    ///   10. `[]` Vault
+    ///   11. `[]` Update authority info for new metadata
+    ///   12. `[]` Master record metadata account
+    ///   13. `[]` Token program
+    ///   14. `[]` Token vault program
+    ///   15. `[]` System program
+    ///   16. `[]` Rent info
+    MintNewEditionFromMasterEditionViaVaultProxy(MintNewEditionFromMasterEditionViaTokenArgs),
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -357,7 +379,8 @@ pub fn mint_new_edition_from_master_edition_via_token(
     metadata_mint: Pubkey,
     edition: u64,
 ) -> Instruction {
-    let as_string = edition.to_string();
+    let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
+    let as_string = edition_number.to_string();
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
             PREFIX.as_bytes(),
@@ -376,11 +399,6 @@ pub fn mint_new_edition_from_master_edition_via_token(
         AccountMeta::new(new_mint, false),
         AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(new_mint_authority, true),
-        // due to weird bug in solana, for a two layer cpi call
-        // that requires a payer at each layer, payer must be writable
-        // because this is called by vault through metaplex, needs to remain
-        // writable in order to avoid an erroneous 'writable priv escalated' bug
-        // Nothing is actually written.
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(token_account_owner, true),
         AccountMeta::new_readonly(token_account, false),
@@ -420,5 +438,57 @@ pub fn convert_master_edition_v1_to_v2(
         data: MetadataInstruction::ConvertMasterEditionV1ToV2
             .try_to_vec()
             .unwrap(),
+    }
+}
+
+/// creates a mint_edition_proxy instruction
+#[allow(clippy::too_many_arguments)]
+pub fn mint_edition_from_master_edition_via_vault_proxy(
+    program_id: Pubkey,
+    new_metadata: Pubkey,
+    new_edition: Pubkey,
+    master_edition: Pubkey,
+    new_mint: Pubkey,
+    edition_mark_pda: Pubkey,
+    new_mint_authority: Pubkey,
+    payer: Pubkey,
+    vault_authority: Pubkey,
+    safety_deposit_store: Pubkey,
+    safety_deposit_box: Pubkey,
+    vault: Pubkey,
+    new_metadata_update_authority: Pubkey,
+    metadata: Pubkey,
+    token_program: Pubkey,
+    token_vault_program_info: Pubkey,
+    edition: u64,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(new_metadata, false),
+        AccountMeta::new(new_edition, false),
+        AccountMeta::new(master_edition, false),
+        AccountMeta::new(new_mint, false),
+        AccountMeta::new(edition_mark_pda, false),
+        AccountMeta::new_readonly(new_mint_authority, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(vault_authority, true),
+        AccountMeta::new_readonly(safety_deposit_store, false),
+        AccountMeta::new_readonly(safety_deposit_box, false),
+        AccountMeta::new_readonly(vault, false),
+        AccountMeta::new_readonly(new_metadata_update_authority, false),
+        AccountMeta::new_readonly(metadata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new_readonly(token_vault_program_info, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction {
+        program_id,
+        accounts,
+        data: MetadataInstruction::MintNewEditionFromMasterEditionViaVaultProxy(
+            MintNewEditionFromMasterEditionViaTokenArgs { edition },
+        )
+        .try_to_vec()
+        .unwrap(),
     }
 }
