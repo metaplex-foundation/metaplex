@@ -486,6 +486,9 @@ async function setupRedeemPrintingV2Instructions(
       mySigners,
     );
 
+    const winIndex =
+      auctionView.auction.info.bidState.getWinnerIndex(wallet.publicKey) || 0;
+
     await redeemPrintingV2Bid(
       auctionView.vault.pubkey,
       safetyDeposit.info.store,
@@ -500,6 +503,7 @@ async function setupRedeemPrintingV2Instructions(
       mint,
       editionBase.add(new BN(offset)),
       new BN(offset),
+      new BN(winIndex),
       myInstructions,
     );
 

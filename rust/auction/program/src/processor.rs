@@ -474,7 +474,7 @@ impl BidState {
         }
     }
 
-    // Idea is to present winner as index 0 to outside world
+    /// Idea is to present #1 winner as index 0 to outside world with this method
     pub fn winner_at(&self, index: usize, min: u64) -> Option<Pubkey> {
         match self {
             BidState::EnglishAuction { bids, max } => {

@@ -102,7 +102,12 @@ pub fn process_instruction<'a>(
         }
         MetaplexInstruction::RedeemPrintingV2Bid(args) => {
             msg!("Instruction: Redeem Printing V2 Bid");
-            process_redeem_printing_v2_bid(program_id, accounts, args.edition_offset)
+            process_redeem_printing_v2_bid(
+                program_id,
+                accounts,
+                args.edition_offset,
+                args.win_index,
+            )
         }
         MetaplexInstruction::WithdrawMasterEdition => {
             msg!("Instruction: Withdraw Master Edition");

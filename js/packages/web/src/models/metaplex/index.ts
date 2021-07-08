@@ -190,8 +190,10 @@ export class DecommissionAuctionManagerArgs {
 export class RedeemPrintingV2BidArgs {
   instruction = 14;
   editionOffset: BN;
-  constructor(args: { editionOffset: BN }) {
+  winIndex: BN;
+  constructor(args: { editionOffset: BN; winIndex: BN }) {
     this.editionOffset = args.editionOffset;
+    this.winIndex = args.winIndex;
   }
 }
 export class WithdrawMasterEditionArgs {
@@ -617,6 +619,7 @@ export const SCHEMA = new Map<any, any>([
       fields: [
         ['instruction', 'u8'],
         ['editionOffset', 'u64'],
+        ['winIndex', 'u64'],
       ],
     },
   ],

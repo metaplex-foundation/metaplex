@@ -186,6 +186,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
     edition_offset: u64,
+    user_provided_win_index: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -254,6 +255,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         store_info,
         rent_info,
         is_participation: false,
+        user_provided_win_index: Some(Some(user_provided_win_index as usize)),
         overwrite_win_index: None,
         assert_bidder_signer: false,
     })?;

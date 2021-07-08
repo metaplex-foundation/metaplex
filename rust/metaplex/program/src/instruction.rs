@@ -43,6 +43,7 @@ pub struct RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct RedeemPrintingV2BidArgs {
     pub edition_offset: u64,
+    pub win_index: u64,
 }
 
 /// Instructions supported by the Fraction program.
@@ -903,6 +904,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
     new_mint: Pubkey,
     new_mint_authority: Pubkey,
     edition: u64,
+    win_index: u64,
 ) -> Instruction {
     let (prize_tracking_ticket, _) = Pubkey::find_program_address(
         &[
@@ -970,7 +972,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new_readonly(auction, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, false),
-            AccountMeta::new_readonly(payer, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
             AccountMeta::new_readonly(spl_token_vault::id(), false),
             AccountMeta::new_readonly(spl_token_metadata::id(), false),
@@ -986,9 +988,12 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
         ],
-        data: MetaplexInstruction::RedeemPrintingV2Bid(RedeemPrintingV2BidArgs { edition_offset })
-            .try_to_vec()
-            .unwrap(),
+        data: MetaplexInstruction::RedeemPrintingV2Bid(RedeemPrintingV2BidArgs {
+            edition_offset,
+            win_index,
+        })
+        .try_to_vec()
+        .unwrap(),
     }
 }
 

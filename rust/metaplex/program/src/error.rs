@@ -402,6 +402,10 @@ pub enum MetaplexError {
     /// The provided account needs to contain one token of this mint type
     #[error("The provided account needs to contain one token of this mint type")]
     ProvidedAccountDoesNotContainOneToken,
+
+    /// You are not the winner at this index
+    #[error("You are not the winner at this index")]
+    WinnerIndexMismatch
 }
 
 impl PrintProgramError for MetaplexError {

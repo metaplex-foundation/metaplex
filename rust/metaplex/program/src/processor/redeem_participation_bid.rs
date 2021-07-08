@@ -321,6 +321,7 @@ pub fn process_redeem_participation_bid<'a>(
         rent_info,
         store_info,
         is_participation: true,
+        user_provided_win_index: Some(None),
         overwrite_win_index: None,
         assert_bidder_signer: true,
     })?;

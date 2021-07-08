@@ -188,6 +188,7 @@ pub fn process_redeem_bid<'a>(
         rent_info,
         store_info,
         is_participation: false,
+        user_provided_win_index: None,
         overwrite_win_index,
         assert_bidder_signer: true,
     })?;

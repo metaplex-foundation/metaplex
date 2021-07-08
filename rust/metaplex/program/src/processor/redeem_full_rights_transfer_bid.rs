@@ -73,6 +73,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         store_info,
         rent_info,
         is_participation: false,
+        user_provided_win_index: None,
         overwrite_win_index,
         assert_bidder_signer: true,
     })?;

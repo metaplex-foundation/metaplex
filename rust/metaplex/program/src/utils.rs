@@ -370,8 +370,66 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub store_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
     pub is_participation: bool,
+    // If this is being called by the auctioneer to pull prizes out they overwrite the win index
+    // they would normally get if they themselves bid for whatever win index they choose.
     pub overwrite_win_index: Option<usize>,
+    // In newer endpoints, to conserve CPU and make way for 10,000 person auctions,
+    // client must specify win index and then we simply check if the address matches for O(1) lookup vs O(n)
+    // scan. This is an option so older actions which rely on the O(n) lookup because we can't change their call structure
+    // can continue to work.
+    pub user_provided_win_index: Option<Option<usize>>,
     pub assert_bidder_signer: bool,
+}
+
+fn calculate_win_index(
+    bidder_info: &AccountInfo,
+    auction: &AuctionData,
+    user_provided_win_index: Option<Option<usize>>,
+    overwrite_win_index: Option<usize>,
+) -> Result<Option<usize>, ProgramError> {
+    let mut win_index: Option<usize>;
+    // User provided us with an option of an option telling us what if anything they won. We need to validate.
+    if let Some(up_win_index) = user_provided_win_index {
+        // check that this person is the winner they say they are. Only if not doing an override of win index,
+        // which we know likely wont match bidder info and is simply checking below that you arent stealing a prize.
+
+        if overwrite_win_index.is_none() {
+            if let Some(up_win_index_unwrapped) = up_win_index {
+                let winner = auction.winner_at(up_win_index_unwrapped);
+                if let Some(winner_key) = winner {
+                    if winner_key != *bidder_info.key {
+                        return Err(MetaplexError::WinnerIndexMismatch.into());
+                    }
+                } else {
+                    return Err(MetaplexError::WinnerIndexMismatch.into());
+                }
+            }
+        }
+
+        // Notice if overwrite win index is some, this gets wiped anyway in the if statement below.
+        // If not, it becomes the win index going forward as we have validated the user is either
+        // saying they won nothing (Participation redemption) or they won something
+        // and they weren't lying.
+        win_index = up_win_index;
+    } else {
+        // Legacy system where we O(n) scan the bid index to find the winner index. CPU intensive.
+        win_index = auction.is_winner(bidder_info.key);
+    }
+
+    // This means auctioneer is attempting to pull goods out of the system, and is attempting to set
+    // the win index for themselves. Has a different field because it has different logic - mainly
+    // just checking to make sure you arent claiming from someone who won. Supersedes normal user provided
+    // logic.
+    if let Some(index) = overwrite_win_index {
+        let winner_at = auction.winner_at(index);
+        if winner_at.is_some() {
+            return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
+        } else {
+            win_index = overwrite_win_index
+        }
+    }
+
+    Ok(win_index)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -396,6 +454,7 @@ pub fn common_redeem_checks(
         store_info,
         is_participation,
         overwrite_win_index,
+        user_provided_win_index,
         assert_bidder_signer,
     } = args;
 
@@ -457,16 +516,12 @@ pub fn common_redeem_checks(
         }
     }
 
-    let mut win_index = auction.is_winner(bidder_info.key);
-
-    if let Some(index) = overwrite_win_index {
-        let winner_at = auction.winner_at(index);
-        if winner_at.is_some() {
-            return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
-        } else {
-            win_index = overwrite_win_index
-        }
-    }
+    let win_index = calculate_win_index(
+        bidder_info,
+        &auction,
+        user_provided_win_index,
+        overwrite_win_index,
+    )?;
 
     if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
         let bid_redemption_data = bid_redemption_info.data.borrow();

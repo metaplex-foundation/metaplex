@@ -37,6 +37,7 @@ export async function redeemPrintingV2Bid(
   newMint: PublicKey,
   edition: BN,
   editionOffset: BN,
+  winIndex: BN,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -62,7 +63,7 @@ export async function redeemPrintingV2Bid(
 
   const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
-  const value = new RedeemPrintingV2BidArgs({ editionOffset });
+  const value = new RedeemPrintingV2BidArgs({ editionOffset, winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
