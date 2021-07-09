@@ -1,7 +1,14 @@
 declare module '@holaplex/storefront' {
   export interface Storefront {
-    pubkey: string;
+    pubkey?: string;
   }
 
-  export = Storefront;
+  export interface StorefrontConfig {
+    storefront: Storefront | void;
+  }
+
+  export interface ArweaveTag {
+    name: string;
+    value: string;
+  }
 }
