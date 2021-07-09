@@ -96,7 +96,7 @@ function RunAction({
   return component;
 }
 
-async function getPersonalEscrowAta(
+export async function getPersonalEscrowAta(
   wallet: WalletAdapter | undefined,
 ): Promise<PublicKey | undefined> {
   const PROGRAM_IDS = programIds();

@@ -25,7 +25,7 @@ import {
   createAssociatedTokenAccountInstruction,
   deprecatedMintNewEditionFromMasterEditionViaPrintingToken,
   MetadataKey,
-  getEdition,
+  TokenAccountParser,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -50,6 +50,7 @@ import { deprecatedPopulateParticipationPrintingAccount } from '../models/metapl
 import { setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { BN } from 'bn.js';
+import { QUOTE_MINT } from '../constants';
 const { createTokenAccount } = actions;
 const { approve } = models;
 
@@ -248,6 +249,7 @@ export async function sendRedeemBid(
       );
     } else {
       await setupRedeemParticipationInstructions(
+        connection,
         auctionView,
         accountsByMint,
         accountRentExempt,
@@ -695,6 +697,7 @@ async function deprecatedRedeemPrintingV1Token(
 }
 
 async function setupRedeemParticipationInstructions(
+  connection: Connection,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
@@ -727,16 +730,33 @@ async function setupRedeemParticipationInstructions(
       mintingSigners,
     );
 
-    let tokenAccount = accountsByMint.get(
-      auctionView.auction.info.tokenMint.toBase58(),
-    );
-
     const fixedPrice =
       auctionView.auctionManager.info.settings.participationConfig?.fixedPrice;
     let price: number =
       fixedPrice !== undefined && fixedPrice !== null
         ? fixedPrice.toNumber()
         : auctionView.myBidderMetadata?.info.lastBid.toNumber() || 0;
+
+    let tokenAccount = accountsByMint.get(
+      auctionView.auction.info.tokenMint.toBase58(),
+    );
+
+    console.log('Have token account', tokenAccount);
+    if (!tokenAccount) {
+      // In case accountsByMint missed it(which it does sometimes)
+      const allAccounts = await connection.getTokenAccountsByOwner(
+        wallet.publicKey,
+        { mint: QUOTE_MINT },
+      );
+
+      if (allAccounts.value.length > 0) {
+        tokenAccount = TokenAccountParser(
+          allAccounts.value[0].pubkey,
+          allAccounts.value[0].account,
+        );
+      }
+      console.log('Found token account', tokenAccount);
+    }
 
     const payingSolAccount = ensureWrappedAccount(
       mintingInstructions,
