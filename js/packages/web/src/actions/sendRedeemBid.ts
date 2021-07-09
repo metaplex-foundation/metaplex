@@ -703,19 +703,22 @@ async function setupRedeemParticipationInstructions(
     return;
   }
 
+  // Forgive me, for i have sinned. I had to split up the commands
+  // here into multiple txns because participation redemption is huge.
   if (!auctionView.myBidRedemption?.info.participationRedeemed) {
     const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
 
-    let myInstructions: TransactionInstruction[] = [];
-    const cleanupInstructions: TransactionInstruction[] = [];
+    // Super unfortunate but cant fit this all in one txn
+    let mintingInstructions: TransactionInstruction[] = [];
+    let mintingSigners: Keypair[] = [];
 
-    let mySigners: Keypair[] = [];
+    const cleanupInstructions: TransactionInstruction[] = [];
 
     const { mint, account } = await createMintAndAccountWithOne(
       wallet,
       mintRentExempt,
-      myInstructions,
-      mySigners,
+      mintingInstructions,
+      mintingSigners,
     );
 
     let tokenAccount = accountsByMint.get(
@@ -730,13 +733,20 @@ async function setupRedeemParticipationInstructions(
         : auctionView.myBidderMetadata?.info.lastBid.toNumber() || 0;
 
     const payingSolAccount = ensureWrappedAccount(
-      myInstructions,
+      mintingInstructions,
       cleanupInstructions,
       tokenAccount,
       wallet.publicKey,
       price + accountRentExempt,
-      mySigners,
+      mintingSigners,
     );
+
+    instructions.push(mintingInstructions);
+    signers.push(mintingSigners);
+
+    let myInstructions: TransactionInstruction[] = [];
+
+    let mySigners: Keypair[] = [];
 
     const transferAuthority = approve(
       myInstructions,
@@ -770,12 +780,17 @@ async function setupRedeemParticipationInstructions(
     signers.push(mySigners);
     const metadata = await getMetadata(mint);
 
+    let updatePrimarySaleHappenedInstructions: TransactionInstruction[] = [];
+    let updatePrimarySaleHappenedSigners: Keypair[] = [];
+
     await updatePrimarySaleHappenedViaToken(
       metadata,
       wallet.publicKey,
       account,
-      myInstructions,
+      updatePrimarySaleHappenedInstructions,
     );
+    instructions.push(updatePrimarySaleHappenedInstructions);
+    signers.push(updatePrimarySaleHappenedSigners);
   } else {
     console.log('Item is already claimed!', item.metadata.info.mint.toBase58());
   }

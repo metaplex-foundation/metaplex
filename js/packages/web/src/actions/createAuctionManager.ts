@@ -258,9 +258,11 @@ export async function createAuctionManager(
           // Only V1s need to skip normal validation and use special endpoint
           (participationSafetyDepositDraft.masterEdition?.info.key ==
             MetadataKey.MasterEditionV1 &&
-            c.draft.metadata.pubkey.equals(
+            !c.draft.metadata.pubkey.equals(
               participationSafetyDepositDraft.metadata.pubkey,
-            )),
+            )) ||
+          participationSafetyDepositDraft.masterEdition?.info.key ==
+            MetadataKey.MasterEditionV2,
       ),
       safetyDepositTokenStores,
       settings,
@@ -617,7 +619,6 @@ async function validateBoxes(
   if (!store) {
     throw new Error('Store not initialized');
   }
-
   let signers: Keypair[][] = [];
   let instructions: TransactionInstruction[][] = [];
 
@@ -634,58 +635,56 @@ async function validateBoxes(
       ow => ow.safetyDepositBoxIndex === i,
     );
 
-    if (winningConfigItem) {
-      const me = safetyDeposits[i].draft
-        .masterEdition as ParsedAccount<MasterEditionV1>;
-      if (
-        winningConfigItem.winningConfigType === WinningConfigType.PrintingV1 &&
-        me &&
-        me.info.printingMint
-      ) {
-        safetyDepositBox = await getSafetyDepositBox(
-          vault,
-          //@ts-ignore
-          safetyDeposits[i].draft.masterEdition.info.printingMint,
-        );
-      } else {
-        safetyDepositBox = await getSafetyDepositBox(
-          vault,
-          safetyDeposits[i].draft.metadata.info.mint,
-        );
-      }
-      const edition: PublicKey = await getEdition(
+    const me = safetyDeposits[i].draft
+      .masterEdition as ParsedAccount<MasterEditionV1>;
+    if (
+      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1 &&
+      me &&
+      me.info.printingMint
+    ) {
+      safetyDepositBox = await getSafetyDepositBox(
+        vault,
+        //@ts-ignore
+        safetyDeposits[i].draft.masterEdition.info.printingMint,
+      );
+    } else {
+      safetyDepositBox = await getSafetyDepositBox(
+        vault,
         safetyDeposits[i].draft.metadata.info.mint,
       );
-
-      const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data
-        .creators
-        ? await findValidWhitelistedCreator(
-            whitelistedCreatorsByCreator,
-            //@ts-ignore
-            safetyDeposits[i].draft.metadata.info.data.creators,
-          )
-        : undefined;
-
-      await validateSafetyDepositBox(
-        vault,
-        safetyDeposits[i].draft.metadata.pubkey,
-        safetyDepositBox,
-        safetyDepositTokenStores[i],
-        //@ts-ignore
-        winningConfigItem.winningConfigType === WinningConfigType.PrintingV1
-          ? me?.info.printingMint
-          : safetyDeposits[i].draft.metadata.info.mint,
-        wallet.publicKey,
-        wallet.publicKey,
-        wallet.publicKey,
-        tokenInstructions,
-        edition,
-        whitelistedCreator,
-        store,
-        me?.info.printingMint,
-        safetyDeposits[i].draft.masterEdition ? wallet.publicKey : undefined,
-      );
     }
+    const edition: PublicKey = await getEdition(
+      safetyDeposits[i].draft.metadata.info.mint,
+    );
+
+    const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data
+      .creators
+      ? await findValidWhitelistedCreator(
+          whitelistedCreatorsByCreator,
+          //@ts-ignore
+          safetyDeposits[i].draft.metadata.info.data.creators,
+        )
+      : undefined;
+
+    await validateSafetyDepositBox(
+      vault,
+      safetyDeposits[i].draft.metadata.pubkey,
+      safetyDepositBox,
+      safetyDepositTokenStores[i],
+      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1
+        ? me?.info.printingMint
+        : safetyDeposits[i].draft.metadata.info.mint,
+      wallet.publicKey,
+      wallet.publicKey,
+      wallet.publicKey,
+      tokenInstructions,
+      edition,
+      whitelistedCreator,
+      store,
+      me?.info.printingMint,
+      safetyDeposits[i].draft.masterEdition ? wallet.publicKey : undefined,
+    );
+
     signers.push(tokenSigners);
     instructions.push(tokenInstructions);
   }

@@ -123,14 +123,6 @@ pub fn process_withdraw_master_edition<'a>(
             }
         }
 
-        if auction_manager.settings.participation_config.is_some()
-            && minimum_required_bids_to_stop_removal == 0
-        {
-            // Even one bid in a participation based auction will require waiting for a prize tracking ticket.
-            // Dont set it lower than 1 if it is already higher than 1!
-            minimum_required_bids_to_stop_removal = 1
-        }
-
         if auction_data_extended.total_uncancelled_bids
             > minimum_required_bids_to_stop_removal as u64
         {

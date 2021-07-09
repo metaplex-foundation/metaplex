@@ -2,7 +2,7 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup,
+            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, ParticipationState,
             SafetyDepositValidationTicket, Store, WinningConfigType, MAX_AUTHORITY_LOOKUP_SIZE,
             MAX_VALIDATION_TICKET_SIZE, PREFIX,
         },
@@ -195,14 +195,34 @@ pub fn process_validate_safety_deposit_box(
                     .ok_or(MetaplexError::NumericalOverflowError)?;
 
                 // Build array to sum total amount
-                total_amount_requested =
-                    match total_amount_requested.checked_add(possible_item.amount.into()) {
-                        Some(val) => val,
-                        None => return Err(MetaplexError::NumericalOverflowError.into()),
-                    };
+                total_amount_requested = total_amount_requested
+                    .checked_add(possible_item.amount.into())
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
                 // Record that primary sale happened at time of validation for later royalties reconcilation
                 auction_manager.state.winning_config_states[i].items[j].primary_sale_happened =
                     metadata.primary_sale_happened;
+            }
+        }
+    }
+
+    if let Some(participation_config) = &auction_manager.settings.participation_config {
+        if participation_config.safety_deposit_box_index == safety_deposit.order {
+            // Really it's unknown how many prints will be made
+            // but we set it to 1 since that's how many master edition tokens are in there.
+            total_amount_requested = total_amount_requested
+                .checked_add(1)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+
+            // now that participation configs can be validated through normal safety deposit endpoints, need to flip this boolean
+            // here too, until we can deprecate it later.
+            if let Some(state) = &auction_manager.state.participation_state {
+                auction_manager.state.participation_state = Some(ParticipationState {
+                    collected_to_accept_payment: state.collected_to_accept_payment,
+                    primary_sale_happened: state.primary_sale_happened,
+                    validated: true,
+                    printing_authorization_token_account: state
+                        .printing_authorization_token_account,
+                })
             }
         }
     }
