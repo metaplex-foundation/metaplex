@@ -45,7 +45,8 @@ module.exports = {
           lessOptions: {
             modifyVars: {
               '@primary-color': '#768BF9',
-              '@text-color': 'rgba(255, 255, 255)',
+              '@text-color': '#000',
+              '@background-color': "#fff",
             },
             javascriptEnabled: true,
           },
