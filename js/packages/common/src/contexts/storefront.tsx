@@ -1,6 +1,8 @@
 import { Storefront, StorefrontConfig, ArweaveTag } from '@holaplex/storefront';
 import React, { useEffect, useState } from 'react';
 
+const REACT_APP_ARWEAVE_URL = process.env.REACT_APP_ARWEAVE_URL;
+
 export const StorefrontContext = React.createContext<StorefrontConfig>({
   storefront: undefined,
 });
@@ -10,7 +12,7 @@ export function StorefrontProvider({ children = undefined as any }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_ARWEAVE_URL}/graphql`, {
+    fetch(`${REACT_APP_ARWEAVE_URL}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +52,7 @@ export function StorefrontProvider({ children = undefined as any }) {
 
         link.type = 'text/css';
         link.rel = 'stylesheet';
-        link.href = `${process.env.REACT_APP_ARWEAVE_URL}/${transaction.id}`;
+        link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
 
         head.appendChild(link);
         const pubkey = transaction.tags.find(
