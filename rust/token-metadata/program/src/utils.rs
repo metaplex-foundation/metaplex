@@ -331,6 +331,7 @@ pub fn transfer_mint_authority<'a>(
         ],
         &[],
     )?;
+    msg!("Finished setting freeze authority");
     Ok(())
 }
 

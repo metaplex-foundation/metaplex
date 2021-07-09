@@ -884,8 +884,8 @@ const PriceAuction = (props: {
             <label className="action-field">
               <span className="field-title">Price</span>
               <span className="field-info">
-                This is an optional fixed price that non-winners will pay for
-                your Participation NFT.
+                This is the fixed price that everybody will pay for your
+                Participation NFT.
               </span>
               <Input
                 type="number"

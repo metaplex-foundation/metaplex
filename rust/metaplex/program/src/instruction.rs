@@ -191,11 +191,11 @@ pub enum MetaplexInstruction {
     ///   14. `[]` Store
     ///   15. `[]` System
     ///   16. `[]` Rent sysvar
-    ///   18. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
+    ///   17. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
     ///             on the auction manager to the auction manager account itself.
-    ///   19.  `[writable]` The accept payment account for the auction manager
-    ///   20.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
-    ///   21. `[writable]` Participation NFT printing holding account (present on participation_state)
+    ///   18.  `[writable]` The accept payment account for the auction manager
+    ///   19.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
+    ///   20. `[writable]` Participation NFT printing holding account (present on participation_state)
     DeprecatedRedeemParticipationBid,
 
     /// If the auction manager is in Validated state, it can invoke the start command via calling this command here.

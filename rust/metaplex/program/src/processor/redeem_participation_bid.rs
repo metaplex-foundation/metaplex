@@ -1,3 +1,5 @@
+use solana_program::msg;
+
 use {
     crate::{
         error::MetaplexError,
@@ -148,15 +150,10 @@ fn v2_transfer<'a>(
     safety_deposit_token_store_info: &AccountInfo<'a>,
     system_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
+    auction_manager_bump: u8,
     master_edition: &Box<dyn MasterEdition>,
     accounts: &V2Accounts<'a>,
 ) -> ProgramResult {
-    let auction_manager_bump = assert_derivation(
-        program_id,
-        auction_manager_info,
-        &[PREFIX.as_bytes(), auction_info.key.as_ref()],
-    )?;
-
     let actual_edition = master_edition
         .supply()
         .checked_add(1)
@@ -201,10 +198,17 @@ fn charge_for_participation<'a>(
     token_program_info: &AccountInfo<'a>,
     win_index: Option<usize>,
     config: &ParticipationConfig,
+    auction_manager_bump: u8,
     auction_manager: &mut AuctionManager,
     bidder_token: &Account,
     bidder_metadata: &BidderMetadata,
 ) -> ProgramResult {
+    let signer_seeds = &[
+        PREFIX.as_bytes(),
+        auction_manager.auction.as_ref(),
+        &[auction_manager_bump],
+    ];
+
     let mut price: u64 = 0;
     if win_index.is_none() {
         if let Some(fixed_price) = config.fixed_price {
@@ -238,7 +242,7 @@ fn charge_for_participation<'a>(
             accept_payment_info.clone(),
             price,
             transfer_authority_info.clone(),
-            &[],
+            signer_seeds,
             token_program_info.clone(),
         )?;
     }
@@ -363,16 +367,20 @@ pub fn process_redeem_participation_bid<'a>(
         }
     }
 
-    if gets_participation {
-        let seeds = &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()];
-        let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
-        let mint_seeds = &[
-            PREFIX.as_bytes(),
-            &auction_manager.auction.as_ref(),
-            &[bump_seed],
-        ];
+    let bump_seed = assert_derivation(
+        program_id,
+        auction_manager_info,
+        &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
+    )?;
 
+    if gets_participation {
         if let Some(accounts) = legacy_accounts {
+            let mint_seeds = &[
+                PREFIX.as_bytes(),
+                &auction_manager.auction.as_ref(),
+                &[bump_seed],
+            ];
+
             legacy_validation(token_program_info, &auction_manager, &accounts)?;
             spl_token_transfer(
                 accounts.participation_printing_holding_account_info.clone(),
@@ -413,6 +421,7 @@ pub fn process_redeem_participation_bid<'a>(
                 safety_deposit_token_store_info,
                 system_info,
                 rent_info,
+                bump_seed,
                 &master_edition,
                 &accounts,
             )?;
@@ -425,6 +434,7 @@ pub fn process_redeem_participation_bid<'a>(
             token_program_info,
             win_index,
             &config,
+            bump_seed,
             &mut auction_manager,
             &bidder_token,
             &bidder_metadata,

@@ -57,6 +57,11 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
   auctionView: AuctionView,
 ) {
+  if (
+    !auctionView.myBidderMetadata ||
+    auctionView.myBidRedemption?.info.participationRedeemed
+  )
+    return false;
   return (
     (winnerIndex === null &&
       auctionView.auctionManager.info.settings.participationConfig
@@ -225,6 +230,7 @@ export async function sendRedeemBid(
     auctionView.participationItem &&
     eligibleForParticipationPrizeGivenWinningIndex(winnerIndex, auctionView)
   ) {
+    console.log('eligible for participation');
     const item = auctionView.participationItem;
     const safetyDeposit = item.safetyDeposit;
     if (item.masterEdition?.info.key == MetadataKey.MasterEditionV1) {

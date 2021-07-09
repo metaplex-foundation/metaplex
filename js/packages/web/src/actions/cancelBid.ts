@@ -16,6 +16,7 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 import { AuctionView } from '../hooks';
+import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 
 export async function sendCancelBid(
@@ -55,6 +56,20 @@ export async function sendCancelBid(
     signers,
     instructions,
   );
+
+  if (
+    wallet?.publicKey?.equals(auctionView.auctionManager.info.authority) &&
+    auctionView.auction.info.ended()
+  ) {
+    await claimUnusedPrizes(
+      connection,
+      wallet,
+      auctionView,
+      accountsByMint,
+      signers,
+      instructions,
+    );
+  }
 
   instructions.length === 1
     ? await sendTransactionWithRetry(
