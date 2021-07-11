@@ -1,3 +1,5 @@
+use solana_program::msg;
+
 use {
     crate::{
         error::MetadataError,
@@ -409,7 +411,8 @@ pub fn process_deprecated_set_reservation_list(
     }
 
     if reservation_list.current_reservation_spots() > reservation_list.total_reservation_spots() {
-        return Err(MetadataError::BeyondAlottedAddressSize.into());
+        msg!("Beyond alotted address size but we're moratoriuming this due to some bad data that's been saved. Cant screw over users for 2 weeks.")
+        //return Err(MetadataError::BeyondAlottedAddressSize.into());
     };
 
     if reservation_list.reservations().len() > MAX_RESERVATIONS {
