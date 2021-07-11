@@ -15,12 +15,11 @@ use {
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
-        program_error::ProgramError,
         pubkey::Pubkey,
     },
     spl_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
     spl_token::state::Account,
-    spl_token_metadata::state::{get_master_edition, MasterEdition},
+    spl_token_metadata::utils::get_supply_off_master_edition,
 };
 
 struct LegacyAccounts<'a> {
@@ -78,14 +77,14 @@ fn v2_validation<'a>(
     system_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     bidder_info: &AccountInfo<'a>,
+    master_edition_account_info: &AccountInfo<'a>,
     destination_info: &AccountInfo<'a>,
     config: &ParticipationConfig,
     auction: &AuctionData,
     accounts: &V2Accounts<'a>,
-) -> Result<Box<dyn MasterEdition>, ProgramError> {
+) -> ProgramResult {
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
     let store = Store::from_account_info(store_info)?;
-    let master_edition = get_master_edition(accounts.master_edition_account_info)?;
     let destination_amount = get_amount_from_token_account(destination_info)?;
     assert_is_ata(
         destination_info,
@@ -126,11 +125,11 @@ fn v2_validation<'a>(
         payer_info,
         rent_info,
         system_info,
-        &master_edition,
+        master_edition_account_info,
         amount_to_mint,
     )?;
 
-    Ok(master_edition)
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -148,11 +147,10 @@ fn v2_transfer<'a>(
     system_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     auction_manager_bump: u8,
-    master_edition: &Box<dyn MasterEdition>,
+    me_supply: u64,
     accounts: &V2Accounts<'a>,
 ) -> ProgramResult {
-    let actual_edition = master_edition
-        .supply()
+    let actual_edition = me_supply
         .checked_add(1)
         .ok_or(MetaplexError::NumericalOverflowError)?;
 
@@ -328,7 +326,6 @@ pub fn process_redeem_participation_bid<'a>(
         assert_bidder_signer: true,
     })?;
 
-    let master_edition: Box<dyn MasterEdition>;
     let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
 
     let config: ParticipationConfig;
@@ -388,7 +385,8 @@ pub fn process_redeem_participation_bid<'a>(
                 token_program_info.clone(),
             )?;
         } else if let Some(accounts) = v2_accounts {
-            master_edition = v2_validation(
+            let me_supply = get_supply_off_master_edition(accounts.master_edition_account_info)?;
+            v2_validation(
                 program_id,
                 auction_manager_info,
                 store_info,
@@ -398,6 +396,7 @@ pub fn process_redeem_participation_bid<'a>(
                 system_info,
                 rent_info,
                 bidder_info,
+                accounts.master_edition_account_info,
                 destination_info,
                 &config,
                 &auction,
@@ -418,7 +417,7 @@ pub fn process_redeem_participation_bid<'a>(
                 system_info,
                 rent_info,
                 bump_seed,
-                &master_edition,
+                me_supply,
                 &accounts,
             )?;
         }

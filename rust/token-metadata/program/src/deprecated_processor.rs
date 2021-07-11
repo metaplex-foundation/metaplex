@@ -165,9 +165,9 @@ pub fn process_deprecated_create_master_edition(
     Ok(())
 }
 
-pub fn process_deprecated_mint_new_edition_from_master_edition_via_printing_token(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_deprecated_mint_new_edition_from_master_edition_via_printing_token<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -236,7 +236,7 @@ pub fn process_deprecated_mint_new_edition_from_master_edition_via_printing_toke
 
     mint_limited_edition(
         program_id,
-        &master_metadata,
+        master_metadata,
         new_metadata_account_info,
         new_edition_account_info,
         master_edition_account_info,

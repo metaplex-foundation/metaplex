@@ -31,7 +31,7 @@ use {
         instruction::update_metadata_accounts,
         state::{Metadata, EDITION},
     },
-    spl_token_vault::instruction::create_withdraw_tokens_instruction,
+    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::SafetyDepositBox},
     std::{convert::TryInto, str::FromStr},
 };
 
@@ -206,17 +206,19 @@ pub fn create_or_allocate_account_raw<'a>(
         )?;
     }
 
+    let accounts = &[new_account_info.clone(), system_program_info.clone()];
+
     msg!("Allocate space for the account");
     invoke_signed(
         &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
-        &[new_account_info.clone(), system_program_info.clone()],
+        accounts,
         &[&signer_seeds],
     )?;
 
     msg!("Assign the account to the owning program");
     invoke_signed(
         &system_instruction::assign(new_account_info.key, &program_id),
-        &[new_account_info.clone(), system_program_info.clone()],
+        accounts,
         &[&signer_seeds],
     )?;
     msg!("Completed assignation!");
@@ -385,6 +387,7 @@ pub struct CommonRedeemCheckArgs<'a> {
 
 fn calculate_win_index(
     bidder_info: &AccountInfo,
+    auction_info: &AccountInfo,
     auction: &AuctionData,
     user_provided_win_index: Option<Option<usize>>,
     overwrite_win_index: Option<usize>,
@@ -398,7 +401,13 @@ fn calculate_win_index(
         if overwrite_win_index.is_none() {
             if let Some(up_win_index_unwrapped) = up_win_index {
                 let winner = auction.winner_at(up_win_index_unwrapped);
+                let calculated_winner =
+                    AuctionData::get_winner_at(auction_info, up_win_index_unwrapped);
+
                 if let Some(winner_key) = winner {
+                    if let Some(other_winner_key) = calculated_winner {
+                        msg!("Compare {} to {}", winner_key, other_winner_key);
+                    }
                     if winner_key != *bidder_info.key {
                         return Err(MetaplexError::WinnerIndexMismatch.into());
                     }
@@ -520,6 +529,7 @@ pub fn common_redeem_checks(
 
     let win_index = calculate_win_index(
         bidder_info,
+        auction_info,
         &auction,
         user_provided_win_index,
         overwrite_win_index,
@@ -720,9 +730,8 @@ pub fn common_winning_config_checks(
 
     let mut winning_item_index = None;
     for i in 0..winning_config.items.len() {
-        let order: usize = 97;
         if winning_config.items[i].safety_deposit_box_index
-            == safety_deposit_info.data.borrow()[order]
+            == SafetyDepositBox::get_order(safety_deposit_info)
         {
             winning_item_index = Some(i);
             break;

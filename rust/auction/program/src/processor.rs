@@ -1,4 +1,5 @@
 use crate::errors::AuctionError;
+use arrayref::array_ref;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo, borsh::try_from_slice_unchecked, clock::UnixTimestamp,
@@ -57,7 +58,10 @@ pub enum PriceFloor {
 
 // The two extra 8's are present, one 8 is for the Vec's amount of elements and one is for the max
 // usize in bid state.
+// NOTE: New research suggests u32s are used for vecs in borsh, not u64s, so the first extra 8 should be a 4
+// but for legacy reasons we leave it behind.
 pub const BASE_AUCTION_DATA_SIZE: usize = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 8 + 8 + 8;
+pub const BID_LENGTH: usize = 32 + 8;
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
 pub struct AuctionData {
@@ -115,6 +119,34 @@ impl AuctionDataExtended {
 }
 
 impl AuctionData {
+    // Cheap methods to get at AuctionData without supremely expensive borsh deserialization calls.
+    pub fn get_state(a: &AccountInfo) -> Result<AuctionState, ProgramError> {
+        match a.data.borrow()[133] {
+            0 => Ok(AuctionState::Created),
+            1 => Ok(AuctionState::Started),
+            2 => Ok(AuctionState::Ended),
+            _ => Err(ProgramError::InvalidAccountData),
+        }
+    }
+
+    pub fn get_winner_at(a: &AccountInfo, idx: usize) -> Option<Pubkey> {
+        let bid_state_beginning = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 4;
+        let data = a.data.borrow();
+        let num_elements_data = array_ref![data, bid_state_beginning - 4, 4];
+        let num_elements = u32::from_le_bytes(*num_elements_data) as usize;
+        let max_data = array_ref![data, bid_state_beginning + BID_LENGTH * num_elements, 8];
+        let max = u64::from_le_bytes(*max_data) as usize;
+        if idx + 1 > num_elements || idx + 1 > max {
+            return None;
+        }
+        let bid_key = array_ref![
+            data,
+            bid_state_beginning + (num_elements - idx - 1) * BID_LENGTH,
+            32
+        ];
+        Some(Pubkey::new_from_array(*bid_key))
+    }
+
     pub fn from_account_info(a: &AccountInfo) -> Result<AuctionData, ProgramError> {
         if (a.data_len() - BASE_AUCTION_DATA_SIZE) % mem::size_of::<Bid>() != 0 {
             return Err(AuctionError::DataTypeMismatch.into());

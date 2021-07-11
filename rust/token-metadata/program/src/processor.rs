@@ -10,16 +10,17 @@ use {
         error::MetadataError,
         instruction::MetadataInstruction,
         state::{
-            Data, EditionMarker, Key, MasterEditionV1, MasterEditionV2, Metadata, EDITION,
-            EDITION_MARKER_BIT_SIZE, MAX_EDITION_MARKER_SIZE, MAX_MASTER_EDITION_LEN,
-            MAX_METADATA_LEN, PREFIX,
+            Data, Key, MasterEditionV1, MasterEditionV2, Metadata, EDITION, MAX_MASTER_EDITION_LEN,
+            PREFIX,
         },
         utils::{
             assert_data_valid, assert_derivation, assert_initialized,
             assert_mint_authority_matches_mint, assert_owned_by, assert_signer,
             assert_token_program_matches_package, assert_update_authority_is_correct,
-            create_or_allocate_account_raw, get_owner_from_token_account, mint_limited_edition,
-            transfer_mint_authority,
+            create_or_allocate_account_raw, get_owner_from_token_account,
+            process_create_metadata_accounts_logic,
+            process_mint_new_edition_from_master_edition_via_token_logic, transfer_mint_authority,
+            CreateMetadataAccountsLogicArgs, MintNewEditionFromMasterEditionViaTokenLogicArgs,
         },
     },
     arrayref::array_ref,
@@ -35,9 +36,9 @@ use {
     spl_token_vault::{error::VaultError, state::VaultState},
 };
 
-pub fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_instruction<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
     input: &[u8],
 ) -> ProgramResult {
     let instruction = MetadataInstruction::try_from_slice(input)?;
@@ -131,10 +132,9 @@ pub fn process_instruction(
     }
 }
 
-/// Create a new account instruction
-pub fn process_create_metadata_accounts(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_create_metadata_accounts<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
     data: Data,
     allow_direct_creator_writes: bool,
     is_mutable: bool,
@@ -148,55 +148,21 @@ pub fn process_create_metadata_accounts(
     let system_account_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
 
-    let mint: Mint = assert_initialized(mint_info)?;
-    assert_mint_authority_matches_mint(&mint.mint_authority, mint_authority_info)?;
-    assert_owned_by(mint_info, &spl_token::id())?;
-
-    let metadata_seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        mint_info.key.as_ref(),
-    ];
-    let (metadata_key, metadata_bump_seed) =
-        Pubkey::find_program_address(metadata_seeds, program_id);
-    let metadata_authority_signer_seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        mint_info.key.as_ref(),
-        &[metadata_bump_seed],
-    ];
-
-    if metadata_account_info.key != &metadata_key {
-        return Err(MetadataError::InvalidMetadataKey.into());
-    }
-
-    create_or_allocate_account_raw(
-        *program_id,
-        metadata_account_info,
-        rent_info,
-        system_account_info,
-        payer_account_info,
-        MAX_METADATA_LEN,
-        metadata_authority_signer_seeds,
-    )?;
-
-    let mut metadata = Metadata::from_account_info(metadata_account_info)?;
-    assert_data_valid(
-        &data,
-        update_authority_info.key,
-        &metadata,
+    process_create_metadata_accounts_logic(
+        &program_id,
+        CreateMetadataAccountsLogicArgs {
+            metadata_account_info,
+            mint_info,
+            mint_authority_info,
+            payer_account_info,
+            update_authority_info,
+            system_account_info,
+            rent_info,
+        },
+        data,
         allow_direct_creator_writes,
-    )?;
-
-    metadata.mint = *mint_info.key;
-    metadata.key = Key::MetadataV1;
-    metadata.data = data;
-    metadata.is_mutable = is_mutable;
-    metadata.update_authority = *update_authority_info.key;
-
-    metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
-
-    Ok(())
+        is_mutable,
+    )
 }
 
 /// Update existing account instruction
@@ -399,9 +365,9 @@ pub fn process_create_master_edition(
     Ok(())
 }
 
-pub fn process_mint_new_edition_from_master_edition_via_token(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_mint_new_edition_from_master_edition_via_token<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
     edition: u64,
     ignore_owner_signer: bool,
 ) -> ProgramResult {
@@ -422,101 +388,27 @@ pub fn process_mint_new_edition_from_master_edition_via_token(
     let system_account_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
 
-    assert_token_program_matches_package(token_program_account_info)?;
-    assert_owned_by(mint_info, &spl_token::id())?;
-    assert_owned_by(token_account_info, &spl_token::id())?;
-    assert_owned_by(master_edition_account_info, program_id)?;
-    assert_owned_by(master_metadata_account_info, program_id)?;
-
-    let master_metadata = Metadata::from_account_info(master_metadata_account_info)?;
-    let token_account: Account = assert_initialized(token_account_info)?;
-
-    if !ignore_owner_signer {
-        assert_signer(owner_account_info)?;
-
-        if token_account.owner != *owner_account_info.key {
-            return Err(MetadataError::InvalidOwner.into());
-        }
-    }
-
-    if token_account.mint != master_metadata.mint {
-        return Err(MetadataError::TokenAccountMintMismatchV2.into());
-    }
-
-    if token_account.amount < 1 {
-        return Err(MetadataError::NotEnoughTokens.into());
-    }
-
-    if !new_metadata_account_info.data_is_empty() {
-        return Err(MetadataError::AlreadyInitialized.into());
-    }
-
-    if !new_edition_account_info.data_is_empty() {
-        return Err(MetadataError::AlreadyInitialized.into());
-    }
-
-    let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
-    let as_string = edition_number.to_string();
-
-    let bump = assert_derivation(
-        program_id,
-        edition_marker_info,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            master_metadata.mint.as_ref(),
-            EDITION.as_bytes(),
-            as_string.as_bytes(),
-        ],
-    )?;
-
-    if edition_marker_info.data_is_empty() {
-        let seeds = &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            master_metadata.mint.as_ref(),
-            EDITION.as_bytes(),
-            as_string.as_bytes(),
-            &[bump],
-        ];
-
-        create_or_allocate_account_raw(
-            *program_id,
+    process_mint_new_edition_from_master_edition_via_token_logic(
+        &program_id,
+        MintNewEditionFromMasterEditionViaTokenLogicArgs {
+            new_metadata_account_info,
+            new_edition_account_info,
+            master_edition_account_info,
+            mint_info,
             edition_marker_info,
-            rent_info,
-            system_account_info,
+            mint_authority_info,
             payer_account_info,
-            MAX_EDITION_MARKER_SIZE,
-            seeds,
-        )?;
-    }
-
-    let mut edition_marker = EditionMarker::from_account_info(edition_marker_info)?;
-    edition_marker.key = Key::EditionMarker;
-    if edition_marker.edition_taken(edition)? {
-        return Err(MetadataError::InvalidEditionKey.into());
-    } else {
-        edition_marker.insert_edition(edition)?
-    }
-    edition_marker.serialize(&mut *edition_marker_info.data.borrow_mut())?;
-
-    mint_limited_edition(
-        program_id,
-        &master_metadata,
-        new_metadata_account_info,
-        new_edition_account_info,
-        master_edition_account_info,
-        mint_info,
-        mint_authority_info,
-        payer_account_info,
-        update_authority_info,
-        token_program_account_info,
-        system_account_info,
-        rent_info,
-        None,
-        Some(edition),
-    )?;
-    Ok(())
+            owner_account_info,
+            token_account_info,
+            update_authority_info,
+            master_metadata_account_info,
+            token_program_account_info,
+            system_account_info,
+            rent_info,
+        },
+        edition,
+        ignore_owner_signer,
+    )
 }
 
 pub fn process_convert_master_edition_v1_to_v2(
@@ -563,9 +455,9 @@ pub fn process_convert_master_edition_v1_to_v2(
     Ok(())
 }
 
-pub fn process_mint_new_edition_from_master_edition_via_vault_proxy(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_mint_new_edition_from_master_edition_via_vault_proxy<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
     edition: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -658,22 +550,22 @@ pub fn process_mint_new_edition_from_master_edition_via_vault_proxy(
         return Err(VaultError::StoreDoesNotMatchSafetyDepositBox.into());
     }
 
-    let new_iter = &[
-        new_metadata_account_info.clone(),
-        new_edition_account_info.clone(),
-        master_edition_account_info.clone(),
-        mint_info.clone(),
-        edition_marker_info.clone(),
-        mint_authority_info.clone(),
-        payer_info.clone(),
-        vault_authority_info.clone(),
-        store_info.clone(),
-        update_authority_info.clone(),
-        master_metadata_account_info.clone(),
-        token_program_account_info.clone(),
-        system_account_info.clone(),
-        rent_info.clone(),
-    ];
+    let args = MintNewEditionFromMasterEditionViaTokenLogicArgs {
+        new_metadata_account_info,
+        new_edition_account_info,
+        master_edition_account_info,
+        mint_info,
+        edition_marker_info,
+        mint_authority_info,
+        payer_account_info: payer_info,
+        owner_account_info: vault_authority_info,
+        token_account_info: store_info,
+        update_authority_info,
+        master_metadata_account_info,
+        token_program_account_info,
+        system_account_info,
+        rent_info,
+    };
 
-    process_mint_new_edition_from_master_edition_via_token(program_id, new_iter, edition, true)
+    process_mint_new_edition_from_master_edition_via_token_logic(program_id, args, edition, true)
 }

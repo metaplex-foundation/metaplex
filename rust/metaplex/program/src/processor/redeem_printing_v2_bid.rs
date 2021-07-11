@@ -21,7 +21,7 @@ use {
     },
     spl_token_metadata::{
         instruction::mint_edition_from_master_edition_via_vault_proxy,
-        state::{get_master_edition, MasterEdition},
+        utils::get_supply_off_master_edition,
     },
     spl_token_vault::state::SafetyDepositBox,
 };
@@ -30,16 +30,18 @@ fn count_item_amount_by_safety_deposit_order(
     items: &Vec<WinningConfigItem>,
     safety_deposit_index: u8,
 ) -> u64 {
-    items
-        .iter()
-        .map(|i| {
-            if i.safety_deposit_box_index == safety_deposit_index {
-                return i.amount as u64;
-            } else {
-                return 0 as u64;
-            }
-        })
-        .sum()
+    let item = items.iter().find_map(|i| {
+        if i.safety_deposit_box_index == safety_deposit_index {
+            Some(i)
+        } else {
+            None
+        }
+    });
+
+    match item {
+        Some(item) => item.amount as u64,
+        None => 0u64,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -119,7 +121,7 @@ pub fn create_or_update_prize_tracking<'a>(
     payer_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     system_info: &AccountInfo<'a>,
-    master_edition: &Box<dyn MasterEdition>,
+    master_edition_account_info: &AccountInfo<'a>,
     expected_redemptions: u64,
 ) -> Result<u64, ProgramError> {
     let metadata_data = metadata_account_info.data.borrow();
@@ -156,13 +158,13 @@ pub fn create_or_update_prize_tracking<'a>(
         let data = &mut prize_tracking_ticket_info.data.borrow_mut();
         let output = array_mut_ref![data, 0, MAX_PRIZE_TRACKING_TICKET_SIZE];
 
-        let (key, metadata, supply_snapshot_ptr, redemptions, expected_redemptions_ptr, _padding) =
+        let (key, metadata, supply_snapshot_ptr, expected_redemptions_ptr, redemptions, _padding) =
             mut_array_refs![output, 1, 32, 8, 8, 8, 50];
 
         *key = [Key::PrizeTrackingTicketV1 as u8];
         metadata.copy_from_slice(metadata_account_info.key.as_ref());
-        supply_snapshot = master_edition.supply();
-        *supply_snapshot_ptr = master_edition.supply().to_le_bytes();
+        supply_snapshot = get_supply_off_master_edition(master_edition_account_info)?;
+        *supply_snapshot_ptr = supply_snapshot.to_le_bytes();
         *redemptions = 1u64.to_le_bytes();
         *expected_redemptions_ptr = expected_redemptions.to_le_bytes();
     } else {
@@ -170,7 +172,7 @@ pub fn create_or_update_prize_tracking<'a>(
         let data = &mut prize_tracking_ticket_info.data.borrow_mut();
         let output = array_mut_ref![data, 0, MAX_PRIZE_TRACKING_TICKET_SIZE];
 
-        let (_key, _metadata, supply_snapshot_ptr, redemptions, _expected_redemptions, _padding) =
+        let (_key, _metadata, supply_snapshot_ptr, _expected_redemptions, redemptions, _padding) =
             mut_array_refs![output, 1, 32, 8, 8, 8, 50];
         supply_snapshot = u64::from_le_bytes(*supply_snapshot_ptr);
         let next_redemptions = u64::from_le_bytes(*redemptions)
@@ -286,27 +288,24 @@ pub fn process_redeem_printing_v2_bid<'a>(
                     &[PREFIX.as_bytes(), auction_info.key.as_ref()],
                 )?;
 
-                let master_edition = get_master_edition(master_edition_account_info)?;
-
-                let safety_deposit_box = SafetyDepositBox::from_account_info(safety_deposit_info)?;
+                let safety_deposit_box_order = SafetyDepositBox::get_order(safety_deposit_info);
 
                 let mut edition_offset_min: u64 = 1;
                 let mut expected_redemptions: u64 = 0;
+
+                // Given every single winning config item carries a u8, it is impossible to overflow
+                // a u64 with the amount in it given the limited size. Avoid using checked add to save on cpu.
                 for n in 0..auction_manager.settings.winning_configs.len() {
                     let matching = count_item_amount_by_safety_deposit_order(
                         &auction_manager.settings.winning_configs[n].items,
-                        safety_deposit_box.order,
+                        safety_deposit_box_order,
                     );
 
                     if n < winning_index {
-                        edition_offset_min = edition_offset_min
-                            .checked_add(matching)
-                            .ok_or(MetaplexError::NumericalOverflowError)?;
+                        edition_offset_min += matching
                     }
                     if prize_tracking_ticket_info.data_is_empty() {
-                        expected_redemptions = expected_redemptions
-                            .checked_add(matching)
-                            .ok_or(MetaplexError::NumericalOverflowError)?;
+                        expected_redemptions += matching
                     } else if n >= winning_index {
                         // no need to keep using this loop more than winning_index if we're not
                         // tabulating expected_redemptions
@@ -315,11 +314,10 @@ pub fn process_redeem_printing_v2_bid<'a>(
                 }
 
                 let edition_offset_max = edition_offset_min
-                    .checked_add(count_item_amount_by_safety_deposit_order(
+                    + count_item_amount_by_safety_deposit_order(
                         &auction_manager.settings.winning_configs[winning_index].items,
-                        safety_deposit_box.order,
-                    ))
-                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                        safety_deposit_box_order,
+                    );
 
                 if edition_offset < edition_offset_min || edition_offset >= edition_offset_max {
                     return Err(MetaplexError::InvalidEditionNumber.into());
@@ -333,7 +331,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
                     payer_info,
                     rent_info,
                     system_info,
-                    &master_edition,
+                    master_edition_account_info,
                     expected_redemptions,
                 )?;
 

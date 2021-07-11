@@ -27,6 +27,8 @@ import {
   WinningConfigStateItem,
   WinningConfigItem,
   withdrawMasterEdition,
+  PrizeTrackingTicket,
+  getPrizeTrackingTicket,
 } from '../models/metaplex';
 const { createTokenAccount } = actions;
 
@@ -37,6 +39,7 @@ export async function claimUnusedPrizes(
   accountsByMint: Map<string, TokenAccount>,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
+  //prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -47,15 +50,26 @@ export async function claimUnusedPrizes(
     auctionView.participationItem.masterEdition?.info.key ==
       MetadataKey.MasterEditionV2
   ) {
-    await setupRedeemPrintingInstructions(
-      connection,
-      auctionView,
-      wallet,
-      auctionView.participationItem.safetyDeposit,
-      auctionView.participationItem,
-      signers,
-      instructions,
+    const balance = await connection.getTokenAccountBalance(
+      auctionView.participationItem.safetyDeposit.info.store,
     );
+    if (balance.value.uiAmount || 0 > 0) {
+      /*const prizeTrackingTicket = await getPrizeTrackingTicket(
+        auctionView.auctionManager.pubkey,
+        auctionView.participationItem.safetyDeposit.info.tokenMint,
+      );
+      const ticket = prizeTrackingTickets[prizeTrackingTicket.toBase58()];
+      if (!ticket || ticket.info.redemptions >= ticket.info.expectedRedemptions)*/
+      await setupRedeemPrintingInstructions(
+        connection,
+        auctionView,
+        wallet,
+        auctionView.participationItem.safetyDeposit,
+        auctionView.participationItem,
+        signers,
+        instructions,
+      );
+    }
   }
 
   for (
@@ -76,7 +90,10 @@ export async function claimUnusedPrizes(
         safetyDeposit.info.store,
       );
       // If box is empty, we cant redeem this. Could be broken AM we are claiming against.
-      if (tokenBalance.value.uiAmount === 0) continue;
+      if (tokenBalance.value.uiAmount === 0) {
+        console.log('Skipping', i, ' due to empty balance');
+        continue;
+      }
       // In principle it is possible to have two winning config items of same safety deposit box
       // so we cover for that possibility by doing an array not a find
       for (let j = 0; j < winningConfig.items.length; j++) {
