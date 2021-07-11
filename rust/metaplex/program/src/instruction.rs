@@ -123,7 +123,7 @@ pub enum MetaplexInstruction {
     ///   18. `[optional/writable]` Master edition (if Printing type of WinningConfig)
     ///   19. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
     ///        relative to token metadata program (if Printing type of WinningConfig)
-    RedeemBid,
+    DeprecatedRedeemBid,
 
     /// Note: This requires that auction manager be in a Running state.
     ///
@@ -614,9 +614,9 @@ pub fn create_validate_safety_deposit_box_instruction(
     }
 }
 
-/// Creates an RedeemBid instruction
+/// Creates an Deprecated RedeemBid instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_redeem_bid_instruction(
+pub fn create_deprecated_redeem_bid_instruction(
     program_id: Pubkey,
     auction_manager: Pubkey,
     safety_deposit_token_store: Pubkey,
@@ -654,7 +654,9 @@ pub fn create_redeem_bid_instruction(
             AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(transfer_authority, false),
         ],
-        data: MetaplexInstruction::RedeemBid.try_to_vec().unwrap(),
+        data: MetaplexInstruction::DeprecatedRedeemBid
+            .try_to_vec()
+            .unwrap(),
     }
 }
 

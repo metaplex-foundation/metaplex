@@ -161,11 +161,7 @@ impl AuctionData {
     }
 
     pub fn num_winners(&self) -> u64 {
-        let minimum = match self.price_floor {
-            PriceFloor::MinimumPrice(min) => min[0],
-            _ => 0,
-        };
-        self.bid_state.num_winners(minimum)
+        self.bid_state.num_winners()
     }
 
     pub fn num_possible_winners(&self) -> u64 {
@@ -173,11 +169,7 @@ impl AuctionData {
     }
 
     pub fn winner_at(&self, idx: usize) -> Option<Pubkey> {
-        let minimum = match self.price_floor {
-            PriceFloor::MinimumPrice(min) => min[0],
-            _ => 0,
-        };
-        self.bid_state.winner_at(idx, minimum)
+        self.bid_state.winner_at(idx)
     }
 
     pub fn place_bid(
@@ -199,7 +191,11 @@ impl AuctionData {
             }
             None => None,
         };
-        self.bid_state.place_bid(bid, tick_size, gap_val)
+        let minimum = match self.price_floor {
+            PriceFloor::MinimumPrice(min) => min[0],
+            _ => 0,
+        };
+        self.bid_state.place_bid(bid, tick_size, gap_val, minimum)
     }
 }
 
@@ -327,9 +323,13 @@ impl BidState {
         bid: Bid,
         tick_size: Option<u64>,
         gap_tick_size_percentage: Option<u8>,
+        minimum: u64,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
         BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
+        if bid.1 < minimum {
+            return Err(AuctionError::BidTooSmall.into());
+        }
 
         match self {
             // In a capped auction, track the limited number of winners.
@@ -454,15 +454,9 @@ impl BidState {
         }
     }
 
-    pub fn num_winners(&self, min: u64) -> u64 {
+    pub fn num_winners(&self) -> u64 {
         match self {
-            BidState::EnglishAuction { bids, max } => cmp::min(
-                bids.iter()
-                    .filter(|b| b.1 >= min)
-                    .collect::<Vec<&Bid>>()
-                    .len(),
-                *max,
-            ) as u64,
+            BidState::EnglishAuction { bids, max } => cmp::min(bids.len(), *max) as u64,
             BidState::OpenEdition { bids, max } => 0,
         }
     }
@@ -475,16 +469,12 @@ impl BidState {
     }
 
     /// Idea is to present #1 winner as index 0 to outside world with this method
-    pub fn winner_at(&self, index: usize, min: u64) -> Option<Pubkey> {
+    pub fn winner_at(&self, index: usize) -> Option<Pubkey> {
         match self {
             BidState::EnglishAuction { bids, max } => {
                 if index < *max && index < bids.len() {
                     let bid = &bids[bids.len() - index - 1];
-                    if bid.1 >= min {
-                        Some(bids[bids.len() - index - 1].0)
-                    } else {
-                        None
-                    }
+                    Some(bids[bids.len() - index - 1].0)
                 } else {
                     None
                 }

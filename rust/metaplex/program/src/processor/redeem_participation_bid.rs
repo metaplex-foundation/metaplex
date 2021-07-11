@@ -1,5 +1,3 @@
-use solana_program::msg;
-
 use {
     crate::{
         error::MetaplexError,
@@ -137,7 +135,6 @@ fn v2_validation<'a>(
 
 #[allow(clippy::too_many_arguments)]
 fn v2_transfer<'a>(
-    program_id: &'a Pubkey,
     auction_manager_info: &AccountInfo<'a>,
     auction_info: &AccountInfo<'a>,
     vault_info: &AccountInfo<'a>,
@@ -408,7 +405,6 @@ pub fn process_redeem_participation_bid<'a>(
             )?;
 
             v2_transfer(
-                &program_id,
                 auction_manager_info,
                 auction_info,
                 vault_info,

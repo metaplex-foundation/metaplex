@@ -52,7 +52,7 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Validate Safety Deposit Box");
             process_validate_safety_deposit_box(program_id, accounts)
         }
-        MetaplexInstruction::RedeemBid => {
+        MetaplexInstruction::DeprecatedRedeemBid => {
             msg!("Instruction: Redeem Normal Token Bid");
             process_redeem_bid(program_id, accounts, None)
         }

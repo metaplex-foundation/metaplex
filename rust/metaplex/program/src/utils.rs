@@ -1,3 +1,5 @@
+use solana_program::log::sol_log_compute_units;
+
 use {
     crate::{
         error::MetaplexError,
@@ -696,20 +698,8 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         }
     }
 
-    let mut open_claims = false;
-    for state in &auction_manager.state.winning_config_states {
-        for item in &state.items {
-            if !item.claimed {
-                open_claims = true;
-                break;
-            }
-        }
-    }
-
-    if !open_claims {
-        auction_manager.state.status = AuctionManagerStatus::Finished
-    }
-
+    msg!("About to pass through the eye of the needle");
+    sol_log_compute_units();
     auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
 
     Ok(())

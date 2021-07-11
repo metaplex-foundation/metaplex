@@ -302,6 +302,10 @@ pub enum MetadataError {
     /// You tried to insert one edition too many into an edition mark pda
     #[error("You tried to insert one edition too many into an edition mark pda")]
     InvalidEditionIndex,
+
+    // In the legacy system the reservation needs to be of size one for cpu limit reasons
+    #[error("In the legacy system the reservation needs to be of size one for cpu limit reasons")]
+    ReservationArrayShouldBeSizeOne,
 }
 
 impl PrintProgramError for MetadataError {

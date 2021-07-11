@@ -271,9 +271,9 @@ pub trait ReservationList {
     fn set_master_edition(&mut self, key: Pubkey);
     fn set_supply_snapshot(&mut self, supply: Option<u64>);
     fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult;
-    fn add_reservations(
+    fn add_reservation(
         &mut self,
-        reservations: Vec<Reservation>,
+        reservation: Reservation,
         offset: u64,
         total_spot_offset: u64,
     ) -> ProgramResult;
@@ -332,9 +332,9 @@ impl ReservationList for ReservationListV2 {
         self.supply_snapshot = supply;
     }
 
-    fn add_reservations(
+    fn add_reservation(
         &mut self,
-        mut reservations: Vec<Reservation>,
+        reservation: Reservation,
         offset: u64,
         total_spot_offset: u64,
     ) -> ProgramResult {
@@ -347,36 +347,23 @@ impl ReservationList for ReservationListV2 {
             })
         }
         if self.reservations.len() > usize_offset {
-            let reservation_length = reservations.len();
+            let replaced_addr = self.reservations[usize_offset].address;
+            let replaced_spots = self.reservations[usize_offset].total_spots;
 
-            let removed_elements: Vec<Reservation> = self
-                .reservations
-                .splice(
-                    usize_offset..usize_offset + reservations.len(),
-                    reservations,
-                )
-                .collect();
-            let existing_res = removed_elements
-                .iter()
-                .find(|r| r.address != solana_program::system_program::id());
-            if let Some(replaced) = existing_res {
-                // If you overwrite yourself and only yourself, allow it.
-                let allowable_edgecase = reservation_length == 1
-                    && self.reservations[usize_offset].address == replaced.address;
-                if !allowable_edgecase {
-                    return Err(MetadataError::TriedToReplaceAnExistingReservation.into());
-                } else {
-                    // Since we will have incremented, decrease in advance so we dont blow the spot check.
-                    // Super hacky but this code is to be deprecated.
-                    self.set_current_reservation_spots(
-                        self.current_reservation_spots
-                            .checked_sub(replaced.total_spots)
-                            .ok_or(MetadataError::NumericalOverflowError)?,
-                    );
-                }
+            if replaced_addr == reservation.address {
+                // Since we will have incremented, decrease in advance so we dont blow the spot check.
+                // Super hacky but this code is to be deprecated.
+                self.set_current_reservation_spots(
+                    self.current_reservation_spots()
+                        .checked_sub(replaced_spots)
+                        .ok_or(MetadataError::NumericalOverflowError)?,
+                );
+            } else if replaced_addr != solana_program::system_program::id() {
+                return Err(MetadataError::TriedToReplaceAnExistingReservation.into());
             }
+            self.reservations[usize_offset] = reservation;
         } else {
-            self.reservations.append(&mut reservations)
+            self.reservations.push(reservation)
         }
 
         if usize_offset != 0
@@ -478,12 +465,17 @@ impl ReservationList for ReservationListV1 {
         self.supply_snapshot = supply;
     }
 
-    fn add_reservations(
-        &mut self,
-        reservations: Vec<Reservation>,
-        _: u64,
-        _: u64,
-    ) -> ProgramResult {
+    fn add_reservation(&mut self, reservation: Reservation, _: u64, _: u64) -> ProgramResult {
+        self.reservations = vec![ReservationV1 {
+            address: reservation.address,
+            spots_remaining: reservation.spots_remaining as u8,
+            total_spots: reservation.total_spots as u8,
+        }];
+
+        Ok(())
+    }
+
+    fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult {
         self.reservations = reservations
             .iter()
             .map(|r| ReservationV1 {
@@ -492,12 +484,6 @@ impl ReservationList for ReservationListV1 {
                 total_spots: r.total_spots as u8,
             })
             .collect();
-
-        Ok(())
-    }
-
-    fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult {
-        self.add_reservations(reservations, 0, 0)?;
         Ok(())
     }
 

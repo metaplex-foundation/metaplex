@@ -355,6 +355,12 @@ pub fn process_deprecated_set_reservation_list(
         return Err(MetadataError::ReservationDoesNotExist.into());
     }
 
+    if reservations.len() > 1 || reservations.len() == 0 {
+        return Err(MetadataError::ReservationArrayShouldBeSizeOne.into());
+    }
+
+    let my_reservation = &reservations[0];
+
     assert_derivation(
         program_id,
         reservation_list_info,
@@ -373,25 +379,18 @@ pub fn process_deprecated_set_reservation_list(
         return Err(MetadataError::ReservationAlreadyMade.into());
     }
 
-    let mut total_len: u64 = reservation_list.current_reservation_spots();
-    let mut total_len_check: u64 = reservation_list.current_reservation_spots();
-
-    for reservation in &reservations {
-        total_len = total_len
-            .checked_add(reservation.spots_remaining)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-        total_len_check = total_len_check
-            .checked_add(reservation.total_spots)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-        if reservation.spots_remaining != reservation.total_spots {
-            return Err(
-                MetadataError::ReservationSpotsRemainingShouldMatchTotalSpotsAtStart.into(),
-            );
-        }
+    if my_reservation.spots_remaining != my_reservation.total_spots {
+        return Err(MetadataError::ReservationSpotsRemainingShouldMatchTotalSpotsAtStart.into());
     }
-    reservation_list.set_current_reservation_spots(total_len);
 
-    reservation_list.add_reservations(reservations, offset, total_spot_offset)?;
+    reservation_list.set_current_reservation_spots(
+        reservation_list
+            .current_reservation_spots()
+            .checked_add(my_reservation.total_spots)
+            .ok_or(MetadataError::NumericalOverflowError)?,
+    );
+
+    reservation_list.add_reservation(my_reservation.clone(), offset, total_spot_offset)?;
 
     if let Some(total) = total_reservation_spots {
         reservation_list.set_supply_snapshot(Some(master_edition.supply));
@@ -409,11 +408,7 @@ pub fn process_deprecated_set_reservation_list(
         master_edition.serialize(&mut *master_edition_info.data.borrow_mut())?;
     }
 
-    if total_len_check != total_len {
-        return Err(MetadataError::SpotMismatch.into());
-    }
-
-    if total_len > reservation_list.total_reservation_spots() {
+    if reservation_list.current_reservation_spots() > reservation_list.total_reservation_spots() {
         return Err(MetadataError::BeyondAlottedAddressSize.into());
     };
 

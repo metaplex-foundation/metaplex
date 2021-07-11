@@ -244,48 +244,6 @@ export const mintNFT = async (
         1,
       ),
     );
-
-    // This mint, which allows limited editions to be made, stays with user's wallet.
-    const printingMint = createMint(
-      updateInstructions,
-      payerPublicKey,
-      mintRent,
-      0,
-      payerPublicKey,
-      payerPublicKey,
-      updateSigners,
-    );
-
-    const oneTimePrintingAuthorizationMint = createMint(
-      updateInstructions,
-      payerPublicKey,
-      mintRent,
-      0,
-      payerPublicKey,
-      payerPublicKey,
-      updateSigners,
-    );
-
-    if (maxSupply !== undefined) {
-      // make this so we can use it later.
-      const authTokenAccount: PublicKey = (
-        await findProgramAddress(
-          [
-            wallet.publicKey.toBuffer(),
-            programIds().token.toBuffer(),
-            printingMint.toBuffer(),
-          ],
-          programIds().associatedToken,
-        )
-      )[0];
-      createAssociatedTokenAccountInstruction(
-        instructions,
-        authTokenAccount,
-        wallet.publicKey,
-        wallet.publicKey,
-        printingMint,
-      );
-    }
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
