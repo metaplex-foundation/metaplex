@@ -407,6 +407,14 @@ fn calculate_win_index(
                 if let Some(winner_key) = winner {
                     if let Some(other_winner_key) = calculated_winner {
                         msg!("Compare {} to {}", winner_key, other_winner_key);
+                        let win_index = auction.is_winner(&winner_key);
+                        let other_win_index = AuctionData::get_is_winner(auction_info, &winner_key);
+
+                        msg!(
+                            "Compare win indexes {:?} and {:?}",
+                            win_index,
+                            other_win_index
+                        )
                     }
                     if winner_key != *bidder_info.key {
                         return Err(MetaplexError::WinnerIndexMismatch.into());

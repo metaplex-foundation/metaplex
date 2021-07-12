@@ -5,7 +5,7 @@ use solana_program::{
     account_info::AccountInfo, borsh::try_from_slice_unchecked, clock::UnixTimestamp,
     entrypoint::ProgramResult, hash::Hash, msg, program_error::ProgramError, pubkey::Pubkey,
 };
-use std::{cmp, mem};
+use std::{cell::Ref, cmp, mem};
 
 // Declare submodules, each contains a single handler for each instruction variant in the program.
 pub mod cancel_bid;
@@ -129,22 +129,99 @@ impl AuctionData {
         }
     }
 
-    pub fn get_winner_at(a: &AccountInfo, idx: usize) -> Option<Pubkey> {
-        let bid_state_beginning = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 4;
+    fn find_bid_state_beginning(a: &AccountInfo) -> usize {
         let data = a.data.borrow();
+        let mut bid_state_beginning = 32 + 32;
+
+        for i in 0..4 {
+            // One for each unix timestamp
+            if data[bid_state_beginning] == 1 {
+                bid_state_beginning += 9
+            } else {
+                bid_state_beginning += 1;
+            }
+        }
+
+        // Finally add price floor (enum + hash) and state, then the u32,
+        // then add 1 to position at the beginning of first bid.
+        bid_state_beginning += 1 + 32 + 1 + 4 + 1;
+        return bid_state_beginning;
+    }
+
+    fn get_vec_info(a: &AccountInfo) -> (usize, usize, usize) {
+        let bid_state_beginning = AuctionData::find_bid_state_beginning(a);
+        let data = a.data.borrow();
+
         let num_elements_data = array_ref![data, bid_state_beginning - 4, 4];
         let num_elements = u32::from_le_bytes(*num_elements_data) as usize;
         let max_data = array_ref![data, bid_state_beginning + BID_LENGTH * num_elements, 8];
         let max = u64::from_le_bytes(*max_data) as usize;
+
+        (bid_state_beginning, num_elements, max)
+    }
+
+    pub fn get_is_winner(a: &AccountInfo, key: &Pubkey) -> Option<usize> {
+        let bid_state_beginning = AuctionData::find_bid_state_beginning(a);
+        let data = a.data.borrow();
+        let as_bytes = key.to_bytes();
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        for idx in 0..std::cmp::min(num_elements, max) {
+            match AuctionData::get_winner_at_inner(
+                &a.data.borrow(),
+                idx,
+                bid_state_beginning,
+                num_elements,
+                max,
+            ) {
+                Some(bid_key) => {
+                    // why deserialize the entire key to compare the two with a short circuit comparison
+                    // when we can compare them immediately?
+                    let mut matching = true;
+                    for bid_key_idx in 0..32 {
+                        if bid_key[bid_key_idx] != as_bytes[bid_key_idx] {
+                            matching = false;
+                            break;
+                        }
+                    }
+                    if matching {
+                        return Some(idx as usize);
+                    }
+                }
+                None => return None,
+            }
+        }
+        None
+    }
+
+    pub fn get_winner_at(a: &AccountInfo, idx: usize) -> Option<Pubkey> {
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        match AuctionData::get_winner_at_inner(
+            &a.data.borrow(),
+            idx,
+            bid_state_beginning,
+            num_elements,
+            max,
+        ) {
+            Some(bid_key) => Some(Pubkey::new_from_array(*bid_key)),
+            None => None,
+        }
+    }
+
+    fn get_winner_at_inner<'a>(
+        data: &'a Ref<'a, &'a mut [u8]>,
+        idx: usize,
+        bid_state_beginning: usize,
+        num_elements: usize,
+        max: usize,
+    ) -> Option<&'a [u8; 32]> {
         if idx + 1 > num_elements || idx + 1 > max {
             return None;
         }
-        let bid_key = array_ref![
+        Some(array_ref![
             data,
             bid_state_beginning + (num_elements - idx - 1) * BID_LENGTH,
             32
-        ];
-        Some(Pubkey::new_from_array(*bid_key))
+        ])
     }
 
     pub fn from_account_info(a: &AccountInfo) -> Result<AuctionData, ProgramError> {
