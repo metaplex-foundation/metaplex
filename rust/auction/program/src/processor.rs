@@ -120,6 +120,13 @@ impl AuctionDataExtended {
 
 impl AuctionData {
     // Cheap methods to get at AuctionData without supremely expensive borsh deserialization calls.
+
+    pub fn get_token_mint(a: &AccountInfo) -> Pubkey {
+        let data = a.data.borrow();
+        let token_mint_data = array_ref![data, 32, 32];
+        Pubkey::new_from_array(*token_mint_data)
+    }
+
     pub fn get_state(a: &AccountInfo) -> Result<AuctionState, ProgramError> {
         match a.data.borrow()[133] {
             0 => Ok(AuctionState::Created),
@@ -127,6 +134,11 @@ impl AuctionData {
             2 => Ok(AuctionState::Ended),
             _ => Err(ProgramError::InvalidAccountData),
         }
+    }
+
+    pub fn get_num_winners(a: &AccountInfo) -> usize {
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        std::cmp::min(num_elements, max)
     }
 
     fn find_bid_state_beginning(a: &AccountInfo) -> usize {

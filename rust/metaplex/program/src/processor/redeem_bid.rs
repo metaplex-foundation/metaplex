@@ -72,8 +72,8 @@ fn get_supply_snapshot_off_reservation_list(
 #[allow(clippy::too_many_arguments)]
 pub fn reserve_list_if_needed<'a>(
     program_id: &'a Pubkey,
-    auction: &AuctionData,
     winning_index: usize,
+    auction_info: &AccountInfo<'a>,
     bidder_info: &AccountInfo<'a>,
     master_edition_info: &AccountInfo<'a>,
     reservation_list_info: &AccountInfo<'a>,
@@ -94,7 +94,7 @@ pub fn reserve_list_if_needed<'a>(
     if get_supply_snapshot_off_reservation_list(reservation_list_info)?.is_none() {
         total_reservation_spot_opt = Some(std::cmp::min(
             get_amount_from_token_account(safety_deposit_token_store_info)?,
-            auction.num_winners(),
+            AuctionData::get_num_winners(auction_info) as u64,
         ));
     } else {
         total_reservation_spot_opt = None
@@ -114,6 +114,9 @@ pub fn reserve_list_if_needed<'a>(
             total_spots: my_spots,
         }],
         total_reservation_spot_opt,
+        // Note this logic is explicitly wrong in cases of tiered auctions where the edition
+        // is not present in every single winning config. But that would require iteration to figure out,
+        // and we are optimizing for the 99.8% case in this legacy logic.
         winning_index as u64,
         total_spot_offset,
     )?;
@@ -153,7 +156,6 @@ pub fn process_redeem_bid<'a>(
         auction_manager,
         redemption_bump_seed,
         cancelled,
-        auction,
         rent: _rent,
         win_index,
         token_metadata_program: _t,
@@ -177,6 +179,7 @@ pub fn process_redeem_bid<'a>(
         user_provided_win_index: None,
         overwrite_win_index,
         assert_bidder_signer: true,
+        ignore_bid_redeemed_item_check: false,
     })?;
 
     let mut winning_item_index = None;
@@ -192,6 +195,7 @@ pub fn process_redeem_bid<'a>(
                     &auction_manager,
                     &safety_deposit_info,
                     winning_index,
+                    false,
                 )?;
                 winning_item_index = wii;
                 if winning_config_item.winning_config_type != WinningConfigType::TokenOnlyTransfer
@@ -220,8 +224,8 @@ pub fn process_redeem_bid<'a>(
 
                     reserve_list_if_needed(
                         token_metadata_program_info.key,
-                        &auction,
                         winning_index,
+                        auction_info,
                         bidder_info,
                         master_edition_info,
                         reservation_list_info,

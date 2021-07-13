@@ -236,7 +236,6 @@ pub fn process_redeem_printing_v2_bid<'a>(
         auction_manager,
         redemption_bump_seed,
         cancelled,
-        auction: _a,
         rent: _rent,
         win_index,
         token_metadata_program,
@@ -260,6 +259,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         user_provided_win_index: Some(Some(user_provided_win_index as usize)),
         overwrite_win_index: None,
         assert_bidder_signer: false,
+        ignore_bid_redeemed_item_check: true,
     })?;
 
     assert_owned_by(metadata_account_info, &token_metadata_program)?;
@@ -275,6 +275,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
                     &auction_manager,
                     &safety_deposit_info,
                     winning_index,
+                    true,
                 )?;
 
                 winning_item_index = wii;

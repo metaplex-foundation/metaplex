@@ -107,11 +107,15 @@ pub fn process_init_auction_manager(
 
     let mut winning_config_states: Vec<WinningConfigState> = vec![];
     let mut winning_item_count: u8 = 0;
+    let mut any_with_more_than_one = false;
     for winning_config in &auction_manager_settings.winning_configs {
         let mut winning_config_state_items = vec![];
         let mut safety_deposit_box_found_lookup: Vec<bool> = vec![];
         for _ in 0..vault.token_type_count {
             safety_deposit_box_found_lookup.push(false)
+        }
+        if winning_config.items.len() > 1 {
+            any_with_more_than_one = true;
         }
         for item in &winning_config.items {
             // If this blows then they have more than 255 total items which is unacceptable in current impl
@@ -166,6 +170,7 @@ pub fn process_init_auction_manager(
     auction_manager.accept_payment = *accept_payment_info.key;
     auction_manager.state.winning_config_items_validated = 0;
     auction_manager.state.winning_config_states = winning_config_states;
+    auction_manager.straight_shot_optimization = !any_with_more_than_one;
 
     if auction_manager.settings.participation_config.is_some() {
         auction_manager.state.participation_state = Some(ParticipationState {

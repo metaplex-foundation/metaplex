@@ -431,6 +431,8 @@ pub fn calculate_edition_number(
                 edit
             } else {
                 me_supply
+                    .checked_add(1)
+                    .ok_or(MetadataError::NumericalOverflowError)?
             }
         }
     };
@@ -949,7 +951,7 @@ pub fn process_mint_new_edition_from_master_edition_via_token_logic<'a>(
     let mut edition_marker = EditionMarker::from_account_info(edition_marker_info)?;
     edition_marker.key = Key::EditionMarker;
     if edition_marker.edition_taken(edition)? {
-        return Err(MetadataError::InvalidEditionKey.into());
+        return Err(MetadataError::AlreadyInitialized.into());
     } else {
         edition_marker.insert_edition(edition)?
     }

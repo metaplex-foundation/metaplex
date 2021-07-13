@@ -9,7 +9,7 @@ use {
         },
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
-    borsh::{BorshDeserialize, BorshSerialize},
+    borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
         borsh::try_from_slice_unchecked,
@@ -350,7 +350,6 @@ pub fn transfer_mint_authority<'a>(
 pub struct CommonRedeemReturn {
     pub redemption_bump_seed: u8,
     pub auction_manager: AuctionManager,
-    pub auction: AuctionData,
     pub cancelled: bool,
     pub rent: Rent,
     pub win_index: Option<usize>,
@@ -383,12 +382,14 @@ pub struct CommonRedeemCheckArgs<'a> {
     // can continue to work.
     pub user_provided_win_index: Option<Option<usize>>,
     pub assert_bidder_signer: bool,
+    // For printing v2, the edition pda is what essentially forms a backstop for bad bidders. We do not need this additional
+    // check which isn't accurate anyway when one winning config item has an amount > 1.
+    pub ignore_bid_redeemed_item_check: bool,
 }
 
 fn calculate_win_index(
     bidder_info: &AccountInfo,
     auction_info: &AccountInfo,
-    auction: &AuctionData,
     user_provided_win_index: Option<Option<usize>>,
     overwrite_win_index: Option<usize>,
 ) -> Result<Option<usize>, ProgramError> {
@@ -400,22 +401,8 @@ fn calculate_win_index(
 
         if overwrite_win_index.is_none() {
             if let Some(up_win_index_unwrapped) = up_win_index {
-                let winner = auction.winner_at(up_win_index_unwrapped);
-                let calculated_winner =
-                    AuctionData::get_winner_at(auction_info, up_win_index_unwrapped);
-
+                let winner = AuctionData::get_winner_at(auction_info, up_win_index_unwrapped);
                 if let Some(winner_key) = winner {
-                    if let Some(other_winner_key) = calculated_winner {
-                        msg!("Compare {} to {}", winner_key, other_winner_key);
-                        let win_index = auction.is_winner(&winner_key);
-                        let other_win_index = AuctionData::get_is_winner(auction_info, &winner_key);
-
-                        msg!(
-                            "Compare win indexes {:?} and {:?}",
-                            win_index,
-                            other_win_index
-                        )
-                    }
                     if winner_key != *bidder_info.key {
                         return Err(MetaplexError::WinnerIndexMismatch.into());
                     }
@@ -432,7 +419,7 @@ fn calculate_win_index(
         win_index = up_win_index;
     } else {
         // Legacy system where we O(n) scan the bid index to find the winner index. CPU intensive.
-        win_index = auction.is_winner(bidder_info.key);
+        win_index = AuctionData::get_is_winner(auction_info, bidder_info.key);
     }
 
     // This means auctioneer is attempting to pull goods out of the system, and is attempting to set
@@ -440,7 +427,7 @@ fn calculate_win_index(
     // just checking to make sure you arent claiming from someone who won. Supersedes normal user provided
     // logic.
     if let Some(index) = overwrite_win_index {
-        let winner_at = auction.winner_at(index);
+        let winner_at = AuctionData::get_winner_at(auction_info, index);
         if winner_at.is_some() {
             return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
         } else {
@@ -475,13 +462,13 @@ pub fn common_redeem_checks(
         overwrite_win_index,
         user_provided_win_index,
         assert_bidder_signer,
+        ignore_bid_redeemed_item_check,
     } = args;
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
     let mut auction_manager: AuctionManager =
         AuctionManager::from_account_info(auction_manager_info)?;
-    let auction = AuctionData::from_account_info(auction_info)?;
     let store_data = store_info.data.borrow();
     let cancelled: bool;
 
@@ -538,7 +525,6 @@ pub fn common_redeem_checks(
     let win_index = calculate_win_index(
         bidder_info,
         auction_info,
-        &auction,
         user_provided_win_index,
         overwrite_win_index,
     )?;
@@ -565,7 +551,9 @@ pub fn common_redeem_checks(
             None => 0,
         };
         if (is_participation && participation_redeemed)
-            || (!is_participation && items_redeemed == possible_items_to_redeem as u8)
+            || (!is_participation
+                && !ignore_bid_redeemed_item_check
+                && items_redeemed == possible_items_to_redeem as u8)
         {
             return Err(MetaplexError::BidAlreadyRedeemed.into());
         }
@@ -615,7 +603,7 @@ pub fn common_redeem_checks(
         return Err(MetaplexError::AuctionManagerTokenMetadataProgramMismatch.into());
     }
 
-    if auction.state != AuctionState::Ended {
+    if AuctionData::get_state(auction_info)? != AuctionState::Ended {
         return Err(MetaplexError::AuctionHasNotEnded.into());
     }
 
@@ -625,7 +613,6 @@ pub fn common_redeem_checks(
     Ok(CommonRedeemReturn {
         redemption_bump_seed,
         auction_manager,
-        auction,
         cancelled,
         rent: *rent,
         win_index,
@@ -653,7 +640,7 @@ pub struct CommonRedeemFinishArgs<'a> {
 pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     let CommonRedeemFinishArgs {
         program_id,
-        mut auction_manager,
+        auction_manager,
         auction_manager_info,
         bidder_metadata_info,
         rent_info,
@@ -667,14 +654,6 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         winning_item_index,
         overwrite_win_index,
     } = args;
-
-    if bid_redeemed {
-        if let Some(index) = winning_index {
-            if let Some(item_index) = winning_item_index {
-                auction_manager.state.winning_config_states[index].items[item_index].claimed = true;
-            }
-        }
-    }
 
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
         let redemption_seeds = &[
@@ -718,7 +697,20 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
 
     msg!("About to pass through the eye of the needle");
     sol_log_compute_units();
-    auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
+
+    if bid_redeemed {
+        if let Some(index) = winning_index {
+            if let Some(item_index) = winning_item_index {
+                AuctionManager::set_claimed_and_status(
+                    auction_manager_info,
+                    auction_manager.state.status,
+                    index,
+                    item_index,
+                    auction_manager.straight_shot_optimization,
+                );
+            }
+        }
+    }
 
     Ok(())
 }
@@ -732,6 +724,7 @@ pub fn common_winning_config_checks(
     auction_manager: &AuctionManager,
     safety_deposit_info: &AccountInfo,
     winning_index: usize,
+    ignore_claim: bool,
 ) -> Result<CommonWinningConfigCheckReturn, ProgramError> {
     let winning_config = &auction_manager.settings.winning_configs[winning_index];
     let winning_config_state = &auction_manager.state.winning_config_states[winning_index];
@@ -756,7 +749,9 @@ pub fn common_winning_config_checks(
         None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
     };
 
-    if winning_config_state_item.claimed {
+    // For printing v2, we may call many times for different editions and the edition PDA check makes sure it cant
+    // be claimed over-much. This would be 1 time, we need n times.
+    if winning_config_state_item.claimed && !ignore_claim {
         return Err(MetaplexError::PrizeAlreadyClaimed.into());
     }
 

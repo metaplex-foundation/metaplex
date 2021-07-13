@@ -52,7 +52,6 @@ pub fn process_full_rights_transfer_bid<'a>(
         auction_manager,
         redemption_bump_seed,
         cancelled,
-        auction: _a,
         rent: _rent,
         win_index,
         token_metadata_program,
@@ -76,6 +75,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         user_provided_win_index: None,
         overwrite_win_index,
         assert_bidder_signer: true,
+        ignore_bid_redeemed_item_check: false,
     })?;
 
     assert_owned_by(metadata_info, &token_metadata_program)?;
@@ -91,6 +91,7 @@ pub fn process_full_rights_transfer_bid<'a>(
                     &auction_manager,
                     &safety_deposit_info,
                     winning_index,
+                    false,
                 )?;
 
                 winning_item_index = wii;

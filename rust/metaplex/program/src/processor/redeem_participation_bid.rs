@@ -79,8 +79,8 @@ fn v2_validation<'a>(
     bidder_info: &AccountInfo<'a>,
     master_edition_account_info: &AccountInfo<'a>,
     destination_info: &AccountInfo<'a>,
+    auction_info: &AccountInfo<'a>,
     config: &ParticipationConfig,
-    auction: &AuctionData,
     accounts: &V2Accounts<'a>,
 ) -> ProgramResult {
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
@@ -109,12 +109,13 @@ fn v2_validation<'a>(
     )?;
 
     let mut amount_to_mint = extended.total_uncancelled_bids;
+    let num_winners = AuctionData::get_num_winners(auction_info) as u64;
     if config.winner_constraint == WinningConstraint::NoParticipationPrize {
         amount_to_mint = amount_to_mint
-            .checked_sub(auction.num_winners())
+            .checked_sub(num_winners)
             .ok_or(MetaplexError::NumericalOverflowError)?;
     } else if config.non_winning_constraint == NonWinningConstraint::NoParticipationPrize {
-        amount_to_mint = auction.num_winners();
+        amount_to_mint = num_winners
     }
 
     create_or_update_prize_tracking(
@@ -300,7 +301,6 @@ pub fn process_redeem_participation_bid<'a>(
         mut auction_manager,
         redemption_bump_seed,
         cancelled,
-        auction,
         rent: _rent,
         win_index,
         token_metadata_program: _t,
@@ -324,6 +324,7 @@ pub fn process_redeem_participation_bid<'a>(
         user_provided_win_index: Some(None),
         overwrite_win_index: None,
         assert_bidder_signer: true,
+        ignore_bid_redeemed_item_check: false,
     })?;
 
     let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
@@ -340,7 +341,7 @@ pub fn process_redeem_participation_bid<'a>(
 
     let bidder_token: Account = assert_initialized(bidder_token_account_info)?;
 
-    if bidder_token.mint != auction.token_mint {
+    if bidder_token.mint != AuctionData::get_token_mint(auction_info) {
         return Err(MetaplexError::AcceptPaymentMintMismatch.into());
     }
 
@@ -352,7 +353,7 @@ pub fn process_redeem_participation_bid<'a>(
         config.non_winning_constraint != NonWinningConstraint::NoParticipationPrize;
 
     if !cancelled {
-        if let Some(winning_index) = auction.is_winner(bidder_info.key) {
+        if let Some(winning_index) = AuctionData::get_is_winner(auction_info, bidder_info.key) {
             if winning_index < auction_manager.settings.winning_configs.len() {
                 // Okay, so they placed in the auction winning prizes section!
                 gets_participation =
@@ -398,8 +399,8 @@ pub fn process_redeem_participation_bid<'a>(
                 bidder_info,
                 accounts.master_edition_account_info,
                 destination_info,
+                auction_info,
                 &config,
-                &auction,
                 &accounts,
             )?;
 
