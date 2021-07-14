@@ -6,11 +6,9 @@ export const ArtistAlleyForm = () => {
   const { TextArea } = Input;
 
   const onFinish = (values: any) => {
-    console.log('Received values of form: ', values);
   };
 
   const handleFile = (e: any) => {
-    console.log('Upload event:', e);
     if (Array.isArray(e)) {
       return e;
     }
@@ -51,8 +49,8 @@ export const ArtistAlleyForm = () => {
         </Form.Item>
 
         <Form.Item label='Upload artwork (optional)'>
-          <Form.Item name='dragger' valuePropName='fileList' getValueFromEvent={ handleFile } className='dragger'>
-            <Upload.Dragger name='files' action='/upload.do' >
+          <Form.Item name='dragger' valuePropName='fileList' getValueFromEvent={ handleFile } className='dragger-container'>
+            <Upload.Dragger name='files' action='/upload.do' className='dragger'>
               <p className='ant-upload-text'>Upload files here</p>
               <p className='ant-upload-hint'>Drag and drop, or click to browse</p>
             </Upload.Dragger>
