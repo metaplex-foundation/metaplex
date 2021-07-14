@@ -35,6 +35,10 @@ export const ArtistAlleyForm = () => {
         <Form.Item
           name='email'
           label='Your Email Address'
+          rules={[{
+            type: 'email',
+            message: 'This is not a valid email'
+          }]}
         >
           <Input placeholder='name@email.com' className='input-content'/>
         </Form.Item>
@@ -58,6 +62,13 @@ export const ArtistAlleyForm = () => {
         <Form.Item
           name='message'
           label='Anything else to add?'
+          rules={[
+            {
+              pattern: /^[a-zA-Z_0-9]{0,50}$/,
+              message: "Max 500 characters",
+            },
+          ]}
+
         >
           <TextArea rows={4} placeholder='Max 500 characters' className='input-content'/>
         </Form.Item>
