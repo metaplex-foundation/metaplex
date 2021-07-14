@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardProps } from 'antd';
-import { formatTokenAmount, CountdownState, PriceFloorType, fromLamports, useMint } from '@oyster/common';
+import {
+  formatTokenAmount,
+  CountdownState,
+  PriceFloorType,
+  fromLamports,
+  useMint,
+} from '@oyster/common';
 import { ArtContent } from '../ArtContent';
-import './index.less';
-import { AuctionView, AuctionViewState, useArt, useBidsForAuction } from '../../hooks';
+import {
+  AuctionView,
+  AuctionViewState,
+  useArt,
+  useBidsForAuction,
+} from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
 
@@ -38,20 +48,20 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
   let currentBid: number | string = 0;
   let label = '';
-  if(isUpcoming || bids) {
+  if (isUpcoming || bids) {
     label = ended ? 'Ended' : 'Starting bid';
     currentBid = fromLamports(
       participationOnly ? participationFixedPrice : priceFloor,
       mintInfo,
-    )
+    );
   }
 
   if (!isUpcoming && bids.length > 0) {
     label = ended ? 'Winning bid' : 'Current bid';
-    currentBid = winningBid &&
-      Number.isFinite(winningBid.info.lastBid?.toNumber())
+    currentBid =
+      winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber())
         ? formatTokenAmount(winningBid.info.lastBid)
-        : 'No Bid'
+        : 'No Bid';
   }
 
   const auction = auctionView.auction.info;
@@ -77,9 +87,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           <ArtContent
             className="auction-image no-events"
             preview={false}
-
             pubkey={id}
-
             allowMeshRender={false}
           />
         </>
@@ -89,9 +97,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         title={`${name}`}
         description={
           <>
-            <h4 style={{ marginBottom: 0 }}>
-              {label}
-            </h4>
+            <h4 style={{ marginBottom: 0 }}>{label}</h4>
             <div className="bids">
               <AmountLabel
                 style={{ marginBottom: 10 }}

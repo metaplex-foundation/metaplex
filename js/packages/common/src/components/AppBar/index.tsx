@@ -6,7 +6,6 @@ import { Settings } from '../Settings';
 import { LABELS } from '../../constants/labels';
 import { ConnectButton } from '..';
 import { useWallet } from '../../contexts/wallet';
-import './style.css';
 export const AppBar = (props: {
   left?: JSX.Element;
   right?: JSX.Element;
@@ -18,11 +17,9 @@ export const AppBar = (props: {
   const TopBar = (
     <div className="App-Bar-right">
       {props.left}
-      {connected ?
-        (
-          <CurrentUserBadge />
-        )
-     : (
+      {connected ? (
+        <CurrentUserBadge />
+      ) : (
         <ConnectButton
           type="text"
           size="large"

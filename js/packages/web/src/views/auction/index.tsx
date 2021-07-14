@@ -13,7 +13,6 @@ import {
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
 
-import './index.less';
 import {
   formatTokenAmount,
   Identicon,
@@ -81,8 +80,7 @@ export const AuctionView = () => {
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
-
-  const hasDescription = data === undefined || data.description === undefined
+  const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
 
   const items = [
@@ -115,7 +113,6 @@ export const AuctionView = () => {
       <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
-
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
@@ -124,17 +121,30 @@ export const AuctionView = () => {
             </Carousel>
           </div>
           <h6>Number Of Winners</h6>
-          <h1>{winnerCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : winnerCount}</h1>
+          <h1>
+            {winnerCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              winnerCount
+            )}
+          </h1>
           <h6>Number Of NFTs</h6>
-          <h1>{nftCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : nftCount}</h1>
+          <h1>
+            {nftCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              nftCount
+            )}
+          </h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
           <p>
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description || (
-              winnerCount !== undefined && <div style={{ fontStyle: 'italic' }}>
-                No description provided.
-              </div>
-            )}
+            {description ||
+              (winnerCount !== undefined && (
+                <div style={{ fontStyle: 'italic' }}>
+                  No description provided.
+                </div>
+              ))}
           </p>
           {/* {auctionData[id] && (
             <>
@@ -145,7 +155,9 @@ export const AuctionView = () => {
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
+          <h2 className="art-title">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
               <h6>Edition</h6>
@@ -248,7 +260,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
         <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-        ◎{formatTokenAmount(bid.info.lastBid, mint)}
+          ◎{formatTokenAmount(bid.info.lastBid, mint)}
         </span>
       </Col>
     </Row>

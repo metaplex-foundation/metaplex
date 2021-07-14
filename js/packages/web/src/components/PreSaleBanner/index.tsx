@@ -1,7 +1,6 @@
 import React from 'react';
 import { Col, Row, Button, Skeleton } from 'antd';
 
-import './index.less';
 import { AuctionView, useArt } from '../../hooks';
 import { ArtContent } from '../ArtContent';
 import { AuctionCard } from '../AuctionCard';
@@ -31,33 +30,33 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
         />
       </Col>
       <Col md={12} className="presale-info">
-        <h2 className="art-title">
-          {art.title}
-        </h2>
-        {auction && <AuctionCard
-          auctionView={auction}
-          style={{
-            background: 'transparent',
-            width: '100%',
-            padding: 0,
-            margin: 0,
-          }}
-          hideDefaultAction={true}
-          action={
-            <>
-              <Link to={`/auction/${auction.auction.pubkey.toBase58()}`}>
-                <Button
-                  type="primary"
-                  size="large"
-                  className="action-btn"
-                  style={{ maxWidth: 290 }}
-                >
-                  Go to auction
-                </Button>
-              </Link>
-            </>
-          }
-        />}
+        <h2 className="art-title">{art.title}</h2>
+        {auction && (
+          <AuctionCard
+            auctionView={auction}
+            style={{
+              background: 'transparent',
+              width: '100%',
+              padding: 0,
+              margin: 0,
+            }}
+            hideDefaultAction={true}
+            action={
+              <>
+                <Link to={`/auction/${auction.auction.pubkey.toBase58()}`}>
+                  <Button
+                    type="primary"
+                    size="large"
+                    className="action-btn"
+                    style={{ maxWidth: 290 }}
+                  >
+                    Go to auction
+                  </Button>
+                </Link>
+              </>
+            }
+          />
+        )}
       </Col>
     </Row>
   );
