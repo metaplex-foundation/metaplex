@@ -19,11 +19,14 @@ export const AppLayout = React.memo((props: any) => {
         id={'main-layout'}
         title={LABELS.APP_TITLE}
       >
-        <span id={'main-bg'}></span>
+        <div id={'main-bg'}></div>
         <Header className="App-Bar">
           <AppBar />
         </Header>
-        <Content style={{ overflow: 'scroll', paddingBottom: 50 }}>
+        <Content style={{
+          overflow: "scroll",
+          padding: "30px 2vw",
+        }}>
           {props.children}
         </Content>
       </Layout>

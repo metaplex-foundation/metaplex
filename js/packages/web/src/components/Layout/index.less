@@ -10,27 +10,26 @@
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-left: 10px;
+  margin-left: 15px;
 }
+
 .app-right {
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-right: 10px;
+  margin-right: 15px;
 }
 
-section#main-layout.ant-layout {
-  span#main-bg{
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    background-color: @black-100 !important;
-    background-position: top right !important;
-    background-size: 100% 90% !important;
-    background-repeat: no-repeat !important;
-    filter: blur(220px);
-    background-image: url("/main-banner.svg") !important;
-  }
+
+div#main-bg{
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background-position: center -50vh;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(100px) brightness(3);
+  height: 100vh;
 }

@@ -102,7 +102,7 @@ export const HomeView = () => {
   const CURRENT_STORE = programIds().store;
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
+    <Layout style={{ margin: 0, alignItems: 'center' }}>
       {!store && !isLoading && (
         <>
           {!CURRENT_STORE && (
