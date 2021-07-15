@@ -32,11 +32,7 @@ import {
   PriceFloorType,
   IPartialCreateAuctionArgs,
 } from '@oyster/common';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
@@ -312,24 +308,22 @@ export const AuctionCreateView = () => {
 
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
-      endAuctionAt: new BN((attributes.auctionDuration || 0) * (
-        attributes.auctionDurationType == "days"
-        ? (60 * 60 * 24) // 1 day in seconds
-        : (
-          attributes.auctionDurationType == "hours"
-          ? (60 * 60) // 1 hour in seconds
-          : 60 // 1 minute in seconds
-        )
-      )), // endAuctionAt is actually auction duration, poorly named, in seconds
-      auctionGap: new BN((attributes.gapTime || 0) * (
-        attributes.gapTimeType == "days"
-        ? (60 * 60 * 24) // 1 day in seconds
-        : (
-          attributes.gapTimeType == "hours"
-          ? (60 * 60) // 1 hour in seconds
-          : 60 // 1 minute in seconds
-        )
-      )),
+      endAuctionAt: new BN(
+        (attributes.auctionDuration || 0) *
+          (attributes.auctionDurationType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.auctionDurationType == 'hours'
+            ? 60 * 60 // 1 hour in seconds
+            : 60), // 1 minute in seconds
+      ), // endAuctionAt is actually auction duration, poorly named, in seconds
+      auctionGap: new BN(
+        (attributes.gapTime || 0) *
+          (attributes.gapTimeType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.gapTimeType == 'hours'
+            ? 60 * 60 // 1 hour in seconds
+            : 60), // 1 minute in seconds
+      ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -1162,21 +1156,21 @@ const EndingPhaseAuction = (props: {
               This is how long the auction will last for.
             </span>
             <Input
-              addonAfter={(
-                <Select 
-                  defaultValue={props.attributes.auctionDurationType} 
-                  onChange={
-                    value =>
-                      props.setAttributes({
-                        ...props.attributes,
-                        auctionDurationType: value,
-                      })
-                  }>
+              addonAfter={
+                <Select
+                  defaultValue={props.attributes.auctionDurationType}
+                  onChange={value =>
+                    props.setAttributes({
+                      ...props.attributes,
+                      auctionDurationType: value,
+                    })
+                  }
+                >
                   <Option value="minutes">Minutes</Option>
                   <Option value="hours">Hours</Option>
                   <Option value="days">Days</Option>
                 </Select>
-              )}
+              }
               autoFocus
               type="number"
               className="input"
@@ -1198,21 +1192,21 @@ const EndingPhaseAuction = (props: {
               will extend the end time by this same duration.
             </span>
             <Input
-              addonAfter={(
-                <Select 
+              addonAfter={
+                <Select
                   defaultValue={props.attributes.gapTimeType}
-                  onChange={
-                    value => 
-                      props.setAttributes({
-                        ...props.attributes,
-                        gapTimeType: value,
-                      })
-                  }>
+                  onChange={value =>
+                    props.setAttributes({
+                      ...props.attributes,
+                      gapTimeType: value,
+                    })
+                  }
+                >
                   <Option value="minutes">Minutes</Option>
                   <Option value="hours">Hours</Option>
                   <Option value="days">Days</Option>
                 </Select>
-              )}
+              }
               type="number"
               className="input"
               placeholder="Set the gap time"

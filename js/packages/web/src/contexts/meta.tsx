@@ -270,7 +270,6 @@ export function MetaProvider({ children = null as any }) {
 
           tempCache.metadata.push(metadata);
         } else {
-
           delete tempCache.metadataByMint[metadata.info.mint.toBase58() || ''];
         }
       }

@@ -81,11 +81,9 @@ export const ArtCard = (props: ArtCardProps) => {
           )}
           <ArtContent
             pubkey={pubkey}
-
             uri={image}
             animationURL={animationURL}
             category={category}
-
             preview={preview}
             height={height}
             width={width}
@@ -94,7 +92,7 @@ export const ArtCard = (props: ArtCardProps) => {
       }
       {...rest}
     >
-     <Meta
+      <Meta
         title={`${name}`}
         description={
           <>

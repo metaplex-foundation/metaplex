@@ -1,3 +1,5 @@
+@import "_colors";
+
 .metamask-icon {
   background-position: 50%;
   background-repeat: no-repeat;
@@ -15,4 +17,20 @@
   display: flex;
   flex-direction: row;
   margin-right: 10px;
+}
+
+section#main-layout.ant-layout {
+  span#main-bg{
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background-color: @black-100 !important;
+    background-position: top right !important;
+    background-size: 100% 90% !important;
+    background-repeat: no-repeat !important;
+    filter: blur(220px);
+    background-image: url("/main-banner.svg") !important;
+  }
 }

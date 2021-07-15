@@ -14,6 +14,7 @@ import BN from 'bn.js';
 import { programIds, useConnection, useWallet } from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
+import { Banner } from '../../components/Banner';
 
 const { TabPane } = Tabs;
 
@@ -44,8 +45,12 @@ export const HomeView = () => {
     [auctions],
   );
 
-  const liveAuctions = auctions
-  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0);
+  const liveAuctions = auctions.sort(
+    (a, b) =>
+      a.auction.info.endedAt
+        ?.sub(b.auction.info.endedAt || new BN(0))
+        .toNumber() || 0,
+  );
 
   const liveAuctionsView = (
     <Masonry
@@ -55,17 +60,17 @@ export const HomeView = () => {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-              if (m === heroAuction) {
-                return;
-              }
+            if (m === heroAuction) {
+              return;
+            }
 
-              const id = m.auction.pubkey.toBase58();
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -98,50 +103,82 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {!store && !isLoading && <>
-        {!CURRENT_STORE && <p>Store has not been configured please set <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet inside <em>packages/web/.env</em> and restart yarn</p>}
-        {CURRENT_STORE && !wallet?.publicKey && <p><Button type="primary" className="app-btn" onClick={connect}>Connect</Button> to configure store.</p>}
-        {CURRENT_STORE && wallet?.publicKey && <>
-          <p>Initializing store will allow you to control list of creators.</p>
+      {!store && !isLoading && (
+        <>
+          {!CURRENT_STORE && (
+            <p>
+              Store has not been configured please set{' '}
+              <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet
+              inside <em>packages/web/.env</em> and restart yarn
+            </p>
+          )}
+          {CURRENT_STORE && !wallet?.publicKey && (
+            <p>
+              <Button type="primary" className="app-btn" onClick={connect}>
+                Connect
+              </Button>{' '}
+              to configure store.
+            </p>
+          )}
+          {CURRENT_STORE && wallet?.publicKey && (
+            <>
+              <p>
+                Initializing store will allow you to control list of creators.
+              </p>
 
-          <Button className="app-btn" type="primary" loading={isInitalizingStore} disabled={!CURRENT_STORE} onClick={async () => {
-            if(!wallet?.publicKey) {
-              return;
-            }
+              <Button
+                className="app-btn"
+                type="primary"
+                loading={isInitalizingStore}
+                disabled={!CURRENT_STORE}
+                onClick={async () => {
+                  if (!wallet?.publicKey) {
+                    return;
+                  }
 
-            setIsInitalizingStore(true);
+                  setIsInitalizingStore(true);
 
-            await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
-              address: wallet?.publicKey,
-              activated: true,
-            })]);
+                  await saveAdmin(connection, wallet, false, [
+                    new WhitelistedCreator({
+                      address: wallet?.publicKey,
+                      activated: true,
+                    }),
+                  ]);
 
-            history.push('/admin');
+                  history.push('/admin');
 
-            window.location.reload();
-          }}>Init Store</Button>
-        </>}
-      </>}
-      <PreSaleBanner auction={heroAuction} />
+                  window.location.reload();
+                }}
+              >
+                Init Store
+              </Button>
+            </>
+          )}
+        </>
+      )}
+      {/* <PreSaleBanner auction={heroAuction} /> */}
+      <Banner src={'/main-banner.svg'} />
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length > 1 && (<Row>
-              <Tabs>
-                <TabPane>
-                  <h2>Live Auctions</h2>
-                  {liveAuctionsView}
-                </TabPane>
-              </Tabs>
-            </Row>)}
+            {liveAuctions.length > 1 && (
+              <Row>
+                <Tabs>
+                  <TabPane>
+                    <h2>Live Auctions</h2>
+                    {liveAuctionsView}
+                  </TabPane>
+                </Tabs>
+              </Row>
+            )}
             <Row>
               {auctionsEnded.length > 0 && (
-              <Tabs>
-                <TabPane>
-                  <h2>Ended Auctions</h2>
-                  {endedAuctions}
-                </TabPane>
-              </Tabs>
+                <Tabs>
+                  <TabPane>
+                    <h2>Ended Auctions</h2>
+                    {endedAuctions}
+                  </TabPane>
+                </Tabs>
               )}
               <br />
             </Row>

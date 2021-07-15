@@ -9,20 +9,17 @@ import { AppBar } from '../AppBar';
 
 const { Header, Content } = Layout;
 
-// const paddingForLayout = (width: number) => {
-//   if (width <= 768) return "5px 10px"
-//   if (width > 768) return "10px 30px"
-// }
 
 export const AppLayout = React.memo((props: any) => {
   // const { width } = useWindowDimensions();
 
   return (
     <>
-      <Layout title={LABELS.APP_TITLE} style={{
-        // padding: paddingForLayout(width),
-        maxWidth: 1000,
-      }}>
+      <Layout
+        id={'main-layout'}
+        title={LABELS.APP_TITLE}
+      >
+        <span id={'main-bg'}></span>
         <Header className="App-Bar">
           <AppBar />
         </Header>
