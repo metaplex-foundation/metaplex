@@ -3,6 +3,7 @@ import {
   Connection,
   PublicKey,
   TransactionInstruction,
+  AccountInfo,
 } from '@solana/web3.js';
 import {
   actions,
@@ -27,6 +28,7 @@ import {
   MetadataKey,
   TokenAccountParser,
   BidderMetadata,
+  getEditionMarkPda,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -457,6 +459,7 @@ async function createMintAndAccountWithOne(
 }
 
 export async function setupRedeemPrintingV2Instructions(
+  connection: Connection,
   auctionView: AuctionView,
   mintRentExempt: number,
   wallet: any,
@@ -475,9 +478,6 @@ export async function setupRedeemPrintingV2Instructions(
   }
   if (!stateItem.claimed) {
     const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
-
-    let myInstructions: TransactionInstruction[] = [];
-    let mySigners: Keypair[] = [];
 
     const myPrizeTrackingTicketKey = await getPrizeTrackingTicket(
       auctionView.auctionManager.pubkey,
@@ -506,47 +506,65 @@ export async function setupRedeemPrintingV2Instructions(
         }),
     );
 
-    const { mint, account } = await createMintAndAccountWithOne(
-      wallet,
-      receiverWallet,
-      mintRentExempt,
-      myInstructions,
-      mySigners,
-    );
+    for (let i = 0; i < winningConfigItem.amount; i++) {
+      let myInstructions: TransactionInstruction[] = [];
+      let mySigners: Keypair[] = [];
 
-    const winIndex =
-      auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
+      const { mint, account } = await createMintAndAccountWithOne(
+        wallet,
+        receiverWallet,
+        mintRentExempt,
+        myInstructions,
+        mySigners,
+      );
 
-    await redeemPrintingV2Bid(
-      auctionView.vault.pubkey,
-      safetyDeposit.info.store,
-      account,
-      safetyDeposit.pubkey,
-      auctionView.vault.info.fractionMint,
-      receiverWallet,
-      wallet.publicKey,
-      item.metadata.pubkey,
-      me.pubkey,
-      item.metadata.info.mint,
-      mint,
-      editionBase.add(new BN(offset)),
-      new BN(offset),
-      new BN(winIndex),
-      myInstructions,
-    );
+      const winIndex =
+        auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
 
-    const metadata = await getMetadata(mint);
+      const desiredEdition = editionBase.add(new BN(offset + i));
+      const editionMarkPda = await getEditionMarkPda(
+        item.metadata.info.mint,
+        desiredEdition,
+      );
 
-    if (wallet.publicKey.equals(receiverWallet)) {
-      await updatePrimarySaleHappenedViaToken(
-        metadata,
-        wallet.publicKey,
+      let editionData: AccountInfo<Buffer>;
+      try {
+        const editionData = await connection.getAccountInfo(editionMarkPda);
+      } catch (e) {
+        console.error(e);
+      }
+
+      await redeemPrintingV2Bid(
+        auctionView.vault.pubkey,
+        safetyDeposit.info.store,
         account,
+        safetyDeposit.pubkey,
+        auctionView.vault.info.fractionMint,
+        receiverWallet,
+        wallet.publicKey,
+        item.metadata.pubkey,
+        me.pubkey,
+        item.metadata.info.mint,
+        mint,
+        desiredEdition,
+        new BN(offset + i),
+        new BN(winIndex),
         myInstructions,
       );
+
+      const metadata = await getMetadata(mint);
+
+      if (wallet.publicKey.equals(receiverWallet)) {
+        await updatePrimarySaleHappenedViaToken(
+          metadata,
+          wallet.publicKey,
+          account,
+          myInstructions,
+        );
+      }
+      instructions.push(myInstructions);
+      signers.push(mySigners);
     }
-    instructions.push(myInstructions);
-    signers.push(mySigners);
   } else {
     console.log('Item is already claimed!', item.metadata.info.mint.toBase58());
   }
