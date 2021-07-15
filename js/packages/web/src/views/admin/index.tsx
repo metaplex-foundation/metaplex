@@ -98,7 +98,12 @@ function ArtistModal({
           onChange={e => setModalAddress(e.target.value)}
         />
       </Modal>
-      <Button onClick={() => setModalOpen(true)}>Add Creator</Button>
+      <Button
+        className="add-creator-button"
+        onClick={() => setModalOpen(true)}
+      >
+        Add Creator
+      </Button>
     </>
   );
 }
