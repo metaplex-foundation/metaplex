@@ -182,7 +182,11 @@ export async function redeemPrintingV2Bid(
       isWritable: true,
     },
     {
-      pubkey: bidder,
+      // Mint authority (this) is going to be the payer since the bidder
+      // may not be signer hre - we may be redeeming for someone else (permissionless)
+      // and during the txn, mint authority is removed from us and given to master edition.
+      // The ATA account is already owned by bidder by default. No signing needed
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },

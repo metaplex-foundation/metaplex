@@ -123,6 +123,11 @@ pub fn process_init_auction_manager(
                 .checked_add(1)
                 .ok_or(MetaplexError::NumericalOverflowError)?;
 
+            // Check if index referenced exists
+            if item.safety_deposit_box_index as usize >= safety_deposit_box_found_lookup.len() {
+                return Err(MetaplexError::InvalidWinningConfigSafetyDepositIndex.into());
+            }
+
             // Should never have same deposit index appear twice in one config.
             let lookup = safety_deposit_box_found_lookup[item.safety_deposit_box_index as usize];
             if lookup {

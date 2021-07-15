@@ -21,7 +21,6 @@ export const MAX_URI_LENGTH = 200;
 export const MAX_CREATOR_LIMIT = 5;
 
 export const MAX_CREATOR_LEN = 32 + 1 + 1;
-
 export const MAX_METADATA_LEN =
   1 +
   32 +
@@ -30,9 +29,12 @@ export const MAX_METADATA_LEN =
   MAX_SYMBOL_LENGTH +
   MAX_URI_LENGTH +
   MAX_CREATOR_LIMIT * MAX_CREATOR_LEN +
+  2 +
   1 +
   1 +
-  200;
+  198;
+
+export const MAX_EDITION_LEN = 1 + 32 + 8 + 200;
 
 export enum MetadataKey {
   Uninitialized = 0,

@@ -21,7 +21,8 @@ export * from './withdrawMasterEdition';
 
 export const METAPLEX_PREFIX = 'metaplex';
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
-
+export const MAX_BID_REDEMPTION_TICKET_SIZE = 3;
+export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export enum MetaplexKey {
   Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
@@ -766,6 +767,24 @@ export async function getAuctionKeys(
   return { auctionKey, auctionManagerKey };
 }
 
+export async function getBidRedemption(
+  auctionKey: PublicKey,
+  bidMetadata: PublicKey,
+): Promise<PublicKey> {
+  const PROGRAM_IDS = programIds();
+
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        auctionKey.toBuffer(),
+        bidMetadata.toBuffer(),
+      ],
+      PROGRAM_IDS.metaplex,
+    )
+  )[0];
+}
+
 export async function getBidderKeys(
   auctionKey: PublicKey,
   bidder: PublicKey,
@@ -785,16 +804,10 @@ export async function getBidderKeys(
     )
   )[0];
 
-  const bidRedemption: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(METAPLEX_PREFIX),
-        auctionKey.toBuffer(),
-        bidMetadata.toBuffer(),
-      ],
-      PROGRAM_IDS.metaplex,
-    )
-  )[0];
+  const bidRedemption: PublicKey = await getBidRedemption(
+    auctionKey,
+    bidMetadata,
+  );
 
   return { bidMetadata, bidRedemption };
 }

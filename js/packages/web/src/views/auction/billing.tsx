@@ -247,7 +247,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   // Uncancelled bids or bids that were cancelled for refunds but only after redeemed
   // for participation
   const usableBids = bids.filter(
-    b =>
+    b => 
       !b.info.cancelled ||
       bidRedemptions[
         participationBidRedemptionKeys[b.pubkey.toBase58()]?.toBase58()

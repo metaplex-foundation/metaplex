@@ -234,6 +234,15 @@ pub fn get_mint_authority(account_info: &AccountInfo) -> Result<COption<Pubkey>,
     Ok(unpack_coption_key(&authority_bytes)?)
 }
 
+pub fn get_mint_freeze_authority(
+    account_info: &AccountInfo,
+) -> Result<COption<Pubkey>, ProgramError> {
+    let data = account_info.try_borrow_data().unwrap();
+    let authority_bytes = array_ref![data, 36 + 8 + 1 + 1, 36];
+
+    Ok(unpack_coption_key(&authority_bytes)?)
+}
+
 /// cheap method to just get supply off a mint without unpacking whole object
 pub fn get_mint_supply(account_info: &AccountInfo) -> Result<u64, ProgramError> {
     // In token program, 36, 8, 1, 1 is the layout, where the first 8 is supply u64.
@@ -316,20 +325,26 @@ pub fn transfer_mint_authority<'a>(
         &[],
     )?;
     msg!("Setting freeze authority");
-    invoke_signed(
-        &set_authority(
-            token_program_info.key,
-            mint_info.key,
-            Some(&edition_key),
-            AuthorityType::FreezeAccount,
-            mint_authority_info.key,
-            &[&mint_authority_info.key],
-        )
-        .unwrap(),
-        accounts,
-        &[],
-    )?;
-    msg!("Finished setting freeze authority");
+    let freeze_authority = get_mint_freeze_authority(mint_info)?;
+    if freeze_authority.is_some() {
+        invoke_signed(
+            &set_authority(
+                token_program_info.key,
+                mint_info.key,
+                Some(&edition_key),
+                AuthorityType::FreezeAccount,
+                mint_authority_info.key,
+                &[&mint_authority_info.key],
+            )
+            .unwrap(),
+            accounts,
+            &[],
+        )?;
+        msg!("Finished setting freeze authority");
+    } else {
+        msg!("Skipping freeze authority because this mint has none")
+    }
+
     Ok(())
 }
 

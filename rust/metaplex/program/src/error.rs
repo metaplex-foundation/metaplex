@@ -405,7 +405,11 @@ pub enum MetaplexError {
 
     /// You are not the winner at this index
     #[error("You are not the winner at this index")]
-    WinnerIndexMismatch
+    WinnerIndexMismatch,
+
+    /// You supplied a safety deposit index in a winning configuration that does not exist
+    #[error("You supplied a safety deposit index in a winning configuration that does not exist")]
+    InvalidWinningConfigSafetyDepositIndex,
 }
 
 impl PrintProgramError for MetaplexError {

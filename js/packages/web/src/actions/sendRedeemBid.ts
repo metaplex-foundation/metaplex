@@ -26,6 +26,7 @@ import {
   deprecatedMintNewEditionFromMasterEditionViaPrintingToken,
   MetadataKey,
   TokenAccountParser,
+  BidderMetadata,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -43,6 +44,8 @@ import {
   redeemPrintingV2Bid,
   PrizeTrackingTicket,
   getPrizeTrackingTicket,
+  BidRedemptionTicket,
+  getBidRedemption,
 } from '../models/metaplex';
 import { claimBid } from '../models/metaplex/claimBid';
 import { setupCancelBid } from './cancelBid';
@@ -57,11 +60,10 @@ const { approve } = models;
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
   auctionView: AuctionView,
+  bidderMetadata: ParsedAccount<BidderMetadata> | undefined,
+  bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined,
 ) {
-  if (
-    !auctionView.myBidderMetadata ||
-    auctionView.myBidRedemption?.info.participationRedeemed
-  )
+  if (!bidderMetadata || bidRedemption?.info.participationRedeemed)
     return false;
   return (
     (winnerIndex === null &&
@@ -80,6 +82,8 @@ export async function sendRedeemBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
+  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
+  bids: ParsedAccount<BidderMetadata>[],
 ) {
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
@@ -158,6 +162,7 @@ export async function sendRedeemBid(
                 auctionView,
                 mintRentExempt,
                 wallet,
+                wallet.publicKey,
                 safetyDeposit,
                 item,
                 signers,
@@ -229,7 +234,12 @@ export async function sendRedeemBid(
 
   if (
     auctionView.participationItem &&
-    eligibleForParticipationPrizeGivenWinningIndex(winnerIndex, auctionView)
+    eligibleForParticipationPrizeGivenWinningIndex(
+      winnerIndex,
+      auctionView,
+      auctionView.myBidderMetadata,
+      auctionView.myBidRedemption,
+    )
   ) {
     console.log('eligible for participation');
     const item = auctionView.participationItem;
@@ -255,7 +265,10 @@ export async function sendRedeemBid(
         accountRentExempt,
         mintRentExempt,
         wallet,
+        wallet.publicKey,
         safetyDeposit,
+        auctionView.myBidRedemption,
+        auctionView.myBidderMetadata,
         item,
         signers,
         instructions,
@@ -269,6 +282,9 @@ export async function sendRedeemBid(
       wallet,
       auctionView,
       accountsByMint,
+      bids,
+      bidRedemptions,
+      prizeTrackingTickets,
       signers,
       instructions,
     );
@@ -390,6 +406,7 @@ async function setupRedeemFullRightsTransferInstructions(
 
 async function createMintAndAccountWithOne(
   wallet: any,
+  receiverWallet: PublicKey,
   mintRent: any,
   instructions: TransactionInstruction[],
   signers: Keypair[],
@@ -409,7 +426,7 @@ async function createMintAndAccountWithOne(
   const account: PublicKey = (
     await findProgramAddress(
       [
-        wallet.publicKey.toBuffer(),
+        receiverWallet.toBuffer(),
         PROGRAM_IDS.token.toBuffer(),
         mint.toBuffer(),
       ],
@@ -421,7 +438,7 @@ async function createMintAndAccountWithOne(
     instructions,
     account,
     wallet.publicKey,
-    wallet.publicKey,
+    receiverWallet,
     mint,
   );
 
@@ -439,10 +456,11 @@ async function createMintAndAccountWithOne(
   return { mint, account };
 }
 
-async function setupRedeemPrintingV2Instructions(
+export async function setupRedeemPrintingV2Instructions(
   auctionView: AuctionView,
   mintRentExempt: number,
   wallet: any,
+  receiverWallet: PublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
@@ -474,6 +492,7 @@ async function setupRedeemPrintingV2Instructions(
       ? myPrizeTrackingTicket.info.supplySnapshot
       : me.info.supply;
     let offset = 1;
+
     auctionView.auctionManager.info.settings.winningConfigs.forEach(
       (wc, index) =>
         index < winningIndex &&
@@ -489,13 +508,14 @@ async function setupRedeemPrintingV2Instructions(
 
     const { mint, account } = await createMintAndAccountWithOne(
       wallet,
+      receiverWallet,
       mintRentExempt,
       myInstructions,
       mySigners,
     );
 
     const winIndex =
-      auctionView.auction.info.bidState.getWinnerIndex(wallet.publicKey) || 0;
+      auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
 
     await redeemPrintingV2Bid(
       auctionView.vault.pubkey,
@@ -503,7 +523,7 @@ async function setupRedeemPrintingV2Instructions(
       account,
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
-      wallet.publicKey,
+      receiverWallet,
       wallet.publicKey,
       item.metadata.pubkey,
       me.pubkey,
@@ -517,12 +537,14 @@ async function setupRedeemPrintingV2Instructions(
 
     const metadata = await getMetadata(mint);
 
-    await updatePrimarySaleHappenedViaToken(
-      metadata,
-      wallet.publicKey,
-      account,
-      myInstructions,
-    );
+    if (wallet.publicKey.equals(receiverWallet)) {
+      await updatePrimarySaleHappenedViaToken(
+        metadata,
+        wallet.publicKey,
+        account,
+        myInstructions,
+      );
+    }
     instructions.push(myInstructions);
     signers.push(mySigners);
   } else {
@@ -696,14 +718,17 @@ async function deprecatedRedeemPrintingV1Token(
   );
 }
 
-async function setupRedeemParticipationInstructions(
+export async function setupRedeemParticipationInstructions(
   connection: Connection,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
   wallet: any,
+  receiverWallet: PublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
+  bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined,
+  bid: ParsedAccount<BidderMetadata> | undefined,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
@@ -714,7 +739,7 @@ async function setupRedeemParticipationInstructions(
 
   // Forgive me, for i have sinned. I had to split up the commands
   // here into multiple txns because participation redemption is huge.
-  if (!auctionView.myBidRedemption?.info.participationRedeemed) {
+  if (!bidRedemption?.info?.participationRedeemed) {
     const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
 
     // Super unfortunate but cant fit this all in one txn
@@ -725,6 +750,7 @@ async function setupRedeemParticipationInstructions(
 
     const { mint, account } = await createMintAndAccountWithOne(
       wallet,
+      receiverWallet,
       mintRentExempt,
       mintingInstructions,
       mintingSigners,
@@ -735,7 +761,7 @@ async function setupRedeemParticipationInstructions(
     let price: number =
       fixedPrice !== undefined && fixedPrice !== null
         ? fixedPrice.toNumber()
-        : auctionView.myBidderMetadata?.info.lastBid.toNumber() || 0;
+        : bid?.info.lastBid.toNumber() || 0;
 
     let tokenAccount = accountsByMint.get(
       auctionView.auction.info.tokenMint.toBase58(),
@@ -790,7 +816,7 @@ async function setupRedeemParticipationInstructions(
       account,
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
-      wallet.publicKey,
+      receiverWallet,
       wallet.publicKey,
       item.metadata.pubkey,
       me.pubkey,
@@ -806,17 +832,19 @@ async function setupRedeemParticipationInstructions(
     signers.push(mySigners);
     const metadata = await getMetadata(mint);
 
-    let updatePrimarySaleHappenedInstructions: TransactionInstruction[] = [];
-    let updatePrimarySaleHappenedSigners: Keypair[] = [];
+    if (receiverWallet.equals(wallet.publicKey)) {
+      let updatePrimarySaleHappenedInstructions: TransactionInstruction[] = [];
+      let updatePrimarySaleHappenedSigners: Keypair[] = [];
 
-    await updatePrimarySaleHappenedViaToken(
-      metadata,
-      wallet.publicKey,
-      account,
-      updatePrimarySaleHappenedInstructions,
-    );
-    instructions.push(updatePrimarySaleHappenedInstructions);
-    signers.push(updatePrimarySaleHappenedSigners);
+      await updatePrimarySaleHappenedViaToken(
+        metadata,
+        wallet.publicKey,
+        account,
+        updatePrimarySaleHappenedInstructions,
+      );
+      instructions.push(updatePrimarySaleHappenedInstructions);
+      signers.push(updatePrimarySaleHappenedSigners);
+    }
   } else {
     console.log('Item is already claimed!', item.metadata.info.mint.toBase58());
   }

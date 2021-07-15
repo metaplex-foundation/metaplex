@@ -7,6 +7,8 @@ import {
   AuctionState,
   SequenceType,
   sendTransactions,
+  ParsedAccount,
+  BidderMetadata,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
 import {
@@ -16,6 +18,7 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 import { AuctionView } from '../hooks';
+import { BidRedemptionTicket, PrizeTrackingTicket } from '../models/metaplex';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 
@@ -25,6 +28,9 @@ export async function sendCancelBid(
   payingAccount: PublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
+  bids: ParsedAccount<BidderMetadata>[],
+  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
+  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
@@ -66,6 +72,9 @@ export async function sendCancelBid(
       wallet,
       auctionView,
       accountsByMint,
+      bids,
+      bidRedemptions,
+      prizeTrackingTickets,
       signers,
       instructions,
     );
