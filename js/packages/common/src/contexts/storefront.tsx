@@ -20,7 +20,7 @@ export function StorefrontProvider({ children = undefined as any }) {
       body: JSON.stringify({
         query: `
             query GetStorefrontTheme($subdomain: String!) {
-              transactions(tags:[{ name: "holaplex:metadata:subdomain", values: [$subdomain]}], sort: HEIGHT_ASC, first: 1) {
+              transactions(tags:[{ name: "holaplex:metadata:subdomain", values: [$subdomain]}], first: 1) {
                 edges {
                   node {
                     id
