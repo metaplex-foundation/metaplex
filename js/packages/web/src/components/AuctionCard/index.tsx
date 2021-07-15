@@ -692,11 +692,11 @@ export const AuctionCard = ({
         }}
       >
         <h3 style={{ color: 'white' }}>
-          There are some items in this auction that still are required by the
-          auction for printing bidders' limited or open edition NFTs. If you
-          wish to withdraw them early, you are agreeing to foot the cost of ◎
-          <b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b> plus transaction fees
-          to redeem their bids for them right now.
+          Warning: There may be some items in this auction that still are
+          required by the auction for printing bidders' limited or open edition
+          NFTs. If you wish to withdraw them, you are agreeing to foot the cost
+          of up to an estimated ◎<b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b>{' '}
+          plus transaction fees to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
     </div>

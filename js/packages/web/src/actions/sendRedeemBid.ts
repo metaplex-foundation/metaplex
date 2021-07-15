@@ -29,6 +29,7 @@ import {
   TokenAccountParser,
   BidderMetadata,
   getEditionMarkPda,
+  decodeEditionMarker,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -161,6 +162,7 @@ export async function sendRedeemBid(
             case WinningConfigType.PrintingV2:
               console.log('Redeeming printing v2');
               await setupRedeemPrintingV2Instructions(
+                connection,
                 auctionView,
                 mintRentExempt,
                 wallet,
@@ -476,97 +478,102 @@ export async function setupRedeemPrintingV2Instructions(
   if (!item.masterEdition || !item.metadata) {
     return;
   }
-  if (!stateItem.claimed) {
-    const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
 
-    const myPrizeTrackingTicketKey = await getPrizeTrackingTicket(
-      auctionView.auctionManager.pubkey,
+  const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
+
+  const myPrizeTrackingTicketKey = await getPrizeTrackingTicket(
+    auctionView.auctionManager.pubkey,
+    item.metadata.info.mint,
+  );
+
+  const myPrizeTrackingTicket =
+    prizeTrackingTickets[myPrizeTrackingTicketKey.toBase58()];
+  // We are not entirely guaranteed this is right. Someone could be clicking at the same time. Contract will throw error if this
+  // is the case and they'll need to refresh to get tracking ticket which may not have existed when they first clicked.
+  const editionBase = myPrizeTrackingTicket
+    ? myPrizeTrackingTicket.info.supplySnapshot
+    : me.info.supply;
+  let offset = 1;
+
+  auctionView.auctionManager.info.settings.winningConfigs.forEach(
+    (wc, index) =>
+      index < winningIndex &&
+      wc.items.forEach(i => {
+        if (
+          i.safetyDepositBoxIndex === item.safetyDeposit.info.order &&
+          i.winningConfigType === winningConfigItem.winningConfigType
+        ) {
+          offset += i.amount;
+        }
+      }),
+  );
+
+  for (let i = 0; i < winningConfigItem.amount; i++) {
+    let myInstructions: TransactionInstruction[] = [];
+    let mySigners: Keypair[] = [];
+
+    const { mint, account } = await createMintAndAccountWithOne(
+      wallet,
+      receiverWallet,
+      mintRentExempt,
+      myInstructions,
+      mySigners,
+    );
+
+    const winIndex =
+      auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
+
+    const desiredEdition = editionBase.add(new BN(offset + i));
+    const editionMarkPda = await getEditionMarkPda(
       item.metadata.info.mint,
+      desiredEdition,
     );
 
-    const myPrizeTrackingTicket =
-      prizeTrackingTickets[myPrizeTrackingTicketKey.toBase58()];
-    // We are not entirely guaranteed this is right. Someone could be clicking at the same time. Contract will throw error if this
-    // is the case and they'll need to refresh to get tracking ticket which may not have existed when they first clicked.
-    const editionBase = myPrizeTrackingTicket
-      ? myPrizeTrackingTicket.info.supplySnapshot
-      : me.info.supply;
-    let offset = 1;
+    try {
+      const editionData = await connection.getAccountInfo(editionMarkPda);
 
-    auctionView.auctionManager.info.settings.winningConfigs.forEach(
-      (wc, index) =>
-        index < winningIndex &&
-        wc.items.forEach(i => {
-          if (
-            i.safetyDepositBoxIndex === item.safetyDeposit.info.order &&
-            i.winningConfigType === winningConfigItem.winningConfigType
-          ) {
-            offset += i.amount;
-          }
-        }),
-    );
+      if (editionData) {
+        const marker = decodeEditionMarker(editionData.data);
 
-    for (let i = 0; i < winningConfigItem.amount; i++) {
-      let myInstructions: TransactionInstruction[] = [];
-      let mySigners: Keypair[] = [];
-
-      const { mint, account } = await createMintAndAccountWithOne(
-        wallet,
-        receiverWallet,
-        mintRentExempt,
-        myInstructions,
-        mySigners,
-      );
-
-      const winIndex =
-        auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
-
-      const desiredEdition = editionBase.add(new BN(offset + i));
-      const editionMarkPda = await getEditionMarkPda(
-        item.metadata.info.mint,
-        desiredEdition,
-      );
-
-      let editionData: AccountInfo<Buffer>;
-      try {
-        const editionData = await connection.getAccountInfo(editionMarkPda);
-      } catch (e) {
-        console.error(e);
+        if (marker.editionTaken(desiredEdition.toNumber())) {
+          console.log('Edition', desiredEdition, 'taken, continuing');
+          continue;
+        }
       }
-
-      await redeemPrintingV2Bid(
-        auctionView.vault.pubkey,
-        safetyDeposit.info.store,
-        account,
-        safetyDeposit.pubkey,
-        auctionView.vault.info.fractionMint,
-        receiverWallet,
-        wallet.publicKey,
-        item.metadata.pubkey,
-        me.pubkey,
-        item.metadata.info.mint,
-        mint,
-        desiredEdition,
-        new BN(offset + i),
-        new BN(winIndex),
-        myInstructions,
-      );
-
-      const metadata = await getMetadata(mint);
-
-      if (wallet.publicKey.equals(receiverWallet)) {
-        await updatePrimarySaleHappenedViaToken(
-          metadata,
-          wallet.publicKey,
-          account,
-          myInstructions,
-        );
-      }
-      instructions.push(myInstructions);
-      signers.push(mySigners);
+    } catch (e) {
+      console.error(e);
     }
-  } else {
-    console.log('Item is already claimed!', item.metadata.info.mint.toBase58());
+
+    await redeemPrintingV2Bid(
+      auctionView.vault.pubkey,
+      safetyDeposit.info.store,
+      account,
+      safetyDeposit.pubkey,
+      auctionView.vault.info.fractionMint,
+      receiverWallet,
+      wallet.publicKey,
+      item.metadata.pubkey,
+      me.pubkey,
+      item.metadata.info.mint,
+      mint,
+      desiredEdition,
+      new BN(offset + i),
+      new BN(winIndex),
+      myInstructions,
+    );
+
+    const metadata = await getMetadata(mint);
+
+    if (wallet.publicKey.equals(receiverWallet)) {
+      await updatePrimarySaleHappenedViaToken(
+        metadata,
+        wallet.publicKey,
+        account,
+        myInstructions,
+      );
+    }
+    instructions.push(myInstructions);
+    signers.push(mySigners);
   }
 }
 

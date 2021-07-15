@@ -224,6 +224,7 @@ export async function claimUnusedPrizes(
                     winningBidder.toBase58(),
                   );
                   await setupRedeemPrintingV2Instructions(
+                    connection,
                     auctionView,
                     mintRentExempt,
                     wallet,

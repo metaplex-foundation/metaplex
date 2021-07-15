@@ -36,6 +36,8 @@ export const MAX_METADATA_LEN =
 
 export const MAX_EDITION_LEN = 1 + 32 + 8 + 200;
 
+export const EDITION_MARKER_BIT_SIZE = 248;
+
 export enum MetadataKey {
   Uninitialized = 0,
   MetadataV1 = 4,
@@ -128,6 +130,33 @@ export class MasterEditionV2 {
     this.key = MetadataKey.MasterEditionV2;
     this.supply = args.supply;
     this.maxSupply = args.maxSupply;
+  }
+}
+
+export class EditionMarker {
+  key: MetadataKey;
+  ledger: number[];
+
+  constructor(args: { key: MetadataKey; ledger: number[] }) {
+    this.key = MetadataKey.EditionMarker;
+    this.ledger = args.ledger;
+  }
+
+  editionTaken(edition: number) {
+    const editionOffset = edition % EDITION_MARKER_BIT_SIZE;
+    const indexOffset = Math.floor(editionOffset / 8);
+
+    if (indexOffset > 30) {
+      throw Error('bad index for edition');
+    }
+
+    const positionInBitsetFromRight = 7 - (editionOffset % 8);
+
+    const mask = Math.pow(2, positionInBitsetFromRight);
+
+    const appliedMask = this.ledger[indexOffset] & mask;
+
+    return appliedMask != 0;
   }
 }
 
@@ -375,6 +404,16 @@ export const METADATA_SCHEMA = new Map<any, any>([
       ],
     },
   ],
+  [
+    EditionMarker,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['ledger', [31]],
+      ],
+    },
+  ],
 ]);
 
 export const decodeMetadata = (buffer: Buffer): Metadata => {
@@ -384,6 +423,15 @@ export const decodeMetadata = (buffer: Buffer): Metadata => {
     buffer,
   ) as Metadata;
   return metadata;
+};
+
+export const decodeEditionMarker = (buffer: Buffer): EditionMarker => {
+  const editionMarker = deserializeUnchecked(
+    METADATA_SCHEMA,
+    EditionMarker,
+    buffer,
+  ) as EditionMarker;
+  return editionMarker;
 };
 
 export const decodeEdition = (buffer: Buffer) => {
