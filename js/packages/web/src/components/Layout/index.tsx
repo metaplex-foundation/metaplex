@@ -27,7 +27,9 @@ export const AppLayout = React.memo((props: any) => {
           // maxWidth: 1450,
         }}
       >
-        <span id={'main-bg'} style={{}}></span>
+        <span id={'main-bg'} style={{backgroundImage: `url(/main-banner.svg)` }}>
+        </span>
+        <span id={'bg-gradient'}></span>
         <Header className="App-Bar">
           <AppBar />
         </Header>
