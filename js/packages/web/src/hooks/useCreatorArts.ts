@@ -6,6 +6,7 @@ export const useCreatorArts = (id?: PublicKey | string) => {
   const filtered = metadata.filter(
     m => 
       m.info.data.creators !== null 
+      && m.info.data.creators?.findIndex(c => c.address.toBase58() === id) !== undefined &&
       && m.info.data.creators.findIndex(c => c.address.toBase58() === id) >= 0
   );
 
