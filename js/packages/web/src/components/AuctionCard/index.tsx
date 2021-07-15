@@ -17,6 +17,7 @@ import {
   ParsedAccount,
   getAuctionExtended,
   programIds,
+  AuctionState,
 } from '@oyster/common';
 import { AuctionView, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -26,6 +27,7 @@ import {
   eligibleForParticipationPrizeGivenWinningIndex,
 } from '../../actions/sendRedeemBid';
 import { sendCancelBid } from '../../actions/cancelBid';
+import { startAuctionManually } from '../../actions/startAuctionManually';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
@@ -163,6 +165,13 @@ export const AuctionCard = ({
 
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
+  const isAuctionManagerAuthorityNotWalletOwner =
+    auctionView.auctionManager.info.authority.toBase58() !=
+    wallet?.publicKey?.toBase58();
+
+  const isAuctionNotStarted =
+    auctionView.auction.info.state === AuctionState.Created;
+
   return (
     <div className="auction-container" style={style}>
       <Col>
@@ -182,8 +191,7 @@ export const AuctionCard = ({
             disabled={
               !myPayingAccount ||
               (!auctionView.myBidderMetadata &&
-                auctionView.auctionManager.info.authority.toBase58() !=
-                  wallet?.publicKey?.toBase58()) ||
+                isAuctionManagerAuthorityNotWalletOwner) ||
               loading ||
               !!auctionView.items.find(i => i.find(it => !it.metadata))
             }
@@ -227,18 +235,40 @@ export const AuctionCard = ({
           </Button>
         )}
 
-        {!hideDefaultAction && connected && !auctionView.auction.info.ended() && (
-          <Button
-            type="primary"
-            size="large"
-            className="action-btn"
-            disabled={loading}
-            onClick={() => setShowBidModal(true)}
-            style={{ marginTop: 20 }}
-          >
-            {loading ? <Spin /> : 'Place bid'}
-          </Button>
-        )}
+        {!hideDefaultAction &&
+          connected &&
+          !auctionView.auction.info.ended() &&
+          (isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await startAuctionManually(connection, wallet, auctionView);
+                } catch (e) {
+                  console.error(e);
+                }
+                setLoading(false);
+              }}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? <Spin /> : 'Start auction'}
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={() => setShowBidModal(true)}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? <Spin /> : 'Place bid'}
+            </Button>
+          ))}
 
         {!hideDefaultAction && !connected && (
           <Button
