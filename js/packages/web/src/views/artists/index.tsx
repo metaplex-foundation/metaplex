@@ -28,12 +28,15 @@ export const ArtistsView = () => {
         const id = m.info.address.toBase58();
         return (
           <Link to={`/artists/${id}`} key={idx}>
-            <ArtistCard key={id} artist={{
-              address: m.info.address.toBase58(),
-              name: m.info.name || '',
-              image: m.info.image || '',
-              link: m.info.twitter || ''
-            }} />
+            <ArtistCard
+              key={id}
+              artist={{
+                address: m.info.address.toBase58(),
+                name: m.info.name || '',
+                image: m.info.image || '',
+                link: m.info.twitter || '',
+              }}
+            />
           </Link>
         );
       })}
@@ -43,9 +46,7 @@ export const ArtistsView = () => {
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Col style={{ width: '100%', marginTop: 10 }}>
-          {artistGrid}
-        </Col>
+        <Col style={{ width: '100%', marginTop: 10 }}>{artistGrid}</Col>
       </Content>
     </Layout>
   );

@@ -85,7 +85,7 @@ export function Routes() {
                           <Route
                             exact
                             path="/artistAlley"
-                            component={() => <ArtistAlleyView/>}
+                            component={() => <ArtistAlleyView />}
                           />
                           <Route path="/" component={() => <HomeView />} />
                         </Switch>

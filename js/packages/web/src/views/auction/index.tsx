@@ -81,8 +81,7 @@ export const AuctionView = () => {
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
-
-  const hasDescription = data === undefined || data.description === undefined
+  const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
 
   const items = [
@@ -115,7 +114,6 @@ export const AuctionView = () => {
       <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
-
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
@@ -124,17 +122,30 @@ export const AuctionView = () => {
             </Carousel>
           </div>
           <h6>Number Of Winners</h6>
-          <h1>{winnerCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : winnerCount}</h1>
+          <h1>
+            {winnerCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              winnerCount
+            )}
+          </h1>
           <h6>Number Of NFTs</h6>
-          <h1>{nftCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : nftCount}</h1>
+          <h1>
+            {nftCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              nftCount
+            )}
+          </h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
           <p>
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description || (
-              winnerCount !== undefined && <div style={{ fontStyle: 'italic' }}>
-                No description provided.
-              </div>
-            )}
+            {description ||
+              (winnerCount !== undefined && (
+                <div style={{ fontStyle: 'italic' }}>
+                  No description provided.
+                </div>
+              ))}
           </p>
           {/* {auctionData[id] && (
             <>
@@ -145,7 +156,9 @@ export const AuctionView = () => {
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
+          <h2 className="art-title">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
               <h6>Edition</h6>
@@ -187,7 +200,13 @@ export const AuctionView = () => {
   );
 };
 
-const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?: boolean, isActive?: boolean }) => {
+const BidLine = (props: {
+  bid: any;
+  index: number;
+  mint?: MintInfo;
+  isCancelled?: boolean;
+  isActive?: boolean;
+}) => {
   const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
   const bidder = bid.info.bidderPubkey.toBase58();
@@ -200,7 +219,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
         alignItems: 'center',
         padding: '3px 0',
         position: 'relative',
-        opacity: isActive ? undefined: 0.5,
+        opacity: isActive ? undefined : 0.5,
         ...(isme
           ? {
               backgroundColor: '#ffffff21',
@@ -208,7 +227,19 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
           : {}),
       }}
     >
-      {isCancelled && <div style={{ position: 'absolute', left: 0, width: '100%', height: 1, background: 'grey', top: 'calc(50% - 1px)', zIndex: 2 }}/>}
+      {isCancelled && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            width: '100%',
+            height: 1,
+            background: 'grey',
+            top: 'calc(50% - 1px)',
+            zIndex: 2,
+          }}
+        />
+      )}
       <Col
         span={2}
         style={{
@@ -216,20 +247,22 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
           paddingRight: 10,
         }}
       >
-        {!isCancelled && <div
-          style={{
-            opacity: 0.8,
-            fontWeight: 700,
-          }}
-        >
-          {isme && (
-            <>
-              <CheckOutlined />
-              &nbsp;
-            </>
-          )}
-          {index + 1}
-        </div>}
+        {!isCancelled && (
+          <div
+            style={{
+              opacity: 0.8,
+              fontWeight: 700,
+            }}
+          >
+            {isme && (
+              <>
+                <CheckOutlined />
+                &nbsp;
+              </>
+            )}
+            {index + 1}
+          </div>
+        )}
       </Col>
       <Col span={16}>
         <Row>
@@ -248,7 +281,7 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
         <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-        ◎{formatTokenAmount(bid.info.lastBid, mint)}
+          ◎{formatTokenAmount(bid.info.lastBid, mint)}
         </span>
       </Col>
     </Row>
@@ -270,23 +303,29 @@ export const AuctionBids = ({
   const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key.toBase58()))
+    return new Set(activeBids.map(b => b.key.toBase58()));
   }, [activeBids]);
 
-  const auctionState = auctionView ? auctionView.auction.info.state : AuctionState.Created;
+  const auctionState = auctionView
+    ? auctionView.auction.info.state
+    : AuctionState.Created;
   const bidLines = useMemo(() => {
     let activeBidIndex = 0;
     return bids.map((bid, index) => {
-      let isCancelled = (index < winnersCount  && !!bid.info.cancelled) ||
+      let isCancelled =
+        (index < winnersCount && !!bid.info.cancelled) ||
         (auctionState !== AuctionState.Ended && !!bid.info.cancelled);
 
-      let line = <BidLine
-        bid={bid}
-        index={activeBidIndex}
-        key={index}
-        mint={mint}
-        isCancelled={isCancelled}
-        isActive={!bid.info.cancelled} />;
+      let line = (
+        <BidLine
+          bid={bid}
+          index={activeBidIndex}
+          key={index}
+          mint={mint}
+          isCancelled={isCancelled}
+          isActive={!bid.info.cancelled}
+        />
+      );
 
       if (!isCancelled) {
         activeBidIndex++;

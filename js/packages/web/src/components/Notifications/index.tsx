@@ -459,7 +459,9 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <h1 className="title"><BellOutlined style={{fontSize: "16px"}} /></h1>
+      <h1 className="title">
+        <BellOutlined style={{ fontSize: '16px' }} />
+      </h1>
     </Popover>
   );
 

@@ -36,7 +36,7 @@ export const ArtworksView = () => {
       : ownedMetadata.map(m => m.metadata);
 
   useEffect(() => {
-    if(connected) {
+    if (connected) {
       setActiveKey(ArtworkViewState.Owned);
     } else {
       setActiveKey(ArtworkViewState.Metaplex);
