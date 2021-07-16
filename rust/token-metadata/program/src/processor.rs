@@ -423,11 +423,9 @@ pub fn process_convert_master_edition_v1_to_v2(
     assert_owned_by(master_edition_info, program_id)?;
     assert_owned_by(one_time_printing_auth_mint_info, &spl_token::id())?;
     assert_owned_by(printing_mint_info, &spl_token::id())?;
-
     let master_edition: MasterEditionV1 = MasterEditionV1::from_account_info(master_edition_info)?;
-    let printing_mint: Account = assert_initialized(printing_mint_info)?;
-    let auth_mint: Account = assert_initialized(one_time_printing_auth_mint_info)?;
-
+    let printing_mint: Mint = assert_initialized(printing_mint_info)?;
+    let auth_mint: Mint = assert_initialized(one_time_printing_auth_mint_info)?;
     if master_edition.one_time_printing_authorization_mint != *one_time_printing_auth_mint_info.key
     {
         return Err(MetadataError::OneTimePrintingAuthMintMismatch.into());
@@ -437,11 +435,11 @@ pub fn process_convert_master_edition_v1_to_v2(
         return Err(MetadataError::PrintingMintMismatch.into());
     }
 
-    if printing_mint.amount != 0 {
+    if printing_mint.supply != 0 {
         return Err(MetadataError::PrintingMintSupplyMustBeZeroForConversion.into());
     }
 
-    if auth_mint.amount != 0 {
+    if auth_mint.supply != 0 {
         return Err(MetadataError::OneTimeAuthMintSupplyMustBeZeroForConversion.into());
     }
 

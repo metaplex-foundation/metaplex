@@ -348,15 +348,16 @@ export function processAccountsIntoAuctionView(
               participationBox.info.tokenMint.toBase58()
             ]?.pubkey.toBase58()
           ] || metadataByMint[participationBox.info.tokenMint.toBase58()];
-
-        participationMaster =
-          masterEditionsByOneTimeAuthMint[
-            participationBox.info.tokenMint.toBase58()
-          ] ||
-          (participationMetadata.info.masterEdition &&
-            masterEditions[
-              participationMetadata.info.masterEdition?.toBase58()
-            ]);
+        if (participationMetadata) {
+          participationMaster =
+            masterEditionsByOneTimeAuthMint[
+              participationBox.info.tokenMint.toBase58()
+            ] ||
+            (participationMetadata.info.masterEdition &&
+              masterEditions[
+                participationMetadata.info.masterEdition?.toBase58()
+              ]);
+        }
       }
 
       let view: Partial<AuctionView> = {

@@ -1086,6 +1086,42 @@ export async function deprecatedMintPrintingTokens(
   );
 }
 
+export async function convertMasterEditionV1ToV2(
+  masterEdition: PublicKey,
+  oneTimeAuthMint: PublicKey,
+  printingMint: PublicKey,
+  instructions: TransactionInstruction[],
+) {
+  const metadataProgramId = programIds().metadata;
+
+  const data = Buffer.from([12]);
+
+  const keys = [
+    {
+      pubkey: masterEdition,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: oneTimeAuthMint,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: printingMint,
+      isSigner: false,
+      isWritable: true,
+    },
+  ];
+  instructions.push(
+    new TransactionInstruction({
+      keys,
+      programId: metadataProgramId,
+      data,
+    }),
+  );
+}
+
 export async function getEdition(tokenMint: PublicKey): Promise<PublicKey> {
   const PROGRAM_IDS = programIds();
 

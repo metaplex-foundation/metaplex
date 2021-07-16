@@ -51,25 +51,23 @@ import { deprecatedValidateParticipation } from '../models/metaplex/deprecatedVa
 import { deprecatedCreateReservationListForTokens } from './deprecatedCreateReservationListsForTokens';
 import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens';
 import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
+import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 const { createTokenAccount } = actions;
 
 interface normalPattern {
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }
+
+interface arrayPattern {
+  instructions: TransactionInstruction[][];
+  signers: Keypair[][];
+}
 interface byType {
-  addTokens: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
-  deprecatedCreateReservationList: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
-  validateBoxes: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
+  markItemsThatArentMineAsSold: arrayPattern;
+  addTokens: arrayPattern;
+  deprecatedCreateReservationList: arrayPattern;
+  validateBoxes: arrayPattern;
   createVault: normalPattern;
   closeVault: normalPattern;
   makeAuction: normalPattern;
@@ -79,10 +77,7 @@ interface byType {
   externalPriceAccount: normalPattern;
   deprecatedValidateParticipation?: normalPattern;
   deprecatedBuildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
-  deprecatedPopulatePrintingTokens: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
+  deprecatedPopulatePrintingTokens: arrayPattern;
 }
 
 export interface SafetyDepositDraft {
@@ -188,6 +183,10 @@ export async function createAuctionManager(
   );
 
   let lookup: byType = {
+    markItemsThatArentMineAsSold: await markItemsThatArentMineAsSold(
+      wallet,
+      safetyDepositDrafts,
+    ),
     externalPriceAccount: {
       instructions: epaInstructions,
       signers: epaSigners,
@@ -274,6 +273,7 @@ export async function createAuctionManager(
   };
 
   let signers: Keypair[][] = [
+    ...lookup.markItemsThatArentMineAsSold.signers,
     lookup.externalPriceAccount.signers,
     lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount?.signers || [],
     ...lookup.deprecatedPopulatePrintingTokens.signers,
@@ -290,6 +290,7 @@ export async function createAuctionManager(
   ];
   const toRemoveSigners: Record<number, boolean> = {};
   let instructions: TransactionInstruction[][] = [
+    ...lookup.markItemsThatArentMineAsSold.instructions,
     lookup.externalPriceAccount.instructions,
     lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount
       ?.instructions || [],
