@@ -59,10 +59,31 @@ export function StorefrontProvider({ children = undefined as any }) {
           (tag: ArweaveTag) => tag.name === 'solana:pubkey',
         ).value;
 
-        link.onload = () => {
-          setStorefront({ pubkey });
-          setLoading(false);
-        };
+        const logoURL = transaction.tags.find(
+          (tag: ArweaveTag) => tag.name === 'holaplex:theme:logo:url',
+        ).value;
+
+        const onLoadStylesheet = () => {
+          const head = document.head;
+          const link = document.createElement('link');
+  
+          link.type = 'text/css';
+          link.rel = 'stylesheet';
+          link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
+
+          link.onload = () => {
+            setStorefront({ pubkey });
+            setLoading(false);
+          }
+  
+          head.appendChild(link);
+        }
+
+        const logo = new Image()
+        logo.src = logoURL
+        
+        logo.onload = onLoadStylesheet
+        logo.onerror = onLoadStylesheet
       });
   }, []);
 
