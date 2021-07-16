@@ -79,11 +79,14 @@ export function StorefrontProvider({ children = undefined as any }) {
           head.appendChild(link);
         }
 
-        const logo = new Image()
-        logo.src = logoURL
-        
-        logo.onload = onLoadStylesheet
-        logo.onerror = onLoadStylesheet
+        if (logoURL) {
+          const logo = new Image()
+          logo.src = logoURL
+          
+          logo.onload = onLoadStylesheet
+        } else {
+          onLoadStylesheet()
+        }
       });
   }, []);
 
