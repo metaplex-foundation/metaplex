@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -19,6 +20,7 @@ import {
   Identicon,
   MetaplexModal,
   shortenAddress,
+  useConnection,
   useConnectionConfig,
   fromLamports,
   useMint,
@@ -26,6 +28,7 @@ import {
   AuctionState,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
+import { getHandleAndRegistryKey } from '@bonfida/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
@@ -202,6 +205,28 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
   const bidder = bid.info.bidderPubkey.toBase58();
   const isme = wallet?.publicKey?.toBase58() === bidder;
 
+  // Get Twitter Handle from address
+  const connection = useConnection();
+  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
+  useEffect(() => {
+    const getTwitterHandle = async (
+      connection: Connection,
+      bidder: PublicKey,
+    ): Promise<string | undefined> => {
+      try {
+        const [twitterHandle] = await getHandleAndRegistryKey(
+          connection,
+          bidder,
+        );
+        setBidderTwitterHandle(twitterHandle);
+      } catch (err) {
+        console.warn(`err`);
+        return undefined;
+      }
+    };
+    getTwitterHandle(connection, bidder);
+  }, [bidderTwitterHandle]);
+
   return (
     <Row
       style={{
@@ -251,7 +276,15 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
             }}
             address={bidder}
           />{' '}
-          {shortenAddress(bidder)}
+          {bidderTwitterHandle ? (
+            <a
+              target="_blank"
+              title={shortenAddress(bidder)}
+              href={`https://twitter.com/${bidderTwitterHandle}`}
+            >{`@${bidderTwitterHandle}`}</a>
+          ) : (
+            shortenAddress(bidder)
+          )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
         </Row>
       </Col>
