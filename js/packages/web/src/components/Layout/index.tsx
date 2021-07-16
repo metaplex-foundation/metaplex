@@ -15,10 +15,7 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
-      <Layout
-        id={'main-layout'}
-        title={LABELS.APP_TITLE}
-      >
+      <Layout id={'main-layout'}>
         <div id={'main-bg'}></div>
         <Header className="App-Bar">
           <AppBar />
