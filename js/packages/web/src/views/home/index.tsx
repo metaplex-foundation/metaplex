@@ -164,7 +164,7 @@ export const HomeView = () => {
           flexDirection: "column",
           justifyContent: "center",
           marginLeft: "4vw",
-          maxWidth: "50%",
+          maxWidth: 350,
           lineHeight: 1.1,
         }}>
           <h1 style={{
@@ -173,8 +173,8 @@ export const HomeView = () => {
           }}>The amazing world of McFarlane.</h1>
           <p style={{
             color: "white",
-            fontSize: "0.7rem",
-            margin: "0.6rem 0 1.2rem",
+            fontSize: "clamp(0.7em, 1.5vw, 16px)",
+            margin: "1rem 0 2rem",
           }}>Buy exclusive McFarlane NFTs.</p>
           <Button onClick={() => console.log("HOW TO BUY")} className="secondary-btn">
             How to Buy
