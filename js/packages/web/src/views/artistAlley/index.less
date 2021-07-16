@@ -1,14 +1,14 @@
 @import '_colors';
 
 .banner {
-  margin-bottom: 85px;
   background-image: url('./banner2.svg');
   height:188px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 
   .banner-title {
-    position: relative;
     text-align: center;
-    left: 50%;
     width: 60%;
 
     p {
@@ -29,20 +29,6 @@
       border-radius: 8px;
     }
   }
-}
-
-section.ant-layout {
-  width: 100%;
-  margin: auto;
-  position: relative;
-}
-
-header.ant-layout-header.App-Bar {
-  width: 100%;
-  background: transparent;
-  display: flex;
-  justify-content: center;
-  height: 80px;
 }
 
 footer.ant-layout-footer {

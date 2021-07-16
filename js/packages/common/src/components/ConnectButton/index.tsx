@@ -28,7 +28,7 @@ export const ConnectButton = (
       onClick={connected ? onClick : connect}
       disabled={connected && disabled}
     >
-      {connected ? children : 'Connect'}
+      {connected ? children : 'Connect Wallet'}
     </Button>;
   }
 

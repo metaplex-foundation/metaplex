@@ -10,34 +10,26 @@
   align-items: center;
   display: flex;
   flex-direction: row;
+  margin-left: 15px;
 }
+
 .app-right {
   align-items: center;
   display: flex;
   flex-direction: row;
+  margin-right: 15px;
 }
 
-section#main-layout.ant-layout {
-  background-color: @black-100 !important;
-  #bg-gradient {
-    position: absolute;
-    height: 200px;
-    width: 100%;
-    left: 0;
-    top: 510px;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);
-  }
-  span#main-bg{
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 708px;
-    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);;
-    background-position: top right !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    filter: blur(220px);
-    clip-path: inset(0 0 0 0);
-  }
+
+div#main-bg{
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background-position: center -50vh;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(100px) brightness(3);
+  height: 100vh;
 }

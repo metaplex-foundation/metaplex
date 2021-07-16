@@ -122,22 +122,29 @@
 }
 
 .connector {
-  color: #000;
-  background-color: #fff;
-  border-color: #fff;
+  color: #121212;
+  border-color: #121212;
+  background: #FFFFFF;
+  box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: "SF Pro Text";
+  font-style: normal;
+  font-weight: bold;
+  height: fit-content;
+  
+  &:hover, &:focus {
+    background: transparent;
+    border-color: #FFFFFF;
+    color: #FFFFFF;
+  }
 }
 
-.connector:hover, .connector:focus {
-  background: #fff;
-  border-color: #141414;
-  color: #141414;
-}
-
-.ant-btn-primary:hover, .ant-btn-primary:focus {
-  color: #5969d4;
-  background: transparent;
-  border-color: #5969d4;
-}
+// .ant-btn-primary:hover, .ant-btn-primary:focus {
+//   color: #5969d4;
+//   background: transparent;
+//   border-color: #5969d4;
+// }
 
 .create-statistic {
   text-align: left;
