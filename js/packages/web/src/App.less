@@ -1,8 +1,8 @@
 
 @import '~antd/es/style/themes/dark.less';
 @import "~antd/dist/antd.dark.less";
+@import "_colors";
 
-@solana-green: #3d4844;
 
 body {
   --row-highlight: @background-color-base;
@@ -179,4 +179,30 @@ code {
   color: #fff;
   transition: 150ms;
   padding-top: 5px;
+}
+
+h1 {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+.ant-btn {
+  &.secondary-btn {
+    color: @black-100;
+    background: #E65C37;
+    border-color: #E65C37;
+    box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+    border-radius: 8px;
+    width: fit-content;
+    height: fit-content;
+    padding: 12px 20px;
+    font-weight: bold;
+
+    &:hover, &:focus {
+      background: transparent;
+      border-color: #E65C37;
+      color: #E65C37;
+    }
+  }
 }

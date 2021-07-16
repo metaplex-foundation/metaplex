@@ -99,91 +99,112 @@ export const HomeView = () => {
   const CURRENT_STORE = programIds().store;
 
   return (
-    <AppLayout addBannerBg={true} src={'/main-banner.svg'}>
-      <Layout style={{ margin: 0, alignItems: 'center' }}>
-        {!store && !isLoading && (
-          <>
-            {!CURRENT_STORE && (
+    <Layout style={{ margin: 0, alignItems: 'center' }}>
+      {!store && !isLoading && (
+        <>
+          {!CURRENT_STORE && (
+            <p>
+              Store has not been configured please set{' '}
+              <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet
+              inside <em>packages/web/.env</em> and restart yarn
+            </p>
+          )}
+          {CURRENT_STORE && !wallet?.publicKey && (
+            <p>
+              <Button type="primary" className="app-btn" onClick={connect}>
+                Connect
+              </Button>{' '}
+              to configure store.
+            </p>
+          )}
+          {CURRENT_STORE && wallet?.publicKey && (
+            <>
               <p>
-                Store has not been configured please set{' '}
-                <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet
-                inside <em>packages/web/.env</em> and restart yarn
+                Initializing store will allow you to control list of creators.
               </p>
-            )}
-            {CURRENT_STORE && !wallet?.publicKey && (
-              <p>
-                <Button type="primary" className="app-btn" onClick={connect}>
-                  Connect
-                </Button>{' '}
-                to configure store.
-              </p>
-            )}
-            {CURRENT_STORE && wallet?.publicKey && (
-              <>
-                <p>
-                  Initializing store will allow you to control list of creators.
-                </p>
 
-                <Button
-                  className="app-btn"
-                  type="primary"
-                  loading={isInitalizingStore}
-                  disabled={!CURRENT_STORE}
-                  onClick={async () => {
-                    if (!wallet?.publicKey) {
-                      return;
-                    }
+              <Button
+                className="app-btn"
+                type="primary"
+                loading={isInitalizingStore}
+                disabled={!CURRENT_STORE}
+                onClick={async () => {
+                  if (!wallet?.publicKey) {
+                    return;
+                  }
 
-                    setIsInitalizingStore(true);
+                  setIsInitalizingStore(true);
 
-                    await saveAdmin(connection, wallet, false, [
-                      new WhitelistedCreator({
-                        address: wallet?.publicKey,
-                        activated: true,
-                      }),
-                    ]);
+                  await saveAdmin(connection, wallet, false, [
+                    new WhitelistedCreator({
+                      address: wallet?.publicKey,
+                      activated: true,
+                    }),
+                  ]);
 
-                    history.push('/admin');
+                  history.push('/admin');
 
-                    window.location.reload();
-                  }}
-                >
-                  Init Store
-                </Button>
-              </>
-            )}
-          </>
-        )}
-        {/* <PreSaleBanner auction={heroAuction} /> */}
-        <Banner src={'/main-banner.svg'} />
-        <Layout>
-          <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <Col style={{ width: '100%', marginTop: 10 }}>
-              {liveAuctions.length >= 1 && (
-                <Row>
-                  <Tabs>
-                    <TabPane>
-                      <h2>Live Auctions</h2>
-                      {liveAuctionsView}
-                    </TabPane>
-                  </Tabs>
-                </Row>
-              )}
+                  window.location.reload();
+                }}
+              >
+                Init Store
+              </Button>
+            </>
+          )}
+        </>
+      )}
+      {/* <PreSaleBanner auction={heroAuction} /> */}
+      <Banner src={'/main-banner.svg'}>
+        <div style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          marginLeft: "4vw",
+          maxWidth: 350,
+          lineHeight: 1.1,
+        }}>
+          <h1 style={{
+            color: "white",
+            margin: 0,
+          }}>The amazing world of McFarlane.</h1>
+          <p style={{
+            color: "white",
+            fontSize: "clamp(0.7em, 1.5vw, 16px)",
+            margin: "1rem 0 2rem",
+          }}>Buy exclusive McFarlane NFTs.</p>
+          <Button onClick={() => console.log("HOW TO BUY")} className="secondary-btn">
+            How to Buy
+          </Button>
+        </div>
+      </Banner>
+      <Layout>
+        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+          <Col style={{ width: '100%', marginTop: 10 }}>
+            {liveAuctions.length >= 1 && (
               <Row>
-                {auctionsEnded.length > 0 && (
-                  <Tabs>
-                    <TabPane>
-                      <h2>Ended Auctions</h2>
-                      {endedAuctions}
-                    </TabPane>
-                  </Tabs>
-                )}
-                <br />
+                <Tabs>
+                  <TabPane>
+                    <h2>Live Auctions</h2>
+                    {liveAuctionsView}
+                  </TabPane>
+                </Tabs>
               </Row>
-            </Col>
-          </Content>
-        </Layout>
+            )}
+            <Row>
+              {auctionsEnded.length > 0 && (
+                <Tabs>
+                  <TabPane>
+                    <h2>Ended Auctions</h2>
+                    {endedAuctions}
+                  </TabPane>
+                </Tabs>
+              )}
+              <br />
+            </Row>
+          </Col>
+        </Content>
       </Layout>
-    </AppLayout>
+    </Layout>
   );
 };
