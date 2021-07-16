@@ -157,7 +157,30 @@ export const HomeView = () => {
         </>
       )}
       {/* <PreSaleBanner auction={heroAuction} /> */}
-      <Banner src={'/main-banner.svg'} />
+      <Banner src={'/main-banner.svg'}>
+        <div style={{
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          marginLeft: "4vw",
+          maxWidth: "50%",
+          lineHeight: 1.1,
+        }}>
+          <h1 style={{
+            color: "white",
+            margin: 0,
+          }}>The amazing world of McFarlane.</h1>
+          <p style={{
+            color: "white",
+            fontSize: "0.7rem",
+            margin: "0.6rem 0 1.2rem",
+          }}>Buy exclusive McFarlane NFTs.</p>
+          <Button onClick={() => console.log("HOW TO BUY")} className="secondary-btn">
+            How to Buy
+          </Button>
+        </div>
+      </Banner>
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
