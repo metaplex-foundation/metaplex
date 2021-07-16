@@ -61,7 +61,7 @@ export function StorefrontProvider({ children = undefined as any }) {
 
         const logoURL = transaction.tags.find(
           (tag: ArweaveTag) => tag.name === 'holaplex:theme:logo:url',
-        ).value;
+        )?.value;
 
         const onLoadStylesheet = () => {
           const head = document.head;
