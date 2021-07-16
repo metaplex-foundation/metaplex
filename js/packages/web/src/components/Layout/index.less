@@ -1,3 +1,5 @@
+@import "_colors";
+
 .metamask-icon {
   background-position: 50%;
   background-repeat: no-repeat;
@@ -13,5 +15,29 @@
   align-items: center;
   display: flex;
   flex-direction: row;
+}
 
+section#main-layout.ant-layout {
+  background-color: @black-100 !important;
+  #bg-gradient {
+    position: absolute;
+    height: 200px;
+    width: 100%;
+    left: 0;
+    top: 510px;
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);
+  }
+  span#main-bg{
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 708px;
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);;
+    background-position: top right !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    filter: blur(220px);
+    clip-path: inset(0 0 0 0);
+  }
 }

@@ -227,10 +227,7 @@ function usePayoutTickets(
 }
 
 export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
-  const {
-    bidRedemptions,
-    bidderMetadataByAuctionAndBidder,
-  } = useMeta();
+  const { bidRedemptions, bidderMetadataByAuctionAndBidder } = useMeta();
   const auctionKey = auctionView.auction.pubkey.toBase58();
 
   const [participationBidRedemptionKeys, setParticipationBidRedemptionKeys] =
