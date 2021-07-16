@@ -3301,6 +3301,7 @@ dependencies = [
 name = "spl-auction"
 version = "0.0.1"
 dependencies = [
+ "arrayref",
  "borsh",
  "num-derive",
  "num-traits",
@@ -3394,11 +3395,13 @@ dependencies = [
 name = "spl-token-metadata"
 version = "0.0.1"
 dependencies = [
+ "arrayref",
  "borsh",
  "num-derive",
  "num-traits",
  "solana-program",
  "spl-token",
+ "spl-token-vault",
  "thiserror",
 ]
 

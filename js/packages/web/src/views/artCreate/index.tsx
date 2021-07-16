@@ -55,8 +55,9 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [progress, setProgress] = useState<number>(0);
-  const [nft, setNft] =
-    useState<{ metadataAccount: PublicKey } | undefined>(undefined);
+  const [nft, setNft] = useState<{ metadataAccount: PublicKey } | undefined>(
+    undefined,
+  );
   const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
@@ -285,16 +286,18 @@ const CategoryStep = (props: {
 const UploadStep = (props: {
   attributes: IMetadataExtension;
   setAttributes: (attr: IMetadataExtension) => void;
-  files: File[],
-  setFiles: (files: File[]) => void,
+  files: File[];
+  setFiles: (files: File[]) => void;
   confirm: () => void;
 }) => {
-  const [coverFile, setCoverFile] = useState<File | undefined>(props.files?.[0]);
+  const [coverFile, setCoverFile] = useState<File | undefined>(
+    props.files?.[0],
+  );
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
 
   const [customURL, setCustomURL] = useState<string>('');
   const [customURLErr, setCustomURLErr] = useState<string>('');
-  const disableContinue = (!coverFile) || !!customURLErr;
+  const disableContinue = !coverFile || !!customURLErr;
 
   useEffect(() => {
     props.setAttributes({
@@ -349,62 +352,64 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-          <h3>
-            Upload a cover image (PNG, JPG, GIF)
-          </h3>
+        <h3>Upload a cover image (PNG, JPG, GIF)</h3>
+        <Dragger
+          accept=".png,.jpg,.gif,.mp4"
+          style={{ padding: 20 }}
+          multiple={false}
+          customRequest={info => {
+            // dont upload files here, handled outside of the control
+            info?.onSuccess?.({}, null as any);
+          }}
+          fileList={coverFile ? [coverFile as any] : []}
+          onChange={async info => {
+            const file = info.file.originFileObj;
+            if (file) setCoverFile(file);
+          }}
+        >
+          <div className="ant-upload-drag-icon">
+            <h3 style={{ fontWeight: 700 }}>
+              Upload your cover image (PNG, JPG, GIF)
+            </h3>
+          </div>
+          <p className="ant-upload-text">Drag and drop, or click to browse</p>
+        </Dragger>
+      </Row>
+      {props.attributes.properties?.category !== MetadataCategory.Image && (
+        <Row
+          className="content-action"
+          style={{ marginBottom: 5, marginTop: 30 }}
+        >
+          <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
           <Dragger
-            accept=".png,.jpg,.gif,.mp4"
-            style={{ padding: 20 }}
+            accept={acceptableFiles(props.attributes.properties?.category)}
+            style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
             multiple={false}
             customRequest={info => {
               // dont upload files here, handled outside of the control
               info?.onSuccess?.({}, null as any);
             }}
-            fileList={coverFile ? [coverFile as any] : []}
+            fileList={mainFile ? [mainFile as any] : []}
             onChange={async info => {
               const file = info.file.originFileObj;
-              if (file) setCoverFile(file);
+
+              // Reset image URL
+              setCustomURL('');
+              setCustomURLErr('');
+
+              if (file) setMainFile(file);
+            }}
+            onRemove={() => {
+              setMainFile(undefined);
             }}
           >
             <div className="ant-upload-drag-icon">
-              <h3 style={{ fontWeight: 700 }}>
-                Upload your cover image (PNG, JPG, GIF)
-              </h3>
+              <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
             </div>
             <p className="ant-upload-text">Drag and drop, or click to browse</p>
           </Dragger>
         </Row>
-        {(props.attributes.properties?.category !== MetadataCategory.Image) && (
-          <Row className="content-action" style={{ marginBottom: 5, marginTop: 30 }}>
-            <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
-            <Dragger
-              accept={acceptableFiles(props.attributes.properties?.category)}
-              style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
-              multiple={false}
-              customRequest={info => {
-                // dont upload files here, handled outside of the control
-                info?.onSuccess?.({}, null as any);
-              }}
-              fileList={mainFile ? [mainFile as any] : []}
-              onChange={async info => {
-                const file = info.file.originFileObj;
-
-                // Reset image URL
-                setCustomURL('');
-                setCustomURLErr('');
-
-                if (file) setMainFile(file);
-              }}
-              onRemove={() => {
-                setMainFile(undefined);
-              }}
-            >
-              <div className="ant-upload-drag-icon">
-                <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
-              </div>
-              <p className="ant-upload-text">Drag and drop, or click to browse</p>
-            </Dragger>
-        </Row>)}
+      )}
       <Form.Item
         style={{
           width: '100%',
@@ -453,18 +458,19 @@ const UploadStep = (props: {
               properties: {
                 ...props.attributes.properties,
                 files: [coverFile, mainFile, customURL]
-                      .filter(f => f)
-                      .map(
-                        f => {
-                          const uri = typeof f === 'string' ? f : (f?.name || '');
-                          const type = typeof f === 'string' || !f ? 'unknown'  : f.type || (getLast(f.name.split('.')) || 'unknown');
+                  .filter(f => f)
+                  .map(f => {
+                    const uri = typeof f === 'string' ? f : f?.name || '';
+                    const type =
+                      typeof f === 'string' || !f
+                        ? 'unknown'
+                        : f.type || getLast(f.name.split('.')) || 'unknown';
 
-                          return ({
-                            uri,
-                            type
-                          }) as MetadataFile;
-                        },
-                      ),
+                    return {
+                      uri,
+                      type,
+                    } as MetadataFile;
+                  }),
               },
               image: coverFile?.name || '',
               animation_url: mainFile && mainFile.name,
@@ -488,35 +494,38 @@ interface Royalty {
 }
 
 const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
-  const [data, setData] = useState<{ image: string, animation_url: string }>({ image: '', animation_url: '' });
+  const [data, setData] = useState<{ image: string; animation_url: string }>({
+    image: '',
+    animation_url: '',
+  });
 
   useEffect(() => {
-    if(attributes.image) {
+    if (attributes.image) {
       const file = files.find(f => f.name === attributes.image);
-      if(file) {
+      if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {
           setData((data: any) => {
             return {
               ...(data || {}),
               image: (event.target?.result as string) || '',
-            }
+            };
           });
         };
         if (file) reader.readAsDataURL(file);
       }
     }
 
-    if(attributes.animation_url) {
+    if (attributes.animation_url) {
       const file = files.find(f => f.name === attributes.animation_url);
-      if(file) {
+      if (file) {
         const reader = new FileReader();
         reader.onload = function (event) {
           setData((data: any) => {
             return {
               ...(data || {}),
               animation_url: (event.target?.result as string) || '',
-            }
+            };
           });
         };
         if (file) reader.readAsDataURL(file);
@@ -525,17 +534,20 @@ const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
   }, [files, attributes]);
 
   return data;
-}
+};
 
 const InfoStep = (props: {
   attributes: IMetadataExtension;
-  files: File[],
+  files: File[];
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
-  const { image, animation_url } = useArtworkFiles(props.files, props.attributes);
+  const { image, animation_url } = useArtworkFiles(
+    props.files,
+    props.attributes,
+  );
 
   useEffect(() => {
     setRoyalties(
@@ -921,11 +933,14 @@ const RoyaltiesStep = (props: {
 const LaunchStep = (props: {
   confirm: () => void;
   attributes: IMetadataExtension;
-  files: File[],
+  files: File[];
   connection: Connection;
 }) => {
   const [cost, setCost] = useState(0);
-  const { image, animation_url } = useArtworkFiles(props.files, props.attributes);
+  const { image, animation_url } = useArtworkFiles(
+    props.files,
+    props.attributes,
+  );
   const files = props.files;
   const metadata = props.attributes;
   useEffect(() => {

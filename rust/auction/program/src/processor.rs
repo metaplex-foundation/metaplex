@@ -1,10 +1,11 @@
 use crate::errors::AuctionError;
+use arrayref::array_ref;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     account_info::AccountInfo, borsh::try_from_slice_unchecked, clock::UnixTimestamp,
     entrypoint::ProgramResult, hash::Hash, msg, program_error::ProgramError, pubkey::Pubkey,
 };
-use std::{cmp, mem};
+use std::{cell::Ref, cmp, mem};
 
 // Declare submodules, each contains a single handler for each instruction variant in the program.
 pub mod cancel_bid;
@@ -57,7 +58,10 @@ pub enum PriceFloor {
 
 // The two extra 8's are present, one 8 is for the Vec's amount of elements and one is for the max
 // usize in bid state.
+// NOTE: New research suggests u32s are used for vecs in borsh, not u64s, so the first extra 8 should be a 4
+// but for legacy reasons we leave it behind.
 pub const BASE_AUCTION_DATA_SIZE: usize = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 8 + 8 + 8;
+pub const BID_LENGTH: usize = 32 + 8;
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
 pub struct AuctionData {
@@ -115,6 +119,123 @@ impl AuctionDataExtended {
 }
 
 impl AuctionData {
+    // Cheap methods to get at AuctionData without supremely expensive borsh deserialization calls.
+
+    pub fn get_token_mint(a: &AccountInfo) -> Pubkey {
+        let data = a.data.borrow();
+        let token_mint_data = array_ref![data, 32, 32];
+        Pubkey::new_from_array(*token_mint_data)
+    }
+
+    pub fn get_state(a: &AccountInfo) -> Result<AuctionState, ProgramError> {
+        match a.data.borrow()[133] {
+            0 => Ok(AuctionState::Created),
+            1 => Ok(AuctionState::Started),
+            2 => Ok(AuctionState::Ended),
+            _ => Err(ProgramError::InvalidAccountData),
+        }
+    }
+
+    pub fn get_num_winners(a: &AccountInfo) -> usize {
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        std::cmp::min(num_elements, max)
+    }
+
+    fn find_bid_state_beginning(a: &AccountInfo) -> usize {
+        let data = a.data.borrow();
+        let mut bid_state_beginning = 32 + 32;
+
+        for i in 0..4 {
+            // One for each unix timestamp
+            if data[bid_state_beginning] == 1 {
+                bid_state_beginning += 9
+            } else {
+                bid_state_beginning += 1;
+            }
+        }
+
+        // Finally add price floor (enum + hash) and state, then the u32,
+        // then add 1 to position at the beginning of first bid.
+        bid_state_beginning += 1 + 32 + 1 + 4 + 1;
+        return bid_state_beginning;
+    }
+
+    fn get_vec_info(a: &AccountInfo) -> (usize, usize, usize) {
+        let bid_state_beginning = AuctionData::find_bid_state_beginning(a);
+        let data = a.data.borrow();
+
+        let num_elements_data = array_ref![data, bid_state_beginning - 4, 4];
+        let num_elements = u32::from_le_bytes(*num_elements_data) as usize;
+        let max_data = array_ref![data, bid_state_beginning + BID_LENGTH * num_elements, 8];
+        let max = u64::from_le_bytes(*max_data) as usize;
+
+        (bid_state_beginning, num_elements, max)
+    }
+
+    pub fn get_is_winner(a: &AccountInfo, key: &Pubkey) -> Option<usize> {
+        let bid_state_beginning = AuctionData::find_bid_state_beginning(a);
+        let data = a.data.borrow();
+        let as_bytes = key.to_bytes();
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        for idx in 0..std::cmp::min(num_elements, max) {
+            match AuctionData::get_winner_at_inner(
+                &a.data.borrow(),
+                idx,
+                bid_state_beginning,
+                num_elements,
+                max,
+            ) {
+                Some(bid_key) => {
+                    // why deserialize the entire key to compare the two with a short circuit comparison
+                    // when we can compare them immediately?
+                    let mut matching = true;
+                    for bid_key_idx in 0..32 {
+                        if bid_key[bid_key_idx] != as_bytes[bid_key_idx] {
+                            matching = false;
+                            break;
+                        }
+                    }
+                    if matching {
+                        return Some(idx as usize);
+                    }
+                }
+                None => return None,
+            }
+        }
+        None
+    }
+
+    pub fn get_winner_at(a: &AccountInfo, idx: usize) -> Option<Pubkey> {
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        match AuctionData::get_winner_at_inner(
+            &a.data.borrow(),
+            idx,
+            bid_state_beginning,
+            num_elements,
+            max,
+        ) {
+            Some(bid_key) => Some(Pubkey::new_from_array(*bid_key)),
+            None => None,
+        }
+    }
+
+    fn get_winner_at_inner<'a>(
+        data: &'a Ref<'a, &'a mut [u8]>,
+        idx: usize,
+        bid_state_beginning: usize,
+        num_elements: usize,
+        max: usize,
+    ) -> Option<&'a [u8; 32]> {
+        if idx + 1 > num_elements || idx + 1 > max {
+            return None;
+        }
+        Some(array_ref![
+            data,
+            bid_state_beginning + (num_elements - idx - 1) * BID_LENGTH,
+            32
+        ])
+    }
+
     pub fn from_account_info(a: &AccountInfo) -> Result<AuctionData, ProgramError> {
         if (a.data_len() - BASE_AUCTION_DATA_SIZE) % mem::size_of::<Bid>() != 0 {
             return Err(AuctionError::DataTypeMismatch.into());
@@ -161,11 +282,7 @@ impl AuctionData {
     }
 
     pub fn num_winners(&self) -> u64 {
-        let minimum = match self.price_floor {
-            PriceFloor::MinimumPrice(min) => min[0],
-            _ => 0,
-        };
-        self.bid_state.num_winners(minimum)
+        self.bid_state.num_winners()
     }
 
     pub fn num_possible_winners(&self) -> u64 {
@@ -173,11 +290,7 @@ impl AuctionData {
     }
 
     pub fn winner_at(&self, idx: usize) -> Option<Pubkey> {
-        let minimum = match self.price_floor {
-            PriceFloor::MinimumPrice(min) => min[0],
-            _ => 0,
-        };
-        self.bid_state.winner_at(idx, minimum)
+        self.bid_state.winner_at(idx)
     }
 
     pub fn place_bid(
@@ -199,7 +312,11 @@ impl AuctionData {
             }
             None => None,
         };
-        self.bid_state.place_bid(bid, tick_size, gap_val)
+        let minimum = match self.price_floor {
+            PriceFloor::MinimumPrice(min) => min[0],
+            _ => 0,
+        };
+        self.bid_state.place_bid(bid, tick_size, gap_val, minimum)
     }
 }
 
@@ -327,9 +444,13 @@ impl BidState {
         bid: Bid,
         tick_size: Option<u64>,
         gap_tick_size_percentage: Option<u8>,
+        minimum: u64,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
         BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
+        if bid.1 < minimum {
+            return Err(AuctionError::BidTooSmall.into());
+        }
 
         match self {
             // In a capped auction, track the limited number of winners.
@@ -454,15 +575,9 @@ impl BidState {
         }
     }
 
-    pub fn num_winners(&self, min: u64) -> u64 {
+    pub fn num_winners(&self) -> u64 {
         match self {
-            BidState::EnglishAuction { bids, max } => cmp::min(
-                bids.iter()
-                    .filter(|b| b.1 >= min)
-                    .collect::<Vec<&Bid>>()
-                    .len(),
-                *max,
-            ) as u64,
+            BidState::EnglishAuction { bids, max } => cmp::min(bids.len(), *max) as u64,
             BidState::OpenEdition { bids, max } => 0,
         }
     }
@@ -474,17 +589,13 @@ impl BidState {
         }
     }
 
-    // Idea is to present winner as index 0 to outside world
-    pub fn winner_at(&self, index: usize, min: u64) -> Option<Pubkey> {
+    /// Idea is to present #1 winner as index 0 to outside world with this method
+    pub fn winner_at(&self, index: usize) -> Option<Pubkey> {
         match self {
             BidState::EnglishAuction { bids, max } => {
                 if index < *max && index < bids.len() {
                     let bid = &bids[bids.len() - index - 1];
-                    if bid.1 >= min {
-                        Some(bids[bids.len() - index - 1].0)
-                    } else {
-                        None
-                    }
+                    Some(bids[bids.len() - index - 1].0)
                 } else {
                     None
                 }

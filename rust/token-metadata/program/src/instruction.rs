@@ -1,5 +1,8 @@
 use {
-    crate::state::{Creator, Data, Reservation},
+    crate::{
+        deprecated_instruction::{MintPrintingTokensViaTokenArgs, SetReservationListArgs},
+        state::{Creator, Data, EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
+    },
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         instruction::{AccountMeta, Instruction},
@@ -36,24 +39,8 @@ pub struct CreateMasterEditionArgs {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct MintPrintingTokensViaTokenArgs {
-    pub supply: u64,
-}
-
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct SetReservationListArgs {
-    /// If set, means that no more than this number of editions can ever be minted. This is immutable.
-    pub reservations: Vec<Reservation>,
-    /// should only be present on the very first call to set reservation list.
-    pub total_reservation_spots: Option<u64>,
-    /// Where in the reservation list you want to insert this slice of reservations
-    pub offset: u64,
-    /// What the total spot offset is in the reservation list from the beginning to your slice of reservations.
-    /// So if is going to be 4 total editions eventually reserved between your slice and the beginning of the array,
-    /// split between 2 reservation entries, the offset variable above would be "2" since you start at entry 2 in 0 indexed array
-    /// (first 2 taking 0 and 1) and because they each have 2 spots taken, this variable would be 4.
-    pub total_spot_offset: u64,
+pub struct MintNewEditionFromMasterEditionViaTokenArgs {
+    pub edition: u64,
 }
 
 /// Instructions supported by the Metadata program.
@@ -74,16 +61,16 @@ pub enum MetadataInstruction {
     ///   1. `[signer]` Update authority key
     UpdateMetadataAccount(UpdateMetadataAccountArgs),
 
-    /// Register a Metadata as a Master Edition, which means Editions can be minted.
+    /// Register a Metadata as a Master Edition V1, which means Editions can be minted.
     /// Henceforth, no further tokens will be mintable from this primary mint. Will throw an error if more than one
     /// token exists, and will throw an error if less than one token exists in this primary mint.
-    ///   0. `[writable]` Unallocated edition account with address as pda of ['metadata', program id, mint, 'edition']
+    ///   0. `[writable]` Unallocated edition V1 account with address as pda of ['metadata', program id, mint, 'edition']
     ///   1. `[writable]` Metadata mint
     ///   2. `[writable]` Printing mint - A mint you control that can mint tokens that can be exchanged for limited editions of your
     ///       master edition via the MintNewEditionFromMasterEditionViaToken endpoint
     ///   3. `[writable]` One time authorization printing mint - A mint you control that prints tokens that gives the bearer permission to mint any
     ///                  number of tokens from the printing mint one time via an endpoint with the token-metadata program for your metadata. Also burns the token.
-    ///   4. `[signer]` Current Update authority key on metadata
+    ///   4. `[signer]` Current Update authority key
     ///   5. `[signer]`   Printing mint authority - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY.
     ///   6. `[signer]` Mint authority on the metadata's mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   7. `[]` Metadata account
@@ -92,27 +79,28 @@ pub enum MetadataInstruction {
     ///   10. `[]` System program
     ///   11. `[]` Rent info
     ///   13. `[signer]`   One time authorization printing mint authority - must be provided if using max supply. THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY.
-    CreateMasterEdition(CreateMasterEditionArgs),
+    DeprecatedCreateMasterEdition(CreateMasterEditionArgs),
 
     /// Given an authority token minted by the Printing mint of a master edition, and a brand new non-metadata-ed mint with one token
     /// make a new Metadata + Edition that is a child of the master edition denoted by this authority token.
     ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
-    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
-    ///   2. `[writable]` Master Record Edition (pda of ['metadata', program id, Printing mint id, 'edition'])
+    ///   1. `[writable]` New Edition V1 (pda of ['metadata', program id, mint id, 'edition'])
+    ///   2. `[writable]` Master Record Edition V1 (pda of ['metadata', program id, master metadata mint id, 'edition'])
     ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   4. `[signer]` Mint authority of new mint
     ///   5. `[writable]` Printing Mint of master record edition
     ///   6. `[writable]` Token account containing Printing mint token to be transferred
-    ///   7. `[signer]` Burn authority for this token
-    ///   8. `[signer]` payer
-    ///   9. `[signer]` update authority info of master metadata account
-    ///   10. `[]` Master record metadata account
-    ///   11. `[]` Token program
-    ///   12. `[]` System program
-    ///   13. `[]` Rent info
-    ///   14. `[optional/writable]` Reservation List - If present, and you are on this list, you can get
+    ///   7. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master mint id, edition_number])
+    ///   8. `[signer]` Burn authority for this token
+    ///   9. `[signer]` payer
+    ///   10. `[]` update authority info for new metadata account
+    ///   11. `[]` Master record metadata account
+    ///   12. `[]` Token program
+    ///   13. `[]` System program
+    ///   14. `[]` Rent info
+    ///   15. `[optional/writable]` Reservation List - If present, and you are on this list, you can get
     ///        an edition number given by your position on the list.
-    MintNewEditionFromMasterEditionViaToken,
+    DeprecatedMintNewEditionFromMasterEditionViaPrintingToken,
 
     /// Allows updating the primary sale boolean on Metadata solely through owning an account
     /// containing a token from the metadata's mint and being a signer on this transaction.
@@ -137,10 +125,10 @@ pub enum MetadataInstruction {
     /// otherwise, it simply wont fit in one transaction. Only provide a total_reservation argument on the first call, which will
     /// allocate the edition space, and in follow up calls this will specifically be unnecessary (and indeed will error.)
     ///
-    ///   0. `[writable]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   0. `[writable]` Master Edition V1 key (pda of ['metadata', program id, mint id, 'edition'])
     ///   1. `[writable]` PDA for ReservationList of ['metadata', program id, master edition key, 'reservation', resource-key]
     ///   2. `[signer]` The resource you tied the reservation list too
-    SetReservationList(SetReservationListArgs),
+    DeprecatedSetReservationList(SetReservationListArgs),
 
     /// Create an empty reservation list for a resource who can come back later as a signer and fill the reservation list
     /// with reservations to ensure that people who come to get editions get the number they expect. See SetReservationList for more.
@@ -148,13 +136,13 @@ pub enum MetadataInstruction {
     ///   0. `[writable]` PDA for ReservationList of ['metadata', program id, master edition key, 'reservation', resource-key]
     ///   1. `[signer]` Payer
     ///   2. `[signer]` Update authority
-    ///   3. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   3. `[]` Master Edition V1 key (pda of ['metadata', program id, mint id, 'edition'])
     ///   4. `[]` A resource you wish to tie the reservation list to. This is so your later visitors who come to
     ///       redeem can derive your reservation list PDA with something they can easily get at. You choose what this should be.
     ///   5. `[]` Metadata key (pda of ['metadata', program id, mint id])
     ///   6. `[]` System program
     ///   7. `[]` Rent info
-    CreateReservationList,
+    DeprecatedCreateReservationList,
 
     // Sign a piece of metadata that has you as an unverified creator so that it is now verified.
     //
@@ -162,7 +150,7 @@ pub enum MetadataInstruction {
     ///   1. `[signer]` Creator
     SignMetadata,
 
-    /// Using a one time authorization token from a master edition, print any number of printing tokens from the printing_mint
+    /// Using a one time authorization token from a master edition v1, print any number of printing tokens from the printing_mint
     /// one time, burning the one time authorization token.
     ///
     ///   0. `[writable]` Destination account
@@ -171,10 +159,10 @@ pub enum MetadataInstruction {
     ///   3. `[writable]` Printing mint
     ///   4. `[signer]` Burn authority
     ///   5. `[]` Metadata key (pda of ['metadata', program id, mint id])
-    ///   6. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   6. `[]` Master Edition V1 key (pda of ['metadata', program id, mint id, 'edition'])
     ///   7. `[]` Token program
     ///   8. `[]` Rent
-    MintPrintingTokensViaToken(MintPrintingTokensViaTokenArgs),
+    DeprecatedMintPrintingTokensViaToken(MintPrintingTokensViaTokenArgs),
 
     /// Using your update authority, mint printing tokens for your master edition.
     ///
@@ -182,10 +170,74 @@ pub enum MetadataInstruction {
     ///   1. `[writable]` Printing mint
     ///   2. `[signer]` Update authority
     ///   3. `[]` Metadata key (pda of ['metadata', program id, mint id])
-    ///   4. `[]` Master Edition key (pda of ['metadata', program id, mint id, 'edition'])
+    ///   4. `[]` Master Edition V1 key (pda of ['metadata', program id, mint id, 'edition'])
     ///   5. `[]` Token program
     ///   6. `[]` Rent
-    MintPrintingTokens(MintPrintingTokensViaTokenArgs),
+    DeprecatedMintPrintingTokens(MintPrintingTokensViaTokenArgs),
+
+    /// Register a Metadata as a Master Edition V2, which means Edition V2s can be minted.
+    /// Henceforth, no further tokens will be mintable from this primary mint. Will throw an error if more than one
+    /// token exists, and will throw an error if less than one token exists in this primary mint.
+    ///   0. `[writable]` Unallocated edition V2 account with address as pda of ['metadata', program id, mint, 'edition']
+    ///   1. `[writable]` Metadata mint
+    ///   2. `[signer]` Update authority
+    ///   3. `[signer]` Mint authority on the metadata's mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   4. `[signer]` payer
+    ///   5. `[]` Metadata account
+    ///   6. `[]` Token program
+    ///   7. `[]` System program
+    ///   8. `[]` Rent info
+    CreateMasterEdition(CreateMasterEditionArgs),
+
+    /// Given a token account containing the master edition token to prove authority, and a brand new non-metadata-ed mint with one token
+    /// make a new Metadata + Edition that is a child of the master edition denoted by this authority token.
+    ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   2. `[writable]` Master Record Edition V2 (pda of ['metadata', program id, master metadata mint id, 'edition'])
+    ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   4. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE).
+    ///   5. `[signer]` Mint authority of new mint
+    ///   6. `[signer]` payer
+    ///   7. `[signer]` owner of token account containing master token (#8)
+    ///   8. `[]` token account containing token from master metadata mint
+    ///   9. `[]` Update authority info for new metadata
+    ///   10. `[]` Master record metadata account
+    ///   11. `[]` Token program
+    ///   12. `[]` System program
+    ///   13. `[]` Rent info
+    MintNewEditionFromMasterEditionViaToken(MintNewEditionFromMasterEditionViaTokenArgs),
+
+    /// Converts the Master Edition V1 to a Master Edition V2, draining lamports from the two printing mints
+    /// to the owner of the token account holding the master edition token. Permissionless.
+    /// Can only be called if there are currenly no printing tokens or one time authorization tokens in circulation.
+    ///
+    ///   0. `[writable]` Master Record Edition V1 (pda of ['metadata', program id, master metadata mint id, 'edition'])
+    ///   1. `[writable]` One time authorization mint
+    ///   2. `[writable]` Printing mint
+    ConvertMasterEditionV1ToV2,
+
+    /// Proxy Call to Mint Edition using a Store Token Account as a Vault Authority.
+    ///
+    ///   0. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   1. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   2. `[writable]` Master Record Edition V2 (pda of ['metadata', program id, master metadata mint id, 'edition']
+    ///   3. `[writable]` Mint of new token - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   4. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///   where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE).
+    ///   5. `[signer]` Mint authority of new mint
+    ///   6. `[signer]` payer
+    ///   7. `[signer]` Vault authority
+    ///   8. `[]` Safety deposit token store account
+    ///   9. `[]` Safety deposit box
+    ///   10. `[]` Vault
+    ///   11. `[]` Update authority info for new metadata
+    ///   12. `[]` Master record metadata account
+    ///   13. `[]` Token program
+    ///   14. `[]` Token vault program
+    ///   15. `[]` System program
+    ///   16. `[]` Rent info
+    MintNewEditionFromMasterEditionViaVaultProxy(MintNewEditionFromMasterEditionViaTokenArgs),
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -256,97 +308,6 @@ pub fn update_metadata_accounts(
     }
 }
 
-/// creates a create_master_edition instruction
-#[allow(clippy::too_many_arguments)]
-pub fn create_master_edition(
-    program_id: Pubkey,
-    edition: Pubkey,
-    mint: Pubkey,
-    printing_mint: Pubkey,
-    one_time_printing_authorization_mint: Pubkey,
-    update_authority: Pubkey,
-    printing_mint_authority: Pubkey,
-    mint_authority: Pubkey,
-    metadata: Pubkey,
-    payer: Pubkey,
-    max_supply: Option<u64>,
-    one_time_printing_authorization_mint_authority: Option<Pubkey>,
-) -> Instruction {
-    let mut accounts = vec![
-        AccountMeta::new(edition, false),
-        AccountMeta::new(mint, false),
-        AccountMeta::new(printing_mint, false),
-        AccountMeta::new(one_time_printing_authorization_mint, false),
-        AccountMeta::new_readonly(update_authority, true),
-        AccountMeta::new_readonly(printing_mint_authority, true),
-        AccountMeta::new_readonly(mint_authority, true),
-        AccountMeta::new_readonly(metadata, false),
-        AccountMeta::new_readonly(payer, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-    ];
-
-    if let Some(auth) = one_time_printing_authorization_mint_authority {
-        accounts.push(AccountMeta::new_readonly(auth, true));
-    }
-
-    Instruction {
-        program_id,
-        accounts,
-        data: MetadataInstruction::CreateMasterEdition(CreateMasterEditionArgs { max_supply })
-            .try_to_vec()
-            .unwrap(),
-    }
-}
-
-/// creates a mint_new_edition_from_master_edition instruction
-#[allow(clippy::too_many_arguments)]
-pub fn mint_new_edition_from_master_edition_via_token(
-    program_id: Pubkey,
-    metadata: Pubkey,
-    edition: Pubkey,
-    master_edition: Pubkey,
-    mint: Pubkey,
-    mint_authority: Pubkey,
-    printing_mint: Pubkey,
-    master_token_account: Pubkey,
-    burn_authority: Pubkey,
-    payer: Pubkey,
-    master_update_authority: Pubkey,
-    master_metadata: Pubkey,
-    reservation_list: Option<Pubkey>,
-) -> Instruction {
-    let mut accounts = vec![
-        AccountMeta::new(metadata, false),
-        AccountMeta::new(edition, false),
-        AccountMeta::new(master_edition, false),
-        AccountMeta::new(mint, false),
-        AccountMeta::new_readonly(mint_authority, true),
-        AccountMeta::new(printing_mint, false),
-        AccountMeta::new(master_token_account, false),
-        AccountMeta::new_readonly(burn_authority, true),
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(master_update_authority, true),
-        AccountMeta::new_readonly(master_metadata, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-    ];
-
-    if let Some(list) = reservation_list {
-        accounts.push(AccountMeta::new_readonly(list, false))
-    }
-
-    Instruction {
-        program_id,
-        accounts,
-        data: MetadataInstruction::MintNewEditionFromMasterEditionViaToken
-            .try_to_vec()
-            .unwrap(),
-    }
-}
-
 /// creates a update_primary_sale_happened_via_token instruction
 #[allow(clippy::too_many_arguments)]
 pub fn update_primary_sale_happened_via_token(
@@ -368,123 +329,166 @@ pub fn update_primary_sale_happened_via_token(
     }
 }
 
-/// creates an set_reservation_list instruction
+/// creates a create_master_edition instruction
 #[allow(clippy::too_many_arguments)]
-pub fn set_reservation_list(
+pub fn create_master_edition(
+    program_id: Pubkey,
+    edition: Pubkey,
+    mint: Pubkey,
+    update_authority: Pubkey,
+    mint_authority: Pubkey,
+    metadata: Pubkey,
+    payer: Pubkey,
+    max_supply: Option<u64>,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(edition, false),
+        AccountMeta::new(mint, false),
+        AccountMeta::new_readonly(update_authority, true),
+        AccountMeta::new_readonly(mint_authority, true),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(metadata, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction {
+        program_id,
+        accounts,
+        data: MetadataInstruction::CreateMasterEdition(CreateMasterEditionArgs { max_supply })
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+/// creates a mint_new_edition_from_master_edition instruction
+#[allow(clippy::too_many_arguments)]
+pub fn mint_new_edition_from_master_edition_via_token(
+    program_id: Pubkey,
+    new_metadata: Pubkey,
+    new_edition: Pubkey,
+    master_edition: Pubkey,
+    new_mint: Pubkey,
+    new_mint_authority: Pubkey,
+    payer: Pubkey,
+    token_account_owner: Pubkey,
+    token_account: Pubkey,
+    new_metadata_update_authority: Pubkey,
+    metadata: Pubkey,
+    metadata_mint: Pubkey,
+    edition: u64,
+) -> Instruction {
+    let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
+    let as_string = edition_number.to_string();
+    let (edition_mark_pda, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            metadata_mint.as_ref(),
+            EDITION.as_bytes(),
+            as_string.as_bytes(),
+        ],
+        &program_id,
+    );
+
+    let accounts = vec![
+        AccountMeta::new(new_metadata, false),
+        AccountMeta::new(new_edition, false),
+        AccountMeta::new(master_edition, false),
+        AccountMeta::new(new_mint, false),
+        AccountMeta::new(edition_mark_pda, false),
+        AccountMeta::new_readonly(new_mint_authority, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(token_account_owner, true),
+        AccountMeta::new_readonly(token_account, false),
+        AccountMeta::new_readonly(new_metadata_update_authority, false),
+        AccountMeta::new_readonly(metadata, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction {
+        program_id,
+        accounts,
+        data: MetadataInstruction::MintNewEditionFromMasterEditionViaToken(
+            MintNewEditionFromMasterEditionViaTokenArgs { edition },
+        )
+        .try_to_vec()
+        .unwrap(),
+    }
+}
+
+/// Converts a master edition v1 to v2
+#[allow(clippy::too_many_arguments)]
+pub fn convert_master_edition_v1_to_v2(
     program_id: Pubkey,
     master_edition: Pubkey,
-    reservation_list: Pubkey,
-    resource: Pubkey,
-    reservations: Vec<Reservation>,
-    total_reservation_spots: Option<u64>,
-    offset: u64,
-    total_spot_offset: u64,
+    one_time_auth: Pubkey,
+    printing_mint: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id,
         accounts: vec![
             AccountMeta::new(master_edition, false),
-            AccountMeta::new(reservation_list, false),
-            AccountMeta::new_readonly(resource, true),
+            AccountMeta::new(one_time_auth, false),
+            AccountMeta::new(printing_mint, false),
         ],
-        data: MetadataInstruction::SetReservationList(SetReservationListArgs {
-            reservations,
-            total_reservation_spots,
-            offset,
-            total_spot_offset,
-        })
-        .try_to_vec()
-        .unwrap(),
+        data: MetadataInstruction::ConvertMasterEditionV1ToV2
+            .try_to_vec()
+            .unwrap(),
     }
 }
 
-/// creates an create_reservation_list instruction
+/// creates a mint_edition_proxy instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_reservation_list(
+pub fn mint_edition_from_master_edition_via_vault_proxy(
     program_id: Pubkey,
-    reservation_list: Pubkey,
+    new_metadata: Pubkey,
+    new_edition: Pubkey,
+    master_edition: Pubkey,
+    new_mint: Pubkey,
+    edition_mark_pda: Pubkey,
+    new_mint_authority: Pubkey,
     payer: Pubkey,
-    update_authority: Pubkey,
-    master_edition: Pubkey,
-    resource: Pubkey,
+    vault_authority: Pubkey,
+    safety_deposit_store: Pubkey,
+    safety_deposit_box: Pubkey,
+    vault: Pubkey,
+    new_metadata_update_authority: Pubkey,
     metadata: Pubkey,
+    token_program: Pubkey,
+    token_vault_program_info: Pubkey,
+    edition: u64,
 ) -> Instruction {
-    Instruction {
-        program_id,
-        accounts: vec![
-            AccountMeta::new(reservation_list, false),
-            AccountMeta::new_readonly(payer, true),
-            AccountMeta::new_readonly(update_authority, true),
-            AccountMeta::new_readonly(master_edition, false),
-            AccountMeta::new_readonly(resource, false),
-            AccountMeta::new_readonly(metadata, false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-        ],
-        data: MetadataInstruction::CreateReservationList
-            .try_to_vec()
-            .unwrap(),
-    }
-}
+    let accounts = vec![
+        AccountMeta::new(new_metadata, false),
+        AccountMeta::new(new_edition, false),
+        AccountMeta::new(master_edition, false),
+        AccountMeta::new(new_mint, false),
+        AccountMeta::new(edition_mark_pda, false),
+        AccountMeta::new_readonly(new_mint_authority, true),
+        AccountMeta::new(payer, true),
+        AccountMeta::new_readonly(vault_authority, true),
+        AccountMeta::new_readonly(safety_deposit_store, false),
+        AccountMeta::new_readonly(safety_deposit_box, false),
+        AccountMeta::new_readonly(vault, false),
+        AccountMeta::new_readonly(new_metadata_update_authority, false),
+        AccountMeta::new_readonly(metadata, false),
+        AccountMeta::new_readonly(token_program, false),
+        AccountMeta::new_readonly(token_vault_program_info, false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
 
-/// creates an mint_printing_tokens_via_token instruction
-#[allow(clippy::too_many_arguments)]
-pub fn mint_printing_tokens_via_token(
-    program_id: Pubkey,
-    destination: Pubkey,
-    token: Pubkey,
-    one_time_printing_authorization_mint: Pubkey,
-    printing_mint: Pubkey,
-    burn_authority: Pubkey,
-    metadata: Pubkey,
-    master_edition: Pubkey,
-    supply: u64,
-) -> Instruction {
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(destination, false),
-            AccountMeta::new(token, false),
-            AccountMeta::new(one_time_printing_authorization_mint, false),
-            AccountMeta::new(printing_mint, false),
-            AccountMeta::new_readonly(burn_authority, true),
-            AccountMeta::new_readonly(metadata, false),
-            AccountMeta::new_readonly(master_edition, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-        ],
-        data: MetadataInstruction::MintPrintingTokensViaToken(MintPrintingTokensViaTokenArgs {
-            supply,
-        })
+        accounts,
+        data: MetadataInstruction::MintNewEditionFromMasterEditionViaVaultProxy(
+            MintNewEditionFromMasterEditionViaTokenArgs { edition },
+        )
         .try_to_vec()
         .unwrap(),
-    }
-}
-
-/// creates an mint_printing_tokens instruction
-#[allow(clippy::too_many_arguments)]
-pub fn mint_printing_tokens(
-    program_id: Pubkey,
-    destination: Pubkey,
-    printing_mint: Pubkey,
-    update_authority: Pubkey,
-    metadata: Pubkey,
-    master_edition: Pubkey,
-    supply: u64,
-) -> Instruction {
-    Instruction {
-        program_id,
-        accounts: vec![
-            AccountMeta::new(destination, false),
-            AccountMeta::new(printing_mint, false),
-            AccountMeta::new_readonly(update_authority, true),
-            AccountMeta::new_readonly(metadata, false),
-            AccountMeta::new_readonly(master_edition, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-        ],
-        data: MetadataInstruction::MintPrintingTokens(MintPrintingTokensViaTokenArgs { supply })
-            .try_to_vec()
-            .unwrap(),
     }
 }

@@ -96,7 +96,7 @@ function RunAction({
   return component;
 }
 
-async function getPersonalEscrowAta(
+export async function getPersonalEscrowAta(
   wallet: WalletAdapter | undefined,
 ): Promise<PublicKey | undefined> {
   const PROGRAM_IDS = programIds();
@@ -199,21 +199,25 @@ export function useSettlementAuctions({
         const av = nextBatch[i];
         if (!CALLING_MUTEX[av.auctionManager.pubkey.toBase58()]) {
           CALLING_MUTEX[av.auctionManager.pubkey.toBase58()] = true;
-          const balance = await connection.getTokenAccountBalance(
-            av.auctionManager.info.acceptPayment,
-          );
-          if (
-            ((balance.value.uiAmount || 0) === 0 &&
-              av.auction.info.bidState.bids
-                .map(b => b.amount.toNumber())
-                .reduce((acc, r) => (acc += r), 0) > 0) ||
-            (balance.value.uiAmount || 0) > 0.01
-          ) {
-            setValidDiscoveredEndedAuctions(old => ({
-              ...old,
-              [av.auctionManager.pubkey.toBase58()]:
-                balance.value.uiAmount || 0,
-            }));
+          try {
+            const balance = await connection.getTokenAccountBalance(
+              av.auctionManager.info.acceptPayment,
+            );
+            if (
+              ((balance.value.uiAmount || 0) === 0 &&
+                av.auction.info.bidState.bids
+                  .map(b => b.amount.toNumber())
+                  .reduce((acc, r) => (acc += r), 0) > 0) ||
+              (balance.value.uiAmount || 0) > 0.01
+            ) {
+              setValidDiscoveredEndedAuctions(old => ({
+                ...old,
+                [av.auctionManager.pubkey.toBase58()]:
+                  balance.value.uiAmount || 0,
+              }));
+            }
+          } catch (e) {
+            console.error(e);
           }
         }
       }

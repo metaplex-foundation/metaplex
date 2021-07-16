@@ -4,7 +4,13 @@ import {
   PublicKey,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, models, findProgramAddress } from '@oyster/common';
+import {
+  utils,
+  actions,
+  models,
+  findProgramAddress,
+  MetadataKey,
+} from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
@@ -81,7 +87,10 @@ export async function addTokensToVault(
       currSigners.push(transferAuthority);
 
       await addTokenToInactiveVault(
-        nft.amount,
+        nft.draft.masterEdition &&
+          nft.draft.masterEdition.info.key === MetadataKey.MasterEditionV2
+          ? new BN(1)
+          : nft.amount,
         nft.tokenMint,
         nft.tokenAccount,
         newStoreAccount,

@@ -1,33 +1,33 @@
-import {
-  programIds,
-  VAULT_PREFIX,
-  getAuctionExtended,
-  findProgramAddress,
-} from '@oyster/common';
+import { getEdition, programIds, getMetadata } from '@oyster/common';
 import {
   PublicKey,
+  SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { PopulateParticipationPrintingAccountArgs, SCHEMA } from '.';
+import {
+  getAuctionKeys,
+  getBidderKeys,
+  DeprecatedRedeemParticipationBidArgs,
+  SCHEMA,
+} from '.';
 
-export async function populateParticipationPrintingAccount(
+export async function deprecatedRedeemParticipationBid(
   vault: PublicKey,
-  auctionManager: PublicKey,
-  auction: PublicKey,
   safetyDepositTokenStore: PublicKey,
-  transientOneTimeAccount: PublicKey,
-  printingTokenAccount: PublicKey,
+  destination: PublicKey,
   safetyDeposit: PublicKey,
   fractionMint: PublicKey,
-  printingMint: PublicKey,
-  oneTimePrintingAuthorizationMint: PublicKey,
-  masterEdition: PublicKey,
-  metadata: PublicKey,
+  bidder: PublicKey,
   payer: PublicKey,
   instructions: TransactionInstruction[],
+  tokenMint: PublicKey,
+  participationPrintingAccount: PublicKey,
+  transferAuthority: PublicKey,
+  acceptPaymentAccount: PublicKey,
+  tokenPaymentAccount: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -35,43 +35,32 @@ export async function populateParticipationPrintingAccount(
     throw new Error('Store not initialized');
   }
 
-  const transferAuthority: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
-      ],
-      PROGRAM_IDS.vault,
-    )
-  )[0];
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const value = new PopulateParticipationPrintingAccountArgs();
+  const { bidRedemption, bidMetadata } = await getBidderKeys(
+    auctionKey,
+    bidder,
+  );
+  const value = new DeprecatedRedeemParticipationBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
-
   const keys = [
+    {
+      pubkey: auctionManagerKey,
+      isSigner: false,
+      isWritable: true,
+    },
     {
       pubkey: safetyDepositTokenStore,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: transientOneTimeAccount,
+      pubkey: destination,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: printingTokenAccount,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: oneTimePrintingAuthorizationMint,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: printingMint,
+      pubkey: bidRedemption,
       isSigner: false,
       isWritable: true,
     },
@@ -88,24 +77,26 @@ export async function populateParticipationPrintingAccount(
     {
       pubkey: fractionMint,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
-      pubkey: auction,
+      pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: await getAuctionExtended({
-        auctionProgramId: PROGRAM_IDS.auction,
-        resource: vault,
-      }),
+      pubkey: bidMetadata,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: auctionManager,
+      pubkey: bidder,
       isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: payer,
+      isSigner: true,
       isWritable: false,
     },
     {
@@ -129,22 +120,7 @@ export async function populateParticipationPrintingAccount(
       isWritable: false,
     },
     {
-      pubkey: masterEdition,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: metadata,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: transferAuthority,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: payer,
+      pubkey: SystemProgram.programId,
       isSigner: false,
       isWritable: false,
     },
@@ -152,6 +128,26 @@ export async function populateParticipationPrintingAccount(
       pubkey: SYSVAR_RENT_PUBKEY,
       isSigner: false,
       isWritable: false,
+    },
+    {
+      pubkey: transferAuthority,
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: acceptPaymentAccount,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: tokenPaymentAccount,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: participationPrintingAccount,
+      isSigner: false,
+      isWritable: true,
     },
   ];
 

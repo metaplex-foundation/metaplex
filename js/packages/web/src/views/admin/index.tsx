@@ -13,29 +13,37 @@ import {
 import { useMeta } from '../../contexts';
 import { Store, WhitelistedCreator } from '../../models/metaplex';
 import {
+  MasterEditionV1,
   notify,
   ParsedAccount,
   shortenAddress,
   useConnection,
+  useUserAccounts,
   useWallet,
 } from '@oyster/common';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WalletAdapter } from '@solana/wallet-base';
 import './index.less';
+import { useMemo } from 'react';
+import {
+  convertMasterEditions,
+  filterMetadata,
+} from '../../actions/convertMasterEditions';
 
 const { Content } = Layout;
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator } = useMeta();
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const { wallet, connected } = useWallet();
 
-  return store && connection && wallet ? (
+  return store && connection && wallet && connected ? (
     <InnerAdminView
       store={store}
       whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
       connection={connection}
       wallet={wallet}
+      connected={connected}
     />
   ) : (
     <Spin />
@@ -84,8 +92,8 @@ function ArtistModal({
           } catch {
             notify({
               message: 'Only valid Solana addresses are supported',
-              type: 'error'
-            })
+              type: 'error',
+            });
           }
         }}
         onCancel={() => {
@@ -108,6 +116,7 @@ function InnerAdminView({
   whitelistedCreatorsByCreator,
   connection,
   wallet,
+  connected,
 }: {
   store: ParsedAccount<Store>;
   whitelistedCreatorsByCreator: Record<
@@ -116,12 +125,35 @@ function InnerAdminView({
   >;
   connection: Connection;
   wallet: WalletAdapter;
+  connected: boolean;
 }) {
-  const [newStore, setNewStore] = useState(store && store.info && new Store(store.info));
+  const [newStore, setNewStore] = useState(
+    store && store.info && new Store(store.info),
+  );
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
+  const [filteredMetadata, setFilteredMetadata] = useState<{
+    available: ParsedAccount<MasterEditionV1>[];
+    unavailable: ParsedAccount<MasterEditionV1>[];
+  }>();
+  const [loading, setLoading] = useState<boolean>();
+  const { metadata, masterEditions } = useMeta();
 
+  const { accountByMint } = useUserAccounts();
+  useMemo(() => {
+    const fn = async () => {
+      setFilteredMetadata(
+        await filterMetadata(
+          connection,
+          metadata,
+          masterEditions,
+          accountByMint,
+        ),
+      );
+    };
+    fn();
+  }, [connected]);
 
   if (!store || !newStore) {
     return <p>Store is not defined</p>;
@@ -234,10 +266,39 @@ function InnerAdminView({
               key,
               address: uniqueCreatorsWithUpdates[key].address,
               activated: uniqueCreatorsWithUpdates[key].activated,
-              name: uniqueCreatorsWithUpdates[key].name || shortenAddress(uniqueCreatorsWithUpdates[key].address.toBase58()),
-              image: uniqueCreatorsWithUpdates[key].image
+              name:
+                uniqueCreatorsWithUpdates[key].name ||
+                shortenAddress(
+                  uniqueCreatorsWithUpdates[key].address.toBase58(),
+                ),
+              image: uniqueCreatorsWithUpdates[key].image,
             }))}
           ></Table>
+        </Row>
+      </Col>
+
+      <h1>
+        You have {filteredMetadata?.available.length} MasterEditionV1s that can
+        be converted right now and {filteredMetadata?.unavailable.length} still
+        in unfinished auctions that cannot be converted yet.
+      </h1>
+      <Col>
+        <Row>
+          <Button
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              await convertMasterEditions(
+                connection,
+                wallet,
+                filteredMetadata?.available || [],
+                accountByMint,
+              );
+              setLoading(false);
+            }}
+          >
+            {loading ? <Spin /> : <span>Convert Eligible Master Editions</span>}
+          </Button>
         </Row>
       </Col>
     </Content>
