@@ -84,6 +84,7 @@ export function StorefrontProvider({ children = undefined as any }) {
           logo.src = logoURL
           
           logo.onload = onLoadStylesheet
+          logo.onerror = onLoadStylesheet
         } else {
           onLoadStylesheet()
         }
