@@ -41,7 +41,7 @@ bindings that allow interactivity.
 We have a few channels for contact:
 
 - [Discord](https://discord.gg/metaplex)
-- [@metaplexNFT](https://twitter.com/metaplexNFT) on Twitter
+- [@metaplex](https://twitter.com/metaplex) on Twitter
 - [GitHub Issues](https://github.com/metaplex-foundation/metaplex/issues)
 
 # Protocol

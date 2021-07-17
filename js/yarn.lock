@@ -1247,6 +1247,25 @@
     "@babel/helper-validator-identifier" "^7.14.0"
     to-fast-properties "^2.0.0"
 
+"@bonfida/spl-name-service@0.1.12":
+  version "0.1.12"
+  resolved "https://registry.npmjs.org/@bonfida/spl-name-service/-/spl-name-service-0.1.12.tgz#ab186fe0c907efe66cb6818e2f429f9f4b3ab0d2"
+  integrity sha512-zVZiOjhZK+VZAs4aqOmxj6vplbGGwcin/gJ3Xm/gn+wV1GzgeqDkYrrDJclEpQ7WcmA4WV/Pad6tWfPtGt12/g==
+  dependencies:
+    "@solana/spl-token" "0.1.4"
+    "@solana/web3.js" "^1.11.0"
+    bip32 "^2.0.6"
+    bn.js "^5.1.3"
+    borsh "^0.4.0"
+    bs58 "4.0.1"
+    buffer-layout "^1.2.0"
+    core-util-is "^1.0.2"
+    crypto "^1.0.1"
+    crypto-ts "^1.0.2"
+    fs "^0.0.1-security"
+    tweetnacl "^1.0.3"
+    webpack-dev-server "^3.11.2"
+
 "@chaitanyapotti/random-id@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@chaitanyapotti/random-id/-/random-id-1.0.3.tgz#f52f647cfe9f79fc7723ea2b01b0ad3889204002"

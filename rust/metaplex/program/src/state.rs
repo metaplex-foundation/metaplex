@@ -1,5 +1,8 @@
+use solana_program::{msg};
+
 use {
     crate::utils::try_from_slice_checked,
+    arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey},
 };
@@ -34,14 +37,18 @@ pub const MAX_AUCTION_MANAGER_SIZE: usize = 1 + // key
     1 + // participation non winner constraint
     1 + // u8 participation_config's safety deposit box index 
     9 + // option<u64> participation fixed price in borsh is a u8 for option and actual u64
-    150; // padding;
+    1 + 
+    AUCTION_MANAGER_PADDING; // padding;
          // Add padding for future booleans/enums
+pub const AUCTION_MANAGER_PADDING: usize = 149;
 pub const MAX_STORE_SIZE: usize = 2 + 32 + 32 + 32 + 32 + 100;
 pub const MAX_WHITELISTED_CREATOR_SIZE: usize = 2 + 32 + 10;
 pub const MAX_PAYOUT_TICKET_SIZE: usize = 1 + 32 + 8;
 pub const MAX_VALIDATION_TICKET_SIZE: usize = 1 + 32 + 10;
 pub const MAX_BID_REDEMPTION_TICKET_SIZE: usize = 3;
 pub const MAX_AUTHORITY_LOOKUP_SIZE: usize = 33;
+pub const MAX_PRIZE_TRACKING_TICKET_SIZE: usize = 1 + 32 + 8 + 8 + 8 + 50;
+pub const MAX_WINNING_CONFIG_STATE_ITEM_SIZE: usize = 2;
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
@@ -54,6 +61,7 @@ pub enum Key {
     PayoutTicketV1,
     SafetyDepositValidationTicketV1,
     AuctionManagerV1,
+    PrizeTrackingTicketV1,
 }
 
 /// An Auction Manager can support an auction that is an English auction and limited edition and open edition
@@ -78,6 +86,9 @@ pub struct AuctionManager {
     pub state: AuctionManagerState,
 
     pub settings: AuctionManagerSettings,
+
+    /// True if this is only winning configs of one item each, used for optimization in saving.
+    pub straight_shot_optimization: bool,
 }
 
 impl AuctionManager {
@@ -89,6 +100,59 @@ impl AuctionManager {
         )?;
 
         Ok(am)
+    }
+
+    // cheap setter to set status and claimed in one go without using expensive borsh save.
+    pub fn set_claimed_and_status(
+        a: &AccountInfo,
+        status: AuctionManagerStatus,
+        winning_config_index: usize,
+        winning_config_item_index: usize,
+        use_straight_shot: bool
+    ) {
+        let num_configs = AuctionManager::get_num_configs(a);
+        let mut data = a.data.borrow_mut();
+        data[161] = status as u8; // set status
+        let mut current_config_offset = 167;
+        if use_straight_shot {
+            msg!("Using optimization path");
+            // in this optimization framework we know it's one item per config and we can know exact location.
+            let skip = (4 + MAX_WINNING_CONFIG_STATE_ITEM_SIZE + 1) * winning_config_index;
+            // need to skip ahead by the number of items to the next offset.
+            // Add one byte to cover the boolean at the end of the winning config state.
+            let idx = current_config_offset + skip + 4 + 1;
+            data[idx] = 1;
+        } else {
+            msg!("Using tiered auction save");
+            for i in 0..num_configs {
+                // need to hop along and check each u32 of the items sub array to know how much to hop next.
+                let num_items_data = array_ref![data, current_config_offset, 4];
+
+                let num_items = u32::from_le_bytes(*num_items_data) as usize;
+
+                if winning_config_index == i {
+                    // ok we need to target the claimed u8 inside the correct item now.
+                    let idx = current_config_offset
+                        + 4
+                        + winning_config_item_index * MAX_WINNING_CONFIG_STATE_ITEM_SIZE
+                        + 1;
+
+                    data[idx] = 1;
+                    break;
+                } else {
+                    let skip = MAX_WINNING_CONFIG_STATE_ITEM_SIZE * num_items;
+                    // need to skip ahead by the number of items to the next offset.
+                    // Add one byte to cover the boolean at the end of the winning config state.
+                    current_config_offset = current_config_offset + 4 + skip + 1;
+                }
+            } 
+        }
+    }
+
+    pub fn get_num_configs(a: &AccountInfo) -> usize {
+        let data = a.data.borrow();
+        let num_elements_data = array_ref![data, 163, 4];
+        u32::from_le_bytes(*num_elements_data) as usize
     }
 }
 
@@ -193,8 +257,11 @@ pub enum WinningConfigType {
     /// token itself. The other person will be able to mint authorization tokens and make changes to the
     /// artwork.
     FullRightsTransfer,
-    /// Means you are using authorization tokens to print off editions during the auction
-    Printing,
+    /// Means you are using authorization tokens to print off editions during the auction using
+    /// from a MasterEditionV1
+    PrintingV1,
+    /// Means you are using the MasterEditionV2 to print off editions
+    PrintingV2,
 }
 
 #[repr(C)]
@@ -354,6 +421,28 @@ impl SafetyDepositValidationTicket {
             &a.data.borrow_mut(),
             Key::SafetyDepositValidationTicketV1,
             MAX_VALIDATION_TICKET_SIZE,
+        )?;
+
+        Ok(store)
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
+pub struct PrizeTrackingTicket {
+    pub key: Key,
+    pub metadata: Pubkey,
+    pub supply_snapshot: u64,
+    pub expected_redemptions: u64,
+    pub redemptions: u64,
+}
+
+impl PrizeTrackingTicket {
+    pub fn from_account_info(a: &AccountInfo) -> Result<PrizeTrackingTicket, ProgramError> {
+        let store: PrizeTrackingTicket = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::PrizeTrackingTicketV1,
+            MAX_PRIZE_TRACKING_TICKET_SIZE,
         )?;
 
         Ok(store)

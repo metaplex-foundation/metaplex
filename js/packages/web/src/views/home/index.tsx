@@ -18,14 +18,22 @@ import { WhitelistedCreator } from '../../models/metaplex';
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
+
+export enum LiveAuctionViewState {
+  All = '0',
+  Participated = '1',
+  Ended = '2',
+};
+
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading, store } = useMeta();
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
   const connection = useConnection();
   const history = useHistory();
-  const { wallet, connect } = useWallet();
+  const { wallet, connect, connected } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -47,6 +55,13 @@ export const HomeView = () => {
   const liveAuctions = auctions
   .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0);
 
+  const items =
+    activeKey === LiveAuctionViewState.All
+      ? liveAuctions
+      : activeKey === LiveAuctionViewState.Participated ?
+      liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58()):
+      auctionsEnded;
+
   const liveAuctionsView = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
@@ -54,7 +69,7 @@ export const HomeView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {!isLoading
-        ? liveAuctions.map((m, idx) => {
+        ? items.map((m, idx) => {
               if (m === heroAuction) {
                 return;
               }
@@ -77,7 +92,6 @@ export const HomeView = () => {
     >
       {!isLoading
         ? auctionsEnded
-            .filter((m, idx) => idx < 10)
             .map((m, idx) => {
               if (m === heroAuction) {
                 return;
@@ -127,24 +141,33 @@ export const HomeView = () => {
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
             {liveAuctions.length > 1 && (<Row>
-              <Tabs>
-                <TabPane>
-                  <h2>Live Auctions</h2>
-                  {liveAuctionsView}
-                </TabPane>
+              <Tabs activeKey={activeKey}
+                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
+                  <TabPane
+                    tab={<span className="tab-title">Live Auctions</span>}
+                    key={LiveAuctionViewState.All}
+                  >
+                    {liveAuctionsView}
+                  </TabPane>
+                  {auctionsEnded.length > 0 && (
+                  <TabPane
+                    tab={<span className="tab-title">Ended Auctions</span>}
+                    key={LiveAuctionViewState.Ended}
+                  >
+                    {endedAuctions}
+                  </TabPane>
+                  )}
+                  // Show all participated live and ended auctions except heroauction
+                  {connected && (
+                    <TabPane
+                      tab={<span className="tab-title">Participated</span>}
+                      key={LiveAuctionViewState.Participated}
+                    >
+                      {liveAuctionsView}
+                    </TabPane>
+                  )}
               </Tabs>
             </Row>)}
-            <Row>
-              {auctionsEnded.length > 0 && (
-              <Tabs>
-                <TabPane>
-                  <h2>Ended Auctions</h2>
-                  {endedAuctions}
-                </TabPane>
-              </Tabs>
-              )}
-              <br />
-            </Row>
           </Col>
         </Content>
       </Layout>
