@@ -1,116 +1,115 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import './index.less';
-import { Link } from 'react-router-dom';
-import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
-import { Notifications } from '../Notifications';
+import { CurrentUserBadge, useWallet } from '@oyster/common';
+import { Link, NavLink } from 'react-router-dom';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
-import { useMeta } from '../../contexts';
+import LOGO from './logo_sm.png';
 
-const UserActions = () => {
-  const { wallet } = useWallet();
-  const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
-
-  const canCreate = useMemo(() => {
-    return store &&
-      store.info &&
-      (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info
-          ?.activated);
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
-
-  return (
-    <>
-      {/* <Link to={`#`}>
-        <Button className="app-btn">Bids</Button>
-      </Link> */}
-      {canCreate ? (<Link to={`/art/create`}>
-        <Button className="app-btn">Create</Button>
-      </Link>) : null}
-      <Link to={`/auction/create/0`}>
-        <Button className="connector" type="primary" >Sell</Button>
-      </Link>
-    </>
-  );
-};
-
-const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
-  const { connected } = useWallet();
-  return (
-    <div style={{
-      display: "flex",
-      flexDirection: vertical ? "column" : "row",
-    }}>
-      <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
-      </Link>
-      <Link to={`/artworks`}>
-        <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
-      </Link>
-      <Link to={`/artists`}>
-        <Button className="app-btn">Creators</Button>
-      </Link>
-    </div>
-  )
-}
-
-const MetaplexMenu = () => {
+export const AppBar = ({ setMenuOut, menuOut }: { setMenuOut: any, menuOut: any }) => {
+  const { connected, wallet } = useWallet();
   const { width } = useWindowDimensions();
-  const { connected } = useWallet();
-
-  if (width < 768) return <>
-    <Dropdown
-      arrow
-      placement="bottomLeft"
-      trigger={['click']}
-      overlay={<Menu>
-        <Menu.Item>
-          <Link to={`/`}>
-            <Button className="app-btn">Explore</Button>
-          </Link>
-        </Menu.Item>
-        <Menu.Item>
-          <Link to={`/artworks`}>
-            <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
-          </Link>
-        </Menu.Item>
-        <Menu.Item>
-          <Link to={`/artists`}>
-            <Button className="app-btn">Creators</Button>
-          </Link>
-        </Menu.Item>
-      </Menu>}
-    >
-      <MenuOutlined style={{ fontSize: "1.4rem" }} />
-    </Dropdown>
-  </>
-
-  return <DefaultActions />
-}
-
-export const AppBar = () => {
-  const { connected } = useWallet();
 
   return (
-    <>
-      <div className="app-left app-bar-box">
-        <Notifications />
-        <div className="divider" />
-        <MetaplexMenu />
-      </div>
-      {!connected && <ConnectButton type="primary" />}
-      {connected && (
-        <div className="app-right app-bar-box">
-          <UserActions />
-          <CurrentUserBadge
-            showBalance={false}
-            showAddress={false}
-            iconSize={24}
-          />
-        </div>
-      )}
-    </>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        maxWidth: 1000,
+        width: '100%',
+        margin: width >= 768 ? '0 auto' : '0 1rem',
+        height: width >= 768 ? 64 : 80
+      }}
+    >
+
+      <nav
+        style={{
+          width: '100%',
+          letterSpacing: '4px',
+          padding: '0 1rem',
+          position: 'relative',
+          display: 'flex',
+          justifyContent: width >= 768 ? 'center' : 'space-between',
+          alignItems: 'center'
+        }}
+      >
+
+        {width < 768 && (
+          <>
+            <MenuOutlined onClick={() => setMenuOut(!menuOut)} style={{ fontSize: 32, zIndex: 6 }} />
+            <img src={LOGO} style={{ height: 72, width: 'auto' }} alt="ApeShitSocial Logo" />
+            <div style={{ width: 32 }}></div>
+          </>
+        )}
+        {width >= 768 && (
+          <>
+            <NavLink
+              exact={true}
+              activeStyle={{ borderBottom: '1px solid white' }}
+              style={{
+                color: 'white',
+                borderBottom: '1px solid transparent',
+                lineHeight: '32px'
+              }}
+              to="/">
+              Home
+            </NavLink>
+            <span style={{ margin: '0 1rem 0 0.5rem' }}>|</span>
+            <NavLink
+              activeStyle={{ borderBottom: '1px solid white' }}
+              style={{
+                color: 'white',
+                borderBottom: '1px solid transparent',
+                lineHeight: '32px'
+              }}
+              to="/treehouse">
+              Treehouse
+            </NavLink>
+            <span style={{ margin: '0 1rem 0 0.5rem' }}>|</span>
+            <NavLink
+              activeStyle={{ borderBottom: '1px solid white' }}
+              style={{
+                color: 'white',
+                borderBottom: '1px solid transparent',
+                lineHeight: '32px'
+              }}
+              to="/roadmap">
+              Roadmap
+            </NavLink>
+            <span style={{ margin: '0 1rem 0 0.5rem' }}>|</span>
+            <NavLink
+              activeStyle={{ borderBottom: '1px solid white' }}
+              style={{
+                color: 'white',
+                borderBottom: '1px solid transparent',
+                lineHeight: '32px'
+              }}
+              to="/about">
+              About
+            </NavLink>
+          </>
+        )}
+
+        {connected && (
+          <div
+            className="app-bar-box app-bar-right"
+            style={{
+              position: 'absolute',
+              right: '-230px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              paddingRight: '1rem'
+            }}
+          >
+            <CurrentUserBadge
+              showBalance={false}
+              showAddress={true}
+              iconSize={24}
+            />
+          </div>
+        )}
+      </nav>
+    </div>
   );
 };

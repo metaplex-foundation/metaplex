@@ -1,6 +1,7 @@
 
-@import '~antd/es/style/themes/dark.less';
-@import "~antd/dist/antd.dark.less";
+@import '~antd/es/style/themes/default.less';
+@import "~antd/dist/antd.less";
+@import './ant-custom.less';
 
 @solana-green: #3d4844;
 
@@ -179,4 +180,10 @@ code {
   color: #fff;
   transition: 150ms;
   padding-top: 5px;
+}
+
+.ant-modal-content {
+  h1,h2,h3,h4,h5,h6 {
+    color: white;
+  }
 }

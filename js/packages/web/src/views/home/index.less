@@ -15,6 +15,12 @@ header.ant-layout-header.App-Bar {
   height: 80px;
 }
 
+@media screen and (min-width: 768px) {
+  header.ant-layout-header.App-Bar {
+    height: 64px;
+  }
+}
+
 footer.ant-layout-footer {
   padding: 10px 0;
   width: 100%;
@@ -71,4 +77,20 @@ a:active {
 
 .ant-card-body {
   padding: 0;
+}
+
+
+.home {
+  h1, h2, h3, h4 {
+    color: black !important;
+  }
+
+  table {
+    * {
+      color: black !important;
+    }
+    thead {
+      display: none !important;
+    }
+  }
 }

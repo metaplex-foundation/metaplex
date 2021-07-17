@@ -1,3 +1,4 @@
+export { AboutView } from './about';
 export { HomeView } from './home';
 export { ArtView } from './art';
 export { ArtCreateView } from './artCreate';
@@ -6,3 +7,5 @@ export { ArtistsView } from './artists';
 export { AuctionView } from './auction';
 export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
+export { RoadmapView } from './roadmap';
+export { Treehouse } from './treehouse';
