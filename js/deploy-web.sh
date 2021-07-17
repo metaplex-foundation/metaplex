@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 echo "Starting to deploy 'web', bootstrapping..."
-yarn bootstrap
+npm run bootstrap
 echo "Preparing 'common'..."
 cd packages/common || exit
-yarn prepare
+npm run prepare
 cd ../web || exit
 echo "Prestarting 'web'..."
-yarn prestart
+npm run prestart
 echo "Building 'web'..."
 # TODO: fix linting errors!
-CI=false && yarn build
+CI=false && npm run build
 echo "#done"
