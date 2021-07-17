@@ -23,6 +23,7 @@ export enum LiveAuctionViewState {
   All = '0',
   Participated = '1',
   Ended = '2',
+  Resale = '3',
 };
 
 export const HomeView = () => {
@@ -55,11 +56,14 @@ export const HomeView = () => {
   const liveAuctions = auctions
   .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0);
 
+
   const items =
     activeKey === LiveAuctionViewState.All
       ? liveAuctions
       : activeKey === LiveAuctionViewState.Participated ?
       liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58()):
+      activeKey === LiveAuctionViewState.Resale ? 
+      liveAuctions.filter((m, idx) => m.thumbnail.metadata.info.primarySaleHappened == true) :
       auctionsEnded;
 
   const liveAuctionsView = (
@@ -140,7 +144,7 @@ export const HomeView = () => {
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length > 1 && (<Row>
+            {liveAuctions.length >= 0 && (<Row>
               <Tabs activeKey={activeKey}
                   onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
                   <TabPane
@@ -149,6 +153,14 @@ export const HomeView = () => {
                   >
                     {liveAuctionsView}
                   </TabPane>
+                  {auctionsEnded.length > 0 && (
+                  <TabPane
+                    tab={<span className="tab-title">Resales</span>}
+                    key={LiveAuctionViewState.Resale}
+                  >
+                    {liveAuctionsView}
+                  </TabPane>
+                  )}
                   {auctionsEnded.length > 0 && (
                   <TabPane
                     tab={<span className="tab-title">Ended Auctions</span>}
