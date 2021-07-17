@@ -128,7 +128,10 @@ impl AuctionData {
     }
 
     pub fn get_state(a: &AccountInfo) -> Result<AuctionState, ProgramError> {
-        match a.data.borrow()[133] {
+        // Remove the +1 to get rid of first byte of first bid, then -4 to subtract the u32 that is vec size of bids,
+        // now we're back at the beginning of the u32, -1 again to get to state
+        let bid_state_beginning = AuctionData::find_bid_state_beginning(a) - 1 - 4 - 1;
+        match a.data.borrow()[bid_state_beginning] {
             0 => Ok(AuctionState::Created),
             1 => Ok(AuctionState::Started),
             2 => Ok(AuctionState::Ended),
