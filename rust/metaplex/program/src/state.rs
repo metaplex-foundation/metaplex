@@ -196,6 +196,7 @@ pub struct ParticipationState {
 
     pub validated: bool,
 
+    /// NOTE: DEPRECATED.
     /// An account for printing authorization tokens that are made with the one time use token
     /// after the auction ends. Provided during validation step.
     pub printing_authorization_token_account: Option<Pubkey>,
@@ -447,4 +448,26 @@ impl PrizeTrackingTicket {
 
         Ok(store)
     }
+}
+
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
+pub enum SafetyDepositListType {
+    All,
+    Whitelist,
+    Blacklist
+}
+
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
+pub struct SafetyDepositConfig {
+    pub key: Key,
+    // only 255 safety deposits on vault right now but soon this will likely expand. 
+    /// safety deposit order
+    pub order: u64,
+    pub winning_config_type: WinningConfigType,
+    pub list_type: SafetyDepositListType,
+    /// Only used if list type isnt All
+    pub list: Option<Vec<u64>>,
+    /// Only used if winning config type is a PrintingV1 or V2.
+    pub edition_ranges: Option<Vec<(u8,u16)>>
 }
