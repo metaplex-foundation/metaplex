@@ -11,9 +11,28 @@ import {
 } from '@oyster/common';
 import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
+import { useAuctionCountdown } from '../../hooks/useAuctionCountdown';
+
+export const AuctionCountdown = (props: {
+  auctionView: AuctionView;
+  labels: boolean;
+}) => {
+  const { auctionView } = props;
+  const state = useAuctionCountdown(auctionView);
+  const ended = isEnded(state);
+  if (!props.labels) {
+    return <Countdown state={state} />;
+  }
+  return (
+    <Col span={ended ? 24 : 12}>
+      <LabeledCountdown state={state} />
+    </Col>
+  );
+};
 
 export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
   const { auctionView } = props;
+  const state = useAuctionCountdown(auctionView);
   const bids = useBidsForAuction(auctionView.auction.pubkey);
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
@@ -28,24 +47,6 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
       : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
-
-  const [state, setState] = useState<CountdownState>();
-
-  const auction = auctionView.auction.info;
-  useEffect(() => {
-    const calc = () => {
-      const newState = auction.timeToEnd();
-
-      setState(newState);
-    };
-
-    const interval = setInterval(() => {
-      calc();
-    }, 1000);
-
-    calc();
-    return () => clearInterval(interval);
-  }, [auction]);
 
   const ended = isEnded(state);
 
@@ -75,10 +76,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
             )}
           </Col>
         )}
-
-        <Col span={ended ? 24 : 12}>
-          <Countdown state={state} />
-        </Col>
+        <AuctionCountdown auctionView={auctionView} labels={true} />
       </Row>
     </div>
   );
@@ -91,6 +89,54 @@ const isEnded = (state?: CountdownState) =>
   state?.seconds === 0;
 
 const Countdown = ({ state }: { state?: CountdownState }) => {
+  let localState = state;
+  if (!localState) {
+    localState = {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    };
+  }
+  return (
+    <Row style={{ width: '100%', flexWrap: 'nowrap' }}>
+      {localState.days > 0 && (
+        <Col>
+          <div className="cd-number">
+            {localState.days < 10 && <span style={{ opacity: 0.2 }}>0</span>}
+            {localState.days}
+            <span style={{ opacity: 0.2 }}>days</span>
+          </div>
+        </Col>
+      )}
+      <Col>
+        <div className="cd-number">
+          {localState.hours < 10 && <span style={{ opacity: 0.2 }}>0</span>}
+          {localState.hours}
+          <span style={{ opacity: 0.2 }}>hours</span>
+        </div>
+      </Col>
+      <Col>
+        <div className="cd-number">
+          {localState.minutes < 10 && <span style={{ opacity: 0.2 }}>0</span>}
+          {localState.minutes}
+          <span style={{ opacity: 0.2 }}>min</span>
+        </div>
+      </Col>
+      {!localState.days && (
+        <Col>
+          <div className="cd-number">
+            {localState.seconds < 10 && <span style={{ opacity: 0.2 }}>0</span>}
+            {localState.seconds}
+            <span style={{ opacity: 0.2 }}>sec</span>
+          </div>
+        </Col>
+      )}
+    </Row>
+  );
+};
+
+const LabeledCountdown = ({ state }: { state?: CountdownState }) => {
   return (
     <>
       <div style={{ width: '100%' }}>

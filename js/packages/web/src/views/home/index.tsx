@@ -191,17 +191,17 @@ export const HomeView = () => {
                 </Tabs>
               </Row>
             )}
-            <Row>
-              {auctionsEnded.length > 0 && (
-                <Tabs>
-                  <TabPane>
-                    <h2>Ended Auctions</h2>
-                    {endedAuctions}
-                  </TabPane>
-                </Tabs>
-              )}
-              <br />
-            </Row>
+            {auctionsEnded.length > 0 && (
+              <Row>
+                  <Tabs>
+                    <TabPane>
+                      <h2>Ended Auctions</h2>
+                      {endedAuctions}
+                    </TabPane>
+                  </Tabs>
+                <br />
+              </Row>
+            )}
           </Col>
         </Content>
       </Layout>

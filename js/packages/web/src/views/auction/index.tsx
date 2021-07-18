@@ -29,6 +29,7 @@ import { MintInfo } from '@solana/spl-token';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+import { AppLayout } from '../../components/Layout';
 
 export const AuctionItem = ({
   item,
@@ -110,7 +111,7 @@ export const AuctionView = () => {
   });
 
   return (
-    <>
+    <AppLayout>
       <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
@@ -196,7 +197,7 @@ export const AuctionView = () => {
           <AuctionBids auctionView={auction} />
         </Col>
       </Row>
-    </>
+    </AppLayout>
   );
 };
 

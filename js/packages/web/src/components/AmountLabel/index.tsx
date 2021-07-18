@@ -40,7 +40,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           className="create-statistic"
           title={title || ''}
           value={amount}
-          prefix="◎"
+          prefix={<img src={'/sol-circle.svg'} />}
         />
       )}
       {displayUSD && (
