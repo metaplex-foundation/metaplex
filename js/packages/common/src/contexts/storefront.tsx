@@ -46,15 +46,6 @@ export function StorefrontProvider({ children = undefined as any }) {
           setLoading(false);
           return;
         }
-
-        const head = document.head;
-        const link = document.createElement('link');
-
-        link.type = 'text/css';
-        link.rel = 'stylesheet';
-        link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
-
-        head.appendChild(link);
         const pubkey = transaction.tags.find(
           (tag: ArweaveTag) => tag.name === 'solana:pubkey',
         ).value;
