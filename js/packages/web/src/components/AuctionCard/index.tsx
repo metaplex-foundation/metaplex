@@ -383,6 +383,7 @@ export const AuctionCard = ({
                   )}
 
                   <div
+                    className="amount-container"
                     style={{
                       width: '100%',
                       background: '#242424',
