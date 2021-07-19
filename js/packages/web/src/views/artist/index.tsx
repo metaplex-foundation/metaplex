@@ -32,7 +32,7 @@ export const ArtistView = () => {
               </Link>
             );
           })
-        : [...Array(6)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
 

@@ -70,7 +70,7 @@ export const HomeView = () => {
               </Link>
             );
           })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
   const endedAuctions = (
@@ -94,7 +94,7 @@ export const HomeView = () => {
                 </Link>
               );
             })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
 

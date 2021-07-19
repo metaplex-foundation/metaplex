@@ -83,7 +83,7 @@ export const ArtView = () => {
             style={{ textAlign: 'left', fontSize: '1.4rem' }}
           >
             <Row>
-              <div style={{ fontWeight: 700, fontSize: '4rem' }}>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</div>
+              <h1 style={{ fontSize: '4rem' }}>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
             </Row>
             <Row>
               <Col span={6}>
