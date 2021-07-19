@@ -517,7 +517,7 @@ export const AuctionCreateView = () => {
               style={{
                 width: 'fit-content',
                 margin: '0 auto 30px auto',
-                overflowX: 'auto',
+                overflowX: 'visible',
                 maxWidth: '100%',
               }}
             >
@@ -1163,8 +1163,8 @@ const EndingPhaseAuction = (props: {
             </span>
             <Input
               addonAfter={(
-                <Select 
-                  defaultValue={props.attributes.auctionDurationType} 
+                <Select
+                  defaultValue={props.attributes.auctionDurationType}
                   onChange={
                     value =>
                       props.setAttributes({
@@ -1199,10 +1199,10 @@ const EndingPhaseAuction = (props: {
             </span>
             <Input
               addonAfter={(
-                <Select 
+                <Select
                   defaultValue={props.attributes.gapTimeType}
                   onChange={
-                    value => 
+                    value =>
                       props.setAttributes({
                         ...props.attributes,
                         gapTimeType: value,
