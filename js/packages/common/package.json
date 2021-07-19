@@ -5,7 +5,7 @@
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
   "exports": {
-    ".": "./dist/lib/"
+    ".": "./dist/lib"
   },
   "license": "Apache-2.0",
   "publishConfig": {
@@ -29,7 +29,8 @@
   "dependencies": {
     "@project-serum/serum": "^0.13.34",
     "@project-serum/sol-wallet-adapter": "^0.2.0",
-    "@solana/spl-token": "0.1.4",
+    "@solana/spl-token": "0.1.6",
+    "@solana/spl-token-registry": "0.2.176",
     "@solana/spl-token-swap": "0.1.0",
     "@solana/wallet-base": "0.0.1",
     "@solana/wallet-ledger": "0.0.1",
