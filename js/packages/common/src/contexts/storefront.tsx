@@ -61,6 +61,7 @@ export function StorefrontProvider({ children = undefined as any }) {
           link.type = 'text/css';
           link.rel = 'stylesheet';
           link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
+          // link.href = 'http://localhost:3000/demo-theme.css'
 
           link.onload = () => {
             setStorefront({ pubkey });
