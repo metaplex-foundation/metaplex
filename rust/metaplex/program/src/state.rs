@@ -2,8 +2,9 @@ use {
     crate::{
         deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
     },
-    arrayref::array_ref,
+    arrayref::{array_mut_ref, array_ref},
     borsh::{BorshDeserialize, BorshSerialize},
+    num_traits::ToPrimitive,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
         pubkey::Pubkey,
@@ -376,10 +377,10 @@ pub struct AmountRange(pub u64, pub u64);
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub enum TupleNumericType {
-    U8,
-    U16,
-    U32,
-    U64,
+    U8 = 1,
+    U16 = 2,
+    U32 = 4,
+    U64 = 8,
 }
 #[repr(C)]
 #[derive(Clone, Debug)]
@@ -412,7 +413,7 @@ impl SafetyDepositConfig {
 
         let order = u64::from_le_bytes(array_ref![data, 1, 8]);
 
-        let winning_config_type = match data[2] {
+        let winning_config_type = match data[9] {
             0 => WinningConfigType::TokenOnlyTransfer,
             1 => WinningConfigType::FullRightsTransfer,
             2 => WinningConfigType::PrintingV1,
@@ -421,25 +422,25 @@ impl SafetyDepositConfig {
             _ => return ProgramError::InvalidAccountData,
         };
 
-        let amount_type = match data[3] {
-            0 => TupleNumericType::U8,
-            1 => TupleNumericType::U16,
-            2 => TupleNumericType::U32,
-            3 => TupleNumericType::U64,
+        let amount_type = match data[10] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
             _ => return ProgramError::InvalidAccountData,
         };
 
-        let length_type = match data[4] {
-            0 => TupleNumericType::U8,
-            1 => TupleNumericType::U16,
-            2 => TupleNumericType::U32,
-            3 => TupleNumericType::U64,
+        let length_type = match data[11] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
             _ => return ProgramError::InvalidAccountData,
         };
 
-        let length_of_array = u32::from_le_bytes(array_ref![data, 5, 4]);
+        let length_of_array = u32::from_le_bytes(array_ref![data, 12, 4]);
 
-        let mut offset: u64 = 9;
+        let mut offset: u64 = 16;
         let amount_ranges = vec![];
         for n in 0..length_of_array {
             let amount = match amount_type {
@@ -463,7 +464,7 @@ impl SafetyDepositConfig {
         }
 
         let participation_config = match data[offset] {
-            0 => None,
+            0 => offset += 1,
             1 => {
                 let winner_constraint = match data[offset + 1] {
                     0 => WinningConstraint::NoParticipationPrize,
@@ -480,7 +481,7 @@ impl SafetyDepositConfig {
                 offset += 3;
 
                 let fixed_price = match data[offset] {
-                    0 => None,
+                    0 => offset += 1,
                     1 => {
                         let number = u64::from_le_bytes(array_ref![data, offset + 1, 8]);
                         offset += 9;
@@ -499,13 +500,14 @@ impl SafetyDepositConfig {
         };
 
         let participation_state = match data[offset] {
-            0 => None,
+            0 => offset += 1,
             1 => {
                 let collected_to_accept_payment =
                     u64::from_le_bytes(array_ref![data, offset + 1, 8]);
                 ParticipationStateV2 {
                     collected_to_accept_payment,
-                }
+                };
+                offset += 9;
             }
             _ => return ProgramError::InvalidAccountData,
         };
@@ -520,5 +522,109 @@ impl SafetyDepositConfig {
             participation_config,
             participation_state,
         });
+    }
+
+    pub fn create(&mut self, a: &mut AccountInfo) {
+        let data = a.data.borrow_mut();
+
+        data[0] = self.key as u8;
+        *array_mut_ref![data, 1, 8] = self.order.to_le_bytes();
+        data[9] = self.winning_config_type as u8;
+        data[10] = self.amount_type as u8;
+        data[11] = self.length_type as u8;
+        *array_mut_ref![data, 12, 4] = self.amount_ranges.len().to_u32().to_le_bytes();
+        let offset: u64 = 16;
+        for range in self.amount_ranges {
+            match self.amount_type {
+                TupleNumericType::U8 => data[offset] = range.0,
+                TupleNumericType::U16 => {
+                    *array_mut_ref![data, offset, 2] = range.0.to_u16().to_le_bytes()
+                }
+                TupleNumericType::U32 => {
+                    *array_mut_ref![data, offset, 4] = range.0.to_u32().to_le_bytes()
+                }
+                TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.0.to_le_bytes(),
+            }
+            offset += self.amount_type;
+            match self.length_type {
+                TupleNumericType::U8 => data[offset] = range.1,
+                TupleNumericType::U16 => {
+                    *array_mut_ref![data, offset, 2] = range.1.to_u16().to_le_bytes()
+                }
+                TupleNumericType::U32 => {
+                    *array_mut_ref![data, offset, 4] = range.1.to_u32().to_le_bytes()
+                }
+                TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.1.to_le_bytes(),
+            }
+            offset += self.length_type;
+        }
+
+        match self.participation_config {
+            Some(val) => {
+                data[offset] = 1;
+                data[offset + 1] = val.winner_constraint as u8;
+                data[offset + 2] = val.non_winning_constraint as u8;
+                offset += 3;
+                match val.fixed_price {
+                    Some(val) => {
+                        data[offset] = 1;
+                        *array_mut_ref![data, offset + 1, 8] = val.to_le_bytes();
+                        offset += 9;
+                    }
+                    None => {
+                        data[offset] = 0;
+                        offset += 1;
+                    }
+                }
+            }
+            None => {
+                data[offset] = 0;
+                offset += 1;
+            }
+        }
+
+        match self.participation_state {
+            Some(val) => {
+                data[offset] = 1;
+                *array_mut_ref![data, offset + 1, 8] =
+                    val.collected_to_accept_payment.to_le_bytes();
+                offset += 9;
+            }
+            None => {
+                data[offset] = 0;
+                offset += 1
+            }
+        }
+    }
+
+    /// Smaller method for just participation state saving...saves cpu, and it's the only thing
+    /// that will ever change on this model.
+    pub fn save_participation_state(&mut self, a: &mut AccountInfo) {
+        let mut data = a.data.borrow_mut();
+        let offset: u64 = 16 + self.amount_ranges.len() * (self.amount_type + self.length_type);
+
+        offset += match self.participation_config {
+            Some(val) => {
+                let total = 3;
+                if val.fixed_price.is_some() {
+                    total += 8;
+                }
+                total
+            }
+            None => 1,
+        };
+
+        match self.participation_state {
+            Some(val) => {
+                data[offset] = 1;
+                *array_mut_ref![data, offset + 1, 8] =
+                    val.collected_to_accept_payment.to_le_bytes();
+                offset += 9;
+            }
+            None => {
+                data[offset] = 0;
+                offset += 1
+            }
+        }
     }
 }
