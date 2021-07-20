@@ -65,13 +65,6 @@ export const HomeView = () => {
       liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58()):
       auctionsEnded;
 
-  const items =
-    activeKey === LiveAuctionViewState.All
-      ? liveAuctions
-      : activeKey === LiveAuctionViewState.Participated ?
-      liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58()):
-      auctionsEnded;
-
   const liveAuctionsView = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
