@@ -5,8 +5,7 @@ const dotenvLoad = require('dotenv-load');
 
 dotenvLoad();
 
-const debug = process.env.NODE_ENV !== 'production';
-const assetPrefix = !debug ? '/metaplex/' : '';
+const assetPrefix = process.env.ASSET_PREFIX || '';
 
 const plugins = [
   nextEnv({
