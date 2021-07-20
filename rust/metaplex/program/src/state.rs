@@ -1,54 +1,45 @@
-use solana_program::{msg};
-
 use {
-    crate::utils::try_from_slice_checked,
+    crate::{
+        deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
+    },
     arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey},
+    solana_program::{
+        account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
+        pubkey::Pubkey,
+    },
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
 
-pub const MAX_WINNERS: usize = 200;
-pub const MAX_WINNER_SIZE: usize = 6 * MAX_WINNERS;
-// Add 150 padding for future keys and booleans
-// DONT TRUST MEM SIZE OF! IT DOESNT SIZE THINGS PROPERLY! TRUST YOUR OWN MIND AND ITS COUNTING ABILITY!
-pub const MAX_AUCTION_MANAGER_SIZE: usize = 1 + // key
-    32 + // store
-    32 + // authority
-    32 + // auction
-    32 + // vault
-    32 + // accept_payment
-    1 + //status
-    1 + // winning configs validated
-    8 + // u64 borsh uses to determine number of elements in winning config state vec
-    8 + // u64 for numbr of elements in winning config state items
-    MAX_WINNER_SIZE + // total number of bytes for max possible use between WinnerConfig and WinnerConfigStates
-    // for all winner places.
-    1 + // Whether or not participation state exists
-    8 + // participation_collected_to_accept_payment
-    1 + // Whether or not participation is a primary sale'd metadata or not at time of auction
-    1 + // was participation validated
-    32 + // participation printing token holding account pubkey
-    8 + // u64 borsh uses to determine number of elements in winning config vec
-    8 + // u64 for number of items in winning config items vec
-    1 + // Whether or not participation config exists
-    1 + // participation winner constraint
-    1 + // participation non winner constraint
-    1 + // u8 participation_config's safety deposit box index 
-    9 + // option<u64> participation fixed price in borsh is a u8 for option and actual u64
-    1 + 
-    AUCTION_MANAGER_PADDING; // padding;
-         // Add padding for future booleans/enums
-pub const AUCTION_MANAGER_PADDING: usize = 149;
+pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
+32 + // store
+32 + // authority
+32 + // auction
+32 + // vault
+32 + // accept_payment
+1 + //status
+8 + // winning configs validated
+200; // padding
 pub const MAX_STORE_SIZE: usize = 2 + 32 + 32 + 32 + 32 + 100;
 pub const MAX_WHITELISTED_CREATOR_SIZE: usize = 2 + 32 + 10;
 pub const MAX_PAYOUT_TICKET_SIZE: usize = 1 + 32 + 8;
-pub const MAX_VALIDATION_TICKET_SIZE: usize = 1 + 32 + 10;
 pub const MAX_BID_REDEMPTION_TICKET_SIZE: usize = 3;
 pub const MAX_AUTHORITY_LOOKUP_SIZE: usize = 33;
 pub const MAX_PRIZE_TRACKING_TICKET_SIZE: usize = 1 + 32 + 8 + 8 + 8 + 50;
-pub const MAX_WINNING_CONFIG_STATE_ITEM_SIZE: usize = 2;
+pub const BASE_SAFETY_CONFIG_SIZE: usize = 1 +// Key
+ 8 + // order
+ 1 + // winning config type
+ 1 + // amount tuple type
+ 1 + // length tuple type
+ 4 + // u32 for amount range vec
+ 1 + // participation config option
+ 1 + // winning constraint
+ 1 + // non winning constraint
+ 9 + // fixed price + option of it
+ 1 + // participation state option
+ 8 + // collected to accept payment
+ 100; // padding
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
@@ -62,15 +53,36 @@ pub enum Key {
     SafetyDepositValidationTicketV1,
     AuctionManagerV1,
     PrizeTrackingTicketV1,
+    SafetyDepositConfigV1,
+    AuctionManagerV2,
 }
 
-/// An Auction Manager can support an auction that is an English auction and limited edition and open edition
-/// all at once. Need to support all at once. We use u8 keys to point to safety deposit indices in Vault
-/// as opposed to the pubkeys to save on space. Ordering of safety deposits is guaranteed fixed by vault
-/// implementation.
+pub trait AuctionManager {
+    fn key(&self) -> Key;
+    fn store(&self) -> Pubkey;
+    fn authority(&self) -> Pubkey;
+    fn auction(&self) -> Pubkey;
+    fn vault(&self) -> Pubkey;
+    fn accept_payment(&self) -> Pubkey;
+    fn status(&self) -> AuctionManagerStatus;
+    fn configs_validated(&self) -> u64;
+    fn set_configs_validated(&self, new_configs_validated: u64);
+    fn save(&self, account: &AccountInfo) -> ProgramResult;
+}
+
+pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
+    let version = account.data.borrow()[0];
+
+    // For some reason when converting Key to u8 here, it becomes unreachable. Use direct constant instead.
+    match version {
+        7 => return Ok(Box::new(AuctionManagerV1::from_account_info(account)?)),
+        10 => return Ok(Box::new(AuctionManagerV2::from_account_info(account)?)),
+        _ => return Err(MetaplexError::DataTypeMismatch.into()),
+    };
+}
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
-pub struct AuctionManager {
+pub struct AuctionManagerV2 {
     pub key: Key,
 
     pub store: Pubkey,
@@ -83,106 +95,77 @@ pub struct AuctionManager {
 
     pub accept_payment: Pubkey,
 
-    pub state: AuctionManagerState,
-
-    pub settings: AuctionManagerSettings,
-
-    /// True if this is only winning configs of one item each, used for optimization in saving.
-    pub straight_shot_optimization: bool,
+    pub state: AuctionManagerStateV2,
 }
 
-impl AuctionManager {
-    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionManager, ProgramError> {
-        let am: AuctionManager = try_from_slice_checked(
+impl AuctionManager for AuctionManagerV2 {
+    fn key(&self) -> Key {
+        self.key
+    }
+
+    fn store(&self) -> Pubkey {
+        self.store
+    }
+
+    fn authority(&self) -> Pubkey {
+        self.authority
+    }
+
+    fn auction(&self) -> Pubkey {
+        self.auction
+    }
+
+    fn vault(&self) -> Pubkey {
+        self.vault
+    }
+
+    fn accept_payment(&self) -> Pubkey {
+        self.accept_payment
+    }
+
+    fn status(&self) -> AuctionManagerStatus {
+        self.state.status
+    }
+
+    fn configs_validated(&self) -> u64 {
+        self.state.safety_config_items_validated
+    }
+
+    fn set_configs_validated(&self, new_configs_validated: u64) {
+        self.state.safety_config_items_validated = new_configs_validated
+    }
+
+    fn save(&self, account: &AccountInfo) -> ProgramResult {
+        self.serialize(&mut *account.data.borrow_mut())?;
+        Ok(())
+    }
+}
+
+impl AuctionManagerV2 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionManagerV2, ProgramError> {
+        let am: AuctionManagerV2 = try_from_slice_checked(
             &a.data.borrow_mut(),
-            Key::AuctionManagerV1,
-            MAX_AUCTION_MANAGER_SIZE,
+            Key::AuctionManagerV2,
+            MAX_AUCTION_MANAGER_V2_SIZE,
         )?;
 
         Ok(am)
     }
-
-    // cheap setter to set status and claimed in one go without using expensive borsh save.
-    pub fn set_claimed_and_status(
-        a: &AccountInfo,
-        status: AuctionManagerStatus,
-        winning_config_index: usize,
-        winning_config_item_index: usize,
-        use_straight_shot: bool
-    ) {
-        let num_configs = AuctionManager::get_num_configs(a);
-        let mut data = a.data.borrow_mut();
-        data[161] = status as u8; // set status
-        let mut current_config_offset = 167;
-        if use_straight_shot {
-            msg!("Using optimization path");
-            // in this optimization framework we know it's one item per config and we can know exact location.
-            let skip = (4 + MAX_WINNING_CONFIG_STATE_ITEM_SIZE + 1) * winning_config_index;
-            // need to skip ahead by the number of items to the next offset.
-            // Add one byte to cover the boolean at the end of the winning config state.
-            let idx = current_config_offset + skip + 4 + 1;
-            data[idx] = 1;
-        } else {
-            msg!("Using tiered auction save");
-            for i in 0..num_configs {
-                // need to hop along and check each u32 of the items sub array to know how much to hop next.
-                let num_items_data = array_ref![data, current_config_offset, 4];
-
-                let num_items = u32::from_le_bytes(*num_items_data) as usize;
-
-                if winning_config_index == i {
-                    // ok we need to target the claimed u8 inside the correct item now.
-                    let idx = current_config_offset
-                        + 4
-                        + winning_config_item_index * MAX_WINNING_CONFIG_STATE_ITEM_SIZE
-                        + 1;
-
-                    data[idx] = 1;
-                    break;
-                } else {
-                    let skip = MAX_WINNING_CONFIG_STATE_ITEM_SIZE * num_items;
-                    // need to skip ahead by the number of items to the next offset.
-                    // Add one byte to cover the boolean at the end of the winning config state.
-                    current_config_offset = current_config_offset + 4 + skip + 1;
-                }
-            } 
-        }
-    }
-
-    pub fn get_num_configs(a: &AccountInfo) -> usize {
-        let data = a.data.borrow();
-        let num_elements_data = array_ref![data, 163, 4];
-        u32::from_le_bytes(*num_elements_data) as usize
-    }
 }
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
-pub struct AuctionManagerState {
+pub struct AuctionManagerStateV2 {
     pub status: AuctionManagerStatus,
     /// When all configs are validated the auction is started and auction manager moves to Running
-    pub winning_config_items_validated: u8,
-
-    pub winning_config_states: Vec<WinningConfigState>,
-
-    pub participation_state: Option<ParticipationState>,
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
-pub struct AuctionManagerSettings {
-    /// The safety deposit box index in the vault containing the winning items, in order of place
-    /// The same index can appear multiple times if that index contains n tokens for n appearances (this will be checked)
-    pub winning_configs: Vec<WinningConfig>,
-
-    /// The participation config is separated because it is structurally a bit different,
-    /// having different options and also because it has no real "winning place" in the array.
-    pub participation_config: Option<ParticipationConfig>,
+    pub safety_config_items_validated: u64,
+    /// how many bids have been pushed to accept payment
+    pub bids_pushed_to_accept_payment: u64,
 }
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
-pub struct ParticipationState {
+pub struct ParticipationStateV2 {
     /// We have this variable below to keep track in the case of the participation NFTs, whose
     /// income will trickle in over time, how much the artists have in the escrow account and
     /// how much would/should be owed to them if they try to claim it relative to the winning bids.
@@ -190,21 +173,11 @@ pub struct ParticipationState {
     /// there are many bids of differing amounts (in the case of GivenForBidPrice) and they dont all
     /// come in at one time, so this little ledger here keeps track.
     pub collected_to_accept_payment: u64,
-
-    /// Record of primary sale or not at time of auction creation, set during validation step
-    pub primary_sale_happened: bool,
-
-    pub validated: bool,
-
-    /// NOTE: DEPRECATED.
-    /// An account for printing authorization tokens that are made with the one time use token
-    /// after the auction ends. Provided during validation step.
-    pub printing_authorization_token_account: Option<Pubkey>,
 }
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
-pub struct ParticipationConfig {
+pub struct ParticipationConfigV2 {
     /// Setups:
     /// 1. Winners get participation + not charged extra
     /// 2. Winners dont get participation prize
@@ -216,8 +189,6 @@ pub struct ParticipationConfig {
     /// 3. Losers get prize but pay bid price
     pub non_winning_constraint: NonWinningConstraint,
 
-    /// The safety deposit box index in the vault containing the template for the participation prize
-    pub safety_deposit_box_index: u8,
     /// Setting this field disconnects the participation prizes price from the bid. Any bid you submit, regardless
     /// of amount, charges you the same fixed price.
     pub fixed_price: Option<u64>,
@@ -263,39 +234,8 @@ pub enum WinningConfigType {
     PrintingV1,
     /// Means you are using the MasterEditionV2 to print off editions
     PrintingV2,
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
-pub struct WinningConfig {
-    // For now these are just array-of-array proxies but wanted to make them first class
-    // structs in case we want to attach other top level metadata someday.
-    pub items: Vec<WinningConfigItem>,
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
-pub struct WinningConfigState {
-    pub items: Vec<WinningConfigStateItem>,
-    /// Ticked to true when money is pushed to accept_payment account from auction bidding pot
-    pub money_pushed_to_accept_payment: bool,
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
-pub struct WinningConfigItem {
-    pub safety_deposit_box_index: u8,
-    pub amount: u8,
-    pub winning_config_type: WinningConfigType,
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
-pub struct WinningConfigStateItem {
-    /// Record of primary sale or not at time of auction creation, set during validation step
-    pub primary_sale_happened: bool,
-    /// Ticked to true when a prize is claimed by person who won it
-    pub claimed: bool,
+    /// Means you are using a MasterEditionV2 as a participation prize.
+    Participation,
 }
 
 #[repr(C)]
@@ -408,27 +348,6 @@ impl WhitelistedCreator {
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
-pub struct SafetyDepositValidationTicket {
-    pub key: Key,
-    pub address: Pubkey,
-}
-
-impl SafetyDepositValidationTicket {
-    pub fn from_account_info(
-        a: &AccountInfo,
-    ) -> Result<SafetyDepositValidationTicket, ProgramError> {
-        let store: SafetyDepositValidationTicket = try_from_slice_checked(
-            &a.data.borrow_mut(),
-            Key::SafetyDepositValidationTicketV1,
-            MAX_VALIDATION_TICKET_SIZE,
-        )?;
-
-        Ok(store)
-    }
-}
-
-#[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
 pub struct PrizeTrackingTicket {
     pub key: Key,
@@ -450,24 +369,156 @@ impl PrizeTrackingTicket {
     }
 }
 
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
-pub enum SafetyDepositListType {
-    All,
-    Whitelist,
-    Blacklist
-}
+#[repr(C)]
+#[derive(Clone, Debug)]
+pub struct AmountRange(pub u64, pub u64);
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug)]
+#[derive(Clone, Debug)]
+pub enum TupleNumericType {
+    U8,
+    U16,
+    U32,
+    U64,
+}
+#[repr(C)]
+#[derive(Clone, Debug)]
 pub struct SafetyDepositConfig {
     pub key: Key,
-    // only 255 safety deposits on vault right now but soon this will likely expand. 
+    // only 255 safety deposits on vault right now but soon this will likely expand.
     /// safety deposit order
     pub order: u64,
     pub winning_config_type: WinningConfigType,
-    pub list_type: SafetyDepositListType,
-    /// Only used if list type isnt All
-    pub list: Option<Vec<u64>>,
-    /// Only used if winning config type is a PrintingV1 or V2.
-    pub edition_ranges: Option<Vec<(u8,u16)>>
+    pub amount_type: TupleNumericType,
+    pub length_type: TupleNumericType,
+    /// Tuple is (amount of editions or tokens given to people in this range, length of range)
+    pub amount_ranges: Vec<AmountRange>,
+    /// if winning config type is "Participation" then you use this to parameterize it.
+    pub participation_config: Option<ParticipationConfigV2>,
+    /// if winning config type is "Participation" then you use this to keep track of it.
+    pub participation_state: Option<ParticipationStateV2>,
+}
+
+impl SafetyDepositConfig {
+    pub fn from_account_info(a: &AccountInfo) -> Result<SafetyDepositConfig, ProgramError> {
+        let data = &mut a.data.borrow_mut();
+        if a.data_len() < BASE_SAFETY_CONFIG_SIZE {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        if data[0] != Key::SafetyDepositConfigV1 {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        let order = u64::from_le_bytes(array_ref![data, 1, 8]);
+
+        let winning_config_type = match data[2] {
+            0 => WinningConfigType::TokenOnlyTransfer,
+            1 => WinningConfigType::FullRightsTransfer,
+            2 => WinningConfigType::PrintingV1,
+            3 => WinningConfigType::PrintingV2,
+            4 => WinningConfigType::Participation,
+            _ => return ProgramError::InvalidAccountData,
+        };
+
+        let amount_type = match data[3] {
+            0 => TupleNumericType::U8,
+            1 => TupleNumericType::U16,
+            2 => TupleNumericType::U32,
+            3 => TupleNumericType::U64,
+            _ => return ProgramError::InvalidAccountData,
+        };
+
+        let length_type = match data[4] {
+            0 => TupleNumericType::U8,
+            1 => TupleNumericType::U16,
+            2 => TupleNumericType::U32,
+            3 => TupleNumericType::U64,
+            _ => return ProgramError::InvalidAccountData,
+        };
+
+        let length_of_array = u32::from_le_bytes(array_ref![data, 5, 4]);
+
+        let mut offset: u64 = 9;
+        let amount_ranges = vec![];
+        for n in 0..length_of_array {
+            let amount = match amount_type {
+                TupleNumericType::U8 => data[offset],
+                TupleNumericType::U16 => u16::from_le_bytes(array_ref![data, offset, 2]),
+                TupleNumericType::U32 => u32::from_le_bytes(array_ref![data, offset, 4]),
+                TupleNumericType::U64 => u64::from_le_bytes(array_ref![data, offset, 8]),
+            };
+
+            offset += amount_type;
+
+            let length = match length_type {
+                TupleNumericType::U8 => data[offset],
+                TupleNumericType::U16 => u16::from_le_bytes(array_ref![data, offset, 2]),
+                TupleNumericType::U32 => u32::from_le_bytes(array_ref![data, offset, 4]),
+                TupleNumericType::U64 => u64::from_le_bytes(array_ref![data, offset, 8]),
+            };
+
+            amount_ranges.push(AmountRange(amount, length));
+            offset += length_type;
+        }
+
+        let participation_config = match data[offset] {
+            0 => None,
+            1 => {
+                let winner_constraint = match data[offset + 1] {
+                    0 => WinningConstraint::NoParticipationPrize,
+                    1 => WinningConstraint::ParticipationPrizeGiven,
+                    _ => return ProgramError::InvalidAccountData,
+                };
+                let non_winning_constraint = match data[offset + 2] {
+                    0 => NonWinningConstraint::NoParticipationPrize,
+                    1 => NonWinningConstraint::GivenForFixedPrice,
+                    2 => NonWinningConstraint::GivenForBidPrice,
+                    _ => return ProgramError::InvalidAccountData,
+                };
+
+                offset += 3;
+
+                let fixed_price = match data[offset] {
+                    0 => None,
+                    1 => {
+                        let number = u64::from_le_bytes(array_ref![data, offset + 1, 8]);
+                        offset += 9;
+                        number
+                    }
+                    _ => return ProgramError::InvalidAccountData,
+                };
+
+                ParticipationConfigV2 {
+                    winner_constraint,
+                    non_winning_constraint,
+                    fixed_price,
+                }
+            }
+            _ => return ProgramError::InvalidAccountData,
+        };
+
+        let participation_state = match data[offset] {
+            0 => None,
+            1 => {
+                let collected_to_accept_payment =
+                    u64::from_le_bytes(array_ref![data, offset + 1, 8]);
+                ParticipationStateV2 {
+                    collected_to_accept_payment,
+                }
+            }
+            _ => return ProgramError::InvalidAccountData,
+        };
+
+        Ok(SafetyDepositConfig {
+            key: Key::SafetyDepositConfigV1,
+            order,
+            winning_config_type,
+            amount_type,
+            length_type,
+            amount_ranges,
+            participation_config,
+            participation_state,
+        });
+    }
 }
