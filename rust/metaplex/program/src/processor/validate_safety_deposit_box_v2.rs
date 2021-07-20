@@ -3,8 +3,7 @@ use {
         error::MetaplexError,
         state::{
             AuctionManager, AuctionManagerStatus, AuctionManagerV2, Key, OriginalAuthorityLookup,
-            SafetyDepositConfig, Store, WinningConfigType, BASE_SAFETY_CONFIG_SIZE,
-            MAX_AUTHORITY_LOOKUP_SIZE, PREFIX,
+            SafetyDepositConfig, Store, WinningConfigType, MAX_AUTHORITY_LOOKUP_SIZE, PREFIX,
         },
         utils::{
             assert_at_least_one_creator_matches_or_store_public_and_all_verified,
@@ -53,10 +52,7 @@ pub fn make_safety_deposit_config<'a>(
         rent_info,
         system_info,
         payer_info,
-        std::cmp::max(
-            BASE_SAFETY_CONFIG_SIZE,
-            safety_deposit_config.try_to_vec().len(),
-        ),
+        safety_deposit_config.created_size(),
         &[
             PREFIX.as_bytes(),
             program_id.as_ref(),
@@ -66,9 +62,7 @@ pub fn make_safety_deposit_config<'a>(
         ],
     )?;
 
-    safety_deposit_config.key = Key::SafetyDepositConfigV1;
-
-    safety_deposit_config.serialize(&mut *safety_deposit_config_info.data.borrow_mut());
+    safety_deposit_config.create(&mut *safety_deposit_config_info);
 
     Ok(())
 }
@@ -265,6 +259,10 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 return Err(MetaplexError::StoreIsEmpty.into());
             }
 
+            if total_amount_requested != 1 {
+                return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+            }
+
             let original_authority_lookup_seeds = &[
                 PREFIX.as_bytes(),
                 &auction_manager.auction.as_ref(),
@@ -356,8 +354,32 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 }
             }
         }
-        WinningConfigType::Participation => return Err(MetaplexError::InvalidOperation.into()),
+        WinningConfigType::Participation => {
+            // Impossible to use a MEV1 through this avenue of participation...no one time auth token allowed here...
+            // If you wish to use those, you must use the AuctionManagerV1 pathway which allows use of the older endpoints,
+            // which will classify Participation as a PrintingV2 if it's an MEv2 or use the validate_participation endpoint
+            // if it's an MEv1.
+            if edition_key != *edition_info.key {
+                return Err(MetaplexError::InvalidEditionAddress.into());
+            }
+            let master_edition = MasterEditionV2::from_account_info(edition_info)?;
+            if safety_deposit.token_mint != metadata.mint {
+                return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
+            }
+
+            if safety_deposit_token_store.amount != 1 {
+                return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
+            }
+
+            if master_edition.max_supply.is_some() {
+                return Err(
+                    MetaplexError::CantUseLimitedSupplyEditionsWithOpenEditionAuction.into(),
+                );
+            }
+        }
     }
+
+    Ok(())
 }
 
 pub fn process_validate_safety_deposit_box_v2(
@@ -445,6 +467,13 @@ pub fn process_validate_safety_deposit_box_v2(
 
     if safety_deposit_config.order != safety_deposit.order {
         return Err(MetaplexError::SafetyDepositConfigOrderMismatch.into());
+    }
+
+    if safety_deposit_config.winning_config_type != WinningConfigType::Participation
+        && (safety_deposit_config.participation_config.is_some()
+            || safety_deposit_config.participation_state.is_some())
+    {
+        return Err(MetaplexError::InvalidOperation.into());
     }
 
     auction_manager.state.safety_config_items_validated = auction_manager

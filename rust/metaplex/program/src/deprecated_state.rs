@@ -1,12 +1,12 @@
-use solana_program::{msg};
 
 use {
-    crate::{utils::try_from_slice_checked,state::{Key, WinningConfigType, AuctionManager,AuctionManagerStatus, WinningConstraint, NonWinningConstraint}},
-    arrayref::array_ref,
+    crate::{error::MetaplexError, utils::try_from_slice_checked,state::{Key, WinningConfigType, AuctionManager,AuctionManagerStatus, WinningConstraint, NonWinningConstraint}},
+    arrayref::{array_ref,mut_array_refs, array_mut_ref},
     borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, entrypoint::ProgramResult},
+    solana_program::{msg,account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, entrypoint::ProgramResult},
     
 };
+
 
 pub const MAX_WINNERS: usize = 200;
 pub const MAX_WINNER_SIZE: usize = 6 * MAX_WINNERS;
@@ -94,6 +94,10 @@ impl AuctionManager for AuctionManagerV1 {
     fn status(&self) -> AuctionManagerStatus {
         self.state.status
     }
+
+    fn set_status(&mut self, status: AuctionManagerStatus) {
+      self.state.status = status
+  }
 
     fn configs_validated(&self) -> u64 {
       self.state.winning_config_items_validated as u64

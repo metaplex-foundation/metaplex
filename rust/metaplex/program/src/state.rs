@@ -2,9 +2,8 @@ use {
     crate::{
         deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
     },
-    arrayref::{array_mut_ref, array_ref},
+    arrayref::{array_mut_ref, array_ref, mut_array_refs},
     borsh::{BorshDeserialize, BorshSerialize},
-    num_traits::ToPrimitive,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
         pubkey::Pubkey,
@@ -56,6 +55,7 @@ pub enum Key {
     PrizeTrackingTicketV1,
     SafetyDepositConfigV1,
     AuctionManagerV2,
+    BidRedemptionTicketV2,
 }
 
 pub trait AuctionManager {
@@ -66,6 +66,7 @@ pub trait AuctionManager {
     fn vault(&self) -> Pubkey;
     fn accept_payment(&self) -> Pubkey;
     fn status(&self) -> AuctionManagerStatus;
+    fn set_status(&mut self, status: AuctionManagerStatus);
     fn configs_validated(&self) -> u64;
     fn set_configs_validated(&self, new_configs_validated: u64);
     fn save(&self, account: &AccountInfo) -> ProgramResult;
@@ -126,6 +127,10 @@ impl AuctionManager for AuctionManagerV2 {
 
     fn status(&self) -> AuctionManagerStatus {
         self.state.status
+    }
+
+    fn set_status(&mut self, status: AuctionManagerStatus) {
+        self.state.status = status
     }
 
     fn configs_validated(&self) -> u64 {
@@ -270,26 +275,6 @@ impl OriginalAuthorityLookup {
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
-pub struct BidRedemptionTicket {
-    pub key: Key,
-    pub participation_redeemed: bool,
-    pub items_redeemed: u8,
-}
-
-impl BidRedemptionTicket {
-    pub fn from_account_info(a: &AccountInfo) -> Result<BidRedemptionTicket, ProgramError> {
-        let pt: BidRedemptionTicket = try_from_slice_checked(
-            &a.data.borrow_mut(),
-            Key::BidRedemptionTicketV1,
-            MAX_BID_REDEMPTION_TICKET_SIZE,
-        )?;
-
-        Ok(pt)
-    }
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
 pub struct PayoutTicket {
     pub key: Key,
     pub recipient: Pubkey,
@@ -371,19 +356,21 @@ impl PrizeTrackingTicket {
 }
 
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct AmountRange(pub u64, pub u64);
 
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub enum TupleNumericType {
     U8 = 1,
     U16 = 2,
     U32 = 4,
     U64 = 8,
 }
+// Even though we dont use borsh for serialization to the chain, we do use this as an instruction argument
+// and that needs borsh.
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct SafetyDepositConfig {
     pub key: Key,
     // only 255 safety deposits on vault right now but soon this will likely expand.
@@ -401,17 +388,27 @@ pub struct SafetyDepositConfig {
 }
 
 impl SafetyDepositConfig {
+    /// Size of account with padding included
+    pub fn created_size(&self) -> usize {
+        return BASE_SAFETY_CONFIG_SIZE
+            + (self.amount_type as usize + self.length_type as usize) * self.amount_ranges.len();
+    }
+
+    pub fn get_order(a: &AccountInfo) -> u64 {
+        return u64::from_le_bytes(*array_ref![a.data.borrow(), 1, 8]);
+    }
+
     pub fn from_account_info(a: &AccountInfo) -> Result<SafetyDepositConfig, ProgramError> {
         let data = &mut a.data.borrow_mut();
         if a.data_len() < BASE_SAFETY_CONFIG_SIZE {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
-        if data[0] != Key::SafetyDepositConfigV1 {
+        if data[0] != Key::SafetyDepositConfigV1 as u8 {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
-        let order = u64::from_le_bytes(array_ref![data, 1, 8]);
+        let order = u64::from_le_bytes(*array_ref![data, 1, 8]);
 
         let winning_config_type = match data[9] {
             0 => WinningConfigType::TokenOnlyTransfer,
@@ -419,7 +416,7 @@ impl SafetyDepositConfig {
             2 => WinningConfigType::PrintingV1,
             3 => WinningConfigType::PrintingV2,
             4 => WinningConfigType::Participation,
-            _ => return ProgramError::InvalidAccountData,
+            _ => return Err(ProgramError::InvalidAccountData),
         };
 
         let amount_type = match data[10] {
@@ -427,7 +424,7 @@ impl SafetyDepositConfig {
             2 => TupleNumericType::U16,
             4 => TupleNumericType::U32,
             8 => TupleNumericType::U64,
-            _ => return ProgramError::InvalidAccountData,
+            _ => return Err(ProgramError::InvalidAccountData),
         };
 
         let length_type = match data[11] {
@@ -435,81 +432,90 @@ impl SafetyDepositConfig {
             2 => TupleNumericType::U16,
             4 => TupleNumericType::U32,
             8 => TupleNumericType::U64,
-            _ => return ProgramError::InvalidAccountData,
+            _ => return Err(ProgramError::InvalidAccountData),
         };
 
-        let length_of_array = u32::from_le_bytes(array_ref![data, 12, 4]);
+        let length_of_array = u32::from_le_bytes(*array_ref![data, 12, 4]);
 
-        let mut offset: u64 = 16;
+        let mut offset: usize = 16;
         let amount_ranges = vec![];
         for n in 0..length_of_array {
             let amount = match amount_type {
-                TupleNumericType::U8 => data[offset],
-                TupleNumericType::U16 => u16::from_le_bytes(array_ref![data, offset, 2]),
-                TupleNumericType::U32 => u32::from_le_bytes(array_ref![data, offset, 4]),
-                TupleNumericType::U64 => u64::from_le_bytes(array_ref![data, offset, 8]),
+                TupleNumericType::U8 => data[offset] as u64,
+                TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
+                TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
+                TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
             };
 
-            offset += amount_type;
+            offset += amount_type as usize;
 
             let length = match length_type {
-                TupleNumericType::U8 => data[offset],
-                TupleNumericType::U16 => u16::from_le_bytes(array_ref![data, offset, 2]),
-                TupleNumericType::U32 => u32::from_le_bytes(array_ref![data, offset, 4]),
-                TupleNumericType::U64 => u64::from_le_bytes(array_ref![data, offset, 8]),
+                TupleNumericType::U8 => data[offset] as u64,
+                TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
+                TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
+                TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
             };
 
             amount_ranges.push(AmountRange(amount, length));
-            offset += length_type;
+            offset += length_type as usize;
         }
 
-        let participation_config = match data[offset] {
-            0 => offset += 1,
+        let participation_config: Option<ParticipationConfigV2> = match data[offset] {
+            0 => {
+                offset += 1;
+                None
+            }
             1 => {
                 let winner_constraint = match data[offset + 1] {
                     0 => WinningConstraint::NoParticipationPrize,
                     1 => WinningConstraint::ParticipationPrizeGiven,
-                    _ => return ProgramError::InvalidAccountData,
+                    _ => return Err(ProgramError::InvalidAccountData),
                 };
                 let non_winning_constraint = match data[offset + 2] {
                     0 => NonWinningConstraint::NoParticipationPrize,
                     1 => NonWinningConstraint::GivenForFixedPrice,
                     2 => NonWinningConstraint::GivenForBidPrice,
-                    _ => return ProgramError::InvalidAccountData,
+                    _ => return Err(ProgramError::InvalidAccountData),
                 };
 
                 offset += 3;
 
-                let fixed_price = match data[offset] {
-                    0 => offset += 1,
-                    1 => {
-                        let number = u64::from_le_bytes(array_ref![data, offset + 1, 8]);
-                        offset += 9;
-                        number
+                let fixed_price: Option<u64> = match data[offset] {
+                    0 => {
+                        offset += 1;
+                        None
                     }
-                    _ => return ProgramError::InvalidAccountData,
+                    1 => {
+                        let number = u64::from_le_bytes(*array_ref![data, offset + 1, 8]);
+                        offset += 9;
+                        Some(number)
+                    }
+                    _ => return Err(ProgramError::InvalidAccountData),
                 };
 
-                ParticipationConfigV2 {
+                Some(ParticipationConfigV2 {
                     winner_constraint,
                     non_winning_constraint,
                     fixed_price,
-                }
+                })
             }
-            _ => return ProgramError::InvalidAccountData,
+            _ => return Err(ProgramError::InvalidAccountData),
         };
 
-        let participation_state = match data[offset] {
-            0 => offset += 1,
+        let participation_state: Option<ParticipationStateV2> = match data[offset] {
+            0 => {
+                offset += 1;
+                None
+            }
             1 => {
                 let collected_to_accept_payment =
-                    u64::from_le_bytes(array_ref![data, offset + 1, 8]);
-                ParticipationStateV2 {
-                    collected_to_accept_payment,
-                };
+                    u64::from_le_bytes(*array_ref![data, offset + 1, 8]);
                 offset += 9;
+                Some(ParticipationStateV2 {
+                    collected_to_accept_payment,
+                })
             }
-            _ => return ProgramError::InvalidAccountData,
+            _ => return Err(ProgramError::InvalidAccountData),
         };
 
         Ok(SafetyDepositConfig {
@@ -521,42 +527,42 @@ impl SafetyDepositConfig {
             amount_ranges,
             participation_config,
             participation_state,
-        });
+        })
     }
 
-    pub fn create(&mut self, a: &mut AccountInfo) {
+    pub fn create(&mut self, a: &mut AccountInfo) -> ProgramResult {
         let data = a.data.borrow_mut();
 
-        data[0] = self.key as u8;
+        data[0] = Key::SafetyDepositConfigV1 as u8;
         *array_mut_ref![data, 1, 8] = self.order.to_le_bytes();
         data[9] = self.winning_config_type as u8;
         data[10] = self.amount_type as u8;
         data[11] = self.length_type as u8;
-        *array_mut_ref![data, 12, 4] = self.amount_ranges.len().to_u32().to_le_bytes();
-        let offset: u64 = 16;
+        *array_mut_ref![data, 12, 4] = (self.amount_ranges.len() as u32).to_le_bytes();
+        let offset: usize = 16;
         for range in self.amount_ranges {
             match self.amount_type {
-                TupleNumericType::U8 => data[offset] = range.0,
+                TupleNumericType::U8 => data[offset] = range.0 as u8,
                 TupleNumericType::U16 => {
-                    *array_mut_ref![data, offset, 2] = range.0.to_u16().to_le_bytes()
+                    *array_mut_ref![data, offset, 2] = (range.0 as u16).to_le_bytes()
                 }
                 TupleNumericType::U32 => {
-                    *array_mut_ref![data, offset, 4] = range.0.to_u32().to_le_bytes()
+                    *array_mut_ref![data, offset, 4] = (range.0 as u32).to_le_bytes()
                 }
                 TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.0.to_le_bytes(),
             }
-            offset += self.amount_type;
+            offset += self.amount_type as usize;
             match self.length_type {
-                TupleNumericType::U8 => data[offset] = range.1,
+                TupleNumericType::U8 => data[offset] = range.1 as u8,
                 TupleNumericType::U16 => {
-                    *array_mut_ref![data, offset, 2] = range.1.to_u16().to_le_bytes()
+                    *array_mut_ref![data, offset, 2] = (range.1 as u16).to_le_bytes()
                 }
                 TupleNumericType::U32 => {
-                    *array_mut_ref![data, offset, 4] = range.1.to_u32().to_le_bytes()
+                    *array_mut_ref![data, offset, 4] = (range.1 as u32).to_le_bytes()
                 }
                 TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.1.to_le_bytes(),
             }
-            offset += self.length_type;
+            offset += self.length_type as usize;
         }
 
         match self.participation_config {
@@ -595,13 +601,16 @@ impl SafetyDepositConfig {
                 offset += 1
             }
         }
+
+        Ok(())
     }
 
     /// Smaller method for just participation state saving...saves cpu, and it's the only thing
     /// that will ever change on this model.
     pub fn save_participation_state(&mut self, a: &mut AccountInfo) {
         let mut data = a.data.borrow_mut();
-        let offset: u64 = 16 + self.amount_ranges.len() * (self.amount_type + self.length_type);
+        let offset: usize =
+            16 + self.amount_ranges.len() * (self.amount_type as usize + self.length_type as usize);
 
         offset += match self.participation_config {
             Some(val) => {
@@ -626,5 +635,109 @@ impl SafetyDepositConfig {
                 offset += 1
             }
         }
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
+pub struct BidRedemptionTicket {
+    // With BidRedemptionTicket is easier to hide it's legacy V1/V2 behind an internal facade,
+    // since all of it's values are read directly off the array.
+    pub key: Key,
+}
+
+impl BidRedemptionTicket {
+    pub fn check_ticket(
+        bid_redemption_info: &AccountInfo,
+        is_participation: bool,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> ProgramResult {
+        let bid_redemption_data = bid_redemption_info.data.borrow();
+
+        if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8
+            && bid_redemption_data[0] != Key::BidRedemptionTicketV2 as u8
+        {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        if bid_redemption_data[0] == Key::BidRedemptionTicketV1 as u8 {
+            let mut participation_redeemed = false;
+            if bid_redemption_data[1] == 1 {
+                participation_redeemed = true;
+            }
+
+            if is_participation && participation_redeemed {
+                return Err(MetaplexError::BidAlreadyRedeemed.into());
+            }
+        } else if bid_redemption_data[0] != Key::BidRedemptionTicketV2 as u8 {
+            // You can only redeem Full Rights Transfers one time per mint
+            // You can only redeem Token Only Transfers one time per mint
+            // You can only redeem PrintingV1 one time - you get all the printing tokens in one go
+            // You can redeem PrintingV2s many times(once per edition given) - but we dont check these with this ticket
+            // You can redeem Participation only once per mint
+            // With the v2 of bid redemptions we establish a bitmask where each bit in order from left to right
+            // represents the "order" field on the safety deposit box, with bit 0 representing safety deposit 0.
+            // Flipping it to 1 means redeemed.
+            match safety_deposit_config_info {
+                Some(config) => {
+                    let order = SafetyDepositConfig::get_order(config);
+                    let (position, mask) = BidRedemptionTicket::get_index_and_mask(order)?;
+                    if bid_redemption_data[position] & mask != 0 {
+                        return Err(MetaplexError::BidAlreadyRedeemed.into());
+                    }
+                }
+                None => return Err(MetaplexError::InvalidOperation.into()),
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_index_and_mask(order: u64) -> Result<(usize, u8), ProgramError> {
+        // add one because Key is at 0
+        let u8_position = order
+            .checked_div(8)
+            .ok_or(MetaplexError::NumericalOverflowError)?
+            .checked_add(1)
+            .ok_or(MetaplexError::NumericalOverflowError)?;
+        let position_from_right = 7 - order
+            .checked_rem(8)
+            .ok_or(MetaplexError::NumericalOverflowError)?;
+        let mask = u8::pow(2, position_from_right as u32);
+
+        Ok((u8_position as usize, mask))
+    }
+
+    pub fn save(
+        bid_redemption_info: &AccountInfo,
+        participation_redeemed: bool,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> ProgramResult {
+        // Saving on CPU in these large actions by avoiding borsh
+        let data = &mut bid_redemption_info.data.borrow_mut();
+        if data[0] == Key::BidRedemptionTicketV1 as u8 {
+            let output = array_mut_ref![data, 0, 3];
+
+            let (key, participation_redeemed_ptr, items_redeemed_ptr) =
+                mut_array_refs![output, 1, 1, 1];
+
+            *key = [Key::BidRedemptionTicketV1 as u8];
+
+            if participation_redeemed {
+                *participation_redeemed_ptr = [1];
+            }
+        } else if data[0] == Key::BidRedemptionTicketV2 as u8 || data[0] == Key::Uninitialized as u8
+        {
+            data[0] = Key::BidRedemptionTicketV2 as u8;
+            match safety_deposit_config_info {
+                Some(config) => {
+                    let order = SafetyDepositConfig::get_order(config);
+                    let (position, mask) = BidRedemptionTicket::get_index_and_mask(order)?;
+                    data[position] = data[position] | mask;
+                }
+                None => return Err(MetaplexError::InvalidOperation.into()),
+            }
+        }
+
+        Ok(())
     }
 }

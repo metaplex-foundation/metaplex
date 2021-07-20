@@ -2,13 +2,14 @@ use solana_program::log::sol_log_compute_units;
 
 use {
     crate::{
+        deprecated_state::{AuctionManagerV1, WinningConfigItem},
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, Store,
-            WhitelistedCreator, WinningConfigItem, MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
+            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
+            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
         },
     },
-    arrayref::{array_mut_ref, array_ref, mut_array_refs},
+    arrayref::array_ref,
     borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
@@ -31,7 +32,10 @@ use {
         instruction::update_metadata_accounts,
         state::{Metadata, EDITION},
     },
-    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::SafetyDepositBox},
+    spl_token_vault::{
+        instruction::create_withdraw_tokens_instruction,
+        state::{SafetyDepositBox, Vault},
+    },
     std::{convert::TryInto, str::FromStr},
 };
 
@@ -349,7 +353,7 @@ pub fn transfer_mint_authority<'a>(
 
 pub struct CommonRedeemReturn {
     pub redemption_bump_seed: u8,
-    pub auction_manager: AuctionManager,
+    pub auction_manager: Box<dyn AuctionManager>,
     pub cancelled: bool,
     pub rent: Rent,
     pub win_index: Option<usize>,
@@ -372,6 +376,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub token_metadata_program_info: &'a AccountInfo<'a>,
     pub store_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
     pub is_participation: bool,
     // If this is being called by the auctioneer to pull prizes out they overwrite the win index
     // they would normally get if they themselves bid for whatever win index they choose.
@@ -458,6 +463,7 @@ pub fn common_redeem_checks(
         token_metadata_program_info,
         rent_info,
         store_info,
+        safety_deposit_config_info,
         is_participation,
         overwrite_win_index,
         user_provided_win_index,
@@ -467,8 +473,7 @@ pub fn common_redeem_checks(
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let mut auction_manager: AuctionManager =
-        AuctionManager::from_account_info(auction_manager_info)?;
+    let mut auction_manager: Box<dyn AuctionManager> = get_auction_manager(auction_manager_info)?;
     let store_data = store_info.data.borrow();
     let cancelled: bool;
 
@@ -481,7 +486,7 @@ pub fn common_redeem_checks(
     if overwrite_win_index.is_some() {
         cancelled = false;
 
-        if *bidder_info.key != auction_manager.authority {
+        if *bidder_info.key != auction_manager.authority() {
             return Err(MetaplexError::MustBeAuctioneer.into());
         }
     } else {
@@ -510,7 +515,7 @@ pub fn common_redeem_checks(
         }
         let redemption_path = [
             PREFIX.as_bytes(),
-            auction_manager.auction.as_ref(),
+            auction_manager.auction().as_ref(),
             bidder_metadata_info.key.as_ref(),
         ];
         let (redemption_key, actual_redemption_bump_seed) =
@@ -529,34 +534,15 @@ pub fn common_redeem_checks(
         overwrite_win_index,
     )?;
 
-    if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
-        let bid_redemption_data = bid_redemption_info.data.borrow();
-
-        if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8 {
-            return Err(MetaplexError::DataTypeMismatch.into());
-        }
-
-        let mut participation_redeemed = false;
-        if bid_redemption_data[1] == 1 {
-            participation_redeemed = true;
-        }
-        let items_redeemed = bid_redemption_data[2];
-        msg!(
-            "Items redeemed is {} and participation redemption is {}",
-            items_redeemed,
-            participation_redeemed
-        );
-        let possible_items_to_redeem = match win_index {
-            Some(val) => auction_manager.settings.winning_configs[val].items.len(),
-            None => 0,
-        };
-        if (is_participation && participation_redeemed)
-            || (!is_participation
-                && !ignore_bid_redeemed_item_check
-                && items_redeemed == possible_items_to_redeem as u8)
-        {
-            return Err(MetaplexError::BidAlreadyRedeemed.into());
-        }
+    if !bid_redemption_info.data_is_empty()
+        && overwrite_win_index.is_none()
+        && !ignore_bid_redeemed_item_check
+    {
+        BidRedemptionTicket::check_ticket(
+            bid_redemption_info,
+            is_participation,
+            safety_deposit_config_info,
+        )?
     }
 
     if assert_bidder_signer {
@@ -583,11 +569,11 @@ pub fn common_redeem_checks(
     // looking out for you!
     assert_rent_exempt(rent, &destination_info)?;
 
-    if auction_manager.auction != *auction_info.key {
+    if auction_manager.auction() != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
 
-    if *store_info.key != auction_manager.store {
+    if *store_info.key != auction_manager.store() {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -608,7 +594,7 @@ pub fn common_redeem_checks(
     }
 
     // No-op if already set.
-    auction_manager.state.status = AuctionManagerStatus::Disbursing;
+    auction_manager.set_status(AuctionManagerStatus::Disbursing);
 
     Ok(CommonRedeemReturn {
         redemption_bump_seed,
@@ -622,13 +608,15 @@ pub fn common_redeem_checks(
 
 pub struct CommonRedeemFinishArgs<'a> {
     pub program_id: &'a Pubkey,
-    pub auction_manager: AuctionManager,
+    pub auction_manager: Box<dyn AuctionManager>,
     pub auction_manager_info: &'a AccountInfo<'a>,
     pub bidder_metadata_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
     pub system_info: &'a AccountInfo<'a>,
     pub payer_info: &'a AccountInfo<'a>,
     pub bid_redemption_info: &'a AccountInfo<'a>,
+    pub vault_info: &'a AccountInfo<'a>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
     pub winning_index: Option<usize>,
     pub redemption_bump_seed: u8,
     pub bid_redeemed: bool,
@@ -647,6 +635,8 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         system_info,
         payer_info,
         bid_redemption_info,
+        vault_info,
+        safety_deposit_config_info,
         winning_index,
         redemption_bump_seed,
         bid_redeemed,
@@ -658,7 +648,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
         let redemption_seeds = &[
             PREFIX.as_bytes(),
-            auction_manager.auction.as_ref(),
+            auction_manager.auction().as_ref(),
             bidder_metadata_info.key.as_ref(),
             &[redemption_bump_seed],
         ];
@@ -670,29 +660,19 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 &rent_info,
                 &system_info,
                 &payer_info,
-                MAX_BID_REDEMPTION_TICKET_SIZE,
+                1 + Vault::get_token_type_count(vault_info)
+                    .checked_div(8)
+                    .ok_or(MetaplexError::NumericalOverflowError.into())
+                    as usize,
                 redemption_seeds,
             )?;
         }
-        // Saving on CPU in these large actions by avoiding borsh
-        let data = &mut bid_redemption_info.data.borrow_mut();
-        let output = array_mut_ref![data, 0, MAX_BID_REDEMPTION_TICKET_SIZE];
 
-        let (key, participation_redeemed_ptr, items_redeemed_ptr) =
-            mut_array_refs![output, 1, 1, 1];
-
-        *key = [Key::BidRedemptionTicketV1 as u8];
-
-        let curr_items_redeemed = u8::from_le_bytes(*items_redeemed_ptr);
-
-        if participation_redeemed {
-            *participation_redeemed_ptr = [1];
-        } else if bid_redeemed {
-            *items_redeemed_ptr = curr_items_redeemed
-                .checked_add(1)
-                .ok_or(MetaplexError::NumericalOverflowError)?
-                .to_le_bytes();
-        }
+        BidRedemptionTicket::save(
+            bid_redemption_info,
+            participation_redeemed,
+            safety_deposit_config_info,
+        )?;
     }
 
     msg!("About to pass through the eye of the needle");
@@ -721,7 +701,7 @@ pub struct CommonWinningConfigCheckReturn {
 }
 
 pub fn common_winning_config_checks(
-    auction_manager: &AuctionManager,
+    auction_manager: &AuctionManagerV1,
     safety_deposit_info: &AccountInfo,
     winning_index: usize,
     ignore_claim: bool,

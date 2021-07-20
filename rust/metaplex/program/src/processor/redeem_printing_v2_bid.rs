@@ -1,9 +1,8 @@
 use {
     crate::{
+        deprecated_state::WinningConfigItem,
         error::MetaplexError,
-        state::{
-            Key, WinningConfigItem, WinningConfigType, MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
-        },
+        state::{Key, WinningConfigType, MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX},
         utils::{
             assert_derivation, assert_is_ata, assert_owned_by, common_redeem_checks,
             common_redeem_finish, common_winning_config_checks, create_or_allocate_account_raw,
@@ -198,7 +197,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let bid_redemption_info = next_account_info(account_info_iter)?;
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
-    let _fraction_mint_info = next_account_info(account_info_iter)?;
+    let safety_deposit_config_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;

@@ -60,7 +60,7 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Deprecated Validate Safety Deposit Box V1");
             process_deprecated_validate_safety_deposit_box_v1(program_id, accounts)
         }
-        MetaplexInstruction::DeprecatedRedeemBid => {
+        MetaplexInstruction::RedeemBid => {
             msg!("Instruction: Redeem Normal Token Bid");
             process_redeem_bid(program_id, accounts, None)
         }
