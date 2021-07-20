@@ -45,12 +45,12 @@
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "next dev",
-    "build": "next build  & yarn export",
-    "export": "next export -o ../../build/web",
+    "build": "next build && yarn export",
+    "export": "next export -o ../../build/web && touch ../../build/web/.nojekyll",
     "start:prod": "next start",
     "test": "jest",
     "deploy:ar": "arweave deploy-dir  ../../build/web --key-file ",
-    "deploy": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex",
+    "deploy": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
