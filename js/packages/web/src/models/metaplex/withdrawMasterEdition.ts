@@ -1,7 +1,12 @@
-import { getEdition, programIds, getMetadata } from '@oyster/common';
+import {
+  AUCTION_PREFIX,
+  EXTENDED,
+  findProgramAddress,
+  programIds,
+  VAULT_PREFIX,
+} from '@oyster/common';
 import {
   PublicKey,
-  SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
@@ -9,25 +14,19 @@ import { serialize } from 'borsh';
 
 import {
   getAuctionKeys,
-  getBidderKeys,
-  RedeemParticipationBidArgs,
+  WithdrawMasterEditionArgs,
   SCHEMA,
+  getPrizeTrackingTicket,
 } from '.';
 
-export async function redeemParticipationBid(
+export async function withdrawMasterEdition(
   vault: PublicKey,
   safetyDepositTokenStore: PublicKey,
   destination: PublicKey,
   safetyDeposit: PublicKey,
   fractionMint: PublicKey,
-  bidder: PublicKey,
-  payer: PublicKey,
+  mint: PublicKey,
   instructions: TransactionInstruction[],
-  tokenMint: PublicKey,
-  participationPrintingAccount: PublicKey,
-  transferAuthority: PublicKey,
-  acceptPaymentAccount: PublicKey,
-  tokenPaymentAccount: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -37,11 +36,34 @@ export async function redeemParticipationBid(
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const { bidRedemption, bidMetadata } = await getBidderKeys(
-    auctionKey,
-    bidder,
+  const prizeTrackingTicket = await getPrizeTrackingTicket(
+    auctionManagerKey,
+    mint,
   );
-  const value = new RedeemParticipationBidArgs();
+  const vaultAuthority: PublicKey = (
+    await findProgramAddress(
+      [
+        Buffer.from(VAULT_PREFIX),
+        PROGRAM_IDS.vault.toBuffer(),
+        vault.toBuffer(),
+      ],
+      PROGRAM_IDS.vault,
+    )
+  )[0];
+
+  const auctionExtended: PublicKey = (
+    await findProgramAddress(
+      [
+        Buffer.from(AUCTION_PREFIX),
+        PROGRAM_IDS.auction.toBuffer(),
+        vault.toBuffer(),
+        Buffer.from(EXTENDED),
+      ],
+      PROGRAM_IDS.auction,
+    )
+  )[0];
+
+  const value = new WithdrawMasterEditionArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -56,11 +78,6 @@ export async function redeemParticipationBid(
     },
     {
       pubkey: destination,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: bidRedemption,
       isSigner: false,
       isWritable: true,
     },
@@ -80,23 +97,23 @@ export async function redeemParticipationBid(
       isWritable: true,
     },
     {
+      pubkey: prizeTrackingTicket,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: vaultAuthority,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
       pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidMetadata,
+      pubkey: auctionExtended,
       isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: bidder,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: payer,
-      isSigner: true,
       isWritable: false,
     },
     {
@@ -110,17 +127,7 @@ export async function redeemParticipationBid(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
       pubkey: store,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: SystemProgram.programId,
       isSigner: false,
       isWritable: false,
     },
@@ -128,26 +135,6 @@ export async function redeemParticipationBid(
       pubkey: SYSVAR_RENT_PUBKEY,
       isSigner: false,
       isWritable: false,
-    },
-    {
-      pubkey: transferAuthority,
-      isSigner: true,
-      isWritable: false,
-    },
-    {
-      pubkey: acceptPaymentAccount,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: tokenPaymentAccount,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: participationPrintingAccount,
-      isSigner: false,
-      isWritable: true,
     },
   ];
 

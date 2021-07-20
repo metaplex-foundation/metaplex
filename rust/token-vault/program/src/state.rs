@@ -95,6 +95,10 @@ impl SafetyDepositBox {
 
         Ok(sd)
     }
+
+    pub fn get_order(a: &AccountInfo) -> u8 {
+        a.data.borrow()[97]
+    }
 }
 
 #[repr(C)]
