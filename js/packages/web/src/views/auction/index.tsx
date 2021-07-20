@@ -27,7 +27,7 @@ import {
   AuctionState,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
-import { getHandleAndRegistryKey } from '@bonfida/spl-name-service';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
