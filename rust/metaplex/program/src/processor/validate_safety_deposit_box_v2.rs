@@ -2,9 +2,9 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, ParticipationState,
-            SafetyDepositValidationTicket, Store, WinningConfigType, MAX_AUTHORITY_LOOKUP_SIZE,
-            MAX_VALIDATION_TICKET_SIZE, PREFIX,
+            AuctionManager, AuctionManagerStatus, AuctionManagerV2, Key, OriginalAuthorityLookup,
+            SafetyDepositConfig, Store, WinningConfigType, BASE_SAFETY_CONFIG_SIZE,
+            MAX_AUTHORITY_LOOKUP_SIZE, PREFIX,
         },
         utils::{
             assert_at_least_one_creator_matches_or_store_public_and_all_verified,
@@ -26,18 +26,19 @@ use {
     },
     spl_token_vault::state::{SafetyDepositBox, Vault},
 };
-pub fn make_safety_deposit_validation<'a>(
+pub fn make_safety_deposit_config<'a>(
     program_id: &Pubkey,
     auction_manager_info: &AccountInfo<'a>,
     safety_deposit_info: &AccountInfo<'a>,
-    safety_deposit_validation_ticket_info: &AccountInfo<'a>,
+    safety_deposit_config_info: &AccountInfo<'a>,
     payer_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     system_info: &AccountInfo<'a>,
+    safety_deposit_config: &mut SafetyDepositConfig,
 ) -> ProgramResult {
     let bump = assert_derivation(
         program_id,
-        safety_deposit_validation_ticket_info,
+        safety_deposit_config_info,
         &[
             PREFIX.as_bytes(),
             program_id.as_ref(),
@@ -48,11 +49,14 @@ pub fn make_safety_deposit_validation<'a>(
 
     create_or_allocate_account_raw(
         *program_id,
-        safety_deposit_validation_ticket_info,
+        safety_deposit_config_info,
         rent_info,
         system_info,
         payer_info,
-        MAX_VALIDATION_TICKET_SIZE,
+        std::cmp::max(
+            BASE_SAFETY_CONFIG_SIZE,
+            safety_deposit_config.try_to_vec().len(),
+        ),
         &[
             PREFIX.as_bytes(),
             program_id.as_ref(),
@@ -62,49 +66,58 @@ pub fn make_safety_deposit_validation<'a>(
         ],
     )?;
 
-    let mut validation =
-        SafetyDepositValidationTicket::from_account_info(safety_deposit_validation_ticket_info)?;
-    validation.key = Key::SafetyDepositValidationTicketV1;
-    validation.address = *safety_deposit_info.key;
-    validation.serialize(&mut *safety_deposit_validation_ticket_info.data.borrow_mut())?;
+    safety_deposit_config.key = Key::SafetyDepositConfigV1;
+
+    safety_deposit_config.serialize(&mut *safety_deposit_config_info.data.borrow_mut());
 
     Ok(())
 }
 
-pub fn process_validate_safety_deposit_box(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-) -> ProgramResult {
-    let account_info_iter = &mut accounts.iter();
-    let safety_deposit_validation_ticket_info = next_account_info(account_info_iter)?;
-    let auction_manager_info = next_account_info(account_info_iter)?;
-    let metadata_info = next_account_info(account_info_iter)?;
-    let original_authority_lookup_info = next_account_info(account_info_iter)?;
-    let whitelisted_creator_info = next_account_info(account_info_iter)?;
-    let auction_manager_store_info = next_account_info(account_info_iter)?;
-    let safety_deposit_info = next_account_info(account_info_iter)?;
-    let safety_deposit_token_store_info = next_account_info(account_info_iter)?;
-    let mint_info = next_account_info(account_info_iter)?;
-    let edition_info = next_account_info(account_info_iter)?;
-    let vault_info = next_account_info(account_info_iter)?;
-    let authority_info = next_account_info(account_info_iter)?;
-    let metadata_authority_info = next_account_info(account_info_iter)?;
-    let payer_info = next_account_info(account_info_iter)?;
-    let token_metadata_program_info = next_account_info(account_info_iter)?;
-    let system_info = next_account_info(account_info_iter)?;
-    let rent_info = next_account_info(account_info_iter)?;
+pub struct CommonCheckArgs<'a> {
+    pub program_id: &'a Pubkey,
+    pub auction_manager_info: &'a AccountInfo<'a>,
+    pub metadata_info: &'a AccountInfo<'a>,
+    pub original_authority_lookup_info: &'a AccountInfo<'a>,
+    pub whitelisted_creator_info: &'a AccountInfo<'a>,
+    pub safety_deposit_info: &'a AccountInfo<'a>,
+    pub safety_deposit_token_store_info: &'a AccountInfo<'a>,
+    pub edition_info: &'a AccountInfo<'a>,
+    pub vault_info: &'a AccountInfo<'a>,
+    pub mint_info: &'a AccountInfo<'a>,
+    pub token_metadata_program_info: &'a AccountInfo<'a>,
+    pub auction_manager_store_info: &'a AccountInfo<'a>,
+    pub authority_info: &'a AccountInfo<'a>,
+    pub store: &'a Store,
+    pub auction_manager: &'a Box<dyn AuctionManager>,
+    pub metadata: &'a Metadata,
+    pub safety_deposit: &'a SafetyDepositBox,
+    pub vault: &'a Vault,
+    pub winning_config_type: &'a WinningConfigType,
+}
 
-    if !safety_deposit_validation_ticket_info.data_is_empty() {
-        return Err(MetaplexError::AlreadyValidated.into());
-    }
+pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
+    let CommonCheckArgs {
+        program_id,
+        auction_manager_info,
+        metadata_info,
+        original_authority_lookup_info,
+        whitelisted_creator_info,
+        safety_deposit_info,
+        safety_deposit_token_store_info,
+        edition_info,
+        vault_info,
+        mint_info,
+        token_metadata_program_info,
+        auction_manager_store_info,
+        authority_info,
+        store,
+        auction_manager,
+        metadata,
+        safety_deposit,
+        vault,
+        winning_config_type,
+    } = args;
 
-    let mut auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
-    let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
-    let safety_deposit_token_store: Account = assert_initialized(safety_deposit_token_store_info)?;
-    let metadata = Metadata::from_account_info(metadata_info)?;
-    let store = Store::from_account_info(auction_manager_store_info)?;
-    // Is it a real vault?
-    let vault = Vault::from_account_info(vault_info)?;
     // Is it a real mint?
     let _mint: Mint = assert_initialized(mint_info)?;
 
@@ -129,7 +142,10 @@ pub fn process_validate_safety_deposit_box(
     assert_owned_by(safety_deposit_info, &store.token_vault_program)?;
     assert_owned_by(safety_deposit_token_store_info, &store.token_program)?;
     assert_owned_by(mint_info, &store.token_program)?;
-    assert_owned_by(edition_info, &store.token_metadata_program)?;
+
+    if winning_config_type != WinningConfigType::TokenOnlyTransfer {
+        assert_owned_by(edition_info, &store.token_metadata_program)?;
+    }
     assert_owned_by(vault_info, &store.token_vault_program)?;
 
     if *token_metadata_program_info.key != store.token_metadata_program {
@@ -151,7 +167,7 @@ pub fn process_validate_safety_deposit_box(
         auction_manager_store_info,
     )?;
 
-    if auction_manager.store != *auction_manager_store_info.key {
+    if auction_manager.store() != *auction_manager_store_info.key {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -170,66 +186,51 @@ pub fn process_validate_safety_deposit_box(
         return Err(MetaplexError::TokenProgramMismatch.into());
     }
 
-    let mut total_amount_requested: u64 = 0;
-    // At this point we know we have at least one config and they may have different amounts but all
-    // point at the same safety deposit box and so have the same winning config type.
-    // We default to TokenOnlyTransfer but this will get set by the loop.
-    let mut winning_config_type: WinningConfigType = WinningConfigType::TokenOnlyTransfer;
-    let mut winning_config_items_validated: u8 = 0;
-    let mut all_winning_config_items: u8 = 0;
+    Ok(())
+}
 
-    for i in 0..auction_manager.settings.winning_configs.len() {
-        let possible_config = &auction_manager.settings.winning_configs[i];
+pub struct SupplyLogicCheckArgs<'a> {
+    program_id: &'a Pubkey,
+    auction_manager_info: &'a AccountInfo<'a>,
+    metadata_info: &'a AccountInfo<'a>,
+    edition_info: &'a AccountInfo<'a>,
+    metadata_authority_info: &'a AccountInfo<'a>,
+    original_authority_lookup_info: &'a AccountInfo<'a>,
+    rent_info: &'a AccountInfo<'a>,
+    system_info: &'a AccountInfo<'a>,
+    payer_info: &'a AccountInfo<'a>,
+    token_metadata_program_info: &'a AccountInfo<'a>,
+    safety_deposit_token_store_info: &'a AccountInfo<'a>,
+    auction_manager: &'a Box<dyn AuctionManager>,
+    winning_config_type: &'a WinningConfigType,
+    metadata: &'a Metadata,
+    safety_deposit: &'a SafetyDepositBox,
+    store: &'a Store,
+    total_amount_requested: u64,
+}
 
-        for j in 0..possible_config.items.len() {
-            let possible_item = &possible_config.items[j];
-            all_winning_config_items = all_winning_config_items
-                .checked_add(1)
-                .ok_or(MetaplexError::NumericalOverflowError)?;
+pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
+    let SupplyLogicCheckArgs {
+        program_id,
+        auction_manager_info,
+        metadata_info,
+        edition_info,
+        metadata_authority_info,
+        original_authority_lookup_info,
+        rent_info,
+        system_info,
+        payer_info,
+        token_metadata_program_info,
+        auction_manager,
+        winning_config_type,
+        metadata,
+        safety_deposit,
+        store,
+        safety_deposit_token_store_info,
+        total_amount_requested,
+    } = args;
 
-            if possible_item.safety_deposit_box_index == safety_deposit.order {
-                winning_config_type = possible_item.winning_config_type;
-
-                winning_config_items_validated = winning_config_items_validated
-                    .checked_add(1)
-                    .ok_or(MetaplexError::NumericalOverflowError)?;
-
-                // Build array to sum total amount
-                total_amount_requested = total_amount_requested
-                    .checked_add(possible_item.amount.into())
-                    .ok_or(MetaplexError::NumericalOverflowError)?;
-                // Record that primary sale happened at time of validation for later royalties reconcilation
-                auction_manager.state.winning_config_states[i].items[j].primary_sale_happened =
-                    metadata.primary_sale_happened;
-            }
-        }
-    }
-
-    if let Some(participation_config) = &auction_manager.settings.participation_config {
-        if participation_config.safety_deposit_box_index == safety_deposit.order {
-            // Really it's unknown how many prints will be made
-            // but we set it to 1 since that's how many master edition tokens are in there.
-            total_amount_requested = total_amount_requested
-                .checked_add(1)
-                .ok_or(MetaplexError::NumericalOverflowError)?;
-
-            // now that participation configs can be validated through normal safety deposit endpoints, need to flip this boolean
-            // here too, until we can deprecate it later.
-            if let Some(state) = &auction_manager.state.participation_state {
-                auction_manager.state.participation_state = Some(ParticipationState {
-                    collected_to_accept_payment: state.collected_to_accept_payment,
-                    primary_sale_happened: state.primary_sale_happened,
-                    validated: true,
-                    printing_authorization_token_account: state
-                        .printing_authorization_token_account,
-                })
-            }
-        }
-    }
-
-    if total_amount_requested == 0 {
-        return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into());
-    }
+    let safety_deposit_token_store: Account = assert_initialized(safety_deposit_token_store_info)?;
 
     let edition_seeds = &[
         spl_token_metadata::state::PREFIX.as_bytes(),
@@ -248,7 +249,6 @@ pub fn process_validate_safety_deposit_box(
         &auction_manager.auction.as_ref(),
         &[bump_seed],
     ];
-
     // Supply logic check
     match winning_config_type {
         WinningConfigType::FullRightsTransfer => {
@@ -356,34 +356,114 @@ pub fn process_validate_safety_deposit_box(
                 }
             }
         }
+        WinningConfigType::Participation => return Err(MetaplexError::InvalidOperation.into()),
+    }
+}
+
+pub fn process_validate_safety_deposit_box_v2(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    safety_deposit_config: SafetyDepositConfig,
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let safety_deposit_config_info = next_account_info(account_info_iter)?;
+    let auction_manager_info = next_account_info(account_info_iter)?;
+    let metadata_info = next_account_info(account_info_iter)?;
+    let original_authority_lookup_info = next_account_info(account_info_iter)?;
+    let whitelisted_creator_info = next_account_info(account_info_iter)?;
+    let auction_manager_store_info = next_account_info(account_info_iter)?;
+    let safety_deposit_info = next_account_info(account_info_iter)?;
+    let safety_deposit_token_store_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let edition_info = next_account_info(account_info_iter)?;
+    let vault_info = next_account_info(account_info_iter)?;
+    let authority_info = next_account_info(account_info_iter)?;
+    let metadata_authority_info = next_account_info(account_info_iter)?;
+    let payer_info = next_account_info(account_info_iter)?;
+    let token_metadata_program_info = next_account_info(account_info_iter)?;
+    let system_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter)?;
+
+    if !safety_deposit_config_info.data_is_empty() {
+        return Err(MetaplexError::AlreadyValidated.into());
     }
 
-    auction_manager.state.winning_config_items_validated = match auction_manager
-        .state
-        .winning_config_items_validated
-        .checked_add(winning_config_items_validated)
-    {
-        Some(val) => val,
-        None => return Err(MetaplexError::NumericalOverflowError.into()),
-    };
+    let mut auction_manager = AuctionManagerV2::from_account_info(auction_manager_info)?;
+    let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
+    let metadata = Metadata::from_account_info(metadata_info)?;
+    let store = Store::from_account_info(auction_manager_store_info)?;
+    // Is it a real vault?
+    let vault = Vault::from_account_info(vault_info)?;
 
-    if auction_manager.state.winning_config_items_validated == all_winning_config_items {
-        let mut participation_okay = true;
-        if let Some(state) = &auction_manager.state.participation_state {
-            participation_okay = state.validated
-        }
-        if participation_okay {
-            auction_manager.state.status = AuctionManagerStatus::Validated
-        }
+    assert_common_checks(CommonCheckArgs {
+        program_id,
+        auction_manager_info,
+        metadata_info,
+        original_authority_lookup_info,
+        whitelisted_creator_info,
+        safety_deposit_info,
+        safety_deposit_token_store_info,
+        edition_info,
+        vault_info,
+        mint_info,
+        token_metadata_program_info,
+        auction_manager_store_info,
+        authority_info,
+        store,
+        auction_manager,
+        metadata,
+        safety_deposit,
+        vault,
+        winning_config_type: safety_deposit_config.winning_config_type,
+    })?;
+
+    let mut total_amount_requested = safety_deposit_config
+        .amount_ranges
+        .iter()
+        .map(|t| t.0 * t.1)
+        .sum();
+
+    assert_supply_logic_check(SupplyLogicCheckArgs {
+        program_id,
+        auction_manager_info,
+        metadata_info,
+        edition_info,
+        metadata_authority_info,
+        original_authority_lookup_info,
+        rent_info,
+        system_info,
+        payer_info,
+        token_metadata_program_info,
+        auction_manager,
+        winning_config_type: safety_deposit_config.winning_config_type,
+        metadata,
+        safety_deposit,
+        store,
+        safety_deposit_token_store_info,
+        total_amount_requested,
+    })?;
+
+    if safety_deposit_config.order != safety_deposit.order {
+        return Err(MetaplexError::SafetyDepositConfigOrderMismatch.into());
+    }
+
+    auction_manager.state.safety_config_items_validated = auction_manager
+        .state
+        .safety_config_items_validated
+        .checked_add(1)
+        .ok_or(MetaplexError::NumericalOverflowError)?;
+
+    if auction_manager.state.safety_config_items_validated == vault.token_type_count {
+        auction_manager.state.status = AuctionManagerStatus::Validated
     }
 
     auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
 
-    make_safety_deposit_validation(
+    make_safety_deposit_config(
         program_id,
         auction_manager_info,
         safety_deposit_info,
-        safety_deposit_validation_ticket_info,
+        safety_deposit_config_info,
         payer_info,
         rent_info,
         system_info,

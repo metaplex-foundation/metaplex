@@ -82,12 +82,12 @@ pub fn assert_signer(account_info: &AccountInfo) -> ProgramResult {
 }
 
 pub fn assert_store_safety_vault_manager_match(
-    auction_manager: &AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     safety_deposit_info: &AccountInfo,
     vault_info: &AccountInfo,
     token_vault_program: &Pubkey,
 ) -> ProgramResult {
-    if auction_manager.vault != *vault_info.key {
+    if auction_manager.vault() != *vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
 

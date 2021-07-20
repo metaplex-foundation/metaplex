@@ -1,5 +1,8 @@
 use {
-    crate::state::{AuctionManagerSettings, PREFIX},
+    crate::{
+        deprecated_state::AuctionManagerSettingsV1,
+        state::{SafetyDepositConfig, PREFIX},
+    },
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
         instruction::{AccountMeta, Instruction},
@@ -49,8 +52,8 @@ pub struct RedeemPrintingV2BidArgs {
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetaplexInstruction {
-    /// Initializes an Auction Manager
-    //
+    /// Initializes an Auction Manager V1
+    ///
     ///   0. `[writable]` Uninitialized, unallocated auction manager account with pda of ['metaplex', auction_key from auction referenced below]
     ///   1. `[]` Combined vault account with authority set to auction manager account (this will be checked)
     ///           Note in addition that this vault account should have authority set to this program's pda of ['metaplex', auction_key]
@@ -61,7 +64,7 @@ pub enum MetaplexInstruction {
     ///   6. `[]` Store that this auction manager will belong to
     ///   7. `[]` System sysvar    
     ///   8. `[]` Rent sysvar
-    InitAuctionManager(AuctionManagerSettings),
+    DeprecatedInitAuctionManagerV1(AuctionManagerSettingsV1),
 
     /// Validates that a given safety deposit box has in it contents that match the expected WinningConfig in the auction manager.
     /// A stateful call, this will error out if you call it a second time after validation has occurred.
@@ -89,7 +92,7 @@ pub enum MetaplexInstruction {
     ///   17. `[writable]` Limited edition Printing mint account (optional - only if using sending Limited Edition)
     ///   18. `[signer]` Limited edition Printing mint Authority account, this will TEMPORARILY TRANSFER MINTING AUTHORITY to the auction manager
     ///         until all limited editions have been redeemed for authority tokens.
-    ValidateSafetyDepositBox,
+    DeprecatedValidateSafetyDepositBoxV1,
 
     /// Note: This requires that auction manager be in a Running state.
     ///
@@ -478,11 +481,52 @@ pub enum MetaplexInstruction {
     ///   27. `[]` Metadata account of token in vault
     //    28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
     RedeemParticipationBidV2,
+
+    /// Initializes an Auction Manager V2
+    ///
+    /// NOTE: It is not possible to use MasterEditionV1s for participation nfts with these managers.
+    ///
+    ///   0. `[writable]` Uninitialized, unallocated auction manager account with pda of ['metaplex', auction_key from auction referenced below]
+    ///   1. `[]` Combined vault account with authority set to auction manager account (this will be checked)
+    ///           Note in addition that this vault account should have authority set to this program's pda of ['metaplex', auction_key]
+    ///   2. `[]` Auction with auctioned item being set to the vault given and authority set to this program's pda of ['metaplex', auction_key]
+    ///   3. `[]` Authority for the Auction Manager
+    ///   4. `[signer]` Payer
+    ///   5. `[]` Accept payment account of same token mint as the auction for taking payment for open editions, owner should be auction manager key
+    ///   6. `[]` Store that this auction manager will belong to
+    ///   7. `[]` System sysvar    
+    ///   8. `[]` Rent sysvar
+    InitAuctionManagerV2,
+
+    /// Validates that a given safety deposit box has in it contents that match the given SafetyDepositConfig, and creates said config.
+    /// A stateful call, this will error out if you call it a second time after validation has occurred.
+    ///   0. `[writable]` Uninitialized Safety deposit config, pda of seed ['metaplex', program id, auction manager key, safety deposit key]
+    ///   1. `[writable]` Auction manager
+    ///   2. `[writable]` Metadata account
+    ///   3. `[writable]` Original authority lookup - unallocated uninitialized pda account with seed ['metaplex', auction key, metadata key]
+    ///                   We will store original authority here to return it later.
+    ///   4. `[]` A whitelisted creator entry for the store of this auction manager pda of ['metaplex', store key, creator key]
+    ///   where creator key comes from creator list of metadata, any will do
+    ///   5. `[]` The auction manager's store key
+    ///   6. `[]` Safety deposit box account
+    ///   7. `[]` Safety deposit box storage account where the actual nft token is stored
+    ///   8. `[]` Mint account of the token in the safety deposit box
+    ///   9. `[]` Edition OR MasterEdition record key
+    ///           Remember this does not need to be an existing account (may not be depending on token), just is a pda with seed
+    ///            of ['metadata', program id, Printing mint id, 'edition']. - remember PDA is relative to token metadata program.
+    ///   10. `[]` Vault account
+    ///   11. `[signer]` Authority
+    ///   12. `[signer optional]` Metadata Authority - Signer only required if doing a full ownership txfer
+    ///   13. `[signer]` Payer
+    ///   14. `[]` Token metadata program
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ValidateSafetyDepositBoxV2(SafetyDepositConfig),
 }
 
-/// Creates an InitAuctionManager instruction
+/// Creates an DeprecatedInitAuctionManager instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_init_auction_manager_instruction(
+pub fn create_deprecated_init_auction_manager_v1_instruction(
     program_id: Pubkey,
     auction_manager: Pubkey,
     vault: Pubkey,
@@ -491,7 +535,7 @@ pub fn create_init_auction_manager_instruction(
     payer: Pubkey,
     accept_payment_account_key: Pubkey,
     store: Pubkey,
-    settings: AuctionManagerSettings,
+    settings: AuctionManagerSettingsV1,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -506,7 +550,38 @@ pub fn create_init_auction_manager_instruction(
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
-        data: MetaplexInstruction::InitAuctionManager(settings)
+        data: MetaplexInstruction::DeprecatedInitAuctionManagerV1(settings)
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+/// Creates an InitAuctionManager instruction
+#[allow(clippy::too_many_arguments)]
+pub fn create_init_auction_manager_v2_instruction(
+    program_id: Pubkey,
+    auction_manager: Pubkey,
+    vault: Pubkey,
+    auction: Pubkey,
+    auction_manager_authority: Pubkey,
+    payer: Pubkey,
+    accept_payment_account_key: Pubkey,
+    store: Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(auction_manager, false),
+            AccountMeta::new_readonly(vault, false),
+            AccountMeta::new_readonly(auction, false),
+            AccountMeta::new_readonly(auction_manager_authority, false),
+            AccountMeta::new_readonly(payer, true),
+            AccountMeta::new_readonly(accept_payment_account_key, false),
+            AccountMeta::new_readonly(store, false),
+            AccountMeta::new_readonly(solana_program::system_program::id(), false),
+            AccountMeta::new_readonly(sysvar::rent::id(), false),
+        ],
+        data: MetaplexInstruction::InitAuctionManagerV2
             .try_to_vec()
             .unwrap(),
     }
@@ -548,9 +623,9 @@ pub fn deprecated_create_validate_participation_instruction(
     }
 }
 
-/// Creates an ValidateSafetyDepositBox instruction
+/// Creates an DeprecatedValidateSafetyDepositBoxV1 instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_validate_safety_deposit_box_instruction(
+pub fn create_deprecated_validate_safety_deposit_box_v1_instruction(
     program_id: Pubkey,
     auction_manager: Pubkey,
     metadata: Pubkey,
@@ -608,7 +683,64 @@ pub fn create_validate_safety_deposit_box_instruction(
     Instruction {
         program_id,
         accounts,
-        data: MetaplexInstruction::ValidateSafetyDepositBox
+        data: MetaplexInstruction::DeprecatedValidateSafetyDepositBoxV1
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+/// Creates an ValidateSafetyDepositBoxV2 instruction
+#[allow(clippy::too_many_arguments)]
+pub fn create_validate_safety_deposit_box_v2_instruction(
+    program_id: Pubkey,
+    auction_manager: Pubkey,
+    metadata: Pubkey,
+    original_authority_lookup: Pubkey,
+    whitelisted_creator: Pubkey,
+    store: Pubkey,
+    safety_deposit_box: Pubkey,
+    safety_deposit_token_store: Pubkey,
+    safety_deposit_mint: Pubkey,
+    edition: Pubkey,
+    vault: Pubkey,
+    auction_manager_authority: Pubkey,
+    metadata_authority: Pubkey,
+    payer: Pubkey,
+    safety_deposit_config: SafetyDepositConfig,
+) -> Instruction {
+    let (validation, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            auction_manager.as_ref(),
+            safety_deposit_box.as_ref(),
+        ],
+        &program_id,
+    );
+    let mut accounts = vec![
+        AccountMeta::new(validation, false),
+        AccountMeta::new(auction_manager, false),
+        AccountMeta::new(metadata, false),
+        AccountMeta::new(original_authority_lookup, false),
+        AccountMeta::new_readonly(whitelisted_creator, false),
+        AccountMeta::new_readonly(store, false),
+        AccountMeta::new_readonly(safety_deposit_box, false),
+        AccountMeta::new_readonly(safety_deposit_token_store, false),
+        AccountMeta::new_readonly(safety_deposit_mint, false),
+        AccountMeta::new_readonly(edition, false),
+        AccountMeta::new_readonly(vault, false),
+        AccountMeta::new_readonly(auction_manager_authority, true),
+        AccountMeta::new_readonly(metadata_authority, true),
+        AccountMeta::new_readonly(payer, true),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction {
+        program_id,
+        accounts,
+        data: MetaplexInstruction::ValidateSafetyDepositBoxV2(safety_deposit_config)
             .try_to_vec()
             .unwrap(),
     }

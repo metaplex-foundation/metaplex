@@ -410,6 +410,10 @@ pub enum MetaplexError {
     /// You supplied a safety deposit index in a winning configuration that does not exist
     #[error("You supplied a safety deposit index in a winning configuration that does not exist")]
     InvalidWinningConfigSafetyDepositIndex,
+
+    /// The order provided on the safety deposit config does not match that on the safety deposit box!
+    #[error("The order provided on the safety deposit config does not match that on the safety deposit box!")]
+    SafetyDepositConfigOrderMismatch,
 }
 
 impl PrintProgramError for MetaplexError {

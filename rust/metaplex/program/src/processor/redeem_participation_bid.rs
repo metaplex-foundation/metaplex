@@ -1,11 +1,9 @@
 use {
     crate::{
+        deprecated_state::{ParticipationConfig, ParticipationState},
         error::MetaplexError,
         processor::redeem_printing_v2_bid::{create_or_update_prize_tracking, mint_edition},
-        state::{
-            AuctionManager, NonWinningConstraint, ParticipationConfig, ParticipationState, Store,
-            WinningConstraint, PREFIX,
-        },
+        state::{AuctionManager, NonWinningConstraint, Store, WinningConstraint, PREFIX},
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
             common_redeem_checks, common_redeem_finish, get_amount_from_token_account,
