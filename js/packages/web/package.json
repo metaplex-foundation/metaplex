@@ -45,7 +45,8 @@
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "next dev",
-    "build": "next build",
+    "build": "next build  & yarn export",
+    "export": "next export -o ../../build/web",
     "start:prod": "next start",
     "test": "jest",
     "deploy:ar": "arweave deploy-dir  ../../build/web --key-file ",
