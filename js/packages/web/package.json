@@ -50,7 +50,8 @@
     "start:prod": "next start",
     "test": "jest",
     "deploy:ar": "arweave deploy-dir  ../../build/web --key-file ",
-    "deploy": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
+    "deploy:gh": "gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
+    "deploy": "ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
