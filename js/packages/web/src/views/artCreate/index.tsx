@@ -459,8 +459,7 @@ const UploadStep = (props: {
                 files: [coverFile, mainFile, customURL]
                   .filter(f => f)
                   .map(f => {
-                    const uri =
-                      typeof f === 'string' ? f : cleanName(f?.name) || '';
+                    const uri = typeof f === 'string' ? f : f?.name || '';
                     const type =
                       typeof f === 'string' || !f
                         ? 'unknown'
