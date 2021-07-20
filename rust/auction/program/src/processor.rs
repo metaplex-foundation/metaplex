@@ -90,7 +90,7 @@ pub struct AuctionData {
     pub bid_state: BidState,
 }
 
-pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 200;
+pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 200;
 // Further storage for more fields. Would like to store more on the main data but due
 // to a borsh issue that causes more added fields to inflict "Access violation" errors
 // during redemption in main Metaplex app for no reason, we had to add this nasty PDA.
@@ -104,6 +104,8 @@ pub struct AuctionDataExtended {
     pub tick_size: Option<u64>,
     /// gap_tick_size_percentage - two decimal points
     pub gap_tick_size_percentage: Option<u8>,
+    /// instant sale price
+    pub instant_sale_price: Option<u64>,
 }
 
 impl AuctionDataExtended {
