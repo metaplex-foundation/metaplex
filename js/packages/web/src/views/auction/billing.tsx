@@ -31,7 +31,6 @@ import {
   PayoutTicket,
   WinningConstraint,
 } from '../../models/metaplex';
-import './billing.less';
 import { WalletAdapter } from '@solana/wallet-base';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { settle } from '../../actions/settle';

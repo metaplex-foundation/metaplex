@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Col, Button, InputNumber, Spin } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
-import './index.less';
 import {
   useConnection,
   useUserAccounts,

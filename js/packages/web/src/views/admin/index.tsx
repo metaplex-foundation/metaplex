@@ -24,7 +24,6 @@ import {
 import { Connection, PublicKey } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WalletAdapter } from '@solana/wallet-base';
-import './index.less';
 import { useMemo } from 'react';
 import {
   convertMasterEditions,
