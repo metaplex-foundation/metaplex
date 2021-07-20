@@ -28,14 +28,13 @@
     "prepare": "run-s clean build"
   },
   "dependencies": {
-    "@project-serum/serum": "^0.13.34",
-    "@project-serum/sol-wallet-adapter": "^0.2.0",
+    "@project-serum/serum": "^0.13.52",
+    "@project-serum/sol-wallet-adapter": "^0.2.5",
     "@solana/spl-token": "0.1.6",
-    "@solana/spl-token-registry": "0.2.176",
-    "@solana/spl-token-swap": "0.1.0",
+    "@solana/spl-token-registry": "0.2.202",
     "@solana/wallet-base": "0.0.1",
     "@solana/wallet-ledger": "0.0.1",
-    "@solana/web3.js": "^1.10.0",
+    "@solana/web3.js": "^1.21.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
