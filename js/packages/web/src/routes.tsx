@@ -27,7 +27,9 @@ export function Routes() {
   return (
     <>
       <HashRouter basename={'/'}>
-        <ConnectionProvider>
+        <ConnectionProvider
+          storeId={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS}
+        >
           <WalletProvider>
             <UseWalletProvider chainId={5}>
               <AccountsProvider>
