@@ -465,9 +465,7 @@ impl BidState {
             BidState::EnglishAuction { ref mut bids, max } => {
                 match bids.last() {
                     Some(top) => {
-                        msg!("Looking to go over the loop, but check tick size first");
-
-                        let max_size = BidState::max_array_size_for(*max);
+                        msg!("Looking to go over the loop, but check tick size first"); 
 
                         for i in (0..bids.len()).rev() {
                             msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
@@ -495,14 +493,6 @@ impl BidState {
 
                                 msg!("Ok we can do an equivalent insert");
                                 if i == 0 {
-                                    if let Some(instant_sale_amount) = instant_sale_price {
-                                        if bids[i].1 == instant_sale_amount && bids.len() == max_size - 1 {
-                                            msg!("All the lots were sold with instant_sale_price, auction is ended");
-                                            bids.insert(0, bid);
-                                            *auction_sate = AuctionState::Ended;
-                                            break;
-                                        }
-                                    }
                                     msg!("Doing a normal insert");
                                     bids.insert(0, bid);
                                     break;
@@ -520,6 +510,17 @@ impl BidState {
                                 break;
                             }
                         }
+
+                        // Check if all the lots were sold with instant_sale_price
+                        if let Some(instant_sale_amount) = instant_sale_price {
+                            // bids.len() - max = index of the last winner bid
+                            if bids.len() >= *max && bids[bids.len() - *max].1 >= instant_sale_amount {
+                                msg!("All the lots were sold with instant_sale_price, auction is ended");
+                                *auction_sate = AuctionState::Ended;
+                            }
+                        }
+
+                        let max_size = BidState::max_array_size_for(*max);
 
                         if bids.len() > max_size {
                             bids.remove(0);
