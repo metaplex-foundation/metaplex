@@ -338,6 +338,14 @@ pub fn claim_bid_instruction(
     ];
     let (bidder_pot_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
 
+    let seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        args.resource.as_ref(),
+        EXTENDED.as_bytes(),
+    ];
+    let (auction_extended_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
+
     Instruction {
         program_id,
         accounts: vec![
@@ -346,6 +354,7 @@ pub fn claim_bid_instruction(
             AccountMeta::new(bidder_pot_pubkey, false),
             AccountMeta::new_readonly(authority_pubkey, true),
             AccountMeta::new_readonly(auction_pubkey, false),
+            AccountMeta::new_readonly(auction_extended_pubkey, false),
             AccountMeta::new_readonly(bidder_pubkey, false),
             AccountMeta::new_readonly(token_mint_pubkey, false),
             AccountMeta::new_readonly(sysvar::clock::id(), false),

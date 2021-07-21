@@ -3,13 +3,14 @@
 
 use crate::{
     errors::AuctionError,
-    processor::{AuctionData, BidderMetadata, BidderPot},
+    processor::{AuctionData, AuctionDataExtended, BidderMetadata, BidderPot},
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
         assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
         TokenTransferParams,
     },
     PREFIX,
+    EXTENDED,
 };
 
 use {
@@ -40,6 +41,7 @@ struct Accounts<'a, 'b: 'a> {
     bidder_pot: &'a AccountInfo<'b>,
     authority: &'a AccountInfo<'b>,
     auction: &'a AccountInfo<'b>,
+    auction_extended: &'a AccountInfo<'b>,
     bidder: &'a AccountInfo<'b>,
     mint: &'a AccountInfo<'b>,
     clock_sysvar: &'a AccountInfo<'b>,
@@ -57,6 +59,7 @@ fn parse_accounts<'a, 'b: 'a>(
         bidder_pot: next_account_info(account_iter)?,
         authority: next_account_info(account_iter)?,
         auction: next_account_info(account_iter)?,
+        auction_extended: next_account_info(account_iter)?,
         bidder: next_account_info(account_iter)?,
         mint: next_account_info(account_iter)?,
         clock_sysvar: next_account_info(account_iter)?,
@@ -64,6 +67,7 @@ fn parse_accounts<'a, 'b: 'a>(
     };
 
     assert_owned_by(accounts.auction, program_id)?;
+    assert_owned_by(accounts.auction_extended, program_id)?;
     assert_owned_by(accounts.mint, &spl_token::id())?;
     assert_owned_by(accounts.destination, &spl_token::id())?;
     assert_owned_by(accounts.bidder_pot_token, &spl_token::id())?;
@@ -114,20 +118,40 @@ pub fn claim_bid(
     // Load the auction and verify this bid is valid.
     let auction = AuctionData::from_account_info(accounts.auction)?;
 
+    assert_derivation(
+        program_id,
+        accounts.auction_extended,
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            args.resource.as_ref(),
+            EXTENDED.as_bytes(),
+        ],
+    )?;
+    let mut auction_extended: AuctionDataExtended =
+        AuctionDataExtended::from_account_info(accounts.auction_extended)?;
+
     if auction.authority != *accounts.authority.key {
         return Err(AuctionError::InvalidAuthority.into());
     }
 
     // User must have won the auction in order to claim their funds. Check early as the rest of the
     // checks will be for nothing otherwise.
-    if auction.is_winner(accounts.bidder.key).is_none() {
+    let bid_index = auction.is_winner(accounts.bidder.key);
+    if bid_index.is_none() {
         msg!("User {:?} is not winner", accounts.bidder.key);
         return Err(AuctionError::InvalidState.into());
     }
 
-    // Auction must have ended.
+    // Auction either must have ended or bidder pay instant_sale_price
     if !auction.ended(clock.unix_timestamp)? {
-        return Err(AuctionError::InvalidState.into());
+        if let Some(instant_sale_price) = auction_extended.instant_sale_price {
+            if auction.bid_state.amount(bid_index.unwrap()) < instant_sale_price {
+                return Err(AuctionError::InvalidState.into());
+            }
+        } else {
+            return Err(AuctionError::InvalidState.into());
+        }
     }
 
     // The mint provided in this claim must match the one the auction was initialized with.
