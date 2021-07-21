@@ -16,11 +16,13 @@ import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Banner } from '../../components/Banner';
 import { AppLayout } from '../../components/Layout';
+import {ModalHowToBuy} from "../../components/ModalHowToBuy";
 
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
 export const HomeView = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const { isLoading, store } = useMeta();
@@ -34,6 +36,8 @@ export const HomeView = () => {
     700: 2,
     500: 1,
   };
+
+  const toggleModal = () => setModalOpen(!isModalOpen);
 
   const heroAuction = useMemo(
     () =>
@@ -173,7 +177,8 @@ export const HomeView = () => {
             fontSize: "clamp(0.7em, 1.5vw, 16px)",
             margin: "1rem 0 2rem",
           }}>Buy exclusive McFarlane NFTs.</p>
-          <Button onClick={() => console.log("HOW TO BUY")} className="secondary-btn">
+
+          <Button onClick={ toggleModal } className="secondary-btn">
             How to Buy
           </Button>
         </div>
@@ -205,6 +210,10 @@ export const HomeView = () => {
           </Col>
         </Content>
       </Layout>
+      <ModalHowToBuy
+        isOpen={isModalOpen}
+        onClose={toggleModal}
+      />
     </Layout>
   );
 };

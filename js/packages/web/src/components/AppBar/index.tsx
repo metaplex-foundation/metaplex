@@ -7,6 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { ModalHowToBuy} from "../ModalHowToBuy";
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -104,6 +105,9 @@ export const LogoLink = () => {
 
 export const AppBar = () => {
   const { connected } = useWallet();
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const toggleModal = () => setModalOpen(!isModalOpen);
 
   return (
     <>
@@ -113,7 +117,13 @@ export const AppBar = () => {
         <MetaplexMenu />
       </div>
       <div className="app-right">
-        {!connected && <ConnectButton type="primary" />}
+        <div
+          className={"link-modal"}
+          onClick={toggleModal}
+        >
+          How to Buy
+        </div>
+        {!connected && <ConnectButton type="primary" className="connector"/>}
         {connected && <>
           <UserActions />
           <Notifications />
@@ -124,6 +134,10 @@ export const AppBar = () => {
           />
         </>}
       </div>
+      <ModalHowToBuy
+        isOpen={isModalOpen}
+        onClose={toggleModal}
+      />
     </>
   );
 };
