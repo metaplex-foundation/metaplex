@@ -318,6 +318,7 @@ pub fn place_bid<'r, 'b: 'r>(
         auction_extended.tick_size,
         auction_extended.gap_tick_size_percentage,
         clock.unix_timestamp,
+        auction_extended.instant_sale_price,
     )?;
     auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
 

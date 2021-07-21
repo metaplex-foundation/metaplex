@@ -304,6 +304,7 @@ impl AuctionData {
         tick_size: Option<u64>,
         gap_tick_size_percentage: Option<u8>,
         now: UnixTimestamp,
+        instant_sale_price: Option<u64>,
     ) -> Result<(), ProgramError> {
         let gap_val = match self.ended_at {
             Some(end) => {
@@ -321,7 +322,7 @@ impl AuctionData {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
-        self.bid_state.place_bid(bid, tick_size, gap_val, minimum)
+        self.bid_state.place_bid(bid, tick_size, gap_val, minimum, instant_sale_price, &mut self.state)
     }
 }
 
@@ -450,6 +451,8 @@ impl BidState {
         tick_size: Option<u64>,
         gap_tick_size_percentage: Option<u8>,
         minimum: u64,
+        instant_sale_price: Option<u64>,
+        auction_sate: &mut AuctionState,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
         BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
@@ -463,6 +466,8 @@ impl BidState {
                 match bids.last() {
                     Some(top) => {
                         msg!("Looking to go over the loop, but check tick size first");
+
+                        let max_size = BidState::max_array_size_for(*max);
 
                         for i in (0..bids.len()).rev() {
                             msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
@@ -490,6 +495,14 @@ impl BidState {
 
                                 msg!("Ok we can do an equivalent insert");
                                 if i == 0 {
+                                    if let Some(instant_sale_amount) = instant_sale_price {
+                                        if bids[i].1 == instant_sale_amount && bids.len() == max_size - 1 {
+                                            msg!("All the lots were sold with instant_sale_price, auction is ended");
+                                            bids.insert(0, bid);
+                                            *auction_sate = AuctionState::Ended;
+                                            break;
+                                        }
+                                    }
                                     msg!("Doing a normal insert");
                                     bids.insert(0, bid);
                                     break;
@@ -507,7 +520,6 @@ impl BidState {
                                 break;
                             }
                         }
-                        let max_size = BidState::max_array_size_for(*max);
 
                         if bids.len() > max_size {
                             bids.remove(0);
