@@ -58,17 +58,17 @@ export const ArtistAlleyView = () => {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+          if (m === heroAuction) {
+            return;
+          }
 
-            const id = m.auction.pubkey.toBase58();
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
+          const id = m.auction.pubkey.toBase58();
+          return (
+            <Link to={`/auction/${id}`} key={idx}>
+              <AuctionRenderCard key={id} auctionView={m} />
+            </Link>
+          );
+        })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -80,19 +80,19 @@ export const ArtistAlleyView = () => {
     >
       {!isLoading
         ? auctionsEnded
-            .filter((m, idx) => idx < 10)
-            .map((m, idx) => {
-              if (m === heroAuction) {
-                return;
-              }
+          .filter((m, idx) => idx < 10)
+          .map((m, idx) => {
+            if (m === heroAuction) {
+              return;
+            }
 
-              const id = m.auction.pubkey.toBase58();
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -137,26 +137,23 @@ export const ArtistAlleyView = () => {
     <Layout>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
-          {liveAuctions.length > 1 && (
-            <Row>
-              <Tabs>
-                <TabPane>
-                  <h2>Live Auctions</h2>
-                  {liveAuctionsView}
-                </TabPane>
-              </Tabs>
-            </Row>
-          )}
           <Row>
-            {auctionsEnded.length > 0 && (
-              <Tabs>
-                <TabPane>
-                  <h2>Ended Auctions</h2>
-                  {endedAuctions}
-                </TabPane>
-              </Tabs>
-            )}
-            <br />
+            <Tabs>
+              <TabPane
+                tab={
+                  <>
+                    <span className={'live'}></span> Live
+                  </>
+                }
+                key={1}
+                active={true}
+              >
+                {liveAuctionsView}
+              </TabPane>
+              <TabPane tab={'Ended'} key={2}>
+                {endedAuctions}
+              </TabPane>
+            </Tabs>
           </Row>
         </Col>
       </Content>
