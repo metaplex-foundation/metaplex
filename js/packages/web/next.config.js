@@ -1,16 +1,9 @@
 const withPlugins = require('next-compose-plugins');
 const withLess = require('next-with-less');
-const nextEnv = require('next-env');
-const dotenvLoad = require('dotenv-load');
-
-dotenvLoad();
 
 const assetPrefix = process.env.ASSET_PREFIX || '';
 
 const plugins = [
-  nextEnv({
-    publicPrefix: 'REACT_APP_',
-  }),
   [
     withLess,
     {
@@ -33,6 +26,9 @@ module.exports = withPlugins(plugins, {
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  env:{
+    NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS: process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
   },
   async rewrites() {
     return [
