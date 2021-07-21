@@ -132,7 +132,7 @@ export const ArtCreateView = () => {
               style={{
                 width: 'fit-content',
                 margin: '0 auto 30px auto',
-                overflowX: 'auto',
+                overflowX: 'visible',
                 maxWidth: '100%',
               }}
             >
