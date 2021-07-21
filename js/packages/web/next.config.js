@@ -5,6 +5,8 @@ const dotenvLoad = require('dotenv-load');
 
 dotenvLoad();
 
+const assetPrefix = process.env.ASSET_PREFIX || '';
+
 const plugins = [
   nextEnv({
     publicPrefix: 'REACT_APP_',
@@ -17,6 +19,7 @@ const plugins = [
           modifyVars: {
             '@primary-color': '#768BF9',
             '@text-color': 'rgba(255, 255, 255)',
+            '@assetPrefix': assetPrefix || "''",
           },
           javascriptEnabled: true,
         },
@@ -26,6 +29,7 @@ const plugins = [
 ];
 
 module.exports = withPlugins(plugins, {
+  assetPrefix,
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,
