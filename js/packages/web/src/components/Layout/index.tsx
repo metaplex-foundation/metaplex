@@ -16,10 +16,10 @@ export const AppLayout = React.memo((props: any) => {
       <Layout id={'main-layout'}>
         <span id={'main-bg'}></span>
         <span id={'bg-gradient'}></span>
+        <Header className="App-Bar">
+          <AppBar />
+        </Header>
         <Layout id={'width-layout'}>
-          <Header className="App-Bar">
-            <AppBar />
-          </Header>
           <Content
             style={{
               overflow: 'scroll',
