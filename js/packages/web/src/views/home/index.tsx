@@ -61,13 +61,13 @@ export const HomeView = () => {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-          const id = m.auction.pubkey.toBase58();
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -79,19 +79,19 @@ export const HomeView = () => {
     >
       {!isLoading
         ? auctionsEnded
-          .filter((m, idx) => idx < 10)
-          .map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+            .filter((m, idx) => idx < 10)
+            .map((m, idx) => {
+              if (m === heroAuction) {
+                return;
+              }
 
-            const id = m.auction.pubkey.toBase58();
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
+              const id = m.auction.pubkey.toBase58();
+              return (
+                <Link to={`/auction/${id}`} key={idx}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );

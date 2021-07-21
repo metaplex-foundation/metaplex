@@ -58,30 +58,6 @@ export const ArtistAlleyView = () => {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-          if (m === heroAuction) {
-            return;
-          }
-
-          const id = m.auction.pubkey.toBase58();
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-    </Masonry>
-  );
-  const endedAuctions = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
-      {!isLoading
-        ? auctionsEnded
-          .filter((m, idx) => idx < 10)
-          .map((m, idx) => {
             if (m === heroAuction) {
               return;
             }
@@ -93,6 +69,30 @@ export const ArtistAlleyView = () => {
               </Link>
             );
           })
+        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+    </Masonry>
+  );
+  const endedAuctions = (
+    <Masonry
+      breakpointCols={breakpointColumnsObj}
+      className="my-masonry-grid"
+      columnClassName="my-masonry-grid_column"
+    >
+      {!isLoading
+        ? auctionsEnded
+            .filter((m, idx) => idx < 10)
+            .map((m, idx) => {
+              if (m === heroAuction) {
+                return;
+              }
+
+              const id = m.auction.pubkey.toBase58();
+              return (
+                <Link to={`/auction/${id}`} key={idx}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
