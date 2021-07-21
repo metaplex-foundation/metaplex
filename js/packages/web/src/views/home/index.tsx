@@ -154,26 +154,39 @@ export const HomeView = () => {
         </>
       )}
       {/* <PreSaleBanner auction={heroAuction} /> */}
-      <Banner src={'/main-banner.svg'}>
-        <div style={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          marginLeft: "4vw",
-          maxWidth: 350,
-          lineHeight: 1.1,
-        }}>
-          <h1 style={{
-            color: "white",
-            margin: 0,
-          }}>The amazing world of McFarlane.</h1>
-          <p style={{
-            color: "white",
-            fontSize: "clamp(0.7em, 1.5vw, 16px)",
-            margin: "1rem 0 2rem",
-          }}>Buy exclusive McFarlane NFTs.</p>
-          <Button onClick={() => console.log("HOW TO BUY")} className="secondary-btn">
+      <Banner src={'/main-banner.svg'} useBannerBg={true}>
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            marginLeft: '4vw',
+            maxWidth: 350,
+            lineHeight: 1.1,
+          }}
+        >
+          <h1
+            style={{
+              color: 'white',
+              margin: 0,
+            }}
+          >
+            The amazing world of McFarlane.
+          </h1>
+          <p
+            style={{
+              color: 'white',
+              fontSize: 'clamp(0.7em, 1.5vw, 16px)',
+              margin: '1rem 0 2rem',
+            }}
+          >
+            Buy exclusive McFarlane NFTs.
+          </p>
+          <Button
+            onClick={() => console.log('HOW TO BUY')}
+            className="secondary-btn"
+          >
             How to Buy
           </Button>
         </div>
