@@ -82,7 +82,9 @@ const MetaplexMenu = () => {
           trigger={['click']}
           overlay={
             <Menu>
-              {getDefaultLinkActions(connected).map((item, idx) => <Menu.Item key={idx}>{item}</Menu.Item>)}
+              {getDefaultLinkActions(connected).map((item, idx) => (
+                <Menu.Item key={idx}>{item}</Menu.Item>
+              ))}
             </Menu>
           }
         >
@@ -114,15 +116,17 @@ export const AppBar = () => {
       </div>
       <div className="app-right">
         {!connected && <ConnectButton type="primary" />}
-        {connected && <>
-          <UserActions />
-          <Notifications />
-          <CurrentUserBadge
-            showBalance={false}
-            showAddress={false}
-            iconSize={24}
-          />
-        </>}
+        {connected && (
+          <>
+            <UserActions />
+            <Notifications />
+            <CurrentUserBadge
+              showBalance={false}
+              showAddress={false}
+              iconSize={24}
+            />
+          </>
+        )}
       </div>
     </>
   );
