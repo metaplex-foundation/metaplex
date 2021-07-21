@@ -5,8 +5,8 @@ use {
         deprecated_state::{AuctionManagerV1, WinningConfigItem},
         error::MetaplexError,
         state::{
-            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
+            get_auction_manager, AuctionManager, AuctionManagerStatus, AuctionManagerV2,
+            BidRedemptionTicket, Key, OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
         },
     },
     arrayref::array_ref,
@@ -443,6 +443,39 @@ fn calculate_win_index(
     Ok(win_index)
 }
 
+pub fn assert_safety_deposit_config_valid(
+    program_id: &Pubkey,
+    auction_manager_info: &AccountInfo,
+    safety_deposit_info: &AccountInfo,
+    safety_deposit_config_info: Option<&AccountInfo>,
+    auction_manager: &Box<dyn AuctionManager>,
+) -> ProgramResult {
+    // If using v2, you must have one and it must be the right address and type
+    if let Some(config) = safety_deposit_config_info {
+        assert_derivation(
+            program_id,
+            config,
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                auction_manager_info.key.as_ref(),
+                safety_deposit_info.key.as_ref(),
+            ],
+        )?;
+
+        if config.data.borrow()[0] != Key::SafetyDepositConfigV1 as u8 {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+    } else {
+        // V2s MUST provide a safety deposit config, v1s it's optional (because its unused)
+        if auction_manager.key() == Key::AuctionManagerV2 {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn common_redeem_checks(
     args: CommonRedeemCheckArgs,
@@ -566,6 +599,13 @@ pub fn common_redeem_checks(
         &vault_info,
         &token_vault_program,
     )?;
+    assert_safety_deposit_config_valid(
+        program_id,
+        auction_manager_info,
+        safety_deposit_info,
+        safety_deposit_config_info,
+        &auction_manager,
+    )?;
     // looking out for you!
     assert_rent_exempt(rent, &destination_info)?;
 
@@ -653,6 +693,10 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
             &[redemption_bump_seed],
         ];
 
+        let token_type_count = Vault::get_token_type_count(vault_info)
+            .checked_div(8)
+            .ok_or(MetaplexError::NumericalOverflowError)?;
+
         if bid_redemption_info.data_is_empty() {
             create_or_allocate_account_raw(
                 *program_id,
@@ -660,10 +704,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 &rent_info,
                 &system_info,
                 &payer_info,
-                1 + Vault::get_token_type_count(vault_info)
-                    .checked_div(8)
-                    .ok_or(MetaplexError::NumericalOverflowError.into())
-                    as usize,
+                1 + token_type_count as usize,
                 redemption_seeds,
             )?;
         }
@@ -680,65 +721,20 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
 
     if bid_redeemed {
         if let Some(index) = winning_index {
+            // There should never be a winning item index for V2...its a nonsensical concept, but we set it anyway for backwards compatibility.
             if let Some(item_index) = winning_item_index {
-                AuctionManager::set_claimed_and_status(
-                    auction_manager_info,
-                    auction_manager.state.status,
-                    index,
-                    item_index,
-                    auction_manager.straight_shot_optimization,
-                );
+                auction_manager.fast_save(auction_manager_info, index, item_index);
             }
+        }
+    } else if participation_redeemed && auction_manager.key() == Key::AuctionManagerV2 {
+        // AV2s can be saved (and set to disbursing) even in open edition auctions...a bug in V1 that we were okay with
+        // for speed. AV1s never get set to disbursing in Open Edition auctions.
+        if let Some(index) = winning_index {
+            auction_manager.fast_save(auction_manager_info, index, 0);
         }
     }
 
     Ok(())
-}
-
-pub struct CommonWinningConfigCheckReturn {
-    pub winning_config_item: WinningConfigItem,
-    pub winning_item_index: Option<usize>,
-}
-
-pub fn common_winning_config_checks(
-    auction_manager: &AuctionManagerV1,
-    safety_deposit_info: &AccountInfo,
-    winning_index: usize,
-    ignore_claim: bool,
-) -> Result<CommonWinningConfigCheckReturn, ProgramError> {
-    let winning_config = &auction_manager.settings.winning_configs[winning_index];
-    let winning_config_state = &auction_manager.state.winning_config_states[winning_index];
-
-    let mut winning_item_index = None;
-    for i in 0..winning_config.items.len() {
-        if winning_config.items[i].safety_deposit_box_index
-            == SafetyDepositBox::get_order(safety_deposit_info)
-        {
-            winning_item_index = Some(i);
-            break;
-        }
-    }
-
-    let winning_config_item = match winning_item_index {
-        Some(index) => winning_config.items[index],
-        None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
-    };
-
-    let winning_config_state_item = match winning_item_index {
-        Some(index) => winning_config_state.items[index],
-        None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
-    };
-
-    // For printing v2, we may call many times for different editions and the edition PDA check makes sure it cant
-    // be claimed over-much. This would be 1 time, we need n times.
-    if winning_config_state_item.claimed && !ignore_claim {
-        return Err(MetaplexError::PrizeAlreadyClaimed.into());
-    }
-
-    Ok(CommonWinningConfigCheckReturn {
-        winning_config_item,
-        winning_item_index,
-    })
 }
 
 #[allow(clippy::too_many_arguments)]

@@ -1,12 +1,21 @@
-
 use {
-    crate::{error::MetaplexError, utils::try_from_slice_checked,state::{Key, WinningConfigType, AuctionManager,AuctionManagerStatus, WinningConstraint, NonWinningConstraint}},
-    arrayref::{array_ref,mut_array_refs, array_mut_ref},
+    crate::{
+        error::MetaplexError,
+        state::{
+            AuctionManager, AuctionManagerStatus, CommonWinningIndexChecks,
+            CommonWinningIndexReturn, Key, NonWinningConstraint, PrintingV2CalculationCheckReturn,
+            PrintingV2CalculationChecks, WinningConfigType, WinningConstraint,
+        },
+        utils::try_from_slice_checked,
+    },
+    arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
-    solana_program::{msg,account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, entrypoint::ProgramResult},
-    
+    solana_program::{
+        account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
+        pubkey::Pubkey,
+    },
+    spl_token_vault::state::SafetyDepositBox,
 };
-
 
 pub const MAX_WINNERS: usize = 200;
 pub const MAX_WINNER_SIZE: usize = 6 * MAX_WINNERS;
@@ -36,9 +45,9 @@ pub const MAX_AUCTION_MANAGER_V1_SIZE: usize = 1 + // key
     1 + // participation non winner constraint
     1 + // u8 participation_config's safety deposit box index 
     9 + // option<u64> participation fixed price in borsh is a u8 for option and actual u64
-    1 + 
+    1 +
     AUCTION_MANAGER_PADDING; // padding;
-         // Add padding for future booleans/enums
+                             // Add padding for future booleans/enums
 pub const AUCTION_MANAGER_PADDING: usize = 149;
 pub const MAX_VALIDATION_TICKET_SIZE: usize = 1 + 32 + 10;
 pub const MAX_WINNING_CONFIG_STATE_ITEM_SIZE: usize = 2;
@@ -96,11 +105,11 @@ impl AuctionManager for AuctionManagerV1 {
     }
 
     fn set_status(&mut self, status: AuctionManagerStatus) {
-      self.state.status = status
-  }
+        self.state.status = status
+    }
 
     fn configs_validated(&self) -> u64 {
-      self.state.winning_config_items_validated as u64
+        self.state.winning_config_items_validated as u64
     }
 
     fn set_configs_validated(&self, new_configs_validated: u64) {
@@ -111,27 +120,15 @@ impl AuctionManager for AuctionManagerV1 {
         self.serialize(&mut *account.data.borrow_mut())?;
         Ok(())
     }
-}
 
-impl AuctionManagerV1 {
-    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionManagerV1, ProgramError> {
-        let am: AuctionManagerV1 = try_from_slice_checked(
-            &a.data.borrow_mut(),
-            Key::AuctionManagerV1,
-            MAX_AUCTION_MANAGER_V1_SIZE,
-        )?;
-
-        Ok(am)
-    }
-
-    // cheap setter to set status and claimed in one go without using expensive borsh save.
-    pub fn set_claimed_and_status(
+    fn fast_save(
+        &self,
         a: &AccountInfo,
-        status: AuctionManagerStatus,
         winning_config_index: usize,
         winning_config_item_index: usize,
-        use_straight_shot: bool
     ) {
+        let status = self.state.status;
+        let use_straight_shot = self.straight_shot_optimization;
         let num_configs = AuctionManagerV1::get_num_configs(a);
         let mut data = a.data.borrow_mut();
         data[161] = status as u8; // set status
@@ -167,14 +164,158 @@ impl AuctionManagerV1 {
                     // Add one byte to cover the boolean at the end of the winning config state.
                     current_config_offset = current_config_offset + 4 + skip + 1;
                 }
-            } 
+            }
         }
+    }
+
+    fn common_winning_index_checks(
+        &self,
+        args: CommonWinningIndexChecks,
+    ) -> Result<CommonWinningIndexReturn, ProgramError> {
+        let CommonWinningIndexChecks {
+            safety_deposit_info,
+            winning_index,
+            auction_manager_v1_ignore_claim,
+            safety_deposit_config_info,
+        } = args;
+
+        let winning_config = self.settings.winning_configs[winning_index];
+        let winning_config_state = self.state.winning_config_states[winning_index];
+
+        let mut winning_config_item_index = None;
+        for i in 0..winning_config.items.len() {
+            if winning_config.items[i].safety_deposit_box_index
+                == SafetyDepositBox::get_order(safety_deposit_info)
+            {
+                winning_config_item_index = Some(i);
+                break;
+            }
+        }
+
+        let winning_config_item = match winning_config_item_index {
+            Some(index) => winning_config.items[index],
+            None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
+        };
+
+        let winning_config_state_item = match winning_config_item_index {
+            Some(index) => winning_config_state.items[index],
+            None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
+        };
+
+        // For printing v2, we may call many times for different editions and the edition PDA check makes sure it cant
+        // be claimed over-much. This would be 1 time, we need n times.
+        if winning_config_state_item.claimed && !auction_manager_v1_ignore_claim {
+            return Err(MetaplexError::PrizeAlreadyClaimed.into());
+        }
+
+        Ok(CommonWinningIndexReturn {
+            amount: winning_config_item.amount as u64,
+
+            winning_config_type: winning_config_item.winning_config_type,
+            winning_config_item_index,
+        })
+    }
+
+    fn printing_v2_calculation_checks(
+        &self,
+        args: PrintingV2CalculationChecks,
+    ) -> Result<PrintingV2CalculationCheckReturn, ProgramError> {
+        let PrintingV2CalculationChecks {
+            safety_deposit_config_info,
+            safety_deposit_info,
+            winning_index,
+            auction_manager_v1_ignore_claim,
+            short_circuit_total,
+            edition_offset,
+        } = args;
+
+        let CommonWinningIndexReturn {
+            amount,
+            winning_config_item_index,
+            winning_config_type,
+        } = self.common_winning_index_checks(CommonWinningIndexChecks {
+            safety_deposit_config_info,
+            safety_deposit_info,
+            winning_index,
+            auction_manager_v1_ignore_claim,
+        })?;
+
+        let safety_deposit_box_order = SafetyDepositBox::get_order(safety_deposit_info);
+
+        let mut edition_offset_min: u64 = 1;
+        let mut expected_redemptions: u64 = 0;
+
+        // Given every single winning config item carries a u8, it is impossible to overflow
+        // a u64 with the amount in it given the limited size. Avoid using checked add to save on cpu.
+        for n in 0..self.settings.winning_configs.len() {
+            let matching = count_item_amount_by_safety_deposit_order(
+                &self.settings.winning_configs[n].items,
+                safety_deposit_box_order,
+            );
+
+            if n < winning_index {
+                edition_offset_min += matching
+            }
+            if !short_circuit_total {
+                expected_redemptions += matching
+            } else if n >= winning_index {
+                // no need to keep using this loop more than winning_index if we're not
+                // tabulating expected_redemptions
+                break;
+            }
+        }
+
+        let edition_offset_max = edition_offset_min
+            + count_item_amount_by_safety_deposit_order(
+                &self.settings.winning_configs[winning_index].items,
+                safety_deposit_box_order,
+            );
+
+        if edition_offset < edition_offset_min || edition_offset >= edition_offset_max {
+            return Err(MetaplexError::InvalidEditionNumber.into());
+        }
+
+        Ok(PrintingV2CalculationCheckReturn {
+            expected_redemptions,
+            winning_config_type,
+            winning_config_item_index,
+        })
+    }
+}
+
+impl AuctionManagerV1 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionManagerV1, ProgramError> {
+        let am: AuctionManagerV1 = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::AuctionManagerV1,
+            MAX_AUCTION_MANAGER_V1_SIZE,
+        )?;
+
+        Ok(am)
     }
 
     pub fn get_num_configs(a: &AccountInfo) -> usize {
         let data = a.data.borrow();
         let num_elements_data = array_ref![data, 163, 4];
         u32::from_le_bytes(*num_elements_data) as usize
+    }
+}
+
+fn count_item_amount_by_safety_deposit_order(
+    items: &Vec<WinningConfigItem>,
+    safety_deposit_index: u8,
+) -> u64 {
+    let item = items.iter().find_map(|i| {
+        if i.safety_deposit_box_index == safety_deposit_index {
+            Some(i)
+        } else {
+            None
+        }
+    });
+
+    match item {
+        Some(item) => item.amount as u64,
+        None => 0u64,
     }
 }
 
@@ -261,7 +402,6 @@ pub struct WinningConfigState {
     pub money_pushed_to_accept_payment: bool,
 }
 
-
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
 pub struct WinningConfigItem {
@@ -278,7 +418,6 @@ pub struct WinningConfigStateItem {
     /// Ticked to true when a prize is claimed by person who won it
     pub claimed: bool,
 }
-
 
 /// Deprecated model used in V1 logic in lieu of SafetyDepositConfig
 #[repr(C)]
@@ -301,5 +440,3 @@ impl SafetyDepositValidationTicket {
         Ok(store)
     }
 }
-
-

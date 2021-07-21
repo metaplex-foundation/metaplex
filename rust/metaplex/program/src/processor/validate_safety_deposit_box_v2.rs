@@ -236,11 +236,11 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     let (edition_key, _) =
         Pubkey::find_program_address(edition_seeds, &store.token_metadata_program);
 
-    let seeds = &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()];
     let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
     let authority_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction.as_ref(),
+        &auction_manager.auction().as_ref(),
         &[bump_seed],
     ];
     // Supply logic check
@@ -265,7 +265,7 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
 
             let original_authority_lookup_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction.as_ref(),
+                &auction_manager.auction().as_ref(),
                 metadata_info.key.as_ref(),
             ];
 
@@ -273,7 +273,7 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 Pubkey::find_program_address(original_authority_lookup_seeds, &program_id);
             let original_authority_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction.as_ref(),
+                &auction_manager.auction().as_ref(),
                 metadata_info.key.as_ref(),
                 &[original_bump_seed],
             ];

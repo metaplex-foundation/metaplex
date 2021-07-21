@@ -127,6 +127,8 @@ pub enum MetaplexInstruction {
     ///   18. `[optional/writable]` Master edition (if Printing type of WinningConfig)
     ///   19. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
     ///        relative to token metadata program (if Printing type of WinningConfig)
+    ///   20. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///      This account will only get used AND BE REQUIRED in the event this is an AuctionManagerV2
     RedeemBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -163,6 +165,8 @@ pub enum MetaplexInstruction {
     ///             after this transaction. Otherwise this account will be ignored.
     ///   19. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
+    ///   20. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///      This account will only get used AND BE REQUIRED in the event this is an AuctionManagerV2
     RedeemFullRightsTransferBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -460,7 +464,8 @@ pub enum MetaplexInstruction {
     ///        Just a PDA with seed ['metaplex', auction_key, bidder_metadata_key] that we will allocate to mark that you redeemed your bid
     ///   4. `[]` Safety deposit box account
     ///   5. `[]` Vault account
-    ///   6. `[]` Fraction mint of the vault
+    ///   6. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///      This account will only get used in the event this is an AuctionManagerV2
     ///   7. `[]` Auction
     ///   8. `[]` Your BidderMetadata account
     ///   9. `[]` Your Bidder account
@@ -1023,122 +1028,6 @@ pub fn create_decommission_auction_manager_instruction(
     }
 }
 
-/// Creates an deprecated RedeemPrintingV2Bid instruction
-#[allow(clippy::too_many_arguments)]
-pub fn create_deprecated_redeem_printing_v2_bid_instruction(
-    program_id: Pubkey,
-    auction_manager: Pubkey,
-    safety_deposit_token_store: Pubkey,
-    destination: Pubkey,
-    bid_redemption: Pubkey,
-    safety_deposit_box: Pubkey,
-    vault: Pubkey,
-    fraction_mint: Pubkey,
-    auction: Pubkey,
-    bidder_metadata: Pubkey,
-    bidder: Pubkey,
-    payer: Pubkey,
-    store: Pubkey,
-    new_metadata: Pubkey,
-    original_mint: Pubkey,
-    new_mint: Pubkey,
-    new_mint_authority: Pubkey,
-    edition: u64,
-    win_index: u64,
-) -> Instruction {
-    let (prize_tracking_ticket, _) = Pubkey::find_program_address(
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            auction_manager.as_ref(),
-            original_mint.as_ref(),
-        ],
-        &program_id,
-    );
-
-    let edition_offset = edition.checked_rem(EDITION_MARKER_BIT_SIZE).unwrap();
-    let edition_number = edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
-
-    let (edition_mark_pda, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
-            edition_number.to_string().as_bytes(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    let (metadata, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            original_mint.as_ref(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    let (master_edition, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    let (new_edition, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            new_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    Instruction {
-        program_id,
-        accounts: vec![
-            AccountMeta::new(auction_manager, false),
-            AccountMeta::new(safety_deposit_token_store, false),
-            AccountMeta::new(destination, false),
-            AccountMeta::new(bid_redemption, false),
-            AccountMeta::new(safety_deposit_box, false),
-            AccountMeta::new(vault, false),
-            AccountMeta::new(fraction_mint, false),
-            AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(bidder_metadata, false),
-            AccountMeta::new_readonly(bidder, false),
-            AccountMeta::new(payer, true),
-            AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
-            AccountMeta::new_readonly(store, false),
-            AccountMeta::new_readonly(solana_program::system_program::id(), false),
-            AccountMeta::new_readonly(sysvar::rent::id(), false),
-            AccountMeta::new(prize_tracking_ticket, false),
-            AccountMeta::new(new_metadata, false),
-            AccountMeta::new(new_edition, false),
-            AccountMeta::new(master_edition, false),
-            AccountMeta::new(new_mint, false),
-            AccountMeta::new(edition_mark_pda, false),
-            AccountMeta::new_readonly(new_mint_authority, true),
-            AccountMeta::new_readonly(metadata, false),
-        ],
-        data: MetaplexInstruction::DeprecatedRedeemPrintingV2BidForAuctionManagerV1Only(
-            RedeemPrintingV2BidArgs {
-                edition_offset,
-                win_index,
-            },
-        )
-        .try_to_vec()
-        .unwrap(),
-    }
-}
-
 /// Creates an RedeemPrintingV2Bid instruction
 #[allow(clippy::too_many_arguments)]
 pub fn create_redeem_printing_v2_bid_instruction(
@@ -1149,7 +1038,6 @@ pub fn create_redeem_printing_v2_bid_instruction(
     bid_redemption: Pubkey,
     safety_deposit_box: Pubkey,
     vault: Pubkey,
-    fraction_mint: Pubkey,
     auction: Pubkey,
     bidder_metadata: Pubkey,
     bidder: Pubkey,
@@ -1234,7 +1122,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new(bid_redemption, false),
             AccountMeta::new(safety_deposit_box, false),
             AccountMeta::new(vault, false),
-            AccountMeta::new_readonly(validation, false),
+            AccountMeta::new(validation, false),
             AccountMeta::new_readonly(auction, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, false),

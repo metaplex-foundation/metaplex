@@ -199,7 +199,7 @@ fn charge_for_participation<'a>(
 ) -> ProgramResult {
     let signer_seeds = &[
         PREFIX.as_bytes(),
-        auction_manager.auction.as_ref(),
+        auction_manager.auction().as_ref(),
         &[auction_manager_bump],
     ];
 
@@ -258,7 +258,7 @@ pub fn process_redeem_participation_bid<'a>(
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
     // We keep it here to keep API base identical to the other redeem calls for ease of use by callers
-    let _fraction_mint_info = next_account_info(account_info_iter)?;
+    let safety_deposit_config_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
@@ -318,6 +318,7 @@ pub fn process_redeem_participation_bid<'a>(
         token_metadata_program_info,
         rent_info,
         store_info,
+        safety_deposit_config_info: Some(safety_deposit_config_info),
         is_participation: true,
         user_provided_win_index: Some(None),
         overwrite_win_index: None,
@@ -343,7 +344,7 @@ pub fn process_redeem_participation_bid<'a>(
         return Err(MetaplexError::AcceptPaymentMintMismatch.into());
     }
 
-    if *accept_payment_info.key != auction_manager.accept_payment {
+    if *accept_payment_info.key != auction_manager.accept_payment() {
         return Err(MetaplexError::AcceptPaymentMismatch.into());
     }
 
@@ -363,14 +364,14 @@ pub fn process_redeem_participation_bid<'a>(
     let bump_seed = assert_derivation(
         program_id,
         auction_manager_info,
-        &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
+        &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
     )?;
 
     if gets_participation {
         if let Some(accounts) = legacy_accounts {
             let mint_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction.as_ref(),
+                &auction_manager.auction().as_ref(),
                 &[bump_seed],
             ];
 
@@ -446,6 +447,8 @@ pub fn process_redeem_participation_bid<'a>(
         system_info,
         payer_info,
         bid_redemption_info,
+        vault_info,
+        safety_deposit_config_info: Some(safety_deposit_config_info),
         winning_index: None,
         redemption_bump_seed,
         bid_redeemed: false,

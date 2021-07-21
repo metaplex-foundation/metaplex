@@ -8,6 +8,7 @@ use {
         account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
         pubkey::Pubkey,
     },
+    std::cell::Ref,
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
@@ -58,6 +59,34 @@ pub enum Key {
     BidRedemptionTicketV2,
 }
 
+pub struct CommonWinningIndexChecks<'a> {
+    safety_deposit_info: &'a AccountInfo<'a>,
+    winning_index: usize,
+    auction_manager_v1_ignore_claim: bool,
+    safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+}
+
+pub struct PrintingV2CalculationChecks<'a> {
+    safety_deposit_info: &'a AccountInfo<'a>,
+    winning_index: usize,
+    auction_manager_v1_ignore_claim: bool,
+    safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+    short_circuit_total: bool,
+    edition_offset: u64,
+}
+
+pub struct CommonWinningIndexReturn {
+    amount: u64,
+    winning_config_type: WinningConfigType,
+    winning_config_item_index: Option<usize>,
+}
+
+pub struct PrintingV2CalculationCheckReturn {
+    expected_redemptions: u64,
+    winning_config_type: WinningConfigType,
+    winning_config_item_index: Option<usize>,
+}
+
 pub trait AuctionManager {
     fn key(&self) -> Key;
     fn store(&self) -> Pubkey;
@@ -70,6 +99,21 @@ pub trait AuctionManager {
     fn configs_validated(&self) -> u64;
     fn set_configs_validated(&self, new_configs_validated: u64);
     fn save(&self, account: &AccountInfo) -> ProgramResult;
+    fn fast_save(
+        &self,
+        account: &AccountInfo,
+        winning_config_index: usize,
+        winning_config_item_index: usize,
+    );
+    fn common_winning_index_checks(
+        &self,
+        args: CommonWinningIndexChecks,
+    ) -> Result<CommonWinningIndexReturn, ProgramError>;
+
+    fn printing_v2_calculation_checks(
+        &self,
+        args: PrintingV2CalculationChecks,
+    ) -> Result<PrintingV2CalculationCheckReturn, ProgramError>;
 }
 
 pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
@@ -127,6 +171,86 @@ impl AuctionManager for AuctionManagerV2 {
 
     fn status(&self) -> AuctionManagerStatus {
         self.state.status
+    }
+
+    fn fast_save(
+        &self,
+        account: &AccountInfo,
+        winning_config_index: usize,
+        winning_config_item_index: usize,
+    ) {
+        let mut data = account.data.borrow_mut();
+        data[161] = self.state.status as u8;
+    }
+
+    fn common_winning_index_checks(
+        &self,
+        args: CommonWinningIndexChecks,
+    ) -> Result<CommonWinningIndexReturn, ProgramError> {
+        let CommonWinningIndexChecks {
+            safety_deposit_config_info,
+            safety_deposit_info,
+            winning_index,
+            auction_manager_v1_ignore_claim: _a,
+        } = args;
+
+        if let Some(config) = safety_deposit_config_info {
+            Ok(CommonWinningIndexReturn {
+                amount: SafetyDepositConfig::find_amount_and_cumulative_offset(
+                    config,
+                    winning_index as u64,
+                    true,
+                )?
+                .amount,
+                winning_config_type: SafetyDepositConfig::get_winning_config_type(config)?,
+                // not used
+                winning_config_item_index: Some(0),
+            })
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    fn printing_v2_calculation_checks(
+        &self,
+        args: PrintingV2CalculationChecks,
+    ) -> Result<PrintingV2CalculationCheckReturn, ProgramError> {
+        let PrintingV2CalculationChecks {
+            safety_deposit_config_info,
+            safety_deposit_info,
+            winning_index,
+            auction_manager_v1_ignore_claim: _a,
+            short_circuit_total,
+            edition_offset,
+        } = args;
+        if let Some(config) = safety_deposit_config_info {
+            let derived_results = SafetyDepositConfig::find_amount_and_cumulative_offset(
+                config,
+                winning_index as u64,
+                short_circuit_total,
+            )?;
+
+            let edition_offset_min = derived_results
+                .cumulative_amount
+                .checked_add(1)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+            let edition_offset_max = edition_offset_min
+                .checked_add(derived_results.amount)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+            if edition_offset < edition_offset_min || edition_offset >= edition_offset_max {
+                return Err(MetaplexError::InvalidEditionNumber.into());
+            }
+
+            Ok(PrintingV2CalculationCheckReturn {
+                // NOTE this total will be WRONG if short circuit is TRUE. But also it wont be USED if it's true!
+                expected_redemptions: derived_results.total_amount,
+                winning_config_type: SafetyDepositConfig::get_winning_config_type(config)?,
+                // not used
+                winning_config_item_index: Some(0),
+            })
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
     }
 
     fn set_status(&mut self, status: AuctionManagerStatus) {
@@ -387,6 +511,18 @@ pub struct SafetyDepositConfig {
     pub participation_state: Option<ParticipationStateV2>,
 }
 
+pub struct AmountCumulativeReturn {
+    pub amount: u64,
+    pub cumulative_amount: u64,
+    pub total_amount: u64,
+}
+const ORDER_POSITION: usize = 1;
+const WINNING_CONFIG_POSITION: usize = 9;
+const AMOUNT_POSITION: usize = 10;
+const LENGTH_POSITION: usize = 11;
+const AMOUNT_RANGE_SIZE_POSITION: usize = 12;
+const AMOUNT_RANGE_FIRST_EL_POSITION: usize = 16;
+
 impl SafetyDepositConfig {
     /// Size of account with padding included
     pub fn created_size(&self) -> usize {
@@ -395,11 +531,146 @@ impl SafetyDepositConfig {
     }
 
     pub fn get_order(a: &AccountInfo) -> u64 {
-        return u64::from_le_bytes(*array_ref![a.data.borrow(), 1, 8]);
+        return u64::from_le_bytes(*array_ref![a.data.borrow(), ORDER_POSITION, 8]);
+    }
+
+    pub fn get_amount_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
+        let data = &a.data.borrow();
+
+        Ok(match data[AMOUNT_POSITION] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
+            _ => return Err(ProgramError::InvalidAccountData),
+        })
+    }
+
+    pub fn get_length_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
+        let data = &a.data.borrow();
+
+        Ok(match data[LENGTH_POSITION] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
+            _ => return Err(ProgramError::InvalidAccountData),
+        })
+    }
+
+    pub fn get_amount_range_len(a: &AccountInfo) -> u32 {
+        let data = &a.data.borrow();
+
+        return u32::from_le_bytes(*array_ref![data, AMOUNT_RANGE_SIZE_POSITION, 4]);
+    }
+
+    pub fn get_winning_config_type(a: &AccountInfo) -> Result<WinningConfigType, ProgramError> {
+        let data = &a.data.borrow();
+
+        Ok(match data[WINNING_CONFIG_POSITION] {
+            0 => WinningConfigType::TokenOnlyTransfer,
+            1 => WinningConfigType::FullRightsTransfer,
+            2 => WinningConfigType::PrintingV1,
+            3 => WinningConfigType::PrintingV2,
+            4 => WinningConfigType::Participation,
+            _ => return Err(ProgramError::InvalidAccountData),
+        })
+    }
+
+    fn get_number_from_data(
+        data: &Ref<&mut [u8]>,
+        data_type: TupleNumericType,
+        offset: usize,
+    ) -> u64 {
+        return match data_type {
+            TupleNumericType::U8 => data[offset] as u64,
+            TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
+            TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
+            TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
+        };
+    }
+
+    /// Basically finds what edition offset you should get from 0 for your FIRST edition,
+    /// and the amount of editions you should get. If not a PrintingV2 safety deposit, the edition offset
+    /// (the cumulative count of all amounts from all people up to yours) is (relatively) meaningless,
+    /// but the amount AT your point still represents the amount of tokens you would receive.
+    /// Pass in the short_circuit: false for the total_cumulative to roll until the end to get the
+    /// complete total.
+    pub fn find_amount_and_cumulative_offset(
+        a: &AccountInfo,
+        index: u64,
+        short_circuit: bool,
+    ) -> Result<AmountCumulativeReturn, ProgramError> {
+        let data = &mut a.data.borrow();
+
+        let amount_type = SafetyDepositConfig::get_amount_type(a)?;
+
+        let length_type = SafetyDepositConfig::get_length_type(a)?;
+
+        let length_of_array = SafetyDepositConfig::get_amount_range_len(a);
+
+        let mut cumulative_amount: u64 = 0;
+        let mut total_amount: u64 = 0;
+        let mut amount: u64 = 0;
+        let mut current_winner_range_start: u64 = 0;
+        let mut offset = AMOUNT_RANGE_FIRST_EL_POSITION;
+        let mut not_found = true;
+        for n in 0..length_of_array {
+            let amount_each_winner_gets =
+                SafetyDepositConfig::get_number_from_data(data, amount_type, offset);
+
+            offset += amount_type as usize;
+
+            let length_of_range =
+                SafetyDepositConfig::get_number_from_data(data, length_type, offset);
+
+            offset += length_type as usize;
+
+            let current_winner_range_end = current_winner_range_start
+                .checked_add(length_of_range)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+            let to_add = amount_each_winner_gets
+                .checked_mul(length_of_range)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+            total_amount = total_amount
+                .checked_add(to_add)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+
+            if index >= current_winner_range_start && index < current_winner_range_end {
+                let up_to_winner = (index - current_winner_range_start)
+                    .checked_mul(amount_each_winner_gets)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                cumulative_amount = cumulative_amount
+                    .checked_add(up_to_winner)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                amount = amount_each_winner_gets;
+
+                not_found = false;
+                if short_circuit {
+                    break;
+                }
+            } else if current_winner_range_start < index {
+                cumulative_amount = cumulative_amount
+                    .checked_add(to_add)
+                    .ok_or(MetaplexError::NumericalOverflowError)?
+            }
+
+            current_winner_range_start = current_winner_range_end
+        }
+
+        if not_found {
+            return Err(MetaplexError::WinnerIndexNotFound.into());
+        }
+
+        Ok(AmountCumulativeReturn {
+            cumulative_amount,
+            total_amount,
+            amount,
+        })
     }
 
     pub fn from_account_info(a: &AccountInfo) -> Result<SafetyDepositConfig, ProgramError> {
-        let data = &mut a.data.borrow_mut();
+        let data = &mut a.data.borrow();
         if a.data_len() < BASE_SAFETY_CONFIG_SIZE {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
@@ -408,53 +679,24 @@ impl SafetyDepositConfig {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
-        let order = u64::from_le_bytes(*array_ref![data, 1, 8]);
+        let order = SafetyDepositConfig::get_order(a);
 
-        let winning_config_type = match data[9] {
-            0 => WinningConfigType::TokenOnlyTransfer,
-            1 => WinningConfigType::FullRightsTransfer,
-            2 => WinningConfigType::PrintingV1,
-            3 => WinningConfigType::PrintingV2,
-            4 => WinningConfigType::Participation,
-            _ => return Err(ProgramError::InvalidAccountData),
-        };
+        let winning_config_type = SafetyDepositConfig::get_winning_config_type(a)?;
 
-        let amount_type = match data[10] {
-            1 => TupleNumericType::U8,
-            2 => TupleNumericType::U16,
-            4 => TupleNumericType::U32,
-            8 => TupleNumericType::U64,
-            _ => return Err(ProgramError::InvalidAccountData),
-        };
+        let amount_type = SafetyDepositConfig::get_amount_type(a)?;
 
-        let length_type = match data[11] {
-            1 => TupleNumericType::U8,
-            2 => TupleNumericType::U16,
-            4 => TupleNumericType::U32,
-            8 => TupleNumericType::U64,
-            _ => return Err(ProgramError::InvalidAccountData),
-        };
+        let length_type = SafetyDepositConfig::get_length_type(a)?;
 
-        let length_of_array = u32::from_le_bytes(*array_ref![data, 12, 4]);
+        let length_of_array = SafetyDepositConfig::get_amount_range_len(a);
 
-        let mut offset: usize = 16;
+        let mut offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
         let amount_ranges = vec![];
         for n in 0..length_of_array {
-            let amount = match amount_type {
-                TupleNumericType::U8 => data[offset] as u64,
-                TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
-                TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
-                TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
-            };
+            let amount = SafetyDepositConfig::get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
 
-            let length = match length_type {
-                TupleNumericType::U8 => data[offset] as u64,
-                TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
-                TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
-                TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
-            };
+            let length = SafetyDepositConfig::get_number_from_data(data, length_type, offset);
 
             amount_ranges.push(AmountRange(amount, length));
             offset += length_type as usize;
@@ -534,12 +776,13 @@ impl SafetyDepositConfig {
         let data = a.data.borrow_mut();
 
         data[0] = Key::SafetyDepositConfigV1 as u8;
-        *array_mut_ref![data, 1, 8] = self.order.to_le_bytes();
-        data[9] = self.winning_config_type as u8;
-        data[10] = self.amount_type as u8;
-        data[11] = self.length_type as u8;
-        *array_mut_ref![data, 12, 4] = (self.amount_ranges.len() as u32).to_le_bytes();
-        let offset: usize = 16;
+        *array_mut_ref![data, ORDER_POSITION, 8] = self.order.to_le_bytes();
+        data[WINNING_CONFIG_POSITION] = self.winning_config_type as u8;
+        data[AMOUNT_POSITION] = self.amount_type as u8;
+        data[LENGTH_POSITION] = self.length_type as u8;
+        *array_mut_ref![data, AMOUNT_RANGE_SIZE_POSITION, 4] =
+            (self.amount_ranges.len() as u32).to_le_bytes();
+        let offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
         for range in self.amount_ranges {
             match self.amount_type {
                 TupleNumericType::U8 => data[offset] = range.0 as u8,
@@ -609,8 +852,8 @@ impl SafetyDepositConfig {
     /// that will ever change on this model.
     pub fn save_participation_state(&mut self, a: &mut AccountInfo) {
         let mut data = a.data.borrow_mut();
-        let offset: usize =
-            16 + self.amount_ranges.len() * (self.amount_type as usize + self.length_type as usize);
+        let offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION
+            + self.amount_ranges.len() * (self.amount_type as usize + self.length_type as usize);
 
         offset += match self.participation_config {
             Some(val) => {
