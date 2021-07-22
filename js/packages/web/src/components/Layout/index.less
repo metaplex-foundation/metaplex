@@ -21,15 +21,36 @@
 }
 
 
-div#main-bg{
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  bottom: 0;
-  background-position: center -50vh;
-  background-size: cover;
-  background-repeat: no-repeat;
-  filter: blur(100px) brightness(3);
-  height: 100vh;
+
+section.ant-layout {
+  width: 100%;
+  margin: auto;
+  position: relative;
+  #width-layout {
+    max-width: 1440px;
+  }
+}
+section#main-layout.ant-layout {
+  background-color: @black-100 !important;
+  #bg-gradient {
+    position: absolute;
+    height: 200px;
+    width: 100%;
+    left: 0;
+    top: 510px;
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);
+  }
+  span#main-bg{
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 708px;
+    background: linear-gradient(180deg, rgba(18, 18, 18, 0) 0%, @black-100 100%);;
+    background-position: top left !important;
+    background-size: cover  !important;
+    background-repeat: no-repeat !important;
+    filter: blur(220px);
+    clip-path: inset(0 0 0 0);
+  }
 }

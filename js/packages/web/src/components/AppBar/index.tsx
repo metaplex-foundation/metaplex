@@ -116,7 +116,7 @@ export const AppBar = () => {
       </div>
       <div className="app-right">
         <ModalHowToBuy className={'modal-button-default'} />
-        {!connected && <ConnectButton type="primary" className="connector" />}
+        {!connected && <ConnectButton type="primary" />}
         {connected && (
           <>
             <UserActions />
