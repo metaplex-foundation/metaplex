@@ -184,7 +184,7 @@ export const HomeView = () => {
           >
             Buy exclusive McFarlane NFTs.
           </p>
-          <ModalHowToBuy className="secondary-btn" />
+          <ModalHowToBuy className={'secondary-btn'} />
         </div>
       </Banner>
       <Layout>
