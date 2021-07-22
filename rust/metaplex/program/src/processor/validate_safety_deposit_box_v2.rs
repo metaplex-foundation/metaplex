@@ -82,7 +82,7 @@ pub struct CommonCheckArgs<'a> {
     pub auction_manager_store_info: &'a AccountInfo<'a>,
     pub authority_info: &'a AccountInfo<'a>,
     pub store: &'a Store,
-    pub auction_manager: &'a Box<dyn AuctionManager>,
+    pub auction_manager: &'a dyn AuctionManager,
     pub metadata: &'a Metadata,
     pub safety_deposit: &'a SafetyDepositBox,
     pub vault: &'a Vault,
@@ -146,7 +146,7 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
         return Err(MetaplexError::AuctionManagerTokenMetadataMismatch.into());
     }
 
-    assert_authority_correct(&auction_manager, authority_info)?;
+    assert_authority_correct(auction_manager, authority_info)?;
     assert_store_safety_vault_manager_match(
         &auction_manager,
         &safety_deposit_info,
@@ -195,7 +195,7 @@ pub struct SupplyLogicCheckArgs<'a> {
     payer_info: &'a AccountInfo<'a>,
     token_metadata_program_info: &'a AccountInfo<'a>,
     safety_deposit_token_store_info: &'a AccountInfo<'a>,
-    auction_manager: &'a Box<dyn AuctionManager>,
+    auction_manager: &'a dyn AuctionManager,
     winning_config_type: &'a WinningConfigType,
     metadata: &'a Metadata,
     safety_deposit: &'a SafetyDepositBox,
@@ -431,12 +431,12 @@ pub fn process_validate_safety_deposit_box_v2(
         token_metadata_program_info,
         auction_manager_store_info,
         authority_info,
-        store,
-        auction_manager,
-        metadata,
-        safety_deposit,
-        vault,
-        winning_config_type: safety_deposit_config.winning_config_type,
+        store: &store,
+        auction_manager: &auction_manager,
+        metadata: &metadata,
+        safety_deposit: &safety_deposit,
+        vault: &vault,
+        winning_config_type: &safety_deposit_config.winning_config_type,
     })?;
 
     let mut total_amount_requested = safety_deposit_config
@@ -456,16 +456,16 @@ pub fn process_validate_safety_deposit_box_v2(
         system_info,
         payer_info,
         token_metadata_program_info,
-        auction_manager,
-        winning_config_type: safety_deposit_config.winning_config_type,
-        metadata,
-        safety_deposit,
-        store,
+        auction_manager: &auction_manager,
+        winning_config_type: &safety_deposit_config.winning_config_type,
+        metadata: &metadata,
+        safety_deposit: &safety_deposit,
+        store: &store,
         safety_deposit_token_store_info,
         total_amount_requested,
     })?;
 
-    if safety_deposit_config.order != safety_deposit.order {
+    if safety_deposit_config.order != safety_deposit.order as u64 {
         return Err(MetaplexError::SafetyDepositConfigOrderMismatch.into());
     }
 
@@ -496,6 +496,7 @@ pub fn process_validate_safety_deposit_box_v2(
         payer_info,
         rent_info,
         system_info,
+        &mut safety_deposit_config,
     )?;
 
     Ok(())

@@ -1,9 +1,11 @@
 use {
     crate::{
-        deprecated_state::{ParticipationConfig, ParticipationState},
         error::MetaplexError,
         processor::redeem_printing_v2_bid::{create_or_update_prize_tracking, mint_edition},
-        state::{AuctionManager, NonWinningConstraint, Store, WinningConstraint, PREFIX},
+        state::{
+            AuctionManager, NonWinningConstraint, ParticipationConfigV2, Store, WinningConstraint,
+            PREFIX,
+        },
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
             common_redeem_checks, common_redeem_finish, get_amount_from_token_account,
@@ -38,7 +40,7 @@ struct V2Accounts<'a> {
 
 fn legacy_validation(
     token_program_info: &AccountInfo,
-    auction_manager: &AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     accounts: &LegacyAccounts,
 ) -> ProgramResult {
     assert_owned_by(
@@ -53,13 +55,8 @@ fn legacy_validation(
         return Err(MetaplexError::ParticipationPrintingEmpty.into());
     }
 
-    if let Some(state) = &auction_manager.state.participation_state {
-        if let Some(token) = state.printing_authorization_token_account {
-            if *accounts.participation_printing_holding_account_info.key != token {
-                return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
-            }
-        }
-    }
+    auction_manager
+        .assert_legacy_printing_token_match(accounts.participation_printing_holding_account_info)?;
 
     Ok(())
 }
@@ -78,7 +75,7 @@ fn v2_validation<'a>(
     master_edition_account_info: &AccountInfo<'a>,
     destination_info: &AccountInfo<'a>,
     auction_info: &AccountInfo<'a>,
-    config: &ParticipationConfig,
+    config: &ParticipationConfigV2,
     accounts: &V2Accounts<'a>,
 ) -> ProgramResult {
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
@@ -190,10 +187,11 @@ fn charge_for_participation<'a>(
     accept_payment_info: &AccountInfo<'a>,
     transfer_authority_info: &AccountInfo<'a>,
     token_program_info: &AccountInfo<'a>,
+    safety_deposit_config_info: &mut AccountInfo<'a>,
     win_index: Option<usize>,
-    config: &ParticipationConfig,
+    config: &ParticipationConfigV2,
     auction_manager_bump: u8,
-    auction_manager: &mut AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     bidder_token: &Account,
     bidder_metadata: &BidderMetadata,
 ) -> ProgramResult {
@@ -217,19 +215,7 @@ fn charge_for_participation<'a>(
     }
 
     if price > 0 {
-        if let Some(state) = &auction_manager.state.participation_state {
-            // Can't really edit something behind an Option reference...
-            // just make new one.
-            auction_manager.state.participation_state = Some(ParticipationState {
-                collected_to_accept_payment: state
-                    .collected_to_accept_payment
-                    .checked_add(price)
-                    .ok_or(MetaplexError::NumericalOverflowError)?,
-                primary_sale_happened: state.primary_sale_happened,
-                validated: state.validated,
-                printing_authorization_token_account: state.printing_authorization_token_account,
-            });
-        }
+        auction_manager.add_to_collected_payment(safety_deposit_config_info, price)?;
 
         spl_token_transfer(
             bidder_token_account_info.clone(),
@@ -328,12 +314,8 @@ pub fn process_redeem_participation_bid<'a>(
 
     let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
 
-    let config: ParticipationConfig;
-    if let Some(part_config) = auction_manager.settings.participation_config.clone() {
-        config = part_config
-    } else {
-        return Err(MetaplexError::NotEligibleForParticipation.into());
-    }
+    let config: ParticipationConfigV2 =
+        auction_manager.get_participation_config(safety_deposit_config_info)?;
 
     assert_owned_by(accept_payment_info, token_program_info.key)?;
     assert_owned_by(bidder_token_account_info, token_program_info.key)?;
@@ -353,11 +335,9 @@ pub fn process_redeem_participation_bid<'a>(
 
     if !cancelled {
         if let Some(winning_index) = AuctionData::get_is_winner(auction_info, bidder_info.key) {
-            if winning_index < auction_manager.settings.winning_configs.len() {
-                // Okay, so they placed in the auction winning prizes section!
-                gets_participation =
-                    config.winner_constraint == WinningConstraint::ParticipationPrizeGiven;
-            }
+            // Okay, so they placed in the auction winning prizes section!
+            gets_participation =
+                config.winner_constraint == WinningConstraint::ParticipationPrizeGiven;
         }
     }
 
@@ -427,6 +407,7 @@ pub fn process_redeem_participation_bid<'a>(
             accept_payment_info,
             transfer_authority_info,
             token_program_info,
+            &mut safety_deposit_config_info,
             win_index,
             &config,
             bump_seed,

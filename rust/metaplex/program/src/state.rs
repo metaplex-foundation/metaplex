@@ -114,6 +114,19 @@ pub trait AuctionManager {
         &self,
         args: PrintingV2CalculationChecks,
     ) -> Result<PrintingV2CalculationCheckReturn, ProgramError>;
+
+    fn get_participation_config(
+        &self,
+        safety_deposit_config_info: &AccountInfo,
+    ) -> Result<ParticipationConfigV2, ProgramError>;
+
+    fn add_to_collected_payment(
+        &mut self,
+        safety_deposit_config_info: &mut AccountInfo,
+        price: u64,
+    ) -> ProgramResult;
+
+    fn assert_legacy_printing_token_match(&self, account: &AccountInfo) -> ProgramResult;
 }
 
 pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
@@ -268,6 +281,46 @@ impl AuctionManager for AuctionManagerV2 {
     fn save(&self, account: &AccountInfo) -> ProgramResult {
         self.serialize(&mut *account.data.borrow_mut())?;
         Ok(())
+    }
+
+    fn get_participation_config(
+        &self,
+        safety_deposit_config_info: &AccountInfo,
+    ) -> Result<ParticipationConfigV2, ProgramError> {
+        let safety_config = SafetyDepositConfig::from_account_info(safety_deposit_config_info)?;
+        if let Some(p_config) = safety_config.participation_config {
+            Ok(p_config)
+        } else {
+            return Err(MetaplexError::NotEligibleForParticipation.into());
+        }
+    }
+
+    fn add_to_collected_payment(
+        &mut self,
+        safety_deposit_config_info: &mut AccountInfo,
+        price: u64,
+    ) -> ProgramResult {
+        let mut safety_config = SafetyDepositConfig::from_account_info(safety_deposit_config_info)?;
+
+        if let Some(state) = &safety_config.participation_state {
+            // Can't really edit something behind an Option reference...
+            // just make new one.
+            safety_config.participation_state = Some(ParticipationStateV2 {
+                collected_to_accept_payment: state
+                    .collected_to_accept_payment
+                    .checked_add(price)
+                    .ok_or(MetaplexError::NumericalOverflowError)?,
+            });
+            safety_config.save_participation_state(safety_deposit_config_info)
+        }
+
+        Ok(())
+    }
+
+    fn assert_legacy_printing_token_match(&self, account: &AccountInfo) -> ProgramResult {
+        // You cannot use MEV1s with auth tokens with V2 auction managers, so if somehow this is called,
+        // throw an error.
+        return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
     }
 }
 

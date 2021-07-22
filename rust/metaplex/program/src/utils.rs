@@ -86,7 +86,7 @@ pub fn assert_signer(account_info: &AccountInfo) -> ProgramResult {
 }
 
 pub fn assert_store_safety_vault_manager_match(
-    auction_manager: &Box<dyn AuctionManager>,
+    auction_manager: &dyn AuctionManager,
     safety_deposit_info: &AccountInfo,
     vault_info: &AccountInfo,
     token_vault_program: &Pubkey,
@@ -118,7 +118,7 @@ pub fn assert_store_safety_vault_manager_match(
 
 pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
     program_id: &Pubkey,
-    auction_manager: &AuctionManager,
+    auction_manager: &dyn AuctionManager,
     metadata: &Metadata,
     whitelisted_creator_info: &AccountInfo,
     store_info: &AccountInfo,
@@ -146,7 +146,7 @@ pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
                 &[
                     PREFIX.as_bytes(),
                     program_id.as_ref(),
-                    auction_manager.store.as_ref(),
+                    auction_manager.store().as_ref(),
                     creator.address.as_ref(),
                 ],
                 program_id,
@@ -169,10 +169,10 @@ pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
 }
 
 pub fn assert_authority_correct(
-    auction_manager: &AuctionManager,
+    auction_manager: &dyn AuctionManager,
     authority_info: &AccountInfo,
 ) -> ProgramResult {
-    if auction_manager.authority != *authority_info.key {
+    if auction_manager.authority() != *authority_info.key {
         return Err(MetaplexError::AuctionManagerAuthorityMismatch.into());
     }
 

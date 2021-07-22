@@ -3,8 +3,9 @@ use {
         error::MetaplexError,
         state::{
             AuctionManager, AuctionManagerStatus, CommonWinningIndexChecks,
-            CommonWinningIndexReturn, Key, NonWinningConstraint, PrintingV2CalculationCheckReturn,
-            PrintingV2CalculationChecks, WinningConfigType, WinningConstraint,
+            CommonWinningIndexReturn, Key, NonWinningConstraint, ParticipationConfigV2,
+            PrintingV2CalculationCheckReturn, PrintingV2CalculationChecks, WinningConfigType,
+            WinningConstraint,
         },
         utils::try_from_slice_checked,
     },
@@ -280,6 +281,55 @@ impl AuctionManager for AuctionManagerV1 {
             winning_config_type,
             winning_config_item_index,
         })
+    }
+
+    fn get_participation_config(
+        &self,
+        safety_deposit_config_info: &AccountInfo,
+    ) -> Result<ParticipationConfigV2, ProgramError> {
+        if let Some(part_config) = self.settings.participation_config.clone() {
+            Ok(ParticipationConfigV2 {
+                winner_constraint: part_config.winner_constraint,
+                non_winning_constraint: part_config.non_winning_constraint,
+                fixed_price: part_config.fixed_price,
+            })
+        } else {
+            return Err(MetaplexError::NotEligibleForParticipation.into());
+        }
+    }
+
+    fn add_to_collected_payment(
+        &mut self,
+        safety_deposit_config_info: &mut AccountInfo,
+        price: u64,
+    ) -> ProgramResult {
+        if let Some(state) = &self.state.participation_state {
+            // Can't really edit something behind an Option reference...
+            // just make new one.
+            self.state.participation_state = Some(ParticipationStateV1 {
+                collected_to_accept_payment: state
+                    .collected_to_accept_payment
+                    .checked_add(price)
+                    .ok_or(MetaplexError::NumericalOverflowError)?,
+                primary_sale_happened: state.primary_sale_happened,
+                validated: state.validated,
+                printing_authorization_token_account: state.printing_authorization_token_account,
+            });
+        }
+
+        Ok(())
+    }
+
+    fn assert_legacy_printing_token_match(&self, account: &AccountInfo) -> ProgramResult {
+        if let Some(state) = &self.state.participation_state {
+            if let Some(token) = state.printing_authorization_token_account {
+                if *account.key != token {
+                    return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
