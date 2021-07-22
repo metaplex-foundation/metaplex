@@ -167,7 +167,9 @@ export function WalletProvider({ children = null as any }) {
         </Button>
 
         <Collapse ghost>
-          <Panel header="Other wallets" key="1">
+          <Panel header={<span style={{
+            fontWeight: 600,
+          }}>Other wallets</span>} key="1">
             {WALLET_PROVIDERS.map((provider, idx) => {
               if (provider.url === providerUrl) return null
               if (provider.name === "Phantom") return null
