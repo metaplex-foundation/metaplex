@@ -1,51 +1,36 @@
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-}
-
-.modal-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, .8);
-  cursor: pointer;
-}
-
 .modal-box {
   position: relative;
-  width: 80%;
+  width: 80% !important;
   box-sizing: border-box;
   border-radius: 12px;
   background-color: #2A2A2A;
   cursor: auto;
+  padding-bottom: 0px;
 
-  .modal-buy-ntf-title {
-    font-style: normal;
-    font-weight: 600;
-    font-size: 24px;
-    margin-left: 24px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+  .ant-modal-header {
+    border-bottom: 0;
+    border-radius: 12px;
+    padding: 28px 24px 28px 24px;
 
-    .modal-close {
-      position: absolute;
-      top: 2px;
-      right: 30px;
-      background-color: transparent;
-      cursor: pointer;
+    .ant-modal-title {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
     }
   }
 
-  .modal-buy-ntf-body {
-    background: rgba(255, 255, 255, 0.05);
+  .ant-modal-close-x {
+    span {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      color: white;
+    }
+  }
+
+  .ant-modal-body {
+    background: rgba(255, 255, 255, 0.05) !important;
     border-radius: 12px;
     padding: 48px 16px 48px 48px;
 
@@ -53,6 +38,7 @@
       background: transparent;
       border: 0;
       margin-right: 32px;
+      height: 476px;
 
       .card-cover {
         background: rgba(255, 255, 255, 0.1);
@@ -72,6 +58,14 @@
         margin-bottom: 12px;
       }
 
+      .body-content {
+        font-family: GraphikWeb, serif;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 20px;
+      }
+
       .ant-card-body {
         display: flex;
         flex-direction: column;
@@ -79,7 +73,7 @@
         .line {
           width: 100%;
           height: 115px;
-          border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .button-container {
@@ -87,11 +81,12 @@
           justify-content: flex-end;
 
           .modal-button-buy {
+            position: absolute;
             margin-top: 40px;
-            height: 56px;
+            height: 48px;
             width: 156px;
             right: 0;
-            bottom: 0;
+            bottom: 8px;
             background: #B388F5;
             box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
             border-radius: 8px;
@@ -106,8 +101,20 @@
   }
 }
 
+
 @media screen and (min-width: 800px) {
   .modal-box {
-    max-width: 1248px;
+    max-width: 1248px !important;
   }
 }
+
+.modal-button-default {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 19px;
+  cursor: pointer;
+  margin-right: 24px;
+  border: 0;
+}
+

@@ -7,7 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
-import { ModalHowToBuy} from "../ModalHowToBuy";
+import {ModalHowToBuy} from "../ModalHowToBuy";
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -83,7 +83,9 @@ const MetaplexMenu = () => {
           trigger={['click']}
           overlay={
             <Menu>
-              {getDefaultLinkActions(connected).map((item, idx) => <Menu.Item key={idx}>{item}</Menu.Item>)}
+              {getDefaultLinkActions(connected).map((item, idx) => (
+                <Menu.Item key={idx}>{item}</Menu.Item>
+              ))}
             </Menu>
           }
         >
@@ -105,10 +107,6 @@ export const LogoLink = () => {
 
 export const AppBar = () => {
   const { connected } = useWallet();
-  const [isModalOpen, setModalOpen] = React.useState(false);
-
-  const toggleModal = () => setModalOpen(!isModalOpen);
-
   return (
     <>
       <div className="app-left">
@@ -117,27 +115,20 @@ export const AppBar = () => {
         <MetaplexMenu />
       </div>
       <div className="app-right">
-        <div
-          className={"link-modal"}
-          onClick={toggleModal}
-        >
-          How to Buy
-        </div>
-        {!connected && <ConnectButton type="primary" className="connector"/>}
-        {connected && <>
-          <UserActions />
-          <Notifications />
-          <CurrentUserBadge
-            showBalance={false}
-            showAddress={false}
-            iconSize={24}
-          />
-        </>}
+        <ModalHowToBuy className={'modal-button-default'} />
+        {!connected && <ConnectButton type="primary" className="connector" />}
+        {connected && (
+          <>
+            <UserActions />
+            <Notifications />
+            <CurrentUserBadge
+              showBalance={false}
+              showAddress={false}
+              iconSize={24}
+            />
+          </>
+        )}
       </div>
-      <ModalHowToBuy
-        isOpen={isModalOpen}
-        onClose={toggleModal}
-      />
     </>
   );
 };

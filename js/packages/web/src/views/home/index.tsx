@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
+import { ModalHowToBuy } from "../../components/ModalHowToBuy";
 
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { AuctionViewState, useAuctions } from '../../hooks';
@@ -16,13 +17,11 @@ import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Banner } from '../../components/Banner';
 import { AppLayout } from '../../components/Layout';
-import {ModalHowToBuy} from "../../components/ModalHowToBuy";
 
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
 export const HomeView = () => {
-  const [isModalOpen, setModalOpen] = useState(false);
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const { isLoading, store } = useMeta();
@@ -36,8 +35,6 @@ export const HomeView = () => {
     700: 2,
     500: 1,
   };
-
-  const toggleModal = () => setModalOpen(!isModalOpen);
 
   const heroAuction = useMemo(
     () =>
@@ -159,28 +156,35 @@ export const HomeView = () => {
       )}
       {/* <PreSaleBanner auction={heroAuction} /> */}
       <Banner src={'/main-banner.svg'}>
-        <div style={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          marginLeft: "4vw",
-          maxWidth: 350,
-          lineHeight: 1.1,
-        }}>
-          <h1 style={{
-            color: "white",
-            margin: 0,
-          }}>The amazing world of McFarlane.</h1>
-          <p style={{
-            color: "white",
-            fontSize: "clamp(0.7em, 1.5vw, 16px)",
-            margin: "1rem 0 2rem",
-          }}>Buy exclusive McFarlane NFTs.</p>
-
-          <Button onClick={ toggleModal } className="secondary-btn">
-            How to Buy
-          </Button>
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            marginLeft: '4vw',
+            maxWidth: 350,
+            lineHeight: 1.1,
+          }}
+        >
+          <h1
+            style={{
+              color: 'white',
+              margin: 0,
+            }}
+          >
+            The amazing world of McFarlane.
+          </h1>
+          <p
+            style={{
+              color: 'white',
+              fontSize: 'clamp(0.7em, 1.5vw, 16px)',
+              margin: '1rem 0 2rem',
+            }}
+          >
+            Buy exclusive McFarlane NFTs.
+          </p>
+          <ModalHowToBuy className="secondary-btn" />
         </div>
       </Banner>
       <Layout>
@@ -198,22 +202,18 @@ export const HomeView = () => {
             )}
             {auctionsEnded.length > 0 && (
               <Row>
-                  <Tabs>
-                    <TabPane>
-                      <h2>Ended Auctions</h2>
-                      {endedAuctions}
-                    </TabPane>
-                  </Tabs>
+                <Tabs>
+                  <TabPane>
+                    <h2>Ended Auctions</h2>
+                    {endedAuctions}
+                  </TabPane>
+                </Tabs>
                 <br />
               </Row>
             )}
           </Col>
         </Content>
       </Layout>
-      <ModalHowToBuy
-        isOpen={isModalOpen}
-        onClose={toggleModal}
-      />
     </Layout>
   );
 };
