@@ -118,7 +118,6 @@ fn create_auction(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
                 price_floor: floor.unwrap_or(PriceFloor::None([0; 32])),
                 gap_tick_size_percentage: Some(0),
                 tick_size: Some(0),
-                instant_sale_price: None,
             },
         ),
     ];

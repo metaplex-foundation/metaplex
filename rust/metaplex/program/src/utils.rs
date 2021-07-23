@@ -365,7 +365,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub safety_deposit_info: &'a AccountInfo<'a>,
     pub vault_info: &'a AccountInfo<'a>,
     pub auction_info: &'a AccountInfo<'a>,
-    pub auction_extended_info: &'a AccountInfo<'a>,
+    pub auction_extended_info: Option<&'a AccountInfo<'a>>,
     pub bidder_metadata_info: &'a AccountInfo<'a>,
     pub bidder_info: &'a AccountInfo<'a>,
     pub token_program_info: &'a AccountInfo<'a>,
@@ -605,15 +605,16 @@ pub fn common_redeem_checks(
         return Err(MetaplexError::AuctionManagerTokenMetadataProgramMismatch.into());
     }
 
-    let instant_sale_price = AuctionDataExtended::get_instant_sale_price(&auction_extended_info.data.borrow());
-
     if AuctionData::get_state(auction_info)? != AuctionState::Ended {
-        if win_index.is_some() && instant_sale_price.is_some() {
-            // we shouldn't process else branch here such as existing win_index proves that we can get winner_bid_price
-            if let Some(winner_bid_price) = AuctionData::get_winner_bid_amount_at(auction_info, win_index.unwrap()) {
-                if winner_bid_price < instant_sale_price.unwrap() {
+        if win_index.is_some() && auction_extended_info.is_some() {
+            if let Some(instant_sale_price) = AuctionDataExtended::get_instant_sale_price(&auction_extended_info.unwrap().data.borrow()) {
+                // we can safely do unwrap here such as existing win_index proves that we can get winner_bid_price
+                let winner_bid_price = AuctionData::get_winner_bid_amount_at(auction_info, win_index.unwrap()).unwrap();
+                if winner_bid_price < instant_sale_price {
                     return Err(MetaplexError::AuctionHasNotEnded.into());
                 }
+            } else {
+                return Err(MetaplexError::AuctionHasNotEnded.into());
             }
         } else {
             return Err(MetaplexError::AuctionHasNotEnded.into());

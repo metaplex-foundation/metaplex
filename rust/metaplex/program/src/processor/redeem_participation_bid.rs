@@ -262,7 +262,6 @@ pub fn process_redeem_participation_bid<'a>(
     // We keep it here to keep API base identical to the other redeem calls for ease of use by callers
     let _fraction_mint_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
-    let auction_extended_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
     let payer_info = next_account_info(account_info_iter)?;
@@ -279,6 +278,7 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {

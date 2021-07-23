@@ -109,21 +109,21 @@ pub enum MetaplexInstruction {
     ///   5. `[writable]` Vault account
     ///   6. `[writable]` Fraction mint of the vault
     ///   7. `[]` Auction
-    ///   8. `[]` Auction extended
-    ///   9. `[]` Your BidderMetadata account
-    ///   10. `[signer optional]` Your Bidder account - Only needs to be signer if payer does not own
-    ///   11. `[signer]` Payer
-    ///   12. `[]` Token program
-    ///   13. `[]` Token Vault program
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` Store
-    ///   16. `[]` System
-    ///   17. `[]` Rent sysvar
-    ///   18. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[signer optional]` Your Bidder account - Only needs to be signer if payer does not own
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
-    ///   19. `[optional/writable]` Master edition (if Printing type of WinningConfig)
-    ///   20. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
+    ///   18. `[optional/writable]` Master edition (if Printing type of WinningConfig)
+    ///   19. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
     ///        relative to token metadata program (if Printing type of WinningConfig)
+    ///   20. `[]` Auction extended
     DeprecatedRedeemBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -144,23 +144,23 @@ pub enum MetaplexInstruction {
     ///   5. `[writable]` Vault account
     ///   6. `[writable]` Fraction mint of the vault
     ///   7. `[]` Auction
-    ///   8. `[]` Auction extended
-    ///   9. `[]` Your BidderMetadata account
-    ///   10. `[signer optional]` Your Bidder account - Only needs to be signer if payer does not own
-    ///   11. `[signer]` Payer
-    ///   12. `[]` Token program
-    ///   13. `[]` Token Vault program
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` Store
-    ///   16. `[]` System
-    ///   17. `[]` Rent sysvar
-    ///   18. `[writable]` Master Metadata account (pda of ['metadata', program id, Printing mint id]) - remember PDA is relative to token metadata program
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[signer optional]` Your Bidder account - Only needs to be signer if payer does not own
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[writable]` Master Metadata account (pda of ['metadata', program id, Printing mint id]) - remember PDA is relative to token metadata program
     ///           (This account is optional, and will only be used if metadata is unique, otherwise this account key will be ignored no matter it's value)
-    ///   19. `[]` New authority for Master Metadata - If you are taking ownership of a Master Edition in and of itself, or a Limited Edition that isn't newly minted for you during this auction
+    ///   18. `[]` New authority for Master Metadata - If you are taking ownership of a Master Edition in and of itself, or a Limited Edition that isn't newly minted for you during this auction
     ///             ie someone else had it minted for themselves in a prior auction or through some other means, this is the account the metadata for these tokens will be delegated to
     ///             after this transaction. Otherwise this account will be ignored.
-    ///   20. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
+    ///   19. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
+    ///   20. `[]` Auction extended
     RedeemFullRightsTransferBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -184,21 +184,21 @@ pub enum MetaplexInstruction {
     ///   5. `[]` Vault account
     ///   6. `[]` Fraction mint of the vault
     ///   7. `[]` Auction
-    ///   8. `[]` Auction extended
-    ///   9. `[]` Your BidderMetadata account
-    ///   10. `[signer optional/writable]` Your Bidder account - Only needs to be signer if payer does not own
-    ///   11. `[signer]` Payer
-    ///   12. `[]` Token program
-    ///   13. `[]` Token Vault program
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` Store
-    ///   16. `[]` System
-    ///   17. `[]` Rent sysvar
-    ///   18. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[signer optional/writable]` Your Bidder account - Only needs to be signer if payer does not own
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
     ///             on the auction manager to the auction manager account itself.
-    ///   19.  `[writable]` The accept payment account for the auction manager
-    ///   20.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
-    ///   21. `[writable]` Participation NFT printing holding account (present on participation_state)
+    ///   18.  `[writable]` The accept payment account for the auction manager
+    ///   19.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
+    ///   20. `[writable]` Participation NFT printing holding account (present on participation_state)
+    ///   21. `[]` Auction extended
     DeprecatedRedeemParticipationBid,
 
     /// If the auction manager is in Validated state, it can invoke the start command via calling this command here.
@@ -392,25 +392,25 @@ pub enum MetaplexInstruction {
     ///   5. `[writable]` Vault account
     ///   6. `[writable]` Fraction mint of the vault
     ///   7. `[]` Auction
-    ///   8. `[]` Auction extended
-    ///   9. `[]` Your BidderMetadata account
-    ///   10. `[]` Your Bidder account - Only needs to be signer if payer does not own
-    ///   11. `[signer]` Payer
-    ///   12. `[]` Token program
-    ///   13. `[]` Token Vault program
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` Store
-    ///   16. `[]` System
-    ///   17. `[]` Rent sysvar
-    ///   18. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
-    ///   19. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
-    ///   20. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
-    ///   21. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
-    ///   22. `[writable]` Mint of new token
-    ///   23. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[]` Your Bidder account - Only needs to be signer if payer does not own
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
+    ///   18. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   19. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   20. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
+    ///   21. `[writable]` Mint of new token
+    ///   22. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
     ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
-    ///   24. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
-    ///   25. `[]` Metadata account of token in vault
+    ///   23. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   24. `[]` Metadata account of token in vault
+    ///   25. `[]` Auction extended
     RedeemPrintingV2Bid(RedeemPrintingV2BidArgs),
 
     /// Permissionless call to redeem the master edition in a given safety deposit for a PrintingV2 winning config to the
@@ -458,30 +458,30 @@ pub enum MetaplexInstruction {
     ///   5. `[]` Vault account
     ///   6. `[]` Fraction mint of the vault
     ///   7. `[]` Auction
-    ///   8. `[]` Auction extended
-    ///   9. `[]` Your BidderMetadata account
-    ///   10. `[]` Your Bidder account
-    ///   11. `[signer]` Payer
-    ///   12. `[]` Token program
-    ///   13. `[]` Token Vault program
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` Store
-    ///   16. `[]` System
-    ///   17. `[]` Rent sysvar
-    ///   18. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[]` Your Bidder account
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
     ///             on the auction manager to the auction manager account itself.
-    ///   19.  `[writable]` The accept payment account for the auction manager
-    ///   20.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary.
-    ///   21. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
-    ///   22. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
-    ///   23. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
-    ///   24. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
-    ///   25. `[writable]` Mint of new token
-    ///   26. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///   18.  `[writable]` The accept payment account for the auction manager
+    ///   19.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary.
+    ///   20. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
+    ///   21. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   22. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   23. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
+    ///   24. `[writable]` Mint of new token
+    ///   25. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
     ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
-    ///   27. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
-    ///   28. `[]` Metadata account of token in vault
-    //    29. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
+    ///   26. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   27. `[]` Metadata account of token in vault
+    ///   28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
+    ///   29. `[]` Auction extended
     RedeemParticipationBidV2,
 }
 
@@ -649,7 +649,6 @@ pub fn create_deprecated_redeem_bid_instruction(
             AccountMeta::new(vault, false),
             AccountMeta::new(fraction_mint, false),
             AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_extended, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new_readonly(payer, true),
@@ -660,6 +659,7 @@ pub fn create_deprecated_redeem_bid_instruction(
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(transfer_authority, false),
+            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::DeprecatedRedeemBid
             .try_to_vec()
@@ -699,7 +699,6 @@ pub fn create_redeem_full_rights_transfer_bid_instruction(
             AccountMeta::new(vault, false),
             AccountMeta::new(fraction_mint, false),
             AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_extended, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new_readonly(payer, true),
@@ -712,6 +711,7 @@ pub fn create_redeem_full_rights_transfer_bid_instruction(
             AccountMeta::new(master_metadata, false),
             AccountMeta::new_readonly(new_metadata_authority, false),
             AccountMeta::new_readonly(transfer_authority, false),
+            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::RedeemFullRightsTransferBid
             .try_to_vec()
@@ -752,7 +752,6 @@ pub fn create_deprecated_redeem_participation_bid_instruction(
             AccountMeta::new_readonly(vault, false),
             AccountMeta::new_readonly(fraction_mint, false),
             AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_extended, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new(payer, true),
@@ -766,6 +765,7 @@ pub fn create_deprecated_redeem_participation_bid_instruction(
             AccountMeta::new(accept_payment, false),
             AccountMeta::new(paying_token_account, false),
             AccountMeta::new(printing_authorization_token_account, false),
+            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::DeprecatedRedeemParticipationBid
             .try_to_vec()
@@ -985,7 +985,6 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new(vault, false),
             AccountMeta::new(fraction_mint, false),
             AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_extended, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, false),
             AccountMeta::new(payer, true),
@@ -1003,6 +1002,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new(edition_mark_pda, false),
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
+            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::RedeemPrintingV2Bid(RedeemPrintingV2BidArgs {
             edition_offset,
@@ -1181,7 +1181,6 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new_readonly(vault, false),
             AccountMeta::new_readonly(fraction_mint, false),
             AccountMeta::new_readonly(auction, false),
-            AccountMeta::new_readonly(auction_extended, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new(payer, true),
@@ -1203,6 +1202,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
             AccountMeta::new_readonly(extended, false),
+            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::RedeemParticipationBidV2
             .try_to_vec()

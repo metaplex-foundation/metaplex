@@ -40,11 +40,11 @@ struct Accounts<'a, 'b: 'a> {
     bidder_pot: &'a AccountInfo<'b>,
     authority: &'a AccountInfo<'b>,
     auction: &'a AccountInfo<'b>,
-    auction_extended: &'a AccountInfo<'b>,
     bidder: &'a AccountInfo<'b>,
     mint: &'a AccountInfo<'b>,
     clock_sysvar: &'a AccountInfo<'b>,
     token_program: &'a AccountInfo<'b>,
+    auction_extended: Option<&'a AccountInfo<'b>>,
 }
 
 fn parse_accounts<'a, 'b: 'a>(
@@ -58,21 +58,24 @@ fn parse_accounts<'a, 'b: 'a>(
         bidder_pot: next_account_info(account_iter)?,
         authority: next_account_info(account_iter)?,
         auction: next_account_info(account_iter)?,
-        auction_extended: next_account_info(account_iter)?,
         bidder: next_account_info(account_iter)?,
         mint: next_account_info(account_iter)?,
         clock_sysvar: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
+        auction_extended: next_account_info(account_iter).ok(),
     };
 
     assert_owned_by(accounts.auction, program_id)?;
-    assert_owned_by(accounts.auction_extended, program_id)?;
     assert_owned_by(accounts.mint, &spl_token::id())?;
     assert_owned_by(accounts.destination, &spl_token::id())?;
     assert_owned_by(accounts.bidder_pot_token, &spl_token::id())?;
     assert_owned_by(accounts.bidder_pot, program_id)?;
     assert_signer(accounts.authority)?;
     assert_token_program_matches_package(accounts.token_program)?;
+
+    if let Some(auction_extended) = accounts.auction_extended {
+        assert_owned_by(auction_extended, program_id)?;
+    }
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(AuctionError::InvalidTokenProgram.into());
@@ -117,19 +120,6 @@ pub fn claim_bid(
     // Load the auction and verify this bid is valid.
     let auction = AuctionData::from_account_info(accounts.auction)?;
 
-    assert_derivation(
-        program_id,
-        accounts.auction_extended,
-        &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            args.resource.as_ref(),
-            EXTENDED.as_bytes(),
-        ],
-    )?;
-    let mut auction_extended: AuctionDataExtended =
-        AuctionDataExtended::from_account_info(accounts.auction_extended)?;
-
     if auction.authority != *accounts.authority.key {
         return Err(AuctionError::InvalidAuthority.into());
     }
@@ -142,10 +132,32 @@ pub fn claim_bid(
         return Err(AuctionError::InvalidState.into());
     }
 
+    let mut auction_extended: Option<AuctionDataExtended> = None;
+    if let Some(auction_extended_info) = accounts.auction_extended {
+        assert_derivation(
+            program_id,
+            auction_extended_info,
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                EXTENDED.as_bytes(),
+            ],
+        )?;
+        let auction_extended_data = AuctionDataExtended::from_account_info(auction_extended_info)?;
+        // add this check because in this instruction we use AuctionDataExtended only for instant_sale_price
+        if auction_extended_data.instant_sale_price.is_some() {
+            auction_extended = Some(auction_extended_data);
+        }
+    }
+
     // Auction either must have ended or bidder pay instant_sale_price
     if !auction.ended(clock.unix_timestamp)? {
-        if let Some(instant_sale_price) = auction_extended.instant_sale_price {
-            if auction.bid_state.amount(bid_index.unwrap()) < instant_sale_price {
+        if let Some(auction_extended_data) = auction_extended {
+            // we can safely unwrap instant_sale_price because we checked it in if let instruction before
+            if auction.bid_state.amount(bid_index.unwrap())
+                < auction_extended_data.instant_sale_price.unwrap()
+            {
                 return Err(AuctionError::InvalidState.into());
             }
         } else {

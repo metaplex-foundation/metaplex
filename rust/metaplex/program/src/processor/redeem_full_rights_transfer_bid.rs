@@ -34,7 +34,6 @@ pub fn process_full_rights_transfer_bid<'a>(
     let vault_info = next_account_info(account_info_iter)?;
     let fraction_mint_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
-    let auction_extended_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
     let payer_info = next_account_info(account_info_iter)?;
@@ -48,6 +47,7 @@ pub fn process_full_rights_transfer_bid<'a>(
     let metadata_info = next_account_info(account_info_iter)?;
     let new_metadata_authority_info = next_account_info(account_info_iter)?;
     let transfer_authority_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     let CommonRedeemReturn {
         auction_manager,

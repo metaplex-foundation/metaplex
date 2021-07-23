@@ -11,6 +11,7 @@ use std::{cell::Ref, cmp, mem};
 pub mod cancel_bid;
 pub mod claim_bid;
 pub mod create_auction;
+pub mod create_auction_v2;
 pub mod end_auction;
 pub mod place_bid;
 pub mod set_authority;
@@ -20,6 +21,7 @@ pub mod start_auction;
 pub use cancel_bid::*;
 pub use claim_bid::*;
 pub use create_auction::*;
+pub use create_auction_v2::*;
 pub use end_auction::*;
 pub use place_bid::*;
 pub use set_authority::*;
@@ -34,7 +36,8 @@ pub fn process_instruction(
     match AuctionInstruction::try_from_slice(input)? {
         AuctionInstruction::CancelBid(args) => cancel_bid(program_id, accounts, args),
         AuctionInstruction::ClaimBid(args) => claim_bid(program_id, accounts, args),
-        AuctionInstruction::CreateAuction(args) => create_auction(program_id, accounts, args),
+        AuctionInstruction::CreateAuction(args) => create_auction(program_id, accounts, args, None),
+        AuctionInstruction::CreateAuctionV2(args) => create_auction_v2(program_id, accounts, args),
         AuctionInstruction::EndAuction(args) => end_auction(program_id, accounts, args),
         AuctionInstruction::PlaceBid(args) => place_bid(program_id, accounts, args),
         AuctionInstruction::SetAuthority => set_authority(program_id, accounts),
@@ -90,7 +93,7 @@ pub struct AuctionData {
     pub bid_state: BidState,
 }
 
-pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 200;
+pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 191;
 // Further storage for more fields. Would like to store more on the main data but due
 // to a borsh issue that causes more added fields to inflict "Access violation" errors
 // during redemption in main Metaplex app for no reason, we had to add this nasty PDA.
@@ -102,10 +105,10 @@ pub struct AuctionDataExtended {
     // Unimplemented fields
     /// Tick size
     pub tick_size: Option<u64>,
-    /// instant sale price
-    pub instant_sale_price: Option<u64>,
     /// gap_tick_size_percentage - two decimal points
     pub gap_tick_size_percentage: Option<u8>,
+    /// instant sale price
+    pub instant_sale_price: Option<u64>,
 }
 
 impl AuctionDataExtended {
@@ -131,11 +134,15 @@ impl AuctionDataExtended {
         // total_uncancelled_bids + tick_size Option
         let mut instant_sale_beginning = 8;
 
-        // check if tick_size has some value
-        if data[instant_sale_beginning] == 1 {
-            instant_sale_beginning += 9
-        } else {
-            instant_sale_beginning += 1;
+        // gaps for tick_size and gap_tick_size_percentage
+        let gaps = [9, 2];
+
+        for gap in gaps.iter() {
+            if data[instant_sale_beginning] == 1 {
+                instant_sale_beginning += gap;
+            } else {
+                instant_sale_beginning += 1;
+            }
         }
 
         // check if instant_sale_price has some value
@@ -517,7 +524,7 @@ impl BidState {
         gap_tick_size_percentage: Option<u8>,
         minimum: u64,
         instant_sale_price: Option<u64>,
-        auction_sate: &mut AuctionState,
+        auction_state: &mut AuctionState,
     ) -> Result<(), ProgramError> {
         msg!("Placing bid {:?}", &bid.1.to_string());
         BidState::assert_valid_tick_size_bid(&bid, tick_size)?;
@@ -583,7 +590,7 @@ impl BidState {
                                 && bids[bids.len() - *max].1 >= instant_sale_amount
                             {
                                 msg!("All the lots were sold with instant_sale_price, auction is ended");
-                                *auction_sate = AuctionState::Ended;
+                                *auction_state = AuctionState::Ended;
                             }
                         }
 

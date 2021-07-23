@@ -9,8 +9,8 @@ use solana_sdk::{
 use spl_auction::{
     instruction,
     processor::{
-        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, EndAuctionArgs, PlaceBidArgs, PriceFloor,
-        StartAuctionArgs, WinnerLimit,
+        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, CreateAuctionArgsV2, EndAuctionArgs,
+        PlaceBidArgs, PriceFloor, StartAuctionArgs, WinnerLimit,
     },
 };
 
@@ -146,27 +146,51 @@ pub async fn create_auction(
     gap_tick_size_percentage: Option<u8>,
     tick_size: Option<u64>,
 ) -> Result<(), TransportError> {
-    let transaction = Transaction::new_signed_with_payer(
-        &[instruction::create_auction_instruction(
-            *program_id,
-            payer.pubkey(),
-            CreateAuctionArgs {
-                authority: payer.pubkey(),
-                end_auction_at: None,
-                end_auction_gap: None,
-                resource: *resource,
-                token_mint: *mint_keypair,
-                winners: WinnerLimit::Capped(max_winners),
-                price_floor,
-                gap_tick_size_percentage,
-                tick_size,
-                instant_sale_price,
-            },
-        )],
-        Some(&payer.pubkey()),
-        &[payer],
-        *recent_blockhash,
-    );
+    let transaction: Transaction;
+    if instant_sale_price.is_some() {
+        transaction = Transaction::new_signed_with_payer(
+            &[instruction::create_auction_instruction_v2(
+                *program_id,
+                payer.pubkey(),
+                CreateAuctionArgsV2 {
+                    authority: payer.pubkey(),
+                    end_auction_at: None,
+                    end_auction_gap: None,
+                    resource: *resource,
+                    token_mint: *mint_keypair,
+                    winners: WinnerLimit::Capped(max_winners),
+                    price_floor,
+                    gap_tick_size_percentage,
+                    tick_size,
+                    instant_sale_price,
+                },
+            )],
+            Some(&payer.pubkey()),
+            &[payer],
+            *recent_blockhash,
+        );
+    } else {
+        transaction = Transaction::new_signed_with_payer(
+            &[instruction::create_auction_instruction(
+                *program_id,
+                payer.pubkey(),
+                CreateAuctionArgs {
+                    authority: payer.pubkey(),
+                    end_auction_at: None,
+                    end_auction_gap: None,
+                    resource: *resource,
+                    token_mint: *mint_keypair,
+                    winners: WinnerLimit::Capped(max_winners),
+                    price_floor,
+                    gap_tick_size_percentage,
+                    tick_size,
+                },
+            )],
+            Some(&payer.pubkey()),
+            &[payer],
+            *recent_blockhash,
+        );
+    }
     banks_client.process_transaction(transaction).await?;
     Ok(())
 }
