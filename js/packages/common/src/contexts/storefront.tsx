@@ -95,7 +95,6 @@ export function StorefrontProvider({ children }: StorefrontProviderProps) {
   }
 
   if (storefront) {
-    debugger;
     return (
       <StorefrontContext.Provider
         value={{

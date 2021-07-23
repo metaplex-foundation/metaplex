@@ -119,8 +119,6 @@ export function ConnectionProvider({
     });
   }, [env]);
 
-  debugger;
-
   setStoreID(storeId);
   setProgramIds(env);
 
