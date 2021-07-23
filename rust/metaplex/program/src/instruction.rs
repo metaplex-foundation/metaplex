@@ -515,26 +515,27 @@ pub enum MetaplexInstruction {
     /// Validates that a given safety deposit box has in it contents that match the given SafetyDepositConfig, and creates said config.
     /// A stateful call, this will error out if you call it a second time after validation has occurred.
     ///   0. `[writable]` Uninitialized Safety deposit config, pda of seed ['metaplex', program id, auction manager key, safety deposit key]
-    ///   1. `[writable]` Auction manager
-    ///   2. `[writable]` Metadata account
-    ///   3. `[writable]` Original authority lookup - unallocated uninitialized pda account with seed ['metaplex', auction key, metadata key]
+    ///   1. `[writable]` Safety deposit config, pda of seed ['metaplex', program id, auction manager key, safety deposit key]
+    ///   2. `[writable]` Auction manager
+    ///   3. `[writable]` Metadata account
+    ///   4. `[writable]` Original authority lookup - unallocated uninitialized pda account with seed ['metaplex', auction key, metadata key]
     ///                   We will store original authority here to return it later.
-    ///   4. `[]` A whitelisted creator entry for the store of this auction manager pda of ['metaplex', store key, creator key]
+    ///   5. `[]` A whitelisted creator entry for the store of this auction manager pda of ['metaplex', store key, creator key]
     ///   where creator key comes from creator list of metadata, any will do
-    ///   5. `[]` The auction manager's store key
-    ///   6. `[]` Safety deposit box account
-    ///   7. `[]` Safety deposit box storage account where the actual nft token is stored
-    ///   8. `[]` Mint account of the token in the safety deposit box
-    ///   9. `[]` Edition OR MasterEdition record key
+    ///   6. `[]` The auction manager's store key
+    ///   7. `[]` Safety deposit box account
+    ///   8. `[]` Safety deposit box storage account where the actual nft token is stored
+    ///   9. `[]` Mint account of the token in the safety deposit box
+    ///   10. `[]` Edition OR MasterEdition record key
     ///           Remember this does not need to be an existing account (may not be depending on token), just is a pda with seed
     ///            of ['metadata', program id, Printing mint id, 'edition']. - remember PDA is relative to token metadata program.
-    ///   10. `[]` Vault account
-    ///   11. `[signer]` Authority
-    ///   12. `[signer optional]` Metadata Authority - Signer only required if doing a full ownership txfer
-    ///   13. `[signer]` Payer
-    ///   14. `[]` Token metadata program
-    ///   15. `[]` System
-    ///   16. `[]` Rent sysvar
+    ///   11. `[]` Vault account
+    ///   12. `[signer]` Authority
+    ///   13. `[signer optional]` Metadata Authority - Signer only required if doing a full ownership txfer
+    ///   14. `[signer]` Payer
+    ///   15. `[]` Token metadata program
+    ///   16. `[]` System
+    ///   17. `[]` Rent sysvar
     ValidateSafetyDepositBoxV2(SafetyDepositConfig),
 }
 

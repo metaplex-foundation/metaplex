@@ -8,10 +8,12 @@ use {
         account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
         pubkey::Pubkey,
     },
+    spl_auction::processor::AuctionData,
     std::cell::Ref,
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
+pub const BASE_AUCTION_TOTAL_SIZE: usize = 1 + 1 + 1 + 4;
 
 pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
 32 + // store
@@ -57,6 +59,7 @@ pub enum Key {
     SafetyDepositConfigV1,
     AuctionManagerV2,
     BidRedemptionTicketV2,
+    AuctionTotalsV1,
 }
 
 pub struct CommonWinningIndexChecks<'a> {
@@ -138,6 +141,10 @@ pub trait AuctionManager {
         safety_deposit_box_order: u64,
         safety_deposit_config_info: Option<&AccountInfo>,
     ) -> ProgramResult;
+
+    fn mark_bid_as_claimed(&mut self, winner_index: usize) -> ProgramResult;
+
+    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult;
 }
 
 pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
@@ -376,6 +383,24 @@ impl AuctionManager for AuctionManagerV2 {
         } else {
             return Err(MetaplexError::InvalidOperation.into());
         }
+    }
+
+    fn mark_bid_as_claimed(&mut self, _winner_index: usize) -> ProgramResult {
+        self.state.bids_pushed_to_accept_payment = self
+            .state
+            .bids_pushed_to_accept_payment
+            .checked_add(1)
+            .ok_or(MetaplexError::NumericalOverflowError)?;
+
+        Ok(())
+    }
+
+    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult {
+        if self.state.bids_pushed_to_accept_payment != auction.num_winners() {
+            return Err(MetaplexError::NotAllBidsClaimed.into());
+        }
+
+        Ok(())
     }
 }
 
@@ -631,6 +656,15 @@ const LENGTH_POSITION: usize = 11;
 const AMOUNT_RANGE_SIZE_POSITION: usize = 12;
 const AMOUNT_RANGE_FIRST_EL_POSITION: usize = 16;
 
+fn get_number_from_data(data: &Ref<&mut [u8]>, data_type: TupleNumericType, offset: usize) -> u64 {
+    return match data_type {
+        TupleNumericType::U8 => data[offset] as u64,
+        TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
+        TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
+        TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
+    };
+}
+
 impl SafetyDepositConfig {
     /// Size of account with padding included
     pub fn created_size(&self) -> usize {
@@ -685,19 +719,6 @@ impl SafetyDepositConfig {
         })
     }
 
-    fn get_number_from_data(
-        data: &Ref<&mut [u8]>,
-        data_type: TupleNumericType,
-        offset: usize,
-    ) -> u64 {
-        return match data_type {
-            TupleNumericType::U8 => data[offset] as u64,
-            TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
-            TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
-            TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
-        };
-    }
-
     /// Basically finds what edition offset you should get from 0 for your FIRST edition,
     /// and the amount of editions you should get. If not a PrintingV2 safety deposit, the edition offset
     /// (the cumulative count of all amounts from all people up to yours) is (relatively) meaningless,
@@ -724,13 +745,11 @@ impl SafetyDepositConfig {
         let mut offset = AMOUNT_RANGE_FIRST_EL_POSITION;
         let mut not_found = true;
         for n in 0..length_of_array {
-            let amount_each_winner_gets =
-                SafetyDepositConfig::get_number_from_data(data, amount_type, offset);
+            let amount_each_winner_gets = get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
 
-            let length_of_range =
-                SafetyDepositConfig::get_number_from_data(data, length_type, offset);
+            let length_of_range = get_number_from_data(data, length_type, offset);
 
             offset += length_type as usize;
 
@@ -800,11 +819,11 @@ impl SafetyDepositConfig {
         let mut offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
         let amount_ranges = vec![];
         for n in 0..length_of_array {
-            let amount = SafetyDepositConfig::get_number_from_data(data, amount_type, offset);
+            let amount = get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
 
-            let length = SafetyDepositConfig::get_number_from_data(data, length_type, offset);
+            let length = get_number_from_data(data, length_type, offset);
 
             amount_ranges.push(AmountRange(amount, length));
             offset += length_type as usize;
@@ -986,6 +1005,180 @@ impl SafetyDepositConfig {
                 offset += 1
             }
         }
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
+pub struct AuctionTotals {
+    pub key: Key,
+    pub amount_type: TupleNumericType,
+    pub length_type: TupleNumericType,
+    /// Tuple is (amount of editions or tokens given to people in this range, length of range)
+    pub amount_ranges: Vec<AmountRange>,
+}
+
+impl AuctionTotals {
+    pub fn created_size(&self) -> usize {
+        return BASE_AUCTION_TOTAL_SIZE
+            + (self.amount_type as usize + self.length_type as usize) * self.amount_ranges.len();
+    }
+    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionTotals, ProgramError> {
+        let data = &mut a.data.borrow();
+        if a.data_len() < BASE_AUCTION_TOTAL_SIZE {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        if data[0] != Key::AuctionTotalsV1 as u8 {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        let amount_type = AuctionTotals::get_amount_type(a)?;
+
+        let length_type = AuctionTotals::get_length_type(a)?;
+
+        let length_of_array = AuctionTotals::get_amount_range_len(a);
+
+        let mut offset: usize = 7;
+        let amount_ranges = vec![];
+        for n in 0..length_of_array {
+            let amount = get_number_from_data(data, amount_type, offset);
+
+            offset += amount_type as usize;
+
+            let length = get_number_from_data(data, length_type, offset);
+
+            amount_ranges.push(AmountRange(amount, length));
+            offset += length_type as usize;
+        }
+
+        Ok(AuctionTotals {
+            key: Key::AuctionTotalsV1,
+            amount_type,
+            length_type,
+            amount_ranges,
+        })
+    }
+
+    pub fn get_amount_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
+        let data = &a.data.borrow();
+
+        Ok(match data[1] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
+            _ => return Err(ProgramError::InvalidAccountData),
+        })
+    }
+
+    pub fn get_length_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
+        let data = &a.data.borrow();
+
+        Ok(match data[2] {
+            1 => TupleNumericType::U8,
+            2 => TupleNumericType::U16,
+            4 => TupleNumericType::U32,
+            8 => TupleNumericType::U64,
+            _ => return Err(ProgramError::InvalidAccountData),
+        })
+    }
+
+    pub fn get_amount_range_len(a: &AccountInfo) -> u32 {
+        let data = &a.data.borrow();
+
+        return u32::from_le_bytes(*array_ref![data, 3, 4]);
+    }
+
+    /// When there is a range where positive tokens are given in the handed in amount ranges,
+    /// this counts as one unique token type, so we need to count that as a range where "1"
+    /// new type is given. So we consider that a range of 1 and merge it into our existing ranges of
+    /// totals here. So if you have 10 people each getting 1 token type and then you find out
+    /// after a new safety deposit config is merged that the 3rd place person is the only person
+    /// who gets it, you then end up with three ranges: 1st-2nd place getting 1 type, 3rd place getting 2 types,
+    /// and 4th to 10th place getting 1 type.
+    pub fn add_one_where_positive_ranges_occur(
+        &mut self,
+        amount_ranges: Vec<AmountRange>,
+    ) -> ProgramResult {
+        let new_range: Vec<AmountRange> = vec![];
+
+        if self.amount_ranges.len() == 0 {
+            self.amount_ranges = amount_ranges;
+            return Ok(());
+        } else if amount_ranges.len() == 0 {
+            return Ok(());
+        }
+
+        let my_ctr: usize = 0;
+        let their_ctr: usize = 0;
+        while my_ctr < self.amount_ranges.len() && their_ctr < amount_ranges.len() {
+            // Cases:
+            // 1. nothing in theirs - we win and pop on
+            // 2. nothing in ours - they win and pop on
+            // 3. our next range is shorter than their next range - we pop on a new range that is the length of our range and +1
+            // 4. their next range is shorter than ours - we pop on a new range that is the length of theirs and +1 our range
+            // In these cases where we don't use the entire range we need to not increase the counter but we do need to modify the object
+            // length to indicate that it is now shorter, for the next iteration.
+            // 5. Super degenerate case - they are of equal length
+
+            let mut to_add: u64 = 0;
+            if their_ctr < amount_ranges.len() && amount_ranges[their_ctr].0 > 0 {
+                to_add = 1;
+            }
+
+            if my_ctr == self.amount_ranges.len() {
+                new_range.push(amount_ranges[their_ctr]);
+            } else if their_ctr == amount_ranges.len() {
+                new_range.push(self.amount_ranges[my_ctr])
+            } else if self.amount_ranges[my_ctr].1 > amount_ranges[their_ctr].1 {
+                self.amount_ranges[my_ctr].1 = self.amount_ranges[my_ctr]
+                    .1
+                    .checked_sub(amount_ranges[their_ctr].1)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+
+                new_range.push(AmountRange(
+                    self.amount_ranges[my_ctr]
+                        .0
+                        .checked_add(to_add)
+                        .ok_or(MetaplexError::NumericalOverflowError)?,
+                    amount_ranges[their_ctr].1,
+                ));
+
+                their_ctr += 1;
+                // dont increment my_ctr since i still have length to give
+            } else if amount_ranges[their_ctr].1 > self.amount_ranges[my_ctr].1 {
+                amount_ranges[their_ctr].1 = amount_ranges[their_ctr]
+                    .1
+                    .checked_sub(self.amount_ranges[my_ctr].1)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+
+                new_range.push(AmountRange(
+                    self.amount_ranges[my_ctr]
+                        .0
+                        .checked_add(to_add)
+                        .ok_or(MetaplexError::NumericalOverflowError)?,
+                    self.amount_ranges[my_ctr].1,
+                ));
+
+                my_ctr += 1;
+                // dont increment their_ctr since they still have length to give
+            } else if amount_ranges[their_ctr].1 == self.amount_ranges[my_ctr].1 {
+                new_range.push(AmountRange(
+                    self.amount_ranges[my_ctr]
+                        .0
+                        .checked_add(to_add)
+                        .ok_or(MetaplexError::NumericalOverflowError)?,
+                    self.amount_ranges[my_ctr].1,
+                ));
+                // Move them both in this degen case
+                my_ctr += 1;
+                their_ctr += 1;
+            }
+        }
+
+        self.amount_ranges = new_range;
+        Ok(())
     }
 }
 

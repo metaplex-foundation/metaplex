@@ -58,7 +58,7 @@ pub fn process_deprecated_validate_participation(
     }
 
     // top level authority and ownership check
-    assert_authority_correct(&auction_manager, authority_info)?;
+    assert_authority_correct(&auction_manager.authority, authority_info)?;
     assert_owned_by(auction_manager_info, program_id)?;
     assert_owned_by(open_edition_metadata_info, &store.token_metadata_program)?;
     assert_owned_by(open_master_edition_info, &store.token_metadata_program)?;
@@ -78,7 +78,7 @@ pub fn process_deprecated_validate_participation(
     assert_owned_by(vault_info, &store.token_vault_program)?;
     // is it the right vault, safety deposit, and token store?
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault,
         &safety_deposit_box_info,
         vault_info,
         &store.token_vault_program,

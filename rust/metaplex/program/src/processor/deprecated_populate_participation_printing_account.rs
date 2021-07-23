@@ -122,7 +122,7 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
     }
 
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.authority,
         &safety_deposit_info,
         &vault_info,
         &store.token_vault_program,

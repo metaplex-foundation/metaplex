@@ -151,10 +151,7 @@ pub fn process_redeem_bid<'a>(
 
     let transfer_authority_info = next_account_info(account_info_iter)?;
 
-    let safety_deposit_config_info = match next_account_info(account_info_iter) {
-        Ok(val) => Some(val),
-        Err(_) => None,
-    };
+    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
 
     let CommonRedeemReturn {
         auction_manager,

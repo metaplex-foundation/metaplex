@@ -15,6 +15,7 @@ use {
         account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
         pubkey::Pubkey,
     },
+    spl_auction::processor::AuctionData,
     spl_token_vault::state::SafetyDepositBox,
 };
 
@@ -385,6 +386,21 @@ impl AuctionManager for AuctionManagerV1 {
                 // This means there arent any winning configs listed as PrintingV2 so
                 // this isnt a printing v2 type and isnt a master edition.
                 return Err(MetaplexError::InvalidOperation.into());
+            }
+        }
+
+        Ok(())
+    }
+
+    fn mark_bid_as_claimed(&mut self, winner_index: usize) -> ProgramResult {
+        self.state.winning_config_states[winner_index].money_pushed_to_accept_payment = true;
+        Ok(())
+    }
+
+    fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult {
+        for i in 0..auction.num_winners() {
+            if !self.state.winning_config_states[i as usize].money_pushed_to_accept_payment {
+                return Err(MetaplexError::NotAllBidsClaimed.into());
             }
         }
 

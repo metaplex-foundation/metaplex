@@ -4,7 +4,10 @@ use {
     crate::{
         error::MetaplexError,
         instruction::EmptyPaymentAccountArgs,
-        state::{AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE, PREFIX},
+        state::{
+            get_auction_manager, AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE,
+            PREFIX,
+        },
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
             assert_rent_exempt, create_or_allocate_account_raw, spl_token_transfer,
@@ -27,7 +30,7 @@ use {
 };
 
 fn assert_winning_config_safety_deposit_validity(
-    auction_manager: &AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     safety_deposit: &SafetyDepositBox,
     winning_config_index: Option<u8>,
     winning_config_item_index: Option<u8>,
@@ -60,7 +63,7 @@ fn assert_winning_config_safety_deposit_validity(
 }
 
 fn assert_destination_ownership_validity(
-    auction_manager: &AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     metadata: &Metadata,
     destination_info: &AccountInfo,
     destination: &Account,
@@ -105,7 +108,7 @@ fn assert_destination_ownership_validity(
 }
 
 fn calculate_owed_amount(
-    auction_manager: &AuctionManager,
+    auction_manager: &Box<dyn AuctionManager>,
     auction: &AuctionData,
     metadata: &Metadata,
     winning_config_index: &Option<u8>,
@@ -274,11 +277,11 @@ pub fn process_empty_payment_account(
     let auction_info = next_account_info(account_info_iter)?;
     let token_program_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
-    let rent_info = next_account_info(account_info_iter)?;
+    let rent_info = next_account_info(account_info_iter);
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let auction_manager = get_auction_manager(auction_manager_info)?;
     let store = Store::from_account_info(store_info)?;
     let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
     let metadata = Metadata::from_account_info(metadata_info)?;
@@ -286,7 +289,7 @@ pub fn process_empty_payment_account(
     let destination: Account = assert_initialized(destination_info)?;
     let accept_payment: Account = assert_initialized(accept_payment_info)?;
 
-    if auction_manager.store != *store_info.key {
+    if auction_manager.store() != *store_info.key {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -298,11 +301,7 @@ pub fn process_empty_payment_account(
     // Before continuing further, assert all bid monies have been pushed to the main escrow
     // account so that we have a complete (less the unredeemed participation nft bids) accounting
     // to work with
-    for i in 0..auction.num_winners() {
-        if !auction_manager.state.winning_config_states[i as usize].money_pushed_to_accept_payment {
-            return Err(MetaplexError::NotAllBidsClaimed.into());
-        }
-    }
+    auction_manager.assert_all_bids_claimed(&auction)?;
 
     if *token_program_info.key != store.token_program {
         return Err(MetaplexError::AuctionManagerTokenProgramMismatch.into());
@@ -344,11 +343,11 @@ pub fn process_empty_payment_account(
     )?;
 
     // further assert that the vault and safety deposit are correctly matched to the auction manager
-    if auction_manager.vault != *vault_info.key {
+    if auction_manager.vault() != *vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
 
-    if auction_manager.auction != *auction_info.key {
+    if auction_manager.auction() != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
 
@@ -375,7 +374,7 @@ pub fn process_empty_payment_account(
     }
 
     // make sure the accept payment account is right
-    if auction_manager.accept_payment != *accept_payment_info.key {
+    if auction_manager.accept_payment() != *accept_payment_info.key {
         return Err(MetaplexError::AcceptPaymentMismatch.into());
     }
 
@@ -461,12 +460,12 @@ pub fn process_empty_payment_account(
         let bump_seed = assert_derivation(
             program_id,
             auction_manager_info,
-            &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
+            &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
         )?;
 
         let authority_seeds = &[
             PREFIX.as_bytes(),
-            &auction_manager.auction.as_ref(),
+            &auction_manager.auction().as_ref(),
             &[bump_seed],
         ];
 

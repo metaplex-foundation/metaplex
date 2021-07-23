@@ -8,7 +8,7 @@ use {
             MAX_VALIDATION_TICKET_SIZE,
         },
         error::MetaplexError,
-        state::{AuctionManager, AuctionManagerStatus, Key, Store, WinningConfigType, PREFIX},
+        state::{AuctionManagerStatus, Key, Store, WinningConfigType, PREFIX},
         utils::{assert_derivation, assert_initialized, create_or_allocate_account_raw},
     },
     borsh::BorshSerialize,
@@ -66,9 +66,9 @@ pub fn make_safety_deposit_validation<'a>(
     Ok(())
 }
 
-pub fn process_deprecated_validate_safety_deposit_box_v1(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_deprecated_validate_safety_deposit_box_v1<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let safety_deposit_validation_ticket_info = next_account_info(account_info_iter)?;
@@ -176,12 +176,12 @@ pub fn process_deprecated_validate_safety_deposit_box_v1(
         token_metadata_program_info,
         auction_manager_store_info,
         authority_info,
-        store,
-        auction_manager,
-        metadata,
-        safety_deposit,
-        vault,
-        winning_config_type,
+        store: &store,
+        auction_manager: &auction_manager,
+        metadata: &metadata,
+        safety_deposit: &safety_deposit,
+        vault: &vault,
+        winning_config_type: &winning_config_type,
     })?;
 
     assert_supply_logic_check(SupplyLogicCheckArgs {
@@ -195,11 +195,11 @@ pub fn process_deprecated_validate_safety_deposit_box_v1(
         system_info,
         payer_info,
         token_metadata_program_info,
-        auction_manager,
-        winning_config_type,
-        metadata,
-        safety_deposit,
-        store,
+        auction_manager: &auction_manager,
+        winning_config_type: &winning_config_type,
+        metadata: &metadata,
+        safety_deposit: &safety_deposit,
+        store: &store,
         safety_deposit_token_store_info,
         total_amount_requested,
     })?;
