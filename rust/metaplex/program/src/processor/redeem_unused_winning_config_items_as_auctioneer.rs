@@ -1,6 +1,6 @@
 use {
     crate::{
-        instruction::RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
+        instruction::{ProxyCallAddress, RedeemUnusedWinningConfigItemsAsAuctioneerArgs},
         processor::redeem_bid::process_redeem_bid,
         processor::redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     },
@@ -18,17 +18,15 @@ pub fn process_redeem_unused_winning_config_items_as_auctioneer<'a>(
     // check that you ARE the auction authority, because nobody else should be claiming this unused prize.
     // We also still make sure this prize hasnt been claimed more than once.
     match args.proxy_call {
-        crate::instruction::ProxyCallAddress::RedeemBid => process_redeem_bid(
+        ProxyCallAddress::RedeemBid => process_redeem_bid(
             program_id,
             accounts,
             Some(args.winning_config_item_index as usize),
         ),
-        crate::instruction::ProxyCallAddress::RedeemFullRightsTransferBid => {
-            process_full_rights_transfer_bid(
-                program_id,
-                accounts,
-                Some(args.winning_config_item_index as usize),
-            )
-        }
+        ProxyCallAddress::RedeemFullRightsTransferBid => process_full_rights_transfer_bid(
+            program_id,
+            accounts,
+            Some(args.winning_config_item_index as usize),
+        ),
     }
 }

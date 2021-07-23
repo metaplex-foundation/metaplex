@@ -1,14 +1,15 @@
+use solana_program::log::sol_log_compute_units;
+
 use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, WinningConfigItem,
-            MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
+            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, Store,
+            WhitelistedCreator, WinningConfigItem, MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
         },
     },
-    arrayref::array_ref,
-    borsh::{BorshDeserialize, BorshSerialize},
+    arrayref::{array_mut_ref, array_ref, mut_array_refs},
+    borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
         borsh::try_from_slice_unchecked,
@@ -23,16 +24,26 @@ use {
     },
     spl_auction::{
         instruction::end_auction_instruction,
-        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState, BidderMetadata},
+        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState},
     },
     spl_token::instruction::{set_authority, AuthorityType},
     spl_token_metadata::{
         instruction::update_metadata_accounts,
         state::{Metadata, EDITION},
     },
-    spl_token_vault::instruction::create_withdraw_tokens_instruction,
-    std::convert::TryInto,
+    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::SafetyDepositBox},
+    std::{convert::TryInto, str::FromStr},
 };
+
+/// Cheap method to just grab amount from token account, instead of deserializing entire thing
+pub fn get_amount_from_token_account(
+    token_account_info: &AccountInfo,
+) -> Result<u64, ProgramError> {
+    // TokeAccount layout:   mint(32), owner(32), ...
+    let data = token_account_info.try_borrow_data()?;
+    let amount_data = array_ref![data, 64, 8];
+    Ok(u64::from_le_bytes(*amount_data))
+}
 
 /// assert initialized account
 pub fn assert_initialized<T: Pack + IsInitialized>(
@@ -195,17 +206,19 @@ pub fn create_or_allocate_account_raw<'a>(
         )?;
     }
 
+    let accounts = &[new_account_info.clone(), system_program_info.clone()];
+
     msg!("Allocate space for the account");
     invoke_signed(
         &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
-        &[new_account_info.clone(), system_program_info.clone()],
+        accounts,
         &[&signer_seeds],
     )?;
 
     msg!("Assign the account to the owning program");
     invoke_signed(
         &system_instruction::assign(new_account_info.key, &program_id),
-        &[new_account_info.clone(), system_program_info.clone()],
+        accounts,
         &[&signer_seeds],
     )?;
     msg!("Completed assignation!");
@@ -337,8 +350,7 @@ pub fn transfer_mint_authority<'a>(
 pub struct CommonRedeemReturn {
     pub redemption_bump_seed: u8,
     pub auction_manager: AuctionManager,
-    pub auction: AuctionData,
-    pub bidder_metadata: BidderMetadata,
+    pub cancelled: bool,
     pub rent: Rent,
     pub win_index: Option<usize>,
     pub token_metadata_program: Pubkey,
@@ -361,7 +373,69 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub store_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
     pub is_participation: bool,
+    // If this is being called by the auctioneer to pull prizes out they overwrite the win index
+    // they would normally get if they themselves bid for whatever win index they choose.
     pub overwrite_win_index: Option<usize>,
+    // In newer endpoints, to conserve CPU and make way for 10,000 person auctions,
+    // client must specify win index and then we simply check if the address matches for O(1) lookup vs O(n)
+    // scan. This is an option so older actions which rely on the O(n) lookup because we can't change their call structure
+    // can continue to work.
+    pub user_provided_win_index: Option<Option<usize>>,
+    pub assert_bidder_signer: bool,
+    // For printing v2, the edition pda is what essentially forms a backstop for bad bidders. We do not need this additional
+    // check which isn't accurate anyway when one winning config item has an amount > 1.
+    pub ignore_bid_redeemed_item_check: bool,
+}
+
+fn calculate_win_index(
+    bidder_info: &AccountInfo,
+    auction_info: &AccountInfo,
+    user_provided_win_index: Option<Option<usize>>,
+    overwrite_win_index: Option<usize>,
+) -> Result<Option<usize>, ProgramError> {
+    let mut win_index: Option<usize>;
+    // User provided us with an option of an option telling us what if anything they won. We need to validate.
+    if let Some(up_win_index) = user_provided_win_index {
+        // check that this person is the winner they say they are. Only if not doing an override of win index,
+        // which we know likely wont match bidder info and is simply checking below that you arent stealing a prize.
+
+        if overwrite_win_index.is_none() {
+            if let Some(up_win_index_unwrapped) = up_win_index {
+                let winner = AuctionData::get_winner_at(auction_info, up_win_index_unwrapped);
+                if let Some(winner_key) = winner {
+                    if winner_key != *bidder_info.key {
+                        return Err(MetaplexError::WinnerIndexMismatch.into());
+                    }
+                } else {
+                    return Err(MetaplexError::WinnerIndexMismatch.into());
+                }
+            }
+        }
+
+        // Notice if overwrite win index is some, this gets wiped anyway in the if statement below.
+        // If not, it becomes the win index going forward as we have validated the user is either
+        // saying they won nothing (Participation redemption) or they won something
+        // and they weren't lying.
+        win_index = up_win_index;
+    } else {
+        // Legacy system where we O(n) scan the bid index to find the winner index. CPU intensive.
+        win_index = AuctionData::get_is_winner(auction_info, bidder_info.key);
+    }
+
+    // This means auctioneer is attempting to pull goods out of the system, and is attempting to set
+    // the win index for themselves. Has a different field because it has different logic - mainly
+    // just checking to make sure you arent claiming from someone who won. Supersedes normal user provided
+    // logic.
+    if let Some(index) = overwrite_win_index {
+        let winner_at = AuctionData::get_winner_at(auction_info, index);
+        if winner_at.is_some() {
+            return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
+        } else {
+            win_index = overwrite_win_index
+        }
+    }
+
+    Ok(win_index)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -386,15 +460,17 @@ pub fn common_redeem_checks(
         store_info,
         is_participation,
         overwrite_win_index,
+        user_provided_win_index,
+        assert_bidder_signer,
+        ignore_bid_redeemed_item_check,
     } = args;
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
     let mut auction_manager: AuctionManager =
         AuctionManager::from_account_info(auction_manager_info)?;
-    let auction = AuctionData::from_account_info(auction_info)?;
     let store_data = store_info.data.borrow();
-    let bidder_metadata: BidderMetadata;
+    let cancelled: bool;
 
     let auction_program = Pubkey::new_from_array(*array_ref![store_data, 2, 32]);
     let token_vault_program = Pubkey::new_from_array(*array_ref![store_data, 34, 32]);
@@ -403,20 +479,18 @@ pub fn common_redeem_checks(
 
     let mut redemption_bump_seed: u8 = 0;
     if overwrite_win_index.is_some() {
-        // Auctioneer coming through, need to stub bidder metadata since it will not exist.
-        bidder_metadata = BidderMetadata {
-            bidder_pubkey: *bidder_info.key,
-            auction_pubkey: *auction_info.key,
-            last_bid: 0,
-            last_bid_timestamp: 0,
-            cancelled: false,
-        };
+        cancelled = false;
 
         if *bidder_info.key != auction_manager.authority {
             return Err(MetaplexError::MustBeAuctioneer.into());
         }
     } else {
-        bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
+        let bidder_metadata_data = bidder_metadata_info.data.borrow();
+        if bidder_metadata_data[80] == 0 {
+            cancelled = false
+        } else {
+            cancelled = true;
+        }
         assert_owned_by(bidder_metadata_info, &auction_program)?;
         assert_derivation(
             &auction_program,
@@ -430,7 +504,8 @@ pub fn common_redeem_checks(
             ],
         )?;
 
-        if bidder_metadata.bidder_pubkey != *bidder_info.key {
+        let bidder_pubkey = Pubkey::new_from_array(*array_ref![bidder_metadata_data, 0, 32]);
+        if bidder_pubkey != *bidder_info.key {
             return Err(MetaplexError::BidderMetadataBidderMismatch.into());
         }
         let redemption_path = [
@@ -447,33 +522,47 @@ pub fn common_redeem_checks(
         }
     }
 
-    let mut win_index = auction.is_winner(bidder_info.key);
-
-    if let Some(index) = overwrite_win_index {
-        let winner_at = auction.winner_at(index);
-        if winner_at.is_some() {
-            return Err(MetaplexError::AuctioneerCantClaimWonPrize.into());
-        } else {
-            win_index = overwrite_win_index
-        }
-    }
+    let win_index = calculate_win_index(
+        bidder_info,
+        auction_info,
+        user_provided_win_index,
+        overwrite_win_index,
+    )?;
 
     if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
-        let bid_redemption: BidRedemptionTicket =
-            BidRedemptionTicket::from_account_info(bid_redemption_info)?;
+        let bid_redemption_data = bid_redemption_info.data.borrow();
+
+        if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8 {
+            return Err(MetaplexError::DataTypeMismatch.into());
+        }
+
+        let mut participation_redeemed = false;
+        if bid_redemption_data[1] == 1 {
+            participation_redeemed = true;
+        }
+        let items_redeemed = bid_redemption_data[2];
+        msg!(
+            "Items redeemed is {} and participation redemption is {}",
+            items_redeemed,
+            participation_redeemed
+        );
         let possible_items_to_redeem = match win_index {
             Some(val) => auction_manager.settings.winning_configs[val].items.len(),
             None => 0,
         };
-        if (is_participation && bid_redemption.participation_redeemed)
+        if (is_participation && participation_redeemed)
             || (!is_participation
-                && bid_redemption.items_redeemed == possible_items_to_redeem as u8)
+                && !ignore_bid_redeemed_item_check
+                && items_redeemed == possible_items_to_redeem as u8)
         {
             return Err(MetaplexError::BidAlreadyRedeemed.into());
         }
     }
 
-    assert_signer(bidder_info)?;
+    if assert_bidder_signer {
+        assert_signer(bidder_info)?;
+    }
+
     assert_owned_by(&destination_info, token_program_info.key)?;
     assert_owned_by(&auction_manager_info, &program_id)?;
     assert_owned_by(safety_deposit_token_store_info, token_program_info.key)?;
@@ -514,7 +603,7 @@ pub fn common_redeem_checks(
         return Err(MetaplexError::AuctionManagerTokenMetadataProgramMismatch.into());
     }
 
-    if auction.state != AuctionState::Ended {
+    if AuctionData::get_state(auction_info)? != AuctionState::Ended {
         return Err(MetaplexError::AuctionHasNotEnded.into());
     }
 
@@ -524,8 +613,7 @@ pub fn common_redeem_checks(
     Ok(CommonRedeemReturn {
         redemption_bump_seed,
         auction_manager,
-        auction,
-        bidder_metadata,
+        cancelled,
         rent: *rent,
         win_index,
         token_metadata_program,
@@ -552,7 +640,7 @@ pub struct CommonRedeemFinishArgs<'a> {
 pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     let CommonRedeemFinishArgs {
         program_id,
-        mut auction_manager,
+        auction_manager,
         auction_manager_info,
         bidder_metadata_info,
         rent_info,
@@ -566,14 +654,6 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         winning_item_index,
         overwrite_win_index,
     } = args;
-
-    if bid_redeemed {
-        if let Some(index) = winning_index {
-            if let Some(item_index) = winning_item_index {
-                auction_manager.state.winning_config_states[index].items[item_index].claimed = true;
-            }
-        }
-    }
 
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
         let redemption_seeds = &[
@@ -594,33 +674,43 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 redemption_seeds,
             )?;
         }
-        let mut bid_redemption = BidRedemptionTicket::from_account_info(bid_redemption_info)?;
+        // Saving on CPU in these large actions by avoiding borsh
+        let data = &mut bid_redemption_info.data.borrow_mut();
+        let output = array_mut_ref![data, 0, MAX_BID_REDEMPTION_TICKET_SIZE];
 
-        bid_redemption.key = Key::BidRedemptionTicketV1;
+        let (key, participation_redeemed_ptr, items_redeemed_ptr) =
+            mut_array_refs![output, 1, 1, 1];
+
+        *key = [Key::BidRedemptionTicketV1 as u8];
+
+        let curr_items_redeemed = u8::from_le_bytes(*items_redeemed_ptr);
 
         if participation_redeemed {
-            bid_redemption.participation_redeemed = true
+            *participation_redeemed_ptr = [1];
         } else if bid_redeemed {
-            bid_redemption.items_redeemed += 1;
+            *items_redeemed_ptr = curr_items_redeemed
+                .checked_add(1)
+                .ok_or(MetaplexError::NumericalOverflowError)?
+                .to_le_bytes();
         }
-        bid_redemption.serialize(&mut *bid_redemption_info.data.borrow_mut())?;
     }
 
-    let mut open_claims = false;
-    for state in &auction_manager.state.winning_config_states {
-        for item in &state.items {
-            if !item.claimed {
-                open_claims = true;
-                break;
+    msg!("About to pass through the eye of the needle");
+    sol_log_compute_units();
+
+    if bid_redeemed {
+        if let Some(index) = winning_index {
+            if let Some(item_index) = winning_item_index {
+                AuctionManager::set_claimed_and_status(
+                    auction_manager_info,
+                    auction_manager.state.status,
+                    index,
+                    item_index,
+                    auction_manager.straight_shot_optimization,
+                );
             }
         }
     }
-
-    if !open_claims {
-        auction_manager.state.status = AuctionManagerStatus::Finished
-    }
-
-    auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
 
     Ok(())
 }
@@ -634,15 +724,15 @@ pub fn common_winning_config_checks(
     auction_manager: &AuctionManager,
     safety_deposit_info: &AccountInfo,
     winning_index: usize,
+    ignore_claim: bool,
 ) -> Result<CommonWinningConfigCheckReturn, ProgramError> {
     let winning_config = &auction_manager.settings.winning_configs[winning_index];
     let winning_config_state = &auction_manager.state.winning_config_states[winning_index];
 
     let mut winning_item_index = None;
     for i in 0..winning_config.items.len() {
-        let order: usize = 97;
         if winning_config.items[i].safety_deposit_box_index
-            == safety_deposit_info.data.borrow()[order]
+            == SafetyDepositBox::get_order(safety_deposit_info)
         {
             winning_item_index = Some(i);
             break;
@@ -659,7 +749,9 @@ pub fn common_winning_config_checks(
         None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
     };
 
-    if winning_config_state_item.claimed {
+    // For printing v2, we may call many times for different editions and the edition PDA check makes sure it cant
+    // be claimed over-much. This would be 1 time, we need n times.
+    if winning_config_state_item.claimed && !ignore_claim {
         return Err(MetaplexError::PrizeAlreadyClaimed.into());
     }
 
@@ -829,6 +921,21 @@ pub fn end_auction<'a: 'b, 'b>(
         ),
         &[auction, authority, auction_program, clock],
         &[authority_signer_seeds],
+    )?;
+
+    Ok(())
+}
+
+pub fn assert_is_ata(
+    account: &AccountInfo,
+    wallet: &Pubkey,
+    token_program: &Pubkey,
+    mint: &Pubkey,
+) -> ProgramResult {
+    assert_derivation(
+        &Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap(),
+        account,
+        &[wallet.as_ref(), token_program.as_ref(), mint.as_ref()],
     )?;
 
     Ok(())

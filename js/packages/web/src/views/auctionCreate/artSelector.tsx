@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Row, Button, Modal, ButtonProps } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
-import './../styles.less';
 import { useUserArts } from '../../hooks';
 import Masonry from 'react-masonry-css';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
@@ -98,7 +97,10 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             Select the NFT that you want to sell copy/copies of.
           </p>
         </Row>
-        <Row className="content-action" style={{ overflowY: 'auto', height: "50vh" }}>
+        <Row
+          className="content-action"
+          style={{ overflowY: 'auto', height: '50vh' }}
+        >
           <Masonry
             breakpointCols={breakpointColumnsObj}
             className="my-masonry-grid"

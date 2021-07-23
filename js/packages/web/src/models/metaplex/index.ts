@@ -12,13 +12,17 @@ import { deserializeUnchecked } from 'borsh';
 export * from './initAuctionManager';
 export * from './redeemBid';
 export * from './redeemFullRightsTransferBid';
-export * from './redeemParticipationBid';
+export * from './deprecatedRedeemParticipationBid';
 export * from './startAuction';
 export * from './validateSafetyDepositBox';
+export * from './redeemParticipationBidV2';
+export * from './redeemPrintingV2Bid';
+export * from './withdrawMasterEdition';
 
 export const METAPLEX_PREFIX = 'metaplex';
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
-
+export const MAX_BID_REDEMPTION_TICKET_SIZE = 3;
+export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export enum MetaplexKey {
   Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
@@ -28,8 +32,28 @@ export enum MetaplexKey {
   PayoutTicketV1 = 5,
   SafetyDepositValidationTicketV1 = 6,
   AuctionManagerV1 = 7,
+  PrizeTrackingTicketV1 = 8,
 }
+export class PrizeTrackingTicket {
+  key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
+  metadata: PublicKey;
+  supplySnapshot: BN;
+  expectedRedemptions: BN;
+  redemptions: BN;
 
+  constructor(args: {
+    metadata: PublicKey;
+    supplySnapshot: BN;
+    expectedRedemptions: BN;
+    redemptions: BN;
+  }) {
+    this.key = MetaplexKey.PrizeTrackingTicketV1;
+    this.metadata = args.metadata;
+    this.supplySnapshot = args.supplySnapshot;
+    this.expectedRedemptions = args.expectedRedemptions;
+    this.redemptions = args.redemptions;
+  }
+}
 export class PayoutTicket {
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
   recipient: PublicKey;
@@ -92,7 +116,7 @@ export class RedeemFullRightsTransferBidArgs {
   instruction = 3;
 }
 
-export class RedeemParticipationBidArgs {
+export class DeprecatedRedeemParticipationBidArgs {
   instruction = 4;
 }
 
@@ -103,7 +127,7 @@ export class ClaimBidArgs {
   instruction = 6;
 }
 
-export class PopulateParticipationPrintingAccountArgs {
+export class DeprecatedPopulateParticipationPrintingAccountArgs {
   instruction = 11;
 }
 
@@ -156,12 +180,28 @@ export class SetWhitelistedCreatorArgs {
   }
 }
 
-export class ValidateParticipationArgs {
+export class DeprecatedValidateParticipationArgs {
   instruction = 10;
 }
 
 export class DecommissionAuctionManagerArgs {
   instruction = 13;
+}
+
+export class RedeemPrintingV2BidArgs {
+  instruction = 14;
+  editionOffset: BN;
+  winIndex: BN;
+  constructor(args: { editionOffset: BN; winIndex: BN }) {
+    this.editionOffset = args.editionOffset;
+    this.winIndex = args.winIndex;
+  }
+}
+export class WithdrawMasterEditionArgs {
+  instruction = 15;
+}
+export class RedeemParticipationBidV2Args {
+  instruction = 16;
 }
 
 export enum WinningConstraint {
@@ -202,8 +242,11 @@ export enum WinningConfigType {
   /// token itself. The other person will be able to mint authorization tokens and make changes to the
   /// artwork.
   FullRightsTransfer,
-  /// Means you are using authorization tokens to print off editions during the auction
-  Printing,
+  /// Means you are using authorization tokens to print off editions during the auction using
+  /// from a MasterEditionV1
+  PrintingV1,
+  /// Means you are using the MasterEditionV2 to print off editions
+  PrintingV2,
 }
 export class ParticipationState {
   collectedToAcceptPayment: BN = new BN(0);
@@ -245,6 +288,14 @@ export class WinningConfigItem {
     Object.assign(this, args);
   }
 }
+
+export const decodePrizeTrackingTicket = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    SCHEMA,
+    PrizeTrackingTicket,
+    buffer,
+  ) as PrizeTrackingTicket;
+};
 
 export const decodeWhitelistedCreator = (buffer: Buffer) => {
   return deserializeUnchecked(
@@ -374,6 +425,19 @@ export class BidRedemptionTicket {
 }
 
 export const SCHEMA = new Map<any, any>([
+  [
+    PrizeTrackingTicket,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['metadata', 'pubkey'],
+        ['supplySnapshot', 'u64'],
+        ['expectedRedemptions', 'u64'],
+        ['redemptions', 'u64'],
+      ],
+    },
+  ],
   [
     AuctionManager,
     {
@@ -525,7 +589,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    PopulateParticipationPrintingAccountArgs,
+    DeprecatedPopulateParticipationPrintingAccountArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -544,6 +608,32 @@ export const SCHEMA = new Map<any, any>([
   ],
   [
     DecommissionAuctionManagerArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    RedeemPrintingV2BidArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['editionOffset', 'u64'],
+        ['winIndex', 'u64'],
+      ],
+    },
+  ],
+  [
+    WithdrawMasterEditionArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+
+  [
+    RedeemParticipationBidV2Args,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -581,7 +671,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    RedeemParticipationBidArgs,
+    DeprecatedRedeemParticipationBidArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -634,7 +724,7 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
-    ValidateParticipationArgs,
+    DeprecatedValidateParticipationArgs,
     {
       kind: 'struct',
       fields: [['instruction', 'u8']],
@@ -677,6 +767,24 @@ export async function getAuctionKeys(
   return { auctionKey, auctionManagerKey };
 }
 
+export async function getBidRedemption(
+  auctionKey: PublicKey,
+  bidMetadata: PublicKey,
+): Promise<PublicKey> {
+  const PROGRAM_IDS = programIds();
+
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        auctionKey.toBuffer(),
+        bidMetadata.toBuffer(),
+      ],
+      PROGRAM_IDS.metaplex,
+    )
+  )[0];
+}
+
 export async function getBidderKeys(
   auctionKey: PublicKey,
   bidder: PublicKey,
@@ -696,16 +804,10 @@ export async function getBidderKeys(
     )
   )[0];
 
-  const bidRedemption: PublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(METAPLEX_PREFIX),
-        auctionKey.toBuffer(),
-        bidMetadata.toBuffer(),
-      ],
-      PROGRAM_IDS.metaplex,
-    )
-  )[0];
+  const bidRedemption: PublicKey = await getBidRedemption(
+    auctionKey,
+    bidMetadata,
+  );
 
   return { bidMetadata, bidRedemption };
 }
@@ -742,6 +844,29 @@ export async function getWhitelistedCreator(creator: PublicKey) {
         PROGRAM_IDS.metaplex.toBuffer(),
         store.toBuffer(),
         creator.toBuffer(),
+      ],
+      PROGRAM_IDS.metaplex,
+    )
+  )[0];
+}
+
+export async function getPrizeTrackingTicket(
+  auctionManager: PublicKey,
+  mint: PublicKey,
+) {
+  const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
+
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        PROGRAM_IDS.metaplex.toBuffer(),
+        auctionManager.toBuffer(),
+        mint.toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )

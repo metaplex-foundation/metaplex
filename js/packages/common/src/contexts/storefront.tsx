@@ -1,18 +1,26 @@
 import { Storefront, StorefrontConfig, ArweaveTag } from '@holaplex/storefront';
 import React, { useEffect, useState } from 'react';
 
-const REACT_APP_ARWEAVE_URL = process.env.REACT_APP_ARWEAVE_URL;
+const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
 export const StorefrontContext = React.createContext<StorefrontConfig>({
   storefront: undefined,
 });
 
-export function StorefrontProvider({ children = undefined as any }) {
+interface StorefrontProviderChildProps {
+  storefront: Storefront
+}
+
+interface StorefrontProviderProps {
+  children: (props: StorefrontProviderChildProps) => React.ReactElement
+}
+
+export function StorefrontProvider({ children }: StorefrontProviderProps) {
   const [storefront, setStorefront] = useState({} as Storefront);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${REACT_APP_ARWEAVE_URL}/graphql`, {
+    fetch(`${ARWEAVE_URL}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +68,7 @@ export function StorefrontProvider({ children = undefined as any }) {
   
           link.type = 'text/css';
           link.rel = 'stylesheet';
-          link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
+          link.href = `$ARWEAVE_URL}/${transaction.id}`;
           // link.href = 'http://localhost:3000/demo-theme.css'
 
           link.onload = () => {
@@ -94,7 +102,7 @@ export function StorefrontProvider({ children = undefined as any }) {
           storefront,
         }}
       >
-        {children}
+        {children({ storefront })}
       </StorefrontContext.Provider>
     );
   } else {

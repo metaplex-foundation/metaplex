@@ -1,8 +1,6 @@
 import React from 'react';
 import { Layout } from 'antd';
 
-import './../../App.less';
-import './index.less';
 import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
 import useWindowDimensions from '../../utils/layout';
