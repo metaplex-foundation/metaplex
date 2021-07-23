@@ -24,7 +24,7 @@ jobs:
           NEXT_PUBLIC_ARWEAVE_URL: ${{ secrets.NEXT_PUBLIC_ARWEAVE_URL }}
       - name: Export Next Static Site
         working-directory: js/packages/web
-      - run: |
+        run: |
           yarn export
       - uses: aws-actions/configure-aws-credentials@v1
         name: Upload to s3
