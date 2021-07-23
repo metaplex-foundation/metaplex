@@ -22,14 +22,18 @@ jobs:
         env:
           CI: "false"
           NEXT_PUBLIC_ARWEAVE_URL: ${{ secrets.NEXT_PUBLIC_ARWEAVE_URL }}
+      - name: Export Next Static Site
+        working-directory: js/packages/web
+      - run: |
+          yarn export
       - uses: aws-actions/configure-aws-credentials@v1
         name: Upload to s3
-        working-directory: js/packages/web
+        working-directory: js
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
       - run: |
-          yarn run deploy:s3 s3://${{ secrets.S3_BUCKET }}/
+          aws s3 sync build/web s3://${{ secrets.S3_BUCKET }}/
       - run: |
           aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/index.html"
