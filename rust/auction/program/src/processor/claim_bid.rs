@@ -9,8 +9,7 @@ use crate::{
         assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
         TokenTransferParams,
     },
-    PREFIX,
-    EXTENDED,
+    EXTENDED, PREFIX,
 };
 
 use {

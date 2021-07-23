@@ -131,8 +131,7 @@ pub fn cancel_bid(
 
     // Load auction extended account to check instant_sale_price
     // and update cancelled bids if auction still active
-    let mut auction_extended =
-            AuctionDataExtended::from_account_info(accounts.auction_extended)?;
+    let mut auction_extended = AuctionDataExtended::from_account_info(accounts.auction_extended)?;
 
     // Load the clock, used for various auction timing.
     let clock = Clock::from_account_info(accounts.clock_sysvar)?;

@@ -132,6 +132,7 @@ pub async fn get_token_supply(banks_client: &mut BanksClient, mint: &Pubkey) -> 
     account_info.supply
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn create_auction(
     banks_client: &mut BanksClient,
     program_id: &Pubkey,
@@ -141,6 +142,9 @@ pub async fn create_auction(
     mint_keypair: &Pubkey,
     max_winners: usize,
     instant_sale_price: Option<u64>,
+    price_floor: PriceFloor,
+    gap_tick_size_percentage: Option<u8>,
+    tick_size: Option<u64>,
 ) -> Result<(), TransportError> {
     let transaction = Transaction::new_signed_with_payer(
         &[instruction::create_auction_instruction(
@@ -153,9 +157,9 @@ pub async fn create_auction(
                 resource: *resource,
                 token_mint: *mint_keypair,
                 winners: WinnerLimit::Capped(max_winners),
-                price_floor: PriceFloor::None([0u8; 32]),
-                gap_tick_size_percentage: Some(0),
-                tick_size: None,
+                price_floor,
+                gap_tick_size_percentage,
+                tick_size,
                 instant_sale_price,
             },
         )],

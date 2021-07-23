@@ -121,11 +121,7 @@ impl AuctionDataExtended {
 
     pub fn get_instant_sale_price<'a>(data: &'a Ref<'a, &'a mut [u8]>) -> Option<u64> {
         if let Some(idx) = Self::find_instant_sale_beginning(data) {
-            Some(u64::from_le_bytes(*array_ref![
-                data,
-                idx,
-                8
-            ]))
+            Some(u64::from_le_bytes(*array_ref![data, idx, 8]))
         } else {
             None
         }
@@ -144,7 +140,7 @@ impl AuctionDataExtended {
 
         // check if instant_sale_price has some value
         if data[instant_sale_beginning] == 1 {
-            Some(instant_sale_beginning+1)
+            Some(instant_sale_beginning + 1)
         } else {
             None
         }
@@ -384,7 +380,14 @@ impl AuctionData {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
-        self.bid_state.place_bid(bid, tick_size, gap_val, minimum, instant_sale_price, &mut self.state)
+        self.bid_state.place_bid(
+            bid,
+            tick_size,
+            gap_val,
+            minimum,
+            instant_sale_price,
+            &mut self.state,
+        )
     }
 }
 
@@ -527,7 +530,7 @@ impl BidState {
             BidState::EnglishAuction { ref mut bids, max } => {
                 match bids.last() {
                     Some(top) => {
-                        msg!("Looking to go over the loop, but check tick size first"); 
+                        msg!("Looking to go over the loop, but check tick size first");
 
                         for i in (0..bids.len()).rev() {
                             msg!("Comparison of {:?} and {:?} for {:?}", bids[i].1, bid.1, i);
@@ -576,7 +579,9 @@ impl BidState {
                         // Check if all the lots were sold with instant_sale_price
                         if let Some(instant_sale_amount) = instant_sale_price {
                             // bids.len() - max = index of the last winner bid
-                            if bids.len() >= *max && bids[bids.len() - *max].1 >= instant_sale_amount {
+                            if bids.len() >= *max
+                                && bids[bids.len() - *max].1 >= instant_sale_amount
+                            {
                                 msg!("All the lots were sold with instant_sale_price, auction is ended");
                                 *auction_sate = AuctionState::Ended;
                             }
