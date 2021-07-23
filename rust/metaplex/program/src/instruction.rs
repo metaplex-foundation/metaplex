@@ -439,6 +439,8 @@ pub enum MetaplexInstruction {
     ///   11. `[]` Token Vault program
     ///   12. `[]` Store
     ///   13. `[]` Rent sysvar
+    ///   14. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///      This account will only get used in the event this is an AuctionManagerV2
     WithdrawMasterEdition,
 
     /// Note: This requires that auction manager be in a Running state.

@@ -331,6 +331,65 @@ impl AuctionManager for AuctionManagerV1 {
 
         Ok(())
     }
+
+    fn get_max_bids_allowed_before_removal_is_stopped(
+        &self,
+        safety_deposit_box_order: u64,
+        _safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<usize, ProgramError> {
+        let mut max_bids_allowed_before_removal_is_stopped = 0;
+        let u8_order = safety_deposit_box_order as u8;
+        for n in 0..self.settings.winning_configs.len() {
+            if self.settings.winning_configs[n]
+                .items
+                .iter()
+                .find(|i| i.safety_deposit_box_index == u8_order)
+                .is_some()
+            {
+                // This means at least n bids must exist for there to be at least one bidder that will be eligible for this prize.
+                max_bids_allowed_before_removal_is_stopped = n;
+                break;
+            }
+        }
+
+        return Ok(max_bids_allowed_before_removal_is_stopped);
+    }
+
+    fn assert_is_valid_master_edition_v2_safety_deposit(
+        &self,
+        safety_deposit_box_order: u64,
+        _safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> ProgramResult {
+        let u8_order = safety_deposit_box_order as u8;
+        let atleast_one_matching = self
+            .settings
+            .winning_configs
+            .iter()
+            .find(|c| {
+                c.items
+                    .iter()
+                    .find(|i| {
+                        i.safety_deposit_box_index == u8_order
+                            && i.winning_config_type == WinningConfigType::PrintingV2
+                    })
+                    .is_some()
+            })
+            .is_some();
+
+        if !atleast_one_matching {
+            if let Some(config) = self.settings.participation_config {
+                if config.safety_deposit_box_index != u8_order {
+                    return Err(MetaplexError::InvalidOperation.into());
+                }
+            } else {
+                // This means there arent any winning configs listed as PrintingV2 so
+                // this isnt a printing v2 type and isnt a master edition.
+                return Err(MetaplexError::InvalidOperation.into());
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl AuctionManagerV1 {

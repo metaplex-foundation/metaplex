@@ -2,11 +2,10 @@ use solana_program::log::sol_log_compute_units;
 
 use {
     crate::{
-        deprecated_state::{AuctionManagerV1, WinningConfigItem},
         error::MetaplexError,
         state::{
-            get_auction_manager, AuctionManager, AuctionManagerStatus, AuctionManagerV2,
-            BidRedemptionTicket, Key, OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
+            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
+            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
         },
     },
     arrayref::array_ref,
@@ -32,10 +31,7 @@ use {
         instruction::update_metadata_accounts,
         state::{Metadata, EDITION},
     },
-    spl_token_vault::{
-        instruction::create_withdraw_tokens_instruction,
-        state::{SafetyDepositBox, Vault},
-    },
+    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::Vault},
     std::{convert::TryInto, str::FromStr},
 };
 
@@ -86,17 +82,17 @@ pub fn assert_signer(account_info: &AccountInfo) -> ProgramResult {
 }
 
 pub fn assert_store_safety_vault_manager_match(
-    auction_manager: &dyn AuctionManager,
+    vault_key: &Pubkey,
     safety_deposit_info: &AccountInfo,
     vault_info: &AccountInfo,
     token_vault_program: &Pubkey,
 ) -> ProgramResult {
-    if auction_manager.vault() != *vault_info.key {
+    if vault_key != vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
 
     let data = safety_deposit_info.data.borrow();
-    let vault_key = Pubkey::new_from_array(*array_ref![data, 1, 32]);
+    let vault_key_on_deposit = Pubkey::new_from_array(*array_ref![data, 1, 32]);
     let token_mint_key = Pubkey::new_from_array(*array_ref![data, 33, 32]);
 
     assert_derivation(
@@ -109,7 +105,7 @@ pub fn assert_store_safety_vault_manager_match(
         ],
     )?;
 
-    if *vault_info.key != vault_key {
+    if *vault_info.key != vault_key_on_deposit {
         return Err(MetaplexError::SafetyDepositBoxVaultMismatch.into());
     }
 
@@ -169,10 +165,10 @@ pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
 }
 
 pub fn assert_authority_correct(
-    auction_manager: &dyn AuctionManager,
+    auction_manager_authority: &Pubkey,
     authority_info: &AccountInfo,
 ) -> ProgramResult {
-    if auction_manager.authority() != *authority_info.key {
+    if auction_manager_authority != authority_info.key {
         return Err(MetaplexError::AuctionManagerAuthorityMismatch.into());
     }
 
@@ -448,27 +444,29 @@ pub fn assert_safety_deposit_config_valid(
     auction_manager_info: &AccountInfo,
     safety_deposit_info: &AccountInfo,
     safety_deposit_config_info: Option<&AccountInfo>,
-    auction_manager: &Box<dyn AuctionManager>,
+    auction_manager_key: &Key,
 ) -> ProgramResult {
     // If using v2, you must have one and it must be the right address and type
     if let Some(config) = safety_deposit_config_info {
-        assert_derivation(
-            program_id,
-            config,
-            &[
-                PREFIX.as_bytes(),
-                program_id.as_ref(),
-                auction_manager_info.key.as_ref(),
-                safety_deposit_info.key.as_ref(),
-            ],
-        )?;
+        if *auction_manager_key == Key::AuctionManagerV2 {
+            assert_derivation(
+                program_id,
+                config,
+                &[
+                    PREFIX.as_bytes(),
+                    program_id.as_ref(),
+                    auction_manager_info.key.as_ref(),
+                    safety_deposit_info.key.as_ref(),
+                ],
+            )?;
 
-        if config.data.borrow()[0] != Key::SafetyDepositConfigV1 as u8 {
-            return Err(MetaplexError::DataTypeMismatch.into());
+            if config.data.borrow()[0] != Key::SafetyDepositConfigV1 as u8 {
+                return Err(MetaplexError::DataTypeMismatch.into());
+            }
         }
     } else {
         // V2s MUST provide a safety deposit config, v1s it's optional (because its unused)
-        if auction_manager.key() == Key::AuctionManagerV2 {
+        if *auction_manager_key == Key::AuctionManagerV2 {
             return Err(MetaplexError::InvalidOperation.into());
         }
     }
@@ -594,7 +592,7 @@ pub fn common_redeem_checks(
     assert_owned_by(store_info, &program_id)?;
 
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault(),
         &safety_deposit_info,
         &vault_info,
         &token_vault_program,
@@ -604,7 +602,7 @@ pub fn common_redeem_checks(
         auction_manager_info,
         safety_deposit_info,
         safety_deposit_config_info,
-        &auction_manager,
+        &auction_manager.key(),
     )?;
     // looking out for you!
     assert_rent_exempt(rent, &destination_info)?;
@@ -740,7 +738,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
 #[allow(clippy::too_many_arguments)]
 pub fn shift_authority_back_to_originating_user<'a>(
     program_id: &Pubkey,
-    auction_manager: &AuctionManager,
+    auction_manager: &dyn AuctionManager,
     auction_manager_info: &AccountInfo<'a>,
     master_metadata_info: &AccountInfo<'a>,
     original_authority: &AccountInfo<'a>,
@@ -751,7 +749,7 @@ pub fn shift_authority_back_to_originating_user<'a>(
 ) -> ProgramResult {
     let original_authority_lookup_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction.as_ref(),
+        &auction_manager.auction().as_ref(),
         master_metadata_info.key.as_ref(),
     ];
 

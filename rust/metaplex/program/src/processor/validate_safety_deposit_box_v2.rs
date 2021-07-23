@@ -137,7 +137,7 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
     assert_owned_by(safety_deposit_token_store_info, &store.token_program)?;
     assert_owned_by(mint_info, &store.token_program)?;
 
-    if winning_config_type != WinningConfigType::TokenOnlyTransfer {
+    if *winning_config_type != WinningConfigType::TokenOnlyTransfer {
         assert_owned_by(edition_info, &store.token_metadata_program)?;
     }
     assert_owned_by(vault_info, &store.token_vault_program)?;
@@ -146,16 +146,16 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
         return Err(MetaplexError::AuctionManagerTokenMetadataMismatch.into());
     }
 
-    assert_authority_correct(auction_manager, authority_info)?;
+    assert_authority_correct(&auction_manager.authority(), authority_info)?;
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault(),
         &safety_deposit_info,
         vault_info,
         &store.token_vault_program,
     )?;
     assert_at_least_one_creator_matches_or_store_public_and_all_verified(
         program_id,
-        &auction_manager,
+        auction_manager,
         &metadata,
         whitelisted_creator_info,
         auction_manager_store_info,
@@ -382,9 +382,9 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     Ok(())
 }
 
-pub fn process_validate_safety_deposit_box_v2(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+pub fn process_validate_safety_deposit_box_v2<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
     safety_deposit_config: SafetyDepositConfig,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -482,7 +482,7 @@ pub fn process_validate_safety_deposit_box_v2(
         .checked_add(1)
         .ok_or(MetaplexError::NumericalOverflowError)?;
 
-    if auction_manager.state.safety_config_items_validated == vault.token_type_count {
+    if auction_manager.state.safety_config_items_validated == vault.token_type_count as u64 {
         auction_manager.state.status = AuctionManagerStatus::Validated
     }
 

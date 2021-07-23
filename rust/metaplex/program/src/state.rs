@@ -127,6 +127,17 @@ pub trait AuctionManager {
     ) -> ProgramResult;
 
     fn assert_legacy_printing_token_match(&self, account: &AccountInfo) -> ProgramResult;
+    fn get_max_bids_allowed_before_removal_is_stopped(
+        &self,
+        safety_deposit_box_order: u64,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<usize, ProgramError>;
+
+    fn assert_is_valid_master_edition_v2_safety_deposit(
+        &self,
+        safety_deposit_box_order: u64,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> ProgramResult;
 }
 
 pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
@@ -321,6 +332,50 @@ impl AuctionManager for AuctionManagerV2 {
         // You cannot use MEV1s with auth tokens with V2 auction managers, so if somehow this is called,
         // throw an error.
         return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
+    }
+
+    fn get_max_bids_allowed_before_removal_is_stopped(
+        &self,
+        _safety_deposit_box_order: u64,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<usize, ProgramError> {
+        if let Some(config) = safety_deposit_config_info {
+            let safety_config = SafetyDepositConfig::from_account_info(config)?;
+            let mut current_offset: u64 = 0;
+            for n in safety_config.amount_ranges {
+                if n.0 > 0 {
+                    return Ok(current_offset as usize);
+                } else {
+                    current_offset = current_offset
+                        .checked_add(n.1)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                }
+            }
+
+            Ok(0)
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    fn assert_is_valid_master_edition_v2_safety_deposit(
+        &self,
+        _safety_deposit_box_order: u64,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> ProgramResult {
+        if let Some(config) = safety_deposit_config_info {
+            let safety_config = SafetyDepositConfig::from_account_info(config)?;
+
+            if safety_config.winning_config_type != WinningConfigType::PrintingV2
+                && safety_config.winning_config_type != WinningConfigType::Participation
+            {
+                return Err(MetaplexError::InvalidOperation.into());
+            }
+
+            Ok(())
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
     }
 }
 

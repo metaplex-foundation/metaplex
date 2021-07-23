@@ -92,7 +92,7 @@ pub fn assert_common_checks(
         return Err(MetaplexError::VaultCannotEmpty.into());
     }
 
-    Ok(bump_seed, vault, auction)
+    Ok((bump_seed, vault, auction))
 }
 
 pub fn process_init_auction_manager_v2(
