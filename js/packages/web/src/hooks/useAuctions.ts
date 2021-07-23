@@ -7,7 +7,8 @@ import {
   BidderMetadata,
   BidderPot,
   Vault,
-  MasterEdition,
+  MasterEditionV1,
+  MasterEditionV2,
   useWallet,
 } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
@@ -32,7 +33,7 @@ export enum AuctionViewState {
 export interface AuctionViewItem {
   metadata: ParsedAccount<Metadata>;
   safetyDeposit: ParsedAccount<SafetyDepositBox>;
-  masterEdition?: ParsedAccount<MasterEdition>;
+  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
 }
 
 // Flattened surface item for easy display
@@ -188,10 +189,16 @@ export function processAccountsIntoAuctionView(
     ParsedAccount<BidderMetadata>
   >,
   bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>,
-  masterEditions: Record<string, ParsedAccount<MasterEdition>>,
+  masterEditions: Record<
+    string,
+    ParsedAccount<MasterEditionV1 | MasterEditionV2>
+  >,
   vaults: Record<string, ParsedAccount<Vault>>,
-  masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEdition>>,
-  masterEditionsByOneTimeAuthMint: Record<string, ParsedAccount<MasterEdition>>,
+  masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEditionV1>>,
+  masterEditionsByOneTimeAuthMint: Record<
+    string,
+    ParsedAccount<MasterEditionV1>
+  >,
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>,
   cachedRedemptionKeysByWallet: Record<
     string,
@@ -317,6 +324,42 @@ export function processAccountsIntoAuctionView(
     }
 
     if (boxes.length > 0) {
+      let participationMetadata: ParsedAccount<Metadata> | undefined =
+        undefined;
+      let participationBox: ParsedAccount<SafetyDepositBox> | undefined =
+        undefined;
+      let participationMaster:
+        | ParsedAccount<MasterEditionV1 | MasterEditionV2>
+        | undefined = undefined;
+      if (
+        auctionManager.info.settings.participationConfig !== null &&
+        auctionManager.info.settings.participationConfig !== undefined
+      ) {
+        participationBox =
+          boxes[
+            auctionManager.info.settings.participationConfig
+              ?.safetyDepositBoxIndex
+          ];
+        // Cover case of V1 master edition (where we're using one time auth mint in storage)
+        // and case of v2 master edition where the edition itself is stored
+        participationMetadata =
+          metadataByMasterEdition[
+            masterEditionsByOneTimeAuthMint[
+              participationBox.info.tokenMint.toBase58()
+            ]?.pubkey.toBase58()
+          ] || metadataByMint[participationBox.info.tokenMint.toBase58()];
+        if (participationMetadata) {
+          participationMaster =
+            masterEditionsByOneTimeAuthMint[
+              participationBox.info.tokenMint.toBase58()
+            ] ||
+            (participationMetadata.info.masterEdition &&
+              masterEditions[
+                participationMetadata.info.masterEdition?.toBase58()
+              ]);
+        }
+      }
+
       let view: Partial<AuctionView> = {
         auction,
         auctionManager,
@@ -329,7 +372,7 @@ export function processAccountsIntoAuctionView(
                 boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
               ];
             if (!metadata) {
-              // Means is a limited edition, so the tokenMint is the printingMint
+              // Means is a limited edition v1, so the tokenMint is the printingMint
               let masterEdition =
                 masterEditionsByPrintingMint[
                   boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
@@ -349,30 +392,11 @@ export function processAccountsIntoAuctionView(
           });
         }),
         participationItem:
-          auctionManager.info.settings.participationConfig !== null &&
-          auctionManager.info.settings.participationConfig !== undefined
+          participationMetadata && participationBox
             ? {
-                metadata:
-                  metadataByMasterEdition[
-                    masterEditionsByOneTimeAuthMint[
-                      boxes[
-                        auctionManager.info.settings.participationConfig
-                          ?.safetyDepositBoxIndex
-                      ]?.info.tokenMint.toBase58()
-                    ]?.pubkey.toBase58()
-                  ],
-                safetyDeposit:
-                  boxes[
-                    auctionManager.info.settings.participationConfig
-                      ?.safetyDepositBoxIndex
-                  ],
-                masterEdition:
-                  masterEditionsByOneTimeAuthMint[
-                    boxes[
-                      auctionManager.info.settings.participationConfig
-                        ?.safetyDepositBoxIndex
-                    ]?.info.tokenMint.toBase58()
-                  ],
+                metadata: participationMetadata,
+                safetyDeposit: participationBox,
+                masterEdition: participationMaster,
               }
             : undefined,
         myBidderMetadata: bidderMetadata,

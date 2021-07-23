@@ -15,13 +15,12 @@ import {
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { notify } from '../utils/notifications';
 import { ExplorerLink } from '../components/ExplorerLink';
-import { setProgramIds } from '../utils/ids';
+import { setProgramIds, setStoreID } from '../utils/ids';
 import {
   TokenInfo,
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
-import { StorefrontContext } from './storefront';
 
 export type ENV =
   | 'mainnet-beta'
@@ -80,7 +79,10 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({
+  storeId = undefined as any,
+  children = undefined as any,
+}) {
   const [endpoint, setEndpoint] = useLocalStorageState(
     'connectionEndpoint',
     ENDPOINTS[0].endpoint,
@@ -117,10 +119,10 @@ export function ConnectionProvider({ children = undefined as any }) {
     });
   }, [env]);
 
+  debugger;
 
-  const { storefront } = useContext(StorefrontContext);
-
-  setProgramIds(env, storefront);
+  setStoreID(storeId);
+  setProgramIds(env);
 
   // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
   // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.

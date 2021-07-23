@@ -390,6 +390,26 @@ pub enum MetaplexError {
     /// Invalid Auction Manager Status
     #[error("Invalid Auction Manager Status")]
     InvalidStatus,
+
+    /// You are not eligible for this edition offset
+    #[error("You are not eligible for this edition offset")]
+    InvalidEditionNumber,
+
+    /// Invalid operation
+    #[error("Invalid operation")]
+    InvalidOperation,
+
+    /// The provided account needs to contain one token of this mint type
+    #[error("The provided account needs to contain one token of this mint type")]
+    ProvidedAccountDoesNotContainOneToken,
+
+    /// You are not the winner at this index
+    #[error("You are not the winner at this index")]
+    WinnerIndexMismatch,
+
+    /// You supplied a safety deposit index in a winning configuration that does not exist
+    #[error("You supplied a safety deposit index in a winning configuration that does not exist")]
+    InvalidWinningConfigSafetyDepositIndex,
 }
 
 impl PrintProgramError for MetaplexError {

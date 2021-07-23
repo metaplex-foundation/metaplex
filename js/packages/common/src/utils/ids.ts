@@ -1,8 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 import { findProgramAddress } from '../utils';
-import { TokenSwapLayout, TokenSwapLayoutV1 } from '../models/tokenSwap';
-import { Storefront } from '@holaplex/storefront';
-import { Store } from 'antd/lib/form/interface';
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
@@ -63,17 +60,27 @@ export const PROGRAM_IDS = [
   },
 ];
 
-const getStoreID = async (storefront: Storefront | void) => {
-  const { pubkey } = storefront || {};
+let STORE_OWNER_ADDRESS: PublicKey | undefined;
 
-  if (!pubkey) {
+export const setStoreID = (storeId: any) => {
+  STORE_OWNER_ADDRESS = storeId
+    ? new PublicKey(`${storeId}`)
+    : // DEFAULT STORE FRONT OWNER FOR METAPLEX
+      undefined;
+};
+
+const getStoreID = async () => {
+  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
+  if (!STORE_OWNER_ADDRESS) {
     return undefined;
   }
 
-  const publicKey = new PublicKey(pubkey);
-
   const programs = await findProgramAddress(
-    [Buffer.from('metaplex'), METAPLEX_ID.toBuffer(), publicKey.toBuffer()],
+    [
+      Buffer.from('metaplex'),
+      METAPLEX_ID.toBuffer(),
+      STORE_OWNER_ADDRESS.toBuffer(),
+    ],
     METAPLEX_ID,
   );
   const CUSTOM = programs[0];
@@ -82,17 +89,14 @@ const getStoreID = async (storefront: Storefront | void) => {
   return CUSTOM;
 };
 
-export const setProgramIds = async (
-  envName: string,
-  storefront: Storefront | void,
-) => {
+export const setProgramIds = async (envName: string) => {
   let instance = PROGRAM_IDS.find(env => envName.indexOf(env.name) >= 0);
   if (!instance) {
     return;
   }
 
   if (!STORE) {
-    STORE = await getStoreID(storefront);
+    STORE = await getStoreID();
   }
 };
 
