@@ -34,7 +34,10 @@ pub const MAX_METADATA_LEN: usize = 1
 
 pub const MAX_EDITION_LEN: usize = 1 + 32 + 8 + 200;
 
-pub const MAX_MASTER_EDITION_LEN: usize = 1 + 9 + 8 + 32 + 32 + 200;
+// Large buffer because the older master editions have two pubkeys in them,
+// need to keep two versions same size because the conversion process actually changes the same account
+// by rewriting it.
+pub const MAX_MASTER_EDITION_LEN: usize = 1 + 9 + 8 + 264;
 
 pub const MAX_CREATOR_LIMIT: usize = 5;
 
@@ -48,8 +51,12 @@ pub const MAX_RESERVATION_LIST_V1_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATION
 // can hold up to 200 keys per reservation, note: the extra 8 is for number of elements in the vec
 pub const MAX_RESERVATION_LIST_SIZE: usize = 1 + 32 + 8 + 8 + MAX_RESERVATIONS * 48 + 8 + 8 + 84;
 
+pub const MAX_EDITION_MARKER_SIZE: usize = 32;
+
+pub const EDITION_MARKER_BIT_SIZE: u64 = 248;
+
 #[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone, Copy)]
 pub enum Key {
     Uninitialized,
     EditionV1,
@@ -57,6 +64,8 @@ pub enum Key {
     ReservationListV1,
     MetadataV1,
     ReservationListV2,
+    MasterEditionV2,
+    EditionMarker,
 }
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -95,9 +104,73 @@ impl Metadata {
     }
 }
 
+pub trait MasterEdition {
+    fn key(&self) -> Key;
+    fn supply(&self) -> u64;
+    fn set_supply(&mut self, supply: u64);
+    fn max_supply(&self) -> Option<u64>;
+    fn save(&self, account: &AccountInfo) -> ProgramResult;
+}
+
+pub fn get_master_edition(account: &AccountInfo) -> Result<Box<dyn MasterEdition>, ProgramError> {
+    let version = account.data.borrow()[0];
+
+    // For some reason when converting Key to u8 here, it becomes unreachable. Use direct constant instead.
+    match version {
+        2 => return Ok(Box::new(MasterEditionV1::from_account_info(account)?)),
+        6 => return Ok(Box::new(MasterEditionV2::from_account_info(account)?)),
+        _ => return Err(MetadataError::DataTypeMismatch.into()),
+    };
+}
+
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
-pub struct MasterEdition {
+pub struct MasterEditionV2 {
+    pub key: Key,
+
+    pub supply: u64,
+
+    pub max_supply: Option<u64>,
+}
+
+impl MasterEdition for MasterEditionV2 {
+    fn key(&self) -> Key {
+        self.key
+    }
+
+    fn supply(&self) -> u64 {
+        self.supply
+    }
+
+    fn set_supply(&mut self, supply: u64) {
+        self.supply = supply;
+    }
+
+    fn max_supply(&self) -> Option<u64> {
+        self.max_supply
+    }
+
+    fn save(&self, account: &AccountInfo) -> ProgramResult {
+        self.serialize(&mut *account.data.borrow_mut())?;
+        Ok(())
+    }
+}
+
+impl MasterEditionV2 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEditionV2, ProgramError> {
+        let me: MasterEditionV2 = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::MasterEditionV2,
+            MAX_MASTER_EDITION_LEN,
+        )?;
+
+        Ok(me)
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+pub struct MasterEditionV1 {
     pub key: Key,
 
     pub supply: u64,
@@ -120,9 +193,32 @@ pub struct MasterEdition {
     pub one_time_printing_authorization_mint: Pubkey,
 }
 
-impl MasterEdition {
-    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEdition, ProgramError> {
-        let me: MasterEdition = try_from_slice_checked(
+impl MasterEdition for MasterEditionV1 {
+    fn key(&self) -> Key {
+        self.key
+    }
+
+    fn supply(&self) -> u64 {
+        self.supply
+    }
+
+    fn max_supply(&self) -> Option<u64> {
+        self.max_supply
+    }
+
+    fn set_supply(&mut self, supply: u64) {
+        self.supply = supply;
+    }
+
+    fn save(&self, account: &AccountInfo) -> ProgramResult {
+        self.serialize(&mut *account.data.borrow_mut())?;
+        Ok(())
+    }
+}
+
+impl MasterEditionV1 {
+    pub fn from_account_info(a: &AccountInfo) -> Result<MasterEditionV1, ProgramError> {
+        let me: MasterEditionV1 = try_from_slice_checked(
             &a.data.borrow_mut(),
             Key::MasterEditionV1,
             MAX_MASTER_EDITION_LEN,
@@ -175,9 +271,9 @@ pub trait ReservationList {
     fn set_master_edition(&mut self, key: Pubkey);
     fn set_supply_snapshot(&mut self, supply: Option<u64>);
     fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult;
-    fn add_reservations(
+    fn add_reservation(
         &mut self,
-        reservations: Vec<Reservation>,
+        reservation: Reservation,
         offset: u64,
         total_spot_offset: u64,
     ) -> ProgramResult;
@@ -236,9 +332,9 @@ impl ReservationList for ReservationListV2 {
         self.supply_snapshot = supply;
     }
 
-    fn add_reservations(
+    fn add_reservation(
         &mut self,
-        mut reservations: Vec<Reservation>,
+        reservation: Reservation,
         offset: u64,
         total_spot_offset: u64,
     ) -> ProgramResult {
@@ -251,36 +347,23 @@ impl ReservationList for ReservationListV2 {
             })
         }
         if self.reservations.len() > usize_offset {
-            let reservation_length = reservations.len();
+            let replaced_addr = self.reservations[usize_offset].address;
+            let replaced_spots = self.reservations[usize_offset].total_spots;
 
-            let removed_elements: Vec<Reservation> = self
-                .reservations
-                .splice(
-                    usize_offset..usize_offset + reservations.len(),
-                    reservations,
-                )
-                .collect();
-            let existing_res = removed_elements
-                .iter()
-                .find(|r| r.address != solana_program::system_program::id());
-            if let Some(replaced) = existing_res {
-                // If you overwrite yourself and only yourself, allow it.
-                let allowable_edgecase = reservation_length == 1
-                    && self.reservations[usize_offset].address == replaced.address;
-                if !allowable_edgecase {
-                    return Err(MetadataError::TriedToReplaceAnExistingReservation.into());
-                } else {
-                    // Since we will have incremented, decrease in advance so we dont blow the spot check.
-                    // Super hacky but this code is to be deprecated.
-                    self.set_current_reservation_spots(
-                        self.current_reservation_spots
-                            .checked_sub(replaced.total_spots)
-                            .ok_or(MetadataError::NumericalOverflowError)?,
-                    );
-                }
+            if replaced_addr == reservation.address {
+                // Since we will have incremented, decrease in advance so we dont blow the spot check.
+                // Super hacky but this code is to be deprecated.
+                self.set_current_reservation_spots(
+                    self.current_reservation_spots()
+                        .checked_sub(replaced_spots)
+                        .ok_or(MetadataError::NumericalOverflowError)?,
+                );
+            } else if replaced_addr != solana_program::system_program::id() {
+                return Err(MetadataError::TriedToReplaceAnExistingReservation.into());
             }
+            self.reservations[usize_offset] = reservation;
         } else {
-            self.reservations.append(&mut reservations)
+            self.reservations.push(reservation)
         }
 
         if usize_offset != 0
@@ -382,12 +465,17 @@ impl ReservationList for ReservationListV1 {
         self.supply_snapshot = supply;
     }
 
-    fn add_reservations(
-        &mut self,
-        reservations: Vec<Reservation>,
-        _: u64,
-        _: u64,
-    ) -> ProgramResult {
+    fn add_reservation(&mut self, reservation: Reservation, _: u64, _: u64) -> ProgramResult {
+        self.reservations = vec![ReservationV1 {
+            address: reservation.address,
+            spots_remaining: reservation.spots_remaining as u8,
+            total_spots: reservation.total_spots as u8,
+        }];
+
+        Ok(())
+    }
+
+    fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult {
         self.reservations = reservations
             .iter()
             .map(|r| ReservationV1 {
@@ -396,12 +484,6 @@ impl ReservationList for ReservationListV1 {
                 total_spots: r.total_spots as u8,
             })
             .collect();
-
-        Ok(())
-    }
-
-    fn set_reservations(&mut self, reservations: Vec<Reservation>) -> ProgramResult {
-        self.add_reservations(reservations, 0, 0)?;
         Ok(())
     }
 
@@ -441,4 +523,86 @@ pub struct ReservationV1 {
     pub address: Pubkey,
     pub spots_remaining: u8,
     pub total_spots: u8,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditionMarker {
+    pub key: Key,
+    pub ledger: [u8; 31],
+}
+
+impl EditionMarker {
+    pub fn from_account_info(a: &AccountInfo) -> Result<EditionMarker, ProgramError> {
+        let res: EditionMarker = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::EditionMarker,
+            MAX_EDITION_MARKER_SIZE,
+        )?;
+
+        Ok(res)
+    }
+
+    fn get_edition_offset_from_starting_index(edition: u64) -> Result<usize, ProgramError> {
+        Ok(edition
+            .checked_rem(EDITION_MARKER_BIT_SIZE)
+            .ok_or(MetadataError::NumericalOverflowError)? as usize)
+    }
+
+    fn get_index(offset_from_start: usize) -> Result<usize, ProgramError> {
+        let index = offset_from_start
+            .checked_div(8)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+
+        // With only EDITION_MARKER_BIT_SIZE bits, or 31 bytes, we have a max constraint here.
+        if index > 30 {
+            return Err(MetadataError::InvalidEditionIndex.into());
+        }
+
+        Ok(index)
+    }
+
+    fn get_offset_from_right(offset_from_start: usize) -> Result<u32, ProgramError> {
+        // We're saying the left hand side of a u8 is the 0th index so to get a 1 in that 0th index
+        // you need to shift a 1 over 8 spots from the right hand side. To do that you actually
+        // need not 00000001 but 10000000 which you can get by simply multiplying 1 by 2^7, 128 and then ORing
+        // it with the current value.
+        Ok(7 - offset_from_start
+            .checked_rem(8)
+            .ok_or(MetadataError::NumericalOverflowError)? as u32)
+    }
+
+    fn get_index_and_mask(edition: u64) -> Result<(usize, u8), ProgramError> {
+        // How many editions off we are from edition at 0th index
+        let offset_from_start = EditionMarker::get_edition_offset_from_starting_index(edition)?;
+
+        // How many whole u8s we are from the u8 at the 0th index, which basically dividing by 8
+        let index = EditionMarker::get_index(offset_from_start)?;
+
+        // what position in the given u8 bitset are we (remainder math)
+        let my_position_in_index_starting_from_right =
+            EditionMarker::get_offset_from_right(offset_from_start)?;
+
+        Ok((
+            index,
+            u8::pow(2, my_position_in_index_starting_from_right as u32),
+        ))
+    }
+
+    pub fn edition_taken(&self, edition: u64) -> Result<bool, ProgramError> {
+        let (index, mask) = EditionMarker::get_index_and_mask(edition)?;
+
+        // apply mask with bitwise and with a 1 to determine if it is set or not
+        let applied_mask = self.ledger[index] & mask;
+
+        // What remains should not equal 0.
+        Ok(applied_mask != 0)
+    }
+
+    pub fn insert_edition(&mut self, edition: u64) -> ProgramResult {
+        let (index, mask) = EditionMarker::get_index_and_mask(edition)?;
+        // bitwise or a 1 into our position in that position
+        self.ledger[index] = self.ledger[index] | mask;
+        Ok(())
+    }
 }

@@ -1,18 +1,25 @@
 import { Storefront, StorefrontConfig, ArweaveTag } from '@holaplex/storefront';
 import React, { useEffect, useState } from 'react';
 
-const REACT_APP_ARWEAVE_URL = process.env.REACT_APP_ARWEAVE_URL;
+const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
 export const StorefrontContext = React.createContext<StorefrontConfig>({
   storefront: undefined,
 });
 
-export function StorefrontProvider({ children = undefined as any }) {
-  const [storefront, setStorefront] = useState({} as Storefront);
+interface StorefrontProviderChildProps {
+  storefront: Storefront
+}
+
+interface StorefrontProviderProps {
+  children: (props: StorefrontProviderChildProps) => any
+}
+export function StorefrontProvider({ children }: StorefrontProviderProps) {
+  const [storefront, setStorefront] = useState<Storefront>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${REACT_APP_ARWEAVE_URL}/graphql`, {
+    fetch(`${ARWEAVE_URL}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,7 +67,7 @@ export function StorefrontProvider({ children = undefined as any }) {
   
           link.type = 'text/css';
           link.rel = 'stylesheet';
-          link.href = `${REACT_APP_ARWEAVE_URL}/${transaction.id}`;
+          link.href = `${ARWEAVE_URL}/${transaction.id}`;
           // link.href = 'http://localhost:3000/demo-theme.css'
 
           link.onload = () => {
@@ -70,7 +77,6 @@ export function StorefrontProvider({ children = undefined as any }) {
   
           head.appendChild(link);
         }
-
         if (logoURL) {
           const logo = new Image()
           logo.src = logoURL
@@ -83,25 +89,27 @@ export function StorefrontProvider({ children = undefined as any }) {
       });
   }, []);
 
+
   if (loading) {
     return <div />;
   }
 
-  if (storefront.pubkey) {
+  if (storefront) {
+    debugger;
     return (
       <StorefrontContext.Provider
         value={{
           storefront,
         }}
       >
-        {children}
+        {children({ storefront })}
       </StorefrontContext.Provider>
     );
   } else {
     return (
-      <div className="not-found">
+      <h1 className="not-found">
         Claim this storefront on <a href="https://holaplex.com">Holaplex</a>.
-      </div>
+      </h1>
     );
   }
 }

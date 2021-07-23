@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -13,12 +14,12 @@ import {
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
 
-import './index.less';
 import {
   formatTokenAmount,
   Identicon,
   MetaplexModal,
   shortenAddress,
+  useConnection,
   useConnectionConfig,
   fromLamports,
   useMint,
@@ -26,6 +27,7 @@ import {
   AuctionState,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
@@ -89,8 +91,7 @@ export const AuctionView = () => {
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
-
-  const hasDescription = data === undefined || data.description === undefined
+  const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
 
   const items = [
@@ -123,7 +124,6 @@ export const AuctionView = () => {
       <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
-
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
@@ -132,17 +132,30 @@ export const AuctionView = () => {
             </Carousel>
           </div>
           <h6>Number Of Winners</h6>
-          <h1>{winnerCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : winnerCount}</h1>
+          <h1>
+            {winnerCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              winnerCount
+            )}
+          </h1>
           <h6>Number Of NFTs</h6>
-          <h1>{nftCount === undefined ?  <Skeleton paragraph={{ rows: 0 }} /> : nftCount}</h1>
+          <h1>
+            {nftCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              nftCount
+            )}
+          </h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
           <p>
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description || (
-              winnerCount !== undefined && <div style={{ fontStyle: 'italic' }}>
-                No description provided.
-              </div>
-            )}
+            {description ||
+              (winnerCount !== undefined && (
+                <div style={{ fontStyle: 'italic' }}>
+                  No description provided.
+                </div>
+              ))}
           </p>
           {/* {auctionData[id] && (
             <>
@@ -153,7 +166,9 @@ export const AuctionView = () => {
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
+          <h2 className="art-title">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
               <h6>Edition</h6>
@@ -201,6 +216,28 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
   const { wallet } = useWallet();
   const bidder = bid.info.bidderPubkey.toBase58();
   const isme = wallet?.publicKey?.toBase58() === bidder;
+
+  // Get Twitter Handle from address
+  const connection = useConnection();
+  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
+  useEffect(() => {
+    const getTwitterHandle = async (
+      connection: Connection,
+      bidder: PublicKey,
+    ): Promise<string | undefined> => {
+      try {
+        const [twitterHandle] = await getHandleAndRegistryKey(
+          connection,
+          bidder,
+        );
+        setBidderTwitterHandle(twitterHandle);
+      } catch (err) {
+        console.warn(`err`);
+        return undefined;
+      }
+    };
+    getTwitterHandle(connection, bidder);
+  }, [bidderTwitterHandle]);
 
   return (
     <Row
@@ -251,13 +288,21 @@ const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?
             }}
             address={bidder}
           />{' '}
-          {shortenAddress(bidder)}
+          {bidderTwitterHandle ? (
+            <a
+              target="_blank"
+              title={shortenAddress(bidder)}
+              href={`https://twitter.com/${bidderTwitterHandle}`}
+            >{`@${bidderTwitterHandle}`}</a>
+          ) : (
+            shortenAddress(bidder)
+          )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
         </Row>
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
         <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-        ◎{formatTokenAmount(bid.info.lastBid, mint)}
+          ◎{formatTokenAmount(bid.info.lastBid, mint)}
         </span>
       </Col>
     </Row>

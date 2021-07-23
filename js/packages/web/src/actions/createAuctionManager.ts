@@ -8,7 +8,8 @@ import {
   actions,
   Metadata,
   ParsedAccount,
-  MasterEdition,
+  MasterEditionV1,
+  MasterEditionV2,
   SequenceType,
   sendTransactions,
   getSafetyDepositBox,
@@ -21,6 +22,7 @@ import {
   sendTransactionWithRetry,
   findProgramAddress,
   IPartialCreateAuctionArgs,
+  MetadataKey,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -45,29 +47,27 @@ import {
 } from './addTokensToVault';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
-import { validateParticipation } from '../models/metaplex/validateParticipation';
-import { createReservationListForTokens } from './createReservationListsForTokens';
-import { populatePrintingTokens } from './populatePrintingTokens';
+import { deprecatedValidateParticipation } from '../models/metaplex/deprecatedValidateParticipation';
+import { deprecatedCreateReservationListForTokens } from './deprecatedCreateReservationListsForTokens';
+import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens';
 import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
+import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 const { createTokenAccount } = actions;
 
 interface normalPattern {
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }
+
+interface arrayPattern {
+  instructions: TransactionInstruction[][];
+  signers: Keypair[][];
+}
 interface byType {
-  addTokens: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
-  createReservationList: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
-  validateBoxes: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
+  markItemsThatArentMineAsSold: arrayPattern;
+  addTokens: arrayPattern;
+  deprecatedCreateReservationList: arrayPattern;
+  validateBoxes: arrayPattern;
   createVault: normalPattern;
   closeVault: normalPattern;
   makeAuction: normalPattern;
@@ -75,17 +75,14 @@ interface byType {
   startAuction: normalPattern;
   setVaultAndAuctionAuthorities: normalPattern;
   externalPriceAccount: normalPattern;
-  validateParticipation?: normalPattern;
-  buildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
-  populatePrintingTokens: {
-    instructions: Array<TransactionInstruction[]>;
-    signers: Array<Keypair[]>;
-  };
+  deprecatedValidateParticipation?: normalPattern;
+  deprecatedBuildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
+  deprecatedPopulatePrintingTokens: arrayPattern;
 }
 
 export interface SafetyDepositDraft {
   metadata: ParsedAccount<Metadata>;
-  masterEdition?: ParsedAccount<MasterEdition>;
+  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
   edition?: ParsedAccount<Edition>;
   holding: PublicKey;
   printingMintHolding?: PublicKey;
@@ -144,12 +141,12 @@ export async function createAuctionManager(
       settings.winningConfigs,
     );
 
-  // Note that
+  // Only creates for PrintingV1 deprecated configs
   const {
     instructions: populateInstr,
     signers: populateSigners,
     safetyDepositConfigs,
-  } = await populatePrintingTokens(
+  } = await deprecatedPopulatePrintingTokens(
     connection,
     wallet,
     safetyDepositConfigsWithPotentiallyUnsetTokens,
@@ -174,10 +171,11 @@ export async function createAuctionManager(
     safetyDepositTokenStores,
   } = await addTokensToVault(connection, wallet, vault, safetyDepositConfigs);
 
+  // Only creates for deprecated PrintingV1 configs
   const {
     instructions: createReservationInstructions,
     signers: createReservationSigners,
-  } = await createReservationListForTokens(
+  } = await deprecatedCreateReservationListForTokens(
     wallet,
     auctionManager,
     settings,
@@ -185,6 +183,10 @@ export async function createAuctionManager(
   );
 
   let lookup: byType = {
+    markItemsThatArentMineAsSold: await markItemsThatArentMineAsSold(
+      wallet,
+      safetyDepositDrafts,
+    ),
     externalPriceAccount: {
       instructions: epaInstructions,
       signers: epaSigners,
@@ -204,7 +206,7 @@ export async function createAuctionManager(
       externalPriceAccount,
     ),
     addTokens: { instructions: addTokenInstructions, signers: addTokenSigners },
-    createReservationList: {
+    deprecatedCreateReservationList: {
       instructions: createReservationInstructions,
       signers: createReservationSigners,
     },
@@ -223,8 +225,8 @@ export async function createAuctionManager(
       auctionManager,
     ),
     startAuction: await setupStartAuction(wallet, vault),
-    validateParticipation: participationSafetyDepositDraft
-      ? await validateParticipationHelper(
+    deprecatedValidateParticipation: participationSafetyDepositDraft
+      ? await deprecatedValidateParticipationHelper(
           wallet,
           auctionManager,
           whitelistedCreatorsByCreator,
@@ -234,14 +236,16 @@ export async function createAuctionManager(
           accountRentExempt,
         )
       : undefined,
-    buildAndPopulateOneTimeAuthorizationAccount: participationSafetyDepositDraft
-      ? await buildAndPopulateOneTimeAuthorizationAccount(
-          connection,
-          wallet,
-          participationSafetyDepositDraft?.masterEdition?.info
-            .oneTimePrintingAuthorizationMint,
-        )
-      : undefined,
+    deprecatedBuildAndPopulateOneTimeAuthorizationAccount:
+      participationSafetyDepositDraft
+        ? await deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
+            connection,
+            wallet,
+            (
+              participationSafetyDepositDraft?.masterEdition as ParsedAccount<MasterEditionV1>
+            )?.info.oneTimePrintingAuthorizationMint,
+          )
+        : undefined,
     validateBoxes: await validateBoxes(
       wallet,
       whitelistedCreatorsByCreator,
@@ -250,46 +254,55 @@ export async function createAuctionManager(
       safetyDepositConfigs.filter(
         c =>
           !participationSafetyDepositDraft ||
-          c.draft.metadata.pubkey.toBase58() !==
-            participationSafetyDepositDraft.metadata.pubkey.toBase58(),
+          // Only V1s need to skip normal validation and use special endpoint
+          (participationSafetyDepositDraft.masterEdition?.info.key ==
+            MetadataKey.MasterEditionV1 &&
+            !c.draft.metadata.pubkey.equals(
+              participationSafetyDepositDraft.metadata.pubkey,
+            )) ||
+          participationSafetyDepositDraft.masterEdition?.info.key ==
+            MetadataKey.MasterEditionV2,
       ),
       safetyDepositTokenStores,
       settings,
     ),
-    populatePrintingTokens: {
+    deprecatedPopulatePrintingTokens: {
       instructions: populateInstr,
       signers: populateSigners,
     },
   };
 
   let signers: Keypair[][] = [
+    ...lookup.markItemsThatArentMineAsSold.signers,
     lookup.externalPriceAccount.signers,
-    lookup.buildAndPopulateOneTimeAuthorizationAccount?.signers || [],
-    ...lookup.populatePrintingTokens.signers,
+    lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount?.signers || [],
+    ...lookup.deprecatedPopulatePrintingTokens.signers,
     lookup.createVault.signers,
     ...lookup.addTokens.signers,
-    ...lookup.createReservationList.signers,
+    ...lookup.deprecatedCreateReservationList.signers,
     lookup.closeVault.signers,
     lookup.makeAuction.signers,
     lookup.initAuctionManager.signers,
     lookup.setVaultAndAuctionAuthorities.signers,
-    lookup.validateParticipation?.signers || [],
+    lookup.deprecatedValidateParticipation?.signers || [],
     ...lookup.validateBoxes.signers,
     lookup.startAuction.signers,
   ];
   const toRemoveSigners: Record<number, boolean> = {};
   let instructions: TransactionInstruction[][] = [
+    ...lookup.markItemsThatArentMineAsSold.instructions,
     lookup.externalPriceAccount.instructions,
-    lookup.buildAndPopulateOneTimeAuthorizationAccount?.instructions || [],
-    ...lookup.populatePrintingTokens.instructions,
+    lookup.deprecatedBuildAndPopulateOneTimeAuthorizationAccount
+      ?.instructions || [],
+    ...lookup.deprecatedPopulatePrintingTokens.instructions,
     lookup.createVault.instructions,
     ...lookup.addTokens.instructions,
-    ...lookup.createReservationList.instructions,
+    ...lookup.deprecatedCreateReservationList.instructions,
     lookup.closeVault.instructions,
     lookup.makeAuction.instructions,
     lookup.initAuctionManager.instructions,
     lookup.setVaultAndAuctionAuthorities.instructions,
-    lookup.validateParticipation?.instructions || [],
+    lookup.deprecatedValidateParticipation?.instructions || [],
     ...lookup.validateBoxes.instructions,
     lookup.startAuction.instructions,
   ].filter((instr, i) => {
@@ -367,11 +380,12 @@ async function buildSafetyDepositArray(
     winningConfigs.forEach(ow => {
       ow.items.forEach(it => {
         if (it.safetyDepositBoxIndex === i) {
-          if (it.winningConfigType !== WinningConfigType.Printing)
+          if (it.winningConfigType !== WinningConfigType.PrintingV1) {
             nonPrintingConfigs.push(it);
-          // we may also have an auction where we are selling prints of the master too as secondary prizes
-          else if (it.winningConfigType === WinningConfigType.Printing)
+            // we may also have an auction where we are selling prints of the master too as secondary prizes
+          } else if (it.winningConfigType === WinningConfigType.PrintingV1) {
             printingConfigs.push(it);
+          }
         }
       });
     });
@@ -392,10 +406,14 @@ async function buildSafetyDepositArray(
       });
     }
 
-    if (printingTotal > 0 && w.masterEdition?.info.printingMint) {
+    if (
+      printingTotal > 0 &&
+      (w.masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint
+    ) {
       safetyDepositConfig.push({
         tokenAccount: w.printingMintHolding,
-        tokenMint: w.masterEdition?.info.printingMint,
+        tokenMint: (w.masterEdition as ParsedAccount<MasterEditionV1>)?.info
+          .printingMint,
         amount: new BN(printingTotal),
         draft: w,
       });
@@ -406,23 +424,35 @@ async function buildSafetyDepositArray(
     participationSafetyDepositDraft &&
     participationSafetyDepositDraft.masterEdition
   ) {
-    safetyDepositConfig.push({
-      tokenAccount: (
-        await findProgramAddress(
-          [
-            wallet.publicKey.toBuffer(),
-            programIds().token.toBuffer(),
-            participationSafetyDepositDraft.masterEdition?.info.oneTimePrintingAuthorizationMint.toBuffer(),
-          ],
-          programIds().associatedToken,
-        )
-      )[0],
-      tokenMint:
-        participationSafetyDepositDraft.masterEdition?.info
-          .oneTimePrintingAuthorizationMint,
-      amount: new BN(1),
-      draft: participationSafetyDepositDraft,
-    });
+    if (
+      participationSafetyDepositDraft.masterEdition.info.key ==
+      MetadataKey.MasterEditionV1
+    ) {
+      const me =
+        participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>;
+      safetyDepositConfig.push({
+        tokenAccount: (
+          await findProgramAddress(
+            [
+              wallet.publicKey.toBuffer(),
+              programIds().token.toBuffer(),
+              me?.info.oneTimePrintingAuthorizationMint.toBuffer(),
+            ],
+            programIds().associatedToken,
+          )
+        )[0],
+        tokenMint: me?.info.oneTimePrintingAuthorizationMint,
+        amount: new BN(1),
+        draft: participationSafetyDepositDraft,
+      });
+    } else {
+      safetyDepositConfig.push({
+        tokenAccount: participationSafetyDepositDraft.holding,
+        tokenMint: participationSafetyDepositDraft.metadata.info.mint,
+        amount: new BN(1),
+        draft: participationSafetyDepositDraft,
+      });
+    }
   }
 
   return safetyDepositConfig;
@@ -487,7 +517,7 @@ async function setupStartAuction(
   return { instructions, signers };
 }
 
-async function validateParticipationHelper(
+async function deprecatedValidateParticipationHelper(
   wallet: any,
   auctionManager: PublicKey,
   whitelistedCreatorsByCreator: Record<
@@ -517,16 +547,23 @@ async function validateParticipationHelper(
 
   const { auctionManagerKey } = await getAuctionKeys(vault);
 
-  if (participationSafetyDepositDraft.masterEdition) {
+  // V2s do not need to call this special endpoint.
+  if (
+    participationSafetyDepositDraft.masterEdition &&
+    participationSafetyDepositDraft.masterEdition.info.key ==
+      MetadataKey.MasterEditionV1
+  ) {
+    const me =
+      participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>;
     const printingTokenHoldingAccount = createTokenAccount(
       instructions,
       wallet.publicKey,
       accountRentExempt,
-      participationSafetyDepositDraft.masterEdition.info.printingMint,
+      me.info.printingMint,
       auctionManagerKey,
       signers,
     );
-    await validateParticipation(
+    await deprecatedValidateParticipation(
       auctionManager,
       participationSafetyDepositDraft.metadata.pubkey,
       participationSafetyDepositDraft.masterEdition?.pubkey,
@@ -536,8 +573,7 @@ async function validateParticipationHelper(
       store,
       await getSafetyDepositBoxAddress(
         vault,
-        participationSafetyDepositDraft.masterEdition.info
-          .oneTimePrintingAuthorizationMint,
+        me.info.oneTimePrintingAuthorizationMint,
       ),
       tokenStore,
       vault,
@@ -584,7 +620,6 @@ async function validateBoxes(
   if (!store) {
     throw new Error('Store not initialized');
   }
-
   let signers: Keypair[][] = [];
   let instructions: TransactionInstruction[][] = [];
 
@@ -601,62 +636,63 @@ async function validateBoxes(
       ow => ow.safetyDepositBoxIndex === i,
     );
 
-    if (winningConfigItem) {
-      if (
-        winningConfigItem.winningConfigType === WinningConfigType.Printing &&
-        safetyDeposits[i].draft.masterEdition &&
-        safetyDeposits[i].draft.masterEdition?.info.printingMint
-      )
-        safetyDepositBox = await getSafetyDepositBox(
-          vault,
-          //@ts-ignore
-          safetyDeposits[i].draft.masterEdition.info.printingMint,
-        );
-      else
-        safetyDepositBox = await getSafetyDepositBox(
-          vault,
-          safetyDeposits[i].draft.metadata.info.mint,
-        );
-      const edition: PublicKey = await getEdition(
+    const me = safetyDeposits[i].draft
+      .masterEdition as ParsedAccount<MasterEditionV1>;
+    if (
+      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1 &&
+      me &&
+      me.info.printingMint
+    ) {
+      safetyDepositBox = await getSafetyDepositBox(
+        vault,
+        //@ts-ignore
+        safetyDeposits[i].draft.masterEdition.info.printingMint,
+      );
+    } else {
+      safetyDepositBox = await getSafetyDepositBox(
+        vault,
         safetyDeposits[i].draft.metadata.info.mint,
       );
-
-      const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data
-        .creators
-        ? await findValidWhitelistedCreator(
-            whitelistedCreatorsByCreator,
-            //@ts-ignore
-            safetyDeposits[i].draft.metadata.info.data.creators,
-          )
-        : undefined;
-
-      await validateSafetyDepositBox(
-        vault,
-        safetyDeposits[i].draft.metadata.pubkey,
-        safetyDepositBox,
-        safetyDepositTokenStores[i],
-        //@ts-ignore
-        winningConfigItem.winningConfigType === WinningConfigType.Printing
-          ? safetyDeposits[i].draft.masterEdition?.info.printingMint
-          : safetyDeposits[i].draft.metadata.info.mint,
-        wallet.publicKey,
-        wallet.publicKey,
-        wallet.publicKey,
-        tokenInstructions,
-        edition,
-        whitelistedCreator,
-        store,
-        safetyDeposits[i].draft.masterEdition?.info.printingMint,
-        safetyDeposits[i].draft.masterEdition ? wallet.publicKey : undefined,
-      );
     }
+    const edition: PublicKey = await getEdition(
+      safetyDeposits[i].draft.metadata.info.mint,
+    );
+
+    const whitelistedCreator = safetyDeposits[i].draft.metadata.info.data
+      .creators
+      ? await findValidWhitelistedCreator(
+          whitelistedCreatorsByCreator,
+          //@ts-ignore
+          safetyDeposits[i].draft.metadata.info.data.creators,
+        )
+      : undefined;
+
+    await validateSafetyDepositBox(
+      vault,
+      safetyDeposits[i].draft.metadata.pubkey,
+      safetyDepositBox,
+      safetyDepositTokenStores[i],
+      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1
+        ? me?.info.printingMint
+        : safetyDeposits[i].draft.metadata.info.mint,
+      wallet.publicKey,
+      wallet.publicKey,
+      wallet.publicKey,
+      tokenInstructions,
+      edition,
+      whitelistedCreator,
+      store,
+      me?.info.printingMint,
+      safetyDeposits[i].draft.masterEdition ? wallet.publicKey : undefined,
+    );
+
     signers.push(tokenSigners);
     instructions.push(tokenInstructions);
   }
   return { instructions, signers };
 }
 
-async function buildAndPopulateOneTimeAuthorizationAccount(
+async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
   wallet: any,
   oneTimePrintingAuthorizationMint: PublicKey | undefined,

@@ -6,8 +6,8 @@ use {
         instruction::EmptyPaymentAccountArgs,
         state::{AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE, PREFIX},
         utils::{
-            assert_derivation, assert_initialized, assert_owned_by, assert_rent_exempt,
-            create_or_allocate_account_raw, spl_token_transfer,
+            assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
+            assert_rent_exempt, create_or_allocate_account_raw, spl_token_transfer,
         },
     },
     borsh::BorshSerialize,
@@ -22,9 +22,8 @@ use {
     },
     spl_auction::processor::AuctionData,
     spl_token::state::Account,
-    spl_token_metadata::state::{MasterEdition, Metadata},
+    spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::SafetyDepositBox,
-    std::str::FromStr,
 };
 
 fn assert_winning_config_safety_deposit_validity(
@@ -78,14 +77,11 @@ fn assert_destination_ownership_validity(
 
                 // Let's avoid importing the entire ATA library here just to get a helper and an ID.
                 // Assert destination is, in fact, an ATA.
-                assert_derivation(
-                    &Pubkey::from_str("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").unwrap(),
+                assert_is_ata(
                     destination_info,
-                    &[
-                        creator.address.as_ref(),
-                        &store.token_program.as_ref(),
-                        &destination.mint.as_ref(),
-                    ],
+                    &creator.address,
+                    &store.token_program,
+                    &destination.mint,
                 )?;
             } else {
                 return Err(MetaplexError::InvalidCreatorIndex.into());
@@ -362,11 +358,18 @@ pub fn process_empty_payment_account(
 
     // assert that the metadata sent up is the metadata in the safety deposit
     if metadata.mint != safety_deposit.token_mint {
-        // Could be a limited edition, in which case printing tokens or auth tokens were offered, not the original.
-        let master_edition: MasterEdition = MasterEdition::from_account_info(master_edition_info)?;
-        if master_edition.printing_mint != safety_deposit.token_mint
-            && master_edition.one_time_printing_authorization_mint != safety_deposit.token_mint
+        if master_edition_info.data.borrow()[0]
+            == spl_token_metadata::state::Key::MasterEditionV1 as u8
         {
+            // Could be a limited edition, in which case printing tokens or auth tokens were offered, not the original.
+            let master_edition: MasterEditionV1 =
+                MasterEditionV1::from_account_info(master_edition_info)?;
+            if master_edition.printing_mint != safety_deposit.token_mint
+                && master_edition.one_time_printing_authorization_mint != safety_deposit.token_mint
+            {
+                return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
+            }
+        } else {
             return Err(MetaplexError::SafetyDepositBoxMetadataMismatch.into());
         }
     }

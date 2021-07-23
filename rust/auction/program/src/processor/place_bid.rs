@@ -228,18 +228,6 @@ pub fn place_bid<'r, 'b: 'r>(
         return Err(AuctionError::InvalidState.into());
     }
 
-    // Can't bid smaller than the minimum price.
-    if let PriceFloor::MinimumPrice(min) = auction.price_floor {
-        msg!(
-            "Amount is too small: {:?}, compared to price floor of {:?}",
-            args.amount,
-            min[0]
-        );
-        if args.amount < min[0] {
-            return Err(AuctionError::BidTooSmall.into());
-        }
-    }
-
     let bump_authority_seeds = &[
         PREFIX.as_bytes(),
         program_id.as_ref(),

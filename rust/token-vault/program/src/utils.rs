@@ -262,3 +262,15 @@ pub fn try_from_slice_checked<T: BorshDeserialize>(
 
     Ok(result)
 }
+
+pub fn assert_derivation(
+    program_id: &Pubkey,
+    account: &AccountInfo,
+    path: &[&[u8]],
+) -> Result<u8, ProgramError> {
+    let (key, bump) = Pubkey::find_program_address(&path, program_id);
+    if key != *account.key {
+        return Err(VaultError::DerivedKeyInvalid.into());
+    }
+    Ok(bump)
+}
