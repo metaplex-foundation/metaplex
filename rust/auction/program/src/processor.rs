@@ -102,10 +102,10 @@ pub struct AuctionDataExtended {
     // Unimplemented fields
     /// Tick size
     pub tick_size: Option<u64>,
-    /// gap_tick_size_percentage - two decimal points
-    pub gap_tick_size_percentage: Option<u8>,
     /// instant sale price
     pub instant_sale_price: Option<u64>,
+    /// gap_tick_size_percentage - two decimal points
+    pub gap_tick_size_percentage: Option<u8>,
 }
 
 impl AuctionDataExtended {
@@ -117,6 +117,37 @@ impl AuctionDataExtended {
         let auction_extended: AuctionDataExtended = try_from_slice_unchecked(&a.data.borrow_mut())?;
 
         Ok(auction_extended)
+    }
+
+    pub fn get_instant_sale_price<'a>(data: &'a Ref<'a, &'a mut [u8]>) -> Option<u64> {
+        if let Some(idx) = Self::find_instant_sale_beginning(data) {
+            Some(u64::from_le_bytes(*array_ref![
+                data,
+                idx,
+                8
+            ]))
+        } else {
+            None
+        }
+    }
+
+    fn find_instant_sale_beginning<'a>(data: &'a Ref<'a, &'a mut [u8]>) -> Option<usize> {
+        // total_uncancelled_bids + tick_size Option
+        let mut instant_sale_beginning = 8;
+
+        // check if tick_size has some value
+        if data[instant_sale_beginning] == 1 {
+            instant_sale_beginning += 9
+        } else {
+            instant_sale_beginning += 1;
+        }
+
+        // check if instant_sale_price has some value
+        if data[instant_sale_beginning] == 1 {
+            Some(instant_sale_beginning+1)
+        } else {
+            None
+        }
     }
 }
 
@@ -239,6 +270,37 @@ impl AuctionData {
             bid_state_beginning + (num_elements - idx - 1) * BID_LENGTH,
             32
         ])
+    }
+
+    pub fn get_winner_bid_amount_at(a: &AccountInfo, idx: usize) -> Option<u64> {
+        let (bid_state_beginning, num_elements, max) = AuctionData::get_vec_info(a);
+        match AuctionData::get_winner_bid_amount_at_inner(
+            &a.data.borrow(),
+            idx,
+            bid_state_beginning,
+            num_elements,
+            max,
+        ) {
+            Some(bid_amount) => Some(bid_amount),
+            None => None,
+        }
+    }
+
+    fn get_winner_bid_amount_at_inner<'a>(
+        data: &'a Ref<'a, &'a mut [u8]>,
+        idx: usize,
+        bid_state_beginning: usize,
+        num_elements: usize,
+        max: usize,
+    ) -> Option<u64> {
+        if idx + 1 > num_elements || idx + 1 > max {
+            return None;
+        }
+        Some(u64::from_le_bytes(*array_ref![
+            data,
+            bid_state_beginning + (num_elements - idx - 1) * BID_LENGTH + 32,
+            8
+        ]))
     }
 
     pub fn from_account_info(a: &AccountInfo) -> Result<AuctionData, ProgramError> {

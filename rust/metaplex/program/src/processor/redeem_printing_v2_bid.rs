@@ -200,6 +200,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let vault_info = next_account_info(account_info_iter)?;
     let _fraction_mint_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
     let payer_info = next_account_info(account_info_iter)?;
@@ -248,6 +249,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,
