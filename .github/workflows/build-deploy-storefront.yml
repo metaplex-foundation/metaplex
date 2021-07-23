@@ -23,6 +23,7 @@ jobs:
           CI: "false"
           NEXT_PUBLIC_ARWEAVE_URL: ${{ secrets.NEXT_PUBLIC_ARWEAVE_URL }}
       - uses: aws-actions/configure-aws-credentials@v1
+        name: Upload to s3
         working-directory: js/packages/web
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
