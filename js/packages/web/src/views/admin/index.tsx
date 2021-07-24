@@ -24,7 +24,6 @@ import {
 import { Connection, PublicKey } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WalletAdapter } from '@solana/wallet-base';
-import './index.less';
 import { useMemo } from 'react';
 import {
   convertMasterEditions,
@@ -277,6 +276,9 @@ function InnerAdminView({
         </Row>
       </Col>
 
+      {/*
+        Feature not enabled YET<>>>>>> @bhgames <3
+
       <h1>
         You have {filteredMetadata?.available.length} MasterEditionV1s that can
         be converted right now and {filteredMetadata?.unavailable.length} still
@@ -300,7 +302,7 @@ function InnerAdminView({
             {loading ? <Spin /> : <span>Convert Eligible Master Editions</span>}
           </Button>
         </Row>
-      </Col>
+      </Col> */}
     </Content>
   );
 }

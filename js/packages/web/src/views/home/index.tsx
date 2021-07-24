@@ -5,7 +5,6 @@ import Masonry from 'react-masonry-css';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
 
-import './index.less';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
@@ -105,13 +104,13 @@ export const HomeView = () => {
                 return;
               }
 
-              const id = m.auction.pubkey.toBase58();
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -143,30 +142,59 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {!store && !isLoading && <>
-        {!CURRENT_STORE && <p>Store has not been configured please set <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet inside <em>packages/web/.env</em> and restart yarn</p>}
-        {CURRENT_STORE && !wallet?.publicKey && <p><Button type="primary" className="app-btn" onClick={connect}>Connect</Button> to configure store.</p>}
-        {CURRENT_STORE && wallet?.publicKey && <>
-          <p>Initializing store will allow you to control list of creators.</p>
+      {!store && !isLoading && (
+        <>
+          {!CURRENT_STORE && (
+            <p>
+              Store has not been configured please set{' '}
+              <em>REACT_APP_STORE_OWNER_ADDRESS_ADDRESS</em> to admin wallet
+              inside <em>packages/web/.env</em> and restart yarn
+            </p>
+          )}
+          {CURRENT_STORE && !wallet?.publicKey && (
+            <p>
+              <Button type="primary" className="app-btn" onClick={connect}>
+                Connect
+              </Button>{' '}
+              to configure store.
+            </p>
+          )}
+          {CURRENT_STORE && wallet?.publicKey && (
+            <>
+              <p>
+                Initializing store will allow you to control list of creators.
+              </p>
 
-          <Button className="app-btn" type="primary" loading={isInitalizingStore} disabled={!CURRENT_STORE} onClick={async () => {
-            if(!wallet?.publicKey) {
-              return;
-            }
+              <Button
+                className="app-btn"
+                type="primary"
+                loading={isInitalizingStore}
+                disabled={!CURRENT_STORE}
+                onClick={async () => {
+                  if (!wallet?.publicKey) {
+                    return;
+                  }
 
-            setIsInitalizingStore(true);
+                  setIsInitalizingStore(true);
 
-            await saveAdmin(connection, wallet, false, [new WhitelistedCreator({
-              address: wallet?.publicKey,
-              activated: true,
-            })]);
+                  await saveAdmin(connection, wallet, false, [
+                    new WhitelistedCreator({
+                      address: wallet?.publicKey,
+                      activated: true,
+                    }),
+                  ]);
 
-            history.push('/admin');
+                  history.push('/admin');
 
-            window.location.reload();
-          }}>Init Store</Button>
-        </>}
-      </>}
+                  window.location.reload();
+                }}
+              >
+                Init Store
+              </Button>
+            </>
+          )}
+        </>
+      )}
       <PreSaleBanner auction={heroAuction} />
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -196,7 +224,9 @@ export const HomeView = () => {
                     {endedAuctions}
                   </TabPane>
                   )}
-                  // Show all participated live and ended auctions except heroauction
+                  {
+                    // Show all participated live and ended auctions except hero auction
+                  }
                   {connected && (
                     <TabPane
                       tab={<span className="tab-title">Participated</span>}

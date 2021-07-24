@@ -25,7 +25,6 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
-import './index.less';
 import { WalletAdapter } from '@solana/wallet-base';
 interface NotificationCard {
   id: string;

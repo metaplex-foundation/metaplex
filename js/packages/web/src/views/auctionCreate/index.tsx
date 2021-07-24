@@ -18,7 +18,6 @@ import { ArtCard } from './../../components/ArtCard';
 import { QUOTE_MINT } from './../../constants';
 import { Confetti } from './../../components/Confetti';
 import { ArtSelector } from './artSelector';
-import './../styles.less';
 import {
   MAX_METADATA_LEN,
   useConnection,
@@ -52,7 +51,7 @@ import {
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
 import BN from 'bn.js';
-import { ZERO } from '@oyster/common/dist/lib/constants';
+import { constants } from '@oyster/common';
 import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
 import { useMeta } from '../../contexts';
@@ -61,6 +60,7 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Step } = Steps;
+const { ZERO } = constants;
 
 export enum AuctionCategory {
   Limited,
