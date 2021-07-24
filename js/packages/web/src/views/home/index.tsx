@@ -3,7 +3,7 @@ import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 
 import { PreSaleBanner } from '../../components/PreSaleBanner';
-import { AuctionViewState, useAuctions } from '../../hooks';
+import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
 
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link, useHistory } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { programIds, useConnection, useWallet } from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 
+
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
@@ -22,6 +23,7 @@ export enum LiveAuctionViewState {
   All = '0',
   Participated = '1',
   Ended = '2',
+  Resale = '3',
 };
 
 export const HomeView = () => {
@@ -40,30 +42,55 @@ export const HomeView = () => {
     500: 1,
   };
 
+  // Check if the auction is primary sale or not
+  const checkPrimarySale = (auc:AuctionView) => {
+    var flag = 0;
+    auc.items.forEach(i => 
+      {
+        i.forEach(j => { 
+          if (j.metadata.info.primarySaleHappened == true) {
+            flag = 1;
+            return true;
+          }})
+        if (flag == 1) return true;
+      })
+      if (flag == 1) return true; else return false;
+  };
+
+  const resaleAuctions = auctions.filter(m => checkPrimarySale(m) == true);
+
+  // Removed resales from live auctions
+  const liveAuctions = auctions
+  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
+  .filter(a => !resaleAuctions.includes(a));
+
+  let items = liveAuctions;
+
+  switch (activeKey) {
+      case LiveAuctionViewState.All:
+        items = liveAuctions;
+        break;
+      case LiveAuctionViewState.Participated:
+        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58());
+        break;
+      case LiveAuctionViewState.Resale:
+        items = resaleAuctions;
+        break;
+      case LiveAuctionViewState.Ended:
+        items = auctionsEnded;
+        break;
+  }
+
   const heroAuction = useMemo(
     () =>
       auctions.filter(a => {
         // const now = moment().unix();
-        return !a.auction.info.ended();
+        return !a.auction.info.ended() && !resaleAuctions.includes(a);
         // filter out auction for banner that are further than 30 days in the future
         // return Math.floor(delta / 86400) <= 30;
       })?.[0],
     [auctions],
   );
-
-  const liveAuctions = auctions.sort(
-    (a, b) =>
-      a.auction.info.endedAt
-        ?.sub(b.auction.info.endedAt || new BN(0))
-        .toNumber() || 0,
-  );
-
-  const items =
-    activeKey === LiveAuctionViewState.All
-      ? liveAuctions
-      : activeKey === LiveAuctionViewState.Participated ?
-      liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58()):
-      auctionsEnded;
 
   const liveAuctionsView = (
     <Masonry
@@ -172,7 +199,7 @@ export const HomeView = () => {
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length > 1 && (<Row>
+            {liveAuctions.length >= 0 && (<Row>
               <Tabs activeKey={activeKey}
                   onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
                   <TabPane
@@ -181,6 +208,14 @@ export const HomeView = () => {
                   >
                     {liveAuctionsView}
                   </TabPane>
+                  {auctionsEnded.length > 0 && (
+                  <TabPane
+                    tab={<span className="tab-title">Secondary Marketplace</span>}
+                    key={LiveAuctionViewState.Resale}
+                  >
+                    {liveAuctionsView}
+                  </TabPane>
+                  )}
                   {auctionsEnded.length > 0 && (
                   <TabPane
                     tab={<span className="tab-title">Ended Auctions</span>}
