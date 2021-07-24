@@ -418,6 +418,10 @@ pub enum MetaplexError {
     /// Winner index not found in safety deposit config ranges
     #[error("Winner index not found in safety deposit config ranges")]
     WinnerIndexNotFound,
+
+    /// Currently metaplex auctions are limited to a single participation prize
+    #[error("Currently metaplex auctions are limited to a single participation prize")]
+    AlreadyHasOneParticipationPrize,
 }
 
 impl PrintProgramError for MetaplexError {

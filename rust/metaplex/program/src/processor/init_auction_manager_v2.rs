@@ -2,7 +2,8 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManagerStatus, AuctionManagerV2, Key, Store, MAX_AUCTION_MANAGER_V2_SIZE, PREFIX,
+            AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key, Store,
+            TupleNumericType, MAX_AUCTION_MANAGER_V2_SIZE, PREFIX, TOTALS,
         },
         utils::{
             assert_derivation, assert_initialized, assert_owned_by, create_or_allocate_account_raw,
@@ -98,10 +99,13 @@ pub fn assert_common_checks(
 pub fn process_init_auction_manager_v2(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
+    amount_type: TupleNumericType,
+    length_type: TupleNumericType,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
     let auction_manager_info = next_account_info(account_info_iter)?;
+    let auction_token_tracker_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
@@ -146,6 +150,48 @@ pub fn process_init_auction_manager_v2(
     auction_manager.state.bids_pushed_to_accept_payment = 0;
 
     auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
+
+    if !auction_token_tracker_info.data_is_empty() {
+        return Err(ProgramError::AccountAlreadyInitialized);
+    } else {
+        let token_bump = assert_derivation(
+            program_id,
+            auction_token_tracker_info,
+            &[
+                PREFIX.as_bytes(),
+                &program_id.as_ref(),
+                auction_manager_info.key.as_ref(),
+                TOTALS.as_bytes(),
+            ],
+        )?;
+
+        let token_type_tracker = AuctionWinnerTokenTypeTracker {
+            key: Key::AuctionWinnerTokenTypeTrackerV1,
+            amount_type,
+            length_type,
+            amount_ranges: vec![],
+        };
+
+        let token_seeds = &[
+            PREFIX.as_bytes(),
+            &program_id.as_ref(),
+            auction_manager_info.key.as_ref(),
+            TOTALS.as_bytes(),
+            &[token_bump],
+        ];
+
+        create_or_allocate_account_raw(
+            *program_id,
+            auction_token_tracker_info,
+            rent_info,
+            system_info,
+            payer_info,
+            token_type_tracker.created_size(),
+            token_seeds,
+        )?;
+
+        token_type_tracker.save(&mut auction_token_tracker_info);
+    }
 
     Ok(())
 }

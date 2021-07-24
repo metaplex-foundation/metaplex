@@ -9,11 +9,12 @@ use {
         pubkey::Pubkey,
     },
     spl_auction::processor::AuctionData,
-    std::cell::Ref,
+    std::cell::{Ref, RefMut},
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
-pub const BASE_AUCTION_TOTAL_SIZE: usize = 1 + 1 + 1 + 4;
+pub const TOTALS: &str = "totals";
+pub const BASE_TRACKER_SIZE: usize = 1 + 1 + 1 + 4;
 
 pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
 32 + // store
@@ -21,6 +22,7 @@ pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
 32 + // auction
 32 + // vault
 32 + // accept_payment
+1 + // has participation
 1 + //status
 8 + // winning configs validated
 200; // padding
@@ -59,7 +61,7 @@ pub enum Key {
     SafetyDepositConfigV1,
     AuctionManagerV2,
     BidRedemptionTicketV2,
-    AuctionTotalsV1,
+    AuctionWinnerTokenTypeTrackerV1,
 }
 
 pub struct CommonWinningIndexChecks<'a> {
@@ -424,6 +426,8 @@ pub struct AuctionManagerStateV2 {
     pub safety_config_items_validated: u64,
     /// how many bids have been pushed to accept payment
     pub bids_pushed_to_accept_payment: u64,
+
+    pub has_participation: bool,
 }
 
 #[repr(C)]
@@ -663,6 +667,34 @@ fn get_number_from_data(data: &Ref<&mut [u8]>, data_type: TupleNumericType, offs
         TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
         TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
     };
+}
+
+fn write_amount_type(
+    data: &RefMut<&mut [u8]>,
+    amount_type: TupleNumericType,
+    offset: usize,
+    range: AmountRange,
+) {
+    match amount_type {
+        TupleNumericType::U8 => data[offset] = range.0 as u8,
+        TupleNumericType::U16 => *array_mut_ref![data, offset, 2] = (range.0 as u16).to_le_bytes(),
+        TupleNumericType::U32 => *array_mut_ref![data, offset, 4] = (range.0 as u32).to_le_bytes(),
+        TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.0.to_le_bytes(),
+    }
+}
+
+fn write_length_type(
+    data: &RefMut<&mut [u8]>,
+    length_type: TupleNumericType,
+    offset: usize,
+    range: AmountRange,
+) {
+    match length_type {
+        TupleNumericType::U8 => data[offset] = range.1 as u8,
+        TupleNumericType::U16 => *array_mut_ref![data, offset, 2] = (range.1 as u16).to_le_bytes(),
+        TupleNumericType::U32 => *array_mut_ref![data, offset, 4] = (range.1 as u32).to_le_bytes(),
+        TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.1.to_le_bytes(),
+    }
 }
 
 impl SafetyDepositConfig {
@@ -911,27 +943,9 @@ impl SafetyDepositConfig {
             (self.amount_ranges.len() as u32).to_le_bytes();
         let offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
         for range in self.amount_ranges {
-            match self.amount_type {
-                TupleNumericType::U8 => data[offset] = range.0 as u8,
-                TupleNumericType::U16 => {
-                    *array_mut_ref![data, offset, 2] = (range.0 as u16).to_le_bytes()
-                }
-                TupleNumericType::U32 => {
-                    *array_mut_ref![data, offset, 4] = (range.0 as u32).to_le_bytes()
-                }
-                TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.0.to_le_bytes(),
-            }
+            write_amount_type(&data, self.amount_type, offset, range);
             offset += self.amount_type as usize;
-            match self.length_type {
-                TupleNumericType::U8 => data[offset] = range.1 as u8,
-                TupleNumericType::U16 => {
-                    *array_mut_ref![data, offset, 2] = (range.1 as u16).to_le_bytes()
-                }
-                TupleNumericType::U32 => {
-                    *array_mut_ref![data, offset, 4] = (range.1 as u32).to_le_bytes()
-                }
-                TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.1.to_le_bytes(),
-            }
+            write_length_type(&data, self.length_type, offset, range);
             offset += self.length_type as usize;
         }
 
@@ -1010,7 +1024,7 @@ impl SafetyDepositConfig {
 
 #[repr(C)]
 #[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
-pub struct AuctionTotals {
+pub struct AuctionWinnerTokenTypeTracker {
     pub key: Key,
     pub amount_type: TupleNumericType,
     pub length_type: TupleNumericType,
@@ -1018,26 +1032,28 @@ pub struct AuctionTotals {
     pub amount_ranges: Vec<AmountRange>,
 }
 
-impl AuctionTotals {
+impl AuctionWinnerTokenTypeTracker {
     pub fn created_size(&self) -> usize {
-        return BASE_AUCTION_TOTAL_SIZE
+        return BASE_TRACKER_SIZE
             + (self.amount_type as usize + self.length_type as usize) * self.amount_ranges.len();
     }
-    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionTotals, ProgramError> {
+    pub fn from_account_info(
+        a: &AccountInfo,
+    ) -> Result<AuctionWinnerTokenTypeTracker, ProgramError> {
         let data = &mut a.data.borrow();
-        if a.data_len() < BASE_AUCTION_TOTAL_SIZE {
+        if a.data_len() < BASE_TRACKER_SIZE {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
-        if data[0] != Key::AuctionTotalsV1 as u8 {
+        if data[0] != Key::AuctionWinnerTokenTypeTrackerV1 as u8 {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
-        let amount_type = AuctionTotals::get_amount_type(a)?;
+        let amount_type = AuctionWinnerTokenTypeTracker::get_amount_type(a)?;
 
-        let length_type = AuctionTotals::get_length_type(a)?;
+        let length_type = AuctionWinnerTokenTypeTracker::get_length_type(a)?;
 
-        let length_of_array = AuctionTotals::get_amount_range_len(a);
+        let length_of_array = AuctionWinnerTokenTypeTracker::get_amount_range_len(a);
 
         let mut offset: usize = 7;
         let amount_ranges = vec![];
@@ -1052,8 +1068,8 @@ impl AuctionTotals {
             offset += length_type as usize;
         }
 
-        Ok(AuctionTotals {
-            key: Key::AuctionTotalsV1,
+        Ok(AuctionWinnerTokenTypeTracker {
+            key: Key::AuctionWinnerTokenTypeTrackerV1,
             amount_type,
             length_type,
             amount_ranges,
@@ -1179,6 +1195,21 @@ impl AuctionTotals {
 
         self.amount_ranges = new_range;
         Ok(())
+    }
+
+    pub fn save(&self, a: &mut AccountInfo) {
+        let data = a.data.borrow_mut();
+        data[0] = Key::AuctionWinnerTokenTypeTrackerV1 as u8;
+        data[1] = self.amount_type as u8;
+        data[2] = self.length_type as u8;
+        *array_mut_ref![data, 3, 4] = (self.amount_ranges.len() as u32).to_le_bytes();
+        let offset: usize = 7;
+        for range in self.amount_ranges {
+            write_amount_type(&data, self.amount_type, offset, range);
+            offset += self.amount_type as usize;
+            write_length_type(&data, self.length_type, offset, range);
+            offset += self.length_type as usize;
+        }
     }
 }
 

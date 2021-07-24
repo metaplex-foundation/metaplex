@@ -476,6 +476,14 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         return Err(MetaplexError::InvalidOperation.into());
     }
 
+    if safety_deposit_config.winning_config_type == WinningConfigType::Participation {
+        if auction_manager.state.has_participation {
+            return Err(MetaplexError::AlreadyHasOneParticipationPrize.into());
+        } else {
+            auction_manager.state.has_participation = true;
+        }
+    }
+
     auction_manager.state.safety_config_items_validated = auction_manager
         .state
         .safety_config_items_validated
@@ -486,7 +494,7 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         auction_manager.state.status = AuctionManagerStatus::Validated
     }
 
-    auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
+    auction_manager.save(&mut auction_manager_info)?;
 
     make_safety_deposit_config(
         program_id,

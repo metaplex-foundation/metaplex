@@ -499,15 +499,16 @@ pub enum MetaplexInstruction {
     /// NOTE: It is not possible to use MasterEditionV1s for participation nfts with these managers.
     ///
     ///   0. `[writable]` Uninitialized, unallocated auction manager account with pda of ['metaplex', auction_key from auction referenced below]
-    ///   1. `[]` Combined vault account with authority set to auction manager account (this will be checked)
+    ///   1. `[writable]` AuctionWinnerTokenTypeTracker, pda of seed ['metaplex', program id, auction manager key, 'totals']
+    ///   2. `[]` Combined vault account with authority set to auction manager account (this will be checked)
     ///           Note in addition that this vault account should have authority set to this program's pda of ['metaplex', auction_key]
-    ///   2. `[]` Auction with auctioned item being set to the vault given and authority set to this program's pda of ['metaplex', auction_key]
-    ///   3. `[]` Authority for the Auction Manager
-    ///   4. `[signer]` Payer
-    ///   5. `[]` Accept payment account of same token mint as the auction for taking payment for open editions, owner should be auction manager key
-    ///   6. `[]` Store that this auction manager will belong to
-    ///   7. `[]` System sysvar    
-    ///   8. `[]` Rent sysvar
+    ///   3. `[]` Auction with auctioned item being set to the vault given and authority set to this program's pda of ['metaplex', auction_key]
+    ///   4. `[]` Authority for the Auction Manager
+    ///   5. `[signer]` Payer
+    ///   6. `[]` Accept payment account of same token mint as the auction for taking payment for open editions, owner should be auction manager key
+    ///   7. `[]` Store that this auction manager will belong to
+    ///   8. `[]` System sysvar    
+    ///   9. `[]` Rent sysvar
     InitAuctionManagerV2,
 
     /// NOTE: Requires an AuctionManagerV2.
@@ -515,7 +516,7 @@ pub enum MetaplexInstruction {
     /// Validates that a given safety deposit box has in it contents that match the given SafetyDepositConfig, and creates said config.
     /// A stateful call, this will error out if you call it a second time after validation has occurred.
     ///   0. `[writable]` Uninitialized Safety deposit config, pda of seed ['metaplex', program id, auction manager key, safety deposit key]
-    ///   1. `[writable]` Safety deposit config, pda of seed ['metaplex', program id, auction manager key, safety deposit key]
+    ///   1. `[writable]` AuctionWinnerTokenTypeTracker, pda of seed ['metaplex', program id, auction manager key, 'totals']
     ///   2. `[writable]` Auction manager
     ///   3. `[writable]` Metadata account
     ///   4. `[writable]` Original authority lookup - unallocated uninitialized pda account with seed ['metaplex', auction key, metadata key]

@@ -277,7 +277,7 @@ pub fn process_empty_payment_account(
     let auction_info = next_account_info(account_info_iter)?;
     let token_program_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
-    let rent_info = next_account_info(account_info_iter);
+    let rent_info = next_account_info(account_info_iter)?;
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
