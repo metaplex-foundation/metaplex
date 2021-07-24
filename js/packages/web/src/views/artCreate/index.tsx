@@ -17,7 +17,6 @@ import {
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
-import './../styles.less';
 import { mintNFT } from '../../actions';
 import {
   MAX_METADATA_LEN,
@@ -460,7 +459,8 @@ const UploadStep = (props: {
                 files: [coverFile, mainFile, customURL]
                   .filter(f => f)
                   .map(f => {
-                    const uri = typeof f === 'string' ? f : f?.name || '';
+                    const uri =
+                      typeof f === 'string' ? f : cleanName(f?.name) || '';
                     const type =
                       typeof f === 'string' || !f
                         ? 'unknown'

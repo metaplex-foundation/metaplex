@@ -1,6 +1,6 @@
 import './wdyr';
 
-import './fonts/fonts.less';
+import './styles.less';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';

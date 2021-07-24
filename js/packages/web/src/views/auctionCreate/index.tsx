@@ -18,7 +18,6 @@ import { ArtCard } from './../../components/ArtCard';
 import { QUOTE_MINT } from './../../constants';
 import { Confetti } from './../../components/Confetti';
 import { ArtSelector } from './artSelector';
-import './../styles.less';
 import {
   MAX_METADATA_LEN,
   useConnection,
