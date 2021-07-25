@@ -9,5 +9,5 @@ ECHO "Prestarting 'web'..."
 yarn prestart
 ECHO "Building 'web'..."
 # TODO: fix linting errors!
-SET CI=false && yarn build
+SET CI=false && yarn build && yarn export
 ECHO "#done"
