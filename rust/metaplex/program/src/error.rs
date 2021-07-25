@@ -422,6 +422,14 @@ pub enum MetaplexError {
     /// Currently metaplex auctions are limited to a single participation prize
     #[error("Currently metaplex auctions are limited to a single participation prize")]
     AlreadyHasOneParticipationPrize,
+
+    /// This winner was not found in any ranges in the unique token type list, this should never happen
+    #[error("This winner was not found in any ranges in the unique token type list, this should never happen")]
+    NoTokensForThisWinner,
+
+    /// Not allowed to use Master Edition V1 printing with Auction Manager v2
+    #[error("Not allowed to use Master Edition V1 printing with Auction Manager v2")]
+    PrintingV1NotAllowedWithAuctionManagerV2,
 }
 
 impl PrintProgramError for MetaplexError {

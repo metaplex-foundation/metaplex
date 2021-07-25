@@ -75,13 +75,10 @@ pub fn process_start_auction(program_id: &Pubkey, accounts: &[AccountInfo]) -> P
         return Err(MetaplexError::AuctionManagerMustBeValidated.into());
     }
 
-    let seeds = &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()];
+    let auction_key = auction_manager.auction();
+    let seeds = &[PREFIX.as_bytes(), auction_key.as_ref()];
     let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
-    let authority_seeds = &[
-        PREFIX.as_bytes(),
-        &auction_manager.auction().as_ref(),
-        &[bump_seed],
-    ];
+    let authority_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
 
     issue_start_auction(
         auction_program_info.clone(),
@@ -94,7 +91,7 @@ pub fn process_start_auction(program_id: &Pubkey, accounts: &[AccountInfo]) -> P
 
     auction_manager.set_status(AuctionManagerStatus::Running);
 
-    auction_manager.save(&mut auction_manager_info)?;
+    auction_manager.save(auction_manager_info)?;
 
     Ok(())
 }

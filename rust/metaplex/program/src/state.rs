@@ -9,6 +9,8 @@ use {
         pubkey::Pubkey,
     },
     spl_auction::processor::AuctionData,
+    spl_token_metadata::state::Metadata,
+    spl_token_vault::state::SafetyDepositBox,
     std::cell::{Ref, RefMut},
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
@@ -65,31 +67,31 @@ pub enum Key {
 }
 
 pub struct CommonWinningIndexChecks<'a> {
-    safety_deposit_info: &'a AccountInfo<'a>,
-    winning_index: usize,
-    auction_manager_v1_ignore_claim: bool,
-    safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+    pub safety_deposit_info: &'a AccountInfo<'a>,
+    pub winning_index: usize,
+    pub auction_manager_v1_ignore_claim: bool,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
 }
 
 pub struct PrintingV2CalculationChecks<'a> {
-    safety_deposit_info: &'a AccountInfo<'a>,
-    winning_index: usize,
-    auction_manager_v1_ignore_claim: bool,
-    safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
-    short_circuit_total: bool,
-    edition_offset: u64,
+    pub safety_deposit_info: &'a AccountInfo<'a>,
+    pub winning_index: usize,
+    pub auction_manager_v1_ignore_claim: bool,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
+    pub short_circuit_total: bool,
+    pub edition_offset: u64,
 }
 
 pub struct CommonWinningIndexReturn {
-    amount: u64,
-    winning_config_type: WinningConfigType,
-    winning_config_item_index: Option<usize>,
+    pub amount: u64,
+    pub winning_config_type: WinningConfigType,
+    pub winning_config_item_index: Option<usize>,
 }
 
 pub struct PrintingV2CalculationCheckReturn {
-    expected_redemptions: u64,
-    winning_config_type: WinningConfigType,
-    winning_config_item_index: Option<usize>,
+    pub expected_redemptions: u64,
+    pub winning_config_type: WinningConfigType,
+    pub winning_config_item_index: Option<usize>,
 }
 
 pub trait AuctionManager {
@@ -102,7 +104,7 @@ pub trait AuctionManager {
     fn status(&self) -> AuctionManagerStatus;
     fn set_status(&mut self, status: AuctionManagerStatus);
     fn configs_validated(&self) -> u64;
-    fn set_configs_validated(&self, new_configs_validated: u64);
+    fn set_configs_validated(&mut self, new_configs_validated: u64);
     fn save(&self, account: &AccountInfo) -> ProgramResult;
     fn fast_save(
         &self,
@@ -127,7 +129,7 @@ pub trait AuctionManager {
 
     fn add_to_collected_payment(
         &mut self,
-        safety_deposit_config_info: &mut AccountInfo,
+        safety_deposit_config_info: &AccountInfo,
         price: u64,
     ) -> ProgramResult;
 
@@ -147,6 +149,31 @@ pub trait AuctionManager {
     fn mark_bid_as_claimed(&mut self, winner_index: usize) -> ProgramResult;
 
     fn assert_all_bids_claimed(&self, auction: &AuctionData) -> ProgramResult;
+
+    fn get_number_of_unique_token_types_for_this_winner(
+        &self,
+        winner_index: usize,
+        auction_token_tracker_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError>;
+
+    fn get_collected_to_accept_payment(
+        &self,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError>;
+
+    fn get_primary_sale_happened(
+        &self,
+        metadata: &Metadata,
+        winning_config_index: Option<u8>,
+        winning_config_item_index: Option<u8>,
+    ) -> Result<bool, ProgramError>;
+
+    fn assert_winning_config_safety_deposit_validity(
+        &self,
+        safety_deposit: &SafetyDepositBox,
+        winning_config_index: Option<u8>,
+        winning_config_item_index: Option<u8>,
+    ) -> ProgramResult;
 }
 
 pub fn get_auction_manager(account: &AccountInfo) -> Result<Box<dyn AuctionManager>, ProgramError> {
@@ -209,8 +236,8 @@ impl AuctionManager for AuctionManagerV2 {
     fn fast_save(
         &self,
         account: &AccountInfo,
-        winning_config_index: usize,
-        winning_config_item_index: usize,
+        _winning_config_index: usize,
+        _winning_config_item_index: usize,
     ) {
         let mut data = account.data.borrow_mut();
         data[161] = self.state.status as u8;
@@ -222,7 +249,7 @@ impl AuctionManager for AuctionManagerV2 {
     ) -> Result<CommonWinningIndexReturn, ProgramError> {
         let CommonWinningIndexChecks {
             safety_deposit_config_info,
-            safety_deposit_info,
+            safety_deposit_info: _s,
             winning_index,
             auction_manager_v1_ignore_claim: _a,
         } = args;
@@ -250,7 +277,7 @@ impl AuctionManager for AuctionManagerV2 {
     ) -> Result<PrintingV2CalculationCheckReturn, ProgramError> {
         let PrintingV2CalculationChecks {
             safety_deposit_config_info,
-            safety_deposit_info,
+            safety_deposit_info: _s,
             winning_index,
             auction_manager_v1_ignore_claim: _a,
             short_circuit_total,
@@ -294,7 +321,7 @@ impl AuctionManager for AuctionManagerV2 {
         self.state.safety_config_items_validated
     }
 
-    fn set_configs_validated(&self, new_configs_validated: u64) {
+    fn set_configs_validated(&mut self, new_configs_validated: u64) {
         self.state.safety_config_items_validated = new_configs_validated
     }
 
@@ -317,7 +344,7 @@ impl AuctionManager for AuctionManagerV2 {
 
     fn add_to_collected_payment(
         &mut self,
-        safety_deposit_config_info: &mut AccountInfo,
+        safety_deposit_config_info: &AccountInfo,
         price: u64,
     ) -> ProgramResult {
         let mut safety_config = SafetyDepositConfig::from_account_info(safety_deposit_config_info)?;
@@ -337,7 +364,7 @@ impl AuctionManager for AuctionManagerV2 {
         Ok(())
     }
 
-    fn assert_legacy_printing_token_match(&self, account: &AccountInfo) -> ProgramResult {
+    fn assert_legacy_printing_token_match(&self, _account: &AccountInfo) -> ProgramResult {
         // You cannot use MEV1s with auth tokens with V2 auction managers, so if somehow this is called,
         // throw an error.
         return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
@@ -404,6 +431,68 @@ impl AuctionManager for AuctionManagerV2 {
 
         Ok(())
     }
+
+    fn get_number_of_unique_token_types_for_this_winner(
+        &self,
+        winner_index: usize,
+        auction_token_tracker_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError> {
+        if let Some(tracker_info) = auction_token_tracker_info {
+            let tracker = AuctionWinnerTokenTypeTracker::from_account_info(tracker_info)?;
+            let mut start: u64 = 0;
+            for range in tracker.amount_ranges {
+                let end = start
+                    .checked_add(range.1)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+                if winner_index >= start as usize && winner_index < end as usize {
+                    return Ok(range.0 as u128);
+                } else {
+                    start = end
+                }
+            }
+
+            return Err(MetaplexError::NoTokensForThisWinner.into());
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    fn get_collected_to_accept_payment(
+        &self,
+        safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError> {
+        if let Some(config) = safety_deposit_config_info {
+            let parsed = SafetyDepositConfig::from_account_info(config)?;
+            if let Some(p_state) = parsed.participation_state {
+                Ok(p_state.collected_to_accept_payment as u128)
+            } else {
+                Ok(0)
+            }
+        } else {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    fn get_primary_sale_happened(
+        &self,
+        metadata: &Metadata,
+        _winning_config_index: Option<u8>,
+        _winning_config_item_index: Option<u8>,
+    ) -> Result<bool, ProgramError> {
+        // Since auction v2s only support mev2s, and mev2s are always inside
+        // the auction all the time, this is a valid thing to do.
+        Ok(metadata.primary_sale_happened)
+    }
+
+    fn assert_winning_config_safety_deposit_validity(
+        &self,
+        _safety_deposit: &SafetyDepositBox,
+        _winning_config_index: Option<u8>,
+        _winning_config_item_index: Option<u8>,
+    ) -> ProgramResult {
+        // Noop, we dont have winning configs anymore
+        Ok(())
+    }
 }
 
 impl AuctionManagerV2 {
@@ -462,14 +551,14 @@ pub struct ParticipationConfigV2 {
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
 pub enum WinningConstraint {
     NoParticipationPrize,
     ParticipationPrizeGiven,
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
 pub enum NonWinningConstraint {
     NoParticipationPrize,
     GivenForFixedPrice,
@@ -506,7 +595,7 @@ pub enum WinningConfigType {
 }
 
 #[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Debug, PartialEq)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Debug, PartialEq, Copy)]
 pub enum AuctionManagerStatus {
     Initialized,
     Validated,
@@ -617,11 +706,11 @@ impl PrizeTrackingTicket {
 }
 
 #[repr(C)]
-#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize, Copy)]
 pub struct AmountRange(pub u64, pub u64);
 
 #[repr(C)]
-#[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
+#[derive(Clone, Debug, BorshSerialize, BorshDeserialize, Copy)]
 pub enum TupleNumericType {
     U8 = 1,
     U16 = 2,
@@ -670,10 +759,10 @@ fn get_number_from_data(data: &Ref<&mut [u8]>, data_type: TupleNumericType, offs
 }
 
 fn write_amount_type(
-    data: &RefMut<&mut [u8]>,
+    data: &mut RefMut<&mut [u8]>,
     amount_type: TupleNumericType,
     offset: usize,
-    range: AmountRange,
+    range: &AmountRange,
 ) {
     match amount_type {
         TupleNumericType::U8 => data[offset] = range.0 as u8,
@@ -684,10 +773,10 @@ fn write_amount_type(
 }
 
 fn write_length_type(
-    data: &RefMut<&mut [u8]>,
+    data: &mut RefMut<&mut [u8]>,
     length_type: TupleNumericType,
     offset: usize,
-    range: AmountRange,
+    range: &AmountRange,
 ) {
     match length_type {
         TupleNumericType::U8 => data[offset] = range.1 as u8,
@@ -705,7 +794,8 @@ impl SafetyDepositConfig {
     }
 
     pub fn get_order(a: &AccountInfo) -> u64 {
-        return u64::from_le_bytes(*array_ref![a.data.borrow(), ORDER_POSITION, 8]);
+        let data = a.data.borrow();
+        return u64::from_le_bytes(*array_ref![data, ORDER_POSITION, 8]);
     }
 
     pub fn get_amount_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
@@ -776,7 +866,7 @@ impl SafetyDepositConfig {
         let mut current_winner_range_start: u64 = 0;
         let mut offset = AMOUNT_RANGE_FIRST_EL_POSITION;
         let mut not_found = true;
-        for n in 0..length_of_array {
+        for _ in 0..length_of_array {
             let amount_each_winner_gets = get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
@@ -849,8 +939,8 @@ impl SafetyDepositConfig {
         let length_of_array = SafetyDepositConfig::get_amount_range_len(a);
 
         let mut offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
-        let amount_ranges = vec![];
-        for n in 0..length_of_array {
+        let mut amount_ranges = vec![];
+        for _ in 0..length_of_array {
             let amount = get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
@@ -905,19 +995,22 @@ impl SafetyDepositConfig {
 
         let participation_state: Option<ParticipationStateV2> = match data[offset] {
             0 => {
-                offset += 1;
+                // offset += 1;
                 None
             }
             1 => {
                 let collected_to_accept_payment =
                     u64::from_le_bytes(*array_ref![data, offset + 1, 8]);
-                offset += 9;
+                // offset += 9;
                 Some(ParticipationStateV2 {
                     collected_to_accept_payment,
                 })
             }
             _ => return Err(ProgramError::InvalidAccountData),
         };
+
+        // NOTE: Adding more fields? Uncomment the offset adjustments in participation state to keep
+        // the math working.
 
         Ok(SafetyDepositConfig {
             key: Key::SafetyDepositConfigV1,
@@ -931,8 +1024,8 @@ impl SafetyDepositConfig {
         })
     }
 
-    pub fn create(&mut self, a: &mut AccountInfo) -> ProgramResult {
-        let data = a.data.borrow_mut();
+    pub fn create(&self, a: &AccountInfo) -> ProgramResult {
+        let mut data = a.data.borrow_mut();
 
         data[0] = Key::SafetyDepositConfigV1 as u8;
         *array_mut_ref![data, ORDER_POSITION, 8] = self.order.to_le_bytes();
@@ -941,15 +1034,15 @@ impl SafetyDepositConfig {
         data[LENGTH_POSITION] = self.length_type as u8;
         *array_mut_ref![data, AMOUNT_RANGE_SIZE_POSITION, 4] =
             (self.amount_ranges.len() as u32).to_le_bytes();
-        let offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
-        for range in self.amount_ranges {
-            write_amount_type(&data, self.amount_type, offset, range);
+        let mut offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION;
+        for range in &self.amount_ranges {
+            write_amount_type(&mut data, self.amount_type, offset, range);
             offset += self.amount_type as usize;
-            write_length_type(&data, self.length_type, offset, range);
+            write_length_type(&mut data, self.length_type, offset, range);
             offset += self.length_type as usize;
         }
 
-        match self.participation_config {
+        match &self.participation_config {
             Some(val) => {
                 data[offset] = 1;
                 data[offset + 1] = val.winner_constraint as u8;
@@ -973,32 +1066,34 @@ impl SafetyDepositConfig {
             }
         }
 
-        match self.participation_state {
+        match &self.participation_state {
             Some(val) => {
                 data[offset] = 1;
                 *array_mut_ref![data, offset + 1, 8] =
                     val.collected_to_accept_payment.to_le_bytes();
-                offset += 9;
+                //offset += 9;
             }
             None => {
                 data[offset] = 0;
-                offset += 1
+                //offset += 1
             }
         }
 
+        // NOTE: Adding more fields? Uncomment the offset adjustments in participation state to keep
+        // the math working.
         Ok(())
     }
 
     /// Smaller method for just participation state saving...saves cpu, and it's the only thing
     /// that will ever change on this model.
-    pub fn save_participation_state(&mut self, a: &mut AccountInfo) {
+    pub fn save_participation_state(&mut self, a: &AccountInfo) {
         let mut data = a.data.borrow_mut();
-        let offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION
+        let mut offset: usize = AMOUNT_RANGE_FIRST_EL_POSITION
             + self.amount_ranges.len() * (self.amount_type as usize + self.length_type as usize);
 
-        offset += match self.participation_config {
+        offset += match &self.participation_config {
             Some(val) => {
-                let total = 3;
+                let mut total = 3;
                 if val.fixed_price.is_some() {
                     total += 8;
                 }
@@ -1007,18 +1102,21 @@ impl SafetyDepositConfig {
             None => 1,
         };
 
-        match self.participation_state {
+        match &self.participation_state {
             Some(val) => {
                 data[offset] = 1;
                 *array_mut_ref![data, offset + 1, 8] =
                     val.collected_to_accept_payment.to_le_bytes();
-                offset += 9;
+                //offset += 9;
             }
             None => {
                 data[offset] = 0;
-                offset += 1
+                //offset += 1
             }
         }
+
+        // NOTE: Adding more fields? Uncomment the offset adjustments in participation state to keep
+        // the math working.
     }
 }
 
@@ -1033,9 +1131,9 @@ pub struct AuctionWinnerTokenTypeTracker {
 }
 
 impl AuctionWinnerTokenTypeTracker {
-    pub fn created_size(&self) -> usize {
+    pub fn created_size(&self, range_size: u64) -> usize {
         return BASE_TRACKER_SIZE
-            + (self.amount_type as usize + self.length_type as usize) * self.amount_ranges.len();
+            + (self.amount_type as usize + self.length_type as usize) * range_size as usize;
     }
     pub fn from_account_info(
         a: &AccountInfo,
@@ -1056,8 +1154,8 @@ impl AuctionWinnerTokenTypeTracker {
         let length_of_array = AuctionWinnerTokenTypeTracker::get_amount_range_len(a);
 
         let mut offset: usize = 7;
-        let amount_ranges = vec![];
-        for n in 0..length_of_array {
+        let mut amount_ranges = vec![];
+        for _ in 0..length_of_array {
             let amount = get_number_from_data(data, amount_type, offset);
 
             offset += amount_type as usize;
@@ -1115,19 +1213,19 @@ impl AuctionWinnerTokenTypeTracker {
     /// and 4th to 10th place getting 1 type.
     pub fn add_one_where_positive_ranges_occur(
         &mut self,
-        amount_ranges: Vec<AmountRange>,
+        amount_ranges: &mut Vec<AmountRange>,
     ) -> ProgramResult {
-        let new_range: Vec<AmountRange> = vec![];
+        let mut new_range: Vec<AmountRange> = vec![];
 
         if self.amount_ranges.len() == 0 {
-            self.amount_ranges = amount_ranges;
+            self.amount_ranges = amount_ranges.iter().map(|x| *x).collect();
             return Ok(());
         } else if amount_ranges.len() == 0 {
             return Ok(());
         }
 
-        let my_ctr: usize = 0;
-        let their_ctr: usize = 0;
+        let mut my_ctr: usize = 0;
+        let mut their_ctr: usize = 0;
         while my_ctr < self.amount_ranges.len() && their_ctr < amount_ranges.len() {
             // Cases:
             // 1. nothing in theirs - we win and pop on
@@ -1197,17 +1295,17 @@ impl AuctionWinnerTokenTypeTracker {
         Ok(())
     }
 
-    pub fn save(&self, a: &mut AccountInfo) {
-        let data = a.data.borrow_mut();
+    pub fn save(&self, a: &AccountInfo) {
+        let mut data = a.data.borrow_mut();
         data[0] = Key::AuctionWinnerTokenTypeTrackerV1 as u8;
         data[1] = self.amount_type as u8;
         data[2] = self.length_type as u8;
         *array_mut_ref![data, 3, 4] = (self.amount_ranges.len() as u32).to_le_bytes();
-        let offset: usize = 7;
-        for range in self.amount_ranges {
-            write_amount_type(&data, self.amount_type, offset, range);
+        let mut offset: usize = 7;
+        for range in &self.amount_ranges {
+            write_amount_type(&mut data, self.amount_type, offset, range);
             offset += self.amount_type as usize;
-            write_length_type(&data, self.length_type, offset, range);
+            write_length_type(&mut data, self.length_type, offset, range);
             offset += self.length_type as usize;
         }
     }
@@ -1292,7 +1390,7 @@ impl BidRedemptionTicket {
         if data[0] == Key::BidRedemptionTicketV1 as u8 {
             let output = array_mut_ref![data, 0, 3];
 
-            let (key, participation_redeemed_ptr, items_redeemed_ptr) =
+            let (key, participation_redeemed_ptr, _items_redeemed_ptr) =
                 mut_array_refs![output, 1, 1, 1];
 
             *key = [Key::BidRedemptionTicketV1 as u8];

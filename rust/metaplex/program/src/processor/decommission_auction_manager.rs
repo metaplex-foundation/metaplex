@@ -22,7 +22,7 @@ pub fn process_decommission_auction_manager<'a>(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
-    let auction_manager_info = next_account_info(account_info_iter)?;
+    let mut auction_manager_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;

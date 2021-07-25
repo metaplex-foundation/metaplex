@@ -125,9 +125,15 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Redeem Participation Bid V2");
             process_redeem_participation_bid(program_id, accounts, false)
         }
-        MetaplexInstruction::InitAuctionManagerV2 => {
+        MetaplexInstruction::InitAuctionManagerV2(args) => {
             msg!("Instruction: Init Auction Manager V2");
-            process_init_auction_manager_v2(program_id, accounts)
+            process_init_auction_manager_v2(
+                program_id,
+                accounts,
+                args.amount_type,
+                args.length_type,
+                args.max_ranges,
+            )
         }
         MetaplexInstruction::ValidateSafetyDepositBoxV2(safety_deposit_config) => {
             msg!("Instruction: Validate Safety Deposit Box V2");

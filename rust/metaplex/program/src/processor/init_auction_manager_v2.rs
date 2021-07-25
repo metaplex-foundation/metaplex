@@ -101,6 +101,7 @@ pub fn process_init_auction_manager_v2(
     accounts: &[AccountInfo],
     amount_type: TupleNumericType,
     length_type: TupleNumericType,
+    max_ranges: u64,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -186,11 +187,11 @@ pub fn process_init_auction_manager_v2(
             rent_info,
             system_info,
             payer_info,
-            token_type_tracker.created_size(),
+            token_type_tracker.created_size(max_ranges),
             token_seeds,
         )?;
 
-        token_type_tracker.save(&mut auction_token_tracker_info);
+        token_type_tracker.save(&auction_token_tracker_info);
     }
 
     Ok(())

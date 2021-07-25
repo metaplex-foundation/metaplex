@@ -1,7 +1,7 @@
 use {
     crate::{
         deprecated_state::AuctionManagerSettingsV1,
-        state::{SafetyDepositConfig, PREFIX},
+        state::{SafetyDepositConfig, TupleNumericType, PREFIX},
     },
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
@@ -47,6 +47,19 @@ pub struct RedeemUnusedWinningConfigItemsAsAuctioneerArgs {
 pub struct RedeemPrintingV2BidArgs {
     pub edition_offset: u64,
     pub win_index: u64,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct InitAuctionManagerV2Args {
+    pub amount_type: TupleNumericType,
+    pub length_type: TupleNumericType,
+    // how many ranges you can store in the AuctionWinnerTokenTypeTracker. For a limited edition single, you really
+    // only need 1, for more complex auctions you may need more. Feel free to scale this
+    // with the complexity of your auctions - this thing stores a range of how many unique token types
+    // each range of people gets in the most efficient compressed way possible, but if you don't
+    // give a high enough list length, while you may save space, you may also blow out your struct size while performing
+    // validation and have a failed auction.
+    pub max_ranges: u64,
 }
 
 /// Instructions supported by the Fraction program.
@@ -275,6 +288,8 @@ pub enum MetaplexInstruction {
     ///   11. `[]` Token program
     ///   12. `[]` System program
     ///   13. `[]` Rent sysvar
+    ///   14. `[]` AuctionWinnerTokenTypeTracker, pda of seed ['metaplex', program id, auction manager key, 'totals']
+    ///   15. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
     EmptyPaymentAccount(EmptyPaymentAccountArgs),
 
     /// Given a signer wallet, create a store with pda ['metaplex', wallet] (if it does not exist) and/or update it
@@ -509,7 +524,7 @@ pub enum MetaplexInstruction {
     ///   7. `[]` Store that this auction manager will belong to
     ///   8. `[]` System sysvar    
     ///   9. `[]` Rent sysvar
-    InitAuctionManagerV2,
+    InitAuctionManagerV2(InitAuctionManagerV2Args),
 
     /// NOTE: Requires an AuctionManagerV2.
     ///
@@ -583,6 +598,9 @@ pub fn create_init_auction_manager_v2_instruction(
     payer: Pubkey,
     accept_payment_account_key: Pubkey,
     store: Pubkey,
+    amount_type: TupleNumericType,
+    length_type: TupleNumericType,
+    max_ranges: u64,
 ) -> Instruction {
     Instruction {
         program_id,
@@ -597,9 +615,13 @@ pub fn create_init_auction_manager_v2_instruction(
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
-        data: MetaplexInstruction::InitAuctionManagerV2
-            .try_to_vec()
-            .unwrap(),
+        data: MetaplexInstruction::InitAuctionManagerV2(InitAuctionManagerV2Args {
+            amount_type,
+            length_type,
+            max_ranges,
+        })
+        .try_to_vec()
+        .unwrap(),
     }
 }
 
@@ -733,7 +755,7 @@ pub fn create_validate_safety_deposit_box_v2_instruction(
         ],
         &program_id,
     );
-    let mut accounts = vec![
+    let accounts = vec![
         AccountMeta::new(validation, false),
         AccountMeta::new(auction_manager, false),
         AccountMeta::new(metadata, false),

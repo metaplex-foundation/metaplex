@@ -6,11 +6,12 @@ use {
         instruction::EmptyPaymentAccountArgs,
         state::{
             get_auction_manager, AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE,
-            PREFIX,
+            PREFIX, TOTALS,
         },
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
-            assert_rent_exempt, create_or_allocate_account_raw, spl_token_transfer,
+            assert_rent_exempt, assert_safety_deposit_config_valid, create_or_allocate_account_raw,
+            spl_token_transfer,
         },
     },
     borsh::BorshSerialize,
@@ -28,39 +29,6 @@ use {
     spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::SafetyDepositBox,
 };
-
-fn assert_winning_config_safety_deposit_validity(
-    auction_manager: &Box<dyn AuctionManager>,
-    safety_deposit: &SafetyDepositBox,
-    winning_config_index: Option<u8>,
-    winning_config_item_index: Option<u8>,
-) -> ProgramResult {
-    if let Some(winning_index) = winning_config_index {
-        let winning_configs = &auction_manager.settings.winning_configs;
-        if (winning_index as usize) < winning_configs.len() {
-            let winning_config = &winning_configs[winning_index as usize];
-            if let Some(item_index) = winning_config_item_index {
-                if winning_config.items[item_index as usize].safety_deposit_box_index
-                    != safety_deposit.order
-                {
-                    return Err(MetaplexError::WinningConfigSafetyDepositMismatch.into());
-                }
-            } else {
-                return Err(MetaplexError::InvalidWinningConfigItemIndex.into());
-            }
-        } else {
-            return Err(MetaplexError::InvalidWinningConfigIndex.into());
-        }
-    } else if let Some(participation) = &auction_manager.settings.participation_config {
-        if participation.safety_deposit_box_index != safety_deposit.order {
-            return Err(MetaplexError::ParticipationSafetyDepositMismatch.into());
-        }
-    } else {
-        return Err(MetaplexError::ParticipationNotPresent.into());
-    }
-
-    Ok(())
-}
 
 fn assert_destination_ownership_validity(
     auction_manager: &Box<dyn AuctionManager>,
@@ -89,10 +57,10 @@ fn assert_destination_ownership_validity(
             } else {
                 return Err(MetaplexError::InvalidCreatorIndex.into());
             }
-        } else if destination.owner != auction_manager.authority {
+        } else if destination.owner != auction_manager.authority() {
             return Err(MetaplexError::IncorrectOwner.into());
         }
-    } else if destination.owner != auction_manager.authority {
+    } else if destination.owner != auction_manager.authority() {
         return Err(MetaplexError::IncorrectOwner.into());
     }
 
@@ -108,6 +76,8 @@ fn assert_destination_ownership_validity(
 }
 
 fn calculate_owed_amount(
+    auction_token_tracker_info: Option<&AccountInfo>,
+    safety_deposit_config_info: Option<&AccountInfo>,
     auction_manager: &Box<dyn AuctionManager>,
     auction: &AuctionData,
     metadata: &Metadata,
@@ -115,34 +85,17 @@ fn calculate_owed_amount(
     winning_config_item_index: &Option<u8>,
     creator_index: &Option<u8>,
 ) -> Result<u64, ProgramError> {
-    let primary_sale_happened = match winning_config_index {
-        Some(val) => {
-            if let Some(item_index) = winning_config_item_index {
-                auction_manager.state.winning_config_states[*val as usize].items
-                    [*item_index as usize]
-                    .primary_sale_happened
-            } else {
-                return Err(MetaplexError::InvalidWinningConfigItemIndex.into());
-            }
-        }
-        None => {
-            if let Some(config) = &auction_manager.state.participation_state {
-                config.primary_sale_happened
-            } else {
-                false
-            }
-        }
-    };
+    let primary_sale_happened = auction_manager.get_primary_sale_happened(
+        metadata,
+        *winning_config_index,
+        *winning_config_item_index,
+    )?;
 
     let mut amount_available_to_split: u128 = match winning_config_index {
         Some(index) => auction.bid_state.amount(*index as usize) as u128,
         None => {
             // this means the amount owed is the amount collected from participation nft bids.
-            if let Some(state) = &auction_manager.state.participation_state {
-                state.collected_to_accept_payment as u128
-            } else {
-                0
-            }
+            auction_manager.get_collected_to_accept_payment(safety_deposit_config_info)?
         }
     };
 
@@ -228,9 +181,10 @@ fn calculate_owed_amount(
     }
 
     let proportion_divisor = match winning_config_index {
-        Some(val) => auction_manager.settings.winning_configs[*val as usize]
-            .items
-            .len() as u128,
+        Some(val) => auction_manager.get_number_of_unique_token_types_for_this_winner(
+            *val as usize,
+            auction_token_tracker_info,
+        )?,
         None => 1,
     };
 
@@ -278,6 +232,21 @@ pub fn process_empty_payment_account(
     let token_program_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
+    let auction_token_tracker_info = next_account_info(account_info_iter).ok();
+    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
+
+    if let Some(tracker_info) = auction_token_tracker_info {
+        assert_derivation(
+            program_id,
+            tracker_info,
+            &[
+                PREFIX.as_bytes(),
+                &program_id.as_ref(),
+                auction_manager_info.key.as_ref(),
+                TOTALS.as_bytes(),
+            ],
+        )?;
+    }
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
@@ -324,11 +293,18 @@ pub fn process_empty_payment_account(
     assert_rent_exempt(rent, destination_info)?;
 
     // Assert the winning config points to the safety deposit you sent up
-    assert_winning_config_safety_deposit_validity(
-        &auction_manager,
+    auction_manager.assert_winning_config_safety_deposit_validity(
         &safety_deposit,
         args.winning_config_index,
         args.winning_config_item_index,
+    )?;
+
+    assert_safety_deposit_config_valid(
+        program_id,
+        auction_manager_info,
+        safety_deposit_info,
+        safety_deposit_config_info,
+        &auction_manager.key(),
     )?;
 
     // assert the destination account matches the ownership expected to creator or auction manager authority
@@ -439,6 +415,8 @@ pub fn process_empty_payment_account(
     payout_ticket.key = Key::PayoutTicketV1;
 
     let amount = calculate_owed_amount(
+        auction_token_tracker_info,
+        safety_deposit_config_info,
         &auction_manager,
         &auction,
         &metadata,
@@ -457,17 +435,15 @@ pub fn process_empty_payment_account(
             .checked_add(final_amount)
             .ok_or(MetaplexError::NumericalOverflowError)?;
 
+        let auction_key = auction_manager.auction();
+
         let bump_seed = assert_derivation(
             program_id,
             auction_manager_info,
-            &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
+            &[PREFIX.as_bytes(), auction_key.as_ref()],
         )?;
 
-        let authority_seeds = &[
-            PREFIX.as_bytes(),
-            &auction_manager.auction().as_ref(),
-            &[bump_seed],
-        ];
+        let authority_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
 
         spl_token_transfer(
             accept_payment_info.clone(),

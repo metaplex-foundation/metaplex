@@ -544,9 +544,10 @@ pub fn common_redeem_checks(
         if bidder_pubkey != *bidder_info.key {
             return Err(MetaplexError::BidderMetadataBidderMismatch.into());
         }
+        let auction_key = auction_manager.auction();
         let redemption_path = [
             PREFIX.as_bytes(),
-            auction_manager.auction().as_ref(),
+            auction_key.as_ref(),
             bidder_metadata_info.key.as_ref(),
         ];
         let (redemption_key, actual_redemption_bump_seed) =
@@ -684,9 +685,10 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     } = args;
 
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
+        let auction_key = auction_manager.auction();
         let redemption_seeds = &[
             PREFIX.as_bytes(),
-            auction_manager.auction().as_ref(),
+            auction_key.as_ref(),
             bidder_metadata_info.key.as_ref(),
             &[redemption_bump_seed],
         ];
@@ -747,9 +749,10 @@ pub fn shift_authority_back_to_originating_user<'a>(
     token_program_info: &AccountInfo<'a>,
     authority_seeds: &[&[u8]],
 ) -> ProgramResult {
+    let auction_key = auction_manager.auction();
     let original_authority_lookup_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction().as_ref(),
+        auction_key.as_ref(),
         master_metadata_info.key.as_ref(),
     ];
 

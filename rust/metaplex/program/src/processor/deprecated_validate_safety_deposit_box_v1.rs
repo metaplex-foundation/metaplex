@@ -95,7 +95,7 @@ pub fn process_deprecated_validate_safety_deposit_box_v1<'a>(
 
     let mut auction_manager = AuctionManagerV1::from_account_info(auction_manager_info)?;
     let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
-    let safety_deposit_token_store: Account = assert_initialized(safety_deposit_token_store_info)?;
+    let _safety_deposit_token_store: Account = assert_initialized(safety_deposit_token_store_info)?;
     let metadata = Metadata::from_account_info(metadata_info)?;
     let store = Store::from_account_info(auction_manager_store_info)?;
     // Is it a real vault?

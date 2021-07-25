@@ -16,6 +16,7 @@ use {
         pubkey::Pubkey,
     },
     spl_auction::processor::AuctionData,
+    spl_token_metadata::state::Metadata,
     spl_token_vault::state::SafetyDepositBox,
 };
 
@@ -114,7 +115,7 @@ impl AuctionManager for AuctionManagerV1 {
         self.state.winning_config_items_validated as u64
     }
 
-    fn set_configs_validated(&self, new_configs_validated: u64) {
+    fn set_configs_validated(&mut self, new_configs_validated: u64) {
         self.state.winning_config_items_validated = new_configs_validated as u8
     }
 
@@ -178,11 +179,11 @@ impl AuctionManager for AuctionManagerV1 {
             safety_deposit_info,
             winning_index,
             auction_manager_v1_ignore_claim,
-            safety_deposit_config_info,
+            safety_deposit_config_info: _s,
         } = args;
 
-        let winning_config = self.settings.winning_configs[winning_index];
-        let winning_config_state = self.state.winning_config_states[winning_index];
+        let winning_config = &self.settings.winning_configs[winning_index];
+        let winning_config_state = &self.state.winning_config_states[winning_index];
 
         let mut winning_config_item_index = None;
         for i in 0..winning_config.items.len() {
@@ -232,7 +233,7 @@ impl AuctionManager for AuctionManagerV1 {
         } = args;
 
         let CommonWinningIndexReturn {
-            amount,
+            amount: _a,
             winning_config_item_index,
             winning_config_type,
         } = self.common_winning_index_checks(CommonWinningIndexChecks {
@@ -286,7 +287,7 @@ impl AuctionManager for AuctionManagerV1 {
 
     fn get_participation_config(
         &self,
-        safety_deposit_config_info: &AccountInfo,
+        _safety_deposit_config_info: &AccountInfo,
     ) -> Result<ParticipationConfigV2, ProgramError> {
         if let Some(part_config) = self.settings.participation_config.clone() {
             Ok(ParticipationConfigV2 {
@@ -301,7 +302,7 @@ impl AuctionManager for AuctionManagerV1 {
 
     fn add_to_collected_payment(
         &mut self,
-        safety_deposit_config_info: &mut AccountInfo,
+        _safety_deposit_config_info: &AccountInfo,
         price: u64,
     ) -> ProgramResult {
         if let Some(state) = &self.state.participation_state {
@@ -378,7 +379,7 @@ impl AuctionManager for AuctionManagerV1 {
             .is_some();
 
         if !atleast_one_matching {
-            if let Some(config) = self.settings.participation_config {
+            if let Some(config) = &self.settings.participation_config {
                 if config.safety_deposit_box_index != u8_order {
                     return Err(MetaplexError::InvalidOperation.into());
                 }
@@ -402,6 +403,85 @@ impl AuctionManager for AuctionManagerV1 {
             if !self.state.winning_config_states[i as usize].money_pushed_to_accept_payment {
                 return Err(MetaplexError::NotAllBidsClaimed.into());
             }
+        }
+
+        Ok(())
+    }
+
+    fn get_number_of_unique_token_types_for_this_winner(
+        &self,
+        winner_index: usize,
+        _auction_token_tracker_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError> {
+        Ok(self.settings.winning_configs[winner_index].items.len() as u128)
+    }
+
+    fn get_collected_to_accept_payment(
+        &self,
+        _safety_deposit_config_info: Option<&AccountInfo>,
+    ) -> Result<u128, ProgramError> {
+        if let Some(state) = &self.state.participation_state {
+            Ok(state.collected_to_accept_payment as u128)
+        } else {
+            Ok(0)
+        }
+    }
+
+    fn get_primary_sale_happened(
+        &self,
+        _metadata: &Metadata,
+        winning_config_index: Option<u8>,
+        winning_config_item_index: Option<u8>,
+    ) -> Result<bool, ProgramError> {
+        match winning_config_index {
+            Some(val) => {
+                if let Some(item_index) = winning_config_item_index {
+                    Ok(
+                        self.state.winning_config_states[val as usize].items[item_index as usize]
+                            .primary_sale_happened,
+                    )
+                } else {
+                    return Err(MetaplexError::InvalidWinningConfigItemIndex.into());
+                }
+            }
+            None => {
+                if let Some(config) = &self.state.participation_state {
+                    Ok(config.primary_sale_happened)
+                } else {
+                    Ok(false)
+                }
+            }
+        }
+    }
+
+    fn assert_winning_config_safety_deposit_validity(
+        &self,
+        safety_deposit: &SafetyDepositBox,
+        winning_config_index: Option<u8>,
+        winning_config_item_index: Option<u8>,
+    ) -> ProgramResult {
+        if let Some(winning_index) = winning_config_index {
+            let winning_configs = &self.settings.winning_configs;
+            if (winning_index as usize) < winning_configs.len() {
+                let winning_config = &winning_configs[winning_index as usize];
+                if let Some(item_index) = winning_config_item_index {
+                    if winning_config.items[item_index as usize].safety_deposit_box_index
+                        != safety_deposit.order
+                    {
+                        return Err(MetaplexError::WinningConfigSafetyDepositMismatch.into());
+                    }
+                } else {
+                    return Err(MetaplexError::InvalidWinningConfigItemIndex.into());
+                }
+            } else {
+                return Err(MetaplexError::InvalidWinningConfigIndex.into());
+            }
+        } else if let Some(participation) = &self.settings.participation_config {
+            if participation.safety_deposit_box_index != safety_deposit.order {
+                return Err(MetaplexError::ParticipationSafetyDepositMismatch.into());
+            }
+        } else {
+            return Err(MetaplexError::ParticipationNotPresent.into());
         }
 
         Ok(())

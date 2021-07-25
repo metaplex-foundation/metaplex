@@ -5,21 +5,47 @@ use {
     solana_program::{borsh::try_from_slice_unchecked, pubkey::Pubkey},
     solana_sdk::signature::Keypair,
     spl_auction::processor::{AuctionData, AuctionDataExtended},
-    spl_metaplex::state::AuctionManager,
+    spl_metaplex::{
+        deprecated_state::AuctionManagerV1,
+        state::{AuctionManagerV2, Key},
+    },
 };
 
 pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
     let auction_manager_key = pubkey_of(app_matches, "auction_manager").unwrap();
 
     let account = client.get_account(&auction_manager_key).unwrap();
-    let manager: AuctionManager = try_from_slice_unchecked(&account.data).unwrap();
-    let auction_data = client.get_account(&manager.auction).unwrap();
+    let mut managerv1: Option<AuctionManagerV1> = None;
+    let mut managerv2: Option<AuctionManagerV2> = None;
+    let auction_key: Pubkey;
+    let vault_key: Pubkey;
+    if account.data[0] == Key::AuctionManagerV1 as u8 {
+        managerv1 = Some(try_from_slice_unchecked(&account.data).unwrap());
+        if let Some(manager) = &managerv1 {
+            auction_key = manager.auction;
+            vault_key = manager.vault;
+        } else {
+            println!("This should never happen, manager was not loaded.");
+            return;
+        }
+    } else {
+        managerv2 = Some(try_from_slice_unchecked(&account.data).unwrap());
+        if let Some(manager) = &managerv2 {
+            auction_key = manager.auction;
+            vault_key = manager.vault;
+        } else {
+            println!("This should never happen, manager was not loaded.");
+            return;
+        }
+    }
+
+    let auction_data = client.get_account(&auction_key).unwrap();
     let auction: AuctionData = try_from_slice_unchecked(&auction_data.data).unwrap();
     let auction_program = spl_auction::id();
     let seeds = &[
         spl_auction::PREFIX.as_bytes(),
         &auction_program.as_ref(),
-        manager.vault.as_ref(),
+        vault_key.as_ref(),
         spl_auction::EXTENDED.as_bytes(),
     ];
     let (extended, _) = Pubkey::find_program_address(seeds, &auction_program);
@@ -27,7 +53,11 @@ pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
     let auction_ext: AuctionDataExtended = try_from_slice_unchecked(&auction_data.data).unwrap();
 
     let curr_slot = client.get_slot();
-    println!("Auction Manager: {:#?}", manager);
+    if let Some(manager) = managerv1 {
+        println!("Auction Manager: {:#?}", manager);
+    } else if let Some(manager) = managerv2 {
+        println!("Auction Manager: {:#?}", manager);
+    }
     println!("Auction: #{:#?}", auction);
     println!("Extended data: {:#?}", auction_ext);
     println!(

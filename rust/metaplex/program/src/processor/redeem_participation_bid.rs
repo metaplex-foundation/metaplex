@@ -187,17 +187,18 @@ fn charge_for_participation<'a>(
     accept_payment_info: &AccountInfo<'a>,
     transfer_authority_info: &AccountInfo<'a>,
     token_program_info: &AccountInfo<'a>,
-    safety_deposit_config_info: &mut AccountInfo<'a>,
+    safety_deposit_config_info: &AccountInfo<'a>,
     win_index: Option<usize>,
     config: &ParticipationConfigV2,
     auction_manager_bump: u8,
-    auction_manager: &Box<dyn AuctionManager>,
+    auction_manager: &mut Box<dyn AuctionManager>,
     bidder_token: &Account,
     bidder_metadata: &BidderMetadata,
 ) -> ProgramResult {
+    let auction_key = auction_manager.auction();
     let signer_seeds = &[
         PREFIX.as_bytes(),
-        auction_manager.auction().as_ref(),
+        auction_key.as_ref(),
         &[auction_manager_bump],
     ];
 
@@ -334,7 +335,7 @@ pub fn process_redeem_participation_bid<'a>(
         config.non_winning_constraint != NonWinningConstraint::NoParticipationPrize;
 
     if !cancelled {
-        if let Some(winning_index) = AuctionData::get_is_winner(auction_info, bidder_info.key) {
+        if AuctionData::get_is_winner(auction_info, bidder_info.key).is_some() {
             // Okay, so they placed in the auction winning prizes section!
             gets_participation =
                 config.winner_constraint == WinningConstraint::ParticipationPrizeGiven;
@@ -349,11 +350,8 @@ pub fn process_redeem_participation_bid<'a>(
 
     if gets_participation {
         if let Some(accounts) = legacy_accounts {
-            let mint_seeds = &[
-                PREFIX.as_bytes(),
-                &auction_manager.auction().as_ref(),
-                &[bump_seed],
-            ];
+            let auction_key = auction_manager.auction();
+            let mint_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
 
             legacy_validation(token_program_info, &auction_manager, &accounts)?;
             spl_token_transfer(
@@ -407,7 +405,7 @@ pub fn process_redeem_participation_bid<'a>(
             accept_payment_info,
             transfer_authority_info,
             token_program_info,
-            &mut safety_deposit_config_info,
+            safety_deposit_config_info,
             win_index,
             &config,
             bump_seed,

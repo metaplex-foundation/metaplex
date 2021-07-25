@@ -158,9 +158,10 @@ pub fn process_withdraw_master_edition<'a>(
         &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
     )?;
 
+    let auction_key = auction_manager.auction();
     let auction_auth_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction().as_ref(),
+        auction_key.as_ref(),
         &[auction_bump_seed],
     ];
 

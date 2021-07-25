@@ -64,7 +64,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_pot_token_info = next_account_info(account_info_iter)?;
     let bidder_pot_info = next_account_info(account_info_iter)?;
-    let auction_manager_info = next_account_info(account_info_iter)?;
+    let mut auction_manager_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
     let token_mint_info = next_account_info(account_info_iter)?;
@@ -129,11 +129,8 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
         auction_manager_info,
         &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
     )?;
-    let authority_seeds = &[
-        PREFIX.as_bytes(),
-        &auction_manager.auction().as_ref(),
-        &[bump_seed],
-    ];
+    let auction_key = auction_manager.auction();
+    let authority_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
 
     issue_claim_bid(
         auction_program_info.clone(),

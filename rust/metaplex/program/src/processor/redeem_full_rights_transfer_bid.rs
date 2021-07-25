@@ -104,11 +104,12 @@ pub fn process_full_rights_transfer_bid<'a>(
             // Someone is selling off their master edition. We need to transfer it, as well as ownership of their
             // metadata.
 
-            let auction_seeds = &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()];
+            let auction_key = auction_manager.auction();
+            let auction_seeds = &[PREFIX.as_bytes(), auction_key.as_ref()];
             let (_, auction_bump_seed) = Pubkey::find_program_address(auction_seeds, &program_id);
             let auction_authority_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction().as_ref(),
+                auction_key.as_ref(),
                 &[auction_bump_seed],
             ];
 

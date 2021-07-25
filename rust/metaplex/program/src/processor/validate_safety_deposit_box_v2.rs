@@ -2,8 +2,9 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, AuctionManagerV2, Key, OriginalAuthorityLookup,
-            SafetyDepositConfig, Store, WinningConfigType, MAX_AUTHORITY_LOOKUP_SIZE, PREFIX,
+            AuctionManager, AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker,
+            Key, OriginalAuthorityLookup, SafetyDepositConfig, Store, WinningConfigType,
+            MAX_AUTHORITY_LOOKUP_SIZE, PREFIX, TOTALS,
         },
         utils::{
             assert_at_least_one_creator_matches_or_store_public_and_all_verified,
@@ -33,7 +34,7 @@ pub fn make_safety_deposit_config<'a>(
     payer_info: &AccountInfo<'a>,
     rent_info: &AccountInfo<'a>,
     system_info: &AccountInfo<'a>,
-    safety_deposit_config: &mut SafetyDepositConfig,
+    safety_deposit_config: &SafetyDepositConfig,
 ) -> ProgramResult {
     let bump = assert_derivation(
         program_id,
@@ -62,12 +63,12 @@ pub fn make_safety_deposit_config<'a>(
         ],
     )?;
 
-    safety_deposit_config.create(&mut *safety_deposit_config_info);
+    safety_deposit_config.create(safety_deposit_config_info)?;
 
     Ok(())
 }
 
-pub struct CommonCheckArgs<'a> {
+pub struct CommonCheckArgs<'a, 'b> {
     pub program_id: &'a Pubkey,
     pub auction_manager_info: &'a AccountInfo<'a>,
     pub metadata_info: &'a AccountInfo<'a>,
@@ -81,12 +82,12 @@ pub struct CommonCheckArgs<'a> {
     pub token_metadata_program_info: &'a AccountInfo<'a>,
     pub auction_manager_store_info: &'a AccountInfo<'a>,
     pub authority_info: &'a AccountInfo<'a>,
-    pub store: &'a Store,
-    pub auction_manager: &'a dyn AuctionManager,
-    pub metadata: &'a Metadata,
-    pub safety_deposit: &'a SafetyDepositBox,
-    pub vault: &'a Vault,
-    pub winning_config_type: &'a WinningConfigType,
+    pub store: &'b Store,
+    pub auction_manager: &'b dyn AuctionManager,
+    pub metadata: &'b Metadata,
+    pub safety_deposit: &'b SafetyDepositBox,
+    pub vault: &'b Vault,
+    pub winning_config_type: &'b WinningConfigType,
 }
 
 pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
@@ -183,24 +184,24 @@ pub fn assert_common_checks(args: CommonCheckArgs) -> ProgramResult {
     Ok(())
 }
 
-pub struct SupplyLogicCheckArgs<'a> {
-    program_id: &'a Pubkey,
-    auction_manager_info: &'a AccountInfo<'a>,
-    metadata_info: &'a AccountInfo<'a>,
-    edition_info: &'a AccountInfo<'a>,
-    metadata_authority_info: &'a AccountInfo<'a>,
-    original_authority_lookup_info: &'a AccountInfo<'a>,
-    rent_info: &'a AccountInfo<'a>,
-    system_info: &'a AccountInfo<'a>,
-    payer_info: &'a AccountInfo<'a>,
-    token_metadata_program_info: &'a AccountInfo<'a>,
-    safety_deposit_token_store_info: &'a AccountInfo<'a>,
-    auction_manager: &'a dyn AuctionManager,
-    winning_config_type: &'a WinningConfigType,
-    metadata: &'a Metadata,
-    safety_deposit: &'a SafetyDepositBox,
-    store: &'a Store,
-    total_amount_requested: u64,
+pub struct SupplyLogicCheckArgs<'a, 'b> {
+    pub program_id: &'a Pubkey,
+    pub auction_manager_info: &'a AccountInfo<'a>,
+    pub metadata_info: &'a AccountInfo<'a>,
+    pub edition_info: &'a AccountInfo<'a>,
+    pub metadata_authority_info: &'a AccountInfo<'a>,
+    pub original_authority_lookup_info: &'a AccountInfo<'a>,
+    pub rent_info: &'a AccountInfo<'a>,
+    pub system_info: &'a AccountInfo<'a>,
+    pub payer_info: &'a AccountInfo<'a>,
+    pub token_metadata_program_info: &'a AccountInfo<'a>,
+    pub safety_deposit_token_store_info: &'a AccountInfo<'a>,
+    pub auction_manager: &'b dyn AuctionManager,
+    pub winning_config_type: &'b WinningConfigType,
+    pub metadata: &'b Metadata,
+    pub safety_deposit: &'b SafetyDepositBox,
+    pub store: &'b Store,
+    pub total_amount_requested: u64,
 }
 
 pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
@@ -236,13 +237,10 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     let (edition_key, _) =
         Pubkey::find_program_address(edition_seeds, &store.token_metadata_program);
 
-    let seeds = &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()];
+    let auction_key = auction_manager.auction();
+    let seeds = &[PREFIX.as_bytes(), auction_key.as_ref()];
     let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
-    let authority_seeds = &[
-        PREFIX.as_bytes(),
-        &auction_manager.auction().as_ref(),
-        &[bump_seed],
-    ];
+    let authority_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
     // Supply logic check
     match winning_config_type {
         WinningConfigType::FullRightsTransfer => {
@@ -263,9 +261,11 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 return Err(MetaplexError::NotEnoughTokensToSupplyWinners.into());
             }
 
+            let auction_key = auction_manager.auction();
+
             let original_authority_lookup_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction().as_ref(),
+                auction_key.as_ref(),
                 metadata_info.key.as_ref(),
             ];
 
@@ -273,7 +273,7 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
                 Pubkey::find_program_address(original_authority_lookup_seeds, &program_id);
             let original_authority_seeds = &[
                 PREFIX.as_bytes(),
-                &auction_manager.auction().as_ref(),
+                auction_key.as_ref(),
                 metadata_info.key.as_ref(),
                 &[original_bump_seed],
             ];
@@ -389,7 +389,8 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let safety_deposit_config_info = next_account_info(account_info_iter)?;
-    let auction_manager_info = next_account_info(account_info_iter)?;
+    let auction_token_tracker_info = next_account_info(account_info_iter)?;
+    let mut auction_manager_info = next_account_info(account_info_iter)?;
     let metadata_info = next_account_info(account_info_iter)?;
     let original_authority_lookup_info = next_account_info(account_info_iter)?;
     let whitelisted_creator_info = next_account_info(account_info_iter)?;
@@ -410,7 +411,20 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         return Err(MetaplexError::AlreadyValidated.into());
     }
 
+    assert_derivation(
+        program_id,
+        auction_token_tracker_info,
+        &[
+            PREFIX.as_bytes(),
+            &program_id.as_ref(),
+            auction_manager_info.key.as_ref(),
+            TOTALS.as_bytes(),
+        ],
+    )?;
+
     let mut auction_manager = AuctionManagerV2::from_account_info(auction_manager_info)?;
+    let mut auction_token_tracker: AuctionWinnerTokenTypeTracker =
+        AuctionWinnerTokenTypeTracker::from_account_info(auction_token_tracker_info)?;
     let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
     let metadata = Metadata::from_account_info(metadata_info)?;
     let store = Store::from_account_info(auction_manager_store_info)?;
@@ -439,7 +453,7 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         winning_config_type: &safety_deposit_config.winning_config_type,
     })?;
 
-    let mut total_amount_requested = safety_deposit_config
+    let total_amount_requested = safety_deposit_config
         .amount_ranges
         .iter()
         .map(|t| t.0 * t.1)
@@ -467,6 +481,10 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
 
     if safety_deposit_config.order != safety_deposit.order as u64 {
         return Err(MetaplexError::SafetyDepositConfigOrderMismatch.into());
+    }
+
+    if safety_deposit_config.winning_config_type == WinningConfigType::PrintingV1 {
+        return Err(MetaplexError::PrintingV1NotAllowedWithAuctionManagerV2.into());
     }
 
     if safety_deposit_config.winning_config_type != WinningConfigType::Participation
@@ -504,8 +522,12 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         payer_info,
         rent_info,
         system_info,
-        &mut safety_deposit_config,
+        &safety_deposit_config,
     )?;
+
+    auction_token_tracker
+        .add_one_where_positive_ranges_occur(&mut safety_deposit_config.amount_ranges.clone())?;
+    auction_token_tracker.save(auction_token_tracker_info);
 
     Ok(())
 }
