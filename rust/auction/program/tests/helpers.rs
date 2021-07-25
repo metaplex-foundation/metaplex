@@ -14,6 +14,15 @@ use spl_auction::{
     },
 };
 
+fn string_to_array(value: &str) -> Result<[u8; 32], TransportError> {
+    if value.len() > 32 {
+        return Err(TransportError::Custom("String too long".to_string()));
+    }
+    let mut result: [u8; 32] = Default::default();
+    &result[0..value.len()].copy_from_slice(value.as_bytes());
+    Ok(result)
+}
+
 pub async fn get_account(banks_client: &mut BanksClient, pubkey: &Pubkey) -> Account {
     banks_client
         .get_account(*pubkey)
@@ -140,6 +149,7 @@ pub async fn create_auction(
     resource: &Pubkey,
     mint_keypair: &Pubkey,
     max_winners: usize,
+    name: &str,
 ) -> Result<(), TransportError> {
     let transaction = Transaction::new_signed_with_payer(
         &[instruction::create_auction_instruction(
@@ -155,6 +165,7 @@ pub async fn create_auction(
                 price_floor: PriceFloor::None([0u8; 32]),
                 gap_tick_size_percentage: Some(0),
                 tick_size: Some(0),
+                name: string_to_array(name)?,
             },
         )],
         Some(&payer.pubkey()),

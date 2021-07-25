@@ -456,6 +456,8 @@ pub struct AuctionDataExtended {
     pub tick_size: Option<u64>,
     /// gap_tick_size_percentage - two decimal points
     pub gap_tick_size_percentage: Option<u8>,
+    /// auction name
+    pub name: [u8; 32],
 }
 
 /// Define valid auction state transitions.

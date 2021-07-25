@@ -15,7 +15,7 @@ import { findProgramAddress } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
-export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 200;
+export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 32 + 168;
 
 export enum AuctionState {
   Created = 0,
@@ -177,15 +177,18 @@ export class AuctionDataExtended {
   totalUncancelledBids: BN;
   tickSize: BN | null;
   gapTickSizePercentage: number | null;
+  name: Uint8Array;
 
   constructor(args: {
     totalUncancelledBids: BN;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    name: Uint8Array;
   }) {
     this.totalUncancelledBids = args.totalUncancelledBids;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.name = args.name;
   }
 }
 
@@ -366,6 +369,8 @@ export interface IPartialCreateAuctionArgs {
   tickSize: BN | null;
 
   gapTickSizePercentage: number | null;
+
+  name: Uint8Array;
 }
 
 export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
@@ -389,6 +394,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
 
   gapTickSizePercentage: number | null;
 
+  name: Uint8Array;
+
   constructor(args: {
     winners: WinnerLimit;
     endAuctionAt: BN | null;
@@ -399,6 +406,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    name: string | null;
   }) {
     this.winners = args.winners;
     this.endAuctionAt = args.endAuctionAt;
@@ -409,6 +417,10 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     this.priceFloor = args.priceFloor;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+
+    let fixedBuffer = new Buffer(32)
+    if (name) Buffer.from(name).copy(fixedBuffer);
+    this.string = new Uint8Array(fixedBuffer);
   }
 }
 
@@ -461,6 +473,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['name', [32]],
       ],
     },
   ],
@@ -538,6 +551,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['totalUncancelledBids', 'u64'],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['name', [32]],
       ],
     },
   ],
