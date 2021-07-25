@@ -7,15 +7,14 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import {
-  getAuctionKeys,
-  getOriginalAuthority,
-  getSafetyDepositBoxValidationTicket,
-  SCHEMA,
-  ValidateSafetyDepositBoxArgs,
-} from '.';
+import { getAuctionKeys, getOriginalAuthority, SCHEMA } from '.';
 
-export async function validateSafetyDepositBox(
+import {
+  getSafetyDepositBoxValidationTicket,
+  DeprecatedValidateSafetyDepositBoxV1Args,
+} from './deprecatedStates';
+
+export async function deprecatedValidateSafetyDepositBoxV1(
   vault: PublicKey,
   metadata: PublicKey,
   safetyDepositBox: PublicKey,
@@ -40,7 +39,7 @@ export async function validateSafetyDepositBox(
     metadata,
   );
 
-  const value = new ValidateSafetyDepositBoxArgs();
+  const value = new DeprecatedValidateSafetyDepositBoxV1Args();
 
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [

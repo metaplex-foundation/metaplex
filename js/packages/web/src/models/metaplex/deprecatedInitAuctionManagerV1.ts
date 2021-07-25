@@ -7,26 +7,25 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
+import { getAuctionKeys, SCHEMA } from '.';
 import {
-  AuctionManagerSettings,
-  getAuctionKeys,
-  InitAuctionManagerArgs,
-  SCHEMA,
-} from '.';
+  AuctionManagerSettingsV1,
+  DeprecatedInitAuctionManagerV1Args,
+} from './deprecatedStates';
 
-export async function initAuctionManager(
+export async function deprecatedInitAuctionManagerV1(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
   payer: PublicKey,
   acceptPaymentAccount: PublicKey,
   store: PublicKey,
-  settings: AuctionManagerSettings,
+  settings: AuctionManagerSettingsV1,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const value = new InitAuctionManagerArgs({
+  const value = new DeprecatedInitAuctionManagerV1Args({
     settings,
   });
 
