@@ -129,7 +129,6 @@ pub fn process_validate_safety_deposit_box(
     assert_owned_by(safety_deposit_info, &store.token_vault_program)?;
     assert_owned_by(safety_deposit_token_store_info, &store.token_program)?;
     assert_owned_by(mint_info, &store.token_program)?;
-    assert_owned_by(edition_info, &store.token_metadata_program)?;
     assert_owned_by(vault_info, &store.token_vault_program)?;
 
     if *token_metadata_program_info.key != store.token_metadata_program {
@@ -203,6 +202,10 @@ pub fn process_validate_safety_deposit_box(
                     metadata.primary_sale_happened;
             }
         }
+    }
+
+    if winning_config_type != WinningConfigType::TokenOnlyTransfer {
+        assert_owned_by(edition_info, &store.token_metadata_program)?;
     }
 
     if let Some(participation_config) = &auction_manager.settings.participation_config {
