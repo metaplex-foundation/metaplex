@@ -12,6 +12,8 @@ import {
   WinningConstraint,
 } from '.';
 
+export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3;
+
 export class AuctionManagerV1 implements AuctionManager {
   key: MetaplexKey;
   store: PublicKey;

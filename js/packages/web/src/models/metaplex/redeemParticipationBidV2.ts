@@ -22,6 +22,7 @@ import {
   RedeemParticipationBidV2Args,
   SCHEMA,
   getPrizeTrackingTicket,
+  getSafetyDepositConfig,
 } from '.';
 
 export async function redeemParticipationBidV2(
@@ -29,7 +30,6 @@ export async function redeemParticipationBidV2(
   safetyDepositTokenStore: PublicKey,
   destination: PublicKey,
   safetyDeposit: PublicKey,
-  fractionMint: PublicKey,
   bidder: PublicKey,
   payer: PublicKey,
   metadata: PublicKey,
@@ -69,6 +69,11 @@ export async function redeemParticipationBidV2(
 
   const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManagerKey,
+    safetyDeposit,
+  );
+
   const value = new RedeemParticipationBidV2Args();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
@@ -95,17 +100,17 @@ export async function redeemParticipationBidV2(
     {
       pubkey: safetyDeposit,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: vault,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
-      pubkey: fractionMint,
+      pubkey: safetyDepositConfig,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: auctionKey,
