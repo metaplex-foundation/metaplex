@@ -365,32 +365,13 @@ export function processAccountsIntoAuctionView(
         auctionManager,
         state,
         vault: vaults[auctionManager.info.vault.toBase58()],
-        items: auctionManager.info.settings.winningConfigs.map(w => {
-          return w.items.map(it => {
-            let metadata =
-              metadataByMint[
-                boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
-              ];
-            if (!metadata) {
-              // Means is a limited edition v1, so the tokenMint is the printingMint
-              let masterEdition =
-                masterEditionsByPrintingMint[
-                  boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
-                ];
-              if (masterEdition) {
-                metadata =
-                  metadataByMasterEdition[masterEdition.pubkey.toBase58()];
-              }
-            }
-            return {
-              metadata,
-              safetyDeposit: boxes[it.safetyDepositBoxIndex],
-              masterEdition: metadata?.info?.masterEdition
-                ? masterEditions[metadata.info.masterEdition.toBase58()]
-                : undefined,
-            };
-          });
-        }),
+        items: auctionManager.getItemsFromSafetyDepositBoxes(
+          metadataByMint,
+          masterEditionsByPrintingMint,
+          metadataByMasterEdition,
+          masterEditions,
+          boxes,
+        ),
         participationItem:
           participationMetadata && participationBox
             ? {

@@ -2,7 +2,6 @@ import { programIds, findProgramAddress } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
-  AuctionManager,
   AuctionManagerStatus,
   BidRedemptionTicket,
   MetaplexKey,
@@ -14,7 +13,7 @@ import {
 
 export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3;
 
-export class AuctionManagerV1 implements AuctionManager {
+export class AuctionManagerV1 {
   key: MetaplexKey;
   store: PublicKey;
   authority: PublicKey;

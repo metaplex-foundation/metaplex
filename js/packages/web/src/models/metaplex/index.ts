@@ -4,14 +4,24 @@ import {
   METADATA,
   AccountParser,
   findProgramAddress,
+  AuctionData,
+  ParsedAccount,
+  Vault,
+  Metadata,
+  MasterEditionV1,
+  MetadataKey,
+  SafetyDepositBox,
+  MasterEditionV2,
 } from '@oyster/common';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { deserializeUnchecked } from 'borsh';
+import { AuctionViewItem } from '../../hooks';
 import {
   AuctionManagerV1,
   BidRedemptionTicketV1,
   DEPRECATED_SCHEMA,
+  ParticipationConfigV1,
 } from './deprecatedStates';
 
 export * from './deprecatedInitAuctionManagerV1';
@@ -74,16 +84,129 @@ export class PayoutTicket {
     this.amountPaid = args.amountPaid;
   }
 }
-export interface AuctionManager {
-  key: MetaplexKey;
+export class AuctionManager {
   store: PublicKey;
   authority: PublicKey;
   auction: PublicKey;
   vault: PublicKey;
   acceptPayment: PublicKey;
+  numWinners: BN;
+  safetyDepositConfigs?: ParsedAccount<SafetyDepositConfig>[];
+  instance: ParsedAccount<AuctionManagerV1> | ParsedAccount<AuctionManagerV2>;
+  status: AuctionManagerStatus;
+  safetyDepositBoxesExpected: BN;
+  participationConfig?: ParticipationConfigV1;
+
+  constructor(args: {
+    instance: ParsedAccount<AuctionManagerV1> | ParsedAccount<AuctionManagerV2>;
+    auction: ParsedAccount<AuctionData>;
+    vault: ParsedAccount<Vault>;
+    safetyDepositConfigs?: ParsedAccount<SafetyDepositConfig>[];
+  }) {
+    this.instance = args.instance;
+    this.numWinners = args.auction.info.bidState.max;
+    this.safetyDepositBoxesExpected =
+      this.instance.info.key == MetaplexKey.AuctionManagerV2
+        ? new BN(args.vault.info.tokenTypeCount)
+        : new BN(
+            (
+              this.instance.info as AuctionManagerV1
+            ).state.winningConfigItemsValidated,
+          );
+    this.safetyDepositConfigs = args.safetyDepositConfigs;
+    this.store = this.instance.info.store;
+    this.authority = this.instance.info.authority;
+    this.vault = this.instance.info.vault;
+    this.acceptPayment = this.instance.info.acceptPayment;
+    this.auction = this.instance.info.auction;
+    this.status = this.instance.info.state.status;
+    this.participationConfig =
+      this.instance.info.key == MetaplexKey.AuctionManagerV2
+        ? this.safetyDepositConfigs
+            ?.filter(s => s.info.participationConfig)
+            .map(s => ({
+              winnerConstraint:
+                s.info.participationConfig?.winnerConstraint ||
+                WinningConstraint.NoParticipationPrize,
+              nonWinningConstraint:
+                s.info.participationConfig?.nonWinningConstraint ||
+                NonWinningConstraint.GivenForFixedPrice,
+              fixedPrice: s.info.participationConfig?.fixedPrice || null,
+              safetyDepositBoxIndex: s.info.order.toNumber(),
+            }))[0] || undefined
+        : (this.instance.info as AuctionManagerV1).settings
+            .participationConfig || undefined;
+  }
+
+  getItemsFromSafetyDepositBoxes(
+    metadataByMint: Record<string, ParsedAccount<Metadata>>,
+    masterEditionsByPrintingMint: Record<
+      string,
+      ParsedAccount<MasterEditionV1>
+    >,
+    metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>,
+    masterEditions: Record<
+      string,
+      ParsedAccount<MasterEditionV1 | MasterEditionV2>
+    >,
+    boxes: ParsedAccount<SafetyDepositBox>[],
+  ): AuctionViewItem[][] {
+    if (this.instance.info.key == MetaplexKey.AuctionManagerV1) {
+      return (
+        this.instance.info as AuctionManagerV1
+      ).settings.winningConfigs.map(w => {
+        return w.items.map(it => {
+          let metadata =
+            metadataByMint[
+              boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
+            ];
+          if (!metadata) {
+            // Means is a limited edition v1, so the tokenMint is the printingMint
+            let masterEdition =
+              masterEditionsByPrintingMint[
+                boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
+              ];
+            if (masterEdition) {
+              metadata =
+                metadataByMasterEdition[masterEdition.pubkey.toBase58()];
+            }
+          }
+          return {
+            metadata,
+            safetyDeposit: boxes[it.safetyDepositBoxIndex],
+            masterEdition: metadata?.info?.masterEdition
+              ? masterEditions[metadata.info.masterEdition.toBase58()]
+              : undefined,
+          };
+        });
+      });
+    } else {
+      const items: AuctionViewItem[][] = [];
+      for (let i = 0; i < this.numWinners.toNumber(); i++) {
+        const newWinnerArr: AuctionViewItem[] = [];
+        items.push(newWinnerArr);
+        this.safetyDepositConfigs?.forEach(s => {
+          const amount = s.info.getAmountForWinner(new BN(i));
+          if (amount.gt(new BN(0))) {
+            const safetyDeposit = boxes[s.info.order.toNumber()];
+            const metadata =
+              metadataByMint[safetyDeposit.info.tokenMint.toBase58()];
+            newWinnerArr.push({
+              metadata,
+              safetyDeposit,
+              masterEdition: metadata?.info?.masterEdition
+                ? masterEditions[metadata.info.masterEdition.toBase58()]
+                : undefined,
+            });
+          }
+        });
+      }
+      return items;
+    }
+  }
 }
 
-export class AuctionManagerV2 implements AuctionManager {
+export class AuctionManagerV2 {
   key: MetaplexKey;
   store: PublicKey;
   authority: PublicKey;
@@ -422,6 +545,7 @@ export class SafetyDepositConfig {
     winningConfigType: WinningConfigType;
     amountType: TupleNumericType;
     lengthType: TupleNumericType;
+    data: Uint8Array;
     amountRanges: AmountRange[];
     participationConfig: ParticipationConfigV2 | null;
     participationState: ParticipationStateV2 | null;
@@ -430,9 +554,83 @@ export class SafetyDepositConfig {
     this.winningConfigType = args.winningConfigType;
     this.amountType = args.amountType;
     this.lengthType = args.lengthType;
-    this.amountRanges = args.amountRanges;
-    this.participationConfig = args.participationConfig;
-    this.participationState = args.participationState;
+    let lengthOfArray = new BN(args.data.slice(0, 4), undefined, 'le');
+    this.amountRanges = [];
+    let offset = 4;
+    for (let i = 0; i < lengthOfArray.toNumber(); i++) {
+      const amount = this.getBNFromData(args.data, offset, this.amountType);
+      offset += this.amountType;
+      const length = this.getBNFromData(args.data, offset, this.lengthType);
+      offset += this.lengthType;
+      this.amountRanges.push(new AmountRange({ amount, length }));
+    }
+
+    if (args.data[offset] == 0) {
+      offset += 1;
+      this.participationConfig = null;
+    } else {
+      // pick up participation config manually
+      const winnerConstraintAsNumber = args.data[offset + 1];
+      const nonWinnerConstraintAsNumber = args.data[offset + 2];
+      let fixedPrice = null;
+      offset += 3;
+      if (args.data[offset] == 1) {
+        fixedPrice = new BN(args.data.slice(offset + 1, offset + 9));
+        offset += 9;
+      } else {
+        offset += 1;
+      }
+      this.participationConfig = new ParticipationConfigV2({
+        winnerConstraint: winnerConstraintAsNumber,
+        nonWinningConstraint: nonWinnerConstraintAsNumber,
+        fixedPrice: fixedPrice,
+      });
+    }
+
+    if (args.data[offset] == 0) {
+      offset += 1;
+      this.participationState = null;
+    } else {
+      // pick up participation state manually
+      const collectedToAcceptPayment = new BN(
+        args.data.slice(offset + 1, offset + 9),
+        undefined,
+        'le',
+      );
+      offset += 9;
+      this.participationState = new ParticipationStateV2({
+        collectedToAcceptPayment,
+      });
+    }
+  }
+
+  getBNFromData(
+    data: Uint8Array,
+    offset: number,
+    dataType: TupleNumericType,
+  ): BN {
+    switch (dataType) {
+      case TupleNumericType.U8:
+        return new BN(data[offset]);
+      case TupleNumericType.U16:
+        return new BN(data.slice(offset, offset + 2), undefined, 'le');
+      case TupleNumericType.U32:
+        return new BN(data.slice(offset, offset + 4), undefined, 'le');
+      case TupleNumericType.U64:
+        return new BN(data.slice(offset, offset + 8), undefined, 'le');
+    }
+  }
+
+  getAmountForWinner(winner: BN): BN {
+    let start = new BN(0);
+    for (let i = 0; i < this.amountRanges.length; i++) {
+      let end = start.add(this.amountRanges[i].length);
+      if (winner.gte(start) && winner.lt(end)) {
+        return this.amountRanges[i].amount;
+      }
+      start = end;
+    }
+    return new BN(0);
   }
 }
 

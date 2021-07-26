@@ -25,11 +25,9 @@ import {
   WinningConfigType,
   redeemBid,
   redeemFullRightsTransferBid,
-  WinningConfigStateItem,
   withdrawMasterEdition,
   BidRedemptionTicket,
   getBidRedemption,
-  WinningConfigItem,
   PrizeTrackingTicket,
 } from '../models/metaplex';
 import {
@@ -37,6 +35,7 @@ import {
   setupRedeemParticipationInstructions,
   setupRedeemPrintingV2Instructions,
 } from './sendRedeemBid';
+import { WinningConfigStateItem } from '../models/metaplex/deprecatedStates';
 const { createTokenAccount } = actions;
 
 export async function findEligibleParticipationBidsForRedemption(
