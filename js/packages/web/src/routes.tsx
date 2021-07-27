@@ -19,23 +19,20 @@ import { CoingeckoProvider } from './contexts/coingecko';
 import { BillingView } from './views/auction/billing';
 import { AdminView } from './views/admin';
 import { ConfettiProvider } from './components/Confetti';
-import { Storefront } from './models/storefront'
 
 const { WalletProvider } = contexts.Wallet;
 const { ConnectionProvider } = contexts.Connection;
 const { AccountsProvider } = contexts.Accounts;
 
 interface RoutesProps {
-  storefront: Storefront;
+  storeId: string;
 }
 
-export function Routes({ storefront }: RoutesProps) {
+export function Routes({ storeId }: RoutesProps) {
   return (
     <>
       <HashRouter basename={'/'}>
-        <ConnectionProvider
-          storeId={storefront.pubkey}
-        >
+        <ConnectionProvider storeId={storeId}>
           <WalletProvider>
             <UseWalletProvider chainId={5}>
               <AccountsProvider>
