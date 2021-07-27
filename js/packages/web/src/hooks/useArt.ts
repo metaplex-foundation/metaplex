@@ -213,7 +213,11 @@ export const useExtendedArt = (id?: PublicKey | string) => {
               .then(async _ => {
                 try {
                   const data = await _.json();
-                  localStorage.setItem(uri, JSON.stringify(data));
+                  try {
+                    localStorage.setItem(uri, JSON.stringify(data));
+                  } catch {
+                    // ignore
+                  }
                   setData(processJson(data));
                 } catch {
                   return undefined;
