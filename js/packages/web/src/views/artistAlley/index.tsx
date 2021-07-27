@@ -137,26 +137,23 @@ export const ArtistAlleyView = () => {
     <Layout>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
-          {liveAuctions.length > 1 && (
-            <Row>
-              <Tabs>
-                <TabPane>
-                  <h2>Live Auctions</h2>
-                  {liveAuctionsView}
-                </TabPane>
-              </Tabs>
-            </Row>
-          )}
           <Row>
-            {auctionsEnded.length > 0 && (
-              <Tabs>
-                <TabPane>
-                  <h2>Ended Auctions</h2>
-                  {endedAuctions}
-                </TabPane>
-              </Tabs>
-            )}
-            <br />
+            <Tabs>
+              <TabPane
+                tab={
+                  <>
+                    <span className={'live'}></span> Live
+                  </>
+                }
+                key={1}
+                active={true}
+              >
+                {liveAuctionsView}
+              </TabPane>
+              <TabPane tab={'Ended'} key={2}>
+                {endedAuctions}
+              </TabPane>
+            </Tabs>
           </Row>
         </Col>
       </Content>
