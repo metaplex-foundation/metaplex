@@ -14,10 +14,9 @@ interface AppProps {
 }
 
 export async function getServerSideProps(context: NextPageContext) {
-  console.log(context?.req?.headers)
-  const subdomain = context?.req?.headers?.host
-    ?.split(':')[0]
-    .split('.')[0] as string;
+  const headers = (context?.req?.headers || {})
+  const host = (headers['x-forwarded-host'] || headers.host) as string
+  const subdomain = host.split(':')[0].split('.')[0]
 
   const storefront = await getStorefront(subdomain);
 
@@ -83,7 +82,6 @@ function App({ storefront }: AppProps) {
             <link
               rel="icon"
               type="image/png"
-              sizes="16x16"
               href={storefront.meta.favicon}
             />
           </>
