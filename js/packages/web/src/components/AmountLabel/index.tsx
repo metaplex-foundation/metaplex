@@ -7,6 +7,7 @@ import './index.less';
 interface IAmountLabel {
   amount: number | string;
   displayUSD?: boolean;
+  displaySOL?: boolean;
   title?: string;
   style?: object;
   containerStyle?: object;
@@ -17,6 +18,7 @@ export const AmountLabel = (props: IAmountLabel) => {
   const {
     amount: _amount,
     displayUSD = true,
+    displaySOL = false,
     title = '',
     style = {},
     containerStyle = {},
@@ -41,7 +43,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           style={style}
           className="create-statistic"
           title={title || ''}
-          value={amount}
+          value={`${amount}${displaySOL && ' SOL'}`}
           prefix={<img style={symbolStyle} src={'/sol-circle.svg'} />}
         />
       )}

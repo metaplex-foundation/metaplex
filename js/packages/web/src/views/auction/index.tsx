@@ -12,7 +12,7 @@ import {
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
-
+import { format } from 'timeago.js';
 import './index.less';
 import {
   formatTokenAmount,
@@ -29,8 +29,8 @@ import { MintInfo } from '@solana/spl-token';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
-import { AppLayout } from '../../components/Layout';
 import { MetaAvatar } from '../../components/MetaAvatar';
+import { AmountLabel } from '../../components/AmountLabel';
 
 export const AuctionItem = ({
   item,
@@ -213,7 +213,7 @@ export const AuctionView = () => {
 
         {!auction && <Skeleton paragraph={{ rows: 6 }} />}
         {auction && (
-          <AuctionCard auctionView={auction} hideDefaultAction={true} />
+          <AuctionCard auctionView={auction} hideDefaultAction={false} />
         )}
         <AuctionBids auctionView={auction} />
       </Col>
@@ -238,15 +238,10 @@ const BidLine = (props: {
       style={{
         width: '100%',
         alignItems: 'center',
-        padding: '3px 0',
         position: 'relative',
         opacity: isActive ? undefined : 0.5,
-        ...(isme
-          ? {
-              backgroundColor: '#ffffff21',
-            }
-          : {}),
       }}
+      className={'bid-history'}
     >
       {isCancelled && (
         <div
@@ -261,20 +256,9 @@ const BidLine = (props: {
           }}
         />
       )}
-      <Col
-        span={2}
-        style={{
-          textAlign: 'right',
-          paddingRight: 10,
-        }}
-      >
+      <Col span={8}>
         {!isCancelled && (
-          <div
-            style={{
-              opacity: 0.8,
-              fontWeight: 700,
-            }}
-          >
+          <div className={'flex '}>
             {isme && (
               <>
                 <CheckOutlined />
@@ -282,11 +266,24 @@ const BidLine = (props: {
               </>
             )}
             {index + 1}
+            <AmountLabel
+              style={{ marginBottom: 0, fontSize: '14px' }}
+              containerStyle={{
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+              displaySOL={true}
+              amount={formatTokenAmount(bid.info.lastBid, mint)}
+            />
           </div>
         )}
       </Col>
-      <Col span={16}>
-        <Row>
+      <Col span={8}>
+        {/* uses milliseconds */}
+        {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
+      </Col>
+      <Col span={8}>
+        <div className={'flex-right'}>
           <Identicon
             style={{
               width: 24,
@@ -297,13 +294,7 @@ const BidLine = (props: {
             address={bidder}
           />{' '}
           {shortenAddress(bidder)}
-          {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
-        </Row>
-      </Col>
-      <Col span={6} style={{ textAlign: 'right' }}>
-        <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-          ◎{formatTokenAmount(bid.info.lastBid, mint)}
-        </span>
+        </div>
       </Col>
     </Row>
   );
@@ -359,42 +350,44 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Col style={{ width: '100%' }}>
-      <h6>Bid History</h6>
-      {bidLines.slice(0, 10)}
-      {bids.length > 10 && (
-        <div
-          className="full-history"
-          onClick={() => setShowHistoryModal(true)}
-          style={{
-            cursor: 'pointer',
+    <Row>
+      <Col style={{ width: '100%', paddingLeft: '24px', paddingRight: '24px' }}>
+        <h6 className={'info-title'}>Bid History</h6>
+        {bidLines.slice(0, 10)}
+        {bids.length > 10 && (
+          <div
+            className="full-history"
+            onClick={() => setShowHistoryModal(true)}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            View full history
+          </div>
+        )}
+        <MetaplexModal
+          visible={showHistoryModal}
+          onCancel={() => setShowHistoryModal(false)}
+          title="Bid history"
+          bodyStyle={{
+            background: 'unset',
+            boxShadow: 'unset',
+            borderRadius: 0,
           }}
+          centered
+          width={width < 768 ? width - 10 : 600}
         >
-          View full history
-        </div>
-      )}
-      <MetaplexModal
-        visible={showHistoryModal}
-        onCancel={() => setShowHistoryModal(false)}
-        title="Bid history"
-        bodyStyle={{
-          background: 'unset',
-          boxShadow: 'unset',
-          borderRadius: 0,
-        }}
-        centered
-        width={width < 768 ? width - 10 : 600}
-      >
-        <div
-          style={{
-            maxHeight: 600,
-            overflowY: 'scroll',
-            width: '100%',
-          }}
-        >
-          {bidLines}
-        </div>
-      </MetaplexModal>
-    </Col>
+          <div
+            style={{
+              maxHeight: 600,
+              overflowY: 'scroll',
+              width: '100%',
+            }}
+          >
+            {bidLines}
+          </div>
+        </MetaplexModal>
+      </Col>
+    </Row>
   );
 };

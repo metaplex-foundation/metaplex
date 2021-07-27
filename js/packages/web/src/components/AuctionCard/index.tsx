@@ -178,6 +178,7 @@ export const AuctionCard = ({
               auctionView={auctionView}
               showAsRow={true}
               hideCountdown={true}
+              displaySOL={true}
             />
           </Col>
           <Col span={24} md={12}>

@@ -36,6 +36,7 @@
     "react-scripts": "3.4.3",
     "react-virtualized": "^9.22.3",
     "three": "^0.128.0",
+    "timeago.js": "^4.0.2",
     "use-wallet": "^0.8.1"
   },
   "scripts": {

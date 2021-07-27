@@ -25,7 +25,7 @@ export const AuctionCountdown = (props: {
     return <Countdown state={state} />;
   }
   return (
-    <Col span={ended ? 24 : 12}>
+    <Col span={ended ? 24 : 10}>
       <LabeledCountdown state={state} />
     </Col>
   );
@@ -35,6 +35,7 @@ export const AuctionNumbers = (props: {
   auctionView: AuctionView;
   hideCountdown?: boolean;
   showAsRow?: boolean;
+  displaySOL?: boolean;
 }) => {
   const { auctionView } = props;
   const state = useAuctionCountdown(auctionView);
@@ -59,9 +60,10 @@ export const AuctionNumbers = (props: {
     <div style={{ minWidth: 350 }}>
       <Row>
         {!ended && (
-          <Col span={12}>
+          <Col span={14}>
             {(isUpcoming || bids.length === 0) && (
               <AmountLabel
+                displaySOL={props.displaySOL}
                 style={{ marginBottom: props.showAsRow ? 0 : 10 }}
                 containerStyle={{ flexDirection: 'column' }}
                 title="Starting bid"
@@ -73,6 +75,7 @@ export const AuctionNumbers = (props: {
             )}
             {isStarted && bids.length > 0 && (
               <AmountLabel
+                displaySOL={props.displaySOL}
                 style={{ marginBottom: props.showAsRow ? 0 : 10 }}
                 containerStyle={{
                   flexDirection: props.showAsRow ? ' row' : 'column',
