@@ -31,10 +31,17 @@ export async function getServerSideProps(context: NextPageContext) {
 
 function App({ storefront }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [hasLogo, setHasLogo] = useState(false);
+  const [hasStylsheet, setHasStylesheet] = useState(false);
 
   useEffect(() => {
-    const head = document.head
+    if ( hasLogo && hasStylsheet) {
+      setIsMounted(true)
+    }
+  }, [hasLogo, hasStylsheet]);
 
+  useEffect(() => {
+    const head = document.head;
     const link = document.createElement('link');
 
     link.type = 'text/css';
@@ -43,11 +50,29 @@ function App({ storefront }: AppProps) {
     // link.href = 'http://localhost:3000/demo-theme.css'
 
     link.onload = () => {
-      setIsMounted(true);
+      setHasStylesheet(true);
+
     }
 
     head.appendChild(link);
-  }, []);
+  }, [])
+
+  useEffect(() => {
+    const onHasLogo = () => {
+      setHasLogo(true)
+    }
+
+    if (!storefront.theme.logo) {
+      onHasLogo()
+      return;
+    }
+
+    const logo = new Image()
+    logo.src = storefront.theme.logo
+      
+    logo.onload = onHasLogo
+    logo.onerror = onHasLogo
+  }, [])
 
   return (
     <>
@@ -65,7 +90,7 @@ function App({ storefront }: AppProps) {
         <meta name="description" content={storefront.meta.description} />
 
         <title>
-          {storefront.meta.title || `${storefront.subdomain} | NFT Marketplace`}
+          {storefront.meta.title}
         </title>
       </Head>
       {isMounted && <CreateReactAppEntryPoint storeId={storefront.pubkey} />}
