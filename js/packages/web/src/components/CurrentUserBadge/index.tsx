@@ -1,9 +1,20 @@
 import React, { useMemo, useState } from 'react';
 
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { formatUSD, Identicon, useWallet, useNativeAccount, formatNumber, shortenAddress, Settings, MetaplexModal } from '@oyster/common';
+import {
+  formatUSD,
+  Identicon,
+  useWallet,
+  useNativeAccount,
+  formatNumber,
+  shortenAddress,
+  Settings,
+  MetaplexModal,
+  ENDPOINTS,
+  useConnectionConfig,
+} from '@oyster/common';
 import './styles.less';
-import { Popover, Button } from 'antd';
+import { Popover, Button, Select } from 'antd';
 import { useSolPrice, useMeta } from '../../contexts';
 import { Link } from 'react-router-dom';
 
@@ -59,11 +70,6 @@ export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: b
     width: props.iconSize,
     borderRadius: 50,
   }
-
-  const baseWalletKey: React.CSSProperties = { height: props.iconSize, cursor: 'pointer', userSelect: 'none' };
-  const walletKeyStyle: React.CSSProperties = props.showAddress ?
-    baseWalletKey
-    : { ...baseWalletKey, paddingLeft: 0 };
 
   let name = props.showAddress ? shortenAddress(`${wallet.publicKey}`) : '';
   const unknownWallet = wallet as any;
@@ -139,10 +145,10 @@ export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: b
 
         </div>} />}
       >
-        <div className="wallet-key" style={walletKeyStyle}>
+        <Button className="wallet-key">
           {image}
           {name && (<span style={{ marginLeft: '0.5rem' }}>{name}</span>)}
-        </div>
+        </Button>
       </Popover>
 
       <MetaplexModal
@@ -241,6 +247,61 @@ export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: b
           </Button>
         </div>
       </MetaplexModal>
+    </div>
+  );
+};
+
+export const Cog = () => {
+  const { endpoint, setEndpoint } = useConnectionConfig();
+  const { select } = useWallet();
+
+  return (
+    <div className="wallet-wrapper">
+
+      <Popover
+        trigger="click"
+        placement="bottomRight"
+        content={<div style={{
+          width: 250,
+        }}>
+
+          <h5 style={{
+            color: "rgba(255, 255, 255, 0.7)",
+            letterSpacing: "0.02em",
+          }}>NETWORK</h5>
+          <Select
+            onSelect={setEndpoint}
+            value={endpoint}
+            bordered={false}
+            style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: 8,
+              width: "100%",
+              marginBottom: 10,
+            }}
+          >
+            {ENDPOINTS.map(({ name, endpoint }) => (
+              <Select.Option value={endpoint} key={endpoint}>
+                {name}
+              </Select.Option>
+            ))}
+          </Select>
+
+          <Button
+            className="mcfarlane-button"
+            style={btnStyle}
+            onClick={select}
+          >
+            Change wallet
+          </Button>
+
+        </div>}
+      >
+        <Button className="wallet-key">
+          <img src="/cog.svg" />
+        </Button>
+      </Popover>
+
     </div>
   );
 };

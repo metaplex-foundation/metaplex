@@ -1,7 +1,6 @@
 import React from 'react';
-import { Button, Select, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { useWallet } from '../../contexts/wallet';
-import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
 import { shortenAddress } from '../../utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Identicon } from '../Identicon';
@@ -12,8 +11,7 @@ export const Settings = ({
 }: {
   additionalSettings?: JSX.Element;
 }) => {
-  const { connected, select, wallet } = useWallet();
-  const { endpoint, setEndpoint } = useConnectionConfig();
+  const { wallet } = useWallet();
 
   return (
     <>
@@ -55,36 +53,6 @@ export const Settings = ({
           width: "calc(100% + 32px)",
           marginBottom: 10,
         }}></span>
-        {/* <span style={{
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-          justifyContent: "space-between",
-          margin: "5px 0",
-        }}>Network:<Select
-          onSelect={setEndpoint}
-          value={endpoint}
-        >
-          {ENDPOINTS.map(({ name, endpoint }) => (
-            <Select.Option value={endpoint} key={endpoint}>
-              {name}
-            </Select.Option>
-          ))}
-        </Select></span> */}
-        {/* {connected && (
-          <>
-            <Button onClick={select} style={{ marginBottom: 5 }}>
-              Change
-            </Button>
-            <Button
-              type="primary"
-              onClick={disconnect}
-              style={{ marginBottom: 5 }}
-            >
-              Disconnect
-            </Button>
-          </>
-        )} */}
         {additionalSettings}
       </div>
     </>

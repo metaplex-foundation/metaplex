@@ -6,7 +6,7 @@ import { ConnectButton, useWallet } from '@oyster/common';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
-import { CurrentUserBadge } from '../CurrentUserBadge';
+import { CurrentUserBadge, Cog } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -91,6 +91,7 @@ export const AppBar = () => {
               showAddress
               iconSize={24}
             />
+            <Cog />
           </>
         )}
       </div>

@@ -8,12 +8,17 @@
 
 .wallet-key {
   padding: 0.1rem 0.5rem 0.1rem 0.7rem;
-  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.1);
+  border: none;
   border-radius: 48px;
   padding: 18px 8px;
+
+  &:focus {
+    background: rgba(255, 255, 255, 0.1);
+    color: unset;
+  }
 }
 
 .ant-popover-inner {
@@ -22,4 +27,15 @@
 
 .ant-popover-arrow {
   display: none;
+}
+
+h5 {
+  font-weight: normal;
+}
+
+.ant-select-selector {
+  height: 40px !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
