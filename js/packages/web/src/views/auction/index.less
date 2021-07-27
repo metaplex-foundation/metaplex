@@ -1,12 +1,14 @@
 .art-title {
+  margin-top: 44px;
+  margin-bottom: 44px;
   font-style: normal;
   font-weight: 600;
-  font-size: 3rem;
+  font-size: 48px;
+  line-height: 48px;
   @media (max-width: 375px) {
+    margin-top: 0px;
     font-size: 2.8rem;
   }
-
-  line-height: 1em;
   letter-spacing: -0.02em;
   color: #FFFFFF;
 }
@@ -44,6 +46,40 @@ h6 {
 
   color: #FFFFFF;
   opacity: 0.5;
+}
+.info-container {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  div.info-component {
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 24px;
+    padding-left: 24px;
+    &:last-child {
+      border-right: none;
+    }
+    &:first-child {
+      padding-left: 0;
+    }
+  }
+}
+.info-view-container {
+   display: flex;
+  justify-content: flex-end;
+  .info-view {
+    button.tag {
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+  }
+}
+h6.info-title {
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 14px;
+  opacity: 0.7;
+  text-transform: uppercase;
 }
 
 .tag {

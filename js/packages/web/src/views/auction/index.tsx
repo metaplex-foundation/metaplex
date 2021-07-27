@@ -30,6 +30,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { AppLayout } from '../../components/Layout';
+import { MetaAvatar } from '../../components/MetaAvatar';
 
 export const AuctionItem = ({
   item,
@@ -57,7 +58,7 @@ export const AuctionItem = ({
     marginLeft: size > 1 && index === 0 ? '0px' : 'auto',
     background: 'black',
     boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
-    height: 300,
+    aspectRatio: '1/1',
   };
   return (
     <ArtContent
@@ -106,98 +107,117 @@ export const AuctionView = () => {
         index={index}
         size={arr.length}
         active={index === currentIndex}
-      ></AuctionItem>
+      />
     );
   });
 
   return (
-    <AppLayout>
-      <Row justify="space-around" ref={ref}>
-        <Col span={24} md={12} className="pr-4">
-          <div className="auction-view" style={{ minHeight: 300 }}>
-            <Carousel
-              autoplay={false}
-              afterChange={index => setCurrentIndex(index)}
-            >
-              {items}
-            </Carousel>
-          </div>
-          <h6>Number Of Winners</h6>
-          <h1>
-            {winnerCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              winnerCount
-            )}
-          </h1>
-          <h6>Number Of NFTs</h6>
-          <h1>
-            {nftCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              nftCount
-            )}
-          </h1>
-          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
-          <p>
-            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description ||
-              (winnerCount !== undefined && (
-                <div style={{ fontStyle: 'italic' }}>
-                  No description provided.
-                </div>
-              ))}
-          </p>
-          {/* {auctionData[id] && (
+    <Row justify="space-around" ref={ref} gutter={[48, 0]}>
+      <Col span={24} md={8}>
+        <div className="auction-view" style={{ minHeight: 300 }}>
+          <Carousel
+            autoplay={false}
+            afterChange={index => setCurrentIndex(index)}
+          >
+            {items}
+          </Carousel>
+        </div>
+        <h6 className={'info-title'}>
+          About this {nftCount === 1 ? 'NFT' : 'Collection'}
+        </h6>
+        <p>
+          {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+          {description ||
+            (winnerCount !== undefined && (
+              <div style={{ fontStyle: 'italic' }}>
+                No description provided.
+              </div>
+            ))}
+        </p>
+        {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>
               <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
             </>
           )} */}
-        </Col>
+      </Col>
 
-        <Col span={24} md={12}>
-          <h2 className="art-title">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h2>
-          <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
-            <Col>
-              <h6>Edition</h6>
-              <p>{(auction?.items.length || 0) > 1 ? 'Multiple' : edition}</p>
-            </Col>
-
-            <Col>
-              <h6>View on</h6>
-              <div style={{ display: 'flex' }}>
-                <Button
-                  className="tag"
-                  onClick={() => window.open(art.uri || '', '_blank')}
-                >
-                  Arweave
-                </Button>
-                <Button
-                  className="tag"
-                  onClick={() =>
-                    window.open(
-                      `https://explorer.solana.com/account/${art?.mint || ''}${
-                        env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                      }`,
-                      '_blank',
-                    )
-                  }
-                >
-                  Solana
-                </Button>
+      <Col span={24} md={16}>
+        <h2 className="art-title">
+          {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+        </h2>
+        <Row gutter={[44, 0]}>
+          <Col span={12} md={16}>
+            <div className={'info-container'}>
+              <div className={'info-component'}>
+                <h6 className={'info-title'}>CREATED BY</h6>
+                <span>{<MetaAvatar creators={creators} />}</span>
               </div>
-            </Col>
-          </Row>
+              <div className={'info-component'}>
+                <h6 className={'info-title'}>Edition</h6>
+                <span>
+                  {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
+                </span>
+              </div>
+              <div className={'info-component'}>
+                <h6 className={'info-title'}>Winners</h6>
+                <span>
+                  {winnerCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    winnerCount
+                  )}
+                </span>
+              </div>
+              <div className={'info-component'}>
+                <h6 className={'info-title'}>NFTS</h6>
+                <span>
+                  {nftCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    nftCount
+                  )}
+                </span>
+              </div>
+            </div>
+          </Col>
+          <Col span={12} md={8}>
+            <div className={'info-view-container'}>
+              <div className={'info-view'}>
+                <h6 className={'info-title'}>View on</h6>
+                <div style={{ display: 'flex' }}>
+                  <Button
+                    className="tag"
+                    onClick={() => window.open(art.uri || '', '_blank')}
+                  >
+                    Arweave
+                  </Button>
+                  <Button
+                    className="tag"
+                    onClick={() =>
+                      window.open(
+                        `https://explorer.solana.com/account/${
+                          art?.mint || ''
+                        }${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`}`,
+                        '_blank',
+                      )
+                    }
+                  >
+                    Solana
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Col>
+        </Row>
 
-          {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction} />}
-          <AuctionBids auctionView={auction} />
-        </Col>
-      </Row>
-    </AppLayout>
+        {!auction && <Skeleton paragraph={{ rows: 6 }} />}
+        {auction && (
+          <AuctionCard auctionView={auction} hideDefaultAction={true} />
+        )}
+        <AuctionBids auctionView={auction} />
+      </Col>
+    </Row>
   );
 };
 
