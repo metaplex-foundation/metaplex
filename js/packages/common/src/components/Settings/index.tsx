@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Select } from 'antd';
+import { Button, Select, Tooltip } from 'antd';
 import { useWallet } from '../../contexts/wallet';
 import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
 import { shortenAddress } from '../../utils';
@@ -30,11 +30,21 @@ export const Settings = ({
           }}
         />
         {wallet?.publicKey && <>
-          <div style={{
-            fontWeight: 600,
-            letterSpacing: "-0.02em",
-            color: "#FFFFFF"
-          }}>{shortenAddress(wallet.publicKey?.toBase58())}</div>
+          <Tooltip title="Address copied">
+            <div style={{
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "#FFFFFF"
+            }}
+            onClick={() =>
+              navigator.clipboard.writeText(
+                wallet.publicKey?.toBase58() || '',
+              )
+            }>
+              <CopyOutlined />&nbsp;{shortenAddress(wallet.publicKey?.toBase58())}
+            </div>
+          </Tooltip>
+
           <Link to={`/profile/${wallet.publicKey?.toBase58()}`} style={{
             color: "rgba(255, 255, 255, 0.7)",
           }}>View profile</Link>
@@ -63,21 +73,6 @@ export const Settings = ({
         </Select></span> */}
         {/* {connected && (
           <>
-            <span>Wallet:</span>
-            {wallet?.publicKey && (
-              <Button
-                style={{ marginBottom: 5 }}
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    wallet.publicKey?.toBase58() || '',
-                  )
-                }
-              >
-                <CopyOutlined />
-                {shortenAddress(wallet?.publicKey.toBase58())}
-              </Button>
-            )}
-
             <Button onClick={select} style={{ marginBottom: 5 }}>
               Change
             </Button>
