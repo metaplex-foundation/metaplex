@@ -43,7 +43,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           style={style}
           className="create-statistic"
           title={title || ''}
-          value={`${amount}${displaySOL && ' SOL'}`}
+          value={`${amount}${displaySOL ? ' SOL' : ''}`}
           prefix={<img style={symbolStyle} src={'/sol-circle.svg'} />}
         />
       )}
