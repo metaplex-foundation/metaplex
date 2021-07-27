@@ -21,6 +21,7 @@ export const Settings = ({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        padding: "15px 0",
       }}>
         <Identicon
           address={wallet?.publicKey?.toBase58()}
@@ -29,25 +30,37 @@ export const Settings = ({
           }}
         />
         {wallet?.publicKey && <>
-          <div>{shortenAddress(wallet.publicKey?.toBase58())}</div>
-          <Link to={`/profile/${wallet.publicKey?.toBase58()}`}>View profile</Link>
+          <div style={{
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+            color: "#FFFFFF"
+          }}>{shortenAddress(wallet.publicKey?.toBase58())}</div>
+          <Link to={`/profile/${wallet.publicKey?.toBase58()}`} style={{
+            color: "rgba(255, 255, 255, 0.7)",
+          }}>View profile</Link>
         </>}
         <br />
         <span style={{
           borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
           width: "calc(100% + 32px)",
+          marginBottom: 10,
         }}></span>
-        <span>Network: <Select
+        {/* <span style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          justifyContent: "space-between",
+          margin: "5px 0",
+        }}>Network:<Select
           onSelect={setEndpoint}
           value={endpoint}
-          style={{ marginBottom: 20 }}
         >
           {ENDPOINTS.map(({ name, endpoint }) => (
             <Select.Option value={endpoint} key={endpoint}>
               {name}
             </Select.Option>
           ))}
-        </Select></span>
+        </Select></span> */}
         {/* {connected && (
           <>
             <span>Wallet:</span>
