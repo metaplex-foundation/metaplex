@@ -31,17 +31,33 @@ body {
 
   font-style: normal;
   font-weight: normal;
-  font-family: 'Graphik Web' !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: @background-color-base;
 }
 
-.not-found {
-  font-size: 35px;
-  color: black;
+.holaplex-not-found {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 62px 0 0 0;
+  font-size: 32px;
+  line-height: 32px;
+  background: linear-gradient(128.42deg, #841896 24.41%, #4F1364 83.01%);
+  color: white;
   text-align: center;
-  margin: 100px 0 0 0;
+  a:link {
+    color: #d24089;
+    &:hover {
+      color: #d24089;
+    }
+  }
+  p {
+    font-size: 24px;
+    color: white;
+  }
 }
 
 .no-events {
