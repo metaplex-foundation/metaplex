@@ -15,7 +15,13 @@ interface AppProps {
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = (context?.req?.headers || {})
-  const host = (headers['x-forwarded-host'] || headers.host) as string
+  let forwarded = headers.forwarded?.split(';').reduce((acc: any, entry) => {
+    const [key, value] = entry.split("=")
+    acc[key] = value
+
+    return acc
+  }, {})
+  const host = (forwarded.host || headers.host) as string
   const subdomain = host.split(':')[0].split('.')[0]
 
   const storefront = await getStorefront(subdomain);
