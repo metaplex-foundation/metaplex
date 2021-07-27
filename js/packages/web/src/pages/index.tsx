@@ -33,8 +33,21 @@ function App({ storefront }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  });
+    const head = document.head
+
+    const link = document.createElement('link');
+
+    link.type = 'text/css';
+    link.rel = 'stylesheet';
+    link.href = storefront.theme.stylesheet;
+    // link.href = 'http://localhost:3000/demo-theme.css'
+
+    link.onload = () => {
+      setIsMounted(true);
+    }
+
+    head.appendChild(link);
+  }, []);
 
   return (
     <>
@@ -55,7 +68,6 @@ function App({ storefront }: AppProps) {
           {storefront.meta.title || `${storefront.subdomain} | NFT Marketplace`}
         </title>
       </Head>
-      <link rel="stylesheet" href={storefront.theme.stylesheet} />
       {isMounted && <CreateReactAppEntryPoint storeId={storefront.pubkey} />}
     </>
   );
