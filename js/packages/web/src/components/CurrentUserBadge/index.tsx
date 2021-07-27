@@ -1,23 +1,24 @@
 import React from 'react';
 
-import { Identicon } from '../Identicon';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useWallet } from '../../contexts/wallet';
-import { useNativeAccount } from '../../contexts/accounts';
-import { formatNumber, shortenAddress } from '../../utils';
-import './styles.css';
+import { Identicon } from '@oyster/common';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { useWallet } from '@oyster/common';
+import { useNativeAccount } from '@oyster/common';
+import { formatNumber, shortenAddress } from '@oyster/common';
+import './styles.less';
 import { Popover, Button } from 'antd';
-import { Settings } from '../Settings';
-// import { useUserBalance } from '../../hooks/useUserBalance';
+import { Settings } from '@oyster/common';
+import { useSolPrice } from '../../contexts';
 
 export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: boolean, iconSize?: number }) => {
   const { wallet, disconnect } = useWallet();
   const { account } = useNativeAccount();
-  // const { balance, balanceInUSD } = useUserBalance();
+  const solPrice = useSolPrice();
 
-  if (!wallet || !wallet.publicKey) {
-    return null;
-  }
+  const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  const balanceInUSD = balance * solPrice;
+
+  if (!wallet || !wallet.publicKey) return null
 
   const iconStyle: React.CSSProperties = {
     display: 'flex',
@@ -56,7 +57,6 @@ export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: b
 
       <Popover
         placement="bottomRight"
-        // title="Settings"
         content={<Settings additionalSettings={<div style={{
           width: 250,
         }}>
@@ -64,8 +64,8 @@ export const CurrentUserBadge = (props: { showBalance?: boolean, showAddress?: b
           <h6>BALANCE</h6>
           <div>
             <span><img src="/sol-circle.svg" /></span>
-            {/* <span>{balance}</span> */}
-            {/* <span>{balanceInUSD}</span> */}
+            <span>◎{formatNumber.format(balance)} SOL</span>
+            <span>${balanceInUSD}</span>
           </div>
           <div style={{
             display: "flex",

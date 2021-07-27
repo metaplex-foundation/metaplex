@@ -2,21 +2,22 @@ import React, { useMemo } from 'react';
 import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
+import { ConnectButton, useWallet } from '@oyster/common';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { CurrentUserBadge } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/artworks`}>
+    <Link to={`/artworks`} key={0}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artworks'}</Button>
     </Link>,
-    <Link to={`/artists`}>
+    <Link to={`/artists`} key={1}>
       <Button className="app-btn">Creators</Button>
     </Link>,
-    <Link to={`/artistAlley`}>
+    <Link to={`/artistAlley`} key={2}>
       <Button className="app-btn">Artist Alley</Button>
     </Link>,
   ];
