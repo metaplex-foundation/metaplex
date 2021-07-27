@@ -807,7 +807,7 @@ export async function mintNewEditionFromMasterEditionViaToken(
   const masterEdition = await getEdition(tokenMint);
   const editionMarkPda = await getEditionMarkPda(tokenMint, edition);
 
-  const data = Buffer.from([11]);
+  const data = Buffer.from([11, ...edition.toArray('le', 8)]);
 
   const keys = [
     {
