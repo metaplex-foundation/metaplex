@@ -101,9 +101,10 @@ export const ArtView = () => {
               <Col>
                 <h6 style={{ marginTop: 5 }}>Created By</h6>
                 <div className="creators">
-                  {(art.creators || []).map(creator => {
+                  {(art.creators || []).map((creator, idx) => {
                     return (
                       <div
+                        key={idx}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
