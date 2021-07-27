@@ -10,13 +10,13 @@ import { useMeta } from '../../contexts';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/artworks`}>
+    <Link to={`/artworks`} key={'artworks'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artworks'}</Button>
     </Link>,
-    <Link to={`/artists`}>
+    <Link to={`/artists`} key={'artists'}>
       <Button className="app-btn">Creators</Button>
     </Link>,
-    <Link to={`/artistAlley`}>
+    <Link to={`/artistAlley`} key={'artistalley'}>
       <Button className="app-btn">Artist Alley</Button>
     </Link>,
   ];
