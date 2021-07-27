@@ -1,8 +1,14 @@
-import { ArweaveTransaction, Storefront } from './../models/storefront'
+import {
+  ArweaveTransaction,
+  Storefront,
+  ArweaveQueryResponse,
+} from './../models/storefront';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
-export const getStorefront = async (subdomain: string): Promise<Storefront | null> => {
+export const getStorefront = async (
+  subdomain: string,
+): Promise<Storefront | null> => {
   try {
     const response = await fetch(`${ARWEAVE_URL}/graphql`, {
       method: 'POST',
@@ -28,29 +34,35 @@ export const getStorefront = async (subdomain: string): Promise<Storefront | nul
         variables: {
           subdomain,
         },
-      })
-    })
+      }),
+    });
 
-    const { data: { transactions: { edges: [{ node }] } } } = await response.json() as ArweaveQueryResponse
-    const transaction = node as ArweaveTransaction
+    const {
+      data: {
+        transactions: {
+          edges: [{ node }],
+        },
+      },
+    } = (await response.json()) as ArweaveQueryResponse;
+    const transaction = node as ArweaveTransaction;
 
     const values = transaction.tags.reduce((acc: any, tag) => {
-      acc[tag.name] = tag.value || null
+      acc[tag.name] = tag.value || null;
 
-      return acc
-    }, {})
+      return acc;
+    }, {});
 
     return {
-      pubkey: values["solana:pubkey"],
-      favicon: values["holaplex:metadata:favicon:url"],
-      logo: values["holaplex:theme:logo:url"],
+      pubkey: values['solana:pubkey'],
+      favicon: values['holaplex:metadata:favicon:url'],
+      logo: values['holaplex:theme:logo:url'],
       stylesheet: `${ARWEAVE_URL}/${transaction.id}`,
       meta: {
-        title: values["holaplex:metadata:page:title"],
-        description: values["holaplex:metadata:page:description"]
-      }
-    }
-  } catch(e) {
-    return null
+        title: values['holaplex:metadata:page:title'],
+        description: values['holaplex:metadata:page:description'],
+      },
+    };
+  } catch (e) {
+    return null;
   }
-}
+};
