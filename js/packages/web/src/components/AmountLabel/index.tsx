@@ -10,6 +10,7 @@ interface IAmountLabel {
   title?: string;
   style?: object;
   containerStyle?: object;
+  symbolStyle?: object;
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
@@ -19,6 +20,7 @@ export const AmountLabel = (props: IAmountLabel) => {
     title = '',
     style = {},
     containerStyle = {},
+    symbolStyle = {},
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
@@ -40,7 +42,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           className="create-statistic"
           title={title || ''}
           value={amount}
-          prefix={<img src={'/sol-circle.svg'} />}
+          prefix={<img style={symbolStyle} src={'/sol-circle.svg'} />}
         />
       )}
       {displayUSD && (
