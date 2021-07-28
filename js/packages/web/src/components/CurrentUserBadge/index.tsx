@@ -17,6 +17,7 @@ import './styles.less';
 import { Popover, Button, Select } from 'antd';
 import { useSolPrice, useMeta } from '../../contexts';
 import { Link } from 'react-router-dom';
+import { SolCircle } from '../Custom'
 
 const btnStyle: React.CSSProperties = {
   border: 'none',
@@ -130,18 +131,7 @@ export const CurrentUserBadge = (props: {
                     marginBottom: 10,
                   }}
                 >
-                  <span
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '24px',
-                      padding: '5px',
-                      height: '20px',
-                      width: '22px',
-                      display: 'inline-flex',
-                    }}
-                  >
-                    <img src="/sol-circle.svg" />
-                  </span>
+                  <SolCircle />
                   &nbsp;
                   <span
                     style={{
