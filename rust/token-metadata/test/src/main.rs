@@ -472,22 +472,27 @@ fn create_metadata_account_call(
 
     let program_key = spl_token_metadata::id();
     let token_key = Pubkey::from_str(TOKEN_PROGRAM_PUBKEY).unwrap();
-    let new_mint = Keypair::new();
     let name = app_matches.value_of("name").unwrap().to_owned();
     let symbol = app_matches.value_of("symbol").unwrap().to_owned();
     let uri = app_matches.value_of("uri").unwrap().to_owned();
-    let new_mint_key = new_mint.pubkey();
+    let create_new_mint = !app_matches.is_present("mint");
+    let mutable = app_matches.is_present("mutable");
+    let new_mint = Keypair::new();
+    let mint_key = match app_matches.value_of("mint") {
+        Some(_val) => pubkey_of(app_matches, "mint").unwrap(),
+        None => new_mint.pubkey(),
+    };
     let metadata_seeds = &[
         PREFIX.as_bytes(),
         &program_key.as_ref(),
-        new_mint_key.as_ref(),
+        mint_key.as_ref(),
     ];
     let (metadata_key, _) = Pubkey::find_program_address(metadata_seeds, &program_key);
 
-    let instructions = [
+    let mut new_mint_instructions = vec![
         create_account(
             &payer.pubkey(),
-            &new_mint.pubkey(),
+            &mint_key,
             client
                 .get_minimum_balance_for_rent_exemption(Mint::LEN)
                 .unwrap(),
@@ -496,16 +501,19 @@ fn create_metadata_account_call(
         ),
         initialize_mint(
             &token_key,
-            &new_mint.pubkey(),
+            &mint_key,
             &payer.pubkey(),
             Some(&payer.pubkey()),
             0,
         )
         .unwrap(),
+    ];
+
+    let new_metadata_instruction = 
         create_metadata_accounts(
             program_key,
             metadata_key,
-            new_mint.pubkey(),
+            mint_key,
             payer.pubkey(),
             payer.pubkey(),
             update_authority.pubkey(),
@@ -515,18 +523,24 @@ fn create_metadata_account_call(
             None,
             0,
             update_authority.pubkey() != payer.pubkey(),
-            false,
-        ),
-    ];
+            mutable,
+        );
+
+    let mut instructions = vec![new_metadata_instruction];
+
+    if create_new_mint {
+        instructions.append(&mut new_mint_instructions)
+    }
 
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
     let recent_blockhash = client.get_recent_blockhash().unwrap().0;
-    let mut signers = vec![&payer, &new_mint];
-
+    let mut signers = vec![&payer];
+    if create_new_mint {
+        signers.push(&new_mint);
+    }
     if update_authority.pubkey() != payer.pubkey() {
         signers.push(&update_authority)
     }
-
     transaction.sign(&signers, recent_blockhash);
     client.send_and_confirm_transaction(&transaction).unwrap();
     let account = client.get_account(&metadata_key).unwrap();
@@ -590,6 +604,22 @@ fn main() {
                         .takes_value(true)
                         .required(true)
                         .help("URI for the Mint"),
+                )
+                .arg(
+                    Arg::with_name("mint")
+                        .long("mint")
+                        .value_name("MINT")
+                        .takes_value(true)
+                        .required(false)
+                        .help("Pubkey for an existing mint (random new mint otherwise)"),
+                )
+                .arg(
+                    Arg::with_name("mutable")
+                        .long("mutable")
+                        .value_name("MUTABLE")
+                        .takes_value(false)
+                        .required(false)
+                        .help("Permit future metadata updates"),
                 )
         ).subcommand(
             SubCommand::with_name("mint_coins")
