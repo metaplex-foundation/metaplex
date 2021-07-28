@@ -52,7 +52,7 @@ impl Metadata {
                 false,
             )],
             Some(&context.payer.pubkey()),
-            &[&context.payer, &self.mint],
+            &[&context.payer],
             context.last_blockhash,
         );
 
