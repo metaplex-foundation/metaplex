@@ -1,6 +1,8 @@
+mod edition_marker;
 mod master_edition_v2;
 mod metadata;
 
+pub use edition_marker::EditionMarker;
 pub use master_edition_v2::MasterEditionV2;
 pub use metadata::Metadata;
 use solana_program_test::*;
