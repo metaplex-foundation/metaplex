@@ -4,16 +4,6 @@ import { CreditCardOutlined } from '@ant-design/icons';
 import { ConnectButton } from '@oyster/common';
 import './index.less';
 
-interface ModalProps {
-  className: string;
-  children?: {
-    title?: ReactNode;
-    card1?: ReactNode;
-    card2?: ReactNode;
-    card3?: ReactNode;
-  };
-}
-
 interface ContentCardProps {
   title: String;
   description: String;
@@ -59,9 +49,18 @@ export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
   );
 };
 
-export const ModalHowToBuy: React.FC<ModalProps> = ({
-  className,
-  children,
+interface ModalProps {
+  buttonClassName: string;
+  buttonText: string;
+  modalTitle: string;
+  cardProps: ContentCardProps[];
+}
+
+export const InstructionsModal: React.FC<ModalProps> = ({
+  buttonClassName,
+  buttonText,
+  modalTitle,
+  cardProps,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -79,11 +78,11 @@ export const ModalHowToBuy: React.FC<ModalProps> = ({
 
   return (
     <>
-      <Button className={className} onClick={showModal}>
-        How to Buy
+      <Button className={buttonClassName} onClick={showModal}>
+        {buttonText}
       </Button>
       <Modal
-        title={children?.title ? children?.title : 'Buying NFTs Topps'}
+        title={modalTitle}
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
@@ -92,25 +91,16 @@ export const ModalHowToBuy: React.FC<ModalProps> = ({
       >
         <ModalContent>
           <ContentCard
-            title="Create a SOL wallet"
-            description="SOL is the cryptocurrency used for all transactions on the
-                    Solana network, and it’s the currency we use on Topps' NFTs.
-                    All of the NFTs on our platform can be purchased with SOL.
-                    Creators get paid in it, too."
+            title={cardProps[0].title}
+            description={cardProps[0].description}
           ></ContentCard>
           <ContentCard
-            title="Add funds to your wallet"
-            description="SOL is the cryptocurrency used for all transactions on the
-                    Solana network, and it’s the currency we use on Topps' NFTs.
-                    All of the NFTs on our platform can be purchased with SOL.
-                    Creators get paid in it, too."
+            title={cardProps[1].title}
+            description={cardProps[0].description}
           ></ContentCard>
           <ContentCard
-            title="Connect your wallet to Topps and place a bid."
-            description="SOL is the cryptocurrency used for all transactions on the
-                    Solana network, and it’s the currency we use on Topps' NFTs.
-                    All of the NFTs on our platform can be purchased with SOL.
-                    Creators get paid in it, too."
+            title={cardProps[2].title}
+            description={cardProps[0].description}
           ></ContentCard>
         </ModalContent>
       </Modal>
