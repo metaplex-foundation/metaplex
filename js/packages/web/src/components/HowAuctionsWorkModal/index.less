@@ -1,0 +1,120 @@
+.modal-box {
+  position: relative;
+  width: 80% !important;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background-color: #2A2A2A;
+  cursor: auto;
+  padding-bottom: 0px;
+
+  .ant-modal-header {
+    border-bottom: 0;
+    border-radius: 12px;
+    padding: 28px 24px 28px 24px;
+
+    .ant-modal-title {
+      font-style: normal;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
+    }
+  }
+
+  .ant-modal-close-x {
+    span {
+      position: absolute;
+      top: 30px;
+      right: 40px;
+      color: white;
+    }
+  }
+
+  .ant-modal-body {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px;
+    padding: 48px 16px 48px 48px;
+
+    .ant-card {
+      background: transparent;
+      border: 0;
+      margin-right: 32px;
+      height: 476px;
+
+      .card-cover {
+        background: rgba(255, 255, 255, 0.1);
+        height: 200px;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .body-title {
+        font-style: normal;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 20px;
+        margin-top: 20px;
+        margin-bottom: 12px;
+      }
+
+      .body-content {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 20px;
+        color: rgba(255, 255, 255, 0.7)
+      }
+
+      .ant-card-body {
+        display: flex;
+        flex-direction: column;
+
+        .line {
+          width: 100%;
+          height: 115px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .button-container {
+          display: flex;
+          justify-content: flex-end;
+
+          .modal-button-buy {
+            position: absolute;
+            margin-top: 40px;
+            height: 48px;
+            width: 156px;
+            right: 0;
+            bottom: 8px;
+            background: #B388F5;
+            box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+            border-radius: 8px;
+            font-style: normal;
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 16px
+          }
+        }
+      }
+    }
+  }
+}
+
+
+@media screen and (min-width: 800px) {
+  .modal-box {
+    max-width: 1248px !important;
+  }
+}
+
+.modal-button-default {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 19px;
+  cursor: pointer;
+  margin-right: 24px;
+  border: 0;
+}
+
