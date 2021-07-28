@@ -2,7 +2,7 @@ import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { deprecatedCreateReservationList } from '@oyster/common';
 
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
-import { AuctionManagerSettings, WinningConfigType } from '../models/metaplex';
+import { WinningConfigType } from '../models/metaplex';
 
 const BATCH_SIZE = 10;
 // This command batches out creating reservation lists for those tokens who are being sold in PrintingV1 mode.
@@ -24,12 +24,9 @@ export async function deprecatedCreateReservationListForTokens(
   let currInstructions: TransactionInstruction[] = [];
   for (let i = 0; i < safetyDepositInstructionTemplates.length; i++) {
     const safetyDeposit = safetyDepositInstructionTemplates[i];
-    const relevantConfig = settings.winningConfigs
-      .map(i => i.items)
-      .flat()
-      .find(it => it.safetyDepositBoxIndex === i);
+
     if (
-      relevantConfig?.winningConfigType === WinningConfigType.PrintingV1 &&
+      safetyDeposit.config.winningConfigType === WinningConfigType.PrintingV1 &&
       safetyDeposit.draft.masterEdition
     )
       await deprecatedCreateReservationList(

@@ -29,19 +29,13 @@ import {
 import { AccountLayout, Token } from '@solana/spl-token';
 import BN from 'bn.js';
 import {
-  AuctionManagerSettings,
   WinningConfigType,
   getAuctionKeys,
   getWhitelistedCreator,
-  initAuctionManager,
   startAuction,
-  validateSafetyDepositBox,
   WhitelistedCreator,
-  WinningConfig,
-  WinningConfigItem,
   AmountRange,
   ParticipationConfigV2,
-  MetaplexKey,
   TupleNumericType,
   SafetyDepositConfig,
 } from '../models/metaplex';
@@ -58,6 +52,8 @@ import { deprecatedCreateReservationListForTokens } from './deprecatedCreateRese
 import { deprecatedPopulatePrintingTokens } from './deprecatedPopulatePrintingTokens';
 import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
 import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
+import { validateSafetyDepositBoxV2 } from '../models/metaplex/validateSafetyDepositBoxV2';
+import { initAuctionManagerV2 } from '../models/metaplex/initAuctionManagerV2';
 const { createTokenAccount } = actions;
 
 interface normalPattern {
@@ -164,12 +160,12 @@ export async function createAuctionManager(
     signers: auctionManagerSigners,
     auctionManager,
   } = await setupAuctionManagerInstructions(
-    connection,
     wallet,
     vault,
     paymentMint,
-    settings,
     accountRentExempt,
+    safetyDepositConfigs,
+    auctionSettings,
   );
 
   const {
@@ -185,7 +181,6 @@ export async function createAuctionManager(
   } = await deprecatedCreateReservationListForTokens(
     wallet,
     auctionManager,
-    settings,
     safetyDepositConfigs,
   );
 
@@ -271,7 +266,6 @@ export async function createAuctionManager(
             MetadataKey.MasterEditionV2,
       ),
       safetyDepositTokenStores,
-      settings,
     ),
     deprecatedPopulatePrintingTokens: {
       instructions: populateInstr,
@@ -409,11 +403,11 @@ async function buildSafetyDepositArray(
           auctionManager: SystemProgram.programId,
           order: new BN(i),
           amountRanges: s.amountRanges,
-          amountType: maxAmount.gte(new BN(255))
-            ? TupleNumericType.U32
+          amountType: maxAmount.gte(new BN(254))
+            ? TupleNumericType.U16
             : TupleNumericType.U8,
-          lengthType: maxLength.gte(new BN(255))
-            ? TupleNumericType.U32
+          lengthType: maxLength.gte(new BN(254))
+            ? TupleNumericType.U16
             : TupleNumericType.U8,
           winningConfigType: s.winningConfigType,
           participationConfig: null,
@@ -497,12 +491,12 @@ async function buildSafetyDepositArray(
 }
 
 async function setupAuctionManagerInstructions(
-  connection: Connection,
   wallet: any,
   vault: PublicKey,
   paymentMint: PublicKey,
-  settings: AuctionManagerSettings,
   accountRentExempt: number,
+  safetyDeposits: SafetyDepositInstructionTemplate[],
+  auctionSettings: IPartialCreateAuctionArgs,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -527,13 +521,26 @@ async function setupAuctionManagerInstructions(
     signers,
   );
 
-  await initAuctionManager(
+  let maxRanges = [
+    auctionSettings.winners.usize.toNumber(),
+    safetyDeposits.length,
+    100,
+  ].sort()[0];
+  if (maxRanges < 10) {
+    maxRanges = 10;
+  }
+
+  await initAuctionManagerV2(
     vault,
     wallet.publicKey,
     wallet.publicKey,
     acceptPayment,
     store,
-    settings,
+    safetyDeposits.length >= 254 ? TupleNumericType.U16 : TupleNumericType.U8,
+    auctionSettings.winners.usize.toNumber() >= 254
+      ? TupleNumericType.U16
+      : TupleNumericType.U8,
+    new BN(maxRanges),
     instructions,
   );
 
@@ -649,7 +656,6 @@ async function validateBoxes(
   vault: PublicKey,
   safetyDeposits: SafetyDepositInstructionTemplate[],
   safetyDepositTokenStores: PublicKey[],
-  settings: AuctionManagerSettings,
 ): Promise<{
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
@@ -667,17 +673,11 @@ async function validateBoxes(
 
     let safetyDepositBox: PublicKey;
 
-    const flattenedItems = settings.winningConfigs.map(ow => ow.items).flat();
-    // Any item will do - we just need the config type. They should all be identical for a given
-    // safety deposit box.
-    const winningConfigItem = flattenedItems.find(
-      ow => ow.safetyDepositBoxIndex === i,
-    );
-
     const me = safetyDeposits[i].draft
       .masterEdition as ParsedAccount<MasterEditionV1>;
     if (
-      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1 &&
+      safetyDeposits[i].config.winningConfigType ===
+        WinningConfigType.PrintingV1 &&
       me &&
       me.info.printingMint
     ) {
@@ -705,12 +705,13 @@ async function validateBoxes(
         )
       : undefined;
 
-    await validateSafetyDepositBox(
+    await validateSafetyDepositBoxV2(
       vault,
       safetyDeposits[i].draft.metadata.pubkey,
       safetyDepositBox,
       safetyDepositTokenStores[i],
-      winningConfigItem?.winningConfigType === WinningConfigType.PrintingV1
+      safetyDeposits[i].config.winningConfigType ===
+        WinningConfigType.PrintingV1
         ? me?.info.printingMint
         : safetyDeposits[i].draft.metadata.info.mint,
       wallet.publicKey,
@@ -720,8 +721,7 @@ async function validateBoxes(
       edition,
       whitelistedCreator,
       store,
-      me?.info.printingMint,
-      safetyDeposits[i].draft.masterEdition ? wallet.publicKey : undefined,
+      safetyDeposits[i].config,
     );
 
     signers.push(tokenSigners);

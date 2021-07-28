@@ -69,12 +69,12 @@ export async function addTokensToVault(
   let currInstructions: TransactionInstruction[] = [];
   for (let i = 0; i < nfts.length; i++) {
     let nft = nfts[i];
-    if (nft.tokenAccount) {
+    if (nft.box.tokenAccount) {
       const newStoreAccount = createTokenAccount(
         currInstructions,
         wallet.publicKey,
         accountRentExempt,
-        nft.tokenMint,
+        nft.box.tokenMint,
         vaultAuthority,
         currSigners,
       );
@@ -83,9 +83,9 @@ export async function addTokensToVault(
       const transferAuthority = approve(
         currInstructions,
         [],
-        nft.tokenAccount,
+        nft.box.tokenAccount,
         wallet.publicKey,
-        nft.amount.toNumber(),
+        nft.box.amount.toNumber(),
       );
 
       currSigners.push(transferAuthority);
@@ -94,9 +94,9 @@ export async function addTokensToVault(
         nft.draft.masterEdition &&
           nft.draft.masterEdition.info.key === MetadataKey.MasterEditionV2
           ? new BN(1)
-          : nft.amount,
-        nft.tokenMint,
-        nft.tokenAccount,
+          : nft.box.amount,
+        nft.box.tokenMint,
+        nft.box.tokenAccount,
         newStoreAccount,
         vault,
         wallet.publicKey,
