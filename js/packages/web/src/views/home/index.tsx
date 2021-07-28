@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
-import { ModalHowToBuy } from "../../components/ModalHowToBuy";
+import { InstructionsModal } from '../../components/InstructionsModal';
 
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { AuctionViewState, useAuctions } from '../../hooks';
@@ -62,13 +62,13 @@ export const HomeView = () => {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-          const id = m.auction.pubkey.toBase58();
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -80,19 +80,19 @@ export const HomeView = () => {
     >
       {!isLoading
         ? auctionsEnded
-          .filter((m, idx) => idx < 10)
-          .map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+            .filter((m, idx) => idx < 10)
+            .map((m, idx) => {
+              if (m === heroAuction) {
+                return;
+              }
 
-            const id = m.auction.pubkey.toBase58();
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
+              const id = m.auction.pubkey.toBase58();
+              return (
+                <Link to={`/auction/${id}`} key={idx}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -156,7 +156,6 @@ export const HomeView = () => {
       )}
       {/* <PreSaleBanner auction={heroAuction} /> */}
       <Banner src={'/main-banner.svg'} useBannerBg={true}>
-
         <div
           style={{
             height: '100%',
@@ -185,7 +184,28 @@ export const HomeView = () => {
           >
             Buy exclusive McFarlane NFTs.
           </p>
-          <ModalHowToBuy className={'secondary-btn'} />
+          <InstructionsModal
+            buttonClassName={'secondary-btn'}
+            buttonText="How to Buy"
+            modalTitle="Buying NFTs Topps"
+            cardProps={[
+              {
+                title: 'Create a SOL wallet',
+                description:
+                  "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+              },
+              {
+                title: 'Add funds to your wallet',
+                description:
+                  "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+              },
+              {
+                title: 'Connect your wallet to Topps and place a bid.',
+                description:
+                  "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+              },
+            ]}
+          />
         </div>
       </Banner>
       <Layout>
