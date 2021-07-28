@@ -59,7 +59,7 @@ impl Metadata {
             &context.payer.pubkey(),
         )
         .await?;
-        mint_tokens(context, &self.mint.pubkey(), &self.token.pubkey(), 10000000).await?;
+        mint_tokens(context, &self.mint.pubkey(), &self.token.pubkey(), 1).await?;
 
         let tx = Transaction::new_signed_with_payer(
             &[instruction::create_metadata_accounts(
