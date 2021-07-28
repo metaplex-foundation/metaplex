@@ -15,14 +15,18 @@ import {
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { SafetyDepositDraft } from './createAuctionManager';
+import { SafetyDepositConfig } from '../models/metaplex';
 const { createTokenAccount, addTokenToInactiveVault, VAULT_PREFIX } = actions;
 const { approve } = models;
 
-export interface SafetyDepositInstructionConfig {
-  tokenAccount?: PublicKey;
-  tokenMint: PublicKey;
-  amount: BN;
+export interface SafetyDepositInstructionTemplate {
+  box: {
+    tokenAccount?: PublicKey;
+    tokenMint: PublicKey;
+    amount: BN;
+  };
   draft: SafetyDepositDraft;
+  config: SafetyDepositConfig;
 }
 
 const BATCH_SIZE = 1;
@@ -32,7 +36,7 @@ export async function addTokensToVault(
   connection: Connection,
   wallet: any,
   vault: PublicKey,
-  nfts: SafetyDepositInstructionConfig[],
+  nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;

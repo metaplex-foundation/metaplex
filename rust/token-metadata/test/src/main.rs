@@ -135,22 +135,30 @@ fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
         EDITION.as_bytes(),
     ];
     let (master_edition_key, _) = Pubkey::find_program_address(master_edition_seeds, &program_key);
-    let master_edition_account = client.get_account(&master_edition_key).unwrap();
+    let master_edition_account_res = client.get_account(&master_edition_key);
 
     println!("Metadata key: {:?}", master_metadata_key);
     println!("Metadata: {:#?}", master_metadata);
     println!("Update authority: {:?}", update_authority);
-    if master_edition_account.data[0] == Key::MasterEditionV1 as u8 {
-        let master_edition: MasterEditionV1 =
-            try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Deprecated Master edition {:#?}", master_edition);
-    } else if master_edition_account.data[0] == Key::MasterEditionV2 as u8 {
-        let master_edition: MasterEditionV2 =
-            try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Master edition {:#?}", master_edition);
-    } else {
-        let edition: Edition = try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Limited edition {:#?}", edition);
+    match master_edition_account_res {
+        Ok(master_edition_account) => {
+            if master_edition_account.data[0] == Key::MasterEditionV1 as u8 {
+                let master_edition: MasterEditionV1 =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Deprecated Master edition {:#?}", master_edition);
+            } else if master_edition_account.data[0] == Key::MasterEditionV2 as u8 {
+                let master_edition: MasterEditionV2 =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Master edition {:#?}", master_edition);
+            } else {
+                let edition: Edition =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Limited edition {:#?}", edition);
+            }
+        }
+        Err(_) => {
+            println!("No master edition or edition detected")
+        }
     }
 }
 

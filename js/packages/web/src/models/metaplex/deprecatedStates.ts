@@ -156,6 +156,10 @@ export class BidRedemptionTicketV1 implements BidRedemptionTicket {
   constructor(args?: BidRedemptionTicketV1) {
     Object.assign(this, args);
   }
+
+  getBidRedeemed(order: number): boolean {
+    return this.participationRedeemed;
+  }
 }
 
 export async function getSafetyDepositBoxValidationTicket(

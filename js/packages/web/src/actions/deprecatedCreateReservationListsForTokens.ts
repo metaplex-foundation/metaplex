@@ -1,7 +1,7 @@
 import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { deprecatedCreateReservationList } from '@oyster/common';
 
-import { SafetyDepositInstructionConfig } from './addTokensToVault';
+import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 import { AuctionManagerSettings, WinningConfigType } from '../models/metaplex';
 
 const BATCH_SIZE = 10;
@@ -10,8 +10,7 @@ const BATCH_SIZE = 10;
 export async function deprecatedCreateReservationListForTokens(
   wallet: any,
   auctionManager: PublicKey,
-  settings: AuctionManagerSettings,
-  safetyDepositInstructionConfigs: SafetyDepositInstructionConfig[],
+  safetyDepositInstructionTemplates: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
@@ -23,8 +22,8 @@ export async function deprecatedCreateReservationListForTokens(
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
-  for (let i = 0; i < safetyDepositInstructionConfigs.length; i++) {
-    const safetyDeposit = safetyDepositInstructionConfigs[i];
+  for (let i = 0; i < safetyDepositInstructionTemplates.length; i++) {
+    const safetyDeposit = safetyDepositInstructionTemplates[i];
     const relevantConfig = settings.winningConfigs
       .map(i => i.items)
       .flat()

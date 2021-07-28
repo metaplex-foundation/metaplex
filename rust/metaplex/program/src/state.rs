@@ -35,6 +35,7 @@ pub const MAX_BID_REDEMPTION_TICKET_SIZE: usize = 3;
 pub const MAX_AUTHORITY_LOOKUP_SIZE: usize = 33;
 pub const MAX_PRIZE_TRACKING_TICKET_SIZE: usize = 1 + 32 + 8 + 8 + 8 + 50;
 pub const BASE_SAFETY_CONFIG_SIZE: usize = 1 +// Key
+ 32 + // auction manager lookup
  8 + // order
  1 + // winning config type
  1 + // amount tuple type
@@ -723,6 +724,8 @@ pub enum TupleNumericType {
 #[derive(Clone, Debug, BorshSerialize, BorshDeserialize)]
 pub struct SafetyDepositConfig {
     pub key: Key,
+    /// reverse lookup
+    pub auction_manager: Pubkey,
     // only 255 safety deposits on vault right now but soon this will likely expand.
     /// safety deposit order
     pub order: u64,
@@ -742,12 +745,13 @@ pub struct AmountCumulativeReturn {
     pub cumulative_amount: u64,
     pub total_amount: u64,
 }
-const ORDER_POSITION: usize = 1;
-const WINNING_CONFIG_POSITION: usize = 9;
-const AMOUNT_POSITION: usize = 10;
-const LENGTH_POSITION: usize = 11;
-const AMOUNT_RANGE_SIZE_POSITION: usize = 12;
-const AMOUNT_RANGE_FIRST_EL_POSITION: usize = 16;
+const ORDER_POSITION: usize = 33;
+const AUCTION_MANAGER_POSITION: usize = 1;
+const WINNING_CONFIG_POSITION: usize = 41;
+const AMOUNT_POSITION: usize = 42;
+const LENGTH_POSITION: usize = 43;
+const AMOUNT_RANGE_SIZE_POSITION: usize = 44;
+const AMOUNT_RANGE_FIRST_EL_POSITION: usize = 48;
 
 fn get_number_from_data(data: &Ref<&mut [u8]>, data_type: TupleNumericType, offset: usize) -> u64 {
     return match data_type {
@@ -796,6 +800,11 @@ impl SafetyDepositConfig {
     pub fn get_order(a: &AccountInfo) -> u64 {
         let data = a.data.borrow();
         return u64::from_le_bytes(*array_ref![data, ORDER_POSITION, 8]);
+    }
+
+    pub fn get_auction_manager(a: &AccountInfo) -> Pubkey {
+        let data = a.data.borrow();
+        return Pubkey::new_from_array(*array_ref![data, AUCTION_MANAGER_POSITION, 32]);
     }
 
     pub fn get_amount_type(a: &AccountInfo) -> Result<TupleNumericType, ProgramError> {
@@ -928,6 +937,8 @@ impl SafetyDepositConfig {
             return Err(MetaplexError::DataTypeMismatch.into());
         }
 
+        let auction_manager = SafetyDepositConfig::get_auction_manager(a);
+
         let order = SafetyDepositConfig::get_order(a);
 
         let winning_config_type = SafetyDepositConfig::get_winning_config_type(a)?;
@@ -1014,6 +1025,7 @@ impl SafetyDepositConfig {
 
         Ok(SafetyDepositConfig {
             key: Key::SafetyDepositConfigV1,
+            auction_manager,
             order,
             winning_config_type,
             amount_type,
@@ -1028,6 +1040,10 @@ impl SafetyDepositConfig {
         let mut data = a.data.borrow_mut();
 
         data[0] = Key::SafetyDepositConfigV1 as u8;
+        let mut am_ref = *array_mut_ref![data, 0, 33];
+        let (_key, auction_manager) = mut_array_refs![&mut am_ref, 1, 32];
+        auction_manager.copy_from_slice(self.auction_manager.as_ref());
+
         *array_mut_ref![data, ORDER_POSITION, 8] = self.order.to_le_bytes();
         data[WINNING_CONFIG_POSITION] = self.winning_config_type as u8;
         data[AMOUNT_POSITION] = self.amount_type as u8;
@@ -1354,7 +1370,8 @@ impl BidRedemptionTicket {
             match safety_deposit_config_info {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
-                    let (position, mask) = BidRedemptionTicket::get_index_and_mask(order)?;
+                    let (position, mask) =
+                        BidRedemptionTicket::get_index_and_mask(bid_redemption_info, order)?;
                     if bid_redemption_data[position] & mask != 0 {
                         return Err(MetaplexError::BidAlreadyRedeemed.into());
                     }
@@ -1365,12 +1382,18 @@ impl BidRedemptionTicket {
         Ok(())
     }
 
-    pub fn get_index_and_mask(order: u64) -> Result<(usize, u8), ProgramError> {
+    pub fn get_index_and_mask(a: &AccountInfo, order: u64) -> Result<(usize, u8), ProgramError> {
         // add one because Key is at 0
+        let mut offset = 42;
+        if a.data.borrow()[1] == 0 {
+            // remove the lost option space
+            offset -= 8;
+        }
+
         let u8_position = order
-            .checked_div(8)
+            .checked_div(offset)
             .ok_or(MetaplexError::NumericalOverflowError)?
-            .checked_add(1)
+            .checked_add(41)
             .ok_or(MetaplexError::NumericalOverflowError)?;
         let position_from_right = 7 - order
             .checked_rem(8)
@@ -1384,6 +1407,8 @@ impl BidRedemptionTicket {
         bid_redemption_info: &AccountInfo,
         participation_redeemed: bool,
         safety_deposit_config_info: Option<&AccountInfo>,
+        winner_index: Option<usize>,
+        auction_manager: Pubkey,
     ) -> ProgramResult {
         // Saving on CPU in these large actions by avoiding borsh
         let data = &mut bid_redemption_info.data.borrow_mut();
@@ -1401,10 +1426,24 @@ impl BidRedemptionTicket {
         } else if data[0] == Key::BidRedemptionTicketV2 as u8 || data[0] == Key::Uninitialized as u8
         {
             data[0] = Key::BidRedemptionTicketV2 as u8;
+            let mut offset = 2;
+            if let Some(index) = winner_index {
+                data[1] = 1;
+                offset += 8;
+                *array_mut_ref![data, 2, 8] = index.to_le_bytes();
+            } else {
+                data[1] = 0;
+            }
+
+            let auction_manager_ptr = array_mut_ref![data, offset, 32];
+
+            auction_manager_ptr.copy_from_slice(auction_manager.as_ref());
+
             match safety_deposit_config_info {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
-                    let (position, mask) = BidRedemptionTicket::get_index_and_mask(order)?;
+                    let (position, mask) =
+                        BidRedemptionTicket::get_index_and_mask(bid_redemption_info, order)?;
                     data[position] = data[position] | mask;
                 }
                 None => return Err(MetaplexError::InvalidOperation.into()),

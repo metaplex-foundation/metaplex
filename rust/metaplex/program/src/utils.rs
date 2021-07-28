@@ -704,7 +704,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 &rent_info,
                 &system_info,
                 &payer_info,
-                1 + token_type_count as usize,
+                1 + 9 + 32 + token_type_count as usize,
                 redemption_seeds,
             )?;
         }
@@ -713,6 +713,8 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
             bid_redemption_info,
             participation_redeemed,
             safety_deposit_config_info,
+            winning_index,
+            *auction_manager_info.key,
         )?;
     }
 

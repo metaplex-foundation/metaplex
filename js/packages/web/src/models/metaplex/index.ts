@@ -13,7 +13,7 @@ import {
   SafetyDepositBox,
   MasterEditionV2,
 } from '@oyster/common';
-import { AccountInfo, PublicKey } from '@solana/web3.js';
+import { AccountInfo, PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
 import { deserializeUnchecked } from 'borsh';
 import { AuctionViewItem } from '../../hooks';
@@ -85,24 +85,28 @@ export class PayoutTicket {
   }
 }
 export class AuctionManager {
+  pubkey: PublicKey;
   store: PublicKey;
   authority: PublicKey;
   auction: PublicKey;
   vault: PublicKey;
   acceptPayment: PublicKey;
   numWinners: BN;
-  safetyDepositConfigs?: ParsedAccount<SafetyDepositConfig>[];
-  instance: ParsedAccount<AuctionManagerV1> | ParsedAccount<AuctionManagerV2>;
+  safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[];
+  bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[];
+  instance: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>;
   status: AuctionManagerStatus;
   safetyDepositBoxesExpected: BN;
   participationConfig?: ParticipationConfigV1;
 
   constructor(args: {
-    instance: ParsedAccount<AuctionManagerV1> | ParsedAccount<AuctionManagerV2>;
+    instance: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>;
     auction: ParsedAccount<AuctionData>;
     vault: ParsedAccount<Vault>;
-    safetyDepositConfigs?: ParsedAccount<SafetyDepositConfig>[];
+    safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[];
+    bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[];
   }) {
+    this.pubkey = args.instance.pubkey;
     this.instance = args.instance;
     this.numWinners = args.auction.info.bidState.max;
     this.safetyDepositBoxesExpected =
@@ -113,13 +117,14 @@ export class AuctionManager {
               this.instance.info as AuctionManagerV1
             ).state.winningConfigItemsValidated,
           );
-    this.safetyDepositConfigs = args.safetyDepositConfigs;
     this.store = this.instance.info.store;
     this.authority = this.instance.info.authority;
     this.vault = this.instance.info.vault;
     this.acceptPayment = this.instance.info.acceptPayment;
     this.auction = this.instance.info.auction;
     this.status = this.instance.info.state.status;
+    this.safetyDepositConfigs = args.safetyDepositConfigs;
+    this.bidRedemptions = args.bidRedemptions;
     this.participationConfig =
       this.instance.info.key == MetaplexKey.AuctionManagerV2
         ? this.safetyDepositConfigs
@@ -136,6 +141,42 @@ export class AuctionManager {
             }))[0] || undefined
         : (this.instance.info as AuctionManagerV1).settings
             .participationConfig || undefined;
+  }
+
+  isItemClaimed(winnerIndex: number, safetyDepositBoxIndex: number): boolean {
+    if (this.instance.info.key == MetaplexKey.AuctionManagerV1) {
+      const asV1 = this.instance.info as AuctionManagerV1;
+      const itemIndex = asV1.settings.winningConfigs[
+        winnerIndex
+      ].items.findIndex(i => i.safetyDepositBoxIndex == safetyDepositBoxIndex);
+
+      return asV1.state.winningConfigStates[winnerIndex].items[itemIndex]
+        .claimed;
+    } else {
+      const winner = this.bidRedemptions.find(
+        b => b.info.winnerIndex && b.info.winnerIndex.eq(new BN(winnerIndex)),
+      );
+      if (!winner) {
+        return false;
+      } else {
+        return winner.info.getBidRedeemed(safetyDepositBoxIndex);
+      }
+    }
+  }
+
+  getAmountForWinner(winnerIndex: number, safetyDepositBoxIndex: number): BN {
+    if (this.instance.info.key == MetaplexKey.AuctionManagerV1) {
+      return new BN(
+        (this.instance.info as AuctionManagerV1).settings.winningConfigs[
+          winnerIndex
+        ].items.find(i => i.safetyDepositBoxIndex == safetyDepositBoxIndex)
+          ?.amount || 0,
+      );
+    } else {
+      const safetyDepositConfig =
+        this.safetyDepositConfigs[safetyDepositBoxIndex];
+      return safetyDepositConfig.info.getAmountForWinner(new BN(winnerIndex));
+    }
   }
 
   getItemsFromSafetyDepositBoxes(
@@ -173,7 +214,9 @@ export class AuctionManager {
           }
           return {
             metadata,
+            winningConfigType: it.winningConfigType,
             safetyDeposit: boxes[it.safetyDepositBoxIndex],
+            amount: new BN(it.amount),
             masterEdition: metadata?.info?.masterEdition
               ? masterEditions[metadata.info.masterEdition.toBase58()]
               : undefined,
@@ -193,7 +236,9 @@ export class AuctionManager {
               metadataByMint[safetyDeposit.info.tokenMint.toBase58()];
             newWinnerArr.push({
               metadata,
+              winningConfigType: s.info.winningConfigType,
               safetyDeposit,
+              amount,
               masterEdition: metadata?.info?.masterEdition
                 ? masterEditions[metadata.info.masterEdition.toBase58()]
                 : undefined,
@@ -414,12 +459,12 @@ export const decodeStore = (buffer: Buffer) => {
   return deserializeUnchecked(SCHEMA, Store, buffer) as Store;
 };
 
-export const decodeAuctionManager = (buffer: Buffer) => {
-  return (
-    buffer[0] == MetaplexKey.AuctionManagerV1
-      ? deserializeUnchecked(SCHEMA, AuctionManagerV1, buffer)
-      : deserializeUnchecked(SCHEMA, AuctionManagerV2, buffer)
-  ) as AuctionManager;
+export const decodeAuctionManager = (
+  buffer: Buffer,
+): AuctionManagerV1 | AuctionManagerV2 => {
+  return buffer[0] == MetaplexKey.AuctionManagerV1
+    ? deserializeUnchecked(SCHEMA, AuctionManagerV1, buffer)
+    : deserializeUnchecked(SCHEMA, AuctionManagerV2, buffer);
 };
 
 export const decodeBidRedemptionTicket = (buffer: Buffer) => {
@@ -431,6 +476,12 @@ export const decodeBidRedemptionTicket = (buffer: Buffer) => {
           data: buffer.slice(1).toJSON().data,
         })
   ) as BidRedemptionTicket;
+};
+
+export const decodeSafetyDepositConfig = (buffer: Buffer) => {
+  return new SafetyDepositConfig({
+    data: buffer,
+  });
 };
 
 export const decodePayoutTicket = (buffer: Buffer) => {
@@ -480,13 +531,36 @@ export class Store {
 
 export interface BidRedemptionTicket {
   key: MetaplexKey;
+
+  getBidRedeemed(order: number): boolean;
 }
 export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;
+  winnerIndex: BN | null;
+  auctionManager: PublicKey;
   data: number[] = [];
 
-  constructor(args?: BidRedemptionTicketV2) {
+  constructor(args?: { key: MetaplexKey; data: number[] }) {
     Object.assign(this, args);
+    let offset = 2;
+    if (this.data[1] == 0) {
+      this.winnerIndex = null;
+    } else {
+      this.winnerIndex = new BN(this.data.slice(1, 9), undefined, 'le');
+      offset += 8;
+    }
+
+    this.auctionManager = new PublicKey(this.data.slice(offset, offset + 32));
+  }
+
+  getBidRedeemed(order: number): boolean {
+    const index = Math.floor(order / 8) + 1;
+    const positionFromRight = 7 - (order % 8);
+    const mask = Math.pow(2, positionFromRight);
+
+    const appliedMask = this.data[index] & mask;
+
+    return appliedMask != 0;
   }
 }
 
@@ -533,74 +607,84 @@ export class InitAuctionManagerV2Args {
 
 export class SafetyDepositConfig {
   key: MetaplexKey = MetaplexKey.SafetyDepositConfigV1;
-  order: BN;
-  winningConfigType: WinningConfigType;
+  auctionManager: PublicKey = SystemProgram.programId;
+  order: BN = new BN(0);
+  winningConfigType: WinningConfigType = WinningConfigType.PrintingV2;
   amountType: TupleNumericType = TupleNumericType.U8;
   lengthType: TupleNumericType = TupleNumericType.U8;
   amountRanges: AmountRange[] = [];
-  participationConfig: ParticipationConfigV2 | null;
-  participationState: ParticipationStateV2 | null;
+  participationConfig: ParticipationConfigV2 | null = null;
+  participationState: ParticipationStateV2 | null = null;
+
   constructor(args: {
-    order: BN;
-    winningConfigType: WinningConfigType;
-    amountType: TupleNumericType;
-    lengthType: TupleNumericType;
-    data: Uint8Array;
-    amountRanges: AmountRange[];
-    participationConfig: ParticipationConfigV2 | null;
-    participationState: ParticipationStateV2 | null;
+    data?: Uint8Array;
+    directArgs?: {
+      auctionManager: PublicKey;
+      order: BN;
+      winningConfigType: WinningConfigType;
+      amountType: TupleNumericType;
+      lengthType: TupleNumericType;
+      amountRanges: AmountRange[];
+      participationConfig: ParticipationConfigV2 | null;
+      participationState: ParticipationStateV2 | null;
+    };
   }) {
-    this.order = args.order;
-    this.winningConfigType = args.winningConfigType;
-    this.amountType = args.amountType;
-    this.lengthType = args.lengthType;
-    let lengthOfArray = new BN(args.data.slice(0, 4), undefined, 'le');
-    this.amountRanges = [];
-    let offset = 4;
-    for (let i = 0; i < lengthOfArray.toNumber(); i++) {
-      const amount = this.getBNFromData(args.data, offset, this.amountType);
-      offset += this.amountType;
-      const length = this.getBNFromData(args.data, offset, this.lengthType);
-      offset += this.lengthType;
-      this.amountRanges.push(new AmountRange({ amount, length }));
-    }
-
-    if (args.data[offset] == 0) {
-      offset += 1;
-      this.participationConfig = null;
-    } else {
-      // pick up participation config manually
-      const winnerConstraintAsNumber = args.data[offset + 1];
-      const nonWinnerConstraintAsNumber = args.data[offset + 2];
-      let fixedPrice = null;
-      offset += 3;
-      if (args.data[offset] == 1) {
-        fixedPrice = new BN(args.data.slice(offset + 1, offset + 9));
-        offset += 9;
-      } else {
-        offset += 1;
+    if (args.directArgs) {
+      Object.assign(this, args.directArgs);
+    } else if (args.data) {
+      this.auctionManager = new PublicKey(args.data.slice(1, 33));
+      this.order = new BN(args.data.slice(33, 8), undefined, 'le');
+      this.winningConfigType = args.data[41];
+      this.amountType = args.data[42];
+      this.lengthType = args.data[43];
+      let lengthOfArray = new BN(args.data.slice(44, 4), undefined, 'le');
+      this.amountRanges = [];
+      let offset = 48;
+      for (let i = 0; i < lengthOfArray.toNumber(); i++) {
+        const amount = this.getBNFromData(args.data, offset, this.amountType);
+        offset += this.amountType;
+        const length = this.getBNFromData(args.data, offset, this.lengthType);
+        offset += this.lengthType;
+        this.amountRanges.push(new AmountRange({ amount, length }));
       }
-      this.participationConfig = new ParticipationConfigV2({
-        winnerConstraint: winnerConstraintAsNumber,
-        nonWinningConstraint: nonWinnerConstraintAsNumber,
-        fixedPrice: fixedPrice,
-      });
-    }
 
-    if (args.data[offset] == 0) {
-      offset += 1;
-      this.participationState = null;
-    } else {
-      // pick up participation state manually
-      const collectedToAcceptPayment = new BN(
-        args.data.slice(offset + 1, offset + 9),
-        undefined,
-        'le',
-      );
-      offset += 9;
-      this.participationState = new ParticipationStateV2({
-        collectedToAcceptPayment,
-      });
+      if (args.data[offset] == 0) {
+        offset += 1;
+        this.participationConfig = null;
+      } else {
+        // pick up participation config manually
+        const winnerConstraintAsNumber = args.data[offset + 1];
+        const nonWinnerConstraintAsNumber = args.data[offset + 2];
+        let fixedPrice = null;
+        offset += 3;
+        if (args.data[offset] == 1) {
+          fixedPrice = new BN(args.data.slice(offset + 1, offset + 9));
+          offset += 9;
+        } else {
+          offset += 1;
+        }
+        this.participationConfig = new ParticipationConfigV2({
+          winnerConstraint: winnerConstraintAsNumber,
+          nonWinningConstraint: nonWinnerConstraintAsNumber,
+          fixedPrice: fixedPrice,
+        });
+      }
+
+      if (args.data[offset] == 0) {
+        offset += 1;
+        this.participationState = null;
+      } else {
+        // pick up participation state manually
+        const collectedToAcceptPayment = new BN(
+          args.data.slice(offset + 1, offset + 9),
+          undefined,
+          'le',
+        );
+        offset += 9;
+        this.participationState = new ParticipationStateV2({
+          collectedToAcceptPayment,
+        });
+      }
     }
   }
 
@@ -755,6 +839,7 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
+        ['auctionManager', 'pubkey'],
         ['order', 'u64'],
         ['winningConfigType', 'u8'],
         ['amountType', 'u8'],

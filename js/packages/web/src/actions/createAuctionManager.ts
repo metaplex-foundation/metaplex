@@ -3,6 +3,7 @@ import {
   Connection,
   PublicKey,
   TransactionInstruction,
+  SystemProgram,
 } from '@solana/web3.js';
 import {
   actions,
@@ -38,12 +39,17 @@ import {
   WhitelistedCreator,
   WinningConfig,
   WinningConfigItem,
+  AmountRange,
+  ParticipationConfigV2,
+  MetaplexKey,
+  TupleNumericType,
+  SafetyDepositConfig,
 } from '../models/metaplex';
 import { createVault } from './createVault';
 import { closeVault } from './closeVault';
 import {
   addTokensToVault,
-  SafetyDepositInstructionConfig,
+  SafetyDepositInstructionTemplate,
 } from './addTokensToVault';
 import { makeAuction } from './makeAuction';
 import { createExternalPriceAccount } from './createExternalPriceAccount';
@@ -86,6 +92,9 @@ export interface SafetyDepositDraft {
   edition?: ParsedAccount<Edition>;
   holding: PublicKey;
   printingMintHolding?: PublicKey;
+  winningConfigType: WinningConfigType;
+  amountRanges: AmountRange[];
+  participationConfig?: ParticipationConfigV2;
 }
 
 // This is a super command that executes many transactions to create a Vault, Auction, and AuctionManager starting
@@ -97,7 +106,6 @@ export async function createAuctionManager(
     string,
     ParsedAccount<WhitelistedCreator>
   >,
-  settings: AuctionManagerSettings,
   auctionSettings: IPartialCreateAuctionArgs,
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
@@ -138,7 +146,6 @@ export async function createAuctionManager(
       wallet,
       safetyDepositDrafts,
       participationSafetyDepositDraft,
-      settings.winningConfigs,
     );
 
   // Only creates for PrintingV1 deprecated configs
@@ -369,93 +376,124 @@ async function buildSafetyDepositArray(
   wallet: any,
   safetyDeposits: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
-  winningConfigs: WinningConfig[],
-): Promise<SafetyDepositInstructionConfig[]> {
-  let safetyDepositConfig: SafetyDepositInstructionConfig[] = [];
-  safetyDeposits.forEach((w, i) => {
-    // Configs where we are selling this safety deposit as a master edition or single nft
-    let nonPrintingConfigs: WinningConfigItem[] = [];
-    let printingConfigs: WinningConfigItem[] = [];
-
-    winningConfigs.forEach(ow => {
-      ow.items.forEach(it => {
-        if (it.safetyDepositBoxIndex === i) {
-          if (it.winningConfigType !== WinningConfigType.PrintingV1) {
-            nonPrintingConfigs.push(it);
-            // we may also have an auction where we are selling prints of the master too as secondary prizes
-          } else if (it.winningConfigType === WinningConfigType.PrintingV1) {
-            printingConfigs.push(it);
-          }
-        }
-      });
+): Promise<SafetyDepositInstructionTemplate[]> {
+  let safetyDepositTemplates: SafetyDepositInstructionTemplate[] = [];
+  safetyDeposits.forEach((s, i) => {
+    const maxAmount = [...s.amountRanges.map(a => a.amount)]
+      .sort()
+      .reverse()[0];
+    const maxLength = [...s.amountRanges.map(a => a.length)]
+      .sort()
+      .reverse()[0];
+    safetyDepositTemplates.push({
+      box: {
+        tokenAccount: s.holding,
+        tokenMint:
+          s.winningConfigType !== WinningConfigType.PrintingV1
+            ? s.metadata.info.mint
+            : (s.masterEdition as ParsedAccount<MasterEditionV1>)?.info
+                .printingMint,
+        amount:
+          s.winningConfigType == WinningConfigType.PrintingV2 ||
+          s.winningConfigType == WinningConfigType.FullRightsTransfer
+            ? new BN(1)
+            : new BN(
+                s.amountRanges.reduce(
+                  (acc, r) => acc.add(r.amount.mul(r.length)),
+                  new BN(0),
+                ),
+              ),
+      },
+      config: new SafetyDepositConfig({
+        directArgs: {
+          auctionManager: SystemProgram.programId,
+          order: new BN(i),
+          amountRanges: s.amountRanges,
+          amountType: maxAmount.gte(new BN(255))
+            ? TupleNumericType.U32
+            : TupleNumericType.U8,
+          lengthType: maxLength.gte(new BN(255))
+            ? TupleNumericType.U32
+            : TupleNumericType.U8,
+          winningConfigType: s.winningConfigType,
+          participationConfig: null,
+          participationState: null,
+        },
+      }),
+      draft: s,
     });
-
-    const nonPrintingTotal = nonPrintingConfigs
-      .map(ow => ow.amount)
-      .reduce((sum, acc) => (sum += acc), 0);
-    const printingTotal = printingConfigs
-      .map(ow => ow.amount)
-      .reduce((sum, acc) => (sum += acc), 0);
-
-    if (nonPrintingTotal > 0) {
-      safetyDepositConfig.push({
-        tokenAccount: w.holding,
-        tokenMint: w.metadata.info.mint,
-        amount: new BN(nonPrintingTotal),
-        draft: w,
-      });
-    }
-
-    if (
-      printingTotal > 0 &&
-      (w.masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint
-    ) {
-      safetyDepositConfig.push({
-        tokenAccount: w.printingMintHolding,
-        tokenMint: (w.masterEdition as ParsedAccount<MasterEditionV1>)?.info
-          .printingMint,
-        amount: new BN(printingTotal),
-        draft: w,
-      });
-    }
   });
 
   if (
     participationSafetyDepositDraft &&
     participationSafetyDepositDraft.masterEdition
   ) {
+    const maxAmount = [
+      ...participationSafetyDepositDraft.amountRanges.map(s => s.amount),
+    ]
+      .sort()
+      .reverse()[0];
+    const maxLength = [
+      ...participationSafetyDepositDraft.amountRanges.map(s => s.length),
+    ]
+      .sort()
+      .reverse()[0];
+    const config = new SafetyDepositConfig({
+      directArgs: {
+        auctionManager: SystemProgram.programId,
+        order: new BN(safetyDeposits.length),
+        amountRanges: participationSafetyDepositDraft.amountRanges,
+        amountType: maxAmount.gte(new BN(255))
+          ? TupleNumericType.U32
+          : TupleNumericType.U8,
+        lengthType: maxLength.gte(new BN(255))
+          ? TupleNumericType.U32
+          : TupleNumericType.U8,
+        winningConfigType: WinningConfigType.PrintingV1,
+        participationConfig:
+          participationSafetyDepositDraft.participationConfig || null,
+        participationState: { collectedToAcceptPayment: new BN(0) },
+      },
+    });
+
     if (
       participationSafetyDepositDraft.masterEdition.info.key ==
       MetadataKey.MasterEditionV1
     ) {
       const me =
         participationSafetyDepositDraft.masterEdition as ParsedAccount<MasterEditionV1>;
-      safetyDepositConfig.push({
-        tokenAccount: (
-          await findProgramAddress(
-            [
-              wallet.publicKey.toBuffer(),
-              programIds().token.toBuffer(),
-              me?.info.oneTimePrintingAuthorizationMint.toBuffer(),
-            ],
-            programIds().associatedToken,
-          )
-        )[0],
-        tokenMint: me?.info.oneTimePrintingAuthorizationMint,
-        amount: new BN(1),
+      safetyDepositTemplates.push({
+        box: {
+          tokenAccount: (
+            await findProgramAddress(
+              [
+                wallet.publicKey.toBuffer(),
+                programIds().token.toBuffer(),
+                me?.info.oneTimePrintingAuthorizationMint.toBuffer(),
+              ],
+              programIds().associatedToken,
+            )
+          )[0],
+          tokenMint: me?.info.oneTimePrintingAuthorizationMint,
+          amount: new BN(1),
+        },
+        config,
         draft: participationSafetyDepositDraft,
       });
     } else {
-      safetyDepositConfig.push({
-        tokenAccount: participationSafetyDepositDraft.holding,
-        tokenMint: participationSafetyDepositDraft.metadata.info.mint,
-        amount: new BN(1),
+      safetyDepositTemplates.push({
+        box: {
+          tokenAccount: participationSafetyDepositDraft.holding,
+          tokenMint: participationSafetyDepositDraft.metadata.info.mint,
+          amount: new BN(1),
+        },
+        config,
         draft: participationSafetyDepositDraft,
       });
     }
   }
 
-  return safetyDepositConfig;
+  return safetyDepositTemplates;
 }
 
 async function setupAuctionManagerInstructions(
@@ -609,7 +647,7 @@ async function validateBoxes(
     ParsedAccount<WhitelistedCreator>
   >,
   vault: PublicKey,
-  safetyDeposits: SafetyDepositInstructionConfig[],
+  safetyDeposits: SafetyDepositInstructionTemplate[],
   safetyDepositTokenStores: PublicKey[],
   settings: AuctionManagerSettings,
 ): Promise<{
