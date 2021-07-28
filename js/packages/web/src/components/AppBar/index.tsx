@@ -2,58 +2,26 @@ import React, { useMemo } from 'react';
 import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
+import { ConnectButton, useWallet } from '@oyster/common';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 import { HowToBuyModal } from '../HowToBuyModal';
+import { CurrentUserBadge, Cog } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/artworks`}>
-      <Button className="app-btn">{connected ? 'My Items' : 'Artworks'}</Button>
-    </Link>,
-    <Link to={`/artists`}>
-      <Button className="app-btn">Creators</Button>
-    </Link>,
-    <Link to={`/artistAlley`}>
-      <Button className="app-btn">Artist Alley</Button>
-    </Link>,
+    // <Link to={`/artworks`} key={'artworks'}>
+    //   <Button className="app-btn">{connected ? 'My Items' : 'Artworks'}</Button>
+    // </Link>,
+    // <Link to={`/artists`} key={'artists'}>
+    //   <Button className="app-btn">Creators</Button>
+    // </Link>,
+    // <Link to={`/artistAlley`} key={'artistalley'}>
+    //   <Button className="app-btn">Artist Alley</Button>
+    // </Link>,
   ];
-};
-
-const UserActions = () => {
-  const { wallet } = useWallet();
-  const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
-
-  const canCreate = useMemo(() => {
-    return (
-      store &&
-      store.info &&
-      (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info?.activated)
-    );
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
-
-  return (
-    <>
-      {/* <Link to={`#`}>
-        <Button className="app-btn">Bids</Button>
-      </Link> */}
-      {canCreate ? (
-        <Link to={`/art/create`}>
-          <Button className="app-btn">Create</Button>
-        </Link>
-      ) : null}
-      <Link to={`/auction/create/0`}>
-        <Button className="connector" type="primary">
-          Sell
-        </Button>
-      </Link>
-    </>
-  );
 };
 
 const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
@@ -119,13 +87,9 @@ export const AppBar = () => {
         {!connected && <ConnectButton type="primary" />}
         {connected && (
           <>
-            <UserActions />
             <Notifications />
-            <CurrentUserBadge
-              showBalance={false}
-              showAddress={false}
-              iconSize={24}
-            />
+            <CurrentUserBadge showBalance={false} showAddress iconSize={24} />
+            <Cog />
           </>
         )}
       </div>

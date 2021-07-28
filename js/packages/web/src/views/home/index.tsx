@@ -16,7 +16,6 @@ import { programIds, useConnection, useWallet } from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Banner } from '../../components/Banner';
-import { AppLayout } from '../../components/Layout';
 
 const { TabPane } = Tabs;
 
@@ -24,6 +23,7 @@ const { Content } = Layout;
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
+  const auctionsUpcoming = useAuctions(AuctionViewState.Upcoming);
   const { isLoading, store } = useMeta();
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
   const connection = useConnection();
@@ -85,6 +85,26 @@ export const HomeView = () => {
               if (m === heroAuction) {
                 return;
               }
+
+              const id = m.auction.pubkey.toBase58();
+              return (
+                <Link to={`/auction/${id}`} key={idx}>
+                  <AuctionRenderCard key={id} auctionView={m} />
+                </Link>
+              );
+            })
+        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+    </Masonry>
+  );
+  const upcomingAuctions = (
+    <Masonry
+      breakpointCols={breakpointColumnsObj}
+      className="my-masonry-grid"
+      columnClassName="my-masonry-grid_column"
+    >
+      {!isLoading
+        ? auctionsUpcoming
+            .map((m, idx) => {
 
               const id = m.auction.pubkey.toBase58();
               return (
@@ -203,7 +223,10 @@ export const HomeView = () => {
                 >
                   {liveAuctionsView}
                 </TabPane>
-                <TabPane tab={'Ended'} key={2}>
+                <TabPane tab={'Upcoming'} key={2}>
+                  {upcomingAuctions}
+                </TabPane>
+                <TabPane tab={'Ended'} key={3}>
                   {endedAuctions}
                 </TabPane>
               </Tabs>
