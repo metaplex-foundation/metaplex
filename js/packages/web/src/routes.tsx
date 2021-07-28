@@ -12,7 +12,7 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
-  ArtworksView,
+  ArtworkView,
   ArtistAlleyView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
@@ -49,8 +49,8 @@ export function Routes() {
                           />
                           <Route
                             exact
-                            path="/artworks/:id?"
-                            component={() => <ArtworksView />}
+                            path="/artwork/:id?"
+                            component={() => <ArtworkView />}
                           />
                           <Route
                             exact

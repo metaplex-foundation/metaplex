@@ -10,8 +10,8 @@ import { CurrentUserBadge, Cog } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    // <Link to={`/artworks`} key={'artworks'}>
-    //   <Button className="app-btn">{connected ? 'My Items' : 'Artworks'}</Button>
+    // <Link to={`/artwork`} key={'artwork'}>
+    //   <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
     // </Link>,
     // <Link to={`/artists`} key={'artists'}>
     //   <Button className="app-btn">Creators</Button>
