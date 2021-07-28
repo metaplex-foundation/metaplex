@@ -1,10 +1,14 @@
 use crate::*;
+use solana_program::borsh::try_from_slice_unchecked;
 use solana_program_test::*;
 use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
 };
-use spl_token_metadata::{id, state::{Creator, Data}};
+use spl_token_metadata::{
+    id,
+    state::{Creator, Data, PREFIX},
+};
 
 #[derive(Debug)]
 pub struct Metadata {
@@ -22,6 +26,14 @@ impl Metadata {
         let (pubkey, _) = Pubkey::find_program_address(metadata_seeds, &id());
 
         Metadata { mint, pubkey }
+    }
+
+    pub async fn get_data(
+        &self,
+        context: &mut ProgramTestContext,
+    ) -> spl_token_metadata::state::Metadata {
+        let account = get_account(context, &self.pubkey).await;
+        try_from_slice_unchecked(&account.data).unwrap()
     }
 
     pub async fn create(
@@ -79,9 +91,9 @@ impl Metadata {
                     symbol,
                     uri,
                     creators,
-                    seller_fee_basis_points
+                    seller_fee_basis_points,
                 }),
-                None
+                None,
             )],
             Some(&context.payer.pubkey()),
             &[&context.payer],

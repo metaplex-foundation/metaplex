@@ -3,12 +3,21 @@ mod metadata;
 pub use metadata::Metadata;
 use solana_program_test::*;
 use solana_sdk::{
-    program_pack::Pack, pubkey::Pubkey, signature::Signer, signer::keypair::Keypair,
-    system_instruction, transaction::Transaction, transport,
+    account::Account, program_pack::Pack, pubkey::Pubkey, signature::Signer,
+    signer::keypair::Keypair, system_instruction, transaction::Transaction, transport,
 };
 
 pub fn program_test<'a>() -> ProgramTest {
     ProgramTest::new("spl_token_metadata", spl_token_metadata::id(), None)
+}
+
+pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {
+    context
+        .banks_client
+        .get_account(*pubkey)
+        .await
+        .expect("account not found")
+        .expect("account empty")
 }
 
 pub async fn create_mint(
