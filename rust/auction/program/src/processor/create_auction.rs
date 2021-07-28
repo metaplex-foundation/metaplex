@@ -3,8 +3,8 @@ use mem::size_of;
 use crate::{
     errors::AuctionError,
     processor::{
-        AuctionData, AuctionDataExtended, AuctionState, Bid, BidState, PriceFloor, WinnerLimit,
-        BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
+        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, PriceFloor,
+        WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     EXTENDED, PREFIX,
@@ -44,8 +44,6 @@ pub struct CreateAuctionArgs {
     pub tick_size: Option<u64>,
     /// Add a minimum percentage increase each bid must meet.
     pub gap_tick_size_percentage: Option<u8>,
-    /// Auction name
-    pub name: [u8; 32],
 }
 
 struct Accounts<'a, 'b: 'a> {
@@ -76,6 +74,7 @@ pub fn create_auction(
     accounts: &[AccountInfo],
     args: CreateAuctionArgs,
     instant_sale_price: Option<u64>,
+    name: Option<AuctionName>,
 ) -> ProgramResult {
     msg!("+ Processing CreateAuction");
     let accounts = parse_accounts(program_id, accounts)?;
@@ -160,7 +159,7 @@ pub fn create_auction(
         tick_size: args.tick_size,
         gap_tick_size_percentage: args.gap_tick_size_percentage,
         instant_sale_price,
-        name: args.name,
+        name,
     }
     .serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 

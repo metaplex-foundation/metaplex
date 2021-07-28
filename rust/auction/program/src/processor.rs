@@ -36,7 +36,9 @@ pub fn process_instruction(
     match AuctionInstruction::try_from_slice(input)? {
         AuctionInstruction::CancelBid(args) => cancel_bid(program_id, accounts, args),
         AuctionInstruction::ClaimBid(args) => claim_bid(program_id, accounts, args),
-        AuctionInstruction::CreateAuction(args) => create_auction(program_id, accounts, args, None),
+        AuctionInstruction::CreateAuction(args) => {
+            create_auction(program_id, accounts, args, None, None)
+        }
         AuctionInstruction::CreateAuctionV2(args) => create_auction_v2(program_id, accounts, args),
         AuctionInstruction::EndAuction(args) => end_auction(program_id, accounts, args),
         AuctionInstruction::PlaceBid(args) => place_bid(program_id, accounts, args),
@@ -93,6 +95,9 @@ pub struct AuctionData {
     pub bid_state: BidState,
 }
 
+// Alias for auction name.
+pub type AuctionName = [u8; 32];
+
 pub const MAX_AUCTION_DATA_EXTENDED_SIZE: usize = 8 + 9 + 2 + 9 + 191;
 // Further storage for more fields. Would like to store more on the main data but due
 // to a borsh issue that causes more added fields to inflict "Access violation" errors
@@ -110,7 +115,7 @@ pub struct AuctionDataExtended {
     /// Instant sale price
     pub instant_sale_price: Option<u64>,
     /// Auction name
-    pub name: [u8; 32],
+    pub name: Option<AuctionName>,
 }
 
 impl AuctionDataExtended {

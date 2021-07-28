@@ -195,7 +195,6 @@ pub async fn create_auction(
                     price_floor,
                     gap_tick_size_percentage,
                     tick_size,
-                    name: string_to_array(name)?,
                 },
             )],
             Some(&payer.pubkey()),
