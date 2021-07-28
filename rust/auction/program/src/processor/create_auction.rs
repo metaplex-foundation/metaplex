@@ -44,6 +44,8 @@ pub struct CreateAuctionArgs {
     pub tick_size: Option<u64>,
     /// Add a minimum percentage increase each bid must meet.
     pub gap_tick_size_percentage: Option<u8>,
+    /// Auction name
+    pub name: [u8; 32],
 }
 
 struct Accounts<'a, 'b: 'a> {
@@ -157,7 +159,8 @@ pub fn create_auction(
         total_uncancelled_bids: 0,
         tick_size: args.tick_size,
         gap_tick_size_percentage: args.gap_tick_size_percentage,
-        instant_sale_price: instant_sale_price,
+        instant_sale_price,
+        name: args.name,
     }
     .serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 

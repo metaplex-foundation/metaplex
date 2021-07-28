@@ -45,6 +45,8 @@ pub struct CreateAuctionArgsV2 {
     pub tick_size: Option<u64>,
     /// Add a minimum percentage increase each bid must meet.
     pub gap_tick_size_percentage: Option<u8>,
+    /// Auction name
+    pub name: [u8; 32],
     /// Add a instant sale price.
     pub instant_sale_price: Option<u64>,
 }
@@ -90,6 +92,7 @@ pub fn create_auction_v2(
             price_floor: args.price_floor,
             tick_size: args.tick_size,
             gap_tick_size_percentage: args.gap_tick_size_percentage,
+            name: args.name,
         },
         args.instant_sale_price,
     )

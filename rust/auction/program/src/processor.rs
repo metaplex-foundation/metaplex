@@ -107,8 +107,10 @@ pub struct AuctionDataExtended {
     pub tick_size: Option<u64>,
     /// gap_tick_size_percentage - two decimal points
     pub gap_tick_size_percentage: Option<u8>,
-    /// instant sale price
+    /// Instant sale price
     pub instant_sale_price: Option<u64>,
+    /// Auction name
+    pub name: [u8; 32],
 }
 
 impl AuctionDataExtended {

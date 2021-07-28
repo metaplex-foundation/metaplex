@@ -75,6 +75,7 @@ async fn setup_auction(
         &resource,
         &mint_keypair.pubkey(),
         max_winners,
+        "Some name",
         instant_sale,
         price_floor,
         gap_tick_size_percentage,
