@@ -6,7 +6,7 @@ use solana_sdk::{
     transport,
 };
 use spl_token_metadata::{
-    id,
+    id, instruction,
     state::{Creator, Data, PREFIX},
 };
 
@@ -44,6 +44,7 @@ impl Metadata {
         uri: String,
         creators: Option<Vec<Creator>>,
         seller_fee_basis_points: u16,
+        is_mutable: bool,
     ) -> transport::Result<()> {
         create_mint(context, &self.mint, &context.payer.pubkey()).await?;
 
@@ -61,7 +62,7 @@ impl Metadata {
                 creators,
                 seller_fee_basis_points,
                 false,
-                false,
+                is_mutable,
             )],
             Some(&context.payer.pubkey()),
             &[&context.payer],
