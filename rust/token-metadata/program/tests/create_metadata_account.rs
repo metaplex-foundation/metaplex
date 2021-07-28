@@ -27,4 +27,5 @@ async fn success() {
     assert_eq!(metadata.data.symbol, "TST");
     assert_eq!(metadata.data.uri, "uri");
     assert_eq!(metadata.data.seller_fee_basis_points, 10);
+    assert_eq!(metadata.primary_sale_happened, false);
 }

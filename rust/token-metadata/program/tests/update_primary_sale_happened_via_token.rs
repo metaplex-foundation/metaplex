@@ -16,28 +16,21 @@ async fn success() {
             "uri".to_string(),
             None,
             10,
-            true,
+            false,
         )
         .await
         .unwrap();
 
     metadata
-        .update(
-            &mut context,
-            "Cool".to_string(),
-            "TST".to_string(),
-            "uri".to_string(),
-            None,
-            10,
-        )
+        .update_primary_sale_happened_via_token(&mut context)
         .await
         .unwrap();
 
     let metadata = metadata.get_data(&mut context).await;
 
-    assert_eq!(metadata.data.name, "Cool");
+    assert_eq!(metadata.data.name, "Test");
     assert_eq!(metadata.data.symbol, "TST");
     assert_eq!(metadata.data.uri, "uri");
     assert_eq!(metadata.data.seller_fee_basis_points, 10);
-    assert_eq!(metadata.primary_sale_happened, false);
+    assert_eq!(metadata.primary_sale_happened, true);
 }

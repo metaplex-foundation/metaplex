@@ -14,6 +14,7 @@ use spl_token_metadata::{
 pub struct Metadata {
     pub mint: Keypair,
     pub pubkey: Pubkey,
+    pub token: Keypair,
 }
 
 impl Metadata {
@@ -25,7 +26,11 @@ impl Metadata {
         let metadata_seeds = &[PREFIX.as_bytes(), program_id.as_ref(), mint_pubkey.as_ref()];
         let (pubkey, _) = Pubkey::find_program_address(metadata_seeds, &id());
 
-        Metadata { mint, pubkey }
+        Metadata {
+            mint,
+            pubkey,
+            token: Keypair::new(),
+        }
     }
 
     pub async fn get_data(
@@ -47,6 +52,14 @@ impl Metadata {
         is_mutable: bool,
     ) -> transport::Result<()> {
         create_mint(context, &self.mint, &context.payer.pubkey()).await?;
+        create_token_account(
+            context,
+            &self.token,
+            &self.mint.pubkey(),
+            &context.payer.pubkey(),
+        )
+        .await?;
+        mint_tokens(context, &self.mint.pubkey(), &self.token.pubkey(), 10000000).await?;
 
         let tx = Transaction::new_signed_with_payer(
             &[instruction::create_metadata_accounts(
@@ -63,6 +76,25 @@ impl Metadata {
                 seller_fee_basis_points,
                 false,
                 is_mutable,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&context.payer],
+            context.last_blockhash,
+        );
+
+        Ok(context.banks_client.process_transaction(tx).await?)
+    }
+
+    pub async fn update_primary_sale_happened_via_token(
+        &self,
+        context: &mut ProgramTestContext,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::update_primary_sale_happened_via_token(
+                id(),
+                self.pubkey,
+                context.payer.pubkey(),
+                self.token.pubkey(),
             )],
             Some(&context.payer.pubkey()),
             &[&context.payer],
