@@ -16,6 +16,12 @@ export const Banner = (props: {
     const mainBg = document.getElementById('main-bg');
     if (mainBg && props.useBannerBg)
       mainBg.style.backgroundImage = `url(${props.src})`;
+
+    return () => {
+      const mainBg = document.getElementById('main-bg');
+      if (mainBg && props.useBannerBg)
+        mainBg.style.backgroundImage = '';
+      }
   }, [props.src, props.useBannerBg]);
 
   return (
