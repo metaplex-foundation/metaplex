@@ -181,7 +181,10 @@ export const CurrentUserBadge = (props: {
       >
         <Button className="wallet-key">
           {image}
-          {name && <span style={{ marginLeft: '0.5rem' }}>{name}</span>}
+          {name && <span style={{
+            marginLeft: '0.5rem',
+            fontWeight: 600,
+          }}>{name}</span>}
         </Button>
       </Popover>
 
