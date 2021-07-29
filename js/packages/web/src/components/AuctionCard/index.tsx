@@ -17,6 +17,7 @@ import {
   ParsedAccount,
   getAuctionExtended,
   programIds,
+  Identicon,
 } from '@oyster/common';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -33,6 +34,7 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useMeta } from '../../contexts';
 import moment from 'moment';
 import { AmountLabel } from '../AmountLabel';
+import { useEffect } from 'react';
 
 const { useWallet } = contexts.Wallet;
 
@@ -125,6 +127,7 @@ export const AuctionCard = ({
   const [showRedemptionIssue, setShowRedemptionIssue] =
     useState<boolean>(false);
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
+  const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [modalHistory, setModalHistory] = useState<any>();
 
@@ -163,6 +166,17 @@ export const AuctionCard = ({
 
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
+  useEffect(() => {
+    if (wallet) {
+      wallet.on('connect', () => {
+        if (wallet.publicKey && !showPlaceBid) setShowPlaceBid(true);
+      });
+      wallet.on('disconnect', () => {
+        if (showPlaceBid) setShowPlaceBid(false);
+      });
+    }
+  }, [wallet]);
+
   return (
     <div className="auction-container" style={style}>
       <div className={'time-info'}>
@@ -172,25 +186,80 @@ export const AuctionCard = ({
         </div>
       </div>
       <div className={'bid-info'}>
-        <Row style={{ alignItems: 'center' }}>
-          <Col span={24} md={12}>
-            <AuctionNumbers
-              auctionView={auctionView}
-              showAsRow={true}
-              hideCountdown={true}
-              displaySOL={true}
-            />
-          </Col>
-          <Col span={24} md={12}>
-            <div className={'flex-right'}>
-              <div>
-                <Button>How to buy</Button>
-              </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <AuctionNumbers
+            auctionView={auctionView}
+            showAsRow={true}
+            hideCountdown={true}
+            displaySOL={true}
+          />
+          {showPlaceBid ? (
+            <div
+              style={{
+                flexGrow: 1,
+                marginLeft: '30px',
+                borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingLeft: '30px',
+              }}
+            >
+              <AmountLabel
+                title="in your wallet"
+                displaySOL={true}
+                style={{ marginBottom: 0 }}
+                amount={formatAmount(balance.balance, 2)}
+                customPrefix={
+                  <Identicon
+                    address={wallet?.publicKey?.toBase58()}
+                    style={{ width: 36 }}
+                  />
+                }
+              />
             </div>
-          </Col>
-        </Row>
-        <Col>
-          {!hideDefaultAction && <br />}
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Button
+                style={{
+                  fontWeight: 600,
+                  letterSpacing: '-0.02em',
+                  color: 'rgb(255, 255, 255)',
+                  width: 180,
+                  height: 'fit-content',
+                  border: 'none',
+                }}
+              >
+                How Auctions Work
+              </Button>
+              <Button
+                className="mcfarlane-button"
+                style={{
+                  background: '#B388F5',
+                  color: 'black',
+                  width: 'unset',
+                  fontWeight: 600,
+                  letterSpacing: '-0.02em',
+                }}
+                onClick={() => {
+                  if (connected) setShowPlaceBid(true);
+                  else connect();
+                }}
+              >
+                Place Bid
+              </Button>
+            </div>
+          )}
+        </div>
+        <div>
           {showRedemptionIssue && (
             <span>
               There was an issue redeeming or refunding your bid. Please try
@@ -199,9 +268,8 @@ export const AuctionCard = ({
           )}
           {!hideDefaultAction && connected && auctionView.auction.info.ended() && (
             <Button
-              type="primary"
               size="large"
-              className="action-btn"
+              className="mcfarlane-button"
               disabled={
                 !myPayingAccount ||
                 (!auctionView.myBidderMetadata &&
@@ -249,35 +317,31 @@ export const AuctionCard = ({
               )}
             </Button>
           )}
+        </div>
+        {showPlaceBid && (
+          <div>
+            {!hideDefaultAction && <br />}
 
-          {!hideDefaultAction &&
-            connected &&
-            !auctionView.auction.info.ended() && (
-              <Button
-                type="primary"
-                size="large"
-                className="action-btn"
-                disabled={loading}
-                onClick={() => setShowBidModal(true)}
-                style={{ marginTop: 20 }}
-              >
-                {loading ? <Spin /> : 'Place bid'}
-              </Button>
-            )}
+            {!hideDefaultAction &&
+              connected &&
+              !auctionView.auction.info.ended() && (
+                <>
+                  <Button
+                    type="primary"
+                    size="large"
+                    className="action-btn"
+                    disabled={loading}
+                    onClick={() => setShowBidModal(true)}
+                    style={{ marginTop: 20 }}
+                  >
+                    {loading ? <Spin /> : 'Place bid'}
+                  </Button>
+                </>
+              )}
 
-          {!hideDefaultAction && !connected && (
-            <Button
-              type="primary"
-              size="large"
-              className="action-btn"
-              onClick={connect}
-              style={{ marginTop: 20 }}
-            >
-              Connect wallet to place bid
-            </Button>
-          )}
-          {action}
-        </Col>
+            {action}
+          </div>
+        )}
       </div>
 
       <MetaplexOverlay visible={showBidPlaced}>
