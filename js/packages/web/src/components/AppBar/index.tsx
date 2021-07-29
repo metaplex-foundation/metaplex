@@ -6,6 +6,8 @@ import { ConnectButton, useWallet } from '@oyster/common';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
+import { useMeta } from '../../contexts';
+import { HowToBuyModal } from '../HowToBuyModal';
 import { CurrentUserBadge, Cog } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
@@ -73,7 +75,6 @@ export const LogoLink = () => {
 
 export const AppBar = () => {
   const { connected } = useWallet();
-
   return (
     <>
       <div className="app-left">
@@ -82,6 +83,7 @@ export const AppBar = () => {
         <MetaplexMenu />
       </div>
       <div className="app-right">
+        <HowToBuyModal buttonClassName="modal-button-default" />
         {!connected && <ConnectButton type="primary" />}
         {connected && (
           <>

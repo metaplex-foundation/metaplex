@@ -5,13 +5,14 @@ import { useWallet } from './../../contexts/wallet';
 
 export interface ConnectButtonProps extends ButtonProps, React.RefAttributes<HTMLElement> {
   allowWalletChange?: boolean;
+  className?: string;
 }
 
 export const ConnectButton = (
   props: ConnectButtonProps
 ) => {
   const { connected, connect, select, provider } = useWallet();
-  const { onClick, children, disabled, allowWalletChange, ...rest } = props;
+  const { onClick, children, disabled, allowWalletChange, className, ...rest } = props;
 
   // only show if wallet selected or user connected
 
@@ -23,7 +24,7 @@ export const ConnectButton = (
 
   if(!provider || !allowWalletChange) {
     return <Button
-      className="connector"
+      className={className}
       {...rest}
       onClick={connected ? onClick : connect}
       disabled={connected && disabled}
