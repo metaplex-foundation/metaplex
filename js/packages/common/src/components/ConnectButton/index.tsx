@@ -24,7 +24,7 @@ export const ConnectButton = (
 
   if(!provider || !allowWalletChange) {
     return <Button
-      className={className}
+      className={className || 'connector'}
       {...rest}
       onClick={connected ? onClick : connect}
       disabled={connected && disabled}

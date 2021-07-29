@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Col, Button, InputNumber, Spin, Row, Skeleton } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
@@ -40,7 +40,8 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useMeta } from '../../contexts';
 import moment from 'moment';
 import { AmountLabel } from '../AmountLabel';
-import { useEffect } from 'react';
+import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
+
 
 const { useWallet } = contexts.Wallet;
 
@@ -265,18 +266,7 @@ export const AuctionCard = ({
                 alignItems: 'center',
               }}
             >
-              <Button
-                style={{
-                  fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  color: 'rgb(255, 255, 255)',
-                  width: 180,
-                  height: 'fit-content',
-                  border: 'none',
-                }}
-              >
-                How Auctions Work
-              </Button>
+              <HowAuctionsWorkModal buttonClassName="how-auctions-work" />
               {!hideDefaultAction && !auctionView.auction.info.ended() && (
                 <Button
                   className="mcfarlane-button"

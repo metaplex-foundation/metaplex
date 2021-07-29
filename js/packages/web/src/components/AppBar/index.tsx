@@ -84,7 +84,7 @@ export const AppBar = () => {
       </div>
       <div className="app-right">
         <HowToBuyModal buttonClassName="modal-button-default" />
-        {!connected && <ConnectButton type="primary" />}
+        {!connected && <ConnectButton />}
         {connected && (
           <>
             <Notifications />
