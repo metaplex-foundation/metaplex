@@ -98,15 +98,14 @@ export const HomeView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {!isLoading
-        ? auctionsUpcoming
-            .map((m, idx) => {
-              const id = m.auction.pubkey.toBase58();
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+        ? auctionsUpcoming.map((m, idx) => {
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );

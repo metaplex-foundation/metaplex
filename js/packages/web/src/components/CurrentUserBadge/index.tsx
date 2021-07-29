@@ -17,7 +17,7 @@ import './styles.less';
 import { Popover, Button, Select } from 'antd';
 import { useSolPrice, useMeta } from '../../contexts';
 import { Link } from 'react-router-dom';
-import { SolCircle } from '../Custom'
+import { SolCircle } from '../Custom';
 
 const btnStyle: React.CSSProperties = {
   border: 'none',
@@ -181,10 +181,16 @@ export const CurrentUserBadge = (props: {
       >
         <Button className="wallet-key">
           {image}
-          {name && <span style={{
-            marginLeft: '0.5rem',
-            fontWeight: 600,
-          }}>{name}</span>}
+          {name && (
+            <span
+              style={{
+                marginLeft: '0.5rem',
+                fontWeight: 600,
+              }}
+            >
+              {name}
+            </span>
+          )}
         </Button>
       </Popover>
 

@@ -19,9 +19,8 @@ export const Banner = (props: {
 
     return () => {
       const mainBg = document.getElementById('main-bg');
-      if (mainBg && props.useBannerBg)
-        mainBg.style.backgroundImage = '';
-      }
+      if (mainBg && props.useBannerBg) mainBg.style.backgroundImage = '';
+    };
   }, [props.src, props.useBannerBg]);
 
   return (
