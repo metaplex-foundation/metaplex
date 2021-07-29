@@ -22,6 +22,7 @@ pub struct EditionMarker {
     pub edition: u64,
     pub token: Keypair,
     pub metadata_token_pubkey: Pubkey,
+    pub safety_deposit_store: Keypair,
 }
 
 impl EditionMarker {
@@ -66,6 +67,7 @@ impl EditionMarker {
             new_edition_pubkey,
             metadata_token_pubkey: metadata.token.pubkey(),
             token: Keypair::new(),
+            safety_deposit_store: Keypair::new(),
         }
     }
 
@@ -75,6 +77,70 @@ impl EditionMarker {
     ) -> spl_token_metadata::state::EditionMarker {
         let account = get_account(context, &self.pubkey).await;
         try_from_slice_unchecked(&account.data).unwrap()
+    }
+
+    pub async fn create_via_vault(
+        &self,
+        context: &mut ProgramTestContext,
+        vault: &Vault,
+    ) -> transport::Result<()> {
+        let spl_token_vault_id = spl_token_vault::id();
+        let vault_pubkey = vault.keypair.pubkey();
+
+        let vault_mint_seeds = &[
+            PREFIX.as_bytes(),
+            spl_token_vault_id.as_ref(),
+            vault_pubkey.as_ref(),
+        ];
+        let (authority, _) = Pubkey::find_program_address(vault_mint_seeds, &spl_token_vault_id);
+
+        create_mint(context, &self.mint, &context.payer.pubkey()).await?;
+        create_token_account(
+            context,
+            &self.token,
+            &self.mint.pubkey(),
+            &context.payer.pubkey(),
+        )
+        .await?;
+        mint_tokens(context, &self.mint.pubkey(), &self.token.pubkey(), 1).await?;
+        create_token_account(
+            context,
+            &self.safety_deposit_store,
+            &self.mint.pubkey(),
+            &authority,
+        )
+        .await?;
+
+        let fake_safety_deposit_box = Pubkey::new_unique();
+
+        let tx = Transaction::new_signed_with_payer(
+            &[
+                instruction::mint_edition_from_master_edition_via_vault_proxy(
+                    id(),
+                    self.new_metadata_pubkey,
+                    self.new_edition_pubkey,
+                    self.master_edition_pubkey,
+                    self.mint.pubkey(),
+                    self.pubkey,
+                    context.payer.pubkey(),
+                    context.payer.pubkey(),
+                    context.payer.pubkey(),
+                    self.safety_deposit_store.pubkey(),
+                    fake_safety_deposit_box,
+                    vault.keypair.pubkey(),
+                    context.payer.pubkey(),
+                    self.metadata_pubkey,
+                    spl_token::id(),
+                    spl_token_vault::id(),
+                    self.edition,
+                ),
+            ],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &context.payer],
+            context.last_blockhash,
+        );
+
+        Ok(context.banks_client.process_transaction(tx).await?)
     }
 
     pub async fn create(&self, context: &mut ProgramTestContext) -> transport::Result<()> {

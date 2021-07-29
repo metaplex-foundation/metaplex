@@ -42,6 +42,14 @@ impl MasterEditionV2 {
         try_from_slice_unchecked(&account.data).unwrap()
     }
 
+    pub async fn get_data_from_account(
+        context: &mut ProgramTestContext,
+        pubkey: &Pubkey,
+    ) -> spl_token_metadata::state::MasterEditionV2 {
+        let account = get_account(context, pubkey).await;
+        try_from_slice_unchecked(&account.data).unwrap()
+    }
+
     pub async fn create(
         &self,
         context: &mut ProgramTestContext,

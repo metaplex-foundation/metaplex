@@ -1,8 +1,11 @@
 mod edition_marker;
+mod external_price;
 mod master_edition_v2;
 mod metadata;
+mod vault;
 
 pub use edition_marker::EditionMarker;
+pub use external_price::ExternalPrice;
 pub use master_edition_v2::MasterEditionV2;
 pub use metadata::Metadata;
 use solana_program_test::*;
@@ -10,6 +13,8 @@ use solana_sdk::{
     account::Account, program_pack::Pack, pubkey::Pubkey, signature::Signer,
     signer::keypair::Keypair, system_instruction, transaction::Transaction, transport,
 };
+use spl_token::state::Mint;
+pub use vault::Vault;
 
 pub fn program_test<'a>() -> ProgramTest {
     ProgramTest::new("spl_token_metadata", spl_token_metadata::id(), None)
@@ -22,6 +27,11 @@ pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> A
         .await
         .expect("account not found")
         .expect("account empty")
+}
+
+pub async fn get_mint(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Mint {
+    let account = get_account(context, pubkey).await;
+    Mint::unpack(&account.data).unwrap()
 }
 
 pub async fn mint_tokens(
