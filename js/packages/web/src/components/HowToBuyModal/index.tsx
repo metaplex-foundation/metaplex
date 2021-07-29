@@ -5,7 +5,9 @@ interface HowToBuyModalProps {
   buttonClassName: string;
 }
 
-export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ buttonClassName }) => {
+export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
+  buttonClassName,
+}) => {
   return (
     <InstructionsModal
       buttonClassName={buttonClassName}

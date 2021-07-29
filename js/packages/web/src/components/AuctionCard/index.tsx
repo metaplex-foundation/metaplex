@@ -42,7 +42,6 @@ import moment from 'moment';
 import { AmountLabel } from '../AmountLabel';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
 
-
 const { useWallet } = contexts.Wallet;
 
 function useGapTickCheck(
