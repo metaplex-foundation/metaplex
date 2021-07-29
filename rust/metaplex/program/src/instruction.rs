@@ -59,7 +59,7 @@ pub enum MetaplexInstruction {
     ///   4. `[signer]` Payer
     ///   5. `[]` Accept payment account of same token mint as the auction for taking payment for open editions, owner should be auction manager key
     ///   6. `[]` Store that this auction manager will belong to
-    ///   7. `[]` System sysvar    
+    ///   7. `[]` System sysvar
     ///   8. `[]` Rent sysvar
     InitAuctionManager(AuctionManagerSettings),
 
@@ -123,7 +123,7 @@ pub enum MetaplexInstruction {
     ///   18. `[optional/writable]` Master edition (if Printing type of WinningConfig)
     ///   19. `[optional/writable]` Reservation list PDA ['metadata', program id, master edition key, 'reservation', auction manager key]
     ///        relative to token metadata program (if Printing type of WinningConfig)
-    ///   20. `[]` Auction extended
+    ///   20. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     DeprecatedRedeemBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -160,7 +160,7 @@ pub enum MetaplexInstruction {
     ///             after this transaction. Otherwise this account will be ignored.
     ///   19. `[]` PDA-based Transfer authority to move the tokens from the store to the destination seed ['vault', program_id, vault key]
     ///        but please note that this is a PDA relative to the Token Vault program, with the 'vault' prefix
-    ///   20. `[]` Auction extended
+    ///   20. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     RedeemFullRightsTransferBid,
 
     /// Note: This requires that auction manager be in a Running state.
@@ -198,7 +198,7 @@ pub enum MetaplexInstruction {
     ///   18.  `[writable]` The accept payment account for the auction manager
     ///   19.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary
     ///   20. `[writable]` Participation NFT printing holding account (present on participation_state)
-    ///   21. `[]` Auction extended
+    ///   21. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     DeprecatedRedeemParticipationBid,
 
     /// If the auction manager is in Validated state, it can invoke the start command via calling this command here.
@@ -410,7 +410,7 @@ pub enum MetaplexInstruction {
     ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
     ///   23. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   24. `[]` Metadata account of token in vault
-    ///   25. `[]` Auction extended
+    ///   25. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     RedeemPrintingV2Bid(RedeemPrintingV2BidArgs),
 
     /// Permissionless call to redeem the master edition in a given safety deposit for a PrintingV2 winning config to the
@@ -824,6 +824,7 @@ pub fn create_set_store_instruction(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_deprecated_populate_participation_printing_account_instruction(
     program_id: Pubkey,
     safety_deposit_token_store: Pubkey,

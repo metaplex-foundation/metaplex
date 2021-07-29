@@ -370,6 +370,16 @@ impl AuctionData {
         self.bid_state.winner_at(idx)
     }
 
+    pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
+        // Check if all the lots were sold with instant_sale_price
+        if let Some(price) = instant_sale_price {
+            if self.bid_state.has_instant_bid(price) {
+                msg!("All the lots were sold with instant_sale_price, auction is ended");
+                self.state = AuctionState::Ended;
+            }
+        }
+    }
+
     pub fn place_bid(
         &mut self,
         bid: Bid,
@@ -394,6 +404,7 @@ impl AuctionData {
             PriceFloor::MinimumPrice(min) => min[0],
             _ => 0,
         };
+
         self.bid_state.place_bid(
             bid,
             tick_size,
@@ -401,7 +412,11 @@ impl AuctionData {
             minimum,
             instant_sale_price,
             &mut self.state,
-        )
+        )?;
+
+        self.consider_instant_bid(instant_sale_price);
+
+        Ok(())
     }
 }
 
@@ -590,17 +605,6 @@ impl BidState {
                             }
                         }
 
-                        // Check if all the lots were sold with instant_sale_price
-                        if let Some(instant_sale_amount) = instant_sale_price {
-                            // bids.len() - max = index of the last winner bid
-                            if bids.len() >= *max
-                                && bids[bids.len() - *max].1 >= instant_sale_amount
-                            {
-                                msg!("All the lots were sold with instant_sale_price, auction is ended");
-                                *auction_state = AuctionState::Ended;
-                            }
-                        }
-
                         let max_size = BidState::max_array_size_for(*max);
 
                         if bids.len() > max_size {
@@ -700,6 +704,17 @@ impl BidState {
                 }
             }
             BidState::OpenEdition { bids, max } => None,
+        }
+    }
+
+    pub fn has_instant_bid(&self, instant_sale_amount: u64) -> bool {
+        match self {
+            // In a capped auction, track the limited number of winners.
+            BidState::EnglishAuction { bids, max } | BidState::OpenEdition { bids, max } => {
+                // bids.len() - max = index of the last winner bid
+                bids.len() >= *max && bids[bids.len() - *max].1 >= instant_sale_amount
+            }
+            _ => false,
         }
     }
 }

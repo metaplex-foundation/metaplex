@@ -132,36 +132,34 @@ pub fn claim_bid(
         return Err(AuctionError::InvalidState.into());
     }
 
-    let mut auction_extended: Option<AuctionDataExtended> = None;
-    if let Some(auction_extended_info) = accounts.auction_extended {
+    let instant_sale_price = accounts.auction_extended.and_then(|info| {
         assert_derivation(
             program_id,
-            auction_extended_info,
+            info,
             &[
                 PREFIX.as_bytes(),
                 program_id.as_ref(),
                 args.resource.as_ref(),
                 EXTENDED.as_bytes(),
             ],
-        )?;
-        let auction_extended_data = AuctionDataExtended::from_account_info(auction_extended_info)?;
-        // add this check because in this instruction we use AuctionDataExtended only for instant_sale_price
-        if auction_extended_data.instant_sale_price.is_some() {
-            auction_extended = Some(auction_extended_data);
-        }
-    }
+        )
+        .ok()?;
+
+        AuctionDataExtended::from_account_info(info)
+            .ok()?
+            .instant_sale_price
+    });
 
     // Auction either must have ended or bidder pay instant_sale_price
     if !auction.ended(clock.unix_timestamp)? {
-        if let Some(auction_extended_data) = auction_extended {
-            // we can safely unwrap instant_sale_price because we checked it in if let instruction before
-            if auction.bid_state.amount(bid_index.unwrap())
-                < auction_extended_data.instant_sale_price.unwrap()
+        match instant_sale_price {
+            Some(instant_sale_price)
+                if auction.bid_state.amount(bid_index.unwrap()) < instant_sale_price =>
             {
-                return Err(AuctionError::InvalidState.into());
+                return Err(AuctionError::InvalidState.into())
             }
-        } else {
-            return Err(AuctionError::InvalidState.into());
+            None => return Err(AuctionError::InvalidState.into()),
+            _ => (),
         }
     }
 

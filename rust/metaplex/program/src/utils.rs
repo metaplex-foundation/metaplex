@@ -1,4 +1,5 @@
 use solana_program::log::sol_log_compute_units;
+use spl_auction::processor::BidderMetadata;
 
 use {
     crate::{
@@ -176,6 +177,39 @@ pub fn assert_authority_correct(
 
     Ok(())
 }
+
+pub fn assert_auction_is_ended_or_valid_instant_sale(
+    auction_info: &AccountInfo,
+    auction_extended_info: Option<&AccountInfo>,
+    bidder_metadata_info: &AccountInfo,
+    win_index: Option<usize>,
+) -> ProgramResult {
+    if AuctionData::get_state(auction_info)? == AuctionState::Ended {
+        return Ok(());
+    }
+
+    let instant_sale_price = auction_extended_info
+        .and_then(|info| AuctionDataExtended::get_instant_sale_price(&info.data.borrow()));
+
+    match instant_sale_price {
+        Some(instant_sale_price) => {
+            let winner_bid_price = if let Some(win_index) = win_index {
+                AuctionData::get_winner_bid_amount_at(auction_info, win_index).unwrap()
+            } else {
+                // Possible case in an open auction
+                BidderMetadata::from_account_info(bidder_metadata_info)?.last_bid
+            };
+
+            if winner_bid_price < instant_sale_price {
+                return Err(MetaplexError::AuctionHasNotEnded.into());
+            }
+        }
+        None => return Err(MetaplexError::AuctionHasNotEnded.into()),
+    }
+
+    Ok(())
+}
+
 /// Create account almost from scratch, lifted from
 /// https://github.com/solana-labs/solana-program-library/blob/7d4873c61721aca25464d42cc5ef651a7923ca79/associated-token-account/program/src/processor.rs#L51-L98
 #[inline(always)]
@@ -605,21 +639,12 @@ pub fn common_redeem_checks(
         return Err(MetaplexError::AuctionManagerTokenMetadataProgramMismatch.into());
     }
 
-    if AuctionData::get_state(auction_info)? != AuctionState::Ended {
-        if win_index.is_some() && auction_extended_info.is_some() {
-            if let Some(instant_sale_price) = AuctionDataExtended::get_instant_sale_price(&auction_extended_info.unwrap().data.borrow()) {
-                // we can safely do unwrap here such as existing win_index proves that we can get winner_bid_price
-                let winner_bid_price = AuctionData::get_winner_bid_amount_at(auction_info, win_index.unwrap()).unwrap();
-                if winner_bid_price < instant_sale_price {
-                    return Err(MetaplexError::AuctionHasNotEnded.into());
-                }
-            } else {
-                return Err(MetaplexError::AuctionHasNotEnded.into());
-            }
-        } else {
-            return Err(MetaplexError::AuctionHasNotEnded.into());
-        }
-    }
+    assert_auction_is_ended_or_valid_instant_sale(
+        auction_info,
+        auction_extended_info,
+        bidder_metadata_info,
+        win_index,
+    )?;
 
     // No-op if already set.
     auction_manager.state.status = AuctionManagerStatus::Disbursing;

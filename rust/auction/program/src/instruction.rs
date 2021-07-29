@@ -31,19 +31,10 @@ pub enum AuctionInstruction {
     /// Create a new auction account bound to a resource, initially in a pending state.
     ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
     ///   1. `[writable]` Uninitialized auction account.
-    ///   2. `[writable]` Auction extended data account.
+    ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
     ///   3. `[]` Rent sysvar
     ///   4. `[]` System account
     CreateAuction(CreateAuctionArgs),
-
-    /// Create a new auction account bound to a resource, initially in a pending state.
-    /// The only one difference with above instruction it's instant_sale_price parameter in CreateAuctionArgsV2
-    ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
-    ///   1. `[writable]` Uninitialized auction account.
-    ///   2. `[writable]` Auction extended data account.
-    ///   3. `[]` Rent sysvar
-    ///   4. `[]` System account
-    CreateAuctionV2(CreateAuctionArgsV2),
 
     /// Move SPL tokens from winning bid to the destination account.
     ///   0. `[writable]` The destination account
@@ -55,7 +46,7 @@ pub enum AuctionInstruction {
     ///   6. `[]` Token mint of the auction
     ///   7. `[]` Clock sysvar
     ///   8. `[]` Token program
-    ///   9. `[]` Auction extended
+    ///   9. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     ClaimBid(ClaimBidArgs),
 
     /// Ends an auction, regardless of end timing conditions
@@ -85,6 +76,15 @@ pub enum AuctionInstruction {
     ///   11. `[]` System program
     ///   12. `[]` SPL Token Program
     PlaceBid(PlaceBidArgs),
+
+    /// Create a new auction account bound to a resource, initially in a pending state.
+    /// The only one difference with above instruction it's additional parameters in CreateAuctionArgsV2
+    ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
+    ///   1. `[writable]` Uninitialized auction account.
+    ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
+    ///   3. `[]` Rent sysvar
+    ///   4. `[]` System account
+    CreateAuctionV2(CreateAuctionArgsV2),
 }
 
 /// Creates an CreateAuction instruction.
