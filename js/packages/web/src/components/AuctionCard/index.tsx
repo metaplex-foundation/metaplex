@@ -226,7 +226,7 @@ export const AuctionCard = ({
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'stretch',
             justifyContent: 'space-between',
           }}
         >
@@ -281,7 +281,7 @@ export const AuctionCard = ({
                 <Button
                   className="mcfarlane-button"
                   style={{
-                    background: '#B388F5',
+                    background: '#E65C37',
                     color: 'black',
                     width: 'unset',
                     fontWeight: 600,
@@ -301,7 +301,7 @@ export const AuctionCard = ({
                   <Button
                     className="mcfarlane-button"
                     style={{
-                      background: '#B388F5',
+                      background: '#E65C37',
                       color: 'black',
                       width: 'unset',
                       fontWeight: 600,
@@ -405,7 +405,7 @@ export const AuctionCard = ({
                       width: '100%',
                       background: '#393939',
                       borderRadius: 12,
-                      border: '1px solid #B388F5',
+                      border: '1px solid #E65C37',
                     }}
                     onChange={setValue}
                     precision={4}
@@ -436,7 +436,7 @@ export const AuctionCard = ({
                 <Button
                   className="mcfarlane-button"
                   style={{
-                    background: '#B388F5',
+                    background: '#E65C37',
                     color: 'black',
                     width: 'unset',
                     fontWeight: 600,
