@@ -1,6 +1,5 @@
 import { InstructionsModal } from '../InstructionsModal';
 import React from 'react';
-import './index.less';
 
 interface HowAuctionsWorkModalProps {
   buttonClassName: string;

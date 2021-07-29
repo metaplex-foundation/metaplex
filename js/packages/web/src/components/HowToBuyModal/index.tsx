@@ -1,6 +1,5 @@
 import { InstructionsModal } from '../InstructionsModal';
 import React from 'react';
-import './index.less';
 
 interface HowToBuyModalProps {
   buttonClassName: string;
