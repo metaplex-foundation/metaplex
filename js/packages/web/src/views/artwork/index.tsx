@@ -18,7 +18,7 @@ export enum ArtworkViewState {
   Created = '2',
 }
 
-export const ArtworksView = () => {
+export const ArtworkView = () => {
   const { connected } = useWallet();
   const ownedMetadata = useUserArts();
   const { metadata, isLoading } = useMeta();

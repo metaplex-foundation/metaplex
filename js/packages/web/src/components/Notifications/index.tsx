@@ -453,15 +453,8 @@ export function Notifications() {
   );
 
   const justContent = (
-    <Popover
-      className="noty-popover"
-      placement="bottomLeft"
-      content={content}
-      trigger="click"
-    >
-      <h1 className="title">
-        <BellOutlined style={{ fontSize: '16px' }} />
-      </h1>
+    <Popover placement="bottomLeft" content={content} trigger="click">
+      <BellOutlined style={{ fontSize: 24 }} />
     </Popover>
   );
 

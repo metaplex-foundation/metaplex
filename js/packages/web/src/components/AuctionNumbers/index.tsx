@@ -57,39 +57,36 @@ export const AuctionNumbers = (props: {
   const ended = isEnded(state);
 
   return (
-    <div style={{ minWidth: 350 }}>
-      <Row>
-        {!ended && (
-          <Col span={14}>
-            {(isUpcoming || bids.length === 0) && (
-              <AmountLabel
-                displaySOL={props.displaySOL}
-                style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-                containerStyle={{ flexDirection: 'column' }}
-                title="Starting bid"
-                amount={fromLamports(
-                  participationOnly ? participationFixedPrice : priceFloor,
-                  mintInfo,
-                )}
-              />
-            )}
-            {isStarted && bids.length > 0 && (
-              <AmountLabel
-                displaySOL={props.displaySOL}
-                style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-                containerStyle={{
-                  flexDirection: props.showAsRow ? ' row' : 'column',
-                }}
-                title="Highest bid"
-                amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
-              />
-            )}
-          </Col>
-        )}
-        {!props.hideCountdown ? (
-          <AuctionCountdown auctionView={auctionView} labels={true} />
-        ) : null}
-      </Row>
+    <div style={{ maxWidth: 350 }}>
+      {!ended && (
+        <>
+          {(isUpcoming || bids.length === 0) && (
+            <AmountLabel
+              displaySOL={props.displaySOL}
+              style={{ marginBottom: props.showAsRow ? 0 : 10 }}
+              title="Starting bid"
+              amount={fromLamports(
+                participationOnly ? participationFixedPrice : priceFloor,
+                mintInfo,
+              )}
+            />
+          )}
+          {isStarted && bids.length > 0 && (
+            <AmountLabel
+              displaySOL={props.displaySOL}
+              style={{ marginBottom: props.showAsRow ? 0 : 10 }}
+              containerStyle={{
+                flexDirection: props.showAsRow ? ' row' : 'column',
+              }}
+              title="Highest bid"
+              amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
+            />
+          )}
+        </>
+      )}
+      {!props.hideCountdown ? (
+        <AuctionCountdown auctionView={auctionView} labels={true} />
+      ) : null}
     </div>
   );
 };

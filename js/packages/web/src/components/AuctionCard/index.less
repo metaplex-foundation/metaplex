@@ -4,11 +4,7 @@
   border-radius: 12px;
   margin: 30px 0;
   max-width: 100%;
-  .flex-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
+
   .time-info {
     padding: 24px;
     display: flex;
@@ -25,8 +21,12 @@
     padding: 24px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+
     .create-statistic .ant-statistic-title {
-      margin:  0;
+      margin: 0 0 10px 0;
+      letter-spacing: 0.02em;
     }
     .create-statistic .ant-statistic-content {
       line-height: 36px;
@@ -34,10 +34,14 @@
     }
     .ant-statistic-content-prefix {
       line-height: 32px;
-      img {
-        width: 32px;
-        height: 32px;
-      }
+    }
+    .how-auctions-work {
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: rgb(255, 255, 255);
+      width: 180px;
+      height: fit-content;
+      border: none;
     }
   }
 }
