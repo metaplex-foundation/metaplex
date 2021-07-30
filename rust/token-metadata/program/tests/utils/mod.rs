@@ -39,19 +39,21 @@ pub async fn mint_tokens(
     mint: &Pubkey,
     account: &Pubkey,
     amount: u64,
+    owner: &Pubkey,
+    additional_signer: Option<&Keypair>,
 ) -> transport::Result<()> {
+    let mut signing_keypairs = vec![&context.payer];
+    if let Some(signer) = additional_signer {
+        signing_keypairs.push(signer);
+    }
+
     let tx = Transaction::new_signed_with_payer(
-        &[spl_token::instruction::mint_to(
-            &spl_token::id(),
-            mint,
-            account,
-            &context.payer.pubkey(),
-            &[],
-            amount,
-        )
-        .unwrap()],
+        &[
+            spl_token::instruction::mint_to(&spl_token::id(), mint, account, owner, &[], amount)
+                .unwrap(),
+        ],
         Some(&context.payer.pubkey()),
-        &[&context.payer],
+        &signing_keypairs,
         context.last_blockhash,
     );
 
@@ -95,6 +97,7 @@ pub async fn create_mint(
     context: &mut ProgramTestContext,
     mint: &Keypair,
     manager: &Pubkey,
+    freeze_authority: Option<&Pubkey>,
 ) -> transport::Result<()> {
     let rent = context.banks_client.get_rent().await.unwrap();
 
@@ -111,7 +114,7 @@ pub async fn create_mint(
                 &spl_token::id(),
                 &mint.pubkey(),
                 &manager,
-                None,
+                freeze_authority,
                 0,
             )
             .unwrap(),

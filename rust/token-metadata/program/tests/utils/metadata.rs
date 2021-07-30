@@ -51,7 +51,7 @@ impl Metadata {
         seller_fee_basis_points: u16,
         is_mutable: bool,
     ) -> transport::Result<()> {
-        create_mint(context, &self.mint, &context.payer.pubkey()).await?;
+        create_mint(context, &self.mint, &context.payer.pubkey(), None).await?;
         create_token_account(
             context,
             &self.token,
@@ -59,7 +59,15 @@ impl Metadata {
             &context.payer.pubkey(),
         )
         .await?;
-        mint_tokens(context, &self.mint.pubkey(), &self.token.pubkey(), 1).await?;
+        mint_tokens(
+            context,
+            &self.mint.pubkey(),
+            &self.token.pubkey(),
+            1,
+            &context.payer.pubkey(),
+            None,
+        )
+        .await?;
 
         let tx = Transaction::new_signed_with_payer(
             &[instruction::create_metadata_accounts(

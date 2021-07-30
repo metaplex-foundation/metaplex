@@ -10,12 +10,14 @@ use spl_token_vault::instruction;
 #[derive(Debug)]
 pub struct ExternalPrice {
     pub keypair: Keypair,
+    pub price_mint: Keypair,
 }
 
 impl ExternalPrice {
     pub fn new() -> Self {
         ExternalPrice {
             keypair: Keypair::new(),
+            price_mint: Keypair::new(),
         }
     }
 
@@ -53,8 +55,15 @@ impl ExternalPrice {
     }
 
     pub async fn create(&self, context: &mut ProgramTestContext) -> transport::Result<()> {
-        let rent = context.banks_client.get_rent().await.unwrap();
+        create_mint(
+            context,
+            &self.price_mint,
+            &context.payer.pubkey(),
+            Some(&context.payer.pubkey()),
+        )
+        .await?;
 
+        let rent = context.banks_client.get_rent().await.unwrap();
         let tx = Transaction::new_signed_with_payer(
             &[system_instruction::create_account(
                 &context.payer.pubkey(),
