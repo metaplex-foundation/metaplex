@@ -4,24 +4,30 @@ import { CreditCardOutlined } from '@ant-design/icons';
 import './index.less';
 
 interface ContentCardProps {
-  title: String;
-  description: String;
+  title: string;
+  description: string;
+  imgSrc?: string;
 }
 
 export const ContentCard: React.FC<ContentCardProps> = ({
   title,
   description,
+  imgSrc,
 }) => {
   return (
     <Card
       cover={
         <div className={'card-cover'}>
-          <CreditCardOutlined
-            style={{
-              color: 'rgba(179, 136, 245, 1)',
-              fontSize: 18,
-            }}
-          />
+          {imgSrc ? (
+            <img src={imgSrc} />
+          ) : (
+            <CreditCardOutlined
+              style={{
+                color: 'rgba(179, 136, 245, 1)',
+                fontSize: 18,
+              }}
+            />
+          )}
         </div>
       }
     >
@@ -40,9 +46,15 @@ export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
   return (
     <div className="site-card-wrapper">
       <Row gutter={16}>
-        <Col span={8}>{children[0]} </Col>
-        <Col span={8}>{children[1]}</Col>
-        <Col span={8}>{children[2]}</Col>
+        <Col span={24} xl={8}>
+          {children[0]}{' '}
+        </Col>
+        <Col span={24} xl={8}>
+          {children[1]}
+        </Col>
+        <Col span={24} xl={8}>
+          {children[2]}
+        </Col>
       </Row>
     </div>
   );
@@ -92,15 +104,18 @@ export const InstructionsModal: React.FC<ModalProps> = ({
           <ContentCard
             title={cardProps[0].title}
             description={cardProps[0].description}
-          ></ContentCard>
+            imgSrc={cardProps[0].imgSrc}
+          />
           <ContentCard
             title={cardProps[1].title}
-            description={cardProps[0].description}
-          ></ContentCard>
+            description={cardProps[1].description}
+            imgSrc={cardProps[1].imgSrc}
+          />
           <ContentCard
             title={cardProps[2].title}
-            description={cardProps[0].description}
-          ></ContentCard>
+            description={cardProps[2].description}
+            imgSrc={cardProps[2].imgSrc}
+          />
         </ModalContent>
       </Modal>
     </>

@@ -20,7 +20,6 @@ import {
   MetaplexModal,
   shortenAddress,
   useConnectionConfig,
-  fromLamports,
   useMint,
   useWallet,
   AuctionState,
