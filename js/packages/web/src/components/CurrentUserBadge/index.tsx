@@ -47,7 +47,7 @@ const UserActions = () => {
       {canCreate && (
         <>
           <Link to={`/art/create`} style={{ width: '100%' }}>
-            <Button className="mcfarlane-button" style={btnStyle}>
+            <Button className="metaplex-button-default" style={btnStyle}>
               Create
             </Button>
           </Link>
@@ -55,7 +55,7 @@ const UserActions = () => {
         </>
       )}
       <Link to={`/auction/create/0`} style={{ width: '100%' }}>
-        <Button className="mcfarlane-button" style={btnStyle}>
+        <Button className="metaplex-button-default" style={btnStyle}>
           Sell
         </Button>
       </Link>
@@ -158,7 +158,7 @@ export const CurrentUserBadge = (props: {
                   }}
                 >
                   <Button
-                    className="mcfarlane-button"
+                    className="metaplex-button-default"
                     onClick={() => setShowAddFundsModal(true)}
                     style={btnStyle}
                   >
@@ -166,7 +166,7 @@ export const CurrentUserBadge = (props: {
                   </Button>
                   &nbsp;&nbsp;
                   <Button
-                    className="mcfarlane-button"
+                    className="metaplex-button-default"
                     onClick={disconnect}
                     style={btnStyle}
                   >
@@ -334,7 +334,7 @@ export const Cog = () => {
             </Select>
 
             <Button
-              className="mcfarlane-button"
+              className="metaplex-button-default"
               style={btnStyle}
               onClick={select}
             >

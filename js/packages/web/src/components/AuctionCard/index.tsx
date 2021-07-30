@@ -393,7 +393,7 @@ export const AuctionCard = ({
                 </div>
 
                 <Button
-                  className="mcfarlane-button"
+                  className="metaplex-button-default"
                   style={{
                     background: 'transparent',
                     color: 'white',
