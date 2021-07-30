@@ -12,7 +12,7 @@ use {
     },
     spl_auction::{
         instruction::claim_bid_instruction,
-        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState},
+        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot},
     },
 };
 
@@ -77,6 +77,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     let mut auction_manager = get_auction_manager(auction_manager_info)?;
     let store = Store::from_account_info(store_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
+    let token_pot_info = BidderPot::from_account_info(bidder_pot_info)?;
 
     assert_owned_by(auction_info, &store.auction_program)?;
     assert_owned_by(auction_manager_info, program_id)?;
@@ -121,7 +122,9 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     }
 
     if let Some(winner_index) = auction.is_winner(bidder_info.key) {
-        auction_manager.mark_bid_as_claimed(winner_index)?;
+        if !token_pot_info.emptied {
+            auction_manager.mark_bid_as_claimed(winner_index)?;
+        }
     }
 
     let bump_seed = assert_derivation(

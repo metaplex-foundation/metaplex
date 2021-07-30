@@ -47,7 +47,7 @@ pub const BASE_SAFETY_CONFIG_SIZE: usize = 1 +// Key
  9 + // fixed price + option of it
  1 + // participation state option
  8 + // collected to accept payment
- 100; // padding
+ 20; // padding
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
@@ -713,9 +713,21 @@ pub struct AmountRange(pub u64, pub u64);
 #[repr(C)]
 #[derive(Clone, Debug, BorshSerialize, BorshDeserialize, Copy)]
 pub enum TupleNumericType {
+    // So borsh won't listen to the actual numerical assignment of enum keys
+    // If you say U16 = 2 and it's the 2nd element in the enum and U8 = 1 and it's the first
+    // element, you would rightly assume encoding a 1 means U8 and a 2 means U16. However
+    // borsh assumes still that 0 = U8 and 1 = U16 because U8 appears first and U16 appears second in the enum.
+    // It simply ignores your manual assignment and goes purely off order in the enum.
+    // Because of how bad it is, we have to shove in these "padding" enums to make sure
+    // the values we set are the values it uses even though we dont use them for anything.
+    Padding0 = 0,
     U8 = 1,
     U16 = 2,
+    Padding1 = 3,
     U32 = 4,
+    Padding2 = 5,
+    Padding3 = 6,
+    Padding4 = 7,
     U64 = 8,
 }
 // Even though we dont use borsh for serialization to the chain, we do use this as an instruction argument
@@ -759,6 +771,7 @@ fn get_number_from_data(data: &Ref<&mut [u8]>, data_type: TupleNumericType, offs
         TupleNumericType::U16 => u16::from_le_bytes(*array_ref![data, offset, 2]) as u64,
         TupleNumericType::U32 => u32::from_le_bytes(*array_ref![data, offset, 4]) as u64,
         TupleNumericType::U64 => u64::from_le_bytes(*array_ref![data, offset, 8]),
+        _ => 0,
     };
 }
 
@@ -773,6 +786,7 @@ fn write_amount_type(
         TupleNumericType::U16 => *array_mut_ref![data, offset, 2] = (range.0 as u16).to_le_bytes(),
         TupleNumericType::U32 => *array_mut_ref![data, offset, 4] = (range.0 as u32).to_le_bytes(),
         TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.0.to_le_bytes(),
+        _ => (),
     }
 }
 
@@ -787,6 +801,7 @@ fn write_length_type(
         TupleNumericType::U16 => *array_mut_ref![data, offset, 2] = (range.1 as u16).to_le_bytes(),
         TupleNumericType::U32 => *array_mut_ref![data, offset, 4] = (range.1 as u32).to_le_bytes(),
         TupleNumericType::U64 => *array_mut_ref![data, offset, 8] = range.1.to_le_bytes(),
+        _ => (),
     }
 }
 
@@ -1036,14 +1051,15 @@ impl SafetyDepositConfig {
         })
     }
 
-    pub fn create(&self, a: &AccountInfo) -> ProgramResult {
+    pub fn create(&self, a: &AccountInfo, auction_manager_key: &Pubkey) -> ProgramResult {
         let mut data = a.data.borrow_mut();
 
         data[0] = Key::SafetyDepositConfigV1 as u8;
-        let mut am_ref = *array_mut_ref![data, 0, 33];
-        let (_key, auction_manager) = mut_array_refs![&mut am_ref, 1, 32];
-        auction_manager.copy_from_slice(self.auction_manager.as_ref());
-
+        // for whatever reason, copy_from_slice doesnt do jack here.
+        let as_bytes = auction_manager_key.as_ref();
+        for n in 0..32 {
+            data[n + 1] = as_bytes[n];
+        }
         *array_mut_ref![data, ORDER_POSITION, 8] = self.order.to_le_bytes();
         data[WINNING_CONFIG_POSITION] = self.winning_config_type as u8;
         data[AMOUNT_POSITION] = self.amount_type as u8;
@@ -1341,7 +1357,7 @@ impl BidRedemptionTicket {
         is_participation: bool,
         safety_deposit_config_info: Option<&AccountInfo>,
     ) -> ProgramResult {
-        let bid_redemption_data = bid_redemption_info.data.borrow();
+        let bid_redemption_data = bid_redemption_info.data.borrow_mut();
 
         if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8
             && bid_redemption_data[0] != Key::BidRedemptionTicketV2 as u8
@@ -1371,7 +1387,7 @@ impl BidRedemptionTicket {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
                     let (position, mask) =
-                        BidRedemptionTicket::get_index_and_mask(bid_redemption_info, order)?;
+                        BidRedemptionTicket::get_index_and_mask(&bid_redemption_data, order)?;
                     if bid_redemption_data[position] & mask != 0 {
                         return Err(MetaplexError::BidAlreadyRedeemed.into());
                     }
@@ -1382,10 +1398,13 @@ impl BidRedemptionTicket {
         Ok(())
     }
 
-    pub fn get_index_and_mask(a: &AccountInfo, order: u64) -> Result<(usize, u8), ProgramError> {
+    pub fn get_index_and_mask(
+        data: &RefMut<&mut [u8]>,
+        order: u64,
+    ) -> Result<(usize, u8), ProgramError> {
         // add one because Key is at 0
         let mut offset = 42;
-        if a.data.borrow()[1] == 0 {
+        if data[1] == 0 {
             // remove the lost option space
             offset -= 8;
         }
@@ -1442,8 +1461,7 @@ impl BidRedemptionTicket {
             match safety_deposit_config_info {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
-                    let (position, mask) =
-                        BidRedemptionTicket::get_index_and_mask(bid_redemption_info, order)?;
+                    let (position, mask) = BidRedemptionTicket::get_index_and_mask(data, order)?;
                     data[position] = data[position] | mask;
                 }
                 None => return Err(MetaplexError::InvalidOperation.into()),

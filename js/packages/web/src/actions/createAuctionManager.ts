@@ -376,6 +376,7 @@ async function buildSafetyDepositArray(
     const maxAmount = [...s.amountRanges.map(a => a.amount)]
       .sort()
       .reverse()[0];
+
     const maxLength = [...s.amountRanges.map(a => a.length)]
       .sort()
       .reverse()[0];
@@ -417,7 +418,7 @@ async function buildSafetyDepositArray(
       draft: s,
     });
   });
-
+  console.log('templates', safetyDepositTemplates);
   if (
     participationSafetyDepositDraft &&
     participationSafetyDepositDraft.masterEdition

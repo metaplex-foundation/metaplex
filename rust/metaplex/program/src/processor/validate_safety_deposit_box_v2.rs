@@ -63,7 +63,7 @@ pub fn make_safety_deposit_config<'a>(
         ],
     )?;
 
-    safety_deposit_config.create(safety_deposit_config_info)?;
+    safety_deposit_config.create(safety_deposit_config_info, auction_manager_info.key)?;
 
     Ok(())
 }
@@ -514,6 +514,10 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
 
     auction_manager.save(&mut auction_manager_info)?;
 
+    auction_token_tracker
+        .add_one_where_positive_ranges_occur(&mut safety_deposit_config.amount_ranges.clone())?;
+    auction_token_tracker.save(auction_token_tracker_info);
+
     make_safety_deposit_config(
         program_id,
         auction_manager_info,
@@ -524,10 +528,5 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
         system_info,
         &safety_deposit_config,
     )?;
-
-    auction_token_tracker
-        .add_one_where_positive_ranges_occur(&mut safety_deposit_config.amount_ranges.clone())?;
-    auction_token_tracker.save(auction_token_tracker_info);
-
     Ok(())
 }

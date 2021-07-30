@@ -51,6 +51,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   bids: ParsedAccount<BidderMetadata>[],
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
 ): Promise<number> {
+  console.log('Auction view', auctionView);
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
   );

@@ -672,7 +672,10 @@ const processMetaplexAccounts = async (
   try {
     const STORE_ID = programIds().store?.toBase58() || '';
 
-    if (a.account.data[0] === MetaplexKey.AuctionManagerV1) {
+    if (
+      a.account.data[0] === MetaplexKey.AuctionManagerV1 ||
+      a.account.data[0] === MetaplexKey.AuctionManagerV2
+    ) {
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
       if (storeKey.toBase58() === STORE_ID) {
         const auctionManager = decodeAuctionManager(a.account.data);
@@ -688,7 +691,10 @@ const processMetaplexAccounts = async (
           account,
         );
       }
-    } else if (a.account.data[0] === MetaplexKey.BidRedemptionTicketV1) {
+    } else if (
+      a.account.data[0] === MetaplexKey.BidRedemptionTicketV1 ||
+      a.account.data[0] === MetaplexKey.BidRedemptionTicketV2
+    ) {
       const ticket = decodeBidRedemptionTicket(a.account.data);
       const account: ParsedAccount<BidRedemptionTicket> = {
         pubkey: a.pubkey,
@@ -740,6 +746,7 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: config,
       };
+
       setter(
         'safetyDepositConfigsByAuctionManagerAndIndex',
         config.auctionManager.toBase58() + '-' + config.order.toNumber(),

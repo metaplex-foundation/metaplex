@@ -546,7 +546,7 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
     if (this.data[1] == 0) {
       this.winnerIndex = null;
     } else {
-      this.winnerIndex = new BN(this.data.slice(1, 9), undefined, 'le');
+      this.winnerIndex = new BN(this.data.slice(1, 9));
       offset += 8;
     }
 
@@ -633,11 +633,11 @@ export class SafetyDepositConfig {
       Object.assign(this, args.directArgs);
     } else if (args.data) {
       this.auctionManager = new PublicKey(args.data.slice(1, 33));
-      this.order = new BN(args.data.slice(33, 8), undefined, 'le');
+      this.order = new BN(args.data.slice(33, 41));
       this.winningConfigType = args.data[41];
       this.amountType = args.data[42];
       this.lengthType = args.data[43];
-      let lengthOfArray = new BN(args.data.slice(44, 4), undefined, 'le');
+      let lengthOfArray = new BN(args.data.slice(44, 48), 'le');
       this.amountRanges = [];
       let offset = 48;
       for (let i = 0; i < lengthOfArray.toNumber(); i++) {
@@ -677,8 +677,6 @@ export class SafetyDepositConfig {
         // pick up participation state manually
         const collectedToAcceptPayment = new BN(
           args.data.slice(offset + 1, offset + 9),
-          undefined,
-          'le',
         );
         offset += 9;
         this.participationState = new ParticipationStateV2({
@@ -695,13 +693,13 @@ export class SafetyDepositConfig {
   ): BN {
     switch (dataType) {
       case TupleNumericType.U8:
-        return new BN(data[offset]);
+        return new BN(data[offset], 'le');
       case TupleNumericType.U16:
-        return new BN(data.slice(offset, offset + 2), undefined, 'le');
+        return new BN(data.slice(offset, offset + 2), 'le');
       case TupleNumericType.U32:
-        return new BN(data.slice(offset, offset + 4), undefined, 'le');
+        return new BN(data.slice(offset, offset + 4), 'le');
       case TupleNumericType.U64:
-        return new BN(data.slice(offset, offset + 8), undefined, 'le');
+        return new BN(data.slice(offset, offset + 8));
     }
   }
 
