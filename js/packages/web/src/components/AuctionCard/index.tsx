@@ -127,7 +127,7 @@ export const AuctionCard = ({
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
-  // const [showBidModal, setShowBidModal] = useState<boolean>(false);
+
   const [showRedeemedBidModal, setShowRedeemedBidModal] =
     useState<boolean>(false);
   const [showRedemptionIssue, setShowRedemptionIssue] =
@@ -135,7 +135,6 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  // const [modalHistory, setModalHistory] = useState<any>();
 
   const { accountByMint } = useUserAccounts();
 
@@ -268,14 +267,7 @@ export const AuctionCard = ({
               <HowAuctionsWorkModal buttonClassName="how-auctions-work" />
               {!hideDefaultAction && !auctionView.auction.info.ended() && (
                 <Button
-                  className="mcfarlane-button"
-                  style={{
-                    background: '#E65C37',
-                    color: 'black',
-                    width: 'unset',
-                    fontWeight: 600,
-                    letterSpacing: '-0.02em',
-                  }}
+                  className="secondary-btn"
                   onClick={() => {
                     if (connected) setShowPlaceBid(true);
                     else connect();
@@ -288,14 +280,7 @@ export const AuctionCard = ({
                 connected &&
                 auctionView.auction.info.ended() && (
                   <Button
-                    className="mcfarlane-button"
-                    style={{
-                      background: '#E65C37',
-                      color: 'black',
-                      width: 'unset',
-                      fontWeight: 600,
-                      letterSpacing: '-0.02em',
-                    }}
+                    className="secondary-btn"
                     disabled={
                       !myPayingAccount ||
                       (!auctionView.myBidderMetadata &&
@@ -394,7 +379,7 @@ export const AuctionCard = ({
                       width: '100%',
                       background: '#393939',
                       borderRadius: 12,
-                      border: '1px solid #E65C37',
+                      border: '1px solid @metaplex-primary-color',
                     }}
                     onChange={setValue}
                     precision={4}
@@ -423,14 +408,7 @@ export const AuctionCard = ({
                   Cancel
                 </Button>
                 <Button
-                  className="mcfarlane-button"
-                  style={{
-                    background: '#E65C37',
-                    color: 'black',
-                    width: 'unset',
-                    fontWeight: 600,
-                    letterSpacing: '-0.02em',
-                  }}
+                  className="secondary-btn"
                   disabled={invalidBid}
                   onClick={async () => {
                     setLoading(true);

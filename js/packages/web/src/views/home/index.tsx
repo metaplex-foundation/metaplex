@@ -3,7 +3,6 @@ import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 import { HowToBuyModal } from '../../components/HowToBuyModal';
 
-import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { AuctionViewState, useAuctions } from '../../hooks';
 
 import './index.less';

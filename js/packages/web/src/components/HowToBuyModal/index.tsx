@@ -1,5 +1,6 @@
 import { InstructionsModal } from '../InstructionsModal';
 import React from 'react';
+import { LABELS } from '../../constants';
 
 interface HowToBuyModalProps {
   buttonClassName: string;
@@ -12,22 +13,22 @@ export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
     <InstructionsModal
       buttonClassName={buttonClassName}
       buttonText="How to Buy"
-      modalTitle="Buying NFTs Topps"
+      modalTitle={`Buying NFTs ${LABELS.STORE_NAME}`}
       cardProps={[
         {
           title: 'Create a SOL wallet',
-          description:
-            "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+          imgSrc: '/modals/how-to-buy-1.svg',
+          description: `SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on ${LABELS.STORE_NAME}'s NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.`,
         },
         {
           title: 'Add funds to your wallet',
-          description:
-            "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+          imgSrc: '/modals/how-to-buy-2.svg',
+          description: `SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on ${LABELS.STORE_NAME}'s NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.`,
         },
         {
-          title: 'Connect your wallet to Topps and place a bid.',
-          description:
-            "SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on Topps' NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.",
+          title: `Connect your wallet to ${LABELS.STORE_NAME} and place a bid.`,
+          imgSrc: '/modals/how-to-buy-3.svg',
+          description: `SOL is the cryptocurrency used for all transactions on the Solana network, and it’s the currency we use on ${LABELS.STORE_NAME}'s NFTs. All of the NFTs on our platform can be purchased with SOL. Creators get paid in it, too.`,
         },
       ]}
     />

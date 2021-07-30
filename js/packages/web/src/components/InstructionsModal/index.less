@@ -9,7 +9,8 @@
 
   .ant-modal-header {
     border-bottom: 0;
-    border-radius: 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
     padding: 28px 24px 28px 24px;
 
     .ant-modal-title {
@@ -31,7 +32,8 @@
 
   .ant-modal-body {
     background: rgba(255, 255, 255, 0.05) !important;
-    border-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
     padding: 48px 16px 48px 48px;
 
     .ant-card {
@@ -39,14 +41,22 @@
       border: 0;
       margin-right: 32px;
       height: 476px;
+      .ant-card-cover {
+          border-radius: 12px;
+        max-width: 317px;
+        .card-cover {
+          background: rgba(255, 255, 255, 0.1);
+          height: 200px;
+          border-radius: 12px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
 
-      .card-cover {
-        background: rgba(255, 255, 255, 0.1);
-        height: 200px;
-        border-radius: 12px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+          img {
+            width: auto;
+            height: 100%;
+          }
+        }
       }
 
       .body-title {
@@ -56,6 +66,7 @@
         line-height: 20px;
         margin-top: 20px;
         margin-bottom: 12px;
+        color: white;
       }
 
       .body-content {
