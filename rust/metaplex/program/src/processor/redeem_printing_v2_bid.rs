@@ -19,6 +19,7 @@ use {
         program_error::ProgramError,
         pubkey::Pubkey,
     },
+    spl_auction::processor::AuctionData,
     spl_token_metadata::{
         instruction::mint_edition_from_master_edition_via_vault_proxy,
         utils::get_supply_off_master_edition,
@@ -259,6 +260,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
                 safety_deposit_info,
                 winning_index,
                 auction_manager_v1_ignore_claim: true,
+                winners: AuctionData::get_num_winners(auction_info),
                 // We only want to save cpu short circuiting the full loop through all amount ranges
                 // if we know we're building prize tracking ticket first time.
                 // Yes, interface leakage, but you try making this work on 200k cpu.

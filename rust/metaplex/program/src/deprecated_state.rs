@@ -229,6 +229,7 @@ impl AuctionManager for AuctionManagerV1 {
             winning_index,
             auction_manager_v1_ignore_claim,
             short_circuit_total,
+            winners: _w,
             edition_offset,
         } = args;
 

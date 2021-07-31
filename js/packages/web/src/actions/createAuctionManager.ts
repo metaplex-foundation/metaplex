@@ -382,7 +382,10 @@ async function buildSafetyDepositArray(
       .reverse()[0];
     safetyDepositTemplates.push({
       box: {
-        tokenAccount: s.holding,
+        tokenAccount:
+          s.winningConfigType !== WinningConfigType.PrintingV1
+            ? s.holding
+            : s.printingMintHolding,
         tokenMint:
           s.winningConfigType !== WinningConfigType.PrintingV1
             ? s.metadata.info.mint

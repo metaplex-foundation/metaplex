@@ -371,7 +371,6 @@ export function processAccountsIntoAuctionView(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
-
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;
@@ -450,8 +449,11 @@ export function processAccountsIntoAuctionView(
             view.participationItem)) &&
         view.vault
       );
-
-      if (!view.thumbnail || !view.thumbnail.metadata) return undefined;
+      if (
+        (!view.thumbnail || !view.thumbnail.metadata) &&
+        desiredState != AuctionViewState.Defective
+      )
+        return undefined;
 
       return view as AuctionView;
     }
