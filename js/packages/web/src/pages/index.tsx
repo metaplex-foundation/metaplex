@@ -14,21 +14,21 @@ interface AppProps {
 }
 
 export async function getServerSideProps(context: NextPageContext) {
-  const headers = (context?.req?.headers || {})
+  const headers = context?.req?.headers || {};
   let forwarded = headers.forwarded?.split(';').reduce((acc: any, entry) => {
-    const [key, value] = entry.split("=")
-    acc[key] = value
+    const [key, value] = entry.split('=');
+    acc[key] = value;
 
-    return acc
-  }, {})
-  const host = (forwarded.host || headers.host) as string
-  const subdomain = host.split(':')[0].split('.')[0]
+    return acc;
+  }, {});
+  const host = (forwarded?.host || headers.host) as string;
+  const subdomain = host.split(':')[0].split('.')[0];
 
   const storefront = await getStorefront(subdomain);
 
   if (storefront) {
     return { props: { storefront } };
-  };
+  }
 
   return {
     notFound: true,
@@ -42,7 +42,7 @@ function App({ storefront }: AppProps) {
 
   useEffect(() => {
     if (hasLogo && hasStylesheet) {
-      setIsMounted(true)
+      setIsMounted(true);
     }
   }, [hasLogo, hasStylesheet]);
 
@@ -57,25 +57,24 @@ function App({ storefront }: AppProps) {
 
     link.onload = () => {
       setHasStylesheet(true);
-
-    }
+    };
 
     head.appendChild(link);
   }, []);
 
   useEffect(() => {
     const onHasLogo = () => {
-      setHasLogo(true)
-    }
+      setHasLogo(true);
+    };
 
     if (!storefront.theme.logo) {
       onHasLogo();
       return;
     }
 
-    const logo = new Image()
-    logo.src = storefront.theme.logo
-      
+    const logo = new Image();
+    logo.src = storefront.theme.logo;
+
     logo.onload = onHasLogo;
     logo.onerror = onHasLogo;
   }, []);
@@ -85,17 +84,11 @@ function App({ storefront }: AppProps) {
       <Head>
         {storefront.meta.favicon && (
           <>
-            <link
-              rel="icon"
-              type="image/png"
-              href={storefront.meta.favicon}
-            />
+            <link rel="icon" type="image/png" href={storefront.meta.favicon} />
           </>
         )}
         <meta name="description" content={storefront.meta.description} />
-        <title>
-          {storefront.meta.title}
-        </title>
+        <title>{storefront.meta.title}</title>
       </Head>
       {isMounted && <CreateReactAppEntryPoint storeId={storefront.pubkey} />}
     </>
