@@ -20,7 +20,11 @@ solana-program = "1.6.10"
 spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
-borsh = "0.8.2"
+borsh = "0.9.1"
+
+[dev-dependencies]
+solana-sdk = "1.7.8"
+solana-program-test = "1.7.8"
 
 [lib]
 crate-type = ["cdylib", "lib"]
