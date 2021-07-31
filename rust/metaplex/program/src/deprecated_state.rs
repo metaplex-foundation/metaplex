@@ -229,7 +229,7 @@ impl AuctionManager for AuctionManagerV1 {
             winning_index,
             auction_manager_v1_ignore_claim,
             short_circuit_total,
-            winners: _w,
+            winners,
             edition_offset,
         } = args;
 
@@ -261,7 +261,13 @@ impl AuctionManager for AuctionManagerV1 {
                 edition_offset_min += matching
             }
             if !short_circuit_total {
-                expected_redemptions += matching
+                if n <= winners {
+                    // once we hit the number of winnrs in this auction (which coulkd be less than possible total)
+                    // we need to stop as its never possible to redeem more than number of winners in the auction
+                    expected_redemptions += matching
+                } else {
+                    break;
+                }
             } else if n >= winning_index {
                 // no need to keep using this loop more than winning_index if we're not
                 // tabulating expected_redemptions
