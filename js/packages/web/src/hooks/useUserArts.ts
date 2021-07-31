@@ -9,6 +9,7 @@ import BN from 'bn.js';
 import { SafetyDepositDraft } from '../actions/createAuctionManager';
 import {
   NonWinningConstraint,
+  ParticipationConfigV2,
   WinningConfigType,
   WinningConstraint,
 } from '../models/metaplex';
@@ -78,11 +79,11 @@ export const useUserArts = (): SafetyDepositDraft[] => {
         amountRanges: [],
         participationConfig:
           winningConfigType == WinningConfigType.Participation
-            ? {
+            ? new ParticipationConfigV2({
                 winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
                 nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
                 fixedPrice: new BN(0),
-              }
+              })
             : undefined,
       });
     }

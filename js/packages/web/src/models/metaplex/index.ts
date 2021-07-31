@@ -1145,7 +1145,7 @@ export async function getAuctionWinnerTokenTypeTracker(
 
 export async function getSafetyDepositConfig(
   auctionManager: PublicKey,
-  saftyDeposit: PublicKey,
+  safetyDeposit: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -1159,7 +1159,7 @@ export async function getSafetyDepositConfig(
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
         auctionManager.toBuffer(),
-        saftyDeposit.toBuffer(),
+        safetyDeposit.toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )

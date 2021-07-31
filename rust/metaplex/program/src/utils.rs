@@ -1,5 +1,3 @@
-use solana_program::log::sol_log_compute_units;
-
 use {
     crate::{
         error::MetaplexError,
@@ -14,6 +12,7 @@ use {
         account_info::AccountInfo,
         borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
+        log::sol_log_compute_units,
         msg,
         program::{invoke, invoke_signed},
         program_error::ProgramError,
@@ -565,7 +564,6 @@ pub fn common_redeem_checks(
         user_provided_win_index,
         overwrite_win_index,
     )?;
-
     if !bid_redemption_info.data_is_empty()
         && overwrite_win_index.is_none()
         && !ignore_bid_redeemed_item_check

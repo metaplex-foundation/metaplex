@@ -51,8 +51,8 @@ export async function validateSafetyDepositBoxV2(
   );
 
   const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig);
-
   const data = Buffer.from(serialize(SCHEMA, value));
+
   const keys = [
     {
       pubkey: safetyDepositConfigKey,

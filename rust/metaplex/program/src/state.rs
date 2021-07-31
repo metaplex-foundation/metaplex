@@ -81,6 +81,7 @@ pub struct PrintingV2CalculationChecks<'a> {
     pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
     pub short_circuit_total: bool,
     pub edition_offset: u64,
+    pub winners: usize,
 }
 
 pub struct CommonWinningIndexReturn {
@@ -260,7 +261,7 @@ impl AuctionManager for AuctionManagerV2 {
                 amount: SafetyDepositConfig::find_amount_and_cumulative_offset(
                     config,
                     winning_index as u64,
-                    true,
+                    None,
                 )?
                 .amount,
                 winning_config_type: SafetyDepositConfig::get_winning_config_type(config)?,
@@ -281,14 +282,15 @@ impl AuctionManager for AuctionManagerV2 {
             safety_deposit_info: _s,
             winning_index,
             auction_manager_v1_ignore_claim: _a,
-            short_circuit_total,
+            short_circuit_total: _ss,
             edition_offset,
+            winners,
         } = args;
         if let Some(config) = safety_deposit_config_info {
             let derived_results = SafetyDepositConfig::find_amount_and_cumulative_offset(
                 config,
                 winning_index as u64,
-                short_circuit_total,
+                Some(winners),
             )?;
 
             let edition_offset_min = derived_results
@@ -869,12 +871,11 @@ impl SafetyDepositConfig {
     /// and the amount of editions you should get. If not a PrintingV2 safety deposit, the edition offset
     /// (the cumulative count of all amounts from all people up to yours) is (relatively) meaningless,
     /// but the amount AT your point still represents the amount of tokens you would receive.
-    /// Pass in the short_circuit: false for the total_cumulative to roll until the end to get the
-    /// complete total.
+    /// Stop at winner index determines what the total roll count will stop at, if none goes all the way through.
     pub fn find_amount_and_cumulative_offset(
         a: &AccountInfo,
         index: u64,
-        short_circuit: bool,
+        stop_at_winner_index: Option<usize>,
     ) -> Result<AmountCumulativeReturn, ProgramError> {
         let data = &mut a.data.borrow();
 
@@ -882,7 +883,7 @@ impl SafetyDepositConfig {
 
         let length_type = SafetyDepositConfig::get_length_type(a)?;
 
-        let length_of_array = SafetyDepositConfig::get_amount_range_len(a);
+        let length_of_array = SafetyDepositConfig::get_amount_range_len(a) as usize;
 
         let mut cumulative_amount: u64 = 0;
         let mut total_amount: u64 = 0;
@@ -905,9 +906,6 @@ impl SafetyDepositConfig {
             let to_add = amount_each_winner_gets
                 .checked_mul(length_of_range)
                 .ok_or(MetaplexError::NumericalOverflowError)?;
-            total_amount = total_amount
-                .checked_add(to_add)
-                .ok_or(MetaplexError::NumericalOverflowError)?;
 
             if index >= current_winner_range_start && index < current_winner_range_end {
                 let up_to_winner = (index - current_winner_range_start)
@@ -919,13 +917,33 @@ impl SafetyDepositConfig {
                 amount = amount_each_winner_gets;
 
                 not_found = false;
-                if short_circuit {
-                    break;
-                }
             } else if current_winner_range_start < index {
                 cumulative_amount = cumulative_amount
                     .checked_add(to_add)
-                    .ok_or(MetaplexError::NumericalOverflowError)?
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
+            }
+
+            if let Some(win_index) = stop_at_winner_index {
+                let win_index_as_u64 = win_index as u64;
+                if win_index_as_u64 >= current_winner_range_start
+                    && win_index_as_u64 < current_winner_range_end
+                {
+                    let up_to_winner = (win_index_as_u64 - current_winner_range_start)
+                        .checked_mul(amount_each_winner_gets)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                    total_amount = total_amount
+                        .checked_add(up_to_winner)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                    break;
+                } else if current_winner_range_start < win_index_as_u64 {
+                    total_amount = total_amount
+                        .checked_add(to_add)
+                        .ok_or(MetaplexError::NumericalOverflowError)?;
+                }
+            } else {
+                total_amount = total_amount
+                    .checked_add(to_add)
+                    .ok_or(MetaplexError::NumericalOverflowError)?;
             }
 
             current_winner_range_start = current_winner_range_end
@@ -1358,7 +1376,6 @@ impl BidRedemptionTicket {
         safety_deposit_config_info: Option<&AccountInfo>,
     ) -> ProgramResult {
         let bid_redemption_data = bid_redemption_info.data.borrow_mut();
-
         if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8
             && bid_redemption_data[0] != Key::BidRedemptionTicketV2 as u8
         {
@@ -1374,7 +1391,7 @@ impl BidRedemptionTicket {
             if is_participation && participation_redeemed {
                 return Err(MetaplexError::BidAlreadyRedeemed.into());
             }
-        } else if bid_redemption_data[0] != Key::BidRedemptionTicketV2 as u8 {
+        } else if bid_redemption_data[0] == Key::BidRedemptionTicketV2 as u8 {
             // You can only redeem Full Rights Transfers one time per mint
             // You can only redeem Token Only Transfers one time per mint
             // You can only redeem PrintingV1 one time - you get all the printing tokens in one go
@@ -1388,6 +1405,7 @@ impl BidRedemptionTicket {
                     let order = SafetyDepositConfig::get_order(config);
                     let (position, mask) =
                         BidRedemptionTicket::get_index_and_mask(&bid_redemption_data, order)?;
+
                     if bid_redemption_data[position] & mask != 0 {
                         return Err(MetaplexError::BidAlreadyRedeemed.into());
                     }

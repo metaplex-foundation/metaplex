@@ -38,6 +38,7 @@ import {
   ParticipationConfigV2,
   TupleNumericType,
   SafetyDepositConfig,
+  ParticipationStateV2,
 } from '../models/metaplex';
 import { createVault } from './createVault';
 import { closeVault } from './closeVault';
@@ -421,7 +422,7 @@ async function buildSafetyDepositArray(
       draft: s,
     });
   });
-  console.log('templates', safetyDepositTemplates);
+
   if (
     participationSafetyDepositDraft &&
     participationSafetyDepositDraft.masterEdition
@@ -441,16 +442,18 @@ async function buildSafetyDepositArray(
         auctionManager: SystemProgram.programId,
         order: new BN(safetyDeposits.length),
         amountRanges: participationSafetyDepositDraft.amountRanges,
-        amountType: maxAmount.gte(new BN(255))
+        amountType: maxAmount?.gte(new BN(255))
           ? TupleNumericType.U32
           : TupleNumericType.U8,
-        lengthType: maxLength.gte(new BN(255))
+        lengthType: maxLength?.gte(new BN(255))
           ? TupleNumericType.U32
           : TupleNumericType.U8,
-        winningConfigType: WinningConfigType.PrintingV1,
+        winningConfigType: WinningConfigType.Participation,
         participationConfig:
           participationSafetyDepositDraft.participationConfig || null,
-        participationState: { collectedToAcceptPayment: new BN(0) },
+        participationState: new ParticipationStateV2({
+          collectedToAcceptPayment: new BN(0),
+        }),
       },
     });
 
@@ -490,7 +493,7 @@ async function buildSafetyDepositArray(
       });
     }
   }
-
+  console.log('Temps', safetyDepositTemplates);
   return safetyDepositTemplates;
 }
 

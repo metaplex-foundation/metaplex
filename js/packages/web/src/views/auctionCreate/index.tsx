@@ -193,17 +193,16 @@ export const AuctionCreateView = () => {
     ) {
       if (attributes.items.length > 0) {
         const item = attributes.items[0];
-        item.winningConfigType =
-          attributes.category === AuctionCategory.Single
-            ? item.masterEdition &&
-              item.metadata.info.updateAuthority.equals(
-                wallet?.publicKey || SystemProgram.programId,
-              )
-              ? WinningConfigType.FullRightsTransfer
-              : WinningConfigType.TokenOnlyTransfer
-            : item.masterEdition?.info.key == MetadataKey.MasterEditionV1
-            ? WinningConfigType.PrintingV1
-            : WinningConfigType.PrintingV2;
+        if (
+          attributes.category == AuctionCategory.Single &&
+          item.masterEdition
+        ) {
+          item.winningConfigType = item.metadata.info.updateAuthority.equals(
+            wallet?.publicKey || SystemProgram.programId,
+          )
+            ? WinningConfigType.FullRightsTransfer
+            : WinningConfigType.TokenOnlyTransfer;
+        }
         item.amountRanges = [
           new AmountRange({
             amount: new BN(1),

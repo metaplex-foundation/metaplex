@@ -29,6 +29,7 @@ import {
   BidderMetadata,
   getEditionMarkPda,
   decodeEditionMarker,
+  BidStateType,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -69,12 +70,13 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
 ) {
   const index =
     auctionView.auctionManager.participationConfig?.safetyDepositBoxIndex;
-  if (!index) {
+  if (index == undefined || index == null) {
     return false;
   }
 
   if (!bidderMetadata || bidRedemption?.info.getBidRedeemed(index))
     return false;
+
   return (
     (winnerIndex === null &&
       auctionView.auctionManager.participationConfig?.nonWinningConstraint !==
