@@ -22,7 +22,7 @@ spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
 spl-token-metadata = { path = "../../token-metadata/program", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
-borsh = "0.8.2"
+borsh = "0.9.1"
 
 [lib]
 crate-type = ["cdylib", "lib"]
