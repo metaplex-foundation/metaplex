@@ -287,7 +287,7 @@ export const AuctionCreateView = () => {
             ranges = [];
             let oldRangeCtr = 0,
               tierRangeCtr = 0;
-            debugger;
+
             while (
               oldRangeCtr < oldRanges.length ||
               tierRangeCtr < tierRanges.length
