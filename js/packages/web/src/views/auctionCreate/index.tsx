@@ -251,7 +251,11 @@ export const AuctionCreateView = () => {
           );
 
           if (item) {
-            tier.winningSpots.sort().forEach(spot => {
+            config.winningConfigType = (
+              item as TierDummyEntry
+            ).winningConfigType;
+            const sorted = tier.winningSpots.sort();
+            sorted.forEach((spot, i) => {
               if (tierRangeLookup[spot - 1]) {
                 tierRangeLookup[spot] = tierRangeLookup[spot - 1];
                 tierRangeLookup[spot].length = tierRangeLookup[spot].length.add(
@@ -262,6 +266,18 @@ export const AuctionCreateView = () => {
                   amount: new BN((item as TierDummyEntry).amount),
                   length: new BN(1),
                 });
+                // If the first spot with anything is winner spot 1, you want a section of 0 covering winning
+                // spot 0.
+                // If we have a gap, we want a gap area covered with zeroes.
+                const zeroLength = i - 1 > 0 ? spot - sorted[i - 1] - 1 : spot;
+                if (zeroLength > 0) {
+                  tierRanges.push(
+                    new AmountRange({
+                      amount: new BN(0),
+                      length: new BN(zeroLength),
+                    }),
+                  );
+                }
                 tierRanges.push(tierRangeLookup[spot]);
               }
             });
@@ -271,24 +287,29 @@ export const AuctionCreateView = () => {
             ranges = [];
             let oldRangeCtr = 0,
               tierRangeCtr = 0;
+            debugger;
             while (
-              oldRangeCtr < oldRanges.length &&
+              oldRangeCtr < oldRanges.length ||
               tierRangeCtr < tierRanges.length
             ) {
               let toAdd = new BN(0);
               if (
                 tierRangeCtr < tierRanges.length &&
-                tierRanges[tierRangeCtr].amount.gte(new BN(0))
+                tierRanges[tierRangeCtr].amount.gt(new BN(0))
               ) {
-                toAdd = new BN(1);
+                toAdd = tierRanges[tierRangeCtr].amount;
               }
 
               if (oldRangeCtr == oldRanges.length) {
                 ranges.push(tierRanges[tierRangeCtr]);
+                tierRangeCtr++;
               } else if (tierRangeCtr == tierRanges.length) {
                 ranges.push(oldRanges[oldRangeCtr]);
+                oldRangeCtr++;
               } else if (
-                oldRanges[oldRangeCtr].length > tierRanges[tierRangeCtr].length
+                oldRanges[oldRangeCtr].length.gt(
+                  tierRanges[tierRangeCtr].length,
+                )
               ) {
                 oldRanges[oldRangeCtr].length = oldRanges[
                   oldRangeCtr
@@ -304,7 +325,9 @@ export const AuctionCreateView = () => {
                 tierRangeCtr += 1;
                 // dont increment oldRangeCtr since i still have length to give
               } else if (
-                tierRanges[tierRangeCtr].length > oldRanges[oldRangeCtr].length
+                tierRanges[tierRangeCtr].length.gt(
+                  oldRanges[oldRangeCtr].length,
+                )
               ) {
                 tierRanges[tierRangeCtr].length = tierRanges[
                   tierRangeCtr
@@ -320,7 +343,9 @@ export const AuctionCreateView = () => {
                 oldRangeCtr += 1;
                 // dont increment tierRangeCtr since they still have length to give
               } else if (
-                tierRanges[tierRangeCtr].length == oldRanges[oldRangeCtr].length
+                tierRanges[tierRangeCtr].length.eq(
+                  oldRanges[oldRangeCtr].length,
+                )
               ) {
                 ranges.push(
                   new AmountRange({
@@ -335,6 +360,7 @@ export const AuctionCreateView = () => {
             }
           }
         });
+        console.log('Ranges');
         config.amountRanges = ranges;
       });
 

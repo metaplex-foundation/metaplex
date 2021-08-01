@@ -1276,7 +1276,7 @@ impl AuctionWinnerTokenTypeTracker {
 
         let mut my_ctr: usize = 0;
         let mut their_ctr: usize = 0;
-        while my_ctr < self.amount_ranges.len() && their_ctr < amount_ranges.len() {
+        while my_ctr < self.amount_ranges.len() || their_ctr < amount_ranges.len() {
             // Cases:
             // 1. nothing in theirs - we win and pop on
             // 2. nothing in ours - they win and pop on
@@ -1293,8 +1293,10 @@ impl AuctionWinnerTokenTypeTracker {
 
             if my_ctr == self.amount_ranges.len() {
                 new_range.push(amount_ranges[their_ctr]);
+                their_ctr += 1;
             } else if their_ctr == amount_ranges.len() {
-                new_range.push(self.amount_ranges[my_ctr])
+                new_range.push(self.amount_ranges[my_ctr]);
+                my_ctr += 1;
             } else if self.amount_ranges[my_ctr].1 > amount_ranges[their_ctr].1 {
                 self.amount_ranges[my_ctr].1 = self.amount_ranges[my_ctr]
                     .1
