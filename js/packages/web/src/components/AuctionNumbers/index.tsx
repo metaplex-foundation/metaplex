@@ -192,9 +192,7 @@ const LabeledCountdown = ({ state }: { state?: CountdownState }) => {
                 </Col>
                 {!state.days && (
                   <Col>
-                    <div className="cd-number">
-                      {state.seconds}
-                    </div>
+                    <div className="cd-number">{state.seconds}</div>
                     <div className="cd-label">secs</div>
                   </Col>
                 )}

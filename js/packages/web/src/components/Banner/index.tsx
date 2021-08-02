@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import useWindowDimensions from '../../utils/layout';
 
 import './index.less';
-import {HowToBuyModal} from "../HowToBuyModal";
+import { HowToBuyModal } from '../HowToBuyModal';
 
 export const Banner = (props: {
   src: string;
@@ -31,13 +31,9 @@ export const Banner = (props: {
     <div id={'current-banner'} style={{ backgroundImage: `url(${props.src})` }}>
       <span id={'gradient-banner'}></span>
       <div id="banner-inner">
-        <div id={'message-container'} >
-          <div id={"main-heading"} >
-            {props.headingText}
-          </div>
-          <div id={"sub-heading"}>
-            {props.subHeadingText}
-          </div>
+        <div id={'message-container'}>
+          <div id={'main-heading'}>{props.headingText}</div>
+          <div id={'sub-heading'}>{props.subHeadingText}</div>
           {props.actionComponent}
         </div>
         {props.children}

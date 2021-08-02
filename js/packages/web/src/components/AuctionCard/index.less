@@ -1,3 +1,4 @@
+@import "_colors";
 
 .auction-container {
   background: rgba(255, 255, 255, 0.05);
@@ -5,6 +6,16 @@
   margin: 30px 0;
   max-width: 100%;
 
+  .sol-input-bid {
+    width: 100%;
+    height: 56px;
+    background: #393939;
+    border-radius: 12px;
+    border: 1px solid @metaplex-primary-color;
+  }
+  .ant-input-number-handler-wrap {
+    display: none;
+  }
   .time-info {
     padding: 24px;
     display: flex;
@@ -39,7 +50,6 @@
       font-weight: 600;
       letter-spacing: -0.02em;
       color: rgb(255, 255, 255);
-      width: 180px;
       height: fit-content;
       border: none;
     }

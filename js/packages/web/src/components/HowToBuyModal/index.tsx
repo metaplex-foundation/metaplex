@@ -1,7 +1,7 @@
 import { InstructionsModal } from '../InstructionsModal';
 import React from 'react';
 import { LABELS } from '../../constants';
-import {ConnectButton} from "@oyster/common";
+import { ConnectButton } from '@oyster/common';
 
 interface HowToBuyModalProps {
   buttonClassName: string;
@@ -32,7 +32,7 @@ export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
           title: `Connect your wallet to ${LABELS.STORE_NAME}.`,
           imgSrc: '/modals/how-to-buy-3.svg',
           description: `To connect your wallet, tap “Connect Wallet” here on the site. Select the Phantom option, and your wallet will connect. After that, you can start bidding on NFTs.`,
-          endElement: <ConnectButton className={"secondary-btn"} />
+          endElement: <ConnectButton className={'secondary-btn'} />,
         },
       ]}
     />

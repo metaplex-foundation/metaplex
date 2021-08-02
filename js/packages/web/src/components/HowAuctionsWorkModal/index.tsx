@@ -12,7 +12,7 @@ export const HowAuctionsWorkModal: React.FC<HowAuctionsWorkModalProps> = ({
   return (
     <InstructionsModal
       buttonClassName={buttonClassName}
-      buttonText="How Do Auctions Work?"
+      buttonText="How Auctions Work"
       modalTitle="How Auctions Work"
       cardProps={[
         {

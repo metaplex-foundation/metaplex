@@ -112,7 +112,7 @@ export const AuctionView = () => {
 
   return (
     <Row justify="space-around" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={8}>
+      <Col span={24} md={10}>
         <div className="auction-view" style={{ minHeight: 300 }}>
           <Carousel
             autoplay={false}
@@ -121,10 +121,10 @@ export const AuctionView = () => {
             {items}
           </Carousel>
         </div>
-        <h6 className={'info-title'}>
-          About this {nftCount === 1 ? 'NFT' : 'Collection'}
+        <h6 className={'about-nft-collection'}>
+          ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}
         </h6>
-        <p>
+        <p className={'about-nft-collection a-description'}>
           {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
           {description ||
             (winnerCount !== undefined && (
@@ -141,7 +141,7 @@ export const AuctionView = () => {
           )} */}
       </Col>
 
-      <Col span={24} md={16}>
+      <Col span={24} md={14}>
         <h2 className="art-title">
           {art.title || <Skeleton paragraph={{ rows: 0 }} />}
         </h2>

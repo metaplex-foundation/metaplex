@@ -346,12 +346,12 @@ export const AuctionCard = ({
             >
               <div
                 style={{
-                  margin: '0 0 10px 0',
+                  margin: '0 0 12px 0',
                   letterSpacing: '0.02em',
                   fontStyle: 'normal',
                   fontWeight: 400,
-                  fontSize: '1rem',
-                  lineHeight: '28px',
+                  fontSize: '14px',
+                  lineHeight: '14px',
                   textTransform: 'uppercase',
                   color: 'rgba(255, 255, 255, 0.7)',
                 }}
@@ -373,14 +373,8 @@ export const AuctionCard = ({
                 >
                   <InputNumber
                     autoFocus
-                    className="input"
+                    className="input sol-input-bid"
                     value={value}
-                    style={{
-                      width: '100%',
-                      background: '#393939',
-                      borderRadius: 12,
-                      border: '1px solid @metaplex-primary-color',
-                    }}
                     onChange={setValue}
                     precision={4}
                     formatter={value =>

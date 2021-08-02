@@ -174,8 +174,8 @@ export const HomeView = () => {
       {/* <PreSaleBanner auction={heroAuction} /> */}
       <Banner
         src={'/main-banner.svg'}
-        headingText={"The amazing world of McFarlane."}
-        subHeadingText={"Buy exclusive McFarlane NFTs."}
+        headingText={'The amazing world of McFarlane.'}
+        subHeadingText={'Buy exclusive McFarlane NFTs.'}
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg={true}
       />
