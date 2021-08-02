@@ -59,7 +59,9 @@ a:active {
 .ant-tabs-top > .ant-tabs-nav, .ant-tabs-bottom > .ant-tabs-nav, .ant-tabs-top > div > .ant-tabs-nav, .ant-tabs-bottom > div > .ant-tabs-nav {
   margin-bottom: 24px;
 }
-
+.ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 8px;
+}
 .ant-tabs-tab{
   /* Auto Layout */
   display: flex;
@@ -68,12 +70,15 @@ a:active {
   align-items: center;
   padding: 16px;
   font-size: 16px;
+  line-height: 16px;
+  font-weight: 600;
   height: 40px;
-
+  opacity: 0.8;
   &.ant-tabs-tab-active{
     background: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
     border-radius: 8px;
+    opacity: 1;
 
     .ant-tabs-tab-btn {
       color: white;
@@ -89,7 +94,7 @@ a:active {
     height: 8px;
     border-radius: 5px;
 
-    background: #E65C37;
+    background: @metaplex-primary-color;
     box-shadow: 0px 0px 12px rgba(230, 92, 55, 0.8);
 
     /* Inside Auto Layout */
