@@ -8,7 +8,7 @@ Pay attention to these two lines:
 
 ```json
 "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
-"deploy": "ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",
+"deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",
 ```
 
 There are 2 things to change:
@@ -20,7 +20,7 @@ After that, the lines will look like this:
 
 ```json
 "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/my-name/my-metaplex -t true",
-"deploy": "ASSET_PREFIX=/my-metaplex/ yarn build && yarn deploy:gh",
+"deploy": "cross-env ASSET_PREFIX=/my-metaplex/ yarn build && yarn deploy:gh",
 ```
 
 And after that, you can publish the Metaplex app to GitHub Pages by the following commands:
