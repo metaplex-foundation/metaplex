@@ -9,11 +9,19 @@ interface ContentCardProps {
   imgSrc?: string;
 }
 
-export const ContentCard: React.FC<ContentCardProps> = ({
-  title,
-  description,
-  imgSrc,
+export const ContentCard = (props: {
+  title: string,
+  description: string,
+  endElement?: any,
+  imgSrc?: string,
+
 }) => {
+  const {
+    title="",
+    description='',
+    endElement=<div className={'line'} />,
+    imgSrc=""
+  } = props;
   return (
     <Card
       cover={
@@ -33,7 +41,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     >
       <div className={'body-title'}>{title}</div>
       <div className={'body-content'}>{description}</div>
-      <div className={'line'} />
+      {endElement}
     </Card>
   );
 };
@@ -64,7 +72,7 @@ interface ModalProps {
   buttonClassName: string;
   buttonText: string;
   modalTitle: string;
-  cardProps: ContentCardProps[];
+  cardProps: any[];
 }
 
 export const InstructionsModal: React.FC<ModalProps> = ({
@@ -99,22 +107,30 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         onCancel={handleCancel}
         footer={null}
         className={'modal-box'}
+        closeIcon={<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 11L11 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 11L21 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+}
       >
         <ModalContent>
           <ContentCard
             title={cardProps[0].title}
             description={cardProps[0].description}
             imgSrc={cardProps[0].imgSrc}
+            endElement={cardProps[0].endElement}
           />
           <ContentCard
             title={cardProps[1].title}
             description={cardProps[1].description}
             imgSrc={cardProps[1].imgSrc}
+            endElement={cardProps[1].endElement}
           />
           <ContentCard
             title={cardProps[2].title}
             description={cardProps[2].description}
             imgSrc={cardProps[2].imgSrc}
+            endElement={cardProps[2].endElement}
           />
         </ModalContent>
       </Modal>
