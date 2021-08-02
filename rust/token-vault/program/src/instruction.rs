@@ -26,6 +26,12 @@ pub struct NumberOfShareArgs {
     pub number_of_shares: u64,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct MintEditionProxyArgs {
+    pub edition: u64,
+}
+
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum VaultInstruction {

@@ -13,9 +13,10 @@ no-entrypoint = []
 test-bpf = []
 
 [dependencies]
-borsh = "0.8.2"
+borsh = "0.9.1"
 num-derive = "0.3"
 num-traits = "0.2"
+arrayref = "0.3.6"
 solana-program = "1.6.10"
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
