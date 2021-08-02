@@ -373,7 +373,10 @@ impl AuctionData {
     pub fn consider_instant_bid(&mut self, instant_sale_price: Option<u64>) {
         // Check if all the lots were sold with instant_sale_price
         if let Some(price) = instant_sale_price {
-            if self.bid_state.has_instant_bid(price) {
+            if self
+                .bid_state
+                .lowest_winning_bid_is_instant_bid_price(price)
+            {
                 msg!("All the lots were sold with instant_sale_price, auction is ended");
                 self.state = AuctionState::Ended;
             }
@@ -707,7 +710,7 @@ impl BidState {
         }
     }
 
-    pub fn has_instant_bid(&self, instant_sale_amount: u64) -> bool {
+    pub fn lowest_winning_bid_is_instant_bid_price(&self, instant_sale_amount: u64) -> bool {
         match self {
             // In a capped auction, track the limited number of winners.
             BidState::EnglishAuction { bids, max } | BidState::OpenEdition { bids, max } => {
