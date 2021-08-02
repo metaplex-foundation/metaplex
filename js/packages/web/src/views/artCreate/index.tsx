@@ -23,6 +23,7 @@ import {
   useConnection,
   useWallet,
   IMetadataExtension,
+  Attribute,
   MetadataCategory,
   useConnectionConfig,
   Creator,
@@ -65,6 +66,7 @@ export const ArtCreateView = () => {
     external_url: '',
     image: '',
     animation_url: undefined,
+    attributes: undefined,
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
@@ -96,6 +98,7 @@ export const ArtCreateView = () => {
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
       animation_url: attributes.animation_url,
+      attributes: attributes.attributes,
       external_url: attributes.external_url,
       properties: {
         files: attributes.properties.files,
@@ -640,6 +643,22 @@ const InfoStep = (props: {
                 });
               }}
               className="royalties-input"
+            />
+          </label>
+          <label className="action-field">
+            <span className="field-title">Attributes</span>
+            <Input.TextArea
+              className="input textarea"
+              placeholder="Max 500 characters"
+              onChange={info => {
+                const newAttributes = JSON.parse(info.target.value);
+                props.setAttributes({
+                  ...props.attributes,
+                  attributes: newAttributes,
+                });
+                console.log(props.attributes)
+              }}
+              allowClear
             />
           </label>
         </Col>
