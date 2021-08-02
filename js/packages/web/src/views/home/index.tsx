@@ -206,7 +206,7 @@ export const HomeView = () => {
       </Banner>
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <Col style={{ width: '100%', marginTop: 10 }}>
+          <Col style={{ width: '100%', marginTop: 32 }}>
             <Row>
               <Tabs>
                 <TabPane

@@ -39,11 +39,11 @@ a:active {
   width: auto;
   margin-left: auto;
   margin-right: auto;
-  margin-left: -16px;
+  margin-left: -32px !important;
 }
 
 .my-masonry-grid_column {
-  padding-left: 16px; /* gutter size */
+  padding-left: 32px !important; /* gutter size */
   background-clip: padding-box;
 }
 
@@ -55,6 +55,9 @@ a:active {
 }
 .ant-tabs-top > .ant-tabs-nav::before, .ant-tabs-top > div > .ant-tabs-nav::before {
     display: none;
+}
+.ant-tabs-top > .ant-tabs-nav, .ant-tabs-bottom > .ant-tabs-nav, .ant-tabs-top > div > .ant-tabs-nav, .ant-tabs-bottom > div > .ant-tabs-nav {
+  margin-bottom: 24px;
 }
 
 .ant-tabs-tab{
