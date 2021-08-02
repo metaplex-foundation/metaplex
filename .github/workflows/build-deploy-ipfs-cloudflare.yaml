@@ -1,0 +1,35 @@
+name: Deploy to IPFS (Hosted by CloudFlare)
+
+on:
+  pull_request:
+    push:
+      branches: [ipfs-cloudflare-deploy-holaespi.com]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - uses: c-hive/gha-yarn-cache@v2
+      - name: Yarn install
+        working-directory: js
+        run: yarn install
+      - name: Build Metaplex
+        working-directory: js
+        env:
+          REACT_APP_STORE_OWNER_ADDRESS_ADDRESS: ${{ env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS }}
+          CI: false
+        run: yarn build
+      - name: Export Static Next
+        working-directory: js/packages/web
+        run: yarn export
+      - name: IPFS Deploy
+        working-directory: js
+        env:
+          IPFS_DEPLOY_PINATA__API_KEY: ${{ env.IPFS_DEPLOY_PINATA__API_KEY }}
+          IPFS_DEPLOY_PINATA__SECRET_API_KEY: ${{ secrets.IPFS_DEPLOY_PINATA__SECRET_API_KEY }}
+          IPFS_DEPLOY_CLOUDFLARE__API_TOKEN: ${{ secrets.IPFS_DEPLOY_CLOUDFLARE__API_TOKEN }}
+          IPFS_DEPLOY_CLOUDFLARE__ZONE: ${{ env.IPFS_DEPLOY_CLOUDFLARE__ZONE }}
+          IPFS_DEPLOY_CLOUDFLARE__RECORD: ${{ env.IPFS_DEPLOY_CLOUDFLARE__RECORD }}
+        run: IPFS_DEPLOY_PINATA__API_KEY=${IPFS_DEPLOY_PINATA__API_KEY} IPFS_DEPLOY_PINATA__SECRET_API_KEY=${IPFS_DEPLOY_PINATA__SECRET_API_KEY} npx ipfs-deploy -p pinata -d cloudflare build/web
