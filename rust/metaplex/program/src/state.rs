@@ -1292,7 +1292,7 @@ impl AuctionWinnerTokenTypeTracker {
             }
 
             if my_ctr == self.amount_ranges.len() {
-                new_range.push(amount_ranges[their_ctr]);
+                new_range.push(AmountRange(to_add, amount_ranges[their_ctr].1));
                 their_ctr += 1;
             } else if their_ctr == amount_ranges.len() {
                 new_range.push(self.amount_ranges[my_ctr]);

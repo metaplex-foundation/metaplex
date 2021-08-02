@@ -301,7 +301,12 @@ export const AuctionCreateView = () => {
               }
 
               if (oldRangeCtr == oldRanges.length) {
-                ranges.push(tierRanges[tierRangeCtr]);
+                ranges.push(
+                  new AmountRange({
+                    amount: toAdd,
+                    length: tierRanges[tierRangeCtr].length,
+                  }),
+                );
                 tierRangeCtr++;
               } else if (tierRangeCtr == tierRanges.length) {
                 ranges.push(oldRanges[oldRangeCtr]);
