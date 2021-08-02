@@ -1,4 +1,5 @@
 use {
+    super::make_account_with_data,
     clap::ArgMatches,
     solana_clap_utils::input_parsers::pubkey_of,
     solana_client::rpc_client::RpcClient,
@@ -7,7 +8,7 @@ use {
     spl_auction::processor::{AuctionData, AuctionDataExtended},
     spl_metaplex::{
         deprecated_state::AuctionManagerV1,
-        state::{AuctionManagerV2, Key},
+        state::{AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key},
     },
 };
 
@@ -56,7 +57,33 @@ pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
     if let Some(manager) = managerv1 {
         println!("Auction Manager: {:#?}", manager);
     } else if let Some(manager) = managerv2 {
+        let (token_tracker, _) = Pubkey::find_program_address(
+            &[
+                spl_metaplex::state::PREFIX.as_bytes(),
+                spl_metaplex::id().as_ref(),
+                auction_manager_key.as_ref(),
+                spl_metaplex::state::TOTALS.as_bytes(),
+            ],
+            &spl_metaplex::id(),
+        );
+        let token_tracker_data = client.get_account(&token_tracker);
+
         println!("Auction Manager: {:#?}", manager);
+        match token_tracker_data {
+            Ok(mut data) => {
+                let mut lamports: u64 = 0;
+                let token_tracker_obj: AuctionWinnerTokenTypeTracker =
+                    AuctionWinnerTokenTypeTracker::from_account_info(&make_account_with_data(
+                        &token_tracker,
+                        &mut data,
+                        &mut lamports,
+                    ))
+                    .unwrap();
+
+                println!("Token tracker: {:#?}", token_tracker_obj);
+            }
+            Err(_) => println!("No token tracker found"),
+        }
     }
     println!("Auction: #{:#?}", auction);
     println!("Extended data: {:#?}", auction_ext);
