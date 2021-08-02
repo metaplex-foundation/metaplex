@@ -193,12 +193,10 @@ pub fn assert_auction_is_ended_or_valid_instant_sale(
 
     match instant_sale_price {
         Some(instant_sale_price) => {
-            let winner_bid_price = if let Some(win_index) = win_index {
-                AuctionData::get_winner_bid_amount_at(auction_info, win_index).unwrap()
-            } else {
+            let winner_bid_price = win_index
+                .and_then(|i| AuctionData::get_winner_bid_amount_at(auction_info, i))
                 // Possible case in an open auction
-                BidderMetadata::from_account_info(bidder_metadata_info)?.last_bid
-            };
+                .unwrap_or(BidderMetadata::from_account_info(bidder_metadata_info)?.last_bid);
 
             if winner_bid_price < instant_sale_price {
                 return Err(MetaplexError::AuctionHasNotEnded.into());
