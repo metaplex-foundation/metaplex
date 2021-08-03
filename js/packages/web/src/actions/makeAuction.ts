@@ -7,7 +7,6 @@ import {
   CreateAuctionArgs,
 } from '@oyster/common';
 
-import { METAPLEX_PREFIX } from '../models/metaplex';
 const { AUCTION_PREFIX, createAuction } = actions;
 
 // This command makes an auction

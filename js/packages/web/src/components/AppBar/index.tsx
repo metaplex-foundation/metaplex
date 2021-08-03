@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
 import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
@@ -15,11 +14,12 @@ const UserActions = () => {
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
-    return store &&
+    return (
+      store &&
       store.info &&
       (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info
-          ?.activated);
+        whitelistedCreatorsByCreator[pubkey]?.info?.activated)
+    );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
@@ -27,11 +27,15 @@ const UserActions = () => {
       {/* <Link to={`#`}>
         <Button className="app-btn">Bids</Button>
       </Link> */}
-      {canCreate && (<Link to={`/art/create`}>
-        <Button className="app-btn">Create</Button>
-      </Link>)}
+      {canCreate ? (
+        <Link to={`/art/create`}>
+          <Button className="app-btn">Create</Button>
+        </Link>
+      ) : null}
       <Link to={`/auction/create/0`}>
-        <Button className="connector" type="primary" >Sell</Button>
+        <Button className="connector" type="primary">
+          Sell
+        </Button>
       </Link>
     </>
   );
@@ -58,8 +62,8 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       </Link>
 
     </div>
-  )
-}
+  );
+};
 
 const MetaplexMenu = () => {
   const { width } = useWindowDimensions();
@@ -95,8 +99,8 @@ const MetaplexMenu = () => {
     </Dropdown>
   </>
 
-  return <DefaultActions />
-}
+  return <DefaultActions />;
+};
 
 export const AppBar = () => {
   const { connected } = useWallet();

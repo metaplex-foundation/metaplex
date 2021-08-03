@@ -11,7 +11,6 @@ import {
   Data,
   Creator,
   findProgramAddress,
-  MetadataCategory,
 } from '@oyster/common';
 import React from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -84,12 +83,7 @@ export const mintNFT = async (
 
   const realFiles: File[] = [
     ...files,
-    new File(
-      [
-        JSON.stringify(metadataContent),
-      ],
-      'metadata.json',
-    ),
+    new File([JSON.stringify(metadataContent)], 'metadata.json'),
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
@@ -250,61 +244,15 @@ export const mintNFT = async (
         1,
       ),
     );
-
-    // This mint, which allows limited editions to be made, stays with user's wallet.
-    const printingMint = createMint(
-      updateInstructions,
-      payerPublicKey,
-      mintRent,
-      0,
-      payerPublicKey,
-      payerPublicKey,
-      updateSigners,
-    );
-
-    const oneTimePrintingAuthorizationMint = createMint(
-      updateInstructions,
-      payerPublicKey,
-      mintRent,
-      0,
-      payerPublicKey,
-      payerPublicKey,
-      updateSigners,
-    );
-
-    if (maxSupply !== undefined) {
-      // make this so we can use it later.
-      const authTokenAccount: PublicKey = (
-        await findProgramAddress(
-          [
-            wallet.publicKey.toBuffer(),
-            programIds().token.toBuffer(),
-            printingMint.toBuffer(),
-          ],
-          programIds().associatedToken,
-        )
-      )[0];
-      createAssociatedTokenAccountInstruction(
-        instructions,
-        authTokenAccount,
-        wallet.publicKey,
-        wallet.publicKey,
-        printingMint,
-      );
-    }
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
       maxSupply !== undefined ? new BN(maxSupply) : undefined,
       mintKey,
-      printingMint,
-      oneTimePrintingAuthorizationMint,
+      payerPublicKey,
       payerPublicKey,
       payerPublicKey,
       updateInstructions,
-      payerPublicKey,
-      payerPublicKey,
-      maxSupply !== undefined ? payerPublicKey : undefined,
     );
 
     // TODO: enable when using payer account to avoid 2nd popup
@@ -337,7 +285,7 @@ export const mintNFT = async (
     notify({
       message: 'Art created on Solana',
       description: (
-        <a href={arweaveLink} target="_blank">
+        <a href={arweaveLink} target="_blank" rel="noopener noreferrer">
           Arweave Link
         </a>
       ),

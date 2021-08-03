@@ -1,4 +1,10 @@
-import { TokenAccount, useUserAccounts } from '@oyster/common';
+import {
+  MasterEditionV1,
+  MetadataKey,
+  ParsedAccount,
+  TokenAccount,
+  useUserAccounts,
+} from '@oyster/common';
 import { SafetyDepositDraft } from '../actions/createAuctionManager';
 import { useMeta } from './../contexts';
 
@@ -32,9 +38,15 @@ export const useUserArts = (): SafetyDepositDraft[] => {
   let i = 0;
   ownedMetadata.forEach(m => {
     let a = accountByMint.get(m.info.mint.toBase58());
-    let masterA = accountByMint.get(
-      possibleMasterEditions[i]?.info.printingMint?.toBase58() || '',
-    );
+    let masterA;
+
+    if (possibleMasterEditions[i]?.info.key == MetadataKey.MasterEditionV1) {
+      masterA = accountByMint.get(
+        (
+          possibleMasterEditions[i] as ParsedAccount<MasterEditionV1>
+        )?.info.printingMint?.toBase58() || '',
+      );
+    }
 
     if (a) {
       safetyDeposits.push({

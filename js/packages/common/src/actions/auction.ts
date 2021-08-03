@@ -42,6 +42,16 @@ export class BidState {
   bids: Bid[];
   max: BN;
 
+  public getWinnerAt(winnerIndex: number): PublicKey | null {
+    const convertedIndex = this.bids.length - winnerIndex - 1;
+
+    if (convertedIndex >= 0 && convertedIndex < this.bids.length) {
+      return this.bids[convertedIndex].key;
+    } else {
+      return null;
+    }
+  }
+
   public getWinnerIndex(bidder: PublicKey): number | null {
     if (!this.bids) return null;
 
