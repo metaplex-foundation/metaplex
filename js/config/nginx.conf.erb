@@ -16,7 +16,7 @@ http {
 
 	server_tokens off;
 
-	log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id forwarded_for=$http_x_forwarded_for forwarded_http=$http_x_forwarded_http';
+	log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id forwarded_for=$http_x_forwarded_for forwarded_host=$http_x_forwarded_host';
 	access_log 'logs/nginx/access.log' l2met;
 	error_log 'logs/nginx/error.log';
 
