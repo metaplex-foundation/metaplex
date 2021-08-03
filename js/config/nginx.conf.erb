@@ -16,7 +16,7 @@ http {
 
 	server_tokens off;
 
-	log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id forwarded_for=$http_x_forwarded_for forwarded=$http_x_forwarded';
+	log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id forwarded_for=$http_x_forwarded_for';
 	access_log 'logs/nginx/access.log' l2met;
 	error_log 'logs/nginx/error.log';
 
@@ -33,10 +33,6 @@ http {
 		keepalive_timeout 5;
 
 		location / {
-
-			if ($http_x_forwarded_proto != "https") {
-				return 301 https://$http_x_forwarded_host$request_uri;
-			}
 
 			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 			proxy_set_header Host $http_host;
