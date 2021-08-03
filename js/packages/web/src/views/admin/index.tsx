@@ -276,33 +276,39 @@ function InnerAdminView({
         </Row>
       </Col>
 
-      {/*
-        Feature not enabled YET<>>>>>> @bhgames <3
-
-      <h1>
-        You have {filteredMetadata?.available.length} MasterEditionV1s that can
-        be converted right now and {filteredMetadata?.unavailable.length} still
-        in unfinished auctions that cannot be converted yet.
-      </h1>
-      <Col>
-        <Row>
-          <Button
-            disabled={loading}
-            onClick={async () => {
-              setLoading(true);
-              await convertMasterEditions(
-                connection,
-                wallet,
-                filteredMetadata?.available || [],
-                accountByMint,
-              );
-              setLoading(false);
-            }}
-          >
-            {loading ? <Spin /> : <span>Convert Eligible Master Editions</span>}
-          </Button>
-        </Row>
-      </Col> */}
+      {!store.info.public && (
+        <>
+          <h1>
+            You have {filteredMetadata?.available.length} MasterEditionV1s that
+            can be converted right now and{' '}
+            {filteredMetadata?.unavailable.length} still in unfinished auctions
+            that cannot be converted yet.
+          </h1>
+          <Col>
+            <Row>
+              <Button
+                disabled={loading}
+                onClick={async () => {
+                  setLoading(true);
+                  await convertMasterEditions(
+                    connection,
+                    wallet,
+                    filteredMetadata?.available || [],
+                    accountByMint,
+                  );
+                  setLoading(false);
+                }}
+              >
+                {loading ? (
+                  <Spin />
+                ) : (
+                  <span>Convert Eligible Master Editions</span>
+                )}
+              </Button>
+            </Row>
+          </Col>{' '}
+        </>
+      )}
     </Content>
   );
 }
