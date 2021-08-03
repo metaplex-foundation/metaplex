@@ -30,6 +30,10 @@ cd js/packages/web
 yarn deploy
 ```
 
+Note that if you have 2fa enabled, you'll need to use a personal access token as your password:
+
+https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token
+
 ### GitHub Pages with a custom domain
 
 If you have a custom domain linked to the GitHub Pages in your repo, then the instructions are the same as above, but your need to remove  `ASSET_PREFIX` from the deploy script:
