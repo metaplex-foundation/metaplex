@@ -12,6 +12,7 @@ import { PublicKey } from '@solana/web3.js';
 
 const { Content } = Layout;
 
+
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const { wallet } = useWallet();
@@ -74,7 +75,7 @@ export const ArtView = () => {
           >
             <div style={{ fontWeight: 700, fontSize: '4rem' }}>{art.title}</div>
             <br />
-            <div className="info-header">CREATED BY</div>
+            <div className="info-header">Created By</div>
             <div className="creators">
               {(art.creators || [])
                 .map(creator => {
@@ -147,19 +148,19 @@ export const ArtView = () => {
             <Divider />
             <br />
             {art.creators?.find(c => !c.verified) && unverified}
-            <div className="info-header">CREATOR ROYALTIES</div>
+            <div className="info-header">Creator Royalties</div>
             <div className="royalties">
               {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
             </div>
             <br />
-            <div className="info-header">ABOUT THE CREATION</div>
+            <div className="info-header">About the Item</div>
             <div className="info-content">{description}</div>
             <br />
             {/*
               TODO: add info about artist
 
 
-            <div className="info-header">ABOUT THE CREATOR</div>
+            <div className="info-header">About the Creator</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
         </Row>

@@ -8,6 +8,7 @@ import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 
+
 const UserActions = () => {
   const { wallet } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
@@ -43,15 +44,19 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       display: "flex",
       flexDirection: vertical ? "column" : "row",
     }}>
-      <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
+      <Link to={`/intro`}>
+        <Button className="app-btn">Backstory</Button>
+      </Link>
+      <Link to={`/rules`}>
+        <Button className="app-btn">Rules</Button>
       </Link>
       <Link to={`/artworks`}>
-        <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
+        <Button className="app-btn">{connected ? "My Items" : "Items"}</Button>
       </Link>
       <Link to={`/artists`}>
         <Button className="app-btn">Creators</Button>
       </Link>
+
     </div>
   )
 }
@@ -67,13 +72,16 @@ const MetaplexMenu = () => {
       trigger={['click']}
       overlay={<Menu>
         <Menu.Item>
-          <Link to={`/`}>
-            <Button className="app-btn">Explore</Button>
+          <Link to={`/intro`}>
+            <Button className="app-btn">Backstory</Button>
           </Link>
         </Menu.Item>
+          <Link to={`/rules`}>
+            <Button className="app-btn">Rules</Button>
+          </Link>
         <Menu.Item>
           <Link to={`/artworks`}>
-            <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
+            <Button className="app-btn">{connected ? "My Items" : "Items"}</Button>
           </Link>
         </Menu.Item>
         <Menu.Item>

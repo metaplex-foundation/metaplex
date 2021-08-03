@@ -6,3 +6,6 @@ export { ArtistsView } from './artists';
 export { AuctionView } from './auction';
 export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
+export { IntroView } from './intro';
+export { RulesView } from './rules';
+export { FAQView } from './rules';

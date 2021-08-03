@@ -49,7 +49,7 @@ export const ArtistView = () => {
               {creator?.info.name || creator?.info.address.toBase58()}
             </h2>
             <br />
-            <div className="info-header">ABOUT THE CREATOR</div>
+            <div className="info-header"> Artist</div>
             <div className="info-content">{creator?.info.description}</div>
             <br />
             <div className="info-header">Art Created</div>
