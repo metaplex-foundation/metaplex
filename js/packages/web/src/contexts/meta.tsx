@@ -205,12 +205,15 @@ export function MetaProvider({ children = null as any }) {
   const updateMints = useCallback(
     async metadataByMint => {
       try {
-        const m = await queryExtendedMetadata(connection, metadataByMint);
-        setState(current => ({
-          ...current,
-          metadata: m.metadata,
-          metadataByMint: m.mintToMetadata,
-        }));
+        if (!all) {
+          const m = await queryExtendedMetadata(connection, metadataByMint);
+
+          setState(current => ({
+            ...current,
+            metadata: m.metadata,
+            metadataByMint: m.mintToMetadata,
+          }));
+        }
       } catch (er) {
         console.error(er);
       }
