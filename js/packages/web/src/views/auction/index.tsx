@@ -27,7 +27,7 @@ import {
   AuctionState,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
-import { getHandleAndRegistryKey } from '@bonfida/spl-name-service';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
@@ -148,7 +148,7 @@ export const AuctionView = () => {
             )}
           </h1>
           <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
-          <p>
+          <div className="auction-paragraph">
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
             {description ||
               (winnerCount !== undefined && (
@@ -156,7 +156,7 @@ export const AuctionView = () => {
                   No description provided.
                 </div>
               ))}
-          </p>
+          </div>
           {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>

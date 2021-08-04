@@ -1448,7 +1448,7 @@ const TierTableStep = (props: {
         </p>
       </Row>
       {props.attributes.tiers.map((wcg, configIndex) => (
-        <Row className="content-action">
+        <Row className="content-action" key={configIndex}>
           <Col xl={24}>
             <h3>Tier #{configIndex + 1} Basket</h3>
           </Col>
@@ -1468,7 +1468,7 @@ const TierTableStep = (props: {
           />
 
           {wcg.items.map((i, itemIndex) => (
-            <Col className="section" xl={8}>
+            <Col className="section" xl={8} key={itemIndex}>
               <Card>
                 <ArtSelector
                   filter={artistFilter}

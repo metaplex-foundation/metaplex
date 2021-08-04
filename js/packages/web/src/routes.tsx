@@ -13,6 +13,7 @@ import {
   AuctionView,
   HomeView,
   ArtworksView,
+  AnalyticsView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';
@@ -27,7 +28,9 @@ export function Routes() {
   return (
     <>
       <HashRouter basename={'/'}>
-        <ConnectionProvider>
+        <ConnectionProvider
+          storeId={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS}
+        >
           <WalletProvider>
             <UseWalletProvider chainId={5}>
               <AccountsProvider>
@@ -40,6 +43,11 @@ export function Routes() {
                             exact
                             path="/admin"
                             component={() => <AdminView />}
+                          />
+                          <Route
+                            exact
+                            path="/analytics"
+                            component={() => <AnalyticsView />}
                           />
                           <Route
                             exact

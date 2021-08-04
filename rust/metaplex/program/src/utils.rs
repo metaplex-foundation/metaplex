@@ -282,7 +282,7 @@ pub fn transfer_metadata_ownership<'a>(
             *update_authority.key,
             Some(*new_update_authority.key),
             None,
-            Some(true),
+            None,
         ),
         &[
             update_authority,
