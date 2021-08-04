@@ -167,7 +167,6 @@ export function MetaProvider({ children = null as any }) {
   const { env } = useConnectionConfig();
   const urlParams = new URLSearchParams(window.location.search);
   const all = urlParams.get('all') == 'true';
-  console.log('All', urlParams.get('all'));
 
   const [state, setState] = useState<MetaState>({
     metadata: [] as Array<ParsedAccount<Metadata>>,
