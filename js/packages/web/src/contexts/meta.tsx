@@ -59,6 +59,7 @@ import {
   decodePrizeTrackingTicket,
 } from '../models/metaplex';
 import names from './../config/userNames.json';
+import { loadMeta } from './meta/loadMeta';
 
 interface MetaState {
   metadata: ParsedAccount<Metadata>[];
@@ -212,14 +213,7 @@ export function MetaProvider({ children = null as any }) {
     let dispose = () => {};
     (async () => {
       console.log('-----> Query started');
-      const accounts = (
-        await Promise.all([
-          connection.getProgramAccounts(programIds().vault),
-          connection.getProgramAccounts(programIds().auction),
-          connection.getProgramAccounts(programIds().metadata),
-          connection.getProgramAccounts(programIds().metaplex),
-        ])
-      ).flat();
+      const accounts = await loadMeta(connection);
 
       await setProgramIds(env);
 
