@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { useMeta } from '../contexts';
 import { Art, Artist, ArtType } from '../types';
@@ -9,6 +9,7 @@ import {
   MasterEditionV2,
   Metadata,
   ParsedAccount,
+  useLocalStorage,
 } from '@oyster/common';
 import { WhitelistedCreator } from '../models/metaplex';
 import { Cache } from 'three';
@@ -162,6 +163,7 @@ export const useExtendedArt = (id?: PublicKey | string) => {
 
   const [data, setData] = useState<IMetadataExtension>();
   const { ref, inView } = useInView();
+  const localStorage = useLocalStorage();
 
   const key = typeof id === 'string' ? id : id?.toBase58() || '';
 
