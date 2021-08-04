@@ -1,22 +1,25 @@
-import { useState, useEffect } from 'react';
+import { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import dynamic from 'next/dynamic';
+import { preloadMeta } from '../contexts/meta/preloadMeta';
 
 const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
   ssr: false,
 });
 
-function App() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
-  return <CreateReactAppEntryPoint />;
+export default function App({
+  accounts,
+}: InferGetServerSidePropsType<typeof serverPropsGetter>) {
+  return <CreateReactAppEntryPoint accounts={accounts} />;
 }
 
-export default App;
+const serverPropsGetter: GetServerSideProps = async () => {
+  const accounts = await preloadMeta();
+
+  return {
+    props: {
+      accounts,
+    },
+  };
+};
+
+export const getServerSideProps = process.env.SKIP_SSR ? undefined : serverPropsGetter
