@@ -147,15 +147,17 @@ export function WalletProvider({ children = null as any }) {
         onCancel={close}
       >
 
-        <p style={{
+        <span style={{
           color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "0.7rem",
+          fontSize: "14px",
+          lineHeight: "14px",
           fontFamily: "GraphikWeb",
           letterSpacing: "0.02em",
-        }}>RECOMMENDED</p>
+          marginBottom: 14
+        }}>RECOMMENDED</span>
 
         <Button
-          className="mcfarlane-button"
+          className="phantom-button metaplex-button"
           onClick={() => {
             setProviderUrl(pp?.url);
             setAutoConnect(true);
@@ -166,10 +168,23 @@ export function WalletProvider({ children = null as any }) {
           <img src={pp?.icon} style={{ width: '1.2rem' }} />&nbsp;Connect to Phantom
         </Button>
 
-        <Collapse ghost>
+        <Collapse ghost expandIcon={
+          (panelProps) => panelProps.isActive ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 7.5L10 12.5L5 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          ) :(
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7.5 5L12.5 10L7.5 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          )
+        }>
           <Panel header={<span style={{
             fontWeight: 600,
-          }}>Other wallets</span>} key="1">
+            fontSize: "16px",
+            lineHeight: "16px",
+            letterSpacing: "-0.01em"
+          }}>Other Wallets</span>} key="1">
             {WALLET_PROVIDERS.map((provider, idx) => {
               if (provider.url === providerUrl) return null
               if (provider.name === "Phantom") return null
@@ -177,7 +192,7 @@ export function WalletProvider({ children = null as any }) {
               return (
                 <Button
                   key={idx}
-                  className="mcfarlane-button"
+                  className="metaplex-button w100"
                   style={{
                     marginBottom: 5,
                   }}

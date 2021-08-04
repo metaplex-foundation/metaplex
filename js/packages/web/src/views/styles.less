@@ -130,7 +130,7 @@
   padding: 12px 20px;
   font-family: "SF Pro Text";
   font-style: normal;
-  font-weight: bold;
+  font-weight: 600;
   height: fit-content;
   
   &:hover, &:focus {
@@ -265,33 +265,23 @@
 
 .metaplex-button {
   display: flex;
-  justify-content: space-between;
-  height: 50px;
-  width: 460px;
-  max-width: 100%;
-  align-items: center;
-
-  margin: 5px auto;
-  background: linear-gradient(270deg, #616774 7.29%, #403F4C 100%);
-  border-radius: 8px;
-
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.metaplex-button-default {
-  display: flex;
-  height: 50px;
-  width: 100%;
-  max-width: 100%;
-  align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  font-size: 0.8rem;
+  height: 56px;
+  width: auto;
+  max-width: 100%;
+  align-items: center;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 16px;
   font-weight: 600;
-
+  background: rgba(255, 255, 255, 0.1);
+  /* identical to box height, or 100% */
   letter-spacing: -0.01em;
+  /* White */
+  color: #FFFFFF;
+  &.w100{
+    width: 100%;
+  }
 }
 
 .particle {

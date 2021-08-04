@@ -18,7 +18,7 @@ export const MetaplexModal = (props: any) => {
         ...bodyStyle,
       }}
       footer={null}
-      width={400}
+      width={500}
       {...rest}
     >
       {children}
