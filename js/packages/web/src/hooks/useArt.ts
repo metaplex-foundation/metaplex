@@ -9,6 +9,7 @@ import {
   Metadata,
   ParsedAccount,
   StringPublicKey,
+  useLocalStorage,
 } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
@@ -159,6 +160,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
   const [data, setData] = useState<IMetadataExtension>();
   const { ref, inView } = useInView();
+  const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
 
