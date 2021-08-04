@@ -14,6 +14,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletAdapter } from '@solana/wallet-base';
 import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 import { useMemo } from 'react';
+import { QUOTE_MINT } from '../../constants';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
@@ -93,7 +94,10 @@ function InnerAnalytics() {
         // Not entirely correct because we're not covering open edition auction bids
         // and their amounts which are super hard to track, but I think they
         // are probably a minority anyway.
-        if (auction.auction.info.ended()) {
+        if (
+          auction.auction.info.ended() &&
+          auction.auction.info.tokenMint.equals(QUOTE_MINT)
+        ) {
           if (!LOOKUP[auction.auction.pubkey.toBase58()]) {
             LOOKUP[auction.auction.pubkey.toBase58()] = (
               await getAuctionExtended({
