@@ -1,9 +1,10 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
-import { WinningConfigType } from '../../models/metaplex';
+import { AuctionManager, WinningConfigType } from '../../models/metaplex';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
+  AuctionData,
   AuctionDataExtended,
   BidderPot,
   fromLamports,
@@ -11,29 +12,17 @@ import {
   Metadata,
   ParsedAccount,
   programIds,
-  useConnection,
   useMint,
-  useWallet,
 } from '@oyster/common';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { WalletAdapter } from '@solana/wallet-base';
-import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
-import { useMemo } from 'react';
+import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
+import { PublicKey } from '@solana/web3.js';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
-  const { store } = useMeta();
-  const connection = useConnection();
-  const { wallet, connected } = useWallet();
   const mint = useMint(QUOTE_MINT);
-
-  return mint && store && connection && wallet && connected ? (
-    <MemoizedInnerAnalytics mint={mint} />
-  ) : (
-    <Spin />
-  );
+  return mint ? <InnerAnalytics mint={mint} /> : <Spin />;
 };
 
 enum AuctionType {
@@ -46,7 +35,8 @@ enum AuctionType {
 const LOOKUP: Record<string, string> = {};
 
 const rerun = async ({
-  auctions,
+  auctionViews,
+  auctionManagersByAuction,
   usersEngaged,
   auctionDataExtended,
   bidderPotsByAuctionAndBidder,
@@ -61,7 +51,8 @@ const rerun = async ({
   setUsersBid,
   setUsersEngaged,
 }: {
-  auctions: AuctionView[];
+  auctionViews: AuctionView[];
+  auctionManagersByAuction: Record<string, ParsedAccount<AuctionManager>>;
   usersEngaged: Record<string, boolean>;
   auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
   bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
@@ -91,8 +82,8 @@ const rerun = async ({
   let newSortedSales: number[] = [];
   const PROGRAM_IDS = programIds();
 
-  for (let i = 0; i < auctions.length; i++) {
-    const auction = auctions[i];
+  for (let i = 0; i < auctionViews.length; i++) {
+    const auction = auctionViews[i];
     // Not entirely correct because we're not covering open edition auction bids
     // and their amounts which are super hard to track, but I think they
     // are probably a minority anyway.
@@ -148,8 +139,10 @@ const rerun = async ({
 
   const newUsersBid: Record<string, boolean> = {};
   Object.values(bidderPotsByAuctionAndBidder).forEach(acct => {
-    newUsersBid[acct.info.bidderAct.toBase58()] = true;
-    existingUsersEngaged[acct.info.bidderAct.toBase58()] = true;
+    if (auctionManagersByAuction[acct.info.auctionAct.toBase58()]) {
+      newUsersBid[acct.info.bidderAct.toBase58()] = true;
+      existingUsersEngaged[acct.info.bidderAct.toBase58()] = true;
+    }
   });
 
   const newBuild: Record<string, boolean> = {};
@@ -173,7 +166,127 @@ const rerun = async ({
   setUsersEngaged(engaged => ({ ...engaged, ...existingUsersEngaged }));
 };
 
-const MemoizedInnerAnalytics = React.memo(InnerAnalytics);
+const MemoizedBar = React.memo(
+  (props: { sortedSales: number[]; mint: MintInfo }) => {
+    const histogrammedData: Record<number, number> = {
+      0: 0,
+      5: 0,
+      20: 0,
+      50: 0,
+      100: 0,
+      500: 0,
+      1000: 0,
+      10000: 0,
+    };
+    const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000];
+
+    for (let i = 0; i < asArray.length; i++) {
+      const currRange = asArray[i];
+
+      if (i < asArray.length - 1) {
+        const nextRange = asArray[i + 1];
+        histogrammedData[currRange] = props.sortedSales.filter(
+          s =>
+            fromLamports(s, props.mint) >= currRange &&
+            fromLamports(s, props.mint) < nextRange,
+        ).length;
+      } else {
+        histogrammedData[currRange] = props.sortedSales.filter(
+          s => fromLamports(s, props.mint) >= currRange,
+        ).length;
+      }
+    }
+
+    const histoData = {
+      labels: [
+        '◎ [0 - 5)',
+        '◎ [5 - 20)',
+        '◎ [20 - 50)',
+        '◎ [50 - 100)',
+        '◎ [100 - 500)',
+        '◎ [500 - 1000)',
+        '◎ [1000 - 10000)',
+        '◎ [10000 -',
+      ],
+      datasets: [
+        {
+          label: '# bids in these bins',
+          data: asArray.map(a => histogrammedData[a]),
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(255, 206, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+            'rgba(255, 159, 64, 0.2)',
+            'rgba(255, 139, 24, 0.2)',
+            'rgba(212, 39, 24, 0.2)',
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(255, 139, 24, 1)',
+            'rgba(212, 39, 24, 1)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    const histoOptions = {
+      scales: {
+        yAxes: [
+          {
+            ticks: {
+              beginAtZero: true,
+            },
+          },
+        ],
+      },
+    };
+
+    return <Bar data={histoData} options={histoOptions} />;
+  },
+);
+
+const MemoizedPie = React.memo(
+  (props: { byType: Record<AuctionType, number> }) => {
+    const pieData = {
+      labels: ['Open', 'Limited', 'Tiered', 'One of a Kind'],
+      datasets: [
+        {
+          label: '#',
+          data: [
+            props.byType[AuctionType.Open],
+            props.byType[AuctionType.Limited],
+            props.byType[AuctionType.Tiered],
+            props.byType[AuctionType.OneOfKind],
+          ],
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(255, 206, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    return <Pie data={pieData} />;
+  },
+);
+
 function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [usersWithMetadata, setUsersWithMetadata] = useState<
     Record<string, boolean>
@@ -181,7 +294,6 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [usersPublished, setUsersPublished] = useState<Record<string, boolean>>(
     {},
   );
-
   const [usersBid, setUsersBid] = useState<Record<string, boolean>>({});
 
   const [usersEngaged, setUsersEngaged] = useState<Record<string, boolean>>({});
@@ -199,6 +311,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const {
     metadata,
     stores,
+    auctionManagersByAuction,
     bidderPotsByAuctionAndBidder,
     auctionDataExtended,
   } = useMeta();
@@ -206,115 +319,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const totalNFTs = metadata.length;
   const totalMarketplaces = Object.values(stores).length;
 
-  const auctions = useAuctions();
-
-  const histogrammedData: Record<number, number> = {
-    0: 0,
-    5: 0,
-    20: 0,
-    50: 0,
-    100: 0,
-    500: 0,
-    1000: 0,
-    10000: 0,
-  };
-  const asArray = [0, 5, 20, 50, 100, 500, 1000, 10000];
-
-  for (let i = 0; i < asArray.length; i++) {
-    const currRange = asArray[i];
-
-    if (i < asArray.length - 1) {
-      const nextRange = asArray[i + 1];
-      histogrammedData[currRange] = sortedSales.filter(
-        s =>
-          fromLamports(s, mint) >= currRange &&
-          fromLamports(s, mint) < nextRange,
-      ).length;
-    } else {
-      histogrammedData[currRange] = sortedSales.filter(
-        s => fromLamports(s, mint) >= currRange,
-      ).length;
-    }
-  }
-
-  const histoData = {
-    labels: [
-      '◎ [0 - 5)',
-      '◎ [5 - 20)',
-      '◎ [20 - 50)',
-      '◎ [50 - 100)',
-      '◎ [100 - 500)',
-      '◎ [500 - 1000)',
-      '◎ [1000 - 10000)',
-      '◎ [10000 -',
-    ],
-    datasets: [
-      {
-        label: '# bids in these bins',
-        data: asArray.map(a => histogrammedData[a]),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
-          'rgba(255, 139, 24, 0.2)',
-          'rgba(212, 39, 24, 0.2)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-          'rgba(255, 139, 24, 1)',
-          'rgba(212, 39, 24, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const histoOptions = {
-    scales: {
-      yAxes: [
-        {
-          ticks: {
-            beginAtZero: true,
-          },
-        },
-      ],
-    },
-  };
-  const pieData = {
-    labels: ['Open', 'Limited', 'Tiered', 'One of a Kind'],
-    datasets: [
-      {
-        label: '#',
-        data: [
-          byType[AuctionType.Open],
-          byType[AuctionType.Limited],
-          byType[AuctionType.Tiered],
-          byType[AuctionType.OneOfKind],
-        ],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  const auctionViews = useAuctions();
 
   return (
     <Content>
@@ -325,7 +330,8 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
           className="action-btn"
           onClick={() =>
             rerun({
-              auctions,
+              auctionViews,
+              auctionManagersByAuction,
               usersEngaged,
               auctionDataExtended,
               bidderPotsByAuctionAndBidder,
@@ -361,13 +367,13 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
             mint,
           )}
         </h3>
-        <Bar data={histoData} options={histoOptions} />
+        <MemoizedBar sortedSales={sortedSales} mint={mint} />
 
         <h3>Highest Sale: ◎ {fromLamports(highestSale, mint)}</h3>
         <h3>Average Sale: ◎ {fromLamports(averageSale, mint)}</h3>
         <h1>Auction Info</h1>
         <h3>Average Bids per Auction: {averageBids}</h3>
-        <Pie data={pieData} />
+        <MemoizedPie byType={byType} />
       </Col>
     </Content>
   );
