@@ -44,12 +44,12 @@
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "next dev",
     "build": "next build",
-    "export": "next export -o ../../build/web",
+    "export": "cross-env SKIP_SSR=true next build && next export -o ../../build/web",
     "start:prod": "next start",
     "test": "jest",
-    "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
+    "deploy:ar": "yarn export && arweave deploy-dir ../../build/web --key-file ",
     "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
-    "deploy": "cross-env ASSET_PREFIX=/metaplex/ SKIP_SSR=true yarn build && yarn deploy:gh",
+    "deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn deploy:gh",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
