@@ -13,6 +13,7 @@ import {
   InputNumber,
   Form,
   Typography,
+  Space,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
@@ -40,6 +41,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -647,19 +649,68 @@ const InfoStep = (props: {
           </label>
           <label className="action-field">
             <span className="field-title">Attributes</span>
-            <Input.TextArea
-              className="input textarea"
-              placeholder="Max 500 characters"
-              onChange={info => {
-                const newAttributes = JSON.parse(info.target.value);
+            <Form name="dynamic-attributes" autoComplete="off"
+              onFinish={(values) => {
+                console.log('onFinish values:', values);
+
+                const nftAttributes = values.attributes;
                 props.setAttributes({
                   ...props.attributes,
-                  attributes: newAttributes,
+                  attributes: nftAttributes,
                 });
-                console.log(props.attributes)
               }}
-              allowClear
-            />
+              onFinishFailed={() => {
+                props.setAttributes({
+                  ...props.attributes,
+                  attributes: undefined,
+                });
+              }}
+            >
+              <Form.List name="attributes">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map(({ key, name, fieldKey }) => (
+                       <Space key={key} align="baseline">
+                        <Form.Item
+                          name={[name, 'trait_type']}
+                          fieldKey={[fieldKey, 'trait_type']}
+                          rules={[{ required: true, message: 'Missing trait_type' }]}
+                          hasFeedback
+                        >
+                          <Input placeholder="trait_type" />
+                        </Form.Item>
+                        <Form.Item
+                          name={[name, 'value']}
+                          fieldKey={[fieldKey, 'value']}
+                          rules={[{ required: true, message: 'Missing value' }]}
+                          hasFeedback
+                        >
+                          <Input placeholder="value" />
+                        </Form.Item>
+                        <Form.Item
+                          name={[name, 'display_type']}
+                          fieldKey={[fieldKey, 'display_type']}
+                          hasFeedback
+                        >
+                          <Input placeholder="display_type (Optional)" />
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                        Add attribute
+                      </Button>
+                    </Form.Item>
+                    <Form.Item>
+                      <Button type="primary" htmlType="submit">
+                        Validate (Before Continue)
+                      </Button>
+                    </Form.Item>
+                  </>
+                )}
+              </Form.List>
+            </Form>
           </label>
         </Col>
       </Row>
