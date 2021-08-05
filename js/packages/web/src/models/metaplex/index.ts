@@ -546,7 +546,7 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
     if (this.data[1] == 0) {
       this.winnerIndex = null;
     } else {
-      this.winnerIndex = new BN(this.data.slice(1, 9));
+      this.winnerIndex = new BN(this.data.slice(1, 9), 'le');
       offset += 8;
     }
 
@@ -633,7 +633,7 @@ export class SafetyDepositConfig {
       Object.assign(this, args.directArgs);
     } else if (args.data) {
       this.auctionManager = new PublicKey(args.data.slice(1, 33));
-      this.order = new BN(args.data.slice(33, 41));
+      this.order = new BN(args.data.slice(33, 41), 'le');
       this.winningConfigType = args.data[41];
       this.amountType = args.data[42];
       this.lengthType = args.data[43];
@@ -657,8 +657,13 @@ export class SafetyDepositConfig {
         const nonWinnerConstraintAsNumber = args.data[offset + 2];
         let fixedPrice = null;
         offset += 3;
+        if (
+          this.auctionManager.toBase58() ==
+          'EZPmrHjppGrT6bRXekoL89HbDt2axwj6yKQE1C5egicE'
+        )
+          console.log('Data', args.data);
         if (args.data[offset] == 1) {
-          fixedPrice = new BN(args.data.slice(offset + 1, offset + 9));
+          fixedPrice = new BN(args.data.slice(offset + 1, offset + 9), 'le');
           offset += 9;
         } else {
           offset += 1;
@@ -677,6 +682,7 @@ export class SafetyDepositConfig {
         // pick up participation state manually
         const collectedToAcceptPayment = new BN(
           args.data.slice(offset + 1, offset + 9),
+          'le',
         );
         offset += 9;
         this.participationState = new ParticipationStateV2({
@@ -699,7 +705,7 @@ export class SafetyDepositConfig {
       case TupleNumericType.U32:
         return new BN(data.slice(offset, offset + 4), 'le');
       case TupleNumericType.U64:
-        return new BN(data.slice(offset, offset + 8));
+        return new BN(data.slice(offset, offset + 8), 'le');
     }
   }
 

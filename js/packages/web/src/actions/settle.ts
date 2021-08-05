@@ -25,7 +25,7 @@ import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 
 const BATCH_SIZE = 10;
-const SETTLE_TRANSACTION_SIZE = 7;
+const SETTLE_TRANSACTION_SIZE = 6;
 const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,

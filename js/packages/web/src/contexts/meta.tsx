@@ -770,7 +770,6 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: config,
       };
-
       setter(
         'safetyDepositConfigsByAuctionManagerAndIndex',
         config.auctionManager.toBase58() + '-' + config.order.toNumber(),

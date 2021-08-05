@@ -481,7 +481,7 @@ pub enum MetaplexInstruction {
     ///        Just a PDA with seed ['metaplex', auction_key, bidder_metadata_key] that we will allocate to mark that you redeemed your bid
     ///   4. `[]` Safety deposit box account
     ///   5. `[]` Vault account
-    ///   6. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///   6. `[writable]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
     ///      This account will only get used in the event this is an AuctionManagerV2
     ///   7. `[]` Auction
     ///   8. `[]` Your BidderMetadata account
@@ -1076,7 +1076,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
     edition: u64,
     win_index: u64,
 ) -> Instruction {
-    let (validation, _) = Pubkey::find_program_address(
+    let (config, _) = Pubkey::find_program_address(
         &[
             PREFIX.as_bytes(),
             program_id.as_ref(),
@@ -1148,7 +1148,7 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new(bid_redemption, false),
             AccountMeta::new(safety_deposit_box, false),
             AccountMeta::new(vault, false),
-            AccountMeta::new(validation, false),
+            AccountMeta::new(config, false),
             AccountMeta::new_readonly(auction, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, false),
@@ -1254,7 +1254,6 @@ pub fn create_redeem_participation_bid_v2_instruction(
     bid_redemption: Pubkey,
     safety_deposit_box: Pubkey,
     vault: Pubkey,
-    fraction_mint: Pubkey,
     auction: Pubkey,
     bidder_metadata: Pubkey,
     bidder: Pubkey,
@@ -1269,6 +1268,16 @@ pub fn create_redeem_participation_bid_v2_instruction(
     new_mint_authority: Pubkey,
     desired_edition: u64,
 ) -> Instruction {
+    let (config, _) = Pubkey::find_program_address(
+        &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            auction_manager.as_ref(),
+            safety_deposit_box.as_ref(),
+        ],
+        &program_id,
+    );
+
     let (prize_tracking_ticket, _) = Pubkey::find_program_address(
         &[
             PREFIX.as_bytes(),
@@ -1342,7 +1351,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new(bid_redemption, false),
             AccountMeta::new_readonly(safety_deposit_box, false),
             AccountMeta::new_readonly(vault, false),
-            AccountMeta::new_readonly(fraction_mint, false),
+            AccountMeta::new(config, false),
             AccountMeta::new_readonly(auction, false),
             AccountMeta::new_readonly(bidder_metadata, false),
             AccountMeta::new_readonly(bidder, true),

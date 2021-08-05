@@ -1,10 +1,9 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
-import { AuctionManager, WinningConfigType } from '../../models/metaplex';
+import { AuctionManagerV2, WinningConfigType } from '../../models/metaplex';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
-  AuctionData,
   AuctionDataExtended,
   BidderPot,
   fromLamports,
@@ -17,7 +16,7 @@ import {
 import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { AuctionManagerV1 } from '../../models/metaplex/deprecatedStates';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
@@ -52,7 +51,10 @@ const rerun = async ({
   setUsersEngaged,
 }: {
   auctionViews: AuctionView[];
-  auctionManagersByAuction: Record<string, ParsedAccount<AuctionManager>>;
+  auctionManagersByAuction: Record<
+    string,
+    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
+  >;
   usersEngaged: Record<string, boolean>;
   auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
   bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
@@ -117,17 +119,16 @@ const rerun = async ({
       }
     }
 
-    newUsersPublished[auction.auctionManager.info.authority.toBase58()] = true;
-    existingUsersEngaged[auction.auctionManager.info.authority.toBase58()] =
-      true;
+    newUsersPublished[auction.auctionManager.authority.toBase58()] = true;
+    existingUsersEngaged[auction.auctionManager.authority.toBase58()] = true;
 
     let type: AuctionType | undefined = undefined;
     if (auction.items.find(set => set.length > 1)) {
       type = AuctionType.Tiered;
     } else if (auction.items.length && auction.items[0].length) {
       type =
-        auction.auctionManager.info.settings.winningConfigs[0].items[0]
-          .winningConfigType == WinningConfigType.TokenOnlyTransfer
+        auction.items[0][0].winningConfigType ==
+        WinningConfigType.TokenOnlyTransfer
           ? AuctionType.OneOfKind
           : AuctionType.Limited;
     } else {

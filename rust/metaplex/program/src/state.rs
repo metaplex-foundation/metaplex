@@ -1143,7 +1143,7 @@ impl SafetyDepositConfig {
 
         offset += match &self.participation_config {
             Some(val) => {
-                let mut total = 3;
+                let mut total = 4;
                 if val.fixed_price.is_some() {
                     total += 8;
                 }
@@ -1268,7 +1268,16 @@ impl AuctionWinnerTokenTypeTracker {
         let mut new_range: Vec<AmountRange> = vec![];
 
         if self.amount_ranges.len() == 0 {
-            self.amount_ranges = amount_ranges.iter().map(|x| *x).collect();
+            self.amount_ranges = amount_ranges
+                .iter()
+                .map(|x| {
+                    if x.0 > 0 {
+                        return AmountRange(1, x.1);
+                    } else {
+                        return AmountRange(0, x.1);
+                    }
+                })
+                .collect();
             return Ok(());
         } else if amount_ranges.len() == 0 {
             return Ok(());

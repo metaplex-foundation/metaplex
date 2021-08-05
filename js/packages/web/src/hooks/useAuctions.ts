@@ -292,6 +292,7 @@ export function processAccountsIntoAuctionView(
         safetyDepositConfigsByAuctionManagerAndIndex,
         auctionManagerKey,
       );
+
     let bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
       buildListWhileNonZero(
         bidRedemptionV2sByAuctionManagerAndWinningIndex,

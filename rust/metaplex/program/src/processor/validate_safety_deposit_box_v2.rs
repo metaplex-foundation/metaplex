@@ -514,9 +514,12 @@ pub fn process_validate_safety_deposit_box_v2<'a>(
 
     auction_manager.save(&mut auction_manager_info)?;
 
-    auction_token_tracker
-        .add_one_where_positive_ranges_occur(&mut safety_deposit_config.amount_ranges.clone())?;
-    auction_token_tracker.save(auction_token_tracker_info);
+    if safety_deposit_config.winning_config_type != WinningConfigType::Participation {
+        auction_token_tracker.add_one_where_positive_ranges_occur(
+            &mut safety_deposit_config.amount_ranges.clone(),
+        )?;
+        auction_token_tracker.save(auction_token_tracker_info);
+    }
 
     make_safety_deposit_config(
         program_id,

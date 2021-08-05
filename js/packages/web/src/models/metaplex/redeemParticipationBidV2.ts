@@ -110,7 +110,7 @@ export async function redeemParticipationBidV2(
     {
       pubkey: safetyDepositConfig,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: auctionKey,
