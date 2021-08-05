@@ -272,9 +272,10 @@ export function MetaProvider({ children = null as any }) {
 
       for (let i = 0; i < accounts.length; i++) {
         let account = accounts[i];
-        processVaultData(account, updateTemp);
+        let key = account.pubkey.toBase58();
+        processVaultData(key, account, updateTemp);
         processAuctions(account, updateTemp);
-        processMetaData(account, updateTemp);
+        processMetaData(key, account, updateTemp);
 
         await processMetaplexAccounts(account, updateTemp, all);
       }
@@ -359,6 +360,7 @@ export function MetaProvider({ children = null as any }) {
             ? new PublicKey(info.accountId as unknown as string)
             : info.accountId;
         processVaultData(
+          info.accountId.toBase58(),
           {
             pubkey,
             account: info.accountInfo,
@@ -394,6 +396,7 @@ export function MetaProvider({ children = null as any }) {
             ? new PublicKey(info.accountId as unknown as string)
             : info.accountId;
         const result = processMetaData(
+          info.accountId.toBase58(),
           {
             pubkey,
             account: info.accountInfo,
@@ -759,6 +762,7 @@ const processMetaplexAccounts = async (
 };
 
 const processMetaData = (
+  key: string,
   meta: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
 ) => {
@@ -788,7 +792,7 @@ const processMetaData = (
         account: meta.account,
         info: edition,
       };
-      setter('editions', meta.pubkey.toBase58(), account);
+      setter('editions', key, account);
     } else if (
       meta.account.data[0] === MetadataKey.MasterEditionV1 ||
       meta.account.data[0] === MetadataKey.MasterEditionV2
@@ -801,7 +805,7 @@ const processMetaData = (
           account: meta.account,
           info: masterEdition as MasterEditionV1,
         };
-        setter('masterEditions', meta.pubkey.toBase58(), account);
+        setter('masterEditions', key, account);
 
         setter(
           'masterEditionsByPrintingMint',
@@ -821,7 +825,7 @@ const processMetaData = (
           account: meta.account,
           info: masterEdition as MasterEditionV2,
         };
-        setter('masterEditions', meta.pubkey.toBase58(), account);
+        setter('masterEditions', key, account);
       }
     }
   } catch {
@@ -831,10 +835,12 @@ const processMetaData = (
 };
 
 const processVaultData = (
+  key: string,
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
 ) => {
   if (a.account.owner.toBase58() !== programIds().vault.toBase58()) return;
+
   try {
     if (a.account.data[0] === VaultKey.SafetyDepositBoxV1) {
       const safetyDeposit = decodeSafetyDeposit(a.account.data);
@@ -856,7 +862,7 @@ const processVaultData = (
         info: vault,
       };
 
-      setter('vaults', a.pubkey.toBase58(), account);
+      setter('vaults', key, account);
     }
   } catch {
     // ignore errors
