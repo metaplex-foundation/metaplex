@@ -19,7 +19,8 @@ const serverPropsGetter: GetServerSideProps = async () => {
     props: {
       accounts,
     },
+    revalidate: 60,
   };
 };
 
-export const getServerSideProps = process.env.SKIP_SSR ? undefined : serverPropsGetter
+export const getStaticProps = process.env.SKIP_SSR ? undefined : serverPropsGetter
