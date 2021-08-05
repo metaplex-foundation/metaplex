@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { findProgramAddress } from '../utils';
+import { findProgramAddress, is_localhost } from '../utils';
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
@@ -70,7 +70,9 @@ export const setStoreID = (storeId: any) => {
 };
 
 const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
+  if (is_localhost()) {
+    console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
+  }
   if (!STORE_OWNER_ADDRESS) {
     return undefined;
   }
@@ -84,7 +86,9 @@ const getStoreID = async () => {
     METAPLEX_ID,
   );
   const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
+  if (is_localhost()) {
+    console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
+  }
 
   return CUSTOM;
 };
