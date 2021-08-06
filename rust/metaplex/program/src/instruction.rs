@@ -46,6 +46,13 @@ pub struct RedeemPrintingV2BidArgs {
     pub win_index: u64,
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct EndAuctionArgs {
+    /// If the auction was blinded, a revealing price must be specified to release the auction
+    /// winnings.
+    pub reveal: Option<(u64, u64)>,
+}
+
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetaplexInstruction {
@@ -483,6 +490,17 @@ pub enum MetaplexInstruction {
     ///   28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
     ///   29. `[]` Auction extended
     RedeemParticipationBidV2,
+
+    /// Ends an auction, regardless of end timing conditions.
+    ///
+    ///   0. `[writable]` Auction manager
+    ///   1. `[writable]` Auction
+    ///   2. `[]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
+    ///   3. `[signer]` Auction manager authority
+    ///   4. `[]` Store key
+    ///   5. `[]` Auction program
+    ///   6. `[]` Clock sysvar
+    EndAuction(EndAuctionArgs),
 }
 
 /// Creates an InitAuctionManager instruction
@@ -1206,6 +1224,34 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::RedeemParticipationBidV2
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+/// Creates an EndAuction instruction
+#[allow(clippy::too_many_arguments)]
+pub fn create_end_auction_instruction(
+    program_id: Pubkey,
+    auction_manager: Pubkey,
+    auction: Pubkey,
+    auction_data_extended: Pubkey,
+    auction_manager_authority: Pubkey,
+    store: Pubkey,
+    end_auction_args: EndAuctionArgs,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(auction_manager, false),
+            AccountMeta::new(auction, false),
+            AccountMeta::new_readonly(auction_data_extended, false),
+            AccountMeta::new_readonly(auction_manager_authority, true),
+            AccountMeta::new_readonly(store, false),
+            AccountMeta::new_readonly(spl_auction::id(), false),
+            AccountMeta::new_readonly(sysvar::clock::id(), false),
+        ],
+        data: MetaplexInstruction::EndAuction(end_auction_args)
             .try_to_vec()
             .unwrap(),
     }

@@ -1,4 +1,4 @@
-use solana_program::{msg};
+use solana_program::msg;
 
 use {
     crate::utils::try_from_slice_checked,
@@ -108,7 +108,7 @@ impl AuctionManager {
         status: AuctionManagerStatus,
         winning_config_index: usize,
         winning_config_item_index: usize,
-        use_straight_shot: bool
+        use_straight_shot: bool,
     ) {
         let num_configs = AuctionManager::get_num_configs(a);
         let mut data = a.data.borrow_mut();
@@ -145,7 +145,7 @@ impl AuctionManager {
                     // Add one byte to cover the boolean at the end of the winning config state.
                     current_config_offset = current_config_offset + 4 + skip + 1;
                 }
-            } 
+            }
         }
     }
 

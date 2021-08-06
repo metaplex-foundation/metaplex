@@ -50,6 +50,10 @@ pub enum AuctionInstruction {
     ClaimBid(ClaimBidArgs),
 
     /// Ends an auction, regardless of end timing conditions
+    ///
+    ///   0. `[writable, signer]` Auction authority
+    ///   1. `[writable]` Auction
+    ///   6. `[]` Clock sysvar
     EndAuction(EndAuctionArgs),
 
     /// Start an inactive auction.

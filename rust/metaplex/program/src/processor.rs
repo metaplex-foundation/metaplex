@@ -6,6 +6,7 @@ use {
     deprecated_populate_participation_printing_account::process_deprecated_populate_participation_printing_account,
     deprecated_validate_participation::process_deprecated_validate_participation,
     empty_payment_account::process_empty_payment_account,
+    end_auction::process_end_auction,
     init_auction_manager::process_init_auction_manager,
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
@@ -25,6 +26,7 @@ pub mod decommission_auction_manager;
 pub mod deprecated_populate_participation_printing_account;
 pub mod deprecated_validate_participation;
 pub mod empty_payment_account;
+pub mod end_auction;
 pub mod init_auction_manager;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
@@ -116,6 +118,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::RedeemParticipationBidV2 => {
             msg!("Instruction: Redeem Participation Bid V2");
             process_redeem_participation_bid(program_id, accounts, false)
+        }
+        MetaplexInstruction::EndAuction(args) => {
+            msg!("Instruction: End auction");
+            process_end_auction(program_id, accounts, args)
         }
     }
 }
