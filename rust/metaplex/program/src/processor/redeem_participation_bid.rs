@@ -244,7 +244,6 @@ pub fn process_redeem_participation_bid<'a>(
     let bid_redemption_info = next_account_info(account_info_iter)?;
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
-    // We keep it here to keep API base identical to the other redeem calls for ease of use by callers
     let safety_deposit_config_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
@@ -428,7 +427,7 @@ pub fn process_redeem_participation_bid<'a>(
         bid_redemption_info,
         vault_info,
         safety_deposit_config_info: Some(safety_deposit_config_info),
-        winning_index: None,
+        winning_index: win_index,
         redemption_bump_seed,
         bid_redeemed: false,
         participation_redeemed: true,

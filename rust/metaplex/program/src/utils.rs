@@ -702,7 +702,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 &rent_info,
                 &system_info,
                 &payer_info,
-                1 + 9 + 32 + token_type_count as usize,
+                1 + 9 + 32 + 1 + token_type_count as usize,
                 redemption_seeds,
             )?;
         }

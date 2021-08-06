@@ -1,3 +1,5 @@
+use solana_program::msg;
+
 use {
     crate::{
         deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
@@ -1414,9 +1416,16 @@ impl BidRedemptionTicket {
             match safety_deposit_config_info {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
+                    msg!("Order is {}", order);
                     let (position, mask) =
                         BidRedemptionTicket::get_index_and_mask(&bid_redemption_data, order)?;
-
+                    msg!(
+                        "position {}, mask {}, data at that position, {}",
+                        position,
+                        mask,
+                        bid_redemption_data[position]
+                    );
+                    msg!("overall data {:?}", bid_redemption_data);
                     if bid_redemption_data[position] & mask != 0 {
                         return Err(MetaplexError::BidAlreadyRedeemed.into());
                     }
@@ -1439,9 +1448,9 @@ impl BidRedemptionTicket {
         }
 
         let u8_position = order
-            .checked_div(offset)
+            .checked_div(8)
             .ok_or(MetaplexError::NumericalOverflowError)?
-            .checked_add(41)
+            .checked_add(offset)
             .ok_or(MetaplexError::NumericalOverflowError)?;
         let position_from_right = 7 - order
             .checked_rem(8)
@@ -1475,6 +1484,7 @@ impl BidRedemptionTicket {
         {
             data[0] = Key::BidRedemptionTicketV2 as u8;
             let mut offset = 2;
+            msg!("Win index {:?}", winner_index);
             if let Some(index) = winner_index {
                 data[1] = 1;
                 offset += 8;
@@ -1490,8 +1500,16 @@ impl BidRedemptionTicket {
             match safety_deposit_config_info {
                 Some(config) => {
                     let order = SafetyDepositConfig::get_order(config);
+                    msg!("Order is {}", order);
+
                     let (position, mask) = BidRedemptionTicket::get_index_and_mask(data, order)?;
                     data[position] = data[position] | mask;
+                    msg!(
+                        "Setting position {} with mask {} now data is {:?}",
+                        position,
+                        mask,
+                        data
+                    );
                 }
                 None => return Err(MetaplexError::InvalidOperation.into()),
             }

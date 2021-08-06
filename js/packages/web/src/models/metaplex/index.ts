@@ -657,11 +657,7 @@ export class SafetyDepositConfig {
         const nonWinnerConstraintAsNumber = args.data[offset + 2];
         let fixedPrice = null;
         offset += 3;
-        if (
-          this.auctionManager.toBase58() ==
-          'EZPmrHjppGrT6bRXekoL89HbDt2axwj6yKQE1C5egicE'
-        )
-          console.log('Data', args.data);
+
         if (args.data[offset] == 1) {
           fixedPrice = new BN(args.data.slice(offset + 1, offset + 9), 'le');
           offset += 9;
