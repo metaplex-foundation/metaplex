@@ -390,6 +390,10 @@ export class WithdrawMasterEditionArgs {
 }
 export class RedeemParticipationBidV2Args {
   instruction = 16;
+  winIndex: BN | null;
+  constructor(args: { winIndex: BN | null }) {
+    this.winIndex = args.winIndex;
+  }
 }
 
 export enum WinningConstraint {
@@ -894,7 +898,10 @@ export const SCHEMA = new Map<any, any>([
     RedeemParticipationBidV2Args,
     {
       kind: 'struct',
-      fields: [['instruction', 'u8']],
+      fields: [
+        ['instruction', 'u8'],
+        ['winIndex', { kind: 'option', type: 'u64' }],
+      ],
     },
   ],
   [

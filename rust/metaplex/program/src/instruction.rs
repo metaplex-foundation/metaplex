@@ -50,6 +50,11 @@ pub struct RedeemPrintingV2BidArgs {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct RedeemParticipationBidV2Args {
+    pub win_index: Option<u64>,
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct InitAuctionManagerV2Args {
     pub amount_type: TupleNumericType,
     pub length_type: TupleNumericType,
@@ -507,7 +512,7 @@ pub enum MetaplexInstruction {
     ///   26. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   27. `[]` Metadata account of token in vault
     //    28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
-    RedeemParticipationBidV2,
+    RedeemParticipationBidV2(RedeemParticipationBidV2Args),
 
     /// Initializes an Auction Manager V2
     ///
@@ -1267,6 +1272,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
     new_mint: Pubkey,
     new_mint_authority: Pubkey,
     desired_edition: u64,
+    win_index: Option<u64>,
 ) -> Instruction {
     let (config, _) = Pubkey::find_program_address(
         &[
@@ -1375,8 +1381,10 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new_readonly(metadata, false),
             AccountMeta::new_readonly(extended, false),
         ],
-        data: MetaplexInstruction::RedeemParticipationBidV2
-            .try_to_vec()
-            .unwrap(),
+        data: MetaplexInstruction::RedeemParticipationBidV2(RedeemParticipationBidV2Args {
+            win_index,
+        })
+        .try_to_vec()
+        .unwrap(),
     }
 }

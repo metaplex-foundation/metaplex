@@ -70,7 +70,7 @@ pub fn process_instruction<'a>(
         }
         MetaplexInstruction::DeprecatedRedeemParticipationBid => {
             msg!("Instruction: Deprecated Redeem Participation Bid");
-            process_redeem_participation_bid(program_id, accounts, true)
+            process_redeem_participation_bid(program_id, accounts, true, None)
         }
         MetaplexInstruction::StartAuction => {
             msg!("Instruction: Start Auction");
@@ -121,9 +121,9 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Withdraw Master Edition");
             process_withdraw_master_edition(program_id, accounts)
         }
-        MetaplexInstruction::RedeemParticipationBidV2 => {
+        MetaplexInstruction::RedeemParticipationBidV2(args) => {
             msg!("Instruction: Redeem Participation Bid V2");
-            process_redeem_participation_bid(program_id, accounts, false)
+            process_redeem_participation_bid(program_id, accounts, false, args.win_index)
         }
         MetaplexInstruction::InitAuctionManagerV2(args) => {
             msg!("Instruction: Init Auction Manager V2");

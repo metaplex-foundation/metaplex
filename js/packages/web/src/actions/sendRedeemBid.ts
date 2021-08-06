@@ -839,7 +839,9 @@ export async function setupRedeemParticipationInstructions(
     );
 
     mySigners.push(transferAuthority);
-
+    const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
+      wallet.publicKey,
+    );
     await redeemParticipationBidV2(
       auctionView.vault.pubkey,
       safetyDeposit.info.store,
@@ -855,6 +857,9 @@ export async function setupRedeemParticipationInstructions(
       payingSolAccount,
       mint,
       me.info.supply.add(new BN(1)),
+      winnerIndex != null && winnerIndex != undefined
+        ? new BN(winnerIndex)
+        : null,
       myInstructions,
     );
     instructions.push([...myInstructions, ...cleanupInstructions]);

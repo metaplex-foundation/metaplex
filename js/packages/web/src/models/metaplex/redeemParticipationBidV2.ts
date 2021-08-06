@@ -40,6 +40,7 @@ export async function redeemParticipationBidV2(
   tokenPaymentAccount: PublicKey,
   newMint: PublicKey,
   edition: BN,
+  winIndex: BN | null,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -74,7 +75,7 @@ export async function redeemParticipationBidV2(
     safetyDeposit,
   );
 
-  const value = new RedeemParticipationBidV2Args();
+  const value = new RedeemParticipationBidV2Args({ winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
