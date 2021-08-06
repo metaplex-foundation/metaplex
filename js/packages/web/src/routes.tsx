@@ -14,6 +14,7 @@ import {
   HomeView,
   ArtworkView,
   ArtistAlleyView,
+  StaticPageView
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';
@@ -86,6 +87,11 @@ export function Routes() {
                             exact
                             path="/artistAlley"
                             component={() => <ArtistAlleyView />}
+                          />
+                          <Route
+                            exact
+                            path="/staticPage"
+                            component={() => <StaticPageView />}
                           />
                           <Route path="/" component={() => <HomeView />} />
                         </Switch>
