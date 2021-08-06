@@ -5,7 +5,7 @@ import {
   VAULT_ID,
 } from '@oyster/common/dist/lib/utils/ids';
 import { Connection } from '@solana/web3.js';
-import { AccountAndPubkey, MetaState } from './types';
+import { AccountAndPubkey, MetaState, ProcessAccountsFunc } from './types';
 import { isMetadataPartOfStore } from './isMetadataPartOfStore';
 import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
@@ -13,23 +13,7 @@ import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
 import { Metadata, ParsedAccount } from '../../../../common/dist/lib';
 
-export const loadAccounts = async (connection: Connection) => {
-  const accounts = (
-    await Promise.all([
-      connection.getProgramAccounts(VAULT_ID),
-      connection.getProgramAccounts(AUCTION_ID),
-      connection.getProgramAccounts(METAPLEX_ID),
-      connection.getProgramAccounts(METADATA_PROGRAM_ID),
-    ])
-  ).flat();
-
-  return accounts;
-};
-
-export const processAccounts = async (
-  accounts: AccountAndPubkey[],
-  all: boolean,
-) => {
+export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = {
     metadata: [],
     metadataByMint: {},
@@ -54,15 +38,25 @@ export const processAccounts = async (
     bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
     stores: {},
   };
-
   const updateTemp = makeSetter(tempCache);
 
-  for (const account of accounts) {
-    processVaultData(account, updateTemp, all);
-    processAuctions(account, updateTemp, all);
-    processMetaData(account, updateTemp, all);
-    await processMetaplexAccounts(account, updateTemp, all);
-  }
+  const forEach =
+    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
+      for (const account of accounts) {
+        await fn(account, updateTemp, all);
+      }
+    };
+
+  await Promise.all([
+    connection.getProgramAccounts(VAULT_ID).then(forEach(processVaultData)),
+    connection.getProgramAccounts(AUCTION_ID).then(forEach(processAuctions)),
+    connection
+      .getProgramAccounts(METADATA_PROGRAM_ID)
+      .then(forEach(processMetaData)),
+    connection
+      .getProgramAccounts(METAPLEX_ID)
+      .then(forEach(processMetaplexAccounts)),
+  ]);
 
   await postProcessMetadata(tempCache, all);
 

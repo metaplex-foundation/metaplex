@@ -20,7 +20,7 @@ import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
-import { loadAccounts, processAccounts, makeSetter, metadataByMintUpdater } from './loadAccounts';
+import { loadAccounts, makeSetter, metadataByMintUpdater } from './loadAccounts';
 import { onChangeAccount } from './onChangeAccount';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -102,17 +102,13 @@ export function MetaProvider({ children = null as any }) {
 
   useEffect(() => {
     (async () => {
-      console.log('-----> Query started');
-
-      const accounts = await loadAccounts(connection);
-
-      console.log('------->Query finished');
-
       await setProgramIds(env);
 
-      const nextState = await processAccounts(accounts, all);
+      console.log('-----> Query started');
 
-      console.log('------->init finished');
+      const nextState = await loadAccounts(connection, all);
+
+      console.log('------->Query finished');
 
       setState(nextState);
 
