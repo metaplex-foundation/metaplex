@@ -18,5 +18,5 @@ solana-cli-config = "1.6"
 solana-client = "1.6.10"
 solana-program = "1.6.10"
 solana-sdk = "1.6.10"
-spl-auction = { path = "../program", features = [ "no-entrypoint" ] }
+spl-auction = { path = "../program", features = [ "no-entrypoint" ], version = "0.0.1" }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
