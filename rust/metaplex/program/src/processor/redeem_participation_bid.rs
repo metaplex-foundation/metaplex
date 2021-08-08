@@ -1,5 +1,3 @@
-use solana_program::msg;
-
 use {
     crate::{
         error::MetaplexError,
@@ -284,7 +282,6 @@ pub fn process_redeem_participation_bid<'a>(
         })
     }
 
-    msg!("User provided win index {:?}", user_provided_win_index);
     let CommonRedeemReturn {
         mut auction_manager,
         redemption_bump_seed,

@@ -477,7 +477,7 @@ export const decodeBidRedemptionTicket = (buffer: Buffer) => {
       ? deserializeUnchecked(SCHEMA, BidRedemptionTicketV1, buffer)
       : new BidRedemptionTicketV2({
           key: MetaplexKey.BidRedemptionTicketV2,
-          data: buffer.slice(1).toJSON().data,
+          data: buffer.toJSON().data,
         })
   ) as BidRedemptionTicket;
 };
@@ -544,7 +544,7 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   auctionManager: PublicKey;
   data: number[] = [];
 
-  constructor(args?: { key: MetaplexKey; data: number[] }) {
+  constructor(args: { key: MetaplexKey; data: number[] }) {
     Object.assign(this, args);
     let offset = 2;
     if (this.data[1] == 0) {
@@ -558,7 +558,11 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   }
 
   getBidRedeemed(order: number): boolean {
-    const index = Math.floor(order / 8) + 1;
+    let offset = 42;
+    if (this.data[1] == 0) {
+      offset -= 8;
+    }
+    const index = Math.floor(order / 8) + offset;
     const positionFromRight = 7 - (order % 8);
     const mask = Math.pow(2, positionFromRight);
 

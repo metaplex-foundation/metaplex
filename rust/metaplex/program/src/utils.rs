@@ -564,7 +564,7 @@ pub fn common_redeem_checks(
         user_provided_win_index,
         overwrite_win_index,
     )?;
-    msg!("Calced in util loop: Win index is {:?}", win_index);
+
     if !bid_redemption_info.data_is_empty()
         && overwrite_win_index.is_none()
         && !ignore_bid_redeemed_item_check
