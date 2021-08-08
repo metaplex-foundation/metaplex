@@ -1457,10 +1457,14 @@ impl BidRedemptionTicket {
         safety_deposit_config_info: Option<&AccountInfo>,
         winner_index: Option<usize>,
         auction_manager: Pubkey,
+        auction_manager_version: Key,
     ) -> ProgramResult {
         // Saving on CPU in these large actions by avoiding borsh
         let data = &mut bid_redemption_info.data.borrow_mut();
-        if data[0] == Key::BidRedemptionTicketV1 as u8 {
+        if data[0] == Key::BidRedemptionTicketV1 as u8
+            || (data[0] == Key::Uninitialized as u8
+                && auction_manager_version == Key::AuctionManagerV1)
+        {
             let output = array_mut_ref![data, 0, 3];
 
             let (key, participation_redeemed_ptr, _items_redeemed_ptr) =

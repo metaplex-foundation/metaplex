@@ -714,6 +714,7 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
             safety_deposit_config_info,
             winning_index,
             *auction_manager_info.key,
+            auction_manager.key(),
         )?;
     }
 
