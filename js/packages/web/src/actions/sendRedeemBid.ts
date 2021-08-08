@@ -40,7 +40,7 @@ import {
   redeemBid,
   redeemFullRightsTransferBid,
   deprecatedRedeemParticipationBid,
-  redeemParticipationBidV2,
+  redeemParticipationBidV3,
   WinningConstraint,
   redeemPrintingV2Bid,
   PrizeTrackingTicket,
@@ -842,7 +842,7 @@ export async function setupRedeemParticipationInstructions(
     const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       wallet.publicKey,
     );
-    await redeemParticipationBidV2(
+    await redeemParticipationBidV3(
       auctionView.vault.pubkey,
       safetyDeposit.info.store,
       account,

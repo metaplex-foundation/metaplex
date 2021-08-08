@@ -30,7 +30,7 @@ export * from './redeemFullRightsTransferBid';
 export * from './deprecatedRedeemParticipationBid';
 export * from './startAuction';
 export * from './deprecatedValidateSafetyDepositBoxV1';
-export * from './redeemParticipationBidV2';
+export * from './redeemParticipationBidV3';
 export * from './redeemPrintingV2Bid';
 export * from './withdrawMasterEdition';
 
@@ -388,8 +388,8 @@ export class RedeemPrintingV2BidArgs {
 export class WithdrawMasterEditionArgs {
   instruction = 15;
 }
-export class RedeemParticipationBidV2Args {
-  instruction = 16;
+export class RedeemParticipationBidV3Args {
+  instruction = 19;
   winIndex: BN | null;
   constructor(args: { winIndex: BN | null }) {
     this.winIndex = args.winIndex;
@@ -899,7 +899,7 @@ export const SCHEMA = new Map<any, any>([
   ],
 
   [
-    RedeemParticipationBidV2Args,
+    RedeemParticipationBidV3Args,
     {
       kind: 'struct',
       fields: [

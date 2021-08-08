@@ -19,13 +19,13 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  RedeemParticipationBidV2Args,
+  RedeemParticipationBidV3Args,
   SCHEMA,
   getPrizeTrackingTicket,
   getSafetyDepositConfig,
 } from '.';
 
-export async function redeemParticipationBidV2(
+export async function redeemParticipationBidV3(
   vault: PublicKey,
   safetyDepositTokenStore: PublicKey,
   destination: PublicKey,
@@ -75,7 +75,7 @@ export async function redeemParticipationBidV2(
     safetyDeposit,
   );
 
-  const value = new RedeemParticipationBidV2Args({ winIndex });
+  const value = new RedeemParticipationBidV3Args({ winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {

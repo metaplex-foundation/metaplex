@@ -121,9 +121,9 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Withdraw Master Edition");
             process_withdraw_master_edition(program_id, accounts)
         }
-        MetaplexInstruction::RedeemParticipationBidV2(args) => {
-            msg!("Instruction: Redeem Participation Bid V2");
-            process_redeem_participation_bid(program_id, accounts, false, args.win_index)
+        MetaplexInstruction::DeprecatedRedeemParticipationBidV2 => {
+            msg!("Instruction: Deprecated Redeem Participation Bid V2");
+            process_redeem_participation_bid(program_id, accounts, false, None)
         }
         MetaplexInstruction::InitAuctionManagerV2(args) => {
             msg!("Instruction: Init Auction Manager V2");
@@ -138,6 +138,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::ValidateSafetyDepositBoxV2(safety_deposit_config) => {
             msg!("Instruction: Validate Safety Deposit Box V2");
             process_validate_safety_deposit_box_v2(program_id, accounts, safety_deposit_config)
+        }
+        MetaplexInstruction::RedeemParticipationBidV3(args) => {
+            msg!("Instruction: Redeem Participation Bid V3");
+            process_redeem_participation_bid(program_id, accounts, false, args.win_index)
         }
     }
 }

@@ -50,7 +50,7 @@ pub struct RedeemPrintingV2BidArgs {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
-pub struct RedeemParticipationBidV2Args {
+pub struct RedeemParticipationBidV3Args {
     pub win_index: Option<u64>,
 }
 
@@ -512,7 +512,7 @@ pub enum MetaplexInstruction {
     ///   26. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
     ///   27. `[]` Metadata account of token in vault
     //    28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
-    RedeemParticipationBidV2(RedeemParticipationBidV2Args),
+    DeprecatedRedeemParticipationBidV2,
 
     /// Initializes an Auction Manager V2
     ///
@@ -558,6 +558,58 @@ pub enum MetaplexInstruction {
     ///   16. `[]` System
     ///   17. `[]` Rent sysvar
     ValidateSafetyDepositBoxV2(SafetyDepositConfig),
+
+    /// Note: This requires that auction manager be in a Running state.
+    ///
+    /// Second note: V3 is the same as V2, but it requires an additional argument because it is intended to be used with AuctionManagerV2s,
+    /// not V1s, which use BidRedemptionTicketV2s, which require this additional argument (the user_provided_win_index).
+    /// You can in theory pay for someone else's participation NFT and gift it to them.
+    ///
+    /// If an auction is complete, you can redeem your bid for an Open Edition token if it is eligible. If you are the first to do this,
+    /// The auction manager will switch from Running state to Disbursing state. If you are the last, this may change
+    /// the auction manager state to Finished provided that no authorities remain to be delegated for Master Edition tokens.
+    ///
+    /// NOTE: Please note that it is totally possible to redeem a bid 2x - once for a prize you won and once at this end point for a open edition
+    /// that comes as a 'token of appreciation' for bidding. They are not mutually exclusive unless explicitly set to be that way.
+    ///
+    /// NOTE: If you are redeeming a newly minted Open Edition, you must actually supply a destination account containing a token from a brand new
+    /// mint. We do not provide the token to you. Our job with this action is to christen this mint + token combo as an official Open Edition.
+    ///
+    ///   0. `[writable]` Auction manager
+    ///   1. `[writable]` Safety deposit token storage account
+    ///   2. `[writable]` Account containing 1 token of your new mint type.
+    ///   MUST be an associated token account of pda [wallet, token program, mint] relative to ata program.
+    ///   3. `[writable]` Bid redemption key -
+    ///        Just a PDA with seed ['metaplex', auction_key, bidder_metadata_key] that we will allocate to mark that you redeemed your bid
+    ///   4. `[]` Safety deposit box account
+    ///   5. `[]` Vault account
+    ///   6. `[writable]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
+    ///      This account will only get used in the event this is an AuctionManagerV2
+    ///   7. `[]` Auction
+    ///   8. `[]` Your BidderMetadata account
+    ///   9. `[]` Your Bidder account
+    ///   10. `[signer]` Payer
+    ///   11. `[]` Token program
+    ///   12. `[]` Token Vault program
+    ///   13. `[]` Token metadata program
+    ///   14. `[]` Store
+    ///   15. `[]` System
+    ///   16. `[]` Rent sysvar
+    ///   17. `[signer]` Transfer authority to move the payment in the auction's token_mint coin from the bidder account for the participation_fixed_price
+    ///             on the auction manager to the auction manager account itself.
+    ///   18.  `[writable]` The accept payment account for the auction manager
+    ///   19.  `[writable]` The token account you will potentially pay for the open edition bid with if necessary.
+    ///   20. `[writable]` Prize tracking ticket (pda of ['metaplex', program id, auction manager key, metadata mint id])
+    ///   21. `[writable]` New Metadata key (pda of ['metadata', program id, mint id])
+    ///   22. `[writable]` New Edition (pda of ['metadata', program id, mint id, 'edition'])
+    ///   23. `[writable]` Master Edition of token in vault V2 (pda of ['metadata', program id, master metadata mint id, 'edition']) PDA is relative to token metadata.
+    ///   24. `[writable]` Mint of new token
+    ///   25. `[writable]` Edition pda to mark creation - will be checked for pre-existence. (pda of ['metadata', program id, master metadata mint id, 'edition', edition_number])
+    ///        where edition_number is NOT the edition number you pass in args but actually edition_number = floor(edition/EDITION_MARKER_BIT_SIZE). PDA is relative to token metadata.
+    ///   26. `[signer]` Mint authority of new mint - THIS WILL TRANSFER AUTHORITY AWAY FROM THIS KEY
+    ///   27. `[]` Metadata account of token in vault
+    //    28. `[]` Auction data extended - pda of ['auction', auction program id, vault key, 'extended'] relative to auction program
+    RedeemParticipationBidV3(RedeemParticipationBidV3Args),
 }
 
 /// Creates an DeprecatedInitAuctionManager instruction
@@ -1251,7 +1303,7 @@ pub fn create_withdraw_master_edition(
 
 /// Creates an RedeemParticipationBidV2 instruction
 #[allow(clippy::too_many_arguments)]
-pub fn create_redeem_participation_bid_v2_instruction(
+pub fn create_redeem_participation_bid_v3_instruction(
     program_id: Pubkey,
     auction_manager: Pubkey,
     safety_deposit_token_store: Pubkey,
@@ -1381,7 +1433,7 @@ pub fn create_redeem_participation_bid_v2_instruction(
             AccountMeta::new_readonly(metadata, false),
             AccountMeta::new_readonly(extended, false),
         ],
-        data: MetaplexInstruction::RedeemParticipationBidV2(RedeemParticipationBidV2Args {
+        data: MetaplexInstruction::RedeemParticipationBidV3(RedeemParticipationBidV3Args {
             win_index,
         })
         .try_to_vec()
