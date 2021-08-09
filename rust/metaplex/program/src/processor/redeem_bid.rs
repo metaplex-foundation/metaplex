@@ -222,7 +222,10 @@ pub fn process_redeem_bid<'a>(
 
             if winning_config_type == WinningConfigType::PrintingV1 && overwrite_win_index.is_none()
             {
-                let master_edition_info = next_account_info(account_info_iter)?;
+                let master_edition_info = match safety_deposit_config_info {
+                    Some(val) => val,
+                    None => return Err(ProgramError::NotEnoughAccountKeys)
+                };
                 let reservation_list_info = next_account_info(account_info_iter)?;
 
                 reserve_list_if_needed(
