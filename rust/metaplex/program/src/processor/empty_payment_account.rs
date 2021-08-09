@@ -232,8 +232,14 @@ pub fn process_empty_payment_account(
     let token_program_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
-    let auction_token_tracker_info = next_account_info(account_info_iter).ok();
-    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
+    let auction_token_tracker_info = match next_account_info(account_info_iter) {
+        Ok(val) => Some(val),
+        Err(_) => None,
+    };
+    let safety_deposit_config_info = match next_account_info(account_info_iter) {
+        Ok(val) => Some(val),
+        Err(_) => None,
+    };
 
     if let Some(tracker_info) = auction_token_tracker_info {
         assert_derivation(

@@ -39,8 +39,10 @@ pub fn process_withdraw_master_edition<'a>(
     let token_vault_program_info = next_account_info(account_info_iter)?;
     let store_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
-    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
-
+    let safety_deposit_config_info = match next_account_info(account_info_iter) {
+        Ok(val) => Some(val),
+        Err(_) => None,
+    };
     let rent = &Rent::from_account_info(&rent_info)?;
 
     let auction_manager = get_auction_manager(auction_manager_info)?;
