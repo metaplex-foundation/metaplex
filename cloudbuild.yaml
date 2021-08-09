@@ -1,0 +1,12 @@
+timeout: 1800s
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/circlepod-web-app-v2:$REVISION_ID', '.', '-f' ,'Dockerfile.test']
+  id: 'build-gcr'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia.gcr.io/$PROJECT_ID/circlepod-web-app-v2:$REVISION_ID']
+  id: 'push-gcr'
+  waitFor:
+  - 'build-gcr'
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['run', 'deploy', 'circlepod-web-app-v2-services', '--image', 'asia.gcr.io/$PROJECT_ID/circlepod-web-app-v2:$REVISION_ID', '--region', 'asia-east1', '--platform', 'managed', '--memory', '512Mi', '--set-env-vars', 'NODE_ENV=production,HOST=0.0.0.0']
