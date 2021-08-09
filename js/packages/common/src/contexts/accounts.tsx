@@ -13,7 +13,8 @@ import { TokenAccount } from '../models';
 import { chunks } from '../utils/utils';
 import { EventEmitter } from '../utils/eventEmitter';
 import { useUserAccounts } from '../hooks/useUserAccounts';
-import { WRAPPED_SOL_MINT, programIds } from '../utils/ids';
+import { WRAPPED_SOL_MINT } from '../utils/ids';
+import { programIds } from '../utils/programIds';
 import { AuctionParser } from '../actions';
 
 const AccountsContext = React.createContext<any>(null);
