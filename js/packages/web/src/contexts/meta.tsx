@@ -95,6 +95,7 @@ interface MetaState {
     ParsedAccount<WhitelistedCreator>
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
+  stores: Record<string, ParsedAccount<Store>>;
 }
 
 const { MetadataKey } = actions;
@@ -115,7 +116,12 @@ const isMetadataPartOfStore = (
     string,
     ParsedAccount<WhitelistedCreator>
   >,
+  useAll: boolean,
 ) => {
+  if (useAll) {
+    return true;
+  }
+
   if (!m?.info?.data?.creators) {
     return false;
   }
@@ -153,11 +159,14 @@ const MetaContext = React.createContext<MetaContextState>({
   whitelistedCreatorsByCreator: {},
   payoutTickets: {},
   prizeTrackingTickets: {},
+  stores: {},
 });
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { env } = useConnectionConfig();
+  const urlParams = new URLSearchParams(window.location.search);
+  const all = urlParams.get('all') == 'true';
 
   const [state, setState] = useState<MetaState>({
     metadata: [] as Array<ParsedAccount<Metadata>>,
@@ -188,6 +197,7 @@ export function MetaProvider({ children = null as any }) {
     bidderPotsByAuctionAndBidder: {},
     safetyDepositBoxesByVaultAndIndex: {},
     prizeTrackingTickets: {},
+    stores: {},
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -195,12 +205,15 @@ export function MetaProvider({ children = null as any }) {
   const updateMints = useCallback(
     async metadataByMint => {
       try {
-        const m = await queryExtendedMetadata(connection, metadataByMint);
-        setState(current => ({
-          ...current,
-          metadata: m.metadata,
-          metadataByMint: m.mintToMetadata,
-        }));
+        if (!all) {
+          const m = await queryExtendedMetadata(connection, metadataByMint);
+
+          setState(current => ({
+            ...current,
+            metadata: m.metadata,
+            metadataByMint: m.mintToMetadata,
+          }));
+        }
       } catch (er) {
         console.error(er);
       }
@@ -245,6 +258,7 @@ export function MetaProvider({ children = null as any }) {
         bidderPotsByAuctionAndBidder: {},
         safetyDepositBoxesByVaultAndIndex: {},
         prizeTrackingTickets: {},
+        stores: {},
       };
 
       const updateTemp = (prop: keyof MetaState, key: string, value: any) => {
@@ -262,7 +276,7 @@ export function MetaProvider({ children = null as any }) {
         processAuctions(account, updateTemp);
         processMetaData(account, updateTemp);
 
-        await processMetaplexAccounts(account, updateTemp);
+        await processMetaplexAccounts(account, updateTemp, all);
       }
 
       const values = Object.values(
@@ -277,6 +291,7 @@ export function MetaProvider({ children = null as any }) {
             metadata,
             tempCache.store,
             tempCache.whitelistedCreatorsByCreator,
+            all,
           )
         ) {
           await metadata.info.init();
@@ -366,6 +381,7 @@ export function MetaProvider({ children = null as any }) {
             account: info.accountInfo,
           },
           updateStateValue,
+          all,
         );
       },
     );
@@ -387,7 +403,12 @@ export function MetaProvider({ children = null as any }) {
 
         if (
           result &&
-          isMetadataPartOfStore(result, store, whitelistedCreatorsByCreator)
+          isMetadataPartOfStore(
+            result,
+            store,
+            whitelistedCreatorsByCreator,
+            all,
+          )
         ) {
           await result.info.init();
           setState(data => ({
@@ -497,6 +518,7 @@ export function MetaProvider({ children = null as any }) {
         payoutTickets: state.payoutTickets,
         masterEditionsByOneTimeAuthMint: state.masterEditionsByOneTimeAuthMint,
         prizeTrackingTickets: state.prizeTrackingTickets,
+        stores: state.stores,
         isLoading,
       }}
     >
@@ -640,6 +662,7 @@ const processAuctions = (
 const processMetaplexAccounts = async (
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
+  useAll: boolean,
 ) => {
   if (a.account.owner.toBase58() !== programIds().metaplex.toBase58()) return;
 
@@ -648,7 +671,7 @@ const processMetaplexAccounts = async (
 
     if (a.account.data[0] === MetaplexKey.AuctionManagerV1) {
       const storeKey = new PublicKey(a.account.data.slice(1, 33));
-      if (storeKey.toBase58() === STORE_ID) {
+      if (storeKey.toBase58() === STORE_ID || useAll) {
         const auctionManager = decodeAuctionManager(a.account.data);
 
         const account: ParsedAccount<AuctionManager> = {
@@ -696,6 +719,7 @@ const processMetaplexAccounts = async (
       if (a.pubkey.toBase58() === STORE_ID) {
         setter('store', a.pubkey.toBase58(), account);
       }
+      setter('stores', a.pubkey.toBase58(), account);
     } else if (a.account.data[0] === MetaplexKey.WhitelistedCreatorV1) {
       const whitelistedCreator = decodeWhitelistedCreator(a.account.data);
 
