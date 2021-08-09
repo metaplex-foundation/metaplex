@@ -30,6 +30,7 @@ export async function filterMetadata(
 }> {
   const available = [];
   const unavailable = [];
+  let batchWaitCounter = 0;
 
   for (let i = 0; i < metadata.length; i++) {
     const md = metadata[i];
@@ -40,6 +41,11 @@ export async function filterMetadata(
       masterEdition &&
       masterEdition?.info.key == MetadataKey.MasterEditionV1
     ) {
+      if (batchWaitCounter == 10) {
+        console.log('Waiting 10s before continuing to avoid rate limits');
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        batchWaitCounter = 0;
+      }
       console.log('Reviewing', masterEdition.pubkey.toBase58());
       let printingBal = 0;
       try {
@@ -108,6 +114,8 @@ export async function filterMetadata(
           available.push(masterEdition);
         }
       }
+
+      batchWaitCounter++;
     }
   }
 
