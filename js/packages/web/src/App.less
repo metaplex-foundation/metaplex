@@ -10,7 +10,7 @@ html {
 }
 #root {
   height: 100%;
-  font-family: 'Graphik Web', sans-serif;
+  font-family: "Luminari", 'Graphik Web', sans-serif;
 }
 
 #root::before {
@@ -28,13 +28,123 @@ html {
 body {
   --row-highlight: @background-color-base;
   margin: 0;
-
+  background-image: url("https://magicitems.org/img/darkbackground.jpeg");
+  background-attachment: fixed;
   font-style: normal;
   font-weight: normal;
-  font-family: 'Graphik Web' !important;
+  font-family: "Luminari", 'Graphik Web' !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.has-dropcap:first-letter {
+  font-family: "Luminari", "Savoy", sans-serif;
+  float: left;
+  font-size: 6rem;
+  line-height: 0.5;
+  margin: 0.3em 0.2em 0.0em 0.0em;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.has-dropcap {
+  font-family:  "Luminari", "Savoy", sans-serif;
+  float: left;
+  font-size: 20px;
+  background-color: rgba(0, 0, 0, 0.6);
+
+  h2 {
+    color: rgb(255, 255, 182);
+  }
+}
+
+.mission {
+  font-family: "Luminari", "Savoy", sans-serif;
+  display:inline;
+  float: left;
+  font-size: 20px;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+  
+  h2 {
+    color: rgb(255, 255, 182);
+  }
+}
+
+.purple {
+  color:  #e981e9;
+}
+
+.smaller {
+  font-size:100%;
+}
+
+.fancyamp {
+  font-family: "Savoy", sans-serif;
+  display:inline;
+  float: left;
+  font-size: 24px;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.mission:first-letter {
+  font-family: "Luminari", "Savoy", sans-serif;
+  float: left;
+  font-size: 6rem;
+  line-height: 0.6;
+  margin: 0.3em 0.2em 0.1em 0.1em;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.rules {
+  font-family: "Luminari", "Savoy", sans-serif;
+  float: left;
+  display:inline;
+  font-size: 20px;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.rules:first-letter {
+  font-family: "Luminari", "Savoy", sans-serif;
+  float: left;
+  font-size: 6rem;
+  line-height: 0.6;
+  margin: 0.3em 0.2em 0.1em 0.1em;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+
+.FAQ {
+  font-family: "Luminari", "Savoy", sans-serif;
+  float: left;
+  display:inline;
+  font-size: 16px;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+
+  h2 {
+    font-size: 24px;
+  }
+
+  h3 {
+    font-size: 28px;
+    color: #e981e9;
+  }
+
+  h4 {
+    font-size: 70px;
+    color: #e981e9;
+  }
+
+  h5 {
+    font-size: 4.0vw;
+    color: #800080;
+    background-color:  rgb(255, 255, 182);
+    line-height: 1.5;
+  }
+}
+
 
 .no-events {
   pointer-events: none;
@@ -106,10 +216,10 @@ code {
   width: 30px;
   height: 30px;
   border-radius: 30px;
-  background-color: #434343 !important;
+  background-color: #f503f5 !important;
 
   :hover {
-    background-color: #434343;
+    background-color: #f503f5;
   }
 }
 
@@ -127,13 +237,14 @@ code {
 .tab-title {
   font-style: normal;
   font-weight: 600;
-  font-size: 24px;
+  font-size: 28px;
   line-height: 26px;
   display: flex;
   align-items: center;
   letter-spacing: 0.02em;
+  color: #800080;
+  background-color: rgba(0, 0, 0, 0.6);
 
-  color: @text-color-secondary;
 }
 
 .ant-tabs {
@@ -141,7 +252,7 @@ code {
 }
 
 .ant-avatar-group .ant-avatar {
-  border: 1px solid #434343;
+  border: 1px solid #f503f5;
 }
 
 .ant-avatar-group {
@@ -169,12 +280,13 @@ code {
 
 .ant-tabs-tab-active {
   .tab-title {
-    color: @text-color;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
   }
 }
 
 .full-history {
-  color: #6d6d6d;
+  color: #f503f5;
   padding-top: 5px;
 }
 
@@ -182,4 +294,23 @@ code {
   color: #fff;
   transition: 150ms;
   padding-top: 5px;
+}
+
+
+hr.style-eight {
+  overflow: visible; /* For IE */
+  padding: 0;
+  border: none;
+  border-top: medium double #333;
+  color: #333;
+  text-align: center;
+}
+hr.style-eight:after {
+  content: "§";
+  display: inline-block;
+  position: relative;
+  top: -0.7em;
+  font-size: 1.5em;
+  padding: 0 0.25em;
+  background: white;
 }

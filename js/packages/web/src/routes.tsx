@@ -15,7 +15,6 @@ import {
   ArtworksView,
   IntroView,
   RulesView,  
-  FAQView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';

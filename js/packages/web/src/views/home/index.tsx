@@ -26,6 +26,7 @@ export enum LiveAuctionViewState {
   Resale = '3',
 };
 
+
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
@@ -140,6 +141,8 @@ export const HomeView = () => {
 
   const CURRENT_STORE = programIds().store;
 
+  /* Place this below the story statement around line 206
+     <PreSaleBanner auction={heroAuction} />  */
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
       {!store && !isLoading && (
@@ -195,13 +198,21 @@ export const HomeView = () => {
           )}
         </>
       )}
-      <PreSaleBanner auction={heroAuction} />
+      <div className="FAQ">
+        <h5>[• Magic Items Marketplace •]</h5>
+      </div>
+      <div className="mission">  
+        <h2>You’re wandering a barren and enchanted wasteland, when you think you spy in the distance a large, billowing tent. Is it a mirage? Is it a miracle? You trudge toward it to get a closer look.</h2>
+        <h2>When you reach the tent and peek inside, you can hardly believe your eyes. It’s a marketplace of sorts (a bright purple banner above the entrance reveals as much), but the objects being bought and sold inside this tent are somehow ethereal, clearly magical… You wonder to yourself, "Are they even objects?"</h2>
+        <h2><a href="./#/rules">Ask a merchant what the marketplace is all about...</a></h2>
+        <h2><a href="./#/artworks">Browse the tables and see what's available...</a></h2>
+      </div>
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
             {liveAuctions.length >= 0 && (<Row>
               <Tabs activeKey={activeKey}
-                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
+                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>                
                   <TabPane
                     tab={<span className="tab-title">Live Auctions</span>}
                     key={LiveAuctionViewState.All}
