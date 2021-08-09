@@ -1,7 +1,7 @@
 timeout: 1800s
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/circlepod-web-nfts-app:$REVISION_ID', '.', '-f' ,'Dockerfile.test']
+  args: ['build', '-t', 'asia.gcr.io/$PROJECT_ID/circlepod-web-nfts-app:$REVISION_ID', '.']
   id: 'build-gcr'
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia.gcr.io/$PROJECT_ID/circlepod-web-nfts-app:$REVISION_ID']
