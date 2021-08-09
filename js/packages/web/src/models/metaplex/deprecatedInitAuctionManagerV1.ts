@@ -7,80 +7,35 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { SCHEMA } from '.';
-import { DeprecatedValidateParticipationArgs } from './deprecatedStates';
+import { getAuctionKeys, SCHEMA } from '.';
+import {
+  AuctionManagerSettingsV1,
+  DeprecatedInitAuctionManagerV1Args,
+} from './deprecatedStates';
 
-export async function deprecatedValidateParticipation(
-  auctionManager: PublicKey,
-  openEditionMetadata: PublicKey,
-  openEditionMasterAccount: PublicKey,
-  printingAuthorizationHoldingAccount: PublicKey,
-  auctionManagerAuthority: PublicKey,
-  whitelistedCreatorEntry: PublicKey | undefined,
-  store: PublicKey,
-  safetyDepositBox: PublicKey,
-  safetyDepositBoxTokenStore: PublicKey,
+export async function deprecatedInitAuctionManagerV1(
   vault: PublicKey,
+  auctionManagerAuthority: PublicKey,
+  payer: PublicKey,
+  acceptPaymentAccount: PublicKey,
+  store: PublicKey,
+  settings: AuctionManagerSettingsV1,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const value = new DeprecatedValidateParticipationArgs();
+  const value = new DeprecatedInitAuctionManagerV1Args({
+    settings,
+  });
 
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [
     {
-      pubkey: auctionManager,
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
-    },
-
-    {
-      pubkey: openEditionMetadata,
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: openEditionMasterAccount,
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: printingAuthorizationHoldingAccount,
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: auctionManagerAuthority,
-      isSigner: true,
-      isWritable: false,
-    },
-
-    {
-      pubkey: whitelistedCreatorEntry || SystemProgram.programId,
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: store,
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: safetyDepositBox,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: safetyDepositBoxTokenStore,
-      isSigner: false,
-      isWritable: false,
     },
     {
       pubkey: vault,
@@ -88,6 +43,36 @@ export async function deprecatedValidateParticipation(
       isWritable: false,
     },
 
+    {
+      pubkey: auctionKey,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: auctionManagerAuthority,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: payer,
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: acceptPaymentAccount,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: store,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: SystemProgram.programId,
+      isSigner: false,
+      isWritable: false,
+    },
     {
       pubkey: SYSVAR_RENT_PUBKEY,
       isSigner: false,
