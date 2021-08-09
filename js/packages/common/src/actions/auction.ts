@@ -65,9 +65,7 @@ export class BidState {
   public getWinnerIndex(bidder: PublicKey): number | null {
     if (!this.bids) return null;
 
-    const index = this.bids.findIndex(
-      b => b.key.toBase58() === bidder.toBase58(),
-    );
+    const index = this.bids.findIndex(b => b.key.equals(bidder));
     // auction stores data in reverse order
     if (index !== -1) {
       const zeroBased = this.bids.length - index - 1;

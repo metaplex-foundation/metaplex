@@ -894,16 +894,19 @@ const RoyaltiesStep = (props: {
             const creatorStructs: Creator[] = [
               ...fixedCreators,
               ...creators,
-            ].map(
-              c =>
-                new Creator({
-                  address: new PublicKey(c.value),
-                  verified: c.value === wallet?.publicKey?.toBase58(),
-                  share:
-                    royalties.find(r => r.creatorKey === c.value)?.amount ||
-                    Math.round(100 / royalties.length),
-                }),
-            );
+            ].map(c => {
+              const address = new PublicKey(c.value);
+              return new Creator({
+                address,
+                verified:
+                  wallet !== undefined &&
+                  wallet.publicKey !== null &&
+                  address.equals(wallet.publicKey),
+                share:
+                  royalties.find(r => r.creatorKey === c.value)?.amount ||
+                  Math.round(100 / royalties.length),
+              });
+            });
 
             const share = creatorStructs.reduce(
               (acc, el) => (acc += el.share),

@@ -21,7 +21,7 @@ export enum ArtworkViewState {
 export const ArtworksView = () => {
   const { connected, wallet } = useWallet();
   const ownedMetadata = useUserArts();
-  const createdMetadata = useCreatorArts(wallet?.publicKey?.toBase58() || '');
+  const createdMetadata = useCreatorArts(wallet?.publicKey ?? undefined);
   const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {

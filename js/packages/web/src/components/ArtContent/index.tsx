@@ -173,9 +173,9 @@ export const ArtContent = ({
   animationURL?: string;
   files?: (MetadataFile | string)[];
 }) => {
-  const id = pubkeyToString(pubkey);
+  const key = typeof pubkey === 'string' ? new PublicKey(pubkey) : pubkey;
 
-  const { ref, data } = useExtendedArt(id);
+  const { ref, data } = useExtendedArt(key);
 
   if (pubkey && data) {
     uri = data.image;

@@ -9,7 +9,9 @@ export function useUserBalance(
 ) {
   const mint = useMemo(
     () =>
-      typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58(),
+      typeof mintAddress === 'string'
+        ? new PublicKey(mintAddress)
+        : mintAddress,
     [mintAddress],
   );
   const { userAccounts } = useUserAccounts();
@@ -22,7 +24,8 @@ export function useUserBalance(
     return userAccounts
       .filter(
         acc =>
-          mint === acc.info.mint.toBase58() &&
+          mint !== undefined &&
+          mint.equals(acc.info.mint) &&
           (!account || account.equals(acc.pubkey)),
       )
       .sort((a, b) => b.info.amount.sub(a.info.amount).toNumber());

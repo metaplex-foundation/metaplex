@@ -2,11 +2,15 @@ import { PublicKey } from '@solana/web3.js';
 import { useUserAccounts } from '../hooks/useUserAccounts';
 
 export const useAccountByMint = (mint?: string | PublicKey) => {
-  const { userAccounts } = useUserAccounts();
-  const mintAddress = typeof mint === 'string' ? mint : mint?.toBase58();
+  if (mint === undefined) {
+    return undefined;
+  }
 
-  const index = userAccounts.findIndex(
-    acc => acc.info.mint.toBase58() === mintAddress,
+  const { userAccounts } = useUserAccounts();
+  const mintAddress = typeof mint === 'string' ? new PublicKey(mint) : mint;
+
+  const index = userAccounts.findIndex(acc =>
+    acc.info.mint.equals(mintAddress),
   );
 
   if (index !== -1) {

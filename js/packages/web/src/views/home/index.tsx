@@ -73,7 +73,14 @@ export const HomeView = () => {
         items = liveAuctions;
         break;
       case LiveAuctionViewState.Participated:
-        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58());
+        items = liveAuctions
+          .concat(auctionsEnded)
+          .filter(
+            (m, idx) =>
+              wallet !== undefined &&
+              wallet?.publicKey !== null &&
+              m.myBidderMetadata?.info.bidderPubkey.equals(wallet.publicKey),
+          );
         break;
       case LiveAuctionViewState.Resale:
         items = resaleAuctions;

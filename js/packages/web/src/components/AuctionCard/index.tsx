@@ -239,8 +239,9 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority.toBase58() !=
-    wallet?.publicKey?.toBase58();
+    wallet === undefined ||
+    wallet.publicKey === null ||
+    !auctionView.auctionManager.authority.equals(wallet.publicKey);
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;

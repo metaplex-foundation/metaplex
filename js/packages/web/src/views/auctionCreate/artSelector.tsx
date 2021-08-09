@@ -66,7 +66,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               onClick={open}
               close={() => {
                 setSelected(
-                  selected.filter(_ => _.metadata.pubkey.toBase58() !== key),
+                  selected.filter(_ =>
+                    _.metadata.pubkey.equals(m?.metadata.pubkey),
+                  ),
                 );
                 confirm();
               }}

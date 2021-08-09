@@ -96,9 +96,7 @@ async function emptyPaymentAccountForAllTokens(
       const creators = item.metadata.info.data.creators;
       const edgeCaseWhereCreatorIsAuctioneer = !!creators
         ?.map(c => c.address)
-        .find(
-          c => c.toBase58() === auctionView.auctionManager.authority.toBase58(),
-        );
+        .find(c => c.equals(auctionView.auctionManager.authority));
 
       const addresses = [
         ...(creators ? creators.map(c => c.address) : []),

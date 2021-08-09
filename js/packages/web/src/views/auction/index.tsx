@@ -227,7 +227,7 @@ const BidLine = (props: {
   const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
   const bidder = bid.info.bidderPubkey.toBase58();
-  const isme = wallet?.publicKey?.toBase58() === bidder;
+  const isme = wallet?.publicKey?.equals(bid.info.bidderPubkey) ?? false;
 
   // Get Twitter Handle from address
   const connection = useConnection();
