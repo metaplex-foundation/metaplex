@@ -1,17 +1,18 @@
 import { PublicKey } from '@solana/web3.js';
-import { findProgramAddress } from '../utils';
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
-export let TOKEN_PROGRAM_ID = new PublicKey(
+
+export const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 );
 
-export let SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
+export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
-export let BPF_UPGRADE_LOADER_ID = new PublicKey(
+
+export const BPF_UPGRADE_LOADER_ID = new PublicKey(
   'BPFLoaderUpgradeab1e11111111111111111111111',
 );
 
@@ -39,80 +40,4 @@ export const METAPLEX_ID = new PublicKey(
   //'98jcGaKLKx9vv33H9edLUXAydrSipHhJGDQuPXBVPVGp',
 );
 
-export let SYSTEM = new PublicKey('11111111111111111111111111111111');
-
-export const ENABLE_FEES_INPUT = false;
-
-// legacy pools are used to show users contributions in those pools to allow for withdrawals of funds
-export const PROGRAM_IDS = [
-  {
-    name: 'mainnet-beta',
-  },
-  {
-    name: 'testnet',
-  },
-
-  {
-    name: 'devnet',
-  },
-  {
-    name: 'localnet',
-  },
-];
-
-let STORE_OWNER_ADDRESS: PublicKey | undefined;
-
-export const setStoreID = (storeId: any) => {
-  STORE_OWNER_ADDRESS = storeId
-    ? new PublicKey(`${storeId}`)
-    : // DEFAULT STORE FRONT OWNER FOR METAPLEX
-      undefined;
-};
-
-const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
-  if (!STORE_OWNER_ADDRESS) {
-    return undefined;
-  }
-
-  const programs = await findProgramAddress(
-    [
-      Buffer.from('metaplex'),
-      METAPLEX_ID.toBuffer(),
-      STORE_OWNER_ADDRESS.toBuffer(),
-    ],
-    METAPLEX_ID,
-  );
-  const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
-
-  return CUSTOM;
-};
-
-export const setProgramIds = async (envName: string) => {
-  let instance = PROGRAM_IDS.find(env => envName.indexOf(env.name) >= 0);
-  if (!instance) {
-    return;
-  }
-
-  if (!STORE) {
-    STORE = await getStoreID();
-  }
-};
-
-let STORE: PublicKey | undefined;
-
-export const programIds = () => {
-  return {
-    token: TOKEN_PROGRAM_ID,
-    associatedToken: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    bpf_upgrade_loader: BPF_UPGRADE_LOADER_ID,
-    system: SYSTEM,
-    metadata: METADATA_PROGRAM_ID,
-    memo: MEMO_ID,
-    vault: VAULT_ID,
-    auction: AUCTION_ID,
-    metaplex: METAPLEX_ID,
-    store: STORE,
-  };
-};
+export const SYSTEM = new PublicKey('11111111111111111111111111111111');
