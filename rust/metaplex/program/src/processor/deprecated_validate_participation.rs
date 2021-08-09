@@ -1,7 +1,8 @@
 use {
     crate::{
+        deprecated_state::{AuctionManagerV1, ParticipationStateV1},
         error::MetaplexError,
-        state::{AuctionManager, AuctionManagerStatus, ParticipationState, Store},
+        state::{AuctionManagerStatus, Store},
         utils::{
             assert_at_least_one_creator_matches_or_store_public_and_all_verified,
             assert_authority_correct, assert_derivation, assert_initialized, assert_owned_by,
@@ -41,7 +42,7 @@ pub fn process_deprecated_validate_participation(
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let mut auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let mut auction_manager = AuctionManagerV1::from_account_info(auction_manager_info)?;
     let store = Store::from_account_info(store_info)?;
     let vault = Vault::from_account_info(vault_info)?;
     let safety_deposit_token_store: Account =
@@ -57,7 +58,7 @@ pub fn process_deprecated_validate_participation(
     }
 
     // top level authority and ownership check
-    assert_authority_correct(&auction_manager, authority_info)?;
+    assert_authority_correct(&auction_manager.authority, authority_info)?;
     assert_owned_by(auction_manager_info, program_id)?;
     assert_owned_by(open_edition_metadata_info, &store.token_metadata_program)?;
     assert_owned_by(open_master_edition_info, &store.token_metadata_program)?;
@@ -77,7 +78,7 @@ pub fn process_deprecated_validate_participation(
     assert_owned_by(vault_info, &store.token_vault_program)?;
     // is it the right vault, safety deposit, and token store?
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault,
         &safety_deposit_box_info,
         vault_info,
         &store.token_vault_program,
@@ -157,7 +158,7 @@ pub fn process_deprecated_validate_participation(
                 return Err(MetaplexError::AlreadyValidated.into());
             }
 
-            auction_manager.state.participation_state = Some(ParticipationState {
+            auction_manager.state.participation_state = Some(ParticipationStateV1 {
                 collected_to_accept_payment: state.collected_to_accept_payment,
                 primary_sale_happened: open_edition_metadata.primary_sale_happened,
                 validated: true,

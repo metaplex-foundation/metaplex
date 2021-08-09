@@ -2,13 +2,13 @@ use {
     crate::{
         error::MetaplexError,
         state::{
-            Key, WinningConfigItem, WinningConfigType, MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
+            Key, PrintingV2CalculationCheckReturn, PrintingV2CalculationChecks, WinningConfigType,
+            MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
         },
         utils::{
             assert_derivation, assert_is_ata, assert_owned_by, common_redeem_checks,
-            common_redeem_finish, common_winning_config_checks, create_or_allocate_account_raw,
-            get_amount_from_token_account, CommonRedeemCheckArgs, CommonRedeemFinishArgs,
-            CommonRedeemReturn, CommonWinningConfigCheckReturn,
+            common_redeem_finish, create_or_allocate_account_raw, get_amount_from_token_account,
+            CommonRedeemCheckArgs, CommonRedeemFinishArgs, CommonRedeemReturn,
         },
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
@@ -19,30 +19,12 @@ use {
         program_error::ProgramError,
         pubkey::Pubkey,
     },
+    spl_auction::processor::AuctionData,
     spl_token_metadata::{
         instruction::mint_edition_from_master_edition_via_vault_proxy,
         utils::get_supply_off_master_edition,
     },
-    spl_token_vault::state::SafetyDepositBox,
 };
-
-fn count_item_amount_by_safety_deposit_order(
-    items: &Vec<WinningConfigItem>,
-    safety_deposit_index: u8,
-) -> u64 {
-    let item = items.iter().find_map(|i| {
-        if i.safety_deposit_box_index == safety_deposit_index {
-            Some(i)
-        } else {
-            None
-        }
-    });
-
-    match item {
-        Some(item) => item.amount as u64,
-        None => 0u64,
-    }
-}
 
 #[allow(clippy::too_many_arguments)]
 pub fn mint_edition<'a>(
@@ -198,7 +180,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let bid_redemption_info = next_account_info(account_info_iter)?;
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
-    let _fraction_mint_info = next_account_info(account_info_iter)?;
+    let safety_deposit_config_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
@@ -255,6 +237,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         token_metadata_program_info,
         store_info,
         rent_info,
+        safety_deposit_config_info: Some(safety_deposit_config_info),
         is_participation: false,
         user_provided_win_index: Some(Some(user_provided_win_index as usize)),
         overwrite_win_index: None,
@@ -267,108 +250,80 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let mut winning_item_index = None;
     if !cancelled {
         if let Some(winning_index) = win_index {
-            if winning_index < auction_manager.settings.winning_configs.len() {
-                let CommonWinningConfigCheckReturn {
-                    winning_config_item,
-                    winning_item_index: wii,
-                } = common_winning_config_checks(
-                    &auction_manager,
-                    &safety_deposit_info,
-                    winning_index,
-                    true,
-                )?;
+            let PrintingV2CalculationCheckReturn {
+                // NOTE this total will be WRONG if short circuit is TRUE. But also it wont be USED if it's true!
+                // Its only set on prize tracking creation.
+                expected_redemptions,
+                winning_config_type,
+                winning_config_item_index,
+            } = auction_manager.printing_v2_calculation_checks(PrintingV2CalculationChecks {
+                safety_deposit_info,
+                winning_index,
+                auction_manager_v1_ignore_claim: true,
+                winners: AuctionData::get_num_winners(auction_info),
+                // We only want to save cpu short circuiting the full loop through all amount ranges
+                // if we know we're building prize tracking ticket first time.
+                // Yes, interface leakage, but you try making this work on 200k cpu.
+                short_circuit_total: !prize_tracking_ticket_info.data_is_empty(),
+                safety_deposit_config_info: Some(safety_deposit_config_info),
+                edition_offset,
+            })?;
 
-                winning_item_index = wii;
+            winning_item_index = winning_config_item_index;
 
-                if winning_config_item.winning_config_type != WinningConfigType::PrintingV2 {
-                    return Err(MetaplexError::WrongBidEndpointForPrize.into());
-                }
-                let auction_manager_bump = assert_derivation(
-                    program_id,
-                    auction_manager_info,
-                    &[PREFIX.as_bytes(), auction_info.key.as_ref()],
-                )?;
-
-                let safety_deposit_box_order = SafetyDepositBox::get_order(safety_deposit_info);
-
-                let mut edition_offset_min: u64 = 1;
-                let mut expected_redemptions: u64 = 0;
-
-                // Given every single winning config item carries a u8, it is impossible to overflow
-                // a u64 with the amount in it given the limited size. Avoid using checked add to save on cpu.
-                for n in 0..auction_manager.settings.winning_configs.len() {
-                    let matching = count_item_amount_by_safety_deposit_order(
-                        &auction_manager.settings.winning_configs[n].items,
-                        safety_deposit_box_order,
-                    );
-
-                    if n < winning_index {
-                        edition_offset_min += matching
-                    }
-                    if prize_tracking_ticket_info.data_is_empty() {
-                        expected_redemptions += matching
-                    } else if n >= winning_index {
-                        // no need to keep using this loop more than winning_index if we're not
-                        // tabulating expected_redemptions
-                        break;
-                    }
-                }
-
-                let edition_offset_max = edition_offset_min
-                    + count_item_amount_by_safety_deposit_order(
-                        &auction_manager.settings.winning_configs[winning_index].items,
-                        safety_deposit_box_order,
-                    );
-
-                if edition_offset < edition_offset_min || edition_offset >= edition_offset_max {
-                    return Err(MetaplexError::InvalidEditionNumber.into());
-                }
-
-                let supply_snapshot = create_or_update_prize_tracking(
-                    program_id,
-                    auction_manager_info,
-                    prize_tracking_ticket_info,
-                    metadata_account_info,
-                    payer_info,
-                    rent_info,
-                    system_info,
-                    master_edition_account_info,
-                    expected_redemptions,
-                )?;
-
-                let actual_edition = edition_offset
-                    .checked_add(supply_snapshot)
-                    .ok_or(MetaplexError::NumericalOverflowError)?;
-
-                let signer_seeds = &[
-                    PREFIX.as_bytes(),
-                    auction_info.key.as_ref(),
-                    &[auction_manager_bump],
-                ];
-
-                mint_edition(
-                    token_metadata_program_info,
-                    token_vault_program_info,
-                    new_metadata_account_info,
-                    new_edition_account_info,
-                    master_edition_account_info,
-                    edition_marker_info,
-                    mint_info,
-                    mint_authority_info,
-                    payer_info,
-                    auction_manager_info,
-                    safety_deposit_token_store_info,
-                    safety_deposit_info,
-                    vault_info,
-                    bidder_info,
-                    metadata_account_info,
-                    token_program_info,
-                    system_info,
-                    rent_info,
-                    actual_edition,
-                    signer_seeds,
-                )?;
+            if winning_config_type != WinningConfigType::PrintingV2 {
+                return Err(MetaplexError::WrongBidEndpointForPrize.into());
             }
+            let auction_manager_bump = assert_derivation(
+                program_id,
+                auction_manager_info,
+                &[PREFIX.as_bytes(), auction_info.key.as_ref()],
+            )?;
+
+            let supply_snapshot = create_or_update_prize_tracking(
+                program_id,
+                auction_manager_info,
+                prize_tracking_ticket_info,
+                metadata_account_info,
+                payer_info,
+                rent_info,
+                system_info,
+                master_edition_account_info,
+                expected_redemptions,
+            )?;
+
+            let actual_edition = edition_offset
+                .checked_add(supply_snapshot)
+                .ok_or(MetaplexError::NumericalOverflowError)?;
+
+            let signer_seeds = &[
+                PREFIX.as_bytes(),
+                auction_info.key.as_ref(),
+                &[auction_manager_bump],
+            ];
+
+            mint_edition(
+                token_metadata_program_info,
+                token_vault_program_info,
+                new_metadata_account_info,
+                new_edition_account_info,
+                master_edition_account_info,
+                edition_marker_info,
+                mint_info,
+                mint_authority_info,
+                payer_info,
+                auction_manager_info,
+                safety_deposit_token_store_info,
+                safety_deposit_info,
+                vault_info,
+                bidder_info,
+                metadata_account_info,
+                token_program_info,
+                system_info,
+                rent_info,
+                actual_edition,
+                signer_seeds,
+            )?;
         }
     };
 
@@ -381,6 +336,8 @@ pub fn process_redeem_printing_v2_bid<'a>(
         system_info,
         payer_info,
         bid_redemption_info,
+        vault_info,
+        safety_deposit_config_info: Some(safety_deposit_config_info),
         redemption_bump_seed,
         winning_index: win_index,
         bid_redeemed: true,

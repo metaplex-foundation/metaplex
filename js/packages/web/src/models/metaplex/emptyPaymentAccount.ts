@@ -7,7 +7,13 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { EmptyPaymentAccountArgs, getPayoutTicket, SCHEMA } from '.';
+import {
+  EmptyPaymentAccountArgs,
+  getAuctionWinnerTokenTypeTracker,
+  getPayoutTicket,
+  getSafetyDepositConfig,
+  SCHEMA,
+} from '.';
 
 export async function emptyPaymentAccount(
   acceptPayment: PublicKey,
@@ -31,11 +37,19 @@ export async function emptyPaymentAccount(
     throw new Error('Store not initialized');
   }
 
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManager,
+    safetyDepositBox,
+  );
+
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManager);
+
   const value = new EmptyPaymentAccountArgs({
     winningConfigIndex,
     winningConfigItemIndex,
     creatorIndex,
   });
+
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [
@@ -113,6 +127,18 @@ export async function emptyPaymentAccount(
     },
     {
       pubkey: SYSVAR_RENT_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: tokenTracker,
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: false,
     },

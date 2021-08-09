@@ -1,10 +1,11 @@
 use {
     crate::{
         error::MetaplexError,
-        state::{AuctionManager, PrizeTrackingTicket, Store, WinningConfigType, PREFIX},
+        state::{get_auction_manager, PrizeTrackingTicket, Store, PREFIX},
         utils::{
             assert_derivation, assert_is_ata, assert_owned_by, assert_rent_exempt,
-            assert_store_safety_vault_manager_match, transfer_safety_deposit_box_items,
+            assert_safety_deposit_config_valid, assert_store_safety_vault_manager_match,
+            transfer_safety_deposit_box_items,
         },
     },
     solana_program::{
@@ -38,10 +39,11 @@ pub fn process_withdraw_master_edition<'a>(
     let token_vault_program_info = next_account_info(account_info_iter)?;
     let store_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
+    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let auction_manager: AuctionManager = AuctionManager::from_account_info(auction_manager_info)?;
+    let auction_manager = get_auction_manager(auction_manager_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
     let auction_data_extended = AuctionDataExtended::from_account_info(auction_extended_info)?;
 
@@ -58,15 +60,23 @@ pub fn process_withdraw_master_edition<'a>(
     assert_owned_by(store_info, &program_id)?;
 
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault(),
         &safety_deposit_info,
         &vault_info,
         token_vault_program_info.key,
     )?;
+    assert_safety_deposit_config_valid(
+        program_id,
+        auction_manager_info,
+        safety_deposit_info,
+        safety_deposit_config_info,
+        &auction_manager.key(),
+    )?;
+
     // looking out for you!
     assert_rent_exempt(rent, &destination_info)?;
 
-    if auction_manager.auction != *auction_info.key {
+    if auction_manager.auction() != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
 
@@ -81,7 +91,7 @@ pub fn process_withdraw_master_edition<'a>(
         ],
     )?;
 
-    if *store_info.key != auction_manager.store {
+    if *store_info.key != auction_manager.store() {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -100,7 +110,7 @@ pub fn process_withdraw_master_edition<'a>(
     assert_rent_exempt(rent, destination_info)?;
     assert_is_ata(
         destination_info,
-        &auction_manager.authority,
+        &auction_manager.authority(),
         token_program_info.key,
         &safety_deposit_box.token_mint,
     )?;
@@ -109,22 +119,13 @@ pub fn process_withdraw_master_edition<'a>(
         // Nobody has redeemed yet, we need to figure out if SOMEONE could and if we should
         // stop a withdrawal.
 
-        let mut minimum_required_bids_to_stop_removal = 0;
-        for n in 0..auction_manager.settings.winning_configs.len() {
-            if auction_manager.settings.winning_configs[n]
-                .items
-                .iter()
-                .find(|i| i.safety_deposit_box_index == safety_deposit_box.order)
-                .is_some()
-            {
-                // This means at least n bids must exist for there to be at least one bidder that will be eligible for this prize.
-                minimum_required_bids_to_stop_removal = n;
-                break;
-            }
-        }
-
+        let max_bids_allowed_before_removal_is_stopped = auction_manager
+            .get_max_bids_allowed_before_removal_is_stopped(
+                safety_deposit_box.order as u64,
+                safety_deposit_config_info,
+            )?;
         if auction_data_extended.total_uncancelled_bids
-            > minimum_required_bids_to_stop_removal as u64
+            > max_bids_allowed_before_removal_is_stopped as u64
         {
             return Err(MetaplexError::NotAllBidsClaimed.into());
         }
@@ -146,42 +147,21 @@ pub fn process_withdraw_master_edition<'a>(
         }
     }
 
-    let atleast_one_matching = auction_manager
-        .settings
-        .winning_configs
-        .iter()
-        .find(|c| {
-            c.items
-                .iter()
-                .find(|i| {
-                    i.safety_deposit_box_index == safety_deposit_box.order
-                        && i.winning_config_type == WinningConfigType::PrintingV2
-                })
-                .is_some()
-        })
-        .is_some();
-
-    if !atleast_one_matching {
-        if let Some(config) = auction_manager.settings.participation_config {
-            if config.safety_deposit_box_index != safety_deposit_box.order {
-                return Err(MetaplexError::InvalidOperation.into());
-            }
-        } else {
-            // This means there arent any winning configs listed as PrintingV2 so
-            // this isnt a printing v2 type and isnt a master edition.
-            return Err(MetaplexError::InvalidOperation.into());
-        }
-    }
+    auction_manager.assert_is_valid_master_edition_v2_safety_deposit(
+        safety_deposit_box.order as u64,
+        safety_deposit_config_info,
+    )?;
 
     let auction_bump_seed = assert_derivation(
         program_id,
         auction_manager_info,
-        &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
+        &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
     )?;
 
+    let auction_key = auction_manager.auction();
     let auction_auth_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction.as_ref(),
+        auction_key.as_ref(),
         &[auction_bump_seed],
     ];
 

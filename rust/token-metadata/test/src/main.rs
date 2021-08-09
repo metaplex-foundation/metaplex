@@ -135,22 +135,30 @@ fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
         EDITION.as_bytes(),
     ];
     let (master_edition_key, _) = Pubkey::find_program_address(master_edition_seeds, &program_key);
-    let master_edition_account = client.get_account(&master_edition_key).unwrap();
+    let master_edition_account_res = client.get_account(&master_edition_key);
 
     println!("Metadata key: {:?}", master_metadata_key);
     println!("Metadata: {:#?}", master_metadata);
     println!("Update authority: {:?}", update_authority);
-    if master_edition_account.data[0] == Key::MasterEditionV1 as u8 {
-        let master_edition: MasterEditionV1 =
-            try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Deprecated Master edition {:#?}", master_edition);
-    } else if master_edition_account.data[0] == Key::MasterEditionV2 as u8 {
-        let master_edition: MasterEditionV2 =
-            try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Master edition {:#?}", master_edition);
-    } else {
-        let edition: Edition = try_from_slice_unchecked(&master_edition_account.data).unwrap();
-        println!("Limited edition {:#?}", edition);
+    match master_edition_account_res {
+        Ok(master_edition_account) => {
+            if master_edition_account.data[0] == Key::MasterEditionV1 as u8 {
+                let master_edition: MasterEditionV1 =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Deprecated Master edition {:#?}", master_edition);
+            } else if master_edition_account.data[0] == Key::MasterEditionV2 as u8 {
+                let master_edition: MasterEditionV2 =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Master edition {:#?}", master_edition);
+            } else {
+                let edition: Edition =
+                    try_from_slice_unchecked(&master_edition_account.data).unwrap();
+                println!("Limited edition {:#?}", edition);
+            }
+        }
+        Err(_) => {
+            println!("No master edition or edition detected")
+        }
     }
 }
 
@@ -158,7 +166,7 @@ fn mint_edition_via_token_call(
     app_matches: &ArgMatches,
     payer: Keypair,
     client: RpcClient,
-) -> (Edition, Pubkey) {
+) -> (Edition, Pubkey, Pubkey) {
     let account_authority = read_keypair_file(
         app_matches
             .value_of("account_authority")
@@ -295,7 +303,7 @@ fn mint_edition_via_token_call(
     client.send_and_confirm_transaction(&transaction).unwrap();
     let account = client.get_account(&edition_key).unwrap();
     let edition: Edition = try_from_slice_unchecked(&account.data).unwrap();
-    (edition, edition_key)
+    (edition, edition_key, new_mint_key.pubkey())
 }
 
 fn master_edition_call(
@@ -808,10 +816,10 @@ fn main() {
             );
         }
         ("mint_new_edition_from_master_edition_via_token", Some(arg_matches)) => {
-            let (edition, edition_key) = mint_edition_via_token_call(arg_matches, payer, client);
+            let (edition, edition_key, mint) = mint_edition_via_token_call(arg_matches, payer, client);
             println!(
-                "Created new edition {:?} from parent edition {:?} with edition number {:?}",
-                edition_key, edition.parent, edition.edition
+                "New edition: {:?}\nParent edition: {:?}\nEdition number: {:?}\nToken mint: {:?}",
+                edition_key, edition.parent, edition.edition, mint
             );
         }
         ("show", Some(arg_matches)) => {

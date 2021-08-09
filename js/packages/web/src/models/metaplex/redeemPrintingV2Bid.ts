@@ -21,6 +21,7 @@ import {
   RedeemPrintingV2BidArgs,
   getPrizeTrackingTicket,
   SCHEMA,
+  getSafetyDepositConfig,
 } from '.';
 
 export async function redeemPrintingV2Bid(
@@ -28,7 +29,6 @@ export async function redeemPrintingV2Bid(
   safetyDepositTokenStore: PublicKey,
   tokenAccount: PublicKey,
   safetyDeposit: PublicKey,
-  fractionMint: PublicKey,
   bidder: PublicKey,
   payer: PublicKey,
   metadata: PublicKey,
@@ -56,6 +56,11 @@ export async function redeemPrintingV2Bid(
   const prizeTrackingTicket = await getPrizeTrackingTicket(
     auctionManagerKey,
     originalMint,
+  );
+
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManagerKey,
+    safetyDeposit,
   );
 
   const newMetadata = await getMetadata(newMint);
@@ -97,9 +102,9 @@ export async function redeemPrintingV2Bid(
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: safetyDepositConfig,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: auctionKey,
