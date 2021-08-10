@@ -33,7 +33,7 @@ import {
   MasterEditionV2,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
-import { Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
+import { AccountInfo, Commitment, Connection, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
 import React, {
   useCallback,
   useContext,
@@ -162,6 +162,15 @@ const MetaContext = React.createContext<MetaContextState>({
   stores: {},
 });
 
+async function getProgramAccounts(connection: Connection, programId: PublicKey, commitment?: Commitment): Promise<Array<{ pubkey: string, account: AccountInfo<string> }>> {
+  const args = connection._buildArgs([programId.toBase58()], commitment, 'base64');
+  const unsafeRes = await (connection as any)._rpcRequest('getProgramAccounts', args);
+
+  const data = unsafeRes.result as Array<{ account: AccountInfo<string>, pubkey: string }>;
+
+  return data;
+}
+
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { env } = useConnectionConfig();
@@ -227,10 +236,10 @@ export function MetaProvider({ children = null as any }) {
       console.log('-----> Query started');
       const accounts = (
         await Promise.all([
-          connection.getProgramAccounts(programIds().vault),
-          connection.getProgramAccounts(programIds().auction),
-          connection.getProgramAccounts(programIds().metadata),
-          connection.getProgramAccounts(programIds().metaplex),
+          getProgramAccounts(connection, programIds().vault),
+          getProgramAccounts(connection, programIds().auction),
+          getProgramAccounts(connection, programIds().metadata),
+          getProgramAccounts(connection, programIds().metaplex),
         ])
       ).flat();
 
@@ -271,8 +280,17 @@ export function MetaProvider({ children = null as any }) {
       };
 
       for (let i = 0; i < accounts.length; i++) {
-        let account = accounts[i];
-        let key = account.pubkey.toBase58();
+        let data = accounts[i];
+        let key = data.pubkey;
+        let account = {
+          pubkey: new PublicKey(key),
+          account: {
+            data: Buffer.from(data.account.data, 'base64'),
+            executable: data.account.executable,
+            lamports: data.account.lamports,
+            owner: new PublicKey(data.account.owner),
+          } as AccountInfo<Buffer>,
+        };
         processVaultData(key, account, updateTemp);
         processAuctions(account, updateTemp);
         processMetaData(key, account, updateTemp);
