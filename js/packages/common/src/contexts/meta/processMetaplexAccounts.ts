@@ -1,4 +1,3 @@
-import { programIds, cache, ParsedAccount, METAPLEX_ID } from '@oyster/common';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import {
   AuctionManagerV1,
@@ -20,9 +19,10 @@ import {
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import names from '../../config/userNames.json';
+} from '../../models/metaplex';
 import { ProcessAccountsFunc } from './types';
+import { METAPLEX_ID, programIds } from '../../utils';
+import { cache, ParsedAccount } from '../accounts';
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
@@ -144,12 +144,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
           WhitelistedCreatorParser,
           false,
         ) as ParsedAccount<WhitelistedCreator>;
-
-        const nameInfo = (names as any)[parsedAccount.info.address];
-
-        if (nameInfo) {
-          parsedAccount.info = { ...parsedAccount.info, ...nameInfo };
-        }
 
         setter(
           'whitelistedCreatorsByCreator',

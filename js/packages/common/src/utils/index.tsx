@@ -6,4 +6,5 @@ export * from './notifications';
 export * from './utils';
 export * from './strings';
 export * as shortvec from './shortvec';
+export * from './isValidHttpUrl';
 export * from './borsh';

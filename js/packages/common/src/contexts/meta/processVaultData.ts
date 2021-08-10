@@ -1,13 +1,13 @@
+import { AccountInfo } from '@solana/web3.js';
 import {
-  ParsedAccount,
-  SafetyDepositBox,
-  VaultKey,
   decodeSafetyDeposit,
   decodeVault,
+  SafetyDepositBox,
   Vault,
-} from '@oyster/common';
-import { VAULT_ID } from '@oyster/common/dist/lib/utils/ids';
-import { AccountInfo } from '@solana/web3.js';
+  VaultKey,
+} from '../../actions';
+import { VAULT_ID } from '../../utils';
+import { ParsedAccount } from '../accounts';
 import { ProcessAccountsFunc } from './types';
 
 export const processVaultData: ProcessAccountsFunc = (

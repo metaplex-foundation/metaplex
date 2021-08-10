@@ -5,18 +5,18 @@ import {
   StringPublicKey,
   toPublicKey,
   VAULT_ID,
-} from '@oyster/common/dist/lib/utils/ids';
-import { getMultipleAccounts, Metadata, ParsedAccount } from '@oyster/common';
-import { MAX_WHITELISTED_CREATOR_SIZE } from '@oyster/common/dist/lib/models/index';
+} from '../../utils/ids';
+import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models';
 import {
   getEdition,
+  Metadata,
   MAX_CREATOR_LEN,
   MAX_CREATOR_LIMIT,
   MAX_NAME_LENGTH,
   MAX_SYMBOL_LENGTH,
   MAX_URI_LENGTH,
   METADATA_PREFIX,
-} from '@oyster/common/dist/lib/actions/index';
+} from '../../actions';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { AccountAndPubkey, MetaState, ProcessAccountsFunc } from './types';
 import { isMetadataPartOfStore } from './isMetadataPartOfStore';
@@ -24,6 +24,7 @@ import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
+import { ParsedAccount, getMultipleAccounts } from '../accounts';
 
 async function getProgramAccounts(
   connection: Connection,

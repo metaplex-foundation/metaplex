@@ -1,12 +1,12 @@
-import {
-  Metadata,
-  getMultipleAccounts,
-  cache,
-  MintParser,
-  ParsedAccount,
-} from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { Connection } from '@solana/web3.js';
+import { Metadata } from '../../actions';
+import {
+  cache,
+  getMultipleAccounts,
+  MintParser,
+  ParsedAccount,
+} from '../accounts';
 
 export const queryExtendedMetadata = async (
   connection: Connection,
