@@ -15,6 +15,7 @@ import {
   ArtworksView,
   IntroView,
   RulesView,  
+  AnalyticsView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';
@@ -44,6 +45,11 @@ export function Routes() {
                             exact
                             path="/admin"
                             component={() => <AdminView />}
+                          />
+                          <Route
+                            exact
+                            path="/analytics"
+                            component={() => <AnalyticsView />}
                           />
                           <Route
                             exact

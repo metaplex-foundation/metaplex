@@ -1,10 +1,8 @@
 use {
     crate::{
+        deprecated_state::{AuctionManagerV1, ParticipationConfigV1},
         error::MetaplexError,
-        state::{
-            AuctionManager, NonWinningConstraint, ParticipationConfig, Store, WinningConstraint,
-            PREFIX,
-        },
+        state::{NonWinningConstraint, Store, WinningConstraint, PREFIX},
         utils::{
             assert_derivation, assert_initialized, assert_owned_by,
             assert_store_safety_vault_manager_match, transfer_safety_deposit_box_items,
@@ -96,7 +94,7 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
     let payer_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
 
-    let auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let auction_manager = AuctionManagerV1::from_account_info(auction_manager_info)?;
     let safety_deposit = SafetyDepositBox::from_account_info(safety_deposit_info)?;
     let safety_deposit_token_store: Account = assert_initialized(&safety_deposit_token_store_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
@@ -108,7 +106,7 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
         assert_initialized(participation_printing_holding_account_info)?;
     let store = Store::from_account_info(store_info)?;
 
-    let config: &ParticipationConfig;
+    let config: &ParticipationConfigV1;
     if let Some(part_config) = &auction_manager.settings.participation_config {
         config = part_config
     } else {
@@ -124,7 +122,7 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
     }
 
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.authority,
         &safety_deposit_info,
         &vault_info,
         &store.token_vault_program,

@@ -13,7 +13,7 @@
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
-    "start": "CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
+    "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
     "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.ts'",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
@@ -43,6 +43,7 @@
     ]
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "next": "^11.0.1",
     "react": "17.0.2",
     "react-dom": "17.0.2"

@@ -8,3 +8,4 @@ export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
 export { IntroView } from './intro';
 export { RulesView } from './rules';
+export { AnalyticsView } from './analytics';
