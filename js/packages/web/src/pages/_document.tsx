@@ -28,7 +28,7 @@ export default class MetaplexDocument extends Document {
             href="/favicon-32x32.png"
           />
           <meta name="theme-color" content="#000000" />
-          <meta name="description" content="Metaplex NFT Marketplace" />
+          <meta name="description" content="Circlepod NFT Marketplace, Next Generation Podcast combined with NFT and @Solana,Create more interactivity and entertainment. Connect fans and value, Copyright and Subscription Ecosystem" />
           <link rel="manifest" href="/manifest.json" />
           <link
             rel="stylesheet"
