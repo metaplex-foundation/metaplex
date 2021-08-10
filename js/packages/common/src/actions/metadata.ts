@@ -4,7 +4,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { programIds } from '../utils/ids';
+import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
 import { findProgramAddress } from '../utils';
@@ -807,7 +807,7 @@ export async function mintNewEditionFromMasterEditionViaToken(
   const masterEdition = await getEdition(tokenMint);
   const editionMarkPda = await getEditionMarkPda(tokenMint, edition);
 
-  const data = Buffer.from([11]);
+  const data = Buffer.from([11, ...edition.toArray('le', 8)]);
 
   const keys = [
     {

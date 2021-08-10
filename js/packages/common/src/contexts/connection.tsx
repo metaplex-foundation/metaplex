@@ -15,7 +15,7 @@ import {
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { notify } from '../utils/notifications';
 import { ExplorerLink } from '../components/ExplorerLink';
-import { setProgramIds, setStoreID } from '../utils/ids';
+import { setProgramIds, setStoreID } from '../utils/programIds';
 import {
   TokenInfo,
   TokenListProvider,
