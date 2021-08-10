@@ -20,6 +20,7 @@ use {
             create_or_allocate_account_raw, get_owner_from_token_account,
             process_create_metadata_accounts_logic,
             process_mint_new_edition_from_master_edition_via_token_logic, transfer_mint_authority,
+            puff_out_data_fields,
             CreateMetadataAccountsLogicArgs, MintNewEditionFromMasterEditionViaTokenLogicArgs,
         },
     },
@@ -202,6 +203,8 @@ pub fn process_update_metadata_accounts(
             return Err(MetadataError::PrimarySaleCanOnlyBeFlippedToTrue.into());
         }
     }
+
+    puff_out_data_fields(&mut metadata);
 
     metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
     Ok(())

@@ -11,7 +11,16 @@ import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
-import { Metadata, ParsedAccount } from '../../../../common/dist/lib';
+import {
+  MAX_CREATOR_LEN,
+  MAX_CREATOR_LIMIT,
+  Metadata,
+  ParsedAccount,
+} from '../../../../common/dist/lib';
+import {
+  MAX_WHITELISTED_CREATOR_SIZE,
+  MetaplexKey,
+} from '../../models/metaplex';
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = {
@@ -47,16 +56,48 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }
     };
 
-  await Promise.all([
+  await connection
+    .getProgramAccounts(METAPLEX_ID, {
+      filters: [
+        {
+          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
+        },
+        {
+          memcmp: {
+            offset: 0,
+            bytes: MetaplexKey.WhitelistedCreatorV1.toString(),
+          },
+        },
+      ],
+    })
+    .then(forEach(processMetaplexAccounts));
+
+  const promises = [
     connection.getProgramAccounts(VAULT_ID).then(forEach(processVaultData)),
     connection.getProgramAccounts(AUCTION_ID).then(forEach(processAuctions)),
-    connection
-      .getProgramAccounts(METADATA_PROGRAM_ID)
-      .then(forEach(processMetaData)),
+    ,
     connection
       .getProgramAccounts(METAPLEX_ID)
       .then(forEach(processMetaplexAccounts)),
-  ]);
+  ];
+  for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+    promises.push(
+      connection
+        .getProgramAccounts(METADATA_PROGRAM_ID, {
+          filters: [
+            {
+              memcmp: {
+                offset: 0,
+                bytes: MetaplexKey.WhitelistedCreatorV1.toString(),
+              },
+            },
+          ],
+        })
+        .then(forEach(processMetaData)),
+    );
+  }
+
+  await Promise.all(promises);
 
   await postProcessMetadata(tempCache, all);
 
