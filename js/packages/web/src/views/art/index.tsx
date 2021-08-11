@@ -1,20 +1,32 @@
-import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd';
+import React, { useState } from 'react';
+import {
+  Row,
+  Col,
+  Divider,
+  Layout,
+  Tag,
+  Button,
+  Skeleton,
+  List,
+  Card,
+} from 'antd';
 import { useParams } from 'react-router-dom';
-import { useArt, useExtendedArt } from './../../hooks';
+import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
 import { shortenAddress, useConnection, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { ViewOn } from './../../components/ViewOn';
+import { ViewOn } from '../../components/ViewOn';
 import { ArtType } from '../../types';
+import { ArtMinting } from '../../components/ArtMinting';
 
 const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const { wallet } = useWallet();
+  const [remountArtMinting, setRemountArtMinting] = useState(0);
 
   const connection = useConnection();
   const art = useArt(id);
@@ -180,6 +192,13 @@ export const ArtView = () => {
                 >
                   Mark as Sold
                 </Button> */}
+
+            {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
+            <ArtMinting
+              id={id}
+              key={remountArtMinting}
+              onMint={async () => await setRemountArtMinting(prev => prev + 1)}
+            />
           </Col>
           <Col span="12">
             <Divider />
@@ -196,23 +215,22 @@ export const ArtView = () => {
             <div className="info-content">{art.about}</div> */}
           </Col>
           <Col span="12">
-            {attributes &&
+            {attributes && (
               <>
                 <Divider />
                 <br />
                 <div className="info-header">Attributes</div>
-                <List
-                  size="large"
-                  grid={{ column: 4 }}
-                >
-                  {attributes.map(attribute =>
+                <List size="large" grid={{ column: 4 }}>
+                  {attributes.map(attribute => (
                     <List.Item>
-                      <Card title={attribute.trait_type}>{attribute.value}</Card>
+                      <Card title={attribute.trait_type}>
+                        {attribute.value}
+                      </Card>
                     </List.Item>
-                  )}
+                  ))}
                 </List>
               </>
-            }
+            )}
           </Col>
         </Row>
       </Col>
