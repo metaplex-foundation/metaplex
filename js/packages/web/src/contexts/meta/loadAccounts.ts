@@ -59,6 +59,8 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }
     };
 
+  const additionalPromises: Promise<void>[] = [];
+
   const promises = [
     connection.getProgramAccounts(VAULT_ID).then(forEach(processVaultData)),
     connection.getProgramAccounts(AUCTION_ID).then(forEach(processAuctions)),
@@ -83,7 +85,7 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
 
         for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
           for (let j = 0; j < whitelistedCreators.length; j++) {
-            promises.push(
+            additionalPromises.push(
               connection
                 .getProgramAccounts(METADATA_PROGRAM_ID, {
                   filters: [
@@ -115,6 +117,7 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }),
   ];
   await Promise.all(promises);
+  await Promise.all(additionalPromises);
 
   await postProcessMetadata(tempCache, all);
   console.log('Metadata size', tempCache.metadata.length);
