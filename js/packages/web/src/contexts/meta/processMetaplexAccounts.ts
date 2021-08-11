@@ -131,7 +131,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 
     if (isWhitelistedCreatorV1Account(account)) {
       const whitelistedCreator = decodeWhitelistedCreator(account.data);
-
       // TODO: figure out a way to avoid generating creator addresses during parsing
       // should we store store id inside creator?
       const creatorKeyIfCreatorWasPartOfThisStore = await getWhitelistedCreator(
