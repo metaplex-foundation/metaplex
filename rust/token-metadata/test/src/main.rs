@@ -40,7 +40,7 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
     for acct in metadata_accounts {
         if acct.1.data[0] == Key::MetadataV1 as u8 {
             let account: Metadata = try_from_slice_unchecked(&acct.1.data).unwrap();
-            if account.data.name.len() < MAX_NAME_LENGTH || account.data.uri.len() < MAX_URI_LENGTH || account.data.symbol.len() < MAX_SYMBOL_LENGTH {
+            if account.data.name.len() < MAX_NAME_LENGTH || account.data.uri.len() < MAX_URI_LENGTH || account.data.symbol.len() < MAX_SYMBOL_LENGTH || account.edition_nonce.is_none() {
                 needing_puffing.push(acct.0);
             }
         }
