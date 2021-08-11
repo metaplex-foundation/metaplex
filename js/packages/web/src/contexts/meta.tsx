@@ -292,10 +292,10 @@ export function MetaProvider({ children = null as any }) {
           } as AccountInfo<Buffer>,
         };
         processVaultData(key, account, updateTemp);
-        processAuctions(account, updateTemp);
+        processAuctions(key, account, updateTemp);
         processMetaData(key, account, updateTemp);
 
-        await processMetaplexAccounts(account, updateTemp, all);
+        await processMetaplexAccounts(key, account, updateTemp, all);
       }
 
       const values = Object.values(
@@ -393,11 +393,12 @@ export function MetaProvider({ children = null as any }) {
       async info => {
         const pubkey =
           typeof info.accountId === 'string'
-            ? new PublicKey(info.accountId as unknown as string)
-            : info.accountId;
+            ? info.accountId
+            : info.accountId.toBase58();
         await processMetaplexAccounts(
+          pubkey,
           {
-            pubkey,
+            pubkey: new PublicKey(pubkey),
             account: info.accountInfo,
           },
           updateStateValue,
@@ -409,12 +410,13 @@ export function MetaProvider({ children = null as any }) {
     let metaSubId = connection.onProgramAccountChange(
       programIds().metadata,
       async info => {
-        const pubkey =
+        const key =
           typeof info.accountId === 'string'
-            ? new PublicKey(info.accountId as unknown as string)
-            : info.accountId;
+            ? info.accountId
+            : info.accountId.toBase58();
+        const pubkey = new PublicKey(key);
         const result = processMetaData(
-          info.accountId.toBase58(),
+          key,
           {
             pubkey,
             account: info.accountInfo,
@@ -456,11 +458,12 @@ export function MetaProvider({ children = null as any }) {
       async info => {
         const pubkey =
           typeof info.accountId === 'string'
-            ? new PublicKey(info.accountId as unknown as string)
-            : info.accountId;
+            ? info.accountId
+            : info.accountId.toBase58();
         await processAuctions(
+          pubkey,
           {
-            pubkey,
+            pubkey: new PublicKey(pubkey),
             account: info.accountInfo,
           },
           updateStateValue,
@@ -594,22 +597,17 @@ export const useMeta = () => {
 };
 
 function isValidHttpUrl(text: string) {
-  let url;
-
-  try {
-    url = new URL(text);
-  } catch (_) {
-    return false;
+  if(text.startsWith('http:') || text.startsWith('https:')) {
+    return true;
   }
-
-  return url.protocol === 'http:' || url.protocol === 'https:';
 }
 
 const processAuctions = (
+  key: string,
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
 ) => {
-  if (a.account.owner.toBase58() !== programIds().auction.toBase58()) return;
+  if (!a.account.owner.equals(programIds().auction)) return;
 
   try {
     const account = cache.add(
@@ -618,7 +616,7 @@ const processAuctions = (
       AuctionParser,
       false,
     ) as ParsedAccount<AuctionData>;
-    setter('auctions', a.pubkey.toBase58(), account);
+    setter('auctions', key, account);
   } catch (e) {
     // ignore errors
     // add type as first byte for easier deserialization
@@ -632,7 +630,7 @@ const processAuctions = (
         AuctionDataExtendedParser,
         false,
       ) as ParsedAccount<AuctionDataExtended>;
-      setter('auctionDataExtended', a.pubkey.toBase58(), account);
+      setter('auctionDataExtended', key, account);
     }
   } catch {
     // ignore errors
@@ -681,11 +679,12 @@ const processAuctions = (
 };
 
 const processMetaplexAccounts = async (
+  key: string,
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
   useAll: boolean,
 ) => {
-  if (a.account.owner.toBase58() !== programIds().metaplex.toBase58()) return;
+  if (!a.account.owner.equals(programIds().metaplex)) return;
 
   try {
     const STORE_ID = programIds().store?.toBase58() || '';
@@ -713,7 +712,7 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: ticket,
       };
-      setter('bidRedemptions', a.pubkey.toBase58(), account);
+      setter('bidRedemptions', key, account);
     } else if (a.account.data[0] === MetaplexKey.PayoutTicketV1) {
       const ticket = decodePayoutTicket(a.account.data);
       const account: ParsedAccount<PayoutTicket> = {
@@ -721,7 +720,7 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: ticket,
       };
-      setter('payoutTickets', a.pubkey.toBase58(), account);
+      setter('payoutTickets', key, account);
     } else if (a.account.data[0] === MetaplexKey.PrizeTrackingTicketV1) {
       const ticket = decodePrizeTrackingTicket(a.account.data);
       const account: ParsedAccount<PrizeTrackingTicket> = {
@@ -729,7 +728,7 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: ticket,
       };
-      setter('prizeTrackingTickets', a.pubkey.toBase58(), account);
+      setter('prizeTrackingTickets', key, account);
     } else if (a.account.data[0] === MetaplexKey.StoreV1) {
       const store = decodeStore(a.account.data);
       const account: ParsedAccount<Store> = {
@@ -737,10 +736,10 @@ const processMetaplexAccounts = async (
         account: a.account,
         info: store,
       };
-      if (a.pubkey.toBase58() === STORE_ID) {
-        setter('store', a.pubkey.toBase58(), account);
+      if (key === STORE_ID) {
+        setter('store', key, account);
       }
-      setter('stores', a.pubkey.toBase58(), account);
+      setter('stores', key, account);
     } else if (a.account.data[0] === MetaplexKey.WhitelistedCreatorV1) {
       const whitelistedCreator = decodeWhitelistedCreator(a.account.data);
 
@@ -750,7 +749,7 @@ const processMetaplexAccounts = async (
         whitelistedCreator.address,
       );
       if (
-        creatorKeyIfCreatorWasPartOfThisStore.toBase58() === a.pubkey.toBase58()
+        creatorKeyIfCreatorWasPartOfThisStore.toBase58() === key
       ) {
         const account = cache.add(
           a.pubkey,
@@ -784,7 +783,7 @@ const processMetaData = (
   meta: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
 ) => {
-  if (meta.account.owner.toBase58() !== programIds().metadata.toBase58())
+  if (!meta.account.owner.equals(programIds().metadata))
     return;
 
   try {
@@ -857,7 +856,7 @@ const processVaultData = (
   a: PublicKeyAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
 ) => {
-  if (a.account.owner.toBase58() !== programIds().vault.toBase58()) return;
+  if (!a.account.owner.equals(programIds().vault)) return;
 
   try {
     if (a.account.data[0] === VaultKey.SafetyDepositBoxV1) {
