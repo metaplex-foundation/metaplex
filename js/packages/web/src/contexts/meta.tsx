@@ -285,7 +285,7 @@ export function MetaProvider({ children = null as any }) {
         let account = {
           pubkey: new PublicKey(key),
           account: {
-            data: Buffer.from(data.account.data, 'base64'),
+            data: Buffer.from(data.account.data[0], 'base64'),
             executable: data.account.executable,
             lamports: data.account.lamports,
             owner: new PublicKey(data.account.owner),
