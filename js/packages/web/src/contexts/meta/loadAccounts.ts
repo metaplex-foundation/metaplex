@@ -4,7 +4,12 @@ import {
   METAPLEX_ID,
   VAULT_ID,
 } from '@oyster/common/dist/lib/utils/ids';
-import { Connection } from '@solana/web3.js';
+import {
+  AccountInfo,
+  Commitment,
+  Connection,
+  PublicKey,
+} from '@solana/web3.js';
 import { AccountAndPubkey, MetaState, ProcessAccountsFunc } from './types';
 import { isMetadataPartOfStore } from './isMetadataPartOfStore';
 import { processAuctions } from './processAuctions';
@@ -12,6 +17,29 @@ import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
 import { Metadata, ParsedAccount } from '../../../../common/dist/lib';
+
+async function getProgramAccounts(
+  connection: Connection,
+  programId: PublicKey,
+  commitment?: Commitment,
+): Promise<Array<{ pubkey: string; account: AccountInfo<string> }>> {
+  const args = connection._buildArgs(
+    [programId.toBase58()],
+    commitment,
+    'base64',
+  );
+  const unsafeRes = await (connection as any)._rpcRequest(
+    'getProgramAccounts',
+    args,
+  );
+
+  const data = unsafeRes.result as Array<{
+    account: AccountInfo<string>;
+    pubkey: string;
+  }>;
+
+  return data;
+}
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = {
@@ -48,14 +76,14 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
     };
 
   await Promise.all([
-    connection.getProgramAccounts(VAULT_ID).then(forEach(processVaultData)),
-    connection.getProgramAccounts(AUCTION_ID).then(forEach(processAuctions)),
-    connection
-      .getProgramAccounts(METADATA_PROGRAM_ID)
-      .then(forEach(processMetaData)),
-    connection
-      .getProgramAccounts(METAPLEX_ID)
-      .then(forEach(processMetaplexAccounts)),
+    getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
+    getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
+    getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
+      forEach(processMetaData),
+    ),
+    getProgramAccounts(connection, METAPLEX_ID).then(
+      forEach(processMetaplexAccounts),
+    ),
   ]);
 
   await postProcessMetadata(tempCache, all);

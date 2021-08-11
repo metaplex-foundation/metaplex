@@ -25,13 +25,13 @@ const pendingMintCalls = new Map<string, Promise<MintInfo>>();
 const mintCache = new Map<string, MintInfo>();
 
 export interface ParsedAccountBase {
-  pubkey: PublicKey;
+  pubkey: string;
   account: AccountInfo<Buffer>;
-  info: any; // TODO: change to unkown
+  info: any; // TODO: change to unknown
 }
 
 export type AccountParser = (
-  pubkey: PublicKey,
+  pubkey: string,
   data: AccountInfo<Buffer>,
 ) => ParsedAccountBase | undefined;
 

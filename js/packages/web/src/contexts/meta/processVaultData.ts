@@ -38,7 +38,7 @@ export const processVaultData: ProcessAccountsFunc = (
         info: vault,
       };
 
-      setter('vaults', pubkey.toBase58(), parsedAccount);
+      setter('vaults', pubkey, parsedAccount);
     }
   } catch {
     // ignore errors

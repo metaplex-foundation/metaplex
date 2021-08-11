@@ -1,4 +1,11 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountInfo } from '@solana/web3.js';
+
+export type StringPublicKey = string;
+
+export interface PublicKeyStringAndAccount<T> {
+  pubkey: string;
+  account: AccountInfo<T>;
+}
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',

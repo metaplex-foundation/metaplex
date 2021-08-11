@@ -10,6 +10,7 @@ import {
   AuctionDataExtended,
   MasterEditionV1,
   MasterEditionV2,
+  PublicKeyStringAndAccount,
 } from '@oyster/common';
 import { AccountInfo, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
 import {
@@ -89,7 +90,7 @@ export type UpdateStateValueFunc = (
 ) => void;
 
 export type ProcessAccountsFunc = (
-  account: PublicKeyAndAccount<Buffer>,
+  account: PublicKeyStringAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
   useAll: boolean,
 ) => void;
