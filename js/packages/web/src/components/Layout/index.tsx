@@ -16,6 +16,8 @@ export const AppLayout = React.memo((props: any) => {
       <Layout id={'main-layout'}>
         <span id={'main-bg'}></span>
         <span id={'bg-gradient'}></span>
+        <span id={'static-header-gradient'}></span>
+        <span id={'static-end-gradient'}></span>
         <Header className="App-Bar">
           <AppBar />
         </Header>

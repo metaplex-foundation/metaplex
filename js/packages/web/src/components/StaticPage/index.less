@@ -6,16 +6,6 @@
   min-height: 300px;
   position: relative;
 
-  span#header-gradient {
-    position: absolute;
-    //margin: 0 auto;
-    height: 300px;
-    width: 100%;
-    width: 100vw;
-    bottom: 0;
-    background: linear-gradient(0, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-  }
-
   .header-left {
     height: auto;
     padding: 24px;
@@ -85,7 +75,7 @@
   }
 }
 
-.middle-container {
+#middle-container {
   position: relative;
   max-width: 720px;
   margin: 0 auto;
@@ -141,25 +131,13 @@
   }
 }
 
-.bottom-container {
+#bottom-container {
   width: 100%;
   height: auto;
   min-height: 300px;
   text-align: left;
   padding: 100px 172px;
   position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 300px;
-    width: 100vw;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-    transform: translateX(-64px);
-  }
 
   .title {
     font-family: Graphik, sans-serif;

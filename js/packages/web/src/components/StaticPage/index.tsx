@@ -112,18 +112,29 @@ export const StaticPage = (props: {
   );
 
   useEffect(() => {
-    const gradient = document.getElementById('bg-gradient');
+    const headerGradient = document.getElementById('static-header-gradient');
+    const endGradient = document.getElementById('static-end-gradient');
     const upper = document.getElementById('header-container');
-    if (gradient) gradient.id = 'header-gradient';
-    if (upper && gradient) {
-      const containerLeft = cumulativeOffset(upper);
-      gradient.style.top = `${containerLeft.top + upper.offsetHeight - 300}px`;
-      console.log(containerLeft);
+    const lower = document.getElementById('bottom-container');
+    if (headerGradient) headerGradient.style.display = 'inline-block';
+    if (endGradient) endGradient.style.display = 'inline-block';
+
+    if (upper && headerGradient) {
+      const container = cumulativeOffset(upper);
+      headerGradient.style.top = `${
+        container.top + upper.offsetHeight - headerGradient.offsetHeight
+      }px`;
+    }
+    if (lower && endGradient) {
+      const container = cumulativeOffset(lower);
+      endGradient.style.top = `${container.top}px`;
     }
 
     return () => {
-      const gradient = document.getElementById('header-gradient');
-      if (gradient) gradient.id = 'bg-gradient';
+      const headerGradient = document.getElementById('static-header-gradient');
+      const endGradient = document.getElementById('static-end-gradient');
+      if (headerGradient) headerGradient.style.display = 'none';
+      if (endGradient) endGradient.style.display = 'none';
     };
   }, [dimensions]);
 
@@ -164,7 +175,7 @@ export const StaticPage = (props: {
   );
 
   const middleSection = (
-    <section className="middle-container">
+    <section id="middle-container">
       {props.midContent.sections.map(section => (
         <div className="mid-section-item">
           <p className="title">{section.title}</p>
@@ -197,8 +208,7 @@ export const StaticPage = (props: {
   );
 
   const finalSection = (
-    // TODO: fix gradients in large screens
-    <section className="bottom-container">
+    <section id="bottom-container">
       <p className="title">Shop the Collection</p>
       {liveAuctionsView}
     </section>
