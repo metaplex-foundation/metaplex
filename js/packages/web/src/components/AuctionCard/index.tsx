@@ -377,7 +377,7 @@ export const AuctionCard = ({
                     value={value}
                     onChange={setValue}
                     precision={4}
-                    style={{fontSize: 16, lineHeight: "16px"}}
+                    style={{ fontSize: 16, lineHeight: '16px' }}
                     formatter={value =>
                       value
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')

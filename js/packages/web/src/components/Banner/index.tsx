@@ -18,12 +18,20 @@ export const Banner = (props: {
 
   useEffect(() => {
     const mainBg = document.getElementById('main-bg');
-    if (mainBg && props.useBannerBg)
+    const gradient = document.getElementById('bg-gradient');
+    if (mainBg && props.useBannerBg) {
       mainBg.style.backgroundImage = `url(${props.src})`;
+      mainBg.style.display = 'inline-block';
+      if (gradient) {
+        gradient.style.display = 'inline-block';
+      }
+    }
 
     return () => {
       const mainBg = document.getElementById('main-bg');
+      const gradient = document.getElementById('bg-gradient');
       if (mainBg && props.useBannerBg) mainBg.style.backgroundImage = '';
+      if (gradient) gradient.style.display = 'none';
     };
   }, [props.src, props.useBannerBg]);
 

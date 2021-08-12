@@ -84,7 +84,7 @@ export const AppBar = () => {
       </div>
       <div className="app-right">
         {!connected && <HowToBuyModal buttonClassName="modal-button-default" />}
-        {!connected && <ConnectButton style={{height: 48}} />}
+        {!connected && <ConnectButton style={{ height: 48 }} />}
         {connected && (
           <>
             <CurrentUserBadge showBalance={false} showAddress iconSize={24} />

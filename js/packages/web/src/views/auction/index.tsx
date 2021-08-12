@@ -112,7 +112,7 @@ export const AuctionView = () => {
 
   return (
     <Row justify="center" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={10} className={"img-cont-500"}>
+      <Col span={24} md={10} className={'img-cont-500'}>
         <div className="auction-view" style={{ minHeight: 300 }}>
           <Carousel
             autoplay={false}
@@ -233,8 +233,7 @@ const BidLine = (props: {
   const isme = wallet?.publicKey?.toBase58() === bidder;
 
   return (
-    <Row className={'bid-history'}
-    >
+    <Row className={'bid-history'}>
       {isCancelled && (
         <div
           style={{
@@ -270,7 +269,7 @@ const BidLine = (props: {
           </div>
         )}
       </Col>
-      <Col span={8} style={{opacity: 0.7}}>
+      <Col span={8} style={{ opacity: 0.7 }}>
         {/* uses milliseconds */}
         {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
       </Col>
@@ -285,7 +284,7 @@ const BidLine = (props: {
             }}
             address={bidder}
           />{' '}
-          <span style={{opacity: 0.7}}>{shortenAddress(bidder)}</span>
+          <span style={{ opacity: 0.7 }}>{shortenAddress(bidder)}</span>
         </div>
       </Col>
     </Row>
