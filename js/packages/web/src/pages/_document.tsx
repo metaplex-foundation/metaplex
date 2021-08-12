@@ -40,7 +40,7 @@ export default class MetaplexDocument extends Document {
             href="/favicon-16x16.png"
           />
           <meta name="theme-color" content="#000000" />
-          <meta name="description" content="Metaplex NFT Marketplace" />
+          <meta name="description" content="Magic Items Marketplace" />
           <meta name="twitter:card" content="summary_large_image"/>
           <meta name="twitter:site" content="@ghostoutfits"/>
           <meta name="twitter:creator" content="@ghostoutfits"/>

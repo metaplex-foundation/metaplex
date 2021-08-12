@@ -11,7 +11,7 @@ export const RulesView = () => (
         <h2>Trying to get a better idea of what you’ve stumbled upon, you work up the courage to say in hushed tones to a merchant, <span className='purple'>“Why does this Magic Items Marketplace exist?”</span></h2>
         <h3>"Because digital artists should be compensated for making digital art," barks the merchant with a scowl.</h3>
         <h3>A bearded fellow with deep, ancient wrinkles in his face looks up from his browsing with a far-off gaze. He pontificates softly, "Because D&D is built to collectively imagine new worlds, making it an excellent space to explore what it means to 'own' imaginary objects..."</h3>
-        <h3>A tiny goblin hops onto a counter, hisses in your general direction, shrieking, "Because there are so many cash-grab NFT projects out there... We need more projects that use the technology to let people be creative!"</h3>
+        <h3>A tiny goblin hops onto a counter and hisses in your general direction, shrieking, "Because there are so many cash-grab NFT projects out there... We need more projects that puts this technology in the hands of creative creatures!"</h3>
         <br></br>
         <hr></hr>
         <br></br>
