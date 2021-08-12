@@ -515,7 +515,7 @@ export const AuctionCard = ({
                       width: '100%',
                       background: '#242424',
                       borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5);',
+                      color: 'rgba(0, 0, 0, 0.5)',
                     }}
                   >
                     <InputNumber

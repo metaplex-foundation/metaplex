@@ -5,7 +5,9 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  findProgramAddress,
   programIds,
+  StringPublicKey,
   toPublicKey,
   useConnection,
   useUserAccounts,
@@ -98,11 +100,11 @@ function RunAction({
 
 export async function getPersonalEscrowAta(
   wallet: WalletAdapter | undefined,
-): Promise<PublicKey | undefined> {
+): Promise<StringPublicKey | undefined> {
   const PROGRAM_IDS = programIds();
   if (!wallet?.publicKey) return undefined;
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         PROGRAM_IDS.token.toBuffer(),
@@ -127,7 +129,7 @@ export function useCollapseWrappedSol({
     const ata = await getPersonalEscrowAta(wallet);
     if (ata) {
       try {
-        const balance = await connection.getTokenAccountBalance(ata);
+        const balance = await connection.getTokenAccountBalance(toPublicKey(ata));
 
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
@@ -150,7 +152,7 @@ export function useCollapseWrappedSol({
         try {
           const ata = await getPersonalEscrowAta(wallet);
           if (ata) {
-            const data = await connection.getAccountInfo(ata);
+            const data = await connection.getAccountInfo(toPublicKey(ata));
             if (data?.data.length || 0 > 0)
               await closePersonalEscrow(connection, wallet, ata);
           }
