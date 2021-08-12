@@ -7,9 +7,9 @@ import {
   Edition,
   MasterEditionV1,
   MasterEditionV2,
+  MetadataKey,
+  METADATA_PROGRAM_ID,
 } from '@oyster/common';
-import { MetadataKey } from '@oyster/common/dist/lib/actions/metadata';
-import { METADATA_PROGRAM_ID } from '@oyster/common/dist/lib/utils/ids';
 import { AccountInfo } from '@solana/web3.js';
 import { ProcessAccountsFunc } from './types';
 import { isValidHttpUrl } from '../../utils/isValidHttpUrl';

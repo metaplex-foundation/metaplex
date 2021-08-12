@@ -43,16 +43,29 @@ export const setStoreID = (storeId: any) => {
 };
 
 const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
   if (!STORE_OWNER_ADDRESS) {
     return undefined;
   }
 
+  let urlStoreId: PublicKey | null = null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const text = urlParams.get('store');
+    if (text) {
+      urlStoreId = new PublicKey(text);
+    }
+  } catch {
+    // ignore
+  }
+
+  const storeOwnerAddress = urlStoreId || STORE_OWNER_ADDRESS;
+
+  console.log(`STORE_OWNER_ADDRESS: ${storeOwnerAddress?.toBase58()}`);
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
       METAPLEX_ID.toBuffer(),
-      STORE_OWNER_ADDRESS.toBuffer(),
+      storeOwnerAddress.toBuffer(),
     ],
     METAPLEX_ID,
   );
