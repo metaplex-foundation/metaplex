@@ -161,7 +161,6 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       setOf100MetadataEditionKeys.push(edition.toBase58());
 
       if (setOf100MetadataEditionKeys.length >= 100) {
-        console.log('push');
         editionPromises.push(
           getMultipleAccounts(
             connection,
