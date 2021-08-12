@@ -109,7 +109,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: store,
       };
-      if (STORE_ID && pubkey === STORE_ID) {
+      if (STORE_ID && pubkey === STORE_ID.toBase58()) {
         setter('store', pubkey, parsedAccount);
       }
       setter('stores', pubkey, parsedAccount);

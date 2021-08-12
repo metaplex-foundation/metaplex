@@ -45,9 +45,9 @@ export const HomeView = () => {
   // Check if the auction is primary sale or not
   const checkPrimarySale = (auc:AuctionView) => {
     var flag = 0;
-    auc.items.forEach(i => 
+    auc.items.forEach(i =>
       {
-        i.forEach(j => { 
+        i.forEach(j => {
           if (j.metadata.info.primarySaleHappened == true) {
             flag = 1;
             return true;
@@ -73,7 +73,7 @@ export const HomeView = () => {
         items = liveAuctions;
         break;
       case LiveAuctionViewState.Participated:
-        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58());
+        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey == wallet?.publicKey?.toBase58());
         break;
       case LiveAuctionViewState.Resale:
         items = resaleAuctions;
@@ -106,7 +106,7 @@ export const HomeView = () => {
                 return;
               }
 
-            const id = m.auction.pubkey.toBase58();
+            const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
                 <AuctionRenderCard key={id} auctionView={m} />
@@ -129,7 +129,7 @@ export const HomeView = () => {
                 return;
               }
 
-              const id = m.auction.pubkey.toBase58();
+              const id = m.auction.pubkey;
               return (
                 <Link to={`/auction/${id}`} key={idx}>
                   <AuctionRenderCard key={id} auctionView={m} />
@@ -181,7 +181,7 @@ export const HomeView = () => {
 
                   await saveAdmin(connection, wallet, false, [
                     new WhitelistedCreator({
-                      address: wallet?.publicKey,
+                      address: wallet?.publicKey.toBase58(),
                       activated: true,
                     }),
                   ]);
