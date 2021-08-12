@@ -24,6 +24,7 @@ import {
   IPartialCreateAuctionArgs,
   MetadataKey,
   StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -404,7 +405,7 @@ async function buildSafetyDepositArray(
       },
       config: new SafetyDepositConfig({
         directArgs: {
-          auctionManager: SystemProgram.programId,
+          auctionManager: SystemProgram.programId.toBase58(),
           order: new BN(i),
           amountRanges: s.amountRanges,
           amountType: maxAmount.gte(new BN(254))
@@ -438,7 +439,7 @@ async function buildSafetyDepositArray(
       .reverse()[0];
     const config = new SafetyDepositConfig({
       directArgs: {
-        auctionManager: SystemProgram.programId,
+        auctionManager: SystemProgram.programId.toBase58(),
         order: new BN(safetyDeposits.length),
         amountRanges: participationSafetyDepositDraft.amountRanges,
         amountType: maxAmount?.gte(new BN(255))
@@ -469,7 +470,9 @@ async function buildSafetyDepositArray(
               [
                 wallet.publicKey.toBuffer(),
                 programIds().token.toBuffer(),
-                me?.info.oneTimePrintingAuthorizationMint.toBuffer(),
+                toPublicKey(
+                  me?.info.oneTimePrintingAuthorizationMint,
+                ).toBuffer(),
               ],
               programIds().associatedToken,
             )
@@ -508,7 +511,7 @@ async function setupAuctionManagerInstructions(
   signers: Keypair[];
   auctionManager: StringPublicKey;
 }> {
-  let store = programIds().store;
+  let store = programIds().store?.toBase58();
   if (!store) {
     throw new Error('Store not initialized');
   }
@@ -522,10 +525,10 @@ async function setupAuctionManagerInstructions(
     instructions,
     wallet.publicKey,
     accountRentExempt,
-    paymentMint,
-    auctionManagerKey,
+    toPublicKey(paymentMint),
+    toPublicKey(auctionManagerKey),
     signers,
-  );
+  ).toBase58();
 
   let maxRanges = [
     auctionSettings.winners.usize.toNumber(),
@@ -538,8 +541,8 @@ async function setupAuctionManagerInstructions(
 
   await initAuctionManagerV2(
     vault,
-    wallet.publicKey,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
+    wallet.publicKey.toBase58(),
     acceptPayment,
     store,
     safetyDeposits.length >= 254 ? TupleNumericType.U16 : TupleNumericType.U8,
@@ -580,7 +583,7 @@ async function deprecatedValidateParticipationHelper(
   participationSafetyDepositDraft: SafetyDepositDraft,
   accountRentExempt: number,
 ): Promise<{ instructions: TransactionInstruction[]; signers: Keypair[] }> {
-  const store = programIds().store;
+  const store = programIds().store?.toBase58();
   if (!store) {
     throw new Error('Store not initialized');
   }
@@ -610,16 +613,16 @@ async function deprecatedValidateParticipationHelper(
       instructions,
       wallet.publicKey,
       accountRentExempt,
-      me.info.printingMint,
-      auctionManagerKey,
+      toPublicKey(me.info.printingMint),
+      toPublicKey(auctionManagerKey),
       signers,
-    );
+    ).toBase58();
     await deprecatedValidateParticipation(
       auctionManager,
       participationSafetyDepositDraft.metadata.pubkey,
       participationSafetyDepositDraft.masterEdition?.pubkey,
       printingTokenHoldingAccount,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       whitelistedCreator,
       store,
       await getSafetyDepositBoxAddress(
@@ -641,14 +644,12 @@ async function findValidWhitelistedCreator(
     ParsedAccount<WhitelistedCreator>
   >,
   creators: Creator[],
-): Promise<PublicKey> {
+): Promise<StringPublicKey> {
   for (let i = 0; i < creators.length; i++) {
     const creator = creators[i];
 
-    if (
-      whitelistedCreatorsByCreator[creator.address.toBase58()]?.info.activated
-    )
-      return whitelistedCreatorsByCreator[creator.address.toBase58()].pubkey;
+    if (whitelistedCreatorsByCreator[creator.address]?.info.activated)
+      return whitelistedCreatorsByCreator[creator.address].pubkey;
   }
   return await getWhitelistedCreator(creators[0]?.address);
 }
@@ -666,7 +667,7 @@ async function validateBoxes(
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
 }> {
-  const store = programIds().store;
+  const store = programIds().store?.toBase58();
   if (!store) {
     throw new Error('Store not initialized');
   }
@@ -720,9 +721,9 @@ async function validateBoxes(
         WinningConfigType.PrintingV1
         ? me?.info.printingMint
         : safetyDeposits[i].draft.metadata.info.mint,
-      wallet.publicKey,
-      wallet.publicKey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
+      wallet.publicKey.toBase58(),
+      wallet.publicKey.toBase58(),
       tokenInstructions,
       edition,
       whitelistedCreator,
@@ -753,27 +754,27 @@ async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),
-        oneTimePrintingAuthorizationMint.toBuffer(),
+        toPublicKey(oneTimePrintingAuthorizationMint).toBuffer(),
       ],
       programIds().associatedToken,
     )
   )[0];
 
-  if (!(await connection.getAccountInfo(recipientKey))) {
+  if (!(await connection.getAccountInfo(toPublicKey(recipientKey)))) {
     createAssociatedTokenAccountInstruction(
       instructions,
-      recipientKey,
+      toPublicKey(recipientKey),
       wallet.publicKey,
       wallet.publicKey,
-      oneTimePrintingAuthorizationMint,
+      toPublicKey(oneTimePrintingAuthorizationMint),
     );
   }
 
   instructions.push(
     Token.createMintToInstruction(
       programIds().token,
-      oneTimePrintingAuthorizationMint,
-      recipientKey,
+      toPublicKey(oneTimePrintingAuthorizationMint),
+      toPublicKey(recipientKey),
       wallet.publicKey,
       [],
       1,

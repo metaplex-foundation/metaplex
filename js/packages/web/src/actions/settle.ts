@@ -142,7 +142,7 @@ async function emptyPaymentAccountForAllTokens(
           item.safetyDeposit.pubkey,
           item.safetyDeposit.info.vault,
           auctionView.auction.pubkey,
-          wallet.publicKey,
+          wallet.publicKey.toBase58(),
           addresses[k],
           item === auctionView.participationItem ? null : i,
           item === auctionView.participationItem ? null : j,
@@ -230,7 +230,7 @@ async function claimAllBids(
   // That's what this loop is building.
   for (let i = 0; i < bids.length; i++) {
     const bid = bids[i];
-    console.log('Claiming', bid.info.bidderAct.toBase58());
+    console.log('Claiming', bid.info.bidderAct);
     await claimBid(
       auctionView.auctionManager.acceptPayment,
       bid.info.bidderAct,

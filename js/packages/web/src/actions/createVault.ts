@@ -69,7 +69,7 @@ export async function createVault(
     toPublicKey(vaultAuthority),
     toPublicKey(vaultAuthority),
     signers,
-  );
+  ).toBase58();
 
   const redeemTreasury = createTokenAccount(
     instructions,
@@ -78,16 +78,16 @@ export async function createVault(
     toPublicKey(priceMint),
     toPublicKey(vaultAuthority),
     signers,
-  );
+  ).toBase58();
 
   const fractionTreasury = createTokenAccount(
     instructions,
     wallet.publicKey,
     accountRentExempt,
-    fractionalMint,
+    toPublicKey(fractionalMint),
     toPublicKey(vaultAuthority),
     signers,
-  );
+  ).toBase58();
 
   const uninitializedVault = SystemProgram.createAccount({
     fromPubkey: wallet.publicKey,
@@ -104,14 +104,14 @@ export async function createVault(
     fractionalMint,
     redeemTreasury,
     fractionTreasury,
-    vault.publicKey,
-    wallet.publicKey,
+    vault.publicKey.toBase58(),
+    wallet.publicKey.toBase58(),
     externalPriceAccount,
     instructions,
   );
 
   return {
-    vault: vault.publicKey,
+    vault: vault.publicKey.toBase58(),
     fractionalMint,
     redeemTreasury,
     fractionTreasury,

@@ -24,18 +24,18 @@ export async function decommAuctionManagerAndReturnPrizes(
     let decomSigners: Keypair[] = [];
     let decomInstructions: TransactionInstruction[] = [];
 
-    if (auctionView.auction.info.authority === wallet.publicKey) {
+    if (auctionView.auction.info.authority === wallet.publicKey.toBase58()) {
       await setAuctionAuthority(
         auctionView.auction.pubkey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         auctionView.auctionManager.pubkey,
         decomInstructions,
       );
     }
-    if (auctionView.vault.info.authority === wallet.publicKey) {
+    if (auctionView.vault.info.authority === wallet.publicKey.toBase58()) {
       await setVaultAuthority(
         auctionView.vault.pubkey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         auctionView.auctionManager.pubkey,
         decomInstructions,
       );
@@ -43,7 +43,7 @@ export async function decommAuctionManagerAndReturnPrizes(
     await decommissionAuctionManager(
       auctionView.auctionManager.pubkey,
       auctionView.auction.pubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       auctionView.vault.pubkey,
       decomInstructions,
     );

@@ -160,7 +160,7 @@ export async function sendRedeemBid(
             auctionView,
             mintRentExempt,
             wallet,
-            wallet.publicKey,
+            wallet.publicKey.toBase58(),
             safetyDeposit,
             item,
             signers,
@@ -259,7 +259,7 @@ export async function sendRedeemBid(
         accountRentExempt,
         mintRentExempt,
         wallet,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         safetyDeposit,
         auctionView.myBidRedemption,
         auctionView.myBidderMetadata,
@@ -270,7 +270,7 @@ export async function sendRedeemBid(
     }
   }
 
-  if (wallet.publicKey.equals(auctionView.auctionManager.authority)) {
+  if (wallet.publicKey.toBase58() === auctionView.auctionManager.authority) {
     await claimUnusedPrizes(
       connection,
       wallet,
@@ -332,7 +332,7 @@ async function setupRedeemInstructions(
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
       auctionView.myBidderMetadata.info.bidderPubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       undefined,
       undefined,
       false,
@@ -342,7 +342,7 @@ async function setupRedeemInstructions(
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
     await updatePrimarySaleHappenedViaToken(
       metadata,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       newTokenAccount,
       winningPrizeInstructions,
     );
@@ -391,10 +391,10 @@ async function setupRedeemFullRightsTransferInstructions(
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
       auctionView.myBidderMetadata.info.bidderPubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       winningPrizeInstructions,
       item.metadata.pubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
     );
 
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
@@ -548,7 +548,7 @@ export async function setupRedeemPrintingV2Instructions(
       account,
       safetyDeposit.pubkey,
       receiverWallet,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       item.metadata.pubkey,
       me.pubkey,
       item.metadata.info.mint,
@@ -561,10 +561,10 @@ export async function setupRedeemPrintingV2Instructions(
 
     const metadata = await getMetadata(mint);
 
-    if (wallet.publicKey.equals(receiverWallet)) {
+    if (wallet.publicKey.toBase58() === receiverWallet) {
       await updatePrimarySaleHappenedViaToken(
         metadata,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         account,
         myInstructions,
       );
@@ -598,7 +598,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
 
   const me = item.masterEdition as ParsedAccount<MasterEditionV1>;
 
-  const newTokenAccount = accountsByMint.get(me.info.printingMint.toBase58());
+  const newTokenAccount = accountsByMint.get(me.info.printingMint);
   let newTokenAccountKey: StringPublicKey | undefined = newTokenAccount?.pubkey;
 
   let newTokenAccountBalance: number = newTokenAccount
@@ -636,7 +636,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
         safetyDeposit.pubkey,
         auctionView.vault.info.fractionMint,
         auctionView.myBidderMetadata.info.bidderPubkey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         item.masterEdition.pubkey,
         reservationList,
         true,
@@ -727,20 +727,20 @@ async function deprecatedRedeemPrintingV1Token(
   await deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
     newLimitedEditionMint,
     item.metadata.info.mint,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
     me.info.printingMint,
     newTokenAccount,
     burnAuthority.publicKey.toBase58(),
     updateAuth,
     reservationList,
     cashInLimitedPrizeAuthorizationTokenInstruction,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
   );
 
   const metadata = await getMetadata(newLimitedEditionMint);
   await updatePrimarySaleHappenedViaToken(
     metadata,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
     newLimitedEdition.toBase58(),
     cashInLimitedPrizeAuthorizationTokenInstruction,
   );
@@ -844,7 +844,7 @@ export async function setupRedeemParticipationInstructions(
       account,
       safetyDeposit.pubkey,
       receiverWallet,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       item.metadata.pubkey,
       me.pubkey,
       item.metadata.info.mint,
@@ -868,7 +868,7 @@ export async function setupRedeemParticipationInstructions(
 
       await updatePrimarySaleHappenedViaToken(
         metadata,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         account,
         updatePrimarySaleHappenedInstructions,
       );
@@ -944,7 +944,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
       me.info.oneTimePrintingAuthorizationMint,
       me.pubkey,
       item.metadata.pubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       fillParticipationStashInstructions,
     );
 
@@ -1024,7 +1024,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
         newTokenAccount,
         safetyDeposit.pubkey,
         auctionView.myBidderMetadata.info.bidderPubkey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
         winningPrizeInstructions,
         participationState.printingAuthorizationTokenAccount,
         transferAuthority.publicKey.toBase58(),

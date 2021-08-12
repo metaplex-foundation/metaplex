@@ -104,7 +104,7 @@ export const mintNFT = async (
   // twice post Arweave. We store in an account (payer) and use it post-Arweave to update MD with new link
   // then give control back to the user.
   // const payer = new Account();
-  const payerPublicKey = wallet.publicKey;
+  const payerPublicKey = wallet.publicKey.toBase58();
   const instructions: TransactionInstruction[] = [...pushInstructions];
   const signers: Keypair[] = [...pushSigners];
 
@@ -136,7 +136,7 @@ export const mintNFT = async (
     toPublicKey(recipientKey),
     wallet.publicKey,
     wallet.publicKey,
-    mintKey,
+    toPublicKey(mintKey),
   );
 
   const metadataAccount = await createMetadata(
@@ -151,7 +151,7 @@ export const mintNFT = async (
     mintKey,
     payerPublicKey,
     instructions,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
   );
 
   // TODO: enable when using payer account to avoid 2nd popup
@@ -238,9 +238,9 @@ export const mintNFT = async (
     updateInstructions.push(
       Token.createMintToInstruction(
         TOKEN_PROGRAM_ID,
-        mintKey,
-        recipientKey,
-        payerPublicKey,
+        toPublicKey(mintKey),
+        toPublicKey(recipientKey),
+        toPublicKey(payerPublicKey),
         [],
         1,
       ),

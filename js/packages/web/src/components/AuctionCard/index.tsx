@@ -81,7 +81,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
     if (!winner) {
       break;
     } else {
-      const bid = bids.find(b => b.info.bidderPubkey.equals(winner));
+      const bid = bids.find(b => b.info.bidderPubkey === winner);
       if (bid) {
         for (
           let j = 0;
@@ -159,10 +159,10 @@ function useAuctionExtended(
       if (!auctionExtended) {
         const PROGRAM_IDS = programIds();
         const extendedKey = await getAuctionExtended({
-          auctionProgramId: PROGRAM_IDS.auction,
+          auctionProgramId: PROGRAM_IDS.auction.toBase58(),
           resource: auctionView.vault.pubkey,
         });
-        const extendedValue = auctionDataExtended[extendedKey.toBase58()];
+        const extendedValue = auctionDataExtended[extendedKey];
         if (extendedValue) setAuctionExtended(extendedValue);
       }
     };
@@ -239,7 +239,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority.toBase58() !=
+    auctionView.auctionManager.authority !==
     wallet?.publicKey?.toBase58();
 
   const isAuctionNotStarted =
@@ -272,7 +272,7 @@ export const AuctionCard = ({
               setLoading(true);
               setShowRedemptionIssue(false);
               if (
-                wallet?.publicKey?.equals(auctionView.auctionManager.authority)
+                wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
               ) {
                 const totalCost =
                   await calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -325,7 +325,7 @@ export const AuctionCard = ({
             ) : (
               `${
                 wallet?.publicKey &&
-                auctionView.auctionManager.authority.equals(wallet.publicKey)
+                auctionView.auctionManager.authority === wallet.publicKey.toBase58()
                   ? 'Reclaim Items'
                   : 'Refund bid'
               }`

@@ -83,7 +83,7 @@ export async function deprecatedPopulatePrintingTokens(
         await deprecatedMintPrintingTokens(
           nft.box.tokenAccount,
           nft.box.tokenMint,
-          wallet.publicKey,
+          wallet.publicKey.toBase58(),
           nft.draft.metadata.pubkey,
           nft.draft.masterEdition.pubkey,
           new BN(nft.box.amount.toNumber() - balance),

@@ -120,7 +120,7 @@ export async function setupCancelBid(
     );
 
     await cancelBid(
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       receivingSolAccount,
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,

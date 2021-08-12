@@ -36,8 +36,8 @@ export async function deprecatedCreateReservationListForTokens(
         safetyDeposit.draft.metadata.pubkey,
         safetyDeposit.draft.masterEdition.pubkey,
         auctionManager,
-        wallet.publicKey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
+        wallet.publicKey.toBase58(),
         currInstructions,
       );
 

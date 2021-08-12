@@ -131,12 +131,12 @@ export async function setupPlaceBid(
 
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
     payingSolAccount,
     bidderPotTokenAccount,
     auctionView.auction.info.tokenMint,
     transferAuthority.publicKey.toBase58(),
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
     bid,
     instructions,

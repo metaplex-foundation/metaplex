@@ -13,7 +13,7 @@ export async function sendSignMetadata(
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
 
-  await signMetadata(metadata, wallet.publicKey, instructions);
+  await signMetadata(metadata, wallet.publicKey.toBase58(), instructions);
 
   await sendTransactionWithRetry(
     connection,

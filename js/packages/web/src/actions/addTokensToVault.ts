@@ -96,8 +96,8 @@ export async function addTokensToVault(
         nft.box.tokenAccount,
         newStoreAccount.toBase58(),
         vault,
-        wallet.publicKey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
+        wallet.publicKey.toBase58(),
         transferAuthority.publicKey.toBase58(),
         currInstructions,
       );

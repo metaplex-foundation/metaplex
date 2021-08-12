@@ -38,11 +38,11 @@ export async function makeAuction(
 
   const fullSettings = new CreateAuctionArgs({
     ...auctionSettings,
-    authority: wallet.publicKey,
+    authority: wallet.publicKey.toBase58(),
     resource: vault,
   });
 
-  createAuction(fullSettings, wallet.publicKey, instructions);
+  createAuction(fullSettings, wallet.publicKey.toBase58(), instructions);
 
   return { instructions, signers, auction: auctionKey };
 }
