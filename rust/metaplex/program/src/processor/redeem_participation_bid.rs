@@ -263,11 +263,13 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
+    let auction_extended_info: Option<&AccountInfo>; 
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {
             participation_printing_holding_account_info: next_account_info(account_info_iter)?,
         });
+        auction_extended_info = None;
     } else {
         v2_accounts = Some(V2Accounts {
             prize_tracking_ticket_info: next_account_info(account_info_iter)?,
@@ -279,7 +281,8 @@ pub fn process_redeem_participation_bid<'a>(
             mint_authority_info: next_account_info(account_info_iter)?,
             metadata_account_info: next_account_info(account_info_iter)?,
             auction_extended_info: next_account_info(account_info_iter)?,
-        })
+        });
+        auction_extended_info = Some(v2_accounts.unwrap().auction_extended_info)
     }
 
     let CommonRedeemReturn {
@@ -298,6 +301,7 @@ pub fn process_redeem_participation_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,
