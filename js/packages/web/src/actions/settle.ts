@@ -15,6 +15,7 @@ import {
   findProgramAddress,
   AuctionState,
   TokenAccount,
+  toPublicKey,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -32,7 +33,7 @@ export async function settle(
   wallet: any,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
-  payingAccount: PublicKey | undefined,
+  payingAccount: string | undefined,
   accountsByMint: Map<string, TokenAccount>,
 ) {
   if (
@@ -96,9 +97,7 @@ async function emptyPaymentAccountForAllTokens(
       const creators = item.metadata.info.data.creators;
       const edgeCaseWhereCreatorIsAuctioneer = !!creators
         ?.map(c => c.address)
-        .find(
-          c => c.toBase58() === auctionView.auctionManager.authority.toBase58(),
-        );
+        .find(c => c === auctionView.auctionManager.authority);
 
       const addresses = [
         ...(creators ? creators.map(c => c.address) : []),
@@ -109,7 +108,7 @@ async function emptyPaymentAccountForAllTokens(
         const ata = (
           await findProgramAddress(
             [
-              addresses[k].toBuffer(),
+              toPublicKey(addresses[k]).toBuffer(),
               PROGRAM_IDS.token.toBuffer(),
               QUOTE_MINT.toBuffer(),
             ],
@@ -117,23 +116,21 @@ async function emptyPaymentAccountForAllTokens(
           )
         )[0];
 
-        const existingAta = await connection.getAccountInfo(ata);
+        const existingAta = await connection.getAccountInfo(toPublicKey(ata));
         console.log('Existing ata?', existingAta);
-        if (!existingAta && !ataLookup[ata.toBase58()])
+        if (!existingAta && !ataLookup[ata])
           createAssociatedTokenAccountInstruction(
             settleInstructions,
-            ata,
+            toPublicKey(ata),
             wallet.publicKey,
-            addresses[k],
+            toPublicKey(addresses[k]),
             QUOTE_MINT,
           );
 
-        ataLookup[ata.toBase58()] = true;
+        ataLookup[ata] = true;
 
         const creatorIndex = creators
-          ? creators
-              .map(c => c.address.toBase58())
-              .indexOf(addresses[k].toBase58())
+          ? creators.map(c => c.address).indexOf(addresses[k])
           : null;
 
         await emptyPaymentAccount(

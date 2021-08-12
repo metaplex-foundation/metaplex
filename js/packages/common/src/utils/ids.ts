@@ -4,7 +4,11 @@ export type StringPublicKey = string;
 
 const PubKeysInternedMap = new Map<string, PublicKey>();
 
-export const toPublicKey = (key: string) => {
+export const toPublicKey = (key: string | PublicKey) => {
+  if (typeof key !== 'string') {
+    return key;
+  }
+
   let result = PubKeysInternedMap.get(key);
   if (!result) {
     result = new PublicKey(key);

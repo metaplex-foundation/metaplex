@@ -13,8 +13,9 @@ import {
   SafetyDepositBox,
   MasterEditionV2,
   toPublicKey,
+  StringPublicKey,
 } from '@oyster/common';
-import { AccountInfo, PublicKey, SystemProgram } from '@solana/web3.js';
+import { AccountInfo, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
 import { deserializeUnchecked } from 'borsh';
 import bs58 from 'bs58';
@@ -77,22 +78,22 @@ export class PrizeTrackingTicket {
 }
 export class PayoutTicket {
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
-  recipient: string;
+  recipient: StringPublicKey;
   amountPaid: BN;
 
-  constructor(args: { recipient: string; amountPaid: BN }) {
+  constructor(args: { recipient: StringPublicKey; amountPaid: BN }) {
     this.key = MetaplexKey.PayoutTicketV1;
     this.recipient = args.recipient;
     this.amountPaid = args.amountPaid;
   }
 }
 export class AuctionManager {
-  pubkey: string;
-  store: string;
-  authority: string;
-  auction: string;
-  vault: string;
-  acceptPayment: string;
+  pubkey: StringPublicKey;
+  store: StringPublicKey;
+  authority: StringPublicKey;
+  auction: StringPublicKey;
+  vault: StringPublicKey;
+  acceptPayment: StringPublicKey;
   numWinners: BN;
   safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[];
   bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[];
@@ -200,14 +201,12 @@ export class AuctionManager {
       ).settings.winningConfigs.map(w => {
         return w.items.map(it => {
           let metadata =
-            metadataByMint[
-              boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
-            ];
+            metadataByMint[boxes[it.safetyDepositBoxIndex]?.info.tokenMint];
           if (!metadata) {
             // Means is a limited edition v1, so the tokenMint is the printingMint
             let masterEdition =
               masterEditionsByPrintingMint[
-                boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
+                boxes[it.safetyDepositBoxIndex]?.info.tokenMint
               ];
             if (masterEdition) {
               metadata = metadataByMasterEdition[masterEdition.pubkey];
@@ -219,7 +218,7 @@ export class AuctionManager {
             safetyDeposit: boxes[it.safetyDepositBoxIndex],
             amount: new BN(it.amount),
             masterEdition: metadata?.info?.masterEdition
-              ? masterEditions[metadata.info.masterEdition.toBase58()]
+              ? masterEditions[metadata.info.masterEdition]
               : undefined,
           };
         });
@@ -233,15 +232,14 @@ export class AuctionManager {
           const amount = s.info.getAmountForWinner(new BN(i));
           if (amount.gt(new BN(0))) {
             const safetyDeposit = boxes[s.info.order.toNumber()];
-            const metadata =
-              metadataByMint[safetyDeposit.info.tokenMint.toBase58()];
+            const metadata = metadataByMint[safetyDeposit.info.tokenMint];
             newWinnerArr.push({
               metadata,
               winningConfigType: s.info.winningConfigType,
               safetyDeposit,
               amount,
               masterEdition: metadata?.info?.masterEdition
-                ? masterEditions[metadata.info.masterEdition.toBase58()]
+                ? masterEditions[metadata.info.masterEdition]
                 : undefined,
             });
           }
@@ -254,19 +252,19 @@ export class AuctionManager {
 
 export class AuctionManagerV2 {
   key: MetaplexKey;
-  store: string;
-  authority: string;
-  auction: string;
-  vault: string;
-  acceptPayment: string;
+  store: StringPublicKey;
+  authority: StringPublicKey;
+  auction: StringPublicKey;
+  vault: StringPublicKey;
+  acceptPayment: StringPublicKey;
   state: AuctionManagerStateV2;
 
   constructor(args: {
-    store: string;
-    authority: string;
-    auction: string;
-    vault: string;
-    acceptPayment: string;
+    store: StringPublicKey;
+    authority: StringPublicKey;
+    auction: StringPublicKey;
+    vault: StringPublicKey;
+    acceptPayment: StringPublicKey;
     state: AuctionManagerStateV2;
   }) {
     this.key = MetaplexKey.AuctionManagerV2;
@@ -452,7 +450,7 @@ export const decodeWhitelistedCreator = (buffer: Buffer) => {
 };
 
 export const WhitelistedCreatorParser: AccountParser = (
-  pubkey: string,
+  pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,
 ) => ({
   pubkey,
@@ -495,7 +493,7 @@ export const decodePayoutTicket = (buffer: Buffer) => {
 
 export class WhitelistedCreator {
   key: MetaplexKey = MetaplexKey.WhitelistedCreatorV1;
-  address: string;
+  address: StringPublicKey;
   activated: boolean = true;
 
   // Populated from name service
@@ -513,17 +511,17 @@ export class WhitelistedCreator {
 export class Store {
   key: MetaplexKey = MetaplexKey.StoreV1;
   public: boolean = true;
-  auctionProgram: string;
-  tokenVaultProgram: string;
-  tokenMetadataProgram: string;
-  tokenProgram: string;
+  auctionProgram: StringPublicKey;
+  tokenVaultProgram: StringPublicKey;
+  tokenMetadataProgram: StringPublicKey;
+  tokenProgram: StringPublicKey;
 
   constructor(args: {
     public: boolean;
-    auctionProgram: string;
-    tokenVaultProgram: string;
-    tokenMetadataProgram: string;
-    tokenProgram: string;
+    auctionProgram: StringPublicKey;
+    tokenVaultProgram: StringPublicKey;
+    tokenMetadataProgram: StringPublicKey;
+    tokenProgram: StringPublicKey;
   }) {
     this.key = MetaplexKey.StoreV1;
     this.public = args.public;
@@ -542,7 +540,7 @@ export interface BidRedemptionTicket {
 export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;
   winnerIndex: BN | null;
-  auctionManager: string;
+  auctionManager: StringPublicKey;
   data: number[] = [];
 
   constructor(args: { key: MetaplexKey; data: number[] }) {
@@ -616,7 +614,7 @@ export class InitAuctionManagerV2Args {
 
 export class SafetyDepositConfig {
   key: MetaplexKey = MetaplexKey.SafetyDepositConfigV1;
-  auctionManager: string = SystemProgram.programId.toBase58();
+  auctionManager: StringPublicKey = SystemProgram.programId.toBase58();
   order: BN = new BN(0);
   winningConfigType: WinningConfigType = WinningConfigType.PrintingV2;
   amountType: TupleNumericType = TupleNumericType.U8;
@@ -628,7 +626,7 @@ export class SafetyDepositConfig {
   constructor(args: {
     data?: Uint8Array;
     directArgs?: {
-      auctionManager: string;
+      auctionManager: StringPublicKey;
       order: BN;
       winningConfigType: WinningConfigType;
       amountType: TupleNumericType;

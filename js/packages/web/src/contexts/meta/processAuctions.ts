@@ -60,9 +60,9 @@ export const processAuctions: ProcessAccountsFunc = (
       ) as ParsedAccount<BidderMetadata>;
       setter(
         'bidderMetadataByAuctionAndBidder',
-        parsedAccount.info.auctionPubkey.toBase58() +
+        parsedAccount.info.auctionPubkey +
           '-' +
-          parsedAccount.info.bidderPubkey.toBase58(),
+          parsedAccount.info.bidderPubkey,
         parsedAccount,
       );
     }
@@ -81,9 +81,7 @@ export const processAuctions: ProcessAccountsFunc = (
       ) as ParsedAccount<BidderPot>;
       setter(
         'bidderPotsByAuctionAndBidder',
-        parsedAccount.info.auctionAct.toBase58() +
-          '-' +
-          parsedAccount.info.bidderAct.toBase58(),
+        parsedAccount.info.auctionAct + '-' + parsedAccount.info.bidderAct,
         parsedAccount,
       );
     }

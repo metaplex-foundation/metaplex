@@ -1,19 +1,20 @@
-import { getBidderPotKey, programIds } from '@oyster/common';
 import {
-  PublicKey,
-  SYSVAR_CLOCK_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
+  getBidderPotKey,
+  programIds,
+  StringPublicKey,
+  toPublicKey,
+} from '@oyster/common';
+import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.';
 
 export async function claimBid(
-  acceptPayment: PublicKey,
-  bidder: PublicKey,
-  bidderPotToken: PublicKey,
-  vault: PublicKey,
-  tokenMint: PublicKey,
+  acceptPayment: StringPublicKey,
+  bidder: StringPublicKey,
+  bidderPotToken: StringPublicKey,
+  vault: StringPublicKey,
+  tokenMint: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -25,7 +26,7 @@ export async function claimBid(
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
   const bidderPotKey = await getBidderPotKey({
-    auctionProgramId: PROGRAM_IDS.auction,
+    auctionProgramId: PROGRAM_IDS.auction.toBase58(),
     auctionKey,
     bidderPubkey: bidder,
   });
@@ -35,43 +36,43 @@ export async function claimBid(
 
   const keys = [
     {
-      pubkey: acceptPayment,
+      pubkey: toPublicKey(acceptPayment),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: bidderPotToken,
+      pubkey: toPublicKey(bidderPotToken),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: bidderPotKey,
+      pubkey: toPublicKey(bidderPotKey),
       isSigner: false,
       isWritable: true,
     },
 
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidder,
+      pubkey: toPublicKey(bidder),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: tokenMint,
+      pubkey: toPublicKey(tokenMint),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: false,
     },

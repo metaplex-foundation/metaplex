@@ -275,7 +275,7 @@ export function ensureWrappedAccount(
 
   signers.push(account);
 
-  return account.publicKey;
+  return account.publicKey.toBase58();
 }
 
 // TODO: check if one of to accounts needs to be native sol ... if yes unwrap it ...

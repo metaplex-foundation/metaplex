@@ -1,7 +1,6 @@
 import {
   Keypair,
   Connection,
-  PublicKey,
   TransactionInstruction,
   SystemProgram,
 } from '@solana/web3.js';
@@ -24,6 +23,7 @@ import {
   findProgramAddress,
   IPartialCreateAuctionArgs,
   MetadataKey,
+  StringPublicKey,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -87,8 +87,8 @@ export interface SafetyDepositDraft {
   metadata: ParsedAccount<Metadata>;
   masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
   edition?: ParsedAccount<Edition>;
-  holding: PublicKey;
-  printingMintHolding?: PublicKey;
+  holding: StringPublicKey;
+  printingMintHolding?: StringPublicKey;
   winningConfigType: WinningConfigType;
   amountRanges: AmountRange[];
   participationConfig?: ParticipationConfigV2;
@@ -106,11 +106,11 @@ export async function createAuctionManager(
   auctionSettings: IPartialCreateAuctionArgs,
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
-  paymentMint: PublicKey,
+  paymentMint: StringPublicKey,
 ): Promise<{
-  vault: PublicKey;
-  auction: PublicKey;
-  auctionManager: PublicKey;
+  vault: StringPublicKey;
+  auction: StringPublicKey;
+  auctionManager: StringPublicKey;
 }> {
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -260,9 +260,8 @@ export async function createAuctionManager(
           // Only V1s need to skip normal validation and use special endpoint
           (participationSafetyDepositDraft.masterEdition?.info.key ==
             MetadataKey.MasterEditionV1 &&
-            !c.draft.metadata.pubkey.equals(
-              participationSafetyDepositDraft.metadata.pubkey,
-            )) ||
+            c.draft.metadata.pubkey !==
+              participationSafetyDepositDraft.metadata.pubkey) ||
           participationSafetyDepositDraft.masterEdition?.info.key ==
             MetadataKey.MasterEditionV2,
       ),
@@ -499,15 +498,15 @@ async function buildSafetyDepositArray(
 
 async function setupAuctionManagerInstructions(
   wallet: any,
-  vault: PublicKey,
-  paymentMint: PublicKey,
+  vault: StringPublicKey,
+  paymentMint: StringPublicKey,
   accountRentExempt: number,
   safetyDeposits: SafetyDepositInstructionTemplate[],
   auctionSettings: IPartialCreateAuctionArgs,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
-  auctionManager: PublicKey;
+  auctionManager: StringPublicKey;
 }> {
   let store = programIds().store;
   if (!store) {
@@ -556,7 +555,7 @@ async function setupAuctionManagerInstructions(
 
 async function setupStartAuction(
   wallet: any,
-  vault: PublicKey,
+  vault: StringPublicKey,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -571,13 +570,13 @@ async function setupStartAuction(
 
 async function deprecatedValidateParticipationHelper(
   wallet: any,
-  auctionManager: PublicKey,
+  auctionManager: StringPublicKey,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
   >,
-  vault: PublicKey,
-  tokenStore: PublicKey,
+  vault: StringPublicKey,
+  tokenStore: StringPublicKey,
   participationSafetyDepositDraft: SafetyDepositDraft,
   accountRentExempt: number,
 ): Promise<{ instructions: TransactionInstruction[]; signers: Keypair[] }> {
@@ -660,9 +659,9 @@ async function validateBoxes(
     string,
     ParsedAccount<WhitelistedCreator>
   >,
-  vault: PublicKey,
+  vault: StringPublicKey,
   safetyDeposits: SafetyDepositInstructionTemplate[],
-  safetyDepositTokenStores: PublicKey[],
+  safetyDepositTokenStores: StringPublicKey[],
 ): Promise<{
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
@@ -678,7 +677,7 @@ async function validateBoxes(
     let tokenSigners: Keypair[] = [];
     let tokenInstructions: TransactionInstruction[] = [];
 
-    let safetyDepositBox: PublicKey;
+    let safetyDepositBox: StringPublicKey;
 
     const me = safetyDeposits[i].draft
       .masterEdition as ParsedAccount<MasterEditionV1>;
@@ -699,7 +698,7 @@ async function validateBoxes(
         safetyDeposits[i].draft.metadata.info.mint,
       );
     }
-    const edition: PublicKey = await getEdition(
+    const edition: StringPublicKey = await getEdition(
       safetyDeposits[i].draft.metadata.info.mint,
     );
 
@@ -740,7 +739,7 @@ async function validateBoxes(
 async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
   wallet: any,
-  oneTimePrintingAuthorizationMint: PublicKey | undefined,
+  oneTimePrintingAuthorizationMint: StringPublicKey | undefined,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -749,7 +748,7 @@ async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
     return { instructions: [], signers: [] };
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
-  const recipientKey: PublicKey = (
+  const recipientKey: StringPublicKey = (
     await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),

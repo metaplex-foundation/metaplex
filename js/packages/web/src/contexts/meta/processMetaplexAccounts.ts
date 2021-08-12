@@ -52,7 +52,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         };
         setter(
           'auctionManagersByAuction',
-          auctionManager.auction.toBase58(),
+          auctionManager.auction,
           parsedAccount,
         );
       }
@@ -75,7 +75,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         if (asV2.winnerIndex) {
           setter(
             'bidRedemptionV2sByAuctionManagerAndWinningIndex',
-            asV2.auctionManager.toBase58() + '-' + asV2.winnerIndex.toNumber(),
+            asV2.auctionManager + '-' + asV2.winnerIndex.toNumber(),
             parsedAccount,
           );
         }
@@ -124,7 +124,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       };
       setter(
         'safetyDepositConfigsByAuctionManagerAndIndex',
-        config.auctionManager.toBase58() + '-' + config.order.toNumber(),
+        config.auctionManager + '-' + config.order.toNumber(),
         parsedAccount,
       );
     }
@@ -138,7 +138,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         whitelistedCreator.address,
       );
 
-      if (creatorKeyIfCreatorWasPartOfThisStore.equals(pubkey)) {
+      if (creatorKeyIfCreatorWasPartOfThisStore === pubkey) {
         const parsedAccount = cache.add(
           pubkey,
           account,
@@ -146,7 +146,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
           false,
         ) as ParsedAccount<WhitelistedCreator>;
 
-        const nameInfo = (names as any)[parsedAccount.info.address.toBase58()];
+        const nameInfo = (names as any)[parsedAccount.info.address];
 
         if (nameInfo) {
           parsedAccount.info = { ...parsedAccount.info, ...nameInfo };
@@ -154,7 +154,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 
         setter(
           'whitelistedCreatorsByCreator',
-          whitelistedCreator.address.toBase58(),
+          whitelistedCreator.address,
           parsedAccount,
         );
       }

@@ -11,6 +11,8 @@ import {
   Data,
   Creator,
   findProgramAddress,
+  StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 import React from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -18,7 +20,6 @@ import { WalletAdapter } from '@solana/wallet-base';
 import {
   Keypair,
   Connection,
-  PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
@@ -56,7 +57,7 @@ export const mintNFT = async (
   },
   maxSupply?: number,
 ): Promise<{
-  metadataAccount: PublicKey;
+  metadataAccount: StringPublicKey;
 } | void> => {
   if (!wallet?.publicKey) {
     return;
@@ -74,7 +75,7 @@ export const mintNFT = async (
       ...metadata.properties,
       creators: metadata.creators?.map(creator => {
         return {
-          address: creator.address.toBase58(),
+          address: creator.address,
           share: creator.share,
         };
       }),
@@ -117,14 +118,14 @@ export const mintNFT = async (
     payerPublicKey,
     payerPublicKey,
     signers,
-  );
+  ).toBase58();
 
-  const recipientKey: PublicKey = (
+  const recipientKey = (
     await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),
-        mintKey.toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
       ],
       programIds().associatedToken,
     )
@@ -132,7 +133,7 @@ export const mintNFT = async (
 
   createAssociatedTokenAccountInstruction(
     instructions,
-    recipientKey,
+    toPublicKey(recipientKey),
     wallet.publicKey,
     wallet.publicKey,
     mintKey,
@@ -185,7 +186,7 @@ export const mintNFT = async (
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
-      acc[f.name] = [{ name: 'mint', value: mintKey.toBase58() }];
+      acc[f.name] = [{ name: 'mint', value: mintKey }];
       return acc;
     },
     {},

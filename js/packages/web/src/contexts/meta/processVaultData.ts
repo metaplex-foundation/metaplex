@@ -26,7 +26,7 @@ export const processVaultData: ProcessAccountsFunc = (
       };
       setter(
         'safetyDepositBoxesByVaultAndIndex',
-        safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order,
+        safetyDeposit.vault + '-' + safetyDeposit.order,
         parsedAccount,
       );
     }

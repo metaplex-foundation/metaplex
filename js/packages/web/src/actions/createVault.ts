@@ -1,11 +1,17 @@
 import {
   Keypair,
   Connection,
-  PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, createMint, findProgramAddress } from '@oyster/common';
+import {
+  utils,
+  actions,
+  createMint,
+  findProgramAddress,
+  StringPublicKey,
+  toPublicKey,
+} from '@oyster/common';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 const { createTokenAccount, initVault, MAX_VAULT_SIZE, VAULT_PREFIX } = actions;
@@ -15,13 +21,13 @@ const { createTokenAccount, initVault, MAX_VAULT_SIZE, VAULT_PREFIX } = actions;
 export async function createVault(
   connection: Connection,
   wallet: any,
-  priceMint: PublicKey,
-  externalPriceAccount: PublicKey,
+  priceMint: StringPublicKey,
+  externalPriceAccount: StringPublicKey,
 ): Promise<{
-  vault: PublicKey;
-  fractionalMint: PublicKey;
-  redeemTreasury: PublicKey;
-  fractionTreasury: PublicKey;
+  vault: StringPublicKey;
+  fractionalMint: StringPublicKey;
+  redeemTreasury: StringPublicKey;
+  fractionTreasury: StringPublicKey;
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
@@ -60,8 +66,8 @@ export async function createVault(
     wallet.publicKey,
     mintRentExempt,
     0,
-    vaultAuthority,
-    vaultAuthority,
+    toPublicKey(vaultAuthority),
+    toPublicKey(vaultAuthority),
     signers,
   );
 
@@ -69,8 +75,8 @@ export async function createVault(
     instructions,
     wallet.publicKey,
     accountRentExempt,
-    priceMint,
-    vaultAuthority,
+    toPublicKey(priceMint),
+    toPublicKey(vaultAuthority),
     signers,
   );
 
@@ -79,7 +85,7 @@ export async function createVault(
     wallet.publicKey,
     accountRentExempt,
     fractionalMint,
-    vaultAuthority,
+    toPublicKey(vaultAuthority),
     signers,
   );
 

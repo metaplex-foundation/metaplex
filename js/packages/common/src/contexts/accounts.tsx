@@ -12,10 +12,8 @@ import { AccountLayout, MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { TokenAccount } from '../models';
 import { chunks } from '../utils/utils';
 import { EventEmitter } from '../utils/eventEmitter';
-import { useUserAccounts } from '../hooks/useUserAccounts';
-import { WRAPPED_SOL_MINT } from '../utils/ids';
+import { StringPublicKey, WRAPPED_SOL_MINT } from '../utils/ids';
 import { programIds } from '../utils/programIds';
-import { AuctionParser } from '../actions';
 
 const AccountsContext = React.createContext<any>(null);
 
@@ -25,13 +23,13 @@ const pendingMintCalls = new Map<string, Promise<MintInfo>>();
 const mintCache = new Map<string, MintInfo>();
 
 export interface ParsedAccountBase {
-  pubkey: string;
+  pubkey: StringPublicKey;
   account: AccountInfo<Buffer>;
   info: any; // TODO: change to unknown
 }
 
 export type AccountParser = (
-  pubkey: string,
+  pubkey: StringPublicKey,
   data: AccountInfo<Buffer>,
 ) => ParsedAccountBase | undefined;
 

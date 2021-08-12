@@ -11,6 +11,7 @@ import {
   MEMO_ID,
   VAULT_ID,
   AUCTION_ID,
+  toPublicKey,
 } from './ids';
 
 export const ENABLE_FEES_INPUT = false;
@@ -68,7 +69,7 @@ export const setProgramIds = async (envName: string) => {
   }
 
   if (!STORE) {
-    STORE = await getStoreID();
+    STORE = toPublicKey((await getStoreID()) || '');
   }
 };
 

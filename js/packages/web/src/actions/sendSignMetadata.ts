@@ -1,15 +1,14 @@
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  PublicKey,
-} from '@solana/web3.js';
-import { sendTransactionWithRetry, signMetadata } from '@oyster/common';
+  sendTransactionWithRetry,
+  signMetadata,
+  StringPublicKey,
+} from '@oyster/common';
 
 export async function sendSignMetadata(
   connection: Connection,
   wallet: any,
-  metadata: PublicKey,
+  metadata: StringPublicKey,
 ) {
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];

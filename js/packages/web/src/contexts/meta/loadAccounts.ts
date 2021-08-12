@@ -128,7 +128,7 @@ export const metadataByMintUpdater = async (
   state: MetaState,
   all: boolean,
 ) => {
-  const key = metadata.info.mint.toBase58();
+  const key = metadata.info.mint;
   if (
     isMetadataPartOfStore(
       metadata,
@@ -138,7 +138,7 @@ export const metadataByMintUpdater = async (
     )
   ) {
     await metadata.info.init();
-    const masterEditionKey = metadata.info?.masterEdition?.toBase58();
+    const masterEditionKey = metadata.info?.masterEdition;
     if (masterEditionKey) {
       state.metadataByMasterEdition[masterEditionKey] = metadata;
     }

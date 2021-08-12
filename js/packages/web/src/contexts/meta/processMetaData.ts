@@ -33,7 +33,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: metadata,
         };
-        setter('metadataByMint', metadata.mint.toBase58(), parsedAccount);
+        setter('metadataByMint', metadata.mint, parsedAccount);
       }
     }
 
@@ -44,7 +44,7 @@ export const processMetaData: ProcessAccountsFunc = (
         account,
         info: edition,
       };
-      setter('editions', pubkey.toBase58(), parsedAccount);
+      setter('editions', pubkey, parsedAccount);
     }
 
     if (isMasterEditionAccount(account)) {
@@ -56,17 +56,17 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: masterEdition,
         };
-        setter('masterEditions', pubkey.toBase58(), parsedAccount);
+        setter('masterEditions', pubkey, parsedAccount);
 
         setter(
           'masterEditionsByPrintingMint',
-          masterEdition.printingMint.toBase58(),
+          masterEdition.printingMint,
           parsedAccount,
         );
 
         setter(
           'masterEditionsByOneTimeAuthMint',
-          masterEdition.oneTimePrintingAuthorizationMint.toBase58(),
+          masterEdition.oneTimePrintingAuthorizationMint,
           parsedAccount,
         );
       } else {
@@ -75,7 +75,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: masterEdition,
         };
-        setter('masterEditions', pubkey.toBase58(), parsedAccount);
+        setter('masterEditions', pubkey, parsedAccount);
       }
     }
   } catch {
