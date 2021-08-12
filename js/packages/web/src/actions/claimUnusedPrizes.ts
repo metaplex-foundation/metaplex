@@ -120,7 +120,7 @@ export async function claimUnusedPrizes(
               accountRentExempt,
               mintRentExempt,
               wallet,
-              toPublicKey(p.bid.info.bidderPubkey),
+              p.bid.info.bidderPubkey,
               auctionView.participationItem.safetyDeposit,
               p.bidRedemption,
               p.bid,
