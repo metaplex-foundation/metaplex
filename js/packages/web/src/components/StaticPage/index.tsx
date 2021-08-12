@@ -178,7 +178,7 @@ export const StaticPage = (props: {
     <section id="middle-container">
       {props.midContent.sections.map(section => (
         <div className="mid-section-item">
-          <p className="title">{section.title}</p>
+          <span className="mid-title">{section.title}</span>
 
           {section.paragraphs?.map(paragraph => (
             <p className="paragraph-text">{paragraph}</p>
@@ -209,7 +209,7 @@ export const StaticPage = (props: {
 
   const finalSection = (
     <section id="bottom-container">
-      <p className="title">Shop the Collection</p>
+      <p className="bottom-title">Shop the Collection</p>
       {liveAuctionsView}
     </section>
   );
