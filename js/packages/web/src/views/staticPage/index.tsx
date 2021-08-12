@@ -9,6 +9,7 @@ export const StaticPageView = () => {
       <StaticPage
         headContent={example1.headContent}
         midContent={example1.midContent}
+        bottomContent={example1.bottomContent}
       />
     </Layout>
   );

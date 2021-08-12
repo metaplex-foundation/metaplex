@@ -34,6 +34,7 @@ export const example1 = {
       },
     ],
   },
+  bottomContent: true,
 };
 
 export const example2 = {
@@ -57,6 +58,7 @@ export const example2 = {
       },
     ],
   },
+  bottomContent: true,
 };
 
 export const example3 = {
@@ -84,4 +86,5 @@ export const example3 = {
       },
     ],
   },
+  bottomContent: false,
 };

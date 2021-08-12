@@ -13,8 +13,7 @@ import {
   AuctionView,
   HomeView,
   ArtworkView,
-  ArtistAlleyView,
-  StaticPageView,
+  // StaticPageView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';
@@ -83,16 +82,11 @@ export function Routes() {
                             path="/auction/:id/billing"
                             component={() => <BillingView />}
                           />
-                          <Route
-                            exact
-                            path="/artistAlley"
-                            component={() => <ArtistAlleyView />}
-                          />
-                          <Route
-                            exact
-                            path="/staticPage"
-                            component={() => <StaticPageView />}
-                          />
+                          {/*<Route*/}
+                          {/*  exact*/}
+                          {/*  path="/static-page"*/}
+                          {/*  component={() => <StaticPageView />}*/}
+                          {/*/>*/}
                           <Route path="/" component={() => <HomeView />} />
                         </Switch>
                       </AppLayout>

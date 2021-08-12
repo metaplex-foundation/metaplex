@@ -29,7 +29,7 @@ interface ImageCaption {
 }
 
 interface ArticleSection {
-  title: string;
+  title?: string;
   paragraphs: string[];
   image?: string;
   caption?: ImageCaption;
@@ -61,6 +61,7 @@ const cumulativeOffset = (element: HTMLElement) => {
 export const StaticPage = (props: {
   headContent: HeadContent;
   midContent: MidContent;
+  bottomContent: boolean;
 }) => {
   const [dimensions, setDimensions] = useState({
     height: window.innerHeight,
@@ -178,8 +179,7 @@ export const StaticPage = (props: {
     <section id="middle-container">
       {props.midContent.sections.map(section => (
         <div className="mid-section-item">
-          <span className="mid-title">{section.title}</span>
-
+          {section.title && <span className="mid-title">{section.title}</span>}
           {section.paragraphs?.map(paragraph => (
             <p className="paragraph-text">{paragraph}</p>
           ))}
@@ -218,8 +218,7 @@ export const StaticPage = (props: {
     <Fragment>
       {headerSection}
       {middleSection}
-      {finalSection}
-      {/*{liveAuctions.length ? finalSection : null}*/}
+      {props.bottomContent && finalSection}
     </Fragment>
   );
 };
