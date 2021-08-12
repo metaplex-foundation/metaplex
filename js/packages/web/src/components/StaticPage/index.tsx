@@ -1,13 +1,13 @@
-import React, {Fragment} from 'react';
-import {Link} from "react-router-dom";
-import {Col, Divider, Row} from "antd";
-import BN from "bn.js";
+import React, { Fragment, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Col, Divider, Row } from 'antd';
+import BN from 'bn.js';
 
-import Masonry from "react-masonry-css";
-import {CardLoader} from "../MyLoader";
-import {useMeta} from "../../contexts";
-import {AuctionRenderCard} from "../AuctionRenderCard";
-import {AuctionViewState, useAuctions} from "../../hooks";
+import Masonry from 'react-masonry-css';
+import { CardLoader } from '../MyLoader';
+import { useMeta } from '../../contexts';
+import { AuctionRenderCard } from '../AuctionRenderCard';
+import { AuctionViewState, useAuctions } from '../../hooks';
 import './index.less';
 
 interface Author {
@@ -39,12 +39,45 @@ interface MidContent {
   sections: ArticleSection[];
 }
 
+//https://stackoverflow.com/questions/1480133/how-can-i-get-an-objects-absolute-position-on-the-page-in-javascript
+const cumulativeOffset = (element: HTMLElement) => {
+  let top = 0,
+    left = 0;
+  let cumulativeElement: Element | null = element;
+  do {
+    // @ts-ignore
+    top += cumulativeElement.offsetTop || 0;
+    // @ts-ignore
+    left += cumulativeElement.offsetLeft || 0;
+    // @ts-ignore
+    cumulativeElement = cumulativeElement.offsetParent;
+  } while (cumulativeElement);
+
+  return {
+    top: top,
+    left: left,
+  };
+};
 export const StaticPage = (props: {
   headContent: HeadContent;
   midContent: MidContent;
 }) => {
+  const [dimensions, setDimensions] = useState({
+    height: window.innerHeight,
+    width: window.innerWidth,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setDimensions({
+        height: window.innerHeight,
+        width: window.innerWidth,
+      });
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  });
   const auctions = useAuctions(AuctionViewState.Live);
-  const {isLoading} = useMeta();
+  const { isLoading } = useMeta();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -67,25 +100,40 @@ export const StaticPage = (props: {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-          const id = m.auction.pubkey.toBase58();
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m}/>
-            </Link>
-          );
-        })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx}/>)}
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
+        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
 
+  useEffect(() => {
+    const gradient = document.getElementById('bg-gradient');
+    const upper = document.getElementById('header-container');
+    if (gradient) gradient.id = 'header-gradient';
+    if (upper && gradient) {
+      const containerLeft = cumulativeOffset(upper);
+      gradient.style.top = `${containerLeft.top + upper.offsetHeight - 300}px`;
+      console.log(containerLeft);
+    }
+
+    return () => {
+      const gradient = document.getElementById('header-gradient');
+      if (gradient) gradient.id = 'bg-gradient';
+    };
+  }, [dimensions]);
 
   const headerSection = (
-    // TODO: fix gradients in large screens
-    <section className="header-container">
+    <section id="header-container">
+      {/*<span id="header-gradient"></span>*/}
       <Row>
-        <Col span={8} className="header-left">
+        <Col span={24} xl={8} className="header-left">
           <p className="header-subtitle">{props.headContent.subtitle}</p>
-          <Divider/>
+          <Divider />
           <p className="header-title">{props.headContent.title}</p>
 
           {props.headContent.author && (
@@ -95,14 +143,14 @@ export const StaticPage = (props: {
                 className="author-avatar"
                 width="32px"
                 height="32px"
-                alt='author image'
+                alt="author image"
               />
               <p className="author-name">{props.headContent.author.name}</p>
             </div>
           )}
         </Col>
 
-        <Col span={16} className="header-right">
+        <Col xl={16} span={24} className="header-right">
           <img
             src={props.headContent.bannerImage}
             className="header-image"
@@ -113,7 +161,7 @@ export const StaticPage = (props: {
         </Col>
       </Row>
     </section>
-  )
+  );
 
   const middleSection = (
     <section className="middle-container">
@@ -138,13 +186,15 @@ export const StaticPage = (props: {
           {section.caption && (
             <p className="image-caption">
               {section.caption.text}
-              <a href={section.caption.linkUrl} target="_blank">{section.caption.linkText}</a>
+              <a href={section.caption.linkUrl} target="_blank">
+                {section.caption.linkText}
+              </a>
             </p>
           )}
         </div>
       ))}
     </section>
-  )
+  );
 
   const finalSection = (
     // TODO: fix gradients in large screens
@@ -152,7 +202,7 @@ export const StaticPage = (props: {
       <p className="title">Shop the Collection</p>
       {liveAuctionsView}
     </section>
-  )
+  );
 
   return (
     <Fragment>
@@ -161,5 +211,5 @@ export const StaticPage = (props: {
       {finalSection}
       {/*{liveAuctions.length ? finalSection : null}*/}
     </Fragment>
-  )
-}
+  );
+};

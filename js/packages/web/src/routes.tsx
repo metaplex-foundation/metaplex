@@ -14,7 +14,7 @@ import {
   HomeView,
   ArtworkView,
   ArtistAlleyView,
-  StaticPageView
+  StaticPageView,
 } from './views';
 import { UseWalletProvider } from 'use-wallet';
 import { CoingeckoProvider } from './contexts/coingecko';

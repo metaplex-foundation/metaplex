@@ -1,20 +1,19 @@
-.header-container {
+
+#header-container {
   padding-bottom: 48px;
   width: 100%;
   height: auto;
   min-height: 300px;
   position: relative;
 
-  &::before {
-    content: '';
+  span#header-gradient {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    //margin: 0 auto;
     height: 300px;
+    width: 100%;
     width: 100vw;
+    bottom: 0;
     background: linear-gradient(0, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-    transform: translateX(-64px);
   }
 
   .header-left {
@@ -88,7 +87,8 @@
 
 .middle-container {
   position: relative;
-  padding: 36px 288px 82px 288px;
+  max-width: 720px;
+  margin: 0 auto;
 
   .mid-section-item {
     margin-top: 64px;
