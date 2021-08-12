@@ -41,6 +41,7 @@ async function getProgramAccounts(
   ).map(item => {
     return {
       account: {
+        // TODO: possible delay parsing could be added here
         data: Buffer.from(item.account.data[0], 'base64'),
         executable: item.account.executable,
         lamports: item.account.lamports,

@@ -115,8 +115,8 @@ export const mintNFT = async (
     mintRent,
     0,
     // Some weird bug with phantom where it's public key doesnt mesh with data encode wellff
-    payerPublicKey,
-    payerPublicKey,
+    toPublicKey(payerPublicKey),
+    toPublicKey(payerPublicKey),
     signers,
   ).toBase58();
 

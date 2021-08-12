@@ -194,9 +194,9 @@ export const AuctionCreateView = () => {
           attributes.category == AuctionCategory.Single &&
           item.masterEdition
         ) {
-          item.winningConfigType = item.metadata.info.updateAuthority.equals(
-            wallet?.publicKey || SystemProgram.programId,
-          )
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
             ? WinningConfigType.FullRightsTransfer
             : WinningConfigType.TokenOnlyTransfer;
         }
@@ -425,7 +425,7 @@ export const AuctionCreateView = () => {
       attributes.category === AuctionCategory.Open
         ? attributes.items[0]
         : attributes.participationNFT,
-      QUOTE_MINT,
+      QUOTE_MINT.toBase58(),
     );
     setAuctionObj(_auctionObj);
   };
@@ -1486,11 +1486,11 @@ const TierTableStep = (props: {
                     const newTiers = newImmutableTiers(props.attributes.tiers);
                     if (items[0]) {
                       const existing = props.attributes.items.find(it =>
-                        it.metadata.pubkey.equals(items[0].metadata.pubkey),
+                        it.metadata.pubkey === items[0].metadata.pubkey,
                       );
                       if (!existing) newItems.push(items[0]);
                       const index = newItems.findIndex(it =>
-                        it.metadata.pubkey.equals(items[0].metadata.pubkey),
+                        it.metadata.pubkey === items[0].metadata.pubkey,
                       );
 
                       const myNewTier = newTiers[configIndex].items[itemIndex];
