@@ -186,7 +186,7 @@ export const ArtView = () => {
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
-            <div className="info-header">About the Item</div>
+            <div className="info-header">[• About the Item •]</div>
             <div className="info-content">{description}</div>
             <br />
             {/*

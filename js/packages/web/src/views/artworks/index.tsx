@@ -73,7 +73,7 @@ export const ArtworksView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+      <Content style={{ display: 'flex', flexWrap: 'wrap', objectFit: 'contain' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
           <Row>
             <Tabs

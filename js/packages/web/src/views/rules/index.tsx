@@ -9,9 +9,9 @@ export const RulesView = () => (
     <>
     <div className="mission">
         <h2>Trying to get a better idea of what you’ve stumbled upon, you work up the courage to say in hushed tones to a merchant, <span className='purple'>“Why does this Magic Items Marketplace exist?”</span></h2>
-        <h2>"Because digital artists should be compensated for making digital art," <span className='smaller'>barks the merchant with a scowl.</span></h2>
-        <h2>A bearded fellow with deep, ancient wrinkles looks up from his browsing with a far-off gaze. He pontificates softly, "Because DnD is built to collectively imagine new worlds, making it an excellent space to explore what it means to own imaginary objects..."</h2>
-        <h2>A tiny goblin hops onto a counter, hisses in your general direction, shrieking, "Because there are so many cash-grab NFT projects out there, it’s worth trying to use this technology to build something creative!"</h2>
+        <h3>"Because digital artists should be compensated for making digital art," barks the merchant with a scowl.</h3>
+        <h3>A bearded fellow with deep, ancient wrinkles in his face looks up from his browsing with a far-off gaze. He pontificates softly, "Because D&D is built to collectively imagine new worlds, making it an excellent space to explore what it means to 'own' imaginary objects..."</h3>
+        <h3>A tiny goblin hops onto a counter, hisses in your general direction, shrieking, "Because there are so many cash-grab NFT projects out there... We need more projects that use the technology to let people be creative!"</h3>
         <br></br>
         <hr></hr>
         <br></br>
@@ -22,9 +22,9 @@ export const RulesView = () => (
         <br></br>
         <br></br>
         <h2>ules by which the Magic Items Marketplace is run:</h2>
-        <h2>Rule 1: All artwork must be original, created by the named artist.</h2>
-        <h2>Rule 2: Each individual artwork must only be minted and published once. While multiple copies of the item may be printed, each artwork must only have one "master edition."</h2>
-        <h2>Rule 3: The DM always decides what items are playable in a specific game or campaign... Owning a digital Magic Item doesn't flat out entitle you to use it in a game, so tread lightly, be nice, and most importantly have fun.</h2>
+        <h3>Rule 1: All artwork must be original, created by the named artist.</h3>
+        <h3>Rule 2: Each individual artwork must only be minted and published once. While multiple copies of the item may be printed, each artwork must only have one "master edition."</h3>
+        <h3>Rule 3: The DM always decides what items are playable in a specific game or campaign... Owning a digital Magic Item doesn't flat out entitle you to use it in a game, so tread lightly, be nice, and most importantly have fun.</h3>
         <br></br>
         <hr></hr>
         <br></br>
