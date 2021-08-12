@@ -112,7 +112,7 @@ export const StaticPage = (props: {
     </Masonry>
   );
 
-  useEffect(() => {
+  const addGradients = () => {
     const headerGradient = document.getElementById('static-header-gradient');
     const endGradient = document.getElementById('static-end-gradient');
     const upper = document.getElementById('header-container');
@@ -130,7 +130,10 @@ export const StaticPage = (props: {
       const container = cumulativeOffset(lower);
       endGradient.style.top = `${container.top}px`;
     }
+  }
 
+  useEffect(() => {
+    addGradients()
     return () => {
       const headerGradient = document.getElementById('static-header-gradient');
       const endGradient = document.getElementById('static-end-gradient');
@@ -138,6 +141,10 @@ export const StaticPage = (props: {
       if (endGradient) endGradient.style.display = 'none';
     };
   }, [dimensions]);
+
+  useEffect(() => {
+    setTimeout(() => addGradients(), 500)
+  }, []);
 
   const headerSection = (
     <section id="header-container">
