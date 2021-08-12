@@ -298,13 +298,13 @@ export function findOrCreateAccountByMint(
         acc !== undefined &&
         acc.info.mint.toBase58() === accountToFind &&
         acc.info.owner.toBase58() === owner.toBase58() &&
-        (excluded === undefined || !excluded.has(acc.pubkey.toBase58())),
+        (excluded === undefined || !excluded.has(acc.pubkey)),
     );
   const isWrappedSol = accountToFind === WRAPPED_SOL_MINT.toBase58();
 
   let toAccount: PublicKey;
   if (account && !isWrappedSol) {
-    toAccount = account.pubkey;
+    toAccount = new PublicKey(account.pubkey);
   } else {
     // creating depositor pool account
     toAccount = createTokenAccount(

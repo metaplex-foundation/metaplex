@@ -68,7 +68,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('bidRedemptions', pubkey.toBase58(), parsedAccount);
+      setter('bidRedemptions', pubkey, parsedAccount);
 
       if (ticket.key == MetaplexKey.BidRedemptionTicketV2) {
         const asV2 = ticket as BidRedemptionTicketV2;
@@ -89,7 +89,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('payoutTickets', pubkey.toBase58(), parsedAccount);
+      setter('payoutTickets', pubkey, parsedAccount);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
@@ -99,7 +99,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('prizeTrackingTickets', pubkey.toBase58(), parsedAccount);
+      setter('prizeTrackingTickets', pubkey, parsedAccount);
     }
 
     if (isStoreV1Account(account)) {
@@ -109,10 +109,10 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: store,
       };
-      if (STORE_ID && pubkey.equals(STORE_ID)) {
-        setter('store', pubkey.toBase58(), parsedAccount);
+      if (STORE_ID && pubkey === STORE_ID) {
+        setter('store', pubkey, parsedAccount);
       }
-      setter('stores', pubkey.toBase58(), parsedAccount);
+      setter('stores', pubkey, parsedAccount);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {

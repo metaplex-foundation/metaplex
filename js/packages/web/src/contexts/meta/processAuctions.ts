@@ -29,7 +29,7 @@ export const processAuctions: ProcessAccountsFunc = (
       AuctionParser,
       false,
     ) as ParsedAccount<AuctionData>;
-    setter('auctions', pubkey.toBase58(), parsedAccount);
+    setter('auctions', pubkey, parsedAccount);
   } catch (e) {
     // ignore errors
     // add type as first byte for easier deserialization
@@ -43,7 +43,7 @@ export const processAuctions: ProcessAccountsFunc = (
         AuctionDataExtendedParser,
         false,
       ) as ParsedAccount<AuctionDataExtended>;
-      setter('auctionDataExtended', pubkey.toBase58(), parsedAccount);
+      setter('auctionDataExtended', pubkey, parsedAccount);
     }
   } catch {
     // ignore errors

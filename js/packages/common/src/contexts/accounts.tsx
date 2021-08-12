@@ -50,7 +50,7 @@ const getMintInfo = async (connection: Connection, pubKey: PublicKey) => {
   return deserializeMint(data);
 };
 
-export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
+export const MintParser = (pubKey: string, info: AccountInfo<Buffer>) => {
   const buffer = Buffer.from(info.data);
 
   const data = deserializeMint(buffer);
@@ -67,7 +67,7 @@ export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
 };
 
 export const TokenAccountParser = (
-  pubKey: PublicKey,
+  pubKey: string,
   info: AccountInfo<Buffer>,
 ) => {
   // Sometimes a wrapped sol account gets closed, goes to 0 length,
@@ -90,7 +90,7 @@ export const TokenAccountParser = (
 };
 
 export const GenericAccountParser = (
-  pubKey: PublicKey,
+  pubKey: string,
   info: AccountInfo<Buffer>,
 ) => {
   const buffer = Buffer.from(info.data);
@@ -162,7 +162,7 @@ export const cache = {
 
     cache.registerParser(id, deserialize);
     pendingCalls.delete(address);
-    const account = deserialize(new PublicKey(address), obj);
+    const account = deserialize(address, obj);
     if (!account) {
       return;
     }
@@ -274,20 +274,22 @@ export const useAccountsContext = () => {
 };
 
 function wrapNativeAccount(
-  pubkey: PublicKey,
+  pubkey: string,
   account?: AccountInfo<Buffer>,
 ): TokenAccount | undefined {
   if (!account) {
     return undefined;
   }
 
+  const key = new PublicKey(pubkey);
+
   return {
     pubkey: pubkey,
     account,
     info: {
-      address: pubkey,
+      address: key,
       mint: WRAPPED_SOL_MINT,
-      owner: pubkey,
+      owner: key,
       amount: new u64(account.lamports),
       delegate: null,
       delegatedAmount: new u64(0),
@@ -319,7 +321,7 @@ const UseNativeAccount = () => {
   const updateCache = useCallback(
     account => {
       if (wallet && wallet.publicKey) {
-        const wrapped = wrapNativeAccount(wallet.publicKey, account);
+        const wrapped = wrapNativeAccount(wallet.publicKey?.toBase58(), account);
         if (wrapped !== undefined && wallet) {
           const id = wallet.publicKey?.toBase58();
           cache.registerParser(id, TokenAccountParser);

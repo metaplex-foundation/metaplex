@@ -56,7 +56,7 @@ const getStoreID = async () => {
     METAPLEX_ID,
   );
   const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
+  console.log(`CUSTOM STORE: ${CUSTOM}`);
 
   return CUSTOM;
 };

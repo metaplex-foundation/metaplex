@@ -79,7 +79,7 @@ export interface MetaContextState extends MetaState {
 }
 
 export type AccountAndPubkey = {
-  pubkey: PublicKey;
+  pubkey: string;
   account: AccountInfo<Buffer>;
 };
 

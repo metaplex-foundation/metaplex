@@ -12,10 +12,12 @@ import {
   MetadataKey,
   SafetyDepositBox,
   MasterEditionV2,
+  toPublicKey,
 } from '@oyster/common';
 import { AccountInfo, PublicKey, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
 import { deserializeUnchecked } from 'borsh';
+import bs58 from 'bs58';
 import { AuctionViewItem } from '../../hooks';
 import {
   AuctionManagerV1,
@@ -55,13 +57,13 @@ export enum MetaplexKey {
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
-  metadata: PublicKey;
+  metadata: string;
   supplySnapshot: BN;
   expectedRedemptions: BN;
   redemptions: BN;
 
   constructor(args: {
-    metadata: PublicKey;
+    metadata: string;
     supplySnapshot: BN;
     expectedRedemptions: BN;
     redemptions: BN;
@@ -75,22 +77,22 @@ export class PrizeTrackingTicket {
 }
 export class PayoutTicket {
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
-  recipient: PublicKey;
+  recipient: string;
   amountPaid: BN;
 
-  constructor(args: { recipient: PublicKey; amountPaid: BN }) {
+  constructor(args: { recipient: string; amountPaid: BN }) {
     this.key = MetaplexKey.PayoutTicketV1;
     this.recipient = args.recipient;
     this.amountPaid = args.amountPaid;
   }
 }
 export class AuctionManager {
-  pubkey: PublicKey;
-  store: PublicKey;
-  authority: PublicKey;
-  auction: PublicKey;
-  vault: PublicKey;
-  acceptPayment: PublicKey;
+  pubkey: string;
+  store: string;
+  authority: string;
+  auction: string;
+  vault: string;
+  acceptPayment: string;
   numWinners: BN;
   safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[];
   bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[];
@@ -208,8 +210,7 @@ export class AuctionManager {
                 boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
               ];
             if (masterEdition) {
-              metadata =
-                metadataByMasterEdition[masterEdition.pubkey.toBase58()];
+              metadata = metadataByMasterEdition[masterEdition.pubkey];
             }
           }
           return {
@@ -253,19 +254,19 @@ export class AuctionManager {
 
 export class AuctionManagerV2 {
   key: MetaplexKey;
-  store: PublicKey;
-  authority: PublicKey;
-  auction: PublicKey;
-  vault: PublicKey;
-  acceptPayment: PublicKey;
+  store: string;
+  authority: string;
+  auction: string;
+  vault: string;
+  acceptPayment: string;
   state: AuctionManagerStateV2;
 
   constructor(args: {
-    store: PublicKey;
-    authority: PublicKey;
-    auction: PublicKey;
-    vault: PublicKey;
-    acceptPayment: PublicKey;
+    store: string;
+    authority: string;
+    auction: string;
+    vault: string;
+    acceptPayment: string;
     state: AuctionManagerStateV2;
   }) {
     this.key = MetaplexKey.AuctionManagerV2;
@@ -451,7 +452,7 @@ export const decodeWhitelistedCreator = (buffer: Buffer) => {
 };
 
 export const WhitelistedCreatorParser: AccountParser = (
-  pubkey: PublicKey,
+  pubkey: string,
   account: AccountInfo<Buffer>,
 ) => ({
   pubkey,
@@ -494,7 +495,7 @@ export const decodePayoutTicket = (buffer: Buffer) => {
 
 export class WhitelistedCreator {
   key: MetaplexKey = MetaplexKey.WhitelistedCreatorV1;
-  address: PublicKey;
+  address: string;
   activated: boolean = true;
 
   // Populated from name service
@@ -503,7 +504,7 @@ export class WhitelistedCreator {
   image?: string;
   description?: string;
 
-  constructor(args: { address: PublicKey; activated: boolean }) {
+  constructor(args: { address: string; activated: boolean }) {
     this.address = args.address;
     this.activated = args.activated;
   }
@@ -512,17 +513,17 @@ export class WhitelistedCreator {
 export class Store {
   key: MetaplexKey = MetaplexKey.StoreV1;
   public: boolean = true;
-  auctionProgram: PublicKey;
-  tokenVaultProgram: PublicKey;
-  tokenMetadataProgram: PublicKey;
-  tokenProgram: PublicKey;
+  auctionProgram: string;
+  tokenVaultProgram: string;
+  tokenMetadataProgram: string;
+  tokenProgram: string;
 
   constructor(args: {
     public: boolean;
-    auctionProgram: PublicKey;
-    tokenVaultProgram: PublicKey;
-    tokenMetadataProgram: PublicKey;
-    tokenProgram: PublicKey;
+    auctionProgram: string;
+    tokenVaultProgram: string;
+    tokenMetadataProgram: string;
+    tokenProgram: string;
   }) {
     this.key = MetaplexKey.StoreV1;
     this.public = args.public;
@@ -541,7 +542,7 @@ export interface BidRedemptionTicket {
 export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;
   winnerIndex: BN | null;
-  auctionManager: PublicKey;
+  auctionManager: string;
   data: number[] = [];
 
   constructor(args: { key: MetaplexKey; data: number[] }) {
@@ -554,7 +555,7 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
       offset += 8;
     }
 
-    this.auctionManager = new PublicKey(this.data.slice(offset, offset + 32));
+    this.auctionManager = bs58.encode(this.data.slice(offset, offset + 32));
   }
 
   getBidRedeemed(order: number): boolean {
@@ -615,7 +616,7 @@ export class InitAuctionManagerV2Args {
 
 export class SafetyDepositConfig {
   key: MetaplexKey = MetaplexKey.SafetyDepositConfigV1;
-  auctionManager: PublicKey = SystemProgram.programId;
+  auctionManager: string = SystemProgram.programId.toBase58();
   order: BN = new BN(0);
   winningConfigType: WinningConfigType = WinningConfigType.PrintingV2;
   amountType: TupleNumericType = TupleNumericType.U8;
@@ -627,7 +628,7 @@ export class SafetyDepositConfig {
   constructor(args: {
     data?: Uint8Array;
     directArgs?: {
-      auctionManager: PublicKey;
+      auctionManager: string;
       order: BN;
       winningConfigType: WinningConfigType;
       amountType: TupleNumericType;
@@ -640,7 +641,7 @@ export class SafetyDepositConfig {
     if (args.directArgs) {
       Object.assign(this, args.directArgs);
     } else if (args.data) {
-      this.auctionManager = new PublicKey(args.data.slice(1, 33));
+      this.auctionManager = bs58.encode(args.data.slice(1, 33));
       this.order = new BN(args.data.slice(33, 41), 'le');
       this.winningConfigType = args.data[41];
       this.amountType = args.data[42];
@@ -742,7 +743,7 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['metadata', 'pubkey'],
+        ['metadata', 'pubkeyAsString'],
         ['supplySnapshot', 'u64'],
         ['expectedRedemptions', 'u64'],
         ['redemptions', 'u64'],
@@ -755,11 +756,11 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['store', 'pubkey'],
-        ['authority', 'pubkey'],
-        ['auction', 'pubkey'],
-        ['vault', 'pubkey'],
-        ['acceptPayment', 'pubkey'],
+        ['store', 'pubkeyAsString'],
+        ['authority', 'pubkeyAsString'],
+        ['auction', 'pubkeyAsString'],
+        ['vault', 'pubkeyAsString'],
+        ['acceptPayment', 'pubkeyAsString'],
         ['state', AuctionManagerStateV2],
       ],
     },
@@ -782,7 +783,7 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['address', 'pubkey'],
+        ['address', 'pubkeyAsString'],
         ['activated', 'u8'],
       ],
     },
@@ -794,10 +795,10 @@ export const SCHEMA = new Map<any, any>([
       fields: [
         ['key', 'u8'],
         ['public', 'u8'],
-        ['auctionProgram', 'pubkey'],
-        ['tokenVaultProgram', 'pubkey'],
-        ['tokenMetadataProgram', 'pubkey'],
-        ['tokenProgram', 'pubkey'],
+        ['auctionProgram', 'pubkeyAsString'],
+        ['tokenVaultProgram', 'pubkeyAsString'],
+        ['tokenMetadataProgram', 'pubkeyAsString'],
+        ['tokenProgram', 'pubkeyAsString'],
       ],
     },
   ],
@@ -826,7 +827,7 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['recipient', 'pubkey'],
+        ['recipient', 'pubkeyAsString'],
         ['amountPaid', 'u64'],
       ],
     },
@@ -847,7 +848,7 @@ export const SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['auctionManager', 'pubkey'],
+        ['auctionManager', 'pubkeyAsString'],
         ['order', 'u64'],
         ['winningConfigType', 'u8'],
         ['amountType', 'u8'],
@@ -994,30 +995,30 @@ export const SCHEMA = new Map<any, any>([
 ]);
 
 export async function getAuctionManagerKey(
-  vault: PublicKey,
-  auctionKey: PublicKey,
-): Promise<PublicKey> {
+  vault: string,
+  auctionKey: string,
+): Promise<string> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
-      [Buffer.from(METAPLEX_PREFIX), auctionKey.toBuffer()],
+      [Buffer.from(METAPLEX_PREFIX), toPublicKey(auctionKey).toBuffer()],
       PROGRAM_IDS.metaplex,
     )
   )[0];
 }
 
 export async function getAuctionKeys(
-  vault: PublicKey,
-): Promise<{ auctionKey: PublicKey; auctionManagerKey: PublicKey }> {
+  vault: string,
+): Promise<{ auctionKey: string; auctionManagerKey: string }> {
   const PROGRAM_IDS = programIds();
 
-  const auctionKey: PublicKey = (
+  const auctionKey = (
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         PROGRAM_IDS.auction.toBuffer(),
-        vault.toBuffer(),
+        toPublicKey(vault).toBuffer(),
       ],
       PROGRAM_IDS.auction,
     )
@@ -1029,17 +1030,17 @@ export async function getAuctionKeys(
 }
 
 export async function getBidRedemption(
-  auctionKey: PublicKey,
-  bidMetadata: PublicKey,
-): Promise<PublicKey> {
+  auctionKey: string,
+  bidMetadata: string,
+): Promise<string> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        auctionKey.toBuffer(),
-        bidMetadata.toBuffer(),
+        toPublicKey(auctionKey).toBuffer(),
+        toPublicKey(bidMetadata).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )
@@ -1047,51 +1048,48 @@ export async function getBidRedemption(
 }
 
 export async function getBidderKeys(
-  auctionKey: PublicKey,
-  bidder: PublicKey,
-): Promise<{ bidMetadata: PublicKey; bidRedemption: PublicKey }> {
+  auctionKey: string,
+  bidder: string,
+): Promise<{ bidMetadata: string; bidRedemption: string }> {
   const PROGRAM_IDS = programIds();
 
-  const bidMetadata: PublicKey = (
+  const bidMetadata = (
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
         PROGRAM_IDS.auction.toBuffer(),
-        auctionKey.toBuffer(),
-        bidder.toBuffer(),
+        toPublicKey(auctionKey).toBuffer(),
+        toPublicKey(bidder).toBuffer(),
         Buffer.from(METADATA),
       ],
       PROGRAM_IDS.auction,
     )
   )[0];
 
-  const bidRedemption: PublicKey = await getBidRedemption(
-    auctionKey,
-    bidMetadata,
-  );
+  const bidRedemption = await getBidRedemption(auctionKey, bidMetadata);
 
   return { bidMetadata, bidRedemption };
 }
 
 export async function getOriginalAuthority(
-  auctionKey: PublicKey,
-  metadata: PublicKey,
-): Promise<PublicKey> {
+  auctionKey: string,
+  metadata: string,
+): Promise<string> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        auctionKey.toBuffer(),
-        metadata.toBuffer(),
+        toPublicKey(auctionKey).toBuffer(),
+        toPublicKey(metadata).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )
   )[0];
 }
 
-export async function getWhitelistedCreator(creator: PublicKey) {
+export async function getWhitelistedCreator(creator: string) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
@@ -1104,7 +1102,7 @@ export async function getWhitelistedCreator(creator: PublicKey) {
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
         store.toBuffer(),
-        creator.toBuffer(),
+        toPublicKey(creator).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )
@@ -1112,8 +1110,8 @@ export async function getWhitelistedCreator(creator: PublicKey) {
 }
 
 export async function getPrizeTrackingTicket(
-  auctionManager: PublicKey,
-  mint: PublicKey,
+  auctionManager: string,
+  mint: string,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -1126,17 +1124,15 @@ export async function getPrizeTrackingTicket(
       [
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
-        auctionManager.toBuffer(),
-        mint.toBuffer(),
+        toPublicKey(auctionManager).toBuffer(),
+        toPublicKey(mint).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )
   )[0];
 }
 
-export async function getAuctionWinnerTokenTypeTracker(
-  auctionManager: PublicKey,
-) {
+export async function getAuctionWinnerTokenTypeTracker(auctionManager: string) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
@@ -1148,7 +1144,7 @@ export async function getAuctionWinnerTokenTypeTracker(
       [
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
-        auctionManager.toBuffer(),
+        toPublicKey(auctionManager).toBuffer(),
         Buffer.from(TOTALS),
       ],
       PROGRAM_IDS.metaplex,
@@ -1157,8 +1153,8 @@ export async function getAuctionWinnerTokenTypeTracker(
 }
 
 export async function getSafetyDepositConfig(
-  auctionManager: PublicKey,
-  safetyDeposit: PublicKey,
+  auctionManager: string,
+  safetyDeposit: string,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -1171,8 +1167,8 @@ export async function getSafetyDepositConfig(
       [
         Buffer.from(METAPLEX_PREFIX),
         PROGRAM_IDS.metaplex.toBuffer(),
-        auctionManager.toBuffer(),
-        safetyDeposit.toBuffer(),
+        toPublicKey(auctionManager).toBuffer(),
+        toPublicKey(safetyDeposit).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )
@@ -1180,12 +1176,12 @@ export async function getSafetyDepositConfig(
 }
 
 export async function getPayoutTicket(
-  auctionManager: PublicKey,
+  auctionManager: string,
   winnerConfigIndex: number | null | undefined,
   winnerConfigItemIndex: number | null | undefined,
   creatorIndex: number | null | undefined,
-  safetyDepositBox: PublicKey,
-  recipient: PublicKey,
+  safetyDepositBox: string,
+  recipient: string,
 ) {
   const PROGRAM_IDS = programIds();
 
@@ -1193,7 +1189,7 @@ export async function getPayoutTicket(
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        auctionManager.toBuffer(),
+        toPublicKey(auctionManager).toBuffer(),
         Buffer.from(
           winnerConfigIndex !== null && winnerConfigIndex !== undefined
             ? winnerConfigIndex.toString()
@@ -1209,8 +1205,8 @@ export async function getPayoutTicket(
             ? creatorIndex.toString()
             : 'auctioneer',
         ),
-        safetyDepositBox.toBuffer(),
-        recipient.toBuffer(),
+        toPublicKey(safetyDepositBox).toBuffer(),
+        toPublicKey(recipient).toBuffer(),
       ],
       PROGRAM_IDS.metaplex,
     )

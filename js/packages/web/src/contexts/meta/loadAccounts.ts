@@ -22,7 +22,7 @@ async function getProgramAccounts(
   connection: Connection,
   programId: PublicKey,
   commitment?: Commitment,
-): Promise<Array<{ pubkey: string; account: AccountInfo<string> }>> {
+): Promise<Array<AccountAndPubkey>> {
   const args = connection._buildArgs(
     [programId.toBase58()],
     commitment,
@@ -33,10 +33,23 @@ async function getProgramAccounts(
     args,
   );
 
-  const data = unsafeRes.result as Array<{
-    account: AccountInfo<string>;
-    pubkey: string;
-  }>;
+  const data = (
+    unsafeRes.result as Array<{
+      account: AccountInfo<[string, string]>;
+      pubkey: string;
+    }>
+  ).map(item => {
+    return {
+      account: {
+        data: Buffer.from(item.account.data[0], 'base64'),
+        executable: item.account.executable,
+        lamports: item.account.lamports,
+        // TODO: maybe we can do it in lazy way? or just use string
+        owner: new PublicKey(item.account.owner),
+      } as AccountInfo<Buffer>,
+      pubkey: item.pubkey,
+    };
+  });
 
   return data;
 }

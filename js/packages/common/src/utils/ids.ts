@@ -2,6 +2,18 @@ import { PublicKey, AccountInfo } from '@solana/web3.js';
 
 export type StringPublicKey = string;
 
+const PubKeysInternedMap = new Map<string, PublicKey>();
+
+export const toPublicKey = (key: string) => {
+  let result = PubKeysInternedMap.get(key);
+  if (!result) {
+    result = new PublicKey(key);
+    PubKeysInternedMap.set(key, result);
+  }
+
+  return result;
+};
+
 export interface PublicKeyStringAndAccount<T> {
   pubkey: string;
   account: AccountInfo<T>;
