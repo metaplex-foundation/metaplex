@@ -1,6 +1,6 @@
 {
   "name": "Magic Items Marketplace",
-  "short_name": "Magic Items Marketplace",
+  "short_name": "A Metaplex Store on Solana",
   "display": "standalone",
   "start_url": "./",
   "theme_color": "#002140",
