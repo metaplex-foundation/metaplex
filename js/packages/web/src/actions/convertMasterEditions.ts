@@ -51,7 +51,7 @@ export async function filterMetadata(
       let printingBal = 0;
       try {
         let printingBalResp = await connection.getTokenSupply(
-          masterEdition.info.printingMint,
+          toPublicKey(masterEdition.info.printingMint),
         );
         printingBal = printingBalResp.value.uiAmount || 0;
       } catch (e) {
