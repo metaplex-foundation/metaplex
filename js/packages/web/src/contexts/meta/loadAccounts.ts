@@ -121,7 +121,9 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
 
   const additionalPromises: Promise<void>[] = [];
 
-  const IS_BIG_STORE = process.env.NEXT_PUBLIC_BIG_STORE;
+  const IS_BIG_STORE =
+    process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
+  console.log(`Is big store: ${IS_BIG_STORE}`);
 
   const promises = [
     getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),

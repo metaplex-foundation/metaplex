@@ -59,7 +59,6 @@ const getStoreID = async () => {
   }
 
   const storeOwnerAddress = urlStoreId || STORE_OWNER_ADDRESS;
-
   console.log(`STORE_OWNER_ADDRESS: ${storeOwnerAddress?.toBase58()}`);
   const programs = await findProgramAddress(
     [
@@ -82,7 +81,8 @@ export const setProgramIds = async (envName: string) => {
   }
 
   if (!STORE) {
-    STORE = toPublicKey((await getStoreID()) || '');
+    const potential_store = await getStoreID();
+    STORE = potential_store ? toPublicKey(potential_store) : undefined;
   }
 };
 
