@@ -6,6 +6,7 @@
   "types": "dist/lib/index.d.ts",
   "exports": {
     ".": "./dist/lib",
+    "./dist/*": "./dist/*.js",
     "./styles.css": "./dist/lib/styles.css"
   },
   "license": "Apache-2.0",

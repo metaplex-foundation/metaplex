@@ -15,7 +15,7 @@ import {
 } from '@oyster/common';
 
 import BN from 'bn.js';
-import { SafetyDepositInstructionConfig } from './addTokensToVault';
+import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 
 const BATCH_SIZE = 4;
 // Printing tokens are minted on the fly as needed. We need to pre-mint them to give to the vault
@@ -23,11 +23,11 @@ const BATCH_SIZE = 4;
 export async function deprecatedPopulatePrintingTokens(
   connection: Connection,
   wallet: any,
-  safetyDepositConfigs: SafetyDepositInstructionConfig[],
+  safetyDepositConfigs: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
-  safetyDepositConfigs: SafetyDepositInstructionConfig[];
+  safetyDepositConfigs: SafetyDepositInstructionTemplate[];
 }> {
   const PROGRAM_IDS = utils.programIds();
 
@@ -46,7 +46,7 @@ export async function deprecatedPopulatePrintingTokens(
     const printingMint = (
       nft.draft.masterEdition as ParsedAccount<MasterEditionV1>
     )?.info.printingMint;
-    if (nft.tokenMint.equals(printingMint) && !nft.tokenAccount) {
+    if (nft.box.tokenMint.equals(printingMint) && !nft.box.tokenAccount) {
       const holdingKey: PublicKey = (
         await findProgramAddress(
           [
@@ -68,26 +68,26 @@ export async function deprecatedPopulatePrintingTokens(
       console.log('Making atas');
 
       nft.draft.printingMintHolding = holdingKey;
-      nft.tokenAccount = holdingKey;
+      nft.box.tokenAccount = holdingKey;
     }
-    if (nft.tokenAccount && nft.tokenMint.equals(printingMint)) {
+    if (nft.box.tokenAccount && nft.box.tokenMint.equals(printingMint)) {
       let balance = 0;
       try {
         balance =
-          (await connection.getTokenAccountBalance(nft.tokenAccount)).value
+          (await connection.getTokenAccountBalance(nft.box.tokenAccount)).value
             .uiAmount || 0;
       } catch (e) {
         console.error(e);
       }
 
-      if (balance < nft.amount.toNumber() && nft.draft.masterEdition)
+      if (balance < nft.box.amount.toNumber() && nft.draft.masterEdition)
         await deprecatedMintPrintingTokens(
-          nft.tokenAccount,
-          nft.tokenMint,
+          nft.box.tokenAccount,
+          nft.box.tokenMint,
           wallet.publicKey,
           nft.draft.metadata.pubkey,
           nft.draft.masterEdition.pubkey,
-          new BN(nft.amount.toNumber() - balance),
+          new BN(nft.box.amount.toNumber() - balance),
           currInstructions,
         );
 

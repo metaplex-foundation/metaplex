@@ -850,10 +850,43 @@ pub fn process_create_metadata_accounts_logic(
     metadata.is_mutable = is_mutable;
     metadata.update_authority = *update_authority_info.key;
 
+    puff_out_data_fields(&mut metadata);
+
+    let edition_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        metadata.mint.as_ref(),
+        EDITION.as_bytes()
+    ];
+    let (_, edition_bump_seed) =
+        Pubkey::find_program_address(edition_seeds, program_id);
+    metadata.edition_nonce = Some(edition_bump_seed);
+    
     metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
 
     Ok(())
 }
+
+pub fn puff_out_data_fields(metadata: &mut Metadata) {
+    let mut array_of_zeroes = vec![];
+    while array_of_zeroes.len() < MAX_NAME_LENGTH - metadata.data.name.len() {
+        array_of_zeroes.push(0u8);
+    }
+    metadata.data.name = metadata.data.name.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+
+    let mut array_of_zeroes = vec![];
+    while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - metadata.data.symbol.len() {
+        array_of_zeroes.push(0u8);
+    }
+    metadata.data.symbol = metadata.data.symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+
+    let mut array_of_zeroes = vec![];
+    while array_of_zeroes.len() < MAX_URI_LENGTH - metadata.data.uri.len() {
+        array_of_zeroes.push(0u8);
+    }
+    metadata.data.uri = metadata.data.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+}
+
 pub struct MintNewEditionFromMasterEditionViaTokenLogicArgs<'a> {
     pub new_metadata_account_info: &'a AccountInfo<'a>,
     pub new_edition_account_info: &'a AccountInfo<'a>,

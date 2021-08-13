@@ -141,7 +141,7 @@ export async function setupPlaceBid(
     auctionView.auction.info.tokenMint,
     transferAuthority.publicKey,
     wallet.publicKey,
-    auctionView.auctionManager.info.vault,
+    auctionView.auctionManager.vault,
     bid,
     instructions,
   );
