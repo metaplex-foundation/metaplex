@@ -14,6 +14,7 @@ import {
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
+  WalletSigner,
 } from '@oyster/common';
 
 import { AccountLayout, MintInfo } from '@solana/spl-token';
@@ -21,12 +22,13 @@ import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 const { createTokenAccount } = actions;
 const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   bidderTokenAccount: PublicKey | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -61,7 +63,7 @@ export async function sendPlaceBid(
 
 export async function setupPlaceBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   bidderTokenAccount: PublicKey | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -70,6 +72,8 @@ export async function setupPlaceBid(
   overallInstructions: TransactionInstruction[][],
   overallSigners: Keypair[][],
 ): Promise<BN> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];

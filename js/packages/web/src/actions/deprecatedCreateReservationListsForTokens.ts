@@ -1,20 +1,23 @@
 import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { deprecatedCreateReservationList } from '@oyster/common';
+import { deprecatedCreateReservationList, WalletSigner } from '@oyster/common';
 
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 import { WinningConfigType } from '../models/metaplex';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 const BATCH_SIZE = 10;
 // This command batches out creating reservation lists for those tokens who are being sold in PrintingV1 mode.
 // Reservation lists are used to insure printing order among limited editions.
 export async function deprecatedCreateReservationListForTokens(
-  wallet: any,
+  wallet: WalletSigner,
   auctionManager: PublicKey,
   safetyDepositInstructionTemplates: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let batchCounter = 0;
 
   let signers: Array<Keypair[]> = [];

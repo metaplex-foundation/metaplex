@@ -24,6 +24,7 @@ import {
   findProgramAddress,
   IPartialCreateAuctionArgs,
   MetadataKey,
+  WalletSigner,
 } from '@oyster/common';
 
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -55,6 +56,7 @@ import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
 import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 import { validateSafetyDepositBoxV2 } from '../models/metaplex/validateSafetyDepositBoxV2';
 import { initAuctionManagerV2 } from '../models/metaplex/initAuctionManagerV2';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 const { createTokenAccount } = actions;
 
 interface normalPattern {
@@ -98,7 +100,7 @@ export interface SafetyDepositDraft {
 // from some AuctionManagerSettings.
 export async function createAuctionManager(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -368,10 +370,12 @@ export async function createAuctionManager(
 }
 
 async function buildSafetyDepositArray(
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposits: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
 ): Promise<SafetyDepositInstructionTemplate[]> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let safetyDepositTemplates: SafetyDepositInstructionTemplate[] = [];
   safetyDeposits.forEach((s, i) => {
     const maxAmount = [...s.amountRanges.map(a => a.amount)]
@@ -498,7 +502,7 @@ async function buildSafetyDepositArray(
 }
 
 async function setupAuctionManagerInstructions(
-  wallet: any,
+  wallet: WalletSigner,
   vault: PublicKey,
   paymentMint: PublicKey,
   accountRentExempt: number,
@@ -509,6 +513,8 @@ async function setupAuctionManagerInstructions(
   signers: Keypair[];
   auctionManager: PublicKey;
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let store = programIds().store;
   if (!store) {
     throw new Error('Store not initialized');
@@ -555,12 +561,14 @@ async function setupAuctionManagerInstructions(
 }
 
 async function setupStartAuction(
-  wallet: any,
+  wallet: WalletSigner,
   vault: PublicKey,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
 
@@ -570,7 +578,7 @@ async function setupStartAuction(
 }
 
 async function deprecatedValidateParticipationHelper(
-  wallet: any,
+  wallet: WalletSigner,
   auctionManager: PublicKey,
   whitelistedCreatorsByCreator: Record<
     string,
@@ -581,6 +589,8 @@ async function deprecatedValidateParticipationHelper(
   participationSafetyDepositDraft: SafetyDepositDraft,
   accountRentExempt: number,
 ): Promise<{ instructions: TransactionInstruction[]; signers: Keypair[] }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const store = programIds().store;
   if (!store) {
     throw new Error('Store not initialized');
@@ -655,7 +665,7 @@ async function findValidWhitelistedCreator(
 }
 
 async function validateBoxes(
-  wallet: any,
+  wallet: WalletSigner,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -667,6 +677,8 @@ async function validateBoxes(
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const store = programIds().store;
   if (!store) {
     throw new Error('Store not initialized');
@@ -739,12 +751,14 @@ async function validateBoxes(
 
 async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   oneTimePrintingAuthorizationMint: PublicKey | undefined,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!oneTimePrintingAuthorizationMint)
     return { instructions: [], signers: [] };
   let signers: Keypair[] = [];

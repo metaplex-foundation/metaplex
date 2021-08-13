@@ -12,23 +12,27 @@ import {
   MasterEditionV1,
   ParsedAccount,
   MetadataKey,
+  WalletSigner,
 } from '@oyster/common';
 
 import BN from 'bn.js';
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 const BATCH_SIZE = 4;
 // Printing tokens are minted on the fly as needed. We need to pre-mint them to give to the vault
 // for all relevant NFTs.
 export async function deprecatedPopulatePrintingTokens(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDepositConfigs: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
   safetyDepositConfigs: SafetyDepositInstructionTemplate[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
   let batchCounter = 0;

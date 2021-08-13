@@ -10,23 +10,27 @@ import {
   sendTransactionsWithManualRetry,
   decodeExternalPriceAccount,
   findProgramAddress,
+  WalletSigner,
 } from '@oyster/common';
 
 import BN from 'bn.js';
 import { closeVault } from './closeVault';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 const BATCH_SIZE = 1;
 
 // Given a vault you own, unwind all the tokens out of it.
 export async function unwindVault(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   vault: ParsedAccount<Vault>,
   safetyDepositBoxesByVaultAndIndex: Record<
     string,
     ParsedAccount<SafetyDepositBox>
   >,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let batchCounter = 0;
   const PROGRAM_IDS = programIds();
   let signers: Array<Keypair[]> = [];
