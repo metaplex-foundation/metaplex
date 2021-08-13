@@ -1002,7 +1002,7 @@ export async function getAuctionManagerKey(
   return (
     await findProgramAddress(
       [Buffer.from(METAPLEX_PREFIX), toPublicKey(auctionKey).toBuffer()],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1016,10 +1016,10 @@ export async function getAuctionKeys(
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        PROGRAM_IDS.auction.toBuffer(),
+        toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.auction,
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 
@@ -1041,7 +1041,7 @@ export async function getBidRedemption(
         toPublicKey(auctionKey).toBuffer(),
         toPublicKey(bidMetadata).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1056,12 +1056,12 @@ export async function getBidderKeys(
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        PROGRAM_IDS.auction.toBuffer(),
+        toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(auctionKey).toBuffer(),
         toPublicKey(bidder).toBuffer(),
         Buffer.from(METADATA),
       ],
-      PROGRAM_IDS.auction,
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 
@@ -1083,7 +1083,7 @@ export async function getOriginalAuthority(
         toPublicKey(auctionKey).toBuffer(),
         toPublicKey(metadata).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1099,11 +1099,11 @@ export async function getWhitelistedCreator(creator: string) {
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        PROGRAM_IDS.metaplex.toBuffer(),
-        store.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
+        toPublicKey(store).toBuffer(),
         toPublicKey(creator).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1122,11 +1122,11 @@ export async function getPrizeTrackingTicket(
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        PROGRAM_IDS.metaplex.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(auctionManager).toBuffer(),
         toPublicKey(mint).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1142,11 +1142,11 @@ export async function getAuctionWinnerTokenTypeTracker(auctionManager: string) {
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        PROGRAM_IDS.metaplex.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(auctionManager).toBuffer(),
         Buffer.from(TOTALS),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1165,11 +1165,11 @@ export async function getSafetyDepositConfig(
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        PROGRAM_IDS.metaplex.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(auctionManager).toBuffer(),
         toPublicKey(safetyDeposit).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }
@@ -1207,7 +1207,7 @@ export async function getPayoutTicket(
         toPublicKey(safetyDepositBox).toBuffer(),
         toPublicKey(recipient).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }

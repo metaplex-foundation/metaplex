@@ -304,7 +304,7 @@ export async function setVaultAuthority(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data: data,
     }),
   );
@@ -372,7 +372,7 @@ export async function initVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data: data,
     }),
   );
@@ -391,7 +391,7 @@ export async function getSafetyDepositBox(
         toPublicKey(vault).toBuffer(),
         toPublicKey(tokenMint).toBuffer(),
       ],
-      vaultProgramId,
+      toPublicKey(vaultProgramId),
     )
   )[0];
 }
@@ -472,7 +472,7 @@ export async function addTokenToInactiveVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -492,10 +492,10 @@ export async function activateVault(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        vaultProgramId.toBuffer(),
+        toPublicKey(vaultProgramId).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      vaultProgramId,
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -537,7 +537,7 @@ export async function activateVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -562,10 +562,10 @@ export async function combineVault(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        vaultProgramId.toBuffer(),
+        toPublicKey(vaultProgramId).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      vaultProgramId,
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -636,7 +636,7 @@ export async function combineVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -658,10 +658,10 @@ export async function withdrawTokenFromSafetyDepositBox(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        vaultProgramId.toBuffer(),
+        toPublicKey(vaultProgramId).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      vaultProgramId,
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -718,7 +718,7 @@ export async function withdrawTokenFromSafetyDepositBox(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -745,7 +745,7 @@ export async function updateExternalPriceAccount(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -763,7 +763,7 @@ export async function getSafetyDepositBoxAddress(
         toPublicKey(vault).toBuffer(),
         toPublicKey(tokenMint).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 }

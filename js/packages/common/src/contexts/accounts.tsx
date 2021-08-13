@@ -388,13 +388,14 @@ export function AccountsProvider({ children = null as any }) {
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
   const { nativeAccount } = UseNativeAccount();
+  const walletKey = wallet?.publicKey?.toBase58();
 
   const selectUserAccounts = useCallback(() => {
     return cache
       .byParser(TokenAccountParser)
       .map(id => cache.get(id))
       .filter(
-        a => a && a.info.owner.toBase58() === wallet?.publicKey?.toBase58(),
+        a => a && a.info.owner.toBase58() === walletKey,
       )
       .map(a => a as TokenAccount);
   }, [wallet]);

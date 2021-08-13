@@ -63,7 +63,7 @@ export async function setWhitelistedCreator(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

@@ -36,9 +36,21 @@ export async function setStore(
       isWritable: false,
     },
     { pubkey: PROGRAM_IDS.token, isSigner: false, isWritable: false },
-    { pubkey: PROGRAM_IDS.vault, isSigner: false, isWritable: false },
-    { pubkey: PROGRAM_IDS.metadata, isSigner: false, isWritable: false },
-    { pubkey: PROGRAM_IDS.auction, isSigner: false, isWritable: false },
+    {
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(PROGRAM_IDS.auction),
+      isSigner: false,
+      isWritable: false,
+    },
     {
       pubkey: PROGRAM_IDS.system,
       isSigner: false,
@@ -54,7 +66,7 @@ export async function setStore(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

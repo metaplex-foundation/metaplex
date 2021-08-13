@@ -170,11 +170,11 @@ export async function getSafetyDepositBoxValidationTicket(
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        PROGRAM_IDS.metaplex.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(auctionManager).toBuffer(),
         toPublicKey(safetyDepositBox).toBuffer(),
       ],
-      PROGRAM_IDS.metaplex,
+      toPublicKey(PROGRAM_IDS.metaplex),
     )
   )[0];
 }

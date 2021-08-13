@@ -138,12 +138,12 @@ export async function redeemParticipationBidV3(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -232,7 +232,7 @@ export async function redeemParticipationBidV3(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

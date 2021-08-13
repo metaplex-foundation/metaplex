@@ -119,7 +119,7 @@ export async function deprecatedValidateSafetyDepositBoxV1(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -151,7 +151,7 @@ export async function deprecatedValidateSafetyDepositBoxV1(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

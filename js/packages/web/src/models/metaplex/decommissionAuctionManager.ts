@@ -49,7 +49,7 @@ export async function decommissionAuctionManager(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.auction,
+      pubkey: toPublicKey(PROGRAM_IDS.auction),
       isSigner: false,
       isWritable: false,
     },
@@ -63,7 +63,7 @@ export async function decommissionAuctionManager(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

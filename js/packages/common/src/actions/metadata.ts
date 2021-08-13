@@ -481,10 +481,10 @@ export async function updateMetadata(
       await findProgramAddress(
         [
           Buffer.from('metadata'),
-          metadataProgramId.toBuffer(),
+          toPublicKey(metadataProgramId).toBuffer(),
           toPublicKey(mintKey).toBuffer(),
         ],
-        metadataProgramId,
+        toPublicKey(metadataProgramId),
       )
     )[0];
 
@@ -512,7 +512,7 @@ export async function updateMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data: txnData,
     }),
   );
@@ -534,10 +534,10 @@ export async function createMetadata(
     await findProgramAddress(
       [
         Buffer.from('metadata'),
-        metadataProgramId.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
         toPublicKey(mintKey).toBuffer(),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
   console.log('Data', data);
@@ -584,7 +584,7 @@ export async function createMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data: txnData,
     }),
   );
@@ -606,10 +606,10 @@ export async function createMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        metadataProgramId.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
         toPublicKey(mintKey).toBuffer(),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
 
@@ -617,11 +617,11 @@ export async function createMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        metadataProgramId.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
         toPublicKey(mintKey).toBuffer(),
         Buffer.from(EDITION),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
 
@@ -680,7 +680,7 @@ export async function createMasterEdition(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -790,7 +790,7 @@ export async function deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -893,7 +893,7 @@ export async function mintNewEditionFromMasterEditionViaToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -929,7 +929,7 @@ export async function updatePrimarySaleHappenedViaToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -997,7 +997,7 @@ export async function deprecatedCreateReservationList(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -1027,7 +1027,7 @@ export async function signMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -1088,7 +1088,7 @@ export async function deprecatedMintPrintingTokens(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -1124,7 +1124,7 @@ export async function convertMasterEditionV1ToV2(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
@@ -1139,11 +1139,11 @@ export async function getEdition(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
         toPublicKey(tokenMint).toBuffer(),
         Buffer.from(EDITION),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
@@ -1157,10 +1157,10 @@ export async function getMetadata(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
         toPublicKey(tokenMint).toBuffer(),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
@@ -1175,12 +1175,12 @@ export async function deprecatedGetReservationList(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
         toPublicKey(masterEdition).toBuffer(),
         Buffer.from(RESERVATION),
         toPublicKey(resource).toBuffer(),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
@@ -1196,12 +1196,12 @@ export async function getEditionMarkPda(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
         toPublicKey(mint).toBuffer(),
         Buffer.from(EDITION),
         Buffer.from(editionNumber.toString()),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }

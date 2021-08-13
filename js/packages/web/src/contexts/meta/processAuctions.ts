@@ -12,8 +12,8 @@ import {
   AuctionDataExtended,
   MAX_AUCTION_DATA_EXTENDED_SIZE,
   AuctionDataExtendedParser,
+  AUCTION_ID,
 } from '@oyster/common';
-import { AUCTION_ID } from '@oyster/common/dist/lib/utils/ids';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 
 export const processAuctions: ProcessAccountsFunc = (
@@ -92,7 +92,7 @@ export const processAuctions: ProcessAccountsFunc = (
 };
 
 const isAuctionAccount: CheckAccountFunc = account =>
-  account.owner.equals(AUCTION_ID);
+  (account.owner as unknown as any) === AUCTION_ID;
 
 const isExtendedAuctionAccount: CheckAccountFunc = account =>
   account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE;

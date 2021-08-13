@@ -6,12 +6,7 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '@oyster/common/dist/lib/utils/ids';
-import {
-  AccountInfo,
-  Commitment,
-  Connection,
-  PublicKey,
-} from '@solana/web3.js';
+import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { AccountAndPubkey, MetaState, ProcessAccountsFunc } from './types';
 import { isMetadataPartOfStore } from './isMetadataPartOfStore';
 import { processAuctions } from './processAuctions';
@@ -38,7 +33,7 @@ import {
 
 async function getProgramAccounts(
   connection: Connection,
-  programId: PublicKey,
+  programId: StringPublicKey,
   configOrCommitment?: any,
 ): Promise<Array<AccountAndPubkey>> {
   const extra: any = {};
@@ -62,12 +57,7 @@ async function getProgramAccounts(
     }
   }
 
-  const args = connection._buildArgs(
-    [programId.toBase58()],
-    commitment,
-    'base64',
-    extra,
-  );
+  const args = connection._buildArgs([programId], commitment, 'base64', extra);
   const unsafeRes = await (connection as any)._rpcRequest(
     'getProgramAccounts',
     args,
@@ -86,7 +76,7 @@ async function getProgramAccounts(
         executable: item.account.executable,
         lamports: item.account.lamports,
         // TODO: maybe we can do it in lazy way? or just use string
-        owner: new PublicKey(item.account.owner),
+        owner: item.account.owner,
       } as AccountInfo<Buffer>,
       pubkey: item.pubkey,
     };
@@ -131,6 +121,8 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
 
   const additionalPromises: Promise<void>[] = [];
 
+  const IS_BIG_STORE = process.env.NEXT_PUBLIC_BIG_STORE;
+
   const promises = [
     getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
     getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
@@ -138,6 +130,11 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
     getProgramAccounts(connection, METAPLEX_ID).then(
       forEach(processMetaplexAccounts),
     ),
+    IS_BIG_STORE
+      ? getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
+          forEach(processMetaData),
+        )
+      : undefined,
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
         {
@@ -145,7 +142,11 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
         },
       ],
     }).then(async creators => {
-      await forEach(processMetaplexAccounts)(creators);
+      const result = await forEach(processMetaplexAccounts)(creators);
+
+      if (IS_BIG_STORE) {
+        return result;
+      }
 
       const whitelistedCreators = Object.values(
         tempCache.whitelistedCreatorsByCreator,
@@ -211,11 +212,11 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
           await PublicKey.createProgramAddress(
             [
               Buffer.from(METADATA_PREFIX),
-              METADATA_PROGRAM_ID.toBuffer(),
+              toPublicKey(METADATA_PROGRAM_ID).toBuffer(),
               toPublicKey(tempCache.metadata[i].info.mint).toBuffer(),
               new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
             ],
-            METADATA_PROGRAM_ID,
+            toPublicKey(METADATA_PROGRAM_ID),
           )
         ).toBase58();
       } else {

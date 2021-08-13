@@ -26,7 +26,7 @@ export async function claimBid(
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
   const bidderPotKey = await getBidderPotKey({
-    auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+    auctionProgramId: PROGRAM_IDS.auction,
     auctionKey,
     bidderPubkey: bidder,
   });
@@ -77,12 +77,12 @@ export async function claimBid(
       isWritable: false,
     },
     {
-      pubkey: store,
+      pubkey: toPublicKey(store),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.auction,
+      pubkey: toPublicKey(PROGRAM_IDS.auction),
       isSigner: false,
       isWritable: false,
     },
@@ -101,7 +101,7 @@ export async function claimBid(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

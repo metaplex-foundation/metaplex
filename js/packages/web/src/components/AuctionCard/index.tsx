@@ -159,7 +159,7 @@ function useAuctionExtended(
       if (!auctionExtended) {
         const PROGRAM_IDS = programIds();
         const extendedKey = await getAuctionExtended({
-          auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+          auctionProgramId: PROGRAM_IDS.auction,
           resource: auctionView.vault.pubkey,
         });
         const extendedValue = auctionDataExtended[extendedKey];

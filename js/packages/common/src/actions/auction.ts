@@ -616,7 +616,7 @@ export async function createAuction(
   creator: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
-  const auctionProgramId = programIds().auction.toBase58();
+  const auctionProgramId = programIds().auction;
 
   const data = Buffer.from(serialize(AUCTION_SCHEMA, settings));
 
@@ -692,10 +692,10 @@ export async function startAuction(
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        auctionProgramId.toBuffer(),
+        toPublicKey(auctionProgramId).toBuffer(),
         toPublicKey(resource).toBuffer(),
       ],
-      auctionProgramId,
+      toPublicKey(auctionProgramId),
     )
   )[0];
 
@@ -719,7 +719,7 @@ export async function startAuction(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: auctionProgramId,
+      programId: toPublicKey(auctionProgramId),
       data: data,
     }),
   );
@@ -755,7 +755,7 @@ export async function setAuctionAuthority(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: auctionProgramId,
+      programId: toPublicKey(auctionProgramId),
       data: data,
     }),
   );
@@ -772,7 +772,7 @@ export async function placeBid(
   amount: BN,
   instructions: TransactionInstruction[],
 ) {
-  const auctionProgramId = programIds().auction.toBase58();
+  const auctionProgramId = programIds().auction;
 
   const data = Buffer.from(
     serialize(
@@ -951,7 +951,7 @@ export async function cancelBid(
   resource: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
-  const auctionProgramId = programIds().auction.toBase58();
+  const auctionProgramId = programIds().auction;
 
   const data = Buffer.from(
     serialize(

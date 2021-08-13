@@ -4,7 +4,7 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, StringPublicKey } from '@oyster/common';
+import { utils, actions, StringPublicKey, toPublicKey } from '@oyster/common';
 
 import BN from 'bn.js';
 import { QUOTE_MINT } from '../constants';
@@ -47,7 +47,7 @@ export async function createExternalPriceAccount(
     newAccountPubkey: externalPriceAccount.publicKey,
     lamports: epaRentExempt,
     space: MAX_EXTERNAL_ACCOUNT_SIZE,
-    programId: PROGRAM_IDS.vault,
+    programId: toPublicKey(PROGRAM_IDS.vault),
   });
   instructions.push(uninitializedEPA);
   signers.push(externalPriceAccount);

@@ -96,7 +96,7 @@ function useWinnerPotsByBidderKey(
       const promises: Promise<{ winner: Bid; key: StringPublicKey }>[] =
         truWinners.map(winner =>
           getBidderPotKey({
-            auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+            auctionProgramId: PROGRAM_IDS.auction,
             auctionKey: auction.pubkey,
             bidderPubkey: winner.key,
           }).then(key => ({

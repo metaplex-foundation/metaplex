@@ -43,10 +43,10 @@ export async function withdrawMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -54,11 +54,11 @@ export async function withdrawMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        PROGRAM_IDS.auction.toBuffer(),
+        toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
         Buffer.from(EXTENDED),
       ],
-      PROGRAM_IDS.auction,
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 
@@ -126,12 +126,12 @@ export async function withdrawMasterEdition(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: store,
+      pubkey: toPublicKey(store),
       isSigner: false,
       isWritable: false,
     },
@@ -150,7 +150,7 @@ export async function withdrawMasterEdition(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

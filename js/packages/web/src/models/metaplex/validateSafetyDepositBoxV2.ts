@@ -130,7 +130,7 @@ export async function validateSafetyDepositBoxV2(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -149,7 +149,7 @@ export async function validateSafetyDepositBoxV2(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

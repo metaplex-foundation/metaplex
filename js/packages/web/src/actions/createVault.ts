@@ -54,10 +54,10 @@ export async function createVault(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         vault.publicKey.toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -94,7 +94,7 @@ export async function createVault(
     newAccountPubkey: vault.publicKey,
     lamports: vaultRentExempt,
     space: MAX_VAULT_SIZE,
-    programId: PROGRAM_IDS.vault,
+    programId: toPublicKey(PROGRAM_IDS.vault),
   });
   instructions.push(uninitializedVault);
   signers.push(vault);

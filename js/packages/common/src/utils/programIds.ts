@@ -64,10 +64,10 @@ const getStoreID = async () => {
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
-      METAPLEX_ID.toBuffer(),
+      toPublicKey(METAPLEX_ID).toBuffer(),
       storeOwnerAddress.toBuffer(),
     ],
-    METAPLEX_ID,
+    toPublicKey(METAPLEX_ID),
   );
   const CUSTOM = programs[0];
   console.log(`CUSTOM STORE: ${CUSTOM}`);

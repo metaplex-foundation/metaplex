@@ -29,10 +29,10 @@ export async function makeAuction(
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        PROGRAM_IDS.auction.toBuffer(),
+        toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.auction,
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 

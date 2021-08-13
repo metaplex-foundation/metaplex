@@ -38,10 +38,10 @@ export async function deprecatedPopulateParticipationPrintingAccount(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -97,7 +97,7 @@ export async function deprecatedPopulateParticipationPrintingAccount(
     {
       pubkey: toPublicKey(
         await getAuctionExtended({
-          auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+          auctionProgramId: PROGRAM_IDS.auction,
           resource: vault,
         }),
       ),
@@ -115,12 +115,12 @@ export async function deprecatedPopulateParticipationPrintingAccount(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -159,7 +159,7 @@ export async function deprecatedPopulateParticipationPrintingAccount(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

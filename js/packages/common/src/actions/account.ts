@@ -290,6 +290,7 @@ export function findOrCreateAccountByMint(
   excluded?: Set<string>,
 ): PublicKey {
   const accountToFind = mint.toBase58();
+  const ownerKey = owner.toBase58();
   const account = cache
     .byParser(TokenAccountParser)
     .map(id => cache.get(id))
@@ -297,7 +298,7 @@ export function findOrCreateAccountByMint(
       acc =>
         acc !== undefined &&
         acc.info.mint.toBase58() === accountToFind &&
-        acc.info.owner.toBase58() === owner.toBase58() &&
+        acc.info.owner.toBase58() === ownerKey &&
         (excluded === undefined || !excluded.has(acc.pubkey)),
     );
   const isWrappedSol = accountToFind === WRAPPED_SOL_MINT.toBase58();

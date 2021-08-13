@@ -96,7 +96,7 @@ const rerun = async ({
       if (!LOOKUP[auction.auction.pubkey]) {
         LOOKUP[auction.auction.pubkey] = (
           await getAuctionExtended({
-            auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+            auctionProgramId: PROGRAM_IDS.auction,
             resource: auction.vault.pubkey,
           })
         );
