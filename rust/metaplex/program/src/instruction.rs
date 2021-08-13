@@ -154,7 +154,7 @@ pub enum MetaplexInstruction {
     ///   20. `[]` Safety deposit config pda of ['metaplex', program id, auction manager, safety deposit]
     ///      This account will only get used AND BE REQUIRED in the event this is an AuctionManagerV2
     ///   21. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
-    DeprecatedRedeemBid,
+    RedeemBid,
 
     /// Note: This requires that auction manager be in a Running state.
     ///
