@@ -50,7 +50,7 @@ export async function redeemParticipationBidV3(
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
   const auctionDataExtended = await getAuctionExtended({
-    auctionProgramId: PROGRAM_IDS.auction.toBase58(),
+    auctionProgramId: PROGRAM_IDS.auction,
     resource: vault,
   });
 
