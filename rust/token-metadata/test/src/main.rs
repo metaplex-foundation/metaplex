@@ -57,7 +57,7 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
     while i < needing_puffing.len() {
         let pubkey = needing_puffing[i];
         instructions.push(puff_metadata_account(spl_token_metadata::id(), pubkey));
-        if instructions.len() == 20 {
+        if instructions.len() >= 20 {
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
