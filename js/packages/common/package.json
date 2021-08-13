@@ -1,6 +1,6 @@
 {
   "name": "@oyster/common",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Oyster common utilities",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -30,11 +30,11 @@
   },
   "dependencies": {
     "@project-serum/serum": "^0.13.52",
-    "@project-serum/sol-wallet-adapter": "^0.2.5",
     "@solana/spl-token": "0.1.6",
     "@solana/spl-token-registry": "0.2.202",
-    "@solana/wallet-base": "0.0.1",
-    "@solana/wallet-ledger": "0.0.1",
+    "@solana/wallet-adapter-base": "^0.4.1",
+    "@solana/wallet-adapter-react": "^0.7.0",
+    "@solana/wallet-adapter-wallets": "^0.6.0",
     "@solana/web3.js": "^1.21.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
@@ -76,9 +76,5 @@
   "peerDependencies": {
     "react": "*",
     "react-dom": "*"
-  },
-  "resolutions": {
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
   }
 }
