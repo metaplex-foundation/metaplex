@@ -1,4 +1,4 @@
-use super::{create_mint, create_token_account, mint_tokens, ExternalPrice, Metadata};
+use super::{create_mint, create_token_account, ExternalPrice, Metadata};
 use solana_program::{pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{

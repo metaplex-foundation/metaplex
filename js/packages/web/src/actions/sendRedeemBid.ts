@@ -3,7 +3,6 @@ import {
   Connection,
   PublicKey,
   TransactionInstruction,
-  AccountInfo,
 } from '@solana/web3.js';
 import {
   actions,
@@ -30,6 +29,7 @@ import {
   BidderMetadata,
   getEditionMarkPda,
   decodeEditionMarker,
+  BidStateType,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -40,10 +40,8 @@ import {
   redeemBid,
   redeemFullRightsTransferBid,
   deprecatedRedeemParticipationBid,
-  redeemParticipationBidV2,
+  redeemParticipationBidV3,
   WinningConstraint,
-  WinningConfigItem,
-  WinningConfigStateItem,
   redeemPrintingV2Bid,
   PrizeTrackingTicket,
   getPrizeTrackingTicket,
@@ -57,6 +55,10 @@ import { setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
+import {
+  AuctionManagerV1,
+  ParticipationStateV1,
+} from '../models/metaplex/deprecatedStates';
 const { createTokenAccount } = actions;
 const { approve } = models;
 
@@ -66,15 +68,22 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
   bidderMetadata: ParsedAccount<BidderMetadata> | undefined,
   bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined,
 ) {
-  if (!bidderMetadata || bidRedemption?.info.participationRedeemed)
+  const index =
+    auctionView.auctionManager.participationConfig?.safetyDepositBoxIndex;
+  if (index == undefined || index == null) {
     return false;
+  }
+
+  if (!bidderMetadata || bidRedemption?.info.getBidRedeemed(index))
+    return false;
+
   return (
     (winnerIndex === null &&
-      auctionView.auctionManager.info.settings.participationConfig
-        ?.nonWinningConstraint !== NonWinningConstraint.NoParticipationPrize) ||
+      auctionView.auctionManager.participationConfig?.nonWinningConstraint !==
+        NonWinningConstraint.NoParticipationPrize) ||
     (winnerIndex !== null &&
-      auctionView.auctionManager.info.settings.participationConfig
-        ?.winnerConstraint !== WinningConstraint.NoParticipationPrize)
+      auctionView.auctionManager.participationConfig?.winnerConstraint !==
+        WinningConstraint.NoParticipationPrize)
   );
 }
 
@@ -123,89 +132,73 @@ export async function sendRedeemBid(
   console.log('Winner index', winnerIndex);
 
   if (winnerIndex !== null) {
-    const winningConfig =
-      auctionView.auctionManager.info.settings.winningConfigs[winnerIndex];
+    // items is a prebuilt array of arrays where each entry represents one
+    // winning spot, and each entry in it represents one type of item that can
+    // be received.
     const winningSet = auctionView.items[winnerIndex];
 
     for (let i = 0; i < winningSet.length; i++) {
       const item = winningSet[i];
       const safetyDeposit = item.safetyDeposit;
-      // In principle it is possible to have two winning config items of same safety deposit box
-      // so we cover for that possibility by doing an array not a find
-      for (let j = 0; j < winningConfig.items.length; j++) {
-        const winningConfigItem = winningConfig.items[j];
-
-        if (
-          winningConfigItem.safetyDepositBoxIndex === safetyDeposit.info.order
-        ) {
-          const stateItem =
-            auctionView.auctionManager.info.state.winningConfigStates[
-              winnerIndex
-            ].items[j];
-          switch (winningConfigItem.winningConfigType) {
-            case WinningConfigType.PrintingV1:
-              console.log('Redeeming printing v1');
-              await deprecatedSetupRedeemPrintingV1Instructions(
-                auctionView,
-                accountsByMint,
-                accountRentExempt,
-                mintRentExempt,
-                wallet,
-                safetyDeposit,
-                item,
-                signers,
-                instructions,
-                winningConfigItem,
-                stateItem,
-              );
-              break;
-            case WinningConfigType.PrintingV2:
-              console.log('Redeeming printing v2');
-              await setupRedeemPrintingV2Instructions(
-                connection,
-                auctionView,
-                mintRentExempt,
-                wallet,
-                wallet.publicKey,
-                safetyDeposit,
-                item,
-                signers,
-                instructions,
-                winningConfigItem,
-                stateItem,
-                winnerIndex,
-                prizeTrackingTickets,
-              );
-              break;
-            case WinningConfigType.FullRightsTransfer:
-              console.log('Redeeming Full Rights');
-              await setupRedeemFullRightsTransferInstructions(
-                auctionView,
-                accountsByMint,
-                accountRentExempt,
-                wallet,
-                safetyDeposit,
-                item,
-                signers,
-                instructions,
-                stateItem,
-              );
-              break;
-            case WinningConfigType.TokenOnlyTransfer:
-              console.log('Redeeming Token only');
-              await setupRedeemInstructions(
-                auctionView,
-                accountsByMint,
-                accountRentExempt,
-                wallet,
-                safetyDeposit,
-                signers,
-                instructions,
-                stateItem,
-              );
-              break;
-          }
-        }
+      switch (item.winningConfigType) {
+        case WinningConfigType.PrintingV1:
+          console.log('Redeeming printing v1');
+          await deprecatedSetupRedeemPrintingV1Instructions(
+            auctionView,
+            accountsByMint,
+            accountRentExempt,
+            mintRentExempt,
+            wallet,
+            safetyDeposit,
+            item,
+            winnerIndex,
+            signers,
+            instructions,
+          );
+          break;
+        case WinningConfigType.PrintingV2:
+          console.log('Redeeming printing v2');
+          await setupRedeemPrintingV2Instructions(
+            connection,
+            auctionView,
+            mintRentExempt,
+            wallet,
+            wallet.publicKey,
+            safetyDeposit,
+            item,
+            signers,
+            instructions,
+            winnerIndex,
+            prizeTrackingTickets,
+          );
+          break;
+        case WinningConfigType.FullRightsTransfer:
+          console.log('Redeeming Full Rights');
+          await setupRedeemFullRightsTransferInstructions(
+            auctionView,
+            accountsByMint,
+            accountRentExempt,
+            wallet,
+            safetyDeposit,
+            item,
+            winnerIndex,
+            signers,
+            instructions,
+          );
+          break;
+        case WinningConfigType.TokenOnlyTransfer:
+          console.log('Redeeming Token only');
+          await setupRedeemInstructions(
+            auctionView,
+            accountsByMint,
+            accountRentExempt,
+            wallet,
+            safetyDeposit,
+            winnerIndex,
+            signers,
+            instructions,
+          );
+          break;
       }
     }
 
@@ -216,7 +209,7 @@ export async function sendRedeemBid(
       signers.push(claimSigners);
       console.log('Claimed');
       await claimBid(
-        auctionView.auctionManager.info.acceptPayment,
+        auctionView.auctionManager.acceptPayment,
         auctionView.myBidderMetadata.info.bidderPubkey,
         auctionView.myBidderPot?.info.bidderPot,
         auctionView.vault.pubkey,
@@ -280,7 +273,7 @@ export async function sendRedeemBid(
     }
   }
 
-  if (wallet.publicKey.equals(auctionView.auctionManager.info.authority)) {
+  if (wallet.publicKey.equals(auctionView.auctionManager.authority)) {
     await claimUnusedPrizes(
       connection,
       wallet,
@@ -308,16 +301,20 @@ async function setupRedeemInstructions(
   accountRentExempt: number,
   wallet: any,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
+  winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-  stateItem: WinningConfigStateItem,
 ) {
   let winningPrizeSigner: Keypair[] = [];
   let winningPrizeInstructions: TransactionInstruction[] = [];
 
   signers.push(winningPrizeSigner);
   instructions.push(winningPrizeInstructions);
-  if (!stateItem.claimed && auctionView.myBidderMetadata) {
+  const claimed = auctionView.auctionManager.isItemClaimed(
+    winnerIndex,
+    safetyDeposit.info.order,
+  );
+  if (!claimed && auctionView.myBidderMetadata) {
     let newTokenAccount = accountsByMint.get(
       safetyDeposit.info.tokenMint.toBase58(),
     )?.pubkey;
@@ -332,7 +329,7 @@ async function setupRedeemInstructions(
       );
 
     await redeemBid(
-      auctionView.auctionManager.info.vault,
+      auctionView.auctionManager.vault,
       safetyDeposit.info.store,
       newTokenAccount,
       safetyDeposit.pubkey,
@@ -362,16 +359,21 @@ async function setupRedeemFullRightsTransferInstructions(
   wallet: any,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
+  winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-  stateItem: WinningConfigStateItem,
 ) {
   let winningPrizeSigner: Keypair[] = [];
   let winningPrizeInstructions: TransactionInstruction[] = [];
 
   signers.push(winningPrizeSigner);
   instructions.push(winningPrizeInstructions);
-  if (!stateItem.claimed && auctionView.myBidderMetadata) {
+
+  const claimed = auctionView.auctionManager.isItemClaimed(
+    winnerIndex,
+    safetyDeposit.info.order,
+  );
+  if (!claimed && auctionView.myBidderMetadata) {
     let newTokenAccount = accountsByMint.get(
       safetyDeposit.info.tokenMint.toBase58(),
     )?.pubkey;
@@ -386,7 +388,7 @@ async function setupRedeemFullRightsTransferInstructions(
       );
 
     await redeemFullRightsTransferBid(
-      auctionView.auctionManager.info.vault,
+      auctionView.auctionManager.vault,
       safetyDeposit.info.store,
       newTokenAccount,
       safetyDeposit.pubkey,
@@ -470,8 +472,6 @@ export async function setupRedeemPrintingV2Instructions(
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-  winningConfigItem: WinningConfigItem,
-  stateItem: WinningConfigStateItem,
   winningIndex: number,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
@@ -493,22 +493,22 @@ export async function setupRedeemPrintingV2Instructions(
   const editionBase = myPrizeTrackingTicket
     ? myPrizeTrackingTicket.info.supplySnapshot
     : me.info.supply;
-  let offset = 1;
+  let offset = new BN(1);
 
-  auctionView.auctionManager.info.settings.winningConfigs.forEach(
+  auctionView.items.forEach(
     (wc, index) =>
       index < winningIndex &&
-      wc.items.forEach(i => {
+      wc.forEach(i => {
         if (
-          i.safetyDepositBoxIndex === item.safetyDeposit.info.order &&
-          i.winningConfigType === winningConfigItem.winningConfigType
+          i.safetyDeposit.info.order === item.safetyDeposit.info.order &&
+          i.winningConfigType === item.winningConfigType
         ) {
-          offset += i.amount;
+          offset = offset.add(i.amount);
         }
       }),
   );
 
-  for (let i = 0; i < winningConfigItem.amount; i++) {
+  for (let i = 0; i < item.amount.toNumber(); i++) {
     let myInstructions: TransactionInstruction[] = [];
     let mySigners: Keypair[] = [];
 
@@ -523,7 +523,7 @@ export async function setupRedeemPrintingV2Instructions(
     const winIndex =
       auctionView.auction.info.bidState.getWinnerIndex(receiverWallet) || 0;
 
-    const desiredEdition = editionBase.add(new BN(offset + i));
+    const desiredEdition = editionBase.add(offset.add(new BN(i)));
     const editionMarkPda = await getEditionMarkPda(
       item.metadata.info.mint,
       desiredEdition,
@@ -549,7 +549,6 @@ export async function setupRedeemPrintingV2Instructions(
       safetyDeposit.info.store,
       account,
       safetyDeposit.pubkey,
-      auctionView.vault.info.fractionMint,
       receiverWallet,
       wallet.publicKey,
       item.metadata.pubkey,
@@ -557,7 +556,7 @@ export async function setupRedeemPrintingV2Instructions(
       item.metadata.info.mint,
       mint,
       desiredEdition,
-      new BN(offset + i),
+      new BN(offset.add(new BN(i))),
       new BN(winIndex),
       myInstructions,
     );
@@ -585,10 +584,9 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
   wallet: any,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
+  winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
-  winningConfigItem: WinningConfigItem,
-  stateItem: WinningConfigStateItem,
 ) {
   if (!item.masterEdition || !item.metadata) {
     return;
@@ -609,9 +607,14 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
     ? newTokenAccount.info.amount.toNumber()
     : 0;
 
+  const claimed = auctionView.auctionManager.isItemClaimed(
+    winnerIndex,
+    safetyDeposit.info.order,
+  );
+
   if (updateAuth && auctionView.myBidderMetadata) {
-    console.log('This state item is', stateItem.claimed);
-    if (!stateItem.claimed) {
+    console.log('This state item is', claimed);
+    if (!claimed) {
       let winningPrizeSigner: Keypair[] = [];
       let winningPrizeInstructions: TransactionInstruction[] = [];
 
@@ -629,7 +632,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
         );
 
       await redeemBid(
-        auctionView.auctionManager.info.vault,
+        auctionView.auctionManager.vault,
         safetyDeposit.info.store,
         newTokenAccountKey,
         safetyDeposit.pubkey,
@@ -641,7 +644,9 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
         true,
         winningPrizeInstructions,
       );
-      newTokenAccountBalance = winningConfigItem.amount;
+      newTokenAccountBalance = auctionView.auctionManager
+        .getAmountForWinner(winnerIndex, safetyDeposit.info.order)
+        .toNumber();
     }
 
     if (newTokenAccountKey && newTokenAccountBalance > 0)
@@ -764,7 +769,7 @@ export async function setupRedeemParticipationInstructions(
 
   // Forgive me, for i have sinned. I had to split up the commands
   // here into multiple txns because participation redemption is huge.
-  if (!bidRedemption?.info?.participationRedeemed) {
+  if (!bidRedemption?.info?.getBidRedeemed(safetyDeposit.info.order)) {
     const me = item.masterEdition as ParsedAccount<MasterEditionV2>;
 
     // Super unfortunate but cant fit this all in one txn
@@ -782,7 +787,7 @@ export async function setupRedeemParticipationInstructions(
     );
 
     const fixedPrice =
-      auctionView.auctionManager.info.settings.participationConfig?.fixedPrice;
+      auctionView.auctionManager.participationConfig?.fixedPrice;
     let price: number =
       fixedPrice !== undefined && fixedPrice !== null
         ? fixedPrice.toNumber()
@@ -834,23 +839,27 @@ export async function setupRedeemParticipationInstructions(
     );
 
     mySigners.push(transferAuthority);
-
-    await redeemParticipationBidV2(
+    const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
+      wallet.publicKey,
+    );
+    await redeemParticipationBidV3(
       auctionView.vault.pubkey,
       safetyDeposit.info.store,
       account,
       safetyDeposit.pubkey,
-      auctionView.vault.info.fractionMint,
       receiverWallet,
       wallet.publicKey,
       item.metadata.pubkey,
       me.pubkey,
       item.metadata.info.mint,
       transferAuthority.publicKey,
-      auctionView.auctionManager.info.acceptPayment,
+      auctionView.auctionManager.acceptPayment,
       payingSolAccount,
       mint,
       me.info.supply.add(new BN(1)),
+      winnerIndex != null && winnerIndex != undefined
+        ? new BN(winnerIndex)
+        : null,
       myInstructions,
     );
     instructions.push([...myInstructions, ...cleanupInstructions]);
@@ -888,9 +897,12 @@ async function deprecatedSetupRedeemParticipationInstructions(
   instructions: Array<TransactionInstruction[]>,
 ) {
   const me = item.masterEdition as ParsedAccount<MasterEditionV1>;
+  const participationState: ParticipationStateV1 | null = (
+    auctionView.auctionManager.instance.info as AuctionManagerV1
+  ).state?.participationState;
   if (
-    !auctionView.auctionManager.info.state.participationState
-      ?.printingAuthorizationTokenAccount ||
+    !participationState ||
+    !participationState?.printingAuthorizationTokenAccount ||
     !me?.info.oneTimePrintingAuthorizationMint ||
     !item.metadata
   )
@@ -903,8 +915,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   const participationBalance = await connection.getTokenAccountBalance(
-    auctionView.auctionManager.info.state.participationState
-      .printingAuthorizationTokenAccount,
+    participationState.printingAuthorizationTokenAccount,
   );
   const tokenBalance = await connection.getTokenAccountBalance(
     safetyDeposit.info.store,
@@ -932,8 +943,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
       auctionView.auction.pubkey,
       safetyDeposit.info.store,
       oneTimeTransient,
-      auctionView.auctionManager.info.state.participationState
-        .printingAuthorizationTokenAccount,
+      participationState.printingAuthorizationTokenAccount,
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
       me.info.printingMint,
@@ -960,9 +970,13 @@ async function deprecatedSetupRedeemParticipationInstructions(
     updateAuth &&
     auctionView.myBidderMetadata &&
     mint &&
-    !auctionView.myBidRedemption?.info.participationRedeemed
+    !auctionView.myBidRedemption?.info.getBidRedeemed(safetyDeposit.info.order)
   ) {
-    if (!auctionView.myBidRedemption?.info.participationRedeemed) {
+    if (
+      !auctionView.myBidRedemption?.info.getBidRedeemed(
+        safetyDeposit.info.order,
+      )
+    ) {
       let winningPrizeSigner: Keypair[] = [];
       let winningPrizeInstructions: TransactionInstruction[] = [];
       let cleanupInstructions: TransactionInstruction[] = [];
@@ -985,8 +999,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
       signers.push(winningPrizeSigner);
 
       const fixedPrice =
-        auctionView.auctionManager.info.settings.participationConfig
-          ?.fixedPrice;
+        auctionView.auctionManager.participationConfig?.fixedPrice;
       let price: number =
         fixedPrice !== undefined && fixedPrice !== null
           ? fixedPrice.toNumber()
@@ -1012,19 +1025,16 @@ async function deprecatedSetupRedeemParticipationInstructions(
       winningPrizeSigner.push(transferAuthority);
 
       await deprecatedRedeemParticipationBid(
-        auctionView.auctionManager.info.vault,
+        auctionView.auctionManager.vault,
         safetyDeposit.info.store,
         newTokenAccount,
         safetyDeposit.pubkey,
-        auctionView.vault.info.fractionMint,
         auctionView.myBidderMetadata.info.bidderPubkey,
         wallet.publicKey,
         winningPrizeInstructions,
-        item.metadata.info.mint,
-        auctionView.auctionManager.info.state.participationState
-          .printingAuthorizationTokenAccount,
+        participationState.printingAuthorizationTokenAccount,
         transferAuthority.publicKey,
-        auctionView.auctionManager.info.acceptPayment,
+        auctionView.auctionManager.acceptPayment,
         payingSolAccount,
       );
       newTokenBalance = 1;

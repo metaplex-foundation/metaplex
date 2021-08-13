@@ -7,7 +7,8 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { SCHEMA, DeprecatedValidateParticipationArgs } from '.';
+import { SCHEMA } from '.';
+import { DeprecatedValidateParticipationArgs } from './deprecatedStates';
 
 export async function deprecatedValidateParticipation(
   auctionManager: PublicKey,
