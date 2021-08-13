@@ -51,13 +51,13 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
         }
     }
     println!("Found {} accounts needing puffing", needing_puffing.len());
-    
+
     let mut instructions = vec![];
     let mut i = 0;
     while i < needing_puffing.len() {
         let pubkey = needing_puffing[i];
         instructions.push(puff_metadata_account(spl_token_metadata::id(), pubkey));
-        if instructions.len() == 20 {
+        if instructions.len() >= 20 {
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
@@ -568,7 +568,7 @@ fn create_metadata_account_call(
         .unwrap(),
     ];
 
-    let new_metadata_instruction = 
+    let new_metadata_instruction =
         create_metadata_accounts(
             program_key,
             metadata_key,
@@ -801,7 +801,7 @@ fn main() {
                         .validator(is_valid_signer)
                         .takes_value(true)
                         .required(false)
-                        .help("Filepath or URL to a keypair representing mint authority, defaults to you"),       
+                        .help("Filepath or URL to a keypair representing mint authority, defaults to you"),
                 )
         ).subcommand(
                 SubCommand::with_name("mint_new_edition_from_master_edition_via_token")
@@ -831,7 +831,7 @@ fn main() {
                                 .takes_value(true)
                                 .help("Account's authority, defaults to you"),
                         )
-                    
+
         ).subcommand(
                 SubCommand::with_name("puff_unpuffed_metadata")
                         .about("Take metadata that still have variable length name, symbol, and uri fields and stretch them out with null symbols so they can be searched more easily by RPC.")).get_matches();
