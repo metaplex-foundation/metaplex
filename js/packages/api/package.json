@@ -1,0 +1,43 @@
+{
+  "name": "@metaplex/api",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metaplex-foundation/metaplex"
+  },
+  "scripts": {
+    "clean": "rimraf dist/*",
+    "dev:watch": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node src/index.ts",
+    "format": "prettier --write 'src/**/*.{js,ts,json}'",
+    "start": "tsc && node dist/index.js",
+    "server": "ts-node-dev --transpile-only src/server.ts",
+    "tsc": "tsc",
+    "tscCheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/dedent": "^0.7.0",
+    "@types/graphql": "^14.5.0",
+    "@types/node": "^16.4.13",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.1.0",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "^4.1.3"
+  },
+  "lint-staged": {
+    "*.{js,ts}": "eslint --cache --fix",
+    "*.ts": "tsc --noEmit",
+    "*.{js,ts,json}": "prettier --write"
+  },
+  "dependencies": {
+    "@oyster/common": "0.0.2",
+    "@solana/web3.js": "^1.21.0",
+    "apollo-server": "^3.1.2",
+    "dedent": "^0.7.0",
+    "graphql": "^15.5.1",
+    "nexus": "^1.1.0"
+  }
+}
