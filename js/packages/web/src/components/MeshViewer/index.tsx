@@ -41,7 +41,7 @@ export class MeshViewer extends React.Component<MeshViewerProps, {}> {
 
   private gltfLoader: GLTFLoader = new GLTFLoader();
 
-  private renderer?: THREE.WebGLRenderer;
+  private renderer?: any;
 
   private camera?: THREE.OrthographicCamera;
 
@@ -57,6 +57,7 @@ export class MeshViewer extends React.Component<MeshViewerProps, {}> {
     }
     // === THREE.JS CODE START ===
     this.renderer = new THREE.WebGLRenderer({ antialias: true  });
+    this.renderer.gammaOutput = true;
 
     const width = this.threeMountRef.current.clientWidth;
     const height = this.threeMountRef.current.clientHeight;
