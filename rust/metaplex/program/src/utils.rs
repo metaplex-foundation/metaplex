@@ -1,19 +1,18 @@
-use solana_program::log::sol_log_compute_units;
-
 use {
     crate::{
         error::MetaplexError,
         state::{
-            AuctionManager, AuctionManagerStatus, Key, OriginalAuthorityLookup, Store,
-            WhitelistedCreator, WinningConfigItem, MAX_BID_REDEMPTION_TICKET_SIZE, PREFIX,
+            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
+            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
         },
     },
-    arrayref::{array_mut_ref, array_ref, mut_array_refs},
+    arrayref::array_ref,
     borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
         borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
+        log::sol_log_compute_units,
         msg,
         program::{invoke, invoke_signed},
         program_error::ProgramError,
@@ -31,7 +30,7 @@ use {
         instruction::update_metadata_accounts,
         state::{Metadata, EDITION},
     },
-    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::SafetyDepositBox},
+    spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::Vault},
     std::{convert::TryInto, str::FromStr},
 };
 
@@ -82,17 +81,17 @@ pub fn assert_signer(account_info: &AccountInfo) -> ProgramResult {
 }
 
 pub fn assert_store_safety_vault_manager_match(
-    auction_manager: &AuctionManager,
+    vault_key: &Pubkey,
     safety_deposit_info: &AccountInfo,
     vault_info: &AccountInfo,
     token_vault_program: &Pubkey,
 ) -> ProgramResult {
-    if auction_manager.vault != *vault_info.key {
+    if vault_key != vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
 
     let data = safety_deposit_info.data.borrow();
-    let vault_key = Pubkey::new_from_array(*array_ref![data, 1, 32]);
+    let vault_key_on_deposit = Pubkey::new_from_array(*array_ref![data, 1, 32]);
     let token_mint_key = Pubkey::new_from_array(*array_ref![data, 33, 32]);
 
     assert_derivation(
@@ -105,7 +104,7 @@ pub fn assert_store_safety_vault_manager_match(
         ],
     )?;
 
-    if *vault_info.key != vault_key {
+    if *vault_info.key != vault_key_on_deposit {
         return Err(MetaplexError::SafetyDepositBoxVaultMismatch.into());
     }
 
@@ -114,7 +113,7 @@ pub fn assert_store_safety_vault_manager_match(
 
 pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
     program_id: &Pubkey,
-    auction_manager: &AuctionManager,
+    auction_manager: &dyn AuctionManager,
     metadata: &Metadata,
     whitelisted_creator_info: &AccountInfo,
     store_info: &AccountInfo,
@@ -142,7 +141,7 @@ pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
                 &[
                     PREFIX.as_bytes(),
                     program_id.as_ref(),
-                    auction_manager.store.as_ref(),
+                    auction_manager.store().as_ref(),
                     creator.address.as_ref(),
                 ],
                 program_id,
@@ -165,10 +164,10 @@ pub fn assert_at_least_one_creator_matches_or_store_public_and_all_verified(
 }
 
 pub fn assert_authority_correct(
-    auction_manager: &AuctionManager,
+    auction_manager_authority: &Pubkey,
     authority_info: &AccountInfo,
 ) -> ProgramResult {
-    if auction_manager.authority != *authority_info.key {
+    if auction_manager_authority != authority_info.key {
         return Err(MetaplexError::AuctionManagerAuthorityMismatch.into());
     }
 
@@ -349,7 +348,7 @@ pub fn transfer_mint_authority<'a>(
 
 pub struct CommonRedeemReturn {
     pub redemption_bump_seed: u8,
-    pub auction_manager: AuctionManager,
+    pub auction_manager: Box<dyn AuctionManager>,
     pub cancelled: bool,
     pub rent: Rent,
     pub win_index: Option<usize>,
@@ -372,6 +371,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub token_metadata_program_info: &'a AccountInfo<'a>,
     pub store_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
     pub is_participation: bool,
     // If this is being called by the auctioneer to pull prizes out they overwrite the win index
     // they would normally get if they themselves bid for whatever win index they choose.
@@ -438,6 +438,41 @@ fn calculate_win_index(
     Ok(win_index)
 }
 
+pub fn assert_safety_deposit_config_valid(
+    program_id: &Pubkey,
+    auction_manager_info: &AccountInfo,
+    safety_deposit_info: &AccountInfo,
+    safety_deposit_config_info: Option<&AccountInfo>,
+    auction_manager_key: &Key,
+) -> ProgramResult {
+    // If using v2, you must have one and it must be the right address and type
+    if let Some(config) = safety_deposit_config_info {
+        if *auction_manager_key == Key::AuctionManagerV2 {
+            assert_derivation(
+                program_id,
+                config,
+                &[
+                    PREFIX.as_bytes(),
+                    program_id.as_ref(),
+                    auction_manager_info.key.as_ref(),
+                    safety_deposit_info.key.as_ref(),
+                ],
+            )?;
+
+            if config.data.borrow()[0] != Key::SafetyDepositConfigV1 as u8 {
+                return Err(MetaplexError::DataTypeMismatch.into());
+            }
+        }
+    } else {
+        // V2s MUST provide a safety deposit config, v1s it's optional (because its unused)
+        if *auction_manager_key == Key::AuctionManagerV2 {
+            return Err(MetaplexError::InvalidOperation.into());
+        }
+    }
+
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn common_redeem_checks(
     args: CommonRedeemCheckArgs,
@@ -458,6 +493,7 @@ pub fn common_redeem_checks(
         token_metadata_program_info,
         rent_info,
         store_info,
+        safety_deposit_config_info,
         is_participation,
         overwrite_win_index,
         user_provided_win_index,
@@ -467,8 +503,7 @@ pub fn common_redeem_checks(
 
     let rent = &Rent::from_account_info(&rent_info)?;
 
-    let mut auction_manager: AuctionManager =
-        AuctionManager::from_account_info(auction_manager_info)?;
+    let mut auction_manager: Box<dyn AuctionManager> = get_auction_manager(auction_manager_info)?;
     let store_data = store_info.data.borrow();
     let cancelled: bool;
 
@@ -481,7 +516,7 @@ pub fn common_redeem_checks(
     if overwrite_win_index.is_some() {
         cancelled = false;
 
-        if *bidder_info.key != auction_manager.authority {
+        if *bidder_info.key != auction_manager.authority() {
             return Err(MetaplexError::MustBeAuctioneer.into());
         }
     } else {
@@ -508,9 +543,10 @@ pub fn common_redeem_checks(
         if bidder_pubkey != *bidder_info.key {
             return Err(MetaplexError::BidderMetadataBidderMismatch.into());
         }
+        let auction_key = auction_manager.auction();
         let redemption_path = [
             PREFIX.as_bytes(),
-            auction_manager.auction.as_ref(),
+            auction_key.as_ref(),
             bidder_metadata_info.key.as_ref(),
         ];
         let (redemption_key, actual_redemption_bump_seed) =
@@ -529,34 +565,15 @@ pub fn common_redeem_checks(
         overwrite_win_index,
     )?;
 
-    if !bid_redemption_info.data_is_empty() && overwrite_win_index.is_none() {
-        let bid_redemption_data = bid_redemption_info.data.borrow();
-
-        if bid_redemption_data[0] != Key::BidRedemptionTicketV1 as u8 {
-            return Err(MetaplexError::DataTypeMismatch.into());
-        }
-
-        let mut participation_redeemed = false;
-        if bid_redemption_data[1] == 1 {
-            participation_redeemed = true;
-        }
-        let items_redeemed = bid_redemption_data[2];
-        msg!(
-            "Items redeemed is {} and participation redemption is {}",
-            items_redeemed,
-            participation_redeemed
-        );
-        let possible_items_to_redeem = match win_index {
-            Some(val) => auction_manager.settings.winning_configs[val].items.len(),
-            None => 0,
-        };
-        if (is_participation && participation_redeemed)
-            || (!is_participation
-                && !ignore_bid_redeemed_item_check
-                && items_redeemed == possible_items_to_redeem as u8)
-        {
-            return Err(MetaplexError::BidAlreadyRedeemed.into());
-        }
+    if !bid_redemption_info.data_is_empty()
+        && overwrite_win_index.is_none()
+        && !ignore_bid_redeemed_item_check
+    {
+        BidRedemptionTicket::check_ticket(
+            bid_redemption_info,
+            is_participation,
+            safety_deposit_config_info,
+        )?
     }
 
     if assert_bidder_signer {
@@ -575,19 +592,26 @@ pub fn common_redeem_checks(
     assert_owned_by(store_info, &program_id)?;
 
     assert_store_safety_vault_manager_match(
-        &auction_manager,
+        &auction_manager.vault(),
         &safety_deposit_info,
         &vault_info,
         &token_vault_program,
     )?;
+    assert_safety_deposit_config_valid(
+        program_id,
+        auction_manager_info,
+        safety_deposit_info,
+        safety_deposit_config_info,
+        &auction_manager.key(),
+    )?;
     // looking out for you!
     assert_rent_exempt(rent, &destination_info)?;
 
-    if auction_manager.auction != *auction_info.key {
+    if auction_manager.auction() != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
 
-    if *store_info.key != auction_manager.store {
+    if *store_info.key != auction_manager.store() {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -608,7 +632,7 @@ pub fn common_redeem_checks(
     }
 
     // No-op if already set.
-    auction_manager.state.status = AuctionManagerStatus::Disbursing;
+    auction_manager.set_status(AuctionManagerStatus::Disbursing);
 
     Ok(CommonRedeemReturn {
         redemption_bump_seed,
@@ -622,13 +646,15 @@ pub fn common_redeem_checks(
 
 pub struct CommonRedeemFinishArgs<'a> {
     pub program_id: &'a Pubkey,
-    pub auction_manager: AuctionManager,
+    pub auction_manager: Box<dyn AuctionManager>,
     pub auction_manager_info: &'a AccountInfo<'a>,
     pub bidder_metadata_info: &'a AccountInfo<'a>,
     pub rent_info: &'a AccountInfo<'a>,
     pub system_info: &'a AccountInfo<'a>,
     pub payer_info: &'a AccountInfo<'a>,
     pub bid_redemption_info: &'a AccountInfo<'a>,
+    pub vault_info: &'a AccountInfo<'a>,
+    pub safety_deposit_config_info: Option<&'a AccountInfo<'a>>,
     pub winning_index: Option<usize>,
     pub redemption_bump_seed: u8,
     pub bid_redeemed: bool,
@@ -647,6 +673,8 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
         system_info,
         payer_info,
         bid_redemption_info,
+        vault_info,
+        safety_deposit_config_info,
         winning_index,
         redemption_bump_seed,
         bid_redeemed,
@@ -656,12 +684,17 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
     } = args;
 
     if (bid_redeemed || participation_redeemed) && overwrite_win_index.is_none() {
+        let auction_key = auction_manager.auction();
         let redemption_seeds = &[
             PREFIX.as_bytes(),
-            auction_manager.auction.as_ref(),
+            auction_key.as_ref(),
             bidder_metadata_info.key.as_ref(),
             &[redemption_bump_seed],
         ];
+
+        let token_type_count = Vault::get_token_type_count(vault_info)
+            .checked_div(8)
+            .ok_or(MetaplexError::NumericalOverflowError)?;
 
         if bid_redemption_info.data_is_empty() {
             create_or_allocate_account_raw(
@@ -670,29 +703,19 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
                 &rent_info,
                 &system_info,
                 &payer_info,
-                MAX_BID_REDEMPTION_TICKET_SIZE,
+                1 + 9 + 32 + 1 + token_type_count as usize,
                 redemption_seeds,
             )?;
         }
-        // Saving on CPU in these large actions by avoiding borsh
-        let data = &mut bid_redemption_info.data.borrow_mut();
-        let output = array_mut_ref![data, 0, MAX_BID_REDEMPTION_TICKET_SIZE];
 
-        let (key, participation_redeemed_ptr, items_redeemed_ptr) =
-            mut_array_refs![output, 1, 1, 1];
-
-        *key = [Key::BidRedemptionTicketV1 as u8];
-
-        let curr_items_redeemed = u8::from_le_bytes(*items_redeemed_ptr);
-
-        if participation_redeemed {
-            *participation_redeemed_ptr = [1];
-        } else if bid_redeemed {
-            *items_redeemed_ptr = curr_items_redeemed
-                .checked_add(1)
-                .ok_or(MetaplexError::NumericalOverflowError)?
-                .to_le_bytes();
-        }
+        BidRedemptionTicket::save(
+            bid_redemption_info,
+            participation_redeemed,
+            safety_deposit_config_info,
+            winning_index,
+            *auction_manager_info.key,
+            auction_manager.key(),
+        )?;
     }
 
     msg!("About to pass through the eye of the needle");
@@ -700,71 +723,26 @@ pub fn common_redeem_finish(args: CommonRedeemFinishArgs) -> ProgramResult {
 
     if bid_redeemed {
         if let Some(index) = winning_index {
+            // There should never be a winning item index for V2...its a nonsensical concept, but we set it anyway for backwards compatibility.
             if let Some(item_index) = winning_item_index {
-                AuctionManager::set_claimed_and_status(
-                    auction_manager_info,
-                    auction_manager.state.status,
-                    index,
-                    item_index,
-                    auction_manager.straight_shot_optimization,
-                );
+                auction_manager.fast_save(auction_manager_info, index, item_index);
             }
+        }
+    } else if participation_redeemed && auction_manager.key() == Key::AuctionManagerV2 {
+        // AV2s can be saved (and set to disbursing) even in open edition auctions...a bug in V1 that we were okay with
+        // for speed. AV1s never get set to disbursing in Open Edition auctions.
+        if let Some(index) = winning_index {
+            auction_manager.fast_save(auction_manager_info, index, 0);
         }
     }
 
     Ok(())
 }
 
-pub struct CommonWinningConfigCheckReturn {
-    pub winning_config_item: WinningConfigItem,
-    pub winning_item_index: Option<usize>,
-}
-
-pub fn common_winning_config_checks(
-    auction_manager: &AuctionManager,
-    safety_deposit_info: &AccountInfo,
-    winning_index: usize,
-    ignore_claim: bool,
-) -> Result<CommonWinningConfigCheckReturn, ProgramError> {
-    let winning_config = &auction_manager.settings.winning_configs[winning_index];
-    let winning_config_state = &auction_manager.state.winning_config_states[winning_index];
-
-    let mut winning_item_index = None;
-    for i in 0..winning_config.items.len() {
-        if winning_config.items[i].safety_deposit_box_index
-            == SafetyDepositBox::get_order(safety_deposit_info)
-        {
-            winning_item_index = Some(i);
-            break;
-        }
-    }
-
-    let winning_config_item = match winning_item_index {
-        Some(index) => winning_config.items[index],
-        None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
-    };
-
-    let winning_config_state_item = match winning_item_index {
-        Some(index) => winning_config_state.items[index],
-        None => return Err(MetaplexError::SafetyDepositBoxNotUsedInAuction.into()),
-    };
-
-    // For printing v2, we may call many times for different editions and the edition PDA check makes sure it cant
-    // be claimed over-much. This would be 1 time, we need n times.
-    if winning_config_state_item.claimed && !ignore_claim {
-        return Err(MetaplexError::PrizeAlreadyClaimed.into());
-    }
-
-    Ok(CommonWinningConfigCheckReturn {
-        winning_config_item,
-        winning_item_index,
-    })
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn shift_authority_back_to_originating_user<'a>(
     program_id: &Pubkey,
-    auction_manager: &AuctionManager,
+    auction_manager: &dyn AuctionManager,
     auction_manager_info: &AccountInfo<'a>,
     master_metadata_info: &AccountInfo<'a>,
     original_authority: &AccountInfo<'a>,
@@ -773,9 +751,10 @@ pub fn shift_authority_back_to_originating_user<'a>(
     token_program_info: &AccountInfo<'a>,
     authority_seeds: &[&[u8]],
 ) -> ProgramResult {
+    let auction_key = auction_manager.auction();
     let original_authority_lookup_seeds = &[
         PREFIX.as_bytes(),
-        &auction_manager.auction.as_ref(),
+        auction_key.as_ref(),
         master_metadata_info.key.as_ref(),
     ];
 

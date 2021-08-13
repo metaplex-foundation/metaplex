@@ -1,12 +1,18 @@
 use crate::*;
-use solana_program::borsh::try_from_slice_unchecked;
+use borsh::BorshSerialize;
+use solana_program::{
+    borsh::try_from_slice_unchecked,
+    instruction::{AccountMeta, Instruction},
+    sysvar,
+};
 use solana_program_test::*;
 use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
 };
 use spl_token_metadata::{
-    id, instruction,
+    id,
+    instruction::{self, MetadataInstruction, MintNewEditionFromMasterEditionViaTokenArgs},
     state::{EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
 };
 
@@ -179,6 +185,65 @@ impl EditionMarker {
             )],
             Some(&context.payer.pubkey()),
             &[&context.payer, &context.payer],
+            context.last_blockhash,
+        );
+
+        Ok(context.banks_client.process_transaction(tx).await?)
+    }
+
+    pub async fn create_with_invalid_token_program(
+        &self,
+        context: &mut ProgramTestContext,
+    ) -> transport::Result<()> {
+        let fake_token_program = Keypair::new();
+        let program_id = spl_token_metadata::id();
+
+        let edition_number = self.edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
+        let as_string = edition_number.to_string();
+        let (edition_mark_pda, _) = Pubkey::find_program_address(
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                self.metadata_mint_pubkey.as_ref(),
+                EDITION.as_bytes(),
+                as_string.as_bytes(),
+            ],
+            &program_id,
+        );
+
+        let accounts = vec![
+            AccountMeta::new(self.new_metadata_pubkey, false),
+            AccountMeta::new(self.new_edition_pubkey, false),
+            AccountMeta::new(self.master_edition_pubkey, false),
+            AccountMeta::new(self.mint.pubkey(), false),
+            AccountMeta::new(edition_mark_pda, false),
+            AccountMeta::new_readonly(context.payer.pubkey(), true),
+            AccountMeta::new(context.payer.pubkey(), true),
+            AccountMeta::new_readonly(context.payer.pubkey(), true),
+            AccountMeta::new_readonly(self.token.pubkey(), false),
+            AccountMeta::new_readonly(context.payer.pubkey(), false),
+            AccountMeta::new_readonly(self.metadata_pubkey, false),
+            AccountMeta::new_readonly(fake_token_program.pubkey(), false),
+            AccountMeta::new_readonly(solana_program::system_program::id(), false),
+            AccountMeta::new_readonly(sysvar::rent::id(), false),
+        ];
+
+        let fake_instruction = Instruction {
+            program_id,
+            accounts,
+            data: MetadataInstruction::MintNewEditionFromMasterEditionViaToken(
+                MintNewEditionFromMasterEditionViaTokenArgs {
+                    edition: self.edition,
+                },
+            )
+            .try_to_vec()
+            .unwrap(),
+        };
+
+        let tx = Transaction::new_signed_with_payer(
+            &[fake_instruction],
+            Some(&context.payer.pubkey()),
+            &[&context.payer],
             context.last_blockhash,
         );
 

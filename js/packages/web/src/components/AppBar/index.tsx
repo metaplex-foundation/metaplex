@@ -111,7 +111,7 @@ export const AppBar = () => {
   return (
     <>
       <div className="app-left app-bar-box">
-        <Notifications />
+        {window.location.hash !== '#/analytics' && <Notifications />}
         <div className="divider" />
         <MetaplexMenu />
       </div>

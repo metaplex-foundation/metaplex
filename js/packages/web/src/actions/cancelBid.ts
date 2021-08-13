@@ -64,7 +64,7 @@ export async function sendCancelBid(
   );
 
   if (
-    wallet?.publicKey?.equals(auctionView.auctionManager.info.authority) &&
+    wallet?.publicKey?.equals(auctionView.auctionManager.authority) &&
     auctionView.auction.info.ended()
   ) {
     await claimUnusedPrizes(
