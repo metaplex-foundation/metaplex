@@ -24,7 +24,7 @@ export enum LiveAuctionViewState {
   Participated = '1',
   Ended = '2',
   Resale = '3',
-};
+}
 
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
@@ -50,44 +50,61 @@ export const HomeView = () => {
   };
 
   // Check if the auction is primary sale or not
-  const checkPrimarySale = (auc:AuctionView) => {
+  const checkPrimarySale = (auc: AuctionView) => {
     var flag = 0;
-    auc.items.forEach(i => 
-      {
-        i.forEach(j => { 
-          if (j.metadata.info.primarySaleHappened == true) {
-            flag = 1;
-            return true;
-          }})
-        if (flag == 1) return true;
-      })
-      if (flag == 1) return true; else return false;
+    auc.items.forEach(i => {
+      i.forEach(j => {
+        if (j.metadata.info.primarySaleHappened == true) {
+          flag = 1;
+          return true;
+        }
+      });
+      if (flag == 1) return true;
+    });
+    if (flag == 1) return true;
+    else return false;
   };
 
   const resaleAuctions = auctions
-  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
-  .filter(m => checkPrimarySale(m) == true);
+    .sort(
+      (a, b) =>
+        a.auction.info.endedAt
+          ?.sub(b.auction.info.endedAt || new BN(0))
+          .toNumber() || 0,
+    )
+    .filter(m => checkPrimarySale(m) == true);
 
   // Removed resales from live auctions
   const liveAuctions = auctions
-  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
-  .filter(a => !resaleAuctions.includes(a));
+    .sort(
+      (a, b) =>
+        a.auction.info.endedAt
+          ?.sub(b.auction.info.endedAt || new BN(0))
+          .toNumber() || 0,
+    )
+    .filter(a => !resaleAuctions.includes(a));
 
   let items = liveAuctions;
 
   switch (activeKey) {
-      case LiveAuctionViewState.All:
-        items = liveAuctions;
-        break;
-      case LiveAuctionViewState.Participated:
-        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey.toBase58() == wallet?.publicKey?.toBase58());
-        break;
-      case LiveAuctionViewState.Resale:
-        items = resaleAuctions;
-        break;
-      case LiveAuctionViewState.Ended:
-        items = auctionsEnded;
-        break;
+    case LiveAuctionViewState.All:
+      items = liveAuctions;
+      break;
+    case LiveAuctionViewState.Participated:
+      items = liveAuctions
+        .concat(auctionsEnded)
+        .filter(
+          (m, idx) =>
+            m.myBidderMetadata?.info.bidderPubkey.toBase58() ==
+            wallet.publicKey?.toBase58(),
+        );
+      break;
+    case LiveAuctionViewState.Resale:
+      items = resaleAuctions;
+      break;
+    case LiveAuctionViewState.Ended:
+      items = auctionsEnded;
+      break;
   }
 
   const heroAuction = useMemo(
@@ -109,9 +126,9 @@ export const HomeView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-              if (m === heroAuction) {
-                return;
-              }
+            if (m === heroAuction) {
+              return;
+            }
 
             const id = m.auction.pubkey.toBase58();
             return (
@@ -130,19 +147,18 @@ export const HomeView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {!isLoading
-        ? auctionsEnded
-            .map((m, idx) => {
-              if (m === heroAuction) {
-                return;
-              }
+        ? auctionsEnded.map((m, idx) => {
+            if (m === heroAuction) {
+              return;
+            }
 
-              const id = m.auction.pubkey.toBase58();
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+            const id = m.auction.pubkey.toBase58();
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -208,9 +224,12 @@ export const HomeView = () => {
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length >= 0 && (<Row>
-              <Tabs activeKey={activeKey}
-                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
+            {liveAuctions.length >= 0 && (
+              <Row>
+                <Tabs
+                  activeKey={activeKey}
+                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
+                >
                   <TabPane
                     tab={<span className="tab-title">Live Auctions</span>}
                     key={LiveAuctionViewState.All}
@@ -218,20 +237,22 @@ export const HomeView = () => {
                     {liveAuctionsView}
                   </TabPane>
                   {auctionsEnded.length > 0 && (
-                  <TabPane
-                    tab={<span className="tab-title">Secondary Marketplace</span>}
-                    key={LiveAuctionViewState.Resale}
-                  >
-                    {liveAuctionsView}
-                  </TabPane>
+                    <TabPane
+                      tab={
+                        <span className="tab-title">Secondary Marketplace</span>
+                      }
+                      key={LiveAuctionViewState.Resale}
+                    >
+                      {liveAuctionsView}
+                    </TabPane>
                   )}
                   {auctionsEnded.length > 0 && (
-                  <TabPane
-                    tab={<span className="tab-title">Ended Auctions</span>}
-                    key={LiveAuctionViewState.Ended}
-                  >
-                    {endedAuctions}
-                  </TabPane>
+                    <TabPane
+                      tab={<span className="tab-title">Ended Auctions</span>}
+                      key={LiveAuctionViewState.Ended}
+                    >
+                      {endedAuctions}
+                    </TabPane>
                   )}
                   {
                     // Show all participated live and ended auctions except hero auction
@@ -244,8 +265,9 @@ export const HomeView = () => {
                       {liveAuctionsView}
                     </TabPane>
                   )}
-              </Tabs>
-            </Row>)}
+                </Tabs>
+              </Row>
+            )}
           </Col>
         </Content>
       </Layout>

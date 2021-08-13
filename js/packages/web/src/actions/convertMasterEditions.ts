@@ -30,8 +30,8 @@ export async function filterMetadata(
   available: ParsedAccount<MasterEditionV1>[];
   unavailable: ParsedAccount<MasterEditionV1>[];
 }> {
-  const available = [];
-  const unavailable = [];
+  const available: ParsedAccount<MasterEditionV1>[] = [];
+  const unavailable: ParsedAccount<MasterEditionV1>[] = [];
   let batchWaitCounter = 0;
 
   for (let i = 0; i < metadata.length; i++) {

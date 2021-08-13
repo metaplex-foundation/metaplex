@@ -11,7 +11,7 @@ import {
   MasterEditionV1,
   MasterEditionV2,
 } from '@oyster/common';
-import { AccountInfo, PublicKey, PublicKeyAndAccount } from '@solana/web3.js';
+import { AccountInfo, PublicKey } from '@solana/web3.js';
 import {
   BidRedemptionTicket,
   Store,
@@ -89,7 +89,7 @@ export type UpdateStateValueFunc = (
 ) => void;
 
 export type ProcessAccountsFunc = (
-  account: PublicKeyAndAccount<Buffer>,
+  account: AccountAndPubkey,
   setter: UpdateStateValueFunc,
   useAll: boolean,
 ) => void;

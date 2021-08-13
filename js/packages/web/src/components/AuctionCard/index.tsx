@@ -213,7 +213,7 @@ export const AuctionCard = ({
   const balance = useUserBalance(mintKey);
 
   const myPayingAccount = balance.accounts[0];
-  let winnerIndex = null;
+  let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,

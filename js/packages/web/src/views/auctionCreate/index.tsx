@@ -137,14 +137,15 @@ export const AuctionCreateView = () => {
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [auctionObj, setAuctionObj] = useState<
-    | {
-        vault: PublicKey;
-        auction: PublicKey;
-        auctionManager: PublicKey;
-      }
-    | undefined
-  >(undefined);
+  const [auctionObj, setAuctionObj] =
+    useState<
+      | {
+          vault: PublicKey;
+          auction: PublicKey;
+          auctionManager: PublicKey;
+        }
+      | undefined
+    >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],

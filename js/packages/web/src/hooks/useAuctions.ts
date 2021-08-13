@@ -79,11 +79,10 @@ export function useCachedRedemptionKeysByWallet() {
           ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
         > = {};
         const keys = Object.keys(auctions);
-        const tasks = [];
+        const tasks: Promise<void>[] = [];
         for (let i = 0; i < keys.length; i++) {
           const a = keys[i];
           if (!cachedRedemptionKeys[a])
-            //@ts-ignore
             tasks.push(
               getBidderKeys(auctions[a].pubkey, publicKey).then(key => {
                 temp[a] = bidRedemptions[key.bidRedemption.toBase58()]

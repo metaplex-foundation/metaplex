@@ -128,7 +128,7 @@ export async function sendRedeemBid(
     MintLayout.span,
   );
 
-  let winnerIndex = null;
+  let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,

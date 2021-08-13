@@ -322,7 +322,7 @@ export async function createAuctionManager(
 
   let stopPoint = 0;
   let tries = 0;
-  let lastInstructionsLength = null;
+  let lastInstructionsLength: number | null = null;
   while (stopPoint < instructions.length && tries < 3) {
     instructions = instructions.slice(stopPoint, instructions.length);
     filteredSigners = filteredSigners.slice(stopPoint, filteredSigners.length);

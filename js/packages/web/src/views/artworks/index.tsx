@@ -32,14 +32,14 @@ export const ArtworksView = () => {
   };
 
   const items =
-    (activeKey === ArtworkViewState.Owned
+    activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
-      : (activeKey === ArtworkViewState.Created 
-        ? createdMetadata 
-        : metadata));
+      : activeKey === ArtworkViewState.Created
+      ? createdMetadata
+      : metadata;
 
   useEffect(() => {
-    if(connected) {
+    if (connected) {
       setActiveKey(ArtworkViewState.Owned);
     } else {
       setActiveKey(ArtworkViewState.Metaplex);
