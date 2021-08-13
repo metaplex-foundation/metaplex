@@ -220,6 +220,7 @@ export class Metadata {
   data: Data;
   primarySaleHappened: boolean;
   isMutable: boolean;
+  editionNonce: number | null;
 
   // set lazy
   masterEdition?: StringPublicKey;
@@ -231,6 +232,7 @@ export class Metadata {
     data: Data;
     primarySaleHappened: boolean;
     isMutable: boolean;
+    editionNonce: number | null;
   }) {
     this.key = MetadataKey.MetadataV1;
     this.updateAuthority = args.updateAuthority;
@@ -238,6 +240,7 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
+    this.editionNonce = args.editionNonce;
   }
 
   public async init() {
