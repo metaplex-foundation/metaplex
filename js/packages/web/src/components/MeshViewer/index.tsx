@@ -202,6 +202,7 @@ export class MeshViewer extends React.Component<MeshViewerProps, {}> {
     this.camera.bottom = height / -zoom;
     this.camera.updateProjectionMatrix();
 
+    this.renderer.gammaOutput = true;
     this.renderer.setSize(width, height, false);
   }
 
