@@ -2,12 +2,13 @@ import {
   getEdition,
   programIds,
   getMetadata,
+  findProgramAddress,
+  VAULT_PREFIX,
   getEditionMarkPda,
   getAuctionExtended,
-  StringPublicKey,
-  toPublicKey,
 } from '@oyster/common';
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -25,19 +26,19 @@ import {
 } from '.';
 
 export async function redeemParticipationBidV3(
-  vault: StringPublicKey,
-  safetyDepositTokenStore: StringPublicKey,
-  destination: StringPublicKey,
-  safetyDeposit: StringPublicKey,
-  bidder: StringPublicKey,
-  payer: StringPublicKey,
-  metadata: StringPublicKey,
-  masterEdition: StringPublicKey,
-  originalMint: StringPublicKey,
-  transferAuthority: StringPublicKey,
-  acceptPaymentAccount: StringPublicKey,
-  tokenPaymentAccount: StringPublicKey,
-  newMint: StringPublicKey,
+  vault: PublicKey,
+  safetyDepositTokenStore: PublicKey,
+  destination: PublicKey,
+  safetyDeposit: PublicKey,
+  bidder: PublicKey,
+  payer: PublicKey,
+  metadata: PublicKey,
+  masterEdition: PublicKey,
+  originalMint: PublicKey,
+  transferAuthority: PublicKey,
+  acceptPaymentAccount: PublicKey,
+  tokenPaymentAccount: PublicKey,
+  newMint: PublicKey,
   edition: BN,
   winIndex: BN | null,
   instructions: TransactionInstruction[],
@@ -78,57 +79,57 @@ export async function redeemParticipationBidV3(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: toPublicKey(auctionManagerKey),
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(safetyDepositTokenStore),
+      pubkey: safetyDepositTokenStore,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(destination),
+      pubkey: destination,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(bidRedemption),
+      pubkey: bidRedemption,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(safetyDeposit),
+      pubkey: safetyDeposit,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositConfig),
+      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(auctionKey),
+      pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(bidMetadata),
+      pubkey: bidMetadata,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(bidder),
+      pubkey: bidder,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: true,
     },
@@ -138,12 +139,12 @@ export async function redeemParticipationBidV3(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.vault),
+      pubkey: PROGRAM_IDS.vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.metadata),
+      pubkey: PROGRAM_IDS.metadata,
       isSigner: false,
       isWritable: false,
     },
@@ -163,47 +164,47 @@ export async function redeemParticipationBidV3(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(transferAuthority),
+      pubkey: transferAuthority,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(acceptPaymentAccount),
+      pubkey: acceptPaymentAccount,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(tokenPaymentAccount),
+      pubkey: tokenPaymentAccount,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(prizeTrackingTicket),
+      pubkey: prizeTrackingTicket,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(newMetadata),
+      pubkey: newMetadata,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(newEdition),
+      pubkey: newEdition,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(masterEdition),
+      pubkey: masterEdition,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(newMint),
+      pubkey: newMint,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(editionMarkPda),
+      pubkey: editionMarkPda,
       isSigner: false,
       isWritable: true,
     },
@@ -212,27 +213,23 @@ export async function redeemParticipationBidV3(
       // may not be signer hre - we may be redeeming for someone else (permissionless)
       // and during the txn, mint authority is removed from us and given to master edition.
       // The ATA account is already owned by bidder by default. No signing needed
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(metadata),
+      pubkey: metadata,
       isSigner: false,
       isWritable: false,
     },
 
-    {
-      pubkey: toPublicKey(auctionDataExtended),
-      isSigner: false,
-      isWritable: false,
-    },
+    { pubkey: auctionDataExtended, isSigner: false, isWritable: false },
   ];
 
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

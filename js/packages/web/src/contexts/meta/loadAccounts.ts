@@ -2,11 +2,9 @@ import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
   METAPLEX_ID,
-  StringPublicKey,
-  toPublicKey,
   VAULT_ID,
 } from '@oyster/common/dist/lib/utils/ids';
-import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { AccountAndPubkey, MetaState, ProcessAccountsFunc } from './types';
 import { isMetadataPartOfStore } from './isMetadataPartOfStore';
 import { processAuctions } from './processAuctions';
@@ -30,60 +28,6 @@ import {
   MAX_WHITELISTED_CREATOR_SIZE,
   MetaplexKey,
 } from '../../models/metaplex';
-
-async function getProgramAccounts(
-  connection: Connection,
-  programId: StringPublicKey,
-  configOrCommitment?: any,
-): Promise<Array<AccountAndPubkey>> {
-  const extra: any = {};
-  let commitment;
-  let encoding;
-
-  if (configOrCommitment) {
-    if (typeof configOrCommitment === 'string') {
-      commitment = configOrCommitment;
-    } else {
-      commitment = configOrCommitment.commitment;
-      encoding = configOrCommitment.encoding;
-
-      if (configOrCommitment.dataSlice) {
-        extra.dataSlice = configOrCommitment.dataSlice;
-      }
-
-      if (configOrCommitment.filters) {
-        extra.filters = configOrCommitment.filters;
-      }
-    }
-  }
-
-  const args = connection._buildArgs([programId], commitment, 'base64', extra);
-  const unsafeRes = await (connection as any)._rpcRequest(
-    'getProgramAccounts',
-    args,
-  );
-
-  const data = (
-    unsafeRes.result as Array<{
-      account: AccountInfo<[string, string]>;
-      pubkey: string;
-    }>
-  ).map(item => {
-    return {
-      account: {
-        // TODO: possible delay parsing could be added here
-        data: Buffer.from(item.account.data[0], 'base64'),
-        executable: item.account.executable,
-        lamports: item.account.lamports,
-        // TODO: maybe we can do it in lazy way? or just use string
-        owner: item.account.owner,
-      } as AccountInfo<Buffer>,
-      pubkey: item.pubkey,
-    };
-  });
-
-  return data;
-}
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = {
@@ -121,80 +65,71 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
 
   const additionalPromises: Promise<void>[] = [];
 
-  const IS_BIG_STORE =
-    process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
-  console.log(`Is big store: ${IS_BIG_STORE}`);
-
   const promises = [
-    getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
-    getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
+    connection.getProgramAccounts(VAULT_ID).then(forEach(processVaultData)),
+    connection.getProgramAccounts(AUCTION_ID).then(forEach(processAuctions)),
     ,
-    getProgramAccounts(connection, METAPLEX_ID).then(
-      forEach(processMetaplexAccounts),
-    ),
-    IS_BIG_STORE
-      ? getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
-          forEach(processMetaData),
-        )
-      : undefined,
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
-        },
-      ],
-    }).then(async creators => {
-      const result = await forEach(processMetaplexAccounts)(creators);
+    connection
+      .getProgramAccounts(METAPLEX_ID)
+      .then(forEach(processMetaplexAccounts)),
+    connection
+      .getProgramAccounts(METAPLEX_ID, {
+        filters: [
+          {
+            dataSize: MAX_WHITELISTED_CREATOR_SIZE,
+          },
+        ],
+      })
+      .then(async creators => {
+        await forEach(processMetaplexAccounts)(creators);
 
-      if (IS_BIG_STORE) {
-        return result;
-      }
-
-      const whitelistedCreators = Object.values(
-        tempCache.whitelistedCreatorsByCreator,
-      );
-
-      if (whitelistedCreators.length > 3) {
-        console.log(' too many creators, pulling all nfts in one go');
-        additionalPromises.push(
-          getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
-            forEach(processMetaData),
-          ),
+        const whitelistedCreators = Object.values(
+          tempCache.whitelistedCreatorsByCreator,
         );
-      } else {
-        console.log('pulling optimized nfts');
 
-        for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-          for (let j = 0; j < whitelistedCreators.length; j++) {
-            additionalPromises.push(
-              getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-                filters: [
-                  {
-                    memcmp: {
-                      offset:
-                        1 + // key
-                        32 + // update auth
-                        32 + // mint
-                        4 + // name string length
-                        MAX_NAME_LENGTH + // name
-                        4 + // uri string length
-                        MAX_URI_LENGTH + // uri
-                        4 + // symbol string length
-                        MAX_SYMBOL_LENGTH + // symbol
-                        2 + // seller fee basis points
-                        1 + // whether or not there is a creators vec
-                        4 + // creators vec length
-                        i * MAX_CREATOR_LEN,
-                      bytes: whitelistedCreators[j].info.address,
-                    },
-                  },
-                ],
-              }).then(forEach(processMetaData)),
-            );
+        if (whitelistedCreators.length > 3) {
+          console.log(' too many creators, pulling all nfts in one go');
+          additionalPromises.push(
+            connection
+              .getProgramAccounts(METADATA_PROGRAM_ID)
+              .then(forEach(processMetaData)),
+          );
+        } else {
+          console.log('pulling optimized nfts');
+
+          for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+            for (let j = 0; j < whitelistedCreators.length; j++) {
+              additionalPromises.push(
+                connection
+                  .getProgramAccounts(METADATA_PROGRAM_ID, {
+                    filters: [
+                      {
+                        memcmp: {
+                          offset:
+                            1 + // key
+                            32 + // update auth
+                            32 + // mint
+                            4 + // name string length
+                            MAX_NAME_LENGTH + // name
+                            4 + // uri string length
+                            MAX_URI_LENGTH + // uri
+                            4 + // symbol string length
+                            MAX_SYMBOL_LENGTH + // symbol
+                            2 + // seller fee basis points
+                            1 + // whether or not there is a creators vec
+                            4 + // creators vec length
+                            i * MAX_CREATOR_LEN,
+                          bytes: whitelistedCreators[j].info.address.toBase58(),
+                        },
+                      },
+                    ],
+                  })
+                  .then(forEach(processMetaData)),
+              );
+            }
           }
         }
-      }
-    }),
+      }),
   ];
   await Promise.all(promises);
   await Promise.all(additionalPromises);
@@ -208,24 +143,22 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
     const editionPromises = [];
 
     for (let i = 0; i < tempCache.metadata.length; i++) {
-      let edition: StringPublicKey;
+      let edition: PublicKey;
       if (tempCache.metadata[i].info.editionNonce != null) {
-        edition = (
-          await PublicKey.createProgramAddress(
-            [
-              Buffer.from(METADATA_PREFIX),
-              toPublicKey(METADATA_PROGRAM_ID).toBuffer(),
-              toPublicKey(tempCache.metadata[i].info.mint).toBuffer(),
-              new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
-            ],
-            toPublicKey(METADATA_PROGRAM_ID),
-          )
-        ).toBase58();
+        edition = await PublicKey.createProgramAddress(
+          [
+            Buffer.from(METADATA_PREFIX),
+            METADATA_PROGRAM_ID.toBuffer(),
+            tempCache.metadata[i].info.mint.toBuffer(),
+            new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
+          ],
+          METADATA_PROGRAM_ID,
+        );
       } else {
         edition = await getEdition(tempCache.metadata[i].info.mint);
       }
 
-      setOf100MetadataEditionKeys.push(edition);
+      setOf100MetadataEditionKeys.push(edition.toBase58());
 
       if (setOf100MetadataEditionKeys.length >= 100) {
         editionPromises.push(
@@ -245,7 +178,7 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       for (let j = 0; j < returnedAccounts.array.length; j++) {
         processMetaData(
           {
-            pubkey: returnedAccounts.keys[j],
+            pubkey: new PublicKey(returnedAccounts.keys[j]),
             account: returnedAccounts.array[j],
           },
           updateTemp,
@@ -287,7 +220,7 @@ export const metadataByMintUpdater = async (
   state: MetaState,
   all: boolean,
 ) => {
-  const key = metadata.info.mint;
+  const key = metadata.info.mint.toBase58();
   if (
     isMetadataPartOfStore(
       metadata,
@@ -297,7 +230,7 @@ export const metadataByMintUpdater = async (
     )
   ) {
     await metadata.info.init();
-    const masterEditionKey = metadata.info?.masterEdition;
+    const masterEditionKey = metadata.info?.masterEdition?.toBase58();
     if (masterEditionKey) {
       state.metadataByMasterEdition[masterEditionKey] = metadata;
     }

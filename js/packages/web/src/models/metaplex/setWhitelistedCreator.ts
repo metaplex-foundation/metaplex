@@ -1,14 +1,18 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { programIds } from '@oyster/common';
+import {
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getWhitelistedCreator, SCHEMA, SetWhitelistedCreatorArgs } from '.';
 
 export async function setWhitelistedCreator(
-  creator: StringPublicKey,
+  creator: PublicKey,
   activated: boolean,
-  admin: StringPublicKey,
-  payer: StringPublicKey,
+  admin: PublicKey,
+  payer: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -24,22 +28,22 @@ export async function setWhitelistedCreator(
 
   const keys = [
     {
-      pubkey: toPublicKey(whitelistedCreatorPDAKey),
+      pubkey: whitelistedCreatorPDAKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(admin),
+      pubkey: admin,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(creator),
+      pubkey: creator,
       isSigner: false,
       isWritable: false,
     },
@@ -63,7 +67,7 @@ export async function setWhitelistedCreator(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

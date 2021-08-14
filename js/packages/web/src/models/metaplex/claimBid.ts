@@ -1,20 +1,19 @@
+import { getBidderPotKey, programIds } from '@oyster/common';
 import {
-  getBidderPotKey,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
-import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.';
 
 export async function claimBid(
-  acceptPayment: StringPublicKey,
-  bidder: StringPublicKey,
-  bidderPotToken: StringPublicKey,
-  vault: StringPublicKey,
-  tokenMint: StringPublicKey,
+  acceptPayment: PublicKey,
+  bidder: PublicKey,
+  bidderPotToken: PublicKey,
+  vault: PublicKey,
+  tokenMint: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -36,53 +35,53 @@ export async function claimBid(
 
   const keys = [
     {
-      pubkey: toPublicKey(acceptPayment),
+      pubkey: acceptPayment,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(bidderPotToken),
+      pubkey: bidderPotToken,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(bidderPotKey),
+      pubkey: bidderPotKey,
       isSigner: false,
       isWritable: true,
     },
 
     {
-      pubkey: toPublicKey(auctionManagerKey),
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(auctionKey),
+      pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(bidder),
+      pubkey: bidder,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(tokenMint),
+      pubkey: tokenMint,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.auction),
+      pubkey: PROGRAM_IDS.auction,
       isSigner: false,
       isWritable: false,
     },
@@ -101,7 +100,7 @@ export async function claimBid(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

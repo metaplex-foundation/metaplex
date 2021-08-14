@@ -1,10 +1,11 @@
 import {
   Keypair,
   Connection,
+  PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions, StringPublicKey, toPublicKey } from '@oyster/common';
+import { utils, actions } from '@oyster/common';
 
 import BN from 'bn.js';
 import { QUOTE_MINT } from '../constants';
@@ -19,8 +20,8 @@ export async function createExternalPriceAccount(
   connection: Connection,
   wallet: any,
 ): Promise<{
-  priceMint: StringPublicKey;
-  externalPriceAccount: StringPublicKey;
+  priceMint: PublicKey;
+  externalPriceAccount: PublicKey;
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
@@ -34,11 +35,10 @@ export async function createExternalPriceAccount(
   );
 
   let externalPriceAccount = Keypair.generate();
-  let key = externalPriceAccount.publicKey.toBase58();
 
   let epaStruct = new ExternalPriceAccount({
     pricePerShare: new BN(0),
-    priceMint: QUOTE_MINT.toBase58(),
+    priceMint: QUOTE_MINT,
     allowedToCombine: true,
   });
 
@@ -47,16 +47,20 @@ export async function createExternalPriceAccount(
     newAccountPubkey: externalPriceAccount.publicKey,
     lamports: epaRentExempt,
     space: MAX_EXTERNAL_ACCOUNT_SIZE,
-    programId: toPublicKey(PROGRAM_IDS.vault),
+    programId: PROGRAM_IDS.vault,
   });
   instructions.push(uninitializedEPA);
   signers.push(externalPriceAccount);
 
-  await updateExternalPriceAccount(key, epaStruct, instructions);
+  await updateExternalPriceAccount(
+    externalPriceAccount.publicKey,
+    epaStruct,
+    instructions,
+  );
 
   return {
-    externalPriceAccount: key,
-    priceMint: QUOTE_MINT.toBase58(),
+    externalPriceAccount: externalPriceAccount.publicKey,
+    priceMint: QUOTE_MINT,
     instructions,
     signers,
   };

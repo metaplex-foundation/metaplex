@@ -52,7 +52,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         };
         setter(
           'auctionManagersByAuction',
-          auctionManager.auction,
+          auctionManager.auction.toBase58(),
           parsedAccount,
         );
       }
@@ -68,14 +68,14 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('bidRedemptions', pubkey, parsedAccount);
+      setter('bidRedemptions', pubkey.toBase58(), parsedAccount);
 
       if (ticket.key == MetaplexKey.BidRedemptionTicketV2) {
         const asV2 = ticket as BidRedemptionTicketV2;
         if (asV2.winnerIndex) {
           setter(
             'bidRedemptionV2sByAuctionManagerAndWinningIndex',
-            asV2.auctionManager + '-' + asV2.winnerIndex.toNumber(),
+            asV2.auctionManager.toBase58() + '-' + asV2.winnerIndex.toNumber(),
             parsedAccount,
           );
         }
@@ -89,7 +89,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('payoutTickets', pubkey, parsedAccount);
+      setter('payoutTickets', pubkey.toBase58(), parsedAccount);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
@@ -99,7 +99,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: ticket,
       };
-      setter('prizeTrackingTickets', pubkey, parsedAccount);
+      setter('prizeTrackingTickets', pubkey.toBase58(), parsedAccount);
     }
 
     if (isStoreV1Account(account)) {
@@ -109,10 +109,10 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: store,
       };
-      if (STORE_ID && pubkey === STORE_ID.toBase58()) {
-        setter('store', pubkey, parsedAccount);
+      if (STORE_ID && pubkey.equals(STORE_ID)) {
+        setter('store', pubkey.toBase58(), parsedAccount);
       }
-      setter('stores', pubkey, parsedAccount);
+      setter('stores', pubkey.toBase58(), parsedAccount);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {
@@ -124,7 +124,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       };
       setter(
         'safetyDepositConfigsByAuctionManagerAndIndex',
-        config.auctionManager + '-' + config.order.toNumber(),
+        config.auctionManager.toBase58() + '-' + config.order.toNumber(),
         parsedAccount,
       );
     }
@@ -137,7 +137,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         whitelistedCreator.address,
       );
 
-      if (creatorKeyIfCreatorWasPartOfThisStore === pubkey) {
+      if (creatorKeyIfCreatorWasPartOfThisStore.equals(pubkey)) {
         const parsedAccount = cache.add(
           pubkey,
           account,
@@ -145,7 +145,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
           false,
         ) as ParsedAccount<WhitelistedCreator>;
 
-        const nameInfo = (names as any)[parsedAccount.info.address];
+        const nameInfo = (names as any)[parsedAccount.info.address.toBase58()];
 
         if (nameInfo) {
           parsedAccount.info = { ...parsedAccount.info, ...nameInfo };
@@ -153,7 +153,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 
         setter(
           'whitelistedCreatorsByCreator',
-          whitelistedCreator.address,
+          whitelistedCreator.address.toBase58(),
           parsedAccount,
         );
       }
@@ -165,7 +165,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 };
 
 const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === METAPLEX_ID;
+  account.owner.equals(METAPLEX_ID);
 
 const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;

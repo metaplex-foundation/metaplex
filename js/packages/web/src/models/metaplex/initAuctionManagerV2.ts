@@ -1,5 +1,6 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
+import { programIds } from '@oyster/common';
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -16,11 +17,11 @@ import {
 } from '.';
 
 export async function initAuctionManagerV2(
-  vault: StringPublicKey,
-  auctionManagerAuthority: StringPublicKey,
-  payer: StringPublicKey,
-  acceptPaymentAccount: StringPublicKey,
-  store: StringPublicKey,
+  vault: PublicKey,
+  auctionManagerAuthority: PublicKey,
+  payer: PublicKey,
+  acceptPaymentAccount: PublicKey,
+  store: PublicKey,
   amountType: TupleNumericType,
   lengthType: TupleNumericType,
   maxRanges: BN,
@@ -43,43 +44,43 @@ export async function initAuctionManagerV2(
 
   const keys = [
     {
-      pubkey: toPublicKey(auctionManagerKey),
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(tokenTracker),
+      pubkey: tokenTracker,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(auctionKey),
+      pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auctionManagerAuthority),
+      pubkey: auctionManagerAuthority,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(acceptPaymentAccount),
+      pubkey: acceptPaymentAccount,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
@@ -97,7 +98,7 @@ export async function initAuctionManagerV2(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );
