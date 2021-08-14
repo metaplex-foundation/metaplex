@@ -1,12 +1,12 @@
 import {
   useConnection,
-  setProgramIds,
-  useConnectionConfig,
+  useStore,
   AUCTION_ID,
   METAPLEX_ID,
   VAULT_ID,
   METADATA_PROGRAM_ID,
   toPublicKey,
+  useQuerySearch,
 } from '@oyster/common';
 import React, {
   useCallback,
@@ -52,9 +52,9 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
-  const { env } = useConnectionConfig();
-  const urlParams = new URLSearchParams(window.location.search);
-  const all = urlParams.get('all') == 'true';
+  const { loading } = useStore();
+  const searchParams = useQuerySearch();
+  const all = searchParams.get('all') == 'true';
 
   const [state, setState] = useState<MetaState>({
     metadata: [],
@@ -103,7 +103,9 @@ export function MetaProvider({ children = null as any }) {
 
   useEffect(() => {
     (async () => {
-      await setProgramIds(env);
+      if (loading) {
+        return;
+      }
 
       console.log('-----> Query started');
 
@@ -118,7 +120,7 @@ export function MetaProvider({ children = null as any }) {
 
       updateMints(nextState.metadataByMint);
     })();
-  }, [connection, setState, updateMints, env]);
+  }, [connection, setState, updateMints, loading]);
 
   const updateStateValue = useMemo<UpdateStateValueFunc>(
     () => (prop, key, value) => {
