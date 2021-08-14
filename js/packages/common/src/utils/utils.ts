@@ -60,7 +60,10 @@ export const findProgramAddress = async (
   if (cached) {
     const value = JSON.parse(cached);
 
-    return [value.key, parseInt(value.nonce)] as [string, number];
+    return [new PublicKey(value.key), parseInt(value.nonce)] as [
+      PublicKey,
+      number,
+    ];
   }
 
   const result = await PublicKey.findProgramAddress(seeds, programId);
@@ -77,7 +80,7 @@ export const findProgramAddress = async (
     // ignore
   }
 
-  return [result[0].toBase58(), result[1]] as [string, number];
+  return result;
 };
 
 // shorten the checksummed version of the input address to have 4 characters at start and end

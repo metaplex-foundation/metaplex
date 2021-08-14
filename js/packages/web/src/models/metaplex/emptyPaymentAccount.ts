@@ -1,5 +1,6 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
+import { programIds } from '@oyster/common';
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -15,16 +16,16 @@ import {
 } from '.';
 
 export async function emptyPaymentAccount(
-  acceptPayment: StringPublicKey,
-  destination: StringPublicKey,
-  auctionManager: StringPublicKey,
-  metadata: StringPublicKey,
-  masterEdition: StringPublicKey | undefined,
-  safetyDepositBox: StringPublicKey,
-  vault: StringPublicKey,
-  auction: StringPublicKey,
-  payer: StringPublicKey,
-  recipient: StringPublicKey,
+  acceptPayment: PublicKey,
+  destination: PublicKey,
+  auctionManager: PublicKey,
+  metadata: PublicKey,
+  masterEdition: PublicKey | undefined,
+  safetyDepositBox: PublicKey,
+  vault: PublicKey,
+  auction: PublicKey,
+  payer: PublicKey,
+  recipient: PublicKey,
   winningConfigIndex: number | null,
   winningConfigItemIndex: number | null,
   creatorIndex: number | null,
@@ -53,66 +54,64 @@ export async function emptyPaymentAccount(
 
   const keys = [
     {
-      pubkey: toPublicKey(acceptPayment),
+      pubkey: acceptPayment,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(destination),
+      pubkey: destination,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(auctionManager),
+      pubkey: auctionManager,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(
-        await getPayoutTicket(
-          auctionManager,
-          winningConfigIndex,
-          winningConfigItemIndex,
-          creatorIndex,
-          safetyDepositBox,
-          recipient,
-        ),
+      pubkey: await getPayoutTicket(
+        auctionManager,
+        winningConfigIndex,
+        winningConfigItemIndex,
+        creatorIndex,
+        safetyDepositBox,
+        recipient,
       ),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(metadata),
+      pubkey: metadata,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(masterEdition || SystemProgram.programId),
+      pubkey: masterEdition || SystemProgram.programId,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositBox),
+      pubkey: safetyDepositBox,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auction),
+      pubkey: auction,
       isSigner: false,
       isWritable: false,
     },
@@ -133,13 +132,13 @@ export async function emptyPaymentAccount(
     },
 
     {
-      pubkey: toPublicKey(tokenTracker),
+      pubkey: tokenTracker,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(safetyDepositConfig),
+      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: false,
     },
@@ -148,7 +147,7 @@ export async function emptyPaymentAccount(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

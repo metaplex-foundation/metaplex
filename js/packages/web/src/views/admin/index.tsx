@@ -20,9 +20,8 @@ import {
   useConnection,
   useUserAccounts,
   useWallet,
-  StringPublicKey,
 } from '@oyster/common';
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WalletAdapter } from '@solana/wallet-base';
 import { useMemo } from 'react';
@@ -79,9 +78,9 @@ function ArtistModal({
             return;
           }
 
-          let address: StringPublicKey;
+          let address: PublicKey;
           try {
-            address = addressToAdd;
+            address = new PublicKey(addressToAdd);
             setUpdatedCreators(u => ({
               ...u,
               [modalAddress]: new WhitelistedCreator({
@@ -166,7 +165,7 @@ function InnerAdminView({
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {
-      acc[e.info.address] = e.info;
+      acc[e.info.address.toBase58()] = e.info;
       return acc;
     },
     {},
@@ -183,7 +182,7 @@ function InnerAdminView({
     {
       title: 'Address',
       dataIndex: 'address',
-      render: (val: StringPublicKey) => <span>{val}</span>,
+      render: (val: PublicKey) => <span>{val.toBase58()}</span>,
       key: 'address',
     },
     {
@@ -193,7 +192,7 @@ function InnerAdminView({
       render: (
         value: boolean,
         record: {
-          address: StringPublicKey;
+          address: PublicKey;
           activated: boolean;
           name: string;
           key: string;
@@ -274,7 +273,7 @@ function InnerAdminView({
               name:
                 uniqueCreatorsWithUpdates[key].name ||
                 shortenAddress(
-                  uniqueCreatorsWithUpdates[key].address,
+                  uniqueCreatorsWithUpdates[key].address.toBase58(),
                 ),
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
