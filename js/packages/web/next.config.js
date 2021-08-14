@@ -29,6 +29,7 @@ module.exports = withPlugins(plugins, {
   },
   env:{
     NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS: process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
+    NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
   },
   async rewrites() {
     return [

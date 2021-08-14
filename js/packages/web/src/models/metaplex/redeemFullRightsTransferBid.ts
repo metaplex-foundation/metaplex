@@ -2,10 +2,10 @@ import {
   programIds,
   VAULT_PREFIX,
   findProgramAddress,
-  getAuctionExtended,
+  StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -23,16 +23,16 @@ import {
 } from '.';
 
 export async function redeemFullRightsTransferBid(
-  vault: PublicKey,
-  safetyDepositTokenStore: PublicKey,
-  destination: PublicKey,
-  safetyDeposit: PublicKey,
-  fractionMint: PublicKey,
-  bidder: PublicKey,
-  payer: PublicKey,
+  vault: StringPublicKey,
+  safetyDepositTokenStore: StringPublicKey,
+  destination: StringPublicKey,
+  safetyDeposit: StringPublicKey,
+  fractionMint: StringPublicKey,
+  bidder: StringPublicKey,
+  payer: StringPublicKey,
   instructions: TransactionInstruction[],
-  masterMetadata: PublicKey,
-  newAuthority: PublicKey,
+  masterMetadata: StringPublicKey,
+  newAuthority: StringPublicKey,
   // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
   // and this will instead call the proxy route instead of the real one, wrapping the original
   // redemption call in an override call that forces the winning index if the auctioneer is authorized.
@@ -51,14 +51,14 @@ export async function redeemFullRightsTransferBid(
     bidder,
   );
 
-  const transferAuthority: PublicKey = (
+  const transferAuthority = (
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
+        toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -82,57 +82,57 @@ export async function redeemFullRightsTransferBid(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDepositTokenStore,
+      pubkey: toPublicKey(safetyDepositTokenStore),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: bidRedemption,
+      pubkey: toPublicKey(bidRedemption),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDeposit,
+      pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidMetadata,
+      pubkey: toPublicKey(bidMetadata),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidder,
+      pubkey: toPublicKey(bidder),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
@@ -142,12 +142,12 @@ export async function redeemFullRightsTransferBid(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -167,22 +167,22 @@ export async function redeemFullRightsTransferBid(
       isWritable: false,
     },
     {
-      pubkey: masterMetadata,
+      pubkey: toPublicKey(masterMetadata),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newAuthority,
+      pubkey: toPublicKey(newAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: safetyDepositConfig,
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
       isWritable: false,
     },
@@ -197,7 +197,7 @@ export async function redeemFullRightsTransferBid(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

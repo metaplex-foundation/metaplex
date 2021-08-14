@@ -11,6 +11,7 @@ import {
   convertMasterEditionV1ToV2,
   TokenAccount,
   programIds,
+  toPublicKey,
 } from '@oyster/common';
 import { Token } from '@solana/spl-token';
 const BATCH_SIZE = 10;
@@ -35,7 +36,7 @@ export async function filterMetadata(
   for (let i = 0; i < metadata.length; i++) {
     const md = metadata[i];
     const masterEdition = masterEditions[
-      md.info.masterEdition?.toBase58() || ''
+      md.info.masterEdition || ''
     ] as ParsedAccount<MasterEditionV1>;
     if (
       masterEdition &&
@@ -46,20 +47,18 @@ export async function filterMetadata(
         await new Promise(resolve => setTimeout(resolve, 10000));
         batchWaitCounter = 0;
       }
-      console.log('Reviewing', masterEdition.pubkey.toBase58());
+      console.log('Reviewing', masterEdition.pubkey);
       let printingBal = 0;
       try {
         let printingBalResp = await connection.getTokenSupply(
-          masterEdition.info.printingMint,
+          toPublicKey(masterEdition.info.printingMint),
         );
         printingBal = printingBalResp.value.uiAmount || 0;
       } catch (e) {
         console.error(e);
       }
 
-      const myAcct = accountsByMint.get(
-        masterEdition.info.printingMint.toBase58(),
-      );
+      const myAcct = accountsByMint.get(masterEdition.info.printingMint);
       if (myAcct) {
         console.log(
           'Existing print account subtracts',
@@ -73,7 +72,7 @@ export async function filterMetadata(
       if (printingBal > 0) {
         console.log(
           'Reject',
-          masterEdition.pubkey.toBase58(),
+          masterEdition.pubkey,
           'due to printing bal of',
           printingBal,
         );
@@ -82,7 +81,7 @@ export async function filterMetadata(
         let oneTimeBal = 0;
         try {
           let oneTimeBalResp = await connection.getTokenSupply(
-            masterEdition.info.oneTimePrintingAuthorizationMint,
+            toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
           );
           oneTimeBal = oneTimeBalResp.value.uiAmount || 0;
         } catch (e) {
@@ -90,7 +89,7 @@ export async function filterMetadata(
         }
 
         const myAcct = accountsByMint.get(
-          masterEdition.info.oneTimePrintingAuthorizationMint.toBase58(),
+          masterEdition.info.oneTimePrintingAuthorizationMint,
         );
         if (myAcct) {
           console.log(
@@ -105,7 +104,7 @@ export async function filterMetadata(
         if (oneTimeBal > 0) {
           console.log(
             'Reject',
-            masterEdition.pubkey.toBase58(),
+            masterEdition.pubkey,
             'due to one time auth bal of',
             oneTimeBal,
           );
@@ -143,20 +142,20 @@ export async function convertMasterEditions(
   for (let i = 0; i < masterEditions.length; i++) {
     const masterEdition = masterEditions[i] as ParsedAccount<MasterEditionV1>;
 
-    console.log('Converting', masterEdition.pubkey.toBase58());
+    console.log('Converting', masterEdition.pubkey);
     const printingMintAcct = accountsByMint.get(
-      masterEdition.info.printingMint.toBase58(),
+      masterEdition.info.printingMint,
     );
     const oneTimeAuthMintAcct = accountsByMint.get(
-      masterEdition.info.oneTimePrintingAuthorizationMint.toBase58(),
+      masterEdition.info.oneTimePrintingAuthorizationMint,
     );
     if (printingMintAcct) {
       if (printingMintAcct.info.amount.toNumber() > 0) {
         convertInstructions.push(
           Token.createBurnInstruction(
             PROGRAM_IDS.token,
-            masterEdition.info.printingMint,
-            printingMintAcct.pubkey,
+            toPublicKey(masterEdition.info.printingMint),
+            toPublicKey(printingMintAcct.pubkey),
             wallet.publicKey,
             [],
             printingMintAcct.info.amount,
@@ -167,7 +166,7 @@ export async function convertMasterEditions(
       convertInstructions.push(
         Token.createCloseAccountInstruction(
           PROGRAM_IDS.token,
-          printingMintAcct.pubkey,
+          toPublicKey(printingMintAcct.pubkey),
           wallet.publicKey,
           wallet.publicKey,
           [],
@@ -180,8 +179,8 @@ export async function convertMasterEditions(
         convertInstructions.push(
           Token.createBurnInstruction(
             PROGRAM_IDS.token,
-            masterEdition.info.oneTimePrintingAuthorizationMint,
-            oneTimeAuthMintAcct.pubkey,
+            toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
+            toPublicKey(oneTimeAuthMintAcct.pubkey),
             wallet.publicKey,
             [],
             oneTimeAuthMintAcct.info.amount,
@@ -192,7 +191,7 @@ export async function convertMasterEditions(
       convertInstructions.push(
         Token.createCloseAccountInstruction(
           PROGRAM_IDS.token,
-          oneTimeAuthMintAcct.pubkey,
+          toPublicKey(oneTimeAuthMintAcct.pubkey),
           wallet.publicKey,
           wallet.publicKey,
           [],
