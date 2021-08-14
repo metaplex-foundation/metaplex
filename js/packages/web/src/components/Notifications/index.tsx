@@ -186,7 +186,7 @@ export function useSettlementAuctions({
         .filter(
           a =>
             walletPubkey &&
-            a.auctionManager.authority.equals(walletPubkey) &&
+            a.auctionManager.info.authority.equals(walletPubkey) &&
             a.auction.info.ended(),
         )
         .sort(
@@ -200,7 +200,7 @@ export function useSettlementAuctions({
           CALLING_MUTEX[av.auctionManager.pubkey.toBase58()] = true;
           try {
             const balance = await connection.getTokenAccountBalance(
-              av.auctionManager.acceptPayment,
+              av.auctionManager.info.acceptPayment,
             );
             if (
               ((balance.value.uiAmount || 0) === 0 &&
@@ -231,7 +231,7 @@ export function useSettlementAuctions({
     if (!auctionView) return;
     const winners = [...auctionView.auction.info.bidState.bids]
       .reverse()
-      .slice(0, auctionView.auctionManager.numWinners.toNumber())
+      .slice(0, auctionView.auctionManager.info.settings.winningConfigs.length)
       .reduce((acc: Record<string, boolean>, r) => {
         acc[r.key.toBase58()] = true;
         return acc;
@@ -294,7 +294,6 @@ export function Notifications() {
   const possiblyBrokenAuctionManagerSetups = useAuctions(
     AuctionViewState.Defective,
   );
-
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const { wallet } = useWallet();
@@ -347,7 +346,7 @@ export function Notifications() {
   });
 
   possiblyBrokenAuctionManagerSetups
-    .filter(v => v.auctionManager.authority.toBase58() === walletPubkey)
+    .filter(v => v.auctionManager.info.authority.toBase58() === walletPubkey)
     .forEach(v => {
       notifications.push({
         id: v.auctionManager.pubkey.toBase58(),
@@ -416,7 +415,7 @@ export function Notifications() {
   });
 
   upcomingAuctions
-    .filter(v => v.auctionManager.authority.toBase58() === walletPubkey)
+    .filter(v => v.auctionManager.info.authority.toBase58() === walletPubkey)
     .forEach(v => {
       notifications.push({
         id: v.auctionManager.pubkey.toBase58(),

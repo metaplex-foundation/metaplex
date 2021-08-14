@@ -10,7 +10,6 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  getSafetyDepositConfig,
   ProxyCallAddress,
   RedeemBidArgs,
   RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
@@ -57,11 +56,6 @@ export async function redeemBid(
       PROGRAM_IDS.vault,
     )
   )[0];
-
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
 
   const value =
     auctioneerReclaimIndex !== undefined
@@ -159,11 +153,6 @@ export async function redeemBid(
     },
     {
       pubkey: transferAuthority,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: false,
     },

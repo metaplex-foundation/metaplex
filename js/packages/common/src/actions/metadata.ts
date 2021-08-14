@@ -4,7 +4,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { programIds } from '../utils/programIds';
+import { programIds } from '../utils/ids';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
 import { findProgramAddress } from '../utils';
@@ -213,7 +213,6 @@ export class Metadata {
   data: Data;
   primarySaleHappened: boolean;
   isMutable: boolean;
-  editionNonce: number | null;
 
   // set lazy
   masterEdition?: PublicKey;
@@ -225,7 +224,6 @@ export class Metadata {
     data: Data;
     primarySaleHappened: boolean;
     isMutable: boolean;
-    editionNonce: number | null;
   }) {
     this.key = MetadataKey.MetadataV1;
     this.updateAuthority = args.updateAuthority;
@@ -233,7 +231,6 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
-    this.editionNonce = args.editionNonce;
   }
 
   public async init() {

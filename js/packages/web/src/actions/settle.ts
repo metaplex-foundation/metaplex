@@ -25,7 +25,7 @@ import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 
 const BATCH_SIZE = 10;
-const SETTLE_TRANSACTION_SIZE = 6;
+const SETTLE_TRANSACTION_SIZE = 7;
 const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,
@@ -97,12 +97,14 @@ async function emptyPaymentAccountForAllTokens(
       const edgeCaseWhereCreatorIsAuctioneer = !!creators
         ?.map(c => c.address)
         .find(
-          c => c.toBase58() === auctionView.auctionManager.authority.toBase58(),
+          c =>
+            c.toBase58() ===
+            auctionView.auctionManager.info.authority.toBase58(),
         );
 
       const addresses = [
         ...(creators ? creators.map(c => c.address) : []),
-        ...[auctionView.auctionManager.authority],
+        ...[auctionView.auctionManager.info.authority],
       ];
 
       for (let k = 0; k < addresses.length; k++) {
@@ -137,7 +139,7 @@ async function emptyPaymentAccountForAllTokens(
           : null;
 
         await emptyPaymentAccount(
-          auctionView.auctionManager.acceptPayment,
+          auctionView.auctionManager.info.acceptPayment,
           ata,
           auctionView.auctionManager.pubkey,
           item.metadata.pubkey,
@@ -235,7 +237,7 @@ async function claimAllBids(
     const bid = bids[i];
     console.log('Claiming', bid.info.bidderAct.toBase58());
     await claimBid(
-      auctionView.auctionManager.acceptPayment,
+      auctionView.auctionManager.info.acceptPayment,
       bid.info.bidderAct,
       bid.info.bidderPot,
       auctionView.vault.pubkey,

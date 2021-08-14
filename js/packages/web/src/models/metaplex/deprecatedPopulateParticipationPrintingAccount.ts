@@ -11,8 +11,7 @@ import {
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { SCHEMA } from '.';
-import { DeprecatedPopulateParticipationPrintingAccountArgs } from './deprecatedStates';
+import { DeprecatedPopulateParticipationPrintingAccountArgs, SCHEMA } from '.';
 
 export async function deprecatedPopulateParticipationPrintingAccount(
   vault: PublicKey,

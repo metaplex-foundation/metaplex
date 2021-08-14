@@ -17,7 +17,6 @@ import {
   WithdrawMasterEditionArgs,
   SCHEMA,
   getPrizeTrackingTicket,
-  getSafetyDepositConfig,
 } from '.';
 
 export async function withdrawMasterEdition(
@@ -63,11 +62,6 @@ export async function withdrawMasterEdition(
       PROGRAM_IDS.auction,
     )
   )[0];
-
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
 
   const value = new WithdrawMasterEditionArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
@@ -139,11 +133,6 @@ export async function withdrawMasterEdition(
     },
     {
       pubkey: SYSVAR_RENT_PUBKEY,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: false,
     },

@@ -5,51 +5,36 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import BN from 'bn.js';
 import { serialize } from 'borsh';
 
 import {
+  AuctionManagerSettings,
   getAuctionKeys,
-  getAuctionWinnerTokenTypeTracker,
-  InitAuctionManagerV2Args,
+  InitAuctionManagerArgs,
   SCHEMA,
-  TupleNumericType,
 } from '.';
 
-export async function initAuctionManagerV2(
+export async function initAuctionManager(
   vault: PublicKey,
   auctionManagerAuthority: PublicKey,
   payer: PublicKey,
   acceptPaymentAccount: PublicKey,
   store: PublicKey,
-  amountType: TupleNumericType,
-  lengthType: TupleNumericType,
-  maxRanges: BN,
+  settings: AuctionManagerSettings,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const value = new InitAuctionManagerV2Args({
-    amountType,
-    lengthType,
-    maxRanges,
+  const value = new InitAuctionManagerArgs({
+    settings,
   });
-
-  const tokenTracker = await getAuctionWinnerTokenTypeTracker(
-    auctionManagerKey,
-  );
 
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [
     {
       pubkey: auctionManagerKey,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: tokenTracker,
       isSigner: false,
       isWritable: true,
     },

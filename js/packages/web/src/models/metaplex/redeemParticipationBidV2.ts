@@ -19,17 +19,17 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  RedeemParticipationBidV3Args,
+  RedeemParticipationBidV2Args,
   SCHEMA,
   getPrizeTrackingTicket,
-  getSafetyDepositConfig,
 } from '.';
 
-export async function redeemParticipationBidV3(
+export async function redeemParticipationBidV2(
   vault: PublicKey,
   safetyDepositTokenStore: PublicKey,
   destination: PublicKey,
   safetyDeposit: PublicKey,
+  fractionMint: PublicKey,
   bidder: PublicKey,
   payer: PublicKey,
   metadata: PublicKey,
@@ -40,7 +40,6 @@ export async function redeemParticipationBidV3(
   tokenPaymentAccount: PublicKey,
   newMint: PublicKey,
   edition: BN,
-  winIndex: BN | null,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -70,12 +69,7 @@ export async function redeemParticipationBidV3(
 
   const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
-  const safetyDepositConfig = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDeposit,
-  );
-
-  const value = new RedeemParticipationBidV3Args({ winIndex });
+  const value = new RedeemParticipationBidV2Args();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -101,15 +95,15 @@ export async function redeemParticipationBidV3(
     {
       pubkey: safetyDeposit,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: vault,
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
-      pubkey: safetyDepositConfig,
+      pubkey: fractionMint,
       isSigner: false,
       isWritable: true,
     },

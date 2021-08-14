@@ -26,7 +26,10 @@ export async function decommAuctionManagerAndReturnPrizes(
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 
-  if (auctionView.auctionManager.status === AuctionManagerStatus.Initialized) {
+  if (
+    auctionView.auctionManager.info.state.status ===
+    AuctionManagerStatus.Initialized
+  ) {
     let decomSigners: Keypair[] = [];
     let decomInstructions: TransactionInstruction[] = [];
 

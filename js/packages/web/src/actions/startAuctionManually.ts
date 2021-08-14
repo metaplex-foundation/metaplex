@@ -14,7 +14,7 @@ export async function startAuctionManually(
 
     await startAuction(
       auctionView.vault.pubkey,
-      auctionView.auctionManager.authority,
+      auctionView.auctionManager.info.authority,
       instructions,
     );
 

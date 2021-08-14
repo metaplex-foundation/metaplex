@@ -3,8 +3,8 @@ use {
         error::MetaplexError,
         processor::redeem_printing_v2_bid::{create_or_update_prize_tracking, mint_edition},
         state::{
-            AuctionManager, NonWinningConstraint, ParticipationConfigV2, Store, WinningConstraint,
-            PREFIX,
+            AuctionManager, NonWinningConstraint, ParticipationConfig, ParticipationState, Store,
+            WinningConstraint, PREFIX,
         },
         utils::{
             assert_derivation, assert_initialized, assert_is_ata, assert_owned_by,
@@ -40,7 +40,7 @@ struct V2Accounts<'a> {
 
 fn legacy_validation(
     token_program_info: &AccountInfo,
-    auction_manager: &Box<dyn AuctionManager>,
+    auction_manager: &AuctionManager,
     accounts: &LegacyAccounts,
 ) -> ProgramResult {
     assert_owned_by(
@@ -55,8 +55,13 @@ fn legacy_validation(
         return Err(MetaplexError::ParticipationPrintingEmpty.into());
     }
 
-    auction_manager
-        .assert_legacy_printing_token_match(accounts.participation_printing_holding_account_info)?;
+    if let Some(state) = &auction_manager.state.participation_state {
+        if let Some(token) = state.printing_authorization_token_account {
+            if *accounts.participation_printing_holding_account_info.key != token {
+                return Err(MetaplexError::PrintingAuthorizationTokenAccountMismatch.into());
+            }
+        }
+    }
 
     Ok(())
 }
@@ -75,7 +80,7 @@ fn v2_validation<'a>(
     master_edition_account_info: &AccountInfo<'a>,
     destination_info: &AccountInfo<'a>,
     auction_info: &AccountInfo<'a>,
-    config: &ParticipationConfigV2,
+    config: &ParticipationConfig,
     accounts: &V2Accounts<'a>,
 ) -> ProgramResult {
     let extended = AuctionDataExtended::from_account_info(accounts.auction_extended_info)?;
@@ -187,18 +192,16 @@ fn charge_for_participation<'a>(
     accept_payment_info: &AccountInfo<'a>,
     transfer_authority_info: &AccountInfo<'a>,
     token_program_info: &AccountInfo<'a>,
-    safety_deposit_config_info: &AccountInfo<'a>,
     win_index: Option<usize>,
-    config: &ParticipationConfigV2,
+    config: &ParticipationConfig,
     auction_manager_bump: u8,
-    auction_manager: &mut Box<dyn AuctionManager>,
+    auction_manager: &mut AuctionManager,
     bidder_token: &Account,
     bidder_metadata: &BidderMetadata,
 ) -> ProgramResult {
-    let auction_key = auction_manager.auction();
     let signer_seeds = &[
         PREFIX.as_bytes(),
-        auction_key.as_ref(),
+        auction_manager.auction.as_ref(),
         &[auction_manager_bump],
     ];
 
@@ -216,7 +219,19 @@ fn charge_for_participation<'a>(
     }
 
     if price > 0 {
-        auction_manager.add_to_collected_payment(safety_deposit_config_info, price)?;
+        if let Some(state) = &auction_manager.state.participation_state {
+            // Can't really edit something behind an Option reference...
+            // just make new one.
+            auction_manager.state.participation_state = Some(ParticipationState {
+                collected_to_accept_payment: state
+                    .collected_to_accept_payment
+                    .checked_add(price)
+                    .ok_or(MetaplexError::NumericalOverflowError)?,
+                primary_sale_happened: state.primary_sale_happened,
+                validated: state.validated,
+                printing_authorization_token_account: state.printing_authorization_token_account,
+            });
+        }
 
         spl_token_transfer(
             bidder_token_account_info.clone(),
@@ -236,7 +251,6 @@ pub fn process_redeem_participation_bid<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
     legacy: bool,
-    user_provided_win_index: Option<u64>,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let auction_manager_info = next_account_info(account_info_iter)?;
@@ -245,7 +259,8 @@ pub fn process_redeem_participation_bid<'a>(
     let bid_redemption_info = next_account_info(account_info_iter)?;
     let safety_deposit_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
-    let safety_deposit_config_info = next_account_info(account_info_iter)?;
+    // We keep it here to keep API base identical to the other redeem calls for ease of use by callers
+    let _fraction_mint_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let bidder_metadata_info = next_account_info(account_info_iter)?;
     let bidder_info = next_account_info(account_info_iter)?;
@@ -305,12 +320,8 @@ pub fn process_redeem_participation_bid<'a>(
         token_metadata_program_info,
         rent_info,
         store_info,
-        safety_deposit_config_info: Some(safety_deposit_config_info),
         is_participation: true,
-        user_provided_win_index: Some(match user_provided_win_index {
-            Some(val) => Some(val as usize),
-            None => None,
-        }),
+        user_provided_win_index: Some(None),
         overwrite_win_index: None,
         assert_bidder_signer: legacy,
         ignore_bid_redeemed_item_check: false,
@@ -318,8 +329,12 @@ pub fn process_redeem_participation_bid<'a>(
 
     let bidder_metadata = BidderMetadata::from_account_info(bidder_metadata_info)?;
 
-    let config: ParticipationConfigV2 =
-        auction_manager.get_participation_config(safety_deposit_config_info)?;
+    let config: ParticipationConfig;
+    if let Some(part_config) = auction_manager.settings.participation_config.clone() {
+        config = part_config
+    } else {
+        return Err(MetaplexError::NotEligibleForParticipation.into());
+    }
 
     assert_owned_by(accept_payment_info, token_program_info.key)?;
     assert_owned_by(bidder_token_account_info, token_program_info.key)?;
@@ -330,7 +345,7 @@ pub fn process_redeem_participation_bid<'a>(
         return Err(MetaplexError::AcceptPaymentMintMismatch.into());
     }
 
-    if *accept_payment_info.key != auction_manager.accept_payment() {
+    if *accept_payment_info.key != auction_manager.accept_payment {
         return Err(MetaplexError::AcceptPaymentMismatch.into());
     }
 
@@ -338,23 +353,28 @@ pub fn process_redeem_participation_bid<'a>(
         config.non_winning_constraint != NonWinningConstraint::NoParticipationPrize;
 
     if !cancelled {
-        if AuctionData::get_is_winner(auction_info, bidder_info.key).is_some() {
-            // Okay, so they placed in the auction winning prizes section!
-            gets_participation =
-                config.winner_constraint == WinningConstraint::ParticipationPrizeGiven;
+        if let Some(winning_index) = AuctionData::get_is_winner(auction_info, bidder_info.key) {
+            if winning_index < auction_manager.settings.winning_configs.len() {
+                // Okay, so they placed in the auction winning prizes section!
+                gets_participation =
+                    config.winner_constraint == WinningConstraint::ParticipationPrizeGiven;
+            }
         }
     }
 
     let bump_seed = assert_derivation(
         program_id,
         auction_manager_info,
-        &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
+        &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
     )?;
 
     if gets_participation {
         if let Some(accounts) = legacy_accounts {
-            let auction_key = auction_manager.auction();
-            let mint_seeds = &[PREFIX.as_bytes(), auction_key.as_ref(), &[bump_seed]];
+            let mint_seeds = &[
+                PREFIX.as_bytes(),
+                &auction_manager.auction.as_ref(),
+                &[bump_seed],
+            ];
 
             legacy_validation(token_program_info, &auction_manager, &accounts)?;
             spl_token_transfer(
@@ -408,7 +428,6 @@ pub fn process_redeem_participation_bid<'a>(
             accept_payment_info,
             transfer_authority_info,
             token_program_info,
-            safety_deposit_config_info,
             win_index,
             &config,
             bump_seed,
@@ -429,9 +448,7 @@ pub fn process_redeem_participation_bid<'a>(
         system_info,
         payer_info,
         bid_redemption_info,
-        vault_info,
-        safety_deposit_config_info: Some(safety_deposit_config_info),
-        winning_index: win_index,
+        winning_index: None,
         redemption_bump_seed,
         bid_redeemed: false,
         participation_redeemed: true,

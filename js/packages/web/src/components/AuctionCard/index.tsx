@@ -40,6 +40,7 @@ import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
 import {
   BidRedemptionTicket,
+  MAX_BID_REDEMPTION_TICKET_SIZE,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
 } from '../../models/metaplex';
 
@@ -63,6 +64,10 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   const editionRentExempt = await connection.getMinimumBalanceForRentExemption(
     MAX_EDITION_LEN,
   );
+  const bidRedemptionTicketExempt =
+    await connection.getMinimumBalanceForRentExemption(
+      MAX_BID_REDEMPTION_TICKET_SIZE,
+    );
   const prizeTrackingTicketExempt =
     await connection.getMinimumBalanceForRentExemption(
       MAX_PRIZE_TRACKING_TICKET_SIZE,
@@ -83,15 +88,10 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
     } else {
       const bid = bids.find(b => b.info.bidderPubkey.equals(winner));
       if (bid) {
-        for (
-          let j = 0;
-          j < auctionView.auctionManager.safetyDepositBoxesExpected.toNumber();
-          j++
-        ) {
-          totalWinnerItems += auctionView.auctionManager
-            .getAmountForWinner(i, j)
-            .toNumber();
-        }
+        totalWinnerItems +=
+          auctionView.auctionManager.info.settings.winningConfigs[i]?.items
+            .map(i => i.amount)
+            .reduce((acc, s) => (acc += s), 0);
       }
     }
   }
@@ -100,6 +100,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
       accountRentExempt +
       metadataRentExempt +
       editionRentExempt +
+      bidRedemptionTicketExempt +
       prizeTrackingTicketExempt) *
     (eligibleParticipations.length + totalWinnerItems)
   );
@@ -239,7 +240,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority.toBase58() !=
+    auctionView.auctionManager.info.authority.toBase58() !=
     wallet?.publicKey?.toBase58();
 
   const isAuctionNotStarted =
@@ -272,7 +273,9 @@ export const AuctionCard = ({
               setLoading(true);
               setShowRedemptionIssue(false);
               if (
-                wallet?.publicKey?.equals(auctionView.auctionManager.authority)
+                wallet?.publicKey?.equals(
+                  auctionView.auctionManager.info.authority,
+                )
               ) {
                 const totalCost =
                   await calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -325,7 +328,9 @@ export const AuctionCard = ({
             ) : (
               `${
                 wallet?.publicKey &&
-                auctionView.auctionManager.authority.equals(wallet.publicKey)
+                auctionView.auctionManager.info.authority.equals(
+                  wallet.publicKey,
+                )
                   ? 'Reclaim Items'
                   : 'Refund bid'
               }`

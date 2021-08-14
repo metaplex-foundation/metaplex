@@ -13,8 +13,7 @@ import { TokenAccount } from '../models';
 import { chunks } from '../utils/utils';
 import { EventEmitter } from '../utils/eventEmitter';
 import { useUserAccounts } from '../hooks/useUserAccounts';
-import { WRAPPED_SOL_MINT } from '../utils/ids';
-import { programIds } from '../utils/programIds';
+import { WRAPPED_SOL_MINT, programIds } from '../utils/ids';
 import { AuctionParser } from '../actions';
 
 const AccountsContext = React.createContext<any>(null);
@@ -70,23 +69,18 @@ export const TokenAccountParser = (
   pubKey: PublicKey,
   info: AccountInfo<Buffer>,
 ) => {
-  // Sometimes a wrapped sol account gets closed, goes to 0 length,
-  // triggers an update over wss which triggers this guy to get called
-  // since your UI already logged that pubkey as a token account. Check for length.
-  if (info.data.length > 0) {
-    const buffer = Buffer.from(info.data);
-    const data = deserializeAccount(buffer);
+  const buffer = Buffer.from(info.data);
+  const data = deserializeAccount(buffer);
 
-    const details = {
-      pubkey: pubKey,
-      account: {
-        ...info,
-      },
-      info: data,
-    } as TokenAccount;
+  const details = {
+    pubkey: pubKey,
+    account: {
+      ...info,
+    },
+    info: data,
+  } as TokenAccount;
 
-    return details;
-  }
+  return details;
 };
 
 export const GenericAccountParser = (

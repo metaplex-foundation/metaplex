@@ -9,15 +9,13 @@ import { serialize } from 'borsh';
 
 import {
   getAuctionKeys,
-  getAuctionWinnerTokenTypeTracker,
   getOriginalAuthority,
-  getSafetyDepositConfig,
-  SafetyDepositConfig,
+  getSafetyDepositBoxValidationTicket,
   SCHEMA,
-  ValidateSafetyDepositBoxV2Args,
+  ValidateSafetyDepositBoxArgs,
 } from '.';
 
-export async function validateSafetyDepositBoxV2(
+export async function validateSafetyDepositBox(
   vault: PublicKey,
   metadata: PublicKey,
   safetyDepositBox: PublicKey,
@@ -30,7 +28,8 @@ export async function validateSafetyDepositBoxV2(
   edition: PublicKey,
   whitelistedCreator: PublicKey | undefined,
   store: PublicKey,
-  safetyDepositConfig: SafetyDepositConfig,
+  printingMint?: PublicKey,
+  printingMintAuthority?: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
 
@@ -41,26 +40,15 @@ export async function validateSafetyDepositBoxV2(
     metadata,
   );
 
-  const safetyDepositConfigKey = await getSafetyDepositConfig(
-    auctionManagerKey,
-    safetyDepositBox,
-  );
+  const value = new ValidateSafetyDepositBoxArgs();
 
-  const tokenTracker = await getAuctionWinnerTokenTypeTracker(
-    auctionManagerKey,
-  );
-
-  const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig);
   const data = Buffer.from(serialize(SCHEMA, value));
-
   const keys = [
     {
-      pubkey: safetyDepositConfigKey,
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: tokenTracker,
+      pubkey: await getSafetyDepositBoxValidationTicket(
+        auctionManagerKey,
+        safetyDepositBox,
+      ),
       isSigner: false,
       isWritable: true,
     },
@@ -147,6 +135,19 @@ export async function validateSafetyDepositBoxV2(
     },
   ];
 
+  if (printingMint && printingMintAuthority) {
+    keys.push({
+      pubkey: printingMint,
+      isSigner: false,
+      isWritable: true,
+    });
+
+    keys.push({
+      pubkey: printingMintAuthority,
+      isSigner: true,
+      isWritable: false,
+    });
+  }
   instructions.push(
     new TransactionInstruction({
       keys,

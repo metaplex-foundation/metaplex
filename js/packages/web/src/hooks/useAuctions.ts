@@ -18,14 +18,9 @@ import { useMeta } from '../contexts';
 import {
   AuctionManager,
   AuctionManagerStatus,
-  AuctionManagerV2,
   BidRedemptionTicket,
-  BidRedemptionTicketV2,
   getBidderKeys,
-  SafetyDepositConfig,
-  WinningConfigType,
 } from '../models/metaplex';
-import { AuctionManagerV1 } from '../models/metaplex/deprecatedStates';
 
 export enum AuctionViewState {
   Live = '0',
@@ -36,8 +31,6 @@ export enum AuctionViewState {
 }
 
 export interface AuctionViewItem {
-  winningConfigType: WinningConfigType;
-  amount: BN;
   metadata: ParsedAccount<Metadata>;
   safetyDeposit: ParsedAccount<SafetyDepositBox>;
   masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
@@ -49,7 +42,7 @@ export interface AuctionView {
   // once tiered auctions come along, this becomes an array of arrays.
   items: AuctionViewItem[][];
   auction: ParsedAccount<AuctionData>;
-  auctionManager: AuctionManager;
+  auctionManager: ParsedAccount<AuctionManager>;
   participationItem?: AuctionViewItem;
   state: AuctionViewState;
   thumbnail: AuctionViewItem;
@@ -127,8 +120,6 @@ export const useAuctions = (state?: AuctionViewState) => {
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,
     metadataByMasterEdition,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
   } = useMeta();
 
   useEffect(() => {
@@ -142,10 +133,8 @@ export const useAuctions = (state?: AuctionViewState) => {
         metadataByMint,
         bidderMetadataByAuctionAndBidder,
         bidderPotsByAuctionAndBidder,
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
         masterEditions,
         vaults,
-        safetyDepositConfigsByAuctionManagerAndIndex,
         masterEditionsByPrintingMint,
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
@@ -173,9 +162,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     metadataByMint,
     bidderMetadataByAuctionAndBidder,
     bidderPotsByAuctionAndBidder,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
     vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditions,
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,
@@ -188,28 +175,10 @@ export const useAuctions = (state?: AuctionViewState) => {
   return auctionViews;
 };
 
-function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
-  const list: T[] = [];
-  let ticket = hash[key + '-0'];
-  if (ticket) {
-    list.push(ticket);
-    let i = 1;
-    while (ticket) {
-      ticket = hash[key + '-' + i.toString()];
-      if (ticket) list.push(ticket);
-      i++;
-    }
-  }
-  return list;
-}
-
 export function processAccountsIntoAuctionView(
   walletPubkey: PublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
-  auctionManagersByAuction: Record<
-    string,
-    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
-  >,
+  auctionManagersByAuction: Record<string, ParsedAccount<AuctionManager>>,
   safetyDepositBoxesByVaultAndIndex: Record<
     string,
     ParsedAccount<SafetyDepositBox>
@@ -220,19 +189,11 @@ export function processAccountsIntoAuctionView(
     ParsedAccount<BidderMetadata>
   >,
   bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>,
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: Record<
-    string,
-    ParsedAccount<BidRedemptionTicketV2>
-  >,
   masterEditions: Record<
     string,
     ParsedAccount<MasterEditionV1 | MasterEditionV2>
   >,
   vaults: Record<string, ParsedAccount<Vault>>,
-  safetyDepositConfigsByAuctionManagerAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositConfig>
-  >,
   masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEditionV1>>,
   masterEditionsByOneTimeAuthMint: Record<
     string,
@@ -257,7 +218,7 @@ export function processAccountsIntoAuctionView(
     state = AuctionViewState.BuyNow;
   }
 
-  const auctionManagerInstance =
+  const auctionManager =
     auctionManagersByAuction[auction.pubkey.toBase58() || ''];
 
   // The defective auction view state really applies to auction managers, not auctions, so we ignore it here
@@ -268,45 +229,21 @@ export function processAccountsIntoAuctionView(
   )
     return undefined;
 
-  if (auctionManagerInstance) {
+  if (auctionManager) {
     // instead we apply defective state to auction managers
     if (
       desiredState === AuctionViewState.Defective &&
-      auctionManagerInstance.info.state.status !==
-        AuctionManagerStatus.Initialized
+      auctionManager.info.state.status !== AuctionManagerStatus.Initialized
     )
       return undefined;
     // Generally the only way an initialized auction manager can get through is if you are asking for defective ones.
     else if (
       desiredState !== AuctionViewState.Defective &&
-      auctionManagerInstance.info.state.status ===
-        AuctionManagerStatus.Initialized
+      auctionManager.info.state.status === AuctionManagerStatus.Initialized
     )
       return undefined;
 
-    const vault = vaults[auctionManagerInstance.info.vault.toBase58()];
-    const auctionManagerKey = auctionManagerInstance.pubkey.toBase58();
-
-    let safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
-      buildListWhileNonZero(
-        safetyDepositConfigsByAuctionManagerAndIndex,
-        auctionManagerKey,
-      );
-
-    let bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
-      buildListWhileNonZero(
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
-        auctionManagerKey,
-      );
-    const auctionManager = new AuctionManager({
-      instance: auctionManagerInstance,
-      auction,
-      vault,
-      safetyDepositConfigs,
-      bidRedemptions,
-    });
-
-    const boxesExpected = auctionManager.safetyDepositBoxesExpected.toNumber();
+    const boxesExpected = auctionManager.info.state.winningConfigItemsValidated;
 
     let bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
       cachedRedemptionKeysByWallet[auction.pubkey.toBase58()]?.info
@@ -367,11 +304,25 @@ export function processAccountsIntoAuctionView(
       return existingAuctionView;
     }
 
-    const vaultKey = auctionManager.vault.toBase58();
-    let boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
-      safetyDepositBoxesByVaultAndIndex,
-      vaultKey,
-    );
+    let boxes: ParsedAccount<SafetyDepositBox>[] = [];
+
+    let box =
+      safetyDepositBoxesByVaultAndIndex[
+        auctionManager.info.vault.toBase58() + '-0'
+      ];
+    if (box) {
+      boxes.push(box);
+      let i = 1;
+      while (box) {
+        box =
+          safetyDepositBoxesByVaultAndIndex[
+            auctionManager.info.vault.toBase58() + '-' + i.toString()
+          ];
+        if (box) boxes.push(box);
+        i++;
+      }
+    }
+
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;
@@ -381,11 +332,14 @@ export function processAccountsIntoAuctionView(
         | ParsedAccount<MasterEditionV1 | MasterEditionV2>
         | undefined = undefined;
       if (
-        auctionManager.participationConfig !== null &&
-        auctionManager.participationConfig !== undefined
+        auctionManager.info.settings.participationConfig !== null &&
+        auctionManager.info.settings.participationConfig !== undefined
       ) {
         participationBox =
-          boxes[auctionManager.participationConfig?.safetyDepositBoxIndex];
+          boxes[
+            auctionManager.info.settings.participationConfig
+              ?.safetyDepositBoxIndex
+          ];
         // Cover case of V1 master edition (where we're using one time auth mint in storage)
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
@@ -410,22 +364,39 @@ export function processAccountsIntoAuctionView(
         auction,
         auctionManager,
         state,
-        vault,
-        items: auctionManager.getItemsFromSafetyDepositBoxes(
-          metadataByMint,
-          masterEditionsByPrintingMint,
-          metadataByMasterEdition,
-          masterEditions,
-          boxes,
-        ),
+        vault: vaults[auctionManager.info.vault.toBase58()],
+        items: auctionManager.info.settings.winningConfigs.map(w => {
+          return w.items.map(it => {
+            let metadata =
+              metadataByMint[
+                boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
+              ];
+            if (!metadata) {
+              // Means is a limited edition v1, so the tokenMint is the printingMint
+              let masterEdition =
+                masterEditionsByPrintingMint[
+                  boxes[it.safetyDepositBoxIndex]?.info.tokenMint.toBase58()
+                ];
+              if (masterEdition) {
+                metadata =
+                  metadataByMasterEdition[masterEdition.pubkey.toBase58()];
+              }
+            }
+            return {
+              metadata,
+              safetyDeposit: boxes[it.safetyDepositBoxIndex],
+              masterEdition: metadata?.info?.masterEdition
+                ? masterEditions[metadata.info.masterEdition.toBase58()]
+                : undefined,
+            };
+          });
+        }),
         participationItem:
           participationMetadata && participationBox
             ? {
                 metadata: participationMetadata,
                 safetyDeposit: participationBox,
                 masterEdition: participationMaster,
-                amount: new BN(1),
-                winningConfigType: WinningConfigType.Participation,
               }
             : undefined,
         myBidderMetadata: bidderMetadata,
@@ -440,21 +411,18 @@ export function processAccountsIntoAuctionView(
         view.thumbnail &&
         boxesExpected ===
           (view.items || []).length +
-            (auctionManager.participationConfig === null ||
-            auctionManager.participationConfig === undefined
+            (auctionManager.info.settings.participationConfig === null ||
+            auctionManager.info.settings.participationConfig === undefined
               ? 0
               : 1) &&
-        (auctionManager.participationConfig === null ||
-          auctionManager.participationConfig === undefined ||
-          (auctionManager.participationConfig !== null &&
+        (auctionManager.info.settings.participationConfig === null ||
+          auctionManager.info.settings.participationConfig === undefined ||
+          (auctionManager.info.settings.participationConfig !== null &&
             view.participationItem)) &&
         view.vault
       );
-      if (
-        (!view.thumbnail || !view.thumbnail.metadata) &&
-        desiredState != AuctionViewState.Defective
-      )
-        return undefined;
+
+      if (!view.thumbnail || !view.thumbnail.metadata) return undefined;
 
       return view as AuctionView;
     }
