@@ -1,4 +1,4 @@
-import { useWallet } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import {
@@ -11,12 +11,11 @@ import { useMeta } from '../contexts';
 export const useAuction = (pubkey: PublicKey | string) => {
   const id = typeof pubkey === 'string' ? pubkey : pubkey.toBase58();
 
-  const { wallet } = useWallet();
+  const { publicKey: walletPubkey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const [existingAuctionView, setAuctionView] =
     useState<AuctionView | undefined>(undefined);
-  const walletPubkey = wallet?.publicKey;
   const {
     auctions,
     auctionManagersByAuction,

@@ -9,8 +9,8 @@ import {
   Vault,
   MasterEditionV1,
   MasterEditionV2,
-  useWallet,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { useEffect, useState } from 'react';
@@ -62,7 +62,7 @@ export interface AuctionView {
 
 export function useCachedRedemptionKeysByWallet() {
   const { auctions, bidRedemptions } = useMeta();
-  const { wallet } = useWallet();
+  const { publicKey } = useWallet();
 
   const [cachedRedemptionKeys, setCachedRedemptionKeys] = useState<
     Record<
@@ -73,7 +73,7 @@ export function useCachedRedemptionKeysByWallet() {
 
   useEffect(() => {
     (async () => {
-      if (wallet && wallet.publicKey) {
+      if (publicKey) {
         const temp: Record<
           string,
           ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
@@ -85,7 +85,7 @@ export function useCachedRedemptionKeysByWallet() {
           if (!cachedRedemptionKeys[a])
             //@ts-ignore
             tasks.push(
-              getBidderKeys(auctions[a].pubkey, wallet.publicKey).then(key => {
+              getBidderKeys(auctions[a].pubkey, publicKey).then(key => {
                 temp[a] = bidRedemptions[key.bidRedemption.toBase58()]
                   ? bidRedemptions[key.bidRedemption.toBase58()]
                   : { pubkey: key.bidRedemption, info: null };
@@ -103,16 +103,14 @@ export function useCachedRedemptionKeysByWallet() {
         setCachedRedemptionKeys(temp);
       }
     })();
-  }, [auctions, bidRedemptions, wallet?.publicKey]);
+  }, [auctions, bidRedemptions, publicKey]);
 
   return cachedRedemptionKeys;
 }
 
 export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
-  const { wallet } = useWallet();
-
-  const pubkey = wallet?.publicKey;
+  const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const {
@@ -135,7 +133,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     const map = Object.keys(auctions).reduce((agg, a) => {
       const auction = auctions[a];
       const nextAuctionView = processAccountsIntoAuctionView(
-        pubkey,
+        publicKey,
         auction,
         auctionManagersByAuction,
         safetyDepositBoxesByVaultAndIndex,
@@ -180,7 +178,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,
     metadataByMasterEdition,
-    pubkey,
+    publicKey,
     cachedRedemptionKeys,
     setAuctionViews,
   ]);

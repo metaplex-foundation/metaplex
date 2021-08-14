@@ -19,11 +19,11 @@ import {
   shortenAddress,
   useConnection,
   useUserAccounts,
-  useWallet,
+  WalletSigner,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
-import { WalletAdapter } from '@solana/wallet-base';
 import { useMemo } from 'react';
 import {
   convertMasterEditions,
@@ -34,15 +34,15 @@ const { Content } = Layout;
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator } = useMeta();
   const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const wallet = useWallet();
 
-  return store && connection && wallet && connected ? (
+  return store && connection && wallet.connected ? (
     <InnerAdminView
       store={store}
       whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
       connection={connection}
       wallet={wallet}
-      connected={connected}
+      connected={wallet.connected}
     />
   ) : (
     <Spin />
@@ -123,7 +123,7 @@ function InnerAdminView({
     ParsedAccount<WhitelistedCreator>
   >;
   connection: Connection;
-  wallet: WalletAdapter;
+  wallet: WalletSigner;
   connected: boolean;
 }) {
   const [newStore, setNewStore] = useState(

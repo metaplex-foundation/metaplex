@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 
@@ -10,10 +10,10 @@ import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
 import BN from 'bn.js';
-import { programIds, useConnection, useWallet } from '@oyster/common';
+import { programIds, useConnection, useWalletModal } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
-
 
 const { TabPane } = Tabs;
 
@@ -34,7 +34,14 @@ export const HomeView = () => {
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
   const connection = useConnection();
   const history = useHistory();
-  const { wallet, connect, connected } = useWallet();
+
+  const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
+
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -153,7 +160,7 @@ export const HomeView = () => {
               inside <em>packages/web/.env</em> and restart yarn
             </p>
           )}
-          {CURRENT_STORE && !wallet?.publicKey && (
+          {CURRENT_STORE && !wallet.publicKey && (
             <p>
               <Button type="primary" className="app-btn" onClick={connect}>
                 Connect
@@ -161,7 +168,7 @@ export const HomeView = () => {
               to configure store.
             </p>
           )}
-          {CURRENT_STORE && wallet?.publicKey && (
+          {CURRENT_STORE && wallet.publicKey && (
             <>
               <p>
                 Initializing store will allow you to control list of creators.
@@ -173,7 +180,7 @@ export const HomeView = () => {
                 loading={isInitalizingStore}
                 disabled={!CURRENT_STORE}
                 onClick={async () => {
-                  if (!wallet?.publicKey) {
+                  if (!wallet.publicKey) {
                     return;
                   }
 
@@ -181,7 +188,7 @@ export const HomeView = () => {
 
                   await saveAdmin(connection, wallet, false, [
                     new WhitelistedCreator({
-                      address: wallet?.publicKey,
+                      address: wallet.publicKey,
                       activated: true,
                     }),
                   ]);
@@ -229,7 +236,7 @@ export const HomeView = () => {
                   {
                     // Show all participated live and ended auctions except hero auction
                   }
-                  {connected && (
+                  {wallet.connected && (
                     <TabPane
                       tab={<span className="tab-title">Participated</span>}
                       key={LiveAuctionViewState.Participated}

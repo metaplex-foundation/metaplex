@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
-import { useWallet } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 const { TabPane } = Tabs;
 
@@ -19,9 +19,9 @@ export enum ArtworkViewState {
 }
 
 export const ArtworksView = () => {
-  const { connected, wallet } = useWallet();
+  const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
-  const createdMetadata = useCreatorArts(wallet?.publicKey?.toBase58() || '');
+  const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {

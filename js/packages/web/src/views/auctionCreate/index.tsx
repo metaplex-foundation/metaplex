@@ -21,7 +21,6 @@ import { ArtSelector } from './artSelector';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   WinnerLimit,
   WinnerLimitType,
   toLamports,
@@ -32,6 +31,7 @@ import {
   IPartialCreateAuctionArgs,
   MetadataKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
@@ -128,7 +128,7 @@ export interface AuctionState {
 
 export const AuctionCreateView = () => {
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { whitelistedCreatorsByCreator } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
@@ -198,7 +198,7 @@ export const AuctionCreateView = () => {
           item.masterEdition
         ) {
           item.winningConfigType = item.metadata.info.updateAuthority.equals(
-            wallet?.publicKey || SystemProgram.programId,
+            wallet.publicKey || SystemProgram.programId,
           )
             ? WinningConfigType.FullRightsTransfer
             : WinningConfigType.TokenOnlyTransfer;
