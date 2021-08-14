@@ -7,9 +7,9 @@ import {
   Edition,
   MasterEditionV1,
   MasterEditionV2,
-  MetadataKey,
-  METADATA_PROGRAM_ID,
 } from '@oyster/common';
+import { MetadataKey } from '@oyster/common/dist/lib/actions/metadata';
+import { METADATA_PROGRAM_ID } from '@oyster/common/dist/lib/utils/ids';
 import { AccountInfo } from '@solana/web3.js';
 import { ProcessAccountsFunc } from './types';
 import { isValidHttpUrl } from '../../utils/isValidHttpUrl';
@@ -33,7 +33,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: metadata,
         };
-        setter('metadataByMint', metadata.mint, parsedAccount);
+        setter('metadataByMint', metadata.mint.toBase58(), parsedAccount);
       }
     }
 
@@ -44,7 +44,7 @@ export const processMetaData: ProcessAccountsFunc = (
         account,
         info: edition,
       };
-      setter('editions', pubkey, parsedAccount);
+      setter('editions', pubkey.toBase58(), parsedAccount);
     }
 
     if (isMasterEditionAccount(account)) {
@@ -56,17 +56,17 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: masterEdition,
         };
-        setter('masterEditions', pubkey, parsedAccount);
+        setter('masterEditions', pubkey.toBase58(), parsedAccount);
 
         setter(
           'masterEditionsByPrintingMint',
-          masterEdition.printingMint,
+          masterEdition.printingMint.toBase58(),
           parsedAccount,
         );
 
         setter(
           'masterEditionsByOneTimeAuthMint',
-          masterEdition.oneTimePrintingAuthorizationMint,
+          masterEdition.oneTimePrintingAuthorizationMint.toBase58(),
           parsedAccount,
         );
       } else {
@@ -75,7 +75,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: masterEdition,
         };
-        setter('masterEditions', pubkey, parsedAccount);
+        setter('masterEditions', pubkey.toBase58(), parsedAccount);
       }
     }
   } catch {
@@ -85,7 +85,10 @@ export const processMetaData: ProcessAccountsFunc = (
 };
 
 const isMetadataAccount = (account: AccountInfo<Buffer>) => {
-  return (account.owner as unknown as any) === METADATA_PROGRAM_ID;
+  return account.owner.equals
+    ? account.owner.equals(METADATA_PROGRAM_ID)
+    : //@ts-ignore
+      account.owner === METADATA_PROGRAM_ID.toBase58();
 };
 
 const isMetadataV1Account = (account: AccountInfo<Buffer>) =>

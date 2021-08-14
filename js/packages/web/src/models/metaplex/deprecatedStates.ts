@@ -1,4 +1,5 @@
-import { programIds, findProgramAddress, toPublicKey } from '@oyster/common';
+import { programIds, findProgramAddress } from '@oyster/common';
+import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import {
   AuctionManagerStatus,
@@ -14,20 +15,20 @@ export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3;
 
 export class AuctionManagerV1 {
   key: MetaplexKey;
-  store: string;
-  authority: string;
-  auction: string;
-  vault: string;
-  acceptPayment: string;
+  store: PublicKey;
+  authority: PublicKey;
+  auction: PublicKey;
+  vault: PublicKey;
+  acceptPayment: PublicKey;
   state: AuctionManagerStateV1;
   settings: AuctionManagerSettingsV1;
 
   constructor(args: {
-    store: string;
-    authority: string;
-    auction: string;
-    vault: string;
-    acceptPayment: string;
+    store: PublicKey;
+    authority: PublicKey;
+    auction: PublicKey;
+    vault: PublicKey;
+    acceptPayment: PublicKey;
     state: AuctionManagerStateV1;
     settings: AuctionManagerSettingsV1;
   }) {
@@ -80,7 +81,7 @@ export class ParticipationStateV1 {
   collectedToAcceptPayment: BN = new BN(0);
   primarySaleHappened: boolean = false;
   validated: boolean = false;
-  printingAuthorizationTokenAccount: string | null = null;
+  printingAuthorizationTokenAccount: PublicKey | null = null;
 
   constructor(args?: ParticipationStateV1) {
     Object.assign(this, args);
@@ -162,19 +163,19 @@ export class BidRedemptionTicketV1 implements BidRedemptionTicket {
 }
 
 export async function getSafetyDepositBoxValidationTicket(
-  auctionManager: string,
-  safetyDepositBox: string,
+  auctionManager: PublicKey,
+  safetyDepositBox: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   return (
     await findProgramAddress(
       [
         Buffer.from(METAPLEX_PREFIX),
-        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
-        toPublicKey(auctionManager).toBuffer(),
-        toPublicKey(safetyDepositBox).toBuffer(),
+        PROGRAM_IDS.metaplex.toBuffer(),
+        auctionManager.toBuffer(),
+        safetyDepositBox.toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.metaplex),
+      PROGRAM_IDS.metaplex,
     )
   )[0];
 }
@@ -186,11 +187,11 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['store', 'pubkeyAsString'],
-        ['authority', 'pubkeyAsString'],
-        ['auction', 'pubkeyAsString'],
-        ['vault', 'pubkeyAsString'],
-        ['acceptPayment', 'pubkeyAsString'],
+        ['store', 'pubkey'],
+        ['authority', 'pubkey'],
+        ['auction', 'pubkey'],
+        ['vault', 'pubkey'],
+        ['acceptPayment', 'pubkey'],
         ['state', AuctionManagerStateV1],
         ['settings', AuctionManagerSettingsV1],
       ],
@@ -281,7 +282,7 @@ export const DEPRECATED_SCHEMA = new Map<any, any>([
         ['validated', 'u8'], //bool
         [
           'printingAuthorizationTokenAccount',
-          { kind: 'option', type: 'pubkeyAsString' },
+          { kind: 'option', type: 'pubkey' },
         ],
       ],
     },

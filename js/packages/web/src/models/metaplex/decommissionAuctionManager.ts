@@ -1,14 +1,18 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
-import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { programIds } from '@oyster/common';
+import {
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { DecommissionAuctionManagerArgs, SCHEMA } from '.';
 
 export async function decommissionAuctionManager(
-  auctionManager: StringPublicKey,
-  auction: StringPublicKey,
-  authority: StringPublicKey,
-  vault: StringPublicKey,
+  auctionManager: PublicKey,
+  auction: PublicKey,
+  authority: PublicKey,
+  vault: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -22,34 +26,34 @@ export async function decommissionAuctionManager(
 
   const keys = [
     {
-      pubkey: toPublicKey(auctionManager),
+      pubkey: auctionManager,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(auction),
+      pubkey: auction,
       isSigner: false,
       isWritable: true,
     },
 
     {
-      pubkey: toPublicKey(authority),
+      pubkey: authority,
       isSigner: true,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.auction),
+      pubkey: PROGRAM_IDS.auction,
       isSigner: false,
       isWritable: false,
     },
@@ -63,7 +67,7 @@ export async function decommissionAuctionManager(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

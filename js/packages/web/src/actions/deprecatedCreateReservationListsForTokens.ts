@@ -1,8 +1,5 @@
-import { Keypair, TransactionInstruction } from '@solana/web3.js';
-import {
-  deprecatedCreateReservationList,
-  StringPublicKey,
-} from '@oyster/common';
+import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { deprecatedCreateReservationList } from '@oyster/common';
 
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 import { WinningConfigType } from '../models/metaplex';
@@ -12,7 +9,7 @@ const BATCH_SIZE = 10;
 // Reservation lists are used to insure printing order among limited editions.
 export async function deprecatedCreateReservationListForTokens(
   wallet: any,
-  auctionManager: StringPublicKey,
+  auctionManager: PublicKey,
   safetyDepositInstructionTemplates: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
@@ -36,8 +33,8 @@ export async function deprecatedCreateReservationListForTokens(
         safetyDeposit.draft.metadata.pubkey,
         safetyDeposit.draft.masterEdition.pubkey,
         auctionManager,
-        wallet.publicKey.toBase58(),
-        wallet.publicKey.toBase58(),
+        wallet.publicKey,
+        wallet.publicKey,
         currInstructions,
       );
 

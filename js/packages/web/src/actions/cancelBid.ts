@@ -9,10 +9,14 @@ import {
   sendTransactions,
   ParsedAccount,
   BidderMetadata,
-  StringPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
-import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
+import {
+  TransactionInstruction,
+  Keypair,
+  Connection,
+  PublicKey,
+} from '@solana/web3.js';
 import { AuctionView } from '../hooks';
 import { BidRedemptionTicket, PrizeTrackingTicket } from '../models/metaplex';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
@@ -21,7 +25,7 @@ import { setupPlaceBid } from './sendPlaceBid';
 export async function sendCancelBid(
   connection: Connection,
   wallet: any,
-  payingAccount: StringPublicKey,
+  payingAccount: PublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
@@ -106,7 +110,9 @@ export async function setupCancelBid(
   let cancelInstructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];
 
-  let tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
+  let tokenAccount = accountsByMint.get(
+    auctionView.auction.info.tokenMint.toBase58(),
+  );
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   if (mint && auctionView.myBidderPot) {
@@ -120,7 +126,7 @@ export async function setupCancelBid(
     );
 
     await cancelBid(
-      wallet.publicKey.toBase58(),
+      wallet.publicKey,
       receivingSolAccount,
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,

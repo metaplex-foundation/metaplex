@@ -25,11 +25,11 @@ export const ArtistsView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {items.map((m, idx) => {
-        const id = m.info.address;
+        const id = m.info.address.toBase58();
         return (
           <Link to={`/artists/${id}`} key={idx}>
             <ArtistCard key={id} artist={{
-              address: m.info.address,
+              address: m.info.address.toBase58(),
               name: m.info.name || '',
               image: m.info.image || '',
               link: m.info.twitter || ''

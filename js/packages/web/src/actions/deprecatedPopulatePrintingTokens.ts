@@ -1,4 +1,9 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {
+  Keypair,
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import {
   utils,
   createAssociatedTokenAccountInstruction,
@@ -7,7 +12,6 @@ import {
   MasterEditionV1,
   ParsedAccount,
   MetadataKey,
-  toPublicKey,
 } from '@oyster/common';
 
 import BN from 'bn.js';
@@ -42,13 +46,13 @@ export async function deprecatedPopulatePrintingTokens(
     const printingMint = (
       nft.draft.masterEdition as ParsedAccount<MasterEditionV1>
     )?.info.printingMint;
-    if (nft.box.tokenMint === printingMint && !nft.box.tokenAccount) {
-      const holdingKey = (
+    if (nft.box.tokenMint.equals(printingMint) && !nft.box.tokenAccount) {
+      const holdingKey: PublicKey = (
         await findProgramAddress(
           [
             wallet.publicKey.toBuffer(),
             PROGRAM_IDS.token.toBuffer(),
-            toPublicKey(printingMint).toBuffer(),
+            printingMint.toBuffer(),
           ],
           PROGRAM_IDS.associatedToken,
         )
@@ -56,25 +60,22 @@ export async function deprecatedPopulatePrintingTokens(
 
       createAssociatedTokenAccountInstruction(
         currInstructions,
-        toPublicKey(holdingKey),
+        holdingKey,
         wallet.publicKey,
         wallet.publicKey,
-        toPublicKey(printingMint),
+        printingMint,
       );
       console.log('Making atas');
 
       nft.draft.printingMintHolding = holdingKey;
       nft.box.tokenAccount = holdingKey;
     }
-    if (nft.box.tokenAccount && nft.box.tokenMint === printingMint) {
+    if (nft.box.tokenAccount && nft.box.tokenMint.equals(printingMint)) {
       let balance = 0;
       try {
         balance =
-          (
-            await connection.getTokenAccountBalance(
-              toPublicKey(nft.box.tokenAccount),
-            )
-          ).value.uiAmount || 0;
+          (await connection.getTokenAccountBalance(nft.box.tokenAccount)).value
+            .uiAmount || 0;
       } catch (e) {
         console.error(e);
       }
@@ -83,7 +84,7 @@ export async function deprecatedPopulatePrintingTokens(
         await deprecatedMintPrintingTokens(
           nft.box.tokenAccount,
           nft.box.tokenMint,
-          wallet.publicKey.toBase58(),
+          wallet.publicKey,
           nft.draft.metadata.pubkey,
           nft.draft.masterEdition.pubkey,
           new BN(nft.box.amount.toNumber() - balance),

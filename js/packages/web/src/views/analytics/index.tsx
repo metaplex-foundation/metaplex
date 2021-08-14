@@ -91,18 +91,18 @@ const rerun = async ({
     // are probably a minority anyway.
     if (
       auction.auction.info.ended() &&
-      auction.auction.info.tokenMint === QUOTE_MINT.toBase58()
+      auction.auction.info.tokenMint.equals(QUOTE_MINT)
     ) {
-      if (!LOOKUP[auction.auction.pubkey]) {
-        LOOKUP[auction.auction.pubkey] = (
+      if (!LOOKUP[auction.auction.pubkey.toBase58()]) {
+        LOOKUP[auction.auction.pubkey.toBase58()] = (
           await getAuctionExtended({
             auctionProgramId: PROGRAM_IDS.auction,
             resource: auction.vault.pubkey,
           })
-        );
+        ).toBase58();
       }
       const extended =
-        auctionDataExtended[LOOKUP[auction.auction.pubkey]];
+        auctionDataExtended[LOOKUP[auction.auction.pubkey.toBase58()]];
       if (extended && extended.info.totalUncancelledBids.toNumber() > 0) {
         totalAuctions++;
         averageBidders += extended.info.totalUncancelledBids.toNumber();
@@ -119,8 +119,8 @@ const rerun = async ({
       }
     }
 
-    newUsersPublished[auction.auctionManager.authority] = true;
-    existingUsersEngaged[auction.auctionManager.authority] = true;
+    newUsersPublished[auction.auctionManager.authority.toBase58()] = true;
+    existingUsersEngaged[auction.auctionManager.authority.toBase58()] = true;
 
     let type: AuctionType | undefined = undefined;
     if (auction.items.find(set => set.length > 1)) {
@@ -140,19 +140,19 @@ const rerun = async ({
 
   const newUsersBid: Record<string, boolean> = {};
   Object.values(bidderPotsByAuctionAndBidder).forEach(acct => {
-    if (auctionManagersByAuction[acct.info.auctionAct]) {
-      newUsersBid[acct.info.bidderAct] = true;
-      existingUsersEngaged[acct.info.bidderAct] = true;
+    if (auctionManagersByAuction[acct.info.auctionAct.toBase58()]) {
+      newUsersBid[acct.info.bidderAct.toBase58()] = true;
+      existingUsersEngaged[acct.info.bidderAct.toBase58()] = true;
     }
   });
 
   const newBuild: Record<string, boolean> = {};
   metadata.forEach(acct => {
-    newBuild[acct.info.updateAuthority] = true;
-    existingUsersEngaged[acct.info.updateAuthority] = true;
+    newBuild[acct.info.updateAuthority.toBase58()] = true;
+    existingUsersEngaged[acct.info.updateAuthority.toBase58()] = true;
     acct.info.data.creators?.forEach(c => {
-      newBuild[c.address] = true;
-      existingUsersEngaged[c.address] = true;
+      newBuild[c.address.toBase58()] = true;
+      existingUsersEngaged[c.address.toBase58()] = true;
     });
   });
 
