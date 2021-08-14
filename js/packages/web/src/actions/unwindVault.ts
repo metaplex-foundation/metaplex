@@ -10,6 +10,7 @@ import {
   sendTransactionsWithManualRetry,
   decodeExternalPriceAccount,
   findProgramAddress,
+  toPublicKey,
 } from '@oyster/common';
 
 import BN from 'bn.js';
@@ -38,7 +39,7 @@ export async function unwindVault(
   if (vault.info.state === VaultState.Inactive) {
     console.log('Vault is inactive, combining');
     const epa = await connection.getAccountInfo(
-      vault.info.pricingLookupAddress,
+      toPublicKey(vault.info.pricingLookupAddress),
     );
     if (epa) {
       const decoded = decodeExternalPriceAccount(epa.data);
@@ -60,7 +61,7 @@ export async function unwindVault(
     }
   }
 
-  const vaultKey = vault.pubkey.toBase58();
+  const vaultKey = vault.pubkey;
   let boxes: ParsedAccount<SafetyDepositBox>[] = [];
 
   let box = safetyDepositBoxesByVaultAndIndex[vaultKey + '-0'];
@@ -81,24 +82,26 @@ export async function unwindVault(
         [
           wallet.publicKey.toBuffer(),
           PROGRAM_IDS.token.toBuffer(),
-          nft.info.tokenMint.toBuffer(),
+          toPublicKey(nft.info.tokenMint).toBuffer(),
         ],
         PROGRAM_IDS.associatedToken,
       )
     )[0];
 
-    const existingAta = await connection.getAccountInfo(ata);
+    const existingAta = await connection.getAccountInfo(toPublicKey(ata));
     console.log('Existing ata?', existingAta);
     if (!existingAta)
       createAssociatedTokenAccountInstruction(
         currInstructions,
-        ata,
+        toPublicKey(ata),
         wallet.publicKey,
         wallet.publicKey,
-        nft.info.tokenMint,
+        toPublicKey(nft.info.tokenMint),
       );
 
-    const value = await connection.getTokenAccountBalance(nft.info.store);
+    const value = await connection.getTokenAccountBalance(
+      toPublicKey(nft.info.store),
+    );
     await withdrawTokenFromSafetyDepositBox(
       new BN(value.value.uiAmount || 1),
       ata,
