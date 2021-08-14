@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  TransactionInstruction,
-  PublicKey,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   actions,
   ParsedAccount,
@@ -17,6 +12,7 @@ import {
   createAssociatedTokenAccountInstruction,
   MetadataKey,
   BidderMetadata,
+  toPublicKey,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -35,7 +31,6 @@ import {
   setupRedeemParticipationInstructions,
   setupRedeemPrintingV2Instructions,
 } from './sendRedeemBid';
-import { WinningConfigStateItem } from '../models/metaplex/deprecatedStates';
 const { createTokenAccount } = actions;
 
 export async function findEligibleParticipationBidsForRedemption(
@@ -60,9 +55,7 @@ export async function findEligibleParticipationBidsForRedemption(
       );
       const bidRedemption =
         bidRedemptions[
-          (
-            await getBidRedemption(auctionView.auction.pubkey, bid.pubkey)
-          ).toBase58()
+          await getBidRedemption(auctionView.auction.pubkey, bid.pubkey)
         ];
       const eligible = eligibleForParticipationPrizeGivenWinningIndex(
         winnerIndex,
@@ -70,7 +63,7 @@ export async function findEligibleParticipationBidsForRedemption(
         bid,
         bidRedemption,
       );
-      console.log(bid.pubkey.toBase58(), 'eligible?', eligible);
+      console.log(bid.pubkey, 'eligible?', eligible);
       if (eligible) {
         unredeemedParticipations.push({ bid, bidRedemption });
       }
@@ -104,7 +97,7 @@ export async function claimUnusedPrizes(
       MetadataKey.MasterEditionV2
   ) {
     const balance = await connection.getTokenAccountBalance(
-      auctionView.participationItem.safetyDeposit.info.store,
+      toPublicKey(auctionView.participationItem.safetyDeposit.info.store),
     );
     if (balance.value.uiAmount || 0 > 0) {
       // before we can redeem, check if we need to print other people's stuff.
@@ -164,7 +157,7 @@ export async function claimUnusedPrizes(
 
       const safetyDeposit = item.safetyDeposit;
       const tokenBalance = await connection.getTokenAccountBalance(
-        safetyDeposit.info.store,
+        toPublicKey(safetyDeposit.info.store),
       );
       // If box is empty, we cant redeem this. Could be broken AM we are claiming against.
       if (tokenBalance.value.uiAmount === 0) {
@@ -199,14 +192,11 @@ export async function claimUnusedPrizes(
           const winningBidder =
             auctionView.auction.info.bidState.getWinnerAt(winnerIndex);
           if (winningBidder) {
-            const bidderMetadata = bids.find(b =>
-              b.info.bidderPubkey.equals(winningBidder),
+            const bidderMetadata = bids.find(
+              b => b.info.bidderPubkey === winningBidder,
             );
             if (bidderMetadata) {
-              console.log(
-                'Redeeming v2 for bid by wallet',
-                winningBidder.toBase58(),
-              );
+              console.log('Redeeming v2 for bid by wallet', winningBidder);
               await setupRedeemPrintingV2Instructions(
                 connection,
                 auctionView,
@@ -222,7 +212,7 @@ export async function claimUnusedPrizes(
               );
             }
           }
-          printingV2ByMint[item.metadata.info.mint.toBase58()] = item;
+          printingV2ByMint[item.metadata.info.mint] = item;
           break;
         case WinningConfigType.FullRightsTransfer:
           console.log('Redeeming Full Rights');
@@ -292,17 +282,17 @@ async function setupRedeemInstructions(
 
   if (!claimed) {
     let newTokenAccount = accountsByMint.get(
-      safetyDeposit.info.tokenMint.toBase58(),
+      safetyDeposit.info.tokenMint,
     )?.pubkey;
     if (!newTokenAccount)
       newTokenAccount = createTokenAccount(
         winningPrizeInstructions,
         wallet.publicKey,
         accountRentExempt,
-        safetyDeposit.info.tokenMint,
+        toPublicKey(safetyDeposit.info.tokenMint),
         wallet.publicKey,
         winningPrizeSigner,
-      );
+      ).toBase58();
 
     await redeemBid(
       auctionView.auctionManager.vault,
@@ -310,8 +300,8 @@ async function setupRedeemInstructions(
       newTokenAccount,
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
-      wallet.publicKey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
+      wallet.publicKey.toBase58(),
       undefined,
       undefined,
       false,
@@ -342,17 +332,17 @@ async function setupRedeemFullRightsTransferInstructions(
   instructions.push(winningPrizeInstructions);
   if (!claimed) {
     let newTokenAccount = accountsByMint.get(
-      safetyDeposit.info.tokenMint.toBase58(),
+      safetyDeposit.info.tokenMint,
     )?.pubkey;
     if (!newTokenAccount)
       newTokenAccount = createTokenAccount(
         winningPrizeInstructions,
         wallet.publicKey,
         accountRentExempt,
-        safetyDeposit.info.tokenMint,
+        toPublicKey(safetyDeposit.info.tokenMint),
         wallet.publicKey,
         winningPrizeSigner,
-      );
+      ).toBase58();
 
     await redeemFullRightsTransferBid(
       auctionView.auctionManager.vault,
@@ -360,11 +350,11 @@ async function setupRedeemFullRightsTransferInstructions(
       newTokenAccount,
       safetyDeposit.pubkey,
       auctionView.vault.info.fractionMint,
-      wallet.publicKey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
+      wallet.publicKey.toBase58(),
       winningPrizeInstructions,
       item.metadata.pubkey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       winningConfigIndex,
     );
   }
@@ -390,21 +380,21 @@ async function setupWithdrawMasterEditionInstructions(
       [
         wallet.publicKey.toBuffer(),
         programIds().token.toBuffer(),
-        item.metadata.info.mint.toBuffer(),
+        toPublicKey(item.metadata.info.mint).toBuffer(),
       ],
       programIds().associatedToken,
     )
   )[0];
 
-  const existingAta = await connection.getAccountInfo(ata);
+  const existingAta = await connection.getAccountInfo(toPublicKey(ata));
   console.log('Existing ata?', existingAta);
   if (!existingAta) {
     createAssociatedTokenAccountInstruction(
       myInstructions,
-      ata,
+      toPublicKey(ata),
       wallet.publicKey,
       wallet.publicKey,
-      item.metadata.info.mint,
+      toPublicKey(item.metadata.info.mint),
     );
   }
 
@@ -443,8 +433,8 @@ async function deprecatedSetupRedeemPrintingInstructions(
     auctionView.auctionManager.pubkey,
   );
 
-  const newTokenAccount = accountsByMint.get(me.info.printingMint.toBase58());
-  let newTokenAccountKey: PublicKey | undefined = newTokenAccount?.pubkey;
+  const newTokenAccount = accountsByMint.get(me.info.printingMint);
+  let newTokenAccountKey = newTokenAccount?.pubkey;
 
   if (updateAuth) {
     const claimed = auctionView.auctionManager.isItemClaimed(
@@ -464,10 +454,10 @@ async function deprecatedSetupRedeemPrintingInstructions(
           winningPrizeInstructions,
           wallet.publicKey,
           accountRentExempt,
-          me.info.printingMint,
+          toPublicKey(me.info.printingMint),
           wallet.publicKey,
           winningPrizeSigner,
-        );
+        ).toBase58();
 
       await redeemBid(
         auctionView.auctionManager.vault,
@@ -475,8 +465,8 @@ async function deprecatedSetupRedeemPrintingInstructions(
         newTokenAccountKey,
         safetyDeposit.pubkey,
         auctionView.vault.info.fractionMint,
-        wallet.publicKey,
-        wallet.publicKey,
+        wallet.publicKey.toBase58(),
+        wallet.publicKey.toBase58(),
         item.masterEdition.pubkey,
         reservationList,
         true,

@@ -29,7 +29,11 @@ module.exports = withPlugins(plugins, {
   },
   env:{
     NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS: process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
+<<<<<<< HEAD
     NEXT_PUBLIC_ARWEAVE_URL: process.env.NEXT_PUBLIC_ARWEAVE_URL
+=======
+    NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
+>>>>>>> 81023eb3e52c31b605e1dcf2eb1e7425153600cd
   },
   async rewrites() {
     return [
