@@ -39,10 +39,15 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
     let mut needing_puffing = vec![];
     for acct in metadata_accounts {
         if acct.1.data[0] == Key::MetadataV1 as u8 {
-            let account: Metadata = try_from_slice_unchecked(&acct.1.data).unwrap();
-            if account.data.name.len() < MAX_NAME_LENGTH || account.data.uri.len() < MAX_URI_LENGTH || account.data.symbol.len() < MAX_SYMBOL_LENGTH || account.edition_nonce.is_none() {
-                needing_puffing.push(acct.0);
-            }
+            match try_from_slice_unchecked(&acct.1.data) {
+                Ok(val) => {
+                    let account: Metadata = val;
+                    if account.data.name.len() < MAX_NAME_LENGTH || account.data.uri.len() < MAX_URI_LENGTH || account.data.symbol.len() < MAX_SYMBOL_LENGTH || account.edition_nonce.is_none() {
+                        needing_puffing.push(acct.0);
+                    }
+                },
+                Err(_) => { println!("Skipping {}", acct.0)},
+            };
         }
     }
     println!("Found {} accounts needing puffing", needing_puffing.len());
@@ -52,7 +57,7 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
     while i < needing_puffing.len() {
         let pubkey = needing_puffing[i];
         instructions.push(puff_metadata_account(spl_token_metadata::id(), pubkey));
-        if instructions.len() == 20 {
+        if instructions.len() >= 20 {
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
