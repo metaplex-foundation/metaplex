@@ -1,15 +1,12 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   utils,
   actions,
   models,
   findProgramAddress,
   MetadataKey,
+  StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
@@ -21,8 +18,8 @@ const { approve } = models;
 
 export interface SafetyDepositInstructionTemplate {
   box: {
-    tokenAccount?: PublicKey;
-    tokenMint: PublicKey;
+    tokenAccount?: StringPublicKey;
+    tokenMint: StringPublicKey;
     amount: BN;
   };
   draft: SafetyDepositDraft;
@@ -35,12 +32,12 @@ const BATCH_SIZE = 1;
 export async function addTokensToVault(
   connection: Connection,
   wallet: any,
-  vault: PublicKey,
+  vault: StringPublicKey,
   nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
-  safetyDepositTokenStores: PublicKey[];
+  safetyDepositTokenStores: StringPublicKey[];
 }> {
   const PROGRAM_IDS = utils.programIds();
 
@@ -52,10 +49,10 @@ export async function addTokensToVault(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
+        toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -63,7 +60,7 @@ export async function addTokensToVault(
 
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
-  let newStores: PublicKey[] = [];
+  let newStores: StringPublicKey[] = [];
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
@@ -74,16 +71,16 @@ export async function addTokensToVault(
         currInstructions,
         wallet.publicKey,
         accountRentExempt,
-        nft.box.tokenMint,
-        vaultAuthority,
+        toPublicKey(nft.box.tokenMint),
+        toPublicKey(vaultAuthority),
         currSigners,
       );
-      newStores.push(newStoreAccount);
+      newStores.push(newStoreAccount.toBase58());
 
       const transferAuthority = approve(
         currInstructions,
         [],
-        nft.box.tokenAccount,
+        toPublicKey(nft.box.tokenAccount),
         wallet.publicKey,
         nft.box.amount.toNumber(),
       );
@@ -97,11 +94,11 @@ export async function addTokensToVault(
           : nft.box.amount,
         nft.box.tokenMint,
         nft.box.tokenAccount,
-        newStoreAccount,
+        newStoreAccount.toBase58(),
         vault,
-        wallet.publicKey,
-        wallet.publicKey,
-        transferAuthority.publicKey,
+        wallet.publicKey.toBase58(),
+        wallet.publicKey.toBase58(),
+        transferAuthority.publicKey.toBase58(),
         currInstructions,
       );
 

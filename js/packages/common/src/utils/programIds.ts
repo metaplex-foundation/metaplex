@@ -11,6 +11,7 @@ import {
   MEMO_ID,
   VAULT_ID,
   AUCTION_ID,
+  toPublicKey,
 } from './ids';
 
 export const ENABLE_FEES_INPUT = false;
@@ -42,21 +43,33 @@ export const setStoreID = (storeId: any) => {
 };
 
 const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
   if (!STORE_OWNER_ADDRESS) {
     return undefined;
   }
 
+  let urlStoreId: PublicKey | null = null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const text = urlParams.get('store');
+    if (text) {
+      urlStoreId = new PublicKey(text);
+    }
+  } catch {
+    // ignore
+  }
+
+  const storeOwnerAddress = urlStoreId || STORE_OWNER_ADDRESS;
+  console.log(`STORE_OWNER_ADDRESS: ${storeOwnerAddress?.toBase58()}`);
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
-      METAPLEX_ID.toBuffer(),
-      STORE_OWNER_ADDRESS.toBuffer(),
+      toPublicKey(METAPLEX_ID).toBuffer(),
+      storeOwnerAddress.toBuffer(),
     ],
-    METAPLEX_ID,
+    toPublicKey(METAPLEX_ID),
   );
   const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
+  console.log(`CUSTOM STORE: ${CUSTOM}`);
 
   return CUSTOM;
 };
@@ -68,7 +81,8 @@ export const setProgramIds = async (envName: string) => {
   }
 
   if (!STORE) {
-    STORE = await getStoreID();
+    const potential_store = await getStoreID();
+    STORE = potential_store ? toPublicKey(potential_store) : undefined;
   }
 };
 
