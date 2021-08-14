@@ -373,10 +373,14 @@ export interface IPartialCreateAuctionArgs {
   tickSize: BN | null;
 
   gapTickSizePercentage: number | null;
+
+  instantSalePrice: BN | null;
+
+  name: number[] | null;
 }
 
 export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
-  instruction: number = 1;
+  instruction: number = 7;
   /// How many winners are allowed for this auction. See AuctionData.
   winners: WinnerLimit;
   /// End time is the cut-off point that the auction is forced to end by. See AuctionData.
@@ -396,6 +400,10 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
 
   gapTickSizePercentage: number | null;
 
+  instantSalePrice: BN | null;
+
+  name: number[] | null;
+
   constructor(args: {
     winners: WinnerLimit;
     endAuctionAt: BN | null;
@@ -406,6 +414,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    name: number[] | null;
+    instantSalePrice: BN | null;
   }) {
     this.winners = args.winners;
     this.endAuctionAt = args.endAuctionAt;
@@ -416,6 +426,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     this.priceFloor = args.priceFloor;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.name = args.name;
+    this.instantSalePrice = args.instantSalePrice;
   }
 }
 
@@ -468,6 +480,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
       ],
     },
   ],
@@ -545,6 +559,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['totalUncancelledBids', 'u64'],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
       ],
     },
   ],
