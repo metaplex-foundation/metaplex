@@ -356,8 +356,9 @@ type PrizeTrackingTicket {
 scalar PublicKey
 
 type Query {
-  creators(id: String): [AccountWithWhitelistedCreator]
-  creatorsByStore(storeId: String!): [AccountWithWhitelistedCreator]
+  creatorByStore(creatorId: String!, storeId: String!): WhitelistedCreator
+  creators(id: String): [WhitelistedCreator]
+  creatorsByStore(storeId: String!): [WhitelistedCreator]
   creatorsCount: Int
   hello(name: String): String
   store(
@@ -473,6 +474,7 @@ enum VaultState {
 type WhitelistedCreator {
   activated: Boolean
   address: PublicKey
+  artworks: [Metadata]
   key: MetaplexKey
 }
 

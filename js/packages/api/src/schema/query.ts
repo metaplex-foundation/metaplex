@@ -1,7 +1,6 @@
-import { queryType, stringArg, list, nonNull } from 'nexus';
+import { queryType, stringArg, list, nonNull, nullable } from 'nexus';
 import { AccountWithStore, AccountWithWhitelistedCreator } from './account';
-import { isCreatorPartOfTheStore } from '@oyster/common/dist/lib/models/metaplex/index';
-import { PublicKey } from '@solana/web3.js';
+import { WhitelistedCreator } from './metaplex';
 
 export const Query = queryType({
   definition(t) {
@@ -38,28 +37,28 @@ export const Query = queryType({
       },
     });
     t.field('creators', {
-      type: list(AccountWithWhitelistedCreator),
+      type: list(WhitelistedCreator),
       args: {
         id: stringArg(),
       },
       resolve(_, { id }, { dataSources }) {
-        const { creators } = dataSources.dataApi.state;
-        if (id) {
-          const filtered = Object.entries(creators).filter(([key]) =>
-            key.startsWith(`${id}-`),
-          );
-          return filtered.map(([_, item]) => item);
-        }
-        return Object.values(creators);
+        return dataSources.dataApi.getCreators(id);
       },
     });
     t.field('creatorsByStore', {
-      type: list(AccountWithWhitelistedCreator),
+      type: list(WhitelistedCreator),
       args: {
         storeId: nonNull(stringArg()),
       },
       async resolve(_, { storeId }, { dataSources }) {
         return dataSources.dataApi.getCreatorsByStore(storeId);
+      },
+    });
+    t.field('creatorByStore', {
+      type: WhitelistedCreator,
+      args: { storeId: nonNull(stringArg()), creatorId: nonNull(stringArg()) },
+      async resolve(_, { storeId, creatorId }, { dataSources }) {
+        return dataSources.dataApi.getCreatorByStore(storeId, creatorId);
       },
     });
   },

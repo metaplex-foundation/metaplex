@@ -713,6 +713,7 @@ export interface NexusGenFieldTypes {
     // field return type
     activated: boolean | null; // Boolean
     address: NexusGenScalars['PublicKey'] | null; // PublicKey
+    artworks: Array<NexusGenRootTypes['Metadata'] | null> | null; // [Metadata]
     key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
   };
 }

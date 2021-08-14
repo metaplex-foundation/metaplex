@@ -1,11 +1,10 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { ENDPOINTS } from '@oyster/common/dist/lib/contexts/connection';
 import { loadAccounts } from '@oyster/common/dist/lib/contexts/meta/loadAccounts';
-import {
-  MetaState,
-  subscribeAccountsChange,
-} from '@oyster/common/dist/lib/contexts/meta/index';
+import { MetaState } from '@oyster/common/dist/lib/contexts/meta/types';
+import { subscribeAccountsChange } from '@oyster/common/dist/lib/contexts/meta/subscribeAccountsChange';
 import { isCreatorPartOfTheStore } from '@oyster/common/dist/lib/models/index';
+import { ParsedAccount } from '@oyster/common/dist/lib/contexts/accounts/types';
 
 // const endpoint = ENDPOINTS[0].endpoint;
 const endpoint = ENDPOINTS.find(({ name }) => name === 'devnet')!.endpoint;
@@ -55,10 +54,21 @@ export class DataApi {
     return DataApi.state;
   }
 
+  getCreators(creatorId?: string | null) {
+    let creators = mapInfo(Object.values(DataApi.state.creators));
+
+    if (creatorId) {
+      creators = creators.filter(
+        ({ address }) => address.toBase58() === creatorId,
+      );
+    }
+    return creators;
+  }
+
   async getCreatorsByStore(storeId: string) {
     const creators = Object.values(DataApi.state.creators);
     const store = new PublicKey(storeId);
-    const creatorsByStore: typeof creators = [];
+    const creatorsByStore = [];
 
     for (const creator of creators) {
       const isLookedCreator = await isCreatorPartOfTheStore(
@@ -67,9 +77,30 @@ export class DataApi {
         store,
       );
       if (isLookedCreator) {
-        creatorsByStore.push(creator);
+        creatorsByStore.push(creator.info);
       }
     }
     return creatorsByStore;
   }
+
+  async getCreatorByStore(storeId: string, creatorId: string) {
+    const creators = await this.getCreatorsByStore(storeId);
+    return (
+      creators.find(({ address }) => address.toBase58() === creatorId) || null
+    );
+  }
+
+  getCreatorArtworks(creatorId: string) {
+    const artworks = mapInfo(DataApi.state.metadata);
+    console.log('@', DataApi.state.metadata.length);
+    return artworks.filter(({ data }) => {
+      return data.creators?.some(
+        ({ address }) => address.toBase58() === creatorId,
+      );
+    });
+  }
 }
+
+const mapInfo = <T>(list: ParsedAccount<T>[]) => {
+  return list.map(({ info }) => info);
+};
