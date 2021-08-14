@@ -8,14 +8,14 @@ export interface Auction {
   image: string;
 }
 
+// TODO: review props
 export interface Artist {
-  address?: string;
-  name: string;
-  link: string;
-  image: string;
-  itemsAvailable?: number;
-  itemsSold?: number;
+  address: string;
+  name?: string;
+  link?: string;
+  image?: string;
   about?: string;
+  description?: string;
   verified?: boolean;
 
   share?: number;

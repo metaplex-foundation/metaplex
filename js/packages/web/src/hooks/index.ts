@@ -7,3 +7,5 @@ export * from './useUserBalance';
 export * from './useCreator';
 export * from './useCreatorArts';
 export * from './useCreators';
+export * from './useCreatorNameService';
+export * from './useQueryCreators';

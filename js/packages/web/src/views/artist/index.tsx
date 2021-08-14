@@ -10,6 +10,7 @@ export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
   const creator = useCreator(id);
   const artwork = useCreatorArts(id);
+
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,

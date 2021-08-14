@@ -18,7 +18,9 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
         <div className="artist-card-name">
           {artist.name || shortenAddress(artist.address || '')}
         </div>
-        <div className="artist-card-description">{artist.about}</div>
+        <div className="artist-card-description">
+          {artist.about || artist.description}
+        </div>
       </div>
     </Card>
   );
