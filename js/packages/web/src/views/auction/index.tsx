@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -25,8 +25,6 @@ import {
   useMint,
   useWallet,
   AuctionState,
-  StringPublicKey,
-  toPublicKey,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
@@ -100,7 +98,7 @@ export const AuctionView = () => {
     ...(auction?.items
       .flat()
       .reduce((agg, item) => {
-        agg.set(item.metadata.pubkey, item);
+        agg.set(item.metadata.pubkey.toBase58(), item);
         return agg;
       }, new Map<string, AuctionViewItem>())
       .values() || []),
@@ -112,7 +110,7 @@ export const AuctionView = () => {
 
     return (
       <AuctionItem
-        key={item.metadata.pubkey}
+        key={item.metadata.pubkey.toBase58()}
         item={item}
         index={index}
         size={arr.length}
@@ -228,7 +226,7 @@ const BidLine = (props: {
 }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
-  const bidder = bid.info.bidderPubkey;
+  const bidder = bid.info.bidderPubkey.toBase58();
   const isme = wallet?.publicKey?.toBase58() === bidder;
 
   // Get Twitter Handle from address
@@ -237,12 +235,12 @@ const BidLine = (props: {
   useEffect(() => {
     const getTwitterHandle = async (
       connection: Connection,
-      bidder: StringPublicKey,
+      bidder: PublicKey,
     ): Promise<string | undefined> => {
       try {
         const [twitterHandle] = await getHandleAndRegistryKey(
           connection,
-          toPublicKey(bidder),
+          bidder,
         );
         setBidderTwitterHandle(twitterHandle);
       } catch (err) {
@@ -352,7 +350,7 @@ export const AuctionBids = ({
   const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key));
+    return new Set(activeBids.map(b => b.key.toBase58()));
   }, [activeBids]);
 
   const auctionState = auctionView

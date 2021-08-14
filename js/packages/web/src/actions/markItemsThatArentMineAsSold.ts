@@ -19,9 +19,7 @@ export async function markItemsThatArentMineAsSold(
     const item = safetyDepositDrafts[i].metadata;
 
     if (
-      !item.info.data.creators?.find(
-        c => c.address === wallet.publicKey.toBase58(),
-      ) &&
+      !item.info.data.creators?.find(c => c.address.equals(wallet.publicKey)) &&
       !item.info.primarySaleHappened
     ) {
       console.log(
@@ -31,7 +29,7 @@ export async function markItemsThatArentMineAsSold(
       );
       await updatePrimarySaleHappenedViaToken(
         item.pubkey,
-        wallet.publicKey.toBase58(),
+        wallet.publicKey,
         safetyDepositDrafts[i].holding,
         markInstructions,
       );

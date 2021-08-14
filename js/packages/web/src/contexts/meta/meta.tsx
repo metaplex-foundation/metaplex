@@ -6,7 +6,6 @@ import {
   METAPLEX_ID,
   VAULT_ID,
   METADATA_PROGRAM_ID,
-  toPublicKey,
 } from '@oyster/common';
 import React, {
   useCallback,
@@ -136,22 +135,22 @@ export function MetaProvider({ children = null as any }) {
     }
 
     const vaultSubId = connection.onProgramAccountChange(
-      toPublicKey(VAULT_ID),
+      VAULT_ID,
       onChangeAccount(processVaultData, updateStateValue, all),
     );
 
     const auctionSubId = connection.onProgramAccountChange(
-      toPublicKey(AUCTION_ID),
+      AUCTION_ID,
       onChangeAccount(processAuctions, updateStateValue, all),
     );
 
     const metaplexSubId = connection.onProgramAccountChange(
-      toPublicKey(METAPLEX_ID),
+      METAPLEX_ID,
       onChangeAccount(processMetaplexAccounts, updateStateValue, all),
     );
 
     const metaSubId = connection.onProgramAccountChange(
-      toPublicKey(METADATA_PROGRAM_ID),
+      METADATA_PROGRAM_ID,
       onChangeAccount(processMetaData, async (prop, key, value) => {
         if (prop === 'metadataByMint') {
           const nextState = await metadataByMintUpdater(value, state, all);

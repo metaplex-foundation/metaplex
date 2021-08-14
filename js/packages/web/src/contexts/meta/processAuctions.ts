@@ -12,8 +12,8 @@ import {
   AuctionDataExtended,
   MAX_AUCTION_DATA_EXTENDED_SIZE,
   AuctionDataExtendedParser,
-  AUCTION_ID,
 } from '@oyster/common';
+import { AUCTION_ID } from '@oyster/common/dist/lib/utils/ids';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 
 export const processAuctions: ProcessAccountsFunc = (
@@ -29,7 +29,7 @@ export const processAuctions: ProcessAccountsFunc = (
       AuctionParser,
       false,
     ) as ParsedAccount<AuctionData>;
-    setter('auctions', pubkey, parsedAccount);
+    setter('auctions', pubkey.toBase58(), parsedAccount);
   } catch (e) {
     // ignore errors
     // add type as first byte for easier deserialization
@@ -43,7 +43,7 @@ export const processAuctions: ProcessAccountsFunc = (
         AuctionDataExtendedParser,
         false,
       ) as ParsedAccount<AuctionDataExtended>;
-      setter('auctionDataExtended', pubkey, parsedAccount);
+      setter('auctionDataExtended', pubkey.toBase58(), parsedAccount);
     }
   } catch {
     // ignore errors
@@ -60,9 +60,9 @@ export const processAuctions: ProcessAccountsFunc = (
       ) as ParsedAccount<BidderMetadata>;
       setter(
         'bidderMetadataByAuctionAndBidder',
-        parsedAccount.info.auctionPubkey +
+        parsedAccount.info.auctionPubkey.toBase58() +
           '-' +
-          parsedAccount.info.bidderPubkey,
+          parsedAccount.info.bidderPubkey.toBase58(),
         parsedAccount,
       );
     }
@@ -81,7 +81,9 @@ export const processAuctions: ProcessAccountsFunc = (
       ) as ParsedAccount<BidderPot>;
       setter(
         'bidderPotsByAuctionAndBidder',
-        parsedAccount.info.auctionAct + '-' + parsedAccount.info.bidderAct,
+        parsedAccount.info.auctionAct.toBase58() +
+          '-' +
+          parsedAccount.info.bidderAct.toBase58(),
         parsedAccount,
       );
     }
@@ -92,7 +94,7 @@ export const processAuctions: ProcessAccountsFunc = (
 };
 
 const isAuctionAccount: CheckAccountFunc = account =>
-  (account.owner as unknown as any) === AUCTION_ID;
+  account.owner.equals(AUCTION_ID);
 
 const isExtendedAuctionAccount: CheckAccountFunc = account =>
   account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE;

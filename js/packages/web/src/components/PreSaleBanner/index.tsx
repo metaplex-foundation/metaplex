@@ -43,7 +43,7 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
             hideDefaultAction={true}
             action={
               <>
-                <Link to={`/auction/${auction.auction.pubkey}`}>
+                <Link to={`/auction/${auction.auction.pubkey.toBase58()}`}>
                   <Button
                     type="primary"
                     size="large"

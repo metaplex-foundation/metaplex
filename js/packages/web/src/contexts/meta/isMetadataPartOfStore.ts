@@ -21,6 +21,6 @@ export const isMetadataPartOfStore = (
     c =>
       c.verified &&
       (store.info.public ||
-        whitelistedCreatorsByCreator[c.address]?.info?.activated),
+        whitelistedCreatorsByCreator[c.address.toBase58()]?.info?.activated),
   );
 };

@@ -81,7 +81,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
     if (!winner) {
       break;
     } else {
-      const bid = bids.find(b => b.info.bidderPubkey === winner);
+      const bid = bids.find(b => b.info.bidderPubkey.equals(winner));
       if (bid) {
         for (
           let j = 0;
@@ -162,7 +162,7 @@ function useAuctionExtended(
           auctionProgramId: PROGRAM_IDS.auction,
           resource: auctionView.vault.pubkey,
         });
-        const extendedValue = auctionDataExtended[extendedKey];
+        const extendedValue = auctionDataExtended[extendedKey.toBase58()];
         if (extendedValue) setAuctionExtended(extendedValue);
       }
     };
@@ -239,7 +239,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !==
+    auctionView.auctionManager.authority.toBase58() !=
     wallet?.publicKey?.toBase58();
 
   const isAuctionNotStarted =
@@ -272,7 +272,7 @@ export const AuctionCard = ({
               setLoading(true);
               setShowRedemptionIssue(false);
               if (
-                wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
+                wallet?.publicKey?.equals(auctionView.auctionManager.authority)
               ) {
                 const totalCost =
                   await calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -325,7 +325,7 @@ export const AuctionCard = ({
             ) : (
               `${
                 wallet?.publicKey &&
-                auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+                auctionView.auctionManager.authority.equals(wallet.publicKey)
                   ? 'Reclaim Items'
                   : 'Refund bid'
               }`
@@ -516,7 +516,7 @@ export const AuctionCard = ({
                       width: '100%',
                       background: '#242424',
                       borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5)',
+                      color: 'rgba(0, 0, 0, 0.5);',
                     }}
                   >
                     <InputNumber

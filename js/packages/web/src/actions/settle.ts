@@ -15,7 +15,6 @@ import {
   findProgramAddress,
   AuctionState,
   TokenAccount,
-  toPublicKey,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -33,7 +32,7 @@ export async function settle(
   wallet: any,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
-  payingAccount: string | undefined,
+  payingAccount: PublicKey | undefined,
   accountsByMint: Map<string, TokenAccount>,
 ) {
   if (
@@ -97,7 +96,9 @@ async function emptyPaymentAccountForAllTokens(
       const creators = item.metadata.info.data.creators;
       const edgeCaseWhereCreatorIsAuctioneer = !!creators
         ?.map(c => c.address)
-        .find(c => c === auctionView.auctionManager.authority);
+        .find(
+          c => c.toBase58() === auctionView.auctionManager.authority.toBase58(),
+        );
 
       const addresses = [
         ...(creators ? creators.map(c => c.address) : []),
@@ -108,7 +109,7 @@ async function emptyPaymentAccountForAllTokens(
         const ata = (
           await findProgramAddress(
             [
-              toPublicKey(addresses[k]).toBuffer(),
+              addresses[k].toBuffer(),
               PROGRAM_IDS.token.toBuffer(),
               QUOTE_MINT.toBuffer(),
             ],
@@ -116,21 +117,23 @@ async function emptyPaymentAccountForAllTokens(
           )
         )[0];
 
-        const existingAta = await connection.getAccountInfo(toPublicKey(ata));
+        const existingAta = await connection.getAccountInfo(ata);
         console.log('Existing ata?', existingAta);
-        if (!existingAta && !ataLookup[ata])
+        if (!existingAta && !ataLookup[ata.toBase58()])
           createAssociatedTokenAccountInstruction(
             settleInstructions,
-            toPublicKey(ata),
+            ata,
             wallet.publicKey,
-            toPublicKey(addresses[k]),
+            addresses[k],
             QUOTE_MINT,
           );
 
-        ataLookup[ata] = true;
+        ataLookup[ata.toBase58()] = true;
 
         const creatorIndex = creators
-          ? creators.map(c => c.address).indexOf(addresses[k])
+          ? creators
+              .map(c => c.address.toBase58())
+              .indexOf(addresses[k].toBase58())
           : null;
 
         await emptyPaymentAccount(
@@ -142,7 +145,7 @@ async function emptyPaymentAccountForAllTokens(
           item.safetyDeposit.pubkey,
           item.safetyDeposit.info.vault,
           auctionView.auction.pubkey,
-          wallet.publicKey.toBase58(),
+          wallet.publicKey,
           addresses[k],
           item === auctionView.participationItem ? null : i,
           item === auctionView.participationItem ? null : j,
@@ -230,7 +233,7 @@ async function claimAllBids(
   // That's what this loop is building.
   for (let i = 0; i < bids.length; i++) {
     const bid = bids[i];
-    console.log('Claiming', bid.info.bidderAct);
+    console.log('Claiming', bid.info.bidderAct.toBase58());
     await claimBid(
       auctionView.auctionManager.acceptPayment,
       bid.info.bidderAct,

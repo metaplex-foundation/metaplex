@@ -20,7 +20,7 @@ export const useCreators = (auction?: AuctionView) => {
         )
           .filter(creator => creator.verified)
           .reduce((agg, item) => {
-            agg.add(item.address);
+            agg.add(item.address.toBase58());
             return agg;
           }, new Set<string>())
           .values(),
