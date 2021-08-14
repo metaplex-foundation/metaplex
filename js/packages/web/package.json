@@ -82,6 +82,7 @@
     "@types/bn.js": "^5.1.0",
     "@types/bs58": "^4.0.1",
     "@types/canvas-confetti": "^1.4.0",
+    "@types/gtag.js": "^0.0.7",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.62",
     "@types/react-router-dom": "^5.1.6",

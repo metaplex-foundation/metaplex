@@ -29,6 +29,7 @@ module.exports = withPlugins(plugins, {
   },
   env:{
     NEXT_PUBLIC_STORE_OWNER_ADDRESS_ADDRESS: process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
+    NEXT_PUBLIC_GOOGLE_ANALYTICS: process.env.REACT_APP_GOOGLE_ANALYTICS
   },
   async rewrites() {
     return [
