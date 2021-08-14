@@ -10,29 +10,39 @@ import { useQuerySearch } from '../hooks';
 
 interface StoreConfig {
   address?: StringPublicKey;
-  loading: boolean;
+  isReady: boolean;
 }
 
 export const StoreContext = createContext<StoreConfig>(null!);
 
-// TODO: pass storeAddress to speed up page
-export const StoreProvider: FC<{ value?: string }> = ({ children, value }) => {
+export const StoreProvider: FC<{
+  ownerAddress?: string;
+  storeAddress?: string;
+}> = ({ children, ownerAddress, storeAddress }) => {
   const searchParams = useQuerySearch();
-  const storeOwnerAddress = searchParams.get('store') || value;
+  const ownerAddressFromQuery = searchParams.get('store');
+
+  const initOwnerAddress = ownerAddressFromQuery || ownerAddress;
+  const initStoreAddress = !ownerAddressFromQuery ? storeAddress : undefined;
+
   const [store, setStore] = useState<StoreConfig>({
-    loading: !!storeOwnerAddress || false,
+    address: initStoreAddress,
+    isReady: Boolean(initStoreAddress && !initOwnerAddress),
   });
 
   useEffect(() => {
-    console.log(`STORE_OWNER_ADDRESS: ${value}`);
-    if (storeOwnerAddress) {
-      getStoreID(storeOwnerAddress).then(storeAddress => {
+    console.log(`STORE_OWNER_ADDRESS: ${initOwnerAddress}`);
+    if (initOwnerAddress && !initStoreAddress) {
+      getStoreID(initOwnerAddress).then(storeAddress => {
         setProgramIds(storeAddress); // fallback
-        setStore({ address: storeAddress, loading: false });
+        setStore({ address: storeAddress, isReady: true });
         console.log(`CUSTOM STORE: ${storeAddress}`);
       });
+    } else {
+      setProgramIds(initStoreAddress); // fallback
+      console.log(`CUSTOM STORE FROM ENV: ${initStoreAddress}`);
     }
-  }, [value]);
+  }, [initOwnerAddress]);
 
   return (
     <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
