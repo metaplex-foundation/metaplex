@@ -4,7 +4,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { programIds } from '../utils/programIds';
+import { programIds } from '../utils/ids';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
 import { findProgramAddress } from '../utils';

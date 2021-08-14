@@ -26,12 +26,9 @@ export const useAuction = (pubkey: PublicKey | string) => {
     bidderPotsByAuctionAndBidder,
     masterEditions,
     vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditionsByOneTimeAuthMint,
     masterEditionsByPrintingMint,
     metadataByMasterEdition,
-
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
   } = useMeta();
 
   useEffect(() => {
@@ -45,11 +42,8 @@ export const useAuction = (pubkey: PublicKey | string) => {
         metadataByMint,
         bidderMetadataByAuctionAndBidder,
         bidderPotsByAuctionAndBidder,
-
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
         masterEditions,
         vaults,
-        safetyDepositConfigsByAuctionManagerAndIndex,
         masterEditionsByPrintingMint,
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
@@ -67,9 +61,7 @@ export const useAuction = (pubkey: PublicKey | string) => {
     metadataByMint,
     bidderMetadataByAuctionAndBidder,
     bidderPotsByAuctionAndBidder,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
     vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditions,
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,

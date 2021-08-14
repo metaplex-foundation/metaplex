@@ -17,9 +17,10 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
   const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
+    auctionView.auctionManager.info.settings.participationConfig?.fixedPrice ||
+    0;
   const participationOnly =
-    auctionView.auctionManager.numWinners.toNumber() === 0;
+    auctionView.auctionManager.info.settings.winningConfigs.length === 0;
   const priceFloor =
     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0

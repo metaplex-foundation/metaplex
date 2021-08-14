@@ -1,11 +1,12 @@
 use {
     crate::{
         error::MetaplexError,
-        state::{CommonWinningIndexChecks, CommonWinningIndexReturn, WinningConfigType, PREFIX},
+        state::{WinningConfigType, PREFIX},
         utils::{
             assert_derivation, common_redeem_checks, common_redeem_finish,
-            get_amount_from_token_account, transfer_safety_deposit_box_items,
-            CommonRedeemCheckArgs, CommonRedeemFinishArgs, CommonRedeemReturn,
+            common_winning_config_checks, get_amount_from_token_account,
+            transfer_safety_deposit_box_items, CommonRedeemCheckArgs, CommonRedeemFinishArgs,
+            CommonRedeemReturn, CommonWinningConfigCheckReturn,
         },
     },
     arrayref::array_ref,
@@ -151,8 +152,6 @@ pub fn process_redeem_bid<'a>(
 
     let transfer_authority_info = next_account_info(account_info_iter)?;
 
-    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
-
     let CommonRedeemReturn {
         auction_manager,
         redemption_bump_seed,
@@ -176,7 +175,6 @@ pub fn process_redeem_bid<'a>(
         token_metadata_program_info,
         rent_info,
         store_info,
-        safety_deposit_config_info,
         is_participation: false,
         user_provided_win_index: None,
         overwrite_win_index,
@@ -187,73 +185,70 @@ pub fn process_redeem_bid<'a>(
     let mut winning_item_index = None;
     if !cancelled {
         if let Some(winning_index) = win_index {
-            // Okay, so they placed in the auction winning prizes section!
+            if winning_index < auction_manager.settings.winning_configs.len() {
+                // Okay, so they placed in the auction winning prizes section!
 
-            let CommonWinningIndexReturn {
-                amount,
-                winning_config_type,
-                winning_config_item_index,
-            } = auction_manager.common_winning_index_checks(CommonWinningIndexChecks {
-                safety_deposit_info,
-                winning_index,
-                auction_manager_v1_ignore_claim: false,
-                safety_deposit_config_info,
-            })?;
-
-            winning_item_index = winning_config_item_index;
-            if winning_config_type != WinningConfigType::TokenOnlyTransfer
-                && winning_config_type != WinningConfigType::PrintingV1
-            {
-                return Err(MetaplexError::WrongBidEndpointForPrize.into());
-            }
-
-            let auction_bump_seed = assert_derivation(
-                program_id,
-                auction_manager_info,
-                &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
-            )?;
-
-            let auction_key = auction_manager.auction();
-            let auction_auth_seeds = &[
-                PREFIX.as_bytes(),
-                auction_key.as_ref(),
-                &[auction_bump_seed],
-            ];
-
-            if winning_config_type == WinningConfigType::PrintingV1 && overwrite_win_index.is_none()
-            {
-                let master_edition_info = match safety_deposit_config_info {
-                    Some(val) => val,
-                    None => return Err(ProgramError::NotEnoughAccountKeys)
-                };
-                let reservation_list_info = next_account_info(account_info_iter)?;
-
-                reserve_list_if_needed(
-                    token_metadata_program_info.key,
+                let CommonWinningConfigCheckReturn {
+                    winning_config_item,
+                    winning_item_index: wii,
+                } = common_winning_config_checks(
+                    &auction_manager,
+                    &safety_deposit_info,
                     winning_index,
-                    auction_info,
-                    bidder_info,
-                    master_edition_info,
-                    reservation_list_info,
+                    false,
+                )?;
+                winning_item_index = wii;
+                if winning_config_item.winning_config_type != WinningConfigType::TokenOnlyTransfer
+                    && winning_config_item.winning_config_type != WinningConfigType::PrintingV1
+                {
+                    return Err(MetaplexError::WrongBidEndpointForPrize.into());
+                }
+
+                let auction_bump_seed = assert_derivation(
+                    program_id,
                     auction_manager_info,
-                    safety_deposit_token_store_info,
+                    &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
+                )?;
+
+                let auction_auth_seeds = &[
+                    PREFIX.as_bytes(),
+                    &auction_manager.auction.as_ref(),
+                    &[auction_bump_seed],
+                ];
+
+                if winning_config_item.winning_config_type == WinningConfigType::PrintingV1
+                    && overwrite_win_index.is_none()
+                {
+                    let master_edition_info = next_account_info(account_info_iter)?;
+                    let reservation_list_info = next_account_info(account_info_iter)?;
+
+                    reserve_list_if_needed(
+                        token_metadata_program_info.key,
+                        winning_index,
+                        auction_info,
+                        bidder_info,
+                        master_edition_info,
+                        reservation_list_info,
+                        auction_manager_info,
+                        safety_deposit_token_store_info,
+                        auction_auth_seeds,
+                    )?;
+                }
+
+                transfer_safety_deposit_box_items(
+                    token_vault_program_info.clone(),
+                    destination_info.clone(),
+                    safety_deposit_info.clone(),
+                    safety_deposit_token_store_info.clone(),
+                    vault_info.clone(),
+                    fraction_mint_info.clone(),
+                    auction_manager_info.clone(),
+                    transfer_authority_info.clone(),
+                    rent_info.clone(),
+                    winning_config_item.amount as u64,
                     auction_auth_seeds,
                 )?;
             }
-
-            transfer_safety_deposit_box_items(
-                token_vault_program_info.clone(),
-                destination_info.clone(),
-                safety_deposit_info.clone(),
-                safety_deposit_token_store_info.clone(),
-                vault_info.clone(),
-                fraction_mint_info.clone(),
-                auction_manager_info.clone(),
-                transfer_authority_info.clone(),
-                rent_info.clone(),
-                amount as u64,
-                auction_auth_seeds,
-            )?;
         }
     }
 
@@ -266,8 +261,6 @@ pub fn process_redeem_bid<'a>(
         system_info,
         payer_info,
         bid_redemption_info,
-        safety_deposit_config_info,
-        vault_info,
         winning_index: win_index,
         redemption_bump_seed,
         bid_redeemed: true,
