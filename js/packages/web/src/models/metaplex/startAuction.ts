@@ -1,16 +1,12 @@
-import { programIds } from '@oyster/common';
-import {
-  PublicKey,
-  SYSVAR_CLOCK_PUBKEY,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
+import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, SCHEMA, StartAuctionArgs } from '.';
 
 export async function startAuction(
-  vault: PublicKey,
-  auctionManagerAuthority: PublicKey,
+  vault: StringPublicKey,
+  auctionManagerAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -26,17 +22,17 @@ export async function startAuction(
 
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionManagerAuthority,
+      pubkey: toPublicKey(auctionManagerAuthority),
       isSigner: true,
       isWritable: false,
     },
@@ -46,7 +42,7 @@ export async function startAuction(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.auction,
+      pubkey: toPublicKey(PROGRAM_IDS.auction),
       isSigner: false,
       isWritable: false,
     },
@@ -61,7 +57,7 @@ export async function startAuction(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

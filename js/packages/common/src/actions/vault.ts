@@ -1,5 +1,4 @@
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -7,7 +6,7 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import { findProgramAddress } from '../utils';
+import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 
 export const VAULT_PREFIX = 'vault';
 export enum VaultKey {
@@ -31,20 +30,20 @@ export const MAX_EXTERNAL_ACCOUNT_SIZE = 1 + 8 + 32 + 1;
 export class Vault {
   key: VaultKey;
   /// Store token program used
-  tokenProgram: PublicKey;
+  tokenProgram: StringPublicKey;
   /// Mint that produces the fractional shares
-  fractionMint: PublicKey;
+  fractionMint: StringPublicKey;
   /// Authority who can make changes to the vault
-  authority: PublicKey;
+  authority: StringPublicKey;
   /// treasury where fractional shares are held for redemption by authority
-  fractionTreasury: PublicKey;
+  fractionTreasury: StringPublicKey;
   /// treasury where monies are held for fractional share holders to redeem(burn) shares once buyout is made
-  redeemTreasury: PublicKey;
+  redeemTreasury: StringPublicKey;
   /// Can authority mint more shares from fraction_mint after activation
   allowFurtherShareCreation: boolean;
 
   /// Must point at an ExternalPriceAccount, which gives permission and price for buyout.
-  pricingLookupAddress: PublicKey;
+  pricingLookupAddress: StringPublicKey;
   /// In inactive state, we use this to set the order key on Safety Deposit Boxes being added and
   /// then we increment it and save so the next safety deposit box gets the next number.
   /// In the Combined state during token redemption by authority, we use it as a decrementing counter each time
@@ -59,13 +58,13 @@ export class Vault {
   lockedPricePerShare: BN;
 
   constructor(args: {
-    tokenProgram: PublicKey;
-    fractionMint: PublicKey;
-    authority: PublicKey;
-    fractionTreasury: PublicKey;
-    redeemTreasury: PublicKey;
+    tokenProgram: StringPublicKey;
+    fractionMint: StringPublicKey;
+    authority: StringPublicKey;
+    fractionTreasury: StringPublicKey;
+    redeemTreasury: StringPublicKey;
     allowFurtherShareCreation: boolean;
-    pricingLookupAddress: PublicKey;
+    pricingLookupAddress: StringPublicKey;
     tokenTypeCount: number;
     state: VaultState;
     lockedPricePerShare: BN;
@@ -87,18 +86,18 @@ export class SafetyDepositBox {
   /// Each token type in a vault has it's own box that contains it's mint and a look-back
   key: VaultKey;
   /// VaultKey pointing to the parent vault
-  vault: PublicKey;
+  vault: StringPublicKey;
   /// This particular token's mint
-  tokenMint: PublicKey;
+  tokenMint: StringPublicKey;
   /// Account that stores the tokens under management
-  store: PublicKey;
+  store: StringPublicKey;
   /// the order in the array of registries
   order: number;
 
   constructor(args: {
-    vault: PublicKey;
-    tokenMint: PublicKey;
-    store: PublicKey;
+    vault: StringPublicKey;
+    tokenMint: StringPublicKey;
+    store: StringPublicKey;
     order: number;
   }) {
     this.key = VaultKey.SafetyDepositBoxV1;
@@ -114,13 +113,13 @@ export class ExternalPriceAccount {
   pricePerShare: BN;
   /// Mint of the currency we are pricing the shares against, should be same as redeem_treasury.
   /// Most likely will be USDC mint most of the time.
-  priceMint: PublicKey;
+  priceMint: StringPublicKey;
   /// Whether or not combination has been allowed for this vault.
   allowedToCombine: boolean;
 
   constructor(args: {
     pricePerShare: BN;
-    priceMint: PublicKey;
+    priceMint: StringPublicKey;
     allowedToCombine: boolean;
   }) {
     this.key = VaultKey.ExternalPriceAccountV1;
@@ -215,13 +214,13 @@ export const VAULT_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['tokenProgram', 'pubkey'],
-        ['fractionMint', 'pubkey'],
-        ['authority', 'pubkey'],
-        ['fractionTreasury', 'pubkey'],
-        ['redeemTreasury', 'pubkey'],
+        ['tokenProgram', 'pubkeyAsString'],
+        ['fractionMint', 'pubkeyAsString'],
+        ['authority', 'pubkeyAsString'],
+        ['fractionTreasury', 'pubkeyAsString'],
+        ['redeemTreasury', 'pubkeyAsString'],
         ['allowFurtherShareCreation', 'u8'],
-        ['pricingLookupAddress', 'pubkey'],
+        ['pricingLookupAddress', 'pubkeyAsString'],
         ['tokenTypeCount', 'u8'],
         ['state', 'u8'],
         ['lockedPricePerShare', 'u64'],
@@ -234,9 +233,9 @@ export const VAULT_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['vault', 'pubkey'],
-        ['tokenMint', 'pubkey'],
-        ['store', 'pubkey'],
+        ['vault', 'pubkeyAsString'],
+        ['tokenMint', 'pubkeyAsString'],
+        ['store', 'pubkeyAsString'],
         ['order', 'u8'],
       ],
     },
@@ -248,7 +247,7 @@ export const VAULT_SCHEMA = new Map<any, any>([
       fields: [
         ['key', 'u8'],
         ['pricePerShare', 'u64'],
-        ['priceMint', 'pubkey'],
+        ['priceMint', 'pubkeyAsString'],
         ['allowedToCombine', 'u8'],
       ],
     },
@@ -276,9 +275,9 @@ export const decodeSafetyDeposit = (buffer: Buffer) => {
 };
 
 export async function setVaultAuthority(
-  vault: PublicKey,
-  currentAuthority: PublicKey,
-  newAuthority: PublicKey,
+  vault: StringPublicKey,
+  currentAuthority: StringPublicKey,
+  newAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
@@ -287,17 +286,17 @@ export async function setVaultAuthority(
 
   const keys = [
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: currentAuthority,
+      pubkey: toPublicKey(currentAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: newAuthority,
+      pubkey: toPublicKey(newAuthority),
       isSigner: false,
       isWritable: false,
     },
@@ -305,7 +304,7 @@ export async function setVaultAuthority(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data: data,
     }),
   );
@@ -313,12 +312,12 @@ export async function setVaultAuthority(
 
 export async function initVault(
   allowFurtherShareCreation: boolean,
-  fractionalMint: PublicKey,
-  redeemTreasury: PublicKey,
-  fractionalTreasury: PublicKey,
-  vault: PublicKey,
-  vaultAuthority: PublicKey,
-  pricingLookupAddress: PublicKey,
+  fractionalMint: StringPublicKey,
+  redeemTreasury: StringPublicKey,
+  fractionalTreasury: StringPublicKey,
+  vault: StringPublicKey,
+  vaultAuthority: StringPublicKey,
+  pricingLookupAddress: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
@@ -329,32 +328,32 @@ export async function initVault(
 
   const keys = [
     {
-      pubkey: fractionalMint,
+      pubkey: toPublicKey(fractionalMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: redeemTreasury,
+      pubkey: toPublicKey(redeemTreasury),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionalTreasury,
+      pubkey: toPublicKey(fractionalTreasury),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vaultAuthority,
+      pubkey: toPublicKey(vaultAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: pricingLookupAddress,
+      pubkey: toPublicKey(pricingLookupAddress),
       isSigner: false,
       isWritable: false,
     },
@@ -373,43 +372,44 @@ export async function initVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data: data,
     }),
   );
 }
 
 export async function getSafetyDepositBox(
-  vault: PublicKey,
-  tokenMint: PublicKey,
-): Promise<PublicKey> {
+  vault: StringPublicKey,
+  tokenMint: StringPublicKey,
+): Promise<StringPublicKey> {
   const vaultProgramId = programIds().vault;
 
   return (
     await findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vault.toBuffer(), tokenMint.toBuffer()],
-      vaultProgramId,
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(vault).toBuffer(),
+        toPublicKey(tokenMint).toBuffer(),
+      ],
+      toPublicKey(vaultProgramId),
     )
   )[0];
 }
 
 export async function addTokenToInactiveVault(
   amount: BN,
-  tokenMint: PublicKey,
-  tokenAccount: PublicKey,
-  tokenStoreAccount: PublicKey,
-  vault: PublicKey,
-  vaultAuthority: PublicKey,
-  payer: PublicKey,
-  transferAuthority: PublicKey,
+  tokenMint: StringPublicKey,
+  tokenAccount: StringPublicKey,
+  tokenStoreAccount: StringPublicKey,
+  vault: StringPublicKey,
+  vaultAuthority: StringPublicKey,
+  payer: StringPublicKey,
+  transferAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
 
-  const safetyDepositBox: PublicKey = await getSafetyDepositBox(
-    vault,
-    tokenMint,
-  );
+  const safetyDepositBox = await getSafetyDepositBox(vault, tokenMint);
 
   const value = new AmountArgs({
     instruction: 1,
@@ -419,37 +419,37 @@ export async function addTokenToInactiveVault(
   const data = Buffer.from(serialize(VAULT_SCHEMA, value));
   const keys = [
     {
-      pubkey: safetyDepositBox,
+      pubkey: toPublicKey(safetyDepositBox),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: tokenAccount,
+      pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: tokenStoreAccount,
+      pubkey: toPublicKey(tokenStoreAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vaultAuthority,
+      pubkey: toPublicKey(vaultAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
       isSigner: true,
       isWritable: false,
     },
@@ -472,7 +472,7 @@ export async function addTokenToInactiveVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -480,18 +480,22 @@ export async function addTokenToInactiveVault(
 
 export async function activateVault(
   numberOfShares: BN,
-  vault: PublicKey,
-  fractionMint: PublicKey,
-  fractionTreasury: PublicKey,
-  vaultAuthority: PublicKey,
+  vault: StringPublicKey,
+  fractionMint: StringPublicKey,
+  fractionTreasury: StringPublicKey,
+  vaultAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
 
   const fractionMintAuthority = (
     await findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
-      vaultProgramId,
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(vaultProgramId).toBuffer(),
+        toPublicKey(vault).toBuffer(),
+      ],
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -500,27 +504,27 @@ export async function activateVault(
 
   const keys = [
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionTreasury,
+      pubkey: toPublicKey(fractionTreasury),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMintAuthority,
+      pubkey: toPublicKey(fractionMintAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: vaultAuthority,
+      pubkey: toPublicKey(vaultAuthority),
       isSigner: true,
       isWritable: false,
     },
@@ -533,31 +537,35 @@ export async function activateVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
 }
 
 export async function combineVault(
-  vault: PublicKey,
-  outstandingShareTokenAccount: PublicKey,
-  payingTokenAccount: PublicKey,
-  fractionMint: PublicKey,
-  fractionTreasury: PublicKey,
-  redeemTreasury: PublicKey,
-  newVaultAuthority: PublicKey | undefined,
-  vaultAuthority: PublicKey,
-  transferAuthority: PublicKey,
-  externalPriceAccount: PublicKey,
+  vault: StringPublicKey,
+  outstandingShareTokenAccount: StringPublicKey,
+  payingTokenAccount: StringPublicKey,
+  fractionMint: StringPublicKey,
+  fractionTreasury: StringPublicKey,
+  redeemTreasury: StringPublicKey,
+  newVaultAuthority: StringPublicKey | undefined,
+  vaultAuthority: StringPublicKey,
+  transferAuthority: StringPublicKey,
+  externalPriceAccount: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
 
   const burnAuthority = (
     await findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
-      vaultProgramId,
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(vaultProgramId).toBuffer(),
+        toPublicKey(vault).toBuffer(),
+      ],
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -565,57 +573,57 @@ export async function combineVault(
 
   const keys = [
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: outstandingShareTokenAccount,
+      pubkey: toPublicKey(outstandingShareTokenAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: payingTokenAccount,
+      pubkey: toPublicKey(payingTokenAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionTreasury,
+      pubkey: toPublicKey(fractionTreasury),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: redeemTreasury,
+      pubkey: toPublicKey(redeemTreasury),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newVaultAuthority || vaultAuthority,
+      pubkey: toPublicKey(newVaultAuthority || vaultAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: vaultAuthority,
+      pubkey: toPublicKey(vaultAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: burnAuthority,
+      pubkey: toPublicKey(burnAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: externalPriceAccount,
+      pubkey: toPublicKey(externalPriceAccount),
       isSigner: false,
       isWritable: false,
     },
@@ -628,7 +636,7 @@ export async function combineVault(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
@@ -636,20 +644,24 @@ export async function combineVault(
 
 export async function withdrawTokenFromSafetyDepositBox(
   amount: BN,
-  destination: PublicKey,
-  safetyDepositBox: PublicKey,
-  storeKey: PublicKey,
-  vault: PublicKey,
-  fractionMint: PublicKey,
-  vaultAuthority: PublicKey,
+  destination: StringPublicKey,
+  safetyDepositBox: StringPublicKey,
+  storeKey: StringPublicKey,
+  vault: StringPublicKey,
+  fractionMint: StringPublicKey,
+  vaultAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
 
   const transferAuthority = (
     await findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vaultProgramId.toBuffer(), vault.toBuffer()],
-      vaultProgramId,
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(vaultProgramId).toBuffer(),
+        toPublicKey(vault).toBuffer(),
+      ],
+      toPublicKey(vaultProgramId),
     )
   )[0];
 
@@ -658,37 +670,37 @@ export async function withdrawTokenFromSafetyDepositBox(
 
   const keys = [
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDepositBox,
+      pubkey: toPublicKey(safetyDepositBox),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: storeKey,
+      pubkey: toPublicKey(storeKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vaultAuthority,
+      pubkey: toPublicKey(vaultAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
       isSigner: false,
       isWritable: false,
     },
@@ -706,14 +718,14 @@ export async function withdrawTokenFromSafetyDepositBox(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
 }
 
 export async function updateExternalPriceAccount(
-  externalPriceAccountKey: PublicKey,
+  externalPriceAccountKey: StringPublicKey,
   externalPriceAccount: ExternalPriceAccount,
   instructions: TransactionInstruction[],
 ) {
@@ -725,7 +737,7 @@ export async function updateExternalPriceAccount(
 
   const keys = [
     {
-      pubkey: externalPriceAccountKey,
+      pubkey: toPublicKey(externalPriceAccountKey),
       isSigner: false,
       isWritable: true,
     },
@@ -733,21 +745,25 @@ export async function updateExternalPriceAccount(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: vaultProgramId,
+      programId: toPublicKey(vaultProgramId),
       data,
     }),
   );
 }
 
 export async function getSafetyDepositBoxAddress(
-  vault: PublicKey,
-  tokenMint: PublicKey,
-): Promise<PublicKey> {
+  vault: StringPublicKey,
+  tokenMint: StringPublicKey,
+): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
   return (
     await findProgramAddress(
-      [Buffer.from(VAULT_PREFIX), vault.toBuffer(), tokenMint.toBuffer()],
-      PROGRAM_IDS.vault,
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(vault).toBuffer(),
+        toPublicKey(tokenMint).toBuffer(),
+      ],
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 }
