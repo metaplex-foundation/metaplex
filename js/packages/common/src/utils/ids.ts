@@ -1,4 +1,45 @@
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, AccountInfo, Account } from '@solana/web3.js';
+
+export type StringPublicKey = string;
+
+export class LazyAccountInfoProxy<T> {
+  executable: boolean = false;
+  owner: StringPublicKey = '';
+  lamports: number = 0;
+
+  get data() {
+    //
+    return undefined as unknown as T;
+  }
+}
+
+export interface LazyAccountInfo {
+  executable: boolean;
+  owner: StringPublicKey;
+  lamports: number;
+  data: [string, string];
+}
+
+const PubKeysInternedMap = new Map<string, PublicKey>();
+
+export const toPublicKey = (key: string | PublicKey) => {
+  if (typeof key !== 'string') {
+    return key;
+  }
+
+  let result = PubKeysInternedMap.get(key);
+  if (!result) {
+    result = new PublicKey(key);
+    PubKeysInternedMap.set(key, result);
+  }
+
+  return result;
+};
+
+export interface PublicKeyStringAndAccount<T> {
+  pubkey: string;
+  account: AccountInfo<T>;
+}
 
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
@@ -16,28 +57,20 @@ export const BPF_UPGRADE_LOADER_ID = new PublicKey(
   'BPFLoaderUpgradeab1e11111111111111111111111',
 );
 
-export const METADATA_PROGRAM_ID = new PublicKey(
-  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
-  //'GCUQ7oWCzgtRKnHnuJGxpr5XVeEkxYUXwTKYcqGtxLv4',
-);
-
 export const MEMO_ID = new PublicKey(
   'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 );
 
-export const VAULT_ID = new PublicKey(
-  'vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn',
-  //'41cCnZ1Z1upJdtsS1tzFGR34cPFgJLzvJFmgYKpCqkz7',
-);
+export const METADATA_PROGRAM_ID =
+  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s' as StringPublicKey;
 
-export const AUCTION_ID = new PublicKey(
-  'auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8',
-  //'6u5XVthCStUfmNrYhFsST94oKxzwEZfZFHFhiCnB2nR1',
-);
+export const VAULT_ID =
+  'vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn' as StringPublicKey;
 
-export const METAPLEX_ID = new PublicKey(
-  'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98',
-  //'98jcGaKLKx9vv33H9edLUXAydrSipHhJGDQuPXBVPVGp',
-);
+export const AUCTION_ID =
+  'auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8' as StringPublicKey;
+
+export const METAPLEX_ID =
+  'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98' as StringPublicKey;
 
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');

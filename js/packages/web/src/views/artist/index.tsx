@@ -25,7 +25,7 @@ export const ArtistView = () => {
     >
       {artwork.length > 0
         ? artwork.map((m, idx) => {
-            const id = m.pubkey.toBase58();
+            const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
                 <ArtCard key={id} pubkey={m.pubkey} preview={false} />
@@ -46,7 +46,7 @@ export const ArtistView = () => {
           <Col span={24}>
             <h2>
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
-              {creator?.info.name || creator?.info.address.toBase58()}
+              {creator?.info.name || creator?.info.address}
             </h2>
             <br />
             <div className="info-header">ABOUT THE CREATOR</div>
