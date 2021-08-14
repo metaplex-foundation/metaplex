@@ -1,15 +1,18 @@
-import { fromLamports, useMint, useUserAccounts } from '@oyster/common';
-import { PublicKey } from '@solana/web3.js';
+import {
+  fromLamports,
+  StringPublicKey,
+  useMint,
+  useUserAccounts,
+} from '@oyster/common';
 import { useEffect, useMemo, useState } from 'react';
 import { useSolPrice } from '../contexts';
 
 export function useUserBalance(
-  mintAddress?: PublicKey | string,
-  account?: PublicKey,
+  mintAddress?: StringPublicKey,
+  account?: StringPublicKey,
 ) {
   const mint = useMemo(
-    () =>
-      typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58(),
+    () => (typeof mintAddress === 'string' ? mintAddress : mintAddress),
     [mintAddress],
   );
   const { userAccounts } = useUserAccounts();
@@ -23,7 +26,7 @@ export function useUserBalance(
       .filter(
         acc =>
           mint === acc.info.mint.toBase58() &&
-          (!account || account.equals(acc.pubkey)),
+          (!account || account === acc.pubkey),
       )
       .sort((a, b) => b.info.amount.sub(a.info.amount).toNumber());
   }, [userAccounts, mint, account]);

@@ -1,10 +1,10 @@
+import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { utils, sendTransactionWithRetry } from '@oyster/common';
+  utils,
+  sendTransactionWithRetry,
+  StringPublicKey,
+  toPublicKey,
+} from '@oyster/common';
 
 import { Token } from '@solana/spl-token';
 // When you are an artist and you receive royalties, due to the design of the system
@@ -16,7 +16,7 @@ import { Token } from '@solana/spl-token';
 export async function closePersonalEscrow(
   connection: Connection,
   wallet: any,
-  ata: PublicKey,
+  ata: StringPublicKey,
 ) {
   const PROGRAM_IDS = utils.programIds();
 
@@ -25,7 +25,7 @@ export async function closePersonalEscrow(
   let instructions: TransactionInstruction[] = [
     Token.createCloseAccountInstruction(
       PROGRAM_IDS.token,
-      ata,
+      toPublicKey(ata),
       wallet.publicKey,
       wallet.publicKey,
       [],
