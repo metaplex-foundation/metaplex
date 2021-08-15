@@ -1,5 +1,6 @@
 //! A Token Fraction program for the Solana blockchain.
 
+pub mod deprecated_state;
 pub mod entrypoint;
 pub mod error;
 pub mod instruction;

@@ -238,6 +238,11 @@ pub enum MetadataInstruction {
     ///   15. `[]` System program
     ///   16. `[]` Rent info
     MintNewEditionFromMasterEditionViaVaultProxy(MintNewEditionFromMasterEditionViaTokenArgs),
+
+    /// Puff a Metadata - make all of it's variable length fields (name/uri/symbol) a fixed length using a null character
+    /// so that it can be found using offset searches by the RPC to make client lookups cheaper.
+    ///   0. `[writable]` Metadata account
+    PuffMetadata,
 }
 
 /// Creates an CreateMetadataAccounts instruction
@@ -303,6 +308,22 @@ pub fn update_metadata_accounts(
             update_authority: new_update_authority,
             primary_sale_happened,
         })
+        .try_to_vec()
+        .unwrap(),
+    }
+}
+
+/// puff metadata account instruction
+pub fn puff_metadata_account(
+    program_id: Pubkey,
+    metadata_account: Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(metadata_account, false),
+        ],
+        data: MetadataInstruction::PuffMetadata
         .try_to_vec()
         .unwrap(),
     }

@@ -10,20 +10,19 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  DeprecatedRedeemParticipationBidArgs,
   SCHEMA,
+  getSafetyDepositConfig,
 } from '.';
+import { DeprecatedRedeemParticipationBidArgs } from './deprecatedStates';
 
 export async function deprecatedRedeemParticipationBid(
   vault: PublicKey,
   safetyDepositTokenStore: PublicKey,
   destination: PublicKey,
   safetyDeposit: PublicKey,
-  fractionMint: PublicKey,
   bidder: PublicKey,
   payer: PublicKey,
   instructions: TransactionInstruction[],
-  tokenMint: PublicKey,
   participationPrintingAccount: PublicKey,
   transferAuthority: PublicKey,
   acceptPaymentAccount: PublicKey,
@@ -41,6 +40,12 @@ export async function deprecatedRedeemParticipationBid(
     auctionKey,
     bidder,
   );
+
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManagerKey,
+    safetyDeposit,
+  );
+
   const value = new DeprecatedRedeemParticipationBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
@@ -67,17 +72,17 @@ export async function deprecatedRedeemParticipationBid(
     {
       pubkey: safetyDeposit,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: vault,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
-      pubkey: fractionMint,
+      pubkey: safetyDepositConfig,
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: auctionKey,
