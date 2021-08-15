@@ -9,13 +9,15 @@ import { serialize } from 'borsh';
 
 import {
   getAuctionKeys,
+  getAuctionWinnerTokenTypeTracker,
   getOriginalAuthority,
-  getSafetyDepositBoxValidationTicket,
+  getSafetyDepositConfig,
+  SafetyDepositConfig,
   SCHEMA,
-  ValidateSafetyDepositBoxArgs,
+  ValidateSafetyDepositBoxV2Args,
 } from '.';
 
-export async function validateSafetyDepositBox(
+export async function validateSafetyDepositBoxV2(
   vault: PublicKey,
   metadata: PublicKey,
   safetyDepositBox: PublicKey,
@@ -28,8 +30,7 @@ export async function validateSafetyDepositBox(
   edition: PublicKey,
   whitelistedCreator: PublicKey | undefined,
   store: PublicKey,
-  printingMint?: PublicKey,
-  printingMintAuthority?: PublicKey,
+  safetyDepositConfig: SafetyDepositConfig,
 ) {
   const PROGRAM_IDS = programIds();
 
@@ -40,15 +41,26 @@ export async function validateSafetyDepositBox(
     metadata,
   );
 
-  const value = new ValidateSafetyDepositBoxArgs();
+  const safetyDepositConfigKey = await getSafetyDepositConfig(
+    auctionManagerKey,
+    safetyDepositBox,
+  );
 
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(
+    auctionManagerKey,
+  );
+
+  const value = new ValidateSafetyDepositBoxV2Args(safetyDepositConfig);
   const data = Buffer.from(serialize(SCHEMA, value));
+
   const keys = [
     {
-      pubkey: await getSafetyDepositBoxValidationTicket(
-        auctionManagerKey,
-        safetyDepositBox,
-      ),
+      pubkey: safetyDepositConfigKey,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: tokenTracker,
       isSigner: false,
       isWritable: true,
     },
@@ -135,19 +147,6 @@ export async function validateSafetyDepositBox(
     },
   ];
 
-  if (printingMint && printingMintAuthority) {
-    keys.push({
-      pubkey: printingMint,
-      isSigner: false,
-      isWritable: true,
-    });
-
-    keys.push({
-      pubkey: printingMintAuthority,
-      isSigner: true,
-      isWritable: false,
-    });
-  }
   instructions.push(
     new TransactionInstruction({
       keys,

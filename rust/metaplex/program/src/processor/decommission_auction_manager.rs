@@ -1,13 +1,12 @@
 use {
     crate::{
         error::MetaplexError,
-        state::{AuctionManager, AuctionManagerStatus, Store, PREFIX},
+        state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
         utils::{
             assert_authority_correct, assert_derivation, assert_owned_by, assert_signer,
             end_auction,
         },
     },
-    borsh::BorshSerialize,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -23,7 +22,7 @@ pub fn process_decommission_auction_manager<'a>(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
-    let auction_manager_info = next_account_info(account_info_iter)?;
+    let mut auction_manager_info = next_account_info(account_info_iter)?;
     let auction_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
     let vault_info = next_account_info(account_info_iter)?;
@@ -34,12 +33,12 @@ pub fn process_decommission_auction_manager<'a>(
     assert_owned_by(store_info, program_id)?;
     assert_signer(authority_info)?;
 
-    let mut auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let mut auction_manager = get_auction_manager(auction_manager_info)?;
     let vault = Vault::from_account_info(vault_info)?;
     let auction = AuctionData::from_account_info(auction_info)?;
 
     let store = Store::from_account_info(store_info)?;
-    assert_authority_correct(&auction_manager, authority_info)?;
+    assert_authority_correct(&auction_manager.authority(), authority_info)?;
 
     if auction.authority != *auction_manager_info.key {
         return Err(MetaplexError::AuctionAuthorityMismatch.into());
@@ -49,11 +48,11 @@ pub fn process_decommission_auction_manager<'a>(
         return Err(MetaplexError::VaultAuthorityMismatch.into());
     }
 
-    if auction_manager.state.status != AuctionManagerStatus::Initialized {
+    if auction_manager.status() != AuctionManagerStatus::Initialized {
         return Err(MetaplexError::InvalidStatus.into());
     }
 
-    if auction_manager.store != *store_info.key {
+    if auction_manager.store() != *store_info.key {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
     }
 
@@ -61,7 +60,7 @@ pub fn process_decommission_auction_manager<'a>(
         return Err(MetaplexError::AuctionManagerAuctionProgramMismatch.into());
     }
 
-    if auction_manager.auction != *auction_info.key {
+    if auction_manager.auction() != *auction_info.key {
         return Err(MetaplexError::AuctionManagerAuctionMismatch.into());
     }
 
@@ -74,7 +73,7 @@ pub fn process_decommission_auction_manager<'a>(
     let authority_seeds = &[PREFIX.as_bytes(), &auction_info.key.as_ref(), &[bump_seed]];
 
     end_auction(
-        auction_manager.vault,
+        auction_manager.vault(),
         auction_info.clone(),
         auction_manager_info.clone(),
         auction_program_info.clone(),
@@ -82,9 +81,9 @@ pub fn process_decommission_auction_manager<'a>(
         authority_seeds,
     )?;
 
-    auction_manager.state.status = AuctionManagerStatus::Disbursing;
+    auction_manager.set_status(AuctionManagerStatus::Disbursing);
 
-    auction_manager.serialize(&mut *auction_manager_info.data.borrow_mut())?;
+    auction_manager.save(&mut auction_manager_info)?;
 
     Ok(())
 }
