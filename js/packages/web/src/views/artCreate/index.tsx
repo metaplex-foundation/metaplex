@@ -30,10 +30,9 @@ import {
   MetaplexModal,
   MetaplexOverlay,
   MetadataFile,
-  StringPublicKey,
 } from '@oyster/common';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
@@ -56,7 +55,7 @@ export const ArtCreateView = () => {
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [progress, setProgress] = useState<number>(0);
   const [nft, setNft] =
-    useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
+    useState<{ metadataAccount: PublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
@@ -897,7 +896,7 @@ const RoyaltiesStep = (props: {
             ].map(
               c =>
                 new Creator({
-                  address: c.value,
+                  address: new PublicKey(c.value),
                   verified: c.value === wallet?.publicKey?.toBase58(),
                   share:
                     royalties.find(r => r.creatorKey === c.value)?.amount ||
@@ -1060,7 +1059,7 @@ const WaitingStep = (props: {
 
 const Congrats = (props: {
   nft?: {
-    metadataAccount: StringPublicKey;
+    metadataAccount: PublicKey;
   };
 }) => {
   const history = useHistory();

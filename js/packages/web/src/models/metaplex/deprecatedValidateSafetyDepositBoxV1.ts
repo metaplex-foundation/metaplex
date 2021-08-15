@@ -1,5 +1,6 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
+import { programIds, getEdition } from '@oyster/common';
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -14,26 +15,26 @@ import {
 } from './deprecatedStates';
 
 export async function deprecatedValidateSafetyDepositBoxV1(
-  vault: StringPublicKey,
-  metadata: StringPublicKey,
-  safetyDepositBox: StringPublicKey,
-  safetyDepositTokenStore: StringPublicKey,
-  tokenMint: StringPublicKey,
-  auctionManagerAuthority: StringPublicKey,
-  metadataAuthority: StringPublicKey,
-  payer: StringPublicKey,
+  vault: PublicKey,
+  metadata: PublicKey,
+  safetyDepositBox: PublicKey,
+  safetyDepositTokenStore: PublicKey,
+  tokenMint: PublicKey,
+  auctionManagerAuthority: PublicKey,
+  metadataAuthority: PublicKey,
+  payer: PublicKey,
   instructions: TransactionInstruction[],
-  edition: StringPublicKey,
-  whitelistedCreator: StringPublicKey | undefined,
-  store: StringPublicKey,
-  printingMint?: StringPublicKey,
-  printingMintAuthority?: StringPublicKey,
+  edition: PublicKey,
+  whitelistedCreator: PublicKey | undefined,
+  store: PublicKey,
+  printingMint?: PublicKey,
+  printingMintAuthority?: PublicKey,
 ) {
   const PROGRAM_IDS = programIds();
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
-  const originalAuthorityLookup = await getOriginalAuthority(
+  const originalAuthorityLookup: PublicKey = await getOriginalAuthority(
     auctionKey,
     metadata,
   );
@@ -43,83 +44,81 @@ export async function deprecatedValidateSafetyDepositBoxV1(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: toPublicKey(
-        await getSafetyDepositBoxValidationTicket(
-          auctionManagerKey,
-          safetyDepositBox,
-        ),
+      pubkey: await getSafetyDepositBoxValidationTicket(
+        auctionManagerKey,
+        safetyDepositBox,
       ),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(auctionManagerKey),
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(metadata),
+      pubkey: metadata,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(originalAuthorityLookup),
+      pubkey: originalAuthorityLookup,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(whitelistedCreator || SystemProgram.programId),
+      pubkey: whitelistedCreator || SystemProgram.programId,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositBox),
+      pubkey: safetyDepositBox,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositTokenStore),
+      pubkey: safetyDepositTokenStore,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(tokenMint),
+      pubkey: tokenMint,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(edition),
+      pubkey: edition,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auctionManagerAuthority),
+      pubkey: auctionManagerAuthority,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(metadataAuthority),
+      pubkey: metadataAuthority,
       isSigner: true,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.metadata),
+      pubkey: PROGRAM_IDS.metadata,
       isSigner: false,
       isWritable: false,
     },
@@ -137,13 +136,13 @@ export async function deprecatedValidateSafetyDepositBoxV1(
 
   if (printingMint && printingMintAuthority) {
     keys.push({
-      pubkey: toPublicKey(printingMint),
+      pubkey: printingMint,
       isSigner: false,
       isWritable: true,
     });
 
     keys.push({
-      pubkey: toPublicKey(printingMintAuthority),
+      pubkey: printingMintAuthority,
       isSigner: true,
       isWritable: false,
     });
@@ -151,7 +150,7 @@ export async function deprecatedValidateSafetyDepositBoxV1(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

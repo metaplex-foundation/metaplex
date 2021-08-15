@@ -3,11 +3,13 @@ import {
   EXTENDED,
   findProgramAddress,
   programIds,
-  StringPublicKey,
-  toPublicKey,
   VAULT_PREFIX,
 } from '@oyster/common';
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import {
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import {
@@ -19,12 +21,12 @@ import {
 } from '.';
 
 export async function withdrawMasterEdition(
-  vault: StringPublicKey,
-  safetyDepositTokenStore: StringPublicKey,
-  destination: StringPublicKey,
-  safetyDeposit: StringPublicKey,
-  fractionMint: StringPublicKey,
-  mint: StringPublicKey,
+  vault: PublicKey,
+  safetyDepositTokenStore: PublicKey,
+  destination: PublicKey,
+  safetyDeposit: PublicKey,
+  fractionMint: PublicKey,
+  mint: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -39,26 +41,26 @@ export async function withdrawMasterEdition(
     auctionManagerKey,
     mint,
   );
-  const vaultAuthority = (
+  const vaultAuthority: PublicKey = (
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
-        toPublicKey(vault).toBuffer(),
+        PROGRAM_IDS.vault.toBuffer(),
+        vault.toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault),
+      PROGRAM_IDS.vault,
     )
   )[0];
 
-  const auctionExtended = (
+  const auctionExtended: PublicKey = (
     await findProgramAddress(
       [
         Buffer.from(AUCTION_PREFIX),
-        toPublicKey(PROGRAM_IDS.auction).toBuffer(),
-        toPublicKey(vault).toBuffer(),
+        PROGRAM_IDS.auction.toBuffer(),
+        vault.toBuffer(),
         Buffer.from(EXTENDED),
       ],
-      toPublicKey(PROGRAM_IDS.auction),
+      PROGRAM_IDS.auction,
     )
   )[0];
 
@@ -71,52 +73,52 @@ export async function withdrawMasterEdition(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: toPublicKey(auctionManagerKey),
+      pubkey: auctionManagerKey,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(safetyDepositTokenStore),
+      pubkey: safetyDepositTokenStore,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(destination),
+      pubkey: destination,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(safetyDeposit),
+      pubkey: safetyDeposit,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(fractionMint),
+      pubkey: fractionMint,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(prizeTrackingTicket),
+      pubkey: prizeTrackingTicket,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vaultAuthority),
+      pubkey: vaultAuthority,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auctionKey),
+      pubkey: auctionKey,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auctionExtended),
+      pubkey: auctionExtended,
       isSigner: false,
       isWritable: false,
     },
@@ -126,12 +128,12 @@ export async function withdrawMasterEdition(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(PROGRAM_IDS.vault),
+      pubkey: PROGRAM_IDS.vault,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
@@ -141,7 +143,7 @@ export async function withdrawMasterEdition(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositConfig),
+      pubkey: safetyDepositConfig,
       isSigner: false,
       isWritable: false,
     },
@@ -150,7 +152,7 @@ export async function withdrawMasterEdition(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

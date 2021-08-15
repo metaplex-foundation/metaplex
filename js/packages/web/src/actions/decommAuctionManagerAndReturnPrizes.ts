@@ -1,5 +1,7 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
+  BidderMetadata,
+  ParsedAccount,
   sendTransactionsWithManualRetry,
   setAuctionAuthority,
   setVaultAuthority,
@@ -7,7 +9,11 @@ import {
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
-import { AuctionManagerStatus } from '../models/metaplex';
+import {
+  AuctionManagerStatus,
+  BidRedemptionTicket,
+  PrizeTrackingTicket,
+} from '../models/metaplex';
 import { decommissionAuctionManager } from '../models/metaplex/decommissionAuctionManager';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 
@@ -24,18 +30,18 @@ export async function decommAuctionManagerAndReturnPrizes(
     let decomSigners: Keypair[] = [];
     let decomInstructions: TransactionInstruction[] = [];
 
-    if (auctionView.auction.info.authority === wallet.publicKey.toBase58()) {
+    if (auctionView.auction.info.authority.equals(wallet.publicKey)) {
       await setAuctionAuthority(
         auctionView.auction.pubkey,
-        wallet.publicKey.toBase58(),
+        wallet.publicKey,
         auctionView.auctionManager.pubkey,
         decomInstructions,
       );
     }
-    if (auctionView.vault.info.authority === wallet.publicKey.toBase58()) {
+    if (auctionView.vault.info.authority.equals(wallet.publicKey)) {
       await setVaultAuthority(
         auctionView.vault.pubkey,
-        wallet.publicKey.toBase58(),
+        wallet.publicKey,
         auctionView.auctionManager.pubkey,
         decomInstructions,
       );
@@ -43,7 +49,7 @@ export async function decommAuctionManagerAndReturnPrizes(
     await decommissionAuctionManager(
       auctionView.auctionManager.pubkey,
       auctionView.auction.pubkey,
-      wallet.publicKey.toBase58(),
+      wallet.publicKey,
       auctionView.vault.pubkey,
       decomInstructions,
     );

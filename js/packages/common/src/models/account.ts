@@ -10,7 +10,7 @@ import { TOKEN_PROGRAM_ID } from '../utils/ids';
 import BufferLayout from 'buffer-layout';
 
 export interface TokenAccount {
-  pubkey: string;
+  pubkey: PublicKey;
   account: AccountInfo<Buffer>;
   info: TokenAccountInfo;
 }

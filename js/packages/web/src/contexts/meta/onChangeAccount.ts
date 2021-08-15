@@ -1,6 +1,7 @@
 import {
   KeyedAccountInfo,
   ProgramAccountChangeCallback,
+  PublicKey,
 } from '@solana/web3.js';
 import { ProcessAccountsFunc, UpdateStateValueFunc } from './types';
 
@@ -24,6 +25,6 @@ export const onChangeAccount =
 
 const pubkeyByAccountInfo = (info: KeyedAccountInfo) => {
   return typeof info.accountId === 'string'
-    ? info.accountId
-    : info.accountId.toBase58();
+    ? new PublicKey(info.accountId as unknown as string)
+    : info.accountId;
 };

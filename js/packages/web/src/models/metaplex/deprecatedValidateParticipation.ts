@@ -1,5 +1,6 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
+import { programIds } from '@oyster/common';
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -10,16 +11,16 @@ import { SCHEMA } from '.';
 import { DeprecatedValidateParticipationArgs } from './deprecatedStates';
 
 export async function deprecatedValidateParticipation(
-  auctionManager: StringPublicKey,
-  openEditionMetadata: StringPublicKey,
-  openEditionMasterAccount: StringPublicKey,
-  printingAuthorizationHoldingAccount: StringPublicKey,
-  auctionManagerAuthority: StringPublicKey,
-  whitelistedCreatorEntry: StringPublicKey | undefined,
-  store: StringPublicKey,
-  safetyDepositBox: StringPublicKey,
-  safetyDepositBoxTokenStore: StringPublicKey,
-  vault: StringPublicKey,
+  auctionManager: PublicKey,
+  openEditionMetadata: PublicKey,
+  openEditionMasterAccount: PublicKey,
+  printingAuthorizationHoldingAccount: PublicKey,
+  auctionManagerAuthority: PublicKey,
+  whitelistedCreatorEntry: PublicKey | undefined,
+  store: PublicKey,
+  safetyDepositBox: PublicKey,
+  safetyDepositBoxTokenStore: PublicKey,
+  vault: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -30,59 +31,59 @@ export async function deprecatedValidateParticipation(
 
   const keys = [
     {
-      pubkey: toPublicKey(auctionManager),
+      pubkey: auctionManager,
       isSigner: false,
       isWritable: true,
     },
 
     {
-      pubkey: toPublicKey(openEditionMetadata),
+      pubkey: openEditionMetadata,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(openEditionMasterAccount),
+      pubkey: openEditionMasterAccount,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(printingAuthorizationHoldingAccount),
+      pubkey: printingAuthorizationHoldingAccount,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(auctionManagerAuthority),
+      pubkey: auctionManagerAuthority,
       isSigner: true,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(whitelistedCreatorEntry || SystemProgram.programId),
+      pubkey: whitelistedCreatorEntry || SystemProgram.programId,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: toPublicKey(safetyDepositBox),
+      pubkey: safetyDepositBox,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositBoxTokenStore),
+      pubkey: safetyDepositBoxTokenStore,
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(vault),
+      pubkey: vault,
       isSigner: false,
       isWritable: false,
     },
@@ -96,7 +97,7 @@ export async function deprecatedValidateParticipation(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );

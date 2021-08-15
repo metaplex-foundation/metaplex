@@ -1,7 +1,11 @@
 export function isValidHttpUrl(text: string) {
-  if (text.startsWith('http:') || text.startsWith('https:')) {
-    return true;
+  let url;
+
+  try {
+    url = new URL(text);
+  } catch (_) {
+    return false;
   }
 
-  return false;
+  return url.protocol === 'http:' || url.protocol === 'https:';
 }
