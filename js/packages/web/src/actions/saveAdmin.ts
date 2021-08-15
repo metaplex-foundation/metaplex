@@ -25,8 +25,8 @@ export async function saveAdmin(
 
   await setStore(
     isPublic,
-    wallet.publicKey,
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
+    wallet.publicKey.toBase58(),
     storeInstructions,
   );
   signers.push(storeSigners);
@@ -40,8 +40,8 @@ export async function saveAdmin(
     await setWhitelistedCreator(
       wc.address,
       wc.activated,
-      wallet.publicKey,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
+      wallet.publicKey.toBase58(),
       wcInstructions,
     );
     signers.push(wcSigners);
