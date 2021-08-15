@@ -26,32 +26,28 @@ export const useUserArts = (): SafetyDepositDraft[] => {
 
   const ownedMetadata = metadata.filter(
     m =>
-      accountByMint.has(m.info.mint.toBase58()) &&
-      (accountByMint?.get(m.info.mint.toBase58())?.info?.amount?.toNumber() ||
-        0) > 0,
+      accountByMint.has(m.info.mint) &&
+      (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0,
   );
 
   const possibleEditions = ownedMetadata.map(m =>
-    m.info.edition ? editions[m.info.edition?.toBase58()] : undefined,
+    m.info.edition ? editions[m.info.edition] : undefined,
   );
 
   const possibleMasterEditions = ownedMetadata.map(m =>
-    m.info.masterEdition
-      ? masterEditions[m.info.masterEdition?.toBase58()]
-      : undefined,
+    m.info.masterEdition ? masterEditions[m.info.masterEdition] : undefined,
   );
 
   let safetyDeposits: SafetyDepositDraft[] = [];
   let i = 0;
   ownedMetadata.forEach(m => {
-    let a = accountByMint.get(m.info.mint.toBase58());
+    let a = accountByMint.get(m.info.mint);
     let masterA;
     const masterEdition = possibleMasterEditions[i];
     if (masterEdition?.info.key == MetadataKey.MasterEditionV1) {
       masterA = accountByMint.get(
-        (
-          masterEdition as ParsedAccount<MasterEditionV1>
-        )?.info.printingMint?.toBase58() || '',
+        (masterEdition as ParsedAccount<MasterEditionV1>)?.info.printingMint ||
+          '',
       );
     }
 

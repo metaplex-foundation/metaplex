@@ -17,7 +17,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
   let items = useUserArts();
   if (props.filter) items = items.filter(props.filter);
   const selectedItems = useMemo<Set<string>>(
-    () => new Set(selected.map(item => item.metadata.pubkey.toBase58())),
+    () => new Set(selected.map(item => item.metadata.pubkey)),
     [selected],
   );
 
@@ -56,7 +56,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         columnClassName="my-masonry-grid_column"
       >
         {selected.map(m => {
-          let key = m?.metadata.pubkey.toBase58() || '';
+          let key = m?.metadata.pubkey || '';
 
           return (
             <ArtCard
@@ -66,7 +66,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               onClick={open}
               close={() => {
                 setSelected(
-                  selected.filter(_ => _.metadata.pubkey.toBase58() !== key),
+                  selected.filter(_ => _.metadata.pubkey !== key),
                 );
                 confirm();
               }}
@@ -107,7 +107,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
             columnClassName="my-masonry-grid_column"
           >
             {items.map(m => {
-              const id = m.metadata.pubkey.toBase58();
+              const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
 
               const onSelect = () => {
@@ -121,7 +121,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   : new Set([...list, id]);
 
                 let selected = items.filter(item =>
-                  newSet.has(item.metadata.pubkey.toBase58()),
+                  newSet.has(item.metadata.pubkey),
                 );
                 setSelected(selected);
 

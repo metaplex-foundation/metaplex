@@ -34,8 +34,8 @@ export const ArtworksView = () => {
   const items =
     (activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
-      : (activeKey === ArtworkViewState.Created 
-        ? createdMetadata 
+      : (activeKey === ArtworkViewState.Created
+        ? createdMetadata
         : metadata));
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const ArtworksView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-            const id = m.pubkey.toBase58();
+            const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
                 <ArtCard
