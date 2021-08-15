@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { PublicKey } from '@solana/web3.js';
 import {
   BidderMetadata,
   BidderMetadataParser,
   cache,
   ParsedAccount,
-  StringPublicKey,
 } from '@oyster/common';
 
-export const useHighestBidForAuction = (
-  auctionPubkey: StringPublicKey | string,
-) => {
+export const useHighestBidForAuction = (auctionPubkey: PublicKey | string) => {
   const bids = useBidsForAuction(auctionPubkey);
 
   const winner = useMemo(() => {
@@ -19,12 +17,12 @@ export const useHighestBidForAuction = (
   return winner;
 };
 
-export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
+export const useBidsForAuction = (auctionPubkey: PublicKey | string) => {
   const id = useMemo(
     () =>
       typeof auctionPubkey === 'string'
         ? auctionPubkey !== ''
-          ? auctionPubkey
+          ? new PublicKey(auctionPubkey)
           : undefined
         : auctionPubkey,
     [auctionPubkey],
@@ -49,7 +47,7 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
   return bids;
 };
 
-const getBids = (id?: StringPublicKey) => {
+const getBids = (id?: PublicKey) => {
   return cache
     .byParser(BidderMetadataParser)
     .filter(key => {
@@ -58,7 +56,7 @@ const getBids = (id?: StringPublicKey) => {
         return false;
       }
 
-      return id === bidder.info.auctionPubkey;
+      return id?.equals(bidder.info.auctionPubkey);
     })
     .map(key => {
       const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;

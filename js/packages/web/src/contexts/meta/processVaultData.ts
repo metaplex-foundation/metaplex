@@ -26,7 +26,7 @@ export const processVaultData: ProcessAccountsFunc = (
       };
       setter(
         'safetyDepositBoxesByVaultAndIndex',
-        safetyDeposit.vault + '-' + safetyDeposit.order,
+        safetyDeposit.vault.toBase58() + '-' + safetyDeposit.order,
         parsedAccount,
       );
     }
@@ -38,7 +38,7 @@ export const processVaultData: ProcessAccountsFunc = (
         info: vault,
       };
 
-      setter('vaults', pubkey, parsedAccount);
+      setter('vaults', pubkey.toBase58(), parsedAccount);
     }
   } catch {
     // ignore errors
@@ -47,7 +47,7 @@ export const processVaultData: ProcessAccountsFunc = (
 };
 
 const isVaultAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === VAULT_ID;
+  account.owner.equals(VAULT_ID);
 
 const isSafetyDepositBoxV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === VaultKey.SafetyDepositBoxV1;

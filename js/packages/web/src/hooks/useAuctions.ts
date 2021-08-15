@@ -10,8 +10,8 @@ import {
   MasterEditionV1,
   MasterEditionV2,
   useWallet,
-  StringPublicKey,
 } from '@oyster/common';
+import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { useEffect, useState } from 'react';
 import { useMeta } from '../contexts';
@@ -67,8 +67,7 @@ export function useCachedRedemptionKeysByWallet() {
   const [cachedRedemptionKeys, setCachedRedemptionKeys] = useState<
     Record<
       string,
-      | ParsedAccount<BidRedemptionTicket>
-      | { pubkey: StringPublicKey; info: null }
+      ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
     >
   >({});
 
@@ -77,8 +76,7 @@ export function useCachedRedemptionKeysByWallet() {
       if (wallet && wallet.publicKey) {
         const temp: Record<
           string,
-          | ParsedAccount<BidRedemptionTicket>
-          | { pubkey: StringPublicKey; info: null }
+          ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
         > = {};
         const keys = Object.keys(auctions);
         const tasks = [];
@@ -87,18 +85,15 @@ export function useCachedRedemptionKeysByWallet() {
           if (!cachedRedemptionKeys[a])
             //@ts-ignore
             tasks.push(
-              getBidderKeys(
-                auctions[a].pubkey,
-                wallet.publicKey.toBase58(),
-              ).then(key => {
-                temp[a] = bidRedemptions[key.bidRedemption]
-                  ? bidRedemptions[key.bidRedemption]
+              getBidderKeys(auctions[a].pubkey, wallet.publicKey).then(key => {
+                temp[a] = bidRedemptions[key.bidRedemption.toBase58()]
+                  ? bidRedemptions[key.bidRedemption.toBase58()]
                   : { pubkey: key.bidRedemption, info: null };
               }),
             );
           else if (!cachedRedemptionKeys[a].info) {
             temp[a] =
-              bidRedemptions[cachedRedemptionKeys[a].pubkey] ||
+              bidRedemptions[cachedRedemptionKeys[a].pubkey.toBase58()] ||
               cachedRedemptionKeys[a];
           }
         }
@@ -117,7 +112,7 @@ export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { wallet } = useWallet();
 
-  const pubkey = wallet?.publicKey?.toBase58();
+  const pubkey = wallet?.publicKey;
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const {
@@ -209,7 +204,7 @@ function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
 }
 
 export function processAccountsIntoAuctionView(
-  walletPubkey: StringPublicKey | null | undefined,
+  walletPubkey: PublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
   auctionManagersByAuction: Record<
     string,
@@ -246,7 +241,7 @@ export function processAccountsIntoAuctionView(
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>,
   cachedRedemptionKeysByWallet: Record<
     string,
-    ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
+    ParsedAccount<BidRedemptionTicket> | { pubkey: PublicKey; info: null }
   >,
   desiredState: AuctionViewState | undefined,
   existingAuctionView?: AuctionView,
@@ -262,7 +257,8 @@ export function processAccountsIntoAuctionView(
     state = AuctionViewState.BuyNow;
   }
 
-  const auctionManagerInstance = auctionManagersByAuction[auction.pubkey || ''];
+  const auctionManagerInstance =
+    auctionManagersByAuction[auction.pubkey.toBase58() || ''];
 
   // The defective auction view state really applies to auction managers, not auctions, so we ignore it here
   if (
@@ -288,8 +284,8 @@ export function processAccountsIntoAuctionView(
     )
       return undefined;
 
-    const vault = vaults[auctionManagerInstance.info.vault];
-    const auctionManagerKey = auctionManagerInstance.pubkey;
+    const vault = vaults[auctionManagerInstance.info.vault.toBase58()];
+    const auctionManagerKey = auctionManagerInstance.pubkey.toBase58();
 
     let safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
       buildListWhileNonZero(
@@ -313,16 +309,20 @@ export function processAccountsIntoAuctionView(
     const boxesExpected = auctionManager.safetyDepositBoxesExpected.toNumber();
 
     let bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
-      cachedRedemptionKeysByWallet[auction.pubkey]?.info
+      cachedRedemptionKeysByWallet[auction.pubkey.toBase58()]?.info
         ? (cachedRedemptionKeysByWallet[
-            auction.pubkey
+            auction.pubkey.toBase58()
           ] as ParsedAccount<BidRedemptionTicket>)
         : undefined;
 
     const bidderMetadata =
-      bidderMetadataByAuctionAndBidder[auction.pubkey + '-' + walletPubkey];
+      bidderMetadataByAuctionAndBidder[
+        auction.pubkey.toBase58() + '-' + walletPubkey?.toBase58()
+      ];
     const bidderPot =
-      bidderPotsByAuctionAndBidder[auction.pubkey + '-' + walletPubkey];
+      bidderPotsByAuctionAndBidder[
+        auction.pubkey.toBase58() + '-' + walletPubkey?.toBase58()
+      ];
 
     if (existingAuctionView && existingAuctionView.totallyComplete) {
       // If totally complete, we know we arent updating anythign else, let's speed things up
@@ -336,13 +336,16 @@ export function processAccountsIntoAuctionView(
           const curr = winningSet[j];
           if (!curr.metadata) {
             let foundMetadata =
-              metadataByMint[curr.safetyDeposit.info.tokenMint];
+              metadataByMint[curr.safetyDeposit.info.tokenMint.toBase58()];
             if (!foundMetadata) {
               // Means is a limited edition, so the tokenMint is the printingMint
               let masterEdition =
-                masterEditionsByPrintingMint[curr.safetyDeposit.info.tokenMint];
+                masterEditionsByPrintingMint[
+                  curr.safetyDeposit.info.tokenMint.toBase58()
+                ];
               if (masterEdition) {
-                foundMetadata = metadataByMasterEdition[masterEdition.pubkey];
+                foundMetadata =
+                  metadataByMasterEdition[masterEdition.pubkey.toBase58()];
               }
             }
             curr.metadata = foundMetadata;
@@ -353,7 +356,8 @@ export function processAccountsIntoAuctionView(
             !curr.masterEdition &&
             curr.metadata.info.masterEdition
           ) {
-            let foundMaster = masterEditions[curr.metadata.info.masterEdition];
+            let foundMaster =
+              masterEditions[curr.metadata.info.masterEdition.toBase58()];
 
             curr.masterEdition = foundMaster;
           }
@@ -363,7 +367,7 @@ export function processAccountsIntoAuctionView(
       return existingAuctionView;
     }
 
-    const vaultKey = auctionManager.vault;
+    const vaultKey = auctionManager.vault.toBase58();
     let boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
@@ -386,14 +390,19 @@ export function processAccountsIntoAuctionView(
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
           metadataByMasterEdition[
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-              ?.pubkey
-          ] || metadataByMint[participationBox.info.tokenMint];
+            masterEditionsByOneTimeAuthMint[
+              participationBox.info.tokenMint.toBase58()
+            ]?.pubkey.toBase58()
+          ] || metadataByMint[participationBox.info.tokenMint.toBase58()];
         if (participationMetadata) {
           participationMaster =
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint] ||
+            masterEditionsByOneTimeAuthMint[
+              participationBox.info.tokenMint.toBase58()
+            ] ||
             (participationMetadata.info.masterEdition &&
-              masterEditions[participationMetadata.info.masterEdition]);
+              masterEditions[
+                participationMetadata.info.masterEdition?.toBase58()
+              ]);
         }
       }
 

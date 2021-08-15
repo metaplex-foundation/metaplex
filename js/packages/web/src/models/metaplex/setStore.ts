@@ -1,13 +1,17 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { programIds } from '@oyster/common';
+import {
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { SCHEMA, SetStoreArgs } from '.';
 
 export async function setStore(
   isPublic: boolean,
-  admin: StringPublicKey,
-  payer: StringPublicKey,
+  admin: PublicKey,
+  payer: PublicKey,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -21,36 +25,24 @@ export async function setStore(
 
   const keys = [
     {
-      pubkey: toPublicKey(store),
+      pubkey: store,
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(admin),
+      pubkey: admin,
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(payer),
+      pubkey: payer,
       isSigner: true,
       isWritable: false,
     },
     { pubkey: PROGRAM_IDS.token, isSigner: false, isWritable: false },
-    {
-      pubkey: toPublicKey(PROGRAM_IDS.vault),
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(PROGRAM_IDS.metadata),
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(PROGRAM_IDS.auction),
-      isSigner: false,
-      isWritable: false,
-    },
+    { pubkey: PROGRAM_IDS.vault, isSigner: false, isWritable: false },
+    { pubkey: PROGRAM_IDS.metadata, isSigner: false, isWritable: false },
+    { pubkey: PROGRAM_IDS.auction, isSigner: false, isWritable: false },
     {
       pubkey: PROGRAM_IDS.system,
       isSigner: false,
@@ -66,7 +58,7 @@ export async function setStore(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: PROGRAM_IDS.metaplex,
       data,
     }),
   );
