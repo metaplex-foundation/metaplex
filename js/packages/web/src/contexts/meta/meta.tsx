@@ -56,7 +56,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
-  const { address: storeAddress } = useStore();
+  const { isReady, storeAddress } = useStore();
   const searchParams = useQuerySearch();
   const all = searchParams.get('all') == 'true';
 
@@ -111,7 +111,12 @@ export function MetaProvider({ children = null as any }) {
   useEffect(() => {
     (async () => {
       if (!storeAddress) {
+        if (isReady) {
+          setIsLoading(false);
+        }
         return;
+      } else if (!state.store) {
+        setIsLoading(true);
       }
 
       console.log('-----> Query started');
@@ -127,7 +132,7 @@ export function MetaProvider({ children = null as any }) {
 
       updateMints(nextState.metadataByMint);
     })();
-  }, [connection, setState, updateMints, storeAddress]);
+  }, [connection, setState, updateMints, storeAddress, isReady]);
 
   const updateStateValue = useMemo<UpdateStateValueFunc>(
     () => (prop, key, value) => {
