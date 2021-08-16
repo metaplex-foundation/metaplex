@@ -2092,10 +2092,10 @@
   resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-phantom/-/wallet-adapter-phantom-0.4.1.tgz#db5f70aa1cf293314b447a902995099e7a3a1c16"
   integrity sha512-2Y3625SyQi0Kz9crqzrYOJD76jfDlcFhUEfJYlWWc+aJTnKwLECd91qGoBmms40PyBuTmdB9eJWTYT0Ev0NAig==
 
-"@solana/wallet-adapter-react@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.7.0.tgz#b8d19a9619adb012667456edc033c1d076d0dfdd"
-  integrity sha512-1ZPxWcbvcvsw4oE22XBtDr7jtKCOof0PGWsDsWhhW04wXqMNNKq+pxqYzjKlY9+WJpe0dx8Kyzar3PWN+wqJUg==
+"@solana/wallet-adapter-react@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.7.1.tgz#3b51028ff15a92f5cc6db990fbbc4d7b7db7f489"
+  integrity sha512-iqyMm7j5FNYOrn1hOYJtro07axEH7RQuMO93Q0gohiyu0zZEnNhbvch6e1EQMpfu2R+Z5qXJzEfbDT9X7G1aGg==
 
 "@solana/wallet-adapter-solflare@^0.1.0":
   version "0.1.0"
@@ -2123,10 +2123,10 @@
     "@toruslabs/openlogin-ed25519" "^0.9.2"
     "@types/keccak" "^3.0.1"
 
-"@solana/wallet-adapter-wallets@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-wallets/-/wallet-adapter-wallets-0.6.0.tgz#03117cb2d102de10da5d975da71da45f17cd1076"
-  integrity sha512-MazpY4QiGl/ljdZrTGsQnEZFEIcas+nmceeleSCz9L1BEu8AqovcqmW0Ak//yhGZm6C/3RfxgwpV+4PKOrrexQ==
+"@solana/wallet-adapter-wallets@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-wallets/-/wallet-adapter-wallets-0.6.1.tgz#e1afb5b7ebeba460384e9be5a378e165b76d61d5"
+  integrity sha512-BoejyJXuIJt89nRzQJdTEjG26q0tIyw0Cr3woIyCWTEIylmfGO9Oiedj5LsK9IvhP+5PGaXf/IfMhgmLtjyn1w==
   dependencies:
     "@solana/wallet-adapter-ledger" "^0.4.1"
     "@solana/wallet-adapter-mathwallet" "^0.4.1"
