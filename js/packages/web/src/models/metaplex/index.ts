@@ -14,6 +14,7 @@ import {
   MasterEditionV2,
   toPublicKey,
   StringPublicKey,
+  getAuctionExtended,
 } from '@oyster/common';
 import { AccountInfo, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
@@ -88,6 +89,7 @@ export class PayoutTicket {
     this.amountPaid = args.amountPaid;
   }
 }
+
 export class AuctionManager {
   pubkey: StringPublicKey;
   store: StringPublicKey;
@@ -259,6 +261,7 @@ export class AuctionManagerV2 {
   vault: StringPublicKey;
   acceptPayment: StringPublicKey;
   state: AuctionManagerStateV2;
+  auctionDataExtended?: StringPublicKey;
 
   constructor(args: {
     store: StringPublicKey;
@@ -275,6 +278,13 @@ export class AuctionManagerV2 {
     this.vault = args.vault;
     this.acceptPayment = args.acceptPayment;
     this.state = args.state;
+
+    const auction = programIds().auction;
+
+    getAuctionExtended({
+      auctionProgramId: auction,
+      resource: this.vault,
+    }).then(val => (this.auctionDataExtended = val));
   }
 }
 

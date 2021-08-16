@@ -1,4 +1,5 @@
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -6,7 +7,12 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
+import {
+  findProgramAddress,
+  METADATA_PROGRAM_ID,
+  StringPublicKey,
+  toPublicKey,
+} from '../utils';
 export const METADATA_PREFIX = 'metadata';
 export const EDITION = 'edition';
 export const RESERVATION = 'reservation';
@@ -244,22 +250,23 @@ export class Metadata {
   }
 
   public async init() {
-    const edition: PublicKey;
-    if (this.info.editionNonce != null) {
-      edition = await PublicKey.createProgramAddress(
-        [
-          Buffer.from(METADATA_PREFIX),
-          METADATA_PROGRAM_ID.toBuffer(),
-          tempCache.metadata[i].info.mint.toBuffer(),
-          new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
-        ],
-        METADATA_PROGRAM_ID,
-      );
+    const metadata = toPublicKey(programIds().metadata);
+    if (this.editionNonce != null) {
+      this.edition = (
+        await PublicKey.createProgramAddress(
+          [
+            Buffer.from(METADATA_PREFIX),
+            metadata.toBuffer(),
+            toPublicKey(this.mint).toBuffer(),
+            new Uint8Array([this.editionNonce || 0]),
+          ],
+          metadata,
+        )
+      ).toBase58();
     } else {
-      edition = await getEdition(tempCache.metadata[i].info.mint);
+      this.edition = await getEdition(this.mint);
     }
-    this.edition = edition;
-    this.masterEdition = edition;
+    this.masterEdition = this.edition;
   }
 }
 

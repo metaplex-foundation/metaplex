@@ -225,6 +225,8 @@ export class AuctionData {
   /// Used for precalculation on the front end, not a backend key
   bidRedemptionKey?: StringPublicKey;
 
+  auctionDataExtended?: StringPublicKey;
+
   public timeToEnd(): CountdownState {
     const now = moment().unix();
     const ended = { days: 0, hours: 0, minutes: 0, seconds: 0 };
