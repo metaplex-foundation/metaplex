@@ -319,10 +319,7 @@ const UseNativeAccount = () => {
   const updateCache = useCallback(
     account => {
       if (publicKey) {
-        const wrapped = wrapNativeAccount(
-          publicKey.toBase58(),
-          account,
-        );
+        const wrapped = wrapNativeAccount(publicKey.toBase58(), account);
         if (wrapped !== undefined) {
           const id = publicKey.toBase58();
           cache.registerParser(id, TokenAccountParser);

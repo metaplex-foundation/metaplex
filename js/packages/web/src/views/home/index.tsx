@@ -52,16 +52,17 @@ export const HomeView = () => {
   // Check if the auction is primary sale or not
   const checkPrimarySale = (auc: AuctionView) => {
     var flag = 0;
-    auc.items.forEach(i =>
-      {
-        i.forEach(j => {
-          if (j.metadata.info.primarySaleHappened == true) {
-            flag = 1;
-            return true;
-          }})
-        if (flag == 1) return true;
-      })
-      if (flag == 1) return true; else return false;
+    auc.items.forEach(i => {
+      i.forEach(j => {
+        if (j.metadata.info.primarySaleHappened == true) {
+          flag = 1;
+          return true;
+        }
+      });
+      if (flag == 1) return true;
+    });
+    if (flag == 1) return true;
+    else return false;
   };
 
   const resaleAuctions = auctions
@@ -86,18 +87,24 @@ export const HomeView = () => {
   let items = liveAuctions;
 
   switch (activeKey) {
-      case LiveAuctionViewState.All:
-        items = liveAuctions;
-        break;
-      case LiveAuctionViewState.Participated:
-        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey == wallet?.publicKey?.toBase58());
-        break;
-      case LiveAuctionViewState.Resale:
-        items = resaleAuctions;
-        break;
-      case LiveAuctionViewState.Ended:
-        items = auctionsEnded;
-        break;
+    case LiveAuctionViewState.All:
+      items = liveAuctions;
+      break;
+    case LiveAuctionViewState.Participated:
+      items = liveAuctions
+        .concat(auctionsEnded)
+        .filter(
+          (m, idx) =>
+            m.myBidderMetadata?.info.bidderPubkey ==
+            wallet?.publicKey?.toBase58(),
+        );
+      break;
+    case LiveAuctionViewState.Resale:
+      items = resaleAuctions;
+      break;
+    case LiveAuctionViewState.Ended:
+      items = auctionsEnded;
+      break;
   }
 
   const heroAuction = useMemo(
@@ -145,13 +152,13 @@ export const HomeView = () => {
               return;
             }
 
-              const id = m.auction.pubkey;
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
+            const id = m.auction.pubkey;
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );

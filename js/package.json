@@ -16,6 +16,7 @@
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
     "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}'",
+    "format:fix": "lerna run format:fix",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",

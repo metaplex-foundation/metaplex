@@ -26,7 +26,8 @@
     "watch": "tsc --watch",
     "test": "jest test",
     "clean": "rm -rf dist",
-    "prepare": "run-s clean build"
+    "prepare": "run-s clean build",
+    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "dependencies": {
     "@project-serum/serum": "^0.13.52",

@@ -147,7 +147,8 @@ function usePayoutTickets(
         ? [[auctionView.participationItem]]
         : []),
     ];
-    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] = [];
+    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
+      [];
     let total = 0;
     for (let i = 0; i < prizeArrays.length; i++) {
       const items = prizeArrays[i];
@@ -162,9 +163,7 @@ function usePayoutTickets(
 
         for (let k = 0; k < recipientAddresses.length; k++) {
           // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
-          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[
-            k
-          ]}-${k}`;
+          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
 
           if (!currFound[key]) {
             payoutPromises.push({
@@ -187,8 +186,7 @@ function usePayoutTickets(
       (payoutKeys: StringPublicKey[]) => {
         payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
           if (payoutTickets[payoutKey])
-            currFound[payoutPromises[i].key] =
-              payoutTickets[payoutKey];
+            currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
         });
 
         setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
@@ -345,9 +343,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   }[] = [
     ...winnersThatCanBeEmptied.map(pot => ({
       metadata:
-        bidderMetadataByAuctionAndBidder[
-          `${auctionKey}-${pot.info.bidderAct}`
-        ],
+        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
       pot,
     })),
   ];
@@ -384,7 +380,9 @@ export const InnerBillingView = ({
 
   useEffect(() => {
     connection
-      .getTokenAccountBalance(toPublicKey(auctionView.auctionManager.acceptPayment))
+      .getTokenAccountBalance(
+        toPublicKey(auctionView.auctionManager.acceptPayment),
+      )
       .then(resp => {
         if (resp.value.uiAmount !== undefined && resp.value.uiAmount !== null)
           setEscrowBalance(resp.value.uiAmount);

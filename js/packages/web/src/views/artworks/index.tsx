@@ -34,9 +34,9 @@ export const ArtworksView = () => {
   const items =
     activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
-      : (activeKey === ArtworkViewState.Created
-        ? createdMetadata
-        : metadata);
+      : activeKey === ArtworkViewState.Created
+      ? createdMetadata
+      : metadata;
 
   useEffect(() => {
     if (connected) {

@@ -269,9 +269,7 @@ function InnerAdminView({
               activated: uniqueCreatorsWithUpdates[key].activated,
               name:
                 uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(
-                  uniqueCreatorsWithUpdates[key].address,
-                ),
+                shortenAddress(uniqueCreatorsWithUpdates[key].address),
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
           ></Table>
