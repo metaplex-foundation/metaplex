@@ -21,7 +21,6 @@ import { ArtSelector } from './artSelector';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   WinnerLimit,
   WinnerLimitType,
   toLamports,
@@ -34,6 +33,7 @@ import {
   StringPublicKey,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
@@ -125,7 +125,7 @@ export interface AuctionState {
 
 export const AuctionCreateView = () => {
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { whitelistedCreatorsByCreator } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();

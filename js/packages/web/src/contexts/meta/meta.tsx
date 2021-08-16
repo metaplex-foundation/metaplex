@@ -87,7 +87,10 @@ export function MetaProvider({ children = null as any }) {
     async metadataByMint => {
       try {
         if (!all) {
-          const {metadata, mintToMetadata} = await queryExtendedMetadata(connection, metadataByMint);
+          const { metadata, mintToMetadata } = await queryExtendedMetadata(
+            connection,
+            metadataByMint,
+          );
           setState(current => ({
             ...current,
             metadata,
@@ -122,7 +125,7 @@ export function MetaProvider({ children = null as any }) {
 
   const updateStateValue = useMemo<UpdateStateValueFunc>(
     () => (prop, key, value) => {
-      setState(current => makeSetter({...current})(prop, key, value));
+      setState(current => makeSetter({ ...current })(prop, key, value));
     },
     [setState],
   );
@@ -221,4 +224,3 @@ export const useMeta = () => {
   const context = useContext(MetaContext);
   return context;
 };
-

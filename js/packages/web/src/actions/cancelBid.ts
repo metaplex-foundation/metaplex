@@ -10,6 +10,7 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
+  WalletSigner,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
 import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
@@ -17,10 +18,11 @@ import { AuctionView } from '../hooks';
 import { BidRedemptionTicket, PrizeTrackingTicket } from '../models/metaplex';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendCancelBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -28,6 +30,8 @@ export async function sendCancelBid(
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
   if (
@@ -60,7 +64,7 @@ export async function sendCancelBid(
   );
 
   if (
-    wallet?.publicKey?.equals(auctionView.auctionManager.authority) &&
+    wallet.publicKey.toBase58() === auctionView.auctionManager.authority &&
     auctionView.auction.info.ended()
   ) {
     await claimUnusedPrizes(
@@ -98,10 +102,12 @@ export async function setupCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let cancelSigners: Keypair[] = [];
   let cancelInstructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];

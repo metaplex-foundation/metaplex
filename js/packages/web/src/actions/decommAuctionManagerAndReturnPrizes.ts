@@ -4,19 +4,23 @@ import {
   setAuctionAuthority,
   setVaultAuthority,
   TokenAccount,
+  WalletSigner,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
 import { AuctionManagerStatus } from '../models/metaplex';
 import { decommissionAuctionManager } from '../models/metaplex/decommissionAuctionManager';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function decommAuctionManagerAndReturnPrizes(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 

@@ -11,7 +11,6 @@ import {
 import { ArtContent } from '../../components/ArtContent';
 import {
   useConnection,
-  contexts,
   BidderMetadata,
   ParsedAccount,
   cache,
@@ -24,7 +23,9 @@ import {
   useUserAccounts,
   StringPublicKey,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
 import {
   getBidderKeys,
@@ -33,18 +34,16 @@ import {
   PayoutTicket,
   WinningConstraint,
 } from '../../models/metaplex';
-import { WalletAdapter } from '@solana/wallet-base';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
-const { useWallet } = contexts.Wallet;
 const { Content } = Layout;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
   const auctionView = useAuction(id);
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const mint = useMint(auctionView?.auction.info.tokenMint);
 
   return auctionView && wallet && connection && mint ? (
@@ -371,7 +370,7 @@ export const InnerBillingView = ({
   mint,
 }: {
   auctionView: AuctionView;
-  wallet: WalletAdapter;
+  wallet: WalletSigner;
   connection: Connection;
   mint: MintInfo;
 }) => {

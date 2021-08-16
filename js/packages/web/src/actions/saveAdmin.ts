@@ -3,20 +3,24 @@ import {
   SequenceType,
   sendTransactions,
   sendTransactionWithRetry,
+  WalletSigner,
 } from '@oyster/common';
 
 import { WhitelistedCreator } from '../models/metaplex';
 import { setStore } from '../models/metaplex/setStore';
 import { setWhitelistedCreator } from '../models/metaplex/setWhitelistedCreator';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 // TODO if this becomes very slow move to batching txns like we do with settle.ts
 // but given how little this should be used keep it simple
 export async function saveAdmin(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   isPublic: boolean,
   whitelistedCreators: WhitelistedCreator[],
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 
