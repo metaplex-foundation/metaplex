@@ -1,11 +1,4 @@
 import {
-  programIds,
-  VAULT_PREFIX,
-  findProgramAddress,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
-import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -15,28 +8,24 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  getSafetyDepositConfig,
-  ProxyCallAddress,
-  RedeemFullRightsTransferBidArgs,
-  RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
   SCHEMA,
+  getSafetyDepositConfig,
 } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { DeprecatedRedeemParticipationBidArgs } from './deprecatedStates';
 
-export async function redeemFullRightsTransferBid(
+export async function deprecatedRedeemParticipationBid(
   vault: StringPublicKey,
   safetyDepositTokenStore: StringPublicKey,
   destination: StringPublicKey,
   safetyDeposit: StringPublicKey,
-  fractionMint: StringPublicKey,
   bidder: StringPublicKey,
   payer: StringPublicKey,
   instructions: TransactionInstruction[],
-  masterMetadata: StringPublicKey,
-  newAuthority: StringPublicKey,
-  // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
-  // and this will instead call the proxy route instead of the real one, wrapping the original
-  // redemption call in an override call that forces the winning index if the auctioneer is authorized.
-  auctioneerReclaimIndex?: number,
+  participationPrintingAccount: StringPublicKey,
+  transferAuthority: StringPublicKey,
+  acceptPaymentAccount: StringPublicKey,
+  tokenPaymentAccount: StringPublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -51,29 +40,12 @@ export async function redeemFullRightsTransferBid(
     bidder,
   );
 
-  const transferAuthority = (
-    await findProgramAddress(
-      [
-        Buffer.from(VAULT_PREFIX),
-        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
-        toPublicKey(vault).toBuffer(),
-      ],
-      toPublicKey(PROGRAM_IDS.vault),
-    )
-  )[0];
-
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
     safetyDeposit,
   );
 
-  const value =
-    auctioneerReclaimIndex !== undefined
-      ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
-          winningConfigItemIndex: auctioneerReclaimIndex,
-          proxyCall: ProxyCallAddress.RedeemFullRightsTransferBid,
-        })
-      : new RedeemFullRightsTransferBidArgs();
+  const value = new DeprecatedRedeemParticipationBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -99,17 +71,17 @@ export async function redeemFullRightsTransferBid(
     {
       pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: toPublicKey(vault),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
-      pubkey: toPublicKey(fractionMint),
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: toPublicKey(auctionKey),
@@ -124,7 +96,7 @@ export async function redeemFullRightsTransferBid(
     {
       pubkey: toPublicKey(bidder),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(payer),
@@ -162,24 +134,24 @@ export async function redeemFullRightsTransferBid(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(masterMetadata),
+      pubkey: toPublicKey(transferAuthority),
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(acceptPaymentAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(newAuthority),
+      pubkey: toPublicKey(tokenPaymentAccount),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
-      pubkey: toPublicKey(transferAuthority),
+      pubkey: toPublicKey(participationPrintingAccount),
       isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(safetyDepositConfig),
-      isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
   ];
 

@@ -1,6 +1,7 @@
 import { programIds, cache, ParsedAccount, METAPLEX_ID } from '@oyster/common';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import {
+  AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
   decodeAuctionManager,
@@ -19,8 +20,7 @@ import {
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
-} from '../../models/metaplex';
-import { AuctionManagerV1 } from '../../models/metaplex/deprecatedStates';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import names from '../../config/userNames.json';
 import { ProcessAccountsFunc } from './types';
 

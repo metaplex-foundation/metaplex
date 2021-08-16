@@ -1,4 +1,3 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -13,6 +12,7 @@ import {
   getSafetyDepositConfig,
   SCHEMA,
 } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function emptyPaymentAccount(
   acceptPayment: StringPublicKey,

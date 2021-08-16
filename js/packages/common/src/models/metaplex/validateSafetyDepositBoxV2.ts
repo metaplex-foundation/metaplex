@@ -1,4 +1,3 @@
-import { programIds, toPublicKey, StringPublicKey } from '@oyster/common';
 import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -15,6 +14,7 @@ import {
   SCHEMA,
   ValidateSafetyDepositBoxV2Args,
 } from '.';
+import { programIds, toPublicKey, StringPublicKey } from '../../utils';
 
 export async function validateSafetyDepositBoxV2(
   vault: StringPublicKey,

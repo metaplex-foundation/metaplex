@@ -1,4 +1,3 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -14,6 +13,7 @@ import {
   SCHEMA,
   TupleNumericType,
 } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function initAuctionManagerV2(
   vault: StringPublicKey,

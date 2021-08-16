@@ -1,43 +1,43 @@
 import {
-  getEdition,
-  getEditionMarkPda,
-  getMetadata,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
-import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import BN from 'bn.js';
 import { serialize } from 'borsh';
 
 import {
   getAuctionKeys,
   getBidderKeys,
-  RedeemPrintingV2BidArgs,
-  getPrizeTrackingTicket,
-  SCHEMA,
   getSafetyDepositConfig,
+  ProxyCallAddress,
+  RedeemBidArgs,
+  RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
+  SCHEMA,
 } from '.';
+import { VAULT_PREFIX } from '../../actions';
+import {
+  findProgramAddress,
+  programIds,
+  StringPublicKey,
+  toPublicKey,
+} from '../../utils';
 
-export async function redeemPrintingV2Bid(
+export async function redeemBid(
   vault: StringPublicKey,
   safetyDepositTokenStore: StringPublicKey,
-  tokenAccount: StringPublicKey,
+  destination: StringPublicKey,
   safetyDeposit: StringPublicKey,
+  fractionMint: StringPublicKey,
   bidder: StringPublicKey,
   payer: StringPublicKey,
-  metadata: StringPublicKey,
-  masterEdition: StringPublicKey,
-  originalMint: StringPublicKey,
-  newMint: StringPublicKey,
-  edition: BN,
-  editionOffset: BN,
-  winIndex: BN,
+  masterEdition: StringPublicKey | undefined,
+  reservationList: StringPublicKey | undefined,
+  isPrintingType: boolean,
   instructions: TransactionInstruction[],
+  // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
+  // and this will instead call the proxy route instead of the real one, wrapping the original
+  // redemption call in an override call that forces the winning index if the auctioneer is authorized.
+  auctioneerReclaimIndex?: number,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -52,22 +52,29 @@ export async function redeemPrintingV2Bid(
     bidder,
   );
 
-  const prizeTrackingTicket = await getPrizeTrackingTicket(
-    auctionManagerKey,
-    originalMint,
-  );
+  const transferAuthority: StringPublicKey = (
+    await findProgramAddress(
+      [
+        Buffer.from(VAULT_PREFIX),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
+        toPublicKey(vault).toBuffer(),
+      ],
+      toPublicKey(PROGRAM_IDS.vault),
+    )
+  )[0];
 
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
     safetyDeposit,
   );
 
-  const newMetadata = await getMetadata(newMint);
-  const newEdition = await getEdition(newMint);
-
-  const editionMarkPda = await getEditionMarkPda(originalMint, edition);
-
-  const value = new RedeemPrintingV2BidArgs({ editionOffset, winIndex });
+  const value =
+    auctioneerReclaimIndex !== undefined
+      ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
+          winningConfigItemIndex: auctioneerReclaimIndex,
+          proxyCall: ProxyCallAddress.RedeemBid,
+        })
+      : new RedeemBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -81,7 +88,7 @@ export async function redeemPrintingV2Bid(
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(tokenAccount),
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
@@ -101,9 +108,9 @@ export async function redeemPrintingV2Bid(
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(safetyDepositConfig),
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(auctionKey),
@@ -123,7 +130,7 @@ export async function redeemPrintingV2Bid(
     {
       pubkey: toPublicKey(payer),
       isSigner: true,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: PROGRAM_IDS.token,
@@ -156,50 +163,29 @@ export async function redeemPrintingV2Bid(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(prizeTrackingTicket),
+      pubkey: toPublicKey(transferAuthority),
       isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(newMetadata),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(newEdition),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(masterEdition),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(newMint),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(editionMarkPda),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      // Mint authority (this) is going to be the payer since the bidder
-      // may not be signer hre - we may be redeeming for someone else (permissionless)
-      // and during the txn, mint authority is removed from us and given to master edition.
-      // The ATA account is already owned by bidder by default. No signing needed
-      pubkey: toPublicKey(payer),
-      isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(metadata),
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
       isWritable: false,
     },
   ];
+
+  if (isPrintingType && masterEdition && reservationList) {
+    keys.push({
+      pubkey: toPublicKey(masterEdition),
+      isSigner: false,
+      isWritable: true,
+    });
+    keys.push({
+      pubkey: toPublicKey(reservationList),
+      isSigner: false,
+      isWritable: true,
+    });
+  }
 
   instructions.push(
     new TransactionInstruction({

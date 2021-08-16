@@ -1,24 +1,24 @@
-import {
-  AUCTION_PREFIX,
-  programIds,
-  METADATA,
-  AccountParser,
-  findProgramAddress,
-  AuctionData,
-  ParsedAccount,
-  Vault,
-  Metadata,
-  MasterEditionV1,
-  SafetyDepositBox,
-  MasterEditionV2,
-  toPublicKey,
-  StringPublicKey,
-} from '@oyster/common';
 import { AccountInfo, SystemProgram } from '@solana/web3.js';
 import BN from 'bn.js';
-import { deserializeUnchecked } from 'borsh';
 import bs58 from 'bs58';
-import { AuctionViewItem } from '../../hooks';
+import { deserializeUnchecked } from 'borsh';
+import {
+  AuctionData,
+  AUCTION_PREFIX,
+  MasterEditionV1,
+  MasterEditionV2,
+  METADATA,
+  Metadata,
+  SafetyDepositBox,
+  Vault,
+} from '../../actions';
+import { AccountParser, ParsedAccount } from '../../contexts';
+import {
+  findProgramAddress,
+  programIds,
+  toPublicKey,
+  StringPublicKey,
+} from '../../utils';
 import {
   AuctionManagerV1,
   BidRedemptionTicketV1,
@@ -35,6 +35,7 @@ export * from './deprecatedValidateSafetyDepositBoxV1';
 export * from './redeemParticipationBidV3';
 export * from './redeemPrintingV2Bid';
 export * from './withdrawMasterEdition';
+export * from './deprecatedStates';
 
 export const METAPLEX_PREFIX = 'metaplex';
 export const TOTALS = 'totals';
@@ -536,6 +537,14 @@ export interface BidRedemptionTicket {
   key: MetaplexKey;
 
   getBidRedeemed(order: number): boolean;
+}
+
+export interface AuctionViewItem {
+  winningConfigType: WinningConfigType;
+  amount: BN;
+  metadata: ParsedAccount<Metadata>;
+  safetyDeposit: ParsedAccount<SafetyDepositBox>;
+  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
 }
 export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;

@@ -1,15 +1,13 @@
-import {
-  programIds,
-  VAULT_PREFIX,
-  getAuctionExtended,
-  findProgramAddress,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
-
 import { SCHEMA } from '.';
+import { getAuctionExtended, VAULT_PREFIX } from '../../actions';
+import {
+  findProgramAddress,
+  programIds,
+  StringPublicKey,
+  toPublicKey,
+} from '../../utils';
 import { DeprecatedPopulateParticipationPrintingAccountArgs } from './deprecatedStates';
 
 export async function deprecatedPopulateParticipationPrintingAccount(

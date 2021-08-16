@@ -1,4 +1,3 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -7,6 +6,7 @@ import {
 import { serialize } from 'borsh';
 
 import { SCHEMA } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 import { DeprecatedValidateParticipationArgs } from './deprecatedStates';
 
 export async function deprecatedValidateParticipation(

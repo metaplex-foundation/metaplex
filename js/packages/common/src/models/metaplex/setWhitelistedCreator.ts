@@ -1,8 +1,8 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getWhitelistedCreator, SCHEMA, SetWhitelistedCreatorArgs } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function setWhitelistedCreator(
   creator: StringPublicKey,

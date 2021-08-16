@@ -1,43 +1,44 @@
 import {
-  findProgramAddress,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-  VAULT_PREFIX,
-} from '@oyster/common';
-import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
+import BN from 'bn.js';
 import { serialize } from 'borsh';
 
 import {
   getAuctionKeys,
   getBidderKeys,
-  getSafetyDepositConfig,
-  ProxyCallAddress,
-  RedeemBidArgs,
-  RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
+  RedeemParticipationBidV3Args,
   SCHEMA,
+  getPrizeTrackingTicket,
+  getSafetyDepositConfig,
 } from '.';
+import {
+  getAuctionExtended,
+  getEdition,
+  getEditionMarkPda,
+  getMetadata,
+} from '../../actions';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
-export async function redeemBid(
+export async function redeemParticipationBidV3(
   vault: StringPublicKey,
   safetyDepositTokenStore: StringPublicKey,
   destination: StringPublicKey,
   safetyDeposit: StringPublicKey,
-  fractionMint: StringPublicKey,
   bidder: StringPublicKey,
   payer: StringPublicKey,
-  masterEdition: StringPublicKey | undefined,
-  reservationList: StringPublicKey | undefined,
-  isPrintingType: boolean,
+  metadata: StringPublicKey,
+  masterEdition: StringPublicKey,
+  originalMint: StringPublicKey,
+  transferAuthority: StringPublicKey,
+  acceptPaymentAccount: StringPublicKey,
+  tokenPaymentAccount: StringPublicKey,
+  newMint: StringPublicKey,
+  edition: BN,
+  winIndex: BN | null,
   instructions: TransactionInstruction[],
-  // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
-  // and this will instead call the proxy route instead of the real one, wrapping the original
-  // redemption call in an override call that forces the winning index if the auctioneer is authorized.
-  auctioneerReclaimIndex?: number,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -46,35 +47,32 @@ export async function redeemBid(
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const auctionDataExtended = await getAuctionExtended({
+    auctionProgramId: PROGRAM_IDS.auction,
+    resource: vault,
+  });
 
   const { bidRedemption, bidMetadata } = await getBidderKeys(
     auctionKey,
     bidder,
   );
 
-  const transferAuthority: StringPublicKey = (
-    await findProgramAddress(
-      [
-        Buffer.from(VAULT_PREFIX),
-        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
-        toPublicKey(vault).toBuffer(),
-      ],
-      toPublicKey(PROGRAM_IDS.vault),
-    )
-  )[0];
+  const prizeTrackingTicket = await getPrizeTrackingTicket(
+    auctionManagerKey,
+    originalMint,
+  );
+
+  const newMetadata = await getMetadata(newMint);
+  const newEdition = await getEdition(newMint);
+
+  const editionMarkPda = await getEditionMarkPda(originalMint, edition);
 
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
     safetyDeposit,
   );
 
-  const value =
-    auctioneerReclaimIndex !== undefined
-      ? new RedeemUnusedWinningConfigItemsAsAuctioneerArgs({
-          winningConfigItemIndex: auctioneerReclaimIndex,
-          proxyCall: ProxyCallAddress.RedeemBid,
-        })
-      : new RedeemBidArgs();
+  const value = new RedeemParticipationBidV3Args({ winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -100,15 +98,15 @@ export async function redeemBid(
     {
       pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: toPublicKey(vault),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
-      pubkey: toPublicKey(fractionMint),
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
       isWritable: true,
     },
@@ -125,12 +123,12 @@ export async function redeemBid(
     {
       pubkey: toPublicKey(bidder),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(payer),
       isSigner: true,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: PROGRAM_IDS.token,
@@ -164,28 +162,70 @@ export async function redeemBid(
     },
     {
       pubkey: toPublicKey(transferAuthority),
-      isSigner: false,
+      isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(safetyDepositConfig),
+      pubkey: toPublicKey(acceptPaymentAccount),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(tokenPaymentAccount),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(prizeTrackingTicket),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(newMetadata),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(newEdition),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(masterEdition),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(newMint),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(editionMarkPda),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      // Mint authority (this) is going to be the payer since the bidder
+      // may not be signer hre - we may be redeeming for someone else (permissionless)
+      // and during the txn, mint authority is removed from us and given to master edition.
+      // The ATA account is already owned by bidder by default. No signing needed
+      pubkey: toPublicKey(payer),
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(metadata),
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: toPublicKey(auctionDataExtended),
       isSigner: false,
       isWritable: false,
     },
   ];
-
-  if (isPrintingType && masterEdition && reservationList) {
-    keys.push({
-      pubkey: toPublicKey(masterEdition),
-      isSigner: false,
-      isWritable: true,
-    });
-    keys.push({
-      pubkey: toPublicKey(reservationList),
-      isSigner: false,
-      isWritable: true,
-    });
-  }
 
   instructions.push(
     new TransactionInstruction({

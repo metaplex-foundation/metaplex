@@ -10,7 +10,7 @@ import {
   ParsedAccount,
   StringPublicKey,
 } from '@oyster/common';
-import { WhitelistedCreator } from '../models/metaplex';
+import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
 import { pubkeyToString } from '../utils/pubkeyToString';

@@ -1,13 +1,4 @@
 import {
-  getEdition,
-  programIds,
-  getMetadata,
-  getEditionMarkPda,
-  getAuctionExtended,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
-import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -18,28 +9,28 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
-  RedeemParticipationBidV3Args,
-  SCHEMA,
+  RedeemPrintingV2BidArgs,
   getPrizeTrackingTicket,
+  SCHEMA,
   getSafetyDepositConfig,
 } from '.';
+import { getEdition, getEditionMarkPda, getMetadata } from '../../actions';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
-export async function redeemParticipationBidV3(
+export async function redeemPrintingV2Bid(
   vault: StringPublicKey,
   safetyDepositTokenStore: StringPublicKey,
-  destination: StringPublicKey,
+  tokenAccount: StringPublicKey,
   safetyDeposit: StringPublicKey,
   bidder: StringPublicKey,
   payer: StringPublicKey,
   metadata: StringPublicKey,
   masterEdition: StringPublicKey,
   originalMint: StringPublicKey,
-  transferAuthority: StringPublicKey,
-  acceptPaymentAccount: StringPublicKey,
-  tokenPaymentAccount: StringPublicKey,
   newMint: StringPublicKey,
   edition: BN,
-  winIndex: BN | null,
+  editionOffset: BN,
+  winIndex: BN,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -49,10 +40,6 @@ export async function redeemParticipationBidV3(
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
-  const auctionDataExtended = await getAuctionExtended({
-    auctionProgramId: PROGRAM_IDS.auction,
-    resource: vault,
-  });
 
   const { bidRedemption, bidMetadata } = await getBidderKeys(
     auctionKey,
@@ -64,17 +51,17 @@ export async function redeemParticipationBidV3(
     originalMint,
   );
 
-  const newMetadata = await getMetadata(newMint);
-  const newEdition = await getEdition(newMint);
-
-  const editionMarkPda = await getEditionMarkPda(originalMint, edition);
-
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
     safetyDeposit,
   );
 
-  const value = new RedeemParticipationBidV3Args({ winIndex });
+  const newMetadata = await getMetadata(newMint);
+  const newEdition = await getEdition(newMint);
+
+  const editionMarkPda = await getEditionMarkPda(originalMint, edition);
+
+  const value = new RedeemPrintingV2BidArgs({ editionOffset, winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
@@ -88,7 +75,7 @@ export async function redeemParticipationBidV3(
       isWritable: true,
     },
     {
-      pubkey: toPublicKey(destination),
+      pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: true,
     },
@@ -100,17 +87,17 @@ export async function redeemParticipationBidV3(
     {
       pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(vault),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: toPublicKey(auctionKey),
@@ -125,7 +112,7 @@ export async function redeemParticipationBidV3(
     {
       pubkey: toPublicKey(bidder),
       isSigner: false,
-      isWritable: true,
+      isWritable: false,
     },
     {
       pubkey: toPublicKey(payer),
@@ -161,21 +148,6 @@ export async function redeemParticipationBidV3(
       pubkey: SYSVAR_RENT_PUBKEY,
       isSigner: false,
       isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(transferAuthority),
-      isSigner: true,
-      isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(acceptPaymentAccount),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: toPublicKey(tokenPaymentAccount),
-      isSigner: false,
-      isWritable: true,
     },
     {
       pubkey: toPublicKey(prizeTrackingTicket),
@@ -218,12 +190,6 @@ export async function redeemParticipationBidV3(
     },
     {
       pubkey: toPublicKey(metadata),
-      isSigner: false,
-      isWritable: false,
-    },
-
-    {
-      pubkey: toPublicKey(auctionDataExtended),
       isSigner: false,
       isWritable: false,
     },

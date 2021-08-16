@@ -1,4 +1,3 @@
-import { programIds, findProgramAddress, toPublicKey } from '@oyster/common';
 import BN from 'bn.js';
 import {
   AuctionManagerStatus,
@@ -9,6 +8,7 @@ import {
   WinningConfigType,
   WinningConstraint,
 } from '.';
+import { findProgramAddress, programIds, toPublicKey } from '../../utils';
 
 export const MAX_BID_REDEMPTION_TICKET_V1_SIZE = 3;
 

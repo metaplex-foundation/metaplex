@@ -1,13 +1,9 @@
-import {
-  getBidderPotKey,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-} from '@oyster/common';
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.';
+import { getBidderPotKey } from '../../actions';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function claimBid(
   acceptPayment: StringPublicKey,

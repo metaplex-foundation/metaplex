@@ -9,8 +9,8 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AuctionView } from '../hooks';
-import { AuctionManagerStatus } from '../models/metaplex';
-import { decommissionAuctionManager } from '../models/metaplex/decommissionAuctionManager';
+import { AuctionManagerStatus } from '@oyster/common/dist/lib/models/metaplex/index';
+import { decommissionAuctionManager } from '@oyster/common/dist/lib/models/metaplex/decommissionAuctionManager';
 import { unwindVault } from './unwindVault';
 
 export async function decommAuctionManagerAndReturnPrizes(

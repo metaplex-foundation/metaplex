@@ -14,6 +14,7 @@ import {
 } from '@oyster/common';
 import { AccountInfo } from '@solana/web3.js';
 import {
+  AuctionManagerV1,
   BidRedemptionTicket,
   Store,
   WhitelistedCreator,
@@ -22,8 +23,7 @@ import {
   AuctionManagerV2,
   SafetyDepositConfig,
   BidRedemptionTicketV2,
-} from '../../models/metaplex';
-import { AuctionManagerV1 } from '../../models/metaplex/deprecatedStates';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];

@@ -1,12 +1,3 @@
-import {
-  AUCTION_PREFIX,
-  EXTENDED,
-  findProgramAddress,
-  programIds,
-  StringPublicKey,
-  toPublicKey,
-  VAULT_PREFIX,
-} from '@oyster/common';
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
@@ -17,6 +8,13 @@ import {
   getPrizeTrackingTicket,
   getSafetyDepositConfig,
 } from '.';
+import { AUCTION_PREFIX, EXTENDED, VAULT_PREFIX } from '../../actions';
+import {
+  findProgramAddress,
+  programIds,
+  toPublicKey,
+  StringPublicKey,
+} from '../../utils';
 
 export async function withdrawMasterEdition(
   vault: StringPublicKey,

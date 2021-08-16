@@ -1,8 +1,8 @@
-import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, SCHEMA, StartAuctionArgs } from '.';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function startAuction(
   vault: StringPublicKey,
