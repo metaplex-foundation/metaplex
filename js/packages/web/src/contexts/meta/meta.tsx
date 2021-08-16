@@ -105,11 +105,11 @@ export function MetaProvider({ children = null as any }) {
     (async () => {
       await setProgramIds(env);
 
-      console.log('-----> Query started', new Date());
+      console.log('-----> Query started');
 
       const nextState = await loadAccounts(connection, all);
 
-      console.log('------->Query finished', new Date());
+      console.log('------->Query finished');
 
       setState(nextState);
 
