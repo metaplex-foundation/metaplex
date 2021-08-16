@@ -178,7 +178,7 @@ export function WalletProvider({ children = null as any }) {
             marginBottom: 10,
           }}
         >
-          M
+          P
         </div>
 
         <h2>{provider ? 'Change provider' : 'Welcome to Metaplex'}</h2>
