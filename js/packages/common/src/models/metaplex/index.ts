@@ -1096,9 +1096,22 @@ export async function getOriginalAuthority(
   )[0];
 }
 
-export async function getWhitelistedCreator(creator: string) {
+export const isCreatorPartOfTheStore = async (
+  creatorAddress: StringPublicKey,
+  pubkey: StringPublicKey,
+  store?: StringPublicKey,
+) => {
+  const creatorKeyInStore = await getWhitelistedCreator(creatorAddress, store);
+
+  return creatorKeyInStore === pubkey;
+};
+
+export async function getWhitelistedCreator(
+  creator: StringPublicKey,
+  storeId?: StringPublicKey,
+) {
   const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const store = storeId || PROGRAM_IDS.store;
   if (!store) {
     throw new Error('Store not initialized');
   }

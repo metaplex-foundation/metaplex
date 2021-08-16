@@ -6,8 +6,7 @@ import {
   decodeAuctionManager,
   decodeBidRedemptionTicket,
   decodeStore,
-  decodeWhitelistedCreator,
-  getWhitelistedCreator,
+  isCreatorPartOfTheStore,
   MetaplexKey,
   Store,
   WhitelistedCreator,
@@ -131,24 +130,33 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     }
 
     if (isWhitelistedCreatorV1Account(account)) {
-      const whitelistedCreator = decodeWhitelistedCreator(account.data);
+      const parsedAccount = cache.add(
+        pubkey,
+        account,
+        WhitelistedCreatorParser,
+        false,
+      ) as ParsedAccount<WhitelistedCreator>;
+
       // TODO: figure out a way to avoid generating creator addresses during parsing
       // should we store store id inside creator?
-      const creatorKeyIfCreatorWasPartOfThisStore = await getWhitelistedCreator(
-        whitelistedCreator.address,
-      );
-
-      if (creatorKeyIfCreatorWasPartOfThisStore === pubkey) {
-        const parsedAccount = cache.add(
+      if (STORE_ID) {
+        const isWhitelistedCreator = await isCreatorPartOfTheStore(
+          parsedAccount.info.address,
           pubkey,
-          account,
-          WhitelistedCreatorParser,
-          false,
-        ) as ParsedAccount<WhitelistedCreator>;
+        );
+        if (isWhitelistedCreator) {
+          setter(
+            'whitelistedCreatorsByCreator',
+            parsedAccount.info.address,
+            parsedAccount,
+          );
+        }
+      }
 
+      if (useAll) {
         setter(
-          'whitelistedCreatorsByCreator',
-          whitelistedCreator.address,
+          'creators',
+          parsedAccount.info.address + '-' + pubkey,
           parsedAccount,
         );
       }

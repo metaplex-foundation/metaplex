@@ -26,6 +26,7 @@ import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
 import { getMultipleAccounts } from '../accounts';
+import { getEmptyMetaState } from './getEmptyMetaState';
 
 async function getProgramAccounts(
   connection: Connection,
@@ -82,30 +83,7 @@ async function getProgramAccounts(
 }
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
-  const tempCache: MetaState = {
-    metadata: [],
-    metadataByMint: {},
-    masterEditions: {},
-    masterEditionsByPrintingMint: {},
-    masterEditionsByOneTimeAuthMint: {},
-    metadataByMasterEdition: {},
-    editions: {},
-    auctionManagersByAuction: {},
-    bidRedemptions: {},
-    auctions: {},
-    auctionDataExtended: {},
-    vaults: {},
-    payoutTickets: {},
-    store: null,
-    whitelistedCreatorsByCreator: {},
-    bidderMetadataByAuctionAndBidder: {},
-    bidderPotsByAuctionAndBidder: {},
-    safetyDepositBoxesByVaultAndIndex: {},
-    prizeTrackingTickets: {},
-    safetyDepositConfigsByAuctionManagerAndIndex: {},
-    bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
-    stores: {},
-  };
+  const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
   const forEach =
@@ -298,7 +276,6 @@ export const metadataByMintUpdater = async (
       metadata,
       state.store,
       state.whitelistedCreatorsByCreator,
-      all,
     )
   ) {
     await metadata.info.init();

@@ -9,11 +9,7 @@ export const isMetadataPartOfStore = (
     string,
     ParsedAccount<WhitelistedCreator>
   >,
-  useAll: boolean,
 ) => {
-  if (useAll) {
-    return true;
-  }
   if (!m?.info?.data?.creators || !store?.info) {
     return false;
   }

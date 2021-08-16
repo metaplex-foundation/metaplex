@@ -1,57 +1,16 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { MetaState, MetaContextState, UpdateStateValueFunc } from './types';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
-import { processAuctions } from './processAuctions';
-import { processMetaplexAccounts } from './processMetaplexAccounts';
-import { processMetaData } from './processMetaData';
-import { processVaultData } from './processVaultData';
-import {
-  loadAccounts,
-  makeSetter,
-  metadataByMintUpdater,
-} from './loadAccounts';
-import { onChangeAccount } from './onChangeAccount';
+import { subscribeAccountsChange } from './subscribeAccountsChange';
+import { getEmptyMetaState } from './getEmptyMetaState';
+import { loadAccounts } from './loadAccounts';
+import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
-import {
-  AUCTION_ID,
-  METADATA_PROGRAM_ID,
-  METAPLEX_ID,
-  toPublicKey,
-  VAULT_ID,
-} from '../../utils';
-import { useQuerySearch } from '../../hooks';
 import { useStore } from '../store';
+import { useQuerySearch } from '../../hooks';
 
 const MetaContext = React.createContext<MetaContextState>({
-  metadata: [],
-  metadataByMint: {},
-  masterEditions: {},
-  masterEditionsByPrintingMint: {},
-  masterEditionsByOneTimeAuthMint: {},
-  metadataByMasterEdition: {},
-  editions: {},
-  auctionManagersByAuction: {},
-  auctions: {},
-  auctionDataExtended: {},
-  vaults: {},
-  store: null,
+  ...getEmptyMetaState(),
   isLoading: false,
-  bidderMetadataByAuctionAndBidder: {},
-  safetyDepositBoxesByVaultAndIndex: {},
-  safetyDepositConfigsByAuctionManagerAndIndex: {},
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
-  bidderPotsByAuctionAndBidder: {},
-  bidRedemptions: {},
-  whitelistedCreatorsByCreator: {},
-  payoutTickets: {},
-  prizeTrackingTickets: {},
-  stores: {},
 });
 
 export function MetaProvider({ children = null as any }) {
@@ -60,30 +19,7 @@ export function MetaProvider({ children = null as any }) {
   const searchParams = useQuerySearch();
   const all = searchParams.get('all') == 'true';
 
-  const [state, setState] = useState<MetaState>({
-    metadata: [],
-    metadataByMint: {},
-    masterEditions: {},
-    masterEditionsByPrintingMint: {},
-    masterEditionsByOneTimeAuthMint: {},
-    metadataByMasterEdition: {},
-    editions: {},
-    auctionManagersByAuction: {},
-    bidRedemptions: {},
-    auctions: {},
-    auctionDataExtended: {},
-    vaults: {},
-    payoutTickets: {},
-    store: null,
-    whitelistedCreatorsByCreator: {},
-    bidderMetadataByAuctionAndBidder: {},
-    bidderPotsByAuctionAndBidder: {},
-    safetyDepositBoxesByVaultAndIndex: {},
-    prizeTrackingTickets: {},
-    safetyDepositConfigsByAuctionManagerAndIndex: {},
-    bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
-    stores: {},
-  });
+  const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -134,66 +70,13 @@ export function MetaProvider({ children = null as any }) {
     })();
   }, [connection, setState, updateMints, storeAddress, isReady]);
 
-  const updateStateValue = useMemo<UpdateStateValueFunc>(
-    () => (prop, key, value) => {
-      setState(current => makeSetter({ ...current })(prop, key, value));
-    },
-    [setState],
-  );
-
-  const store = state.store;
-  const whitelistedCreatorsByCreator = state.whitelistedCreatorsByCreator;
-
   useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    const vaultSubId = connection.onProgramAccountChange(
-      toPublicKey(VAULT_ID),
-      onChangeAccount(processVaultData, updateStateValue, all),
-    );
-
-    const auctionSubId = connection.onProgramAccountChange(
-      toPublicKey(AUCTION_ID),
-      onChangeAccount(processAuctions, updateStateValue, all),
-    );
-
-    const metaplexSubId = connection.onProgramAccountChange(
-      toPublicKey(METAPLEX_ID),
-      onChangeAccount(processMetaplexAccounts, updateStateValue, all),
-    );
-
-    const metaSubId = connection.onProgramAccountChange(
-      toPublicKey(METADATA_PROGRAM_ID),
-      onChangeAccount(
-        processMetaData,
-        async (prop, key, value) => {
-          if (prop === 'metadataByMint') {
-            const nextState = await metadataByMintUpdater(value, state, all);
-            setState(nextState);
-          } else {
-            updateStateValue(prop, key, value);
-          }
-        },
-        all,
-      ),
-    );
-
-    return () => {
-      connection.removeProgramAccountChangeListener(vaultSubId);
-      connection.removeProgramAccountChangeListener(metaplexSubId);
-      connection.removeProgramAccountChangeListener(metaSubId);
-      connection.removeProgramAccountChangeListener(auctionSubId);
-    };
-  }, [
-    connection,
-    updateStateValue,
-    setState,
-    store,
-    whitelistedCreatorsByCreator,
-    isLoading,
-  ]);
+    return subscribeAccountsChange(connection, all, () => state, setState);
+  }, [connection, setState, isLoading]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators

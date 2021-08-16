@@ -72,6 +72,7 @@ export interface MetaState {
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
   stores: Record<string, ParsedAccount<Store>>;
+  creators: Record<string, ParsedAccount<WhitelistedCreator>>;
 }
 
 export interface MetaContextState extends MetaState {

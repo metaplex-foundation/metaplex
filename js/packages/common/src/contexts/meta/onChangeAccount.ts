@@ -1,7 +1,5 @@
-import {
-  KeyedAccountInfo,
-  ProgramAccountChangeCallback,
-} from '@solana/web3.js';
+import { ProgramAccountChangeCallback } from '@solana/web3.js';
+import { pubkeyToString } from '../../utils';
 import { ProcessAccountsFunc, UpdateStateValueFunc } from './types';
 
 export const onChangeAccount =
@@ -11,7 +9,7 @@ export const onChangeAccount =
     all: boolean,
   ): ProgramAccountChangeCallback =>
   async info => {
-    const pubkey = pubkeyByAccountInfo(info);
+    const pubkey = pubkeyToString(info.accountId);
     await process(
       {
         pubkey,
@@ -21,9 +19,3 @@ export const onChangeAccount =
       all,
     );
   };
-
-const pubkeyByAccountInfo = (info: KeyedAccountInfo) => {
-  return typeof info.accountId === 'string'
-    ? info.accountId
-    : info.accountId.toBase58();
-};
