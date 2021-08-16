@@ -99,12 +99,6 @@ export const WhitelistedCreator = objectType({
     t.field('key', { type: MetaplexKey });
     t.pubkey('address');
     t.boolean('activated');
-    t.list.field('artworks', {
-      type: Metadata,
-      resolve: (creator, _, { dataSources }) => {
-        return dataSources.dataApi.getCreatorArtworks(creator.address);
-      },
-    });
   },
 });
 

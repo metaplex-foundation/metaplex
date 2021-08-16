@@ -2,114 +2,6 @@
 ### Do not make changes to this file directly
 
 
-type Account {
-  data: Buffer
-  lamports: Int
-  owner: PublicKey
-}
-
-type AccountWithAuctionData {
-  account: Account
-  info: AuctionData
-  pubkey: PublicKey
-}
-
-type AccountWithAuctionDataExtended {
-  account: Account
-  info: AuctionDataExtended
-  pubkey: PublicKey
-}
-
-type AccountWithAuctionManagerV1 {
-  account: Account
-  info: AuctionManagerV1
-  pubkey: PublicKey
-}
-
-type AccountWithAuctionManagerV2 {
-  account: Account
-  info: AuctionManagerV2
-  pubkey: PublicKey
-}
-
-type AccountWithBidRedemptionTicket {
-  account: Account
-  info: BidRedemptionTicket
-  pubkey: PublicKey
-}
-
-type AccountWithBidderMetadata {
-  account: Account
-  info: BidderMetadata
-  pubkey: PublicKey
-}
-
-type AccountWithBidderPot {
-  account: Account
-  info: BidderPot
-  pubkey: PublicKey
-}
-
-type AccountWithEdition {
-  account: Account
-  info: Edition
-  pubkey: PublicKey
-}
-
-type AccountWithMasterEdition {
-  account: Account
-  info: MasterEdition
-  pubkey: PublicKey
-}
-
-type AccountWithMetadata {
-  account: Account
-  info: Metadata
-  pubkey: PublicKey
-}
-
-type AccountWithPayoutTicket {
-  account: Account
-  info: PayoutTicket
-  pubkey: PublicKey
-}
-
-type AccountWithPrizeTrackingTicket {
-  account: Account
-  info: PrizeTrackingTicket
-  pubkey: PublicKey
-}
-
-type AccountWithSafetyDepositBox {
-  account: Account
-  info: SafetyDepositBox
-  pubkey: PublicKey
-}
-
-type AccountWithSafetyDepositConfig {
-  account: Account
-  info: SafetyDepositConfig
-  pubkey: PublicKey
-}
-
-type AccountWithStore {
-  account: Account
-  info: Store
-  pubkey: PublicKey
-}
-
-type AccountWithVault {
-  account: Account
-  info: Vault
-  pubkey: PublicKey
-}
-
-type AccountWithWhitelistedCreator {
-  account: Account
-  info: WhitelistedCreator
-  pubkey: PublicKey
-}
-
 type AmountRange {
   amount: BN
   length: BN
@@ -308,11 +200,6 @@ enum NonWinningConstraint {
   NoParticipationPrize
 }
 
-type ParsedAccount {
-  account: Account
-  pubkey: PublicKey
-}
-
 type ParticipationConfigV2 {
   fixedPrice: BN
   nonWinningConstraint: NonWinningConstraint
@@ -356,16 +243,12 @@ type PrizeTrackingTicket {
 scalar PublicKey
 
 type Query {
-  creatorByStore(creatorId: String!, storeId: String!): WhitelistedCreator
-  creators(id: String): [WhitelistedCreator]
-  creatorsByStore(storeId: String!): [WhitelistedCreator]
+  artworks(creatorId: String, storeId: String!): [Metadata]
+  artworksCount: Int
+  creator(creatorId: String!, storeId: String!): WhitelistedCreator
+  creators(storeId: String!): [WhitelistedCreator]
   creatorsCount: Int
-  hello(name: String): String
-  store(
-    """Store ID, processed from Store Owner Address"""
-    id: String!
-  ): Store
-  stores: [Store]
+  store(storeId: String!): Store
   storesCount: Int
 }
 
@@ -474,7 +357,6 @@ enum VaultState {
 type WhitelistedCreator {
   activated: Boolean
   address: PublicKey
-  artworks: [Metadata]
   key: MetaplexKey
 }
 

@@ -85,114 +85,6 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
-  Account: {
-    // root type
-    data?: NexusGenScalars['Buffer'] | null; // Buffer
-    lamports?: number | null; // Int
-    owner?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionData: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['AuctionData'] | null; // AuctionData
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionDataExtended: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['AuctionDataExtended'] | null; // AuctionDataExtended
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionManagerV1: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['AuctionManagerV1'] | null; // AuctionManagerV1
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionManagerV2: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['AuctionManagerV2'] | null; // AuctionManagerV2
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidRedemptionTicket: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['BidRedemptionTicket'] | null; // BidRedemptionTicket
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidderMetadata: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['BidderMetadata'] | null; // BidderMetadata
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidderPot: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['BidderPot'] | null; // BidderPot
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithEdition: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['Edition'] | null; // Edition
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithMasterEdition: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['MasterEdition'] | null; // MasterEdition
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithMetadata: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['Metadata'] | null; // Metadata
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithPayoutTicket: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['PayoutTicket'] | null; // PayoutTicket
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithPrizeTrackingTicket: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['PrizeTrackingTicket'] | null; // PrizeTrackingTicket
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithSafetyDepositBox: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['SafetyDepositBox'] | null; // SafetyDepositBox
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithSafetyDepositConfig: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['SafetyDepositConfig'] | null; // SafetyDepositConfig
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithStore: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['Store'] | null; // Store
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithVault: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['Vault'] | null; // Vault
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithWhitelistedCreator: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    info?: NexusGenRootTypes['WhitelistedCreator'] | null; // WhitelistedCreator
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
   AmountRange: {
     // root type
     amount?: NexusGenScalars['BN'] | null; // BN
@@ -300,11 +192,6 @@ export interface NexusGenObjects {
     primarySaleHappened?: boolean | null; // Boolean
     updateAuthority?: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
-  ParsedAccount: {
-    // root type
-    account?: NexusGenRootTypes['Account'] | null; // Account
-    pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
   ParticipationConfigV2: {
     // root type
     fixedPrice?: NexusGenScalars['BN'] | null; // BN
@@ -402,114 +289,6 @@ export type NexusGenAllTypes = NexusGenRootTypes &
   NexusGenEnums;
 
 export interface NexusGenFieldTypes {
-  Account: {
-    // field return type
-    data: NexusGenScalars['Buffer'] | null; // Buffer
-    lamports: number | null; // Int
-    owner: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionData: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['AuctionData'] | null; // AuctionData
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionDataExtended: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['AuctionDataExtended'] | null; // AuctionDataExtended
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionManagerV1: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['AuctionManagerV1'] | null; // AuctionManagerV1
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithAuctionManagerV2: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['AuctionManagerV2'] | null; // AuctionManagerV2
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidRedemptionTicket: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['BidRedemptionTicket'] | null; // BidRedemptionTicket
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidderMetadata: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['BidderMetadata'] | null; // BidderMetadata
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithBidderPot: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['BidderPot'] | null; // BidderPot
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithEdition: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['Edition'] | null; // Edition
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithMasterEdition: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['MasterEdition'] | null; // MasterEdition
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithMetadata: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['Metadata'] | null; // Metadata
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithPayoutTicket: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['PayoutTicket'] | null; // PayoutTicket
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithPrizeTrackingTicket: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['PrizeTrackingTicket'] | null; // PrizeTrackingTicket
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithSafetyDepositBox: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['SafetyDepositBox'] | null; // SafetyDepositBox
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithSafetyDepositConfig: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['SafetyDepositConfig'] | null; // SafetyDepositConfig
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithStore: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['Store'] | null; // Store
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithVault: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['Vault'] | null; // Vault
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
-  AccountWithWhitelistedCreator: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    info: NexusGenRootTypes['WhitelistedCreator'] | null; // WhitelistedCreator
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
   AmountRange: {
     // field return type
     amount: NexusGenScalars['BN'] | null; // BN
@@ -617,11 +396,6 @@ export interface NexusGenFieldTypes {
     primarySaleHappened: boolean | null; // Boolean
     updateAuthority: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
-  ParsedAccount: {
-    // field return type
-    account: NexusGenRootTypes['Account'] | null; // Account
-    pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
   ParticipationConfigV2: {
     // field return type
     fixedPrice: NexusGenScalars['BN'] | null; // BN
@@ -661,9 +435,7 @@ export interface NexusGenFieldTypes {
       NexusGenRootTypes['AccountWithWhitelistedCreator'] | null
     > | null; // [AccountWithWhitelistedCreator]
     creatorsCount: number | null; // Int
-    hello: string | null; // String
     store: NexusGenRootTypes['Store'] | null; // Store
-    stores: Array<NexusGenRootTypes['Store'] | null> | null; // [Store]
     storesCount: number | null; // Int
   };
   SafetyDepositBox: {
@@ -713,120 +485,11 @@ export interface NexusGenFieldTypes {
     // field return type
     activated: boolean | null; // Boolean
     address: NexusGenScalars['PublicKey'] | null; // PublicKey
-    artworks: Array<NexusGenRootTypes['Metadata'] | null> | null; // [Metadata]
     key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
   };
 }
 
 export interface NexusGenFieldTypeNames {
-  Account: {
-    // field return type name
-    data: 'Buffer';
-    lamports: 'Int';
-    owner: 'PublicKey';
-  };
-  AccountWithAuctionData: {
-    // field return type name
-    account: 'Account';
-    info: 'AuctionData';
-    pubkey: 'PublicKey';
-  };
-  AccountWithAuctionDataExtended: {
-    // field return type name
-    account: 'Account';
-    info: 'AuctionDataExtended';
-    pubkey: 'PublicKey';
-  };
-  AccountWithAuctionManagerV1: {
-    // field return type name
-    account: 'Account';
-    info: 'AuctionManagerV1';
-    pubkey: 'PublicKey';
-  };
-  AccountWithAuctionManagerV2: {
-    // field return type name
-    account: 'Account';
-    info: 'AuctionManagerV2';
-    pubkey: 'PublicKey';
-  };
-  AccountWithBidRedemptionTicket: {
-    // field return type name
-    account: 'Account';
-    info: 'BidRedemptionTicket';
-    pubkey: 'PublicKey';
-  };
-  AccountWithBidderMetadata: {
-    // field return type name
-    account: 'Account';
-    info: 'BidderMetadata';
-    pubkey: 'PublicKey';
-  };
-  AccountWithBidderPot: {
-    // field return type name
-    account: 'Account';
-    info: 'BidderPot';
-    pubkey: 'PublicKey';
-  };
-  AccountWithEdition: {
-    // field return type name
-    account: 'Account';
-    info: 'Edition';
-    pubkey: 'PublicKey';
-  };
-  AccountWithMasterEdition: {
-    // field return type name
-    account: 'Account';
-    info: 'MasterEdition';
-    pubkey: 'PublicKey';
-  };
-  AccountWithMetadata: {
-    // field return type name
-    account: 'Account';
-    info: 'Metadata';
-    pubkey: 'PublicKey';
-  };
-  AccountWithPayoutTicket: {
-    // field return type name
-    account: 'Account';
-    info: 'PayoutTicket';
-    pubkey: 'PublicKey';
-  };
-  AccountWithPrizeTrackingTicket: {
-    // field return type name
-    account: 'Account';
-    info: 'PrizeTrackingTicket';
-    pubkey: 'PublicKey';
-  };
-  AccountWithSafetyDepositBox: {
-    // field return type name
-    account: 'Account';
-    info: 'SafetyDepositBox';
-    pubkey: 'PublicKey';
-  };
-  AccountWithSafetyDepositConfig: {
-    // field return type name
-    account: 'Account';
-    info: 'SafetyDepositConfig';
-    pubkey: 'PublicKey';
-  };
-  AccountWithStore: {
-    // field return type name
-    account: 'Account';
-    info: 'Store';
-    pubkey: 'PublicKey';
-  };
-  AccountWithVault: {
-    // field return type name
-    account: 'Account';
-    info: 'Vault';
-    pubkey: 'PublicKey';
-  };
-  AccountWithWhitelistedCreator: {
-    // field return type name
-    account: 'Account';
-    info: 'WhitelistedCreator';
-    pubkey: 'PublicKey';
-  };
   AmountRange: {
     // field return type name
     amount: 'BN';
@@ -934,11 +597,6 @@ export interface NexusGenFieldTypeNames {
     primarySaleHappened: 'Boolean';
     updateAuthority: 'PublicKey';
   };
-  ParsedAccount: {
-    // field return type name
-    account: 'Account';
-    pubkey: 'PublicKey';
-  };
   ParticipationConfigV2: {
     // field return type name
     fixedPrice: 'BN';
@@ -1038,15 +696,16 @@ export interface NexusGenArgTypes {
     };
     creatorsByStore: {
       // args
+      creatorId: string; // String!
       storeId: string; // String!
     };
-    hello: {
+    creators: {
       // args
-      name?: string | null; // String
+      storeId: string; // String!
     };
     store: {
       // args
-      id: string; // String!
+      storeId: string; // String!
     };
   };
 }

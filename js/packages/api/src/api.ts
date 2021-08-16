@@ -50,45 +50,46 @@ export class DataApi {
     return DataApi.state;
   }
 
-  getState() {
-    return DataApi.state;
+  // data methods
+
+  getStore(storeId: string) {
+    return this.state.stores[storeId].info;
   }
 
-  getCreators(creatorId?: string | null) {
-    let creators = mapInfo(Object.values(DataApi.state.creators));
-
-    if (creatorId) {
-      creators = creators.filter(({ address }) => address === creatorId);
-    }
-    return creators;
-  }
-
-  async getCreatorsByStore(storeId: string) {
-    const creators = Object.values(DataApi.state.creators);
+  async getCreators(storeId: string) {
+    const creators = Object.values(this.state.creators);
     const creatorsByStore = [];
 
     for (const creator of creators) {
-      const isLookedCreator = await isCreatorPartOfTheStore(
+      const isWhitelistedCreator = await isCreatorPartOfTheStore(
         creator.info.address,
         creator.pubkey,
         storeId,
       );
-      if (isLookedCreator) {
+      if (isWhitelistedCreator) {
         creatorsByStore.push(creator.info);
       }
     }
     return creatorsByStore;
   }
 
-  async getCreatorByStore(storeId: string, creatorId: string) {
-    const creators = await this.getCreatorsByStore(storeId);
+  async getCreator(storeId: string, creatorId?: string | null) {
+    const creators = await this.getCreators(storeId);
     return creators.find(({ address }) => address === creatorId) || null;
   }
 
-  getCreatorArtworks(creatorId: string) {
+  async getArtworks(storeId: string, creatorId?: string | null) {
+    const store = this.getStore(storeId);
+    const creator = await this.getCreator(storeId, creatorId);
+    if (creatorId && !creator?.activated) {
+      return [];
+    }
+
     const artworks = mapInfo(DataApi.state.metadata);
-    return artworks.filter(({ data }) => {
-      return data.creators?.some(({ address }) => address === creatorId);
+    return artworks.filter(({ data: { creators } }) => {
+      return creators?.some(({ address, verified }) => {
+        return verified && (creatorId ? address === creatorId : store.public);
+      });
     });
   }
 }
