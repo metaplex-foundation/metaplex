@@ -1,7 +1,8 @@
-import { DataApi } from './api';
+import { MetaplexApi } from './api';
 
 export interface Context {
   dataSources: {
-    dataApi: DataApi;
+    dataApi: MetaplexApi;
   };
+  network?: string;
 }

@@ -1,6 +1,7 @@
 import { ApolloServer } from 'apollo-server';
+import { ExpressContext } from 'apollo-server-express';
 import { makeSchema } from 'nexus';
-import { DataApi } from './api';
+import { MetaplexApi } from './api';
 import * as types from './schema';
 import path from 'path';
 
@@ -23,10 +24,15 @@ async function startApolloServer() {
   });
 
   const dataSources = () => ({
-    dataApi: new DataApi(),
+    dataApi: new MetaplexApi(),
   });
 
-  const server = new ApolloServer({ schema, dataSources });
+  const context = ({ req }: ExpressContext) => {
+    const network = req.headers.network;
+    return { network };
+  };
+
+  const server = new ApolloServer({ schema, dataSources, context });
   const { url } = await server.listen();
   console.log(`🚀 Server ready at ${url}`);
 }
