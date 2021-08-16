@@ -1,7 +1,11 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
-import { AuctionManagerV1, AuctionManagerV2, WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
+import {
+  AuctionManagerV1,
+  AuctionManagerV2,
+  WinningConfigType,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
   AuctionDataExtended,

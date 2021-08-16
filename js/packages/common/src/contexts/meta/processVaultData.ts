@@ -7,7 +7,7 @@ import {
   VaultKey,
 } from '../../actions';
 import { VAULT_ID } from '../../utils';
-import { ParsedAccount } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
 import { ProcessAccountsFunc } from './types';
 
 export const processVaultData: ProcessAccountsFunc = (

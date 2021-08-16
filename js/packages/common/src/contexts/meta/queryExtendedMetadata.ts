@@ -1,12 +1,10 @@
 import { MintInfo } from '@solana/spl-token';
 import { Connection } from '@solana/web3.js';
 import { Metadata } from '../../actions';
-import {
-  cache,
-  getMultipleAccounts,
-  MintParser,
-  ParsedAccount,
-} from '../accounts';
+import { ParsedAccount } from '../accounts/types';
+import { cache } from '../accounts/cache';
+import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
+import { MintParser } from '../accounts/parsesrs';
 
 export const queryExtendedMetadata = async (
   connection: Connection,

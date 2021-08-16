@@ -22,8 +22,8 @@ import {
   Store,
   WhitelistedCreator,
 } from '../../models/metaplex';
-import { ParsedAccount } from '../accounts';
 import { PublicKeyStringAndAccount } from '../../utils';
+import { ParsedAccount } from '../accounts/types';
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];

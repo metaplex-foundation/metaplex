@@ -11,7 +11,7 @@ import {
   Metadata,
   MetadataKey,
 } from '../../actions';
-import { ParsedAccount } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
 import { METADATA_PROGRAM_ID } from '../../utils';
 
 export const processMetaData: ProcessAccountsFunc = (

@@ -12,7 +12,8 @@ import {
   MAX_AUCTION_DATA_EXTENDED_SIZE,
 } from '../../actions';
 import { AUCTION_ID } from '../../utils';
-import { cache, ParsedAccount } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
+import { cache } from '../accounts/cache';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 
 export const processAuctions: ProcessAccountsFunc = (

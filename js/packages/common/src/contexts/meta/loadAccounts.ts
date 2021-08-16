@@ -24,7 +24,8 @@ import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
-import { ParsedAccount, getMultipleAccounts } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
+import { getMultipleAccounts } from '../accounts';
 
 async function getProgramAccounts(
   connection: Connection,

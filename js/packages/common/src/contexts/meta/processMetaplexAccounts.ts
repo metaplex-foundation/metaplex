@@ -22,7 +22,8 @@ import {
 } from '../../models/metaplex';
 import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, programIds } from '../../utils';
-import { cache, ParsedAccount } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
+import { cache } from '../accounts/cache';
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },

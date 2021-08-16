@@ -1,6 +1,6 @@
 import { Metadata } from '../../actions';
 import { Store, WhitelistedCreator } from '../../models/metaplex';
-import { ParsedAccount } from '../accounts';
+import { ParsedAccount } from '../accounts/types';
 
 export const isMetadataPartOfStore = (
   m: ParsedAccount<Metadata>,
