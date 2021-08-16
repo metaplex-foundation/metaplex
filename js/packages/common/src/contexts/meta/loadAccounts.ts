@@ -25,8 +25,8 @@ import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
-import { getMultipleAccounts } from '../accounts';
 import { getEmptyMetaState } from './getEmptyMetaState';
+import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 
 async function getProgramAccounts(
   connection: Connection,
@@ -93,89 +93,58 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }
     };
 
-  const additionalPromises: Promise<void>[] = [];
+  let isSelectivePullMetadata = false;
+  const pullMetadata = async (creators: AccountAndPubkey[]) => {
+    await forEach(processMetaplexAccounts)(creators);
 
-  const IS_BIG_STORE =
-    process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
-  console.log(`Is big store: ${IS_BIG_STORE}`);
+    const whitelistedCreators = Object.values(
+      tempCache.whitelistedCreatorsByCreator,
+    );
 
-  const promises = [
-    getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
-    getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
-    getProgramAccounts(connection, METAPLEX_ID).then(
-      forEach(processMetaplexAccounts),
-    ),
-    IS_BIG_STORE
-      ? getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
+    if (whitelistedCreators.length > 3) {
+      console.log(' too many creators, pulling all nfts in one go');
+      additionalPromises.push(
+        getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
           forEach(processMetaData),
-        )
-      : undefined,
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
-        },
-      ],
-    }).then(async creators => {
-      const result = await forEach(processMetaplexAccounts)(creators);
-
-      if (IS_BIG_STORE) {
-        return result;
-      }
-
-      const whitelistedCreators = Object.values(
-        tempCache.whitelistedCreatorsByCreator,
+        ),
       );
+    } else {
+      console.log('pulling optimized nfts');
+      isSelectivePullMetadata = true;
 
-      if (whitelistedCreators.length > 3) {
-        console.log(' too many creators, pulling all nfts in one go');
-        additionalPromises.push(
-          getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
-            forEach(processMetaData),
-          ),
-        );
-      } else {
-        console.log('pulling optimized nfts');
-
-        for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-          for (let j = 0; j < whitelistedCreators.length; j++) {
-            additionalPromises.push(
-              getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-                filters: [
-                  {
-                    memcmp: {
-                      offset:
-                        1 + // key
-                        32 + // update auth
-                        32 + // mint
-                        4 + // name string length
-                        MAX_NAME_LENGTH + // name
-                        4 + // uri string length
-                        MAX_URI_LENGTH + // uri
-                        4 + // symbol string length
-                        MAX_SYMBOL_LENGTH + // symbol
-                        2 + // seller fee basis points
-                        1 + // whether or not there is a creators vec
-                        4 + // creators vec length
-                        i * MAX_CREATOR_LEN,
-                      bytes: whitelistedCreators[j].info.address,
-                    },
+      for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+        for (let j = 0; j < whitelistedCreators.length; j++) {
+          additionalPromises.push(
+            getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+              filters: [
+                {
+                  memcmp: {
+                    offset:
+                      1 + // key
+                      32 + // update auth
+                      32 + // mint
+                      4 + // name string length
+                      MAX_NAME_LENGTH + // name
+                      4 + // uri string length
+                      MAX_URI_LENGTH + // uri
+                      4 + // symbol string length
+                      MAX_SYMBOL_LENGTH + // symbol
+                      2 + // seller fee basis points
+                      1 + // whether or not there is a creators vec
+                      4 + // creators vec length
+                      i * MAX_CREATOR_LEN,
+                    bytes: whitelistedCreators[j].info.address,
                   },
-                ],
-              }).then(forEach(processMetaData)),
-            );
-          }
+                },
+              ],
+            }).then(forEach(processMetaData)),
+          );
         }
       }
-    }),
-  ];
-  await Promise.all(promises);
-  await Promise.all(additionalPromises);
+    }
+  };
 
-  await postProcessMetadata(tempCache, all);
-  console.log('Metadata size', tempCache.metadata.length);
-
-  if (additionalPromises.length > 0) {
+  const pullEditions = async () => {
     console.log('Pulling editions for optimized metadata');
     let setOf100MetadataEditionKeys: string[] = [];
     const editionPromises: Promise<{
@@ -241,6 +210,39 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       Object.keys(tempCache.editions).length,
       Object.keys(tempCache.masterEditions).length,
     );
+  };
+
+  const IS_BIG_STORE =
+    all || process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
+  console.log(`Is big store: ${IS_BIG_STORE}`);
+
+  const additionalPromises: Promise<void>[] = [];
+  const basePromises = [
+    getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
+    getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
+    getProgramAccounts(connection, METAPLEX_ID).then(
+      forEach(processMetaplexAccounts),
+    ),
+    IS_BIG_STORE
+      ? getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
+          forEach(processMetaData),
+        )
+      : getProgramAccounts(connection, METAPLEX_ID, {
+          filters: [
+            {
+              dataSize: MAX_WHITELISTED_CREATOR_SIZE,
+            },
+          ],
+        }).then(pullMetadata),
+  ];
+  await Promise.all(basePromises);
+  await Promise.all(additionalPromises);
+
+  await postProcessMetadata(tempCache, all);
+  console.log('Metadata size', tempCache.metadata.length);
+
+  if (isSelectivePullMetadata) {
+    await pullEditions();
   }
 
   return tempCache;
@@ -272,6 +274,7 @@ export const metadataByMintUpdater = async (
 ) => {
   const key = metadata.info.mint;
   if (
+    all ||
     isMetadataPartOfStore(
       metadata,
       state.store,
