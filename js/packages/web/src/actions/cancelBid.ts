@@ -10,6 +10,7 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
 import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
@@ -30,6 +31,7 @@ export async function sendCancelBid(
 ) {
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
+
   if (
     auctionView.auction.info.ended() &&
     auctionView.auction.info.state !== AuctionState.Ended
@@ -60,7 +62,9 @@ export async function sendCancelBid(
   );
 
   if (
-    wallet?.publicKey?.equals(auctionView.auctionManager.authority) &&
+    wallet?.publicKey?.equals(
+      toPublicKey(auctionView.auctionManager.authority),
+    ) &&
     auctionView.auction.info.ended()
   ) {
     await claimUnusedPrizes(
