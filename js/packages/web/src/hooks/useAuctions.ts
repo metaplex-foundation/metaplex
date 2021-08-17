@@ -61,6 +61,7 @@ export interface AuctionView {
   myBidRedemption?: ParsedAccount<BidRedemptionTicket>;
   vault: ParsedAccount<Vault>;
   totallyComplete: boolean;
+  isInstantSale: boolean;
 }
 
 export function useCachedRedemptionKeysByWallet() {
@@ -198,6 +199,17 @@ export const useAuctions = (state?: AuctionViewState) => {
 
   return auctionViews;
 };
+
+function isInstantSale(
+  auctionDataExt: ParsedAccount<AuctionDataExtended> | null,
+  auction: ParsedAccount<AuctionData>,
+) {
+  return !!(
+    auctionDataExt?.info.instantSalePrice &&
+    auction.info.priceFloor.minPrice &&
+    auctionDataExt?.info.instantSalePrice.eq(auction.info.priceFloor.minPrice)
+  );
+}
 
 function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   const list: T[] = [];
@@ -347,6 +359,10 @@ export function processAccountsIntoAuctionView(
       existingAuctionView.myBidderMetadata = bidderMetadata;
       existingAuctionView.myBidRedemption = bidRedemption;
       existingAuctionView.auctionDataExtended = auctionDataExt || undefined;
+      existingAuctionView.isInstantSale = isInstantSale(
+        auctionDataExt,
+        auction,
+      );
       for (let i = 0; i < existingAuctionView.items.length; i++) {
         const winningSet = existingAuctionView.items[i];
         for (let j = 0; j < winningSet.length; j++) {
@@ -444,6 +460,8 @@ export function processAccountsIntoAuctionView(
 
       view.thumbnail =
         ((view.items || [])[0] || [])[0] || view.participationItem;
+
+      view.isInstantSale = isInstantSale(auctionDataExt, auction);
 
       view.totallyComplete = !!(
         view.thumbnail &&

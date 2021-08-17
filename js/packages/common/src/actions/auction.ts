@@ -184,15 +184,21 @@ export class AuctionDataExtended {
   totalUncancelledBids: BN;
   tickSize: BN | null;
   gapTickSizePercentage: number | null;
+  instantSalePrice: BN | null;
+  name: number[] | null;
 
   constructor(args: {
     totalUncancelledBids: BN;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    instantSalePrice: BN | null;
+    name: number[] | null;
   }) {
     this.totalUncancelledBids = args.totalUncancelledBids;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.instantSalePrice = args.instantSalePrice;
+    this.name = args.name;
   }
 }
 
