@@ -21,6 +21,8 @@ import {
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
+import { ConnectionProxy } from "rpc-cache-server";
+import { connect } from 'http2';
 
 export type ENV =
   | 'mainnet-beta'
@@ -156,6 +158,34 @@ export function ConnectionProvider({
       {children}
     </ConnectionContext.Provider>
   );
+}
+
+const CACHE_ENDPOINT = ""; //TODO: Give this a value
+
+interface ConnectionProxyConfig {
+  connection: Connection;
+  sendConnection: Connection;
+  endpoint: string;
+  setSlippage: (val: number) => void;
+  env: ENV;
+  setEndpoint: (val: string) => void;
+  tokens: TokenInfo[];
+  tokenMap: Map<string, TokenInfo>;
+}
+
+const ConnectionProxyContext = React.createContext<ConnectionProxyConfig>({
+  endpoint: DEFAULT,
+  setEndpoint: () => {},
+  setSlippage: (val: number) => {},
+  connection: await (async () => {return await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent')})(),
+  sendConnection: await (async () => {return await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent')})(),
+  env: ENDPOINTS[0].name,
+  tokens: [],
+  tokenMap: new Map<string, TokenInfo>(),
+});
+
+export const useConnectionProxy = async () => {
+  return useContext(ConnectionProxyContext).connection as Connection;
 }
 
 export function useConnection() {
