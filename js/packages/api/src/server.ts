@@ -12,6 +12,18 @@ async function startApolloServer() {
       schema: __dirname + '/generated/schema.graphql',
       typegen: __dirname + '/generated/typings.ts',
     },
+    sourceTypes: {
+      modules: [
+        {
+          module: path.join(__dirname, 'sourceTypes.ts'),
+          alias: 'common',
+        },
+      ],
+      mapping: {
+        Artwork: 'common.Metadata',
+        Creator: 'common.WhitelistedCreator',
+      },
+    },
     contextType: {
       module: path.join(__dirname, 'context.ts'),
       export: 'Context',
@@ -24,7 +36,7 @@ async function startApolloServer() {
   });
 
   const dataSources = () => ({
-    dataApi: new MetaplexApi(),
+    api: new MetaplexApi(),
   });
 
   const context = ({ req }: ExpressContext) => {
@@ -35,6 +47,9 @@ async function startApolloServer() {
   const server = new ApolloServer({ schema, dataSources, context });
   const { url } = await server.listen();
   console.log(`🚀 Server ready at ${url}`);
+
+  console.log('🌋 Warm up data');
+  MetaplexApi.load();
 }
 
 void startApolloServer();

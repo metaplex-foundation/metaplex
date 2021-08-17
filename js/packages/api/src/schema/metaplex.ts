@@ -1,5 +1,4 @@
-import { enumType, list, objectType } from 'nexus';
-import { Metadata } from './metadata';
+import { enumType, objectType } from 'nexus';
 
 export const MetaplexKey = enumType({
   name: 'MetaplexKey',
@@ -91,10 +90,9 @@ export const SafetyDepositConfig = objectType({
   },
 });
 
-// TODO: duplicated with metadata/creator
 // TODO: has extra props
-export const WhitelistedCreator = objectType({
-  name: 'WhitelistedCreator',
+export const Creator = objectType({
+  name: 'Creator',
   definition(t) {
     t.field('key', { type: MetaplexKey });
     t.pubkey('address');

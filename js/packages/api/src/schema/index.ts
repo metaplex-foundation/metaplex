@@ -1,4 +1,5 @@
 export * from './scalar';
+export * from './artwork';
 export * from './metadata';
 export * from './metaplex';
 export * from './auction';

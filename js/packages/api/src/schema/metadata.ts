@@ -58,37 +58,3 @@ export const MasterEdition = unionType({
     t.members(MasterEditionV1, MasterEditionV2);
   },
 });
-
-export const Metadata = objectType({
-  name: 'Metadata',
-  definition(t) {
-    t.field('key', { type: MetadataKey });
-    t.field('data', { type: Data });
-    t.pubkey('updateAuthority');
-    t.pubkey('mint');
-    t.boolean('primarySaleHappened');
-    t.boolean('isMutable');
-    t.pubkey('edition');
-    t.pubkey('masterEdition');
-  },
-});
-
-export const Data = objectType({
-  name: 'Data',
-  definition(t) {
-    t.string('name');
-    t.string('symbol');
-    t.string('uri');
-    t.int('sellerFeeBasisPoints');
-    t.list.field('creators', { type: Creator });
-  },
-});
-
-export const Creator = objectType({
-  name: 'Creator',
-  definition(t) {
-    t.pubkey('address');
-    t.boolean('verified');
-    t.int('share');
-  },
-});

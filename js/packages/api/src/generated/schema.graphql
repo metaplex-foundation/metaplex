@@ -7,6 +7,30 @@ type AmountRange {
   length: BN
 }
 
+enum ArtType {
+  Master
+  NFT
+  Print
+}
+
+type Artwork {
+  creators: [ArtworkCreator]
+  edition: BN
+  maxSupply: BN
+  mint: PublicKey
+  name: String
+  sellerFeeBasisPoints: Int!
+  supply: BN
+  type: ArtType
+  uri: String
+}
+
+type ArtworkCreator {
+  address: PublicKey
+  share: Int
+  verified: Boolean
+}
+
 type AuctionData {
   """
   Gap time is the amount of time in slots after the previous bid at which the auction ends.
@@ -118,17 +142,9 @@ type BidderPot {
 scalar Buffer
 
 type Creator {
+  activated: Boolean
   address: PublicKey
-  share: Int
-  verified: Boolean
-}
-
-type Data {
-  creators: [Creator]
-  name: String
-  sellerFeeBasisPoints: Int
-  symbol: String
-  uri: String
+  key: MetaplexKey
 }
 
 type Edition {
@@ -156,17 +172,6 @@ type MasterEditionV2 {
   key: MetadataKey
   maxSupply: BN
   supply: BN
-}
-
-type Metadata {
-  data: Data
-  edition: PublicKey
-  isMutable: Boolean
-  key: MetadataKey
-  masterEdition: PublicKey
-  mint: PublicKey
-  primarySaleHappened: Boolean
-  updateAuthority: PublicKey
 }
 
 enum MetadataKey {
@@ -243,10 +248,10 @@ type PrizeTrackingTicket {
 scalar PublicKey
 
 type Query {
-  artworks(creatorId: String, storeId: String!): [Metadata]
+  artworks(creatorId: String, storeId: String!): [Artwork]
   artworksCount: Int
-  creator(creatorId: String!, storeId: String!): WhitelistedCreator
-  creators(storeId: String!): [WhitelistedCreator]
+  creator(creatorId: String!, storeId: String!): Creator
+  creators(storeId: String!): [Creator]
   creatorsCount: Int
   store(storeId: String!): Store
   storesCount: Int
@@ -352,12 +357,6 @@ enum VaultState {
   Combined
   Deactivated
   Inactive
-}
-
-type WhitelistedCreator {
-  activated: Boolean
-  address: PublicKey
-  key: MetaplexKey
 }
 
 enum WinningConfigType {

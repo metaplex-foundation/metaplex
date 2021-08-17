@@ -6,7 +6,10 @@ import { isCreatorPartOfTheStore } from '@oyster/common/dist/lib/models/index';
 import { ParsedAccount } from '@oyster/common/dist/lib/contexts/accounts/types';
 import { Context } from './context';
 
+// XXX: re-use from `contexts/connection` ?
 const ENDPOINTS = [
+  // TODO: uncomment this
+  // TODO: check other mainnets (Solana, Serum)
   // {
   //   name: 'mainnet-beta',
   //   endpoint: 'https://api.metaplex.solana.com/',
@@ -21,6 +24,7 @@ const ENDPOINTS = [
   },
 ];
 
+// TODO: set to mainnet-beta
 const DEFAULT_ENDPOINT = ENDPOINTS.find(({ name }) => name === 'devnet')!;
 
 export const getData = async (): Promise<MetaState> => {
@@ -40,13 +44,16 @@ export class MetaplexApi {
   private static configs: ConnectionConfig[];
   private static states: Record<string, MetaState> = {};
 
-  private static firstLoad() {
+  public static load() {
     if (!this.configs) {
       this.configs = ENDPOINTS.map(({ name, endpoint }) => {
         const connection = new Connection(endpoint, 'recent');
         const loader = loadAccounts(connection, true);
         loader.then(state => {
+          console.log(`🏝️  ${name} data for loaded`);
           this.states[name] = state;
+
+          // XXX: there is a GAP before subscribe
           this.subscribe(name);
         });
         return {
@@ -72,7 +79,7 @@ export class MetaplexApi {
   }
 
   async initialize({ context }: { context: Omit<Context, 'dataSources'> }) {
-    await MetaplexApi.firstLoad();
+    await MetaplexApi.load();
     this.state =
       MetaplexApi.states[context.network || ''] ||
       MetaplexApi.states[DEFAULT_ENDPOINT.name];

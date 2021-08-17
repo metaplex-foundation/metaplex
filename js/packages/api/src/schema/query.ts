@@ -1,54 +1,50 @@
 import { queryType, stringArg, list, nonNull } from 'nexus';
-import { Metadata } from './metadata';
-import { Store, WhitelistedCreator } from './metaplex';
+import { Artwork } from './artwork';
+import { Store, Creator } from './metaplex';
 
 export const Query = queryType({
   definition(t) {
     t.field('storesCount', {
       type: 'Int',
-      resolve: (_, args, { dataSources }) =>
-        Object.keys(dataSources.dataApi.state.stores).length,
+      resolve: (_, args, { dataSources: { api } }) =>
+        Object.keys(api.state.stores).length,
     });
     t.field('creatorsCount', {
       type: 'Int',
-      resolve: (_, args, { dataSources }) =>
-        Object.values(dataSources.dataApi.state.creators).length,
+      resolve: (_, args, { dataSources: { api } }) =>
+        Object.values(api.state.creators).length,
     });
     t.field('artworksCount', {
       type: 'Int',
-      resolve: (_, args, { dataSources }) =>
-        dataSources.dataApi.state.metadata.length,
+      resolve: (_, args, { dataSources: { api } }) => api.state.metadata.length,
     });
     t.field('store', {
       type: Store,
       args: {
         storeId: nonNull(stringArg()),
       },
-      resolve: (_, { storeId }, { dataSources }) =>
-        dataSources.dataApi.getStore(storeId),
+      resolve: (_, { storeId }, { dataSources: { api } }) =>
+        api.getStore(storeId),
     });
     t.field('creators', {
-      type: list(WhitelistedCreator),
+      type: list(Creator),
       args: {
         storeId: nonNull(stringArg()),
       },
-      resolve(_, { storeId }, { dataSources }) {
-        return dataSources.dataApi.getCreators(storeId);
-      },
+      resolve: (_, { storeId }, { dataSources: { api } }) =>
+        api.getCreators(storeId),
     });
     t.field('creator', {
-      type: WhitelistedCreator,
+      type: Creator,
       args: { storeId: nonNull(stringArg()), creatorId: nonNull(stringArg()) },
-      async resolve(_, { storeId, creatorId }, { dataSources }) {
-        return dataSources.dataApi.getCreator(storeId, creatorId);
-      },
+      resolve: async (_, { storeId, creatorId }, { dataSources: { api } }) =>
+        api.getCreator(storeId, creatorId),
     });
     t.field('artworks', {
-      type: list(Metadata),
+      type: list(Artwork),
       args: { storeId: nonNull(stringArg()), creatorId: stringArg() },
-      async resolve(_, { storeId, creatorId }, { dataSources }) {
-        return dataSources.dataApi.getArtworks(storeId, creatorId);
-      },
+      resolve: async (_, { storeId, creatorId }, { dataSources: { api } }) =>
+        api.getArtworks(storeId, creatorId),
     });
   },
 });
