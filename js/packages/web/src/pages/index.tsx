@@ -88,6 +88,10 @@ function App({ storefront }: AppProps) {
           </>
         )}
         <meta name="description" content={storefront.meta.description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content={storefront.theme.logo} />
+        <meta property="og:title" content={storefront.meta.title} />
+        <meta property="og:description" content={storefront.meta.description} />
         <title>{storefront.meta.title}</title>
       </Head>
       {isMounted && <CreateReactAppEntryPoint storeId={storefront.pubkey} />}
