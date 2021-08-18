@@ -3,6 +3,7 @@ import { Providers } from './providers';
 import {
   AnalyticsView,
   ArtCreateView,
+  ArtCreateBulkView,
   ArtistsView,
   ArtistView,
   ArtView,
