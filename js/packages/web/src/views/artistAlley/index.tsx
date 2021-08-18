@@ -61,7 +61,7 @@ export const ArtistAlleyView = () => {
               return;
             }
 
-            const id = m.auction.pubkey.toBase58();
+            const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
                 <AuctionRenderCard key={id} auctionView={m} />
@@ -85,7 +85,7 @@ export const ArtistAlleyView = () => {
                 return;
               }
 
-              const id = m.auction.pubkey.toBase58();
+              const id = m.auction.pubkey;
               return (
                 <Link to={`/auction/${id}`} key={idx}>
                   <AuctionRenderCard key={id} auctionView={m} />
@@ -109,7 +109,7 @@ export const ArtistAlleyView = () => {
     setIsInitalizingStore(true);
     await saveAdmin(connection, wallet, false, [
       new WhitelistedCreator({
-        address: wallet?.publicKey,
+        address: wallet?.publicKey.toBase58(),
         activated: true,
       }),
     ]);
