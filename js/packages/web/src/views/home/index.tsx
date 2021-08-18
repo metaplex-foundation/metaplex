@@ -29,7 +29,6 @@ export enum LiveAuctionViewState {
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
-  const auctionsUpcoming = useAuctions(AuctionViewState.Upcoming);
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading, store } = useMeta();
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
@@ -84,17 +83,6 @@ export const HomeView = () => {
         break;
   }
 
-  const heroAuction = useMemo(
-    () =>
-      auctions.filter(a => {
-        // const now = moment().unix();
-        return !a.auction.info.ended() && !resaleAuctions.includes(a);
-        // filter out auction for banner that are further than 30 days in the future
-        // return Math.floor(delta / 86400) <= 30;
-      })?.[0],
-    [auctions],
-  );
-
   const liveAuctionsView = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
@@ -103,47 +91,6 @@ export const HomeView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-    </Masonry>
-  );
-  const endedAuctions = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
-      {!isLoading
-        ? auctionsEnded
-            .map((m, idx) => {
-              if (m === heroAuction) {
-                return;
-              }
-
-              const id = m.auction.pubkey;
-              return (
-                <Link to={`/auction/${id}`} key={idx}>
-                  <AuctionRenderCard key={id} auctionView={m} />
-                </Link>
-              );
-            })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-    </Masonry>
-  );
-  const upcomingAuctions = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
-      {!isLoading
-        ? auctionsUpcoming.map((m, idx) => {
             const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
@@ -236,10 +183,7 @@ export const HomeView = () => {
                 >
                   {liveAuctionsView}
                 </TabPane>
-                <TabPane tab={'Upcoming'} key={2}>
-                  {upcomingAuctions}
-                </TabPane>
-                {auctionsEnded.length > 0 && (
+                {resaleAuctions.length > 0 && (
                   <TabPane
                     tab={'Secondary Marketplace'}
                     key={LiveAuctionViewState.Resale}
@@ -247,8 +191,8 @@ export const HomeView = () => {
                     {liveAuctionsView}
                   </TabPane>
                 )}
-                <TabPane tab={'Ended'} key={3}>
-                  {endedAuctions}
+                <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
+                  {liveAuctionsView}
                 </TabPane>
               </Tabs>
             </Row>
