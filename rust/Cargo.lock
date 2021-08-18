@@ -1599,6 +1599,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "metaplex-nft-packs"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "num_enum",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
