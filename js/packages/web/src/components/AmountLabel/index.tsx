@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Statistic } from 'antd';
 import { useSolPrice } from '../../contexts';
 import { formatUSD } from '@oyster/common';
-import './index.less';
 import { SolCircle } from '../Custom';
 
 interface IAmountLabel {

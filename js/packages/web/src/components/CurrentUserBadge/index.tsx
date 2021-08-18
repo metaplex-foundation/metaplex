@@ -13,7 +13,6 @@ import {
   ENDPOINTS,
   useConnectionConfig,
 } from '@oyster/common';
-import './styles.less';
 import { Popover, Button, Select } from 'antd';
 import { useSolPrice, useMeta } from '../../contexts';
 import { Link } from 'react-router-dom';

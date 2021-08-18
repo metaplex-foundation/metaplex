@@ -1,7 +1,6 @@
 import React, { useState, ReactNode } from 'react';
 import { Card, Modal, Button, Col, Row } from 'antd';
 import { CreditCardOutlined } from '@ant-design/icons';
-import './index.less';
 
 interface ContentCardProps {
   title: string;

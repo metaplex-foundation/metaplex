@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 
 import useWindowDimensions from '../../utils/layout';
 
-import './index.less';
 import { HowToBuyModal } from '../HowToBuyModal';
 
 export const Banner = (props: {

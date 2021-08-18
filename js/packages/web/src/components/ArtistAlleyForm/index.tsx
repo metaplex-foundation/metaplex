@@ -1,6 +1,5 @@
 import React from 'react';
 import { Form, Input, Button, Upload } from 'antd';
-import './index.less';
 
 export const ArtistAlleyForm = () => {
   const { TextArea } = Input;

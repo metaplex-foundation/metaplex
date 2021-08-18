@@ -51,6 +51,7 @@ import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
 } from '../../models/metaplex';
+import {AuctionManagerV1} from "../../models/metaplex/deprecatedStates";
 
 const { useWallet } = contexts.Wallet;
 
@@ -257,12 +258,11 @@ export const AuctionCard = ({
 
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
   const participationFixedPrice =
-    auctionView.auctionManager.info.settings.participationConfig?.fixedPrice ||
+    auctionView.auctionManager.participationConfig?.fixedPrice ||
     0;
   const participationOnly =
-    auctionView.auctionManager.info.settings.winningConfigs.length === 0;
+    (auctionView.auctionManager.instance.info as AuctionManagerV1).settings.winningConfigs.length === 0;
 
   const minBid =
     tickSize &&

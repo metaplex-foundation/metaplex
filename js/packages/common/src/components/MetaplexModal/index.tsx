@@ -1,8 +1,6 @@
 import React from 'react';
 import { Modal } from 'antd';
 
-import './index.css';
-
 export const MetaplexModal = (props: any) => {
   const { children, bodyStyle, ...rest } = props;
 

@@ -1,17 +1,7 @@
 import { WalletAdapter } from "@solana/wallet-base";
 
-import Wallet from "@project-serum/sol-wallet-adapter";
-import { Button, Collapse } from "antd";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { notify } from "./../utils/notifications";
-import { useConnectionConfig } from "./connection";
-import { useLocalStorageState } from "../utils/utils";
-import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
-import { useLocation } from "react-router";
-import { MetaplexModal } from "../components/MetaplexModal";
-
 import Wallet from '@project-serum/sol-wallet-adapter';
-import { Button } from 'antd';
+import { Button, Collapse } from "antd";
 import React, {
   useCallback,
   useContext,

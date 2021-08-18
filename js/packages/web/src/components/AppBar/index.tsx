@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
 import { ConnectButton, useWallet } from '@oyster/common';

@@ -5,7 +5,6 @@ import Masonry from 'react-masonry-css';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { AuctionViewState, useAuctions } from '../../hooks';
 
-import './index.less';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';

@@ -8,7 +8,6 @@ import { CardLoader } from '../MyLoader';
 import { useMeta } from '../../contexts';
 import { AuctionRenderCard } from '../AuctionRenderCard';
 import { AuctionViewState, useAuctions } from '../../hooks';
-import './index.less';
 
 interface Author {
   name: string;
@@ -101,7 +100,7 @@ export const StaticPage = (props: {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-            const id = m.auction.pubkey.toBase58();
+            const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
                 <AuctionRenderCard key={id} auctionView={m} />
