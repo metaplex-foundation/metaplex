@@ -4,7 +4,6 @@ import { SelectProps } from 'antd/es/select';
 import debounce from 'lodash/debounce';
 import React, { useMemo, useRef, useState } from 'react';
 import { useMeta } from '../../contexts';
-import './styles.less';
 
 export interface DebounceSelectProps<ValueType = any>
   extends Omit<SelectProps<ValueType>, 'options' | 'children'> {
@@ -78,8 +77,8 @@ export const UserSearch = (props: { setCreators: Function }) => {
         const items = Object.values(whitelistedCreatorsByCreator)
           .filter(c => c.info.activated)
           .map(a => ({
-            label: a.info.name || shortenAddress(a.info.address.toBase58()),
-            value: a.info.address.toBase58(),
+            label: a.info.name || shortenAddress(a.info.address),
+            value: a.info.address,
           }));
 
         return items;

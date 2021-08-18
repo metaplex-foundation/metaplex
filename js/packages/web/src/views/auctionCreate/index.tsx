@@ -18,7 +18,6 @@ import { ArtCard } from './../../components/ArtCard';
 import { QUOTE_MINT } from './../../constants';
 import { Confetti } from './../../components/Confetti';
 import { ArtSelector } from './artSelector';
-import './../styles.less';
 import {
   MAX_METADATA_LEN,
   useConnection,
@@ -31,19 +30,16 @@ import {
   PriceFloor,
   PriceFloorType,
   IPartialCreateAuctionArgs,
+  MetadataKey,
+  StringPublicKey,
 } from '@oyster/common';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
 import {
-  AuctionManagerSettings,
   WinningConfigType,
-  NonWinningConstraint,
-  WinningConfig,
-  WinningConstraint,
-  ParticipationConfig,
-  WinningConfigItem,
+  AmountRange,
 } from '../../models/metaplex';
 import moment from 'moment';
 import {
@@ -51,15 +47,17 @@ import {
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
 import BN from 'bn.js';
-import { ZERO } from '@oyster/common/dist/lib/constants';
+import { constants } from '@oyster/common';
 import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
 import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
+import { SystemProgram } from '@solana/web3.js';
 
 const { Option } = Select;
 const { Step } = Steps;
+const { ZERO } = constants;
 
 export enum AuctionCategory {
   Limited,
@@ -68,8 +66,14 @@ export enum AuctionCategory {
   Tiered,
 }
 
+interface TierDummyEntry {
+  safetyDepositBoxIndex: number;
+  amount: number;
+  winningConfigType: WinningConfigType;
+}
+
 interface Tier {
-  items: (WinningConfigItem | {})[];
+  items: (TierDummyEntry | {})[];
   winningSpots: number[];
 }
 interface TieredAuctionState {
@@ -130,15 +134,14 @@ export const AuctionCreateView = () => {
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [auctionObj, setAuctionObj] =
-    useState<
-      | {
-          vault: PublicKey;
-          auction: PublicKey;
-          auctionManager: PublicKey;
-        }
-      | undefined
-    >(undefined);
+  const [auctionObj, setAuctionObj] = useState<
+    | {
+        vault: StringPublicKey;
+        auction: StringPublicKey;
+        auctionManager: StringPublicKey;
+      }
+    | undefined
+  >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -167,21 +170,16 @@ export const AuctionCreateView = () => {
   };
 
   const createAuction = async () => {
-    let settings: AuctionManagerSettings;
     let winnerLimit: WinnerLimit;
     if (attributes.category === AuctionCategory.Open) {
-      settings = new AuctionManagerSettings({
-        winningConfigs: [],
-        participationConfig: new ParticipationConfig({
-          safetyDepositBoxIndex: 0,
-          winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
-          nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
-          fixedPrice: new BN(
-            toLamports(attributes.participationFixedPrice, mint) || 0,
-          ),
-        }),
-      });
-
+      if (
+        attributes.items.length > 0 &&
+        attributes.items[0].participationConfig
+      ) {
+        attributes.items[0].participationConfig.fixedPrice = new BN(
+          toLamports(attributes.participationFixedPrice, mint) || 0,
+        );
+      }
       winnerLimit = new WinnerLimit({
         type: WinnerLimitType.Unlimited,
         usize: ZERO,
@@ -190,55 +188,28 @@ export const AuctionCreateView = () => {
       attributes.category === AuctionCategory.Limited ||
       attributes.category === AuctionCategory.Single
     ) {
-      // In these cases there is only ever one item in the array.
-
-      let winningConfigs: WinningConfig[];
-      if (attributes.category === AuctionCategory.Single)
-        winningConfigs = [
-          new WinningConfig({
-            items: [
-              new WinningConfigItem({
-                safetyDepositBoxIndex: 0,
-                amount: 1,
-                // Assume if you select a thing with a Master Edition you want to do a full rights
-                // transfer vs a token only transfer. If we want to move to jsut transferring the token
-                // not the entire thing, change this.
-                winningConfigType: attributes.items[0].masterEdition
-                  ? WinningConfigType.FullRightsTransfer
-                  : WinningConfigType.TokenOnlyTransfer,
-              }),
-            ],
+      if (attributes.items.length > 0) {
+        const item = attributes.items[0];
+        if (
+          attributes.category == AuctionCategory.Single &&
+          item.masterEdition
+        ) {
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
+            ? WinningConfigType.FullRightsTransfer
+            : WinningConfigType.TokenOnlyTransfer;
+        }
+        item.amountRanges = [
+          new AmountRange({
+            amount: new BN(1),
+            length:
+              attributes.category === AuctionCategory.Single
+                ? new BN(1)
+                : new BN(attributes.editions || 1),
           }),
         ];
-      else {
-        winningConfigs = [];
-        for (let i = 0; i < (attributes.editions || 1); i++) {
-          winningConfigs.push(
-            new WinningConfig({
-              items: [
-                new WinningConfigItem({
-                  safetyDepositBoxIndex: 0,
-                  amount: 1,
-                  winningConfigType: WinningConfigType.Printing,
-                }),
-              ],
-            }),
-          );
-        }
       }
-      settings = new AuctionManagerSettings({
-        winningConfigs,
-        participationConfig: attributes.participationNFT
-          ? new ParticipationConfig({
-              safetyDepositBoxIndex: attributes.items.length,
-              winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
-              nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
-              fixedPrice: new BN(
-                toLamports(attributes.participationFixedPrice, mint) || 0,
-              ),
-            })
-          : null,
-      });
       winnerLimit = new WinnerLimit({
         type: WinnerLimitType.Capped,
         usize:
@@ -246,64 +217,168 @@ export const AuctionCreateView = () => {
             ? new BN(1)
             : new BN(attributes.editions || 1),
       });
-      console.log('Settings', settings, attributes.editions);
+
+      if (
+        attributes.participationNFT &&
+        attributes.participationNFT.participationConfig
+      ) {
+        attributes.participationNFT.participationConfig.fixedPrice = new BN(
+          toLamports(attributes.participationFixedPrice, mint) || 0,
+        );
+      }
     } else {
       const tiers = tieredAttributes.tiers;
       tiers.forEach(
         c =>
           (c.items = c.items.filter(
-            i => (i as WinningConfigItem).winningConfigType !== undefined,
+            i => (i as TierDummyEntry).winningConfigType !== undefined,
           )),
       );
       let filteredTiers = tiers.filter(
         i => i.items.length > 0 && i.winningSpots.length > 0,
       );
 
-      const winnerConfigs: WinningConfig[] = [];
-      for (let i = 0; i < attributes.winnersCount; i++) {
-        winnerConfigs.push(new WinningConfig({ items: [] }));
-      }
-      filteredTiers.forEach(tier => {
-        tier.winningSpots.forEach(spot => {
-          const config = winnerConfigs[spot];
-          tier.items.forEach(item => {
-            const realI = item as WinningConfigItem;
-            const existing = config.items.find(
-              i => i.safetyDepositBoxIndex === realI.safetyDepositBoxIndex,
-            );
-            if (existing) existing.amount += realI.amount;
-            else
-              config.items.push(
-                new WinningConfigItem({
-                  safetyDepositBoxIndex: realI.safetyDepositBoxIndex,
-                  amount: realI.amount,
-                  winningConfigType: realI.winningConfigType,
-                }),
-              );
-          });
+      tieredAttributes.items.forEach((config, index) => {
+        let ranges: AmountRange[] = [];
+        filteredTiers.forEach(tier => {
+          const tierRangeLookup: Record<number, AmountRange> = {};
+          const tierRanges: AmountRange[] = [];
+          const item = tier.items.find(
+            i => (i as TierDummyEntry).safetyDepositBoxIndex == index,
+          );
+
+          if (item) {
+            config.winningConfigType = (
+              item as TierDummyEntry
+            ).winningConfigType;
+            const sorted = tier.winningSpots.sort();
+            sorted.forEach((spot, i) => {
+              if (tierRangeLookup[spot - 1]) {
+                tierRangeLookup[spot] = tierRangeLookup[spot - 1];
+                tierRangeLookup[spot].length = tierRangeLookup[spot].length.add(
+                  new BN(1),
+                );
+              } else {
+                tierRangeLookup[spot] = new AmountRange({
+                  amount: new BN((item as TierDummyEntry).amount),
+                  length: new BN(1),
+                });
+                // If the first spot with anything is winner spot 1, you want a section of 0 covering winning
+                // spot 0.
+                // If we have a gap, we want a gap area covered with zeroes.
+                const zeroLength = i - 1 > 0 ? spot - sorted[i - 1] - 1 : spot;
+                if (zeroLength > 0) {
+                  tierRanges.push(
+                    new AmountRange({
+                      amount: new BN(0),
+                      length: new BN(zeroLength),
+                    }),
+                  );
+                }
+                tierRanges.push(tierRangeLookup[spot]);
+              }
+            });
+            // Ok now we have combined ranges from this tier range. Now we merge them into the ranges
+            // at the top level.
+            let oldRanges = ranges;
+            ranges = [];
+            let oldRangeCtr = 0,
+              tierRangeCtr = 0;
+
+            while (
+              oldRangeCtr < oldRanges.length ||
+              tierRangeCtr < tierRanges.length
+            ) {
+              let toAdd = new BN(0);
+              if (
+                tierRangeCtr < tierRanges.length &&
+                tierRanges[tierRangeCtr].amount.gt(new BN(0))
+              ) {
+                toAdd = tierRanges[tierRangeCtr].amount;
+              }
+
+              if (oldRangeCtr == oldRanges.length) {
+                ranges.push(
+                  new AmountRange({
+                    amount: toAdd,
+                    length: tierRanges[tierRangeCtr].length,
+                  }),
+                );
+                tierRangeCtr++;
+              } else if (tierRangeCtr == tierRanges.length) {
+                ranges.push(oldRanges[oldRangeCtr]);
+                oldRangeCtr++;
+              } else if (
+                oldRanges[oldRangeCtr].length.gt(
+                  tierRanges[tierRangeCtr].length,
+                )
+              ) {
+                oldRanges[oldRangeCtr].length = oldRanges[
+                  oldRangeCtr
+                ].length.sub(tierRanges[tierRangeCtr].length);
+
+                ranges.push(
+                  new AmountRange({
+                    amount: oldRanges[oldRangeCtr].amount.add(toAdd),
+                    length: tierRanges[tierRangeCtr].length,
+                  }),
+                );
+
+                tierRangeCtr += 1;
+                // dont increment oldRangeCtr since i still have length to give
+              } else if (
+                tierRanges[tierRangeCtr].length.gt(
+                  oldRanges[oldRangeCtr].length,
+                )
+              ) {
+                tierRanges[tierRangeCtr].length = tierRanges[
+                  tierRangeCtr
+                ].length.sub(oldRanges[oldRangeCtr].length);
+
+                ranges.push(
+                  new AmountRange({
+                    amount: oldRanges[oldRangeCtr].amount.add(toAdd),
+                    length: oldRanges[oldRangeCtr].length,
+                  }),
+                );
+
+                oldRangeCtr += 1;
+                // dont increment tierRangeCtr since they still have length to give
+              } else if (
+                tierRanges[tierRangeCtr].length.eq(
+                  oldRanges[oldRangeCtr].length,
+                )
+              ) {
+                ranges.push(
+                  new AmountRange({
+                    amount: oldRanges[oldRangeCtr].amount.add(toAdd),
+                    length: oldRanges[oldRangeCtr].length,
+                  }),
+                );
+                // Move them both in this degen case
+                oldRangeCtr++;
+                tierRangeCtr++;
+              }
+            }
+          }
         });
+        console.log('Ranges');
+        config.amountRanges = ranges;
       });
 
       winnerLimit = new WinnerLimit({
         type: WinnerLimitType.Capped,
         usize: new BN(attributes.winnersCount),
       });
-
-      settings = new AuctionManagerSettings({
-        winningConfigs: winnerConfigs,
-        participationConfig: attributes.participationNFT
-          ? new ParticipationConfig({
-              safetyDepositBoxIndex: tieredAttributes.items.length,
-              winnerConstraint: WinningConstraint.ParticipationPrizeGiven,
-              nonWinningConstraint: NonWinningConstraint.GivenForFixedPrice,
-              fixedPrice: new BN(
-                toLamports(attributes.participationFixedPrice, mint) || 0,
-              ),
-            })
-          : null,
-      });
-
-      console.log('Tiered settings', settings);
+      if (
+        attributes.participationNFT &&
+        attributes.participationNFT.participationConfig
+      ) {
+        attributes.participationNFT.participationConfig.fixedPrice = new BN(
+          toLamports(attributes.participationFixedPrice, mint) || 0,
+        );
+      }
+      console.log('Tiered settings', tieredAttributes.items);
     }
 
     const auctionSettings: IPartialCreateAuctionArgs = {
@@ -330,7 +405,7 @@ export const AuctionCreateView = () => {
           : PriceFloorType.None,
         minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
       }),
-      tokenMint: QUOTE_MINT,
+      tokenMint: QUOTE_MINT.toBase58(),
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
       tickSize: attributes.priceTick
         ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
@@ -341,7 +416,6 @@ export const AuctionCreateView = () => {
       connection,
       wallet,
       whitelistedCreatorsByCreator,
-      settings,
       auctionSettings,
       attributes.category === AuctionCategory.Open
         ? []
@@ -351,7 +425,7 @@ export const AuctionCreateView = () => {
       attributes.category === AuctionCategory.Open
         ? attributes.items[0]
         : attributes.participationNFT,
-      QUOTE_MINT,
+      QUOTE_MINT.toBase58(),
     );
     setAuctionObj(_auctionObj);
   };
@@ -877,8 +951,8 @@ const PriceAuction = (props: {
             <label className="action-field">
               <span className="field-title">Price</span>
               <span className="field-info">
-                This is an optional fixed price that non-winners will pay for
-                your Participation NFT.
+                This is the fixed price that everybody will pay for your
+                Participation NFT.
               </span>
               <Input
                 type="number"
@@ -1371,7 +1445,7 @@ const TierTableStep = (props: {
         </p>
       </Row>
       {props.attributes.tiers.map((wcg, configIndex) => (
-        <Row className="content-action">
+        <Row className="content-action" key={configIndex}>
           <Col xl={24}>
             <h3>Tier #{configIndex + 1} Basket</h3>
           </Col>
@@ -1391,15 +1465,15 @@ const TierTableStep = (props: {
           />
 
           {wcg.items.map((i, itemIndex) => (
-            <Col className="section" xl={8}>
+            <Col className="section" xl={8} key={itemIndex}>
               <Card>
                 <ArtSelector
                   filter={artistFilter}
                   selected={
-                    (i as WinningConfigItem).safetyDepositBoxIndex !== undefined
+                    (i as TierDummyEntry).safetyDepositBoxIndex !== undefined
                       ? [
                           props.attributes.items[
-                            (i as WinningConfigItem).safetyDepositBoxIndex
+                            (i as TierDummyEntry).safetyDepositBoxIndex
                           ],
                         ]
                       : []
@@ -1411,30 +1485,37 @@ const TierTableStep = (props: {
 
                     const newTiers = newImmutableTiers(props.attributes.tiers);
                     if (items[0]) {
-                      const existing = props.attributes.items.find(
-                        it =>
-                          it.metadata.pubkey.toBase58() ===
-                          items[0].metadata.pubkey.toBase58(),
+                      const existing = props.attributes.items.find(it =>
+                        it.metadata.pubkey === items[0].metadata.pubkey,
                       );
                       if (!existing) newItems.push(items[0]);
-                      const index = newItems.findIndex(
-                        it =>
-                          it.metadata.pubkey.toBase58() ===
-                          items[0].metadata.pubkey.toBase58(),
+                      const index = newItems.findIndex(it =>
+                        it.metadata.pubkey === items[0].metadata.pubkey,
                       );
 
                       const myNewTier = newTiers[configIndex].items[itemIndex];
                       myNewTier.safetyDepositBoxIndex = index;
-                      if (items[0].masterEdition)
+                      if (
+                        items[0].masterEdition &&
+                        items[0].masterEdition.info.key ==
+                          MetadataKey.MasterEditionV1
+                      ) {
                         myNewTier.winningConfigType =
-                          WinningConfigType.Printing;
-                      else
+                          WinningConfigType.PrintingV1;
+                      } else if (
+                        items[0].masterEdition &&
+                        items[0].masterEdition.info.key ==
+                          MetadataKey.MasterEditionV2
+                      ) {
+                        myNewTier.winningConfigType =
+                          WinningConfigType.PrintingV2;
+                      } else {
                         myNewTier.winningConfigType =
                           WinningConfigType.TokenOnlyTransfer;
+                      }
                       myNewTier.amount = 1;
                     } else if (
-                      (i as WinningConfigItem).safetyDepositBoxIndex !==
-                      undefined
+                      (i as TierDummyEntry).safetyDepositBoxIndex !== undefined
                     ) {
                       const myNewTier = newTiers[configIndex];
                       myNewTier.items.splice(itemIndex, 1);
@@ -1444,14 +1525,14 @@ const TierTableStep = (props: {
                         c.items.find(
                           it =>
                             it.safetyDepositBoxIndex ===
-                            (i as WinningConfigItem).safetyDepositBoxIndex,
+                            (i as TierDummyEntry).safetyDepositBoxIndex,
                         ),
                       );
 
                       if (!othersWithSameItem) {
                         for (
                           let j =
-                            (i as WinningConfigItem).safetyDepositBoxIndex + 1;
+                            (i as TierDummyEntry).safetyDepositBoxIndex + 1;
                           j < props.attributes.items.length;
                           j++
                         ) {
@@ -1463,7 +1544,7 @@ const TierTableStep = (props: {
                           );
                         }
                         newItems.splice(
-                          (i as WinningConfigItem).safetyDepositBoxIndex,
+                          (i as TierDummyEntry).safetyDepositBoxIndex,
                           1,
                         );
                       }
@@ -1480,10 +1561,10 @@ const TierTableStep = (props: {
                   Select item
                 </ArtSelector>
 
-                {(i as WinningConfigItem).winningConfigType !== undefined && (
+                {(i as TierDummyEntry).winningConfigType !== undefined && (
                   <>
                     <Select
-                      defaultValue={(i as WinningConfigItem).winningConfigType}
+                      defaultValue={(i as TierDummyEntry).winningConfigType}
                       style={{ width: 120 }}
                       onChange={value => {
                         const newTiers = newImmutableTiers(
@@ -1493,6 +1574,17 @@ const TierTableStep = (props: {
                         const myNewTier =
                           newTiers[configIndex].items[itemIndex];
 
+                        // Legacy hack...
+                        if (
+                          value == WinningConfigType.PrintingV2 &&
+                          myNewTier.safetyDepositBoxIndex &&
+                          props.attributes.items[
+                            myNewTier.safetyDepositBoxIndex
+                          ].masterEdition?.info.key ==
+                            MetadataKey.MasterEditionV1
+                        ) {
+                          value = WinningConfigType.PrintingV1;
+                        }
                         myNewTier.winningConfigType = value;
                         props.setAttributes({
                           ...props.attributes,
@@ -1506,13 +1598,19 @@ const TierTableStep = (props: {
                       <Option value={WinningConfigType.TokenOnlyTransfer}>
                         Token Only Transfer
                       </Option>
-                      <Option value={WinningConfigType.Printing}>
-                        Printing
+                      <Option value={WinningConfigType.PrintingV2}>
+                        Printing V2
+                      </Option>
+
+                      <Option value={WinningConfigType.PrintingV1}>
+                        Printing V1
                       </Option>
                     </Select>
 
-                    {(i as WinningConfigItem).winningConfigType ===
-                      WinningConfigType.Printing && (
+                    {((i as TierDummyEntry).winningConfigType ===
+                      WinningConfigType.PrintingV1 ||
+                      (i as TierDummyEntry).winningConfigType ===
+                        WinningConfigType.PrintingV2) && (
                       <label className="action-field">
                         <span className="field-title">
                           How many copies do you want to create for each winner?
@@ -1817,9 +1915,9 @@ const WaitingStep = (props: {
 
 const Congrats = (props: {
   auction?: {
-    vault: PublicKey;
-    auction: PublicKey;
-    auctionManager: PublicKey;
+    vault: StringPublicKey;
+    auction: StringPublicKey;
+    auctionManager: StringPublicKey;
   };
 }) => {
   const history = useHistory();

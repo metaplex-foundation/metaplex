@@ -1,22 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PublicKey } from '@solana/web3.js';
 import { useMeta } from '../contexts';
 import { Art, Artist, ArtType } from '../types';
 import {
   Edition,
   IMetadataExtension,
-  MasterEdition,
+  MasterEditionV1,
+  MasterEditionV2,
   Metadata,
   ParsedAccount,
+  StringPublicKey,
 } from '@oyster/common';
 import { WhitelistedCreator } from '../models/metaplex';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
+import { pubkeyToString } from '../utils/pubkeyToString';
 
 const metadataToArt = (
   info: Metadata | undefined,
   editions: Record<string, ParsedAccount<Edition>>,
-  masterEditions: Record<string, ParsedAccount<MasterEdition>>,
+  masterEditions: Record<
+    string,
+    ParsedAccount<MasterEditionV1 | MasterEditionV2>
+  >,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -28,11 +33,10 @@ const metadataToArt = (
   let supply: number | undefined = undefined;
 
   if (info) {
-    const masterEdition = masterEditions[info.masterEdition?.toBase58() || ''];
-    const edition = editions[info.edition?.toBase58() || ''];
+    const masterEdition = masterEditions[info.masterEdition || ''];
+    const edition = editions[info.edition || ''];
     if (edition) {
-      const myMasterEdition =
-        masterEditions[edition.info.parent.toBase58() || ''];
+      const myMasterEdition = masterEditions[edition.info.parent || ''];
       if (myMasterEdition) {
         type = ArtType.Print;
         editionNumber = edition.info.edition.toNumber();
@@ -47,15 +51,14 @@ const metadataToArt = (
 
   return {
     uri: info?.data.uri || '',
-    mint: info?.mint.toBase58(),
+    mint: info?.mint,
     title: info?.data.name,
     creators: (info?.data.creators || [])
       .map(creator => {
-        const knownCreator =
-          whitelistedCreatorsByCreator[creator.address.toBase58()];
+        const knownCreator = whitelistedCreatorsByCreator[creator.address];
 
         return {
-          address: creator.address.toBase58(),
+          address: creator.address,
           verified: creator.verified,
           share: creator.share,
           image: knownCreator?.info.image || '',
@@ -128,14 +131,12 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
   return { cachedBlob, isLoading };
 };
 
-export const useArt = (id?: PublicKey | string) => {
+export const useArt = (key?: StringPublicKey) => {
   const { metadata, editions, masterEditions, whitelistedCreatorsByCreator } =
     useMeta();
 
-  const key = typeof id === 'string' ? id : id?.toBase58() || '';
-
   const account = useMemo(
-    () => metadata.find(a => a.pubkey.toBase58() === key),
+    () => metadata.find(a => a.pubkey === key),
     [key, metadata],
   );
 
@@ -153,16 +154,16 @@ export const useArt = (id?: PublicKey | string) => {
   return art;
 };
 
-export const useExtendedArt = (id?: PublicKey | string) => {
+export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
   const { ref, inView } = useInView();
 
-  const key = typeof id === 'string' ? id : id?.toBase58() || '';
+  const key = pubkeyToString(id);
 
   const account = useMemo(
-    () => metadata.find(a => a.pubkey.toBase58() === key),
+    () => metadata.find(a => a.pubkey === key),
     [key, metadata],
   );
 
@@ -209,7 +210,11 @@ export const useExtendedArt = (id?: PublicKey | string) => {
               .then(async _ => {
                 try {
                   const data = await _.json();
-                  localStorage.setItem(uri, JSON.stringify(data));
+                  try {
+                    localStorage.setItem(uri, JSON.stringify(data));
+                  } catch {
+                    // ignore
+                  }
                   setData(processJson(data));
                 } catch {
                   return undefined;

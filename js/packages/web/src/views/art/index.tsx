@@ -3,13 +3,12 @@ import { Row, Col, Divider, Layout, Tag, Button, Skeleton } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from './../../hooks';
 
-import './index.less';
 import { ArtContent } from '../../components/ArtContent';
 import { shortenAddress, useConnection, useWallet } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { PublicKey } from '@solana/web3.js';
 import { ViewOn } from './../../components/ViewOn';
+import { ArtType } from '../../types';
 
 const { Content } = Layout;
 
@@ -19,6 +18,14 @@ export const ArtView = () => {
 
   const connection = useConnection();
   const art = useArt(id);
+  let badge = '';
+  if (art.type === ArtType.NFT) {
+    badge = 'Unique';
+  } else if (art.type === ArtType.Master) {
+    badge = 'NFT 0';
+  } else if (art.type === ArtType.Print) {
+    badge = `${art.edition} of ${art.supply}`;
+  }
   const { ref, data } = useExtendedArt(id);
 
   // const { userAccounts } = useUserAccounts();
@@ -93,9 +100,10 @@ export const ArtView = () => {
               <Col>
                 <h6 style={{ marginTop: 5 }}>Created By</h6>
                 <div className="creators">
-                  {(art.creators || []).map(creator => {
+                  {(art.creators || []).map((creator, idx) => {
                     return (
                       <div
+                        key={idx}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -117,7 +125,7 @@ export const ArtView = () => {
                                       await sendSignMetadata(
                                         connection,
                                         wallet,
-                                        new PublicKey(id),
+                                        id,
                                       );
                                     } catch (e) {
                                       console.error(e);
@@ -137,6 +145,12 @@ export const ArtView = () => {
                     );
                   })}
                 </div>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <h6 style={{ marginTop: 5 }}>Edition</h6>
+                <div className="art-edition">{badge}</div>
               </Col>
             </Row>
 

@@ -1,25 +1,30 @@
-import { programIds } from '@oyster/common';
+import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
-import { EmptyPaymentAccountArgs, getPayoutTicket, SCHEMA } from '.';
+import {
+  EmptyPaymentAccountArgs,
+  getAuctionWinnerTokenTypeTracker,
+  getPayoutTicket,
+  getSafetyDepositConfig,
+  SCHEMA,
+} from '.';
 
 export async function emptyPaymentAccount(
-  acceptPayment: PublicKey,
-  destination: PublicKey,
-  auctionManager: PublicKey,
-  metadata: PublicKey,
-  masterEdition: PublicKey | undefined,
-  safetyDepositBox: PublicKey,
-  vault: PublicKey,
-  auction: PublicKey,
-  payer: PublicKey,
-  recipient: PublicKey,
+  acceptPayment: StringPublicKey,
+  destination: StringPublicKey,
+  auctionManager: StringPublicKey,
+  metadata: StringPublicKey,
+  masterEdition: StringPublicKey | undefined,
+  safetyDepositBox: StringPublicKey,
+  vault: StringPublicKey,
+  auction: StringPublicKey,
+  payer: StringPublicKey,
+  recipient: StringPublicKey,
   winningConfigIndex: number | null,
   winningConfigItemIndex: number | null,
   creatorIndex: number | null,
@@ -31,73 +36,83 @@ export async function emptyPaymentAccount(
     throw new Error('Store not initialized');
   }
 
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManager,
+    safetyDepositBox,
+  );
+
+  const tokenTracker = await getAuctionWinnerTokenTypeTracker(auctionManager);
+
   const value = new EmptyPaymentAccountArgs({
     winningConfigIndex,
     winningConfigItemIndex,
     creatorIndex,
   });
+
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [
     {
-      pubkey: acceptPayment,
+      pubkey: toPublicKey(acceptPayment),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionManager,
+      pubkey: toPublicKey(auctionManager),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: await getPayoutTicket(
-        auctionManager,
-        winningConfigIndex,
-        winningConfigItemIndex,
-        creatorIndex,
-        safetyDepositBox,
-        recipient,
+      pubkey: toPublicKey(
+        await getPayoutTicket(
+          auctionManager,
+          winningConfigIndex,
+          winningConfigItemIndex,
+          creatorIndex,
+          safetyDepositBox,
+          recipient,
+        ),
       ),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: metadata,
+      pubkey: toPublicKey(metadata),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: masterEdition || SystemProgram.programId,
+      pubkey: toPublicKey(masterEdition || SystemProgram.programId),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: safetyDepositBox,
+      pubkey: toPublicKey(safetyDepositBox),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: store,
+      pubkey: toPublicKey(store),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: auction,
+      pubkey: toPublicKey(auction),
       isSigner: false,
       isWritable: false,
     },
@@ -116,12 +131,24 @@ export async function emptyPaymentAccount(
       isSigner: false,
       isWritable: false,
     },
+
+    {
+      pubkey: toPublicKey(tokenTracker),
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: toPublicKey(safetyDepositConfig),
+      isSigner: false,
+      isWritable: false,
+    },
   ];
 
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

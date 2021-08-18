@@ -10,7 +10,7 @@ Metaplex is a protocol built on top of Solana that allows:
 - **Starting** a variety of auctions for primary/secondary sales;
 - and **Visualizing** NFTs in a standard way across wallets and applications.
 
-Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web2 application.
+Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web3 application.
 
 ## In Depth Developer's Guide
 
@@ -42,7 +42,7 @@ bindings that allow interactivity.
 We have a few channels for contact:
 
 - [Discord](https://discord.gg/metaplex)
-- [@metaplexNFT](https://twitter.com/metaplexNFT) on Twitter
+- [@metaplex](https://twitter.com/metaplex) on Twitter
 - [GitHub Issues](https://github.com/metaplex-foundation/metaplex/issues)
 
 # Protocol

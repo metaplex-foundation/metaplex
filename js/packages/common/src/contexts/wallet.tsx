@@ -10,28 +10,49 @@ import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { useLocation } from "react-router";
 import { MetaplexModal } from "../components/MetaplexModal";
 
-import './wallet.css'
-import { TorusWalletAdapter } from "../wallet-adapters/torus";
+import Wallet from '@project-serum/sol-wallet-adapter';
+import { Button } from 'antd';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { notify } from './../utils/notifications';
+import { useConnectionConfig } from './connection';
+import { useLocalStorageState } from '../utils/utils';
+import { PhantomWalletAdapter } from '../wallet-adapters/phantom';
+import { useLocation } from 'react-router';
+import { MetaplexModal } from '../components/MetaplexModal';
+import { TorusWalletAdapter } from '../wallet-adapters/torus';
+import { SolflareWalletAdapter } from '../wallet-adapters/solflare';
 
 const { Panel } = Collapse;
 
-
-const ASSETS_URL = 'https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/';
+const ASSETS_URL =
+  'https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/';
 export const WALLET_PROVIDERS = [
   {
-    name: "Phantom",
-    url: "https://www.phantom.app",
+    name: 'Phantom',
+    url: 'https://www.phantom.app',
     icon: `https://www.phantom.app/img/logo.png`,
     adapter: PhantomWalletAdapter,
   },
   {
-    name: "Sollet",
-    url: "https://www.sollet.io",
+    name: 'Solflare',
+    url: 'https://solflare.com',
+    icon: `${ASSETS_URL}solflare.svg`,
+    adapter: SolflareWalletAdapter,
+  },
+  {
+    name: 'Sollet',
+    url: 'https://www.sollet.io',
     icon: `${ASSETS_URL}sollet.svg`,
   },
   {
-    name: "MathWallet",
-    url: "https://mathwallet.org",
+    name: 'MathWallet',
+    url: 'https://mathwallet.org',
     icon: `${ASSETS_URL}mathwallet.svg`,
   },
   {
@@ -39,34 +60,45 @@ export const WALLET_PROVIDERS = [
     url: 'https://tor.us',
     icon: `${ASSETS_URL}torus.svg`,
     adapter: TorusWalletAdapter,
-  }
+  },
 ];
 
 const WalletContext = React.createContext<{
-  wallet: WalletAdapter | undefined,
-  connected: boolean,
-  select: () => void,
-  provider: typeof WALLET_PROVIDERS[number] | undefined,
+  wallet: WalletAdapter | undefined;
+  connected: boolean;
+  select: () => void;
+  provider: typeof WALLET_PROVIDERS[number] | undefined;
 }>({
   wallet: undefined,
   connected: false,
-  select() { },
+  select() {},
   provider: undefined,
 });
 
 export function WalletProvider({ children = null as any }) {
   const { endpoint } = useConnectionConfig();
   const location = useLocation();
-  const [autoConnect, setAutoConnect] = useState(location.pathname.indexOf('result=') >= 0 || false);
-  const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
+  const [autoConnect, setAutoConnect] = useState(
+    location.pathname.indexOf('result=') >= 0 || false,
+  );
+  const [providerUrl, setProviderUrl] = useLocalStorageState('walletProvider');
 
-  const provider = useMemo(() => WALLET_PROVIDERS.find(({ url }) => url === providerUrl), [providerUrl]);
+  const provider = useMemo(
+    () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
+    [providerUrl],
+  );
 
-  const wallet = useMemo(function () {
-    if (provider) {
-      return new (provider.adapter || Wallet)(providerUrl, endpoint) as WalletAdapter;
-    }
-  }, [provider, providerUrl, endpoint]);
+  const wallet = useMemo(
+    function () {
+      if (provider) {
+        return new (provider.adapter || Wallet)(
+          providerUrl,
+          endpoint,
+        ) as WalletAdapter;
+      }
+    },
+    [provider, providerUrl, endpoint],
+  );
 
   const [connected, setConnected] = useState(false);
 
@@ -76,31 +108,30 @@ export function WalletProvider({ children = null as any }) {
       const keyToDisplay =
         walletPublicKey.length > 20
           ? `${walletPublicKey.substring(0, 7)}.....${walletPublicKey.substring(
-            walletPublicKey.length - 7,
-            walletPublicKey.length
-          )}`
+              walletPublicKey.length - 7,
+              walletPublicKey.length,
+            )}`
           : walletPublicKey;
       notify({
-        message: "Wallet update",
-        description: "Connected to wallet " + keyToDisplay,
+        message: 'Wallet update',
+        description: 'Connected to wallet ' + keyToDisplay,
       });
     }
-
-  }, [connected])
+  }, [connected]);
 
   useEffect(() => {
     if (wallet) {
-      wallet.on("connect", () => {
+      wallet.on('connect', () => {
         if (wallet.publicKey) {
           setConnected(true);
         }
       });
 
-      wallet.on("disconnect", () => {
+      wallet.on('disconnect', () => {
         setConnected(false);
         notify({
-          message: "Wallet update",
-          description: "Disconnected from wallet",
+          message: 'Wallet update',
+          description: 'Disconnected from wallet',
         });
       });
     }
@@ -119,7 +150,7 @@ export function WalletProvider({ children = null as any }) {
       setAutoConnect(false);
     }
 
-    return () => { }
+    return () => {};
   }, [wallet, autoConnect]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -129,7 +160,7 @@ export function WalletProvider({ children = null as any }) {
     setIsModalVisible(false)
   }, []);
 
-  const pp = WALLET_PROVIDERS.find(wp => wp.name === "Phantom")
+  const pp = WALLET_PROVIDERS.find(wp => wp.name === 'Phantom');
 
   return (
     <WalletContext.Provider
@@ -229,4 +260,4 @@ export const useWallet = () => {
       wallet?.disconnect();
     },
   };
-}
+};

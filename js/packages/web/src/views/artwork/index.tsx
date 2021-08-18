@@ -3,7 +3,7 @@ import { ArtCard } from '../../components/ArtCard';
 import { Layout, Row, Col, Tabs } from 'antd';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
-import { useUserArts } from '../../hooks';
+import { useCreatorArts, useUserArts } from '../../hooks';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
 import { useWallet } from '@oyster/common';
@@ -18,9 +18,10 @@ export enum ArtworkViewState {
   Created = '2',
 }
 
-export const ArtworkView = () => {
-  const { connected } = useWallet();
+export const ArtworksView = () => {
+  const { connected, wallet } = useWallet();
   const ownedMetadata = useUserArts();
+  const createdMetadata = useCreatorArts(wallet?.publicKey?.toBase58() || '');
   const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
@@ -31,9 +32,11 @@ export const ArtworkView = () => {
   };
 
   const items =
-    activeKey === ArtworkViewState.Metaplex
-      ? metadata
-      : ownedMetadata.map(m => m.metadata);
+    (activeKey === ArtworkViewState.Owned
+      ? ownedMetadata.map(m => m.metadata)
+      : (activeKey === ArtworkViewState.Created
+        ? createdMetadata
+        : metadata));
 
   useEffect(() => {
     if (connected) {
@@ -51,7 +54,7 @@ export const ArtworkView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-            const id = m.pubkey.toBase58();
+            const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
                 <ArtCard

@@ -3,9 +3,8 @@ import { Layout, Row, Col, Tabs, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 import { HowToBuyModal } from '../../components/HowToBuyModal';
 
-import { AuctionViewState, useAuctions } from '../../hooks';
+import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
 
-import './index.less';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
@@ -19,15 +18,24 @@ import { Banner } from '../../components/Banner';
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
+
+export enum LiveAuctionViewState {
+  All = '0',
+  Participated = '1',
+  Ended = '2',
+  Resale = '3',
+};
+
 export const HomeView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const auctionsUpcoming = useAuctions(AuctionViewState.Upcoming);
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading, store } = useMeta();
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
   const connection = useConnection();
   const history = useHistory();
-  const { wallet, connect } = useWallet();
+  const { wallet, connect, connected } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -35,22 +43,56 @@ export const HomeView = () => {
     500: 1,
   };
 
+  // Check if the auction is primary sale or not
+  const checkPrimarySale = (auc:AuctionView) => {
+    var flag = 0;
+    auc.items.forEach(i =>
+      {
+        i.forEach(j => {
+          if (j.metadata.info.primarySaleHappened == true) {
+            flag = 1;
+            return true;
+          }})
+        if (flag == 1) return true;
+      })
+      if (flag == 1) return true; else return false;
+  };
+
+  const resaleAuctions = auctions
+  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
+  .filter(m => checkPrimarySale(m) == true);
+
+  // Removed resales from live auctions
+  const liveAuctions = auctions
+  .sort((a, b) => a.auction.info.endedAt?.sub(b.auction.info.endedAt || new BN(0)).toNumber() || 0)
+  .filter(a => !resaleAuctions.includes(a));
+
+  let items = liveAuctions;
+
+  switch (activeKey) {
+      case LiveAuctionViewState.All:
+        items = liveAuctions;
+        break;
+      case LiveAuctionViewState.Participated:
+        items = liveAuctions.concat(auctionsEnded).filter((m, idx) => m.myBidderMetadata?.info.bidderPubkey == wallet?.publicKey?.toBase58());
+        break;
+      case LiveAuctionViewState.Resale:
+        items = resaleAuctions;
+        break;
+      case LiveAuctionViewState.Ended:
+        items = auctionsEnded;
+        break;
+  }
+
   const heroAuction = useMemo(
     () =>
       auctions.filter(a => {
         // const now = moment().unix();
-        return !a.auction.info.ended();
+        return !a.auction.info.ended() && !resaleAuctions.includes(a);
         // filter out auction for banner that are further than 30 days in the future
         // return Math.floor(delta / 86400) <= 30;
       })?.[0],
     [auctions],
-  );
-
-  const liveAuctions = auctions.sort(
-    (a, b) =>
-      a.auction.info.endedAt
-        ?.sub(b.auction.info.endedAt || new BN(0))
-        .toNumber() || 0,
   );
 
   const liveAuctionsView = (
@@ -60,8 +102,8 @@ export const HomeView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {!isLoading
-        ? liveAuctions.map((m, idx) => {
-            const id = m.auction.pubkey.toBase58();
+        ? items.map((m, idx) => {
+            const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
                 <AuctionRenderCard key={id} auctionView={m} />
@@ -79,13 +121,12 @@ export const HomeView = () => {
     >
       {!isLoading
         ? auctionsEnded
-            .filter((m, idx) => idx < 10)
             .map((m, idx) => {
               if (m === heroAuction) {
                 return;
               }
 
-              const id = m.auction.pubkey.toBase58();
+              const id = m.auction.pubkey;
               return (
                 <Link to={`/auction/${id}`} key={idx}>
                   <AuctionRenderCard key={id} auctionView={m} />
@@ -155,7 +196,7 @@ export const HomeView = () => {
 
                   await saveAdmin(connection, wallet, false, [
                     new WhitelistedCreator({
-                      address: wallet?.publicKey,
+                      address: wallet?.publicKey.toBase58(),
                       activated: true,
                     }),
                   ]);
@@ -183,21 +224,29 @@ export const HomeView = () => {
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>
             <Row>
-              <Tabs>
+              <Tabs activeKey={activeKey}
+                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
                 <TabPane
                   tab={
                     <>
                       <span className={'live'}></span> Live
                     </>
                   }
-                  key={1}
-                  active={true}
+                  key={LiveAuctionViewState.All}
                 >
                   {liveAuctionsView}
                 </TabPane>
                 <TabPane tab={'Upcoming'} key={2}>
                   {upcomingAuctions}
                 </TabPane>
+                {auctionsEnded.length > 0 && (
+                  <TabPane
+                    tab={'Secondary Marketplace'}
+                    key={LiveAuctionViewState.Resale}
+                  >
+                    {liveAuctionsView}
+                  </TabPane>
+                )}
                 <TabPane tab={'Ended'} key={3}>
                   {endedAuctions}
                 </TabPane>

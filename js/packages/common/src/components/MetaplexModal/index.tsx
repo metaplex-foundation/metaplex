@@ -4,8 +4,7 @@ import { Modal } from 'antd';
 import './index.css';
 
 export const MetaplexModal = (props: any) => {
-
-  const { children, bodyStyle, ...rest } = props
+  const { children, bodyStyle, ...rest } = props;
 
   return (
     <Modal

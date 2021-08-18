@@ -36,7 +36,7 @@ export const mintNFT = async (
   );
 
   const accountRent = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
+    AccountLayout.span,
   );
 
   let transaction = new Transaction();

@@ -1,7 +1,6 @@
 import React from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import './searchBox.less';
 
 export const SearchBox = ({}) => {
   return (

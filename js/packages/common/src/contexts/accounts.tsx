@@ -12,9 +12,8 @@ import { AccountLayout, MintInfo, MintLayout, u64 } from '@solana/spl-token';
 import { TokenAccount } from '../models';
 import { chunks } from '../utils/utils';
 import { EventEmitter } from '../utils/eventEmitter';
-import { useUserAccounts } from '../hooks/useUserAccounts';
-import { WRAPPED_SOL_MINT, programIds } from '../utils/ids';
-import { AuctionParser } from '../actions';
+import { StringPublicKey, WRAPPED_SOL_MINT } from '../utils/ids';
+import { programIds } from '../utils/programIds';
 
 const AccountsContext = React.createContext<any>(null);
 
@@ -24,13 +23,13 @@ const pendingMintCalls = new Map<string, Promise<MintInfo>>();
 const mintCache = new Map<string, MintInfo>();
 
 export interface ParsedAccountBase {
-  pubkey: PublicKey;
+  pubkey: StringPublicKey;
   account: AccountInfo<Buffer>;
-  info: any; // TODO: change to unkown
+  info: any; // TODO: change to unknown
 }
 
 export type AccountParser = (
-  pubkey: PublicKey,
+  pubkey: StringPublicKey,
   data: AccountInfo<Buffer>,
 ) => ParsedAccountBase | undefined;
 
@@ -49,7 +48,7 @@ const getMintInfo = async (connection: Connection, pubKey: PublicKey) => {
   return deserializeMint(data);
 };
 
-export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
+export const MintParser = (pubKey: string, info: AccountInfo<Buffer>) => {
   const buffer = Buffer.from(info.data);
 
   const data = deserializeMint(buffer);
@@ -66,25 +65,30 @@ export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
 };
 
 export const TokenAccountParser = (
-  pubKey: PublicKey,
+  pubKey: string,
   info: AccountInfo<Buffer>,
 ) => {
-  const buffer = Buffer.from(info.data);
-  const data = deserializeAccount(buffer);
+  // Sometimes a wrapped sol account gets closed, goes to 0 length,
+  // triggers an update over wss which triggers this guy to get called
+  // since your UI already logged that pubkey as a token account. Check for length.
+  if (info.data.length > 0) {
+    const buffer = Buffer.from(info.data);
+    const data = deserializeAccount(buffer);
 
-  const details = {
-    pubkey: pubKey,
-    account: {
-      ...info,
-    },
-    info: data,
-  } as TokenAccount;
+    const details = {
+      pubkey: pubKey,
+      account: {
+        ...info,
+      },
+      info: data,
+    } as TokenAccount;
 
-  return details;
+    return details;
+  }
 };
 
 export const GenericAccountParser = (
-  pubKey: PublicKey,
+  pubKey: string,
   info: AccountInfo<Buffer>,
 ) => {
   const buffer = Buffer.from(info.data);
@@ -146,10 +150,6 @@ export const cache = {
     parser?: AccountParser,
     isActive?: boolean | undefined | ((parsed: any) => boolean),
   ) => {
-    if (obj.data.length === 0) {
-      return;
-    }
-
     const address = typeof id === 'string' ? id : id?.toBase58();
     const deserialize = parser ? parser : keyToAccountParser.get(address);
     if (!deserialize) {
@@ -160,7 +160,7 @@ export const cache = {
 
     cache.registerParser(id, deserialize);
     pendingCalls.delete(address);
-    const account = deserialize(new PublicKey(address), obj);
+    const account = deserialize(address, obj);
     if (!account) {
       return;
     }
@@ -272,20 +272,22 @@ export const useAccountsContext = () => {
 };
 
 function wrapNativeAccount(
-  pubkey: PublicKey,
+  pubkey: string,
   account?: AccountInfo<Buffer>,
 ): TokenAccount | undefined {
   if (!account) {
     return undefined;
   }
 
+  const key = new PublicKey(pubkey);
+
   return {
     pubkey: pubkey,
     account,
     info: {
-      address: pubkey,
+      address: key,
       mint: WRAPPED_SOL_MINT,
-      owner: pubkey,
+      owner: key,
       amount: new u64(account.lamports),
       delegate: null,
       delegatedAmount: new u64(0),
@@ -317,7 +319,10 @@ const UseNativeAccount = () => {
   const updateCache = useCallback(
     account => {
       if (wallet && wallet.publicKey) {
-        const wrapped = wrapNativeAccount(wallet.publicKey, account);
+        const wrapped = wrapNativeAccount(
+          wallet.publicKey?.toBase58(),
+          account,
+        );
         if (wrapped !== undefined && wallet) {
           const id = wallet.publicKey?.toBase58();
           cache.registerParser(id, TokenAccountParser);
@@ -375,6 +380,7 @@ const precacheUserTokenAccounts = async (
   const accounts = await connection.getTokenAccountsByOwner(owner, {
     programId: programIds().token,
   });
+
   accounts.value.forEach(info => {
     cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
   });
@@ -386,16 +392,15 @@ export function AccountsProvider({ children = null as any }) {
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
   const { nativeAccount } = UseNativeAccount();
+  const walletKey = wallet?.publicKey?.toBase58();
 
   const selectUserAccounts = useCallback(() => {
     return cache
       .byParser(TokenAccountParser)
       .map(id => cache.get(id))
-      .filter(
-        a => a && a.info.owner.toBase58() === wallet?.publicKey?.toBase58(),
-      )
+      .filter(a => a && a.info.owner.toBase58() === walletKey)
       .map(a => a as TokenAccount);
-  }, [wallet]);
+  }, [walletKey]);
 
   useEffect(() => {
     const accounts = selectUserAccounts().filter(

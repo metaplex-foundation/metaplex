@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
+import { Connection } from '@solana/web3.js';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -12,22 +13,28 @@ import {
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
+
 import { format } from 'timeago.js';
-import './index.less';
+
 import {
   formatTokenAmount,
   Identicon,
   MetaplexModal,
   shortenAddress,
+  useConnection,
   useConnectionConfig,
   useMint,
   useWallet,
   AuctionState,
+  StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
 import { MintInfo } from '@solana/spl-token';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
+import { ArtType } from '../../types';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { AmountLabel } from '../../components/AmountLabel';
 
@@ -78,7 +85,14 @@ export const AuctionView = () => {
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
-  const edition = '1 of 1';
+  let edition = '';
+  if (art.type === ArtType.NFT) {
+    edition = 'Unique';
+  } else if (art.type === ArtType.Master) {
+    edition = 'NFT 0';
+  } else if (art.type === ArtType.Print) {
+    edition = `${art.edition} of ${art.supply}`;
+  }
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
 
@@ -89,7 +103,7 @@ export const AuctionView = () => {
     ...(auction?.items
       .flat()
       .reduce((agg, item) => {
-        agg.set(item.metadata.pubkey.toBase58(), item);
+        agg.set(item.metadata.pubkey, item);
         return agg;
       }, new Map<string, AuctionViewItem>())
       .values() || []),
@@ -101,7 +115,7 @@ export const AuctionView = () => {
 
     return (
       <AuctionItem
-        key={item.metadata.pubkey.toBase58()}
+        key={item.metadata.pubkey}
         item={item}
         index={index}
         size={arr.length}
@@ -229,8 +243,30 @@ const BidLine = (props: {
 }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
-  const bidder = bid.info.bidderPubkey.toBase58();
+  const bidder = bid.info.bidderPubkey;
   const isme = wallet?.publicKey?.toBase58() === bidder;
+
+  // Get Twitter Handle from address
+  const connection = useConnection();
+  const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
+  useEffect(() => {
+    const getTwitterHandle = async (
+      connection: Connection,
+      bidder: StringPublicKey,
+    ): Promise<string | undefined> => {
+      try {
+        const [twitterHandle] = await getHandleAndRegistryKey(
+          connection,
+          toPublicKey(bidder),
+        );
+        setBidderTwitterHandle(twitterHandle);
+      } catch (err) {
+        console.warn(`err`);
+        return undefined;
+      }
+    };
+    getTwitterHandle(connection, bidder);
+  }, [bidderTwitterHandle]);
 
   return (
     <Row className={'bid-history'}>
@@ -284,7 +320,17 @@ const BidLine = (props: {
             }}
             address={bidder}
           />{' '}
-          <span style={{ opacity: 0.7 }}>{shortenAddress(bidder)}</span>
+          <span style={{ opacity: 0.7 }}>
+            {bidderTwitterHandle ? (
+              <a
+                target="_blank"
+                title={shortenAddress(bidder)}
+                href={`https://twitter.com/${bidderTwitterHandle}`}
+              >{`@${bidderTwitterHandle}`}</a>
+            ) : (
+              shortenAddress(bidder)
+            )}
+          </span>
         </div>
       </Col>
     </Row>
@@ -306,7 +352,7 @@ export const AuctionBids = ({
   const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key.toBase58()));
+    return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
 
   const auctionState = auctionView

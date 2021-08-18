@@ -8,7 +8,6 @@ import {
   useMint,
 } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
-import './index.less';
 import {
   AuctionView,
   AuctionViewState,
@@ -18,6 +17,7 @@ import {
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
+import { BN } from 'bn.js';
 import { MetaAvatar } from '../MetaAvatar';
 import { AuctionCountdown } from '../AuctionNumbers';
 
@@ -37,10 +37,8 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
   const participationFixedPrice =
-    auctionView.auctionManager.info.settings.participationConfig?.fixedPrice ||
-    0;
-  const participationOnly =
-    auctionView.auctionManager.info.settings.winningConfigs.length === 0;
+    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
+  const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
   const priceFloor =
     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
