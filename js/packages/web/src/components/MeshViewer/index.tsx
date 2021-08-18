@@ -4,7 +4,6 @@ import '@google/model-viewer/dist/model-viewer';
 type MeshViewerProps = {
   className?: string;
   url?: string;
-  gltf?: string;
   style?: React.CSSProperties;
   onError?: () => void;
 };
