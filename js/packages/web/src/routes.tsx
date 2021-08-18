@@ -6,6 +6,7 @@ import { AppLayout } from './components/Layout';
 
 import {
   ArtCreateView,
+  ArtCreateBulkView,
   ArtistsView,
   ArtistView,
   ArtView,
@@ -53,6 +54,11 @@ export function Routes() {
                             exact
                             path="/art/create/:step_param?"
                             component={() => <ArtCreateView />}
+                          />
+                          <Route
+                            exact
+                            path="/art/create-bulk/:step_param?"
+                            component={() => <ArtCreateBulkView />}
                           />
                           <Route
                             exact
