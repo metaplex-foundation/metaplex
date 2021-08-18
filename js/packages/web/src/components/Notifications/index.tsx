@@ -299,7 +299,7 @@ export function Notifications() {
   );
 
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet } = useWallet();
   const { accountByMint } = useUserAccounts();
 

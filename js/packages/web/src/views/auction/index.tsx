@@ -232,7 +232,7 @@ const BidLine = (props: {
   const isme = wallet?.publicKey?.toBase58() === bidder;
 
   // Get Twitter Handle from address
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const [bidderTwitterHandle, setBidderTwitterHandle] = useState('');
   useEffect(() => {
     const getTwitterHandle = async (

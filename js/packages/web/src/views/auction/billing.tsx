@@ -43,7 +43,7 @@ const { Content } = Layout;
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
   const auctionView = useAuction(id);
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet } = useWallet();
   const mint = useMint(auctionView?.auction.info.tokenMint);
 

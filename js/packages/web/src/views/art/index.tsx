@@ -16,7 +16,7 @@ export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const { wallet } = useWallet();
 
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const art = useArt(id);
   let badge = '';
   if (art.type === ArtType.NFT) {

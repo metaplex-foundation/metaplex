@@ -182,7 +182,7 @@ export const AuctionCard = ({
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet, connected, connect } = useWallet();
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();

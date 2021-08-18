@@ -39,7 +39,7 @@ If you opted to create a button or something to click to call this method, here 
 ```js
 // These are hooks you should insert at the top of the component your rendering your button in
 const { wallet } = useWallet();
-const connection = useConnection();
+const connection = useConnectionProxy();
 ```
 
 ```js

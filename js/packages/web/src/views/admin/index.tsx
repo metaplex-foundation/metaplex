@@ -34,7 +34,7 @@ import {
 const { Content } = Layout;
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator } = useMeta();
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet, connected } = useWallet();
 
   return store && connection && wallet && connected ? (

@@ -32,7 +32,7 @@ export const HomeView = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading, store } = useMeta();
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const history = useHistory();
   const { wallet, connect, connected } = useWallet();
   const breakpointColumnsObj = {

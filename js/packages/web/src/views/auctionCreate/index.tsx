@@ -124,7 +124,7 @@ export interface AuctionState {
 }
 
 export const AuctionCreateView = () => {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet } = useWallet();
   const { whitelistedCreatorsByCreator } = useMeta();
   const { step_param }: { step_param: string } = useParams();

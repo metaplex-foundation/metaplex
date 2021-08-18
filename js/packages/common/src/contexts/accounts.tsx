@@ -311,7 +311,7 @@ export const getCachedAccount = (
 };
 
 const UseNativeAccount = () => {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet } = useWallet();
 
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
@@ -387,7 +387,7 @@ const precacheUserTokenAccounts = async (
 };
 
 export function AccountsProvider({ children = null as any }) {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { wallet, connected } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
   const [userAccounts, setUserAccounts] = useState<TokenAccount[]>([]);
@@ -536,7 +536,7 @@ const getMultipleAccountsCore = async (
 };
 
 export function useMint(key?: string | PublicKey) {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const [mint, setMint] = useState<MintInfo>();
 
   const id = typeof key === 'string' ? key : key?.toBase58();
@@ -568,7 +568,7 @@ export function useMint(key?: string | PublicKey) {
 }
 
 export function useAccount(pubKey?: PublicKey) {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const [account, setAccount] = useState<TokenAccount>();
 
   const key = pubKey?.toBase58();

@@ -45,7 +45,7 @@ const { Dragger } = Upload;
 const { Text } = Typography;
 
 export const ArtCreateView = () => {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { env } = useConnectionConfig();
   const { wallet } = useWallet();
   const { step_param }: { step_param: string } = useParams();

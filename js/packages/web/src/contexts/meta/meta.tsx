@@ -51,7 +51,7 @@ const MetaContext = React.createContext<MetaContextState>({
 });
 
 export function MetaProvider({ children = null as any }) {
-  const connection = useConnection();
+  const connection = useConnectionProxy();
   const { env } = useConnectionConfig();
   const urlParams = new URLSearchParams(window.location.search);
   const all = urlParams.get('all') == 'true';
