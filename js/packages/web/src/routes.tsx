@@ -57,7 +57,7 @@ export function Routes() {
                           />
                           <Route
                             exact
-                            path="/art/create-bulk/:step_param?"
+                            path="/art/create-bulk"
                             component={() => <ArtCreateBulkView />}
                           />
                           <Route

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-csv-reader": "^3.3.1"
+  }
+}

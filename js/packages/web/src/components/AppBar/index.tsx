@@ -10,7 +10,7 @@ import { useMeta } from '../../contexts';
 const menu = (
   <Menu>
     <Menu.Item>
-      <Link to={`/art/create-bulk`}>
+      <Link to={`/art/create`}>
         <Button className="app-btn">Create Single</Button>
       </Link>
     </Menu.Item>
