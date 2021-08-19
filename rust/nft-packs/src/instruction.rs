@@ -1,10 +1,12 @@
 //! Instruction types
 
+use crate::state::InitPackSetParams;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     program_error::ProgramError,
     pubkey::Pubkey,
+    sysvar,
 };
 
 use crate::{find_pack_card_program_address, state::ProbabilityType};
@@ -12,11 +14,6 @@ use crate::{find_pack_card_program_address, state::ProbabilityType};
 /// Instruction definition
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum NFTPacksInstruction {
-    /// Example.
-    ///
-    ///   0. `[w]` Example account.
-    ExampleInstruction,
-
     /// InitPack
     ///
     /// Initialize created account.
@@ -25,12 +22,13 @@ pub enum NFTPacksInstruction {
     /// - write                          pack_set
     /// - signer                         authority
     /// - read                           minting_authority
+    /// - read                           Rent account
     ///
     /// Parameters:
     /// - name	[u8; 32]
     /// - total_packs	u32
     /// - mutable	bool
-    InitPack,
+    InitPack(InitPackSetParams),
 
     /// AddCardToPack
     ///
@@ -41,7 +39,6 @@ pub enum NFTPacksInstruction {
     /// - read, write                   pack_set
     /// - write                         pack_card (PDA, [pack, 'card', index])
     /// - signer                        authority
-    /// - signer, write                 payer
     /// - read                          master_edition
     /// - read                          master_metadata
     /// - write                         token_account (program account to hold MasterEdition token)
@@ -68,7 +65,6 @@ pub enum NFTPacksInstruction {
     /// - read, write                   pack_set
     /// - write                         pack_voucher (PDA, [pack, 'voucher', index])
     /// - signer                        authority
-    /// - signer, write                 payer
     /// - read                          master_edition
     /// - read                          master_metadata
     /// - write                         token_account (program account to hold MasterEdition token)
@@ -223,16 +219,22 @@ pub enum NFTPacksInstruction {
     EditPackVoucher,
 }
 
-/// Create `Example` instruction
-pub fn init(program_id: &Pubkey, example_account: &Pubkey) -> Result<Instruction, ProgramError> {
-    let init_data = NFTPacksInstruction::ExampleInstruction;
-    let data = init_data.try_to_vec()?;
-    let accounts = vec![AccountMeta::new(*example_account, false)];
-    Ok(Instruction {
-        program_id: *program_id,
-        accounts,
-        data,
-    })
+/// Create `InitPack` instruction
+pub fn init_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    minting_authority: &Pubkey,
+    args: InitPackSetParams,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*minting_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::InitPack(args), accounts)
 }
 
 /// Creates 'AddCardToPack' instruction.
