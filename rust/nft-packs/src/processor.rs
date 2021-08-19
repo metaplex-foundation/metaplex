@@ -1,13 +1,13 @@
 //! Program state processor
 
-use crate::{error::NFTPacksError, instruction::NFTPacksInstruction};
+use crate::instruction::NFTPacksInstruction;
 use borsh::BorshDeserialize;
-use init_pack::init_pack;
-use solana_program::{
-    account_info::next_account_info, account_info::AccountInfo, entrypoint::ProgramResult, msg,
-    pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
+use add_card_to_pack::*;
+use init_pack::*;
+
+pub mod add_card_to_pack;
 pub mod init_pack;
 
 /// Program state handler.
@@ -25,13 +25,9 @@ impl Processor {
                 msg!("Instruction: InitPack");
                 init_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddCardToPack {
-                max_supply,
-                probability_type,
-                probability,
-            } => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::AddCardToPack(args) => {
+                msg!("Instruction: AddCardToPack");
+                add_card_to_pack(program_id, accounts, args)
             }
             NFTPacksInstruction::AddVoucherToPack => {
                 msg!("");

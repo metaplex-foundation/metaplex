@@ -1,10 +1,15 @@
 //! Program utils
 
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
-    program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, rent::Rent,
-    system_instruction,
-};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, program::{invoke, invoke_signed}, program_error::ProgramError, program_pack::{IsInitialized, Pack}, pubkey::Pubkey, rent::Rent, system_instruction};
+
+/// Assert unitialized
+pub fn assert_uninitialized<T: IsInitialized>(account: &T) -> ProgramResult {
+    if account.is_initialized() {
+        Err(ProgramError::AccountAlreadyInitialized)
+    } else {
+        Ok(())
+    }
+}
 
 /// Assert signer
 pub fn assert_signer(account: &AccountInfo) -> ProgramResult {
@@ -60,4 +65,21 @@ pub fn create_account<'a, S: Pack>(
     );
 
     invoke_signed(&ix, &[from, to], signers_seeds)
+}
+
+/// Initialize SPL accont instruction.
+pub fn spl_initialize_account<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_account(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+    )?;
+
+    invoke(&ix, &[account, mint, authority, rent])
 }

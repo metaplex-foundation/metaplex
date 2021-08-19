@@ -1,18 +1,29 @@
 //! Instruction types
+#![allow(missing_docs)]
 
 use crate::state::InitPackSetParams;
+use crate::{find_pack_card_program_address, state::ProbabilityType};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    program_error::ProgramError,
     pubkey::Pubkey,
     sysvar,
 };
 
-use crate::{find_pack_card_program_address, state::ProbabilityType};
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct AddCardToPackArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// Fixed number / probability-based
+    pub probability_type: ProbabilityType,
+    /// Based on above property it's fixed number to receive or probability
+    pub probability: u64,
+    /// Index
+    pub index: u32,
+}
 
 /// Instruction definition
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum NFTPacksInstruction {
     /// InitPack
     ///
@@ -47,14 +58,7 @@ pub enum NFTPacksInstruction {
     /// - max_supply	Option<u32>
     /// - probability_type	enum[fixed number, probability based]
     /// - probability	u64
-    AddCardToPack {
-        /// How many instances of this card exists in all packs
-        max_supply: Option<u32>,
-        /// Fixed number / probability-based
-        probability_type: ProbabilityType,
-        /// Based on above property it's fixed number to receive or probability
-        probability: u64,
-    },
+    AddCardToPack(AddCardToPackArgs),
 
     /// AddVoucherToPack
     ///
@@ -239,19 +243,16 @@ pub fn init_pack(
 
 /// Creates 'AddCardToPack' instruction.
 #[allow(clippy::too_many_arguments)]
-pub fn add_cart_to_pack(
+pub fn add_card_to_pack(
     program_id: &Pubkey,
     pack_set: &Pubkey,
     authority: &Pubkey,
     master_edition: &Pubkey,
     master_metadata: &Pubkey,
     token_account: &Pubkey,
-    max_supply: Option<u32>,
-    probability_type: ProbabilityType,
-    probability: u64,
-    index: u32,
+    args: AddCardToPackArgs,
 ) -> Instruction {
-    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, args.index);
 
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
@@ -260,16 +261,12 @@ pub fn add_cart_to_pack(
         AccountMeta::new_readonly(*master_edition, false),
         AccountMeta::new_readonly(*master_metadata, false),
         AccountMeta::new(*token_account, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
 
     Instruction::new_with_borsh(
         *program_id,
-        &NFTPacksInstruction::AddCardToPack {
-            max_supply,
-            probability_type,
-            probability,
-        },
+        &NFTPacksInstruction::AddCardToPack(args),
         accounts,
     )
 }
