@@ -6,3 +6,4 @@ export { ParsedAccount, ParsedAccountBase } from './accounts';
 export * from './accounts';
 export * from './wallet';
 export * from './connection';
+export * from './store';
