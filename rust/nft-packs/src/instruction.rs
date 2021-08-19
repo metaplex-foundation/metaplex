@@ -1,10 +1,8 @@
 //! Instruction types
 
-use crate::state::InitPackSetParams;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    program_error::ProgramError,
     pubkey::Pubkey,
     sysvar,
 };
@@ -242,7 +240,20 @@ pub fn init_pack(
 
 /// Create `Activate` instruction
 pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
-    let accounts = vec![AccountMeta::new(*pack_set, false), AccountMeta::new_readonly(*authority, true)];
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Activate, accounts)
+}
+
+/// Create `Deactivate` instruction
+pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
 }
