@@ -2,6 +2,7 @@
 
 use crate::{
     error::NFTPacksError,
+    instruction::InitPackSetArgs,
     state::{InitPackSetParams, PackSet},
     utils::*,
 };
@@ -19,7 +20,7 @@ use solana_program::{
 pub fn init_pack(
     _program_id: &Pubkey,
     accounts: &[AccountInfo],
-    args: InitPackSetParams,
+    args: InitPackSetArgs,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
@@ -42,7 +43,13 @@ pub fn init_pack(
         return Err(ProgramError::AccountAlreadyInitialized);
     }
 
-    pack_set.init(args, authority_account.key, minting_authority_account.key);
+    pack_set.init(InitPackSetParams {
+        name: args.name,
+        authority: *authority_account.key,
+        minting_authority: *minting_authority_account.key,
+        total_packs: args.total_packs,
+        mutable: args.mutable,
+    });
 
     pack_set
         .serialize(&mut *pack_set_account.data.borrow_mut())

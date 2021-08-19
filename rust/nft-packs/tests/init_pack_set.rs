@@ -19,7 +19,7 @@ async fn test_init_pack_set() {
     let authority = Keypair::new();
     let minting_authority = Keypair::new();
 
-    let pack_set_params = state::InitPackSetParams {
+    let pack_set_params = instruction::InitPackSetArgs {
         name: [7; 32],
         total_packs: 5,
         mutable: true,

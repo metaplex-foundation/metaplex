@@ -9,6 +9,18 @@ use solana_program::{
     sysvar,
 };
 
+/// Initialize a PackSet arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct InitPackSetArgs {
+    /// Name
+    pub name: [u8; 32],
+    /// How many packs are available for redeeming
+    pub total_packs: u32,
+    /// If true authority can make changes at deactivated phase
+    pub mutable: bool,
+}
+
 /// Instruction definition
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum NFTPacksInstruction {
@@ -26,7 +38,7 @@ pub enum NFTPacksInstruction {
     /// - name	[u8; 32]
     /// - total_packs	u32
     /// - mutable	bool
-    InitPack(InitPackSetParams),
+    InitPack(InitPackSetArgs),
 
     /// AddCardToPack
     ///
@@ -216,7 +228,7 @@ pub fn init_pack(
     pack_set: &Pubkey,
     authority: &Pubkey,
     minting_authority: &Pubkey,
-    args: InitPackSetParams,
+    args: InitPackSetArgs,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*pack_set, false),

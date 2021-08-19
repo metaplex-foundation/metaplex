@@ -185,7 +185,7 @@ pub async fn init_pack_set(
     program_context: &mut ProgramTestContext,
     authority: &Keypair,
     minting_authority: &Keypair,
-    args: state::InitPackSetParams,
+    args: instruction::InitPackSetArgs,
     rent: &Rent,
 ) -> Pubkey {
     let pack_set = Keypair::new();
