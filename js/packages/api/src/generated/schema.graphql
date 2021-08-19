@@ -7,28 +7,31 @@ type AmountRange {
   length: BN
 }
 
-enum ArtType {
-  Master
-  NFT
-  Print
-}
-
 type Artwork {
   creators: [ArtworkCreator]
   edition: BN
   maxSupply: BN
   mint: PublicKey
-  name: String
+  pubkey: PublicKey!
   sellerFeeBasisPoints: Int!
   supply: BN
-  type: ArtType
-  uri: String
+  title: String!
+  type: Int!
+  uri: String!
 }
 
 type ArtworkCreator {
-  address: PublicKey
-  share: Int
-  verified: Boolean
+  address: PublicKey!
+  share: Int!
+  verified: Boolean!
+}
+
+input ArtworksInput {
+  artId: String
+  creatorId: String
+  onlyVerified: Boolean
+  ownerId: String
+  storeId: String!
 }
 
 type AuctionData {
@@ -145,6 +148,7 @@ type Creator {
   activated: Boolean
   address: PublicKey
   key: MetaplexKey
+  pubkey: PublicKey
 }
 
 type Edition {
@@ -248,13 +252,15 @@ type PrizeTrackingTicket {
 scalar PublicKey
 
 type Query {
-  artworks(creatorId: String, storeId: String!): [Artwork]
+  artwork(artId: String!): Artwork
+  artworks(filter: ArtworksInput!): [Artwork]
   artworksCount: Int
   creator(creatorId: String!, storeId: String!): Creator
   creators(storeId: String!): [Creator]
   creatorsCount: Int
   store(storeId: String!): Store
   storesCount: Int
+  tokens: Int
 }
 
 type SafetyDepositBox {
@@ -287,6 +293,7 @@ type SafetyDepositConfig {
 type Store {
   auctionProgram: PublicKey
   key: MetaplexKey
+  pubkey: PublicKey
   public: Boolean
   tokenMetadataProgram: PublicKey
   tokenProgram: PublicKey

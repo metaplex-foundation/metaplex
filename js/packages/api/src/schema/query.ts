@@ -1,5 +1,6 @@
 import { queryType, stringArg, list, nonNull } from 'nexus';
 import { Artwork } from './artwork';
+import { ArtworksInput } from './inputs';
 import { Store, Creator } from './metaplex';
 
 export const Query = queryType({
@@ -42,9 +43,15 @@ export const Query = queryType({
     });
     t.field('artworks', {
       type: list(Artwork),
-      args: { storeId: nonNull(stringArg()), creatorId: stringArg() },
-      resolve: async (_, { storeId, creatorId }, { dataSources: { api } }) =>
-        api.getArtworks(storeId, creatorId),
+      args: { filter: nonNull(ArtworksInput.asArg()) },
+      resolve: async (_, { filter }, { dataSources: { api } }) =>
+        api.getArtworks(filter),
+    });
+    t.field('artwork', {
+      type: Artwork,
+      args: { artId: nonNull(stringArg()) },
+      resolve: async (_, { artId }, { dataSources: { api } }) =>
+        api.getArtwork(artId),
     });
   },
 });

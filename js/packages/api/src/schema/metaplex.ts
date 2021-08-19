@@ -66,6 +66,7 @@ export const PrizeTrackingTicket = objectType({
 export const Store = objectType({
   name: 'Store',
   definition(t) {
+    t.pubkey('pubkey');
     t.field('key', { type: MetaplexKey });
     t.boolean('public');
     t.pubkey('auctionProgram');
@@ -94,6 +95,7 @@ export const SafetyDepositConfig = objectType({
 export const Creator = objectType({
   name: 'Creator',
   definition(t) {
+    t.pubkey('pubkey');
     t.field('key', { type: MetaplexKey });
     t.pubkey('address');
     t.boolean('activated');

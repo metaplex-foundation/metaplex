@@ -6,20 +6,12 @@ import {
   artType,
 } from '../mappers/art';
 
-export const ArtType = enumType({
-  name: 'ArtType',
-  members: {
-    Master: 0,
-    Print: 1,
-    NFT: 2,
-  },
-});
-
 export const Artwork = objectType({
   name: 'Artwork',
   definition(t) {
-    t.string('uri', { resolve: item => item.data.uri });
-    t.string('name', { resolve: item => item.data.name });
+    t.nonNull.pubkey('pubkey');
+    t.nonNull.string('uri', { resolve: item => item.data.uri });
+    t.nonNull.string('title', { resolve: item => item.data.name });
     t.pubkey('mint');
     t.list.field('creators', {
       type: ArtworkCreator,
@@ -28,8 +20,7 @@ export const Artwork = objectType({
     t.nonNull.int('sellerFeeBasisPoints', {
       resolve: item => item.data.sellerFeeBasisPoints || 0,
     });
-    t.field('type', {
-      type: ArtType,
+    t.nonNull.int('type', {
       resolve: (item, args, { dataSources: { api } }) =>
         artType(item, api.state),
     });
@@ -51,8 +42,8 @@ export const Artwork = objectType({
 export const ArtworkCreator = objectType({
   name: 'ArtworkCreator',
   definition(t) {
-    t.pubkey('address');
-    t.boolean('verified');
-    t.int('share');
+    t.nonNull.pubkey('address');
+    t.nonNull.boolean('verified');
+    t.nonNull.int('share');
   },
 });
