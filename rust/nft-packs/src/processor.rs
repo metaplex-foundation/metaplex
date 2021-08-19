@@ -37,7 +37,11 @@ impl Processor {
                 msg!("");
                 unimplemented!()
             }
-            NFTPacksInstruction::AddCardToPack => {
+            NFTPacksInstruction::AddCardToPack {
+                max_supply,
+                probability_type,
+                probability,
+            } => {
                 msg!("");
                 unimplemented!()
             }

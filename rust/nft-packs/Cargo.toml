@@ -13,6 +13,8 @@ num-traits = "0.2"
 num_enum = "0.5.1"
 solana-program = "1.7.6"
 thiserror = "1.0"
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
+spl-token-metadata = {path = "../token-metadata/program/", features = [ "no-entrypoint" ]}
 borsh = "0.9.1"
 
 [dev-dependencies]
