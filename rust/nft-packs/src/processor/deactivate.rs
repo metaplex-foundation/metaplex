@@ -1,4 +1,4 @@
-//! Activate instruction processing
+//! Deactivate instruction processing
 
 use crate::{
     error::NFTPacksError,
@@ -15,8 +15,8 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 
-/// Process Activate instruction
-pub fn activate_pack(
+/// Process Deactivate instruction
+pub fn deactivate_pack(
     _program_id: &Pubkey,
     accounts: &[AccountInfo],
 ) -> ProgramResult {
@@ -31,16 +31,12 @@ pub fn activate_pack(
     if *authority_account.key != pack_set.authority {
         return Err(ProgramError::MissingRequiredSignature);
     }
-    
-    if pack_set.pack_cards == 0 || pack_set.pack_vouchers == 0 {
+
+    if pack_set.pack_state == PackSetState::NotActivated || pack_set.pack_state == PackSetState::Deactivated {
         return Err();
     }
 
-    if pack_set.pack_state == PackSetState::Activated {
-        return Err();
-    }
-
-    pack_set.pack_state = PackSetState::Activated;
+    pack_set.pack_state = PackSetState::Deactivated;
 
     pack_set.serialize(&mut *pack_set_account.data.borrow_mut()).map_err(|e| e.into())
 }
