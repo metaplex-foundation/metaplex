@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import { FC } from 'react';
 import { Card } from 'antd';
-
-import { Artist } from '../../types';
 
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
+import { Artist } from '../../hooks';
 
-export const ArtistCard = ({ artist }: { artist: Artist }) => {
+export const ArtistCard: FC<{ artist: Artist }> = ({ artist }) => {
   return (
     <Card
       hoverable={true}
@@ -18,9 +17,7 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
         <div className="artist-card-name">
           {artist.name || shortenAddress(artist.address || '')}
         </div>
-        <div className="artist-card-description">
-          {artist.about || artist.description}
-        </div>
+        <div className="artist-card-description">{artist.about}</div>
       </div>
     </Card>
   );

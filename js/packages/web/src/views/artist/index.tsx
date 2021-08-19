@@ -1,15 +1,16 @@
 import { Col, Divider, Row } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 import Masonry from 'react-masonry-css';
 import { Link, useParams } from 'react-router-dom';
-import { ArtCard } from '../../components/ArtCard';
+import { ArtCard } from '../../components/ArtCard/next';
 import { CardLoader } from '../../components/MyLoader';
-import { useCreator, useCreatorArts } from '../../hooks';
+import { useQueryCreatorWithArtworks } from '../../hooks';
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
-  const creator = useCreator(id);
-  const artwork = useCreatorArts(id);
+
+  const variables = useMemo(() => ({ creatorId: id }), [id]);
+  const [data, { fetching }] = useQueryCreatorWithArtworks(variables);
 
   const breakpointColumnsObj = {
     default: 4,
@@ -24,15 +25,12 @@ export const ArtistView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {artwork.length > 0
-        ? artwork.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard key={id} pubkey={m.pubkey} preview={false} />
-              </Link>
-            );
-          })
+      {!fetching
+        ? data?.artworks.map(art => (
+            <Link to={`/art/${art.pubkey}`} key={art.pubkey}>
+              <ArtCard art={art} pubkey={art.pubkey} preview={false} />
+            </Link>
+          ))
         : [...Array(6)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -47,11 +45,11 @@ export const ArtistView = () => {
           <Col span={24}>
             <h2>
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
-              {creator?.info.name || creator?.info.address}
+              {data?.creator.name || data?.creator.address}
             </h2>
             <br />
             <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{creator?.info.description}</div>
+            <div className="info-content">{data?.creator.description}</div>
             <br />
             <div className="info-header">Art Created</div>
             {artworkGrid}

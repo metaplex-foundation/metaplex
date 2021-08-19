@@ -3,13 +3,12 @@ import React from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
-import { useCreatorNameService, useQueryCreators } from '../../hooks';
+import { useQueryCreators } from '../../hooks';
 
 const { Content } = Layout;
 
 export const ArtistsView = () => {
-  const [{ data }] = useQueryCreators();
-  const getArtistInfo = useCreatorNameService();
+  const [data] = useQueryCreators();
 
   const breakpointColumnsObj = {
     default: 4,
@@ -24,19 +23,11 @@ export const ArtistsView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {data?.map(({ address }: { address: string }) => {
-        const artistInfo = getArtistInfo(address);
-        return (
-          <Link to={`/artists/${address}`} key={address}>
-            <ArtistCard
-              artist={{
-                address,
-                ...artistInfo,
-              }}
-            />
-          </Link>
-        );
-      })}
+      {data?.creators.map(creator => (
+        <Link to={`/artists/${creator.address}`} key={creator.address}>
+          <ArtistCard artist={creator} />
+        </Link>
+      ))}
     </Masonry>
   );
 

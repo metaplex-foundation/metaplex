@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Layout,
   Row,
@@ -21,7 +21,8 @@ import {
   StringPublicKey,
   useConnection,
   useStore,
-  useUserAccounts, useWalletModal,
+  useUserAccounts,
+  useWalletModal,
   WalletSigner,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -51,7 +52,6 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
 
   return (
     <>

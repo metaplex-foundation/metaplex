@@ -69,7 +69,7 @@ const metadataToArt = (
       .sort((a, b) => {
         const share = (b.share || 0) - (a.share || 0);
         if (share === 0) {
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         }
 
         return share;

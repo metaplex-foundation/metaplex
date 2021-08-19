@@ -1,37 +1,37 @@
-import { useQuery } from 'urql';
-import { useStore } from '@oyster/common/dist/lib/contexts/index';
-import { useEffect } from 'react';
+import { gql } from 'urql';
+import { populateArtistInfo } from '../utils/getArtistInfo';
+import { createQuery, QueryResultField } from './createQuery';
 
-const CreatorsQuery = `
-  query getCreators($storeId: String!) {
-    creatorsByStore(storeId: $storeId) {
-      address
-      activated
-    }
+export type CreatorType = {
+  pubkey: string; // PublicKey
+  address: string;
+  activated: boolean;
+};
+
+type CreatorsQuery = {
+  creators: CreatorType[];
+};
+
+export const CreatorFragment = gql`
+  fragment CreatorFragment on Creator {
+    address
+    activated
   }
 `;
 
-export const useQueryCreators = () => {
-  const store = useStore();
-
-  const [result, reexecuteQuery] = useQuery({
-    query: CreatorsQuery,
-    variables: { storeId: store.address?.toBase58() },
-    pause: store.loading,
-  });
-
-  useEffect(() => {
-    if (store.address && !result.fetching && !result.data) {
-      reexecuteQuery();
+const creatorsQuery = gql<CreatorsQuery, { storeId: string }>`
+  query getCreastors($storeId: String!) {
+    creators(storeId: $storeId) {
+      ...CreatorFragment
     }
-  }, [store.address]);
+  }
+  ${CreatorFragment}
+`;
 
-  return [
-    {
-      data: result.data?.creatorsByStore,
-      fetching: result.fetching || store.loading,
-      error: result.error,
-    },
-    reexecuteQuery,
-  ] as const;
-};
+export const useQueryCreators = createQuery(creatorsQuery, ({ creators }) => ({
+  creators: creators.map(processCreator),
+}));
+
+export const processCreator = populateArtistInfo;
+
+export type Artist = QueryResultField<typeof useQueryCreators, 'creators'>[0];
