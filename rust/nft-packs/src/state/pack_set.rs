@@ -44,7 +44,7 @@ pub struct PackSet {
     pub pack_cards: u32,
     /// Pack voucher counter
     pub pack_vouchers: u32,
-    /// If true authroty can make changes at deactivated phase
+    /// If true authority can make changes at deactivated phase
     pub mutable: bool,
     /// Pack state
     pub pack_state: PackSetState,
@@ -75,7 +75,7 @@ pub struct InitPackSetParams {
     pub minting_authority: Pubkey,
     /// How many packs are available for redeeming
     pub total_packs: u32,
-    /// If true authroty can make changes at deactivated phase
+    /// If true authority can make changes at deactivated phase
     pub mutable: bool,
 }
 

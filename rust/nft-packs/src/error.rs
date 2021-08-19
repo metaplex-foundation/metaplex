@@ -12,9 +12,9 @@ use thiserror::Error;
 /// Errors that may be returned by the Metaplex NFT packs program.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum NFTPacksError {
-    /// Example error
-    #[error("Example error")]
-    ExampleError,
+    /// Total packs amount should be more then 0
+    #[error("Total packs amount should be more then 0")]
+    WrongTotalPacksAmount,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {
@@ -32,8 +32,6 @@ impl PrintProgramError for NFTPacksError {
     where
         E: 'static + std::error::Error + DecodeError<E> + PrintProgramError + FromPrimitive,
     {
-        match self {
-            NFTPacksError::ExampleError => msg!("Example error message"),
-        }
+        msg!(&self.to_string())
     }
 }
