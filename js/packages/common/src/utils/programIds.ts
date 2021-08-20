@@ -11,65 +11,29 @@ import {
   MEMO_ID,
   VAULT_ID,
   AUCTION_ID,
+  toPublicKey,
 } from './ids';
 
-export const ENABLE_FEES_INPUT = false;
-
-// legacy pools are used to show users contributions in those pools to allow for withdrawals of funds
-export const PROGRAM_IDS = [
-  {
-    name: 'mainnet-beta',
-  },
-  {
-    name: 'testnet',
-  },
-
-  {
-    name: 'devnet',
-  },
-  {
-    name: 'localnet',
-  },
-];
-
-let STORE_OWNER_ADDRESS: PublicKey | undefined;
-
-export const setStoreID = (storeId: any) => {
-  STORE_OWNER_ADDRESS = storeId
-    ? new PublicKey(`${storeId}`)
-    : // DEFAULT STORE FRONT OWNER FOR METAPLEX
-      undefined;
-};
-
-const getStoreID = async () => {
-  console.log(`STORE_OWNER_ADDRESS: ${STORE_OWNER_ADDRESS?.toBase58()}`);
-  if (!STORE_OWNER_ADDRESS) {
+export const getStoreID = async (storeOwnerAddress?: string) => {
+  if (!storeOwnerAddress) {
     return undefined;
   }
 
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
-      METAPLEX_ID.toBuffer(),
-      STORE_OWNER_ADDRESS.toBuffer(),
+      toPublicKey(METAPLEX_ID).toBuffer(),
+      toPublicKey(storeOwnerAddress).toBuffer(),
     ],
-    METAPLEX_ID,
+    toPublicKey(METAPLEX_ID),
   );
-  const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM.toBase58()}`);
+  const storeAddress = programs[0];
 
-  return CUSTOM;
+  return storeAddress;
 };
 
-export const setProgramIds = async (envName: string) => {
-  let instance = PROGRAM_IDS.find(env => envName.indexOf(env.name) >= 0);
-  if (!instance) {
-    return;
-  }
-
-  if (!STORE) {
-    STORE = await getStoreID();
-  }
+export const setProgramIds = async (store?: string) => {
+  STORE = store ? toPublicKey(store) : undefined;
 };
 
 let STORE: PublicKey | undefined;

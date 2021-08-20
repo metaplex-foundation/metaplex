@@ -20,6 +20,7 @@ use {
             create_or_allocate_account_raw, get_owner_from_token_account,
             process_create_metadata_accounts_logic,
             process_mint_new_edition_from_master_edition_via_token_logic, transfer_mint_authority,
+            puff_out_data_fields,
             CreateMetadataAccountsLogicArgs, MintNewEditionFromMasterEditionViaTokenLogicArgs,
         },
     },
@@ -129,6 +130,13 @@ pub fn process_instruction<'a>(
                 args.edition,
             )
         }
+        MetadataInstruction::PuffMetadata => {
+            msg!("Instruction: Puff Metadata");
+            process_puff_metadata_account(
+                program_id,
+                accounts
+            )
+        }
     }
 }
 
@@ -202,6 +210,8 @@ pub fn process_update_metadata_accounts(
             return Err(MetadataError::PrimarySaleCanOnlyBeFlippedToTrue.into());
         }
     }
+
+    puff_out_data_fields(&mut metadata);
 
     metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
     Ok(())
@@ -566,4 +576,33 @@ pub fn process_mint_new_edition_from_master_edition_via_vault_proxy<'a>(
     };
 
     process_mint_new_edition_from_master_edition_via_token_logic(program_id, args, edition, true)
+}
+
+/// Puff out the variable length fields to a fixed length on a metadata
+/// account in a permissionless way.
+pub fn process_puff_metadata_account(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let metadata_account_info = next_account_info(account_info_iter)?;
+    let mut metadata = Metadata::from_account_info(metadata_account_info)?;
+
+    assert_owned_by(metadata_account_info, program_id)?;
+
+    puff_out_data_fields(&mut metadata);
+    
+    let edition_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        metadata.mint.as_ref(),
+        EDITION.as_bytes()
+    ];
+    let (_, edition_bump_seed) =
+        Pubkey::find_program_address(edition_seeds, program_id);
+    metadata.edition_nonce = Some(edition_bump_seed);
+
+    metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
+    Ok(())
 }

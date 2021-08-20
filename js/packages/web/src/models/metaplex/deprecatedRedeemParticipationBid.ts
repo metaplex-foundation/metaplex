@@ -1,6 +1,5 @@
-import { getEdition, programIds, getMetadata } from '@oyster/common';
+import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -16,17 +15,17 @@ import {
 import { DeprecatedRedeemParticipationBidArgs } from './deprecatedStates';
 
 export async function deprecatedRedeemParticipationBid(
-  vault: PublicKey,
-  safetyDepositTokenStore: PublicKey,
-  destination: PublicKey,
-  safetyDeposit: PublicKey,
-  bidder: PublicKey,
-  payer: PublicKey,
+  vault: StringPublicKey,
+  safetyDepositTokenStore: StringPublicKey,
+  destination: StringPublicKey,
+  safetyDeposit: StringPublicKey,
+  bidder: StringPublicKey,
+  payer: StringPublicKey,
   instructions: TransactionInstruction[],
-  participationPrintingAccount: PublicKey,
-  transferAuthority: PublicKey,
-  acceptPaymentAccount: PublicKey,
-  tokenPaymentAccount: PublicKey,
+  participationPrintingAccount: StringPublicKey,
+  transferAuthority: StringPublicKey,
+  acceptPaymentAccount: StringPublicKey,
+  tokenPaymentAccount: StringPublicKey,
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
@@ -50,57 +49,57 @@ export async function deprecatedRedeemParticipationBid(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDepositTokenStore,
+      pubkey: toPublicKey(safetyDepositTokenStore),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: bidRedemption,
+      pubkey: toPublicKey(bidRedemption),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDeposit,
+      pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: safetyDepositConfig,
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidMetadata,
+      pubkey: toPublicKey(bidMetadata),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidder,
+      pubkey: toPublicKey(bidder),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
@@ -110,12 +109,12 @@ export async function deprecatedRedeemParticipationBid(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -135,22 +134,22 @@ export async function deprecatedRedeemParticipationBid(
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: acceptPaymentAccount,
+      pubkey: toPublicKey(acceptPaymentAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: tokenPaymentAccount,
+      pubkey: toPublicKey(tokenPaymentAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: participationPrintingAccount,
+      pubkey: toPublicKey(participationPrintingAccount),
       isSigner: false,
       isWritable: true,
     },
@@ -159,7 +158,7 @@ export async function deprecatedRedeemParticipationBid(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

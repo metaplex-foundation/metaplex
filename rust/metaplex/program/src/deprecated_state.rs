@@ -261,7 +261,7 @@ impl AuctionManager for AuctionManagerV1 {
                 edition_offset_min += matching
             }
             if !short_circuit_total {
-                if n <= winners {
+                if n < winners {
                     // once we hit the number of winnrs in this auction (which coulkd be less than possible total)
                     // we need to stop as its never possible to redeem more than number of winners in the auction
                     expected_redemptions += matching
