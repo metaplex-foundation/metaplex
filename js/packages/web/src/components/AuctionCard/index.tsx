@@ -437,7 +437,6 @@ export const AuctionCard = ({
                       }
                       setLoading(false);
                     }}
-                    style={{ marginTop: 20 }}
                   >
                     {loading ||
                     auctionView.items.find(i => i.find(it => !it.metadata)) ||

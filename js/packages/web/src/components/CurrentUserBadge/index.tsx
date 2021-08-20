@@ -30,35 +30,37 @@ const UserActions = () => {
 
   const canCreate = useMemo(() => {
     return (
-      store &&
-      store.info &&
-      (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info?.activated)
+      store?.info?.public ||
+      whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-      }}
-    >
-      {canCreate && (
-        <>
-          <Link to={`/art/create`} style={{ width: '100%' }}>
+    <>
+      {store && (
+        <div
+          style={{
+            display: 'flex',
+          }}
+        >
+          {canCreate && (
+            <>
+              <Link to={`/art/create`} style={{ width: '100%' }}>
+                <Button className="metaplex-button-default" style={btnStyle}>
+                  Create
+                </Button>
+              </Link>
+              &nbsp;&nbsp;
+            </>
+          )}
+          <Link to={`/auction/create/0`} style={{ width: '100%' }}>
             <Button className="metaplex-button-default" style={btnStyle}>
-              Create
+              Sell
             </Button>
           </Link>
-          &nbsp;&nbsp;
-        </>
+        </div>
       )}
-      <Link to={`/auction/create/0`} style={{ width: '100%' }}>
-        <Button className="metaplex-button-default" style={btnStyle}>
-          Sell
-        </Button>
-      </Link>
-    </div>
+    </>
   );
 };
 
