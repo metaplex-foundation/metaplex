@@ -17,7 +17,7 @@ spl-auction = { path = "../../auction/program", features = [ "no-entrypoint" ] }
 num-derive = "0.3"
 num-traits = "0.2"
 arrayref = "0.3.6"
-solana-program = "1.6.10"
+solana-program = "1.7.6"
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
 spl-token-metadata = { path = "../../token-metadata/program", features = [ "no-entrypoint" ] }

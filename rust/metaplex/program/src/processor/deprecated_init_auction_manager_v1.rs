@@ -1,30 +1,26 @@
 use {
     crate::{
+        deprecated_state::{
+            AuctionManagerSettingsV1, AuctionManagerV1, ParticipationStateV1, WinningConfigState,
+            WinningConfigStateItem, MAX_AUCTION_MANAGER_V1_SIZE,
+        },
         error::MetaplexError,
-        state::{
-            AuctionManager, AuctionManagerSettings, AuctionManagerStatus, Key, ParticipationState,
-            Store, WinningConfigState, WinningConfigStateItem, MAX_AUCTION_MANAGER_SIZE, PREFIX,
-        },
-        utils::{
-            assert_derivation, assert_initialized, assert_owned_by, create_or_allocate_account_raw,
-        },
+        processor::init_auction_manager_v2::assert_common_checks,
+        state::{AuctionManagerStatus, Key, PREFIX},
+        utils::create_or_allocate_account_raw,
     },
     borsh::BorshSerialize,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
-        program_option::COption,
         pubkey::Pubkey,
     },
-    spl_auction::processor::{AuctionData, AuctionState},
-    spl_token::state::Account,
-    spl_token_vault::state::{Vault, VaultState},
 };
 
-pub fn process_init_auction_manager(
+pub fn process_deprecated_init_auction_manager_v1(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    auction_manager_settings: AuctionManagerSettings,
+    auction_manager_settings: AuctionManagerSettingsV1,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -37,69 +33,15 @@ pub fn process_init_auction_manager(
     let store_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
-
-    let vault = Vault::from_account_info(vault_info)?;
-    let auction = AuctionData::from_account_info(auction_info)?;
-    let accept_payment: Account = assert_initialized(accept_payment_info)?;
-    // Assert it is real
-    let store = Store::from_account_info(store_info)?;
-
-    assert_owned_by(vault_info, &store.token_vault_program)?;
-    assert_owned_by(auction_info, &store.auction_program)?;
-    assert_owned_by(store_info, program_id)?;
-    assert_owned_by(accept_payment_info, &store.token_program)?;
-
-    if auction.authority != *auction_manager_info.key && auction.authority != *authority_info.key {
-        return Err(MetaplexError::AuctionAuthorityMismatch.into());
-    }
-
-    if vault.authority != *auction_manager_info.key && vault.authority != *authority_info.key {
-        return Err(MetaplexError::VaultAuthorityMismatch.into());
-    }
-
-    if auction.state != AuctionState::Created {
-        return Err(MetaplexError::AuctionMustBeCreated.into());
-    }
-
-    let bump_seed = assert_derivation(
+    let (bump_seed, vault, auction) = assert_common_checks(
         program_id,
         auction_manager_info,
-        &[PREFIX.as_bytes(), &auction_info.key.as_ref()],
-    )?;
-
-    assert_derivation(
-        &store.auction_program,
+        vault_info,
         auction_info,
-        &[
-            spl_auction::PREFIX.as_bytes(),
-            &store.auction_program.as_ref(),
-            &vault_info.key.as_ref(),
-        ],
+        store_info,
+        accept_payment_info,
+        authority_info,
     )?;
-
-    if auction.token_mint != accept_payment.mint {
-        return Err(MetaplexError::AuctionAcceptPaymentMintMismatch.into());
-    }
-
-    if accept_payment.owner != *auction_manager_info.key {
-        return Err(MetaplexError::AcceptPaymentOwnerMismatch.into());
-    }
-
-    if accept_payment.delegate != COption::None {
-        return Err(MetaplexError::DelegateShouldBeNone.into());
-    }
-
-    if accept_payment.close_authority != COption::None {
-        return Err(MetaplexError::CloseAuthorityShouldBeNone.into());
-    }
-
-    if vault.state != VaultState::Combined {
-        return Err(MetaplexError::VaultNotCombined.into());
-    }
-
-    if vault.token_type_count == 0 {
-        return Err(MetaplexError::VaultCannotEmpty.into());
-    }
 
     if auction_manager_settings.winning_configs.len() != auction.num_possible_winners() as usize {
         return Err(MetaplexError::WinnerAmountMismatch.into());
@@ -159,11 +101,11 @@ pub fn process_init_auction_manager(
         rent_info,
         system_info,
         payer_info,
-        MAX_AUCTION_MANAGER_SIZE,
+        MAX_AUCTION_MANAGER_V1_SIZE,
         authority_seeds,
     )?;
 
-    let mut auction_manager = AuctionManager::from_account_info(auction_manager_info)?;
+    let mut auction_manager = AuctionManagerV1::from_account_info(auction_manager_info)?;
 
     auction_manager.key = Key::AuctionManagerV1;
     auction_manager.store = *store_info.key;
@@ -178,7 +120,7 @@ pub fn process_init_auction_manager(
     auction_manager.straight_shot_optimization = !any_with_more_than_one;
 
     if auction_manager.settings.participation_config.is_some() {
-        auction_manager.state.participation_state = Some(ParticipationState {
+        auction_manager.state.participation_state = Some(ParticipationStateV1 {
             collected_to_accept_payment: 0,
             validated: false,
             primary_sale_happened: false,

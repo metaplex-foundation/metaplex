@@ -66,6 +66,10 @@ impl Vault {
 
         Ok(vt)
     }
+
+    pub fn get_token_type_count(a: &AccountInfo) -> u8 {
+        return a.data.borrow()[194];
+    }
 }
 
 #[repr(C)]

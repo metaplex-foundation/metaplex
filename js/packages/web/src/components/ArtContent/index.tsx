@@ -7,6 +7,7 @@ import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
+import { pubkeyToString } from '../../utils/pubkeyToString';
 
 const MeshArtContent = ({
   uri,
@@ -172,14 +173,17 @@ export const ArtContent = ({
   animationURL?: string;
   files?: (MetadataFile | string)[];
 }) => {
-  const id = typeof pubkey === 'string' ? pubkey : pubkey?.toBase58() || '';
+  const id = pubkeyToString(pubkey);
 
   const { ref, data } = useExtendedArt(id);
 
-  if(pubkey && data) {
-    files = data.properties.files;
+  if (pubkey && data) {
     uri = data.image;
     animationURL = data.animation_url;
+  }
+
+  if (pubkey && data?.properties) {
+    files = data.properties.files;
     category = data.properties.category;
   }
 

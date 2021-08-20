@@ -1,16 +1,12 @@
 import { PublicKey } from '@solana/web3.js';
 import { useMeta } from '../contexts';
+import { pubkeyToString } from '../utils/pubkeyToString';
 
 export const useCreator = (id?: PublicKey | string) => {
   const { whitelistedCreatorsByCreator } = useMeta();
-  const key = typeof id === 'string' ? id : id?.toBase58() || '';
-  const creators = Object.values(whitelistedCreatorsByCreator).filter(
+  const key = pubkeyToString(id);
+  const creator = Object.values(whitelistedCreatorsByCreator).find(
     creator => creator.info.address.toBase58() === key,
   );
-
-  if (creators.length === 0) {
-    return undefined;
-  }
-
-  return creators[0];
+  return creator;
 };
