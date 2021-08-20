@@ -34,6 +34,11 @@ export function Routes() {
             />
             <Route
               exact
+              path="/art/create-bulk"
+              component={() => <ArtCreateBulkView />}
+            />
+            <Route
+              exact
               path="/artworks/:id?"
               component={() => <ArtworksView />}
             />

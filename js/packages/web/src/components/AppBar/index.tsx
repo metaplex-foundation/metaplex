@@ -43,9 +43,9 @@ const UserActions = () => {
             <Button className="app-btn">Bids</Button>
           </Link> */}
           {canCreate ? (
-            <Link to={`/art/create`}>
-              <Button className="app-btn">Create</Button>
-            </Link>
+            <Dropdown overlay={menu} placement="bottomLeft">
+              <Button>Create</Button>
+            </Dropdown>
           ) : null}
           <Link to={`/auction/create/0`}>
             <Button className="connector" type="primary">
