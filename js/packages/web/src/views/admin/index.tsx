@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Layout,
   Row,
@@ -9,6 +9,7 @@ import {
   Modal,
   Button,
   Input,
+  Divider,
 } from 'antd';
 import { useMeta } from '../../contexts';
 import { Store, WhitelistedCreator } from '../../models/metaplex';
@@ -17,36 +18,78 @@ import {
   notify,
   ParsedAccount,
   shortenAddress,
+  StringPublicKey,
   useConnection,
+  useStore,
   useUserAccounts,
   useWallet,
-  StringPublicKey,
 } from '@oyster/common';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WalletAdapter } from '@solana/wallet-base';
-import { useMemo } from 'react';
 import {
   convertMasterEditions,
   filterMetadata,
 } from '../../actions/convertMasterEditions';
+import { Link } from 'react-router-dom';
+import { SetupVariables } from '../../components/SetupVariables';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator } = useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
   const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const { wallet, connected, connect } = useWallet();
+  const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
-  return store && connection && wallet && connected ? (
-    <InnerAdminView
-      store={store}
-      whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
-      connection={connection}
-      wallet={wallet}
-      connected={connected}
-    />
-  ) : (
-    <Spin />
+  useEffect(() => {
+    if (!store && !storeAddress && connected && wallet?.publicKey) {
+      setStoreForOwner(wallet?.publicKey?.toBase58());
+    }
+  }, [store, storeAddress, connected, wallet?.publicKey]);
+  console.log('@admin', connected, storeAddress, isLoading, store);
+
+  return (
+    <>
+      {!connected ? (
+        <p>
+          <Button type="primary" className="app-btn" onClick={connect}>
+            Connect
+          </Button>{' '}
+          to admin store.
+        </p>
+      ) : !storeAddress || isLoading ? (
+        <Spin />
+      ) : store && wallet ? (
+        <>
+          <InnerAdminView
+            store={store}
+            whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
+            connection={connection}
+            wallet={wallet}
+            connected={connected}
+          />
+          {!isConfigured && (
+            <>
+              <Divider />
+              <Divider />
+              <p>
+                To finish initialization please copy config below into{' '}
+                <b>packages/web/.env</b> and restart yarn or redeploy
+              </p>
+              <SetupVariables
+                storeAddress={storeAddress}
+                storeOwnerAddress={wallet.publicKey?.toBase58()}
+              />
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <p>Store is not initialized</p>
+          <Link to={`/`}>Go to initialize</Link>
+        </>
+      )}
+    </>
   );
 };
 
@@ -133,10 +176,11 @@ function InnerAdminView({
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] = useState<{
-    available: ParsedAccount<MasterEditionV1>[];
-    unavailable: ParsedAccount<MasterEditionV1>[];
-  }>();
+  const [filteredMetadata, setFilteredMetadata] =
+    useState<{
+      available: ParsedAccount<MasterEditionV1>[];
+      unavailable: ParsedAccount<MasterEditionV1>[];
+    }>();
   const [loading, setLoading] = useState<boolean>();
   const { metadata, masterEditions } = useMeta();
 
@@ -154,10 +198,6 @@ function InnerAdminView({
     };
     fn();
   }, [connected]);
-
-  if (!store || !newStore) {
-    return <p>Store is not defined</p>;
-  }
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {
@@ -268,9 +308,7 @@ function InnerAdminView({
               activated: uniqueCreatorsWithUpdates[key].activated,
               name:
                 uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(
-                  uniqueCreatorsWithUpdates[key].address,
-                ),
+                shortenAddress(uniqueCreatorsWithUpdates[key].address),
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
           ></Table>
