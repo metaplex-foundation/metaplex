@@ -1,29 +1,19 @@
-import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
-import { contexts } from '@oyster/common';
-import { MetaProvider } from './contexts';
-import { AppLayout } from './components/Layout';
-
+import { Providers } from './providers';
 import {
+  AnalyticsView,
   ArtCreateView,
   ArtCreateBulkView,
   ArtistsView,
   ArtistView,
   ArtView,
+  ArtworksView,
   AuctionCreateView,
   AuctionView,
   HomeView,
-  ArtworksView,
-  AnalyticsView,
 } from './views';
-import { UseWalletProvider } from 'use-wallet';
-import { CoingeckoProvider } from './contexts/coingecko';
-import { BillingView } from './views/auction/billing';
 import { AdminView } from './views/admin';
-import { ConfettiProvider } from './components/Confetti';
-const { WalletProvider } = contexts.Wallet;
-const { ConnectionProvider } = contexts.Connection;
-const { AccountsProvider } = contexts.Accounts;
+import { BillingView } from './views/auction/billing';
 
 export function Routes() {
   return (

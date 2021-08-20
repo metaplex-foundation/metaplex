@@ -30,10 +30,8 @@ const UserActions = () => {
 
   const canCreate = useMemo(() => {
     return (
-      store &&
-      store.info &&
-      (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info?.activated)
+      store?.info?.public ||
+      whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
