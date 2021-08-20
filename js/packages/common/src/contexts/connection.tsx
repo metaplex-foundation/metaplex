@@ -46,16 +46,16 @@ export const ENDPOINTS = [
     endpoint: 'https://solana-api.projectserum.com/',
     ChainId: ChainId.MainnetBeta,
   },
-  {
-    name: 'testnet' as ENV,
-    endpoint: clusterApiUrl('testnet'),
-    ChainId: ChainId.Testnet,
-  },
-  {
-    name: 'devnet' as ENV,
-    endpoint: clusterApiUrl('devnet'),
-    ChainId: ChainId.Devnet,
-  },
+  // {
+  //   name: 'testnet' as ENV,
+  //   endpoint: clusterApiUrl('testnet'),
+  //   ChainId: ChainId.Testnet,
+  // },
+  // {
+  //   name: 'devnet' as ENV,
+  //   endpoint: clusterApiUrl('devnet'),
+  //   ChainId: ChainId.Devnet,
+  // },
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
