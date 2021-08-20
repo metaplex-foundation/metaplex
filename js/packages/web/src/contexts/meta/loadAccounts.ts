@@ -235,6 +235,13 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }
     }
 
+    if (setOf100MetadataEditionKeys.length >= 0) {
+      editionPromises.push(
+        getMultipleAccounts(connection, setOf100MetadataEditionKeys, 'recent'),
+      );
+      setOf100MetadataEditionKeys = [];
+    }
+
     const responses = await Promise.all(editionPromises);
     for (let i = 0; i < responses.length; i++) {
       const returnedAccounts = responses[i];
