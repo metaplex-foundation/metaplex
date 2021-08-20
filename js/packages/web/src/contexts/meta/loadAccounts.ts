@@ -14,7 +14,6 @@ import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
 import {
-  findProgramAddress,
   getEdition,
   getMultipleAccounts,
   MAX_CREATOR_LEN,
@@ -25,11 +24,8 @@ import {
   Metadata,
   METADATA_PREFIX,
   ParsedAccount,
-} from '../../../../common/dist/lib';
-import {
-  MAX_WHITELISTED_CREATOR_SIZE,
-  MetaplexKey,
-} from '../../models/metaplex';
+} from '@oyster/common';
+import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models/metaplex';
 
 async function getProgramAccounts(
   connection: Connection,
