@@ -37,19 +37,23 @@ const UserActions = () => {
 
   return (
     <>
-      {/* <Link to={`#`}>
-        <Button className="app-btn">Bids</Button>
-      </Link> */}
-      {canCreate ? (
-        <Dropdown overlay={menu} placement="bottomLeft">
-          <Button>Create</Button>
-        </Dropdown>
-      ) : null}
-      <Link to={`/auction/create/0`}>
-        <Button className="connector" type="primary">
-          Sell
-        </Button>
-      </Link>
+      {store && (
+        <>
+          {/* <Link to={`#`}>
+            <Button className="app-btn">Bids</Button>
+          </Link> */}
+          {canCreate ? (
+            <Dropdown overlay={menu} placement="bottomLeft">
+              <Button>Create</Button>
+            </Dropdown>
+          ) : null}
+          <Link to={`/auction/create/0`}>
+            <Button className="connector" type="primary">
+              Sell
+            </Button>
+          </Link>
+        </>
+      )}
     </>
   );
 };
