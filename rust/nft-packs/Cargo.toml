@@ -1,0 +1,25 @@
+[package]
+name = "metaplex-nft-packs"
+version = "0.1.0"
+edition = "2018"
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+num-derive = "0.3"
+num-traits = "0.2"
+num_enum = "0.5.1"
+solana-program = "1.7.6"
+thiserror = "1.0"
+borsh = "0.9.1"
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
+spl-token-metadata = {path = "../token-metadata/program/", features = [ "no-entrypoint" ]}
+
+[dev-dependencies]
+solana-program-test = "1.7.6"
+solana-sdk = "1.7.6"
+
+[lib]
+crate-type = ["cdylib", "lib"]
