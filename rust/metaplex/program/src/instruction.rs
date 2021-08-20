@@ -384,6 +384,9 @@ pub enum MetaplexInstruction {
     /// The items inside of it. This will allow you to move it straight to Disbursing, and then you can, as Auctioneer,
     /// Redeem those items using the RedeemUnusedWinningConfigItemsAsAuctioneer endpoint.
     ///
+    /// If you pass the vault program account, authority over the vault will be returned to you, so you can unwind the vault
+    /// to get your items back that way instead.
+    ///
     /// Be WARNED: Because the boxes have not been validated, the logic for redemptions may not work quite right. For instance,
     /// if your validation step failed because you provided an empty box but said there was a token in it, when you go
     /// and try to redeem it, you yourself will experience quite the explosion. It will be up to you to tactfully
@@ -394,11 +397,12 @@ pub enum MetaplexInstruction {
     ///
     /// 0. `[writable]` Auction Manager
     /// 1. `[writable]` Auction
-    /// 2. `[Signer]` Authority of the Auction Manager
-    /// 3. `[]` Vault
+    /// 2. `[signer]` Authority of the Auction Manager
+    /// 3. `[writable]` Vault
     /// 4. `[]` Store
     /// 5. `[]` Auction program
     /// 6. `[]` Clock sysvar
+    /// 7. `[]` Vault program (Optional)
     DecommissionAuctionManager,
 
     /// Note: This requires that auction manager be in a Running state and that be of the V1 type.
