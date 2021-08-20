@@ -61,3 +61,35 @@ After that, configure this project with the following settings:
 - Output directory: `packages/web/.next`
 
 One last thing: specify `REACT_APP_STORE_OWNER_ADDRESS_ADDRESS` in the Environment Variables section
+
+## Google Cloud Run
+
+We can deploy deploy through docker and cloud run.
+Let's visit [Cloud Run](https://console.cloud.google.com/run)
+
+### Prepare your docker container
+
+1. change `Dockerfile` `ENV REACT_APP_STORE_OWNER_ADDRESS_ADDRESS=""` to your address.
+2. change `REACT_APP_STORE_OWNER_ADDRESS_ADDRESS` to your address. on `js/packages/web/.env.production`
+3. use `docker build . -t` build your image.
+4. use `gcloud cli` upload your image` [read](https://cloud.google.com/container-registry/docs/pushing-and-pulling)
+
+### Create Clound Run Services
+
+visit [Cloud Run](https://console.cloud.google.com/run)
+
+1. click create service
+2. setup your service name, like `my nft store`
+3. choose your uploaded image
+4. open adcanced setings
+    1. switch to Variables and keys
+    2. add Environment Variables
+        1. name: `NODE_ENV`, value: `production`
+5. set up & finish your create.
+
+### setup your domain
+
+visit [Cloud Run](https://console.cloud.google.com/run)
+
+1. switch to manage custom domain
+2. setup your domain and bind service.
