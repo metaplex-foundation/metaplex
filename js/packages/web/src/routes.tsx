@@ -15,6 +15,8 @@ import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
 
 import * as ga from './utils/ga'
+import { useRouter } from 'next/dist/client/router';
+import { useEffect } from 'react';
 
 export function Routes() {
 
