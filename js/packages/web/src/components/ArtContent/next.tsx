@@ -164,7 +164,6 @@ export const ArtContent = ({
   preview,
   active,
   allowMeshRender,
-  pubkey,
   uri,
 
   image,
@@ -177,7 +176,6 @@ export const ArtContent = ({
   preview?: boolean;
   active?: boolean;
   allowMeshRender?: boolean;
-  pubkey?: string;
   uri?: string;
 
   image?: string;

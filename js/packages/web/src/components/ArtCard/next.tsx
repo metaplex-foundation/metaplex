@@ -1,14 +1,12 @@
 import React, { MouseEventHandler } from 'react';
 import { Card, CardProps, Button, Badge } from 'antd';
-import { StringPublicKey } from '@oyster/common';
 import { ArtContent } from './../ArtContent/next';
 import { ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
-import { Artwork } from '../../hooks/useQueryArtworks';
+import { Artwork } from '../../hooks';
 
 export interface ArtCardProps extends CardProps {
   art: Partial<Artwork>;
-  pubkey?: StringPublicKey;
 
   preview?: boolean;
   small?: boolean;
@@ -18,7 +16,6 @@ export interface ArtCardProps extends CardProps {
 export const ArtCard = (props: ArtCardProps) => {
   let {
     art,
-    pubkey,
 
     className,
     small,
@@ -27,7 +24,7 @@ export const ArtCard = (props: ArtCardProps) => {
     ...rest
   } = props;
 
-  const badge = getBadge(art || {});
+  const badge = getBadge(art);
   const hasUnverifiedCreator = art?.creators?.some(c => !c.verified);
 
   const closeHandler: MouseEventHandler = e => {
@@ -52,7 +49,6 @@ export const ArtCard = (props: ArtCardProps) => {
             </Button>
           )}
           <ArtContent
-            pubkey={pubkey}
             uri={art.uri}
             // uri={image} ???
             // animationURL={animationURL} ???
@@ -82,14 +78,14 @@ export const ArtCard = (props: ArtCardProps) => {
   );
 };
 
-const getBadge = (art: Partial<Artwork>) => {
-  if (art.type === ArtType.NFT) {
+export const getBadge = (art: Partial<Artwork> | null) => {
+  if (art?.type === ArtType.NFT) {
     return 'Unique';
   }
-  if (art.type === ArtType.Master) {
+  if (art?.type === ArtType.Master) {
     return 'NFT 0';
   }
-  if (art.type === ArtType.Print) {
+  if (art?.type === ArtType.Print) {
     return `${art.edition} of ${art.supply}`;
   }
   return '';

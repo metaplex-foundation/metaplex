@@ -4,7 +4,7 @@ import {
   ArtworkType,
   ArtworkFragment,
   processArtwork,
-} from './useQueryArtworks';
+} from './useQueryArtwork';
 import {
   CreatorType,
   CreatorFragment,
@@ -24,7 +24,7 @@ const creatorWithArtworksQuery = gql<
     creator(storeId: $storeId, creatorId: $creatorId) {
       ...CreatorFragment
     }
-    artworks(storeId: $storeId, creatorId: $creatorId) {
+    artworks(filter: { storeId: $storeId, creatorId: $creatorId }) {
       ...ArtworkFragment
     }
   }

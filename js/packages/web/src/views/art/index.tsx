@@ -1,43 +1,39 @@
-import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd';
+import React, { MouseEventHandler, useMemo } from 'react';
+import {
+  Row,
+  Col,
+  Divider,
+  Layout,
+  Tag,
+  Button,
+  Skeleton,
+  List,
+  Card,
+} from 'antd';
 import { useParams } from 'react-router-dom';
-import { useArt, useExtendedArt } from './../../hooks';
+import { useQueryArtwork } from '../../hooks';
+import { useExtendedArt } from '../../hooks/useArt2';
 
-import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { ArtContent } from '../../components/ArtContent/next';
+import { shortenAddress, useConnection } from '@oyster/common';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { ViewOn } from './../../components/ViewOn';
-import { ArtType } from '../../types';
+import { ViewOn } from '../../components/ViewOn';
+import { getBadge } from '../../components/ArtCard/next';
 
 const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const wallet = useWallet();
-
   const connection = useConnection();
-  const art = useArt(id);
-  let badge = '';
-  if (art.type === ArtType.NFT) {
-    badge = 'Unique';
-  } else if (art.type === ArtType.Master) {
-    badge = 'NFT 0';
-  } else if (art.type === ArtType.Print) {
-    badge = `${art.edition} of ${art.supply}`;
-  }
-  const { ref, data } = useExtendedArt(id);
 
-  // const { userAccounts } = useUserAccounts();
+  const variables = useMemo(() => ({ artId: id }), [id]);
+  const [{ artwork: art } = { artwork: null }] = useQueryArtwork(variables);
 
-  // const accountByMint = userAccounts.reduce((prev, acc) => {
-  //   prev.set(acc.info.mint.toBase58(), acc);
-  //   return prev;
-  // }, new Map<string, TokenAccount>());
-
-  const description = data?.description;
-  const attributes = data?.attributes;
+  const badge = getBadge(art);
+  const { ref, data } = useExtendedArt(art?.uri);
 
   const pubkey = wallet.publicKey?.toBase58() || '';
 
@@ -53,13 +49,23 @@ export const ArtView = () => {
       <div style={{ fontSize: 12 }}>
         <i>
           This artwork is still missing verification from{' '}
-          {art.creators?.filter(c => !c.verified).length} contributors before it
-          can be considered verified and sellable on the platform.
+          {art?.creators?.filter(c => !c.verified).length} contributors before
+          it can be considered verified and sellable on the platform.
         </i>
       </div>
       <br />
     </>
   );
+
+  const approveHandler: MouseEventHandler = async () => {
+    try {
+      await sendSignMetadata(connection, wallet, id);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+    return true;
+  };
 
   return (
     <Content>
@@ -67,11 +73,9 @@ export const ArtView = () => {
         <Row ref={ref}>
           <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
             <ArtContent
-              style={{ width: 300 }}
-              height={300}
-              width={300}
               className="artwork-image"
-              pubkey={id}
+              style={{ width: 300 }}
+              uri={art?.uri}
               active={true}
               allowMeshRender={true}
             />
@@ -84,14 +88,14 @@ export const ArtView = () => {
           >
             <Row>
               <div style={{ fontWeight: 700, fontSize: '4rem' }}>
-                {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+                {art?.title || <Skeleton paragraph={{ rows: 0 }} />}
               </div>
             </Row>
             <Row>
               <Col span={6}>
                 <h6>Royalties</h6>
                 <div className="royalties">
-                  {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
+                  {((art?.sellerFeeBasisPoints || 0) / 100).toFixed(2)}%
                 </div>
               </Col>
               <Col span={12}>
@@ -102,7 +106,7 @@ export const ArtView = () => {
               <Col>
                 <h6 style={{ marginTop: 5 }}>Created By</h6>
                 <div className="creators">
-                  {(art.creators || []).map((creator, idx) => {
+                  {(art?.creators || []).map((creator, idx) => {
                     return (
                       <div
                         key={idx}
@@ -121,21 +125,7 @@ export const ArtView = () => {
                           <div style={{ marginLeft: 10 }}>
                             {!creator.verified &&
                               (creator.address === pubkey ? (
-                                <Button
-                                  onClick={async () => {
-                                    try {
-                                      await sendSignMetadata(
-                                        connection,
-                                        wallet,
-                                        id,
-                                      );
-                                    } catch (e) {
-                                      console.error(e);
-                                      return false;
-                                    }
-                                    return true;
-                                  }}
-                                >
+                                <Button onClick={approveHandler}>
                                   Approve
                                 </Button>
                               ) : (
@@ -184,10 +174,10 @@ export const ArtView = () => {
           </Col>
           <Col span="12">
             <Divider />
-            {art.creators?.find(c => !c.verified) && unverified}
+            {art?.creators?.find(c => !c.verified) && unverified}
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
-            <div className="info-content">{description}</div>
+            <div className="info-content">{data?.description}</div>
             <br />
             {/*
               TODO: add info about artist
@@ -197,23 +187,22 @@ export const ArtView = () => {
             <div className="info-content">{art.about}</div> */}
           </Col>
           <Col span="12">
-            {attributes &&
+            {data?.attributes && (
               <>
                 <Divider />
                 <br />
                 <div className="info-header">Attributes</div>
-                <List
-                  size="large"
-                  grid={{ column: 4 }}
-                >
-                  {attributes.map(attribute =>
+                <List size="large" grid={{ column: 4 }}>
+                  {data?.attributes.map(attribute => (
                     <List.Item>
-                      <Card title={attribute.trait_type}>{attribute.value}</Card>
+                      <Card title={attribute.trait_type}>
+                        {attribute.value}
+                      </Card>
                     </List.Item>
-                  )}
+                  ))}
                 </List>
               </>
-            }
+            )}
           </Col>
         </Row>
       </Col>

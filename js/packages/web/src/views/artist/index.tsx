@@ -28,7 +28,7 @@ export const ArtistView = () => {
       {!fetching
         ? data?.artworks.map(art => (
             <Link to={`/art/${art.pubkey}`} key={art.pubkey}>
-              <ArtCard art={art} pubkey={art.pubkey} preview={false} />
+              <ArtCard art={art} preview={false} />
             </Link>
           ))
         : [...Array(6)].map((_, idx) => <CardLoader key={idx} />)}
