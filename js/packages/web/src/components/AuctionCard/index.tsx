@@ -385,7 +385,6 @@ export const AuctionCard = ({
       <MetaplexOverlay visible={showBidPlaced}>
         <Confetti />
         <h1
-          className="title"
           style={{
             fontSize: '3rem',
             marginBottom: 20,
@@ -395,7 +394,6 @@ export const AuctionCard = ({
         </h1>
         <p
           style={{
-            color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
           }}
@@ -411,7 +409,6 @@ export const AuctionCard = ({
       <MetaplexOverlay visible={showRedeemedBidModal}>
         <Confetti />
         <h1
-          className="title"
           style={{
             fontSize: '3rem',
             marginBottom: 20,
@@ -421,7 +418,6 @@ export const AuctionCard = ({
         </h1>
         <p
           style={{
-            color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
           }}
