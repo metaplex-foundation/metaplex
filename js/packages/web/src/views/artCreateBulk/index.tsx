@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Button, Col, Progress } from 'antd';
-import CSVReader from 'react-csv-reader';
+import CSVReader, { IFileInfo } from 'react-csv-reader';
 import { Confetti } from './../../components/Confetti';
 import { mintNFT } from '../../actions';
 import {
@@ -12,26 +12,79 @@ import {
   shortenAddress,
   MetadataFile,
   StringPublicKey,
+  chunks,
 } from '@oyster/common';
 import { getLast } from '../../utils/utils';
+
+const normalizeData = (data: string[][]) => {
+  // keys: ["name", "Background color", "chain"]
+  // values: [ ["0000", "pelegreen", "silver"], [...], [...] ]
+  // filter any empty lines
+  // console.log('data', data);
+
+  const [keys, ...values] = data.filter(el => el.length > 1);
+
+  const mapValuesToKeys = (valueArr: string[]) =>
+    valueArr.reduce(
+      (acc, value, idx) => {
+        const key = keys[idx];
+        const nameKey = 'name';
+
+        if (key.toLowerCase() === nameKey) {
+          return {
+            ...acc,
+            [nameKey]: value,
+          };
+        } else {
+          return {
+            ...acc,
+            traits: [
+              ...acc.traits,
+              {
+                trait_type: key,
+                value,
+              },
+            ],
+          };
+        }
+      },
+      {
+        traits: [],
+      },
+    );
+
+  // [ { "name": "00000", "BG": "pelegreen" }, {...}, {...} ]
+  const keyValue = values.map(mapValuesToKeys);
+
+  return keyValue;
+};
+
+const mintChunkSize = 4;
 
 export const ArtCreateBulkView = () => {
   const { connected } = useWallet();
   const [csvData, setCsvData] = useState<unknown[]>([]);
   const [startMint, setStartMint] = useState(false);
-  const handleSCV = (data: unknown[], fileInfo: any) => {
+  const [csvError, setScvError] = useState(false);
+  const handleSCV = (data: string[][], fileInfo: IFileInfo) => {
     // console.log(data, fileInfo);
-    const dataNormalized = data.map(row => ({
-      name: row[0],
-      props: [...row.slice(1)],
-    }));
-
-    setCsvData(dataNormalized);
+    try {
+      const dataNormalized = normalizeData(data);
+      console.log('dataNormalized', dataNormalized);
+      setCsvData(dataNormalized);
+    } catch (error) {
+      console.warn('CSV File parsing error:', error);
+      setScvError(true);
+    }
   };
   const onStartClicked = () => setStartMint(true);
 
   if (!connected) {
     return <h1>Please Connect your wallet to proceed!</h1>;
+  }
+
+  if (csvError) {
+    return <h1>⚠️ Error parsing CSV File. Make sure all fields are correct</h1>;
   }
 
   return (
@@ -45,7 +98,9 @@ export const ArtCreateBulkView = () => {
       <br />
 
       {startMint ? (
-        <MintFromData data={csvData} />
+        chunks(csvData, mintChunkSize).map((data, index) => (
+          <MintFromData data={data} chunkIdx={index} />
+        ))
       ) : (
         <Button
           type="primary"
@@ -60,13 +115,12 @@ export const ArtCreateBulkView = () => {
   );
 };
 
-const MintFromData = ({ data }) => {
+const MintFromData = ({ data, chunkIdx }: any) => {
   const [idxToMint, setIdxToMint] = useState(0);
   const [error, setError] = useState();
   const [completed, setCompleted] = useState(false);
 
   const onItemMinted = (idx, error) => {
-    console.log('idx', idx);
     const idxUpdated = idx + 1;
     const numberOfItems = data.length;
 
@@ -82,28 +136,32 @@ const MintFromData = ({ data }) => {
   }
 
   if (completed) {
+    const itemsStartAt = mintChunkSize * chunkIdx + 1;
+    const itemsEndAt = mintChunkSize * (chunkIdx + 1);
+
     return (
       <>
         <h1>
-          {idxToMint + 1} items created successfully! <br /> 🎉🎉🎉
+          🎉 {itemsStartAt}-{itemsEndAt} items created successfully!
         </h1>
         <Confetti />
       </>
     );
   }
 
-  console.log('idxToMint', idxToMint);
+  // console.log('idxToMint', idxToMint);
   const progress = idxToMint / (data.length / 100);
 
   return (
     <>
       {error !== undefined ? <div>{error.message}</div> : null}
-      <Progress percent={progress} status="active" />
       <ArtCreateSingleItem
         data={data[idxToMint]}
         idx={idxToMint}
         onComplete={onItemMinted}
+        chunkIdx={chunkIdx}
       />
+      <Progress percent={progress} status="active" />
     </>
   );
 };
@@ -125,7 +183,12 @@ const attributesDefault = {
   },
 };
 
-export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
+export const ArtCreateSingleItem = ({
+  data,
+  onComplete,
+  idx,
+  chunkIdx,
+}: any) => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
   const { wallet, connected } = useWallet();
@@ -176,8 +239,12 @@ export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
           name: data.name,
           creators: [creator],
           image,
+          attributes: data.traits,
           properties,
         };
+
+        // console.log('attributesUpdated', attributesUpdated);
+
 
         await mint(attributesUpdated, file);
       }
@@ -187,13 +254,15 @@ export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
   }, [connected, wallet, idx]);
 
   const createFile = async () => {
-    const imageUrl = `/preminted/${idx + 1}.png`;
+    const imageIdx = mintChunkSize * chunkIdx + idx;
+
+    const imageUrl = `/preminted/${imageIdx}.png`;
     let response = await fetch(imageUrl);
     let data = await response.blob();
     let metadata = {
       type: 'image/png',
     };
-    let file = new File([data], `${idx + 1}.png`, metadata);
+    let file = new File([data], `${imageIdx}.png`, metadata);
 
     return file;
 
@@ -208,7 +277,7 @@ export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
     // }
   };
 
-  console.log('data', data);
+  // console.log('data', data);
   // console.log('attributes', attributesDefault);
 
   // store files
@@ -234,7 +303,7 @@ export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
     );
 
     const files = [file];
-    console.log('files', files);
+    // console.log('files', files);
 
     // Update progress inside mintNFT
     const _nft = await mintNFT(
@@ -260,28 +329,37 @@ export const ArtCreateSingleItem = ({ data, onComplete, idx }: any) => {
     <>
       <Row style={{ paddingTop: 50 }}>
         <Col span={24}>
-          <WaitingStep progress={progress} idx={idx} />
+          <WaitingStep progress={progress} idx={idx} chunkIdx={chunkIdx} />
         </Col>
       </Row>
     </>
   );
 };
 
-const WaitingStep = (props: { progress: number; idx: number }) => {
+interface PropsWaitingStep {
+  progress: number;
+  idx: number;
+  chunkIdx: number;
+}
+
+const WaitingStep = ({ progress, idx, chunkIdx }: PropsWaitingStep) => {
+  const itemsStartAt = mintChunkSize * chunkIdx + 1;
+  const itemsEndAt = mintChunkSize * (chunkIdx + 1);
+
   return (
     <div
       style={{
-        marginTop: 70,
+        marginTop: 10,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
       }}
     >
-      <Progress type="circle" percent={props.progress} />
+      <Progress type="circle" percent={progress} width={50} />
       <div className="waiting-title">
-        Creation #{props.idx + 1} is being uploaded to the decentralized web...
+        Thread #{chunkIdx+1}. Creation {idx + 1}/{mintChunkSize} ({itemsStartAt}-{itemsEndAt}) is
+        being uploaded to the decentralized web...
       </div>
-      <div className="waiting-subtitle">This can take up to 1 minute.</div>
     </div>
   );
 };
