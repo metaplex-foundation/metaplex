@@ -167,9 +167,9 @@ const MintFromData = ({ data, chunkIdx }: any) => {
 };
 
 const attributesDefault = {
-  name: 'Untitled',
+  name: 'Noname Thug',
   symbol: '',
-  description: 'test description',
+  description: 'can\'t be uncovered',
   external_url: 'https://www.thugbirdz.com/',
   image: '',
   animation_url: undefined,
@@ -180,6 +180,10 @@ const attributesDefault = {
     files: [],
     category: MetadataCategory.Image,
     maxSupply: 1,
+  },
+  collection: {
+    name: 'OG Collection',
+    family: 'thugbirdz',
   },
 };
 
@@ -245,7 +249,6 @@ export const ArtCreateSingleItem = ({
 
         // console.log('attributesUpdated', attributesUpdated);
 
-
         await mint(attributesUpdated, file);
       }
     }
@@ -291,12 +294,18 @@ export const ArtCreateSingleItem = ({
       image: attributes.image,
       animation_url: attributes.animation_url,
       external_url: attributes.external_url,
+      attributes: attributes.attributes,
+      collection: attributes.collection,
       properties: {
         files: attributes.properties.files,
         category: attributes.properties?.category,
         maxSupply: attributesDefault.properties.maxSupply,
       },
     };
+
+    // console.log('metadata', metadata);
+
+
     const inte = setInterval(
       () => setProgress(prog => Math.min(prog + 1, 99)),
       600,
@@ -357,8 +366,9 @@ const WaitingStep = ({ progress, idx, chunkIdx }: PropsWaitingStep) => {
     >
       <Progress type="circle" percent={progress} width={50} />
       <div className="waiting-title">
-        Thread #{chunkIdx+1}. Creation {idx + 1}/{mintChunkSize} ({itemsStartAt}-{itemsEndAt}) is
-        being uploaded to the decentralized web...
+        Thread #{chunkIdx + 1}. Creation {idx + 1}/{mintChunkSize} (
+        {itemsStartAt}-{itemsEndAt}) is being uploaded to the decentralized
+        web...
       </div>
     </div>
   );
