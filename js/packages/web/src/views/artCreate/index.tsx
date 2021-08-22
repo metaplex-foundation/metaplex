@@ -212,33 +212,7 @@ export const ArtCreateView = () => {
   );
 };
 
-const CategoryStep = (props: {
-  confirm: (category: MetadataCategory) => void;
-}) => {
-  const { width } = useWindowDimensions();
-  return (
-    <>
-      <Row className="call-to-action">
-        <h2>Create a new item</h2>
-        <p>
-          First time creating on Metaplex?{' '}
-          <a href="#">Read our creators’ guide.</a>
-        </p>
-      </Row>
-      <Row justify={width < 768 ? 'center' : 'start'}>
-        <Col>
-          <Row>
-            <Button
-              className="type-btn"
-              size="large"
-              onClick={() => props.confirm(MetadataCategory.Image)}
-            >
-              <div>
-                <div>Image</div>
-                <div className="type-btn-description">JPG, PNG, GIF</div>
-              </div>
-            </Button>
-          </Row>
+/* Removed buttons to upload video and audio.
           <Row>
             <Button
               className="type-btn"
@@ -260,6 +234,36 @@ const CategoryStep = (props: {
               <div>
                 <div>Audio</div>
                 <div className="type-btn-description">MP3, WAV, FLAC</div>
+              </div>
+            </Button>
+          </Row>
+          */
+
+
+const CategoryStep = (props: {
+  confirm: (category: MetadataCategory) => void;
+}) => {
+  const { width } = useWindowDimensions();
+  return (
+    <>
+      <Row className="call-to-action">
+        <h2>Create a new item</h2>
+        <p>
+          First time creating on Metaplex?{' '}
+          <a href="https://docs.google.com/document/d/1RbJQTOWp1WL6t5hkB4Ib7uSTAAlmjg6Uw-2-_EKrJcs/edit">Read our creators’ guide.</a>
+        </p>
+      </Row>
+      <Row justify={width < 768 ? 'center' : 'start'}>
+        <Col>
+          <Row>
+            <Button
+              className="type-btn"
+              size="large"
+              onClick={() => props.confirm(MetadataCategory.Image)}
+            >
+              <div>
+                <div>Image</div>
+                <div className="type-btn-description">JPG, PNG, GIF</div>
               </div>
             </Button>
           </Row>
@@ -560,8 +564,7 @@ const InfoStep = (props: {
       <Row className="call-to-action">
         <h2>Describe your item</h2>
         <p>
-          Provide detailed description of your creative process to engage with
-          your audience.
+          Give detailed specifications on the powers of the item. There is no character limit, but line breaks will not register.
         </p>
       </Row>
       <Row className="content-action" justify="space-around">
@@ -583,7 +586,7 @@ const InfoStep = (props: {
             <Input
               autoFocus
               className="input"
-              placeholder="Max 50 characters"
+              placeholder="Max 32 characters"
               allowClear
               value={props.attributes.name}
               onChange={info =>
@@ -614,7 +617,7 @@ const InfoStep = (props: {
             <span className="field-title">Description</span>
             <Input.TextArea
               className="input textarea"
-              placeholder="Max 500 characters"
+              placeholder="WARNING: Line breaks will not register!"
               value={props.attributes.description}
               onChange={info =>
                 props.setAttributes({

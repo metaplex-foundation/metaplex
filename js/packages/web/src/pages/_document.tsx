@@ -45,13 +45,13 @@ export default class MetaplexDocument extends Document {
           <meta name="twitter:site" content="@ghostoutfits"/>
           <meta name="twitter:creator" content="@ghostoutfits"/>
           <meta property="og:site_name" content="Magic Items Marketplace"/>
-          <meta name="twitter:image" content="https://magicitems.org/img/sample.jpg"/>       
+          <meta name="twitter:image" content="https://magicitems.org/img/allitems.jpg"/>       
           <meta name="twitter:image:alt" content="DnD Magic Items for collecting, trading, and ruling; built on @solana"/>
           <meta name="twitter:title" content="Magic Items Marketplace"/>
           <meta name="twitter:description" content="DnD Magic Items for collecting, trading, and ruling; built on @solana"/>
           <meta name="og:url" content="https://magicitems.org"/>
           <meta name="og:title" content="Magic Items Marketplace"/>
-          <meta name="og:image" content="https://magicitems.org/img/sample.jpg"/>
+          <meta name="og:image" content="https://magicitems.org/img/allitems.jpg"/>
           <meta property="og:description" content="DnD Magic Items for collecting, trading, and ruling; built on @solana"/>
 
           <link rel="manifest" href="/manifest.json" />

@@ -25,6 +25,12 @@ export const isMetadataPartOfStore = (
     '6iPCcMkaw9g9d9gbBQvHQP4NXVWcL4ew4wvSrwypgpj6' /*AmuletNoHalo*/,
     'CV9vEXffVPQQomLtbHEqS7hqV4n7qstb4FJpics5p389' /*NamedAxedNotHammer*/,
     '7bwx4P9pJMa6T2oSs8RLZCs2rYHdCk12GoG9KkERqidn' /*666Battleaxe*/,
+    'GhayxMMusJL5yHLqSS2aWSwZW4ARKMx9yr4qzFo7CLco' /*10ShortSword*/,
+    'E3eYQybfNiDJ6V3CL2PLhWPncYehMoNuzgdUSmhoj774' /*10Battleaxe*/,
+    '5zoYYWJWksasAN5SGFiovT6KmsoQvr4BnDsGkMVBRA9s' /*10LightHammer*/,
+    'G6FX3ynKYYKmstJp19voC8QxiYDWbBNsqdZPkKqogvDZ' /*TVShieldFreeze*/,
+    '5tKKMmKckWk7sXW2WthC8Z9tzVC7M99tiMp19tp1pXKX' /*RopeOfClimbing*/,
+    '6oj3k2e4BhbEqgjwnpPVYvzcxDT1FZSxgGqySUVv5BA8' /*AmuletOfHealth*/,
   ];
   if (badCreation.includes(m.pubkey.toBase58())) {
     return false;

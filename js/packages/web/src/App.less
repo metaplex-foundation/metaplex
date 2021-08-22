@@ -28,8 +28,9 @@ html {
 body {
   --row-highlight: @background-color-base;
   margin: 0;
-  background-image: url("https://magicitems.org/img/darkbackground.jpeg");
+  /*background-image: url("https://magicitems.org/img/darkbackground.jpeg");*/
   background-attachment: fixed;
+  background-color: #000000;
   font-style: normal;
   font-weight: normal;
   font-family: "Luminari", 'Graphik Web' !important;
@@ -58,26 +59,60 @@ body {
 }
 
 .mission {
-  font-family: "Times New Roman", "Luminari", "Savoy", sans-serif;
+  font-family: "Times New Roman", "Luminari";
   display:inline;
   float: left;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1;
   background-color: rgba(0, 0, 0, 0.6);
   
   h2 {
-    color: #FFFFB6;
-  }
+    color: #FFFFB6;}  
+  
 
   h3 {
     font-family: "Times New Roman";
     font-size: 24px;
     color: #FFFFB6;
   }
+}
+
+.mission:first-letter {
+  font-family: "Luminari", "Times New Roman";
+  float: left;
+  font-size: 6rem;
+  line-height: 0.6;
+  margin: 0.3em 0.2em 0.1em 0.1em;
+  background-color: rgba(0, 0, 0, 0.6);
+}
 
   .purple {
     color:  yellow;
   }
+
+
+  .intro {
+  font-family: "Luminari", "Times New Roman";
+  display:inline;
+  float: left;
+  font-size: 24px;
+  color: #FFFFB6;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.6);
+
+  h2{
+    font-size: 24px;
+  }
+
+}
+
+.intro:first-letter {
+  font-family: "Luminari", "Times New Roman";
+  float: left;
+  font-size: 4rem;
+  line-height: 0.6;
+  margin: 0.3em 0.2em 0.1em 0.1em;
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .purple {
@@ -89,14 +124,7 @@ body {
 }
 
 
-.mission:first-letter {
-  font-family: "Luminari", "Savoy", sans-serif;
-  float: left;
-  font-size: 6rem;
-  line-height: 0.6;
-  margin: 0.3em 0.2em 0.1em 0.1em;
-  background-color: rgba(0, 0, 0, 0.6);
-}
+
 
 .rules {
   float: left;
@@ -146,8 +174,8 @@ body {
 
   h5 {
     font-size: min(6.0vw, 60px);
-    color: #580143;
-    background-color:  rgb(255, 255, 182);
+    color: rgb(255, 255, 182);
+    background-color: #580143;
     line-height: 1.5;
   }
 }
@@ -206,8 +234,8 @@ code {
   overflow: hidden;
   .ant-image-img,
   video {
-    height: 300px;
-    object-fit: cover;
+    height: auto;
+    object-fit: contain;
   }
 }
 

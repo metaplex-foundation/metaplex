@@ -14,7 +14,7 @@ export const ViewOn = ({ id }: { id: string }) => {
   return (
     <>
       <Col>
-        <h6>View on</h6>
+        <h6>View on:</h6>
         <div style={{ display: 'flex' }}>
           <Button
             className="tag"

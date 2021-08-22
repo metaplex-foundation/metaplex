@@ -203,12 +203,15 @@ export const HomeView = () => {
       <div className="FAQ">
         <h5>[• Magic Items Marketplace •]</h5>
       </div>
-      <div className="mission">  
-        <h2>You’re wandering a barren and enchanted wasteland, when you think you spy in the distance a large, billowing tent. Is it a mirage? Is it a miracle? You trudge toward it to get a closer look.</h2>
-        <h2>When you reach the tent and peek inside, you can hardly believe your eyes. It’s a marketplace of sorts (a large banner above the entrance reveals as much), but the objects being bought and sold inside this tent are somehow ethereal, clearly magical… You wonder to yourself, "Are they even objects?"</h2>
+      <div className="intro">  
+        <div>You’re wandering a barren and encanted wasteland, when you think you spy in the distance a large, billowing tent. Is it a mirage? Is it a miracle? You trudge toward it to get a closer look.</div>
+        <br></br>
+        <div>When you reach the tent and peek inside, you can hardly believe your eyes. It’s a marketplace of sorts (a large banner above the entrance reveals as much), but the objects being bought and sold inside this tent are somehow ethereal, clearly magical… You wonder to yourself, "Are they even objects?"</div>
+        <br></br>
         <h2><a href="./#/rules">Ask a merchant what the marketplace is all about...</a></h2>
         <h2><a href="./#/artworks">Browse the tables and see what's available...</a></h2>
       </div>
+      <PreSaleBanner auction={heroAuction} /> 
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 10 }}>
