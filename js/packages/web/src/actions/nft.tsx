@@ -39,6 +39,16 @@ interface IArweaveResult {
   }>;
 }
 
+interface Collection {
+  name: string;
+  family: string;
+}
+
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
+
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletAdapter | undefined,
@@ -54,6 +64,8 @@ export const mintNFT = async (
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
+    collection: Collection;
+    attributes: Attribute[];
   },
   maxSupply?: number,
 ): Promise<{
@@ -71,6 +83,8 @@ export const mintNFT = async (
     image: metadata.image,
     animation_url: metadata.animation_url,
     external_url: metadata.external_url,
+    attributes: metadata.attributes,
+    collection: metadata.collection,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map(creator => {
