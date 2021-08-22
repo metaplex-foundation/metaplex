@@ -26,12 +26,13 @@ use {
             mint_new_edition_from_master_edition_via_token, update_metadata_accounts,
         },
         state::{
-            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
+            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata, Creator,
             EDITION, PREFIX,
         },
     },
     std::str::FromStr,
 };
+
 
 const TOKEN_PROGRAM_PUBKEY: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
@@ -418,6 +419,14 @@ fn update_metadata_account_call(
     .unwrap();
     let program_key = spl_token_metadata::id();
     let mint_key = pubkey_of(app_matches, "mint").unwrap();
+    let seller_fee_basis_points = match app_matches.value_of("seller_fee_basis_points") {
+        Some(val) => Some(val.parse::<u16>().unwrap()),
+        None => None,
+    };
+    let primary_sale_happened = match app_matches.is_present("primary_sale_happened") {
+        true => Some(true),
+        false => None,
+    };
     let metadata_seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), mint_key.as_ref()];
     let (metadata_key, _) = Pubkey::find_program_address(metadata_seeds, &program_key);
 
@@ -435,13 +444,17 @@ fn update_metadata_account_call(
 
     let metadata_account = client.get_account(&metadata_key).unwrap();
     let metadata: Metadata = try_from_slice_unchecked(&metadata_account.data).unwrap();
+    let creators = match app_matches.value_of("creators") {
+        Some(val) => Some(parse_creators(val, &payer.pubkey())),
+        None => metadata.data.creators,
+    };
 
     let new_data = Data {
         name: name.unwrap_or(metadata.data.name),
         symbol: metadata.data.symbol,
         uri: uri.unwrap_or(metadata.data.uri),
-        seller_fee_basis_points: 0,
-        creators: metadata.data.creators,
+        seller_fee_basis_points: seller_fee_basis_points.unwrap_or(metadata.data.seller_fee_basis_points),
+        creators: creators,
     };
 
     let instructions = [update_metadata_accounts(
@@ -450,7 +463,7 @@ fn update_metadata_account_call(
         update_authority.pubkey(),
         new_update_authority,
         Some(new_data),
-        None,
+        primary_sale_happened,
     )];
 
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
@@ -462,6 +475,21 @@ fn update_metadata_account_call(
     let metadata_account = client.get_account(&metadata_key).unwrap();
     let metadata: Metadata = try_from_slice_unchecked(&metadata_account.data).unwrap();
     (metadata, metadata_key)
+}
+
+fn parse_creators(s: &str, signer: &Pubkey) -> Vec<Creator> {
+    s.split(",").map(|c| {
+        let t = c.split(":").collect::<Vec<&str>>();
+        if t.len() != 2 {
+            panic!("Invalid creator format: {:?}", c)
+        }
+        let address = Pubkey::from_str(t[0]).unwrap();
+        Creator {
+            address: address,
+            share: t[1].parse::<u8>().unwrap(),
+            verified: if *signer == address { true } else { false },
+        }
+    }).collect::<Vec<Creator>>()
 }
 
 fn create_metadata_account_call(
@@ -481,6 +509,14 @@ fn create_metadata_account_call(
     let name = app_matches.value_of("name").unwrap().to_owned();
     let symbol = app_matches.value_of("symbol").unwrap().to_owned();
     let uri = app_matches.value_of("uri").unwrap().to_owned();
+    let seller_fee_basis_points = match app_matches.value_of("seller_fee_basis_points") {
+        Some(val) => val.parse::<u16>().unwrap(),
+        None => 0,
+    };
+    let creators = match app_matches.value_of("creators") {
+        Some(val) => Some(parse_creators(val, &payer.pubkey())),
+        None => None,
+    };
     let create_new_mint = !app_matches.is_present("mint");
     let mutable = app_matches.is_present("mutable");
     let new_mint = Keypair::new();
@@ -526,8 +562,8 @@ fn create_metadata_account_call(
             name,
             symbol,
             uri,
-            None,
-            0,
+            creators,
+            seller_fee_basis_points,
             update_authority.pubkey() != payer.pubkey(),
             mutable,
         );
@@ -627,6 +663,22 @@ fn main() {
                         .required(false)
                         .help("Permit future metadata updates"),
                 )
+                .arg(
+                    Arg::with_name("seller_fee_basis_points")
+                        .long("seller-fee-basis-points")
+                        .value_name("POINTS")
+                        .takes_value(true)
+                        .required(false)
+                        .help("Creator royalties total deducted on sales (10000 is 100%)"),
+                )
+                .arg(
+                    Arg::with_name("creators")
+                        .long("creators")
+                        .value_name("LIST")
+                        .takes_value(true)
+                        .required(false)
+                        .help("List of creators and %shares. Format: PUBKEY1:SHARE1,PUBKEY2:SHARE2,..."),
+                )
         ).subcommand(
             SubCommand::with_name("mint_coins")
                        .about("Mint coins to your mint to an account")
@@ -691,6 +743,30 @@ fn main() {
                         .validator(is_valid_pubkey)
                         .takes_value(true)
                         .help("New update authority"))
+                .arg(
+                    Arg::with_name("seller_fee_basis_points")
+                        .long("seller-fee-basis-points")
+                        .value_name("POINTS")
+                        .takes_value(true)
+                        .required(false)
+                        .help("Creator royalties total deducted on sales (10000 is 100%)"),
+                )
+                .arg(
+                    Arg::with_name("creators")
+                        .long("creators")
+                        .value_name("LIST")
+                        .takes_value(true)
+                        .required(false)
+                        .help("List of creators and %shares. Format: PUBKEY1:SHARE1,PUBKEY2:SHARE2,..."),
+                )
+                .arg(
+                    Arg::with_name("primary_sale_happened")
+                        .long("primary-sale-happened")
+                        .value_name("BOOL")
+                        .takes_value(false)
+                        .required(false)
+                        .help("Whether primary sale happened"),
+                )
         ).subcommand(
             SubCommand::with_name("show")
                 .about("Show")
