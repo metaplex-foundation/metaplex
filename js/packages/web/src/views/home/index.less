@@ -71,9 +71,79 @@ a:active {
   padding: 0;
 }
 
+.purchase-screen {
+  margin: 0;
+  margin-top: 30;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
 .app-btn.purchase-btn {
-  font-size: 3em;
+  font-size: 2em;
   padding: 1em;
   height: auto;
   border-radius: 100px;
+  background: #f85172 !important;
+  // font-family: 'Bungee Inline', cursive;
+  font-family: 'GraphikWeb';
+  color: black;
+
+  &:disabled {
+    color: rgba(255, 255, 255, 1);
+    opacity: .5;
+  }
+}
+
+.app-btn.purchase-btn * {
+  font-family: 'GraphikWeb';
+  font-weight: 600;
+}
+
+.ant-progress-bg {
+  height: 20px !important;
+  background-color: #0a0a0a;
+}
+
+.welcome-description {
+  max-width: 580px;
+  font-size: 1.25em;
+  line-height: 1.25em;
+  text-align: center;
+  color: #c0ffff;
+  margin-bottom: 50px;
+}
+
+.only-left-text {
+  font-size: 1.5em;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-family: 'GraphikWeb';
+  color: #c0ffff;
+}
+
+.purchase-screen {
+  .welcome-text {
+    color: black;
+  }
+
+  .highlight {
+    font-family: 'Bungee Inline', cursive;
+  }
+
+  .sold-out {
+    font-size: 4em;
+    color: #c0ffff;
+  }
+}
+
+.app-left.app-bar-box {
+  background: transparent;
+  box-shadow: none;
+
+  * {
+    // font-family: 'Bungee Inline', cursive;
+    font-size: 20px;
+    color: black;
+  }
 }

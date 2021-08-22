@@ -11,9 +11,12 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
+  FaqView,
+  AboutView,
+  RoadmapView
 } from './views';
 import { AdminView } from './views/admin';
-import { BillingView } from './views/auction/billing';
+// import { BillingView } from './views/auction/billing';
 
 export function Routes() {
   return (
@@ -29,37 +32,52 @@ export function Routes() {
             />
             <Route
               exact
+              path="/about"
+              component={() => <AboutView />}
+            />
+            <Route
+              exact
+              path="/roadmap"
+              component={() => <RoadmapView />}
+            />
+            <Route
+              exact
+              path="/faq"
+              component={() => <FaqView />}
+            />
+            {/* <Route
+              exact
               path="/art/create/:step_param?"
               component={() => <ArtCreateView />}
-            />
+            /> */}
             <Route
               exact
               path="/art/create-bulk"
               component={() => <ArtCreateBulkView />}
             />
-            <Route
+            {/* <Route
               exact
               path="/artworks/:id?"
               component={() => <ArtworksView />}
-            />
-            <Route exact path="/art/:id" component={() => <ArtView />} />
-            <Route exact path="/artists/:id" component={() => <ArtistView />} />
-            <Route exact path="/artists" component={() => <ArtistsView />} />
-            <Route
+            /> */}
+            {/* <Route exact path="/art/:id" component={() => <ArtView />} /> */}
+            {/* <Route exact path="/artists/:id" component={() => <ArtistView />} /> */}
+            {/* <Route exact path="/artists" component={() => <ArtistsView />} /> */}
+            {/* <Route
               exact
               path="/auction/create/:step_param?"
               component={() => <AuctionCreateView />}
-            />
-            <Route
+            /> */}
+            {/* <Route
               exact
               path="/auction/:id"
               component={() => <AuctionView />}
-            />
-            <Route
+            /> */}
+            {/* <Route
               exact
               path="/auction/:id/billing"
               component={() => <BillingView />}
-            />
+            /> */}
             <Route path="/" component={() => <HomeView />} />
           </Switch>
         </Providers>
