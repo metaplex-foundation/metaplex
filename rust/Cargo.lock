@@ -223,35 +223,12 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "borsh"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a7111f797cc721407885a323fb071636aee57f750b1a4ddc27397eba168a74"
-dependencies = [
- "borsh-derive 0.8.2",
- "hashbrown",
-]
-
-[[package]]
-name = "borsh"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18dda7dc709193c0d86a1a51050a926dc3df1cf262ec46a23a25dba421ea1924"
 dependencies = [
- "borsh-derive 0.9.1",
+ "borsh-derive",
  "hashbrown",
-]
-
-[[package]]
-name = "borsh-derive"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "307f3740906bac2c118a8122fe22681232b244f1369273e45f1156b45c43d2dd"
-dependencies = [
- "borsh-derive-internal 0.8.2",
- "borsh-schema-derive-internal 0.8.2",
- "proc-macro-crate",
- "proc-macro2 1.0.27",
- "syn 1.0.72",
 ]
 
 [[package]]
@@ -260,21 +237,10 @@ version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "684155372435f578c0fa1acd13ebbb182cc19d6b38b64ae7901da4393217d264"
 dependencies = [
- "borsh-derive-internal 0.9.1",
- "borsh-schema-derive-internal 0.9.1",
+ "borsh-derive-internal",
+ "borsh-schema-derive-internal",
  "proc-macro-crate",
  "proc-macro2 1.0.27",
- "syn 1.0.72",
-]
-
-[[package]]
-name = "borsh-derive-internal"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2104c73179359431cc98e016998f2f23bc7a05bc53e79741bcba705f30047bc"
-dependencies = [
- "proc-macro2 1.0.27",
- "quote 1.0.9",
  "syn 1.0.72",
 ]
 
@@ -283,17 +249,6 @@ name = "borsh-derive-internal"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2102f62f8b6d3edeab871830782285b64cc1830168094db05c8e458f209bc5c3"
-dependencies = [
- "proc-macro2 1.0.27",
- "quote 1.0.9",
- "syn 1.0.72",
-]
-
-[[package]]
-name = "borsh-schema-derive-internal"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae29eb8418fcd46f723f8691a2ac06857d31179d33d2f2d91eb13967de97c728"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote 1.0.9",
@@ -2757,8 +2712,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a51c83e33eb5fc2a688db5e7e19a8c5b481385e1d9f30b012962e9bcdb002629"
 dependencies = [
  "bincode",
- "borsh 0.9.1",
- "borsh-derive 0.9.1",
+ "borsh",
+ "borsh-derive",
  "futures 0.3.15",
  "mio 0.7.11",
  "solana-banks-interface",
@@ -3048,8 +3003,8 @@ checksum = "fe5e5dd99d642b5e89eeb20457310c3c23f20dbf44e67c64e473a02fbc50d646"
 dependencies = [
  "bincode",
  "blake3",
- "borsh 0.9.1",
- "borsh-derive 0.9.1",
+ "borsh",
+ "borsh-derive",
  "bs58",
  "bv",
  "curve25519-dalek 2.1.2",
@@ -3377,7 +3332,7 @@ name = "spl-auction"
 version = "0.0.1"
 dependencies = [
  "arrayref",
- "borsh 0.9.1",
+ "borsh",
  "num-derive",
  "num-traits",
  "solana-program",
@@ -3392,7 +3347,7 @@ name = "spl-auction-test-client"
 version = "0.1.0"
 dependencies = [
  "bincode",
- "borsh 0.8.2",
+ "borsh",
  "clap",
  "rand 0.8.3",
  "solana-clap-utils",
@@ -3418,7 +3373,7 @@ name = "spl-metaplex"
 version = "0.0.1"
 dependencies = [
  "arrayref",
- "borsh 0.9.1",
+ "borsh",
  "num-derive",
  "num-traits",
  "solana-program",
@@ -3435,7 +3390,7 @@ version = "0.1.0"
 dependencies = [
  "arrayref",
  "bincode",
- "borsh 0.8.2",
+ "borsh",
  "clap",
  "serde",
  "serde_derive",
@@ -3471,7 +3426,7 @@ name = "spl-token-metadata"
 version = "0.0.1"
 dependencies = [
  "arrayref",
- "borsh 0.9.1",
+ "borsh",
  "num-derive",
  "num-traits",
  "solana-program",
@@ -3487,7 +3442,7 @@ name = "spl-token-metadata-test-client"
 version = "0.1.0"
 dependencies = [
  "bincode",
- "borsh 0.8.2",
+ "borsh",
  "clap",
  "solana-clap-utils",
  "solana-cli-config",
@@ -3502,7 +3457,7 @@ dependencies = [
 name = "spl-token-vault"
 version = "0.0.1"
 dependencies = [
- "borsh 0.9.1",
+ "borsh",
  "num-derive",
  "num-traits",
  "solana-program",
@@ -3515,7 +3470,7 @@ name = "spl-token-vault-test-client"
 version = "0.1.0"
 dependencies = [
  "bincode",
- "borsh 0.8.2",
+ "borsh",
  "clap",
  "solana-clap-utils",
  "solana-cli-config",

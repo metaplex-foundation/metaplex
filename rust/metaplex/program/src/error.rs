@@ -410,6 +410,26 @@ pub enum MetaplexError {
     /// You supplied a safety deposit index in a winning configuration that does not exist
     #[error("You supplied a safety deposit index in a winning configuration that does not exist")]
     InvalidWinningConfigSafetyDepositIndex,
+
+    /// The order provided on the safety deposit config does not match that on the safety deposit box!
+    #[error("The order provided on the safety deposit config does not match that on the safety deposit box!")]
+    SafetyDepositConfigOrderMismatch,
+
+    /// Winner index not found in safety deposit config ranges
+    #[error("Winner index not found in safety deposit config ranges")]
+    WinnerIndexNotFound,
+
+    /// Currently metaplex auctions are limited to a single participation prize
+    #[error("Currently metaplex auctions are limited to a single participation prize")]
+    AlreadyHasOneParticipationPrize,
+
+    /// This winner was not found in any ranges in the unique token type list, this should never happen
+    #[error("This winner was not found in any ranges in the unique token type list, this should never happen")]
+    NoTokensForThisWinner,
+
+    /// Not allowed to use Master Edition V1 printing with Auction Manager v2
+    #[error("Not allowed to use Master Edition V1 printing with Auction Manager v2")]
+    PrintingV1NotAllowedWithAuctionManagerV2,
 }
 
 impl PrintProgramError for MetaplexError {

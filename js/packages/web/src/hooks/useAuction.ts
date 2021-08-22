@@ -1,5 +1,4 @@
-import { useWallet } from '@oyster/common';
-import { PublicKey } from '@solana/web3.js';
+import { StringPublicKey, useWallet } from '@oyster/common';
 import { useEffect, useState } from 'react';
 import {
   AuctionView,
@@ -8,15 +7,13 @@ import {
 } from '.';
 import { useMeta } from '../contexts';
 
-export const useAuction = (pubkey: PublicKey | string) => {
-  const id = typeof pubkey === 'string' ? pubkey : pubkey.toBase58();
-
+export const useAuction = (id: StringPublicKey) => {
   const { wallet } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const [existingAuctionView, setAuctionView] =
     useState<AuctionView | undefined>(undefined);
-  const walletPubkey = wallet?.publicKey;
+  const walletPubkey = wallet?.publicKey?.toBase58();
   const {
     auctions,
     auctionManagersByAuction,
@@ -26,9 +23,12 @@ export const useAuction = (pubkey: PublicKey | string) => {
     bidderPotsByAuctionAndBidder,
     masterEditions,
     vaults,
+    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditionsByOneTimeAuthMint,
     masterEditionsByPrintingMint,
     metadataByMasterEdition,
+
+    bidRedemptionV2sByAuctionManagerAndWinningIndex,
   } = useMeta();
 
   useEffect(() => {
@@ -42,8 +42,11 @@ export const useAuction = (pubkey: PublicKey | string) => {
         metadataByMint,
         bidderMetadataByAuctionAndBidder,
         bidderPotsByAuctionAndBidder,
+
+        bidRedemptionV2sByAuctionManagerAndWinningIndex,
         masterEditions,
         vaults,
+        safetyDepositConfigsByAuctionManagerAndIndex,
         masterEditionsByPrintingMint,
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
@@ -61,7 +64,9 @@ export const useAuction = (pubkey: PublicKey | string) => {
     metadataByMint,
     bidderMetadataByAuctionAndBidder,
     bidderPotsByAuctionAndBidder,
+    bidRedemptionV2sByAuctionManagerAndWinningIndex,
     vaults,
+    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditions,
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,
