@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Progress, Typography } from 'antd';
+import { Button, Progress, Typography, Row, Col, Divider, Image} from 'antd';
 import { web3, Provider, Program } from '@project-serum/anchor';
 import { useWallet } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
@@ -7,7 +7,7 @@ import type { MasterAccount, Receipt } from './types';
 import { Confetti } from './../../components/Confetti';
 
 const { Title } = Typography;
-
+const style = { background: '#0092ff', padding: '10px' };
 const masterAccountAddress = 'HWJth7QE2C2DQqgnk5ZHd8CzWC4afCMaKrPWoNQDQJWW';
 if (masterAccountAddress === undefined) {
   throw new Error('The master account address is not defined');
@@ -45,7 +45,7 @@ export const PurchaseArt = () => {
       // mock it for now
       const program = {};
       const masterAccount = {
-        counter: 2454,
+        counter: 2455,
         authority: masterAccountAddress,
         numTokens: 2454,
       };
@@ -109,12 +109,8 @@ export const PurchaseArt = () => {
 
   return (
     <div className="purchase-screen">
-      <Title level={2} className="welcome-text">Welcome text</Title>
-      <p className="welcome-description">
-        In the process of internal desktop applications development, many
-        different design specs and implementations would be involved
-      </p>
-
+      <Title level={2} className="welcome-text">Introducing Thugbirdz: OG Collection</Title>
+      
       {ifDealMade ? <Confetti /> : null}
 
       {progressValue === 100 ? (
@@ -143,9 +139,9 @@ export const PurchaseArt = () => {
           <Progress percent={progressValue} />
         </>
       )}
-
-      <img src="hero.gif" />
-    </div>
+    <Title level={3} className="welcome-text">Possible features</Title>
+    
+  </div>
   );
 };
 
@@ -162,8 +158,8 @@ const getPurchaseBtnText = (
   isDone: boolean,
   price: number,
 ) => {
-  if (!connected) return 'Connect your wallet';
-  else if (isProcessing) return 'Processing request...';
-  else if (isDone) return 'Your bird is on its way...';
+  if (!connected) return 'connect your wallet fool';
+  else if (isProcessing) return 'processing request...';
+  else if (isDone) return 'your bird is on its way...';
   else return `Mint bird for ◎${price} SOL!`;
 };
