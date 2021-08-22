@@ -52,7 +52,7 @@ export function Routes() {
             /> */}
             <Route
               exact
-              path="/art/create-bulk"
+              path="/art/create-batch"
               component={() => <ArtCreateBulkView />}
             />
             {/* <Route

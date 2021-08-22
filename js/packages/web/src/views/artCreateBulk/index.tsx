@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Row, Button, Col, Progress } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Row, Button, Col, Progress, InputNumber } from 'antd';
 import CSVReader, { IFileInfo } from 'react-csv-reader';
 import { Confetti } from './../../components/Confetti';
 import { mintNFT } from '../../actions';
@@ -59,13 +60,12 @@ const normalizeData = (data: string[][]) => {
   return keyValue;
 };
 
-const mintChunkSize = 4;
-
 export const ArtCreateBulkView = () => {
   const { connected } = useWallet();
   const [csvData, setCsvData] = useState<unknown[]>([]);
   const [startMint, setStartMint] = useState(false);
   const [csvError, setScvError] = useState(false);
+  const [threadNumber, setTreadNumber] = useState(15);
   const handleSCV = (data: string[][], fileInfo: IFileInfo) => {
     // console.log(data, fileInfo);
     try {
@@ -87,6 +87,9 @@ export const ArtCreateBulkView = () => {
     return <h1>⚠️ Error parsing CSV File. Make sure all fields are correct</h1>;
   }
 
+  const mintChunkSize = Math.ceil(csvData?.length / threadNumber);
+  console.log('mintChunkSize', mintChunkSize);
+
   return (
     <div className="">
       <h1>Create Items from csv</h1>
@@ -99,23 +102,48 @@ export const ArtCreateBulkView = () => {
 
       {startMint ? (
         chunks(csvData, mintChunkSize).map((data, index) => (
-          <MintFromData data={data} chunkIdx={index} />
+          <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onReset={() => {
+              // reset the state of your app so the error doesn't happen again
+            }}
+          >
+            <MintFromData
+              data={data}
+              chunkIdx={index}
+              mintChunkSize={mintChunkSize}
+            />
+          </ErrorBoundary>
         ))
       ) : (
-        <Button
-          type="primary"
-          size="large"
-          onClick={onStartClicked}
-          disabled={!csvData.length}
-        >
-          Start Minting
-        </Button>
+        <>
+          <label className="action-field">
+            <span className="field-title">Number of Threads</span>
+            <InputNumber
+              min={1}
+              max={50}
+              step={1}
+              placeholder="Number of Threads"
+              onChange={setTreadNumber}
+              className="thread-input"
+              value={threadNumber}
+            />
+          </label>
+          <Button
+            type="primary"
+            size="large"
+            onClick={onStartClicked}
+            disabled={!csvData.length}
+          >
+            Start Minting
+          </Button>
+        </>
       )}
     </div>
   );
 };
 
-const MintFromData = ({ data, chunkIdx }: any) => {
+const MintFromData = ({ data, chunkIdx, mintChunkSize }: any) => {
   const [idxToMint, setIdxToMint] = useState(0);
   const [error, setError] = useState();
   const [completed, setCompleted] = useState(false);
@@ -160,6 +188,7 @@ const MintFromData = ({ data, chunkIdx }: any) => {
         idx={idxToMint}
         onComplete={onItemMinted}
         chunkIdx={chunkIdx}
+        mintChunkSize={mintChunkSize}
       />
       <Progress percent={progress} status="active" />
     </>
@@ -169,7 +198,7 @@ const MintFromData = ({ data, chunkIdx }: any) => {
 const attributesDefault = {
   name: 'Noname Thug',
   symbol: '',
-  description: 'can\'t be uncovered',
+  description: "can't be uncovered",
   external_url: 'https://www.thugbirdz.com/',
   image: '',
   animation_url: undefined,
@@ -192,6 +221,7 @@ export const ArtCreateSingleItem = ({
   onComplete,
   idx,
   chunkIdx,
+  mintChunkSize,
 }: any) => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
@@ -259,7 +289,7 @@ export const ArtCreateSingleItem = ({
   const createFile = async () => {
     const imageIdx = mintChunkSize * chunkIdx + idx;
 
-    const imageUrl = `/preminted/${imageIdx}.png`;
+    const imageUrl = `/preminted-200/${imageIdx}.png`;
     let response = await fetch(imageUrl);
     let data = await response.blob();
     let metadata = {
@@ -305,7 +335,6 @@ export const ArtCreateSingleItem = ({
 
     // console.log('metadata', metadata);
 
-
     const inte = setInterval(
       () => setProgress(prog => Math.min(prog + 1, 99)),
       600,
@@ -338,7 +367,12 @@ export const ArtCreateSingleItem = ({
     <>
       <Row style={{ paddingTop: 50 }}>
         <Col span={24}>
-          <WaitingStep progress={progress} idx={idx} chunkIdx={chunkIdx} />
+          <WaitingStep
+            progress={progress}
+            idx={idx}
+            chunkIdx={chunkIdx}
+            mintChunkSize={mintChunkSize}
+          />
         </Col>
       </Row>
     </>
@@ -349,9 +383,15 @@ interface PropsWaitingStep {
   progress: number;
   idx: number;
   chunkIdx: number;
+  mintChunkSize: number;
 }
 
-const WaitingStep = ({ progress, idx, chunkIdx }: PropsWaitingStep) => {
+const WaitingStep = ({
+  progress,
+  idx,
+  chunkIdx,
+  mintChunkSize,
+}: PropsWaitingStep) => {
   const itemsStartAt = mintChunkSize * chunkIdx + 1;
   const itemsEndAt = mintChunkSize * (chunkIdx + 1);
 
@@ -372,4 +412,31 @@ const WaitingStep = ({ progress, idx, chunkIdx }: PropsWaitingStep) => {
       </div>
     </div>
   );
+};
+
+interface ErrorProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+}
+
+const ErrorFallback = ({ error, resetErrorBoundary }: ErrorProps) => {
+  return (
+    <div role="alert" style={style.container}>
+      <p style={style.p}>Thread failed with error:</p>
+      <pre>{error.message}</pre>
+      {/* <button onClick={resetErrorBoundary}>Try again</button> */}
+    </div>
+  );
+};
+
+const style = {
+  container: {
+    background: 'tomato',
+    color: 'black',
+    padding: '10px',
+    marginTop: '20px',
+  },
+  p: {
+    color: 'white',
+  },
 };
