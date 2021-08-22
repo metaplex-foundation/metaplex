@@ -2,7 +2,7 @@ import React from "react";
 
 export const AboutView = () => {
   return (
-    <div className="about-screen">
+    <div className="about-screen bungee-font">
       <br></br>
       <br></br>
       <br></br>

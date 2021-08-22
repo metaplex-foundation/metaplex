@@ -108,7 +108,7 @@ export const PurchaseArt = () => {
   const btnText = getPurchaseBtnText(connected, isProcessing, isDone, price);
 
   return (
-    <div className="purchase-screen">
+    <div className="purchase-screen bungee-font">
       <Title level={2} className="welcome-text">Introducing Thugbirdz: OG Collection</Title>
       <img src = 'hero.gif'/>
       {ifDealMade ? <Confetti /> : null}
@@ -143,7 +143,7 @@ export const PurchaseArt = () => {
     <br></br>
     <br></br>
     <Title level={3} className="welcome-text">Possible features</Title>
-    
+
   </div>
   );
 };

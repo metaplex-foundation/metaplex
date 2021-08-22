@@ -16,8 +16,8 @@ const menu = (
     </Menu.Item>
 
     <Menu.Item>
-      <Link to={`/art/create-bulk`}>
-        <Button className="app-btn">Create Bulk</Button>
+      <Link to={`/art/create-batch`}>
+        <Button className="app-btn">Create Batch</Button>
       </Link>
     </Menu.Item>
   </Menu>
@@ -48,11 +48,11 @@ const UserActions = () => {
             </Dropdown>
           ) : null}
           {canCreate ? (
-          <Link to={`/auction/create/0`}>
-            <Button className="connector" type="primary">
-              Sell
-            </Button>
-          </Link>
+            <Link to={`/auction/create/0`}>
+              <Button className="connector" type="primary">
+                Sell
+              </Button>
+            </Link>
           ) : null}
         </>
       )}
@@ -68,6 +68,7 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
         display: 'flex',
         flexDirection: vertical ? 'column' : 'row',
       }}
+      className="bungee-font"
     >
       <Link to={`/`}>
         <Button className="app-btn">NEST</Button>
@@ -104,6 +105,7 @@ const MetaplexMenu = () => {
           arrow
           placement="bottomLeft"
           trigger={['click']}
+          className="bungee-font-inline"
           overlay={
             <Menu>
               <Menu.Item>
@@ -113,9 +115,7 @@ const MetaplexMenu = () => {
               </Menu.Item>
               <Menu.Item>
                 <Link to={`/about`}>
-                  <Button className="app-btn">
-                    ABOUT
-                  </Button>
+                  <Button className="app-btn">ABOUT</Button>
                 </Link>
               </Menu.Item>
               <Menu.Item>

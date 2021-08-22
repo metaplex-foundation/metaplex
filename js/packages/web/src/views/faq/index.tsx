@@ -2,7 +2,7 @@ import React from 'react';
 
 export const FaqView = () => {
   return (
-    <div className="faq-screen">
+    <div className="faq-screen bungee-font">
       <br></br>
       <br></br>
       <br></br>
