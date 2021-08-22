@@ -1,6 +1,38 @@
 
 .usd {
-  margin: 'auto 0';
-  color: 'rgba(255, 255, 255, 0.4)';
-  font-size: '1.5rem';
+  margin-left: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.5rem;
+  line-height: 44px;
+}
+.amount-label {
+  .ant-statistic-content-prefix {
+    display: flex;
+    align-items: center;
+  }
+
+  //svg {
+  //  width: 42px;
+  //}
+
+  &.small {
+    font-size: 1.6rem;
+
+    .create-statistic {
+      margin-bottom: 0;
+      .ant-statistic-content {
+        font-size: 1.6rem;
+      }
+    }
+
+    .usd {
+      margin: 0 auto;
+      margin-left: 10px;
+    }
+
+    svg {
+      width: 24px;
+      height: auto;
+    }
+  }
 }

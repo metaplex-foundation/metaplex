@@ -32,6 +32,7 @@ import {
   IPartialCreateAuctionArgs,
   MetadataKey,
   StringPublicKey,
+  CreateAuctionArgsCreator,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
@@ -121,6 +122,9 @@ export interface AuctionState {
   tiers?: Array<Tier>;
 
   winnersCount: number;
+
+  instantSalePrice: number | null;
+  name: string | null;
 }
 
 export const AuctionCreateView = () => {
@@ -152,6 +156,8 @@ export const AuctionCreateView = () => {
     winnersCount: 1,
     startSaleTS: undefined,
     startListTS: undefined,
+    instantSalePrice: null,
+    name: null,
   });
 
   const [tieredAttributes, setTieredAttributes] = useState<TieredAuctionState>({
@@ -381,7 +387,7 @@ export const AuctionCreateView = () => {
       console.log('Tiered settings', tieredAttributes.items);
     }
 
-    const auctionSettings: IPartialCreateAuctionArgs = {
+    const auctionSettingsArgs = {
       winners: winnerLimit,
       endAuctionAt: new BN(
         (attributes.auctionDuration || 0) *
@@ -410,7 +416,11 @@ export const AuctionCreateView = () => {
       tickSize: attributes.priceTick
         ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
         : null,
+      instantSalePrice: attributes.instantSalePrice ? new BN(attributes.instantSalePrice * LAMPORTS_PER_SOL) : null,
+      name: attributes.name ?? '',
     };
+
+    const auctionSettings = CreateAuctionArgsCreator.create(auctionSettingsArgs);
 
     const _auctionObj = await createAuctionManager(
       connection,
@@ -474,6 +484,14 @@ export const AuctionCreateView = () => {
     />
   );
 
+  const instantSaleStep = (
+    <InstantSaleStep
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={() => gotoNextStep()}
+    />
+  );
+
   const initialStep = (
     <InitialPhaseStep
       attributes={attributes}
@@ -531,6 +549,7 @@ export const AuctionCreateView = () => {
       ['Copies', copiesStep],
       ['Sale Type', typeStep],
       ['Price', priceStep],
+      ['Instant Sale', instantSaleStep],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
@@ -731,6 +750,24 @@ const CopiesStep = (props: {
           >
             Select NFT
           </ArtSelector>
+          <label className="action-field">
+              <span className="field-title">
+                Auction Name
+              </span>
+            <Input
+              maxLength={32}
+              autoFocus
+              className="input"
+              placeholder="Auction Name"
+              allowClear
+              onChange={info =>
+                props.setAttributes({
+                  ...props.attributes,
+                  name: info.target.value,
+                })
+              }
+            />
+          </label>
           {props.attributes.category === AuctionCategory.Limited && (
             <label className="action-field">
               <span className="field-title">
@@ -882,6 +919,54 @@ const PriceStep = (props: {
       ) : (
         <PriceSale {...props} />
       )}
+    </>
+  );
+};
+
+const InstantSaleStep = (props: {
+  attributes: AuctionState;
+  setAttributes: (attr: AuctionState) => void;
+  confirm: () => void;
+}) => {
+  return (
+    <>
+      <Row className="call-to-action">
+        <h2>Price</h2>
+        <p>Set the price for your auction.</p>
+      </Row>
+      <Row className="content-action">
+        <label className="action-field">
+          <span className="field-title">Sale price</span>
+          <span className="field-info">
+            This is the fix price for your auction.
+          </span>
+          <Input
+            type="number"
+            min={0}
+            autoFocus
+            className="input"
+            placeholder="Price"
+            prefix="◎"
+            suffix="SOL"
+            onChange={info =>
+              props.setAttributes({
+                ...props.attributes,
+                instantSalePrice: parseFloat(info.target.value) || null,
+              })
+            }
+          />
+        </label>
+      </Row>
+      <Row>
+        <Button
+          type="primary"
+          size="large"
+          onClick={props.confirm}
+          className="action-btn"
+        >
+          Continue
+        </Button>
+      </Row>
     </>
   );
 };
@@ -1803,6 +1888,7 @@ const ReviewStep = (props: {
           )}
         </Col>
         <Col className="section" xl={12}>
+        {props.attributes.name && (<h1>{props.attributes.name}</h1>)}
           <Statistic
             className="create-statistic"
             title="Copies"

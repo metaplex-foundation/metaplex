@@ -14,7 +14,7 @@ import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
-export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 200;
+export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 9 + 33 + 158;
 
 export enum AuctionState {
   Created = 0,
@@ -179,20 +179,34 @@ export class PriceFloor {
   }
 }
 
+function bin2String(str: number[]) {
+  let result = '';
+  for (var i = 0; i < str.length; i++) {
+    result += String.fromCharCode(str[i]);
+  }
+  return result;
+}
+
 export class AuctionDataExtended {
   /// Total uncancelled bids
   totalUncancelledBids: BN;
   tickSize: BN | null;
   gapTickSizePercentage: number | null;
+  instantSalePrice: BN | null;
+  name: string;
 
   constructor(args: {
     totalUncancelledBids: BN;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    instantSalePrice: BN | null;
+    name: number[];
   }) {
     this.totalUncancelledBids = args.totalUncancelledBids;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.instantSalePrice = args.instantSalePrice;
+    this.name = args?.name[0] !== 0 ? bin2String(args.name) : '';
   }
 }
 
@@ -372,6 +386,12 @@ export interface IPartialCreateAuctionArgs {
   gapTickSizePercentage: number | null;
 }
 
+export interface IPartialCreateAuctionArgsV2 extends IPartialCreateAuctionArgs {
+  instantSalePrice?: BN | null;
+
+  name?: string;
+}
+
 export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
   instruction: number = 1;
   /// How many winners are allowed for this auction. See AuctionData.
@@ -416,6 +436,60 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
   }
 }
 
+export type IPartialCreateAuctionArgsCommon =
+  | IPartialCreateAuctionArgsV2
+  | IPartialCreateAuctionArgs;
+
+export class CreateAuctionArgsV2
+  extends CreateAuctionArgs
+  implements IPartialCreateAuctionArgsV2
+{
+  instruction: number = 7;
+
+  name: string;
+
+  instantSalePrice: BN | null;
+
+  constructor(args: {
+    winners: WinnerLimit;
+    endAuctionAt: BN | null;
+    auctionGap: BN | null;
+    tokenMint: StringPublicKey;
+    authority: StringPublicKey;
+    resource: StringPublicKey;
+    priceFloor: PriceFloor;
+    tickSize: BN | null;
+    gapTickSizePercentage: number | null;
+    instantSalePrice?: BN | null;
+    name?: string;
+  }) {
+    super(args);
+    this.instantSalePrice = args.instantSalePrice ?? null;
+    this.name =
+      args.name?.padEnd(32, '\0') ?? String.prototype.padStart(32, '\0');
+  }
+}
+
+export class CreateAuctionArgsCreator {
+  static create(args: {
+    winners: WinnerLimit;
+    endAuctionAt: BN | null;
+    auctionGap: BN | null;
+    priceFloor: PriceFloor;
+    tokenMint: StringPublicKey;
+    gapTickSizePercentage: number | null;
+    tickSize: BN | null;
+    instantSalePrice?: BN | null;
+    name?: string;
+  }): IPartialCreateAuctionArgsCommon {
+    if (args.instantSalePrice || args.name) {
+      return <IPartialCreateAuctionArgsV2>{ ...args };
+    } else {
+      return <IPartialCreateAuctionArgs>{ ...args };
+    }
+  }
+}
+
 class StartAuctionArgs {
   instruction: number = 4;
   resource: StringPublicKey;
@@ -450,6 +524,27 @@ class SetAuthorityArgs {
 }
 
 export const AUCTION_SCHEMA = new Map<any, any>([
+  [
+    CreateAuctionArgsV2,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['winners', WinnerLimit],
+        ['endAuctionAt', { kind: 'option', type: 'u64' }],
+        ['auctionGap', { kind: 'option', type: 'u64' }],
+        ['tokenMint', 'pubkey'],
+        ['authority', 'pubkey'],
+        ['resource', 'pubkey'],
+        ['priceFloor', PriceFloor],
+        ['tickSize', { kind: 'option', type: 'u64' }],
+        ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        /**@TODO check auction name*/
+        ['name', [32]],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+      ],
+    },
+  ],
   [
     CreateAuctionArgs,
     {
@@ -542,6 +637,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['totalUncancelledBids', 'u64'],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
       ],
     },
   ],

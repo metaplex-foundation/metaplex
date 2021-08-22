@@ -68,9 +68,9 @@ export const VAULT_ID =
   'vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn' as StringPublicKey;
 
 export const AUCTION_ID =
-  'auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8' as StringPublicKey;
+  '531a9nS7GZCrfNonjs7WkLN2qby4r4y7GrbiiAcmRd5N' as StringPublicKey;
 
 export const METAPLEX_ID =
-  'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98' as StringPublicKey;
+  'BMXJNVMrsf1vmebRVY1xvU9CnTZWWWCEgTwtQMLWBH5X' as StringPublicKey;
 
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');

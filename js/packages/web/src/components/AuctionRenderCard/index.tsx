@@ -16,6 +16,7 @@ import {
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
+import {useAuctionExtended} from "../AuctionCard";
 import { BN } from 'bn.js';
 
 const { Meta } = Card;
@@ -27,10 +28,11 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   let { auctionView } = props;
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
-  const name = art?.title || ' ';
   const [state, setState] = useState<CountdownState>();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
+  const auctionExtended = useAuctionExtended(auctionView);
+  const name = auctionExtended?.info.name || art?.title || ' ';
 
   const participationFixedPrice =
     auctionView.auctionManager.participationConfig?.fixedPrice || 0;

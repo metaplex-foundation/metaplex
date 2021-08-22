@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel } from 'antd';
-import { AuctionCard } from '../../components/AuctionCard';
+import { Row, Col, Button, Skeleton, Carousel, Divider } from 'antd';
+import { AuctionCard, useAuctionExtended } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
+import moment from 'moment';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -13,6 +14,7 @@ import {
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
+import {AmountLabel} from "../../components/AmountLabel";
 
 import {
   formatTokenAmount,
@@ -77,11 +79,11 @@ export const AuctionItem = ({
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
-  const auction = useAuction(id);
+  const auction = useAuction(id) as Auction;
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
-  const creators = useCreators(auction);
+  const auctionExtended = useAuctionExtended(auction);
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -123,8 +125,8 @@ export const AuctionView = () => {
 
   return (
     <>
-      <Row justify="space-around" ref={ref}>
-        <Col span={24} md={12} className="pr-4">
+      <Row className={"auction-details"} justify="space-around" ref={ref}>
+        <Col span={24} md={10} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
             <Carousel
               autoplay={false}
@@ -133,23 +135,7 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
-          <h6>Number Of Winners</h6>
-          <h1>
-            {winnerCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              winnerCount
-            )}
-          </h1>
-          <h6>Number Of NFTs</h6>
-          <h1>
-            {nftCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              nftCount
-            )}
-          </h1>
-          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
+          <h6>DETAILS</h6>
           <div className="auction-paragraph">
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
             {description ||
@@ -167,11 +153,31 @@ export const AuctionView = () => {
           )} */}
         </Col>
 
-        <Col span={24} md={12}>
+        <Col span={24} md={14}>
           <h2 className="art-title">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          {auctionExtended?.info.name || art.title || <Skeleton paragraph={{ rows: 0 }} />}
           </h2>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
+          <Col>
+              <h6>CREATED BY</h6>
+              {!auction && (
+                <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
+              )}
+              {auction && (
+                <p className="auction-art-edition">
+                  <Identicon
+                    style={{
+                      width: 24,
+                      height: 24,
+                      marginRight: 10,
+                      marginTop: 2,
+                    }}
+                    address={auction.auctionManager.info.authority.toBase58()}
+                  />
+                </p>
+              )}
+            </Col>
+            <Divider type="vertical"/>
             <Col>
               <h6>Edition</h6>
               {!auction && (
@@ -184,7 +190,40 @@ export const AuctionView = () => {
               )}
             </Col>
 
+            <Divider type="vertical" />
+
             <Col>
+            <h6>WINNERS</h6>
+              {!auction && (
+                <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
+              )}
+              {auction && (
+                <p className="auction-art-edition">
+                  {winnerCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    winnerCount
+                  )}
+                </p>
+              )}
+            </Col>
+            <Divider type="vertical" />
+            <Col>
+              <h6>NFTS</h6>
+              {!auction && (
+                <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
+              )}
+              {auction && (
+                <p className="auction-art-edition">
+                  {winnerCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    nftCount
+                  )}
+                </p>
+              )}
+            </Col>
+            <Col style={{marginLeft: 'auto', paddingRight: 0}}>
               <h6>View on</h6>
               <div style={{ display: 'flex' }}>
                 <Button
@@ -258,9 +297,10 @@ const BidLine = (props: {
       style={{
         width: '100%',
         alignItems: 'center',
-        padding: '3px 0',
+        padding: '10px 30px',
         position: 'relative',
         opacity: isActive ? undefined : 0.5,
+        borderBottom: '1px solid #2A2A2A',
         ...(isme
           ? {
               backgroundColor: '#ffffff21',
@@ -281,32 +321,17 @@ const BidLine = (props: {
           }}
         />
       )}
-      <Col
-        span={2}
-        style={{
-          textAlign: 'right',
-          paddingRight: 10,
-        }}
-      >
-        {!isCancelled && (
-          <div
-            style={{
-              opacity: 0.8,
-              fontWeight: 700,
-            }}
-          >
-            {isme && (
-              <>
-                <CheckOutlined />
-                &nbsp;
-              </>
-            )}
-            {index + 1}
-          </div>
-        )}
+      <Col span={6}>
+        <AmountLabel
+          amount={formatTokenAmount(bid.info.lastBid, mint)}
+          className={'small'}
+        />
       </Col>
-      <Col span={16}>
-        <Row>
+      <Col span={6} className={'text-align-right'}>
+        {moment(bid.info.lastBidTimestamp).fromNow()}
+      </Col>
+      <Col span={12} className={'d-flex'}>
+        <Row className={'text-right'}>
           <Identicon
             style={{
               width: 24,
@@ -323,15 +348,10 @@ const BidLine = (props: {
               href={`https://twitter.com/${bidderTwitterHandle}`}
             >{`@${bidderTwitterHandle}`}</a>
           ) : (
-            shortenAddress(bidder)
+            <div style={{alignSelf:'center'}}>{shortenAddress(bidder)}</div>
           )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
         </Row>
-      </Col>
-      <Col span={6} style={{ textAlign: 'right' }}>
-        <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-          ◎{formatTokenAmount(bid.info.lastBid, mint)}
-        </span>
       </Col>
     </Row>
   );
@@ -388,7 +408,7 @@ export const AuctionBids = ({
 
   return (
     <Col style={{ width: '100%' }}>
-      <h6>Bid History</h6>
+      <h6 style={{marginLeft:30}}>PAST BIDS</h6>
       {bidLines.slice(0, 10)}
       {bids.length > 10 && (
         <div

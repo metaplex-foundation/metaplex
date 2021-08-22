@@ -7,6 +7,8 @@ import {
   CreateAuctionArgs,
   StringPublicKey,
   toPublicKey,
+  CreateAuctionArgsV2,
+  IPartialCreateAuctionArgsCommon,
 } from '@oyster/common';
 
 const { AUCTION_PREFIX, createAuction } = actions;
@@ -15,7 +17,7 @@ const { AUCTION_PREFIX, createAuction } = actions;
 export async function makeAuction(
   wallet: any,
   vault: StringPublicKey,
-  auctionSettings: IPartialCreateAuctionArgs,
+  auctionSettings: IPartialCreateAuctionArgsCommon,
 ): Promise<{
   auction: StringPublicKey;
   instructions: TransactionInstruction[];
@@ -36,11 +38,17 @@ export async function makeAuction(
     )
   )[0];
 
-  const fullSettings = new CreateAuctionArgs({
-    ...auctionSettings,
-    authority: wallet.publicKey.toBase58(),
-    resource: vault,
-  });
+  const fullSettings = auctionSettings.hasOwnProperty('instantSalePrice')
+    ? new CreateAuctionArgsV2({
+        ...auctionSettings,
+        authority: wallet.publicKey.toBase58(),
+        resource: vault,
+      })
+    : new CreateAuctionArgs({
+        ...auctionSettings,
+        authority: wallet.publicKey.toBase58(),
+        resource: vault,
+      });
 
   createAuction(fullSettings, wallet.publicKey.toBase58(), instructions);
 

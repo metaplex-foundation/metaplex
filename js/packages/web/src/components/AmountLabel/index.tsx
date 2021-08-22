@@ -8,6 +8,7 @@ interface IAmountLabel {
   displayUSD?: boolean;
   title?: string;
   style?: object;
+  className?: string;
   containerStyle?: object;
 }
 
@@ -18,6 +19,7 @@ export const AmountLabel = (props: IAmountLabel) => {
     title = '',
     style = {},
     containerStyle = {},
+    className = '',
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
@@ -32,13 +34,14 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <div style={{ display: 'flex', ...containerStyle }}>
+    <div className={'amount-label ' + className} style={{ display: 'flex', ...containerStyle }}>
       {PriceNaN === false && (
         <Statistic
           style={style}
           className="create-statistic"
           title={title || ''}
           value={amount}
+          suffix={'SOL'}
           prefix="◎"
         />
       )}
