@@ -1,10 +1,5 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { actions, models } from '@oyster/common';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import { actions, models, StringPublicKey, toPublicKey } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
@@ -16,12 +11,12 @@ const { approve } = models;
 export async function closeVault(
   connection: Connection,
   wallet: any,
-  vault: PublicKey,
-  fractionMint: PublicKey,
-  fractionTreasury: PublicKey,
-  redeemTreasury: PublicKey,
-  priceMint: PublicKey,
-  externalPriceAccount: PublicKey,
+  vault: StringPublicKey,
+  fractionMint: StringPublicKey,
+  fractionTreasury: StringPublicKey,
+  redeemTreasury: StringPublicKey,
+  priceMint: StringPublicKey,
+  externalPriceAccount: StringPublicKey,
 ): Promise<{
   instructions: TransactionInstruction[];
   signers: Keypair[];
@@ -45,7 +40,7 @@ export async function closeVault(
     instructions,
     wallet.publicKey,
     accountRentExempt,
-    fractionMint,
+    toPublicKey(fractionMint),
     wallet.publicKey,
     signers,
   );
@@ -54,7 +49,7 @@ export async function closeVault(
     instructions,
     wallet.publicKey,
     accountRentExempt,
-    priceMint,
+    toPublicKey(priceMint),
     wallet.publicKey,
     signers,
   );
@@ -89,14 +84,14 @@ export async function closeVault(
 
   await combineVault(
     vault,
-    outstandingShareAccount,
-    payingTokenAccount,
+    outstandingShareAccount.toBase58(),
+    payingTokenAccount.toBase58(),
     fractionMint,
     fractionTreasury,
     redeemTreasury,
-    wallet.publicKey,
-    wallet.publicKey,
-    transferAuthority.publicKey,
+    wallet.publicKey.toBase58(),
+    wallet.publicKey.toBase58(),
+    transferAuthority.publicKey.toBase58(),
     externalPriceAccount,
     instructions,
   );

@@ -134,7 +134,7 @@ pub fn process_set_authority(program_id: &Pubkey, accounts: &[AccountInfo]) -> P
     }
 
     // Make sure new authority actually exists in some form.
-    if new_authority_info.data_is_empty() || new_authority_info.lamports() == 0 {
+    if new_authority_info.data_is_empty() && new_authority_info.lamports() == 0 {
         msg!("Disallowing new authority because it does not exist.");
         return Err(VaultError::InvalidAuthority.into());
     }

@@ -1,10 +1,10 @@
 import { useMeta } from '../contexts';
-import { PublicKey } from '@solana/web3.js';
+import { StringPublicKey } from '@oyster/common';
 
-export const useCreatorArts = (id?: PublicKey | string) => {
+export const useCreatorArts = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
   const filtered = metadata.filter(m =>
-    m.info.data.creators?.some(c => c.address.toBase58() === id),
+    m.info.data.creators?.some(c => c.address === id),
   );
 
   return filtered;

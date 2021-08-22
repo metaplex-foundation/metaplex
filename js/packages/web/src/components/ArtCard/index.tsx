@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardProps, Button, Badge } from 'antd';
-import { MetadataCategory } from '@oyster/common';
+import { MetadataCategory, StringPublicKey } from '@oyster/common';
 import { ArtContent } from './../ArtContent';
 import { useArt } from '../../hooks';
 import { PublicKey } from '@solana/web3.js';
@@ -10,7 +10,7 @@ import { MetaAvatar } from '../MetaAvatar';
 const { Meta } = Card;
 
 export interface ArtCardProps extends CardProps {
-  pubkey?: PublicKey;
+  pubkey?: StringPublicKey;
 
   image?: string;
   animationURL?: string;
