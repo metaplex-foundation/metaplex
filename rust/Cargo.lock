@@ -1028,13 +1028,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fair-launch"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1872,6 +1865,14 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "nft-candy-machine"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "spl-token",
 ]
 
 [[package]]
