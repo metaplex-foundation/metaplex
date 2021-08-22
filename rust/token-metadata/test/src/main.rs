@@ -207,8 +207,9 @@ fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
                 println!("Limited edition {:#?}", edition);
             }
         },
-        Err(e) =>
-            println!("No master edition account: {:?}", e),
+        Err(_) => {
+            println!("No master edition or edition detected")
+        }
     }
 }
 
