@@ -110,14 +110,14 @@ export const PurchaseArt = () => {
   return (
     <div className="purchase-screen">
       <Title level={2} className="welcome-text">Introducing Thugbirdz: OG Collection</Title>
-      
+      <img src = 'hero.gif'/>
       {ifDealMade ? <Confetti /> : null}
 
       {progressValue === 100 ? (
         <h1 className="highlight sold-out">SOLD OUT</h1>
       ) : null}
 
-      {!!progressValue && progressValue < 100 && (
+      {/* {!!progressValue && progressValue < 100 && (
         <>
           <Button
             type="primary"
@@ -138,7 +138,10 @@ export const PurchaseArt = () => {
           </div>
           <Progress percent={progressValue} />
         </>
-      )}
+      )} */}
+    <br></br>
+    <br></br>
+    <br></br>
     <Title level={3} className="welcome-text">Possible features</Title>
     
   </div>
