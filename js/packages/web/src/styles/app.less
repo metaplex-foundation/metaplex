@@ -1,6 +1,10 @@
 @import '~antd/es/style/themes/dark.less';
 @import '~antd/dist/antd.dark.less';
 
+@import url('https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee+Inline&display=swap');
+
+
 html {
   overflow-y: scroll;
   width: 100vw;
@@ -8,7 +12,8 @@ html {
 }
 #root {
   height: 100%;
-  font-family: 'Graphik Web', sans-serif;
+  // font-family: 'Graphik Web', sans-serif;
+  font-family: 'Bungee Shade', cursive;
 }
 
 #root::before {
@@ -26,10 +31,12 @@ html {
 body {
   --row-highlight: @background-color-base;
   margin: 0;
+  background: #9c74fc;
 
   font-style: normal;
   font-weight: normal;
-  font-family: 'Graphik Web' !important;
+  // font-family: 'Graphik Web' !important;
+  font-family: 'Bungee Shade', cursive;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -180,4 +187,39 @@ code {
   color: #fff;
   transition: 150ms;
   padding-top: 5px;
+}
+
+.thug-title {
+  font-size: 3em;
+  color: black;
+}
+
+.thug-subtitle {
+  font-size: 2em;
+  color: #c0ffff;
+  font-family: 'Bungee Inline', cursive;
+  text-align: center;
+}
+
+.faq-screen,
+.roadmap-screen,
+.about-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.ant-btn.connector {
+  background: #01ffff;
+    color: black;
+    border-color: black;
+
+    * {
+      font-family: 'Bungee Inline', cursive;
+    }
+}
+
+.ant-popover-inner-content * {
+  font-family: 'Bungee Inline', cursive;
 }

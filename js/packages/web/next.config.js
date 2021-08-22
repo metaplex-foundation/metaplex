@@ -35,6 +35,12 @@ module.exports = withPlugins(plugins, {
     NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback.fs = false;
+    }
+    return config;
+  },
   async rewrites() {
     return [
       {
