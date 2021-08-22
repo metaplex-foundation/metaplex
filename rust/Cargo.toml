@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "fair-launch/",
   "auction/program",
   "metaplex/program",
   "token-vault/program",

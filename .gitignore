@@ -1,4 +1,6 @@
 node_modules/
+.anchor
+**/*.rs.bk
 build/
 dist/
 lib/

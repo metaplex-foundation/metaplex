@@ -49,6 +49,151 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "250f629c0161ad8107cf89319e990051fae62832fd343083bea452d93e2205fd"
 
 [[package]]
+name = "anchor-attribute-access-control"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35ba6adc8bed8a9b284219ba12489b459ad233679a489edf9642987e6b090473"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "regex",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-account"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab91b688a60b289767724288d73bf5d4fc425438e13d4d4f604a73ab9686c675"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-error"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a7a9215bb3b101f7237c06d5fc873278b82f685bfee95e4ec7e8427ff83c390"
+dependencies = [
+ "anchor-syn",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-event"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b26d266d84ec0d8097214cf37430b4681e29da0522fbd3fdb0afc6fc16b2313"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-interface"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08e35d76a8f8bc8934acc877c8643ec14ddcb355d423de8f9b7e225fe9824b60"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "heck",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-program"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f6e8a3822e58df25ef45125a6dbe5ceeefebea68954f22beeeff83e4bd040a4"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-attribute-state"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86586d43cf7e0f10431e018c72f51cfc60d1ce3323df44249ff3a70a45168b20"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-derive-accounts"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85aa313d4317811983cab3e7a66ede358c4eb3f1fe47acf51a6078cd239bdbe7"
+dependencies = [
+ "anchor-syn",
+ "anyhow",
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+]
+
+[[package]]
+name = "anchor-lang"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0b300d7222b786b7947bd1c14ab82a6c519fa1bbce4ed0f0ffe4db1e6c05669"
+dependencies = [
+ "anchor-attribute-access-control",
+ "anchor-attribute-account",
+ "anchor-attribute-error",
+ "anchor-attribute-event",
+ "anchor-attribute-interface",
+ "anchor-attribute-program",
+ "anchor-attribute-state",
+ "anchor-derive-accounts",
+ "base64 0.13.0",
+ "borsh",
+ "bytemuck",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "anchor-syn"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "833a32a3945814ecd8b6fdcb8666580e69037fe2efc4eaa4a9c68b1940450505"
+dependencies = [
+ "anyhow",
+ "bs58",
+ "heck",
+ "proc-macro2 1.0.27",
+ "proc-macro2-diagnostics",
+ "quote 1.0.9",
+ "serde",
+ "serde_json",
+ "sha2",
+ "syn 1.0.72",
+ "thiserror",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -293,6 +438,12 @@ name = "byte-tools"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
+
+[[package]]
+name = "bytemuck"
+version = "1.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72957246c41db82b8ef88a5486143830adeb8227ef9837740bdec67724cf2c5b"
 
 [[package]]
 name = "byteorder"
@@ -877,6 +1028,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "fair-launch"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1169,6 +1327,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 dependencies = [
  "ahash",
+]
+
+[[package]]
+name = "heck"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
+dependencies = [
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -2110,6 +2277,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0d8caf72986c1a598726adc988bb5984792ef84f5ee5aa50209145ee8077038"
 dependencies = [
  "unicode-xid 0.2.2",
+]
+
+[[package]]
+name = "proc-macro2-diagnostics"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bf29726d67464d49fa6224a1d07936a8c08bb3fba727c7493f6cf1616fdaada"
+dependencies = [
+ "proc-macro2 1.0.27",
+ "quote 1.0.9",
+ "syn 1.0.72",
+ "version_check",
+ "yansi",
 ]
 
 [[package]]
@@ -4060,6 +4240,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-segmentation"
+version = "1.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8895849a949e7845e06bd6dc1aa51731a103c42707010a5b591c0038fb73385b"
+
+[[package]]
 name = "unicode-width"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4353,6 +4539,12 @@ checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
 dependencies = [
  "linked-hash-map",
 ]
+
+[[package]]
+name = "yansi"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fc79f4a1e39857fc00c3f662cbf2651c771f00e9c15fe2abc341806bd46bd71"
 
 [[package]]
 name = "zeroize"
