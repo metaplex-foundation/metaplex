@@ -2,7 +2,7 @@ import React from 'react';
 
 export const RoadmapView = () => {
   return (
-    <div className="roadmap-screen">
+    <div className="roadmap-screen bungee-font">
       <br></br>
       <br></br>
       <br></br>
