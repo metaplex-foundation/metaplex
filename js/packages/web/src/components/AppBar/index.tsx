@@ -47,11 +47,13 @@ const UserActions = () => {
               <Button>Create</Button>
             </Dropdown>
           ) : null}
+          {canCreate ? (
           <Link to={`/auction/create/0`}>
             <Button className="connector" type="primary">
               Sell
             </Button>
           </Link>
+          ) : null}
         </>
       )}
     </>

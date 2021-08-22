@@ -117,7 +117,7 @@ export const PurchaseArt = () => {
         <h1 className="highlight sold-out">SOLD OUT</h1>
       ) : null}
 
-      {/* {!!progressValue && progressValue < 100 && (
+       {!!progressValue && progressValue < 100 && (
         <>
           <Button
             type="primary"
@@ -138,7 +138,7 @@ export const PurchaseArt = () => {
           </div>
           <Progress percent={progressValue} />
         </>
-      )} */}
+      )} 
     <br></br>
     <br></br>
     <br></br>
@@ -161,7 +161,7 @@ const getPurchaseBtnText = (
   isDone: boolean,
   price: number,
 ) => {
-  if (!connected) return 'connect your wallet fool';
+  if (!connected) return 'connect your wallet';
   else if (isProcessing) return 'processing request...';
   else if (isDone) return 'your bird is on its way...';
   else return `Mint bird for ◎${price} SOL!`;
