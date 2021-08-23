@@ -650,51 +650,52 @@ const InfoStep = (props: {
           </label>
           <label className="action-field">
             <span className="field-title">Attributes</span>
-            <Form
-              name="dynamic-attributes"
-              form={form}
-              autoComplete="off"
-            >
-              <Form.List name="attributes">
-                {(fields, { add, remove }) => (
-                  <>
-                    {fields.map(({ key, name, fieldKey }) => (
-                       <Space key={key} align="baseline">
-                        <Form.Item
-                          name={[name, 'trait_type']}
-                          fieldKey={[fieldKey, 'trait_type']}
-                          hasFeedback
-                        >
-                          <Input placeholder="trait_type (Optional)" />
-                        </Form.Item>
-                        <Form.Item
-                          name={[name, 'value']}
-                          fieldKey={[fieldKey, 'value']}
-                          rules={[{ required: true, message: 'Missing value' }]}
-                          hasFeedback
-                        >
-                          <Input placeholder="value" />
-                        </Form.Item>
-                        <Form.Item
-                          name={[name, 'display_type']}
-                          fieldKey={[fieldKey, 'display_type']}
-                          hasFeedback
-                        >
-                          <Input placeholder="display_type (Optional)" />
-                        </Form.Item>
-                        <MinusCircleOutlined onClick={() => remove(name)} />
-                      </Space>
-                    ))}
-                    <Form.Item>
-                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                        Add attribute
-                      </Button>
-                    </Form.Item>
-                  </>
-                )}
-              </Form.List>
-            </Form>
           </label>
+          <Form
+            name="dynamic_attributes"
+            form={form}
+            autoComplete="off"
+          >
+            <Form.List name="attributes">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, fieldKey }) => (
+                      <Space key={key} align="baseline">
+                      <Form.Item
+                        name={[name, 'trait_type']}
+                        fieldKey={[fieldKey, 'trait_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="trait_type (Optional)" />
+                      </Form.Item>
+                      <Form.Item
+                        name={[name, 'value']}
+                        fieldKey={[fieldKey, 'value']}
+                        rules={[{ required: true, message: 'Missing value' }]}
+                        hasFeedback
+                      >
+                        <Input placeholder="value" />
+                      </Form.Item>
+                      <Form.Item
+
+                        name={[name, 'display_type']}
+                        fieldKey={[fieldKey, 'display_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="display_type (Optional)" />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                      Add attribute
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </Form>
         </Col>
       </Row>
 
@@ -707,7 +708,7 @@ const InfoStep = (props: {
               .then(values => {
                 const nftAttributes = values.attributes;
                 // value is number if possible
-                for (const nftAttribute of nftAttributes) {
+                for (const nftAttribute of nftAttributes || []) {
                   const newValue = Number(nftAttribute.value);
                   if (!isNaN(newValue)) {
                     nftAttribute.value = newValue;
