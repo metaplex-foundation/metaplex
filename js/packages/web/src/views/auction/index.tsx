@@ -172,7 +172,7 @@ export const AuctionView = () => {
                       marginRight: 10,
                       marginTop: 2,
                     }}
-                    address={auction.auctionManager.info.authority.toBase58()}
+                    address={auction.auctionManager.authority}
                   />
                 </p>
               )}

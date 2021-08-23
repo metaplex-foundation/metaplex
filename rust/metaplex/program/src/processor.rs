@@ -6,6 +6,7 @@ use {
     deprecated_init_auction_manager_v1::process_deprecated_init_auction_manager_v1,
     deprecated_populate_participation_printing_account::process_deprecated_populate_participation_printing_account,
     deprecated_validate_participation::process_deprecated_validate_participation,
+    end_auction::process_end_auction,
     deprecated_validate_safety_deposit_box_v1::process_deprecated_validate_safety_deposit_box_v1,
     empty_payment_account::process_empty_payment_account,
     init_auction_manager_v2::process_init_auction_manager_v2,
@@ -25,6 +26,7 @@ use {
 pub mod claim_bid;
 pub mod decommission_auction_manager;
 pub mod deprecated_init_auction_manager_v1;
+pub mod end_auction;
 pub mod deprecated_populate_participation_printing_account;
 pub mod deprecated_validate_participation;
 pub mod deprecated_validate_safety_deposit_box_v1;
@@ -116,6 +118,10 @@ pub fn process_instruction<'a>(
                 args.edition_offset,
                 args.win_index,
             )
+        }
+        MetaplexInstruction::EndAuction(args) => {
+            msg!("Instruction: End auction");
+            process_end_auction(program_id, accounts, args)
         }
         MetaplexInstruction::WithdrawMasterEdition => {
             msg!("Instruction: Withdraw Master Edition");

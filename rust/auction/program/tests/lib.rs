@@ -1,7 +1,7 @@
 #![allow(warnings)]
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::borsh::try_from_slice_unchecked;
+use solana_program::{borsh::try_from_slice_unchecked, instruction::InstructionError};
 use solana_program_test::*;
 use solana_sdk::program_pack::Pack;
 use solana_sdk::{
@@ -11,10 +11,11 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signer},
     system_instruction, system_program,
-    transaction::Transaction,
+    transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
 use spl_auction::{
+    errors::AuctionError,
     instruction,
     processor::{
         process_instruction, AuctionData, AuctionState, Bid, BidState, BidderPot, CancelBidArgs,
@@ -31,6 +32,10 @@ mod helpers;
 async fn setup_auction(
     start: bool,
     max_winners: usize,
+    instant_sale: Option<u64>,
+    price_floor: PriceFloor,
+    gap_tick_size_percentage: Option<u8>,
+    tick_size: Option<u64>,
 ) -> (
     Pubkey,
     BanksClient,
@@ -70,6 +75,11 @@ async fn setup_auction(
         &resource,
         &mint_keypair.pubkey(),
         max_winners,
+        "Some name",
+        instant_sale,
+        price_floor,
+        gap_tick_size_percentage,
+        tick_size,
     )
     .await
     .unwrap();
@@ -182,7 +192,7 @@ enum Action {
     Cancel(usize),
     End,
 }
-/* Commenting out for now
+
 #[cfg(feature = "test-bpf")]
 #[tokio::test]
 async fn test_correct_runs() {
@@ -208,9 +218,9 @@ async fn test_correct_runs() {
                 Action::End,
             ],
             max_winners: 3,
-            price_floor: PriceFloor::None,
+            price_floor: PriceFloor::None([0; 32]),
             seller_collects: 9000,
-            expect: vec![(1, 2000), (2, 3000), (3, 4000)],
+            expect: vec![(3, 4000), (2, 3000), (1, 2000)],
         },
         // A single bidder should be able to cancel and rebid lower.
         Test {
@@ -222,7 +232,7 @@ async fn test_correct_runs() {
             ],
             expect: vec![(0, 4000)],
             max_winners: 3,
-            price_floor: PriceFloor::None,
+            price_floor: PriceFloor::None([0; 32]),
             seller_collects: 4000,
         },
         // The top bidder when cancelling should allow room for lower bidders.
@@ -237,9 +247,9 @@ async fn test_correct_runs() {
                 Action::Cancel(0),
                 Action::End,
             ],
-            expect: vec![(2, 5500), (1, 6000), (3, 7000)],
+            expect: vec![(3, 7000), (1, 6000), (2, 5500)],
             max_winners: 3,
-            price_floor: PriceFloor::None,
+            price_floor: PriceFloor::None([0; 32]),
             seller_collects: 18500,
         },
         // An auction where everyone cancels should still succeed, with no winners.
@@ -255,7 +265,7 @@ async fn test_correct_runs() {
             ],
             expect: vec![],
             max_winners: 3,
-            price_floor: PriceFloor::None,
+            price_floor: PriceFloor::None([0; 32]),
             seller_collects: 0,
         },
         // An auction where no one bids should still succeed.
@@ -263,7 +273,7 @@ async fn test_correct_runs() {
             actions: vec![Action::End],
             expect: vec![],
             max_winners: 3,
-            price_floor: PriceFloor::None,
+            price_floor: PriceFloor::None([0; 32]),
             seller_collects: 0,
         },
     ];
@@ -280,7 +290,15 @@ async fn test_correct_runs() {
             mint_authority,
             auction_pubkey,
             recent_blockhash,
-        ) = setup_auction(true, strategy.max_winners).await;
+        ) = setup_auction(
+            true,
+            strategy.max_winners,
+            None,
+            strategy.price_floor.clone(),
+            Some(0),
+            None,
+        )
+        .await;
 
         // Interpret test actions one by one.
         for action in strategy.actions.iter() {
@@ -417,22 +435,21 @@ async fn test_correct_runs() {
             BidState::EnglishAuction { ref bids, .. } => {
                 // Zip internal bid state with the expected indices this strategy expects winners
                 // to result in.
-                let results: Vec<(_, _)> = strategy.expect.iter().zip(bids).collect();
+                let results: Vec<(_, _)> = strategy.expect.iter().zip(bids.iter().rev()).collect();
                 for (index, bid) in results.iter() {
                     let bidder = &bidders[index.0];
                     let amount = index.1;
 
                     // Winners should match the keypair indices we expected.
                     // bid.0 is the pubkey.
-                    // bidder.2 is the derived potkey we expect Bid.0 to be.
-                    assert_eq!(bid.0, bidder.2);
+                    assert_eq!(bid.0, bidder.0.pubkey());
                     // Must have bid the amount we expected.
                     // bid.1 is the amount.
                     assert_eq!(bid.1, amount);
                 }
 
                 // If the auction has ended, attempt to claim back SPL tokens into a new account.
-                if auction.ended(0) {
+                if auction.ended(0).unwrap() {
                     let collection = Keypair::new();
 
                     // Generate Collection Pot.
@@ -610,49 +627,40 @@ async fn test_incorrect_runs() {
         actions: Vec<Action>,
         max_winners: usize,
         price_floor: PriceFloor,
+        gap_tick_size_percentage: Option<u8>,
+        tick_size: Option<u64>,
     }
 
     // A list of auction runs that should succeed. At the end of the run the winning bid state
     // should match the expected result.
     let strategies = [
-        Test {
-            actions: vec![Action::Cancel(0), Action::End],
-            max_winners: 3,
-            price_floor: PriceFloor::None,
-        },
         // Cancel a non-existing bid.
-        // Bidding less than the top bidder should fail.
         Test {
-            actions: vec![
-                Action::Bid(0, 5000),
-                Action::Bid(1, 6000),
-                Action::Bid(2, 5500),
-                Action::Bid(0, 1000),
-                Action::Bid(1, 2000),
-                Action::Bid(2, 3000),
-                Action::Bid(3, 4000),
-                Action::Bid(3, 4000),
-                Action::End,
-            ],
+            actions: vec![Action::Cancel(0)],
             max_winners: 3,
             price_floor: PriceFloor::None([0; 32]),
+            gap_tick_size_percentage: Some(0),
+            tick_size: None,
         },
-        // Bidding less than any bidder should fail.
+        // Bidding not a multiple of tick size should fail.
         Test {
             actions: vec![
-                Action::Bid(0, 5000),
+                Action::Bid(0, 3000),
                 Action::Bid(1, 6000),
                 Action::Bid(2, 1000),
-                Action::End,
             ],
             max_winners: 3,
             price_floor: PriceFloor::None([0; 32]),
+            gap_tick_size_percentage: Some(0),
+            tick_size: Some(3),
         },
         // Bidding after an auction has been explicitly ended should fail.
         Test {
             actions: vec![Action::Bid(0, 5000), Action::End, Action::Bid(1, 6000)],
             max_winners: 3,
             price_floor: PriceFloor::None([0; 32]),
+            gap_tick_size_percentage: Some(5),
+            tick_size: None,
         },
     ];
 
@@ -668,29 +676,456 @@ async fn test_incorrect_runs() {
             mint_authority,
             auction_pubkey,
             recent_blockhash,
-        ) = setup_auction(true, strategy.max_winners).await;
+        ) = setup_auction(
+            true,
+            strategy.max_winners,
+            None,
+            strategy.price_floor.clone(),
+            strategy.gap_tick_size_percentage,
+            strategy.tick_size,
+        )
+        .await;
 
         let mut failed = false;
 
         for action in strategy.actions.iter() {
-            failed = failed
-                || handle_failing_action(
-                    &mut banks_client,
-                    &recent_blockhash,
-                    &program_id,
-                    &bidders,
-                    &mint,
-                    &payer,
-                    &resource,
-                    &auction_pubkey,
-                    action,
-                )
-                .await
-                .is_err();
+            failed = handle_failing_action(
+                &mut banks_client,
+                &recent_blockhash,
+                &program_id,
+                &bidders,
+                &mint,
+                &payer,
+                &resource,
+                &auction_pubkey,
+                action,
+            )
+            .await
+            .is_err();
         }
 
         // Expect to fail.
         assert!(failed);
     }
 }
-*/
+
+#[cfg(feature = "test-bpf")]
+#[tokio::test]
+async fn test_place_instant_sale_bid() {
+    let instant_sale_price = 5000;
+    let bid_price = 6000;
+
+    let (
+        program_id,
+        mut banks_client,
+        bidders,
+        payer,
+        resource,
+        mint,
+        mint_authority,
+        auction_pubkey,
+        recent_blockhash,
+    ) = setup_auction(
+        true,
+        1,
+        Some(instant_sale_price),
+        PriceFloor::None([0; 32]),
+        Some(0),
+        None,
+    )
+    .await;
+
+    // Get balances pre bidding.
+    let pre_balance = (
+        helpers::get_token_balance(&mut banks_client, &bidders[0].0.pubkey()).await,
+        helpers::get_token_balance(&mut banks_client, &bidders[0].1.pubkey()).await,
+    );
+
+    let transfer_authority = Keypair::new();
+    helpers::approve(
+        &mut banks_client,
+        &recent_blockhash,
+        &payer,
+        &transfer_authority.pubkey(),
+        &bidders[0].0,
+        bid_price,
+    )
+    .await
+    .expect("approve");
+
+    // Make bid with price above instant_sale_price to check if it reduce amount
+    helpers::place_bid(
+        &mut banks_client,
+        &recent_blockhash,
+        &program_id,
+        &payer,
+        &bidders[0].0,
+        &bidders[0].1,
+        &transfer_authority,
+        &resource,
+        &mint,
+        bid_price,
+    )
+    .await
+    .expect("place_bid");
+
+    let post_balance = (
+        helpers::get_token_balance(&mut banks_client, &bidders[0].0.pubkey()).await,
+        helpers::get_token_balance(&mut banks_client, &bidders[0].1.pubkey()).await,
+    );
+
+    assert_eq!(post_balance.0, pre_balance.0 - instant_sale_price);
+    assert_eq!(post_balance.1, pre_balance.1 + instant_sale_price);
+}
+
+#[cfg(feature = "test-bpf")]
+#[tokio::test]
+async fn test_all_bids_are_taken_by_instant_sale_price() {
+    // Local wrapper around a small test description described by actions.
+    struct Test {
+        actions: Vec<Action>,
+        expect: Vec<(usize, u64)>,
+        max_winners: usize,
+        price_floor: PriceFloor,
+        seller_collects: u64,
+        instant_sale_price: Option<u64>,
+    }
+
+    let strategy = Test {
+        actions: vec![
+            Action::Bid(0, 2000),
+            Action::Bid(1, 3000),
+            Action::Bid(2, 3000),
+            Action::Bid(3, 3000),
+        ],
+        max_winners: 3,
+        price_floor: PriceFloor::None([0; 32]),
+        seller_collects: 9000,
+        expect: vec![(1, 3000), (2, 3000), (3, 3000)],
+        instant_sale_price: Some(3000),
+    };
+
+    let (
+        program_id,
+        mut banks_client,
+        bidders,
+        payer,
+        resource,
+        mint,
+        mint_authority,
+        auction_pubkey,
+        recent_blockhash,
+    ) = setup_auction(
+        true,
+        strategy.max_winners,
+        strategy.instant_sale_price,
+        strategy.price_floor,
+        Some(0),
+        None,
+    )
+    .await;
+
+    // Interpret test actions one by one.
+    for action in strategy.actions.iter() {
+        println!("Strategy: {} Step {:?}", strategy.actions.len(), action);
+        match *action {
+            Action::Bid(bidder, amount) => {
+                // Get balances pre bidding.
+                let pre_balance = (
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].0.pubkey())
+                        .await,
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].1.pubkey())
+                        .await,
+                );
+
+                let transfer_authority = Keypair::new();
+                helpers::approve(
+                    &mut banks_client,
+                    &recent_blockhash,
+                    &payer,
+                    &transfer_authority.pubkey(),
+                    &bidders[bidder].0,
+                    amount,
+                )
+                .await
+                .expect("approve");
+
+                helpers::place_bid(
+                    &mut banks_client,
+                    &recent_blockhash,
+                    &program_id,
+                    &payer,
+                    &bidders[bidder].0,
+                    &bidders[bidder].1,
+                    &transfer_authority,
+                    &resource,
+                    &mint,
+                    amount,
+                )
+                .await
+                .expect("place_bid");
+
+                let post_balance = (
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].0.pubkey())
+                        .await,
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].1.pubkey())
+                        .await,
+                );
+
+                assert_eq!(post_balance.0, pre_balance.0 - amount);
+                assert_eq!(post_balance.1, pre_balance.1 + amount);
+            }
+            _ => {}
+        }
+    }
+
+    let auction: AuctionData = try_from_slice_unchecked(
+        &banks_client
+            .get_account(auction_pubkey)
+            .await
+            .expect("get_account")
+            .expect("account not found")
+            .data,
+    )
+    .unwrap();
+
+    match auction.bid_state {
+        BidState::EnglishAuction { ref bids, .. } => {
+            // Zip internal bid state with the expected indices this strategy expects winners
+            // to result in.
+            let results: Vec<(_, _)> = strategy.expect.iter().zip(bids.iter().rev()).collect();
+            for (index, bid) in results.iter() {
+                let bidder = &bidders[index.0];
+                let amount = index.1;
+
+                // Winners should match the keypair indices we expected.
+                // bid.0 is the pubkey.
+                assert_eq!(bid.0, bidder.0.pubkey());
+                // Must have bid the amount we expected.
+                // bid.1 is the amount.
+                assert_eq!(bid.1, amount);
+            }
+        }
+        _ => {}
+    }
+
+    assert_eq!(auction.state, AuctionState::Ended);
+}
+
+#[cfg(feature = "test-bpf")]
+#[tokio::test]
+async fn test_claim_bid_with_instant_sale_price() {
+    let instant_sale_price = 5000;
+
+    let (
+        program_id,
+        mut banks_client,
+        bidders,
+        payer,
+        resource,
+        mint,
+        mint_authority,
+        auction_pubkey,
+        recent_blockhash,
+    ) = setup_auction(
+        true,
+        5,
+        Some(instant_sale_price),
+        PriceFloor::None([0; 32]),
+        Some(0),
+        None,
+    )
+    .await;
+
+    let transfer_authority = Keypair::new();
+    helpers::approve(
+        &mut banks_client,
+        &recent_blockhash,
+        &payer,
+        &transfer_authority.pubkey(),
+        &bidders[0].0,
+        instant_sale_price,
+    )
+    .await
+    .expect("approve");
+
+    // Make bid with price above instant_sale_price to check if it reduce amount
+    helpers::place_bid(
+        &mut banks_client,
+        &recent_blockhash,
+        &program_id,
+        &payer,
+        &bidders[0].0,
+        &bidders[0].1,
+        &transfer_authority,
+        &resource,
+        &mint,
+        instant_sale_price,
+    )
+    .await
+    .expect("place_bid");
+
+    let collection = Keypair::new();
+
+    // Generate Collection Pot.
+    helpers::create_token_account(
+        &mut banks_client,
+        &payer,
+        &recent_blockhash,
+        &collection,
+        &mint,
+        &payer.pubkey(),
+    )
+    .await
+    .unwrap();
+
+    helpers::claim_bid(
+        &mut banks_client,
+        &recent_blockhash,
+        &program_id,
+        &payer,
+        &payer,
+        &bidders[0].0,
+        &bidders[0].1,
+        &collection.pubkey(),
+        &resource,
+        &mint,
+    )
+    .await
+    .unwrap();
+
+    // Bid pot should be empty
+    let balance = helpers::get_token_balance(&mut banks_client, &bidders[0].1.pubkey()).await;
+    assert_eq!(balance, 0);
+
+    let balance = helpers::get_token_balance(&mut banks_client, &collection.pubkey()).await;
+    assert_eq!(balance, instant_sale_price);
+}
+
+#[cfg(feature = "test-bpf")]
+#[tokio::test]
+async fn test_cancel_bid_with_instant_sale_price() {
+    // Local wrapper around a small test description described by actions.
+    struct Test {
+        actions: Vec<Action>,
+        max_winners: usize,
+        price_floor: PriceFloor,
+        instant_sale_price: Option<u64>,
+    }
+
+    let strategy = Test {
+        actions: vec![
+            Action::Bid(0, 2000),
+            Action::Bid(1, 3000),
+            Action::Cancel(1),
+        ],
+        max_winners: 3,
+        price_floor: PriceFloor::None([0; 32]),
+        instant_sale_price: Some(3000),
+    };
+
+    let (
+        program_id,
+        mut banks_client,
+        bidders,
+        payer,
+        resource,
+        mint,
+        mint_authority,
+        auction_pubkey,
+        recent_blockhash,
+    ) = setup_auction(
+        true,
+        strategy.max_winners,
+        strategy.instant_sale_price,
+        strategy.price_floor,
+        Some(0),
+        None,
+    )
+    .await;
+
+    // Interpret test actions one by one.
+    for action in strategy.actions.iter() {
+        println!("Strategy: {} Step {:?}", strategy.actions.len(), action);
+        match *action {
+            Action::Bid(bidder, amount) => {
+                // Get balances pre bidding.
+                let pre_balance = (
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].0.pubkey())
+                        .await,
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].1.pubkey())
+                        .await,
+                );
+
+                let transfer_authority = Keypair::new();
+                helpers::approve(
+                    &mut banks_client,
+                    &recent_blockhash,
+                    &payer,
+                    &transfer_authority.pubkey(),
+                    &bidders[bidder].0,
+                    amount,
+                )
+                .await
+                .expect("approve");
+
+                helpers::place_bid(
+                    &mut banks_client,
+                    &recent_blockhash,
+                    &program_id,
+                    &payer,
+                    &bidders[bidder].0,
+                    &bidders[bidder].1,
+                    &transfer_authority,
+                    &resource,
+                    &mint,
+                    amount,
+                )
+                .await
+                .expect("place_bid");
+
+                let post_balance = (
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].0.pubkey())
+                        .await,
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].1.pubkey())
+                        .await,
+                );
+
+                assert_eq!(post_balance.0, pre_balance.0 - amount);
+                assert_eq!(post_balance.1, pre_balance.1 + amount);
+            }
+            Action::Cancel(bidder) => {
+                // Get balances pre bidding.
+                let pre_balance = (
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].0.pubkey())
+                        .await,
+                    helpers::get_token_balance(&mut banks_client, &bidders[bidder].1.pubkey())
+                        .await,
+                );
+
+                let err = helpers::cancel_bid(
+                    &mut banks_client,
+                    &recent_blockhash,
+                    &program_id,
+                    &payer,
+                    &bidders[bidder].0,
+                    &bidders[bidder].1,
+                    &resource,
+                    &mint,
+                )
+                .await
+                .unwrap_err()
+                .unwrap();
+
+                assert_eq!(
+                    err,
+                    TransactionError::InstructionError(
+                        0,
+                        InstructionError::Custom(AuctionError::InvalidState as u32)
+                    )
+                );
+            }
+            _ => {}
+        }
+    }
+}

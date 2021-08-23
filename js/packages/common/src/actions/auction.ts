@@ -389,7 +389,7 @@ export interface IPartialCreateAuctionArgs {
 export interface IPartialCreateAuctionArgsV2 extends IPartialCreateAuctionArgs {
   instantSalePrice?: BN | null;
 
-  name?: string;
+  name?: string | null;
 }
 
 export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
@@ -446,7 +446,7 @@ export class CreateAuctionArgsV2
 {
   instruction: number = 7;
 
-  name: string;
+  name: string | null;
 
   instantSalePrice: BN | null;
 
@@ -461,7 +461,7 @@ export class CreateAuctionArgsV2
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
     instantSalePrice?: BN | null;
-    name?: string;
+    name?: string | null;
   }) {
     super(args);
     this.instantSalePrice = args.instantSalePrice ?? null;
@@ -480,7 +480,7 @@ export class CreateAuctionArgsCreator {
     gapTickSizePercentage: number | null;
     tickSize: BN | null;
     instantSalePrice?: BN | null;
-    name?: string;
+    name?: string | null;
   }): IPartialCreateAuctionArgsCommon {
     if (args.instantSalePrice || args.name) {
       return <IPartialCreateAuctionArgsV2>{ ...args };
@@ -533,9 +533,9 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['winners', WinnerLimit],
         ['endAuctionAt', { kind: 'option', type: 'u64' }],
         ['auctionGap', { kind: 'option', type: 'u64' }],
-        ['tokenMint', 'pubkey'],
-        ['authority', 'pubkey'],
-        ['resource', 'pubkey'],
+        ['tokenMint', 'pubkeyAsString'],
+        ['authority', 'pubkeyAsString'],
+        ['resource', 'pubkeyAsString'],
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
@@ -709,7 +709,7 @@ export const decodeAuctionData = (buffer: Buffer) => {
 };
 
 export async function createAuction(
-  settings: CreateAuctionArgs,
+  settings: CreateAuctionArgs | CreateAuctionArgsV2,
   creator: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
