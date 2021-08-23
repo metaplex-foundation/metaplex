@@ -13,6 +13,12 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
+use spl_token::state::Account;
+use spl_token_metadata::{
+    error::MetadataError,
+    state::{MasterEditionV2, Metadata, EDITION, PREFIX},
+    utils::{assert_derivation, assert_initialized},
+};
 
 /// Process AddCardToPack instruction
 pub fn add_card_to_pack(
@@ -26,6 +32,8 @@ pub fn add_card_to_pack(
     let authority_info = next_account_info(account_info_iter)?;
     let master_edition_info = next_account_info(account_info_iter)?;
     let master_metadata_info = next_account_info(account_info_iter)?;
+    let mint_info = next_account_info(account_info_iter)?;
+    let source_info = next_account_info(account_info_iter)?;
     let token_account_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
@@ -66,16 +74,45 @@ pub fn add_card_to_pack(
         rent,
     )?;
 
-    // Initialize token account
-    // spl_initialize_account(
-    //     token_account_info.clone(),
-    //     master_edition_info.clone(),
-    //     authority_info.clone(),
-    //     rent_info.clone(),
-    // )?;
+    let token_metadata_program_id = spl_token_metadata::id();
 
-    // Transfer to token account
-    // ...
+    // Check for v2
+    let _master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
+
+    let master_metadata = Metadata::from_account_info(master_metadata_info)?;
+    assert_account_key(mint_info, &master_metadata.mint)?;
+    assert_derivation(
+        &token_metadata_program_id,
+        master_edition_info,
+        &[
+            PREFIX.as_bytes(),
+            token_metadata_program_id.as_ref(),
+            master_metadata.mint.as_ref(),
+            EDITION.as_bytes(),
+        ],
+    )?;
+
+    let source: Account = assert_initialized(source_info)?;
+    if source.mint != master_metadata.mint {
+        return Err(MetadataError::MintMismatch.into());
+    }
+
+    // Initialize token account
+    spl_initialize_account(
+        token_account_info.clone(),
+        mint_info.clone(),
+        authority_info.clone(),
+        rent_info.clone(),
+    )?;
+
+    // Transfer from source to token account
+    spl_token_transfer(
+        source_info.clone(),
+        token_account_info.clone(),
+        authority_info.clone(),
+        1,
+        &[],
+    )?;
 
     pack_card.init(InitPackCardParams {
         pack_set: *pack_set_info.key,

@@ -83,3 +83,23 @@ pub fn spl_initialize_account<'a>(
 
     invoke(&ix, &[account, mint, authority, rent])
 }
+
+/// SPL transfer instruction.
+pub fn spl_token_transfer<'a>(
+    source: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<(), ProgramError> {
+    let ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        source.key,
+        destination.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
+}

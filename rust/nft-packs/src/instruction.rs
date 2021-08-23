@@ -249,6 +249,8 @@ pub fn add_card_to_pack(
     authority: &Pubkey,
     master_edition: &Pubkey,
     master_metadata: &Pubkey,
+    mint: &Pubkey,
+    source: &Pubkey,
     token_account: &Pubkey,
     args: AddCardToPackArgs,
 ) -> Instruction {
@@ -260,6 +262,8 @@ pub fn add_card_to_pack(
         AccountMeta::new_readonly(*authority, true),
         AccountMeta::new_readonly(*master_edition, false),
         AccountMeta::new_readonly(*master_metadata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new(*source, false),
         AccountMeta::new(*token_account, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
