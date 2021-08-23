@@ -24,7 +24,9 @@ const creatorWithArtworksQuery = gql<
     creator(storeId: $storeId, creatorId: $creatorId) {
       ...CreatorFragment
     }
-    artworks(filter: { storeId: $storeId, creatorId: $creatorId }) {
+    artworks(
+      filter: { storeId: $storeId, creatorId: $creatorId, onlyVerified: true }
+    ) {
       ...ArtworkFragment
     }
   }

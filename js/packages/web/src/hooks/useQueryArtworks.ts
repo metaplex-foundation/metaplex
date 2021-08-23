@@ -12,10 +12,27 @@ interface ArtworksQuery {
 
 const artworksQuery = gql<
   ArtworksQuery,
-  { storeId: string; creatorId: string }
+  {
+    storeId: string;
+    creatorId?: string;
+    ownerId?: string;
+    onlyVerified?: boolean;
+  }
 >`
-  query getArtworks($storeId: String!) {
-    artworks(filter: { storeId: $storeId }) {
+  query getArtworks(
+    $storeId: String!
+    $creatorId: String
+    $ownerId: String
+    $onlyVerified: Boolean
+  ) {
+    artworks(
+      filter: {
+        storeId: $storeId
+        creatorId: $creatorId
+        ownerId: $ownerId
+        onlyVerified: $onlyVerified
+      }
+    ) {
       ...ArtworkFragment
     }
   }
