@@ -117,6 +117,8 @@ export const ArtCreateView = () => {
       attributes.properties?.maxSupply,
     );
     if (_nft) setNft(_nft);
+    console.log('_nft', _nft);
+
     clearInterval(inte);
   };
 
