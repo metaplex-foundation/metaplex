@@ -34,27 +34,31 @@ const updateTokenSane = async (
   setAmountRemainingFn: React.Dispatch<React.SetStateAction<number>>,
   setCurrentPriceFn: React.Dispatch<React.SetStateAction<number>>,
 ) => {
-  const masterAccount = await program.account.masterAccount.fetch(accountId);
-  if (masterAccount) {
-    const account = masterAccount as MasterAccount;
-    console.log('Fetched master account: ', TOKEN_SALE_MASTER_ACCOUNT_ADDRESS);
-    setAccountFn(masterAccount as MasterAccount);
-    if (account && account.numTokens.toNumber() > 0) {
-      // set progress value and amount remaining
-      if (account.counter.toNumber() <= 1) {
-        setProgressValueFn(0);
-        setAmountRemainingFn(account.numTokens.toNumber());
-      } else {
-        setProgressValueFn(Math.round((account.counter.toNumber() / account.numTokens.toNumber()) * 100));
-        setAmountRemainingFn(account.numTokens.toNumber() - account.counter.toNumber());
-      }
-      // set price
-      if (account.counter.toNumber() >= 2222) {
-        setCurrentPriceFn(3);
-      } else if (account.counter.toNumber() >= 1111) {
-        setCurrentPriceFn(2);
+  try {
+    const masterAccount = await program.account.masterAccount.fetch(accountId);
+    if (masterAccount) {
+      const account = masterAccount as MasterAccount;
+      console.log('Fetched master account: ', TOKEN_SALE_MASTER_ACCOUNT_ADDRESS);
+      setAccountFn(masterAccount as MasterAccount);
+      if (account && account.numTokens.toNumber() > 0) {
+        // set progress value and amount remaining
+        if (account.counter.toNumber() <= 1) {
+          setProgressValueFn(0);
+          setAmountRemainingFn(account.numTokens.toNumber());
+        } else {
+          setProgressValueFn(Math.round((account.counter.toNumber() / account.numTokens.toNumber()) * 100));
+          setAmountRemainingFn(account.numTokens.toNumber() - account.counter.toNumber());
+        }
+        // set price
+        if (account.counter.toNumber() >= 2222) {
+          setCurrentPriceFn(3);
+        } else if (account.counter.toNumber() >= 1111) {
+          setCurrentPriceFn(2);
+        }
       }
     }
+  } catch (error) {
+    console.warn(`Can't get the account: ${error.message}`);
   }
 }
 
@@ -181,7 +185,7 @@ export const PurchaseArt = () => {
           </div>
           <Progress percent={progressValue} />
         </>
-      )} 
+      )}
     <br></br>
     <br></br>
     <br></br>

@@ -18,16 +18,15 @@ import {
 import { getLast } from '../../utils/utils';
 
 const normalizeData = (data: string[][]) => {
-  // keys: ["name", "Background color", "chain"]
-  // values: [ ["0000", "pelegreen", "silver"], [...], [...] ]
+  // first line is field names,
+  // rest will [ ["0000", "pelegreen", "silver"], [...] ]
   // filter any empty lines
-  // console.log('data', data);
-
   const [keys, ...values] = data.filter(el => el.length > 1);
+  // console.log('data', data);
 
   const mapValuesToKeys = (valueArr: string[]) =>
     valueArr.reduce(
-      (acc, value, idx) => {
+      (acc: any, value: any, idx: number) => {
         const key = keys[idx];
         const nameKey = 'name';
 
@@ -60,12 +59,35 @@ const normalizeData = (data: string[][]) => {
   return keyValue;
 };
 
+type Token = {
+  name: string;
+  metadataAccount: StringPublicKey;
+  mintKey: StringPublicKey;
+  associatedTokenAddress: StringPublicKey;
+} | void;
+interface mintedProps {
+  idx: number;
+  token: Token;
+  error?: Error;
+}
+
+const date = new Date().toDateString().replaceAll(' ', '-').toLocaleLowerCase();
+
 export const ArtCreateBulkView = () => {
   const { connected } = useWallet();
   const [csvData, setCsvData] = useState<unknown[]>([]);
   const [startMint, setStartMint] = useState(false);
   const [csvError, setScvError] = useState(false);
   const [threadNumber, setTreadNumber] = useState(15);
+  const [mintedTokens, setMintedToken] = useState({});
+
+  const addMintedTokenInfo = ({ idx: idxInSet, token }: mintedProps) => {
+    setMintedToken(state => ({
+      ...state,
+      [idxInSet]: [token?.mintKey, token?.associatedTokenAddress],
+    }));
+  };
+
   const handleSCV = (data: string[][], fileInfo: IFileInfo) => {
     // console.log(data, fileInfo);
     try {
@@ -90,19 +112,48 @@ export const ArtCreateBulkView = () => {
   const mintChunkSize = Math.ceil(csvData?.length / threadNumber);
   console.log('mintChunkSize', mintChunkSize);
 
+  const getJsonHref = () => {
+    const output = JSON.stringify(mintedTokens);
+    const blob = new Blob([output]);
+    const fileDownloadUrl = URL.createObjectURL(blob);
+
+    return fileDownloadUrl;
+  };
+
+  const isAllMinted =
+    csvData.length > 0 && csvData.length === Object.keys(mintedTokens).length;
+
   return (
     <div className="">
       <h1>Create Items from csv</h1>
-      <CSVReader
-        onFileLoaded={handleSCV}
-        onError={error => console.log(error)}
-        disabled={startMint}
-      />
+
+      <Row style={{ paddingTop: 50 }}>
+        <Col span={12}>
+          <CSVReader
+            onFileLoaded={handleSCV}
+            onError={error => console.log(error)}
+            disabled={startMint}
+          />
+        </Col>
+        <Col span={12} style={{ textAlign: 'right' }}>
+          <a
+            href={getJsonHref()}
+            download={`minted-tokens-${date}.json`}
+            hidden={!isAllMinted}
+          >
+            <Button type="primary" style={styles.button}>
+              Download Mint Data
+            </Button>
+          </a>
+        </Col>
+      </Row>
+
       <br />
 
       {startMint ? (
         chunks(csvData, mintChunkSize).map((data, index) => (
           <ErrorBoundary
+            key={index}
             FallbackComponent={ErrorFallback}
             onReset={() => {
               // reset the state of your app so the error doesn't happen again
@@ -112,6 +163,7 @@ export const ArtCreateBulkView = () => {
               data={data}
               chunkIdx={index}
               mintChunkSize={mintChunkSize}
+              addMintedTokenInfo={addMintedTokenInfo}
             />
           </ErrorBoundary>
         ))
@@ -127,6 +179,7 @@ export const ArtCreateBulkView = () => {
               onChange={setTreadNumber}
               className="thread-input"
               value={threadNumber}
+              disabled={!csvData.length}
             />
           </label>
           <Button
@@ -143,17 +196,33 @@ export const ArtCreateBulkView = () => {
   );
 };
 
-const MintFromData = ({ data, chunkIdx, mintChunkSize }: any) => {
+interface MintFromDataProps {
+  data: any;
+  chunkIdx: number;
+  mintChunkSize: number;
+  addMintedTokenInfo: (props: mintedProps) => void;
+}
+
+const MintFromData = ({
+  data,
+  chunkIdx,
+  mintChunkSize,
+  addMintedTokenInfo,
+}: MintFromDataProps) => {
   const [idxToMint, setIdxToMint] = useState(0);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const [completed, setCompleted] = useState(false);
 
-  const onItemMinted = (idx, error) => {
+  const onItemMinted = ({ idx, token, error }: mintedProps) => {
+    const idxInSet = mintChunkSize * chunkIdx + idx;
+
+    addMintedTokenInfo({ idx: idxInSet, token });
+
     const idxUpdated = idx + 1;
     const numberOfItems = data.length;
 
+    if (error) setError(error);
     if (idxUpdated === numberOfItems) setCompleted(true);
-    else if (error) setError(error);
     else {
       setIdxToMint(idxUpdated);
     }
@@ -171,6 +240,14 @@ const MintFromData = ({ data, chunkIdx, mintChunkSize }: any) => {
       <>
         <h1>
           🎉 {itemsStartAt}-{itemsEndAt} items created successfully!
+          {error ? (
+            <div style={{ fontSize: '0.75em' }}>
+              ⚠️ Some failed mints in this tread, check json for undefined/null
+              values.
+              <pre>Error: {error.message}</pre>
+              <hr />
+            </div>
+          ) : null}
         </h1>
         <Confetti />
       </>
@@ -227,9 +304,6 @@ export const ArtCreateSingleItem = ({
   const { env } = useConnectionConfig();
   const { wallet, connected } = useWallet();
   const [progress, setProgress] = useState<number>(0);
-  const [nft, setNft] = useState<
-    { metadataAccount: StringPublicKey } | undefined
-  >(undefined);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -315,52 +389,59 @@ export const ArtCreateSingleItem = ({
 
   // store files
   const mint = async (attributes: any, file: File) => {
-    const metadata = {
-      name: attributes.name,
-      symbol: attributes.symbol,
-      creators: attributes.creators,
-      description: attributes.description,
-      sellerFeeBasisPoints: attributes.seller_fee_basis_points,
-      image: attributes.image,
-      animation_url: attributes.animation_url,
-      external_url: attributes.external_url,
-      attributes: attributes.attributes,
-      collection: attributes.collection,
-      properties: {
-        files: attributes.properties.files,
-        category: attributes.properties?.category,
-        maxSupply: attributesDefault.properties.maxSupply,
-      },
-    };
+    try {
+      const metadata = {
+        name: attributes.name,
+        symbol: attributes.symbol,
+        creators: attributes.creators,
+        description: attributes.description,
+        sellerFeeBasisPoints: attributes.seller_fee_basis_points,
+        image: attributes.image,
+        animation_url: attributes.animation_url,
+        external_url: attributes.external_url,
+        attributes: attributes.attributes,
+        collection: attributes.collection,
+        properties: {
+          files: attributes.properties.files,
+          category: attributes.properties?.category,
+          maxSupply: attributesDefault.properties.maxSupply,
+        },
+      };
 
-    // console.log('metadata', metadata);
+      // console.log('metadata', metadata);
 
-    const inte = setInterval(
-      () => setProgress(prog => Math.min(prog + 1, 99)),
-      600,
-    );
+      const inte = setInterval(
+        () => setProgress(prog => Math.min(prog + 1, 99)),
+        600,
+      );
 
-    const files = [file];
-    // console.log('files', files);
+      const files = [file];
+      // console.log('files', files);
 
-    // Update progress inside mintNFT
-    const _nft = await mintNFT(
-      connection,
-      wallet,
-      env,
-      files,
-      metadata,
-      attributes.properties?.maxSupply,
-    );
-    if (_nft) setNft(_nft);
-    clearInterval(inte);
-    onMintItemComplete();
+      // Update progress inside mintNFT
+      const _nft = await mintNFT(
+        connection,
+        wallet,
+        env,
+        files,
+        metadata,
+        attributes.properties?.maxSupply,
+      );
+      onMintItemComplete({ ..._nft, name: metadata.name });
+      clearInterval(inte);
+    } catch (error) {
+      console.warn(`⚠️ Mint failed for item ${idx}`, error);
+      onMintItemComplete(undefined, error);
+    }
   };
 
-  const onMintItemComplete = () => {
+  const onMintItemComplete = (token: Token, error?: Error) => {
     setProgress(0);
-    setNft(undefined);
-    onComplete(idx);
+    onComplete({
+      idx,
+      token,
+      error,
+    });
   };
 
   return (
@@ -421,15 +502,15 @@ interface ErrorProps {
 
 const ErrorFallback = ({ error, resetErrorBoundary }: ErrorProps) => {
   return (
-    <div role="alert" style={style.container}>
-      <p style={style.p}>Thread failed with error:</p>
+    <div role="alert" style={styles.container}>
+      <p style={styles.p}>Thread failed with error:</p>
       <pre>{error.message}</pre>
       {/* <button onClick={resetErrorBoundary}>Try again</button> */}
     </div>
   );
 };
 
-const style = {
+const styles = {
   container: {
     background: 'tomato',
     color: 'black',
@@ -438,5 +519,9 @@ const style = {
   },
   p: {
     color: 'white',
+  },
+  button: {
+    background: 'black',
+    borderColor: 'black',
   },
 };
