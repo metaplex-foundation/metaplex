@@ -51,7 +51,7 @@ export const mintNFT = async (
     description: string;
     image: string | undefined;
     animation_url: string | undefined;
-    attributes: Attribute[] | undefined
+    attributes: Attribute[] | undefined;
     external_url: string;
     properties: any;
     creators: Creator[] | null;

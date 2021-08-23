@@ -552,6 +552,7 @@ const InfoStep = (props: {
     props.files,
     props.attributes,
   );
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setRoyalties(
@@ -649,22 +650,10 @@ const InfoStep = (props: {
           </label>
           <label className="action-field">
             <span className="field-title">Attributes</span>
-            <Form name="dynamic-attributes" autoComplete="off"
-              onFinish={(values) => {
-                console.log('onFinish values:', values);
-
-                const nftAttributes = values.attributes;
-                props.setAttributes({
-                  ...props.attributes,
-                  attributes: nftAttributes,
-                });
-              }}
-              onFinishFailed={() => {
-                props.setAttributes({
-                  ...props.attributes,
-                  attributes: undefined,
-                });
-              }}
+            <Form
+              name="dynamic-attributes"
+              form={form}
+              autoComplete="off"
             >
               <Form.List name="attributes">
                 {(fields, { add, remove }) => (
@@ -674,10 +663,9 @@ const InfoStep = (props: {
                         <Form.Item
                           name={[name, 'trait_type']}
                           fieldKey={[fieldKey, 'trait_type']}
-                          rules={[{ required: true, message: 'Missing trait_type' }]}
                           hasFeedback
                         >
-                          <Input placeholder="trait_type" />
+                          <Input placeholder="trait_type (Optional)" />
                         </Form.Item>
                         <Form.Item
                           name={[name, 'value']}
@@ -702,11 +690,6 @@ const InfoStep = (props: {
                         Add attribute
                       </Button>
                     </Form.Item>
-                    <Form.Item>
-                      <Button type="primary" htmlType="submit">
-                        Validate (Before Continue)
-                      </Button>
-                    </Form.Item>
                   </>
                 )}
               </Form.List>
@@ -720,11 +703,24 @@ const InfoStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-            });
+            form.validateFields()
+              .then(values => {
+                const nftAttributes = values.attributes;
+                // value is number if possible
+                for (const nftAttribute of nftAttributes) {
+                  const newValue = Number(nftAttribute.value);
+                  if (!isNaN(newValue)) {
+                    nftAttribute.value = newValue;
+                  }
+                }
+                console.log('Adding NFT attributes:', nftAttributes)
+                props.setAttributes({
+                  ...props.attributes,
+                  attributes: nftAttributes,
+                });
 
-            props.confirm();
+                props.confirm();
+              })
           }}
           className="action-btn"
         >
