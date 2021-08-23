@@ -136,7 +136,7 @@ export const mintNFT = async (
     signers,
   ).toBase58();
 
-  console.log('mintKey', mintKey);
+  // console.log('mintKey', mintKey);
 
 
   const recipientKey = (
@@ -149,7 +149,7 @@ export const mintNFT = async (
       programIds().associatedToken,
     )
   )[0];
-  console.log('recipientKey', recipientKey);
+  // console.log('recipientKey', recipientKey);
 
   createAssociatedTokenAccountInstruction(
     instructions,
@@ -159,7 +159,7 @@ export const mintNFT = async (
     toPublicKey(mintKey),
   );
 
-  console.log('payerPublicKey', payerPublicKey);
+  // console.log('payerPublicKey', payerPublicKey);
 
 
   const metadataAccount = await createMetadata(
@@ -177,7 +177,7 @@ export const mintNFT = async (
     wallet.publicKey.toBase58(),
   );
 
-  console.log('metadataAccount', metadataAccount);
+  // console.log('metadataAccount', metadataAccount);
 
 
   // TODO: enable when using payer account to avoid 2nd popup
@@ -240,7 +240,7 @@ export const mintNFT = async (
     m => m.filename === RESERVED_TXN_MANIFEST,
   );
 
-  console.log('metadataFile', metadataFile);
+  // console.log('metadataFile', metadataFile);
 
 
   if (metadataFile?.transactionId && wallet.publicKey) {

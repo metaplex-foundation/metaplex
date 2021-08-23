@@ -59,7 +59,12 @@ const normalizeData = (data: string[][]) => {
   return keyValue;
 };
 
-type Token = { metadataAccount: StringPublicKey; name: string } | void;
+type Token = {
+  name: string;
+  metadataAccount: StringPublicKey;
+  mintKey: StringPublicKey;
+  associatedTokenAddress: StringPublicKey;
+} | void;
 interface mintedProps {
   idx: number;
   token: Token;
@@ -79,7 +84,7 @@ export const ArtCreateBulkView = () => {
   const addMintedTokenInfo = ({ idx: idxInSet, token }: mintedProps) => {
     setMintedToken(state => ({
       ...state,
-      [idxInSet]: [token?.name, token?.metadataAccount],
+      [idxInSet]: [token?.name, token?.mintKey, token?.associatedTokenAddress],
     }));
   };
 
@@ -113,9 +118,10 @@ export const ArtCreateBulkView = () => {
     const fileDownloadUrl = URL.createObjectURL(blob);
 
     return fileDownloadUrl;
-  }
+  };
 
-  const isAllMinted = csvData.length === mintedTokens.keys?.().length;
+  const isAllMinted =
+    csvData.length > 0 && csvData.length === Object.keys(mintedTokens).length;
 
   return (
     <div className="">
@@ -129,11 +135,8 @@ export const ArtCreateBulkView = () => {
             disabled={startMint}
           />
         </Col>
-        <Col span={12} style={{textAlign: 'right'}}>
+        <Col span={12} style={{ textAlign: 'right' }}>
           <a
-            // href={`data:text/json;charset=utf-8,${encodeURIComponent(
-            //   JSON.stringify(tokenList),
-            // )}`}
             href={getJsonHref()}
             download={`minted-tokens-${date}.json`}
             hidden={!isAllMinted}
@@ -212,15 +215,14 @@ const MintFromData = ({
 
   const onItemMinted = ({ idx, token, error }: mintedProps) => {
     const idxInSet = mintChunkSize * chunkIdx + idx;
-    console.log('idxInSet', idxInSet);
 
     addMintedTokenInfo({ idx: idxInSet, token });
 
     const idxUpdated = idx + 1;
     const numberOfItems = data.length;
 
+    if (error) setError(error);
     if (idxUpdated === numberOfItems) setCompleted(true);
-    else if (error) setError(error);
     else {
       setIdxToMint(idxUpdated);
     }
@@ -238,6 +240,15 @@ const MintFromData = ({
       <>
         <h1>
           🎉 {itemsStartAt}-{itemsEndAt} items created successfully!
+          {error ? (
+            <div style={{fontSize: '0.75em'}}>
+              ⚠️ Some failed mints in this tread, check json for undefined/null values. Error:
+              <pre>
+                {error.message}
+              </pre>
+              <hr />
+            </div>
+          ) : null}
         </h1>
         <Confetti />
       </>
@@ -420,17 +431,17 @@ export const ArtCreateSingleItem = ({
       onMintItemComplete({ ..._nft, name: metadata.name });
       clearInterval(inte);
     } catch (error) {
-      console.warn(`Mint failed for item ${idx}`, error);
-      onMintItemComplete(undefined);
-      throw new Error(error);
+      console.warn(`⚠️ Mint failed for item ${idx}`, error);
+      onMintItemComplete(undefined, error);
     }
   };
 
-  const onMintItemComplete = (token: Token) => {
+  const onMintItemComplete = (token: Token, error?: Error) => {
     setProgress(0);
     onComplete({
       idx,
       token,
+      error,
     });
   };
 
@@ -513,5 +524,5 @@ const styles = {
   button: {
     background: 'black',
     borderColor: 'black',
-  }
+  },
 };
