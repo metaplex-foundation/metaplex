@@ -84,7 +84,7 @@ export const ArtCreateBulkView = () => {
   const addMintedTokenInfo = ({ idx: idxInSet, token }: mintedProps) => {
     setMintedToken(state => ({
       ...state,
-      [idxInSet]: [token?.name, token?.mintKey, token?.associatedTokenAddress],
+      [idxInSet]: [token?.mintKey, token?.associatedTokenAddress],
     }));
   };
 
@@ -241,11 +241,10 @@ const MintFromData = ({
         <h1>
           🎉 {itemsStartAt}-{itemsEndAt} items created successfully!
           {error ? (
-            <div style={{fontSize: '0.75em'}}>
-              ⚠️ Some failed mints in this tread, check json for undefined/null values. Error:
-              <pre>
-                {error.message}
-              </pre>
+            <div style={{ fontSize: '0.75em' }}>
+              ⚠️ Some failed mints in this tread, check json for undefined/null
+              values.
+              <pre>Error: {error.message}</pre>
               <hr />
             </div>
           ) : null}
