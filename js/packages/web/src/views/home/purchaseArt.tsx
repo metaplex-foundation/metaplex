@@ -9,7 +9,7 @@ import { Confetti } from './../../components/Confetti';
 import { PublicKey } from '@solana/web3.js';
 
 const TOKEN_SALE_PROGRAM_ADDRESS = '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
-const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS = '2vxBAJ6niNbXWyofnT4W1mbiyyw94QeWsZZuD7nGgvvd';
+const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS = '7jZDN6S9WHEvBH1jqiiva9fwTCEXEVt9UA694zVrAAqo';
 
 const { Title } = Typography;
 
