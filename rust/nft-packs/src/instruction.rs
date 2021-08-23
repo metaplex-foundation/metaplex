@@ -1,7 +1,6 @@
 //! Instruction types
 #![allow(missing_docs)]
 
-use crate::state::InitPackSetParams;
 use crate::{find_pack_card_program_address, state::ProbabilityType};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -22,6 +21,17 @@ pub struct AddCardToPackArgs {
     pub index: u32,
 }
 
+/// Initialize a PackSet arguments
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct InitPackSetArgs {
+    /// Name
+    pub name: [u8; 32],
+    /// How many packs are available for redeeming
+    pub total_packs: u32,
+    /// If true authority can make changes at deactivated phase
+    pub mutable: bool,
+}
+
 /// Instruction definition
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum NFTPacksInstruction {
@@ -39,7 +49,7 @@ pub enum NFTPacksInstruction {
     /// - name	[u8; 32]
     /// - total_packs	u32
     /// - mutable	bool
-    InitPack(InitPackSetParams),
+    InitPack(InitPackSetArgs),
 
     /// AddCardToPack
     ///
@@ -229,7 +239,7 @@ pub fn init_pack(
     pack_set: &Pubkey,
     authority: &Pubkey,
     minting_authority: &Pubkey,
-    args: InitPackSetParams,
+    args: InitPackSetArgs,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*pack_set, false),

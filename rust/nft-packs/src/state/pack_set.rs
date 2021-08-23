@@ -52,16 +52,11 @@ pub struct PackSet {
 
 impl PackSet {
     /// Initialize a PackSet
-    pub fn init(
-        &mut self,
-        params: InitPackSetParams,
-        authority: &Pubkey,
-        minting_authority: &Pubkey,
-    ) {
+    pub fn init(&mut self, params: InitPackSetParams) {
         self.account_type = AccountType::PackSet;
         self.name = params.name;
-        self.authority = *authority;
-        self.minting_authority = *minting_authority;
+        self.authority = params.authority;
+        self.minting_authority = params.minting_authority;
         self.total_packs = params.total_packs;
         self.pack_cards = 0;
         self.pack_vouchers = 0;
@@ -76,11 +71,13 @@ impl PackSet {
 }
 
 /// Initialize a PackSet params
-#[repr(C)]
-#[derive(Debug, Clone, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, Default)]
 pub struct InitPackSetParams {
     /// Name
     pub name: [u8; 32],
+    /// Pack authority
+    pub authority: Pubkey,
+    /// Authority to mint voucher editions
+    pub minting_authority: Pubkey,
     /// How many packs are available for redeeming
     pub total_packs: u32,
     /// If true authority can make changes at deactivated phase
