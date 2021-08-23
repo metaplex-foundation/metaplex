@@ -70,6 +70,8 @@ export const mintNFT = async (
   maxSupply?: number,
 ): Promise<{
   metadataAccount: StringPublicKey;
+  mintKey: StringPublicKey;
+  associatedTokenAddress: StringPublicKey;
 } | void> => {
   if (!wallet?.publicKey) {
     return;
@@ -134,6 +136,9 @@ export const mintNFT = async (
     signers,
   ).toBase58();
 
+  console.log('mintKey', mintKey);
+
+
   const recipientKey = (
     await findProgramAddress(
       [
@@ -144,6 +149,7 @@ export const mintNFT = async (
       programIds().associatedToken,
     )
   )[0];
+  console.log('recipientKey', recipientKey);
 
   createAssociatedTokenAccountInstruction(
     instructions,
@@ -152,6 +158,9 @@ export const mintNFT = async (
     wallet.publicKey,
     toPublicKey(mintKey),
   );
+
+  console.log('payerPublicKey', payerPublicKey);
+
 
   const metadataAccount = await createMetadata(
     new Data({
@@ -163,10 +172,13 @@ export const mintNFT = async (
     }),
     payerPublicKey,
     mintKey,
-    payerPublicKey,
+    payerPublicKey, /** mintAuthorityKey */
     instructions,
     wallet.publicKey.toBase58(),
   );
+
+  console.log('metadataAccount', metadataAccount);
+
 
   // TODO: enable when using payer account to avoid 2nd popup
   // const block = await connection.getRecentBlockhash('singleGossip');
@@ -227,6 +239,10 @@ export const mintNFT = async (
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,
   );
+
+  console.log('metadataFile', metadataFile);
+
+
   if (metadataFile?.transactionId && wallet.publicKey) {
     const updateInstructions: TransactionInstruction[] = [];
     const updateSigners: Keypair[] = [];
@@ -315,7 +331,11 @@ export const mintNFT = async (
   // 1. Jordan: --- upload file and metadata to storage API
   // 2. pay for storage by hashing files and attaching memo for each file
 
-  return { metadataAccount };
+  return {
+    metadataAccount,
+    mintKey,
+    associatedTokenAddress: recipientKey
+  };
 };
 
 export const prepPayForFilesTxn = async (

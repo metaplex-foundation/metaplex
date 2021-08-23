@@ -18,12 +18,11 @@ import {
 import { getLast } from '../../utils/utils';
 
 const normalizeData = (data: string[][]) => {
-  // keys: ["name", "Background color", "chain"]
-  // values: [ ["0000", "pelegreen", "silver"], [...], [...] ]
+  // first line is field names,
+  // rest will [ ["0000", "pelegreen", "silver"], [...] ]
   // filter any empty lines
-  // console.log('data', data);
-
   const [keys, ...values] = data.filter(el => el.length > 1);
+  // console.log('data', data);
 
   const mapValuesToKeys = (valueArr: string[]) =>
     valueArr.reduce(
@@ -116,6 +115,8 @@ export const ArtCreateBulkView = () => {
     return fileDownloadUrl;
   }
 
+  const isAllMinted = csvData.length === mintedTokens.keys?.().length;
+
   return (
     <div className="">
       <h1>Create Items from csv</h1>
@@ -135,6 +136,7 @@ export const ArtCreateBulkView = () => {
             // )}`}
             href={getJsonHref()}
             download={`minted-tokens-${date}.json`}
+            hidden={!isAllMinted}
           >
             <Button type="primary" style={styles.button}>
               Download Mint Data
@@ -148,13 +150,13 @@ export const ArtCreateBulkView = () => {
       {startMint ? (
         chunks(csvData, mintChunkSize).map((data, index) => (
           <ErrorBoundary
+            key={index}
             FallbackComponent={ErrorFallback}
             onReset={() => {
               // reset the state of your app so the error doesn't happen again
             }}
           >
             <MintFromData
-              key={index}
               data={data}
               chunkIdx={index}
               mintChunkSize={mintChunkSize}
