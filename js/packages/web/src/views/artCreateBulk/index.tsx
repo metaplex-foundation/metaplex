@@ -139,7 +139,7 @@ export const ArtCreateBulkView = () => {
           <a
             href={getJsonHref()}
             download={`minted-tokens-${date}.json`}
-            hidden={!isAllMinted}
+            // hidden={!isAllMinted}
           >
             <Button type="primary" style={styles.button}>
               Download Mint Data
