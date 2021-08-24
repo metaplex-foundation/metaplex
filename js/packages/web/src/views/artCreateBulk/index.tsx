@@ -275,7 +275,7 @@ const MintFromData = ({
 const attributesDefault = {
   name: 'Noname Thug',
   symbol: '',
-  description: "can't be uncovered",
+  description: "You hold in your possession an OG thugbird. It was created with love for the Solana community",
   external_url: 'https://www.thugbirdz.com/',
   image: '',
   animation_url: undefined,
