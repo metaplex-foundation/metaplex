@@ -7,7 +7,7 @@ import idl from '../../config/simple_token_sale.json';
 import type { MasterAccount } from './types';
 import { Confetti } from './../../components/Confetti';
 import { PublicKey } from '@solana/web3.js';
-import {FeatureList} from './FeatureList';
+import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
   '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
@@ -21,11 +21,27 @@ const getPurchaseBtnText = (
   isProcessing: boolean,
   isDone: boolean,
   price: number,
+  isSoldOut: boolean,
+  errorPurchasing: Error | null,
 ) => {
   if (!connected) return 'connect your wallet';
+  else if (errorPurchasing !== null) return 'Something goes wrong...';
+  else if (isSoldOut)
+    return <span className="bungee-font-inline">COLECTION SOLD OUT</span>;
   else if (isProcessing) return 'processing request...';
-  else if (isDone) return 'your bird is on its way...';
-  else return `Mint bird for ◎${price} SOL!`;
+  else if (isDone)
+    return (
+      <span>
+        Success! 🎉 Your <span className="bungee-font-inline">bird</span> is on
+        its way...
+      </span>
+    );
+  else
+    return (
+      <span>
+        Mint <span className="bungee-font-inline">bird</span> for ◎{price} SOL!
+      </span>
+    );
 };
 
 /** Convenience function to refresh token sale data */
@@ -86,6 +102,7 @@ export const PurchaseArt = () => {
   const [ifDealMade, setDealMade] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [errorPurchasing, setErrorPurchasing] = useState(null);
 
   const [anchorProvider, setAnchorProvider] = useState<Provider | null>(null);
   const [anchorProgram, setAnchorProgram] = useState<Program | null>(null);
@@ -174,6 +191,7 @@ export const PurchaseArt = () => {
       refreshInformation();
     } catch (error) {
       console.warn('Error occurred while purchasing the item: ', error);
+      setErrorPurchasing(error);
     } finally {
       setIsProcessing(false);
       setIsDone(true);
@@ -182,11 +200,15 @@ export const PurchaseArt = () => {
 
   if (isLoading) return <div>loading...</div>;
 
+  const isSoldOut = progressValue !== null && progressValue >= 100;
+
   const btnText = getPurchaseBtnText(
     connected,
     isProcessing,
     isDone,
     currentPrice,
+    isSoldOut,
+    errorPurchasing,
   );
 
   return (
@@ -197,11 +219,13 @@ export const PurchaseArt = () => {
       <img src="hero.gif" />
       {ifDealMade ? <Confetti /> : null}
 
-      {progressValue === 100 ? (
-        <h1 className="highlight sold-out">SOLD OUT</h1>
+      {!account ? (
+        <h1 className="highlight sold-out">CONNECT YOUR WALLET</h1>
       ) : null}
 
-      {progressValue !== null && progressValue < 100 && account && (
+      {isSoldOut ? <h1 className="highlight sold-out">SOLD OUT</h1> : null}
+
+      {progressValue !== null && !isSoldOut && account && (
         <>
           <Button
             type="primary"
@@ -209,10 +233,28 @@ export const PurchaseArt = () => {
             size="large"
             className="app-btn purchase-btn"
             onClick={doPurchase}
-            disabled={!connected || ifDealMade}
+            disabled={
+              !connected ||
+              isDone ||
+              ifDealMade ||
+              isProcessing ||
+              !!errorPurchasing
+            }
           >
             {btnText}
           </Button>
+
+          {errorPurchasing ? (
+            <div className="purchase-error">
+              <b>Error occurred while purchasing the item.</b>
+              <br />
+              Make sure you have enough SOL in your wallet and you use correct Solana
+              network (mainnet-beta).
+              <br />
+              Then refresh the page and try again!
+            </div>
+          ) : null}
+
           <div className="only-left-text">
             Only <span className="highlight">{amountRemaining}</span> of{' '}
             <span className="highlight">{account.numTokens.toNumber()}</span>{' '}
@@ -224,7 +266,7 @@ export const PurchaseArt = () => {
       <br></br>
       <br></br>
       <br></br>
-          <FeatureList />
+      <FeatureList />
     </div>
   );
 };
