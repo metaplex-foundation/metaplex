@@ -488,7 +488,7 @@ export function Notifications() {
       trigger="click"
     >
       <h1 className="title">
-      <NotificationOutlined />
+      <NotificationOutlined style={{color:'white'}} />
       </h1>
     </Popover>
   );
