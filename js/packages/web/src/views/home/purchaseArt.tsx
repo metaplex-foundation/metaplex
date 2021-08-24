@@ -266,7 +266,7 @@ export const PurchaseArt = () => {
       <br></br>
       <br></br>
       <br></br>
-      <FeatureList />
+      {/* <FeatureList /> */}
     </div>
   );
 };
