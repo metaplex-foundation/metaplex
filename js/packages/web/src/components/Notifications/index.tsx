@@ -131,7 +131,9 @@ export function useCollapseWrappedSol({
     const ata = await getPersonalEscrowAta(wallet);
     if (ata) {
       try {
-        const balance = await connection.getTokenAccountBalance(toPublicKey(ata));
+        const balance = await connection.getTokenAccountBalance(
+          toPublicKey(ata),
+        );
 
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
@@ -216,8 +218,7 @@ export function useSettlementAuctions({
             ) {
               setValidDiscoveredEndedAuctions(old => ({
                 ...old,
-                [av.auctionManager.pubkey]:
-                  balance.value.uiAmount || 0,
+                [av.auctionManager.pubkey]: balance.value.uiAmount || 0,
               }));
             }
           } catch (e) {
@@ -369,7 +370,7 @@ export function Notifications() {
               connection,
               wallet,
               v,
-              accountByMint,
+              safetyDepositBoxesByVaultAndIndex,
             );
           } catch (e) {
             console.error(e);
@@ -402,8 +403,8 @@ export function Notifications() {
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info
-            ?.name || m.pubkey}{' '}
+          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
+            m.pubkey}{' '}
           wants you to approve that you helped create their art{' '}
           <Link to={`/art/${m.pubkey}`}>here.</Link>
         </span>

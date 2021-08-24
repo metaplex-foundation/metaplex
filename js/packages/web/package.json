@@ -5,6 +5,7 @@
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
     "@cloudflare/stream-react": "^1.1.0",
+    "@google/model-viewer": "^1.7.2",
     "@oyster/common": "0.0.1",
     "@project-serum/serum": "^0.13.52",
     "@project-serum/sol-wallet-adapter": "^0.2.5",
