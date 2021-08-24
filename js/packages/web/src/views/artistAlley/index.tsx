@@ -120,7 +120,7 @@ export const ArtistAlleyView = () => {
   const banner = (
     <div className="banner">
       <div className="banner-title">
-        <p>Submit your original artwork to be featured by todd McFarlane</p>
+        <p>Submit your original artwork to be featured by Metaplex</p>
         <Button
           type="primary"
           className="banner-button"
