@@ -3,6 +3,7 @@ import {
   programIds,
   StringPublicKey,
   toPublicKey,
+  getAuctionExtended,
 } from '@oyster/common';
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
@@ -58,6 +59,16 @@ export async function claimBid(
     },
     {
       pubkey: toPublicKey(auctionKey),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(
+        await getAuctionExtended({
+          auctionProgramId: PROGRAM_IDS.auction,
+          resource: vault,
+        }),
+      ),
       isSigner: false,
       isWritable: false,
     },

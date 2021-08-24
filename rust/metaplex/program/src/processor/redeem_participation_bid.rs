@@ -26,6 +26,7 @@ struct LegacyAccounts<'a> {
     pub participation_printing_holding_account_info: &'a AccountInfo<'a>,
 }
 
+#[derive(Copy, Clone)]
 struct V2Accounts<'a> {
     pub prize_tracking_ticket_info: &'a AccountInfo<'a>,
     pub new_metadata_account_info: &'a AccountInfo<'a>,
@@ -263,7 +264,6 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
-    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {
@@ -299,7 +299,7 @@ pub fn process_redeem_participation_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
-        auction_extended_info,
+        auction_extended_info: v2_accounts.map_or(None, |accounts| Some(accounts.auction_extended_info)),
         bidder_metadata_info,
         bidder_info,
         token_program_info,

@@ -1342,7 +1342,6 @@ pub fn create_redeem_participation_bid_v3_instruction(
     safety_deposit_box: Pubkey,
     vault: Pubkey,
     auction: Pubkey,
-    auction_extended: Pubkey,
     bidder_metadata: Pubkey,
     bidder: Pubkey,
     payer: Pubkey,
@@ -1463,7 +1462,6 @@ pub fn create_redeem_participation_bid_v3_instruction(
             AccountMeta::new_readonly(new_mint_authority, true),
             AccountMeta::new_readonly(metadata, false),
             AccountMeta::new_readonly(extended, false),
-            AccountMeta::new_readonly(auction_extended, false),
         ],
         data: MetaplexInstruction::RedeemParticipationBidV3(RedeemParticipationBidV3Args {
             win_index,
