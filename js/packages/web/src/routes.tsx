@@ -1,48 +1,68 @@
-import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
-import { contexts } from '@oyster/common';
-import { MetaProvider } from './contexts';
-import { AppLayout } from './components/Layout';
-
+import { Providers } from './providers';
 import {
-  AboutView,
+  AnalyticsView,
+  ArtCreateView,
+  ArtistsView,
+  ArtistView,
+  ArtView,
+  ArtworksView,
+  AuctionCreateView,
+  AuctionView,
   HomeView,
+  AboutView,
   RoadmapView,
   Treehouse
 } from './views';
-import { UseWalletProvider } from 'use-wallet';
-import { CoingeckoProvider } from './contexts/coingecko';
-import { ConfettiProvider } from './components/Confetti';
-const { WalletProvider } = contexts.Wallet;
-const { ConnectionProvider } = contexts.Connection;
-const { AccountsProvider } = contexts.Accounts;
+import { AdminView } from './views/admin';
+import { BillingView } from './views/auction/billing';
 
 export function Routes() {
   return (
     <>
       <HashRouter basename={'/'}>
-        <ConnectionProvider>
-          <WalletProvider>
-            <UseWalletProvider chainId={5}>
-              <AccountsProvider>
-                <CoingeckoProvider>
-                  <MetaProvider>
-                    <ConfettiProvider>
-                      <AppLayout>
-                        <Switch>
-                          <Route path="/treehouse" component={() => <Treehouse />} />
-                          <Route path="/about" component={() => <AboutView />} />
-                          <Route path="/roadmap" component={() => <RoadmapView />} />
-                          <Route path="/" component={() => <HomeView />} />
-                        </Switch>
-                      </AppLayout>
-                    </ConfettiProvider>
-                  </MetaProvider>
-                </CoingeckoProvider>
-              </AccountsProvider>
-            </UseWalletProvider>
-          </WalletProvider>
-        </ConnectionProvider>
+        <Providers>
+          <Switch>
+            <Route path="/treehouse" component={() => <Treehouse />} />
+            <Route path="/about" component={() => <AboutView />} />
+            <Route path="/roadmap" component={() => <RoadmapView />} />
+            <Route path="/" component={() => <HomeView />} />
+            <Route exact path="/admin" component={() => <AdminView />} />
+            <Route
+              exact
+              path="/analytics"
+              component={() => <AnalyticsView />}
+            />
+            <Route
+              exact
+              path="/art/create/:step_param?"
+              component={() => <ArtCreateView />}
+            />
+            <Route
+              exact
+              path="/artworks/:id?"
+              component={() => <ArtworksView />}
+            />
+            <Route exact path="/art/:id" component={() => <ArtView />} />
+            <Route exact path="/artists/:id" component={() => <ArtistView />} />
+            <Route exact path="/artists" component={() => <ArtistsView />} />
+            <Route
+              exact
+              path="/auction/create/:step_param?"
+              component={() => <AuctionCreateView />}
+            />
+            <Route
+              exact
+              path="/auction/:id"
+              component={() => <AuctionView />}
+            />
+            <Route
+              exact
+              path="/auction/:id/billing"
+              component={() => <BillingView />}
+            />
+          </Switch>
+        </Providers>
       </HashRouter>
     </>
   );

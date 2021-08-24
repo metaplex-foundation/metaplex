@@ -9,3 +9,4 @@ export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
 export { RoadmapView } from './roadmap';
 export { Treehouse } from './treehouse';
+export { AnalyticsView } from './analytics';

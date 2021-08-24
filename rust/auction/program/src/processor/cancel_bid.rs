@@ -231,10 +231,11 @@ pub fn cancel_bid(
                 .ok_or(AuctionError::NumericalOverflowError)?;
         }
         auction_extended.serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
-    }
 
-    auction.bid_state.cancel_bid(*accounts.bidder.key);
-    auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
+        // Only cancel the bid if the auction has not ended yet
+        auction.bid_state.cancel_bid(*accounts.bidder.key);
+        auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
+    }
 
     Ok(())
 }

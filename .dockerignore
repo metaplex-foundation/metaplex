@@ -2,3 +2,4 @@ node_modules
 .git
 .editorconfig
 .gitignore
+.next

@@ -15,7 +15,6 @@ import {
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { notify } from '../utils/notifications';
 import { ExplorerLink } from '../components/ExplorerLink';
-import { setProgramIds } from '../utils/ids';
 import {
   TokenInfo,
   TokenListProvider,
@@ -115,8 +114,6 @@ export function ConnectionProvider({ children = undefined as any }) {
       setTokens(list);
     });
   }, [env]);
-
-  setProgramIds(env);
 
   // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
   // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
