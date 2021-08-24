@@ -61,9 +61,9 @@ const normalizeData = (data: string[][]) => {
 
 type Token = {
   name: string;
-  metadataAccount: StringPublicKey;
-  mintKey: StringPublicKey;
-  associatedTokenAddress: StringPublicKey;
+  metadataAccount?: StringPublicKey;
+  mintKey?: StringPublicKey;
+  associatedTokenAddress?: StringPublicKey;
 } | void;
 interface mintedProps {
   idx: number;

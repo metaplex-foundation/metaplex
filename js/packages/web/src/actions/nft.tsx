@@ -49,24 +49,26 @@ interface Attribute {
   value: string;
 }
 
+export interface mintMetadata {
+  name: string;
+  symbol: string;
+  description: string;
+  image: string | undefined;
+  animation_url: string | undefined;
+  external_url: string;
+  properties: any;
+  creators: Creator[] | null;
+  sellerFeeBasisPoints: number;
+  collection: Collection;
+  attributes: Attribute[];
+}
+
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletAdapter | undefined,
   env: ENV,
   files: File[],
-  metadata: {
-    name: string;
-    symbol: string;
-    description: string;
-    image: string | undefined;
-    animation_url: string | undefined;
-    external_url: string;
-    properties: any;
-    creators: Creator[] | null;
-    sellerFeeBasisPoints: number;
-    collection: Collection;
-    attributes: Attribute[];
-  },
+  metadata: mintMetadata,
   maxSupply?: number,
 ): Promise<{
   metadataAccount: StringPublicKey;
