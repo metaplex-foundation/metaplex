@@ -14,6 +14,7 @@
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
+    "clear": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
     "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.ts'",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
