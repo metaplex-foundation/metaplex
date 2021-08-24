@@ -14,7 +14,7 @@ const TOKEN_SALE_PROGRAM_ADDRESS =
 const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
   'ZyqQKfAiZuXyisA9bXbKmNxyRYAe5a75FBc5JsnPdys';
 
-const MAX_RETRIES = 5;  // what is a good value for this?
+const MAX_RETRIES = 5; // what is a good value for this?
 
 const { Title } = Typography;
 
@@ -188,7 +188,10 @@ export const PurchaseArt = () => {
             fromPubkey: wallet.publicKey,
             newAccountPubkey: receipt.publicKey,
             space: receiptSize, // Add 8 for the account discriminator.
-            lamports: await anchorProvider.connection.getMinimumBalanceForRentExemption(receiptSize),
+            lamports:
+              await anchorProvider.connection.getMinimumBalanceForRentExemption(
+                receiptSize,
+              ),
             programId: anchorProgram.programId,
           }),
         ],
@@ -199,7 +202,6 @@ export const PurchaseArt = () => {
       setDealMade(true);
       refreshInformation();
     } catch (error) {
-
       if (retriedTimes > MAX_RETRIES) {
         // this is so that we can break out of a potentially endless loop of retrying
         console.warn('Error occurred while purchasing the item: ', error);
@@ -211,7 +213,6 @@ export const PurchaseArt = () => {
           await doPurchase();
         });
       }
-
     } finally {
       if (retriedTimes > MAX_RETRIES) {
         setIsProcessing(false);
@@ -236,17 +237,26 @@ export const PurchaseArt = () => {
   return (
     <div className="purchase-screen bungee-font">
       <Title level={2} className="welcome-text">
-        Introducing Thugbirdz: OG Collection
+        {/* Introducing Thugbirdz: OG Collection */}
+        We have experienced significant traffic overload over sale.
       </Title>
-      <img src="hero.gif" />
+      <img src="hero.gif" style={{ filter: 'blur(30px)' }} />
       {ifDealMade ? <Confetti /> : null}
 
-      {!account ? (
+      <h1 className="highlight sold-out" style={styles.error as any}>
+        So, we have paused it and updating our infra so no server overloads,
+        weather cyclons or any other gang clans {"can't"} stop our birdz on its
+        way to you!
+      </h1>
+
+      <p style={{ color: 'white', fontSize: '4em', position: 'relative' }}>
+        Stay Tuned!
+      </p>
+
+      {/* {!account ? (
         <h1 className="highlight sold-out">CONNECT YOUR WALLET</h1>
       ) : null}
-
       {isSoldOut ? <h1 className="highlight sold-out">SOLD OUT</h1> : null}
-
       {progressValue !== null && !isSoldOut && account && (
         <>
           <Button
@@ -270,8 +280,8 @@ export const PurchaseArt = () => {
             <div className="purchase-error">
               <b>Error occurred while purchasing the item.</b>
               <br />
-              Make sure you have enough SOL in your wallet and you use correct Solana
-              network (mainnet-beta).
+              Make sure you have enough SOL in your wallet and you use correct
+              Solana network (mainnet-beta).
               <br />
               Then refresh the page and try again!
             </div>
@@ -287,8 +297,19 @@ export const PurchaseArt = () => {
       )}
       <br></br>
       <br></br>
-      <br></br>
+      <br></br> */}
       {/* <FeatureList /> */}
     </div>
   );
+};
+
+const styles = {
+  error: {
+    fontSize: '2.5em',
+    marginTop: '-350px',
+    position: 'relative',
+    zIndex: 1,
+    maxWidth: '680px',
+    textAlign: 'center',
+  },
 };

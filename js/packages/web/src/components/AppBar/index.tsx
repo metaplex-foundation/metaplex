@@ -152,7 +152,7 @@ export const AppBar = () => {
       {!connected && <ConnectButton type="primary" />}
       {connected && (
         <div className="app-right app-bar-box">
-          <UserActions />
+          {/* <UserActions /> */}
           <CurrentUserBadge
             showBalance={false}
             showAddress={false}
