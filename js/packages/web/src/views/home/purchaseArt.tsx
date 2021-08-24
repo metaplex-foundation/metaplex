@@ -170,22 +170,28 @@ export const PurchaseArt = () => {
       setIsProcessing(true);
 
       const payer = wallet.publicKey.toBase58();
-      const [pda, bump] = await web3.PublicKey.findProgramAddress(
-        [
-          masterAccountPubkey.toBuffer(),
-          Buffer.from(`${account.counter.toNumber()}`),
-        ],
-        anchorProgram.programId,
-      );
 
-      const txId = await anchorProgram.rpc.purchase(account.counter, bump, {
+      const receipt = web3.Keypair.generate();
+      const receiptSize = 8 + 32 + 32 + 8 + 8;
+
+      const txId = await anchorProgram.rpc.purchase({
         accounts: {
           payer,
-          receipt: pda,
+          receipt: receipt.publicKey,
           authority: account.authority,
           masterAccount: masterAccountPubkey,
           systemProgram: web3.SystemProgram.programId,
         },
+        signers: [receipt],
+        instructions: [
+          web3.SystemProgram.createAccount({
+            fromPubkey: wallet.publicKey,
+            newAccountPubkey: receipt.publicKey,
+            space: receiptSize, // Add 8 for the account discriminator.
+            lamports: await anchorProvider.connection.getMinimumBalanceForRentExemption(receiptSize),
+            programId: anchorProgram.programId,
+          }),
+        ],
       });
 
       console.log('Successful purchase, transaction ID: ', txId);
