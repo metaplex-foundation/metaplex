@@ -14,6 +14,8 @@ const TOKEN_SALE_PROGRAM_ADDRESS =
 const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
   'ZyqQKfAiZuXyisA9bXbKmNxyRYAe5a75FBc5JsnPdys';
 
+const MAX_RETRIES = 5;  // what is a good value for this?
+
 const { Title } = Typography;
 
 const getPurchaseBtnText = (
@@ -98,6 +100,7 @@ export const PurchaseArt = () => {
   const [progressValue, setProgressValue] = useState<number | null>(null);
   const [amountRemaining, setAmountRemaining] = useState<number>(3333); // TODO: whats a good default?
   const [currentPrice, setCurrentPrice] = useState<number>(1);
+  const [retriedTimes, setRetriedTimes] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [ifDealMade, setDealMade] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -167,22 +170,28 @@ export const PurchaseArt = () => {
       setIsProcessing(true);
 
       const payer = wallet.publicKey.toBase58();
-      const [pda, bump] = await web3.PublicKey.findProgramAddress(
-        [
-          masterAccountPubkey.toBuffer(),
-          Buffer.from(`${account.counter.toNumber()}`),
-        ],
-        anchorProgram.programId,
-      );
 
-      const txId = await anchorProgram.rpc.purchase(account.counter, bump, {
+      const receipt = web3.Keypair.generate();
+      const receiptSize = 8 + 32 + 32 + 8 + 8;
+
+      const txId = await anchorProgram.rpc.purchase({
         accounts: {
           payer,
-          receipt: pda,
+          receipt: receipt.publicKey,
           authority: account.authority,
           masterAccount: masterAccountPubkey,
           systemProgram: web3.SystemProgram.programId,
         },
+        signers: [receipt],
+        instructions: [
+          web3.SystemProgram.createAccount({
+            fromPubkey: wallet.publicKey,
+            newAccountPubkey: receipt.publicKey,
+            space: receiptSize, // Add 8 for the account discriminator.
+            lamports: await anchorProvider.connection.getMinimumBalanceForRentExemption(receiptSize),
+            programId: anchorProgram.programId,
+          }),
+        ],
       });
 
       console.log('Successful purchase, transaction ID: ', txId);
@@ -190,11 +199,24 @@ export const PurchaseArt = () => {
       setDealMade(true);
       refreshInformation();
     } catch (error) {
-      console.warn('Error occurred while purchasing the item: ', error);
-      setErrorPurchasing(error);
+
+      if (retriedTimes > MAX_RETRIES) {
+        // this is so that we can break out of a potentially endless loop of retrying
+        console.warn('Error occurred while purchasing the item: ', error);
+        setErrorPurchasing(error);
+      } else {
+        setRetriedTimes(retriedTimes + 1);
+        console.log(`Retry #retriedTimes`);
+        refreshInformation().then(async () => {
+          await doPurchase();
+        });
+      }
+
     } finally {
-      setIsProcessing(false);
-      setIsDone(true);
+      if (retriedTimes > MAX_RETRIES) {
+        setIsProcessing(false);
+        setIsDone(true);
+      }
     }
   };
 
