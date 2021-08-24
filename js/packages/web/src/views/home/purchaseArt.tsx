@@ -10,9 +10,9 @@ import { PublicKey } from '@solana/web3.js';
 import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
-  '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
+  'Bpr78AJoh1Mq69iM67sHvPKaa36AzZYeGfLGLiwAzjnk';
 const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
-  'DV52bvMndxKbpvzW7D9Xko29YUhUaA1BH7nMfUaDTMie';
+  'ZyqQKfAiZuXyisA9bXbKmNxyRYAe5a75FBc5JsnPdys';
 
 const { Title } = Typography;
 
