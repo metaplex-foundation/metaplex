@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Progress, Typography } from 'antd';
-import { web3, Provider, Program } from '@project-serum/anchor';
+import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
 import type { BN } from '@project-serum/anchor';
 import { useConnection, useWallet } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
@@ -98,8 +98,8 @@ export const PurchaseArt = () => {
   }
 
   useEffect(() => {
-      const provider = new Provider(connection, wallet, Provider.defaultOptions());
-      const tokenSaleProgram = new Program(idl, tokenSaleProgramId, provider);
+      const provider = new Provider(connection, wallet as any, Provider.defaultOptions());
+      const tokenSaleProgram = new Program(idl as Idl, tokenSaleProgramId, provider);
       setAnchorProvider(provider);
       setAnchorProgram(tokenSaleProgram);
   }, [wallet]);

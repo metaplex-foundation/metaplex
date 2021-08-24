@@ -17,7 +17,7 @@ import {
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
-import { mintNFT } from '../../actions';
+import { mintNFT, mintMetadata } from '../../actions';
 import {
   MAX_METADATA_LEN,
   useConnection,
@@ -88,7 +88,7 @@ export const ArtCreateView = () => {
 
   // store files
   const mint = async () => {
-    const metadata = {
+    const metadata: any = {
       name: attributes.name,
       symbol: attributes.symbol,
       creators: attributes.creators,
