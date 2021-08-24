@@ -100,7 +100,7 @@ pub struct Metadata {
     // Whether or not the data struct is mutable, default is not
     pub is_mutable: bool,
     /// nonce for easy calculation of editions, if present
-    pub edition_nonce: Option<u8>
+    pub edition_nonce: Option<u8>,
 }
 
 impl Metadata {
