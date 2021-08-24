@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel, Typography } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Card, Typography } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import {
@@ -95,6 +95,7 @@ export const AuctionView = () => {
   }
 
   const description = data?.description;
+  // const attributes = data?.attributes;
 
   const items = [
     ...(auction?.items
