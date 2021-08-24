@@ -88,6 +88,8 @@ a:active {
   // font-family: 'Bungee Inline', cursive;
   font-family: 'GraphikWeb';
   color: black;
+  text-transform: uppercase;
+  transition: color 0.5s ease;
 
   & > span {
     transition: color 0.25s ease;
@@ -100,7 +102,7 @@ a:active {
 
   &:hover *,
   &:focus * {
-    color: #01ffff;
+    color: #c0ffff;
   }
 }
 
@@ -176,5 +178,17 @@ a:active {
     border-bottom: 1px solid rgb(175 255 255 / 25%);
     margin-bottom: 1em;
   }
+}
 
+.purchase-error {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #000000d9;
+  line-height: 1.5715;
+  padding: 8px 15px;
+  word-wrap: break-word;
+  border-radius: 2px;
+  margin: 20px;
+  font-family: 'GraphikWeb';
+  font-size: 1.5em;
 }
