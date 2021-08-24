@@ -95,27 +95,60 @@ describe("nft-candy-machine", function () {
     preflightCommitment: "recent",
   });
   const program = new anchor.Program(idl, programId, provider);
-  const config = anchor.web3.Keypair.generate();
 
-  const getCandyMachine = async () => {
-    //@ts-ignore
-    if (!this.candyResult) {
-      const [candyMachine, bump] =
-        await anchor.web3.PublicKey.findProgramAddress(
-          [Buffer.from(CANDY_MACHINE), config.publicKey.toBuffer()],
-          programId
-        );
-      //@ts-ignore
-      this.candyResult = [candyMachine, bump];
-    }
-    //@ts-ignore
-    return this.candyResult;
+  const getCandyMachine = async (config: anchor.web3.Keypair) => {
+    return await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(CANDY_MACHINE), config.publicKey.toBuffer()],
+      programId
+    );
   };
+
+  const getConfig = async (
+    authority: anchor.web3.PublicKey,
+    name: number[]
+  ) => {
+    return await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(name)],
+      programId
+    );
+  };
+
+  const createConfig = async function () {
+    this.authority = anchor.web3.Keypair.generate();
+    this.name = [1, 2, 3, 4];
+    const [config, bump] = await getConfig(this.authority.publicKey, this.name);
+    this.config = config;
+    this.configBump = bump;
+    await program.rpc.initialize_config(bump, this.name, 5, {
+      accounts: {
+        config: this.config.publicKey,
+        authority: this.authority.publicKey,
+        payer: myWallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      },
+      signers: [myWallet, this.authority],
+      instructions: [
+        anchor.web3.SystemProgram.transfer({
+          fromPubkey: myWallet.publicKey,
+          toPubkey: this.authority.publicKey,
+          lamports: 5,
+        }),
+      ],
+    });
+  };
+
+  describe("config building", function () {
+    beforeEach(async function () {
+      await createConfig();
+    });
+  });
 
   describe("sol only", function () {
     beforeEach(async function () {
-      const [candyMachine, bump] = await getCandyMachine();
-      const tx = await program.rpc.initialize(
+      this.config = anchor.web3.Keypair.generate();
+      const [candyMachine, bump] = await getCandyMachine(this.config);
+      const tx = await program.rpc.initialize_candy_machine(
         bump,
         new anchor.BN(1),
         new anchor.BN(5),
@@ -123,23 +156,23 @@ describe("nft-candy-machine", function () {
           accounts: {
             candyMachine,
             wallet: myWallet.publicKey,
-            config: config.publicKey,
+            config: this.config.publicKey,
             authority: myWallet.publicKey,
             payer: myWallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
           },
-          signers: [myWallet, config],
+          signers: [myWallet, this.config],
           instructions: [
             anchor.web3.SystemProgram.createAccount({
               fromPubkey: myWallet.publicKey,
-              newAccountPubkey: config.publicKey,
+              newAccountPubkey: this.config.publicKey,
               space: 8 + 8, // Add 8 for the account discriminator.
               lamports:
                 await provider.connection.getMinimumBalanceForRentExemption(
                   8 + 8
                 ),
-              programId: program.programId,
+              programId: myWallet.publicKey,
             }),
           ],
         }
@@ -148,16 +181,17 @@ describe("nft-candy-machine", function () {
 
     it("Is initialized!", async function () {
       // Add your test here.
-      const [candyMachine, _] = await getCandyMachine();
+      const [candyMachine, bump] = await getCandyMachine(this.config);
 
       const machine: CandyMachine = await program.account.candyMachine.fetch(
         candyMachine
       );
 
       assert.ok(machine.wallet.equals(myWallet.publicKey));
-      assert.ok(machine.config.equals(config.publicKey));
+      assert.ok(machine.config.equals(this.config.publicKey));
       assert.ok(machine.authority.equals(myWallet.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
+      assert.equal(machine.bump, bump);
       assert.equal(
         machine.itemsAvailable.toNumber(),
         new anchor.BN(5).toNumber()
@@ -167,15 +201,13 @@ describe("nft-candy-machine", function () {
   });
 
   describe("token", function () {
-    const tokenMint = anchor.web3.Keypair.generate();
-
-    const getTokenWallet = async function () {
+    const getTokenWallet = async function (mint: PublicKey) {
       return (
         await PublicKey.findProgramAddress(
           [
             myWallet.publicKey.toBuffer(),
             TOKEN_PROGRAM_ID.toBuffer(),
-            tokenMint.publicKey.toBuffer(),
+            mint.toBuffer(),
           ],
           SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
         )
@@ -183,60 +215,65 @@ describe("nft-candy-machine", function () {
     };
 
     beforeEach(async function () {
-      const [candyMachine, bump] = await getCandyMachine();
-      const walletToken = await getTokenWallet();
-
-      const tx = await program.rpc.initialize(
+      this.config = anchor.web3.Keypair.generate();
+      this.tokenMint = anchor.web3.Keypair.generate();
+      const [candyMachine, bump] = await getCandyMachine(this.config);
+      this.walletToken = await getTokenWallet(this.tokenMint.publicKey);
+      const tx = await program.rpc.initialize_candy_machine(
         bump,
         new anchor.BN(1),
         new anchor.BN(5),
         {
           accounts: {
             candyMachine,
-            wallet: walletToken,
-            config: config.publicKey,
+            wallet: this.walletToken,
+            config: this.config.publicKey,
             authority: myWallet.publicKey,
             payer: myWallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
           },
           remainingAccounts: [
-            { pubkey: tokenMint.publicKey, isWritable: false, isSigner: true },
+            {
+              pubkey: this.tokenMint.publicKey,
+              isWritable: false,
+              isSigner: true,
+            },
           ],
-          signers: [myWallet, config, tokenMint],
+          signers: [myWallet, this.config, this.tokenMint],
           instructions: [
             anchor.web3.SystemProgram.createAccount({
               fromPubkey: myWallet.publicKey,
-              newAccountPubkey: config.publicKey,
+              newAccountPubkey: this.config.publicKey,
               space: 8 + 8, // Add 8 for the account discriminator.
               lamports:
                 await provider.connection.getMinimumBalanceForRentExemption(
                   8 + 8
                 ),
-              programId: program.programId,
+              programId: myWallet.publicKey,
             }),
             anchor.web3.SystemProgram.createAccount({
               fromPubkey: myWallet.publicKey,
-              newAccountPubkey: config.publicKey,
+              newAccountPubkey: this.tokenMint.publicKey,
               space: MintLayout.span,
               lamports:
                 await provider.connection.getMinimumBalanceForRentExemption(
                   MintLayout.span
                 ),
-              programId: program.programId,
+              programId: TOKEN_PROGRAM_ID,
             }),
             Token.createInitMintInstruction(
               TOKEN_PROGRAM_ID,
-              tokenMint.publicKey,
+              this.tokenMint.publicKey,
               0,
               myWallet.publicKey,
               myWallet.publicKey
             ),
             createAssociatedTokenAccountInstruction(
-              SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+              this.walletToken,
               myWallet.publicKey,
               myWallet.publicKey,
-              tokenMint.publicKey
+              this.tokenMint.publicKey
             ),
           ],
         }
@@ -245,21 +282,23 @@ describe("nft-candy-machine", function () {
 
     it("Is initialized!", async function () {
       // Add your test here.
-      const [candyMachine, _] = await getCandyMachine();
+      const [candyMachine, bump] = await getCandyMachine(this.config);
 
       const machine: CandyMachine = await program.account.candyMachine.fetch(
         candyMachine
       );
 
-      assert.ok(machine.wallet.equals(myWallet.publicKey));
-      assert.ok(machine.config.equals(config.publicKey));
+      assert.ok(machine.wallet.equals(this.walletToken));
+      assert.ok(machine.config.equals(this.config.publicKey));
       assert.ok(machine.authority.equals(myWallet.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
+      assert.equal(machine.bump, bump);
+
       assert.equal(
         machine.itemsAvailable.toNumber(),
         new anchor.BN(5).toNumber()
       );
-      assert.equal(machine.tokenMint, null);
+      assert.ok(machine.tokenMint.equals(this.tokenMint.publicKey));
     });
   });
 });

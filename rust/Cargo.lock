@@ -1872,7 +1872,9 @@ name = "nft-candy-machine"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "arrayref",
  "spl-token",
+ "spl-token-metadata",
 ]
 
 [[package]]
