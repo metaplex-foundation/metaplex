@@ -89,9 +89,18 @@ a:active {
   font-family: 'GraphikWeb';
   color: black;
 
+  & > span {
+    transition: color 0.25s ease;
+  }
+
   &:disabled {
     color: rgba(255, 255, 255, 1);
-    opacity: .5;
+    opacity: 0.5;
+  }
+
+  &:hover *,
+  &:focus * {
+    color: #01ffff;
   }
 }
 
@@ -146,4 +155,26 @@ a:active {
     font-size: 20px;
     color: black;
   }
+}
+
+.feature-list-home {
+  & * {
+    font-family: 'Bungee Inline', cursive;
+  }
+
+  div {
+    font-size: 18px;
+    color: #c0ffff;
+  }
+
+  .ant-tag {
+    font-size: 1.25em;
+    padding: 0.3em 0.5em;
+  }
+
+  .ant-list-split .ant-list-item {
+    border-bottom: 1px solid rgb(175 255 255 / 25%);
+    margin-bottom: 1em;
+  }
+
 }
