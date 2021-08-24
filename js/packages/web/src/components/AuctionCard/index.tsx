@@ -20,6 +20,7 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
+  placeBid,
 } from '@oyster/common';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
@@ -239,8 +240,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !==
-    wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
@@ -272,7 +272,8 @@ export const AuctionCard = ({
               setLoading(true);
               setShowRedemptionIssue(false);
               if (
-                wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
+                wallet?.publicKey?.toBase58() ===
+                auctionView.auctionManager.authority
               ) {
                 const totalCost =
                   await calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -325,7 +326,8 @@ export const AuctionCard = ({
             ) : (
               `${
                 wallet?.publicKey &&
-                auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+                auctionView.auctionManager.authority ===
+                  wallet.publicKey.toBase58()
                   ? 'Reclaim Items'
                   : 'Refund bid'
               }`

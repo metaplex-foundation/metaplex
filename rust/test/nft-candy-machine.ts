@@ -9,7 +9,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { CandyMachine } from "./nft-candy-machine-types";
+import { CandyMachine, Config, ConfigLine } from "./nft-candy-machine-types";
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
@@ -138,15 +138,46 @@ describe("nft-candy-machine", function () {
     });
   };
 
-  describe("config building", function () {
-    beforeEach(async function () {
-      await createConfig();
+  const addConfigLines = async function () {
+    const sample = {
+      symbol: "SAMPLE",
+      uri: "www.aol.com",
+      creators: [{ address: myWallet.publicKey, verified: true, share: 100 }],
+      sellerFeeBasisPoints: 5,
+    };
+    const firstVec: ConfigLine[] = [];
+    for (let i = 0; i < 5; i++) {
+      firstVec.push([
+        { data: { ...sample, name: `Sample ${i}` }, mutable: true },
+      ]);
+    }
+    const secondVec: ConfigLine[] = [];
+    for (let i = 5; i < 10; i++) {
+      secondVec.push([
+        { data: { ...sample, name: `Sample ${i}` }, mutable: true },
+      ]);
+    }
+    await program.rpc.add_config_lines(firstVec, {
+      accounts: {
+        config: this.config.publicKey,
+        authority: this.authority.publicKey,
+      },
+      signers: [this.authority, myWallet],
     });
-  });
+
+    await program.rpc.add_config_lines(secondVec, {
+      accounts: {
+        config: this.config.publicKey,
+        authority: this.authority.publicKey,
+      },
+      signers: [this.authority, myWallet],
+    });
+  };
 
   describe("sol only", function () {
     beforeEach(async function () {
-      this.config = anchor.web3.Keypair.generate();
+      await createConfig();
+      await addConfigLines();
       const [candyMachine, bump] = await getCandyMachine(this.config);
       const tx = await program.rpc.initialize_candy_machine(
         bump,
@@ -156,25 +187,13 @@ describe("nft-candy-machine", function () {
           accounts: {
             candyMachine,
             wallet: myWallet.publicKey,
-            config: this.config.publicKey,
+            config: this.config,
             authority: myWallet.publicKey,
             payer: myWallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
           },
-          signers: [myWallet, this.config],
-          instructions: [
-            anchor.web3.SystemProgram.createAccount({
-              fromPubkey: myWallet.publicKey,
-              newAccountPubkey: this.config.publicKey,
-              space: 8 + 8, // Add 8 for the account discriminator.
-              lamports:
-                await provider.connection.getMinimumBalanceForRentExemption(
-                  8 + 8
-                ),
-              programId: myWallet.publicKey,
-            }),
-          ],
+          signers: [myWallet],
         }
       );
     });
@@ -188,7 +207,7 @@ describe("nft-candy-machine", function () {
       );
 
       assert.ok(machine.wallet.equals(myWallet.publicKey));
-      assert.ok(machine.config.equals(this.config.publicKey));
+      assert.ok(machine.config.equals(this.config));
       assert.ok(machine.authority.equals(myWallet.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
       assert.equal(machine.bump, bump);
@@ -215,7 +234,8 @@ describe("nft-candy-machine", function () {
     };
 
     beforeEach(async function () {
-      this.config = anchor.web3.Keypair.generate();
+      await createConfig();
+      await addConfigLines();
       this.tokenMint = anchor.web3.Keypair.generate();
       const [candyMachine, bump] = await getCandyMachine(this.config);
       this.walletToken = await getTokenWallet(this.tokenMint.publicKey);
@@ -227,7 +247,7 @@ describe("nft-candy-machine", function () {
           accounts: {
             candyMachine,
             wallet: this.walletToken,
-            config: this.config.publicKey,
+            config: this.config,
             authority: myWallet.publicKey,
             payer: myWallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
@@ -240,18 +260,8 @@ describe("nft-candy-machine", function () {
               isSigner: true,
             },
           ],
-          signers: [myWallet, this.config, this.tokenMint],
+          signers: [myWallet, this.tokenMint],
           instructions: [
-            anchor.web3.SystemProgram.createAccount({
-              fromPubkey: myWallet.publicKey,
-              newAccountPubkey: this.config.publicKey,
-              space: 8 + 8, // Add 8 for the account discriminator.
-              lamports:
-                await provider.connection.getMinimumBalanceForRentExemption(
-                  8 + 8
-                ),
-              programId: myWallet.publicKey,
-            }),
             anchor.web3.SystemProgram.createAccount({
               fromPubkey: myWallet.publicKey,
               newAccountPubkey: this.tokenMint.publicKey,
@@ -289,7 +299,7 @@ describe("nft-candy-machine", function () {
       );
 
       assert.ok(machine.wallet.equals(this.walletToken));
-      assert.ok(machine.config.equals(this.config.publicKey));
+      assert.ok(machine.config.equals(this.config));
       assert.ok(machine.authority.equals(myWallet.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
       assert.equal(machine.bump, bump);

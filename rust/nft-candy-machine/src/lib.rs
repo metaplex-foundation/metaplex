@@ -9,7 +9,7 @@ use {
     },
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
-    spl_token_metadata::state::{Data, MAX_DATA_SIZE},
+    spl_token_metadata::state::MAX_DATA_SIZE,
 };
 
 const PREFIX: &str = "candy_machine";
@@ -184,11 +184,34 @@ pub fn get_config_line(
 }
 
 pub const CONFIG_LINE_SIZE: usize = MAX_DATA_SIZE + 1;
-#[repr(C)]
-#[derive(Clone, AnchorDeserialize, AnchorSerialize, Debug)]
+#[account]
 pub struct ConfigLine {
     pub data: Data,
     pub is_mutable: bool,
+}
+
+// Unfortunate duplication of token metadata so that IDL picks it up.
+
+#[account]
+pub struct Creator {
+    pub address: Pubkey,
+    pub verified: bool,
+    // In percentages, NOT basis points ;) Watch out!
+    pub share: u8,
+}
+
+#[account]
+pub struct Data {
+    /// The name of the asset
+    pub name: String,
+    /// The symbol for the asset
+    pub symbol: String,
+    /// URI pointing to JSON representing the asset
+    pub uri: String,
+    /// Royalty basis points that goes to creators in secondary sales (0-10000)
+    pub seller_fee_basis_points: u16,
+    /// Array of creators, optional
+    pub creators: Option<Vec<Creator>>,
 }
 
 #[error]
