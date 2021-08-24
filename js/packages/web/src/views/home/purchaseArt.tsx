@@ -1,15 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Progress, Typography } from 'antd';
 import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
 import type { BN } from '@project-serum/anchor';
 import { useConnection, useWallet } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
-import type { MasterAccount, Receipt } from './types';
+import type { MasterAccount } from './types';
 import { Confetti } from './../../components/Confetti';
 import { PublicKey } from '@solana/web3.js';
+import {FeatureList} from './FeatureList';
 
-const TOKEN_SALE_PROGRAM_ADDRESS = '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
-const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS = 'DV52bvMndxKbpvzW7D9Xko29YUhUaA1BH7nMfUaDTMie';
+const TOKEN_SALE_PROGRAM_ADDRESS =
+  '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
+const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
+  'DV52bvMndxKbpvzW7D9Xko29YUhUaA1BH7nMfUaDTMie';
 
 const { Title } = Typography;
 
@@ -38,7 +41,10 @@ const updateTokenSane = async (
     const masterAccount = await program.account.masterAccount.fetch(accountId);
     if (masterAccount) {
       const account = masterAccount as MasterAccount;
-      console.log('Fetched master account: ', TOKEN_SALE_MASTER_ACCOUNT_ADDRESS);
+      console.log(
+        'Fetched master account: ',
+        TOKEN_SALE_MASTER_ACCOUNT_ADDRESS,
+      );
       setAccountFn(masterAccount as MasterAccount);
       if (account && account.numTokens.toNumber() > 0) {
         // set progress value and amount remaining
@@ -46,8 +52,14 @@ const updateTokenSane = async (
           setProgressValueFn(0);
           setAmountRemainingFn(account.numTokens.toNumber());
         } else {
-          setProgressValueFn(Math.round((account.counter.toNumber() / account.numTokens.toNumber()) * 100));
-          setAmountRemainingFn(account.numTokens.toNumber() - account.counter.toNumber());
+          setProgressValueFn(
+            Math.round(
+              (account.counter.toNumber() / account.numTokens.toNumber()) * 100,
+            ),
+          );
+          setAmountRemainingFn(
+            account.numTokens.toNumber() - account.counter.toNumber(),
+          );
         }
         // set price
         if (account.counter.toNumber() >= 2222) {
@@ -60,8 +72,7 @@ const updateTokenSane = async (
   } catch (error) {
     console.warn(`Can't get the account: ${error.message}`);
   }
-}
-
+};
 
 export const PurchaseArt = () => {
   const { wallet, connected } = useWallet();
@@ -79,7 +90,9 @@ export const PurchaseArt = () => {
   const [anchorProvider, setAnchorProvider] = useState<Provider | null>(null);
   const [anchorProgram, setAnchorProgram] = useState<Program | null>(null);
 
-  const masterAccountPubkey = new web3.PublicKey(TOKEN_SALE_MASTER_ACCOUNT_ADDRESS);
+  const masterAccountPubkey = new web3.PublicKey(
+    TOKEN_SALE_MASTER_ACCOUNT_ADDRESS,
+  );
   const tokenSaleProgramId = new web3.PublicKey(TOKEN_SALE_PROGRAM_ADDRESS);
 
   const refreshInformation = async () => {
@@ -91,17 +104,25 @@ export const PurchaseArt = () => {
         setProgressValue,
         setAmountRemaining,
         setCurrentPrice,
-      )
+      );
     } else {
       console.log('Token sale info not found');
     }
-  }
-  
+  };
+
   useEffect(() => {
-      const provider = new Provider(connection, wallet as any, Provider.defaultOptions());
-      const tokenSaleProgram = new Program(idl as Idl, tokenSaleProgramId, provider);
-      setAnchorProvider(provider);
-      setAnchorProgram(tokenSaleProgram);
+    const provider = new Provider(
+      connection,
+      wallet as any,
+      Provider.defaultOptions(),
+    );
+    const tokenSaleProgram = new Program(
+      idl as Idl,
+      tokenSaleProgramId,
+      provider,
+    );
+    setAnchorProvider(provider);
+    setAnchorProgram(tokenSaleProgram);
   }, [wallet]);
 
   useEffect(() => {
@@ -110,12 +131,18 @@ export const PurchaseArt = () => {
         await refreshInformation();
       } else {
       }
-    }
+    };
     runner();
   }, [wallet, connected]);
 
   const doPurchase = async () => {
-    if (!connected || !wallet?.publicKey || !account || !anchorProgram || !anchorProvider) {
+    if (
+      !connected ||
+      !wallet?.publicKey ||
+      !account ||
+      !anchorProgram ||
+      !anchorProvider
+    ) {
       throw new Error('Something bad happened.');
     }
 
@@ -124,7 +151,10 @@ export const PurchaseArt = () => {
 
       const payer = wallet.publicKey.toBase58();
       const [pda, bump] = await web3.PublicKey.findProgramAddress(
-        [masterAccountPubkey.toBuffer(), Buffer.from(`${account.counter.toNumber()}`)],
+        [
+          masterAccountPubkey.toBuffer(),
+          Buffer.from(`${account.counter.toNumber()}`),
+        ],
         anchorProgram.programId,
       );
 
@@ -152,19 +182,26 @@ export const PurchaseArt = () => {
 
   if (isLoading) return <div>loading...</div>;
 
-  const btnText = getPurchaseBtnText(connected, isProcessing, isDone, currentPrice);
+  const btnText = getPurchaseBtnText(
+    connected,
+    isProcessing,
+    isDone,
+    currentPrice,
+  );
 
   return (
     <div className="purchase-screen bungee-font">
-      <Title level={2} className="welcome-text">Introducing Thugbirdz: OG Collection</Title>
-      <img src = 'hero.gif'/>
+      <Title level={2} className="welcome-text">
+        Introducing Thugbirdz: OG Collection
+      </Title>
+      <img src="hero.gif" />
       {ifDealMade ? <Confetti /> : null}
 
       {progressValue === 100 ? (
         <h1 className="highlight sold-out">SOLD OUT</h1>
       ) : null}
 
-       {progressValue !== null && progressValue < 100 && account && (
+      {progressValue !== null && progressValue < 100 && account && (
         <>
           <Button
             type="primary"
@@ -177,19 +214,17 @@ export const PurchaseArt = () => {
             {btnText}
           </Button>
           <div className="only-left-text">
-            Only{' '}
-            <span className="highlight">
-              {amountRemaining}
-            </span>{' '}
-            of <span className="highlight">{account.numTokens.toNumber()}</span> remaining
+            Only <span className="highlight">{amountRemaining}</span> of{' '}
+            <span className="highlight">{account.numTokens.toNumber()}</span>{' '}
+            remaining
           </div>
           <Progress percent={progressValue} />
         </>
       )}
-    <br></br>
-    <br></br>
-    <br></br>
-    <Title level={3} className="welcome-text">Possible features</Title>
-  </div>
+      <br></br>
+      <br></br>
+      <br></br>
+          <FeatureList />
+    </div>
   );
 };
