@@ -363,7 +363,7 @@ export const ArtCreateSingleItem = ({
   const createFile = async () => {
     const imageIdx = mintChunkSize * chunkIdx + idx;
 
-    const imageUrl = `/preminted-200/${imageIdx}.png`;
+    const imageUrl = `/preminted/${imageIdx}.png`;
     let response = await fetch(imageUrl);
     let data = await response.blob();
     let metadata = {
