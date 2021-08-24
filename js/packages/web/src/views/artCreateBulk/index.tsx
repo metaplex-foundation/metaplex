@@ -285,7 +285,7 @@ const attributesDefault = {
   properties: {
     files: [],
     category: MetadataCategory.Image,
-    maxSupply: 1,
+    maxSupply: 0,
   },
   collection: {
     name: 'OG Collection',
