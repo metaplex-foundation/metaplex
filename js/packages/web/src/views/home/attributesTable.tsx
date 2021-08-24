@@ -25,12 +25,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Body</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.body.map(tableRow)}
                     </tbody>
@@ -39,12 +33,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Mouth</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.mouth.map(tableRow)}
                     </tbody>
@@ -54,12 +42,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Eyes</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.eyes.map(tableRow)}
 
@@ -71,12 +53,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Head/Hair</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.head.map(tableRow)}
                     </tbody>
@@ -85,12 +61,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Clothes</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.clothes.map(tableRow)}
                     </tbody>
@@ -100,12 +70,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Background</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.background.map(tableRow)}
                     </tbody>
@@ -115,12 +79,6 @@ export function AttributesTable() {
             <div>
                 <Title level={4}>Accessories</Title>
                 <table style={{ width: 'calc(100% - 4rem)', margin: '0 2rem' }}>
-                    <tr>
-                      <th style={{textAlign: 'right'}}></th>
-                      {/* <th style={{textAlign: 'right'}}>Rarity Score</th> */}
-                      <th style={{textAlign: 'right'}}>Rarity</th>
-                      {/* <th style={{textAlign: 'right'}}>Chance</th> */}
-                    </tr>
                     <tbody>
                         {attributes.accessories.map(tableRow)}
                     </tbody>
