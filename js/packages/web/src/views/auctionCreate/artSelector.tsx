@@ -1,20 +1,31 @@
-import React, { useMemo, useState } from 'react';
-import { Row, Button, Modal, ButtonProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Row, Modal, ButtonProps, Typography, Spin } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { useUserArts } from '../../hooks';
-import Masonry from 'react-masonry-css';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import {  useApes } from '../../contexts';
+import { ApeTag } from '../../components/ApeTag/ape-tag';
+import { ArtContent } from '../../components/ArtContent';
+import useWindowDimensions from '../../utils/layout';
 
+const { Title } = Typography;
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[];
   setSelected: (selected: SafetyDepositDraft[]) => void;
   allowMultiple: boolean;
   filter?: (i: SafetyDepositDraft) => boolean;
+  setApe: (ape: any) => void;
 }
 
 export const ArtSelector = (props: ArtSelectorProps) => {
   const { selected, setSelected, allowMultiple, ...rest } = props;
   let items = useUserArts();
+  const { apes, myApes } = useApes();
+  const [apeData, setApeData] = useState<any>();
+  const [loading, setLoading] = useState(false);
+  const {width} = useWindowDimensions()
+
+
   if (props.filter) items = items.filter(props.filter);
   const selectedItems = useMemo<Set<string>>(
     () => new Set(selected.map(item => item.metadata.pubkey)),
@@ -23,11 +34,41 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
   const [visible, setVisible] = useState(false);
 
+  const onSelectApeGrid = useCallback((a) => {
+    if (!a) {
+      props.setApe(undefined);
+      setApeData(undefined);
+      setSelected([]);
+      confirm();
+      return
+    }
+    const s = items.find(item => item.metadata.info.mint.toString() === a.metadata.minted_token_pubkey);
+    if (s) {
+      props.setApe(a);
+      setApeData(a);
+      setSelected([s]);
+      confirm();
+    }
+  }, [apeData, apes, items.length])
+
   const open = () => {
     clear();
 
     setVisible(true);
   };
+
+  const onSelectArt = useCallback((m) => {
+    if (!m) {
+      onSelectApeGrid(undefined);
+      return
+    }
+    const selectedMint = m.metadata.info.mint.toString();
+    const data = myApes.find(
+      ape => ape.metadata.minted_token_pubkey === selectedMint
+    );
+    onSelectApeGrid(data)
+    
+  }, [apeData, apes])
 
   const close = () => {
     setVisible(false);
@@ -41,48 +82,72 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     close();
   };
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
+
+
+  useEffect(() => {
+    if (apes.length && selected && selected.length && !apeData) {
+      const selectedMint = selected[0].metadata.info.mint.toString();
+      const data = apes.find(
+        ape => ape.metadata.minted_token_pubkey === selectedMint
+      );
+      setLoading(true);
+      fetch(data.attributes.image_url).then(res => res.json()).then((res) => {
+        setApeData(res);
+        setLoading(false);
+      })
+    };
+  }, [apes, apeData, selected, loading])
+
+  const getDisplay = () => {
+    if (width <= 768) {
+      return 'block'
+    }
+    return selected?.length ? 'flex' : 'grid'
+  }
 
   return (
     <>
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
-        {selected.map(m => {
-          let key = m?.metadata.pubkey || '';
+      {apeData && <div style={{ display: getDisplay(), flexDirection: 'row', alignItems: 'center' }}>
+        <ArtCard
+          preview={false}
+          onClick={open}
+          hideMeta
+          ape={apeData}
+          close={() => {
+            setSelected(
+              selected.filter(_ => _.metadata.pubkey !== selected[0]?.metadata?.pubkey || ''),
+            );
+            onSelectArt(undefined)
+            confirm();
+          }}
+        />
+        <div style={{ padding: '0 1rem', flex: 1 }}>
+          {loading && <div style={{ textAlign: 'center' }}><Spin /></div>}
+          <Title level={3}>{apeData?.name}</Title>
 
-          return (
-            <ArtCard
-              key={key}
-              pubkey={m.metadata.pubkey}
-              preview={false}
-              onClick={open}
-              close={() => {
-                setSelected(
-                  selected.filter(_ => _.metadata.pubkey !== key),
-                );
-                confirm();
-              }}
-            />
-          );
-        })}
-        {(allowMultiple || selectedItems.size === 0) && (
-          <div
-            className="ant-card ant-card-bordered ant-card-hoverable art-card"
-            style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={open}
-          >
-            <span className="text-center">Add an NFT</span>
+          <div>
+            {apeData?.attributes?.map((attr: any) => <ApeTag key={attr.trait_type} {...attr} />)}
           </div>
-        )}
-      </Masonry>
+
+          {/* <Title level={3}>Rarity: {getRarityForApe(apeData)}</Title> */}
+        </div>
+      </div>}
+      {apeData && (
+        <Title level={4}>Or select a different Ape</Title>
+      )}
+      <div style={{ display: selected.length ? 'flex' : 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', overflow: 'auto', marginBottom: '2rem' }}>
+        {myApes.filter(a => a.name !== apeData?.name).map(a => (<div key={a.name} onClick={() => onSelectApeGrid(a)} style={{ 
+          cursor: 'pointer', 
+          minWidth: selected.length ? '120px' : '100%',  
+          maxWidth: selected.length ? '120px' : '100%',  
+        }}  >
+          <ArtContent uri={a.image} preview={false} />
+          <div>
+            <Title level={4}>{a?.name}</Title>
+            {/* <span>Rarity: {getRarityForApe(a)}</span> */}
+          </div>
+        </div>))}
+      </div>
 
       <Modal
         visible={visible}
@@ -92,65 +157,31 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         footer={null}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
-          <h2>Select the NFT you want to sell</h2>
-          <p style={{ fontSize: '1.2rem' }}>
-            Select the NFT that you want to sell copy/copies of.
-          </p>
+          <h2>Select the Ape you want to sell</h2>
         </Row>
-        <Row
-          className="content-action"
-          style={{ overflowY: 'auto', height: '50vh' }}
-        >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
+        <Row className="content-action" style={{ overflowY: 'auto', height: "50vh" }}>
+          <div style={{
+            display: 'grid',
+            gap: '0 1rem',
+            gridAutoRows: 300,
+            gridTemplateColumns: 'repeat(3, 1fr)'
+          }}>
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
-
-              const onSelect = () => {
-                let list = [...selectedItems.keys()];
-                if (allowMultiple) {
-                  list = [];
-                }
-
-                const newSet = isSelected
-                  ? new Set(list.filter(item => item !== id))
-                  : new Set([...list, id]);
-
-                let selected = items.filter(item =>
-                  newSet.has(item.metadata.pubkey),
-                );
-                setSelected(selected);
-
-                if (!allowMultiple) {
-                  confirm();
-                }
-              };
 
               return (
                 <ArtCard
                   key={id}
                   pubkey={m.metadata.pubkey}
                   preview={false}
-                  onClick={onSelect}
+                  hideMeta
+                  onClick={() => onSelectArt(m)}
                   className={isSelected ? 'selected-card' : 'not-selected-card'}
                 />
               );
             })}
-          </Masonry>
-        </Row>
-        <Row>
-          <Button
-            type="primary"
-            size="large"
-            onClick={confirm}
-            className="action-btn"
-          >
-            Confirm
-          </Button>
+          </div>
         </Row>
       </Modal>
     </>

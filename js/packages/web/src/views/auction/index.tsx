@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, Typography } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import {
@@ -9,7 +9,6 @@ import {
   useArt,
   useAuction,
   useBidsForAuction,
-  useCreators,
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
@@ -20,7 +19,6 @@ import {
   MetaplexModal,
   shortenAddress,
   useConnection,
-  useConnectionConfig,
   fromLamports,
   useMint,
   useWallet,
@@ -34,6 +32,11 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
+import { ViewOn } from '../../components/ViewOn';
+import { getRarityForApe, useApes } from '../../contexts';
+import { ApeTag } from '../../components/ApeTag/ape-tag';
+
+const {Title} = Typography;
 
 export const AuctionItem = ({
   item,
@@ -76,13 +79,13 @@ export const AuctionItem = ({
 
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
-  const { env } = useConnectionConfig();
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
+  const {apes} = useApes();
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
-  const creators = useCreators(auction);
-  let edition = '';
+  const [apeData, setApeData]=useState<any>();
+  let edition = ''
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
   } else if (art.type === ArtType.Master) {
@@ -90,10 +93,7 @@ export const AuctionView = () => {
   } else if (art.type === ArtType.Print) {
     edition = `${art.edition} of ${art.supply}`;
   }
-  const nftCount = auction?.items.flat().length;
-  const winnerCount = auction?.items.length;
 
-  const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
 
   const items = [
@@ -105,7 +105,19 @@ export const AuctionView = () => {
       }, new Map<string, AuctionViewItem>())
       .values() || []),
     auction?.participationItem,
-  ].map((item, index, arr) => {
+  ];
+
+  useEffect(() => {
+    const meta = apes.find(a => items[0]?.metadata.info.mint.toString() === a.metadata.minted_token_pubkey);
+    if (meta && !apeData) {
+      fetch(meta.attributes.image_url).then(res => res.json()).then((res) => {
+        setApeData(res)
+      })
+    }
+
+  }, [apes, items, apeData])
+
+  const auctionItems = items.map((item, index, arr) => {
     if (!item || !item?.metadata || !item.metadata?.pubkey) {
       return null;
     }
@@ -119,73 +131,44 @@ export const AuctionView = () => {
         active={index === currentIndex}
       ></AuctionItem>
     );
-  });
+  })
 
   return (
     <>
-      <Row justify="space-around" ref={ref}>
+      <Row className="auction--view" justify="space-around" ref={ref}>
+        <Col span={24}><Title>{description}</Title></Col>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
+
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
             >
-              {items}
+              {auctionItems}
             </Carousel>
           </div>
-          <h6>Number Of Winners</h6>
-          <h1>
-            {winnerCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              winnerCount
-            )}
-          </h1>
-          <h6>Number Of NFTs</h6>
-          <h1>
-            {nftCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              nftCount
-            )}
-          </h1>
-          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
-          <div className="auction-paragraph">
-            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description ||
-              (winnerCount !== undefined && (
-                <div style={{ fontStyle: 'italic' }}>
-                  No description provided.
-                </div>
-              ))}
-          </div>
-          {/* {auctionData[id] && (
-            <>
-              <h6>About this Auction</h6>
-              <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
-            </>
-          )} */}
+          {/* <Title level={3}>Rarity: {getRarityForApe(apeData)}</Title> */}
+          <br />
+          <Title level={4}>About this ape</Title>
+          {apeData?.attributes?.map(ApeTag)}
+          {!apeData && <Skeleton ></Skeleton>}
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h2>
+          <Title level={2} className="art-title overflow-ellipsis">{apeData?.name}</Title>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
             <Col>
-              <h6>Edition</h6>
-              {!auction && (
-                <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
-              )}
-              {auction && (
-                <p className="auction-art-edition">
-                  {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
-                </p>
-              )}
+              <Title level={5}>Edition</Title>
+              <div>
+                {!auction && <Skeleton title={{ width: "100%" }} paragraph={{ rows: 0 }} />}
+                {auction && <p className="auction-art-edition" style={{color: 'black'}}>{(auction?.items.length || 0) > 1 ? 'Multiple' : edition}</p>}
+              </div>
             </Col>
 
             <Col>
-              <h6>View on</h6>
+              {id && <ViewOn id={items[0]?.metadata?.pubkey as string}></ViewOn>}
+
+              {/* <h6>View on</h6>
               <div style={{ display: 'flex' }}>
                 <Button
                   className="tag"
@@ -206,7 +189,7 @@ export const AuctionView = () => {
                 >
                   Solana
                 </Button>
-              </div>
+              </div> */}
             </Col>
           </Row>
 
@@ -219,13 +202,7 @@ export const AuctionView = () => {
   );
 };
 
-const BidLine = (props: {
-  bid: any;
-  index: number;
-  mint?: MintInfo;
-  isCancelled?: boolean;
-  isActive?: boolean;
-}) => {
+const BidLine = (props: { bid: any; index: number; mint?: MintInfo, isCancelled?: boolean, isActive?: boolean }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
   const { wallet } = useWallet();
   const bidder = bid.info.bidderPubkey;
@@ -260,7 +237,8 @@ const BidLine = (props: {
         alignItems: 'center',
         padding: '3px 0',
         position: 'relative',
-        opacity: isActive ? undefined : 0.5,
+        opacity: isActive ? undefined: 0.5,
+        color: 'black',
         ...(isme
           ? {
               backgroundColor: '#ffffff21',
@@ -268,19 +246,7 @@ const BidLine = (props: {
           : {}),
       }}
     >
-      {isCancelled && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            width: '100%',
-            height: 1,
-            background: 'grey',
-            top: 'calc(50% - 1px)',
-            zIndex: 2,
-          }}
-        />
-      )}
+      {isCancelled && <div style={{ position: 'absolute', left: 0, width: '100%', height: 1, background: 'grey', top: 'calc(50% - 1px)', zIndex: 2 }}/>}
       <Col
         span={2}
         style={{
@@ -288,22 +254,20 @@ const BidLine = (props: {
           paddingRight: 10,
         }}
       >
-        {!isCancelled && (
-          <div
-            style={{
-              opacity: 0.8,
-              fontWeight: 700,
-            }}
-          >
-            {isme && (
-              <>
-                <CheckOutlined />
-                &nbsp;
-              </>
-            )}
-            {index + 1}
-          </div>
-        )}
+        {!isCancelled && <div
+          style={{
+            opacity: 0.8,
+            fontWeight: 700,
+          }}
+        >
+          {isme && (
+            <>
+              <CheckOutlined />
+              &nbsp;
+            </>
+          )}
+          {index + 1}
+        </div>}
       </Col>
       <Col span={16}>
         <Row>
@@ -330,7 +294,7 @@ const BidLine = (props: {
       </Col>
       <Col span={6} style={{ textAlign: 'right' }}>
         <span title={fromLamports(bid.info.lastBid, mint).toString()}>
-          ◎{formatTokenAmount(bid.info.lastBid, mint)}
+        ◎{formatTokenAmount(bid.info.lastBid, mint)}
         </span>
       </Col>
     </Row>
@@ -355,26 +319,20 @@ export const AuctionBids = ({
     return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
 
-  const auctionState = auctionView
-    ? auctionView.auction.info.state
-    : AuctionState.Created;
+  const auctionState = auctionView ? auctionView.auction.info.state : AuctionState.Created;
   const bidLines = useMemo(() => {
     let activeBidIndex = 0;
     return bids.map((bid, index) => {
-      let isCancelled =
-        (index < winnersCount && !!bid.info.cancelled) ||
+      let isCancelled = (index < winnersCount  && !!bid.info.cancelled) ||
         (auctionState !== AuctionState.Ended && !!bid.info.cancelled);
 
-      let line = (
-        <BidLine
-          bid={bid}
-          index={activeBidIndex}
-          key={index}
-          mint={mint}
-          isCancelled={isCancelled}
-          isActive={!bid.info.cancelled}
-        />
-      );
+      let line = <BidLine
+        bid={bid}
+        index={activeBidIndex}
+        key={index}
+        mint={mint}
+        isCancelled={isCancelled}
+        isActive={!bid.info.cancelled} />;
 
       if (!isCancelled) {
         activeBidIndex++;

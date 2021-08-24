@@ -1,3 +1,6 @@
+
+
+
 section.ant-layout {
   width: 100%;
   margin: auto;
@@ -7,9 +10,12 @@ section.ant-layout {
 header.ant-layout-header.App-Bar {
   width: 100%;
   background: transparent;
-  display: flex;
-  justify-content: center;
   height: 80px;
+  height: 64px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 5px 10px 1px;
+  z-index: 10;
+  top: 0;
+  position: fixed;
 }
 
 footer.ant-layout-footer {
@@ -21,18 +27,18 @@ footer.ant-layout-footer {
   background-color: unset;
 }
 
-a:link {
-  color: #b480eb;
-}
-a:visited {
-  color: #b480eb;
-}
-a:hover {
-  color: #b480eb;
-}
-a:active {
-  color: #b480eb;
-}
+// a:link {
+//   color: #b480eb;
+// }
+// a:visited {
+//   color: #b480eb;
+// }
+// a:hover {
+//   color: #b480eb;
+// }
+// a:active {
+//   color: #b480eb;
+// }
 
 .my-masonry-grid {
   display: -webkit-box; /* Not needed if autoprefixing */
@@ -49,8 +55,7 @@ a:active {
   background-clip: padding-box;
 }
 
-.my-masonry-grid_column > div {
-  /* change div to reference your elements you put in <Masonry> */
+.my-masonry-grid_column > div { /* change div to reference your elements you put in <Masonry> */
   margin-bottom: 30px;
 }
 
@@ -69,4 +74,28 @@ a:active {
 
 .ant-card-body {
   padding: 0;
+}
+
+
+.home {
+  h1, h2, h3, h4 {
+    color: black !important;
+  }
+
+  table {
+    * {
+      color: black !important;
+    }
+    thead {
+      display: none !important;
+    }
+  }
+
+  .ant-btn-round.ant-btn-lg {
+   width: 320px;
+  }
+
+  .ant-select-selection-item {
+    color: black;
+  }
 }

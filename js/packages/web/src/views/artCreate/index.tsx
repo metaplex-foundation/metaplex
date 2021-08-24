@@ -122,7 +122,7 @@ export const ArtCreateView = () => {
 
   return (
     <>
-      <Row style={{ paddingTop: 50 }}>
+      <Row className="art-create" style={{ paddingTop: 50 }}>
         {stepsVisible && (
           <Col span={24} md={4}>
             <Steps
@@ -697,8 +697,9 @@ const RoyaltiesSplitter = (props: {
           };
 
           return (
-            <Col span={24} key={idx}>
+            <Col span={24}>
               <Row
+                key={idx}
                 align="middle"
                 gutter={[0, 16]}
                 style={{ margin: '5px auto' }}

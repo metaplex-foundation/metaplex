@@ -1,6 +1,50 @@
+// @import '../../_colors.less';
+// @import "_colors";
+
+.app-bar-container {
+  height: 64px;
+  margin: 0 1rem;
+  width: 100%;
+
+  .nav {
+    width: calc(100% - 4rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 2rem;
+    * {
+      color: white o !important
+    };
+  }
+
+  .divider {
+    margin: 0 1rem 0 0.5rem;
+  }
+
+  .menu-link {
+    border-bottom: 1px solid transparent;
+    line-height: 32px;
+  }
+  .menu-button {
+    width: 142px;
+    display: flex;
+  }
+  
+  .burger {
+    font-size: 32px;
+    z-index: 6;
+
+  }
+
+  .logo {
+    height: 64px;
+    width: auto;
+  }
+}
 .App-Bar {
   padding: 0px;
   justify-content: space-between !important;
+  background-color: #2b2b2b !important;
 }
 
 .app-bar-box {
@@ -10,8 +54,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  // padding: 8px 10px;
-  height: 56px;
+  height: 64px;
 }
 
 .app-left {
@@ -27,17 +70,10 @@
   align-items: center;
   text-align: center;
 
-  color: #ffffff;
+  color: #000000;
   padding: 10px 14px 10px 6px;
 
   margin-bottom: 0px;
-}
-
-.divider {
-  border-left: 1px solid #282828;
-  width: 2px;
-  height: 40px;
-  margin-right: 14px;
 }
 
 .app-btn {
@@ -57,7 +93,7 @@
   .app-bar-item {
     cursor: pointer;
     padding: 0 30px;
-    color: @tungsten-60;
+    // color: @tungsten-60;
     font-size: 18px;
     a {
       color: inherit;
@@ -67,3 +103,5 @@
     }
   }
 }
+
+

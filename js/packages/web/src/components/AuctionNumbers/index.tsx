@@ -54,7 +54,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
           <Col span={12}>
             {(isUpcoming || bids.length === 0) && (
               <AmountLabel
-                style={{ marginBottom: 10 }}
+                style={{ marginBottom: 10, color: 'white' }}
                 containerStyle={{ flexDirection: 'column' }}
                 title="Starting bid"
                 amount={fromLamports(
@@ -65,7 +65,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
             )}
             {isStarted && bids.length > 0 && (
               <AmountLabel
-                style={{ marginBottom: 10 }}
+                style={{ marginBottom: 10, color: 'black' }}
                 containerStyle={{ flexDirection: 'column' }}
                 title="Highest bid"
                 amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
@@ -98,6 +98,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
             style={{
               margin: '12px 0',
               fontSize: 18,
+              // color: 'black'
             }}
           >
             Time left
@@ -118,7 +119,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
                       {state.days}
                       <span style={{ opacity: 0.2 }}>:</span>
                     </div>
-                    <div className="cd-label">days</div>
+                    {/* <div className="cd-label">days</div> */}
                   </Col>
                 )}
                 <Col>
@@ -129,7 +130,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
                     {state.hours}
                     <span style={{ opacity: 0.2 }}>:</span>
                   </div>
-                  <div className="cd-label">hour</div>
+                  {/* <div className="cd-label">hour</div> */}
                 </Col>
                 <Col>
                   <div className="cd-number">
@@ -141,7 +142,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
                       <span style={{ opacity: 0.2 }}>:</span>
                     )}
                   </div>
-                  <div className="cd-label">mins</div>
+                  {/* <div className="cd-label">mins</div> */}
                 </Col>
                 {!state.days && (
                   <Col>
@@ -151,7 +152,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
                       )}
                       {state.seconds}
                     </div>
-                    <div className="cd-label">secs</div>
+                    {/* <div className="cd-label">secs</div> */}
                   </Col>
                 )}
               </Row>

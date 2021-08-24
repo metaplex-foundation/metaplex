@@ -1,11 +1,12 @@
 import React from 'react';
-import { Col, Button } from 'antd';
+import { Col, Button, Typography } from 'antd';
 import {
   useArt,
 } from '../../hooks';
 import {
   useConnectionConfig,
 } from '@oyster/common';
+const {Title} = Typography;
 
 export const ViewOn = ({ id }: { id: string }) => {
   const { env } = useConnectionConfig();
@@ -13,8 +14,8 @@ export const ViewOn = ({ id }: { id: string }) => {
 
   return (
     <>
-      <Col>
-        <h6>View on</h6>
+      <Col className="view-on">
+        <Title level={5} style={{color: 'black', textAlign: 'center'}}>View on</Title>
         <div style={{ display: 'flex' }}>
           <Button
             className="tag"

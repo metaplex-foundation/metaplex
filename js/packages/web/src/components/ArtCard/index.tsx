@@ -4,8 +4,9 @@ import { MetadataCategory, StringPublicKey } from '@oyster/common';
 import { ArtContent } from './../ArtContent';
 import { useArt } from '../../hooks';
 import { PublicKey } from '@solana/web3.js';
-import { Artist, ArtType } from '../../types';
-import { MetaAvatar } from '../MetaAvatar';
+import { Artist } from '../../types';
+import { CloseOutlined } from '@ant-design/icons';
+import { ApeTag } from '../ApeTag/ape-tag';
 
 const { Meta } = Card;
 
@@ -24,9 +25,11 @@ export interface ArtCardProps extends CardProps {
   preview?: boolean;
   small?: boolean;
   close?: () => void;
+  hideMeta?: boolean;
 
   height?: number;
   width?: number;
+  ape?:any;
 }
 
 export const ArtCard = (props: ArtCardProps) => {
@@ -36,28 +39,19 @@ export const ArtCard = (props: ArtCardProps) => {
     category,
     image,
     animationURL,
-    name,
     preview,
     creators,
     description,
     close,
     pubkey,
+    hideMeta,
     height,
     width,
+    ape,
     ...rest
   } = props;
   const art = useArt(pubkey);
   creators = art?.creators || creators || [];
-  name = art?.title || name || ' ';
-
-  let badge = '';
-  if (art.type === ArtType.NFT) {
-    badge = 'Unique';
-  } else if (art.type === ArtType.Master) {
-    badge = 'NFT 0';
-  } else if (art.type === ArtType.Print) {
-    badge = `${art.edition} of ${art.supply}`;
-  }
 
   const card = (
     <Card
@@ -75,14 +69,16 @@ export const ArtCard = (props: ArtCardProps) => {
                 close && close();
               }}
             >
-              X
+              <CloseOutlined />
             </Button>
           )}
           <ArtContent
             pubkey={pubkey}
-            uri={image}
+
+            uri={ape?.image || image}
             animationURL={animationURL}
             category={category}
+
             preview={preview}
             height={height}
             width={width}
@@ -91,11 +87,12 @@ export const ArtCard = (props: ArtCardProps) => {
       }
       {...rest}
     >
-      <Meta
-        title={`${name}`}
+     {!hideMeta && <Meta
+        title={`${ape?.name}`}
         description={
           <>
-            <MetaAvatar creators={creators} size={32} />
+          {ape?.attributes?.map(ApeTag)}
+            {/* <MetaAvatar creators={creators} size={32} /> */}
             {/* {art.type === ArtType.Master && (
               <>
                 <br />
@@ -107,15 +104,16 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            <div className="edition-badge">{badge}</div>
+            {/* <div className="edition-badge">{badge}</div> */}
           </>
         }
-      />
+      />}
     </Card>
   );
 
   return art.creators?.find(c => !c.verified) ? (
-    <Badge.Ribbon text="Unverified">{card}</Badge.Ribbon>
+    <Badge.Ribbon text="Unverified"><div className="art-card">
+      {card}</div></Badge.Ribbon>
   ) : (
     card
   );

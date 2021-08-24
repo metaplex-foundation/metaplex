@@ -1,6 +1,7 @@
 import {
   CheckCircleTwoTone,
   LoadingOutlined,
+  NotificationOutlined,
   PlayCircleOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
@@ -486,7 +487,9 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <h1 className="title">M</h1>
+      <h1 className="title">
+      <NotificationOutlined />
+      </h1>
     </Popover>
   );
 

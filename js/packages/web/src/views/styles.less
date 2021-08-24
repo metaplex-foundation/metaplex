@@ -1,7 +1,13 @@
 
 * {
-  font-family: "GraphikWeb";
+  // font-family: "GraphikWeb";
+  font-family: 'Schoolbell', cursive; 
 }
+
+p {
+  font-family: 'Schoolbell', cursive !important; 
+}
+
 
 .ant-layout-content {
   overflow: auto !important;
@@ -23,7 +29,7 @@
     display: flex;
     align-items: center;
 
-    color: #FFFFFF;
+    color: #000000;
   }
 
   p {
@@ -47,8 +53,13 @@
   }
 }
 
+.ant-input-affix-wrapper.input,
+.ant-input {
+  background-color: white;
+  border: 1px solid #ccc;
+}
 .input {
-  background: #282828;
+  // background: #282828;
   border-radius: 8px;
   padding: 10px;
   border-width: 0px;
@@ -101,7 +112,7 @@
   padding: 20px 10px;
 
   /* button/primary/default */
-  background: linear-gradient(180deg, #768BF9 0%, #5870EE 100%);
+  background: @primary-color;
   border-radius: 8px;
   height: 58px;
 
@@ -134,9 +145,9 @@
 }
 
 .ant-btn-primary:hover, .ant-btn-primary:focus {
-  color: #5969d4;
+  color: @primary-color;
   background: transparent;
-  border-color: #5969d4;
+  border-color: @primary-color;
 }
 
 .create-statistic {
@@ -165,7 +176,7 @@
     font-weight: 600;
     font-size: 36px;
     line-height: 44px;
-    color: #FFFFFF;
+    color: #000000;
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -240,7 +251,7 @@
 .waiting-title {
   font-weight: 600;
   font-size: 2rem;
-  color: #FFFFFF;
+  color: #000000;
   text-align: center;
 }
 

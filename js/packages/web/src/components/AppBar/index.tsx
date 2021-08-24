@@ -1,133 +1,52 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Dropdown, Menu } from 'antd';
 import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
-import { Notifications } from '../Notifications';
+import { Row, Col, Spin } from 'antd';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
+
+import { ApeshitMenu } from '../Menu';
 import { useMeta } from '../../contexts';
+import { NavLink } from 'react-router-dom';
+import { Notifications } from '../Notifications';
 
-const UserActions = () => {
-  const { wallet } = useWallet();
-  const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
-
-  const canCreate = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
-
-  return (
-    <>
-      {store && (
-        <>
-          {/* <Link to={`#`}>
-            <Button className="app-btn">Bids</Button>
-          </Link> */}
-          {canCreate ? (
-            <Link to={`/art/create`}>
-              <Button className="app-btn">Create</Button>
-            </Link>
-          ) : null}
-          <Link to={`/auction/create/0`}>
-            <Button className="connector" type="primary">
-              Sell
-            </Button>
-          </Link>
-        </>
-      )}
-    </>
-  );
-};
-
-const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
+const LOGO = '/img/logo_sm.png';
+const logo = <NavLink to="/"><img className="logo" src={LOGO} alt="ApeShitSocial Logo" /></NavLink>;
+export const AppBar = ({ setMenuOut, menuOut }: { setMenuOut: any, menuOut: any }) => {
   const { connected } = useWallet();
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: vertical ? 'column' : 'row',
-      }}
-    >
-      <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
-      </Link>
-      <Link to={`/artworks`}>
-        <Button className="app-btn">
-          {connected ? 'My Items' : 'Artworks'}
-        </Button>
-      </Link>
-      <Link to={`/artists`}>
-        <Button className="app-btn">Creators</Button>
-      </Link>
-    </div>
-  );
-};
-
-const MetaplexMenu = () => {
+  const { isLoading } = useMeta();
   const { width } = useWindowDimensions();
-  const { connected } = useWallet();
-
-  if (width < 768)
-    return (
-      <>
-        <Dropdown
-          arrow
-          placement="bottomLeft"
-          trigger={['click']}
-          overlay={
-            <Menu>
-              <Menu.Item>
-                <Link to={`/`}>
-                  <Button className="app-btn">Explore</Button>
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link to={`/artworks`}>
-                  <Button className="app-btn">
-                    {connected ? 'My Items' : 'Artworks'}
-                  </Button>
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link to={`/artists`}>
-                  <Button className="app-btn">Creators</Button>
-                </Link>
-              </Menu.Item>
-            </Menu>
-          }
-        >
-          <MenuOutlined style={{ fontSize: '1.4rem' }} />
-        </Dropdown>
-      </>
-    );
-
-  return <DefaultActions />;
-};
-
-export const AppBar = () => {
-  const { connected } = useWallet();
-
+  
   return (
-    <>
-      <div className="app-left app-bar-box">
-        {window.location.hash !== '#/analytics' && <Notifications />}
-        <div className="divider" />
-        <MetaplexMenu />
-      </div>
-      {!connected && <ConnectButton type="primary" />}
-      {connected && (
-        <div className="app-right app-bar-box">
-          <UserActions />
-          <CurrentUserBadge
-            showBalance={false}
-            showAddress={false}
-            iconSize={24}
-          />
-        </div>
-      )}
-    </>
-  );
+    <div className="app-bar-container">
+      <Row>
+        <Col span={width > 768 ? 4 : 8} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {width > 768 && logo}
+          {width <= 768 && (
+            <div className="menu-button">
+              <MenuOutlined className="burger" onClick={() => setMenuOut(!menuOut)} />
+            </div>
+          )}
+        </Col>
+        <Col span={width > 768 ? 16 : 8} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {width > 768 && <ApeshitMenu />}
+          {width <= 768 && logo}
+
+        </Col>
+        <Col style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}} span={width > 768 ? 4 : 8}>
+          <Notifications />
+          <div style={{marginLeft: '2rem' ,display: 'flex', justifyContent: width > 768 ? 'center' : 'flex-end', alignItems: 'center', height: '100%' }}>
+            {connected && <CurrentUserBadge
+              showBalance={false}
+              showAddress={true}
+              iconSize={24}
+            />}
+            {isLoading && <span style={{width: 69, display: 'flex', justifyContent: 'center', alignItems: 'center'}}><Spin/></span>}
+            {(!connected && !isLoading && <ConnectButton size="small">
+              Connect
+          </ConnectButton>)}
+          </div>
+        </Col>
+      </Row>
+    </div>
+  )
 };

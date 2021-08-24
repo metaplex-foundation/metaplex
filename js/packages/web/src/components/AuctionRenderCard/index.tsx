@@ -17,6 +17,7 @@ import {
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
 import { BN } from 'bn.js';
+import { useApes } from '../../contexts';
 
 const { Meta } = Card;
 export interface AuctionCard extends CardProps {
@@ -25,6 +26,10 @@ export interface AuctionCard extends CardProps {
 
 export const AuctionRenderCard = (props: AuctionCard) => {
   let { auctionView } = props;
+
+  const mint = auctionView?.items[0][0]?.metadata?.info?.mint;
+  const {apes} = useApes();
+
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
   const name = art?.title || ' ';
@@ -64,6 +69,18 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   }
 
   const auction = auctionView.auction.info;
+  const [apeData, setApeData]=useState<any>();
+
+  useEffect(() => {
+    const meta = apes.find(a => mint.toString() === a.metadata.minted_token_pubkey);
+    if (meta && !apeData) {
+      fetch(meta.attributes.image_url).then(res => res.json()).then((res) => {
+        setApeData(res)
+      })
+    }
+
+  }, [apes, mint, apeData])
+
   useEffect(() => {
     const calc = () => {
       setState(auction.timeToEnd());
@@ -93,7 +110,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       }
     >
       <Meta
-        title={`${name}`}
+        title={apeData?.name}
         description={
           <>
             <h4 style={{ marginBottom: 0 }}>{label}</h4>
