@@ -13,6 +13,7 @@ import {
   InputNumber,
   Form,
   Typography,
+  Space,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
@@ -23,6 +24,7 @@ import {
   useConnection,
   useWallet,
   IMetadataExtension,
+  Attribute,
   MetadataCategory,
   useConnectionConfig,
   Creator,
@@ -39,6 +41,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -65,6 +68,7 @@ export const ArtCreateView = () => {
     external_url: '',
     image: '',
     animation_url: undefined,
+    attributes: undefined,
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
@@ -96,6 +100,7 @@ export const ArtCreateView = () => {
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
       animation_url: attributes.animation_url,
+      attributes: attributes.attributes,
       external_url: attributes.external_url,
       properties: {
         files: attributes.properties.files,
@@ -547,6 +552,7 @@ const InfoStep = (props: {
     props.files,
     props.attributes,
   );
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setRoyalties(
@@ -642,6 +648,54 @@ const InfoStep = (props: {
               className="royalties-input"
             />
           </label>
+          <label className="action-field">
+            <span className="field-title">Attributes</span>
+          </label>
+          <Form
+            name="dynamic_attributes"
+            form={form}
+            autoComplete="off"
+          >
+            <Form.List name="attributes">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, fieldKey }) => (
+                      <Space key={key} align="baseline">
+                      <Form.Item
+                        name={[name, 'trait_type']}
+                        fieldKey={[fieldKey, 'trait_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="trait_type (Optional)" />
+                      </Form.Item>
+                      <Form.Item
+                        name={[name, 'value']}
+                        fieldKey={[fieldKey, 'value']}
+                        rules={[{ required: true, message: 'Missing value' }]}
+                        hasFeedback
+                      >
+                        <Input placeholder="value" />
+                      </Form.Item>
+                      <Form.Item
+
+                        name={[name, 'display_type']}
+                        fieldKey={[fieldKey, 'display_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="display_type (Optional)" />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                      Add attribute
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </Form>
         </Col>
       </Row>
 
@@ -650,11 +704,24 @@ const InfoStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-            });
+            form.validateFields()
+              .then(values => {
+                const nftAttributes = values.attributes;
+                // value is number if possible
+                for (const nftAttribute of nftAttributes || []) {
+                  const newValue = Number(nftAttribute.value);
+                  if (!isNaN(newValue)) {
+                    nftAttribute.value = newValue;
+                  }
+                }
+                console.log('Adding NFT attributes:', nftAttributes)
+                props.setAttributes({
+                  ...props.attributes,
+                  attributes: nftAttributes,
+                });
 
-            props.confirm();
+                props.confirm();
+              })
           }}
           className="action-btn"
         >

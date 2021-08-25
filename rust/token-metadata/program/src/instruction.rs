@@ -314,18 +314,11 @@ pub fn update_metadata_accounts(
 }
 
 /// puff metadata account instruction
-pub fn puff_metadata_account(
-    program_id: Pubkey,
-    metadata_account: Pubkey,
-) -> Instruction {
+pub fn puff_metadata_account(program_id: Pubkey, metadata_account: Pubkey) -> Instruction {
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(metadata_account, false),
-        ],
-        data: MetadataInstruction::PuffMetadata
-        .try_to_vec()
-        .unwrap(),
+        accounts: vec![AccountMeta::new(metadata_account, false)],
+        data: MetadataInstruction::PuffMetadata.try_to_vec().unwrap(),
     }
 }
 
