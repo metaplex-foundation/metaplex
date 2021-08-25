@@ -135,9 +135,12 @@ describe("nft-candy-machine", function () {
   });
   const program = new anchor.Program(idl, programId, provider);
 
-  const getCandyMachine = async (config: anchor.web3.PublicKey) => {
+  const getCandyMachine = async (
+    config: anchor.web3.PublicKey,
+    uuid: string
+  ) => {
     return await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(CANDY_MACHINE), config.toBuffer()],
+      [Buffer.from(CANDY_MACHINE), config.toBuffer(), Buffer.from(uuid)],
       programId
     );
   };
@@ -213,10 +216,18 @@ describe("nft-candy-machine", function () {
     beforeEach(async function () {
       const txInstr = await createConfig(this);
       const linesInstr = await addConfigLines(this);
-      const [candyMachine, bump] = await getCandyMachine(this.config);
+
+      this.candyMachineUuid = anchor.web3.Keypair.generate()
+        .publicKey.toBase58()
+        .slice(0, 6);
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config,
+        this.candyMachineUuid
+      );
       try {
         const tx = await program.rpc.initializeCandyMachine(
           bump,
+          this.candyMachineUuid,
           new anchor.BN(1),
           new anchor.BN(5),
           null,
@@ -284,12 +295,15 @@ describe("nft-candy-machine", function () {
 
     it("Is initialized!", async function () {
       // Add your test here.
-      const [candyMachine, bump] = await getCandyMachine(this.config);
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config,
+        this.candyMachineUuid
+      );
 
       const machine: CandyMachine = await program.account.candyMachine.fetch(
         candyMachine
       );
-
+      assert.equal(machine.uuid, this.candyMachineUuid);
       assert.ok(machine.wallet.equals(myWallet.publicKey));
       assert.ok(machine.config.equals(this.config));
       assert.ok(machine.authority.equals(this.authority.publicKey));
@@ -321,11 +335,18 @@ describe("nft-candy-machine", function () {
       const txInstr = await createConfig(this);
       const linesInstr = await addConfigLines(this);
       this.tokenMint = anchor.web3.Keypair.generate();
-      const [candyMachine, bump] = await getCandyMachine(this.config);
+      this.candyMachineUuid = anchor.web3.Keypair.generate()
+        .publicKey.toBase58()
+        .slice(0, 6);
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config,
+        this.candyMachineUuid
+      );
       this.walletToken = await getTokenWallet(this.tokenMint.publicKey);
       try {
         const tx = await program.rpc.initializeCandyMachine(
           bump,
+          this.candyMachineUuid,
           new anchor.BN(1),
           new anchor.BN(5),
           null,
@@ -389,12 +410,16 @@ describe("nft-candy-machine", function () {
 
     it("Is initialized!", async function () {
       // Add your test here.
-      const [candyMachine, bump] = await getCandyMachine(this.config);
+      const [candyMachine, bump] = await getCandyMachine(
+        this.config,
+        this.candyMachineUuid
+      );
 
       const machine: CandyMachine = await program.account.candyMachine.fetch(
         candyMachine
       );
 
+      assert.equal(machine.uuid, this.candyMachineUuid);
       assert.ok(machine.wallet.equals(this.walletToken));
       assert.ok(machine.config.equals(this.config));
       assert.ok(machine.authority.equals(this.authority.publicKey));

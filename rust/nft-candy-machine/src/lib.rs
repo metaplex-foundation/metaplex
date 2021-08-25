@@ -30,7 +30,7 @@ pub mod nft_candy_machine {
         let config = &mut ctx.accounts.config;
         config.bump = bump;
         if uuid.len() != 6 {
-            return Err(ErrorCode::ConfigUuidMustBeExactly6Length.into());
+            return Err(ErrorCode::UuidMustBeExactly6Length.into());
         }
         config.uuid = uuid;
         config.authority = *ctx.accounts.authority.key;
@@ -111,11 +111,17 @@ pub mod nft_candy_machine {
     pub fn initialize_candy_machine(
         ctx: Context<InitializeCandyMachine>,
         bump: u8,
+        uuid: String,
         price: u64,
         items_available: u64,
         go_live_date: Option<i64>,
     ) -> ProgramResult {
         let candy_machine = &mut ctx.accounts.candy_machine;
+
+        if uuid.len() != 6 {
+            return Err(ErrorCode::UuidMustBeExactly6Length.into());
+        }
+        candy_machine.uuid = uuid;
         candy_machine.price = price;
         candy_machine.items_available = items_available;
         candy_machine.wallet = *ctx.accounts.wallet.key;
@@ -148,9 +154,9 @@ pub mod nft_candy_machine {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction(bump: u8, uuid: String)]
 pub struct InitializeCandyMachine<'info> {
-    #[account(init, seeds=[PREFIX.as_bytes(), config.key().as_ref()], payer=payer, bump=bump, space=8+32+32+33+32+64+64+64+200)]
+    #[account(init, seeds=[PREFIX.as_bytes(), config.key().as_ref(), uuid.as_bytes()], payer=payer, bump=bump, space=8+32+32+33+32+64+64+64+200)]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(constraint= !wallet.data_is_empty() || wallet.lamports() > 0 )]
     wallet: AccountInfo<'info>,
@@ -186,10 +192,22 @@ pub struct AddConfigLines<'info> {
     #[account(signer)]
     authority: AccountInfo<'info>,
 }
+/*
+#[derive(Accounts)]
+pub struct Mint<'info> {
+    #[account(seeds=[PREFIX.as_bytes(), config.authority.key.as_ref(), &config.uuid.as_bytes(), &[config.bump]])]
+    config: ProgramAccount<'info, Config>,
 
+    #[account(mut, seeds=[PREFIX.as_bytes(), config.key().as_ref()], payer=payer, bump=bump, space=8+32+32+33+32+64+64+64+200)]
+    candy_machine: ProgramAccount<'info, CandyMachine>,
+    #[account(signer)]
+    authority: AccountInfo<'info>,
+}
+*/
 #[account]
 #[derive(Default)]
 pub struct CandyMachine {
+    pub uuid: String,
     pub authority: Pubkey,
     pub wallet: Pubkey,
     pub token_mint: Option<Pubkey>,
@@ -284,6 +302,6 @@ pub enum ErrorCode {
     NumericalOverflowError,
     #[msg("Can only provide up to 4 creators to candy machine (because candy machine is one)!")]
     TooManyCreators,
-    #[msg("Config uuid must be exactly of 6 length")]
-    ConfigUuidMustBeExactly6Length,
+    #[msg("Uuid must be exactly of 6 length")]
+    UuidMustBeExactly6Length,
 }
