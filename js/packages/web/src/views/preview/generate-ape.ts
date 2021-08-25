@@ -365,10 +365,12 @@ export async function generateApe({
     });
   };
 
+  debugger
+
   return await mergeImages([
     {
       src: await loadImg(
-        `//apeshit.social/background/${background
+        `/background/${background
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -379,7 +381,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/body/${body
+        `/body/${body
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -390,7 +392,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/eyes/${eyes
+        `/eyes/${eyes
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -401,7 +403,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/clothes/${clothes
+        `/clothes/${clothes
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -412,7 +414,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/hair_hats/${head
+        `/hair_hats/${head
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -423,7 +425,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/mouth/${mouth
+        `/mouth/${mouth
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -434,7 +436,7 @@ export async function generateApe({
     },
     {
       src: await loadImg(
-        `//apeshit.social/accessories/${access
+        `/accessories/${access
           ?.toLowerCase()
           .replaceAll(' ', '-')
           .replaceAll('(', '')
@@ -444,7 +446,7 @@ export async function generateApe({
       height: 1000,
     },
     {
-      src: await loadImg(`//apeshit.social/watermark.png`),
+      src: await loadImg(`/watermark.png`),
       width: 1000,
       height: 1000,
     },

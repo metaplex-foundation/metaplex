@@ -18,7 +18,7 @@ const { Title } = Typography;
 
 export function Preview() {
   const { width } = useWindowDimensions();
-  const [apeImg, setApeImg] = useState('https://apeshit.social/outline.jpg');
+  const [apeImg, setApeImg] = useState('/img/outline.jpg');
   const [loading, setLoading] = useState(true);
 
   const generate = async () => {

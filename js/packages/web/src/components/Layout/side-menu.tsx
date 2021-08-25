@@ -67,13 +67,13 @@ export const SideMenu = ({menuOut, setMenuOut, width}: {[key:string]: any}) => {
 
           <div style={{ margin: 'auto 2rem 2rem', display: 'flex' }}>
             <a
-              style={{ marginRight: '2rem', color: '#282828' }}
+              style={{ marginRight: '2rem', color: '#282828 !important' }}
               href="https://discord.gg/apeshit"
               target="_blank"
             >
               <i style={{ fontSize: '1.75rem' }} className="fab fa-discord"></i>
             </a>
-            <a  style={{ color: '#282828'}} href="https://twitter.com/ApeShitSocial" target="_blank">
+            <a  style={{ color: '#282828 !important'}} href="https://twitter.com/ApeShitSocial" target="_blank">
               <i style={{ fontSize: '1.75rem' }} className="fab fa-twitter"></i>
             </a>
           </div>
