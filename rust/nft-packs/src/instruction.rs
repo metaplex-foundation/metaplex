@@ -1,10 +1,9 @@
 //! Instruction types
 
-use crate::state::InitPackSetParams;
+use crate::{find_pack_card_program_address, find_proving_process_program_address};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
-    program_error::ProgramError,
     pubkey::Pubkey,
     sysvar,
 };
@@ -124,7 +123,7 @@ pub enum NFTPacksInstruction {
     /// - signer            user_wallet
     /// - read, write       pack_card (PDA, [pack, 'card', index])
     /// - write             user_token_acc (user token account ot hold new minted edition)
-    ClaimPack,
+    ClaimPack(u32),
 
     /// TransferAuthority
     ///
@@ -238,4 +237,48 @@ pub fn init_pack(
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::InitPack(args), accounts)
+}
+
+/// Create `ClaimPack` instruction
+pub fn claim_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    user_wallet: &Pubkey,
+    user_token: &Pubkey,
+    new_metadata: &Pubkey,
+    new_edition: &Pubkey,
+    master_edition: &Pubkey,
+    new_mint: &Pubkey,
+    new_mint_authority: &Pubkey,
+    metadata: &Pubkey,
+    metadata_mint: &Pubkey,
+    edition: &Pubkey,
+    index: u32,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(pack_card, false),
+        AccountMeta::new(*user_token, false),
+        AccountMeta::new(*new_metadata, false),
+        AccountMeta::new(*new_edition, false),
+        AccountMeta::new(*master_edition, false),
+        AccountMeta::new(*new_mint, false),
+        AccountMeta::new(*new_mint_authority, false),
+        AccountMeta::new(*metadata, false),
+        AccountMeta::new(*metadata_mint, false),
+        AccountMeta::new(*edition, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::ClaimPack(index),
+        accounts,
+    )
 }

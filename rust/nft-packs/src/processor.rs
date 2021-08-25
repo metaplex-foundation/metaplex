@@ -2,12 +2,14 @@
 
 use crate::{error::NFTPacksError, instruction::NFTPacksInstruction};
 use borsh::BorshDeserialize;
+use claim_pack::claim_pack;
 use init_pack::init_pack;
 use solana_program::{
     account_info::next_account_info, account_info::AccountInfo, entrypoint::ProgramResult, msg,
     pubkey::Pubkey,
 };
 
+pub mod claim_pack;
 pub mod init_pack;
 
 /// Program state handler.
@@ -45,9 +47,9 @@ impl Processor {
                 msg!("");
                 unimplemented!()
             }
-            NFTPacksInstruction::ClaimPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::ClaimPack(index) => {
+                msg!("Instruction: ClaimPack");
+                claim_pack(program_id, accounts, index)
             }
             NFTPacksInstruction::TransferAuthority => {
                 msg!("");

@@ -15,6 +15,14 @@ pub enum NFTPacksError {
     /// Total packs amount should be more then 0
     #[error("Total packs amount should be more then 0")]
     WrongTotalPacksAmount,
+
+    /// Proved vouchers mismatch pack vourchers
+    #[error("Proved vouchers mismatch pack vourchers")]
+    ProvedVouchersMismatchPackVouchers,
+
+    /// Pack is already open
+    #[error("Pack is already open")]
+    PackIsAlreadyOpen,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {
