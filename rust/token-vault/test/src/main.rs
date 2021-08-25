@@ -50,7 +50,7 @@ fn initialize_vault(app_matches: &ArgMatches, payer: Keypair, client: RpcClient)
     let vault = Keypair::new();
     let allow_further_share_creation = app_matches.is_present("allow_further_share_creation");
 
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let instructions = [
@@ -241,11 +241,11 @@ fn add_token_to_vault(app_matches: &ArgMatches, payer: Keypair, client: RpcClien
     let clone_of_key = token_mint.pubkey().clone();
     let seeds = &[
         PREFIX.as_bytes(),
-        &vault_key.as_ref(),
-        &clone_of_key.as_ref(),
+        vault_key.as_ref(),
+        clone_of_key.as_ref(),
     ];
     let (safety_deposit_box, _) = Pubkey::find_program_address(seeds, &program_key);
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let instructions = [
@@ -364,7 +364,7 @@ fn activate_vault(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) -
     let vault_account = client.get_account(&vault_key).unwrap();
     let vault: Vault = try_from_slice_unchecked(&vault_account.data).unwrap();
 
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (mint_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let instructions = [create_activate_vault_instruction(
@@ -422,7 +422,7 @@ fn combine_vault(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) ->
         try_from_slice_unchecked(&external_price_account.data).unwrap();
     let payment_account = Keypair::new();
 
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (uncirculated_burn_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let transfer_authority = Keypair::new();
@@ -572,7 +572,7 @@ fn redeem_shares(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) ->
     let burn_authority = Keypair::new();
     let mut signers = vec![&payer, &vault_authority, &burn_authority];
 
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (transfer_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let mut instructions = vec![];
@@ -662,7 +662,7 @@ fn withdraw_tokens(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) 
         .unwrap();
 
     let mut signers = vec![&payer, &vault_authority];
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (transfer_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let mut instructions = vec![];
@@ -725,7 +725,7 @@ fn mint_shares(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) -> P
     let vault: Vault = try_from_slice_unchecked(&vault_account.data).unwrap();
 
     let signers = vec![&payer, &vault_authority];
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (mint_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let number_of_shares: u64 = app_matches
@@ -774,7 +774,7 @@ fn withdraw_shares(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) 
         .unwrap();
 
     let mut signers = vec![&payer, &vault_authority];
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref()];
     let (transfer_authority, _) = Pubkey::find_program_address(seeds, &program_key);
 
     let mut instructions = vec![];
