@@ -8,8 +8,6 @@ export { ArtistsView } from './artists';
 export { AuctionView } from './auction';
 export { AuctionCreateView } from './auctionCreate';
 export { ArtworksView } from './artworks';
-export { RoadmapView } from './roadmap';
-export { Treehouse } from './treehouse';
 export { AnalyticsView } from './analytics';
 export { RoadmapView } from './roadmap';
 export { Preview } from './preview/preview';
