@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Link } from 'react-router-dom';
 import { Layout , Typography, Button } from 'antd';
 const { Content } = Layout;
@@ -10,6 +11,7 @@ export function AboutView() {
             <Content>
                 <div style={{ padding: '0 1rem', maxWidth: 640, margin: '0 auto' }}>
                     <br />
+
                     <Title style={{ textAlign: 'center', fontSize: '2rem' }}>What is the ApeShit Social Club?</Title>
                     <br />
 

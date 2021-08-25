@@ -49,4 +49,5 @@ export const AppBar = ({ setMenuOut, menuOut }: { setMenuOut: any, menuOut: any 
       </Row>
     </div>
   )
+
 };

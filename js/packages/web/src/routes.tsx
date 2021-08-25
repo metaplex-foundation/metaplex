@@ -14,7 +14,8 @@ import {
   RoadmapView,
   Preview,
   MyApes,
-  AuctionsView
+  AuctionsView,
+  Treehouse
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';

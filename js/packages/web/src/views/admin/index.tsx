@@ -254,7 +254,7 @@ function InnerAdminView({
 
   return (
     <Content>
-      <Col style={{ marginTop: 10 }}>
+      <Col>
         <Row>
           <Col span={21}>
             <ArtistModal

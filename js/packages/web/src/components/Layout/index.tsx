@@ -5,7 +5,6 @@ import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
 import useWindowDimensions from '../../utils/layout';
 import { SideMenu } from '../side-menu/side-menu';
-
 const { Header, Content } = Layout;
 
 const paddingForLayout = (width: number) => {
