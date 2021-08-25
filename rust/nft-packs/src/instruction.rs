@@ -109,6 +109,9 @@ pub enum NFTPacksInstruction {
     /// - read             pack_voucher (PDA, [pack, 'voucher', index])
     /// - read             master_metadata
     /// - write            user_token_acc (account with edition token)
+    /// 
+    /// Parameters:
+    /// - index u32
     ProveOwnership,
 
     /// ClaimPack
