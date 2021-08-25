@@ -7,71 +7,91 @@ export interface Props {}
 
 const data = [
   {
-    title: 'Background Color',
+    title: 'TYPE',
     color: 'magenta',
-    description: 'Silve, Gold, MEtal',
+    description: [
+      'Alien - Very rare',
+      'Zombie - Very rare',
+      'Spotted - rare',
+      'Normal - Common',
+    ],
   },
   {
-    title: 'Head Color',
+    title: 'Head/Hat',
     color: 'red',
-    description: 'Silve, Gold, MEtal',
-  },
-  {
-    title: 'Neck Color',
-    color: 'volcano',
-    description: 'Silve, Gold, MEtal',
+    description: [
+      'Heisenhat - rare',
+      'Doorag -rare',
+      'Beanie - rare',
+      'Backwards - rare',
+      'Forwards hat - rare',
+      'Normal head - common',
+    ],
   },
   {
     title: 'Shades',
-    color: 'orange',
-    description: 'Silve, Gold, MEtal',
+    color: 'volcano',
+    description: [
+      'Standard - Common',
+      'Tron - Extremely rare',
+      'Gold - Very rare',
+      'Red - Rare',
+    ],
   },
   {
     title: 'Chain',
     color: 'gold',
-    description: 'Silve, Gold, MEtal',
+    description: [
+      'No chain - common',
+      'Silver chain - very rare',
+      'Gold chain - extremely rare',
+    ],
   },
   {
     title: 'Face Tattoo',
     color: 'lime',
-    description: 'Silve, Gold, MEtal',
+    description: ['None - Common', 'Teardrop - Rare'],
   },
   {
     title: 'Ear-ring',
     color: 'green',
-    description: 'Silve, Gold, MEtal',
-  },
-  {
-    title: 'Beak Color',
-    color: 'cyan',
-    description: 'Silve, Gold, MEtal',
+    description: ['None - common', 'Silver - rare', 'Gold - very rare'],
   },
   {
     title: 'Smoking',
-    color: 'blue',
-    description: 'Silve, Gold, MEtal',
+    color: 'cyan',
+    description: [
+      'None - common',
+      'Cigarette - rare',
+      'Spliff - very rare',
+      'Blunt - very rare',
+    ],
   },
   {
-    title: 'Position in gang',
+    title: 'Role in gang',
     color: 'geekblue',
-    description: 'Silve, Gold, MEtal',
+    description: [
+      'Boss - extremely rare',
+      'underboss - very rare',
+      'enforcer - rare',
+      'thug -common',
+    ],
   },
   {
-    title: 'Favourite rapper',
+    title: 'Rapper',
     color: 'purple',
-    description: 'Silve, Gold, MEtal',
-  },
-  {
-    title: 'Head accessories',
-    color: 'red',
-    description: 'Silve, Gold, MEtal',
+    description: ['All rappers equally rare'],
   },
 ];
 
 export const FeatureList: React.FunctionComponent<Props> = () => {
   return (
     <>
-      <Title level={3} className="welcome-text bungee-font-inline" style={{ fontSize: '2em', margin: '1em 0 2em' }}>
+      <Title
+        level={3}
+        className="welcome-text bungee-font-inline"
+        style={{ fontSize: '2em', margin: '1em 0 2em' }}
+      >
         Feature List
       </Title>
       <Row
@@ -79,8 +99,8 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
         className="feature-list-home"
         gutter={[64, 0]}
       >
-        {chunks(data, 6).map((chunk, index) => (
-          <Col span={12}>
+        {chunks(data, 3).map((chunk, index) => (
+          <Col span={8}>
             <div className="feature-list">
               <List
                 itemLayout="horizontal"
@@ -96,7 +116,13 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
                           <Tag color={item.color}>{item.title}</Tag>
                         </>
                       }
-                      description={item.description}
+                      description={
+                        <ul style={styles.ul}>
+                          {item.description.map(el => (
+                            <li>{el}</li>
+                          ))}
+                        </ul>
+                      }
                     />
                   </List.Item>
                 )}
@@ -108,5 +134,12 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
     </>
   );
 };
+
+const styles = {
+  ul: {
+    padding: '0',
+    margin: '1em 0'
+  }
+}
 
 export default FeatureList;
