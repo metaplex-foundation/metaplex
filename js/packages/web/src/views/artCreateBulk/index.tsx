@@ -76,10 +76,13 @@ const date = new Date().toDateString().replaceAll(' ', '-').toLocaleLowerCase();
 export const ArtCreateBulkView = () => {
   const { connected } = useWallet();
   const [csvData, setCsvData] = useState<unknown[]>([]);
+  const [csvDataPartial, setCsvDataPartial] = useState<unknown[]>([]);
   const [startMint, setStartMint] = useState(false);
   const [csvError, setScvError] = useState(false);
   const [threadNumber, setTreadNumber] = useState(15);
   const [mintedTokens, setMintedToken] = useState({});
+  const [startMintFromIdx, setStartMintFromIdx] = useState(0);
+  const [endMintFromIdx, setEndMintFromIdx] = useState(0);
 
   const addMintedTokenInfo = ({ idx: idxInSet, token }: mintedProps) => {
     setMintedToken(state => ({
@@ -94,6 +97,9 @@ export const ArtCreateBulkView = () => {
       const dataNormalized = normalizeData(data);
       console.log('dataNormalized', dataNormalized);
       setCsvData(dataNormalized);
+      setCsvDataPartial(dataNormalized);
+      setStartMintFromIdx(0);
+      setEndMintFromIdx(dataNormalized.length);
     } catch (error) {
       console.warn('CSV File parsing error:', error);
       setScvError(true);
@@ -109,7 +115,7 @@ export const ArtCreateBulkView = () => {
     return <h1>⚠️ Error parsing CSV File. Make sure all fields are correct</h1>;
   }
 
-  const mintChunkSize = Math.ceil(csvData?.length / threadNumber);
+  const mintChunkSize = Math.ceil(csvDataPartial?.length / threadNumber);
   console.log('mintChunkSize', mintChunkSize);
 
   const getJsonHref = () => {
@@ -120,8 +126,22 @@ export const ArtCreateBulkView = () => {
     return fileDownloadUrl;
   };
 
-  const isAllMinted =
-    csvData.length > 0 && csvData.length === Object.keys(mintedTokens).length;
+  const onStartIdxChange = (value: number) => {
+    const dataPartial = csvData.slice(value, endMintFromIdx);
+    setCsvDataPartial(dataPartial);
+    setStartMintFromIdx(value);
+    console.log('You are going to mint this set:', dataPartial);
+  };
+
+  const onEndIdxChange = (value: number) => {
+    const dataPartial = csvData.slice(startMintFromIdx, value);
+    setCsvDataPartial(dataPartial);
+    setEndMintFromIdx(value);
+    console.log('You are going to mint this set:', dataPartial);
+  };
+
+  // const isAllMinted =
+  // csvDataPartial.length > 0 && csvDataPartial.length === Object.keys(mintedTokens).length;
 
   return (
     <div className="">
@@ -134,6 +154,8 @@ export const ArtCreateBulkView = () => {
             onError={error => console.log(error)}
             disabled={startMint}
           />
+          <br />
+          <h3>Set is <b>{csvData.length}</b> length | You are going to mint <b>{csvDataPartial.length}</b> NFTs</h3>
         </Col>
         <Col span={12} style={{ textAlign: 'right' }}>
           <a
@@ -148,48 +170,110 @@ export const ArtCreateBulkView = () => {
         </Col>
       </Row>
 
+      <hr />
       <br />
 
       {startMint ? (
-        chunks(csvData, mintChunkSize).map((data, index) => (
-          <ErrorBoundary
-            key={index}
-            FallbackComponent={ErrorFallback}
-            onReset={() => {
-              // reset the state of your app so the error doesn't happen again
-            }}
-          >
-            <MintFromData
-              data={data}
-              chunkIdx={index}
-              mintChunkSize={mintChunkSize}
-              addMintedTokenInfo={addMintedTokenInfo}
-            />
-          </ErrorBoundary>
-        ))
+        <>
+          {chunks(csvDataPartial, mintChunkSize).map((data, index) => (
+            <ErrorBoundary
+              key={index}
+              FallbackComponent={ErrorFallback}
+              onReset={() => {
+                // reset the state of your app so the error doesn't happen again
+              }}
+            >
+              <MintFromData
+                data={data}
+                chunkIdx={index}
+                mintChunkSize={mintChunkSize}
+                addMintedTokenInfo={addMintedTokenInfo}
+                globalIdxOffset={startMintFromIdx}
+              />
+            </ErrorBoundary>
+          ))}
+          <>
+            <br />
+            <h2>Minted Items:</h2>
+            <pre style={styles.pre}>
+              {JSON.stringify(mintedTokens, undefined, 2)}
+            </pre>
+          </>
+        </>
       ) : (
         <>
           <label className="action-field">
-            <span className="field-title">Number of Threads</span>
-            <InputNumber
-              min={1}
-              max={50}
-              step={1}
-              placeholder="Number of Threads"
-              onChange={setTreadNumber}
-              className="thread-input"
-              value={threadNumber}
-              disabled={!csvData.length}
-            />
+            <Row>
+              <Col span={8}>
+                <span className="field-title">
+                  Start mint from index (including):
+                </span>
+                <InputNumber
+                  min={0}
+                  step={1}
+                  max={csvData.length - 1}
+                  placeholder="Start mint from index:"
+                  onChange={onStartIdxChange}
+                  className="mint-input"
+                  style={styles.mintInput}
+                  value={startMintFromIdx}
+                  disabled={!csvData.length}
+                />
+              </Col>
+              <Col span={8}>
+                <span className="field-title">
+                  End mint on index (excluding):
+                </span>
+                <InputNumber
+                  min={startMintFromIdx + 1}
+                  max={csvData.length}
+                  step={1}
+                  placeholder="End mint from index:"
+                  onChange={onEndIdxChange}
+                  className="mint-input"
+                  style={styles.mintInput}
+                  value={endMintFromIdx}
+                  disabled={!csvData.length}
+                />
+              </Col>
+            </Row>
+            <div>
+              <br />
+              <hr />
+              <br />
+              <span className="field-title">Number of Threads</span>
+              <InputNumber
+                min={1}
+                max={50}
+                step={1}
+                placeholder="Number of Threads"
+                onChange={setTreadNumber}
+                className="mint-input"
+                style={styles.mintInput}
+                value={threadNumber}
+                disabled={!csvData.length}
+              />
+              <br />
+              <br />
+              <hr />
+            </div>
           </label>
           <Button
             type="primary"
             size="large"
             onClick={onStartClicked}
             disabled={!csvData.length}
+            style={{ fontSize: '2em', height: 'auto' }}
           >
-            Start Minting
+            Start Minting - {csvDataPartial.length} itm.
           </Button>
+          <br />
+
+          <pre style={styles.pre}>
+            {csvDataPartial.map(row => (
+              <div>{JSON.stringify(row.name, undefined, 2)} </div>
+            ))}
+          </pre>
         </>
       )}
     </div>
@@ -201,6 +285,7 @@ interface MintFromDataProps {
   chunkIdx: number;
   mintChunkSize: number;
   addMintedTokenInfo: (props: mintedProps) => void;
+  globalIdxOffset: number;
 }
 
 const MintFromData = ({
@@ -208,13 +293,14 @@ const MintFromData = ({
   chunkIdx,
   mintChunkSize,
   addMintedTokenInfo,
+  globalIdxOffset,
 }: MintFromDataProps) => {
   const [idxToMint, setIdxToMint] = useState(0);
   const [error, setError] = useState<Error>();
   const [completed, setCompleted] = useState(false);
 
   const onItemMinted = ({ idx, token, error }: mintedProps) => {
-    const idxInSet = mintChunkSize * chunkIdx + idx;
+    const idxInSet = mintChunkSize * chunkIdx + idx + globalIdxOffset;
 
     addMintedTokenInfo({ idx: idxInSet, token });
 
@@ -266,6 +352,7 @@ const MintFromData = ({
         onComplete={onItemMinted}
         chunkIdx={chunkIdx}
         mintChunkSize={mintChunkSize}
+        globalIdxOffset={globalIdxOffset}
       />
       <Progress percent={progress} status="active" />
     </>
@@ -275,7 +362,8 @@ const MintFromData = ({
 const attributesDefault = {
   name: 'Noname Thug',
   symbol: '',
-  description: "You hold in your possession an OG thugbird. It was created with love for the Solana community by 0x_thug",
+  description:
+    'You hold in your possession an OG thugbird. It was created with love for the Solana community by 0x_thug',
   external_url: 'https://www.thugbirdz.com/',
   image: '',
   animation_url: undefined,
@@ -299,6 +387,7 @@ export const ArtCreateSingleItem = ({
   idx,
   chunkIdx,
   mintChunkSize,
+  globalIdxOffset,
 }: any) => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
@@ -361,7 +450,7 @@ export const ArtCreateSingleItem = ({
   }, [connected, wallet, idx]);
 
   const createFile = async () => {
-    const imageIdx = mintChunkSize * chunkIdx + idx;
+    const imageIdx = mintChunkSize * chunkIdx + idx + globalIdxOffset;
 
     const imageUrl = `/preminted/${imageIdx}.png`;
     let response = await fetch(imageUrl);
@@ -408,7 +497,8 @@ export const ArtCreateSingleItem = ({
         },
       };
 
-      // console.log('metadata', metadata);
+      const imageIdx = mintChunkSize * chunkIdx + idx;
+      console.log(`metadata for file ${imageIdx}`, metadata);
 
       const inte = setInterval(
         () => setProgress(prog => Math.min(prog + 1, 99)),
@@ -523,5 +613,14 @@ const styles = {
   button: {
     background: 'black',
     borderColor: 'black',
+  },
+  mintInput: {
+    fontSize: '1.5em',
+  },
+  pre: {
+    background: 'rgba(0,0,0,.5)',
+    whiteSpace: 'normal',
+    margin: '2em 0',
+    padding: '2em',
   },
 };
