@@ -16,6 +16,45 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
+function fromUTF8Array(data: number[]) {
+  // array of bytes
+  let str = "",
+    i;
+
+  for (i = 0; i < data.length; i++) {
+    const value = data[i];
+
+    if (value < 0x80) {
+      str += String.fromCharCode(value);
+    } else if (value > 0xbf && value < 0xe0) {
+      str += String.fromCharCode(((value & 0x1f) << 6) | (data[i + 1] & 0x3f));
+      i += 1;
+    } else if (value > 0xdf && value < 0xf0) {
+      str += String.fromCharCode(
+        ((value & 0x0f) << 12) |
+          ((data[i + 1] & 0x3f) << 6) |
+          (data[i + 2] & 0x3f)
+      );
+      i += 2;
+    } else {
+      // surrogate pair
+      const charCode =
+        (((value & 0x07) << 18) |
+          ((data[i + 1] & 0x3f) << 12) |
+          ((data[i + 2] & 0x3f) << 6) |
+          (data[i + 3] & 0x3f)) -
+        0x010000;
+
+      str += String.fromCharCode(
+        (charCode >> 10) | 0xd800,
+        (charCode & 0x03ff) | 0xdc00
+      );
+      i += 3;
+    }
+  }
+
+  return str;
+}
 
 export function createAssociatedTokenAccountInstruction(
   associatedTokenAddress: PublicKey,
@@ -96,9 +135,9 @@ describe("nft-candy-machine", function () {
   });
   const program = new anchor.Program(idl, programId, provider);
 
-  const getCandyMachine = async (config: anchor.web3.Keypair) => {
+  const getCandyMachine = async (config: anchor.web3.PublicKey) => {
     return await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(CANDY_MACHINE), config.publicKey.toBuffer()],
+      [Buffer.from(CANDY_MACHINE), config.toBuffer()],
       programId
     );
   };
@@ -110,84 +149,70 @@ describe("nft-candy-machine", function () {
     );
   };
 
-  const createConfig = async function (that) {
+  const createConfig = async function (that): Promise<TransactionInstruction> {
     that.authority = anchor.web3.Keypair.generate();
     that.uuid = anchor.web3.Keypair.generate().publicKey.toBase58().slice(0, 6);
     const [config, bump] = await getConfig(that.authority.publicKey, that.uuid);
     that.config = config;
     that.configBump = bump;
-    try {
-      await program.rpc.initializeConfig(
-        bump,
-        that.uuid,
-        "SYMBOL",
-        500,
-        [{ address: myWallet.publicKey, verified: false, share: 100 }],
-        10,
-        {
-          accounts: {
-            config: that.config,
-            authority: that.authority.publicKey,
-            payer: myWallet.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          },
-          signers: [myWallet],
-          instructions: [
-            anchor.web3.SystemProgram.transfer({
-              fromPubkey: myWallet.publicKey,
-              toPubkey: that.authority.publicKey,
-              lamports: 5,
-            }),
-          ],
-        }
-      );
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
+
+    return await program.instruction.initializeConfig(
+      bump,
+      that.uuid,
+      10,
+      "SYMBOL",
+      500,
+      [{ address: myWallet.publicKey, verified: false, share: 100 }],
+      {
+        accounts: {
+          config: that.config,
+          authority: that.authority.publicKey,
+          payer: myWallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [myWallet],
+      }
+    );
   };
 
-  const addConfigLines = async function (that) {
+  const addConfigLines = async function (
+    that
+  ): Promise<TransactionInstruction[]> {
     const sample = {
       uri: "www.aol.com",
       isMutable: true,
     };
     const firstVec = [];
     for (let i = 0; i < 5; i++) {
-      firstVec.push([{ ...sample, name: `Sample ${i}` }]);
+      firstVec.push({ ...sample, name: `Sample ${i}` });
     }
     const secondVec = [];
     for (let i = 5; i < 10; i++) {
-      secondVec.push([{ ...sample, name: `Sample ${i}` }]);
+      secondVec.push({ ...sample, name: `Sample ${i}` });
     }
-    try {
-      await program.rpc.addConfigLines(0, firstVec, {
-        accounts: {
-          config: that.config,
-          authority: that.authority.publicKey,
-        },
-        signers: [that.authority, myWallet],
-      });
+    const tx1 = await program.instruction.addConfigLines(0, firstVec, {
+      accounts: {
+        config: that.config,
+        authority: that.authority.publicKey,
+      },
+      signers: [that.authority, myWallet],
+    });
 
-      await program.rpc.addConfigLines(5, secondVec, {
-        accounts: {
-          config: that.config,
-          authority: that.authority.publicKey,
-        },
-        signers: [that.authority, myWallet],
-      });
-    } catch (e) {
-      console.log("Config line failure");
-      console.log(e);
-      throw e;
-    }
+    const tx2 = await program.instruction.addConfigLines(5, secondVec, {
+      accounts: {
+        config: that.config,
+        authority: that.authority.publicKey,
+      },
+      signers: [that.authority, myWallet],
+    });
+    return [tx1, tx2];
   };
 
   describe("sol only", function () {
     beforeEach(async function () {
-      await createConfig(this);
-      await addConfigLines(this);
+      const txInstr = await createConfig(this);
+      const linesInstr = await addConfigLines(this);
       const [candyMachine, bump] = await getCandyMachine(this.config);
       try {
         const tx = await program.rpc.initializeCandyMachine(
@@ -200,17 +225,60 @@ describe("nft-candy-machine", function () {
               candyMachine,
               wallet: myWallet.publicKey,
               config: this.config,
-              authority: myWallet.publicKey,
+              authority: this.authority.publicKey,
               payer: myWallet.publicKey,
               systemProgram: anchor.web3.SystemProgram.programId,
               rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             },
-            signers: [myWallet],
+            signers: [myWallet, this.authority],
+            instructions: [
+              anchor.web3.SystemProgram.transfer({
+                fromPubkey: myWallet.publicKey,
+                toPubkey: this.authority.publicKey,
+                lamports: 5,
+              }),
+              txInstr,
+              ...linesInstr,
+            ],
           }
         );
       } catch (e) {
         console.log(e);
         throw e;
+      }
+    });
+
+    it("has all ten lines", async function () {
+      const config = await connection.getAccountInfo(this.config);
+      const configArrayStart =
+        1 + // bump
+        32 + // authority
+        4 +
+        6 + // uuid + u32 len
+        4 +
+        10 + // u32 len + symbol
+        2 + // seller fee basis points
+        1 +
+        4 +
+        5 * 34 + // optional + u32 len + actual vec
+        4; // max number of lines;
+      const configLineSize = 4 + 32 + 4 + 200 + 1;
+      const amountOfConfigs = new anchor.BN(
+        config.data.slice(configArrayStart, configArrayStart + 4),
+        "le"
+      );
+      assert.equal(amountOfConfigs.toNumber(), 10);
+      for (let i = 0; i < amountOfConfigs.toNumber(); i++) {
+        const thisSlice = config.data.slice(
+          configArrayStart + 4 + configLineSize * i,
+          configArrayStart + 4 + configLineSize * (i + 1)
+        );
+        const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+        const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+        const isMutable = thisSlice[241] != 0;
+        assert.equal(name.replace(/\0/g, "").trim(), `Sample ${i}`);
+        assert.equal(uri.replace(/\0/g, "").trim(), "www.aol.com");
+        assert.equal(isMutable, true);
       }
     });
 
@@ -224,7 +292,7 @@ describe("nft-candy-machine", function () {
 
       assert.ok(machine.wallet.equals(myWallet.publicKey));
       assert.ok(machine.config.equals(this.config));
-      assert.ok(machine.authority.equals(myWallet.publicKey));
+      assert.ok(machine.authority.equals(this.authority.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
       assert.equal(machine.bump, bump);
       assert.equal(
@@ -250,13 +318,13 @@ describe("nft-candy-machine", function () {
     };
 
     beforeEach(async function () {
-      await createConfig(this);
-      await addConfigLines(this);
+      const txInstr = await createConfig(this);
+      const linesInstr = await addConfigLines(this);
       this.tokenMint = anchor.web3.Keypair.generate();
       const [candyMachine, bump] = await getCandyMachine(this.config);
       this.walletToken = await getTokenWallet(this.tokenMint.publicKey);
       try {
-        const tx = await program.rpc.initialize_candy_machine(
+        const tx = await program.rpc.initializeCandyMachine(
           bump,
           new anchor.BN(1),
           new anchor.BN(5),
@@ -266,7 +334,7 @@ describe("nft-candy-machine", function () {
               candyMachine,
               wallet: this.walletToken,
               config: this.config,
-              authority: myWallet.publicKey,
+              authority: this.authority.publicKey,
               payer: myWallet.publicKey,
               systemProgram: anchor.web3.SystemProgram.programId,
               rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -278,8 +346,13 @@ describe("nft-candy-machine", function () {
                 isSigner: true,
               },
             ],
-            signers: [myWallet, this.tokenMint],
+            signers: [myWallet, this.tokenMint, this.authority],
             instructions: [
+              anchor.web3.SystemProgram.transfer({
+                fromPubkey: myWallet.publicKey,
+                toPubkey: this.authority.publicKey,
+                lamports: 5,
+              }),
               anchor.web3.SystemProgram.createAccount({
                 fromPubkey: myWallet.publicKey,
                 newAccountPubkey: this.tokenMint.publicKey,
@@ -303,6 +376,8 @@ describe("nft-candy-machine", function () {
                 myWallet.publicKey,
                 this.tokenMint.publicKey
               ),
+              txInstr,
+              ...linesInstr,
             ],
           }
         );
@@ -322,7 +397,7 @@ describe("nft-candy-machine", function () {
 
       assert.ok(machine.wallet.equals(this.walletToken));
       assert.ok(machine.config.equals(this.config));
-      assert.ok(machine.authority.equals(myWallet.publicKey));
+      assert.ok(machine.authority.equals(this.authority.publicKey));
       assert.equal(machine.price.toNumber(), new anchor.BN(1).toNumber());
       assert.equal(machine.bump, bump);
 

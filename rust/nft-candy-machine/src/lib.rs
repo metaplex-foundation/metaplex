@@ -3,15 +3,14 @@ pub mod utils;
 use {
     crate::utils::{assert_initialized, assert_owned_by},
     anchor_lang::{
-        prelude::*,
-        solana_program::{borsh::try_from_slice_unchecked, system_program},
-        AnchorDeserialize, AnchorSerialize, Key,
+        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key,
     },
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
     spl_token_metadata::state::{
         MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
     },
+    std::cell::Ref,
 };
 
 const PREFIX: &str = "candy_machine";
@@ -23,10 +22,10 @@ pub mod nft_candy_machine {
         ctx: Context<InitializeConfig>,
         bump: u8,
         uuid: String,
+        max_number_of_lines: u32,
         symbol: String,
         seller_fee_basis_points: u16,
         creators: Option<Vec<Creator>>,
-        max_number_of_lines: u32,
     ) -> ProgramResult {
         let config = &mut ctx.accounts.config;
         config.bump = bump;
@@ -62,8 +61,9 @@ pub mod nft_candy_machine {
     ) -> ProgramResult {
         let config = &mut ctx.accounts.config;
         let account = config.to_account_info();
+        let current_count = get_config_count(&account.data.borrow())?;
         let mut data = account.data.borrow_mut();
-        let current_count = get_config_count(&account)?;
+
         let mut fixed_config_lines = vec![];
 
         if index > config.max_number_of_lines - 1 {
@@ -92,15 +92,18 @@ pub mod nft_candy_machine {
         let as_vec = fixed_config_lines.try_to_vec()?;
         // remove unneeded u32 because we're just gonna edit the u32 at the front
         let serialized: &[u8] = &as_vec.as_slice()[4..];
+
         let position = CONFIG_ARRAY_START + 4 + (index as usize) * CONFIG_LINE_SIZE;
+
         let array_slice: &mut [u8] =
-            &mut data[position..position + config_lines.len() * CONFIG_LINE_SIZE];
+            &mut data[position..position + fixed_config_lines.len() * CONFIG_LINE_SIZE];
         array_slice.copy_from_slice(serialized);
         let new_count = current_count
-            .checked_add(config_lines.len())
+            .checked_add(fixed_config_lines.len())
             .ok_or(ErrorCode::NumericalOverflowError)?;
         // plug in new count.
-        data[CONFIG_ARRAY_START..4].copy_from_slice(&new_count.to_le_bytes());
+        data[CONFIG_ARRAY_START..CONFIG_ARRAY_START + 4]
+            .copy_from_slice(&(new_count as u32).to_le_bytes());
 
         Ok(())
     }
@@ -153,7 +156,7 @@ pub struct InitializeCandyMachine<'info> {
     wallet: AccountInfo<'info>,
     #[account(seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.uuid.as_bytes(), &[config.bump]])]
     config: ProgramAccount<'info, Config>,
-    #[account(constraint= !authority.data_is_empty() || authority.lamports() > 0 )]
+    #[account(signer, constraint= !authority.data_is_empty() || authority.lamports() > 0)]
     authority: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -198,7 +201,14 @@ pub struct CandyMachine {
     pub bump: u8,
 }
 
-pub const CONFIG_ARRAY_START: usize = 51 + MAX_CREATOR_LEN + MAX_SYMBOL_LENGTH + 2;
+pub const CONFIG_ARRAY_START: usize = 1 + // bump
+32 + // authority
+4 + 6 + // uuid + u32 len
+4 + MAX_SYMBOL_LENGTH + // u32 len + symbol
+2 + // seller fee basis points
+1 + 4 + MAX_CREATOR_LIMIT*MAX_CREATOR_LEN + // optional + u32 len + actual vec
+4; // max number of lines;
+
 #[account]
 #[derive(Default)]
 pub struct Config {
@@ -216,8 +226,7 @@ pub struct Config {
     // There is actually lines and lines of data after this but we explicitly never want them deserialized.
 }
 
-pub fn get_config_count(a: &AccountInfo) -> core::result::Result<usize, ProgramError> {
-    let data = a.data.borrow();
+pub fn get_config_count(data: &Ref<&mut [u8]>) -> core::result::Result<usize, ProgramError> {
     return Ok(u32::from_le_bytes(*array_ref![data, CONFIG_ARRAY_START, 4]) as usize);
 }
 
@@ -225,24 +234,22 @@ pub fn get_config_line(
     a: &AccountInfo,
     index: usize,
 ) -> core::result::Result<ConfigLine, ProgramError> {
-    let total = get_config_count(a)?;
+    let arr = a.data.borrow();
+
+    let total = get_config_count(&arr)?;
     if index > total {
         return Err(ErrorCode::IndexGreaterThanLength.into());
     }
-    let arr = a.data.borrow();
-    let data_array = array_ref![
-        arr,
-        CONFIG_ARRAY_START + 4 + index * (CONFIG_LINE_SIZE),
-        CONFIG_LINE_SIZE
-    ];
+    let data_array = &arr[CONFIG_ARRAY_START + 4 + index * (CONFIG_LINE_SIZE)
+        ..CONFIG_ARRAY_START + 4 + (index + 1) * (CONFIG_LINE_SIZE)];
 
-    let config_line: ConfigLine = try_from_slice_unchecked(data_array)?;
+    let config_line: ConfigLine = ConfigLine::try_from_slice(data_array)?;
 
     Ok(config_line)
 }
 
-pub const CONFIG_LINE_SIZE: usize = MAX_NAME_LENGTH + MAX_URI_LENGTH + 1;
-#[derive(AnchorSerialize, AnchorDeserialize)]
+pub const CONFIG_LINE_SIZE: usize = 4 + MAX_NAME_LENGTH + 4 + MAX_URI_LENGTH + 1;
+#[derive(AnchorSerialize, AnchorDeserialize, Debug)]
 pub struct ConfigLine {
     /// The name of the asset
     pub name: String,
