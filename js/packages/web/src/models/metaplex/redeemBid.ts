@@ -2,11 +2,6 @@ import {
   findProgramAddress,
   getAuctionExtended,
   programIds,
-  VAULT_PREFIX,
-} from '@oyster/common';
-import {
-  findProgramAddress,
-  programIds,
   StringPublicKey,
   toPublicKey,
   VAULT_PREFIX,
