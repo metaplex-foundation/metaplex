@@ -38,7 +38,7 @@ pub fn activate_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramR
 
     pack_set.pack_state = PackSetState::Activated;
 
-    pack_set
-        .serialize(&mut *pack_set_account.data.borrow_mut())
-        .map_err(|e| e.into())
+    PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
+
+    Ok(())
 }
