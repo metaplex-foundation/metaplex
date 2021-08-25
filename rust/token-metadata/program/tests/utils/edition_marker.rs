@@ -98,7 +98,7 @@ impl EditionMarker {
             spl_token_vault_id.as_ref(),
             vault_pubkey.as_ref(),
         ];
-        let (authority, _) = Pubkey::find_program_address(vault_mint_seeds, &spl_token_vault_id);
+        let (_authority, _) = Pubkey::find_program_address(vault_mint_seeds, &spl_token_vault_id);
 
         create_mint(context, &self.mint, &context.payer.pubkey(), None).await?;
         create_token_account(

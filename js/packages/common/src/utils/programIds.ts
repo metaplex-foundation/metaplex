@@ -14,76 +14,26 @@ import {
   toPublicKey,
 } from './ids';
 
-export const ENABLE_FEES_INPUT = false;
-
-// legacy pools are used to show users contributions in those pools to allow for withdrawals of funds
-export const PROGRAM_IDS = [
-  {
-    name: 'mainnet-beta',
-  },
-  {
-    name: 'testnet',
-  },
-
-  {
-    name: 'devnet',
-  },
-  {
-    name: 'localnet',
-  },
-];
-
-let STORE_OWNER_ADDRESS: PublicKey | undefined;
-
-export const setStoreID = (storeId: any) => {
-  STORE_OWNER_ADDRESS = storeId
-    ? new PublicKey(`${storeId}`)
-    : // DEFAULT STORE FRONT OWNER FOR METAPLEX
-      undefined;
-};
-
-const getStoreID = async () => {
-  if (!STORE_OWNER_ADDRESS) {
+export const getStoreID = async (storeOwnerAddress?: string) => {
+  if (!storeOwnerAddress) {
     return undefined;
   }
 
-  let urlStoreId: PublicKey | null = null;
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const text = urlParams.get('store');
-    if (text) {
-      urlStoreId = new PublicKey(text);
-    }
-  } catch {
-    // ignore
-  }
-
-  const storeOwnerAddress = urlStoreId || STORE_OWNER_ADDRESS;
-  console.log(`STORE_OWNER_ADDRESS: ${storeOwnerAddress?.toBase58()}`);
   const programs = await findProgramAddress(
     [
       Buffer.from('metaplex'),
       toPublicKey(METAPLEX_ID).toBuffer(),
-      storeOwnerAddress.toBuffer(),
+      toPublicKey(storeOwnerAddress).toBuffer(),
     ],
     toPublicKey(METAPLEX_ID),
   );
-  const CUSTOM = programs[0];
-  console.log(`CUSTOM STORE: ${CUSTOM}`);
+  const storeAddress = programs[0];
 
-  return CUSTOM;
+  return storeAddress;
 };
 
-export const setProgramIds = async (envName: string) => {
-  let instance = PROGRAM_IDS.find(env => envName.indexOf(env.name) >= 0);
-  if (!instance) {
-    return;
-  }
-
-  if (!STORE) {
-    const potential_store = await getStoreID();
-    STORE = potential_store ? toPublicKey(potential_store) : undefined;
-  }
+export const setProgramIds = async (store?: string) => {
+  STORE = store ? toPublicKey(store) : undefined;
 };
 
 let STORE: PublicKey | undefined;

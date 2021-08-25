@@ -66,6 +66,12 @@ export type MetadataFile = {
 
 export type FileOrString = MetadataFile | string;
 
+export type Attribute = {
+  trait_type?: string;
+  display_type?: string;
+  value: string | number;
+};
+
 export interface IMetadataExtension {
   name: string;
   symbol: string;
@@ -75,6 +81,8 @@ export interface IMetadataExtension {
   // preview image absolute URI
   image: string;
   animation_url?: string;
+
+  attributes?: Attribute[];
 
   // stores link to item on meta
   external_url: string;
@@ -444,12 +452,17 @@ export const METADATA_SCHEMA = new Map<any, any>([
   ],
 ]);
 
+const METADATA_REPLACE = new RegExp('\u0000', 'g');
+
 export const decodeMetadata = (buffer: Buffer): Metadata => {
   const metadata = deserializeUnchecked(
     METADATA_SCHEMA,
     Metadata,
     buffer,
   ) as Metadata;
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
   return metadata;
 };
 
