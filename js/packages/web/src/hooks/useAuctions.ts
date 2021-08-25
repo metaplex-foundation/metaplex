@@ -48,6 +48,7 @@ export interface AuctionView {
   // items 1:1 with winning configs FOR NOW
   // once tiered auctions come along, this becomes an array of arrays.
   items: AuctionViewItem[][];
+  safetyDepositBoxes: ParsedAccount<SafetyDepositBox>[];
   auction: ParsedAccount<AuctionData>;
   auctionManager: AuctionManager;
   participationItem?: AuctionViewItem;
@@ -398,6 +399,7 @@ export function processAccountsIntoAuctionView(
         auctionManager,
         state,
         vault,
+        safetyDepositBoxes: boxes,
         items: auctionManager.getItemsFromSafetyDepositBoxes(
           metadataByMint,
           masterEditionsByPrintingMint,

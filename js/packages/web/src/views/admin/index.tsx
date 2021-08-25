@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   Layout,
   Row,
@@ -9,6 +9,7 @@ import {
   Modal,
   Button,
   Input,
+  Divider,
 } from 'antd';
 import { useMeta } from '../../contexts';
 import { Store, WhitelistedCreator } from '../../models/metaplex';
@@ -17,36 +18,83 @@ import {
   notify,
   ParsedAccount,
   shortenAddress,
-  useConnection,
-  useUserAccounts,
   StringPublicKey,
+  useConnection,
+  useStore,
+  useUserAccounts, useWalletModal,
   WalletSigner,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
-import { useMemo } from 'react';
 import {
   convertMasterEditions,
   filterMetadata,
 } from '../../actions/convertMasterEditions';
+import { Link } from 'react-router-dom';
+import { SetupVariables } from '../../components/SetupVariables';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator } = useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
+  const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
-  return store && connection && wallet.connected ? (
-    <InnerAdminView
-      store={store}
-      whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
-      connection={connection}
-      wallet={wallet}
-      connected={wallet.connected}
-    />
-  ) : (
-    <Spin />
+  useEffect(() => {
+    if (!store && !storeAddress && wallet.publicKey) {
+      setStoreForOwner(wallet.publicKey.toBase58());
+    }
+  }, [store, storeAddress, wallet.publicKey]);
+  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+
+  return (
+    <>
+      {!wallet.connected ? (
+        <p>
+          <Button type="primary" className="app-btn" onClick={connect}>
+            Connect
+          </Button>{' '}
+          to admin store.
+        </p>
+      ) : !storeAddress || isLoading ? (
+        <Spin />
+      ) : store && wallet ? (
+        <>
+          <InnerAdminView
+            store={store}
+            whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
+            connection={connection}
+            wallet={wallet}
+            connected={wallet.connected}
+          />
+          {!isConfigured && (
+            <>
+              <Divider />
+              <Divider />
+              <p>
+                To finish initialization please copy config below into{' '}
+                <b>packages/web/.env</b> and restart yarn or redeploy
+              </p>
+              <SetupVariables
+                storeAddress={storeAddress}
+                storeOwnerAddress={wallet.publicKey?.toBase58()}
+              />
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <p>Store is not initialized</p>
+          <Link to={`/`}>Go to initialize</Link>
+        </>
+      )}
+    </>
   );
 };
 
@@ -155,10 +203,6 @@ function InnerAdminView({
     };
     fn();
   }, [connected]);
-
-  if (!store || !newStore) {
-    return <p>Store is not defined</p>;
-  }
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {

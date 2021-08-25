@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import {
@@ -95,6 +95,7 @@ export const AuctionView = () => {
 
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
+  const attributes = data?.attributes;
 
   const items = [
     ...(auction?.items
@@ -158,7 +159,22 @@ export const AuctionView = () => {
                   No description provided.
                 </div>
               ))}
+
           </div>
+
+          {attributes &&
+            <>
+              <h6>Attributes</h6>
+              <List
+                grid={{ column: 4 }}
+              >
+                {attributes.map(attribute =>
+                  <List.Item>
+                    <Card title={attribute.trait_type}>{attribute.value}</Card>
+                  </List.Item>
+                )}
+              </List>
+            </>}
           {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>

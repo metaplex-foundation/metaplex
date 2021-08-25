@@ -369,7 +369,7 @@ export function Notifications() {
               connection,
               wallet,
               v,
-              accountByMint,
+              safetyDepositBoxesByVaultAndIndex,
             );
           } catch (e) {
             console.error(e);
