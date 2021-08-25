@@ -9,7 +9,9 @@ use {
     },
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
-    spl_token_metadata::state::MAX_DATA_SIZE,
+    spl_token_metadata::state::{
+        MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
+    },
 };
 
 const PREFIX: &str = "candy_machine";
@@ -20,29 +22,78 @@ pub mod nft_candy_machine {
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
         bump: u8,
-        name: [u8; 32],
+        uuid: String,
+        symbol: String,
+        seller_fee_basis_points: u16,
+        creators: Option<Vec<Creator>>,
         max_number_of_lines: u32,
     ) -> ProgramResult {
         let config = &mut ctx.accounts.config;
         config.bump = bump;
-        config.name = name;
+        if uuid.len() != 6 {
+            return Err(ErrorCode::ConfigUuidMustBeExactly6Length.into());
+        }
+        config.uuid = uuid;
         config.authority = *ctx.accounts.authority.key;
         config.max_number_of_lines = max_number_of_lines;
+
+        let mut array_of_zeroes = vec![];
+        while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - symbol.len() {
+            array_of_zeroes.push(0u8);
+        }
+        let new_symbol = symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+        config.symbol = new_symbol;
+
+        config.seller_fee_basis_points = seller_fee_basis_points;
+        if let Some(creat) = &creators {
+            // - 1 because we are going to be a creator
+            if creat.len() > MAX_CREATOR_LIMIT - 1 {
+                return Err(ErrorCode::TooManyCreators.into());
+            }
+        }
+        config.creators = creators;
         Ok(())
     }
 
     pub fn add_config_lines(
         ctx: Context<AddConfigLines>,
-        config_lines: Vec<ConfigLine>,
+        index: u32,
+        config_line: ConfigLine,
     ) -> ProgramResult {
+        let config_lines = [config_line];
         let config = &mut ctx.accounts.config;
         let account = config.to_account_info();
         let mut data = account.data.borrow_mut();
         let current_count = get_config_count(&account)?;
-        let as_vec = config_lines.try_to_vec()?;
+        let mut fixed_config_lines = vec![];
+
+        if index > config.max_number_of_lines - 1 {
+            return Err(ErrorCode::IndexGreaterThanLength.into());
+        }
+
+        for line in &config_lines {
+            let mut array_of_zeroes = vec![];
+            while array_of_zeroes.len() < MAX_NAME_LENGTH - line.name.len() {
+                array_of_zeroes.push(0u8);
+            }
+            let name = line.name.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+
+            let mut array_of_zeroes = vec![];
+            while array_of_zeroes.len() < MAX_URI_LENGTH - line.uri.len() {
+                array_of_zeroes.push(0u8);
+            }
+            let uri = line.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+            fixed_config_lines.push(ConfigLine {
+                name,
+                uri,
+                is_mutable: line.is_mutable,
+            })
+        }
+
+        let as_vec = fixed_config_lines.try_to_vec()?;
         // remove unneeded u32 because we're just gonna edit the u32 at the front
         let serialized: &[u8] = &as_vec.as_slice()[4..];
-        let position = CONFIG_ARRAY_START + 4 + (current_count + 1) * CONFIG_LINE_SIZE;
+        let position = CONFIG_ARRAY_START + 4 + (index as usize) * CONFIG_LINE_SIZE;
         let array_slice: &mut [u8] =
             &mut data[position..position + config_lines.len() * CONFIG_LINE_SIZE];
         array_slice.copy_from_slice(serialized);
@@ -60,6 +111,7 @@ pub mod nft_candy_machine {
         bump: u8,
         price: u64,
         items_available: u64,
+        go_live_date: Option<i64>,
     ) -> ProgramResult {
         let candy_machine = &mut ctx.accounts.candy_machine;
         candy_machine.price = price;
@@ -68,6 +120,7 @@ pub mod nft_candy_machine {
         candy_machine.authority = *ctx.accounts.authority.key;
         candy_machine.config = ctx.accounts.config.key();
         candy_machine.bump = bump;
+        candy_machine.go_live_date = go_live_date;
         if ctx.remaining_accounts.len() > 0 {
             let token_mint_info = &ctx.remaining_accounts[0];
             let _token_mint: Mint = assert_initialized(&token_mint_info)?;
@@ -99,7 +152,7 @@ pub struct InitializeCandyMachine<'info> {
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(constraint= !wallet.data_is_empty() || wallet.lamports() > 0 )]
     wallet: AccountInfo<'info>,
-    #[account(seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.name, &[config.bump]])]
+    #[account(seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.uuid.as_bytes(), &[config.bump]])]
     config: ProgramAccount<'info, Config>,
     #[account(constraint= !authority.data_is_empty() || authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
@@ -111,9 +164,9 @@ pub struct InitializeCandyMachine<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8, name: [u8; 32], max_number_of_lines: u32)]
+#[instruction(bump: u8, uuid: String, max_number_of_lines: u32)]
 pub struct InitializeConfig<'info> {
-    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &name], payer=payer, bump=bump, space=8+1+4+(max_number_of_lines as usize)*CONFIG_LINE_SIZE)]
+    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), uuid.as_bytes()], payer=payer, bump=bump, space=CONFIG_ARRAY_START+4+(max_number_of_lines as usize)*CONFIG_LINE_SIZE)]
     config: ProgramAccount<'info, Config>,
     #[account(constraint= !authority.data_is_empty() || authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
@@ -126,7 +179,7 @@ pub struct InitializeConfig<'info> {
 
 #[derive(Accounts)]
 pub struct AddConfigLines<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.name])]
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.uuid.as_bytes(), &[config.bump]])]
     config: ProgramAccount<'info, Config>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -142,17 +195,24 @@ pub struct CandyMachine {
     pub price: u64,
     pub items_available: u64,
     pub items_redeemed: u64,
+    pub go_live_date: Option<i64>,
     pub bump: u8,
 }
 
-pub const CONFIG_ARRAY_START: usize = 77;
+pub const CONFIG_ARRAY_START: usize = 51 + MAX_CREATOR_LEN + MAX_SYMBOL_LENGTH + 2;
 #[account]
 #[derive(Default)]
 pub struct Config {
-    bump: u8,
-    authority: Pubkey,
-    name: [u8; 32],
-    max_number_of_lines: u32,
+    pub bump: u8,
+    pub authority: Pubkey,
+    pub uuid: String,
+    /// The symbol for the asset
+    pub symbol: String,
+    /// Royalty basis points that goes to creators in secondary sales (0-10000)
+    pub seller_fee_basis_points: u16,
+    /// Array of creators, optional
+    pub creators: Option<Vec<Creator>>,
+    pub max_number_of_lines: u32,
     // there's a borsh vec u32 denoting how many actual lines of data there are currently (eventually equals max number of lines)
     // There is actually lines and lines of data after this but we explicitly never want them deserialized.
 }
@@ -174,44 +234,32 @@ pub fn get_config_line(
     let data_array = array_ref![
         arr,
         CONFIG_ARRAY_START + 4 + index * (CONFIG_LINE_SIZE),
-        MAX_DATA_SIZE
+        CONFIG_LINE_SIZE
     ];
 
-    let data: Data = try_from_slice_unchecked(data_array)?;
-    let is_mutable = arr[CONFIG_ARRAY_START + 4 + (index + 1) * (CONFIG_LINE_SIZE) - 1] != 0;
+    let config_line: ConfigLine = try_from_slice_unchecked(data_array)?;
 
-    Ok(ConfigLine { data, is_mutable })
+    Ok(config_line)
 }
 
-pub const CONFIG_LINE_SIZE: usize = MAX_DATA_SIZE + 1;
-#[account]
+pub const CONFIG_LINE_SIZE: usize = MAX_NAME_LENGTH + MAX_URI_LENGTH + 1;
+#[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct ConfigLine {
-    pub data: Data,
+    /// The name of the asset
+    pub name: String,
+    /// URI pointing to JSON representing the asset
+    pub uri: String,
     pub is_mutable: bool,
 }
 
 // Unfortunate duplication of token metadata so that IDL picks it up.
 
-#[account]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct Creator {
     pub address: Pubkey,
     pub verified: bool,
     // In percentages, NOT basis points ;) Watch out!
     pub share: u8,
-}
-
-#[account]
-pub struct Data {
-    /// The name of the asset
-    pub name: String,
-    /// The symbol for the asset
-    pub symbol: String,
-    /// URI pointing to JSON representing the asset
-    pub uri: String,
-    /// Royalty basis points that goes to creators in secondary sales (0-10000)
-    pub seller_fee_basis_points: u16,
-    /// Array of creators, optional
-    pub creators: Option<Vec<Creator>>,
 }
 
 #[error]
@@ -228,4 +276,8 @@ pub enum ErrorCode {
     ConfigMustHaveAtleastOneEntry,
     #[msg("Numerical overflow error!")]
     NumericalOverflowError,
+    #[msg("Can only provide up to 4 creators to candy machine (because candy machine is one)!")]
+    TooManyCreators,
+    #[msg("Config uuid must be exactly of 6 length")]
+    ConfigUuidMustBeExactly6Length,
 }

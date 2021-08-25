@@ -9,7 +9,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { CandyMachine, Config, ConfigLine } from "./nft-candy-machine-types";
+import { CandyMachine, Config } from "./nft-candy-machine-types";
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
@@ -103,99 +103,123 @@ describe("nft-candy-machine", function () {
     );
   };
 
-  const getConfig = async (
-    authority: anchor.web3.PublicKey,
-    name: number[]
-  ) => {
+  const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
     return await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(name)],
+      [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
       programId
     );
   };
 
-  const createConfig = async function () {
-    this.authority = anchor.web3.Keypair.generate();
-    this.name = [1, 2, 3, 4];
-    const [config, bump] = await getConfig(this.authority.publicKey, this.name);
-    this.config = config;
-    this.configBump = bump;
-    await program.rpc.initialize_config(bump, this.name, 5, {
-      accounts: {
-        config: this.config.publicKey,
-        authority: this.authority.publicKey,
-        payer: myWallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      },
-      signers: [myWallet, this.authority],
-      instructions: [
-        anchor.web3.SystemProgram.transfer({
-          fromPubkey: myWallet.publicKey,
-          toPubkey: this.authority.publicKey,
-          lamports: 5,
-        }),
-      ],
-    });
-  };
-
-  const addConfigLines = async function () {
-    const sample = {
-      symbol: "SAMPLE",
-      uri: "www.aol.com",
-      creators: [{ address: myWallet.publicKey, verified: true, share: 100 }],
-      sellerFeeBasisPoints: 5,
-    };
-    const firstVec: ConfigLine[] = [];
-    for (let i = 0; i < 5; i++) {
-      firstVec.push([
-        { data: { ...sample, name: `Sample ${i}` }, mutable: true },
-      ]);
-    }
-    const secondVec: ConfigLine[] = [];
-    for (let i = 5; i < 10; i++) {
-      secondVec.push([
-        { data: { ...sample, name: `Sample ${i}` }, mutable: true },
-      ]);
-    }
-    await program.rpc.add_config_lines(firstVec, {
-      accounts: {
-        config: this.config.publicKey,
-        authority: this.authority.publicKey,
-      },
-      signers: [this.authority, myWallet],
-    });
-
-    await program.rpc.add_config_lines(secondVec, {
-      accounts: {
-        config: this.config.publicKey,
-        authority: this.authority.publicKey,
-      },
-      signers: [this.authority, myWallet],
-    });
-  };
-
-  describe("sol only", function () {
-    beforeEach(async function () {
-      await createConfig();
-      await addConfigLines();
-      const [candyMachine, bump] = await getCandyMachine(this.config);
-      const tx = await program.rpc.initialize_candy_machine(
+  const createConfig = async function (that) {
+    that.authority = anchor.web3.Keypair.generate();
+    that.uuid = anchor.web3.Keypair.generate().publicKey.toBase58().slice(0, 6);
+    const [config, bump] = await getConfig(that.authority.publicKey, that.uuid);
+    that.config = config;
+    that.configBump = bump;
+    try {
+      await program.rpc.initializeConfig(
         bump,
-        new anchor.BN(1),
-        new anchor.BN(5),
+        that.uuid,
+        "SYMBOL",
+        500,
+        [{ address: myWallet.publicKey, verified: false, share: 100 }],
+        10,
         {
           accounts: {
-            candyMachine,
-            wallet: myWallet.publicKey,
-            config: this.config,
-            authority: myWallet.publicKey,
+            config: that.config,
+            authority: that.authority.publicKey,
             payer: myWallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
           },
           signers: [myWallet],
+          instructions: [
+            anchor.web3.SystemProgram.transfer({
+              fromPubkey: myWallet.publicKey,
+              toPubkey: that.authority.publicKey,
+              lamports: 5,
+            }),
+          ],
         }
       );
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  };
+
+  const addConfigLines = async function (that) {
+    const sample = {
+      uri: "www.aol.com",
+      isMutable: true,
+    };
+    const firstVec = [];
+    for (let i = 0; i < 5; i++) {
+      firstVec.push([{ ...sample, name: `Sample ${i}` }]);
+    }
+    const secondVec = [];
+    for (let i = 5; i < 10; i++) {
+      secondVec.push([{ ...sample, name: `Sample ${i}` }]);
+    }
+    try {
+      await program.rpc.addConfigLines(
+        0,
+        { ...sample, name: "Sample" },
+        {
+          accounts: {
+            config: that.config,
+            authority: that.authority.publicKey,
+          },
+          signers: [that.authority, myWallet],
+        }
+      );
+
+      await program.rpc.addConfigLines(
+        5,
+        { ...sample, name: "Sample" },
+        {
+          accounts: {
+            config: that.config,
+            authority: that.authority.publicKey,
+          },
+          signers: [that.authority, myWallet],
+        }
+      );
+    } catch (e) {
+      console.log("Config line failure");
+      console.log(e);
+      throw e;
+    }
+  };
+
+  describe("sol only", function () {
+    beforeEach(async function () {
+      await createConfig(this);
+      await addConfigLines(this);
+      const [candyMachine, bump] = await getCandyMachine(this.config);
+      try {
+        const tx = await program.rpc.initializeCandyMachine(
+          bump,
+          new anchor.BN(1),
+          new anchor.BN(5),
+          null,
+          {
+            accounts: {
+              candyMachine,
+              wallet: myWallet.publicKey,
+              config: this.config,
+              authority: myWallet.publicKey,
+              payer: myWallet.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+              rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            },
+            signers: [myWallet],
+          }
+        );
+      } catch (e) {
+        console.log(e);
+        throw e;
+      }
     });
 
     it("Is initialized!", async function () {
@@ -234,60 +258,66 @@ describe("nft-candy-machine", function () {
     };
 
     beforeEach(async function () {
-      await createConfig();
-      await addConfigLines();
+      await createConfig(this);
+      await addConfigLines(this);
       this.tokenMint = anchor.web3.Keypair.generate();
       const [candyMachine, bump] = await getCandyMachine(this.config);
       this.walletToken = await getTokenWallet(this.tokenMint.publicKey);
-      const tx = await program.rpc.initialize_candy_machine(
-        bump,
-        new anchor.BN(1),
-        new anchor.BN(5),
-        {
-          accounts: {
-            candyMachine,
-            wallet: this.walletToken,
-            config: this.config,
-            authority: myWallet.publicKey,
-            payer: myWallet.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          },
-          remainingAccounts: [
-            {
-              pubkey: this.tokenMint.publicKey,
-              isWritable: false,
-              isSigner: true,
+      try {
+        const tx = await program.rpc.initialize_candy_machine(
+          bump,
+          new anchor.BN(1),
+          new anchor.BN(5),
+          null,
+          {
+            accounts: {
+              candyMachine,
+              wallet: this.walletToken,
+              config: this.config,
+              authority: myWallet.publicKey,
+              payer: myWallet.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+              rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             },
-          ],
-          signers: [myWallet, this.tokenMint],
-          instructions: [
-            anchor.web3.SystemProgram.createAccount({
-              fromPubkey: myWallet.publicKey,
-              newAccountPubkey: this.tokenMint.publicKey,
-              space: MintLayout.span,
-              lamports:
-                await provider.connection.getMinimumBalanceForRentExemption(
-                  MintLayout.span
-                ),
-              programId: TOKEN_PROGRAM_ID,
-            }),
-            Token.createInitMintInstruction(
-              TOKEN_PROGRAM_ID,
-              this.tokenMint.publicKey,
-              0,
-              myWallet.publicKey,
-              myWallet.publicKey
-            ),
-            createAssociatedTokenAccountInstruction(
-              this.walletToken,
-              myWallet.publicKey,
-              myWallet.publicKey,
-              this.tokenMint.publicKey
-            ),
-          ],
-        }
-      );
+            remainingAccounts: [
+              {
+                pubkey: this.tokenMint.publicKey,
+                isWritable: false,
+                isSigner: true,
+              },
+            ],
+            signers: [myWallet, this.tokenMint],
+            instructions: [
+              anchor.web3.SystemProgram.createAccount({
+                fromPubkey: myWallet.publicKey,
+                newAccountPubkey: this.tokenMint.publicKey,
+                space: MintLayout.span,
+                lamports:
+                  await provider.connection.getMinimumBalanceForRentExemption(
+                    MintLayout.span
+                  ),
+                programId: TOKEN_PROGRAM_ID,
+              }),
+              Token.createInitMintInstruction(
+                TOKEN_PROGRAM_ID,
+                this.tokenMint.publicKey,
+                0,
+                myWallet.publicKey,
+                myWallet.publicKey
+              ),
+              createAssociatedTokenAccountInstruction(
+                this.walletToken,
+                myWallet.publicKey,
+                myWallet.publicKey,
+                this.tokenMint.publicKey
+              ),
+            ],
+          }
+        );
+      } catch (e) {
+        console.log(e);
+        throw e;
+      }
     });
 
     it("Is initialized!", async function () {
