@@ -23,11 +23,12 @@ use {
     spl_token_metadata::{
         instruction::{
             create_master_edition, create_metadata_accounts,
-            mint_new_edition_from_master_edition_via_token, update_metadata_accounts,puff_metadata_account
+            mint_new_edition_from_master_edition_via_token, puff_metadata_account,
+            update_metadata_accounts,
         },
         state::{
             get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
-            EDITION, PREFIX,MAX_NAME_LENGTH, MAX_URI_LENGTH, MAX_SYMBOL_LENGTH
+            EDITION, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
         },
     },
     std::str::FromStr,
@@ -35,18 +36,26 @@ use {
 
 const TOKEN_PROGRAM_PUBKEY: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
-    let metadata_accounts = client.get_program_accounts(&spl_token_metadata::id()).unwrap();
+    let metadata_accounts = client
+        .get_program_accounts(&spl_token_metadata::id())
+        .unwrap();
     let mut needing_puffing = vec![];
     for acct in metadata_accounts {
         if acct.1.data[0] == Key::MetadataV1 as u8 {
             match try_from_slice_unchecked(&acct.1.data) {
                 Ok(val) => {
                     let account: Metadata = val;
-                    if account.data.name.len() < MAX_NAME_LENGTH || account.data.uri.len() < MAX_URI_LENGTH || account.data.symbol.len() < MAX_SYMBOL_LENGTH || account.edition_nonce.is_none() {
+                    if account.data.name.len() < MAX_NAME_LENGTH
+                        || account.data.uri.len() < MAX_URI_LENGTH
+                        || account.data.symbol.len() < MAX_SYMBOL_LENGTH
+                        || account.edition_nonce.is_none()
+                    {
                         needing_puffing.push(acct.0);
                     }
-                },
-                Err(_) => { println!("Skipping {}", acct.0)},
+                }
+                Err(_) => {
+                    println!("Skipping {}", acct.0)
+                }
             };
         }
     }
@@ -67,11 +76,11 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
                     println!("Another 20 down. At {} / {}", i, needing_puffing.len());
                     instructions = vec![];
                     i += 1;
-                },
+                }
                 Err(_) => {
                     println!("Txn failed. Retry.");
                     std::thread::sleep(std::time::Duration::from_millis(1000));
-                },
+                }
             }
         } else {
             i += 1;
@@ -541,11 +550,7 @@ fn create_metadata_account_call(
         Some(_val) => pubkey_of(app_matches, "mint").unwrap(),
         None => new_mint.pubkey(),
     };
-    let metadata_seeds = &[
-        PREFIX.as_bytes(),
-        &program_key.as_ref(),
-        mint_key.as_ref(),
-    ];
+    let metadata_seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), mint_key.as_ref()];
     let (metadata_key, _) = Pubkey::find_program_address(metadata_seeds, &program_key);
 
     let mut new_mint_instructions = vec![
@@ -568,22 +573,21 @@ fn create_metadata_account_call(
         .unwrap(),
     ];
 
-    let new_metadata_instruction =
-        create_metadata_accounts(
-            program_key,
-            metadata_key,
-            mint_key,
-            payer.pubkey(),
-            payer.pubkey(),
-            update_authority.pubkey(),
-            name,
-            symbol,
-            uri,
-            None,
-            0,
-            update_authority.pubkey() != payer.pubkey(),
-            mutable,
-        );
+    let new_metadata_instruction = create_metadata_accounts(
+        program_key,
+        metadata_key,
+        mint_key,
+        payer.pubkey(),
+        payer.pubkey(),
+        update_authority.pubkey(),
+        name,
+        symbol,
+        uri,
+        None,
+        0,
+        update_authority.pubkey() != payer.pubkey(),
+        mutable,
+    );
 
     let mut instructions = vec![new_metadata_instruction];
 
@@ -870,7 +874,8 @@ fn main() {
             );
         }
         ("mint_new_edition_from_master_edition_via_token", Some(arg_matches)) => {
-            let (edition, edition_key, mint) = mint_edition_via_token_call(arg_matches, payer, client);
+            let (edition, edition_key, mint) =
+                mint_edition_via_token_call(arg_matches, payer, client);
             println!(
                 "New edition: {:?}\nParent edition: {:?}\nEdition number: {:?}\nToken mint: {:?}",
                 edition_key, edition.parent, edition.edition, mint

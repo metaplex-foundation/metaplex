@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton } from 'antd';
+import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from './../../hooks';
 
@@ -36,6 +36,7 @@ export const ArtView = () => {
   // }, new Map<string, TokenAccount>());
 
   const description = data?.description;
+  const attributes = data?.attributes;
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
@@ -180,7 +181,7 @@ export const ArtView = () => {
                   Mark as Sold
                 </Button> */}
           </Col>
-          <Col span="24">
+          <Col span="12">
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
@@ -193,6 +194,25 @@ export const ArtView = () => {
 
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
+          </Col>
+          <Col span="12">
+            {attributes &&
+              <>
+                <Divider />
+                <br />
+                <div className="info-header">Attributes</div>
+                <List
+                  size="large"
+                  grid={{ column: 4 }}
+                >
+                  {attributes.map(attribute =>
+                    <List.Item>
+                      <Card title={attribute.trait_type}>{attribute.value}</Card>
+                    </List.Item>
+                  )}
+                </List>
+              </>
+            }
           </Col>
         </Row>
       </Col>

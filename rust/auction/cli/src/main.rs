@@ -42,7 +42,7 @@ fn create_auction(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let mint = read_keypair_file(app_matches.value_of("mint").unwrap()).unwrap();
 
     // Auction seeds.
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), &resource.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref(), resource.as_ref()];
     let (auction_pubkey, _) = Pubkey::find_program_address(seeds, &program_key);
 
     // Configure a price floor
@@ -199,7 +199,7 @@ fn place_bid(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let bidder = read_keypair_file(app_matches.value_of("bidder").unwrap()).unwrap();
 
     // Auction seeds.
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), &resource.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref(), resource.as_ref()];
     let (auction_pubkey, _) = Pubkey::find_program_address(seeds, &program_key);
 
     // Parse CLI amount value, fail if not a number.
@@ -342,14 +342,14 @@ fn claim_bid(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let destination = read_keypair_file(app_matches.value_of("destination").unwrap()).unwrap();
 
     // Auction seeds.
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), &resource.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref(), resource.as_ref()];
     let (auction, _) = Pubkey::find_program_address(seeds, &program_key);
     let bidder_pubkey = bidder.pubkey();
     let seeds = &[
         PREFIX.as_bytes(),
-        &program_key.as_ref(),
-        &auction.as_ref(),
-        &bidder_pubkey.as_ref(),
+        program_key.as_ref(),
+        auction.as_ref(),
+        bidder_pubkey.as_ref(),
     ];
     let (bidpot, _) = Pubkey::find_program_address(seeds, &program_key);
     let bidpot_data = client.get_account(&bidpot).unwrap();
@@ -435,14 +435,14 @@ fn cancel_bid(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let bidder = read_keypair_file(app_matches.value_of("bidder").unwrap()).unwrap();
 
     // Load Bidpot data.
-    let seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), &resource.as_ref()];
+    let seeds = &[PREFIX.as_bytes(), program_key.as_ref(), resource.as_ref()];
     let (auction, _) = Pubkey::find_program_address(seeds, &program_key);
     let bidder_pubkey = bidder.pubkey();
     let seeds = &[
         PREFIX.as_bytes(),
-        &program_key.as_ref(),
-        &auction.as_ref(),
-        &bidder_pubkey.as_ref(),
+        program_key.as_ref(),
+        auction.as_ref(),
+        bidder_pubkey.as_ref(),
     ];
     let (bidpot, _) = Pubkey::find_program_address(seeds, &program_key);
     let bidpot_data = client.get_account(&bidpot).unwrap();

@@ -41,7 +41,7 @@ export async function decommissionAuctionManager(
     {
       pubkey: toPublicKey(vault),
       isSigner: false,
-      isWritable: false,
+      isWritable: true,
     },
     {
       pubkey: toPublicKey(store),
@@ -55,6 +55,11 @@ export async function decommissionAuctionManager(
     },
     {
       pubkey: SYSVAR_CLOCK_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(programIds().vault),
       isSigner: false,
       isWritable: false,
     },
