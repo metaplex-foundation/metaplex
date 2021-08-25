@@ -1,6 +1,7 @@
-import { useConnection, useStore, useWallet } from '@oyster/common';
+import { useConnection, useStore, useWalletModal } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { useMeta } from '../../contexts';
@@ -13,23 +14,28 @@ export const SetupView = () => {
   const { store } = useMeta();
   const { setStoreForOwner } = useStore();
   const history = useHistory();
-  const { wallet, connected, connect } = useWallet();
+  const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
   const [storeAddress, setStoreAddress] = useState<string | undefined>();
 
   useEffect(() => {
     const getStore = async () => {
-      if (connected && wallet) {
-        const store = await setStoreForOwner(wallet?.publicKey?.toBase58());
+      if (wallet.publicKey) {
+        const store = await setStoreForOwner(wallet.publicKey.toBase58());
         setStoreAddress(store);
       } else {
         setStoreAddress(undefined);
       }
     };
     getStore();
-  }, [wallet?.publicKey, connected]);
+  }, [wallet.publicKey]);
 
   const initializeStore = async () => {
-    if (!wallet?.publicKey) {
+    if (!wallet.publicKey) {
       return;
     }
 
@@ -46,14 +52,14 @@ export const SetupView = () => {
 
     // Fack to reload meta
     await setStoreForOwner(undefined);
-    await setStoreForOwner(wallet?.publicKey?.toBase58());
+    await setStoreForOwner(wallet.publicKey.toBase58());
 
     history.push('/admin');
   };
 
   return (
     <>
-      {!connected && (
+      {!wallet.connected && (
         <p>
           <Button type="primary" className="app-btn" onClick={connect}>
             Connect
@@ -61,7 +67,7 @@ export const SetupView = () => {
           to configure store.
         </p>
       )}
-      {connected && !store && (
+      {wallet.connected && !store && (
         <>
           <p>Store is not initialized yet</p>
           <p>There must be some ◎ SOL in the wallet before initialization.</p>
@@ -82,7 +88,7 @@ export const SetupView = () => {
           </p>
         </>
       )}
-      {connected && store && (
+      {wallet.connected && store && (
         <>
           <p>
             To finish initialization please copy config below into{' '}
@@ -90,7 +96,7 @@ export const SetupView = () => {
           </p>
           <SetupVariables
             storeAddress={storeAddress}
-            storeOwnerAddress={wallet?.publicKey?.toBase58()}
+            storeOwnerAddress={wallet.publicKey?.toBase58()}
           />
         </>
       )}

@@ -113,7 +113,7 @@ export async function unwindVault(
       nft.info.store,
       vault.pubkey,
       vault.info.fractionMint,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       currInstructions,
     );
 
