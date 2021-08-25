@@ -162,29 +162,21 @@ describe("nft-candy-machine", function () {
       secondVec.push([{ ...sample, name: `Sample ${i}` }]);
     }
     try {
-      await program.rpc.addConfigLines(
-        0,
-        { ...sample, name: "Sample" },
-        {
-          accounts: {
-            config: that.config,
-            authority: that.authority.publicKey,
-          },
-          signers: [that.authority, myWallet],
-        }
-      );
+      await program.rpc.addConfigLines(0, firstVec, {
+        accounts: {
+          config: that.config,
+          authority: that.authority.publicKey,
+        },
+        signers: [that.authority, myWallet],
+      });
 
-      await program.rpc.addConfigLines(
-        5,
-        { ...sample, name: "Sample" },
-        {
-          accounts: {
-            config: that.config,
-            authority: that.authority.publicKey,
-          },
-          signers: [that.authority, myWallet],
-        }
-      );
+      await program.rpc.addConfigLines(5, secondVec, {
+        accounts: {
+          config: that.config,
+          authority: that.authority.publicKey,
+        },
+        signers: [that.authority, myWallet],
+      });
     } catch (e) {
       console.log("Config line failure");
       console.log(e);

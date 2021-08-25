@@ -58,9 +58,8 @@ pub mod nft_candy_machine {
     pub fn add_config_lines(
         ctx: Context<AddConfigLines>,
         index: u32,
-        config_line: ConfigLine,
+        config_lines: Vec<ConfigLine>,
     ) -> ProgramResult {
-        let config_lines = [config_line];
         let config = &mut ctx.accounts.config;
         let account = config.to_account_info();
         let mut data = account.data.borrow_mut();
