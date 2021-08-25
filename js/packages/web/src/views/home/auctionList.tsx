@@ -1,4 +1,4 @@
-import { useWallet } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
@@ -26,7 +26,7 @@ export const AuctionListView = () => {
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
-  const { wallet, connected } = useWallet();
+  const { wallet, connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -81,7 +81,7 @@ export const AuctionListView = () => {
         .filter(
           (m, idx) =>
             m.myBidderMetadata?.info.bidderPubkey ==
-            wallet?.publicKey?.toBase58(),
+            publicKey?.toBase58(),
         );
       break;
     case LiveAuctionViewState.Resale:
