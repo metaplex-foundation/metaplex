@@ -32,12 +32,13 @@ export const isMetadataPartOfStore = (
     '5tKKMmKckWk7sXW2WthC8Z9tzVC7M99tiMp19tp1pXKX' /*RopeOfClimbing*/,
     '6oj3k2e4BhbEqgjwnpPVYvzcxDT1FZSxgGqySUVv5BA8' /*AmuletOfHealth*/,
   ];
-  if (badCreation.includes(m.pubkey.toBase58())) {
+  if (badCreation.includes(m.pubkey)) {
     return false;
   }
   if (useAll) {
     return true;
   }
+
   if (!m?.info?.data?.creators || !store?.info) {
     return false;
   }
