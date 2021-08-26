@@ -12,7 +12,8 @@
     "dev:watch": "ts-node-dev --respawn src/index.ts",
     "dev": "ts-node src/index.ts",
     "format": "prettier --write 'src/**/*.{js,ts,json}'",
-    "start": "tsc && node dist/index.js",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "server": "ts-node-dev --transpile-only src/server.ts",
     "tsc": "tsc",
     "tscCheck": "tsc --noEmit"

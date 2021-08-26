@@ -17,26 +17,21 @@ import { mapInfo, wrapPubkey } from './utils/mapInfo';
 
 // XXX: re-use list from `contexts/connection` ?
 export const ENDPOINTS = [
-  // TODO: uncomment this
-  // TODO: check other mainnets (Solana, Serum)
-  // {
-  //   name: 'mainnet-beta',
-  //   endpoint: 'https://api.metaplex.solana.com/',
-  // },
-  // {
-  //   name: 'testnet',
-  //   endpoint: clusterApiUrl('testnet'),
-  // },
+  {
+    name: 'mainnet-beta',
+    endpoint: 'https://api.metaplex.solana.com/',
+  },
+  {
+    name: 'testnet',
+    endpoint: clusterApiUrl('testnet'),
+  },
   {
     name: 'devnet',
     endpoint: clusterApiUrl('devnet'),
   },
 ];
 
-// TODO: set to mainnet-beta
-export const DEFAULT_ENDPOINT = ENDPOINTS.find(
-  ({ name }) => name === 'devnet',
-)!;
+export const DEFAULT_ENDPOINT = ENDPOINTS[0];
 
 interface ConnectionConfig {
   connection: Connection;

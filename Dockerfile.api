@@ -25,23 +25,26 @@ RUN yarn build
 # Stage 2: Serve app
 
 # Production image, copy all the files and run next
-FROM node:14.17.3-alpine AS runner
+FROM node:14.17.3-alpine AS api-server
 WORKDIR /app
 
 ENV NODE_ENV production
 
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN adduser -S api -u 1001
 
 # Copy the build output
-COPY --from=build /app/packages/web/next.config.js ./
-COPY --from=build /app/packages/web/public ./public
-COPY --from=build --chown=nextjs:nodejs /app/packages/web/.next ./.next
+COPY --from=build /app/packages/api/dist ./dist
+COPY --from=build /app/packages/api/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages/web/package.json ./package.json
 
-USER nextjs
+# Copy @oyster/common module
+RUN rm -f node_modules/@oyster/common && mkdir -p node_modules/@oyster/common/dist
+COPY --from=build /app/packages/common/dist ./node_modules/@oyster/common/dist
+COPY --from=build /app/packages/common/package.json ./node_modules/@oyster/common
 
-EXPOSE 3000
+# USER api
 
-CMD ["yarn", "start:prod"]
+EXPOSE 4000
+
+CMD ["yarn", "start"]
