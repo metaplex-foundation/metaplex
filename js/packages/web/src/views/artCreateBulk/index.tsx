@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, CSSProperties } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Row, Button, Col, Progress, InputNumber } from 'antd';
 import CSVReader, { IFileInfo } from 'react-csv-reader';
@@ -195,7 +195,7 @@ export const ArtCreateBulkView = () => {
           <>
             <br />
             <h2>Minted Items:</h2>
-            <pre style={styles.pre}>
+            <pre style={styles.pre as CSSProperties}>
               {JSON.stringify(mintedTokens, undefined, 2)}
             </pre>
           </>
@@ -269,8 +269,8 @@ export const ArtCreateBulkView = () => {
           </Button>
           <br />
 
-          <pre style={styles.pre}>
-            {csvDataPartial.map(row => (
+          <pre style={styles.pre as CSSProperties}>
+            {csvDataPartial.map((row: any) => (
               <div>{JSON.stringify(row.name, undefined, 2)} </div>
             ))}
           </pre>
