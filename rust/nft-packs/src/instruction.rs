@@ -125,18 +125,25 @@ pub enum NFTPacksInstruction {
     /// - write             user_token_acc (user token account ot hold new minted edition)
     ClaimPack,
 
-    /// TransferAuthority
+    /// TransferPackAuthority
     ///
-    /// Change either usual authority or mint authority.
+    /// Change pack authority.
     ///
     /// Accounts:
     /// - write            pack_set
     /// - signer           current_authority
     /// - read             new_authority
+    TransferPackAuthority,
+
+    /// TransferMintingAuthority
     ///
-    /// Parameters:
-    /// - authority_type enum[pack, minting]
-    TransferAuthority,
+    /// Change minting authority.
+    ///
+    /// Accounts:
+    /// - write            pack_set
+    /// - signer           current_authority
+    /// - read             new_authority
+    TransferMintingAuthority,
 
     /// DeletePack
     ///
@@ -284,4 +291,26 @@ pub fn prove_ownership(
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
+}
+
+/// Create `TransferPackAuthority` instruction
+pub fn transfer_pack_authority(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, new_authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*new_authority, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::TransferPackAuthority, accounts)
+}
+
+/// Create `TransferMintingAuthority` instruction
+pub fn transfer_minting_authority(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, new_authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*new_authority, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::TransferMintingAuthority, accounts)
 }

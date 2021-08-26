@@ -6,12 +6,14 @@ use borsh::BorshDeserialize;
 use deactivate::deactivate_pack;
 use init_pack::init_pack;
 use prove_ownership::prove_ownership;
+use change_authority::{transfer_authority, AuthorityToChange};
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
 pub mod deactivate;
 pub mod init_pack;
 pub mod prove_ownership;
+pub mod change_authority;
 
 /// Program state handler.
 pub struct Processor {}
@@ -52,9 +54,13 @@ impl Processor {
                 msg!("");
                 unimplemented!()
             }
-            NFTPacksInstruction::TransferAuthority => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::TransferPackAuthority => {
+                msg!("Instruction: TransferPackAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::PackAuthority)
+            }
+            NFTPacksInstruction::TransferMintingAuthority => {
+                msg!("Instruction: TransferMintingAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
             }
             NFTPacksInstruction::DeletePack => {
                 msg!("");
