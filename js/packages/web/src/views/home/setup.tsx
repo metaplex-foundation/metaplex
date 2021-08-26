@@ -1,7 +1,7 @@
-import { useConnection, useStore, WalletSigner } from '@oyster/common';
+import { useConnection, useStore, useWalletModal, WalletSigner } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { useMeta } from '../../contexts';
@@ -16,22 +16,27 @@ export const SetupView = () => {
   const { setStoreForOwner } = useStore();
   const history = useHistory();
   const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
   const [storeAddress, setStoreAddress] = useState<string | undefined>();
 
   useEffect(() => {
     const getStore = async () => {
-      if (wallet.connected) {
-        const store = await setStoreForOwner(wallet.publicKey?.toBase58());
+      if (wallet.publicKey) {
+        const store = await setStoreForOwner(wallet.publicKey.toBase58());
         setStoreAddress(store);
       } else {
         setStoreAddress(undefined);
       }
     };
     getStore();
-  }, [wallet.publicKey, wallet.connected]);
+  }, [wallet.publicKey]);
 
   const initializeStore = async () => {
-    if (!wallet.publicKey || !wallet) {
+    if (!wallet.publicKey) {
       return;
     }
 
@@ -47,7 +52,7 @@ export const SetupView = () => {
     // TODO: process errors
 
     await setStoreForOwner(undefined);
-    await setStoreForOwner(wallet.publicKey?.toBase58());
+    await setStoreForOwner(wallet.publicKey.toBase58());
 
     history.push('/admin');
   };
@@ -56,7 +61,7 @@ export const SetupView = () => {
     <>
       {!wallet.connected && (
         <p>
-          <Button type="primary" className="app-btn" onClick={wallet.connect}>
+          <Button type="primary" className="app-btn" onClick={connect}>
             Connect
           </Button>{' '}
           to configure store.

@@ -26,7 +26,7 @@ export const AuctionListView = () => {
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
-  const { wallet, connected, publicKey } = useWallet();
+  const { connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
