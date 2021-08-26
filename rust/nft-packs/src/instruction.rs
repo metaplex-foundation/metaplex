@@ -1,5 +1,6 @@
 //! Instruction types
 
+use crate::{find_pack_voucher_program_address, find_proving_process_program_address};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -109,9 +110,6 @@ pub enum NFTPacksInstruction {
     /// - read             pack_voucher (PDA, [pack, 'voucher', index])
     /// - read             master_metadata
     /// - write            user_token_acc (account with edition token)
-    /// 
-    /// Parameters:
-    /// - index u32
     ProveOwnership,
 
     /// ClaimPack
@@ -259,4 +257,31 @@ pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) ->
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
+}
+
+/// Create `ProveOwnership` instruction
+pub fn prove_ownership(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    edition_data: &Pubkey,
+    edition_mint: &Pubkey,
+    user_wallet: &Pubkey,
+    user_token_acc: &Pubkey,
+    voucher: &Pubkey,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*edition_data, false),
+        AccountMeta::new(*edition_mint, false),
+        AccountMeta::new(*voucher, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(*user_token_acc, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
 }
