@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
+import { ConnectButton, CurrentUserBadge } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
@@ -9,9 +10,9 @@ import { useMeta } from '../../contexts';
 
 
 const UserActions = () => {
-  const { wallet } = useWallet();
+  const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
+  const pubkey = publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
     return (
@@ -124,8 +125,7 @@ export const AppBar = () => {
         <div className="divider" />
         <MetaplexMenu />
       </div>
-      {!connected && <ConnectButton type="primary" />}
-      {connected && (
+      {connected ? (
         <div className="app-right app-bar-box">
           <UserActions />
           <CurrentUserBadge
@@ -134,6 +134,8 @@ export const AppBar = () => {
             iconSize={24}
           />
         </div>
+      ) : (
+        <ConnectButton type="primary" allowWalletChange />
       )}
     </>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import {
@@ -23,11 +23,11 @@ import {
   useConnectionConfig,
   fromLamports,
   useMint,
-  useWallet,
   AuctionState,
   StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
@@ -95,6 +95,7 @@ export const AuctionView = () => {
 
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
+  const attributes = data?.attributes;
 
   const items = [
     ...(auction?.items
@@ -158,7 +159,22 @@ export const AuctionView = () => {
                   No description provided.
                 </div>
               ))}
+
           </div>
+
+          {attributes &&
+            <>
+              <h6>Attributes</h6>
+              <List
+                grid={{ column: 4 }}
+              >
+                {attributes.map(attribute =>
+                  <List.Item>
+                    <Card title={attribute.trait_type}>{attribute.value}</Card>
+                  </List.Item>
+                )}
+              </List>
+            </>}
           {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>
@@ -227,9 +243,9 @@ const BidLine = (props: {
   isActive?: boolean;
 }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
-  const { wallet } = useWallet();
+  const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
-  const isme = wallet?.publicKey?.toBase58() === bidder;
+  const isme = publicKey?.toBase58() === bidder;
 
   // Get Twitter Handle from address
   const connection = useConnection();
