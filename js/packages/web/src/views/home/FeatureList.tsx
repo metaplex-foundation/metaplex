@@ -94,6 +94,13 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
       >
         Feature List
       </Title>
+      <p style={styles.description}>
+        We have over 30 unique attributes in different combination.<br /> All items
+        are unique but some are more unique because of having incredibly rare
+        properties
+      </p>
+      <br />
+      <br />
       <Row
         style={{ width: '100%' }}
         className="feature-list-home"
@@ -138,8 +145,13 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
 const styles = {
   ul: {
     padding: '0',
-    margin: '1em 0'
-  }
-}
+    margin: '1em 0',
+  },
+  description: {
+    color: 'white',
+    fontSize: '1.5em',
+    margin: 0,
+  },
+};
 
 export default FeatureList;
