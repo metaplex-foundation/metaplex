@@ -274,6 +274,8 @@ pub fn claim_pack(
         AccountMeta::new(*metadata_mint, false),
         AccountMeta::new(*edition, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     Instruction::new_with_borsh(

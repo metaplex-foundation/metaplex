@@ -71,11 +71,53 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
     // Obtain edition instance
     let edition = Edition::from_account_info(edition_account)?;
 
-    let _new_metadata = Metadata::from_account_info(new_metadata_account)?;
-    let _new_edition = Edition::from_account_info(new_edition_account)?;
+    // Obtain master metadata instance
+    let master_metadata = Metadata::from_account_info(metadata_account)?;
 
-    // Вызов token_metadata(mint_new_edition_via_token), mint аккаунт создаётся off-chain(mint инициализируется on-chain)
-    // Передается созданный токен аккаунт для probability, на контракте инит
+    // Obtain master metadata mint instance
+    let master_mint =
+        spl_token::state::Mint::unpack_unchecked(&metadata_mint_account.data.borrow())?;
+
+    // Initialize mint
+    invoke_signed(
+        &spl_token::instruction::initialize_mint(
+            &spl_token::id(),
+            new_mint_account.key,
+            new_mint_authority_account.key,
+            None,
+            master_mint.decimals,
+        )?,
+        &[],
+        &[],
+    )?;
+
+    // Create new metadata account on-chain from master metadata account
+    invoke_signed(
+        &spl_token_metadata::instruction::create_metadata_accounts(
+            spl_token_metadata::id(),
+            *new_metadata_account.key,
+            *new_mint_account.key,
+            *new_mint_authority_account.key,
+            *user_wallet_account.key,
+            *user_wallet_account.key,
+            master_metadata.data.name,
+            master_metadata.data.symbol,
+            master_metadata.data.uri,
+            master_metadata.data.creators,
+            master_metadata.data.seller_fee_basis_points,
+            true,
+            master_metadata.is_mutable,
+        ),
+        &[
+            new_metadata_account.clone(),
+            new_mint_account.clone(),
+            new_mint_authority_account.clone(),
+            user_wallet_account.clone(),
+            user_wallet_account.clone(),
+        ],
+        &[],
+    )?;
+
     match pack_card.probability_type {
         ProbabilityType::FixedNumber => {
             // Check if user already open pack
@@ -126,7 +168,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
         }
         ProbabilityType::ProbabilityBased => {
             // From oracle
-            // Если пользователь выиграл то увеличить claimed_card_editions, иначе claimed_cards
 
             unimplemented!()
         }
