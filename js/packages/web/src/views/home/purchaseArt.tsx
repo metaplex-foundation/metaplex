@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Progress, Typography } from 'antd';
 import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
 import type { BN } from '@project-serum/anchor';
-import { useConnection, useWallet } from '@oyster/common';
+import { useConnection, useWallet, ConnectButton } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
 import type { MasterAccount } from './types';
 import { Confetti } from './../../components/Confetti';
@@ -10,11 +10,13 @@ import { PublicKey } from '@solana/web3.js';
 import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
-  'Bpr78AJoh1Mq69iM67sHvPKaa36AzZYeGfLGLiwAzjnk';
+  '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
 const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
-  'ZyqQKfAiZuXyisA9bXbKmNxyRYAe5a75FBc5JsnPdys';
+  'EwaL61ayrw2F7f3AdG83LqU7jPiMmytuR6jA7hJpwpsK';
 
 const MAX_RETRIES = 5; // what is a good value for this?
+
+const isSaleStarted = false;
 
 const { Title } = Typography;
 
@@ -25,11 +27,13 @@ const getPurchaseBtnText = (
   price: number,
   isSoldOut: boolean,
   errorPurchasing: Error | null,
+  retriedTimes: number,
 ) => {
   if (!connected) return 'connect your wallet';
-  else if (errorPurchasing !== null) return 'Something goes wrong...';
+  else if (errorPurchasing !== null) return "No Success 😔 Try Again";
   else if (isSoldOut)
-    return <span className="bungee-font-inline">COLECTION SOLD OUT</span>;
+  return <span className="bungee-font-inline">COLECTION SOLD OUT</span>;
+  else if (isProcessing && retriedTimes > 0 && !isDone) return `Trying again  (${retriedTimes} try)...`
   else if (isProcessing) return 'processing request...';
   else if (isDone)
     return (
@@ -155,7 +159,7 @@ export const PurchaseArt = () => {
     runner();
   }, [wallet, connected]);
 
-  const doPurchase = async () => {
+  const doPurchase = async (retriedCounter: number) => {
     if (
       !connected ||
       !wallet?.publicKey ||
@@ -174,6 +178,7 @@ export const PurchaseArt = () => {
       const receipt = web3.Keypair.generate();
       const receiptSize = 8 + 32 + 32 + 8 + 8;
 
+      // throw new Error('failed');
       const txId = await anchorProgram.rpc.purchase({
         accounts: {
           payer,
@@ -199,22 +204,28 @@ export const PurchaseArt = () => {
 
       console.log('Successful purchase, transaction ID: ', txId);
 
+      setIsProcessing(false);
       setDealMade(true);
       refreshInformation();
+      setIsDone(true);
     } catch (error) {
-      if (retriedTimes > MAX_RETRIES) {
+      if (retriedCounter > MAX_RETRIES) {
         // this is so that we can break out of a potentially endless loop of retrying
         console.warn('Error occurred while purchasing the item: ', error);
         setErrorPurchasing(error);
       } else {
-        setRetriedTimes(retriedTimes + 1);
+        // prevent multiply purchases for single buy button
+        if (isDone) return;
+
+        const retriedTimesUpdated = retriedCounter + 1;
+        setRetriedTimes(retriedTimesUpdated);
         console.log(`Retry #retriedTimes`);
         refreshInformation().then(async () => {
-          await doPurchase();
+          await doPurchase(retriedTimesUpdated);
         });
       }
     } finally {
-      if (retriedTimes > MAX_RETRIES) {
+      if (isDone || retriedCounter > MAX_RETRIES) {
         setIsProcessing(false);
         setIsDone(true);
       }
@@ -232,31 +243,27 @@ export const PurchaseArt = () => {
     currentPrice,
     isSoldOut,
     errorPurchasing,
+    retriedTimes,
   );
+
+  if (!isSaleStarted) return <ComingSoon />;
 
   return (
     <div className="purchase-screen bungee-font">
       <Title level={2} className="welcome-text">
-        {/* Introducing Thugbirdz: OG Collection */}
-        We have experienced significant traffic overload over sale.
+        Introducing Thugbirdz: OG Collection
+        {/* We have experienced significant traffic overload over sale. */}
       </Title>
-      <img src="hero.gif" style={{ filter: 'blur(30px)' }} />
-      {ifDealMade ? <Confetti /> : null}
 
-      <h1 className="highlight sold-out" style={styles.error as any}>
-        So, we have paused it and updating our infra so no server overloads,
-        weather cyclons or any other gang clans {"can't"} stop our birdz on its
-        way to you!
-      </h1>
+      <img src="hero.gif" />
 
-      <p style={{ color: 'white', fontSize: '4em', position: 'relative' }}>
-        Stay Tuned!
-      </p>
-
-      {/* {!account ? (
-        <h1 className="highlight sold-out">CONNECT YOUR WALLET</h1>
+      {!account ? (
+        <>
+          <h1 className="highlight sky-title">CONNECT YOUR WALLET</h1>
+          <ConnectButton type="primary" style={{fontSize: '24px', height: 'auto'}} />
+        </>
       ) : null}
-      {isSoldOut ? <h1 className="highlight sold-out">SOLD OUT</h1> : null}
+      {isSoldOut ? <h1 className="highlight sky-title">SOLD OUT</h1> : null}
       {progressValue !== null && !isSoldOut && account && (
         <>
           <Button
@@ -264,7 +271,7 @@ export const PurchaseArt = () => {
             shape="round"
             size="large"
             className="app-btn purchase-btn"
-            onClick={doPurchase}
+            onClick={() => doPurchase(retriedTimes)}
             disabled={
               !connected ||
               isDone ||
@@ -278,9 +285,9 @@ export const PurchaseArt = () => {
 
           {errorPurchasing ? (
             <div className="purchase-error">
-              <b>Error occurred while purchasing the item.</b>
+              <b>Information. TX wasn't successful.</b>
               <br />
-              Make sure you have enough SOL in your wallet and you use correct
+               Make sure you have enough SOL in your wallet and you use correct
               Solana network (mainnet-beta).
               <br />
               Then refresh the page and try again!
@@ -295,10 +302,11 @@ export const PurchaseArt = () => {
           <Progress percent={progressValue} />
         </>
       )}
+      {ifDealMade ? <Confetti /> : null}
       <br></br>
       <br></br>
-      <br></br> */}
-      {/* <FeatureList /> */}
+      <br></br>
+      <FeatureList />
     </div>
   );
 };
@@ -313,3 +321,23 @@ const styles = {
     textAlign: 'center',
   },
 };
+
+const ComingSoon = () => (
+  <div className="purchase-screen bungee-font">
+    <Title level={2} className="welcome-text">
+      {/* Introducing Thugbirdz: OG Collection */}
+      We have experienced significant traffic overload over sale.
+    </Title>
+    <img src="hero.gif" style={{ filter: 'blur(30px)' }} />
+
+    <h1 className="highlight sky-title" style={styles.error as any}>
+      So, we have paused it and updating our infra so no server overloads,
+      weather cyclons or any other gang clans {"can't"} stop our birdz on its
+      way to you!
+    </h1>
+
+    <p style={{ color: 'white', fontSize: '4em', position: 'relative' }}>
+      Stay Tuned!
+    </p>
+  </div>
+);

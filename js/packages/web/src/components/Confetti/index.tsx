@@ -19,7 +19,7 @@ export const ConfettiProvider = ({ children = null as any }) => {
       confettiRef.current({
         particleCount: 400,
         spread: 160,
-        origin: { y: 0.3 },
+        origin: { y: 0.5 },
       })?.finally(() => {
         if(canvasRef.current) {
           canvasRef.current.style.visibility = 'hidden';
