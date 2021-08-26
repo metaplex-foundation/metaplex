@@ -4,7 +4,7 @@
   </a>
 </p>
 
-Site build with metaplex protocol
+Thugsite made with metaplex protocol
 
 
 ## In Depth Developer's Guide
