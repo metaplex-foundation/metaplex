@@ -369,23 +369,22 @@ const ComingSoon = () => (
           onClick={() => {}}
           disabled={true}
         >
-          will arrive soon
+          coming soon
         </Button>
       </Col>
       <Col span={12} style={{ display: 'flex', alignItems: 'flex-end' }}>
         <div>
           <div className="only-left-text">
-            <span className="highlight">{3333}</span> of{' '}
+            <span className="highlight">{2580}</span> of{' '}
             <span className="highlight">{3333}</span> remaining
           </div>
-          <Progress percent={0} />
+          <Progress percent={22} />
           <br />
           <br />
           <br />
           <p style={styles.description}>
             Collection of <b>3,333</b> uniquely generated, tough and collectible
-            thug birdz. They might belong to different gangs but will arrive all
-            together on Solana blockchain this weekend.
+            thugbirdz.
           </p>
         </div>
       </Col>
@@ -395,14 +394,7 @@ const ComingSoon = () => (
     <br />
     <br />
     <br />
-    <Title
-      level={3}
-      className="welcome-text bungee-font-inline"
-      style={{ marginTop: '4em', fontSize: '2em', margin: '1em 0 2em' }}
-    >
-      Stay In Touch
-    </Title>
-
+  
     <Row gutter={[0, 24]}>
       <Col span={12}>
         <a
@@ -411,9 +403,6 @@ const ComingSoon = () => (
           target="_blank"
         >
           <DiscordLogo />
-          <span className="highlight sky-title" style={styles.socialText}>
-            Join the gang
-          </span>
         </a>
       </Col>
       <Col span={12}>
@@ -423,9 +412,6 @@ const ComingSoon = () => (
           target="_blank"
         >
           <TwitterLogo />
-          <span className="highlight sky-title" style={styles.socialText}>
-            Friendly flock
-          </span>
         </a>
       </Col>
     </Row>

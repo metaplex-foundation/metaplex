@@ -94,11 +94,6 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
       >
         Feature List
       </Title>
-      <p style={styles.description}>
-        We have over 30 unique attributes in different combination.<br /> All items
-        are unique but some are more unique because of having incredibly rare
-        properties
-      </p>
       <br />
       <br />
       <Row
