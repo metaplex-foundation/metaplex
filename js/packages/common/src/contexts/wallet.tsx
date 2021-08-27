@@ -24,7 +24,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { notify } from '../utils';
+import { notify, shortenAddress } from '../utils';
 import { MetaplexModal } from '../components';
 
 export interface WalletModalContextState {
@@ -154,10 +154,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const base58 = publicKey.toBase58();
       const keyToDisplay =
         base58.length > 20
-          ? `${base58.substring(0, 7)}.....${base58.substring(
-              base58.length - 7,
-              base58.length,
-            )}`
+          ? shortenAddress(base58, 8)
           : base58;
 
       notify({
