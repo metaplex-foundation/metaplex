@@ -434,6 +434,25 @@ pub fn mint_new_edition_from_master_edition_via_token(
     }
 }
 
+/// Sign Metadata
+#[allow(clippy::too_many_arguments)]
+pub fn sign_metadata(
+    program_id: Pubkey,
+    metadata: Pubkey,
+    creator: Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(metadata, false),
+            AccountMeta::new_readonly(creator, true),
+        ],
+        data: MetadataInstruction::SignMetadata
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
 /// Converts a master edition v1 to v2
 #[allow(clippy::too_many_arguments)]
 pub fn convert_master_edition_v1_to_v2(

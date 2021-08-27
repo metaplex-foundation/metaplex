@@ -8,7 +8,7 @@ use {
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
     spl_token_metadata::{
-        instruction::{create_master_edition, create_metadata_accounts},
+        instruction::{create_master_edition, create_metadata_accounts, update_metadata_accounts},
         state::{
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
@@ -122,7 +122,7 @@ pub mod nft_candy_machine {
             });
         }
 
-        let mut metadata_infos = vec![
+        let metadata_infos = vec![
             ctx.accounts.metadata.clone(),
             ctx.accounts.mint.clone(),
             ctx.accounts.mint_authority.clone(),
@@ -131,9 +131,10 @@ pub mod nft_candy_machine {
             ctx.accounts.token_program.clone(),
             ctx.accounts.system_program.clone(),
             ctx.accounts.rent.to_account_info().clone(),
+            candy_machine.to_account_info().clone(),
         ];
 
-        let mut master_edition_infos = vec![
+        let master_edition_infos = vec![
             ctx.accounts.master_edition.clone(),
             ctx.accounts.mint.clone(),
             ctx.accounts.mint_authority.clone(),
@@ -143,24 +144,8 @@ pub mod nft_candy_machine {
             ctx.accounts.token_program.clone(),
             ctx.accounts.system_program.clone(),
             ctx.accounts.rent.to_account_info().clone(),
+            candy_machine.to_account_info().clone(),
         ];
-
-        let mut update_authority_is_signer = true;
-        let mut update_authority = candy_machine.key();
-        if !ctx.accounts.config.data.retain_authority {
-            update_authority_is_signer = false;
-            update_authority = *ctx.accounts.update_authority.key;
-            metadata_infos.push(ctx.accounts.update_authority.clone());
-            master_edition_infos.push(ctx.accounts.update_authority.clone())
-        } else {
-            metadata_infos.push(candy_machine.to_account_info().clone());
-            master_edition_infos.push(candy_machine.to_account_info().clone())
-        }
-        msg!("metadata {}", ctx.accounts.metadata.key);
-        msg!("mint {}", ctx.accounts.mint.key);
-        msg!("mint authority {}", ctx.accounts.mint_authority.key);
-        msg!("payer {}", ctx.accounts.payer.key);
-        msg!("update auth {}", update_authority);
 
         invoke_signed(
             &create_metadata_accounts(
@@ -169,13 +154,13 @@ pub mod nft_candy_machine {
                 *ctx.accounts.mint.key,
                 *ctx.accounts.mint_authority.key,
                 *ctx.accounts.payer.key,
-                update_authority,
+                candy_machine.key(),
                 config_line.name,
                 config.data.symbol.clone(),
                 config_line.uri,
                 Some(creators),
                 config.data.seller_fee_basis_points,
-                update_authority_is_signer,
+                false,
                 config.data.is_mutable,
             ),
             metadata_infos.as_slice(),
@@ -187,7 +172,7 @@ pub mod nft_candy_machine {
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.master_edition.key,
                 *ctx.accounts.mint.key,
-                update_authority,
+                candy_machine.key(),
                 *ctx.accounts.mint_authority.key,
                 *ctx.accounts.metadata.key,
                 *ctx.accounts.payer.key,
@@ -197,6 +182,46 @@ pub mod nft_candy_machine {
             &[&authority_seeds],
         )?;
 
+        let mut new_update_authority = None;
+
+        if !ctx.accounts.config.data.retain_authority {
+            new_update_authority = Some(ctx.accounts.update_authority.key());
+        }
+
+        invoke_signed(
+            &update_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                candy_machine.key(),
+                new_update_authority,
+                None,
+                Some(true),
+            ),
+            &[
+                ctx.accounts.token_metadata_program.clone(),
+                ctx.accounts.metadata.clone(),
+                candy_machine.to_account_info().clone(),
+            ],
+            &[&authority_seeds],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn update_candy_machine(
+        ctx: Context<UpdateCandyMachine>,
+        price: Option<u64>,
+        go_live_date: Option<i64>,
+    ) -> ProgramResult {
+        let candy_machine = &mut ctx.accounts.candy_machine;
+
+        if let Some(p) = price {
+            candy_machine.data.price = p;
+        }
+
+        if let Some(go_l) = go_live_date {
+            candy_machine.data.go_live_date = Some(go_l)
+        }
         Ok(())
     }
 
@@ -309,6 +334,12 @@ pub mod nft_candy_machine {
             candy_machine.token_mint = Some(*token_mint_info.key);
         }
 
+        if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
+            != candy_machine.data.items_available as usize
+        {
+            return Err(ErrorCode::ConfigLineMismatch.into());
+        }
+
         let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
@@ -388,6 +419,14 @@ pub struct MintNFT<'info> {
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateCandyMachine<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    candy_machine: ProgramAccount<'info, CandyMachine>,
+    #[account(signer, constraint=&candy_machine.authority == authority.key)]
+    authority: AccountInfo<'info>,
 }
 
 #[account]
@@ -514,4 +553,6 @@ pub enum ErrorCode {
     CandyMachineEmpty,
     #[msg("Candy machine is not live yet!")]
     CandyMachineNotLiveYet,
+    #[msg("Number of config lines must match items available")]
+    ConfigLineMismatch,
 }
