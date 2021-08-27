@@ -1,23 +1,24 @@
 use {
     crate::{
         error::MetaplexError,
-        state::{AuctionManager, WinningConfigItem, WinningConfigType, PREFIX},
+        state::{CommonWinningIndexChecks, CommonWinningIndexReturn, WinningConfigType, PREFIX},
         utils::{
             assert_derivation, common_redeem_checks, common_redeem_finish,
-            common_winning_config_checks, transfer_safety_deposit_box_items, CommonRedeemCheckArgs,
-            CommonRedeemFinishArgs, CommonRedeemReturn, CommonWinningConfigCheckReturn,
+            get_amount_from_token_account, transfer_safety_deposit_box_items,
+            CommonRedeemCheckArgs, CommonRedeemFinishArgs, CommonRedeemReturn,
         },
     },
+    arrayref::array_ref,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
+        program_error::ProgramError,
         pubkey::Pubkey,
     },
     spl_auction::processor::AuctionData,
     spl_token_metadata::{
-        instruction::set_reservation_list,
-        state::{get_reservation_list, Reservation},
+        deprecated_instruction::deprecated_set_reservation_list, state::Reservation,
     },
 };
 
@@ -33,7 +34,7 @@ fn set_reservation_list_wrapper<'a>(
     total_spot_offset: u64,
 ) -> ProgramResult {
     invoke_signed(
-        &set_reservation_list(
+        &deprecated_set_reservation_list(
             *program_id,
             *master_edition_info.key,
             *reservation_list_info.key,
@@ -54,68 +55,52 @@ fn set_reservation_list_wrapper<'a>(
     Ok(())
 }
 
-pub fn calc_spots(
-    winning_config_item: &WinningConfigItem,
-    auction_manager: &AuctionManager,
-    n: usize,
-) -> u64 {
-    auction_manager.settings.winning_configs[n]
-        .items
-        .iter()
-        .filter(|i| i.safety_deposit_box_index == winning_config_item.safety_deposit_box_index)
-        .map(|i| i.amount as u64)
-        .sum()
+fn get_supply_snapshot_off_reservation_list(
+    reservation_list_info: &AccountInfo,
+) -> Result<Option<u64>, ProgramError> {
+    let data = reservation_list_info.try_borrow_data()?;
+    // this is an option, 9 bytes, first is 0 means is none
+    if data[33] == 0 {
+        Ok(None)
+    } else {
+        let amount_data = array_ref![data, 34, 8];
+        Ok(Some(u64::from_le_bytes(*amount_data)))
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
 pub fn reserve_list_if_needed<'a>(
     program_id: &'a Pubkey,
-    auction_manager: &AuctionManager,
-    auction: &AuctionData,
-    winning_config_item: &WinningConfigItem,
     winning_index: usize,
+    auction_info: &AccountInfo<'a>,
     bidder_info: &AccountInfo<'a>,
     master_edition_info: &AccountInfo<'a>,
     reservation_list_info: &AccountInfo<'a>,
     auction_manager_info: &AccountInfo<'a>,
+    safety_deposit_token_store_info: &AccountInfo<'a>,
     signer_seeds: &[&[u8]],
 ) -> ProgramResult {
-    let reservation_list = get_reservation_list(reservation_list_info)?;
-
     let total_reservation_spot_opt: Option<u64>;
 
-    // Auction specifically does not expose internal state workings as it may change someday,
-    // but it does expose a point get-winner-at-index method. Right now this is just array access
-    // but may be invocation someday. It's inefficient style but better for the interface maintenance
-    // in the long run if we move to better storage solutions (so that this action doesnt need to change if
-    // storage does.)
+    // This math will explicitly be off in custom cases where you are giving away multiple editions to a single
+    // person. However these are rare. This optimization will literally break this case because
+    // there will be fewer reservation spots than those available. However I'm switching to it
+    // because we need to support those 50 person legacy auctions out there which are mostly limited editions
+    // and get them redeemed so we can move to the newer system which works.
 
-    let mut total_reservation_spots: u64 = 0;
-    let mut total_spot_offset: u64 = 0;
-    for n in 0..auction_manager.settings.winning_configs.len() {
-        match auction.winner_at(n) {
-            Some(_) => {
-                let spots: u64 = calc_spots(winning_config_item, auction_manager, n);
-                total_reservation_spots = total_reservation_spots
-                    .checked_add(spots)
-                    .ok_or(MetaplexError::NumericalOverflowError)?;
-                if n < winning_index {
-                    total_spot_offset = total_spot_offset
-                        .checked_add(spots)
-                        .ok_or(MetaplexError::NumericalOverflowError)?;
-                }
-            }
-            None => break,
-        }
-    }
+    let total_spot_offset: u64 = winning_index as u64;
 
-    if reservation_list.supply_snapshot().is_none() {
-        total_reservation_spot_opt = Some(total_reservation_spots)
+    if get_supply_snapshot_off_reservation_list(reservation_list_info)?.is_none() {
+        total_reservation_spot_opt = Some(std::cmp::min(
+            get_amount_from_token_account(safety_deposit_token_store_info)?,
+            AuctionData::get_num_winners(auction_info) as u64,
+        ));
     } else {
         total_reservation_spot_opt = None
     }
 
-    let my_spots: u64 = calc_spots(winning_config_item, auction_manager, winning_index);
+    let my_spots: u64 = 1;
+
     set_reservation_list_wrapper(
         program_id,
         master_edition_info,
@@ -128,6 +113,9 @@ pub fn reserve_list_if_needed<'a>(
             total_spots: my_spots,
         }],
         total_reservation_spot_opt,
+        // Note this logic is explicitly wrong in cases of tiered auctions where the edition
+        // is not present in every single winning config. But that would require iteration to figure out,
+        // and we are optimizing for the 99.8% case in this legacy logic.
         winning_index as u64,
         total_spot_offset,
     )?;
@@ -163,11 +151,12 @@ pub fn process_redeem_bid<'a>(
 
     let transfer_authority_info = next_account_info(account_info_iter)?;
 
+    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
+
     let CommonRedeemReturn {
         auction_manager,
         redemption_bump_seed,
-        bidder_metadata,
-        auction,
+        cancelled,
         rent: _rent,
         win_index,
         token_metadata_program: _t,
@@ -187,75 +176,84 @@ pub fn process_redeem_bid<'a>(
         token_metadata_program_info,
         rent_info,
         store_info,
+        safety_deposit_config_info,
         is_participation: false,
+        user_provided_win_index: None,
         overwrite_win_index,
+        assert_bidder_signer: true,
+        ignore_bid_redeemed_item_check: false,
     })?;
 
     let mut winning_item_index = None;
-    if !bidder_metadata.cancelled {
+    if !cancelled {
         if let Some(winning_index) = win_index {
-            if winning_index < auction_manager.settings.winning_configs.len() {
-                // Okay, so they placed in the auction winning prizes section!
+            // Okay, so they placed in the auction winning prizes section!
 
-                let CommonWinningConfigCheckReturn {
-                    winning_config_item,
-                    winning_item_index: wii,
-                } = common_winning_config_checks(
-                    &auction_manager,
-                    &safety_deposit_info,
+            let CommonWinningIndexReturn {
+                amount,
+                winning_config_type,
+                winning_config_item_index,
+            } = auction_manager.common_winning_index_checks(CommonWinningIndexChecks {
+                safety_deposit_info,
+                winning_index,
+                auction_manager_v1_ignore_claim: false,
+                safety_deposit_config_info,
+            })?;
+
+            winning_item_index = winning_config_item_index;
+            if winning_config_type != WinningConfigType::TokenOnlyTransfer
+                && winning_config_type != WinningConfigType::PrintingV1
+            {
+                return Err(MetaplexError::WrongBidEndpointForPrize.into());
+            }
+
+            let auction_bump_seed = assert_derivation(
+                program_id,
+                auction_manager_info,
+                &[PREFIX.as_bytes(), &auction_manager.auction().as_ref()],
+            )?;
+
+            let auction_key = auction_manager.auction();
+            let auction_auth_seeds = &[
+                PREFIX.as_bytes(),
+                auction_key.as_ref(),
+                &[auction_bump_seed],
+            ];
+
+            if winning_config_type == WinningConfigType::PrintingV1 && overwrite_win_index.is_none()
+            {
+                let master_edition_info = match safety_deposit_config_info {
+                    Some(val) => val,
+                    None => return Err(ProgramError::NotEnoughAccountKeys),
+                };
+                let reservation_list_info = next_account_info(account_info_iter)?;
+
+                reserve_list_if_needed(
+                    token_metadata_program_info.key,
                     winning_index,
-                )?;
-                winning_item_index = wii;
-                if winning_config_item.winning_config_type != WinningConfigType::TokenOnlyTransfer
-                    && winning_config_item.winning_config_type != WinningConfigType::Printing
-                {
-                    return Err(MetaplexError::WrongBidEndpointForPrize.into());
-                }
-
-                let auction_bump_seed = assert_derivation(
-                    program_id,
+                    auction_info,
+                    bidder_info,
+                    master_edition_info,
+                    reservation_list_info,
                     auction_manager_info,
-                    &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()],
-                )?;
-
-                let auction_auth_seeds = &[
-                    PREFIX.as_bytes(),
-                    &auction_manager.auction.as_ref(),
-                    &[auction_bump_seed],
-                ];
-
-                if winning_config_item.winning_config_type == WinningConfigType::Printing {
-                    let master_edition_info = next_account_info(account_info_iter)?;
-                    let reservation_list_info = next_account_info(account_info_iter)?;
-
-                    reserve_list_if_needed(
-                        token_metadata_program_info.key,
-                        &auction_manager,
-                        &auction,
-                        &winning_config_item,
-                        winning_index,
-                        bidder_info,
-                        master_edition_info,
-                        reservation_list_info,
-                        auction_manager_info,
-                        auction_auth_seeds,
-                    )?;
-                }
-
-                transfer_safety_deposit_box_items(
-                    token_vault_program_info.clone(),
-                    destination_info.clone(),
-                    safety_deposit_info.clone(),
-                    safety_deposit_token_store_info.clone(),
-                    vault_info.clone(),
-                    fraction_mint_info.clone(),
-                    auction_manager_info.clone(),
-                    transfer_authority_info.clone(),
-                    rent_info.clone(),
-                    winning_config_item.amount as u64,
+                    safety_deposit_token_store_info,
                     auction_auth_seeds,
                 )?;
             }
+
+            transfer_safety_deposit_box_items(
+                token_vault_program_info.clone(),
+                destination_info.clone(),
+                safety_deposit_info.clone(),
+                safety_deposit_token_store_info.clone(),
+                vault_info.clone(),
+                fraction_mint_info.clone(),
+                auction_manager_info.clone(),
+                transfer_authority_info.clone(),
+                rent_info.clone(),
+                amount as u64,
+                auction_auth_seeds,
+            )?;
         }
     }
 
@@ -268,6 +266,8 @@ pub fn process_redeem_bid<'a>(
         system_info,
         payer_info,
         bid_redemption_info,
+        safety_deposit_config_info,
+        vault_info,
         winning_index: win_index,
         redemption_bump_seed,
         bid_redeemed: true,

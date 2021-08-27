@@ -1,12 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Col, Button, InputNumber, Spin } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
-import './index.less';
 import {
   useConnection,
   useUserAccounts,
-  contexts,
   MetaplexModal,
   MetaplexOverlay,
   formatAmount,
@@ -17,8 +15,14 @@ import {
   ParsedAccount,
   getAuctionExtended,
   programIds,
+  AuctionState,
+  BidderMetadata,
+  MAX_METADATA_LEN,
+  MAX_EDITION_LEN,
+  useWalletModal,
 } from '@oyster/common';
-import { AuctionView, useUserBalance } from '../../hooks';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
@@ -26,15 +30,79 @@ import {
   eligibleForParticipationPrizeGivenWinningIndex,
 } from '../../actions/sendRedeemBid';
 import { sendCancelBid } from '../../actions/cancelBid';
+import { startAuctionManually } from '../../actions/startAuctionManually';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useMeta } from '../../contexts';
 import moment from 'moment';
+import { AccountLayout, MintLayout } from '@solana/spl-token';
+import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
+import {
+  BidRedemptionTicket,
+  MAX_PRIZE_TRACKING_TICKET_SIZE,
+} from '../../models/metaplex';
 
-const { useWallet } = contexts.Wallet;
+async function calculateTotalCostOfRedeemingOtherPeoplesBids(
+  connection: Connection,
+  auctionView: AuctionView,
+  bids: ParsedAccount<BidderMetadata>[],
+  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
+): Promise<number> {
+  const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
+    AccountLayout.span,
+  );
+  const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
+    MintLayout.span,
+  );
+  const metadataRentExempt = await connection.getMinimumBalanceForRentExemption(
+    MAX_METADATA_LEN,
+  );
+  const editionRentExempt = await connection.getMinimumBalanceForRentExemption(
+    MAX_EDITION_LEN,
+  );
+  const prizeTrackingTicketExempt =
+    await connection.getMinimumBalanceForRentExemption(
+      MAX_PRIZE_TRACKING_TICKET_SIZE,
+    );
 
+  const eligibleParticipations =
+    await findEligibleParticipationBidsForRedemption(
+      auctionView,
+      bids,
+      bidRedemptions,
+    );
+  const max = auctionView.auction.info.bidState.max.toNumber();
+  let totalWinnerItems = 0;
+  for (let i = 0; i < max; i++) {
+    const winner = auctionView.auction.info.bidState.getWinnerAt(i);
+    if (!winner) {
+      break;
+    } else {
+      const bid = bids.find(b => b.info.bidderPubkey === winner);
+      if (bid) {
+        for (
+          let j = 0;
+          j < auctionView.auctionManager.safetyDepositBoxesExpected.toNumber();
+          j++
+        ) {
+          totalWinnerItems += auctionView.auctionManager
+            .getAmountForWinner(i, j)
+            .toNumber();
+        }
+      }
+    }
+  }
+  return (
+    (mintRentExempt +
+      accountRentExempt +
+      metadataRentExempt +
+      editionRentExempt +
+      prizeTrackingTicketExempt) *
+    (eligibleParticipations.length + totalWinnerItems)
+  );
+}
 function useGapTickCheck(
   value: number | undefined,
   gapTick: number | null,
@@ -93,7 +161,7 @@ function useAuctionExtended(
           auctionProgramId: PROGRAM_IDS.auction,
           resource: auctionView.vault.pubkey,
         });
-        const extendedValue = auctionDataExtended[extendedKey.toBase58()];
+        const extendedValue = auctionDataExtended[extendedKey];
         if (extendedValue) setAuctionExtended(extendedValue);
       }
     };
@@ -114,8 +182,17 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { wallet, connected, connect } = useWallet();
+
+  const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
+
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
+  const { prizeTrackingTickets, bidRedemptions } = useMeta();
+  const bids = useBidsForAuction(auctionView.auction.pubkey);
 
   const [value, setValue] = useState<number>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -127,6 +204,8 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
   const [modalHistory, setModalHistory] = useState<any>();
+  const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
+  const [printingCost, setPrintingCost] = useState<number>();
 
   const { accountByMint } = useUserAccounts();
 
@@ -134,7 +213,7 @@ export const AuctionCard = ({
   const balance = useUserBalance(mintKey);
 
   const myPayingAccount = balance.accounts[0];
-  let winnerIndex = null;
+  let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
@@ -146,6 +225,8 @@ export const AuctionCard = ({
   const eligibleForOpenEdition = eligibleForParticipationPrizeGivenWinningIndex(
     winnerIndex,
     auctionView,
+    auctionView.myBidderMetadata,
+    auctionView.myBidRedemption,
   );
   const auctionExtended = useAuctionExtended(auctionView);
 
@@ -163,6 +244,12 @@ export const AuctionCard = ({
 
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
+  const isAuctionManagerAuthorityNotWalletOwner =
+    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
+
+  const isAuctionNotStarted =
+    auctionView.auction.info.state === AuctionState.Created;
+
   return (
     <div className="auction-container" style={style}>
       <Col>
@@ -174,73 +261,123 @@ export const AuctionCard = ({
             again.
           </span>
         )}
-        {!hideDefaultAction && connected && auctionView.auction.info.ended() && (
-          <Button
-            type="primary"
-            size="large"
-            className="action-btn"
-            disabled={
-              !myPayingAccount ||
-              (!auctionView.myBidderMetadata &&
-                auctionView.auctionManager.info.authority.toBase58() !=
-                  wallet?.publicKey?.toBase58()) ||
-              loading ||
-              !!auctionView.items.find(i => i.find(it => !it.metadata))
-            }
-            onClick={async () => {
-              setLoading(true);
-              setShowRedemptionIssue(false);
-              try {
-                if (eligibleForAnything)
-                  await sendRedeemBid(
-                    connection,
-                    wallet,
-                    myPayingAccount.pubkey,
-                    auctionView,
-                    accountByMint,
-                  ).then(() => setShowRedeemedBidModal(true));
-                else
-                  await sendCancelBid(
-                    connection,
-                    wallet,
-                    myPayingAccount.pubkey,
-                    auctionView,
-                    accountByMint,
-                  );
-              } catch (e) {
-                console.error(e);
-                setShowRedemptionIssue(true);
+        {!hideDefaultAction &&
+          wallet.connected &&
+          auctionView.auction.info.ended() && (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={
+                !myPayingAccount ||
+                (!auctionView.myBidderMetadata &&
+                  isAuctionManagerAuthorityNotWalletOwner) ||
+                loading ||
+                !!auctionView.items.find(i => i.find(it => !it.metadata))
               }
-              setLoading(false);
-            }}
-            style={{ marginTop: 20 }}
-          >
-            {loading ||
-            auctionView.items.find(i => i.find(it => !it.metadata)) ||
-            !myPayingAccount ? (
-              <Spin />
-            ) : eligibleForAnything ? (
-              'Redeem bid'
-            ) : (
-              'Refund bid'
-            )}
-          </Button>
-        )}
+              onClick={async () => {
+                setLoading(true);
+                setShowRedemptionIssue(false);
+                if (
+                  wallet?.publicKey?.toBase58() ===
+                  auctionView.auctionManager.authority
+                ) {
+                  const totalCost =
+                    await calculateTotalCostOfRedeemingOtherPeoplesBids(
+                      connection,
+                      auctionView,
+                      bids,
+                      bidRedemptions,
+                    );
+                  setPrintingCost(totalCost);
+                  setShowWarningModal(true);
+                }
+                try {
+                  if (eligibleForAnything) {
+                    await sendRedeemBid(
+                      connection,
+                      wallet,
+                      myPayingAccount.pubkey,
+                      auctionView,
+                      accountByMint,
+                      prizeTrackingTickets,
+                      bidRedemptions,
+                      bids,
+                    ).then(() => setShowRedeemedBidModal(true));
+                  } else {
+                    await sendCancelBid(
+                      connection,
+                      wallet,
+                      myPayingAccount.pubkey,
+                      auctionView,
+                      accountByMint,
+                      bids,
+                      bidRedemptions,
+                      prizeTrackingTickets,
+                    );
+                  }
+                } catch (e) {
+                  console.error(e);
+                  setShowRedemptionIssue(true);
+                }
+                setLoading(false);
+              }}
+              style={{ marginTop: 20 }}
+            >
+              {loading ||
+              auctionView.items.find(i => i.find(it => !it.metadata)) ||
+              !myPayingAccount ? (
+                <Spin />
+              ) : eligibleForAnything ? (
+                `Redeem bid`
+              ) : (
+                `${
+                  wallet?.publicKey &&
+                  auctionView.auctionManager.authority ===
+                    wallet.publicKey.toBase58()
+                    ? 'Reclaim Items'
+                    : 'Refund bid'
+                }`
+              )}
+            </Button>
+          )}
 
-        {!hideDefaultAction && connected && !auctionView.auction.info.ended() && (
-          <Button
-            type="primary"
-            size="large"
-            className="action-btn"
-            disabled={loading}
-            onClick={() => setShowBidModal(true)}
-            style={{ marginTop: 20 }}
-          >
-            {loading ? <Spin /> : 'Place bid'}
-          </Button>
-        )}
+        {!hideDefaultAction &&
+          wallet.connected &&
+          !auctionView.auction.info.ended() &&
+          (isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await startAuctionManually(connection, wallet, auctionView);
+                } catch (e) {
+                  console.error(e);
+                }
+                setLoading(false);
+              }}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? <Spin /> : 'Start auction'}
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={() => setShowBidModal(true)}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? <Spin /> : 'Place bid'}
+            </Button>
+          ))}
 
-        {!hideDefaultAction && !connected && (
+        {!hideDefaultAction && !wallet.connected && (
           <Button
             type="primary"
             size="large"
@@ -387,7 +524,7 @@ export const AuctionCard = ({
                       width: '100%',
                       background: '#242424',
                       borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5);',
+                      color: 'rgba(0, 0, 0, 0.5)',
                     }}
                   >
                     <InputNumber
@@ -516,7 +653,7 @@ export const AuctionCard = ({
               <Button
                 onClick={() => {
                   window.open(
-                    `https://ftx.com/pay/request?coin=SOL&address=${wallet?.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
+                    `https://ftx.com/pay/request?coin=SOL&address=${wallet.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
                     '_blank',
                     'resizable,width=680,height=860',
                   );
@@ -548,6 +685,22 @@ export const AuctionCard = ({
             </div>
           </Route>
         </MemoryRouter>
+      </MetaplexModal>
+
+      <MetaplexModal
+        visible={showWarningModal}
+        onCancel={() => setShowWarningModal(false)}
+        bodyStyle={{
+          alignItems: 'start',
+        }}
+      >
+        <h3 style={{ color: 'white' }}>
+          Warning: There may be some items in this auction that still are
+          required by the auction for printing bidders' limited or open edition
+          NFTs. If you wish to withdraw them, you are agreeing to foot the cost
+          of up to an estimated ◎<b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b>{' '}
+          plus transaction fees to redeem their bids for them right now.
+        </h3>
       </MetaplexModal>
     </div>
   );

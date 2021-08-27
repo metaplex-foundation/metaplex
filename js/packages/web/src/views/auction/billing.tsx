@@ -11,7 +11,6 @@ import {
 import { ArtContent } from '../../components/ArtContent';
 import {
   useConnection,
-  contexts,
   BidderMetadata,
   ParsedAccount,
   cache,
@@ -22,7 +21,11 @@ import {
   programIds,
   Bid,
   useUserAccounts,
+  StringPublicKey,
+  toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
 import {
   getBidderKeys,
@@ -31,19 +34,16 @@ import {
   PayoutTicket,
   WinningConstraint,
 } from '../../models/metaplex';
-import './billing.less';
-import { WalletAdapter } from '@solana/wallet-base';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
-const { useWallet } = contexts.Wallet;
 const { Content } = Layout;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
   const auctionView = useAuction(id);
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const mint = useMint(auctionView?.auction.info.tokenMint);
 
   return auctionView && wallet && connection && mint ? (
@@ -63,12 +63,11 @@ function getLosingParticipationPrice(
   auctionView: AuctionView,
 ) {
   const nonWinnerConstraint =
-    auctionView.auctionManager.info.settings.participationConfig
-      ?.nonWinningConstraint;
+    auctionView.auctionManager.participationConfig?.nonWinningConstraint;
 
   if (nonWinnerConstraint === NonWinningConstraint.GivenForFixedPrice)
     return (
-      auctionView.auctionManager.info.settings.participationConfig?.fixedPrice?.toNumber() ||
+      auctionView.auctionManager.participationConfig?.fixedPrice?.toNumber() ||
       0
     );
   else if (nonWinnerConstraint === NonWinningConstraint.GivenForBidPrice)
@@ -84,17 +83,16 @@ function useWinnerPotsByBidderKey(
   );
   const PROGRAM_IDS = programIds();
 
-  const winningConfigLength =
-    auctionView.auctionManager.info.settings.winningConfigs.length;
+  const winnersLength = auctionView.auctionManager.numWinners.toNumber();
   const auction = auctionView.auction;
   const winners = auction.info.bidState.bids;
   const truWinners = useMemo(() => {
-    return [...winners].reverse().slice(0, winningConfigLength);
-  }, [winners, winningConfigLength]);
+    return [...winners].reverse().slice(0, winnersLength);
+  }, [winners, winnersLength]);
 
   useEffect(() => {
     (async () => {
-      const promises: Promise<{ winner: Bid; key: PublicKey }>[] =
+      const promises: Promise<{ winner: Bid; key: StringPublicKey }>[] =
         truWinners.map(winner =>
           getBidderPotKey({
             auctionProgramId: PROGRAM_IDS.auction,
@@ -110,7 +108,7 @@ function useWinnerPotsByBidderKey(
       const newPots = values.reduce((agg, value) => {
         const el = cache.get(value.key) as ParsedAccount<BidderPot>;
         if (el) {
-          agg[value.winner.key.toBase58()] = el;
+          agg[value.winner.key] = el;
         }
 
         return agg;
@@ -149,7 +147,8 @@ function usePayoutTickets(
         ? [[auctionView.participationItem]]
         : []),
     ];
-    const payoutPromises: { key: string; promise: Promise<PublicKey> }[] = [];
+    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
+      [];
     let total = 0;
     for (let i = 0; i < prizeArrays.length; i++) {
       const items = prizeArrays[i];
@@ -159,14 +158,12 @@ function usePayoutTickets(
         const recipientAddresses = creators
           ? creators
               .map(c => c.address)
-              .concat([auctionView.auctionManager.info.authority])
-          : [auctionView.auctionManager.info.authority];
+              .concat([auctionView.auctionManager.authority])
+          : [auctionView.auctionManager.authority];
 
         for (let k = 0; k < recipientAddresses.length; k++) {
           // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
-          const key = `${auctionView.auctionManager.pubkey.toBase58()}-${i}-${j}-${item.safetyDeposit.pubkey.toBase58()}-${recipientAddresses[
-            k
-          ].toBase58()}-${k}`;
+          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
 
           if (!currFound[key]) {
             payoutPromises.push({
@@ -186,11 +183,10 @@ function usePayoutTickets(
       }
     }
     Promise.all(payoutPromises.map(p => p.promise)).then(
-      (payoutKeys: PublicKey[]) => {
-        payoutKeys.forEach((payoutKey: PublicKey, i: number) => {
-          if (payoutTickets[payoutKey.toBase58()])
-            currFound[payoutPromises[i].key] =
-              payoutTickets[payoutKey.toBase58()];
+      (payoutKeys: StringPublicKey[]) => {
+        payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
+          if (payoutTickets[payoutKey])
+            currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
         });
 
         setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
@@ -212,14 +208,14 @@ function usePayoutTickets(
       >,
       el: ParsedAccount<PayoutTicket>,
     ) => {
-      if (!acc[el.info.recipient.toBase58()]) {
-        acc[el.info.recipient.toBase58()] = {
+      if (!acc[el.info.recipient]) {
+        acc[el.info.recipient] = {
           sum: 0,
           tickets: [],
         };
       }
-      acc[el.info.recipient.toBase58()].tickets.push(el);
-      acc[el.info.recipient.toBase58()].sum += el.info.amountPaid.toNumber();
+      acc[el.info.recipient].tickets.push(el);
+      acc[el.info.recipient].sum += el.info.amountPaid.toNumber();
       return acc;
     },
     {},
@@ -227,22 +223,18 @@ function usePayoutTickets(
 }
 
 export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
-  const {
-    bidRedemptions,
-    bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
-  } = useMeta();
-  const auctionKey = auctionView.auction.pubkey.toBase58();
+  const { bidRedemptions, bidderMetadataByAuctionAndBidder } = useMeta();
+  const auctionKey = auctionView.auction.pubkey;
 
   const [participationBidRedemptionKeys, setParticipationBidRedemptionKeys] =
-    useState<Record<string, PublicKey>>({});
+    useState<Record<string, StringPublicKey>>({});
 
   const bids = useBidsForAuction(auctionView.auction.pubkey);
 
   const payoutTickets = usePayoutTickets(auctionView);
   const winners = [...auctionView.auction.info.bidState.bids]
     .reverse()
-    .slice(0, auctionView.auctionManager.info.settings.winningConfigs.length);
+    .slice(0, auctionView.auctionManager.numWinners.toNumber());
   const winnerPotsByBidderKey = useWinnerPotsByBidderKey(auctionView);
 
   // Uncancelled bids or bids that were cancelled for refunds but only after redeemed
@@ -251,23 +243,24 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     b =>
       !b.info.cancelled ||
       bidRedemptions[
-        participationBidRedemptionKeys[b.pubkey.toBase58()]?.toBase58()
-      ]?.info.participationRedeemed,
+        participationBidRedemptionKeys[b.pubkey]
+      ]?.info.getBidRedeemed(
+        auctionView.participationItem?.safetyDeposit.info.order || 0,
+      ),
   );
 
   let hasParticipation =
-    auctionView.auctionManager.info.settings.participationConfig !==
-      undefined &&
-    auctionView.auctionManager.info.settings.participationConfig !== null;
+    auctionView.auctionManager.participationConfig !== undefined &&
+    auctionView.auctionManager.participationConfig !== null;
   let participationEligible = hasParticipation ? usableBids : [];
 
   useMemo(async () => {
-    const newKeys: Record<string, PublicKey> = {};
+    const newKeys: Record<string, StringPublicKey> = {};
 
     for (let i = 0; i < bids.length; i++) {
       const o = bids[i];
-      if (!participationBidRedemptionKeys[o.pubkey.toBase58()]) {
-        newKeys[o.pubkey.toBase58()] = (
+      if (!participationBidRedemptionKeys[o.pubkey]) {
+        newKeys[o.pubkey] = (
           await getBidderKeys(auctionView.auction.pubkey, o.info.bidderPubkey)
         ).bidRedemption;
       }
@@ -280,23 +273,22 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   }, [bids.length]);
 
   if (
-    auctionView.auctionManager.info.settings.participationConfig
-      ?.winnerConstraint === WinningConstraint.NoParticipationPrize
+    auctionView.auctionManager.participationConfig?.winnerConstraint ===
+    WinningConstraint.NoParticipationPrize
   )
     // Filter winners out of the open edition eligible
     participationEligible = participationEligible.filter(
       // winners are stored by pot key, not bidder key, so we translate
-      b => !winnerPotsByBidderKey[b.info.bidderPubkey.toBase58()],
+      b => !winnerPotsByBidderKey[b.info.bidderPubkey],
     );
 
   const nonWinnerConstraint =
-    auctionView.auctionManager.info.settings.participationConfig
-      ?.nonWinningConstraint;
+    auctionView.auctionManager.participationConfig?.nonWinningConstraint;
 
   const participationEligibleUnredeemable: ParsedAccount<BidderMetadata>[] = [];
 
   participationEligible.forEach(o => {
-    const isWinner = winnerPotsByBidderKey[o.info.bidderPubkey.toBase58()];
+    const isWinner = winnerPotsByBidderKey[o.info.bidderPubkey];
     // Winners automatically pay nothing for open editions, and are getting claimed anyway right now
     // so no need to add them to list
     if (isWinner) {
@@ -307,10 +299,15 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
       nonWinnerConstraint === NonWinningConstraint.GivenForFixedPrice ||
       nonWinnerConstraint === NonWinningConstraint.GivenForBidPrice
     ) {
-      const key = participationBidRedemptionKeys[o.pubkey.toBase58()];
+      const key = participationBidRedemptionKeys[o.pubkey];
       if (key) {
-        const redemption = bidRedemptions[key.toBase58()];
-        if (!redemption || !redemption.info.participationRedeemed)
+        const redemption = bidRedemptions[key];
+        if (
+          !redemption ||
+          !redemption.info.getBidRedeemed(
+            auctionView.participationItem?.safetyDeposit.info.order || 0,
+          )
+        )
           participationEligibleUnredeemable.push(o);
       } else participationEligibleUnredeemable.push(o);
     }
@@ -324,7 +321,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   // Winners always get it for free so pay zero for them - figure out among all
   // eligible open edition winners what is the total possible for display.
   const participationPossibleTotal = participationEligible.reduce((acc, el) => {
-    const isWinner = winnerPotsByBidderKey[el.info.bidderPubkey.toBase58()];
+    const isWinner = winnerPotsByBidderKey[el.info.bidderPubkey];
     let price = 0;
     if (!isWinner) price = getLosingParticipationPrice(el, auctionView);
 
@@ -346,9 +343,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   }[] = [
     ...winnersThatCanBeEmptied.map(pot => ({
       metadata:
-        bidderMetadataByAuctionAndBidder[
-          `${auctionKey}-${pot.info.bidderAct.toBase58()}`
-        ],
+        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
       pot,
     })),
   ];
@@ -371,7 +366,7 @@ export const InnerBillingView = ({
   mint,
 }: {
   auctionView: AuctionView;
-  wallet: WalletAdapter;
+  wallet: WalletSigner;
   connection: Connection;
   mint: MintInfo;
 }) => {
@@ -385,7 +380,9 @@ export const InnerBillingView = ({
 
   useEffect(() => {
     connection
-      .getTokenAccountBalance(auctionView.auctionManager.info.acceptPayment)
+      .getTokenAccountBalance(
+        toPublicKey(auctionView.auctionManager.acceptPayment),
+      )
       .then(resp => {
         if (resp.value.uiAmount !== undefined && resp.value.uiAmount !== null)
           setEscrowBalance(resp.value.uiAmount);

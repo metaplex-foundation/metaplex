@@ -7,26 +7,35 @@ import {
   AuctionState,
   SequenceType,
   sendTransactions,
+  ParsedAccount,
+  BidderMetadata,
+  StringPublicKey,
+  WalletSigner,
+  toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
-import {
-  TransactionInstruction,
-  Keypair,
-  Connection,
-  PublicKey,
-} from '@solana/web3.js';
+import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
 import { AuctionView } from '../hooks';
+import { BidRedemptionTicket, PrizeTrackingTicket } from '../models/metaplex';
+import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendCancelBid(
   connection: Connection,
-  wallet: any,
-  payingAccount: PublicKey,
+  wallet: WalletSigner,
+  payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
+  bids: ParsedAccount<BidderMetadata>[],
+  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
+  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
+
   if (
     auctionView.auction.info.ended() &&
     auctionView.auction.info.state !== AuctionState.Ended
@@ -56,6 +65,25 @@ export async function sendCancelBid(
     instructions,
   );
 
+  if (
+    wallet.publicKey.equals(
+      toPublicKey(auctionView.auctionManager.authority),
+    ) &&
+    auctionView.auction.info.ended()
+  ) {
+    await claimUnusedPrizes(
+      connection,
+      wallet,
+      auctionView,
+      accountsByMint,
+      bids,
+      bidRedemptions,
+      prizeTrackingTickets,
+      signers,
+      instructions,
+    );
+  }
+
   instructions.length === 1
     ? await sendTransactionWithRetry(
         connection,
@@ -78,17 +106,17 @@ export async function setupCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let cancelSigners: Keypair[] = [];
   let cancelInstructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];
 
-  let tokenAccount = accountsByMint.get(
-    auctionView.auction.info.tokenMint.toBase58(),
-  );
+  let tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   if (mint && auctionView.myBidderPot) {
@@ -102,7 +130,7 @@ export async function setupCancelBid(
     );
 
     await cancelBid(
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       receivingSolAccount,
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,

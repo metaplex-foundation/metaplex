@@ -5,8 +5,8 @@ import { SettingOutlined } from '@ant-design/icons';
 import { Settings } from '../Settings';
 import { LABELS } from '../../constants/labels';
 import { ConnectButton } from '..';
-import { useWallet } from '../../contexts/wallet';
-import './style.css';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 export const AppBar = (props: {
   left?: JSX.Element;
   right?: JSX.Element;
@@ -18,16 +18,14 @@ export const AppBar = (props: {
   const TopBar = (
     <div className="App-Bar-right">
       {props.left}
-      {connected ?
-        (
-          <CurrentUserBadge />
-        )
-     : (
+      {connected ? (
+        <CurrentUserBadge />
+      ) : (
         <ConnectButton
           type="text"
           size="large"
-          allowWalletChange={true}
           style={{ color: '#2abdd2' }}
+          allowWalletChange
         />
       )}
       <Popover

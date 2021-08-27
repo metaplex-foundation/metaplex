@@ -10,23 +10,28 @@ import {
   sendTransactionsWithManualRetry,
   decodeExternalPriceAccount,
   findProgramAddress,
+  toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
 
 import BN from 'bn.js';
 import { closeVault } from './closeVault';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 const BATCH_SIZE = 1;
 
 // Given a vault you own, unwind all the tokens out of it.
 export async function unwindVault(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   vault: ParsedAccount<Vault>,
   safetyDepositBoxesByVaultAndIndex: Record<
     string,
     ParsedAccount<SafetyDepositBox>
   >,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let batchCounter = 0;
   const PROGRAM_IDS = programIds();
   let signers: Array<Keypair[]> = [];
@@ -38,7 +43,7 @@ export async function unwindVault(
   if (vault.info.state === VaultState.Inactive) {
     console.log('Vault is inactive, combining');
     const epa = await connection.getAccountInfo(
-      vault.info.pricingLookupAddress,
+      toPublicKey(vault.info.pricingLookupAddress),
     );
     if (epa) {
       const decoded = decodeExternalPriceAccount(epa.data);
@@ -60,7 +65,7 @@ export async function unwindVault(
     }
   }
 
-  const vaultKey = vault.pubkey.toBase58();
+  const vaultKey = vault.pubkey;
   let boxes: ParsedAccount<SafetyDepositBox>[] = [];
 
   let box = safetyDepositBoxesByVaultAndIndex[vaultKey + '-0'];
@@ -81,24 +86,26 @@ export async function unwindVault(
         [
           wallet.publicKey.toBuffer(),
           PROGRAM_IDS.token.toBuffer(),
-          nft.info.tokenMint.toBuffer(),
+          toPublicKey(nft.info.tokenMint).toBuffer(),
         ],
         PROGRAM_IDS.associatedToken,
       )
     )[0];
 
-    const existingAta = await connection.getAccountInfo(ata);
+    const existingAta = await connection.getAccountInfo(toPublicKey(ata));
     console.log('Existing ata?', existingAta);
     if (!existingAta)
       createAssociatedTokenAccountInstruction(
         currInstructions,
-        ata,
+        toPublicKey(ata),
         wallet.publicKey,
         wallet.publicKey,
-        nft.info.tokenMint,
+        toPublicKey(nft.info.tokenMint),
       );
 
-    const value = await connection.getTokenAccountBalance(nft.info.store);
+    const value = await connection.getTokenAccountBalance(
+      toPublicKey(nft.info.store),
+    );
     await withdrawTokenFromSafetyDepositBox(
       new BN(value.value.uiAmount || 1),
       ata,
@@ -106,7 +113,7 @@ export async function unwindVault(
       nft.info.store,
       vault.pubkey,
       vault.info.fractionMint,
-      vault.info.authority,
+      wallet.publicKey.toBase58(),
       currInstructions,
     );
 

@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardProps } from 'antd';
-import { formatTokenAmount, CountdownState, PriceFloorType, fromLamports, useMint } from '@oyster/common';
+import {
+  formatTokenAmount,
+  CountdownState,
+  PriceFloorType,
+  fromLamports,
+  useMint,
+} from '@oyster/common';
 import { ArtContent } from '../ArtContent';
-import './index.less';
-import { AuctionView, AuctionViewState, useArt, useBidsForAuction } from '../../hooks';
+import {
+  AuctionView,
+  AuctionViewState,
+  useArt,
+  useBidsForAuction,
+} from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
+import { BN } from 'bn.js';
 
 const { Meta } = Card;
 export interface AuctionCard extends CardProps {
@@ -22,16 +33,13 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
   const participationFixedPrice =
-    auctionView.auctionManager.info.settings.participationConfig?.fixedPrice ||
-    0;
-  const participationOnly =
-    auctionView.auctionManager.info.settings.winningConfigs.length === 0;
+    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
+  const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
   const priceFloor =
     auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-  const isStarted = auctionView.state === AuctionViewState.Live;
 
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
   const ended =
@@ -39,20 +47,20 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
   let currentBid: number | string = 0;
   let label = '';
-  if(isUpcoming || bids) {
-    label = 'Starting bid';
+  if (isUpcoming || bids) {
+    label = ended ? 'Ended' : 'Starting bid';
     currentBid = fromLamports(
       participationOnly ? participationFixedPrice : priceFloor,
       mintInfo,
-    )
+    );
   }
 
-  if (isStarted && bids.length > 0) {
+  if (!isUpcoming && bids.length > 0) {
     label = ended ? 'Winning bid' : 'Current bid';
-    currentBid = winningBid &&
-      Number.isFinite(winningBid.info.lastBid?.toNumber())
+    currentBid =
+      winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber())
         ? formatTokenAmount(winningBid.info.lastBid)
-        : 'No Bid'
+        : 'No Bid';
   }
 
   const auction = auctionView.auction.info;
@@ -78,9 +86,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           <ArtContent
             className="auction-image no-events"
             preview={false}
-
             pubkey={id}
-
             allowMeshRender={false}
           />
         </>
@@ -90,9 +96,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         title={`${name}`}
         description={
           <>
-            <h4 style={{ marginBottom: 0 }}>
-              {label}
-            </h4>
+            <h4 style={{ marginBottom: 0 }}>{label}</h4>
             <div className="bids">
               <AmountLabel
                 style={{ marginBottom: 10 }}

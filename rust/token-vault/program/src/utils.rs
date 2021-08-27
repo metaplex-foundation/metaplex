@@ -97,7 +97,7 @@ pub fn create_or_allocate_account_raw<'a>(
     if required_lamports > 0 {
         msg!("Transfer {} lamports to the new account", required_lamports);
         invoke(
-            &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
+            &system_instruction::transfer(payer_info.key, new_account_info.key, required_lamports),
             &[
                 payer_info.clone(),
                 new_account_info.clone(),
@@ -110,14 +110,14 @@ pub fn create_or_allocate_account_raw<'a>(
     invoke_signed(
         &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
         &[new_account_info.clone(), system_program_info.clone()],
-        &[&signer_seeds],
+        &[signer_seeds],
     )?;
 
     msg!("Assign the account to the owning program");
     invoke_signed(
         &system_instruction::assign(new_account_info.key, &program_id),
         &[new_account_info.clone(), system_program_info.clone()],
-        &[&signer_seeds],
+        &[signer_seeds],
     )?;
     msg!("Completed assignation!");
 
@@ -261,4 +261,16 @@ pub fn try_from_slice_checked<T: BorshDeserialize>(
     let result: T = try_from_slice_unchecked(data)?;
 
     Ok(result)
+}
+
+pub fn assert_derivation(
+    program_id: &Pubkey,
+    account: &AccountInfo,
+    path: &[&[u8]],
+) -> Result<u8, ProgramError> {
+    let (key, bump) = Pubkey::find_program_address(path, program_id);
+    if key != *account.key {
+        return Err(VaultError::DerivedKeyInvalid.into());
+    }
+    Ok(bump)
 }

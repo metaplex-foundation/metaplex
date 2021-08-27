@@ -1,5 +1,5 @@
-import { useWallet } from '@oyster/common';
-import { PublicKey } from '@solana/web3.js';
+import { StringPublicKey } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import {
   AuctionView,
@@ -8,15 +8,13 @@ import {
 } from '.';
 import { useMeta } from '../contexts';
 
-export const useAuction = (pubkey: PublicKey | string) => {
-  const id = typeof pubkey === 'string' ? pubkey : pubkey.toBase58();
-
-  const { wallet } = useWallet();
+export const useAuction = (id: StringPublicKey) => {
+  const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const [existingAuctionView, setAuctionView] =
     useState<AuctionView | undefined>(undefined);
-  const walletPubkey = wallet?.publicKey;
+  const walletPubkey = publicKey?.toBase58();
   const {
     auctions,
     auctionManagersByAuction,
@@ -26,9 +24,12 @@ export const useAuction = (pubkey: PublicKey | string) => {
     bidderPotsByAuctionAndBidder,
     masterEditions,
     vaults,
+    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditionsByOneTimeAuthMint,
     masterEditionsByPrintingMint,
     metadataByMasterEdition,
+
+    bidRedemptionV2sByAuctionManagerAndWinningIndex,
   } = useMeta();
 
   useEffect(() => {
@@ -42,8 +43,11 @@ export const useAuction = (pubkey: PublicKey | string) => {
         metadataByMint,
         bidderMetadataByAuctionAndBidder,
         bidderPotsByAuctionAndBidder,
+
+        bidRedemptionV2sByAuctionManagerAndWinningIndex,
         masterEditions,
         vaults,
+        safetyDepositConfigsByAuctionManagerAndIndex,
         masterEditionsByPrintingMint,
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
@@ -61,7 +65,9 @@ export const useAuction = (pubkey: PublicKey | string) => {
     metadataByMint,
     bidderMetadataByAuctionAndBidder,
     bidderPotsByAuctionAndBidder,
+    bidRedemptionV2sByAuctionManagerAndWinningIndex,
     vaults,
+    safetyDepositConfigsByAuctionManagerAndIndex,
     masterEditions,
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,

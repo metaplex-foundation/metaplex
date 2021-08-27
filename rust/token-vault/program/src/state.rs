@@ -66,6 +66,10 @@ impl Vault {
 
         Ok(vt)
     }
+
+    pub fn get_token_type_count(a: &AccountInfo) -> u8 {
+        return a.data.borrow()[194];
+    }
 }
 
 #[repr(C)]
@@ -94,6 +98,10 @@ impl SafetyDepositBox {
         )?;
 
         Ok(sd)
+    }
+
+    pub fn get_order(a: &AccountInfo) -> u8 {
+        a.data.borrow()[97]
     }
 }
 
