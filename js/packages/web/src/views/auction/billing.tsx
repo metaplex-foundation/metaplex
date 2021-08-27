@@ -37,6 +37,7 @@ import { WalletAdapter } from '@solana/wallet-base';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
+import { useConnectionProxy } from '../../../../common/src/contexts/connection';
 const { useWallet } = contexts.Wallet;
 const { Content } = Layout;
 

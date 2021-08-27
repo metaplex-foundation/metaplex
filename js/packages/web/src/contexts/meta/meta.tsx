@@ -15,13 +15,18 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useConnectionProxy } from '../../../../common/src/contexts/connection';
 import { MetaState, MetaContextState, UpdateStateValueFunc } from './types';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { processAuctions } from './processAuctions';
 import { processMetaplexAccounts } from './processMetaplexAccounts';
 import { processMetaData } from './processMetaData';
 import { processVaultData } from './processVaultData';
-import { loadAccounts, makeSetter, metadataByMintUpdater } from './loadAccounts';
+import {
+  loadAccounts,
+  makeSetter,
+  metadataByMintUpdater,
+} from './loadAccounts';
 import { onChangeAccount } from './onChangeAccount';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -87,7 +92,10 @@ export function MetaProvider({ children = null as any }) {
     async metadataByMint => {
       try {
         if (!all) {
-          const {metadata, mintToMetadata} = await queryExtendedMetadata(connection, metadataByMint);
+          const { metadata, mintToMetadata } = await queryExtendedMetadata(
+            connection,
+            metadataByMint,
+          );
           setState(current => ({
             ...current,
             metadata,
@@ -122,7 +130,7 @@ export function MetaProvider({ children = null as any }) {
 
   const updateStateValue = useMemo<UpdateStateValueFunc>(
     () => (prop, key, value) => {
-      setState(current => makeSetter({...current})(prop, key, value));
+      setState(current => makeSetter({ ...current })(prop, key, value));
     },
     [setState],
   );
@@ -152,14 +160,18 @@ export function MetaProvider({ children = null as any }) {
 
     const metaSubId = connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
-      onChangeAccount(processMetaData, async (prop, key, value) => {
-        if (prop === 'metadataByMint') {
-          const nextState = await metadataByMintUpdater(value, state, all);
-          setState(nextState);
-        } else {
-          updateStateValue(prop, key, value);
-        }
-      }, all),
+      onChangeAccount(
+        processMetaData,
+        async (prop, key, value) => {
+          if (prop === 'metadataByMint') {
+            const nextState = await metadataByMintUpdater(value, state, all);
+            setState(nextState);
+          } else {
+            updateStateValue(prop, key, value);
+          }
+        },
+        all,
+      ),
     );
 
     return () => {
@@ -221,4 +233,3 @@ export const useMeta = () => {
   const context = useContext(MetaContext);
   return context;
 };
-

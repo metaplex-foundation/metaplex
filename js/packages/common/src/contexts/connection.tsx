@@ -21,7 +21,7 @@ import {
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
-import { ConnectionProxy } from "rpc-cache-server";
+import { ConnectionProxy } from 'rpc-cache-server';
 import { connect } from 'http2';
 
 export type ENV =
@@ -160,7 +160,7 @@ export function ConnectionProvider({
   );
 }
 
-const CACHE_ENDPOINT = ""; //TODO: Give this a value
+const CACHE_ENDPOINT = ''; //TODO: Give this a value
 
 interface ConnectionProxyConfig {
   connection: Connection;
@@ -173,20 +173,34 @@ interface ConnectionProxyConfig {
   tokenMap: Map<string, TokenInfo>;
 }
 
+export function getConnectionProxy() {
+  let [connectionProxy, setConnectionProxy] = useState(
+    new Connection(DEFAULT, 'recent'),
+  );
+  useEffect(() => {
+    const getTheProxy = async () => {
+      let proxy = await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent');
+      setConnectionProxy(proxy);
+    };
+    getTheProxy();
+  }, []);
+  return connectionProxy;
+}
+
 const ConnectionProxyContext = React.createContext<ConnectionProxyConfig>({
   endpoint: DEFAULT,
   setEndpoint: () => {},
   setSlippage: (val: number) => {},
-  connection: await (async () => {return await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent')})(),
-  sendConnection: await (async () => {return await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent')})(),
+  connection: getConnectionProxy(), //ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent').then((val : Connection) => {return val}).catch((val) => {return null}),
+  sendConnection: getConnectionProxy(),
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export const useConnectionProxy = async () => {
+export const useConnectionProxy = () => {
   return useContext(ConnectionProxyContext).connection as Connection;
-}
+};
 
 export function useConnection() {
   return useContext(ConnectionContext).connection as Connection;

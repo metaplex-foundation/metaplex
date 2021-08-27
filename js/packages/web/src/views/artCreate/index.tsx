@@ -39,6 +39,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
+import { useConnectionProxy } from '../../../../common/src/contexts/connection';
 
 const { Step } = Steps;
 const { Dragger } = Upload;

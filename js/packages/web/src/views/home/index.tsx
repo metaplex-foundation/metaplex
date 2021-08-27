@@ -10,7 +10,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
 import BN from 'bn.js';
-import { programIds, useConnection, useWallet } from '@oyster/common';
+import { programIds, useConnectionProxy, useWallet } from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 

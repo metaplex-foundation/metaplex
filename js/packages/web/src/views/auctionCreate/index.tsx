@@ -54,6 +54,7 @@ import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
+import { useConnectionProxy } from '../../../../common/src/contexts/connection';
 
 const { Option } = Select;
 const { Step } = Steps;

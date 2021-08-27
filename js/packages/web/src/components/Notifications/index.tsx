@@ -29,6 +29,7 @@ import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
 import { WalletAdapter } from '@solana/wallet-base';
+import { useConnectionProxy } from '../../../../common/src/contexts/connection';
 interface NotificationCard {
   id: string;
   title: string;
