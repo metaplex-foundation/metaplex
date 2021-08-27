@@ -123,6 +123,14 @@ pub enum NFTPacksInstruction {
     /// - signer            user_wallet
     /// - read, write       pack_card (PDA, [pack, 'card', index])
     /// - write             user_token_acc (user token account ot hold new minted edition)
+    /// - read              new_metadata_acc
+    /// - read              new_edition_acc
+    /// - read              master_edition_acc
+    /// - read              new_mint_account
+    /// - read              new_mint_authority_acc
+    /// - read              metadata_acc
+    /// - read              metadata_mint_acc
+    /// - read              edition_acc
     ClaimPack(u32),
 
     /// TransferAuthority
@@ -274,6 +282,7 @@ pub fn claim_pack(
         AccountMeta::new(*metadata_mint, false),
         AccountMeta::new(*edition, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(randomness_oracle_program::id(), false),
         AccountMeta::new_readonly(spl_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
     ];
