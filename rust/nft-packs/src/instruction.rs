@@ -314,3 +314,14 @@ pub fn transfer_minting_authority(program_id: &Pubkey, pack_set: &Pubkey, author
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::TransferMintingAuthority, accounts)
 }
+
+/// Create `DeletePack` instruction
+pub fn delete_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, refunder: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePack, accounts)
+}
