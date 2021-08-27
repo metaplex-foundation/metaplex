@@ -11,14 +11,14 @@ use solana_program::{
 
 /// Probability type
 #[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
-pub enum ProbabilityType {
+pub enum DistributionType {
     /// Fixed number
     FixedNumber,
     /// Probability based
     ProbabilityBased,
 }
 
-impl Default for ProbabilityType {
+impl Default for DistributionType {
     fn default() -> Self {
         Self::FixedNumber
     }
@@ -41,9 +41,9 @@ pub struct PackCard {
     /// How many instances of this card exists in all packs
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
-    pub probability_type: ProbabilityType,
-    /// Based on above property it's fixed number to receive or probability
-    pub probability: u64,
+    pub distribution_type: DistributionType,
+    /// Average number of cards in pack multiplied by 10^9 and truncated
+    pub number_in_pack: u64,
     /// How many cards already minted
     pub current_supply: u32,
 }
@@ -57,8 +57,8 @@ impl PackCard {
         self.metadata = params.metadata;
         self.token_account = params.token_account;
         self.max_supply = params.max_supply;
-        self.probability_type = params.probability_type;
-        self.probability = params.probability;
+        self.distribution_type = params.distribution_type;
+        self.number_in_pack = params.number_in_pack;
         self.current_supply = 0;
     }
 }
@@ -76,9 +76,9 @@ pub struct InitPackCardParams {
     /// How many instances of this card exists in all packs
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
-    pub probability_type: ProbabilityType,
-    /// Based on above property it's fixed number to receive or probability
-    pub probability: u64,
+    pub distribution_type: DistributionType,
+    /// Average number of cards in pack multiplied by 10^9 and truncated
+    pub number_in_pack: u64,
 }
 
 impl Sealed for PackCard {}
