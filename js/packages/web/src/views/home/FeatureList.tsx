@@ -89,12 +89,10 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
     <>
       <Title
         level={3}
-        className="welcome-text bungee-font-inline"
-        style={{ fontSize: '2em', margin: '1em 0 2em' }}
+        className="welcome-text bungee-font-inline feature-list-title"
       >
         Feature List
       </Title>
-      <br />
       <br />
       <Row
         style={{ width: '100%' }}
@@ -102,7 +100,7 @@ export const FeatureList: React.FunctionComponent<Props> = () => {
         gutter={[64, 0]}
       >
         {chunks(data, 3).map((chunk, index) => (
-          <Col span={8}>
+          <Col xs={{ span: 24 }} md={{ span: 8 }}>
             <div className="feature-list">
               <List
                 itemLayout="horizontal"
