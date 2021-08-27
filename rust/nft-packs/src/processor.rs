@@ -1,12 +1,16 @@
 //! Program state processor
 
 use crate::instruction::NFTPacksInstruction;
+use activate::activate_pack;
 use borsh::BorshDeserialize;
 use claim_pack::claim_pack;
+use deactivate::deactivate_pack;
 use init_pack::init_pack;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
+pub mod activate;
 pub mod claim_pack;
+pub mod deactivate;
 pub mod init_pack;
 
 /// Program state handler.
@@ -33,12 +37,12 @@ impl Processor {
                 unimplemented!()
             }
             NFTPacksInstruction::Activate => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: Activate");
+                activate_pack(program_id, accounts)
             }
             NFTPacksInstruction::Deactivate => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: Deactivate");
+                deactivate_pack(program_id, accounts)
             }
             NFTPacksInstruction::ProveOwnership => {
                 msg!("");

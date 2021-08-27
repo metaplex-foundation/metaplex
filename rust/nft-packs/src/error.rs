@@ -23,6 +23,18 @@ pub enum NFTPacksError {
     /// Pack is already open
     #[error("Pack is already open")]
     PackIsAlreadyOpen,
+
+    /// NFT pack set not fully configured
+    #[error("NFT pack set not fully configured")]
+    PackSetNotConfigured,
+
+    /// NFT pack set is already activated
+    #[error("NFT pack set already activated")]
+    PackAlreadyActivated,
+
+    /// NFT pack set is already deactivated
+    #[error("NFT pack set already deactivated")]
+    PackAlreadyDeactivated,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {

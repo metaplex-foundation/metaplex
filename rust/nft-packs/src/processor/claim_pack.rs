@@ -3,8 +3,9 @@
 use crate::{
     error::NFTPacksError,
     find_pack_card_program_address,
-    state::{PackCard, PackSet, ProbabilityType, ProvingProcess},
+    state::{DistributionType, PackCard, PackSet, ProvingProcess},
     utils::*,
+    PRECISION,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -190,17 +191,21 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         master_metadata.is_mutable,
     )?;
 
-    match pack_card.probability_type {
-        ProbabilityType::FixedNumber => {
+    // Calculate probability number
+    let probability = pack_card.number_in_pack as u128 * PRECISION
+        / (pack_card.number_in_pack as u128 + PRECISION);
+
+    match pack_card.distribution_type {
+        DistributionType::FixedNumber => {
             // Check if user already open pack
-            if proving_process.claimed_card_editions as u64 == pack_card.probability {
+            if proving_process.claimed_card_editions as u128 == probability {
                 return Err(NFTPacksError::PackIsAlreadyOpen.into());
             }
 
             proving_process.claimed_card_editions += 1;
 
             // Check if this pack is last for user
-            if proving_process.claimed_card_editions as u64 == pack_card.probability {
+            if proving_process.claimed_card_editions as u128 == probability {
                 proving_process.claimed_cards += 1;
                 proving_process.claimed_card_editions = 0;
             }
@@ -219,7 +224,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 edition.edition,
             )?;
         }
-        ProbabilityType::ProbabilityBased => {
+        DistributionType::ProbabilityBased => {
             // From oracle
             let (oracle_random_value, _slot) =
                 randomness_oracle_program::read_value(randomness_oracle_account)?;
@@ -229,8 +234,10 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
             random_value.copy_from_slice(&oracle_random_value);
             let random_value = u32::from_le_bytes(random_value);
 
+            let random_value = (random_value as u128) * PRECISION / (u32::MAX as u128);
+
             // If user win
-            if random_value as u64 <= pack_card.probability {
+            if random_value <= probability {
                 proving_process.claimed_card_editions += 1;
 
                 // Mint new tokens

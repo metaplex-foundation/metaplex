@@ -289,3 +289,23 @@ pub fn claim_pack(
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
 }
+
+/// Create `Activate` instruction
+pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Activate, accounts)
+}
+
+/// Create `Deactivate` instruction
+pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
+}
