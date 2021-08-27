@@ -191,21 +191,17 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         master_metadata.is_mutable,
     )?;
 
-    // Calculate probability number
-    let probability = pack_card.number_in_pack as u128 * PRECISION
-        / (pack_card.number_in_pack as u128 + PRECISION);
-
     match pack_card.distribution_type {
         DistributionType::FixedNumber => {
             // Check if user already open pack
-            if proving_process.claimed_card_editions as u128 == probability {
+            if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
                 return Err(NFTPacksError::PackIsAlreadyOpen.into());
             }
 
             proving_process.claimed_card_editions += 1;
 
             // Check if this pack is last for user
-            if proving_process.claimed_card_editions as u128 == probability {
+            if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
                 proving_process.claimed_cards += 1;
                 proving_process.claimed_card_editions = 0;
             }
@@ -225,6 +221,10 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
             )?;
         }
         DistributionType::ProbabilityBased => {
+            // Calculate probability number
+            let probability = pack_card.number_in_pack as u128 * PRECISION
+                / (pack_card.number_in_pack as u128 + PRECISION);
+
             // From oracle
             let (oracle_random_value, _slot) =
                 randomness_oracle_program::read_value(randomness_oracle_account)?;
