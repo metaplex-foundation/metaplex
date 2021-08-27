@@ -1,8 +1,13 @@
 //! Program utils
 
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
-    program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, rent::Rent,
+    account_info::AccountInfo,
+    entrypoint::ProgramResult,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    rent::Rent,
     system_instruction,
 };
 
@@ -40,6 +45,24 @@ pub fn assert_rent_exempt(rent: &Rent, account_info: &AccountInfo) -> ProgramRes
     } else {
         Ok(())
     }
+}
+
+/// Initialize SPL mint instruction
+pub fn spl_initialize_mint<'a>(
+    mint: AccountInfo<'a>,
+    mint_authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+    decimals: u8,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_mint(
+        &spl_token::id(),
+        mint.key,
+        mint_authority.key,
+        None,
+        decimals,
+    )?;
+
+    invoke(&ix, &[mint, rent])
 }
 
 /// Create account (PDA)

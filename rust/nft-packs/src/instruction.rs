@@ -131,7 +131,7 @@ pub enum NFTPacksInstruction {
     /// - read              metadata_acc
     /// - read              metadata_mint_acc
     /// - read              edition_acc
-    ClaimPack(u32),
+    ClaimPack,
 
     /// TransferAuthority
     ///
@@ -287,9 +287,5 @@ pub fn claim_pack(
         AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::ClaimPack(index),
-        accounts,
-    )
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
 }

@@ -3,17 +3,15 @@
 use crate::{
     error::NFTPacksError,
     find_pack_card_program_address,
-    instruction::InitPackSetArgs,
-    state::{InitPackSetParams, PackCard, PackSet, ProbabilityType, ProvingProcess},
+    state::{PackCard, PackSet, ProbabilityType, ProvingProcess},
     utils::*,
 };
-use borsh::BorshSerialize;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
     program::invoke_signed,
     program_error::ProgramError,
-    program_pack::{IsInitialized, Pack},
+    program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
@@ -111,7 +109,7 @@ fn spl_token_metadata_create_metadata_accounts<'a>(
 }
 
 /// Process ClaimPack instruction
-pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> ProgramResult {
+pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let proving_process_account = next_account_info(account_info_iter)?;
@@ -130,22 +128,24 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
     let randomness_oracle_account = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_account)?;
 
+    assert_owned_by(pack_set_account, program_id)?;
+    assert_owned_by(pack_card_account, program_id)?;
+
     assert_rent_exempt(&rent, &pack_set_account)?;
 
     assert_signer(&user_wallet_account)?;
 
-    let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
+    let pack_set = PackSet::unpack(&pack_set_account.data.borrow())?;
     let mut proving_process = ProvingProcess::unpack(&proving_process_account.data.borrow_mut())?;
+    let index = proving_process.claimed_cards + 1;
 
     assert_account_key(pack_set_account, &proving_process.pack_set)?;
     assert_account_key(user_wallet_account, &proving_process.user_wallet)?;
 
     // Validate PackCard
-    let (valid_pack_card_account, _) =
+    let (valid_pack_card, _) =
         find_pack_card_program_address(program_id, pack_set_account.key, index);
-    if valid_pack_card_account != *pack_card_account.key {
-        return Err(ProgramError::InvalidArgument);
-    }
+    assert_account_key(pack_card_account, &valid_pack_card)?;
 
     let pack_card = PackCard::unpack(&pack_card_account.data.borrow())?;
     assert_account_key(pack_set_account, &pack_card.pack_set)?;
@@ -155,32 +155,24 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
         return Err(NFTPacksError::ProvedVouchersMismatchPackVouchers.into());
     }
 
-    // Check if user already open pack
-    if proving_process.claimed_card_editions as u64 == pack_card.probability {
-        return Err(NFTPacksError::PackIsAlreadyOpen.into());
-    }
-
     // Obtain edition instance
     let edition = Edition::from_account_info(edition_account)?;
 
     // Obtain master metadata instance
     let master_metadata = Metadata::from_account_info(metadata_account)?;
 
+    // Check metadata mint
+    assert_account_key(metadata_mint_account, &master_metadata.mint)?;
+
     // Obtain master metadata mint instance
-    let master_mint =
-        spl_token::state::Mint::unpack_unchecked(&metadata_mint_account.data.borrow())?;
+    let master_mint = spl_token::state::Mint::unpack(&metadata_mint_account.data.borrow())?;
 
     // Initialize mint
-    invoke_signed(
-        &spl_token::instruction::initialize_mint(
-            &spl_token::id(),
-            new_mint_account.key,
-            new_mint_authority_account.key,
-            None,
-            master_mint.decimals,
-        )?,
-        &[new_mint_account.clone(), new_mint_authority_account.clone()],
-        &[],
+    spl_initialize_mint(
+        new_mint_account.clone(),
+        new_mint_authority_account.clone(),
+        rent_account.clone(),
+        master_mint.decimals,
     )?;
 
     // Create new metadata account on-chain from master metadata account
@@ -200,11 +192,17 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
 
     match pack_card.probability_type {
         ProbabilityType::FixedNumber => {
+            // Check if user already open pack
+            if proving_process.claimed_card_editions as u64 == pack_card.probability {
+                return Err(NFTPacksError::PackIsAlreadyOpen.into());
+            }
+
             proving_process.claimed_card_editions += 1;
 
             // Check if this pack is last for user
             if proving_process.claimed_card_editions as u64 == pack_card.probability {
                 proving_process.claimed_cards += 1;
+                proving_process.claimed_card_editions = 0;
             }
 
             // Mint token
@@ -220,8 +218,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
                 metadata_mint_account,
                 edition.edition,
             )?;
-
-            Ok(())
         }
         ProbabilityType::ProbabilityBased => {
             // From oracle
@@ -250,13 +246,16 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo], index: u32) -> 
                     metadata_mint_account,
                     edition.edition,
                 )?;
-
-                return Ok(());
             } else {
                 // User lose
                 proving_process.claimed_cards += 1;
-                return Ok(());
+                proving_process.claimed_card_editions = 0;
             }
         }
-    }
+    };
+
+    // Update state
+    ProvingProcess::pack(proving_process, *proving_process_account.data.borrow_mut())?;
+
+    Ok(())
 }
