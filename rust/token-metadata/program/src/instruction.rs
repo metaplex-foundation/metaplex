@@ -268,7 +268,7 @@ pub fn create_metadata_accounts(
             AccountMeta::new(metadata_account, false),
             AccountMeta::new_readonly(mint, false),
             AccountMeta::new_readonly(mint_authority, true),
-            AccountMeta::new_readonly(payer, true),
+            AccountMeta::new(payer, true),
             AccountMeta::new_readonly(update_authority, update_authority_is_signer),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
