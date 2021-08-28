@@ -1,8 +1,13 @@
 //! Program utils
 
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
-    program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, rent::Rent,
+    account_info::AccountInfo,
+    entrypoint::ProgramResult,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    rent::Rent,
     system_instruction,
 };
 
@@ -60,4 +65,40 @@ pub fn create_account<'a, S: Pack>(
     );
 
     invoke_signed(&ix, &[from, to], signers_seeds)
+}
+
+/// Burn tokens
+pub fn burn_tokens<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+) -> ProgramResult {
+    let ix = spl_token::instruction::burn(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke(&ix, &[account, mint, authority])
+}
+
+/// Close token account
+pub fn close_token_account<'a>(
+    account: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    owner: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::close_account(
+        &spl_token::id(),
+        account.key,
+        destination.key,
+        owner.key,
+        &[],
+    )?;
+
+    invoke(&ix, &[account, destination, owner])
 }

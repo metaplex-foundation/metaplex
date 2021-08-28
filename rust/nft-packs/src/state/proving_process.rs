@@ -30,6 +30,12 @@ pub struct ProvingProcess {
 }
 
 impl ProvingProcess {
+    /// Prefix used to generate account
+    pub const PREFIX: &'static str = "proving";
+
+    /// Amount of tokens for prove operation
+    pub const TOKEN_AMOUNT: u64 = 1;
+
     /// Initialize a ProvingProcess
     pub fn init(&mut self, params: InitProvingProcessParams) {
         self.account_type = AccountType::ProvingProcess;
