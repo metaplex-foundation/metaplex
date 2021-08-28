@@ -7,3 +7,6 @@ wallet = "/Users/jprince/.config/solana/id.json"
 
 [scripts]
 test = "mocha -t 1000000 tests/"
+
+[workspace]
+members = ["nft-candy-machine"]
