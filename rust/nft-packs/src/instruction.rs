@@ -1,7 +1,7 @@
 //! Instruction types
 #![allow(missing_docs)]
 
-use crate::{find_pack_card_program_address, state::ProbabilityType};
+use crate::{find_pack_card_program_address, find_program_authority, state::ProbabilityType};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -264,6 +264,7 @@ pub fn add_card_to_pack(
     token_account: &Pubkey,
     args: AddCardToPackArgs,
 ) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
     let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, args.index);
 
     let accounts = vec![
@@ -275,6 +276,7 @@ pub fn add_card_to_pack(
         AccountMeta::new_readonly(*mint, false),
         AccountMeta::new(*source, false),
         AccountMeta::new(*token_account, false),
+        AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
 

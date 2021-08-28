@@ -1,7 +1,7 @@
 //! Add card to pack instruction processing
 
 use crate::{
-    find_pack_card_program_address,
+    find_pack_card_program_address, find_program_authority,
     instruction::AddCardToPackArgs,
     state::{InitPackCardParams, PackCard, PackSet},
     utils::*,
@@ -35,6 +35,7 @@ pub fn add_card_to_pack(
     let mint_info = next_account_info(account_info_iter)?;
     let source_info = next_account_info(account_info_iter)?;
     let token_account_info = next_account_info(account_info_iter)?;
+    let program_authority_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
@@ -52,6 +53,8 @@ pub fn add_card_to_pack(
     } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
+    assert_account_key(authority_info, &pack_set.authority)?;
+
     let mut pack_card = PackCard::unpack_unchecked(&pack_card_info.data.borrow_mut())?;
     assert_uninitialized(&pack_card)?;
 
@@ -97,11 +100,14 @@ pub fn add_card_to_pack(
         return Err(MetadataError::MintMismatch.into());
     }
 
+    let (program_authority, _) = find_program_authority(program_id);
+    assert_account_key(program_authority_info, &program_authority)?;
+
     // Initialize token account
     spl_initialize_account(
         token_account_info.clone(),
         mint_info.clone(),
-        authority_info.clone(),
+        program_authority_info.clone(),
         rent_info.clone(),
     )?;
 

@@ -29,9 +29,9 @@ pub fn init_pack(
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
-    assert_rent_exempt(&rent, &pack_set_account)?;
+    assert_rent_exempt(rent, pack_set_account)?;
 
-    assert_signer(&authority_account)?;
+    assert_signer(authority_account)?;
 
     if args.total_packs == 0 {
         return Err(NFTPacksError::WrongTotalPacksAmount.into());
