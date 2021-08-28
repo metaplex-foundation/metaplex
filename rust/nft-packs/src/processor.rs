@@ -76,7 +76,7 @@ impl Processor {
                 msg!("");
                 unimplemented!()
             }
-            NFTPacksInstruction::EditPack => {
+            NFTPacksInstruction::EditPack(args) => {
                 msg!("");
                 unimplemented!()
             }

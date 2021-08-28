@@ -20,6 +20,18 @@ pub struct InitPackSetArgs {
     pub mutable: bool,
 }
 
+/// Edit a PackSet arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditPackSetArgs {
+    /// Name
+    pub name: Option<[u8; 32]>,
+    /// How many packs are available for redeeming
+    pub total_packs: Option<u32>,
+    /// If true authority can make changes at deactivated phase
+    pub mutable: Option<bool>,
+}
+
 /// Instruction definition
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum NFTPacksInstruction {
@@ -193,7 +205,7 @@ pub enum NFTPacksInstruction {
     /// - name Option<[u8; 32]>
     /// - total_packs Option<u32>
     /// mutable	Option<bool> (only can be changed from true to false)
-    EditPack,
+    EditPack(EditPackSetArgs),
 
     /// EditPackCard
     ///
@@ -324,4 +336,14 @@ pub fn delete_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, r
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePack, accounts)
+}
+
+/// Create `EditPack` instruction
+pub fn edit_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, args: EditPackSetArgs) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
 }
