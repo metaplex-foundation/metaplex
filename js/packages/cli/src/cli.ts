@@ -42,7 +42,7 @@ const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
 };
 
 const createConfig = async function (
-  program,
+  anchorProgram,
   payerWallet: anchor.web3.Keypair,
   configData: {
     maxNumberOfLines: BN,
@@ -53,13 +53,14 @@ const createConfig = async function (
     retainAuthority: boolean,
     creators: { address: anchor.web3.PublicKey, verified: boolean, share: number }[],
   },
-): Promise<any> {
+) {
   const uuid = anchor.web3.Keypair.generate().publicKey.toBase58().slice(0, 6);
   const [config, bump] = await getConfig(payerWallet.publicKey, uuid);
 
   return {
     config,
-    txId: await program.rpc.initializeConfig(
+    uuid,
+    txId: await anchorProgram.rpc.initializeConfig(
       bump,
       {
         uuid,
@@ -89,20 +90,31 @@ program
     },
   )
   .option('-u, --url', 'Solana cluster url', 'https://api.mainnet-beta.solana.com/')
-  .option('-k, --keypair', 'Solana wallet', '/Users/bartosz.lipinski/aury7LJUae7a92PBo35vVbP61GX8VbyxFKausvUtBrt.json')
+  .option('-k, --keypair <path>', 'Solana wallet')
   // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
   .option('-s, --start-with', 'Image index to start with', '0')
   .option('-n, --number', 'Number of images to upload', '10000')
-  .option('-c, --cache', 'Cache file name', 'temp')
+  .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (files: string[], options, cmd) => {
     const extension = '.png';
-    const { startWith, keypair, cache } = cmd.opts();
-    const cacheContent = {
-      items: {},
+    const { startWith, keypair } = cmd.opts();
+    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cachePath = path.join(CACHE_PATH, cacheName);
+    const savedContent = fs.existsSync(cachePath) ? JSON.parse(fs.readFileSync(cachePath).toString()) : undefined;
+    const cacheContent = savedContent || {
+
     };
 
+    if(!cacheContent.program) {
+      cacheContent.program = {};
+    }
+
+    if(!cacheContent.items) {
+      cacheContent.items = {};
+    }
 
     const images = files.filter(val => path.extname(val) === extension);
+    const SIZE = 15; // images.length;
     const walletKey = anchor.web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())));
 
     // const conversionRates = JSON.parse(
@@ -122,22 +134,26 @@ program
       preflightCommitment: "recent",
     });
     const idl = await anchor.Program.fetchIdl(programId, provider);
-    console.log(idl);
-    const program = new anchor.Program(idl, programId, provider);
+    const anchorProgram = new anchor.Program(idl, programId, provider);
+    let config = cacheContent.program.config ? new anchor.web3.PublicKey(cacheContent.program.config) : undefined;
 
-    const SIZE = 10;
     const block = await solConnection.getRecentBlockhash();
     for (let i = 0; i < SIZE; i++) {
-      console.log(`Processing file: ${i}`);
       const image = images[i];
+      const imageName = path.basename(image);
       const imageBuffer = Buffer.from(fs.readFileSync(image));
-      const manifest = JSON.parse(Buffer.from(fs.readFileSync(image.replace(extension, '.json'))).toString());
+      const manifestPath = image.replace(extension, '.json');
+      const manifestContent = fs.readFileSync(manifestPath).toString().replace(imageName, 'image.png').replace(imageName, 'image.png');
+      const manifest = JSON.parse(manifestContent);
+      const index = imageName.replace(extension, '');
+
+      console.log(`Processing file: ${index}`);
       const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-      if (i === 0) {
+      if (i === 0 && !cacheContent.program.uuid) {
         // initialize config
         try {
-          const res = await createConfig(program, walletKey, {
+          const res = await createConfig(anchorProgram, walletKey, {
             maxNumberOfLines: new BN(SIZE),
             symbol: manifest.symbol,
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
@@ -151,17 +167,22 @@ program
                 share: creator.share,
               }
             }),
-          })
-          console.log(res)
+          });
+          cacheContent.program.uuid = res.uuid;
+          cacheContent.program.config = res.config.toBase58();
+          config = res.config;
         }
         catch(exx) {
-          console.error(exx);
+          console.error('Error deploying config to Solana network.')
+          // console.error(exx);
         }
       }
 
       const sizeInBytes = imageBuffer.length + manifestBuffer.length;
       const storageCost = 10;
 
+      let link = cacheContent?.items?.[index]?.link;
+      if(!link) {
         const tx = new anchor.web3.Transaction();
         tx.add(anchor.web3.SystemProgram.transfer({
           fromPubkey: walletKey.publicKey,
@@ -173,7 +194,6 @@ program
         tx.feePayer = walletKey.publicKey;
         tx.partialSign(walletKey);
 
-
         const serializedTransaction = tx.serialize().toString('base64');
 
         // data.append('tags', JSON.stringify(tags));
@@ -181,8 +201,8 @@ program
         const data = new FormData();
         data.append('transaction', serializedTransaction);
         data.append('env', ENV);
-        data.append('file[]', fs.createReadStream(image), `${i}.png`);
-        data.append('file[]', fs.createReadStream(image.replace(extension, '.json')), 'metadata.json');
+        data.append('file[]', fs.createReadStream(image), `image.png`);
+        data.append('file[]', manifestBuffer, 'metadata.json');
         try {
           const result = await (
             await fetch(
@@ -198,27 +218,45 @@ program
             m => m.filename === 'manifest.json',
           );
           if (metadataFile?.transactionId) {
-            const arweaveLink = `https://arweave.net/${metadataFile.transactionId}`;
-            console.log(`File uploaded: ${arweaveLink}`);
-
-            cacheContent[i] = {
-              arweaveLink,
-            };
-            fs.writeFileSync(path.join(CACHE_PATH, cache), JSON.stringify(cacheContent));
+            link = `https://arweave.net/${metadataFile.transactionId}`;
+            console.log(`File uploaded: ${link}`);
           }
-      } catch {
-        console.error(`Error uploading file ${i}`)
+
+          cacheContent.items[index] = {
+            link,
+            onChain: false,
+          };
+          fs.writeFileSync(path.join(CACHE_PATH, cacheName), JSON.stringify(cacheContent));
+
+        } catch(er) {
+          console.error(`Error uploading file ${index}`, er)
+        }
+      }
+
+      if(link && config) {
+        console.log(`Storing link in on-chain config 🚀🚀🚀`)
+        const txId = await anchorProgram.rpc.addConfigLines(i, [
+          {
+            uri: link,
+            isMutable: true,
+            name: manifest.name,
+            description: manifest.description,
+          }
+        ],{
+          accounts: {
+            config,
+            authority: walletKey,
+          },
+          signers: [walletKey],
+        });
+
+        fs.writeFileSync(path.join(CACHE_PATH, cacheName), JSON.stringify(cacheContent));
+      } else {
+        console.log(`Config not initialized caching Arweave link.`);
       }
     }
 
-
-
-
-    // TODO: read cache content and upload to solana
-
-
-
-
+    // TODO: start andy machine
   });
 
 program
