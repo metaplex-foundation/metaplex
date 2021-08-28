@@ -52,7 +52,7 @@ yarn deploy
 
 ## Vercel
 
-To publish the Metaplex app to Vercel, you first need to visit [https://vercel.com/](https://vercel.com/) and create a new project linked to your github repo.
+To publish the Metaplex app to Vercel, you first need to visit [https://vercel.com/](https://vercel.com/) and create a new project linked to your github repo. Then, create a `pages/` directory under `js`.
 
 After that, configure this project with the following settings:
 
