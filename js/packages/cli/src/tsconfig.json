@@ -4,6 +4,7 @@
         "module": "commonjs",
         "outDir": "./../build",
         "declaration": false,
+        "esModuleInterop": true,
         "noImplicitAny": false,
         "removeComments": false,
         "isolatedModules": false,
