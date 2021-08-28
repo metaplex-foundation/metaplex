@@ -1,9 +1,9 @@
-//! EditPackCard instruction processing
+//! EditPackVoucher instruction processing
 
 use crate::{
     error::NFTPacksError,
-    instruction::EditPackCardArgs,
-    state::{PackCard, PackSet, PackSetState},
+    instruction::EditPackVoucherArgs,
+    state::{PackSet, PackSetState, PackVoucher},
     utils::*,
 };
 use solana_program::{
@@ -14,16 +14,16 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-/// Process EditPackCard instruction
-pub fn edit_pack_card(
+/// Process EditPackVoucher instruction
+pub fn edit_pack_voucher(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    args: EditPackCardArgs,
+    args: EditPackVoucherArgs,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let authority_account = next_account_info(account_info_iter)?;
-    let pack_card_account = next_account_info(account_info_iter)?;
+    let pack_voucher_account = next_account_info(account_info_iter)?;
 
     assert_signer(&authority_account)?;
     assert_owned_by(pack_set_account, program_id)?;
@@ -42,42 +42,48 @@ pub fn edit_pack_card(
         return Err(NFTPacksError::WrongPackState.into());
     }
 
-    let mut pack_card = PackCard::unpack(&pack_card_account.data.borrow_mut())?;
+    let mut pack_voucher = PackVoucher::unpack(&pack_voucher_account.data.borrow_mut())?;
 
-    if pack_card.pack_set != *pack_set_account.key {
-        return Err(NFTPacksError::WrongPackCard.into());
+    if pack_voucher.pack_set != *pack_set_account.key {
+        return Err(NFTPacksError::WrongPackVoucher.into());
     }
 
-    apply_changes(&mut pack_card, args)?;
+    apply_changes(&mut pack_voucher, args)?;
 
-    PackCard::pack(pack_card, *pack_card_account.data.borrow_mut())?;
+    PackVoucher::pack(pack_voucher, *pack_voucher_account.data.borrow_mut())?;
 
     Ok(())
 }
 
-fn apply_changes(pack_card: &mut PackCard, changes: EditPackCardArgs) -> Result<(), ProgramError> {
+fn apply_changes(
+    pack_voucher: &mut PackVoucher,
+    changes: EditPackVoucherArgs,
+) -> Result<(), ProgramError> {
     if let Some(new_max_supply) = changes.max_supply {
-        if new_max_supply < pack_card.current_supply {
+        if new_max_supply < pack_voucher.current_supply {
             return Err(NFTPacksError::SmallMaxSupply.into());
         }
-        if changes.max_supply == pack_card.max_supply {
+        if changes.max_supply == pack_voucher.max_supply {
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
-        pack_card.max_supply = changes.max_supply;
+        pack_voucher.max_supply = changes.max_supply;
     }
 
-    if let Some(new_distribution_type) = changes.distribution_type {
-        if new_distribution_type == pack_card.distribution_type {
+    if let Some(new_number_to_open) = changes.number_to_open {
+        if new_number_to_open == 0 {
+            return Err(NFTPacksError::WrongNumberToOpen.into());
+        }
+        if new_number_to_open == pack_voucher.number_to_open {
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
-        pack_card.distribution_type = new_distribution_type;
+        pack_voucher.number_to_open = new_number_to_open;
     }
 
-    if let Some(new_number_in_pack) = changes.number_in_pack {
-        if new_number_in_pack == pack_card.number_in_pack {
+    if let Some(new_action_to_prove) = changes.action_on_prove {
+        if new_action_to_prove == pack_voucher.action_on_prove {
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
-        pack_card.number_in_pack = new_number_in_pack;
+        pack_voucher.action_on_prove = new_action_to_prove;
     }
 
     Ok(())

@@ -80,9 +80,17 @@ pub enum NFTPacksError {
     #[error("Wrong pack card received")]
     WrongPackCard,
 
+    /// Wrong pack voucher received
+    #[error("Wrong pack voucher received")]
+    WrongPackVoucher,
+
     /// Max supply can't be less then current supply
     #[error("Max supply can't be less then current supply")]
     SmallMaxSupply,
+
+    /// Number NFTs to open pack should be greater then zero
+    #[error("Number NFTs to open pack should be greater then zero")]
+    WrongNumberToOpen,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {

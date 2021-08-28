@@ -2,8 +2,8 @@
 
 use crate::{
     error::NFTPacksError,
-    state::{PackSet, PackSetState},
     instruction::EditPackSetArgs,
+    state::{PackSet, PackSetState},
     utils::*,
 };
 use solana_program::{
@@ -15,7 +15,11 @@ use solana_program::{
 };
 
 /// Process EditPack instruction
-pub fn edit_pack(_program_id: &Pubkey, accounts: &[AccountInfo], args: EditPackSetArgs) -> ProgramResult {
+pub fn edit_pack(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    args: EditPackSetArgs,
+) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let authority_account = next_account_info(account_info_iter)?;
@@ -32,8 +36,7 @@ pub fn edit_pack(_program_id: &Pubkey, accounts: &[AccountInfo], args: EditPackS
         return Err(NFTPacksError::ImmutablePackSet.into());
     }
 
-    if pack_set.pack_state == PackSetState::Activated
-    {
+    if pack_set.pack_state == PackSetState::Activated {
         return Err(NFTPacksError::WrongPackState.into());
     }
 
@@ -65,6 +68,6 @@ fn apply_changes(pack_set: &mut PackSet, changes: EditPackSetArgs) -> Result<(),
         }
         pack_set.mutable = new_mutable_value;
     }
-    
+
     Ok(())
 }

@@ -3,23 +3,24 @@
 use crate::instruction::NFTPacksInstruction;
 use activate::activate_pack;
 use borsh::BorshDeserialize;
-use deactivate::deactivate_pack;
-use init_pack::init_pack;
-use prove_ownership::prove_ownership;
 use change_authority::{transfer_authority, AuthorityToChange};
 use delete_pack::delete_pack;
+use deactivate::deactivate_pack;
 use edit_pack::edit_pack;
 use edit_pack_card::edit_pack_card;
+use init_pack::init_pack;
+use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
-pub mod deactivate;
-pub mod init_pack;
-pub mod prove_ownership;
 pub mod change_authority;
 pub mod delete_pack;
+pub mod deactivate;
 pub mod edit_pack;
 pub mod edit_pack_card;
+pub mod edit_pack_voucher;
+pub mod init_pack;
+pub mod prove_ownership;
 
 /// Program state handler.
 pub struct Processor {}
@@ -88,7 +89,7 @@ impl Processor {
                 msg!("Instruction: EditPackCard");
                 edit_pack_card(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackVoucher => {
+            NFTPacksInstruction::EditPackVoucher(args) => {
                 msg!("");
                 unimplemented!()
             }
