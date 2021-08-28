@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Countdown, { zeroPad } from 'react-countdown';
 import { Button, Progress, Typography, Row, Col } from 'antd';
-import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
-import type { BN } from '@project-serum/anchor';
+import { web3, Provider, Program, Idl } from '@project-serum/anchor';
 import { useConnection, useWallet, ConnectButton } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
 import type { MasterAccount } from './types';
 import { Confetti } from './../../components/Confetti';
 import { PublicKey } from '@solana/web3.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
@@ -20,6 +20,21 @@ const MAX_RETRIES = 5; // what is a good value for this?
 const isSaleStarted = false;
 
 const { Title } = Typography;
+
+/**
+ * Get associated token address
+ *
+ * @param owner - the public key that owns the associated token address
+ * @param mint - the mint
+ * @returns a promise of the associated token address
+ */
+export async function getAssociatedTokenAddress(owner: PublicKey, mint: PublicKey): Promise<PublicKey> {
+  const [address] = await PublicKey.findProgramAddress(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  return address;
+}
 
 const getPurchaseBtnText = (
   connected: boolean,
@@ -175,31 +190,45 @@ export const PurchaseArt = () => {
     try {
       setIsProcessing(true);
 
-      const payer = wallet.publicKey.toBase58();
-
-      const receipt = web3.Keypair.generate();
-      const receiptSize = 8 + 32 + 32 + 8 + 8;
+      const SEED = Buffer.from('Oo');
+      const payer = wallet.publicKey;
+      // The mint to create.
+      const mintAccount = web3.Keypair.generate();
+      // The token mint metadata account
+      const tokenMetadataProgram = new web3.PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+      const [mintMetadata, _mint_nonce] = await web3.PublicKey.findProgramAddress(
+        [Buffer.from('metadata'), tokenMetadataProgram.toBuffer(), mintAccount.publicKey.toBuffer()],
+        tokenMetadataProgram,
+      );
+      // The buyer's token account
+      const buyerTokenAccount = await getAssociatedTokenAddress(payer, mintAccount.publicKey);
+      // the program authority
+      const [programAuthority, nonce] = await web3.PublicKey.findProgramAddress([SEED], anchorProgram.programId);
 
       // throw new Error('failed');
-      const txId = await anchorProgram.rpc.purchase({
+      const txId = await anchorProgram.rpc.purchase(nonce, {
         accounts: {
           payer,
-          receipt: receipt.publicKey,
-          authority: account.authority,
+          buyerTokenAccount,
+          mint: mintAccount.publicKey,
+          mintMetadata,
+          authority: new web3.PublicKey('CzrE3LhijwcmvsXZa8YavqgR9EzW3UGqoSWZKwGpZVqM'),
           masterAccount: masterAccountPubkey,
+          programAuthority,
+          tokenMetadataProgram,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: web3.SystemProgram.programId,
+          rent: web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [receipt],
+        signers: [mintAccount],
         instructions: [
           web3.SystemProgram.createAccount({
-            fromPubkey: wallet.publicKey,
-            newAccountPubkey: receipt.publicKey,
-            space: receiptSize, // Add 8 for the account discriminator.
-            lamports:
-              await anchorProvider.connection.getMinimumBalanceForRentExemption(
-                receiptSize,
-              ),
-            programId: anchorProgram.programId,
+            fromPubkey: payer,
+            newAccountPubkey: mintAccount.publicKey,
+            space: 82,
+            lamports: await anchorProvider.connection.getMinimumBalanceForRentExemption(82),
+            programId: TOKEN_PROGRAM_ID,
           }),
         ],
       });
