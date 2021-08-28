@@ -75,6 +75,14 @@ pub enum NFTPacksError {
     /// Can't set the same value
     #[error("Can't set the same value")]
     CantSetTheSameValue,
+
+    /// Wrong pack card received
+    #[error("Wrong pack card received")]
+    WrongPackCard,
+
+    /// Max supply can't be less then current supply
+    #[error("Max supply can't be less then current supply")]
+    SmallMaxSupply,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {

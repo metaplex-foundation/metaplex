@@ -1,6 +1,6 @@
 //! Instruction types
 
-use crate::{find_pack_voucher_program_address, find_proving_process_program_address};
+use crate::{find_proving_process_program_address, state::DistributionType};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -30,6 +30,18 @@ pub struct EditPackSetArgs {
     pub total_packs: Option<u32>,
     /// If true authority can make changes at deactivated phase
     pub mutable: Option<bool>,
+}
+
+/// Edit a PackCard arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditPackCardArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// Fixed number / probability-based
+    pub distribution_type: Option<DistributionType>,
+    /// Average number of cards in pack multiplied by 10^9 and truncated
+    pub number_in_pack: Option<u64>,
 }
 
 /// Instruction definition
@@ -217,11 +229,10 @@ pub enum NFTPacksInstruction {
     /// - write            pack_card
     ///
     /// Parameters:
-    /// - card_index (to link it with pack set)
     /// - max_supply	Option<u32>
-    /// - probability_type	Option<enum[fixed number, probability based]>
-    /// - probability	Option<u64>
-    EditPackCard,
+    /// - distribution_type	Option<enum[fixed number, probability based]>
+    /// - number_in_pack	Option<u64>
+    EditPackCard(EditPackCardArgs),
 
     /// EditPackVoucher
     ///
@@ -346,4 +357,15 @@ pub fn edit_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, arg
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
+}
+
+/// Create `EditPackCard` instruction
+pub fn edit_pack_card(program_id: &Pubkey, pack_set: &Pubkey, pack_card: &Pubkey, authority: &Pubkey, args: EditPackCardArgs) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*pack_card, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPackCard(args), accounts)
 }

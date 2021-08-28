@@ -45,23 +45,26 @@ pub fn edit_pack(_program_id: &Pubkey, accounts: &[AccountInfo], args: EditPackS
 }
 
 fn apply_changes(pack_set: &mut PackSet, changes: EditPackSetArgs) -> Result<(), ProgramError> {
-    if let changes.name = Some(new_name) {
+    if let Some(new_name) = changes.name {
         if new_name == pack_set.name {
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
         pack_set.name = new_name;
     }
-    if let changes.total_packs = Some(new_total_packs) {
+
+    if let Some(new_total_packs) = changes.total_packs {
         if new_total_packs < pack_set.pack_cards {
             return Err(NFTPacksError::SmallTotalPacksAmount.into());
         }
         pack_set.total_packs = new_total_packs;
     }
-    if let changes.mutable = Some(new_mutable_value) {
+
+    if let Some(new_mutable_value) = changes.mutable {
         if new_mutable_value == pack_set.mutable {
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
         pack_set.mutable = new_mutable_value;
     }
+    
     Ok(())
 }

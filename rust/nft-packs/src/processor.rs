@@ -8,6 +8,8 @@ use init_pack::init_pack;
 use prove_ownership::prove_ownership;
 use change_authority::{transfer_authority, AuthorityToChange};
 use delete_pack::delete_pack;
+use edit_pack::edit_pack;
+use edit_pack_card::edit_pack_card;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
@@ -16,6 +18,8 @@ pub mod init_pack;
 pub mod prove_ownership;
 pub mod change_authority;
 pub mod delete_pack;
+pub mod edit_pack;
+pub mod edit_pack_card;
 
 /// Program state handler.
 pub struct Processor {}
@@ -77,12 +81,12 @@ impl Processor {
                 unimplemented!()
             }
             NFTPacksInstruction::EditPack(args) => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: EditPack");
+                edit_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackCard => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::EditPackCard(args) => {
+                msg!("Instruction: EditPackCard");
+                edit_pack_card(program_id, accounts, args)
             }
             NFTPacksInstruction::EditPackVoucher => {
                 msg!("");
