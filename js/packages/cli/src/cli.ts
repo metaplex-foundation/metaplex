@@ -7,12 +7,13 @@ import FormData from 'form-data';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
+import { sendTransactionWithRetryWithKeypair, fromUTF8Array } from './helper';
+import { PublicKey } from '@solana/web3.js';
 
 const CACHE_PATH = './.cache';
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
 );
-const KEY = '/Users/bartosz.lipinski/Workspace/arweave-keyfile.json';
 const ENV = 'devnet';
 const CANDY_MACHINE = 'candy_machine';
 
@@ -20,6 +21,27 @@ const programId = new anchor.web3.PublicKey(
   'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
 
+function chunks(array, size) {
+  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+    (_, index) => array.slice(index * size, (index + 1) * size),
+  );
+}
+
+const configArrayStart =
+  32 + // authority
+  4 +
+  6 + // uuid + u32 len
+  4 +
+  10 + // u32 len + symbol
+  2 + // seller fee basis points
+  1 +
+  4 +
+  5 * 34 + // optional + u32 len + actual vec
+  8 + //max supply
+  1 + //is mutable
+  1 + // retain authority
+  4; // max number of lines;
+const configLineSize = 4 + 32 + 4 + 200;
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -57,25 +79,11 @@ const createConfig = async function (
     }[];
   },
 ) {
-  const configArrayStart =
-    32 + // authority
-    4 +
-    6 + // uuid + u32 len
-    4 +
-    10 + // u32 len + symbol
-    2 + // seller fee basis points
-    1 +
-    4 +
-    5 * 34 + // optional + u32 len + actual vec
-    8 + //max supply
-    1 + //is mutable
-    1 + // retain authority
-    4; // max number of lines;
-  const configLineSize = 4 + 32 + 4 + 200;
   const size =
     configArrayStart +
     4 +
-    configData.maxNumberOfLines.toNumber() * configLineSize;
+    configData.maxNumberOfLines.toNumber() * configLineSize +
+    configData.maxNumberOfLines.toNumber() / 8;
 
   const config = anchor.web3.Keypair.generate();
   const uuid = config.publicKey.toBase58().slice(0, 6);
@@ -147,11 +155,29 @@ program
       cacheContent.program = {};
     }
 
+    let existingInCache = [];
     if (!cacheContent.items) {
       cacheContent.items = {};
+    } else {
+      existingInCache = Object.keys(cacheContent.items);
     }
 
-    const images = files.filter(val => path.extname(val) === extension);
+    const seen = {};
+    const newFiles = [];
+    existingInCache.forEach(f => {
+      if (!seen[f]) {
+        seen[f] = true;
+        newFiles.push(f + '.png');
+      }
+    });
+    files.forEach(f => {
+      if (!seen[f]) {
+        seen[f] = true;
+        newFiles.push(f);
+      }
+    });
+
+    const images = newFiles.filter(val => path.extname(val) === extension);
     const SIZE = images.length; // images.length;
     const walletKey = anchor.web3.Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
@@ -185,75 +211,78 @@ program
     for (let i = 0; i < SIZE; i++) {
       const image = images[i];
       const imageName = path.basename(image);
-      const imageBuffer = Buffer.from(fs.readFileSync(image));
-      const manifestPath = image.replace(extension, '.json');
-      const manifestContent = fs
-        .readFileSync(manifestPath)
-        .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
-      const manifest = JSON.parse(manifestContent);
       const index = imageName.replace(extension, '');
 
       console.log(`Processing file: ${index}`);
-      const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
-      if (i === 0 && !cacheContent.program.uuid) {
-        // initialize config
-        try {
-          const res = await createConfig(anchorProgram, walletKey, {
-            maxNumberOfLines: new BN(SIZE),
-            symbol: manifest.symbol,
-            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: true,
-            maxSupply: new BN(0),
-            retainAuthority: true,
-            creators: manifest.properties.creators.map(creator => {
-              return {
-                address: new anchor.web3.PublicKey(creator.address),
-                verified: false,
-                share: creator.share,
-              };
-            }),
-          });
-          cacheContent.program.uuid = res.uuid;
-          cacheContent.program.config = res.config.toBase58();
-          config = res.config;
-
-          fs.writeFileSync(
-            path.join(CACHE_PATH, cacheName),
-            JSON.stringify(cacheContent),
-          );
-        } catch (exx) {
-          console.error('Error deploying config to Solana network.', exx);
-          // console.error(exx);
-        }
-      }
-
-      const sizeInBytes = imageBuffer.length + manifestBuffer.length;
       const storageCost = 10;
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link) {
-        const tx = new anchor.web3.Transaction();
-        tx.add(
+        const imageBuffer = Buffer.from(fs.readFileSync(image));
+        const manifestPath = image.replace(extension, '.json');
+        const manifestContent = fs
+          .readFileSync(manifestPath)
+          .toString()
+          .replace(imageName, 'image.png')
+          .replace(imageName, 'image.png');
+        const manifest = JSON.parse(manifestContent);
+
+        const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+        const sizeInBytes = imageBuffer.length + manifestBuffer.length;
+
+        if (i === 0 && !cacheContent.program.uuid) {
+          // initialize config
+          try {
+            const res = await createConfig(anchorProgram, walletKey, {
+              maxNumberOfLines: new BN(SIZE),
+              symbol: manifest.symbol,
+              sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+              isMutable: true,
+              maxSupply: new BN(0),
+              retainAuthority: true,
+              creators: manifest.properties.creators.map(creator => {
+                return {
+                  address: new anchor.web3.PublicKey(creator.address),
+                  verified: false,
+                  share: creator.share,
+                };
+              }),
+            });
+            cacheContent.program.uuid = res.uuid;
+            cacheContent.program.config = res.config.toBase58();
+            config = res.config;
+
+            fs.writeFileSync(
+              path.join(CACHE_PATH, cacheName),
+              JSON.stringify(cacheContent),
+            );
+          } catch (exx) {
+            console.error('Error deploying config to Solana network.', exx);
+            // console.error(exx);
+          }
+        }
+
+        let instructions = [
           anchor.web3.SystemProgram.transfer({
             fromPubkey: walletKey.publicKey,
             toPubkey: PAYMENT_WALLET,
             lamports: storageCost,
           }),
+        ];
+
+        const tx = await sendTransactionWithRetryWithKeypair(
+          solConnection,
+          walletKey,
+          instructions,
+          [],
+          'single',
         );
-
-        tx.recentBlockhash = block.blockhash;
-        tx.feePayer = walletKey.publicKey;
-        tx.partialSign(walletKey);
-
-        const serializedTransaction = tx.serialize().toString('base64');
 
         // data.append('tags', JSON.stringify(tags));
         // payment transaction
         const data = new FormData();
-        data.append('transaction', serializedTransaction);
+        data.append('transaction', tx);
         data.append('env', ENV);
         data.append('file[]', fs.createReadStream(image), `image.png`);
         data.append('file[]', manifestBuffer, 'metadata.json');
@@ -278,6 +307,7 @@ program
 
           cacheContent.items[index] = {
             link,
+            name: manifest.name,
             onChain: false,
           };
           fs.writeFileSync(
@@ -288,57 +318,124 @@ program
           console.error(`Error uploading file ${index}`, er);
         }
       }
-
-      if (link && config && !cacheContent.items[index].onChain) {
-        console.log(`Storing link in on-chain config 🚀🚀🚀`);
-        const txId = await anchorProgram.rpc.addConfigLines(
-          i,
-          [
-            {
-              uri: link,
-              name: manifest.name,
-            },
-          ],
-          {
-            accounts: {
-              config,
-              authority: walletKey.publicKey,
-            },
-            signers: [walletKey],
-          },
-        );
-
-        cacheContent.items[index] = {
-          link,
-          onChain: true,
-        };
-
-        fs.writeFileSync(
-          path.join(CACHE_PATH, cacheName),
-          JSON.stringify(cacheContent),
-        );
-      } else {
-        console.log(`Config not initialized caching Arweave link.`);
-      }
     }
 
+    try {
+      await Promise.all(
+        chunks(Array.from(Array(images.length).keys()), 2000).map(
+          async allIndexesInSlice => {
+            for (
+              let offset = 0;
+              (offset += 10);
+              offset < allIndexesInSlice.length
+            ) {
+              const indexes = allIndexesInSlice.slice(offset, offset + 10);
+              const onChain = indexes.filter(i => {
+                const index = images[i].replace(extension, '');
+                return cacheContent.items[index].onChain;
+              });
+              if (onChain.length != indexes.length) {
+                const i = images[indexes[0]].replace(extension, '');
+                console.log(
+                  'Writing indices ',
+                  i,
+                  '-',
+                  parseInt(i) + indexes.length,
+                );
+
+                const txId = await anchorProgram.rpc.addConfigLines(
+                  i,
+                  indexes.map(i => ({
+                    uri: cacheContent.items[images[i].replace(extension, '')]
+                      .link,
+                    name: cacheContent.items[images[i].replace(extension, '')]
+                      .name,
+                  })),
+                  {
+                    accounts: {
+                      config,
+                      authority: walletKey.publicKey,
+                    },
+                    signers: [walletKey],
+                  },
+                );
+                indexes.forEach(i => {
+                  cacheContent.items[images[i].replace(extension, '')] = {
+                    ...cacheContent.items[images[i].replace(extension, '')],
+                    onChain: true,
+                  };
+                });
+                fs.writeFileSync(
+                  path.join(CACHE_PATH, cacheName),
+                  JSON.stringify(cacheContent),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      fs.writeFileSync(
+        path.join(CACHE_PATH, cacheName),
+        JSON.stringify(cacheContent),
+      );
+    }
+    console.log('Done');
     // TODO: start candy machine
   });
 
 program
   .command('verify')
-  .argument(
-    '<directory>',
-    'Directory containing images named from 0-n',
-    val => {
-      // return list of paths to each image
-      return ['x', 'y'];
-    },
-  )
-  .argument('[second]', 'integer argument', val => parseInt(val), 1000)
-  .option('-n, --number', 'Number of images to upload', '10000')
-  .action((directory, second, options) => {
-    console.log(`${directory} + ${second} = ${1 + 2}`);
+  .option('-c, --cache-name <path>', 'Cache file name')
+  .action(async (directory, second, options) => {
+    const solConnection = new anchor.web3.Connection(
+      `https://api.${ENV}.solana.com/`,
+    );
+    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cachePath = path.join(CACHE_PATH, cacheName);
+    const cachedContent = fs.existsSync(cachePath)
+      ? JSON.parse(fs.readFileSync(cachePath).toString())
+      : undefined;
+
+    const config = await solConnection.getAccountInfo(
+      new PublicKey(cachedContent.program.config),
+    );
+
+    const keys = Object.keys(cachedContent.items);
+    for (let i = 0; i < keys.length; i++) {
+      console.log('Looking at key ', i);
+      const key = keys[i];
+      const thisSlice = config.data.slice(
+        configArrayStart + 4 + configLineSize * i,
+        configArrayStart + 4 + configLineSize * (i + 1),
+      );
+      const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+      const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+      const cacheItem = cachedContent.items[key];
+      if (!name.match(cacheItem.name) || !uri.match(cacheItem.uri)) {
+        console.log(
+          'Name',
+          name,
+          'or uri',
+          uri,
+          'didnt match cache values of',
+          cacheItem.name,
+          'and',
+          cacheItem.uri,
+          ' marking to rerun for image',
+          key,
+        );
+        cacheItem.onChain = false;
+      } else {
+        console.log('Name', name, 'with', uri, 'checked out');
+      }
+    }
+    fs.writeFileSync(
+      path.join(CACHE_PATH, cacheName),
+      JSON.stringify(cachedContent),
+    );
   });
 
 program.command('find-wallets').action(() => {});
