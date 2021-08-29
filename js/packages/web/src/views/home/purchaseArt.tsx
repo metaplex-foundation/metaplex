@@ -334,7 +334,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
   },
   social: {
     display: 'flex',
@@ -350,7 +350,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as 'column',
   },
 };
 
