@@ -383,6 +383,8 @@ const ComingSoon = () => (
           onClick={() => {}}
           disabled={true}
         >
+          <br></br>
+          <br></br>
           <span style={{ marginRight: '10px' }}>Buy in</span>
           <Countdown
             date={saleStartDate}
