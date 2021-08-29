@@ -6,8 +6,19 @@
       "name": "initialize",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": false,
+          "name": "masterAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "allocate",
+      "accounts": [
+        {
+          "name": "caller",
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -18,8 +29,12 @@
       ],
       "args": [
         {
-          "name": "numTokens",
-          "type": "u64"
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
         }
       ]
     },
@@ -32,90 +47,84 @@
           "isSigner": true
         },
         {
-          "name": "receipt",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "masterAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "distribute",
-      "accounts": [
-        {
-          "name": "soldTokenAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "buyerTokenAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "receipt",
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintMetadata",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "authority",
-          "isMut": false,
-          "isSigner": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "masterAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "refund",
-      "accounts": [
-        {
-          "name": "owner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "receipt",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "masterAccount",
-          "isMut": true,
-          "isSigner": false
         },
         {
           "name": "systemProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "close",
+      "accounts": [
+        {
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterAccount",
+          "isMut": true,
           "isSigner": false
         }
       ],
@@ -133,36 +142,51 @@
             "type": "publicKey"
           },
           {
-            "name": "numTokens",
+            "name": "allocated",
             "type": "u64"
           },
           {
-            "name": "counter",
+            "name": "sold",
             "type": "u64"
+          },
+          {
+            "name": "data",
+            "type": {
+              "array": [
+                {
+                  "defined": "Item"
+                },
+                2532
+              ]
+            }
           }
         ]
       }
-    },
+    }
+  ],
+  "types": [
     {
-      "name": "Receipt",
+      "name": "Item",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "owner",
-            "type": "publicKey"
+            "name": "name",
+            "type": {
+              "array": [
+                "u8",
+                280
+              ]
+            }
           },
           {
-            "name": "masterAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "tokenNumber",
-            "type": "u64"
-          },
-          {
-            "name": "amountPaid",
-            "type": "u64"
+            "name": "uri",
+            "type": {
+              "array": [
+                "u8",
+                280
+              ]
+            }
           }
         ]
       }
@@ -176,13 +200,18 @@
     },
     {
       "code": 301,
-      "name": "InvalidReceipt",
-      "msg": "The given receipt is not valid."
+      "name": "Unauthorized",
+      "msg": "Not authorized."
     },
     {
       "code": 302,
       "name": "SaleClosed",
       "msg": "The sale is closed."
+    },
+    {
+      "code": 303,
+      "name": "SaleStillOpen",
+      "msg": "The sale is not closed."
     }
   ]
 }

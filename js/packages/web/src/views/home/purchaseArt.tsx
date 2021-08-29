@@ -14,9 +14,9 @@ import {
 import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
-  '4vo3wuNkVB3UEpYSGjTXNFejEaVr5q7W2KGmg2U5nDrM';
+  '3jZUJi6U5CCadvjGMm9HCzSeTeR3c4W1whkThVYxAj3x';
 const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
-  'EwaL61ayrw2F7f3AdG83LqU7jPiMmytuR6jA7hJpwpsK';
+  'EHW3dmYMAUfKKaTGUC8gFZ5TFnQyEgiM9oqt1qw7EiA8';
 
 const MAX_RETRIES = 5; // what is a good value for this?
 
@@ -86,25 +86,26 @@ const updateTokenSane = async (
         TOKEN_SALE_MASTER_ACCOUNT_ADDRESS,
       );
       setAccountFn(masterAccount as MasterAccount);
-      if (account && account.numTokens.toNumber() > 0) {
+      if (account && account.allocated.toNumber() > 0) {
         // set progress value and amount remaining
-        if (account.counter.toNumber() <= 1) {
+
+        if (account.sold.toNumber() <= 1) {
           setProgressValueFn(0);
-          setAmountRemainingFn(account.numTokens.toNumber());
+          setAmountRemainingFn(account.allocated.toNumber());
         } else {
           setProgressValueFn(
             Math.round(
-              (account.counter.toNumber() / account.numTokens.toNumber()) * 100,
+              (account.sold.toNumber() / account.allocated.toNumber()) * 100,
             ),
           );
           setAmountRemainingFn(
-            account.numTokens.toNumber() - account.counter.toNumber(),
+            account.allocated.toNumber() - account.sold.toNumber(),
           );
         }
         // set price
-        if (account.counter.toNumber() >= 2222) {
+        if (account.sold.toNumber() >= 2222) {
           setCurrentPriceFn(3);
-        } else if (account.counter.toNumber() >= 1111) {
+        } else if (account.sold.toNumber() >= 1111) {
           setCurrentPriceFn(2);
         }
       }
@@ -217,11 +218,13 @@ export const PurchaseArt = () => {
           ],
           tokenMetadataProgram,
         );
+
       // The buyer's token account
       const buyerTokenAccount = await getAssociatedTokenAddress(
         payer,
         mintAccount.publicKey,
       );
+
       // the program authority
       const [programAuthority, nonce] = await web3.PublicKey.findProgramAddress(
         [SEED],
@@ -335,7 +338,8 @@ export const PurchaseArt = () => {
                   >
                     <span style={{ marginRight: '10px' }}>Buy in</span>
                     <span>
-                      {zeroPad(days)}:{zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
+                      {zeroPad(days)}:{zeroPad(hours)}:{zeroPad(minutes)}:
+                      {zeroPad(seconds)}
                     </span>
                   </Button>
                 );
@@ -420,24 +424,24 @@ export const PurchaseArt = () => {
               </div>
             ) : null}
 
-            <div className="only-left-text">
+            {/* <div className="only-left-text">
               <span className="highlight">{2580}</span> of{' '}
               <span className="highlight">{3333}</span> remaining
             </div>
-            <Progress percent={22} />
+            <Progress percent={22} /> */}
 
-            {/* {progressValue !== null && !isSoldOut && account && (
+            {progressValue !== null && !isSoldOut && account && (
               <>
                 <div className="only-left-text">
                   Only <span className="highlight">{amountRemaining}</span> of{' '}
                   <span className="highlight">
-                    {account.numTokens.toNumber()}
+                    {account.allocated.toNumber()}
                   </span>{' '}
                   remaining
                 </div>
                 <Progress percent={progressValue} />
               </>
-            )} */}
+            )}
 
             <br />
             <br />

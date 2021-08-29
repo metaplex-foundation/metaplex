@@ -1,9 +1,14 @@
 import { BN, web3 } from '@project-serum/anchor';
 
+interface Data {
+  name: any;
+  uri: any;
+}
 export interface MasterAccount {
   authority: web3.PublicKey;
-  numTokens: BN /** number of tokens available for sale */;
-  counter: BN /** the token number up for sale */;
+  allocated: BN /** the token number up for sale */;
+  data: Data[];
+  sold: BN /** the already */;
 }
 
 export interface Receipt {
