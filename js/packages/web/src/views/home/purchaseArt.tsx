@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Countdown, { zeroPad } from 'react-countdown';
 import { Button, Progress, Typography, Row, Col } from 'antd';
 import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
 import type { BN } from '@project-serum/anchor';
@@ -353,6 +354,10 @@ const styles = {
   },
 };
 
+// month starts at 0; Aug is 7th
+const saleStartUTCTime = Date.UTC(2021, 7, 29, 14, 0, 0);
+const saleStartDate = new Date(saleStartUTCTime);
+
 const ComingSoon = () => (
   <div className="purchase-screen bungee-font">
     <br />
@@ -378,7 +383,15 @@ const ComingSoon = () => (
           onClick={() => {}}
           disabled={true}
         >
-          coming soon
+          <span style={{ marginRight: '10px' }}>Buy in</span>
+          <Countdown
+            date={saleStartDate}
+            renderer={({ hours, minutes, seconds }) => (
+              <span>
+                {zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
+              </span>
+            )}
+          />
         </Button>
       </Col>
       <Col
