@@ -29,7 +29,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "lint-staged && yarn build"
     }
   },
   "prettier": {
@@ -61,7 +61,7 @@
     "eslint": "^6.6.0",
     "eslint-config-prettier": "^6.15.0",
     "gh-pages": "^3.1.0",
-    "husky": "^4.3.0",
+    "husky": "^7.0.2",
     "jest": "24.9.0",
     "jest-config": "24.9.0",
     "lerna": "3.22.1",

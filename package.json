@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "react-countdown": "^2.3.2",
-    "react-csv-reader": "^3.3.1"
-  }
-}
