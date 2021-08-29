@@ -3,7 +3,7 @@ pub mod utils;
 use {
     crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
     anchor_lang::{
-        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key,
+        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key, Discriminator
     },
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
@@ -227,16 +227,17 @@ pub mod nft_candy_machine {
 
     pub fn initialize_config(
         ctx: Context<InitializeConfig>,
-        bump: u8,
         data: ConfigData,
     ) -> ProgramResult {
-        let config = &mut ctx.accounts.config;
-        config.bump = bump;
+        let config_info = &mut ctx.accounts.config;
         if data.uuid.len() != 6 {
             return Err(ErrorCode::UuidMustBeExactly6Length.into());
         }
-        config.authority = *ctx.accounts.authority.key;
-        config.data = data;
+
+        let mut config = Config {
+            data,
+            authority: *ctx.accounts.authority.key
+        };
 
         let mut array_of_zeroes = vec![];
         while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - config.data.symbol.len() {
@@ -251,6 +252,14 @@ pub mod nft_candy_machine {
             return Err(ErrorCode::TooManyCreators.into());
         }
 
+        let mut new_data = Config::discriminator().try_to_vec().unwrap();
+        new_data.append(&mut config.try_to_vec().unwrap());
+        let mut data = config_info.data.borrow_mut();
+        // god forgive me couldnt think of better way to deal with this
+        for i in 0..new_data.len() {
+            data[i] = new_data[i];
+        }
+        
         Ok(())
     }
 
@@ -339,7 +348,6 @@ pub mod nft_candy_machine {
         {
             return Err(ErrorCode::ConfigLineMismatch.into());
         }
-
         let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
@@ -354,11 +362,11 @@ pub mod nft_candy_machine {
 pub struct InitializeCandyMachine<'info> {
     #[account(init, seeds=[PREFIX.as_bytes(), config.key().as_ref(), data.uuid.as_bytes()], payer=payer, bump=bump, space=8+32+32+33+32+64+64+64+200)]
     candy_machine: ProgramAccount<'info, CandyMachine>,
-    #[account(constraint= !wallet.data_is_empty() || wallet.lamports() > 0 )]
+    #[account(constraint= wallet.owner == &spl_token::id() || (wallet.data_is_empty() && wallet.lamports() > 0) )]
     wallet: AccountInfo<'info>,
-    #[account(seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.data.uuid.as_bytes(), &[config.bump]])]
+    #[account(has_one=authority)]
     config: ProgramAccount<'info, Config>,
-    #[account(signer, constraint= !authority.data_is_empty() || authority.lamports() > 0)]
+    #[account(signer, constraint= authority.data_is_empty() && authority.lamports() > 0)]
     authority: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -368,22 +376,20 @@ pub struct InitializeCandyMachine<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8, data: ConfigData)]
+#[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), data.uuid.as_bytes()], payer=payer, bump=bump, space=CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE)]
-    config: ProgramAccount<'info, Config>,
-    #[account(constraint= !authority.data_is_empty() || authority.lamports() > 0 )]
+    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() == CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE)]
+    config: AccountInfo<'info>,
+    #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
-    #[account(address = system_program::ID)]
-    system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
 pub struct AddConfigLines<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), &config.data.uuid.as_bytes(), &[config.bump]])]
+    #[account(mut, has_one = authority)]
     config: ProgramAccount<'info, Config>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -391,13 +397,12 @@ pub struct AddConfigLines<'info> {
 
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
-    #[account(seeds=[PREFIX.as_bytes(), config.authority.as_ref(), &config.data.uuid.as_bytes(), &[config.bump]])]
     config: ProgramAccount<'info, Config>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(mut, has_one = config, has_one = wallet, seeds=[PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
-    #[account(mut, constraint=wallet.key == &candy_machine.wallet)]
+    #[account(mut)]
     wallet: AccountInfo<'info>,
     // With the following accounts we aren't using anchor macros because they are CPI'd
     // through to token-metadata which will do all the validations we need on them.
@@ -423,9 +428,9 @@ pub struct MintNFT<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateCandyMachine<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(mut, has_one=authority, seeds=[PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
     candy_machine: ProgramAccount<'info, CandyMachine>,
-    #[account(signer, constraint=&candy_machine.authority == authority.key)]
+    #[account(signer)]
     authority: AccountInfo<'info>,
 }
 
@@ -449,7 +454,7 @@ pub struct CandyMachineData {
     pub go_live_date: Option<i64>,
 }
 
-pub const CONFIG_ARRAY_START: usize = 1 + // bump
+pub const CONFIG_ARRAY_START: usize =
 32 + // authority
 4 + 6 + // uuid + u32 len
 4 + MAX_SYMBOL_LENGTH + // u32 len + symbol
@@ -463,7 +468,6 @@ pub const CONFIG_ARRAY_START: usize = 1 + // bump
 #[account]
 #[derive(Default)]
 pub struct Config {
-    pub bump: u8,
     pub authority: Pubkey,
     pub data: ConfigData,
     // there's a borsh vec u32 denoting how many actual lines of data there are currently (eventually equals max number of lines)
