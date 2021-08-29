@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import Countdown, { zeroPad } from 'react-countdown';
 import { Button, Progress, Typography, Row, Col } from 'antd';
-import { web3, Provider, Program, Wallet, Idl } from '@project-serum/anchor';
-import type { BN } from '@project-serum/anchor';
+import { web3, Provider, Program, Idl } from '@project-serum/anchor';
 import { useConnection, useWallet, ConnectButton } from '@oyster/common';
 import idl from '../../config/simple_token_sale.json';
 import type { MasterAccount } from './types';
 import { Confetti } from './../../components/Confetti';
 import { PublicKey } from '@solana/web3.js';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import { FeatureList } from './FeatureList';
 
 const TOKEN_SALE_PROGRAM_ADDRESS =
@@ -17,9 +20,25 @@ const TOKEN_SALE_MASTER_ACCOUNT_ADDRESS =
 
 const MAX_RETRIES = 5; // what is a good value for this?
 
-const isSaleStarted = false;
-
 const { Title } = Typography;
+
+/**
+ * Get associated token address
+ *
+ * @param owner - the public key that owns the associated token address
+ * @param mint - the mint
+ * @returns a promise of the associated token address
+ */
+export async function getAssociatedTokenAddress(
+  owner: PublicKey,
+  mint: PublicKey,
+): Promise<PublicKey> {
+  const [address] = await PublicKey.findProgramAddress(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  );
+  return address;
+}
 
 const getPurchaseBtnText = (
   connected: boolean,
@@ -31,19 +50,13 @@ const getPurchaseBtnText = (
   retriedTimes: number,
 ) => {
   if (!connected) return 'connect your wallet';
-  else if (errorPurchasing !== null) return 'No Success 😔 Try Again';
+  else if (errorPurchasing !== null) return 'No Success 😔';
   else if (isSoldOut)
     return <span className="bungee-font-inline">COLECTION SOLD OUT</span>;
   else if (isProcessing && retriedTimes > 0 && !isDone)
     return `Trying again  (${retriedTimes} try)...`;
   else if (isProcessing) return 'processing request...';
-  else if (isDone)
-    return (
-      <span>
-        Success! 🎉 Your <span className="bungee-font-inline">bird</span> is on
-        its way...
-      </span>
-    );
+  else if (isDone) return <span>Success! 🎉</span>;
   else
     return (
       <span>
@@ -56,13 +69,16 @@ const getPurchaseBtnText = (
 const updateTokenSane = async (
   accountId: PublicKey,
   program: Program,
-  setAccountFn: React.Dispatch<React.SetStateAction<MasterAccount | undefined>>,
+  setAccountFn: React.Dispatch<
+    React.SetStateAction<MasterAccount | undefined | null>
+  >,
   setProgressValueFn: React.Dispatch<React.SetStateAction<number | null>>,
   setAmountRemainingFn: React.Dispatch<React.SetStateAction<number>>,
   setCurrentPriceFn: React.Dispatch<React.SetStateAction<number>>,
 ) => {
   try {
     const masterAccount = await program.account.masterAccount.fetch(accountId);
+
     if (masterAccount) {
       const account = masterAccount as MasterAccount;
       console.log(
@@ -92,17 +108,26 @@ const updateTokenSane = async (
           setCurrentPriceFn(2);
         }
       }
+    } else {
+      setAccountFn(null);
     }
   } catch (error) {
+    setAccountFn(null);
     console.warn(`Can't get the account: ${error.message}`);
   }
 };
+
+// month starts at 0; Aug is 7th
+const saleStartUTCTime = Date.UTC(2021, 7, 30, 14, 0, 0);
+
+const saleStartDate = new Date(saleStartUTCTime);
 
 export const PurchaseArt = () => {
   const { wallet, connected } = useWallet();
   const connection = useConnection();
 
-  const [account, setAccount] = useState<MasterAccount | undefined>(undefined);
+  const [account, setAccount] =
+    useState<MasterAccount | undefined | null>(undefined);
   const [progressValue, setProgressValue] = useState<number | null>(null);
   const [amountRemaining, setAmountRemaining] = useState<number>(3333); // TODO: whats a good default?
   const [currentPrice, setCurrentPrice] = useState<number>(1);
@@ -169,37 +194,69 @@ export const PurchaseArt = () => {
       !anchorProgram ||
       !anchorProvider
     ) {
-      throw new Error('Something bad happened.');
+      throw new Error('Something wrong happened.');
     }
 
     try {
       setIsProcessing(true);
 
-      const payer = wallet.publicKey.toBase58();
-
-      const receipt = web3.Keypair.generate();
-      const receiptSize = 8 + 32 + 32 + 8 + 8;
+      const SEED = Buffer.from('Oo');
+      const payer = wallet.publicKey;
+      // The mint to create.
+      const mintAccount = web3.Keypair.generate();
+      // The token mint metadata account
+      const tokenMetadataProgram = new web3.PublicKey(
+        'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+      );
+      const [mintMetadata, _mint_nonce] =
+        await web3.PublicKey.findProgramAddress(
+          [
+            Buffer.from('metadata'),
+            tokenMetadataProgram.toBuffer(),
+            mintAccount.publicKey.toBuffer(),
+          ],
+          tokenMetadataProgram,
+        );
+      // The buyer's token account
+      const buyerTokenAccount = await getAssociatedTokenAddress(
+        payer,
+        mintAccount.publicKey,
+      );
+      // the program authority
+      const [programAuthority, nonce] = await web3.PublicKey.findProgramAddress(
+        [SEED],
+        anchorProgram.programId,
+      );
 
       // throw new Error('failed');
-      const txId = await anchorProgram.rpc.purchase({
+      const txId = await anchorProgram.rpc.purchase(nonce, {
         accounts: {
           payer,
-          receipt: receipt.publicKey,
-          authority: account.authority,
+          buyerTokenAccount,
+          mint: mintAccount.publicKey,
+          mintMetadata,
+          authority: new web3.PublicKey(
+            'CzrE3LhijwcmvsXZa8YavqgR9EzW3UGqoSWZKwGpZVqM',
+          ),
           masterAccount: masterAccountPubkey,
+          programAuthority,
+          tokenMetadataProgram,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: web3.SystemProgram.programId,
+          rent: web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [receipt],
+        signers: [mintAccount],
         instructions: [
           web3.SystemProgram.createAccount({
-            fromPubkey: wallet.publicKey,
-            newAccountPubkey: receipt.publicKey,
-            space: receiptSize, // Add 8 for the account discriminator.
+            fromPubkey: payer,
+            newAccountPubkey: mintAccount.publicKey,
+            space: 82,
             lamports:
               await anchorProvider.connection.getMinimumBalanceForRentExemption(
-                receiptSize,
+                82,
               ),
-            programId: anchorProgram.programId,
+            programId: TOKEN_PROGRAM_ID,
           }),
         ],
       });
@@ -248,67 +305,171 @@ export const PurchaseArt = () => {
     retriedTimes,
   );
 
-  if (!isSaleStarted) return <ComingSoon />;
-
   return (
     <div className="purchase-screen bungee-font">
+      <br />
+      <br />
       <Title level={2} className="welcome-text">
         Introducing Thugbirdz: OG Collection
         {/* We have experienced significant traffic overload over sale. */}
       </Title>
+      <br />
+      <br />
 
-      <img src="hero.gif" />
+      <Row gutter={[0, 24]}>
+        <Col xs={{ span: 24 }} md={{ span: 8 }} style={styles.flexCol}>
+          <img src="hero.gif" style={{ height: '250px' }} />
 
-      {!account ? (
-        <>
-          <h1 className="highlight sky-title">CONNECT YOUR WALLET</h1>
-          <ConnectButton
-            type="primary"
-            style={{ fontSize: '24px', height: 'auto' }}
+          <Countdown
+            date={saleStartDate}
+            renderer={({ days, hours, minutes, seconds, completed }) => {
+              if (!completed)
+                return (
+                  <Button
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    className="app-btn purchase-btn"
+                    onClick={() => {}}
+                    disabled={true}
+                  >
+                    <span style={{ marginRight: '10px' }}>Buy in</span>
+                    <span>
+                      {zeroPad(days)}:{zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
+                    </span>
+                  </Button>
+                );
+
+              return (
+                <>
+                  {!connected ? (
+                    <>
+                      <h2 className="highlight sky-title">
+                        CONNECT YOUR WALLET
+                      </h2>
+                      <ConnectButton
+                        type="primary"
+                        style={{ fontSize: '24px', height: 'auto' }}
+                      />
+                    </>
+                  ) : null}
+
+                  {connected && account === null ? (
+                    <div className="purchase-error">
+                      <b>Can't access purchase contract.</b>
+                      <br />
+                      Refresh the page and try again!
+                    </div>
+                  ) : null}
+
+                  {isSoldOut ? (
+                    <h1 className="highlight sky-title">SOLD OUT</h1>
+                  ) : null}
+
+                  {progressValue !== null && !isSoldOut && account && (
+                    <>
+                      <Button
+                        type="primary"
+                        shape="round"
+                        size="large"
+                        className="app-btn purchase-btn"
+                        onClick={() => doPurchase(retriedTimes)}
+                        disabled={
+                          !connected ||
+                          isDone ||
+                          ifDealMade ||
+                          isProcessing ||
+                          !!errorPurchasing
+                        }
+                      >
+                        {btnText}
+                      </Button>
+                    </>
+                  )}
+                </>
+              );
+            }}
           />
-        </>
-      ) : null}
-      {isSoldOut ? <h1 className="highlight sky-title">SOLD OUT</h1> : null}
-      {progressValue !== null && !isSoldOut && account && (
-        <>
-          <Button
-            type="primary"
-            shape="round"
-            size="large"
-            className="app-btn purchase-btn"
-            onClick={() => doPurchase(retriedTimes)}
-            disabled={
-              !connected ||
-              isDone ||
-              ifDealMade ||
-              isProcessing ||
-              !!errorPurchasing
-            }
-          >
-            {btnText}
-          </Button>
 
-          {errorPurchasing ? (
-            <div className="purchase-error">
-              <b>Information. TX wasn't successful.</b>
-              <br />
-              Make sure you have enough SOL in your wallet and you use correct
-              Solana network (mainnet-beta).
-              <br />
-              Then refresh the page and try again!
+          {ifDealMade ? <Confetti /> : null}
+        </Col>
+        <Col
+          xs={{ span: 24 }}
+          md={{ span: 12, offset: 4 }}
+          style={{ display: 'flex' }}
+        >
+          <div>
+            {ifDealMade ? (
+              <>
+                <h2 className="highlight sky-title">
+                  Success! 🎉 <br />
+                  Your <span className="bungee-font-inline">bird</span> is on
+                  its way...
+                </h2>
+              </>
+            ) : null}
+
+            {errorPurchasing ? (
+              <div className="purchase-error">
+                <b>TX wasn't successful.</b>
+                <br />
+                Make sure you have enough SOL in your wallet and you use correct
+                Solana network (mainnet-beta).
+                <br />
+                Then refresh the page and try again!
+              </div>
+            ) : null}
+
+            {/* <div className="only-left-text">
+              <span className="highlight">{2580}</span> of{' '}
+              <span className="highlight">{3333}</span> remaining
             </div>
-          ) : null}
+            <Progress percent={22} /> */}
 
-          <div className="only-left-text">
-            Only <span className="highlight">{amountRemaining}</span> of{' '}
-            <span className="highlight">{account.numTokens.toNumber()}</span>{' '}
-            remaining
+            {progressValue !== null && !isSoldOut && account && (
+              <>
+                <div className="only-left-text">
+                  Only <span className="highlight">{amountRemaining}</span> of{' '}
+                  <span className="highlight">
+                    {account.numTokens.toNumber()}
+                  </span>{' '}
+                  remaining
+                </div>
+                <Progress percent={progressValue} />
+              </>
+            )}
+
+            <br />
+            <br />
+            <br />
+            <p style={styles.description}>
+              Collection of <b>3,333</b> uniquely generated, tough and
+              collectible thugbirdz.
+            </p>
+            <Row>
+              <Col span={7}>
+                <a
+                  style={styles.social}
+                  href="https://discord.com/invite/thugbirdz"
+                  target="_blank"
+                >
+                  <DiscordLogo />
+                </a>
+              </Col>
+              <Col span={4}>
+                <a
+                  style={styles.social}
+                  href="https://twitter.com/thugbirdz"
+                  target="_blank"
+                >
+                  <TwitterLogo />
+                </a>
+              </Col>
+            </Row>
           </div>
-          <Progress percent={progressValue} />
-        </>
-      )}
-      {ifDealMade ? <Confetti /> : null}
-      <br></br>
+        </Col>
+      </Row>
+
       <br></br>
       <br></br>
       <FeatureList />
@@ -348,106 +509,11 @@ const styles = {
   },
   flexCol: {
     alignItems: 'center',
-    justifyContent: 'center',
     display: 'flex',
     flexDirection: 'column' as 'column',
+    justifyContent: 'flex-start',
   },
 };
-
-// month starts at 0; Aug is 7th
-const saleStartUTCTime = Date.UTC(2021, 7, 29, 14, 0, 0);
-const saleStartDate = new Date(saleStartUTCTime);
-
-const ComingSoon = () => (
-  <div className="purchase-screen bungee-font">
-    <br />
-    <br />
-    <Title level={2} className="welcome-text">
-      Introducing Thugbirdz: OG Collection
-    </Title>
-    <br />
-    <br />
-
-    <Row gutter={[0, 24]}>
-      <Col
-        xs={{ span: 24 }}
-        md={{ span: 8 }}
-        style={styles.flexCol}
-      >
-        <img src="hero.gif" style={{ height: '250px' }} />
-        <Button
-          type="primary"
-          shape="round"
-          size="large"
-          className="app-btn purchase-btn"
-          onClick={() => {}}
-          disabled={true}
-        >
-          <span style={{ marginRight: '10px' }}>Buy in</span>
-          <Countdown
-            date={saleStartDate}
-            renderer={({ hours, minutes, seconds }) => (
-              <span>
-                {zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
-              </span>
-            )}
-          />
-        </Button>
-      </Col>
-      <Col
-        xs={{ span: 24 }}
-        md={{ span: 12, offset: 4 }}
-        style={{ display: 'flex', alignItems: 'flex-end' }}
-      >
-        <div>
-          <div className="only-left-text">
-            <span className="highlight">{2580}</span> of{' '}
-            <span className="highlight">{3333}</span> remaining
-          </div>
-          <Progress percent={22} />
-          <br />
-          <br />
-          <br />
-          <p style={styles.description}>
-            Collection of <b>3,333</b> uniquely generated, tough and collectible
-            thugbirdz.
-          </p>
-          <Row>
-            <Col span={7}>
-              <a
-                style={styles.social}
-                href="https://discord.com/invite/thugbirdz"
-                target="_blank"
-              >
-                <DiscordLogo />
-              </a>
-            </Col>
-            <Col span={4}>
-              <a
-                style={styles.social}
-                href="https://twitter.com/thugbirdz"
-                target="_blank"
-              >
-                <TwitterLogo />
-              </a>
-            </Col>
-          </Row>
-        </div>
-      </Col>
-    </Row>
-
-    <br />
-    <br />
-
-    {/* <h1 className="highlight sky-title">
-      So, we have paused it and updating our infra so no server overloads,
-      weather cyclons or any other gang clans {"can't"} stop our birdz on its
-      way to you!
-    </h1> */}
-
-    <FeatureList />
-  </div>
-);
 
 const DeadServer = () => (
   <div className="purchase-screen bungee-font">
