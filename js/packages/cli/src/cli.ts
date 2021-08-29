@@ -7,8 +7,17 @@ import FormData from 'form-data';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
+import { MintLayout, Token } from '@solana/spl-token';
+
 import { sendTransactionWithRetryWithKeypair, fromUTF8Array } from './helper';
-import { PublicKey } from '@solana/web3.js';
+import {
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import { token } from '@project-serum/anchor/dist/utils';
 
 const CACHE_PATH = './.cache';
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
@@ -20,6 +29,74 @@ const CANDY_MACHINE = 'candy_machine';
 const programId = new anchor.web3.PublicKey(
   'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+);
+
+const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+);
+const TOKEN_PROGRAM_ID = new PublicKey(
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+);
+const getTokenWallet = async function (wallet: PublicKey, mint: PublicKey) {
+  return (
+    await PublicKey.findProgramAddress(
+      [wallet.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    )
+  )[0];
+};
+
+export function createAssociatedTokenAccountInstruction(
+  associatedTokenAddress: PublicKey,
+  payer: PublicKey,
+  walletAddress: PublicKey,
+  splTokenMintAddress: PublicKey,
+) {
+  const keys = [
+    {
+      pubkey: payer,
+      isSigner: true,
+      isWritable: true,
+    },
+    {
+      pubkey: associatedTokenAddress,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: walletAddress,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: splTokenMintAddress,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: SystemProgram.programId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: TOKEN_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: SYSVAR_RENT_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+  return new TransactionInstruction({
+    keys,
+    programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    data: Buffer.from([]),
+  });
+}
 
 function chunks(array, size) {
   return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
@@ -60,6 +137,37 @@ const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
     [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
     programId,
   );
+};
+
+const getMetadata = async (
+  mint: anchor.web3.PublicKey,
+): Promise<anchor.web3.PublicKey> => {
+  return (
+    await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+
+const getMasterEdition = async (
+  mint: anchor.web3.PublicKey,
+): Promise<anchor.web3.PublicKey> => {
+  return (
+    await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from('edition'),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
 };
 
 const createConfig = async function (
@@ -385,7 +493,203 @@ program
     console.log('Done');
     // TODO: start candy machine
   });
+program
+  .command('set_start_date')
+  .option('-k, --keypair <path>', 'Solana wallet')
+  .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-d, --date', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .action(async (directory, cmd) => {
+    const solConnection = new anchor.web3.Connection(
+      `https://api.${ENV}.solana.com/`,
+    );
 
+    const { keypair } = cmd.opts();
+
+    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cachePath = path.join(CACHE_PATH, cacheName);
+    const cachedContent = fs.existsSync(cachePath)
+      ? JSON.parse(fs.readFileSync(cachePath).toString())
+      : undefined;
+
+    const date = program.getOptionValue('date');
+    const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
+    const walletKey = anchor.web3.Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
+    );
+    const walletWrapper = new anchor.Wallet(walletKey);
+    const provider = new anchor.Provider(solConnection, walletWrapper, {
+      preflightCommitment: 'recent',
+    });
+    const idl = await anchor.Program.fetchIdl(programId, provider);
+    const anchorProgram = new anchor.Program(idl, programId, provider);
+    const [candyMachine, _] = await getCandyMachine(
+      new anchor.web3.PublicKey(cachedContent.program.config),
+      cachedContent.program.uuid,
+    );
+    anchorProgram.rpc.updateCandyMachine(
+      null,
+      new anchor.BN(secondsSinceEpoch),
+      {
+        accounts: {
+          candyMachine,
+          authority: walletKey.publicKey,
+        },
+      },
+    );
+
+    console.log('Done');
+  });
+
+program
+  .command('create_candy_machine')
+  .option('-k, --keypair <path>', 'Solana wallet')
+  .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-p, --price', 'SOL price')
+  .action(async (directory, cmd) => {
+    const solConnection = new anchor.web3.Connection(
+      `https://api.${ENV}.solana.com/`,
+    );
+
+    const { keypair } = cmd.opts();
+    const solPriceStr = program.getOptionValue('price') || '1';
+    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+
+    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cachePath = path.join(CACHE_PATH, cacheName);
+    const cachedContent = fs.existsSync(cachePath)
+      ? JSON.parse(fs.readFileSync(cachePath).toString())
+      : undefined;
+
+    const walletKey = anchor.web3.Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
+    );
+    const walletWrapper = new anchor.Wallet(walletKey);
+    const provider = new anchor.Provider(solConnection, walletWrapper, {
+      preflightCommitment: 'recent',
+    });
+    const idl = await anchor.Program.fetchIdl(programId, provider);
+    const anchorProgram = new anchor.Program(idl, programId, provider);
+    const config = new anchor.web3.PublicKey(cachedContent.program.config);
+    const [candyMachine, bump] = await getCandyMachine(
+      config,
+      cachedContent.program.uuid,
+    );
+    const tx = await anchorProgram.rpc.initializeCandyMachine(
+      bump,
+      {
+        uuid: cachedContent.program.uuid,
+        price: new anchor.BN(lamports),
+        itemsAvailable: new anchor.BN(Object.keys(cachedContent.items).length),
+        goLiveDate: null,
+      },
+      {
+        accounts: {
+          candyMachine,
+          wallet: walletKey.publicKey,
+          config: config,
+          authority: walletKey.publicKey,
+          payer: walletKey.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+      },
+    );
+
+    console.log('Done');
+  });
+
+program
+  .command('mint_token_as_candy_machine_owner')
+  .option('-k, --keypair <path>', 'Solana wallet')
+  .option('-c, --cache-name <path>', 'Cache file name')
+  .action(async (directory, cmd) => {
+    const solConnection = new anchor.web3.Connection(
+      `https://api.${ENV}.solana.com/`,
+    );
+
+    const { keypair } = cmd.opts();
+    const solPriceStr = program.getOptionValue('price') || '1';
+    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+
+    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cachePath = path.join(CACHE_PATH, cacheName);
+    const cachedContent = fs.existsSync(cachePath)
+      ? JSON.parse(fs.readFileSync(cachePath).toString())
+      : undefined;
+    const mint = anchor.web3.Keypair.generate();
+
+    const walletKey = anchor.web3.Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
+    );
+    const token = await getTokenWallet(walletKey.publicKey, mint.publicKey);
+    const walletWrapper = new anchor.Wallet(walletKey);
+    const provider = new anchor.Provider(solConnection, walletWrapper, {
+      preflightCommitment: 'recent',
+    });
+    const idl = await anchor.Program.fetchIdl(programId, provider);
+    const anchorProgram = new anchor.Program(idl, programId, provider);
+    const config = new anchor.web3.PublicKey(cachedContent.program.config);
+    const [candyMachine, bump] = await getCandyMachine(
+      config,
+      cachedContent.program.uuid,
+    );
+    const metadata = await getMetadata(mint.publicKey);
+    const masterEdition = await getMasterEdition(mint.publicKey);
+    const tx = await anchorProgram.rpc.mintNft({
+      accounts: {
+        config: config,
+        candyMachine: candyMachine,
+        payer: walletKey.publicKey,
+        wallet: walletKey.publicKey,
+        mint: mint.publicKey,
+        metadata,
+        masterEdition,
+        mintAuthority: walletKey.publicKey,
+        updateAuthority: walletKey.publicKey,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+      signers: [mint, walletKey],
+      instructions: [
+        anchor.web3.SystemProgram.createAccount({
+          fromPubkey: walletKey.publicKey,
+          newAccountPubkey: mint.publicKey,
+          space: MintLayout.span,
+          lamports: await provider.connection.getMinimumBalanceForRentExemption(
+            MintLayout.span,
+          ),
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitMintInstruction(
+          TOKEN_PROGRAM_ID,
+          mint.publicKey,
+          0,
+          walletKey.publicKey,
+          walletKey.publicKey,
+        ),
+        createAssociatedTokenAccountInstruction(
+          token,
+          walletKey.publicKey,
+          walletKey.publicKey,
+          mint.publicKey,
+        ),
+        Token.createMintToInstruction(
+          TOKEN_PROGRAM_ID,
+          mint.publicKey,
+          token,
+          walletKey.publicKey,
+          [],
+          1,
+        ),
+      ],
+    });
+
+    console.log('Done', tx);
+  });
 program
   .command('verify')
   .option('-c, --cache-name <path>', 'Cache file name')

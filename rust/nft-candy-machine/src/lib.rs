@@ -3,7 +3,8 @@ pub mod utils;
 use {
     crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
     anchor_lang::{
-        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize, Key, Discriminator
+        prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize,
+        Discriminator, Key,
     },
     arrayref::array_ref,
     spl_token::state::{Account, Mint},
@@ -97,7 +98,10 @@ pub mod nft_candy_machine {
             .checked_add(1)
             .ok_or(ErrorCode::NumericalOverflowError)?;
 
-        let config_line = get_config_line(&config.to_account_info(), 0)?;
+        let config_line = get_config_line(
+            &config.to_account_info(),
+            candy_machine.items_redeemed as usize,
+        )?;
 
         let config_key = config.key();
         let authority_seeds = [
@@ -225,10 +229,7 @@ pub mod nft_candy_machine {
         Ok(())
     }
 
-    pub fn initialize_config(
-        ctx: Context<InitializeConfig>,
-        data: ConfigData,
-    ) -> ProgramResult {
+    pub fn initialize_config(ctx: Context<InitializeConfig>, data: ConfigData) -> ProgramResult {
         let config_info = &mut ctx.accounts.config;
         if data.uuid.len() != 6 {
             return Err(ErrorCode::UuidMustBeExactly6Length.into());
@@ -236,7 +237,7 @@ pub mod nft_candy_machine {
 
         let mut config = Config {
             data,
-            authority: *ctx.accounts.authority.key
+            authority: *ctx.accounts.authority.key,
         };
 
         let mut array_of_zeroes = vec![];
@@ -259,7 +260,19 @@ pub mod nft_candy_machine {
         for i in 0..new_data.len() {
             data[i] = new_data[i];
         }
-        
+
+        let vec_start =
+            CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
+        let as_bytes = (config
+            .data
+            .max_number_of_lines
+            .checked_div(8)
+            .ok_or(ErrorCode::NumericalOverflowError)? as u32)
+            .to_le_bytes();
+        for i in 0..4 {
+            data[vec_start + i] = as_bytes[i]
+        }
+
         Ok(())
     }
 
@@ -303,6 +316,10 @@ pub mod nft_candy_machine {
         let array_slice: &mut [u8] =
             &mut data[position..position + fixed_config_lines.len() * CONFIG_LINE_SIZE];
         array_slice.copy_from_slice(serialized);
+
+        let bit_mask_vec_start =
+            CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
+
         let new_count = current_count
             .checked_add(fixed_config_lines.len())
             .ok_or(ErrorCode::NumericalOverflowError)?;
@@ -343,11 +360,6 @@ pub mod nft_candy_machine {
             candy_machine.token_mint = Some(*token_mint_info.key);
         }
 
-        if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
-            != candy_machine.data.items_available as usize
-        {
-            return Err(ErrorCode::ConfigLineMismatch.into());
-        }
         let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
@@ -378,7 +390,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() == CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE)]
+    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() == CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
@@ -454,8 +466,7 @@ pub struct CandyMachineData {
     pub go_live_date: Option<i64>,
 }
 
-pub const CONFIG_ARRAY_START: usize =
-32 + // authority
+pub const CONFIG_ARRAY_START: usize = 32 + // authority
 4 + 6 + // uuid + u32 len
 4 + MAX_SYMBOL_LENGTH + // u32 len + symbol
 2 + // seller fee basis points
@@ -472,6 +483,8 @@ pub struct Config {
     pub data: ConfigData,
     // there's a borsh vec u32 denoting how many actual lines of data there are currently (eventually equals max number of lines)
     // There is actually lines and lines of data after this but we explicitly never want them deserialized.
+    // here there is a borsh vec u32 indicating number of bytes in bitmask array.
+    // here there is a number of bytes equal to ceil(max_number_of_lines/8) and it is a bit mask used to figure out when to increment borsh vec u32
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
