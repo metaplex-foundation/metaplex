@@ -118,7 +118,8 @@ const updateTokenSane = async (
 };
 
 // month starts at 0; Aug is 7th
-const saleStartUTCTime = Date.UTC(2021, 7, 29, 14, 0, 0);
+const saleStartUTCTime = Date.UTC(2021, 7, 30, 14, 0, 0);
+
 const saleStartDate = new Date(saleStartUTCTime);
 
 export const PurchaseArt = () => {
@@ -321,7 +322,7 @@ export const PurchaseArt = () => {
 
           <Countdown
             date={saleStartDate}
-            renderer={({ hours, minutes, seconds, completed }) => {
+            renderer={({ days, hours, minutes, seconds, completed }) => {
               if (!completed)
                 return (
                   <Button
@@ -334,7 +335,7 @@ export const PurchaseArt = () => {
                   >
                     <span style={{ marginRight: '10px' }}>Buy in</span>
                     <span>
-                      {zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
+                      {zeroPad(days)}:{zeroPad(hours)}:{zeroPad(minutes)}:{zeroPad(seconds)}
                     </span>
                   </Button>
                 );
