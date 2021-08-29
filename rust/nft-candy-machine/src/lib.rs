@@ -224,6 +224,7 @@ pub mod nft_candy_machine {
         }
 
         if let Some(go_l) = go_live_date {
+            msg!("Go live date changed to {}", go_l);
             candy_machine.data.go_live_date = Some(go_l)
         }
         Ok(())

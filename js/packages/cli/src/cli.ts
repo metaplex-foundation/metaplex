@@ -526,7 +526,7 @@ program
       new anchor.web3.PublicKey(cachedContent.program.config),
       cachedContent.program.uuid,
     );
-    anchorProgram.rpc.updateCandyMachine(
+    const tx = await anchorProgram.rpc.updateCandyMachine(
       null,
       new anchor.BN(secondsSinceEpoch),
       {
@@ -537,7 +537,7 @@ program
       },
     );
 
-    console.log('Done');
+    console.log('Done', secondsSinceEpoch, tx);
   });
 
 program
