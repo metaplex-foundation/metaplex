@@ -19,11 +19,8 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
-<<<<<<< HEAD
   placeBid,
-=======
   useWalletModal,
->>>>>>> ee475b8424829282e14c3557a8b4858982c60909
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
