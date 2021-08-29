@@ -42,7 +42,7 @@ const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
 };
 
 const createConfig = async function (
-  anchorProgram,
+  anchorProgram: anchor.Program,
   payerWallet: anchor.web3.Keypair,
   configData: {
     maxNumberOfLines: BN,
@@ -54,27 +54,55 @@ const createConfig = async function (
     creators: { address: anchor.web3.PublicKey, verified: boolean, share: number }[],
   },
 ) {
-  const uuid = anchor.web3.Keypair.generate().publicKey.toBase58().slice(0, 6);
-  const [config, bump] = await getConfig(payerWallet.publicKey, uuid);
+  const configArrayStart =
+    32 + // authority
+    4 +
+    6 + // uuid + u32 len
+    4 +
+    10 + // u32 len + symbol
+    2 + // seller fee basis points
+    1 +
+    4 +
+    5 * 34 + // optional + u32 len + actual vec
+    8 + //max supply
+    1 + //is mutable
+    1 + // retain authority
+    4; // max number of lines;
+  const configLineSize = 4 + 32 + 4 + 200;
+  const size = configArrayStart + 4 + configData.maxNumberOfLines.toNumber() * configLineSize;
+
+  const config = anchor.web3.Keypair.generate();
+  const uuid = config.publicKey.toBase58().slice(0, 6);
 
   return {
-    config,
+    config: config.publicKey,
     uuid,
     txId: await anchorProgram.rpc.initializeConfig(
-      bump,
       {
         uuid,
         ...configData,
       },
       {
         accounts: {
-          config,
+          config: config.publicKey,
           authority: payerWallet.publicKey,
           payer: payerWallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [payerWallet],
+        signers: [payerWallet, config],
+        instructions: [
+          anchor.web3.SystemProgram.createAccount({
+            fromPubkey: payerWallet.publicKey,
+            newAccountPubkey: config.publicKey,
+            space: size,
+            lamports:
+              await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
+                size
+              ),
+            programId: programId,
+          }),
+        ],
       }
     ),
   };
@@ -105,6 +133,8 @@ program
 
     };
 
+
+
     if(!cacheContent.program) {
       cacheContent.program = {};
     }
@@ -114,7 +144,7 @@ program
     }
 
     const images = files.filter(val => path.extname(val) === extension);
-    const SIZE = 15; // images.length;
+    const SIZE = images.length; // images.length;
     const walletKey = anchor.web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())));
 
     // const conversionRates = JSON.parse(
@@ -171,9 +201,11 @@ program
           cacheContent.program.uuid = res.uuid;
           cacheContent.program.config = res.config.toBase58();
           config = res.config;
+
+          fs.writeFileSync(path.join(CACHE_PATH, cacheName), JSON.stringify(cacheContent));
         }
         catch(exx) {
-          console.error('Error deploying config to Solana network.')
+          console.error('Error deploying config to Solana network.', exx)
           // console.error(exx);
         }
       }
@@ -233,22 +265,25 @@ program
         }
       }
 
-      if(link && config) {
+      if(link && config && !cacheContent.items[index].onChain) {
         console.log(`Storing link in on-chain config 🚀🚀🚀`)
         const txId = await anchorProgram.rpc.addConfigLines(i, [
           {
             uri: link,
-            isMutable: true,
             name: manifest.name,
-            description: manifest.description,
           }
         ],{
           accounts: {
             config,
-            authority: walletKey,
+            authority: walletKey.publicKey,
           },
           signers: [walletKey],
         });
+
+        cacheContent.items[index] = {
+          link,
+          onChain: true,
+        };
 
         fs.writeFileSync(path.join(CACHE_PATH, cacheName), JSON.stringify(cacheContent));
       } else {
@@ -256,7 +291,7 @@ program
       }
     }
 
-    // TODO: start andy machine
+    // TODO: start candy machine
   });
 
 program
