@@ -93,15 +93,15 @@ pub mod nft_candy_machine {
             )?;
         }
 
-        candy_machine.items_redeemed = candy_machine
-            .items_redeemed
-            .checked_add(1)
-            .ok_or(ErrorCode::NumericalOverflowError)?;
-
         let config_line = get_config_line(
             &config.to_account_info(),
             candy_machine.items_redeemed as usize,
         )?;
+
+        candy_machine.items_redeemed = candy_machine
+            .items_redeemed
+            .checked_add(1)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
 
         let config_key = config.key();
         let authority_seeds = [
@@ -318,12 +318,45 @@ pub mod nft_candy_machine {
             &mut data[position..position + fixed_config_lines.len() * CONFIG_LINE_SIZE];
         array_slice.copy_from_slice(serialized);
 
-        let bit_mask_vec_start =
-            CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
+        let bit_mask_vec_start = CONFIG_ARRAY_START
+            + 4
+            + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE
+            + 4;
 
-        let new_count = current_count
-            .checked_add(fixed_config_lines.len())
-            .ok_or(ErrorCode::NumericalOverflowError)?;
+        let mut new_count = current_count;
+        for i in 0..fixed_config_lines.len() {
+            let position = (index as usize)
+                .checked_add(i)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            let my_position_in_vec = bit_mask_vec_start
+                + position
+                    .checked_div(8)
+                    .ok_or(ErrorCode::NumericalOverflowError)?;
+            let position_from_right = 7 - position
+                .checked_rem(8)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            let mask = u8::pow(2, position_from_right as u32);
+
+            let old_value_in_vec = data[my_position_in_vec];
+            data[my_position_in_vec] = data[my_position_in_vec] | mask;
+            msg!(
+                "My position in vec is {} my mask is going to be {}, the old value is {}",
+                position,
+                mask,
+                old_value_in_vec
+            );
+            msg!(
+                "My new value is {} and my position from right is {}",
+                data[my_position_in_vec],
+                position_from_right
+            );
+            if old_value_in_vec != data[my_position_in_vec] {
+                new_count = new_count
+                    .checked_add(1)
+                    .ok_or(ErrorCode::NumericalOverflowError)?;
+            }
+        }
+
         // plug in new count.
         data[CONFIG_ARRAY_START..CONFIG_ARRAY_START + 4]
             .copy_from_slice(&(new_count as u32).to_le_bytes());
@@ -361,6 +394,12 @@ pub mod nft_candy_machine {
             candy_machine.token_mint = Some(*token_mint_info.key);
         }
 
+        if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
+            != candy_machine.data.items_available as usize
+        {
+            return Err(ErrorCode::ConfigLineMismatch.into());
+        }
+
         let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
@@ -391,7 +430,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() == CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
+    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() > CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,

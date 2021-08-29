@@ -259,7 +259,8 @@ describe("nft-candy-machine", function () {
         signers: [that.authority, myWallet],
       });
 
-      return [tx1, tx2];
+      // Run tx2 twice to simulate an overwrite which might tip counter to overcount.
+      return [tx1, tx2, tx2];
     } else return [tx1];
   };
 
@@ -310,10 +311,10 @@ describe("nft-candy-machine", function () {
               anchor.web3.SystemProgram.createAccount({
                 fromPubkey: myWallet.publicKey,
                 newAccountPubkey: config.publicKey,
-                space: configArrayStart + 4 + 10 * configLineSize,
+                space: configArrayStart + 4 + 10 * configLineSize + 4 + 2,
                 lamports:
                   await provider.connection.getMinimumBalanceForRentExemption(
-                    configArrayStart + 4 + 10 * configLineSize
+                    configArrayStart + 4 + 10 * configLineSize + 4 + 2
                   ),
                 programId: programId,
               }),
@@ -707,10 +708,10 @@ describe("nft-candy-machine", function () {
               anchor.web3.SystemProgram.createAccount({
                 fromPubkey: myWallet.publicKey,
                 newAccountPubkey: config.publicKey,
-                space: configArrayStart + 4 + 5 * configLineSize,
+                space: configArrayStart + 4 + 5 * configLineSize + 4 + 1,
                 lamports:
                   await provider.connection.getMinimumBalanceForRentExemption(
-                    configArrayStart + 4 + 5 * configLineSize
+                    configArrayStart + 4 + 5 * configLineSize + 4 + 1
                   ),
                 programId: programId,
               }),

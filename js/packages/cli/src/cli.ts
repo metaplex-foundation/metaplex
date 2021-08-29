@@ -191,7 +191,8 @@ const createConfig = async function (
     configArrayStart +
     4 +
     configData.maxNumberOfLines.toNumber() * configLineSize +
-    configData.maxNumberOfLines.toNumber() / 8;
+    4 +
+    Math.ceil(configData.maxNumberOfLines.toNumber() / 8);
 
   const config = anchor.web3.Keypair.generate();
   const uuid = config.publicKey.toBase58().slice(0, 6);
