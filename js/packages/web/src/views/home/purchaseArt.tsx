@@ -395,7 +395,7 @@ export const PurchaseArt = () => {
         <Col
           xs={{ span: 24 }}
           md={{ span: 12, offset: 4 }}
-          style={{ display: 'flex', alignItems: 'flex-end' }}
+          style={{ display: 'flex' }}
         >
           <div>
             {ifDealMade ? (
@@ -419,13 +419,13 @@ export const PurchaseArt = () => {
               </div>
             ) : null}
 
-            <div className="only-left-text">
+            {/* <div className="only-left-text">
               <span className="highlight">{2580}</span> of{' '}
               <span className="highlight">{3333}</span> remaining
             </div>
-            <Progress percent={22} />
+            <Progress percent={22} /> */}
 
-            {/* {progressValue !== null && !isSoldOut && account && (
+            {progressValue !== null && !isSoldOut && account && (
               <>
                 <div className="only-left-text">
                   Only <span className="highlight">{amountRemaining}</span> of{' '}
@@ -436,7 +436,7 @@ export const PurchaseArt = () => {
                 </div>
                 <Progress percent={progressValue} />
               </>
-            )} */}
+            )}
 
             <br />
             <br />
