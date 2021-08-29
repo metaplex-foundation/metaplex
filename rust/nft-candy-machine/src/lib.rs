@@ -182,7 +182,7 @@ pub mod nft_candy_machine {
             &[&authority_seeds],
         )?;
 
-        let mut new_update_authority = None;
+        let mut new_update_authority = Some(candy_machine.authority);
 
         if !ctx.accounts.config.data.retain_authority {
             new_update_authority = Some(ctx.accounts.update_authority.key());
