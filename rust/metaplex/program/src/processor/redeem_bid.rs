@@ -224,7 +224,7 @@ pub fn process_redeem_bid<'a>(
             {
                 let master_edition_info = match safety_deposit_config_info {
                     Some(val) => val,
-                    None => return Err(ProgramError::NotEnoughAccountKeys)
+                    None => return Err(ProgramError::NotEnoughAccountKeys),
                 };
                 let reservation_list_info = next_account_info(account_info_iter)?;
 

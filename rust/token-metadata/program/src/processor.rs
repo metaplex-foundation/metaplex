@@ -19,9 +19,9 @@ use {
             assert_token_program_matches_package, assert_update_authority_is_correct,
             create_or_allocate_account_raw, get_owner_from_token_account,
             process_create_metadata_accounts_logic,
-            process_mint_new_edition_from_master_edition_via_token_logic, transfer_mint_authority,
-            puff_out_data_fields,
-            CreateMetadataAccountsLogicArgs, MintNewEditionFromMasterEditionViaTokenLogicArgs,
+            process_mint_new_edition_from_master_edition_via_token_logic, puff_out_data_fields,
+            transfer_mint_authority, CreateMetadataAccountsLogicArgs,
+            MintNewEditionFromMasterEditionViaTokenLogicArgs,
         },
     },
     arrayref::array_ref,
@@ -132,10 +132,7 @@ pub fn process_instruction<'a>(
         }
         MetadataInstruction::PuffMetadata => {
             msg!("Instruction: Puff Metadata");
-            process_puff_metadata_account(
-                program_id,
-                accounts
-            )
+            process_puff_metadata_account(program_id, accounts)
         }
     }
 }
@@ -592,15 +589,14 @@ pub fn process_puff_metadata_account(
     assert_owned_by(metadata_account_info, program_id)?;
 
     puff_out_data_fields(&mut metadata);
-    
+
     let edition_seeds = &[
         PREFIX.as_bytes(),
         program_id.as_ref(),
         metadata.mint.as_ref(),
-        EDITION.as_bytes()
+        EDITION.as_bytes(),
     ];
-    let (_, edition_bump_seed) =
-        Pubkey::find_program_address(edition_seeds, program_id);
+    let (_, edition_bump_seed) = Pubkey::find_program_address(edition_seeds, program_id);
     metadata.edition_nonce = Some(edition_bump_seed);
 
     metadata.serialize(&mut *metadata_account_info.data.borrow_mut())?;
