@@ -663,7 +663,7 @@ export class SafetyDepositConfig {
         // pick up participation config manually
         const winnerConstraintAsNumber = args.data[offset + 1];
         const nonWinnerConstraintAsNumber = args.data[offset + 2];
-        let fixedPrice = null;
+        let fixedPrice: BN | null = null;
         offset += 3;
 
         if (args.data[offset] == 1) {

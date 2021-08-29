@@ -7,12 +7,14 @@ import {
   MetadataKey,
   StringPublicKey,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { SafetyDepositDraft } from './createAuctionManager';
 import { SafetyDepositConfig } from '../models/metaplex';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 const { createTokenAccount, addTokenToInactiveVault, VAULT_PREFIX } = actions;
 const { approve } = models;
 
@@ -31,7 +33,7 @@ const BATCH_SIZE = 1;
 // the vault for use. It issues a series of transaction instructions and signers for the sendTransactions batch.
 export async function addTokensToVault(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   vault: StringPublicKey,
   nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{
@@ -39,6 +41,8 @@ export async function addTokensToVault(
   signers: Array<Keypair[]>;
   safetyDepositTokenStores: StringPublicKey[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
