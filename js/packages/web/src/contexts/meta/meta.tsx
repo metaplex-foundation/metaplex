@@ -123,7 +123,7 @@ export function MetaProvider({ children = null as any }) {
 
       const nextState = await loadAccounts(connection, all);
 
-      console.log('------->Query finished');
+      console.log('------->Query finished', new Date());
 
       setState(nextState);
 
