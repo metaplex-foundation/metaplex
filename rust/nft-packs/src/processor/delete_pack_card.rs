@@ -2,15 +2,13 @@
 
 use crate::{
     error::NFTPacksError,
-    state::{InitPackSetParams, PackCard, PackSet, PackSetState},
+    state::{PackCard, PackSet, PackSetState},
     utils::*,
 };
-use borsh::BorshSerialize;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
-    program_error::ProgramError,
-    program_pack::{IsInitialized, Pack},
+    program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
@@ -24,18 +22,16 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     let refunder_account = next_account_info(account_info_iter)?;
     let new_master_edition_owner = next_account_info(account_info_iter)?;
     let token_account = next_account_info(account_info_iter)?;
-    let rent_account = next_account_info(account_info_iter)?;
-    let rent = &Rent::from_account_info(rent_account)?;
 
+    // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
     assert_owned_by(pack_card_account, program_id)?;
-
-    assert_rent_exempt(&rent, &pack_set_account)?;
 
     assert_signer(&authority_account)?;
 
     // Obtain PackSet instance
     let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
+    assert_account_key(authority_account, &pack_set.authority)?;
 
     // Ensure that PackSet is in valid state
     if pack_set.pack_state != PackSetState::Deactivated {
