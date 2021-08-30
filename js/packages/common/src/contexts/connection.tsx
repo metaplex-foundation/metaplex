@@ -1,7 +1,6 @@
 import { sleep, useLocalStorageState } from '../utils/utils';
 import {
   Keypair,
-  BlockhashAndFeeCalculator,
   clusterApiUrl,
   Commitment,
   Connection,
@@ -11,6 +10,8 @@ import {
   Transaction,
   TransactionInstruction,
   TransactionSignature,
+  Blockhash,
+  FeeCalculator,
 } from '@solana/web3.js';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { notify } from '../utils/notifications';
@@ -20,6 +21,13 @@ import {
   TokenListProvider,
   ENV as ChainId,
 } from '@solana/spl-token-registry';
+import { WalletSigner } from './wallet';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+
+interface BlockhashAndFeeCalculator {
+  blockhash: Blockhash;
+  feeCalculator: FeeCalculator;
+}
 
 export type ENV =
   | 'mainnet-beta'
@@ -204,7 +212,7 @@ export enum SequenceType {
 
 export async function sendTransactionsWithManualRetry(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   instructions: TransactionInstruction[][],
   signers: Keypair[][],
 ) {
@@ -266,7 +274,7 @@ export async function sendTransactionsWithManualRetry(
 
 export const sendTransactions = async (
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   instructionSet: TransactionInstruction[][],
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
@@ -275,6 +283,8 @@ export const sendTransactions = async (
   failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const unsignedTxns: Transaction[] = [];
 
   if (!block) {
@@ -327,6 +337,7 @@ export const sendTransactions = async (
         successCallback(txid, i);
       })
       .catch(reason => {
+        // @ts-ignore
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {
           breakEarlyObject.breakEarly = true;
@@ -358,7 +369,7 @@ export const sendTransactions = async (
 
 export const sendTransaction = async (
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   awaitConfirmation = true,
@@ -366,6 +377,8 @@ export const sendTransaction = async (
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
 ) => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let transaction = new Transaction();
   instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (
@@ -436,7 +449,7 @@ export const sendTransaction = async (
 
 export const sendTransactionWithRetry = async (
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   instructions: TransactionInstruction[],
   signers: Keypair[],
   commitment: Commitment = 'singleGossip',
@@ -444,6 +457,8 @@ export const sendTransactionWithRetry = async (
   block?: BlockhashAndFeeCalculator,
   beforeSend?: () => void,
 ) => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let transaction = new Transaction();
   instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (

@@ -22,19 +22,25 @@ const MeshArtContent = ({
   style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
 }) => {
-  const renderURL = files && files.length > 0 && typeof files[0] === 'string'  ? files[0] : animationUrl;
+  const renderURL =
+    files && files.length > 0 && typeof files[0] === 'string'
+      ? files[0]
+      : animationUrl;
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return <CachedImageContent
-      uri={uri}
-      className={className}
-      preview={false}
-      style={{ width: 300, ...style }}/>;
+    return (
+      <CachedImageContent
+        uri={uri}
+        className={className}
+        preview={false}
+        style={{ width: 300, ...style }}
+      />
+    );
   }
 
   return <MeshViewer url={renderURL} className={className} style={style} />;
-}
+};
 
 const CachedImageContent = ({
   uri,
@@ -50,7 +56,8 @@ const CachedImageContent = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
 
-  return <Image
+  return (
+    <Image
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}
@@ -62,7 +69,8 @@ const CachedImageContent = ({
       placeholder={<ThreeDots />}
       {...(loaded ? {} : { height: 200 })}
     />
-}
+  );
+};
 
 const VideoArtContent = ({
   className,
@@ -95,7 +103,7 @@ const VideoArtContent = ({
   }, [active, playerApi]);
 
   const likelyVideo = (files || []).filter((f, index, arr) => {
-    if(typeof f !== 'string') {
+    if (typeof f !== 'string') {
       return false;
     }
 
@@ -103,8 +111,9 @@ const VideoArtContent = ({
     return arr.length >= 2 ? index === 1 : index === 0;
   })?.[0] as string;
 
-  const content = (
-    likelyVideo && likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+  const content =
+    likelyVideo &&
+    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -133,18 +142,22 @@ const VideoArtContent = ({
         loop={true}
         poster={uri}
       >
-        {likelyVideo && <source src={likelyVideo} type="video/mp4" style={style} />}
-        {animationURL && <source src={animationURL} type="video/mp4" style={style} />}
-        {files?.filter(f => typeof f !== 'string').map((f: any) => <source src={f.uri} type={f.type} style={style} />)}
+        {likelyVideo && (
+          <source src={likelyVideo} type="video/mp4" style={style} />
+        )}
+        {animationURL && (
+          <source src={animationURL} type="video/mp4" style={style} />
+        )}
+        {files
+          ?.filter(f => typeof f !== 'string')
+          .map((f: any) => (
+            <source src={f.uri} type={f.type} style={style} />
+          ))}
       </video>
-    )
-  );
-
-
+    );
 
   return content;
 };
-
 
 export const ArtContent = ({
   category,
@@ -168,7 +181,7 @@ export const ArtContent = ({
   ref?: Ref<HTMLDivElement>;
   active?: boolean;
   allowMeshRender?: boolean;
-  pubkey?: PublicKey | string,
+  pubkey?: PublicKey | string;
   uri?: string;
   animationURL?: string;
   files?: (MetadataFile | string)[];
@@ -189,32 +202,56 @@ export const ArtContent = ({
 
   animationURL = animationURL || '';
 
-  const animationUrlExt = new URLSearchParams(getLast(animationURL.split("?"))).get("ext");
+  const animationUrlExt = new URLSearchParams(
+    getLast(animationURL.split('?')),
+  ).get('ext');
 
-  if (allowMeshRender && (category === 'vr' || animationUrlExt === 'glb' || animationUrlExt === 'gltf')) {
-    return <MeshArtContent
-      uri={uri}
-      animationUrl={animationURL}
-      className={className}
-      style={style}
-      files={files}/>;
+  if (
+    allowMeshRender &&
+    (category === 'vr' ||
+      animationUrlExt === 'glb' ||
+      animationUrlExt === 'gltf')
+  ) {
+    return (
+      <MeshArtContent
+        uri={uri}
+        animationUrl={animationURL}
+        className={className}
+        style={style}
+        files={files}
+      />
+    );
   }
 
-  const content = category === 'video' ? (
-    <VideoArtContent
-      className={className}
-      style={style}
-      files={files}
-      uri={uri}
-      animationURL={animationURL}
-      active={active}
-    />
-  ) : (
-    <CachedImageContent uri={uri}
-      className={className}
-      preview={preview}
-      style={style}/>
-  );
+  const content =
+    category === 'video' ? (
+      <VideoArtContent
+        className={className}
+        style={style}
+        files={files}
+        uri={uri}
+        animationURL={animationURL}
+        active={active}
+      />
+    ) : (
+      <CachedImageContent
+        uri={uri}
+        className={className}
+        preview={preview}
+        style={style}
+      />
+    );
 
-  return <div ref={ref as any} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{content}</div>;
+  return (
+    <div
+      ref={ref as any}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {content}
+    </div>
+  );
 };
