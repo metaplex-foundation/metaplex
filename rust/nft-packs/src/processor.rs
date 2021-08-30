@@ -7,6 +7,7 @@ use change_authority::{transfer_authority, AuthorityToChange};
 use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
 use delete_pack_card::delete_pack_card;
+use delete_pack_voucher::delete_pack_voucher;
 use init_pack::init_pack;
 use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
@@ -16,6 +17,7 @@ pub mod change_authority;
 pub mod claim_pack;
 pub mod deactivate;
 pub mod delete_pack_card;
+pub mod delete_pack_voucher;
 pub mod init_pack;
 pub mod prove_ownership;
 
@@ -75,8 +77,8 @@ impl Processor {
                 delete_pack_card(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackVoucher => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePackVoucher");
+                delete_pack_voucher(program_id, accounts)
             }
             NFTPacksInstruction::EditPack => {
                 msg!("");
