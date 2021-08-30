@@ -55,9 +55,14 @@ pub enum NFTPacksError {
     /// Underflow
     #[error("Underflow")]
     Underflow,
-    /// Wrong pack state to change data
-    #[error("Wrong pack state to change data")]
+
+    /// Wrong pack state to make changes
+    #[error("Wrong pack state to make changes")]
     WrongPackState,
+
+    /// Pack set should be empty to delete it
+    #[error("Pack set should be empty to delete it")]
+    NotEmptyPackSet,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {

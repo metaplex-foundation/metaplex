@@ -7,6 +7,7 @@ use deactivate::deactivate_pack;
 use init_pack::init_pack;
 use prove_ownership::prove_ownership;
 use change_authority::{transfer_authority, AuthorityToChange};
+use delete_pack::delete_pack;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
@@ -14,6 +15,7 @@ pub mod deactivate;
 pub mod init_pack;
 pub mod prove_ownership;
 pub mod change_authority;
+pub mod delete_pack;
 
 /// Program state handler.
 pub struct Processor {}
@@ -63,8 +65,8 @@ impl Processor {
                 transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
             }
             NFTPacksInstruction::DeletePack => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePack");
+                delete_pack(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackCard => {
                 msg!("");
