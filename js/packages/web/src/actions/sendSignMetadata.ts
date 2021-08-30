@@ -3,13 +3,17 @@ import {
   sendTransactionWithRetry,
   signMetadata,
   StringPublicKey,
+  WalletSigner,
 } from '@oyster/common';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendSignMetadata(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   metadata: StringPublicKey,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
 
