@@ -7,7 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: stefanoeb/eslint-action@1.0.2
-        with:
-          entryPoint: ./js
-          files: js/packages
+      - name: Install modules
+        run: yarn
+        working-directory: ./js
+      - name: Run ESLint
+        run: yarn lint:eslint
+        working-directory: ./js
+
