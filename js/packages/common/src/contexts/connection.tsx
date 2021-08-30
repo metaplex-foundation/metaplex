@@ -22,7 +22,6 @@ import {
   ENV as ChainId,
 } from '@solana/spl-token-registry';
 import { ConnectionProxy } from 'rpc-cache-server';
-import { connect } from 'http2';
 
 export type ENV =
   | 'mainnet-beta'
