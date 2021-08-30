@@ -134,3 +134,39 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
 
     Ok(())
 }
+
+/// Burn tokens
+pub fn burn_tokens<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+) -> ProgramResult {
+    let ix = spl_token::instruction::burn(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke(&ix, &[account, mint, authority])
+}
+
+/// Close token account
+pub fn close_token_account<'a>(
+    account: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    owner: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::close_account(
+        &spl_token::id(),
+        account.key,
+        destination.key,
+        owner.key,
+        &[],
+    )?;
+
+    invoke(&ix, &[account, destination, owner])
+}
