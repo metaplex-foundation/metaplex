@@ -2,7 +2,8 @@
 
 use crate::{
     error::NFTPacksError,
-    find_pack_card_program_address,
+    find_pack_card_program_address, find_program_authority,
+    math::SafeMath,
     state::{DistributionType, PackCard, PackSet, ProvingProcess},
     utils::*,
     PRECISION,
@@ -10,13 +11,11 @@ use crate::{
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
-    program::invoke_signed,
-    program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
-use spl_token_metadata::state::{Creator, Edition, Metadata};
+use spl_token_metadata::state::{Edition, Metadata};
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -24,6 +23,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let pack_set_account = next_account_info(account_info_iter)?;
     let proving_process_account = next_account_info(account_info_iter)?;
     let user_wallet_account = next_account_info(account_info_iter)?;
+    let program_authority_account = next_account_info(account_info_iter)?;
     let pack_card_account = next_account_info(account_info_iter)?;
     let user_token_account = next_account_info(account_info_iter)?;
     let new_metadata_account = next_account_info(account_info_iter)?;
@@ -73,6 +73,9 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     // Check metadata mint
     assert_account_key(metadata_mint_account, &master_metadata.mint)?;
 
+    let (program_authority_key, bump_seed) = find_program_authority(program_id);
+    assert_account_key(program_authority_account, &program_authority_key)?;
+
     match pack_card.distribution_type {
         DistributionType::FixedNumber => {
             // Check if user already open pack
@@ -95,11 +98,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 new_mint_account,
                 new_mint_authority_account,
                 user_wallet_account,
+                program_authority_account,
                 user_token_account,
                 metadata_account,
                 master_edition_account,
                 metadata_mint_account,
-                edition.edition,
+                edition.edition.error_increment()?,
+                &[program_id.as_ref(), &[bump_seed]],
             )?;
         }
         DistributionType::ProbabilityBased => {
@@ -129,11 +134,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                     new_mint_account,
                     new_mint_authority_account,
                     user_wallet_account,
+                    program_authority_account,
                     user_token_account,
                     metadata_account,
                     master_edition_account,
                     metadata_mint_account,
-                    edition.edition,
+                    edition.edition.error_increment()?,
+                    &[program_id.as_ref(), &[bump_seed]],
                 )?;
             } else {
                 // User lose
