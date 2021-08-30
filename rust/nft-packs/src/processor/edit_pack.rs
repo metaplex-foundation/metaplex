@@ -28,9 +28,7 @@ pub fn edit_pack(
 
     let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
 
-    if *authority_account.key != pack_set.authority {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
+    assert_account_key(authority_account, &pack_set.authority)?;
 
     if !pack_set.mutable {
         return Err(NFTPacksError::ImmutablePackSet.into());

@@ -30,9 +30,7 @@ pub fn edit_pack_voucher(
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
 
-    if *authority_account.key != pack_set.authority {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
+    assert_account_key(authority_account, &pack_set.authority)?;
 
     if !pack_set.mutable {
         return Err(NFTPacksError::ImmutablePackSet.into());
@@ -44,9 +42,7 @@ pub fn edit_pack_voucher(
 
     let mut pack_voucher = PackVoucher::unpack(&pack_voucher_account.data.borrow_mut())?;
 
-    if pack_voucher.pack_set != *pack_set_account.key {
-        return Err(NFTPacksError::WrongPackVoucher.into());
-    }
+    assert_account_key(pack_set_account, &pack_voucher.pack_set)?;
 
     apply_changes(&mut pack_voucher, args)?;
 
