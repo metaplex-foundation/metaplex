@@ -62,7 +62,7 @@ export function approve(
   const tokenProgram = TOKEN_PROGRAM_ID;
 
   const transferAuthority = existingTransferAuthority || Keypair.generate();
-  const delegateKey = delegate ?? transferAuthority.publicKey;
+  //const delegateKey = delegate ?? transferAuthority.publicKey;
 
   instructions.push(
     Token.createApproveInstruction(

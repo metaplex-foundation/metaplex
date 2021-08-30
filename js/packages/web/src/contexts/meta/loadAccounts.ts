@@ -34,14 +34,14 @@ async function getProgramAccounts(
 ): Promise<Array<AccountAndPubkey>> {
   const extra: any = {};
   let commitment;
-  let encoding;
+  //let encoding;
 
   if (configOrCommitment) {
     if (typeof configOrCommitment === 'string') {
       commitment = configOrCommitment;
     } else {
       commitment = configOrCommitment.commitment;
-      encoding = configOrCommitment.encoding;
+      //encoding = configOrCommitment.encoding;
 
       if (configOrCommitment.dataSlice) {
         extra.dataSlice = configOrCommitment.dataSlice;
@@ -124,7 +124,6 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
   const promises = [
     getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
     getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
-    ,
     getProgramAccounts(connection, METAPLEX_ID).then(
       forEach(processMetaplexAccounts),
     ),
