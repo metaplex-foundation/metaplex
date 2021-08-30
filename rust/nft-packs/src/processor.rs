@@ -6,8 +6,11 @@ use borsh::BorshDeserialize;
 use change_authority::{transfer_authority, AuthorityToChange};
 use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
+use delete_pack::delete_pack;
 use delete_pack_card::delete_pack_card;
 use delete_pack_voucher::delete_pack_voucher;
+use edit_pack::edit_pack;
+use edit_pack_card::edit_pack_card;
 use init_pack::init_pack;
 use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
@@ -16,8 +19,12 @@ pub mod activate;
 pub mod change_authority;
 pub mod claim_pack;
 pub mod deactivate;
+pub mod delete_pack;
 pub mod delete_pack_card;
 pub mod delete_pack_voucher;
+pub mod edit_pack;
+pub mod edit_pack_card;
+pub mod edit_pack_voucher;
 pub mod init_pack;
 pub mod prove_ownership;
 
@@ -69,8 +76,8 @@ impl Processor {
                 transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
             }
             NFTPacksInstruction::DeletePack => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePack");
+                delete_pack(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackCard => {
                 msg!("Instruction: DeletePackCard");
@@ -80,15 +87,15 @@ impl Processor {
                 msg!("Instruction: DeletePackVoucher");
                 delete_pack_voucher(program_id, accounts)
             }
-            NFTPacksInstruction::EditPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::EditPack(args) => {
+                msg!("Instruction: EditPack");
+                edit_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackCard => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::EditPackCard(args) => {
+                msg!("Instruction: EditPackCard");
+                edit_pack_card(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackVoucher => {
+            NFTPacksInstruction::EditPackVoucher(args) => {
                 msg!("");
                 unimplemented!()
             }

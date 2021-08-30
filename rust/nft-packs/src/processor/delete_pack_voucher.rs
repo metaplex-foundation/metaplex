@@ -59,7 +59,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     )?;
 
     // Transfer all SOL from PackVoucher and delete PackVoucher account
-    transfer(pack_voucher_account, refunder_account)?;
+    empty_account_balance(pack_voucher_account, refunder_account)?;
 
     // Update state
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;

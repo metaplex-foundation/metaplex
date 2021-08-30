@@ -61,7 +61,7 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     )?;
 
     // Transfer all SOL from PackCard and delete PackCard account
-    transfer(pack_card_account, refunder_account)?;
+    empty_account_balance(pack_card_account, refunder_account)?;
 
     // Update state
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;

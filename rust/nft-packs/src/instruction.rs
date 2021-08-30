@@ -1,6 +1,9 @@
 //! Instruction types
 
-use crate::{find_pack_card_program_address, find_proving_process_program_address};
+use crate::{
+    find_pack_card_program_address, find_proving_process_program_address,
+    state::{ActionOnProve, DistributionType},
+};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -18,6 +21,42 @@ pub struct InitPackSetArgs {
     pub total_packs: u32,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
+}
+
+/// Edit a PackSet arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditPackSetArgs {
+    /// Name
+    pub name: Option<[u8; 32]>,
+    /// How many packs are available for redeeming
+    pub total_packs: Option<u32>,
+    /// If true authority can make changes at deactivated phase
+    pub mutable: Option<bool>,
+}
+
+/// Edit a PackCard arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditPackCardArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// Fixed number / probability-based
+    pub distribution_type: Option<DistributionType>,
+    /// Average number of cards in pack multiplied by 10^9 and truncated
+    pub number_in_pack: Option<u64>,
+}
+
+/// Edit a PackVoucher arguments
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct EditPackVoucherArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// How many vouchers of this type is required to open a pack
+    pub number_to_open: Option<u32>,
+    /// Burn / redeem
+    pub action_on_prove: Option<ActionOnProve>,
 }
 
 /// Instruction definition
@@ -201,7 +240,7 @@ pub enum NFTPacksInstruction {
     /// - name Option<[u8; 32]>
     /// - total_packs Option<u32>
     /// mutable	Option<bool> (only can be changed from true to false)
-    EditPack,
+    EditPack(EditPackSetArgs),
 
     /// EditPackCard
     ///
@@ -213,11 +252,10 @@ pub enum NFTPacksInstruction {
     /// - write            pack_card
     ///
     /// Parameters:
-    /// - card_index (to link it with pack set)
     /// - max_supply	Option<u32>
-    /// - probability_type	Option<enum[fixed number, probability based]>
-    /// - probability	Option<u64>
-    EditPackCard,
+    /// - distribution_type	Option<enum[fixed number, probability based]>
+    /// - number_in_pack	Option<u64>
+    EditPackCard(EditPackCardArgs),
 
     /// EditPackVoucher
     ///
@@ -229,11 +267,10 @@ pub enum NFTPacksInstruction {
     /// - write            pack_voucher
     ///
     /// Parameters:
-    /// - voucher_index (to link it with pack set)
     /// - max_supply Option<u32>
     /// - number_to_open Option<u32>
     /// - action_on_prove Option<enum[burn, redeem]>
-    EditPackVoucher,
+    EditPackVoucher(EditPackVoucherArgs),
 }
 
 /// Create `InitPack` instruction
@@ -432,6 +469,79 @@ pub fn transfer_minting_authority(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::TransferMintingAuthority,
+        accounts,
+    )
+}
+
+/// Create `DeletePack` instruction
+pub fn delete_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePack, accounts)
+}
+
+/// Create `EditPack` instruction
+pub fn edit_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackSetArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
+}
+
+/// Create `EditPackCard` instruction
+pub fn edit_pack_card(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_card: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackCardArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*pack_card, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::EditPackCard(args),
+        accounts,
+    )
+}
+
+/// Create `EditPackVoucher` instruction
+pub fn edit_pack_voucher(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_voucher: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackVoucherArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*pack_voucher, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::EditPackVoucher(args),
         accounts,
     )
 }
