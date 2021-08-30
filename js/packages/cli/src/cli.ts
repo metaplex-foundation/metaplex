@@ -273,16 +273,17 @@ program
 
     const seen = {};
     const newFiles = [];
+
+    files.forEach(f => {
+      if (!seen[f.split('/').pop()]) {
+        seen[f.split('/').pop()] = true;
+        newFiles.push(f);
+      }
+    });
     existingInCache.forEach(f => {
       if (!seen[f]) {
         seen[f] = true;
         newFiles.push(f + '.png');
-      }
-    });
-    files.forEach(f => {
-      if (!seen[f]) {
-        seen[f] = true;
-        newFiles.push(f);
       }
     });
 
@@ -327,7 +328,7 @@ program
       const storageCost = 10;
 
       let link = cacheContent?.items?.[index]?.link;
-      if (!link) {
+      if (!link || !cacheContent.program.uuid) {
         const imageBuffer = Buffer.from(fs.readFileSync(image));
         const manifestPath = image.replace(extension, '.json');
         const manifestContent = fs
@@ -372,93 +373,100 @@ program
           }
         }
 
-        let instructions = [
-          anchor.web3.SystemProgram.transfer({
-            fromPubkey: walletKey.publicKey,
-            toPubkey: PAYMENT_WALLET,
-            lamports: storageCost,
-          }),
-        ];
+        if (!link) {
+          let instructions = [
+            anchor.web3.SystemProgram.transfer({
+              fromPubkey: walletKey.publicKey,
+              toPubkey: PAYMENT_WALLET,
+              lamports: storageCost,
+            }),
+          ];
 
-        const tx = await sendTransactionWithRetryWithKeypair(
-          solConnection,
-          walletKey,
-          instructions,
-          [],
-          'single',
-        );
-
-        // data.append('tags', JSON.stringify(tags));
-        // payment transaction
-        const data = new FormData();
-        data.append('transaction', tx);
-        data.append('env', ENV);
-        data.append('file[]', fs.createReadStream(image), `image.png`);
-        data.append('file[]', manifestBuffer, 'metadata.json');
-        try {
-          const result = await (
-            await fetch(
-              'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile3',
-              {
-                method: 'POST',
-                body: data,
-              },
-            )
-          ).json();
-
-          const metadataFile = result.messages?.find(
-            m => m.filename === 'manifest.json',
+          const tx = await sendTransactionWithRetryWithKeypair(
+            solConnection,
+            walletKey,
+            instructions,
+            [],
+            'single',
           );
-          if (metadataFile?.transactionId) {
-            link = `https://arweave.net/${metadataFile.transactionId}`;
-            console.log(`File uploaded: ${link}`);
+
+          // data.append('tags', JSON.stringify(tags));
+          // payment transaction
+          const data = new FormData();
+          data.append('transaction', tx);
+          data.append('env', ENV);
+          data.append('file[]', fs.createReadStream(image), `image.png`);
+          data.append('file[]', manifestBuffer, 'metadata.json');
+          try {
+            const result = await (
+              await fetch(
+                'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile3',
+                {
+                  method: 'POST',
+                  body: data,
+                },
+              )
+            ).json();
+
+            const metadataFile = result.messages?.find(
+              m => m.filename === 'manifest.json',
+            );
+            if (metadataFile?.transactionId) {
+              link = `https://arweave.net/${metadataFile.transactionId}`;
+              console.log(`File uploaded: ${link}`);
+            }
+
+            cacheContent.items[index] = {
+              link,
+              name: manifest.name,
+              onChain: false,
+            };
+            fs.writeFileSync(
+              path.join(CACHE_PATH, cacheName),
+              JSON.stringify(cacheContent),
+            );
+          } catch (er) {
+            console.error(`Error uploading file ${index}`, er);
           }
-
-          cacheContent.items[index] = {
-            link,
-            name: manifest.name,
-            onChain: false,
-          };
-          fs.writeFileSync(
-            path.join(CACHE_PATH, cacheName),
-            JSON.stringify(cacheContent),
-          );
-        } catch (er) {
-          console.error(`Error uploading file ${index}`, er);
         }
       }
     }
-
     try {
       await Promise.all(
-        chunks(Array.from(Array(images.length).keys()), 2000).map(
+        chunks(Array.from(Array(images.length).keys()), 1000).map(
           async allIndexesInSlice => {
             for (
               let offset = 0;
-              (offset += 10);
-              offset < allIndexesInSlice.length
+              offset < allIndexesInSlice.length;
+              offset += 10
             ) {
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
-                const index = images[i].replace(extension, '');
+                const index = images[i].replace(extension, '').split('/').pop();
                 return cacheContent.items[index].onChain;
               });
+              const ind = images[indexes[0]]
+                .replace(extension, '')
+                .split('/')
+                .pop();
+
               if (onChain.length != indexes.length) {
-                const i = images[indexes[0]].replace(extension, '');
                 console.log(
                   'Writing indices ',
-                  i,
+                  ind,
                   '-',
-                  parseInt(i) + indexes.length,
+                  parseInt(ind) + indexes.length,
                 );
 
                 const txId = await anchorProgram.rpc.addConfigLines(
-                  i,
+                  ind,
                   indexes.map(i => ({
-                    uri: cacheContent.items[images[i].replace(extension, '')]
-                      .link,
-                    name: cacheContent.items[images[i].replace(extension, '')]
-                      .name,
+                    uri: cacheContent.items[
+                      images[i].replace(extension, '').split('/').pop()
+                    ].link,
+                    name: cacheContent.items[
+                      images[i].replace(extension, '').split('/').pop()
+                    ].name,
                   })),
                   {
                     accounts: {
@@ -469,8 +477,12 @@ program
                   },
                 );
                 indexes.forEach(i => {
-                  cacheContent.items[images[i].replace(extension, '')] = {
-                    ...cacheContent.items[images[i].replace(extension, '')],
+                  cacheContent.items[
+                    images[i].replace(extension, '').split('/').pop()
+                  ] = {
+                    ...cacheContent.items[
+                      images[i].replace(extension, '').split('/').pop()
+                    ],
                     onChain: true,
                   };
                 });
