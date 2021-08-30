@@ -510,7 +510,7 @@ program
   .command('set_start_date')
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
-  .option('-d, --date', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
@@ -518,13 +518,13 @@ program
 
     const { keypair } = cmd.opts();
 
-    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const cacheName = cmd.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
       : undefined;
 
-    const date = program.getOptionValue('date');
+    const date = cmd.getOptionValue('date');
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
     const walletKey = anchor.web3.Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
