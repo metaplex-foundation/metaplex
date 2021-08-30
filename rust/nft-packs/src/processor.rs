@@ -5,12 +5,14 @@ use activate::activate_pack;
 use borsh::BorshDeserialize;
 use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
+use delete_pack_card::delete_pack_card;
 use init_pack::init_pack;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
 pub mod claim_pack;
 pub mod deactivate;
+pub mod delete_pack_card;
 pub mod init_pack;
 
 /// Program state handler.
@@ -61,8 +63,8 @@ impl Processor {
                 unimplemented!()
             }
             NFTPacksInstruction::DeletePackCard => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePackCard");
+                delete_pack_card(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackVoucher => {
                 msg!("");

@@ -35,12 +35,18 @@ pub enum NFTPacksError {
     /// NFT pack set is already deactivated
     #[error("NFT pack set already deactivated")]
     PackAlreadyDeactivated,
+
+    /// NFT pack state is invalid
+    #[error("NFT pack state is invalid")]
+    PackInvalidState,
 }
+
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
+
 impl<T> DecodeError<T> for NFTPacksError {
     fn type_of() -> &'static str {
         "NFTPacksError"

@@ -47,6 +47,15 @@ pub fn assert_rent_exempt(rent: &Rent, account_info: &AccountInfo) -> ProgramRes
     }
 }
 
+/// transfer all the SOL from source to receiver
+pub fn transfer(source: &AccountInfo, receiver: &AccountInfo) -> Result<(), ProgramError> {
+    let mut from = source.try_borrow_mut_lamports()?;
+    let mut to = receiver.try_borrow_mut_lamports()?;
+    **to += **from;
+    **from = 0;
+    Ok(())
+}
+
 /// Initialize SPL mint instruction
 pub fn spl_initialize_mint<'a>(
     mint: AccountInfo<'a>,
@@ -63,6 +72,26 @@ pub fn spl_initialize_mint<'a>(
     )?;
 
     invoke(&ix, &[mint, rent])
+}
+
+/// SPL transfer instruction.
+pub fn spl_token_transfer<'a>(
+    source: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<(), ProgramError> {
+    let ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        source.key,
+        destination.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
 }
 
 /// Create account (PDA)
