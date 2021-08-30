@@ -94,15 +94,12 @@ const rerun = async ({
       auction.auction.info.tokenMint === QUOTE_MINT.toBase58()
     ) {
       if (!LOOKUP[auction.auction.pubkey]) {
-        LOOKUP[auction.auction.pubkey] = (
-          await getAuctionExtended({
-            auctionProgramId: PROGRAM_IDS.auction,
-            resource: auction.vault.pubkey,
-          })
-        );
+        LOOKUP[auction.auction.pubkey] = await getAuctionExtended({
+          auctionProgramId: PROGRAM_IDS.auction,
+          resource: auction.vault.pubkey,
+        });
       }
-      const extended =
-        auctionDataExtended[LOOKUP[auction.auction.pubkey]];
+      const extended = auctionDataExtended[LOOKUP[auction.auction.pubkey]];
       if (extended && extended.info.totalUncancelledBids.toNumber() > 0) {
         totalAuctions++;
         averageBidders += extended.info.totalUncancelledBids.toNumber();

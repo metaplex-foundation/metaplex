@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   Layout,
   Row,
@@ -21,12 +21,12 @@ import {
   StringPublicKey,
   useConnection,
   useStore,
-  useUserAccounts,
-  useWallet,
+  useUserAccounts, useWalletModal,
+  WalletSigner,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
-import { WalletAdapter } from '@solana/wallet-base';
 import {
   convertMasterEditions,
   filterMetadata,
@@ -38,19 +38,24 @@ const { Content } = Layout;
 export const AdminView = () => {
   const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
   const connection = useConnection();
-  const { wallet, connected, connect } = useWallet();
+  const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
   useEffect(() => {
-    if (!store && !storeAddress && connected && wallet?.publicKey) {
-      setStoreForOwner(wallet?.publicKey?.toBase58());
+    if (!store && !storeAddress && wallet.publicKey) {
+      setStoreForOwner(wallet.publicKey.toBase58());
     }
-  }, [store, storeAddress, connected, wallet?.publicKey]);
-  console.log('@admin', connected, storeAddress, isLoading, store);
+  }, [store, storeAddress, wallet.publicKey]);
+  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
 
   return (
     <>
-      {!connected ? (
+      {!wallet.connected ? (
         <p>
           <Button type="primary" className="app-btn" onClick={connect}>
             Connect
@@ -66,7 +71,7 @@ export const AdminView = () => {
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
             connection={connection}
             wallet={wallet}
-            connected={connected}
+            connected={wallet.connected}
           />
           {!isConfigured && (
             <>
@@ -167,7 +172,7 @@ function InnerAdminView({
     ParsedAccount<WhitelistedCreator>
   >;
   connection: Connection;
-  wallet: WalletAdapter;
+  wallet: WalletSigner;
   connected: boolean;
 }) {
   const [newStore, setNewStore] = useState(

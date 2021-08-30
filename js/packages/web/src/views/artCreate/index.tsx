@@ -22,7 +22,6 @@ import { mintNFT } from '../../actions';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   IMetadataExtension,
   Attribute,
   MetadataCategory,
@@ -34,6 +33,7 @@ import {
   MetadataFile,
   StringPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
@@ -50,7 +50,7 @@ const { Text } = Typography;
 export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
@@ -809,8 +809,7 @@ const RoyaltiesStep = (props: {
   confirm: () => void;
 }) => {
   // const file = props.attributes.image;
-  const { wallet, connected } = useWallet();
-
+  const { publicKey, connected } = useWallet();
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [fixedCreators, setFixedCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
@@ -819,8 +818,8 @@ const RoyaltiesStep = (props: {
   const [isShowErrors, setIsShowErrors] = useState<boolean>(false);
 
   useEffect(() => {
-    if (wallet?.publicKey) {
-      const key = wallet.publicKey.toBase58();
+    if (publicKey) {
+      const key = publicKey.toBase58();
       setFixedCreators([
         {
           key,
@@ -966,7 +965,7 @@ const RoyaltiesStep = (props: {
               c =>
                 new Creator({
                   address: c.value,
-                  verified: c.value === wallet?.publicKey?.toBase58(),
+                  verified: c.value === publicKey?.toBase58(),
                   share:
                     royalties.find(r => r.creatorKey === c.value)?.amount ||
                     Math.round(100 / royalties.length),

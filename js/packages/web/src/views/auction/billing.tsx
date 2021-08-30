@@ -11,7 +11,6 @@ import {
 import { ArtContent } from '../../components/ArtContent';
 import {
   useConnection,
-  contexts,
   BidderMetadata,
   ParsedAccount,
   cache,
@@ -24,7 +23,9 @@ import {
   useUserAccounts,
   StringPublicKey,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
 import {
   getBidderKeys,
@@ -33,18 +34,16 @@ import {
   PayoutTicket,
   WinningConstraint,
 } from '../../models/metaplex';
-import { WalletAdapter } from '@solana/wallet-base';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
-const { useWallet } = contexts.Wallet;
 const { Content } = Layout;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
   const auctionView = useAuction(id);
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const mint = useMint(auctionView?.auction.info.tokenMint);
 
   return auctionView && wallet && connection && mint ? (
@@ -148,7 +147,8 @@ function usePayoutTickets(
         ? [[auctionView.participationItem]]
         : []),
     ];
-    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] = [];
+    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
+      [];
     let total = 0;
     for (let i = 0; i < prizeArrays.length; i++) {
       const items = prizeArrays[i];
@@ -163,9 +163,7 @@ function usePayoutTickets(
 
         for (let k = 0; k < recipientAddresses.length; k++) {
           // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
-          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[
-            k
-          ]}-${k}`;
+          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
 
           if (!currFound[key]) {
             payoutPromises.push({
@@ -188,8 +186,7 @@ function usePayoutTickets(
       (payoutKeys: StringPublicKey[]) => {
         payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
           if (payoutTickets[payoutKey])
-            currFound[payoutPromises[i].key] =
-              payoutTickets[payoutKey];
+            currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
         });
 
         setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
@@ -346,9 +343,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   }[] = [
     ...winnersThatCanBeEmptied.map(pot => ({
       metadata:
-        bidderMetadataByAuctionAndBidder[
-          `${auctionKey}-${pot.info.bidderAct}`
-        ],
+        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
       pot,
     })),
   ];
@@ -371,7 +366,7 @@ export const InnerBillingView = ({
   mint,
 }: {
   auctionView: AuctionView;
-  wallet: WalletAdapter;
+  wallet: WalletSigner;
   connection: Connection;
   mint: MintInfo;
 }) => {
@@ -385,7 +380,9 @@ export const InnerBillingView = ({
 
   useEffect(() => {
     connection
-      .getTokenAccountBalance(toPublicKey(auctionView.auctionManager.acceptPayment))
+      .getTokenAccountBalance(
+        toPublicKey(auctionView.auctionManager.acceptPayment),
+      )
       .then(resp => {
         if (resp.value.uiAmount !== undefined && resp.value.uiAmount !== null)
           setEscrowBalance(resp.value.uiAmount);

@@ -589,11 +589,13 @@ fn create_metadata_account_call(
         mutable,
     );
 
-    let mut instructions = vec![new_metadata_instruction];
+    let mut instructions = vec![];
 
     if create_new_mint {
         instructions.append(&mut new_mint_instructions)
     }
+
+    instructions.push(new_metadata_instruction);
 
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
     let recent_blockhash = client.get_recent_blockhash().unwrap().0;
