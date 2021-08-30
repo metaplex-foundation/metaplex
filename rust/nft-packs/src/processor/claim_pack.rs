@@ -75,7 +75,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let metadata_account = next_account_info(account_info_iter)?;
     let metadata_mint_account = next_account_info(account_info_iter)?;
     let edition_account = next_account_info(account_info_iter)?;
-    let _rent_account = next_account_info(account_info_iter)?;
+    let rent_account = next_account_info(account_info_iter)?;
     let randomness_oracle_account = next_account_info(account_info_iter)?;
     let _rent = &Rent::from_account_info(rent_account)?;
 
