@@ -169,7 +169,26 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    if (attributes.category === AuctionCategory.Open) {
+    if (attributes.category === AuctionCategory.InstantSale) {
+      if (attributes.items.length > 0) {
+        const item = attributes.items[0];
+        item.winningConfigType =
+          item.metadata.info.updateAuthority ===
+          (wallet?.publicKey || SystemProgram.programId).toBase58()
+            ? WinningConfigType.FullRightsTransfer
+            : WinningConfigType.TokenOnlyTransfer;
+        item.amountRanges = [
+          new AmountRange({
+            amount: new BN(1),
+            length: new BN(attributes.editions || 1),
+          }),
+        ];
+      }
+      winnerLimit = new WinnerLimit({
+        type: WinnerLimitType.Capped,
+        usize: new BN(attributes.editions || 1),
+      });
+    } else if (attributes.category === AuctionCategory.Open) {
       if (
         attributes.items.length > 0 &&
         attributes.items[0].participationConfig
@@ -531,8 +550,8 @@ export const AuctionCreateView = () => {
     [AuctionCategory.InstantSale]: [
       ['Category', categoryStep],
       ['Instant Sale', instantSaleStep],
-      ['Review', reviewStep], // Update for clarity
-      ['Publish', waitStep], // Just the loading screen
+      ['Review', reviewStep],
+      ['Publish', waitStep],
       [undefined, congratsStep],
     ],
     [AuctionCategory.Limited]: [
@@ -1806,7 +1825,6 @@ const ReviewStep = (props: {
               startListTS: props.attributes.startListTS || moment().unix(),
               startSaleTS: props.attributes.startSaleTS || moment().unix(),
             });
-            console.log('attributes', props.attributes);
             props.confirm();
           }}
           className="action-btn"
