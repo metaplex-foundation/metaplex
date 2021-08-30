@@ -34,7 +34,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { useConnectionProxy } from '../../../../common/src/contexts/connection';
+import { useConnectionProxy } from '../../../../common/dist/lib';
 
 export const AuctionItem = ({
   item,

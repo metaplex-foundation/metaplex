@@ -42,7 +42,7 @@ import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
 } from '../../models/metaplex';
-import { useConnectionProxy } from '../../../../common/src/contexts/connection';
+import { useConnectionProxy } from '../../../../common/dist/lib';
 
 const { useWallet } = contexts.Wallet;
 

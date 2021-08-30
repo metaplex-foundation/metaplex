@@ -9,7 +9,7 @@ import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ViewOn } from './../../components/ViewOn';
 import { ArtType } from '../../types';
-import { useConnectionProxy } from '../../../../common/src/contexts/connection';
+import { useConnectionProxy } from '../../../../common/dist/lib';
 
 const { Content } = Layout;
 

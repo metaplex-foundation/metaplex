@@ -15,7 +15,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { useConnectionProxy } from '../../../../common/src/contexts/connection';
+import { useConnectionProxy } from '../../../../common/dist/lib';
 import { MetaState, MetaContextState, UpdateStateValueFunc } from './types';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { processAuctions } from './processAuctions';
