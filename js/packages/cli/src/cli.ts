@@ -275,8 +275,8 @@ program
     const newFiles = [];
 
     files.forEach(f => {
-      if (!seen[f.split('/').pop()]) {
-        seen[f.split('/').pop()] = true;
+      if (!seen[f.replace(extension, '').split('/').pop()]) {
+        seen[f.replace(extension, '').split('/').pop()] = true;
         newFiles.push(f);
       }
     });
@@ -431,6 +431,7 @@ program
         }
       }
     }
+
     try {
       await Promise.all(
         chunks(Array.from(Array(images.length).keys()), 1000).map(
@@ -457,7 +458,6 @@ program
                   '-',
                   parseInt(ind) + indexes.length,
                 );
-
                 const txId = await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
@@ -731,7 +731,7 @@ program
       const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
       const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
       const cacheItem = cachedContent.items[key];
-      if (!name.match(cacheItem.name) || !uri.match(cacheItem.uri)) {
+      if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
         console.log(
           'Name',
           name,
@@ -740,7 +740,7 @@ program
           'didnt match cache values of',
           cacheItem.name,
           'and',
-          cacheItem.uri,
+          cacheItem.link,
           ' marking to rerun for image',
           key,
         );
