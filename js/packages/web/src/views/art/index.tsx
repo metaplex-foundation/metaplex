@@ -1,5 +1,15 @@
 import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd';
+import {
+  Row,
+  Col,
+  Divider,
+  Layout,
+  Tag,
+  Button,
+  Skeleton,
+  List,
+  Card,
+} from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from './../../hooks';
 
@@ -195,23 +205,23 @@ export const ArtView = () => {
             <div className="info-content">{art.about}</div> */}
           </Col>
           <Col span="12">
-            {attributes &&
+            {attributes && (
               <>
                 <Divider />
                 <br />
                 <div className="info-header">Attributes</div>
-                <List
-                  size="large"
-                  grid={{ column: 4 }}
-                >
-                  {attributes.map(attribute =>
+                <List size="large" grid={{ column: 4 }}>
+                  {attributes.map(attribute => (
                     <List.Item>
-                      <Card title={attribute.trait_type}>{attribute.value}</Card>
+                      <List.Item.Meta
+                        title={attribute.trait_type}
+                        description={attribute.value}
+                      />
                     </List.Item>
-                  )}
+                  ))}
                 </List>
               </>
-            }
+            )}
           </Col>
         </Row>
       </Col>
