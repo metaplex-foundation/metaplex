@@ -60,7 +60,11 @@ export type MetadataFile = {
 
 export type FileOrString = MetadataFile | string;
 
-export type Attribute = {trait_type?: string, display_type?: string, value: string | number};
+export type Attribute = {
+  trait_type?: string;
+  display_type?: string;
+  value: string | number;
+};
 
 export interface IMetadataExtension {
   name: string;
