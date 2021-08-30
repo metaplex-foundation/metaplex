@@ -75,14 +75,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let metadata_account = next_account_info(account_info_iter)?;
     let metadata_mint_account = next_account_info(account_info_iter)?;
     let edition_account = next_account_info(account_info_iter)?;
-    let rent_account = next_account_info(account_info_iter)?;
+    let _rent_account = next_account_info(account_info_iter)?;
     let randomness_oracle_account = next_account_info(account_info_iter)?;
-    let rent = &Rent::from_account_info(rent_account)?;
+    let _rent = &Rent::from_account_info(rent_account)?;
 
+    // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
     assert_owned_by(pack_card_account, program_id)?;
-
-    assert_rent_exempt(&rent, &pack_set_account)?;
 
     assert_signer(&user_wallet_account)?;
 
