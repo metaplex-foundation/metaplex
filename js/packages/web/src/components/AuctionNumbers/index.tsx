@@ -56,7 +56,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
               <AmountLabel
                 style={{ marginBottom: 10 }}
                 containerStyle={{ flexDirection: 'column' }}
-                title="Starting bid"
+                title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
                 amount={fromLamports(
                   participationOnly ? participationFixedPrice : priceFloor,
                   mintInfo,
