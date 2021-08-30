@@ -24,9 +24,7 @@ pub fn delete_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRes
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
 
-    if *authority_account.key != pack_set.authority {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
+    assert_account_key(authority_account, &pack_set.authority)?;
 
     if pack_set.pack_state != PackSetState::Deactivated {
         return Err(NFTPacksError::WrongPackState.into());
