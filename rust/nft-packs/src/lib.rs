@@ -4,10 +4,10 @@
 
 pub mod error;
 pub mod instruction;
+pub mod math;
 pub mod processor;
 pub mod state;
 pub mod utils;
-pub mod math;
 
 /// Current program version
 pub const PROGRAM_VERSION: u8 = 1;

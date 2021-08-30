@@ -22,7 +22,11 @@ pub enum AuthorityToChange {
 }
 
 /// Process TransferAuthority instruction
-pub fn transfer_authority(_program_id: &Pubkey, accounts: &[AccountInfo], authority_type: AuthorityToChange) -> ProgramResult {
+pub fn transfer_authority(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    authority_type: AuthorityToChange,
+) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let authority_account = next_account_info(account_info_iter)?;
@@ -42,7 +46,9 @@ pub fn transfer_authority(_program_id: &Pubkey, accounts: &[AccountInfo], author
 
     match authority_type {
         AuthorityToChange::PackAuthority => pack_set.authority = *new_authority_account.key,
-        AuthorityToChange::MintingAuthority => pack_set.minting_authority = *new_authority_account.key,
+        AuthorityToChange::MintingAuthority => {
+            pack_set.minting_authority = *new_authority_account.key
+        }
     }
 
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;

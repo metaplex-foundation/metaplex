@@ -2,11 +2,11 @@
 
 use crate::{
     error::NFTPacksError,
+    math::SafeMath,
     state::{
         ActionOnProve, InitProvingProcessParams, PackSet, PackSetState, PackVoucher, ProvingProcess,
     },
     utils::*,
-    math::SafeMath,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -69,7 +69,10 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         &[
             pack_set_account.key.as_ref(),
             PackVoucher::PREFIX.as_bytes(),
-            &proving_process.proved_vouchers.error_increment()?.to_le_bytes(),
+            &proving_process
+                .proved_vouchers
+                .error_increment()?
+                .to_le_bytes(),
         ],
     )?;
 
@@ -129,7 +132,8 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         proving_process.proved_voucher_editions = 0;
         proving_process.proved_vouchers = proving_process.proved_vouchers.error_increment()?;
     } else {
-        proving_process.proved_voucher_editions = proving_process.proved_voucher_editions.error_increment()?;
+        proving_process.proved_voucher_editions =
+            proving_process.proved_voucher_editions.error_increment()?;
     }
 
     ProvingProcess::pack(proving_process, *proving_process_account.data.borrow_mut())?;
@@ -151,7 +155,7 @@ pub fn get_proving_process_data(
         Err(_) => {
             assert_rent_exempt(rent, account_info)?;
             let mut data = ProvingProcess::unpack_unchecked(&account_info.data.borrow_mut())?;
-            
+
             data.init(InitProvingProcessParams {
                 user_wallet: *user_wallet,
                 pack_set: *pack_set,

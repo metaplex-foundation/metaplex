@@ -56,13 +56,41 @@ pub enum NFTPacksError {
     #[error("Underflow")]
     Underflow,
 
-    /// Wrong pack state to make changes
-    #[error("Wrong pack state to make changes")]
-    WrongPackState,
-
     /// Pack set should be empty to delete it
     #[error("Pack set should be empty to delete it")]
     NotEmptyPackSet,
+
+    /// Wrong pack state to change data
+    #[error("Wrong pack state to change data")]
+    WrongPackState,
+
+    /// Pack set is immutable
+    #[error("Pack set is immutable")]
+    ImmutablePackSet,
+
+    /// Total packs can't be less then pack cards amount
+    #[error("Total packs can't be less then pack cards amount")]
+    SmallTotalPacksAmount,
+
+    /// Can't set the same value
+    #[error("Can't set the same value")]
+    CantSetTheSameValue,
+
+    /// Wrong pack card received
+    #[error("Wrong pack card received")]
+    WrongPackCard,
+
+    /// Wrong pack voucher received
+    #[error("Wrong pack voucher received")]
+    WrongPackVoucher,
+
+    /// Max supply can't be less then current supply
+    #[error("Max supply can't be less then current supply")]
+    SmallMaxSupply,
+
+    /// Number NFTs to open pack should be greater then zero
+    #[error("Number NFTs to open pack should be greater then zero")]
+    WrongNumberToOpen,
 }
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {
