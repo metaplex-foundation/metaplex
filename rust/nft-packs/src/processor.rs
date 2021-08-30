@@ -3,17 +3,21 @@
 use crate::instruction::NFTPacksInstruction;
 use activate::activate_pack;
 use borsh::BorshDeserialize;
+use change_authority::{transfer_authority, AuthorityToChange};
 use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
 use delete_pack_card::delete_pack_card;
 use init_pack::init_pack;
+use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
+pub mod change_authority;
 pub mod claim_pack;
 pub mod deactivate;
 pub mod delete_pack_card;
 pub mod init_pack;
+pub mod prove_ownership;
 
 /// Program state handler.
 pub struct Processor {}
@@ -47,16 +51,20 @@ impl Processor {
                 deactivate_pack(program_id, accounts)
             }
             NFTPacksInstruction::ProveOwnership => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: ProveOwnership");
+                prove_ownership(program_id, accounts)
             }
             NFTPacksInstruction::ClaimPack => {
                 msg!("Instruction: ClaimPack");
                 claim_pack(program_id, accounts)
             }
-            NFTPacksInstruction::TransferAuthority => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::TransferPackAuthority => {
+                msg!("Instruction: TransferPackAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::PackAuthority)
+            }
+            NFTPacksInstruction::TransferMintingAuthority => {
+                msg!("Instruction: TransferMintingAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
             }
             NFTPacksInstruction::DeletePack => {
                 msg!("");

@@ -6,7 +6,6 @@ use crate::{
     state::{InitPackSetParams, PackSet},
     utils::*,
 };
-use borsh::BorshSerialize;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -51,7 +50,7 @@ pub fn init_pack(
         mutable: args.mutable,
     });
 
-    pack_set
-        .serialize(&mut *pack_set_account.data.borrow_mut())
-        .map_err(|e| e.into())
+    PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
+
+    Ok(())
 }

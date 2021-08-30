@@ -36,9 +36,37 @@ pub enum NFTPacksError {
     #[error("NFT pack set already deactivated")]
     PackAlreadyDeactivated,
 
-    /// NFT pack state is invalid
-    #[error("NFT pack state is invalid")]
-    PackInvalidState,
+    /// Pack set should be activated
+    #[error("Pack set should be activated")]
+    PackSetNotActivated,
+
+    /// Proving process for this pack is completed
+    #[error("Proving process for this pack is completed")]
+    ProvingPackProcessCompleted,
+
+    /// Proving process for this voucher is completed
+    #[error("Proving process for this voucher is completed")]
+    ProvingVoucherProcessCompleted,
+
+    /// Received edition from wrong master
+    #[error("Received edition from wrong master")]
+    WrongEdition,
+
+    /// Received wrong edition mint
+    #[error("Received wrong edition mint")]
+    WrongEditionMint,
+
+    /// Overflow
+    #[error("Overflow")]
+    Overflow,
+
+    /// Underflow
+    #[error("Underflow")]
+    Underflow,
+
+    /// Wrong pack state to change data
+    #[error("Wrong pack state to change data")]
+    WrongPackState,
 }
 
 impl From<NFTPacksError> for ProgramError {

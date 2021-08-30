@@ -16,7 +16,7 @@ thiserror = "1.0"
 borsh = "0.9.1"
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 spl-token-metadata = {path = "../token-metadata/program/", features = [ "no-entrypoint" ]}
-randomness-oracle-program = { path = "../../../randomness-oracle/program/" }
+randomness-oracle-program = { git = "https://github.com/vecheslav/randomness-oracle" }
 
 [dev-dependencies]
 solana-program-test = "1.7.6"

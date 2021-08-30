@@ -49,6 +49,9 @@ pub struct PackVoucher {
 }
 
 impl PackVoucher {
+    /// Prefix used to generate account
+    pub const PREFIX: &'static str = "voucher";
+
     /// Initialize a PackVoucher
     pub fn init(&mut self, params: InitPackVoucherParams) {
         self.account_type = AccountType::PackVoucher;

@@ -2,7 +2,6 @@
 
 use crate::{
     error::NFTPacksError,
-    instruction::InitPackSetArgs,
     state::{InitPackSetParams, PackCard, PackSet, PackSetState},
     utils::*,
 };
@@ -40,7 +39,7 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
 
     // Ensure that PackSet is in valid state
     if pack_set.pack_state != PackSetState::Deactivated {
-        return Err(NFTPacksError::PackInvalidState.into());
+        return Err(NFTPacksError::WrongPackState.into());
     }
 
     // Obtain PackCard instance
