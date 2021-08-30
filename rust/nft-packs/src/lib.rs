@@ -19,11 +19,11 @@ pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::PREFIX;
 
-solana_program::declare_id!("TEST111111111111111111111111111111111111111");
+solana_program::declare_id!("Co1TG1QQyD9UyFxHWiUaEsPdWwH9adbYECwkuXKtQi5y");
 
 /// Generates program authority
 pub fn find_program_authority(program_id: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&[PREFIX.as_bytes(), &program_id.as_ref()], program_id)
+    Pubkey::find_program_address(&[PREFIX.as_bytes(), program_id.as_ref()], program_id)
 }
 
 /// Generates pack card address

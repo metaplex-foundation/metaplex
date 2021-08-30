@@ -1,17 +1,17 @@
 #![cfg(feature = "test-bpf")]
 
 mod utils;
+
 use metaplex_nft_packs::{
     instruction,
     state::{AccountType, PackSetState},
 };
-use metaplex_testutils::TestPackSet;
 use solana_program_test::*;
 use utils::*;
 
 #[tokio::test]
 async fn success() {
-    let mut context = program_test().start_with_context().await;
+    let mut context = nft_packs_program_test().start_with_context().await;
 
     let test_pack_set = TestPackSet::new();
     test_pack_set

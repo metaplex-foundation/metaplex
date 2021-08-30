@@ -1603,7 +1603,6 @@ name = "metaplex-nft-packs"
 version = "0.1.0"
 dependencies = [
  "borsh",
- "metaplex-testutils",
  "num-derive",
  "num-traits",
  "num_enum",
@@ -1616,7 +1615,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "metaplex-testutils"
+name = "metaplex-tests"
 version = "0.1.0"
 dependencies = [
  "borsh",

@@ -9,7 +9,8 @@ use solana_program::{
     sysvar,
 };
 
-#[derive(BorshSerialize, BorshDeserialize, Clone)]
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddCardToPackArgs {
     /// How many instances of this card exists in all packs
     pub max_supply: Option<u32>,
@@ -22,7 +23,8 @@ pub struct AddCardToPackArgs {
 }
 
 /// Initialize a PackSet arguments
-#[derive(BorshSerialize, BorshDeserialize, Clone)]
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct InitPackSetArgs {
     /// Name
     pub name: [u8; 32],

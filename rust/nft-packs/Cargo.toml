@@ -20,7 +20,6 @@ spl-token-metadata = { path = "../token-metadata/program/", features = [ "no-ent
 [dev-dependencies]
 solana-program-test = "1.7.6"
 solana-sdk = "1.7.6"
-metaplex-testutils = { path = "../testutils/" }
 
 [lib]
 crate-type = ["cdylib", "lib"]

@@ -6,13 +6,7 @@ use crate::{
     state::{InitPackCardParams, PackCard, PackSet},
     utils::*,
 };
-use solana_program::{
-    account_info::{next_account_info, AccountInfo},
-    entrypoint::ProgramResult,
-    program_pack::Pack,
-    pubkey::Pubkey,
-    sysvar::{rent::Rent, Sysvar},
-};
+use solana_program::{account_info::{next_account_info, AccountInfo}, entrypoint::ProgramResult, msg, program_pack::Pack, pubkey::Pubkey, sysvar::{rent::Rent, Sysvar}};
 use spl_token::state::Account;
 use spl_token_metadata::{
     error::MetadataError,
@@ -40,7 +34,6 @@ pub fn add_card_to_pack(
     let rent = &Rent::from_account_info(rent_info)?;
 
     assert_signer(authority_info)?;
-    assert_rent_exempt(rent, pack_card_info)?;
     assert_owned_by(pack_set_info, program_id)?;
     assert_owned_by(master_edition_info, &spl_token_metadata::id())?;
     assert_owned_by(master_metadata_info, &spl_token_metadata::id())?;
@@ -69,6 +62,7 @@ pub fn add_card_to_pack(
         &[bump_seed],
     ];
 
+    msg!("Creating pack card account");
     create_account::<PackCard>(
         program_id,
         authority_info.clone(),

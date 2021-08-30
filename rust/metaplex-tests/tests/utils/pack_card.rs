@@ -1,5 +1,6 @@
 use crate::*;
-use metaplex_nft_packs::{find_pack_card_program_address, instruction, state::PackCard};
+use metaplex_nft_packs::{find_pack_card_program_address, state::PackCard};
+use solana_program::{program_pack::Pack, pubkey::Pubkey};
 use solana_program_test::*;
 use solana_sdk::{signature::Signer, signer::keypair::Keypair};
 

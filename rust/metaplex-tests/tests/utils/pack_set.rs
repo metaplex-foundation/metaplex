@@ -1,5 +1,6 @@
 use crate::*;
 use metaplex_nft_packs::{instruction, state::PackSet};
+use solana_program::{program_pack::Pack, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
     signature::Signer, signer::keypair::Keypair, transaction::Transaction, transport,
@@ -28,7 +29,6 @@ impl TestPackSet {
         PackSet::unpack_unchecked(&account.data).unwrap()
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn init(
         &self,
         context: &mut ProgramTestContext,
@@ -37,13 +37,21 @@ impl TestPackSet {
         create_account::<PackSet>(context, &self.keypair, &metaplex_nft_packs::id()).await?;
 
         let tx = Transaction::new_signed_with_payer(
-            &[instruction::init_pack(
-                &metaplex_nft_packs::id(),
-                &self.keypair.pubkey(),
-                &self.authority.pubkey(),
-                &self.minting_authority.pubkey(),
-                args,
-            )],
+            &[
+                // Transfer a few lamports to cover fee for create account
+                system_instruction::transfer(
+                    &context.payer.pubkey(),
+                    &self.authority.pubkey(),
+                    999999999,
+                ),
+                instruction::init_pack(
+                    &metaplex_nft_packs::id(),
+                    &self.keypair.pubkey(),
+                    &self.authority.pubkey(),
+                    &self.minting_authority.pubkey(),
+                    args,
+                ),
+            ],
             Some(&context.payer.pubkey()),
             &[&context.payer, &self.authority],
             context.last_blockhash,

@@ -6,9 +6,6 @@ use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
     state::{AccountType, ProbabilityType},
 };
-use metaplex_testutils::{
-    add_user, TestMasterEditionV2, TestMetadata, TestPackCard, TestPackSet, User,
-};
 use solana_program_test::*;
 use utils::*;
 
@@ -19,7 +16,7 @@ async fn setup() -> (
     TestMasterEditionV2,
     User,
 ) {
-    let mut context = program_test().start_with_context().await;
+    let mut context = nft_packs_program_test().start_with_context().await;
 
     let test_pack_set = TestPackSet::new();
     test_pack_set

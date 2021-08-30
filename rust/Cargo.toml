@@ -9,7 +9,7 @@ members = [
   "token-vault/test",
   "token-metadata/test",
   "nft-packs",
-  "testutils",
+  "metaplex-tests",
 ]
 exclude = [
 ]

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 mod assert;
 mod edition_marker;
 mod external_price;
@@ -24,6 +25,17 @@ use solana_sdk::{
     signer::keypair::Keypair, system_instruction, transaction::Transaction, transport,
 };
 use spl_token::state::Mint;
+
+pub fn nft_packs_program_test() -> ProgramTest {
+    let mut program = ProgramTest::new(
+        "metaplex_nft_packs",
+        metaplex_nft_packs::id(),
+        processor!(metaplex_nft_packs::processor::Processor::process_instruction),
+    );
+    program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
+    program
+}
+
 
 pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {
     context
@@ -114,7 +126,7 @@ pub async fn create_account<S: Pack>(
             owner,
         )],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &account],
+        &[&context.payer, account],
         context.last_blockhash,
     );
 
