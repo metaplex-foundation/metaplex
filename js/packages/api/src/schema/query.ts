@@ -1,6 +1,7 @@
 import { queryType, stringArg, list, nonNull } from 'nexus';
 import { Artwork } from './artwork';
-import { ArtworksInput } from './inputs';
+import { Auction } from './auction';
+import { ArtworksInput, AuctionsInput } from './inputs';
 import { Store, Creator } from './metaplex';
 
 export const Query = queryType({
@@ -57,6 +58,18 @@ export const Query = queryType({
       args: { artId: nonNull(stringArg()) },
       resolve: async (_, { artId }, { dataSources: { api } }) =>
         api.getArtwork(artId),
+    });
+    t.field('auctions', {
+      type: list(Auction),
+      args: { filter: nonNull(AuctionsInput.asArg()) },
+      resolve: async (_, { filter }, { dataSources: { api } }) =>
+        api.getAuctions(filter),
+    });
+    t.field('auction', {
+      type: Auction,
+      args: { auctionId: nonNull(stringArg()) },
+      resolve: async (_, { auctionId }, { dataSources: { api } }) =>
+        api.getAuction(auctionId),
     });
   },
 });

@@ -7,7 +7,12 @@ import { Context } from './context';
 import { NexusGenInputs } from './generated/typings';
 import { loadUserTokenAccounts } from './utils/loadUserTokenAccounts';
 import { filterByOwner, filterByStoreAndCreator } from './artwork/filters';
-import { auctionView } from './auction/mappers';
+import {
+  filterByParticipant,
+  filterByState,
+  getAuctionById,
+  getAuctionsByStoreId,
+} from './auction/filters';
 import { mapInfo, wrapPubkey } from './utils/mapInfo';
 
 // XXX: re-use list from `contexts/connection` ?
@@ -46,7 +51,7 @@ export class MetaplexApi {
   private static configs: Record<string, ConnectionConfig> = {};
   private static states: Record<string, MetaState> = {};
 
-  public static load() {
+  public static load(skipSubscriptions = false) {
     if (!Object.keys(this.configs).length) {
       ENDPOINTS.forEach(({ name, endpoint }) => {
         const connection = new Connection(endpoint, 'recent');
@@ -58,7 +63,7 @@ export class MetaplexApi {
             this.states[name] = state;
 
             // XXX: there is a GAP before subscribe
-            this.subscribe(name);
+            if (!skipSubscriptions) this.subscribe(name);
           })
           .catch(e => console.error(e));
 
@@ -155,15 +160,24 @@ export class MetaplexApi {
     );
   }
 
-  async getArtwork(artId: string) {
+  getArtwork(artId: string) {
     const art = this.state.metadata.find(({ pubkey }) => pubkey === artId);
     return art ? wrapPubkey(art) : null;
   }
 
-  async getAuctions() {
-    const auctions = Object.values(this.state.auctions);
-    return auctions.map(auction => {
-      return auctionView(auction, this.state);
-    });
+  getAuctions({
+    storeId,
+    state,
+    participantId,
+  }: NexusGenInputs['AuctionsInput']) {
+    const stateFilter = filterByState({ state }, this);
+    const participantFilter = filterByParticipant({ participantId }, this);
+    return getAuctionsByStoreId(this.state, storeId).filter(
+      auction => stateFilter(auction) && participantFilter(auction),
+    );
+  }
+
+  getAuction(auctionId: string) {
+    return getAuctionById(this.state, auctionId);
   }
 }

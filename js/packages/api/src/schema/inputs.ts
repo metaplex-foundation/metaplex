@@ -1,4 +1,4 @@
-import { inputObjectType } from 'nexus';
+import { enumType, inputObjectType } from 'nexus';
 
 export const ArtworksInput = inputObjectType({
   name: 'ArtworksInput',
@@ -8,5 +8,19 @@ export const ArtworksInput = inputObjectType({
     t.string('ownerId');
     t.string('artId');
     t.boolean('onlyVerified');
+  },
+});
+
+export const AuctionInputState = enumType({
+  name: 'AuctionInputState',
+  members: ['all', 'live', 'resale', 'ended'],
+});
+
+export const AuctionsInput = inputObjectType({
+  name: 'AuctionsInput',
+  definition(t) {
+    t.string('storeId');
+    t.string('participantId');
+    t.field('state', { type: AuctionInputState });
   },
 });

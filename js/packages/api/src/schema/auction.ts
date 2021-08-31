@@ -1,5 +1,9 @@
 import dedent from 'dedent';
 import { enumType, objectType } from 'nexus';
+import { getAuctionHighestBid, getAuctionThumbnail } from '../auction/mappers';
+import { wrapPubkey } from '../utils/mapInfo';
+import { Artwork } from './artwork';
+import { AuctionManager } from './metaplex';
 
 export const AuctionState = enumType({
   name: 'AuctionState',
@@ -63,6 +67,7 @@ export const PriceFloor = objectType({
 export const Auction = objectType({
   name: 'Auction',
   definition(t) {
+    t.nonNull.pubkey('pubkey');
     t.pubkey('authority', {
       description:
         'Pubkey of the authority with permission to modify this auction.',
@@ -101,6 +106,22 @@ export const Auction = objectType({
     t.nullable.pubkey('bidRedemptionKey', {
       description:
         'Used for precalculation on the front end, not a backend key',
+    });
+    t.field('manager', {
+      type: AuctionManager,
+    });
+    t.field('trumbnail', {
+      type: Artwork,
+      resolve: (item, args, { dataSources: { api } }) =>
+        getAuctionThumbnail(item, api.state),
+    });
+    t.field('highestBid', {
+      type: BidderMetadata,
+      resolve: (item, args, { dataSources: { api } }) =>
+        wrapPubkey(getAuctionHighestBid(item, api.state)),
+    });
+    t.bn('numWinners', {
+      resolve: item => item.bidState.max,
     });
   },
 });

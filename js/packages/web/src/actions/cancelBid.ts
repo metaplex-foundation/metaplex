@@ -2,6 +2,7 @@ import {
   TokenAccount,
   cancelBid,
   cache,
+  isAuctionEnded,
   ensureWrappedAccount,
   sendTransactionWithRetry,
   AuctionState,
@@ -40,7 +41,7 @@ export async function sendCancelBid(
   const instructions: Array<TransactionInstruction[]> = [];
 
   if (
-    auctionView.auction.info.ended() &&
+    isAuctionEnded(auctionView.auction.info) &&
     auctionView.auction.info.state !== AuctionState.Ended
   ) {
     await setupPlaceBid(
@@ -72,7 +73,7 @@ export async function sendCancelBid(
     wallet.publicKey.equals(
       toPublicKey(auctionView.auctionManager.authority),
     ) &&
-    auctionView.auction.info.ended()
+    isAuctionEnded(auctionView.auction.info)
   ) {
     await claimUnusedPrizes(
       connection,

@@ -1,29 +1,17 @@
-import { enumType, objectType } from 'nexus';
+import { enumType, objectType, unionType } from 'nexus';
+import { MetaplexKey } from '@oyster/common/dist/lib/models/metaplex/index';
 
-export const MetaplexKey = enumType({
-  name: 'MetaplexKey',
-  members: {
-    Uninitialized: 0,
-    OriginalAuthorityLookupV1: 1,
-    BidRedemptionTicketV1: 2,
-    StoreV1: 3,
-    WhitelistedCreatorV1: 4,
-    PayoutTicketV1: 5,
-    SafetyDepositValidationTicketV1: 6,
-    AuctionManagerV1: 7,
-    PrizeTrackingTicketV1: 8,
-    SafetyDepositConfigV1: 9,
-    AuctionManagerV2: 10,
-    BidRedemptionTicketV2: 11,
-    AuctionWinnerTokenTypeTrackerV1: 12,
-  },
-});
-
-// TODO: all type
 export const AuctionManagerV1 = objectType({
   name: 'AuctionManagerV1',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
+    t.pubkey('store');
+    t.pubkey('authority');
+    t.pubkey('auction');
+    t.pubkey('vault');
+    t.pubkey('acceptPayment');
+    t.field('state', { type: AuctionManagerStateV1 });
+    // settings: AuctionManagerSettingsV1;
   },
 });
 
@@ -31,7 +19,26 @@ export const AuctionManagerV1 = objectType({
 export const AuctionManagerV2 = objectType({
   name: 'AuctionManagerV2',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
+    t.pubkey('store');
+    t.pubkey('authority');
+    t.pubkey('auction');
+    t.pubkey('vault');
+    t.pubkey('acceptPayment');
+    t.field('state', { type: AuctionManagerStateV2 });
+  },
+});
+
+export const AuctionManager = unionType({
+  name: 'AuctionManager',
+  resolveType(obj) {
+    if (obj.key === MetaplexKey.AuctionManagerV2) {
+      return 'AuctionManagerV2';
+    }
+    return 'AuctionManagerV1';
+  },
+  definition(t) {
+    t.members(AuctionManagerV1, AuctionManagerV2);
   },
 });
 
@@ -39,14 +46,14 @@ export const AuctionManagerV2 = objectType({
 export const BidRedemptionTicket = objectType({
   name: 'BidRedemptionTicket',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
   },
 });
 
 export const PayoutTicket = objectType({
   name: 'PayoutTicket',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
     t.pubkey('recipient');
     t.bn('amountPaid');
   },
@@ -55,7 +62,7 @@ export const PayoutTicket = objectType({
 export const PrizeTrackingTicket = objectType({
   name: 'PrizeTrackingTicket',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
     t.pubkey('metadata');
     t.bn('supplySnapshot');
     t.bn('expectedRedemptions');
@@ -67,7 +74,7 @@ export const Store = objectType({
   name: 'Store',
   definition(t) {
     t.pubkey('pubkey');
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
     t.boolean('public');
     t.pubkey('auctionProgram');
     t.pubkey('tokenVaultProgram');
@@ -79,7 +86,7 @@ export const Store = objectType({
 export const SafetyDepositConfig = objectType({
   name: 'SafetyDepositConfig',
   definition(t) {
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
     t.pubkey('auctionManager');
     t.bn('order');
     t.field('winningConfigType', { type: WinningConfigType });
@@ -96,7 +103,7 @@ export const Creator = objectType({
   name: 'Creator',
   definition(t) {
     t.pubkey('pubkey');
-    t.field('key', { type: MetaplexKey });
+    t.int('key');
     t.pubkey('address');
     t.boolean('activated');
   },
@@ -161,5 +168,25 @@ export const ParticipationStateV2 = objectType({
   name: 'ParticipationStateV2',
   definition(t) {
     t.nullable.bn('collectedToAcceptPayment');
+  },
+});
+
+export const AuctionManagerStateV1 = objectType({
+  name: 'AuctionManagerStateV1',
+  definition(t) {
+    t.int('status'); // AuctionManagerStatus
+    t.int('winningConfigItemsValidated');
+    // winningConfigStates: WinningConfigState[] = [];
+    // participationState: ParticipationStateV1 | null = null;
+  },
+});
+
+export const AuctionManagerStateV2 = objectType({
+  name: 'AuctionManagerStateV2',
+  definition(t) {
+    t.int('status'); // AuctionManagerStatus
+    t.bn('safetyConfigItemsValidated');
+    t.bn('bidsPushedToAcceptPayment');
+    t.boolean('hasParticipation');
   },
 });

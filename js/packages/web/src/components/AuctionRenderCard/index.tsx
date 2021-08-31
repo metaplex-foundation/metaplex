@@ -7,6 +7,7 @@ import {
   AuctionViewState,
   PriceFloorType,
   fromLamports,
+  timeToAuctionEnd,
   useMint,
 } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
@@ -63,7 +64,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const auction = auctionView.auction.info;
   useEffect(() => {
     const calc = () => {
-      setState(auction.timeToEnd());
+      setState(timeToAuctionEnd(auction));
     };
 
     const interval = setInterval(() => {

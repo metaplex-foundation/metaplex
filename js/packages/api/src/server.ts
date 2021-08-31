@@ -34,6 +34,7 @@ async function startApolloServer() {
       mapping: {
         Artwork: 'common.Artwork',
         Creator: 'common.Creator',
+        Auction: 'common.Auction',
       },
     },
     contextType: {

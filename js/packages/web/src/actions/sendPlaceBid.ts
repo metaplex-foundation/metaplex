@@ -4,6 +4,7 @@ import {
   placeBid,
   cache,
   ensureWrappedAccount,
+  isAuctionEnded,
   toLamports,
   ParsedAccount,
   AuctionView,
@@ -96,7 +97,7 @@ export async function setupPlaceBid(
     ).toBase58();
   } else {
     bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot;
-    if (!auctionView.auction.info.ended()) {
+    if (!isAuctionEnded(auctionView.auction.info)) {
       const cancelSigners: Keypair[][] = [];
       const cancelInstr: TransactionInstruction[][] = [];
       await setupCancelBid(

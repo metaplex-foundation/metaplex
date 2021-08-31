@@ -19,8 +19,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src",
-    "../../web/src"
+    "typings/lib.es5.d.ts",
+    "src"
   ],
   "exclude": ["node_modules"]
 }

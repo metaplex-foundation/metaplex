@@ -7,6 +7,7 @@ import {
   BidderPot,
   createAssociatedTokenAccountInstruction,
   programIds,
+  isAuctionEnded,
   findProgramAddress,
   AuctionView,
   AuctionState,
@@ -33,7 +34,7 @@ export async function settle(
   accountsByMint: Map<string, TokenAccount>,
 ) {
   if (
-    auctionView.auction.info.ended() &&
+    isAuctionEnded(auctionView.auction.info) &&
     auctionView.auction.info.state !== AuctionState.Ended
   ) {
     const signers: Keypair[][] = [];

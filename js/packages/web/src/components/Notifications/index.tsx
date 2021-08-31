@@ -8,6 +8,7 @@ import {
   findProgramAddress,
   programIds,
   StringPublicKey,
+  isAuctionEnded,
   toPublicKey,
   useConnection,
   useUserAccounts,
@@ -194,7 +195,7 @@ export function useSettlementAuctions({
           a =>
             walletPubkey &&
             a.auctionManager.authority === walletPubkey &&
-            a.auction.info.ended(),
+            isAuctionEnded(a.auction.info),
         )
         .sort(
           (a, b) =>

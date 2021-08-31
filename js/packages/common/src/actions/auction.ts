@@ -225,50 +225,6 @@ export class AuctionData {
   /// Used for precalculation on the front end, not a backend key
   bidRedemptionKey?: StringPublicKey;
 
-  public timeToEnd(): CountdownState {
-    const now = moment().unix();
-    const ended = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    let endAt = this.endedAt?.toNumber() || 0;
-
-    if (this.auctionGap && this.lastBid) {
-      endAt = Math.max(
-        endAt,
-        this.auctionGap.toNumber() + this.lastBid.toNumber(),
-      );
-    }
-
-    let delta = endAt - now;
-
-    if (!endAt || delta <= 0) return ended;
-
-    const days = Math.floor(delta / 86400);
-    delta -= days * 86400;
-
-    const hours = Math.floor(delta / 3600) % 24;
-    delta -= hours * 3600;
-
-    const minutes = Math.floor(delta / 60) % 60;
-    delta -= minutes * 60;
-
-    const seconds = Math.floor(delta % 60);
-
-    return { days, hours, minutes, seconds };
-  }
-
-  public ended() {
-    const now = moment().unix();
-    if (!this.endedAt) return false;
-
-    if (this.endedAt.toNumber() > now) return false;
-
-    if (this.endedAt.toNumber() < now) {
-      if (this.auctionGap && this.lastBid) {
-        const newEnding = this.auctionGap.toNumber() + this.lastBid.toNumber();
-        return newEnding < now;
-      } else return true;
-    }
-  }
-
   constructor(args: {
     authority: StringPublicKey;
     tokenMint: StringPublicKey;
@@ -292,6 +248,54 @@ export class AuctionData {
     this.bidState = args.bidState;
   }
 }
+
+export const isAuctionEnded = (auction: AuctionData) => {
+  const now = moment().unix();
+  if (!auction.endedAt) return false;
+
+  if (auction.endedAt.toNumber() > now) return false;
+
+  if (auction.endedAt.toNumber() <= now) {
+    if (auction.auctionGap && auction.lastBid) {
+      const newEnding =
+        auction.auctionGap.toNumber() + auction.lastBid.toNumber();
+      return newEnding < now;
+    }
+    return true;
+  }
+
+  return false;
+};
+
+export const timeToAuctionEnd = (auction: AuctionData): CountdownState => {
+  const now = moment().unix();
+  const ended = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  let endAt = auction.endedAt?.toNumber() || 0;
+
+  if (auction.auctionGap && auction.lastBid) {
+    endAt = Math.max(
+      endAt,
+      auction.auctionGap.toNumber() + auction.lastBid.toNumber(),
+    );
+  }
+
+  let delta = endAt - now;
+
+  if (!endAt || delta <= 0) return ended;
+
+  const days = Math.floor(delta / 86400);
+  delta -= days * 86400;
+
+  const hours = Math.floor(delta / 3600) % 24;
+  delta -= hours * 3600;
+
+  const minutes = Math.floor(delta / 60) % 60;
+  delta -= minutes * 60;
+
+  const seconds = Math.floor(delta % 60);
+
+  return { days, hours, minutes, seconds };
+};
 
 export const BIDDER_METADATA_LEN = 32 + 32 + 8 + 8 + 1;
 export class BidderMetadata {

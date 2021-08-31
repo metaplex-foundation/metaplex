@@ -4,6 +4,7 @@ import {
   AuctionState,
   BidderMetadata,
   BidderPot,
+  isAuctionEnded,
 } from '../actions/auction';
 import { SafetyDepositBox, Vault } from '../actions/vault';
 import {
@@ -80,6 +81,19 @@ export function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   return list;
 }
 
+export function getAuctionState(auction: AuctionData): AuctionViewState {
+  if (isAuctionEnded(auction)) {
+    return AuctionViewState.Ended;
+  }
+  if (auction.state === AuctionState.Started) {
+    return AuctionViewState.Live;
+  }
+  if (auction.state === AuctionState.Created) {
+    return AuctionViewState.Upcoming;
+  }
+  return AuctionViewState.BuyNow;
+}
+
 export function processAccountsIntoAuctionView(
   walletPubkey: StringPublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
@@ -123,16 +137,7 @@ export function processAccountsIntoAuctionView(
   desiredState: AuctionViewState | undefined,
   existingAuctionView?: AuctionView,
 ): AuctionView | undefined {
-  let state: AuctionViewState;
-  if (auction.info.ended()) {
-    state = AuctionViewState.Ended;
-  } else if (auction.info.state === AuctionState.Started) {
-    state = AuctionViewState.Live;
-  } else if (auction.info.state === AuctionState.Created) {
-    state = AuctionViewState.Upcoming;
-  } else {
-    state = AuctionViewState.BuyNow;
-  }
+  const state: AuctionViewState = getAuctionState(auction.info);
 
   const auctionManagerInstance = auctionManagersByAuction[auction.pubkey || ''];
 
@@ -326,4 +331,22 @@ export function processAccountsIntoAuctionView(
   }
 
   return undefined;
+}
+
+export function getAuctionBids(
+  bidderMetadataByAuctionAndBidder: ParsedAccount<BidderMetadata>[],
+  auctionId?: StringPublicKey,
+) {
+  return bidderMetadataByAuctionAndBidder
+    .filter(bid => {
+      bid.info.auctionPubkey === auctionId;
+    })
+    .sort((a, b) => {
+      const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber();
+      if (lastBidDiff === 0) {
+        return a.info.lastBidTimestamp.sub(b.info.lastBidTimestamp).toNumber();
+      }
+
+      return lastBidDiff;
+    });
 }

@@ -67,13 +67,19 @@ export interface NexusGenInputs {
     ownerId?: string | null; // String
     storeId: string; // String!
   };
+  AuctionsInput: {
+    // input type
+    participantId?: string | null; // String
+    state?: NexusGenEnums['AuctionInputState'] | null; // AuctionInputState
+    storeId?: string | null; // String
+  };
 }
 
 export interface NexusGenEnums {
+  AuctionInputState: 'all' | 'ended' | 'live' | 'resale';
   AuctionState: 0 | 2 | 1;
   BidStateType: 0 | 1;
   MetadataKey: 7 | 1 | 2 | 6 | 4 | 0;
-  MetaplexKey: 7 | 10 | 12 | 2 | 11 | 1 | 5 | 8 | 9 | 6 | 3 | 0 | 4;
   NonWinningConstraint: 2 | 1 | 0;
   PriceFloorType: 2 | 1 | 0;
   TupleNumericType: 1 | 2 | 4 | 8;
@@ -115,13 +121,37 @@ export interface NexusGenObjects {
     tickSize?: NexusGenScalars['BN'] | null; // BN
     totalUncancelledBids?: NexusGenScalars['BN'] | null; // BN
   };
+  AuctionManagerStateV1: {
+    // root type
+    status?: number | null; // Int
+    winningConfigItemsValidated?: number | null; // Int
+  };
+  AuctionManagerStateV2: {
+    // root type
+    bidsPushedToAcceptPayment?: NexusGenScalars['BN'] | null; // BN
+    hasParticipation?: boolean | null; // Boolean
+    safetyConfigItemsValidated?: NexusGenScalars['BN'] | null; // BN
+    status?: number | null; // Int
+  };
   AuctionManagerV1: {
     // root type
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    acceptPayment?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    auction?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    authority?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    key?: number | null; // Int
+    state?: NexusGenRootTypes['AuctionManagerStateV1'] | null; // AuctionManagerStateV1
+    store?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    vault?: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   AuctionManagerV2: {
     // root type
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    acceptPayment?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    auction?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    authority?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    key?: number | null; // Int
+    state?: NexusGenRootTypes['AuctionManagerStateV2'] | null; // AuctionManagerStateV2
+    store?: NexusGenScalars['PublicKey'] | null; // PublicKey
+    vault?: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   Bid: {
     // root type
@@ -130,7 +160,7 @@ export interface NexusGenObjects {
   };
   BidRedemptionTicket: {
     // root type
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key?: number | null; // Int
   };
   BidState: {
     // root type
@@ -187,7 +217,7 @@ export interface NexusGenObjects {
   PayoutTicket: {
     // root type
     amountPaid?: NexusGenScalars['BN'] | null; // BN
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key?: number | null; // Int
     recipient?: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   PriceFloor: {
@@ -199,7 +229,7 @@ export interface NexusGenObjects {
   PrizeTrackingTicket: {
     // root type
     expectedRedemptions?: NexusGenScalars['BN'] | null; // BN
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key?: number | null; // Int
     metadata?: NexusGenScalars['PublicKey'] | null; // PublicKey
     redemptions?: NexusGenScalars['BN'] | null; // BN
     supplySnapshot?: NexusGenScalars['BN'] | null; // BN
@@ -218,7 +248,7 @@ export interface NexusGenObjects {
     amountRanges?: Array<NexusGenRootTypes['AmountRange'] | null> | null; // [AmountRange]
     amountType?: NexusGenEnums['TupleNumericType'] | null; // TupleNumericType
     auctionManager?: NexusGenScalars['PublicKey'] | null; // PublicKey
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key?: number | null; // Int
     lengthType?: NexusGenEnums['TupleNumericType'] | null; // TupleNumericType
     order?: NexusGenScalars['BN'] | null; // BN
     participationConfig?: NexusGenRootTypes['ParticipationConfigV2'] | null; // ParticipationConfigV2
@@ -228,7 +258,7 @@ export interface NexusGenObjects {
   Store: {
     // root type
     auctionProgram?: NexusGenScalars['PublicKey'] | null; // PublicKey
-    key?: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key?: number | null; // Int
     pubkey?: NexusGenScalars['PublicKey'] | null; // PublicKey
     public?: boolean | null; // Boolean
     tokenMetadataProgram?: NexusGenScalars['PublicKey'] | null; // PublicKey
@@ -254,6 +284,9 @@ export interface NexusGenObjects {
 export interface NexusGenInterfaces {}
 
 export interface NexusGenUnions {
+  AuctionManager:
+    | NexusGenRootTypes['AuctionManagerV1']
+    | NexusGenRootTypes['AuctionManagerV2'];
   MasterEdition:
     | NexusGenRootTypes['MasterEditionV1']
     | NexusGenRootTypes['MasterEditionV2'];
@@ -298,10 +331,15 @@ export interface NexusGenFieldTypes {
     bidState: NexusGenRootTypes['BidState'] | null; // BidState
     endAuctionAt: NexusGenScalars['BN'] | null; // BN
     endedAt: NexusGenScalars['BN'] | null; // BN
+    highestBid: NexusGenRootTypes['BidderMetadata'] | null; // BidderMetadata
     lastBid: NexusGenScalars['BN'] | null; // BN
+    manager: NexusGenRootTypes['AuctionManager'] | null; // AuctionManager
+    numWinners: NexusGenScalars['BN'] | null; // BN
     priceFloor: NexusGenRootTypes['PriceFloor'] | null; // PriceFloor
+    pubkey: NexusGenScalars['PublicKey']; // PublicKey!
     state: NexusGenEnums['AuctionState'] | null; // AuctionState
     tokenMint: NexusGenScalars['PublicKey'] | null; // PublicKey
+    trumbnail: NexusGenRootTypes['Artwork'] | null; // Artwork
   };
   AuctionDataExtended: {
     // field return type
@@ -309,13 +347,37 @@ export interface NexusGenFieldTypes {
     tickSize: NexusGenScalars['BN'] | null; // BN
     totalUncancelledBids: NexusGenScalars['BN'] | null; // BN
   };
+  AuctionManagerStateV1: {
+    // field return type
+    status: number | null; // Int
+    winningConfigItemsValidated: number | null; // Int
+  };
+  AuctionManagerStateV2: {
+    // field return type
+    bidsPushedToAcceptPayment: NexusGenScalars['BN'] | null; // BN
+    hasParticipation: boolean | null; // Boolean
+    safetyConfigItemsValidated: NexusGenScalars['BN'] | null; // BN
+    status: number | null; // Int
+  };
   AuctionManagerV1: {
     // field return type
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    acceptPayment: NexusGenScalars['PublicKey'] | null; // PublicKey
+    auction: NexusGenScalars['PublicKey'] | null; // PublicKey
+    authority: NexusGenScalars['PublicKey'] | null; // PublicKey
+    key: number | null; // Int
+    state: NexusGenRootTypes['AuctionManagerStateV1'] | null; // AuctionManagerStateV1
+    store: NexusGenScalars['PublicKey'] | null; // PublicKey
+    vault: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   AuctionManagerV2: {
     // field return type
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    acceptPayment: NexusGenScalars['PublicKey'] | null; // PublicKey
+    auction: NexusGenScalars['PublicKey'] | null; // PublicKey
+    authority: NexusGenScalars['PublicKey'] | null; // PublicKey
+    key: number | null; // Int
+    state: NexusGenRootTypes['AuctionManagerStateV2'] | null; // AuctionManagerStateV2
+    store: NexusGenScalars['PublicKey'] | null; // PublicKey
+    vault: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   Bid: {
     // field return type
@@ -324,7 +386,7 @@ export interface NexusGenFieldTypes {
   };
   BidRedemptionTicket: {
     // field return type
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
   };
   BidState: {
     // field return type
@@ -351,7 +413,7 @@ export interface NexusGenFieldTypes {
     // field return type
     activated: boolean | null; // Boolean
     address: NexusGenScalars['PublicKey'] | null; // PublicKey
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
     pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   Edition: {
@@ -387,7 +449,7 @@ export interface NexusGenFieldTypes {
   PayoutTicket: {
     // field return type
     amountPaid: NexusGenScalars['BN'] | null; // BN
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
     recipient: NexusGenScalars['PublicKey'] | null; // PublicKey
   };
   PriceFloor: {
@@ -399,7 +461,7 @@ export interface NexusGenFieldTypes {
   PrizeTrackingTicket: {
     // field return type
     expectedRedemptions: NexusGenScalars['BN'] | null; // BN
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
     metadata: NexusGenScalars['PublicKey'] | null; // PublicKey
     redemptions: NexusGenScalars['BN'] | null; // BN
     supplySnapshot: NexusGenScalars['BN'] | null; // BN
@@ -409,6 +471,9 @@ export interface NexusGenFieldTypes {
     artwork: NexusGenRootTypes['Artwork'] | null; // Artwork
     artworks: Array<NexusGenRootTypes['Artwork'] | null> | null; // [Artwork]
     artworksCount: number | null; // Int
+    auction: NexusGenRootTypes['Auction'] | null; // Auction
+    auctions: Array<NexusGenRootTypes['Auction'] | null> | null; // [Auction]
+    auctionsCount: number | null; // Int
     creator: NexusGenRootTypes['Creator'] | null; // Creator
     creators: Array<NexusGenRootTypes['Creator'] | null> | null; // [Creator]
     creatorsCount: number | null; // Int
@@ -428,7 +493,7 @@ export interface NexusGenFieldTypes {
     amountRanges: Array<NexusGenRootTypes['AmountRange'] | null> | null; // [AmountRange]
     amountType: NexusGenEnums['TupleNumericType'] | null; // TupleNumericType
     auctionManager: NexusGenScalars['PublicKey'] | null; // PublicKey
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
     lengthType: NexusGenEnums['TupleNumericType'] | null; // TupleNumericType
     order: NexusGenScalars['BN'] | null; // BN
     participationConfig: NexusGenRootTypes['ParticipationConfigV2'] | null; // ParticipationConfigV2
@@ -438,7 +503,7 @@ export interface NexusGenFieldTypes {
   Store: {
     // field return type
     auctionProgram: NexusGenScalars['PublicKey'] | null; // PublicKey
-    key: NexusGenEnums['MetaplexKey'] | null; // MetaplexKey
+    key: number | null; // Int
     pubkey: NexusGenScalars['PublicKey'] | null; // PublicKey
     public: boolean | null; // Boolean
     tokenMetadataProgram: NexusGenScalars['PublicKey'] | null; // PublicKey
@@ -494,10 +559,15 @@ export interface NexusGenFieldTypeNames {
     bidState: 'BidState';
     endAuctionAt: 'BN';
     endedAt: 'BN';
+    highestBid: 'BidderMetadata';
     lastBid: 'BN';
+    manager: 'AuctionManager';
+    numWinners: 'BN';
     priceFloor: 'PriceFloor';
+    pubkey: 'PublicKey';
     state: 'AuctionState';
     tokenMint: 'PublicKey';
+    trumbnail: 'Artwork';
   };
   AuctionDataExtended: {
     // field return type name
@@ -505,13 +575,37 @@ export interface NexusGenFieldTypeNames {
     tickSize: 'BN';
     totalUncancelledBids: 'BN';
   };
+  AuctionManagerStateV1: {
+    // field return type name
+    status: 'Int';
+    winningConfigItemsValidated: 'Int';
+  };
+  AuctionManagerStateV2: {
+    // field return type name
+    bidsPushedToAcceptPayment: 'BN';
+    hasParticipation: 'Boolean';
+    safetyConfigItemsValidated: 'BN';
+    status: 'Int';
+  };
   AuctionManagerV1: {
     // field return type name
-    key: 'MetaplexKey';
+    acceptPayment: 'PublicKey';
+    auction: 'PublicKey';
+    authority: 'PublicKey';
+    key: 'Int';
+    state: 'AuctionManagerStateV1';
+    store: 'PublicKey';
+    vault: 'PublicKey';
   };
   AuctionManagerV2: {
     // field return type name
-    key: 'MetaplexKey';
+    acceptPayment: 'PublicKey';
+    auction: 'PublicKey';
+    authority: 'PublicKey';
+    key: 'Int';
+    state: 'AuctionManagerStateV2';
+    store: 'PublicKey';
+    vault: 'PublicKey';
   };
   Bid: {
     // field return type name
@@ -520,7 +614,7 @@ export interface NexusGenFieldTypeNames {
   };
   BidRedemptionTicket: {
     // field return type name
-    key: 'MetaplexKey';
+    key: 'Int';
   };
   BidState: {
     // field return type name
@@ -547,7 +641,7 @@ export interface NexusGenFieldTypeNames {
     // field return type name
     activated: 'Boolean';
     address: 'PublicKey';
-    key: 'MetaplexKey';
+    key: 'Int';
     pubkey: 'PublicKey';
   };
   Edition: {
@@ -583,7 +677,7 @@ export interface NexusGenFieldTypeNames {
   PayoutTicket: {
     // field return type name
     amountPaid: 'BN';
-    key: 'MetaplexKey';
+    key: 'Int';
     recipient: 'PublicKey';
   };
   PriceFloor: {
@@ -595,7 +689,7 @@ export interface NexusGenFieldTypeNames {
   PrizeTrackingTicket: {
     // field return type name
     expectedRedemptions: 'BN';
-    key: 'MetaplexKey';
+    key: 'Int';
     metadata: 'PublicKey';
     redemptions: 'BN';
     supplySnapshot: 'BN';
@@ -605,6 +699,9 @@ export interface NexusGenFieldTypeNames {
     artwork: 'Artwork';
     artworks: 'Artwork';
     artworksCount: 'Int';
+    auction: 'Auction';
+    auctions: 'Auction';
+    auctionsCount: 'Int';
     creator: 'Creator';
     creators: 'Creator';
     creatorsCount: 'Int';
@@ -624,7 +721,7 @@ export interface NexusGenFieldTypeNames {
     amountRanges: 'AmountRange';
     amountType: 'TupleNumericType';
     auctionManager: 'PublicKey';
-    key: 'MetaplexKey';
+    key: 'Int';
     lengthType: 'TupleNumericType';
     order: 'BN';
     participationConfig: 'ParticipationConfigV2';
@@ -634,7 +731,7 @@ export interface NexusGenFieldTypeNames {
   Store: {
     // field return type name
     auctionProgram: 'PublicKey';
-    key: 'MetaplexKey';
+    key: 'Int';
     pubkey: 'PublicKey';
     public: 'Boolean';
     tokenMetadataProgram: 'PublicKey';
@@ -667,6 +764,14 @@ export interface NexusGenArgTypes {
       // args
       filter: NexusGenInputs['ArtworksInput']; // ArtworksInput!
     };
+    auction: {
+      // args
+      auctionId: string; // String!
+    };
+    auctions: {
+      // args
+      filter: NexusGenInputs['AuctionsInput']; // AuctionsInput!
+    };
     creator: {
       // args
       creatorId: string; // String!
@@ -684,6 +789,7 @@ export interface NexusGenArgTypes {
 }
 
 export interface NexusGenAbstractTypeMembers {
+  AuctionManager: 'AuctionManagerV1' | 'AuctionManagerV2';
   MasterEdition: 'MasterEditionV1' | 'MasterEditionV2';
 }
 
@@ -703,7 +809,9 @@ export type NexusGenUnionNames = keyof NexusGenUnions;
 
 export type NexusGenObjectsUsingAbstractStrategyIsTypeOf = never;
 
-export type NexusGenAbstractsUsingStrategyResolveType = 'MasterEdition';
+export type NexusGenAbstractsUsingStrategyResolveType =
+  | 'AuctionManager'
+  | 'MasterEdition';
 
 export type NexusGenFeaturesConfig = {
   abstractTypeStrategies: {

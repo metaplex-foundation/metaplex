@@ -4,6 +4,7 @@ import { Row, Col } from 'antd';
 import {
   formatTokenAmount,
   useMint,
+  timeToAuctionEnd,
   fromLamports,
   AuctionView,
   AuctionViewState,
@@ -34,7 +35,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
   const auction = auctionView.auction.info;
   useEffect(() => {
     const calc = () => {
-      const newState = auction.timeToEnd();
+      const newState = timeToAuctionEnd(auction);
 
       setState(newState);
     };
