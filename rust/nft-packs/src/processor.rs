@@ -8,6 +8,7 @@ use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
 use delete_pack::delete_pack;
 use delete_pack_card::delete_pack_card;
+use delete_pack_voucher::delete_pack_voucher;
 use edit_pack::edit_pack;
 use edit_pack_card::edit_pack_card;
 use init_pack::init_pack;
@@ -20,6 +21,7 @@ pub mod claim_pack;
 pub mod deactivate;
 pub mod delete_pack;
 pub mod delete_pack_card;
+pub mod delete_pack_voucher;
 pub mod edit_pack;
 pub mod edit_pack_card;
 pub mod edit_pack_voucher;
@@ -87,8 +89,8 @@ impl Processor {
                 delete_pack_card(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackVoucher => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePackVoucher");
+                delete_pack_voucher(program_id, accounts)
             }
             NFTPacksInstruction::EditPack(args) => {
                 msg!("Instruction: EditPack");

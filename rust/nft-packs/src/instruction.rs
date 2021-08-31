@@ -372,6 +372,34 @@ pub fn delete_pack_card(
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePackCard, accounts)
 }
 
+/// Create `DeletePackVoucher` instruction
+pub fn delete_pack_voucher(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_voucher: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+    new_master_edition_owner: &Pubkey,
+    token_account: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(*pack_voucher, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+        AccountMeta::new(*new_master_edition_owner, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::DeletePackVoucher,
+        accounts,
+    )
+}
+
 /// Create `Activate` instruction
 pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
     let accounts = vec![
