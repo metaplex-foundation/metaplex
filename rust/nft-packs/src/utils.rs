@@ -5,11 +5,20 @@ use solana_program::{
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
-    program_pack::Pack,
+    program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
     rent::Rent,
     system_instruction,
 };
+
+/// Assert unitialized
+pub fn assert_uninitialized<T: IsInitialized>(account: &T) -> ProgramResult {
+    if account.is_initialized() {
+        Err(ProgramError::AccountAlreadyInitialized)
+    } else {
+        Ok(())
+    }
+}
 
 /// Assert signer
 pub fn assert_signer(account: &AccountInfo) -> ProgramResult {
@@ -45,6 +54,23 @@ pub fn assert_rent_exempt(rent: &Rent, account_info: &AccountInfo) -> ProgramRes
     } else {
         Ok(())
     }
+}
+
+/// Initialize SPL account instruction.
+pub fn spl_initialize_account<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_account(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+    )?;
+
+    invoke(&ix, &[account, mint, authority, rent])
 }
 
 /// Initialize SPL mint instruction
@@ -83,6 +109,26 @@ pub fn spl_token_transfer<'a>(
     )?;
 
     invoke_signed(&ix, &[source, destination, authority], signers_seeds)
+}
+
+/// Create account (PDA)
+#[allow(clippy::too_many_arguments)]
+pub fn create_account<'a, S: Pack>(
+    program_id: &Pubkey,
+    from: AccountInfo<'a>,
+    to: AccountInfo<'a>,
+    signers_seeds: &[&[&[u8]]],
+    rent: &Rent,
+) -> ProgramResult {
+    let ix = system_instruction::create_account(
+        from.key,
+        to.key,
+        rent.minimum_balance(S::LEN),
+        S::LEN as u64,
+        program_id,
+    );
+
+    invoke_signed(&ix, &[from, to], signers_seeds)
 }
 
 /// Function wrap spl_token_metadata -> mint_new_edition_from_master_edition_via_token call.
@@ -133,26 +179,6 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     )?;
 
     Ok(())
-}
-
-/// Create account (PDA)
-#[allow(clippy::too_many_arguments)]
-pub fn create_account<'a, S: Pack>(
-    program_id: &Pubkey,
-    from: AccountInfo<'a>,
-    to: AccountInfo<'a>,
-    signers_seeds: &[&[&[u8]]],
-    rent: &Rent,
-) -> ProgramResult {
-    let ix = system_instruction::create_account(
-        from.key,
-        to.key,
-        rent.minimum_balance(S::LEN),
-        S::LEN as u64,
-        program_id,
-    );
-
-    invoke_signed(&ix, &[from, to], signers_seeds)
 }
 
 /// Burn tokens

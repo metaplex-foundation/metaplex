@@ -18,8 +18,9 @@ pub mod entrypoint;
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
 use solana_program::pubkey::Pubkey;
+use state::PREFIX;
 
-solana_program::declare_id!("TEST111111111111111111111111111111111111111");
+solana_program::declare_id!("Co1TG1QQyD9UyFxHWiUaEsPdWwH9adbYECwkuXKtQi5y");
 
 /// Default precision
 pub const PRECISION: u128 = 1000000000;
@@ -27,6 +28,11 @@ pub const PRECISION: u128 = 1000000000;
 /// Generates seed bump for authorities
 pub fn find_program_address(program_id: &Pubkey, pubkey: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[&pubkey.to_bytes()[..32]], program_id)
+}
+
+/// Generates program authority
+pub fn find_program_authority(program_id: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[PREFIX.as_bytes(), program_id.as_ref()], program_id)
 }
 
 /// Generates pack card address
