@@ -2,6 +2,7 @@
 
 use crate::{
     error::NFTPacksError,
+    find_pack_card_program_address,
     state::{PackCard, PackSet, PackSetState},
     utils::*,
 };
@@ -36,6 +37,12 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     if pack_set.pack_state != PackSetState::Deactivated {
         return Err(NFTPacksError::WrongPackState.into());
     }
+
+    // Ensure that PackCard is last
+    let index = pack_set.pack_cards;
+    let (last_pack_card, _) =
+        find_pack_card_program_address(program_id, pack_set_account.key, index);
+    assert_account_key(pack_card_account, &last_pack_card)?;
 
     // Obtain PackCard instance
     let pack_card = PackCard::unpack(&pack_card_account.data.borrow())?;
