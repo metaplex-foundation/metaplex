@@ -18,8 +18,8 @@ jobs:
 
       - name: Install modules
         run: yarn install
-        working-directory: ./js
+        working-directory: js
 
       - name: Run ESLint
         run: yarn lint:eslint
-        working-directory: ./js
+        working-directory: js
