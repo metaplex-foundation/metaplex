@@ -21,7 +21,6 @@ import { ArtSelector } from './artSelector';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   WinnerLimit,
   WinnerLimitType,
   toLamports,
@@ -31,19 +30,14 @@ import {
   PriceFloorType,
   IPartialCreateAuctionArgs,
   MetadataKey,
+  StringPublicKey,
 } from '@oyster/common';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
-import {
-  WinningConfigType,
-  NonWinningConstraint,
-  WinningConstraint,
-  ParticipationConfigV2,
-  SafetyDepositConfig,
-  AmountRange,
-} from '../../models/metaplex';
+import { WinningConfigType, AmountRange } from '../../models/metaplex';
 import moment from 'moment';
 import {
   createAuctionManager,
@@ -128,7 +122,7 @@ export interface AuctionState {
 
 export const AuctionCreateView = () => {
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { whitelistedCreatorsByCreator } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
@@ -137,14 +131,15 @@ export const AuctionCreateView = () => {
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [auctionObj, setAuctionObj] = useState<
-    | {
-        vault: PublicKey;
-        auction: PublicKey;
-        auctionManager: PublicKey;
-      }
-    | undefined
-  >(undefined);
+  const [auctionObj, setAuctionObj] =
+    useState<
+      | {
+          vault: StringPublicKey;
+          auction: StringPublicKey;
+          auctionManager: StringPublicKey;
+        }
+      | undefined
+    >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -197,11 +192,11 @@ export const AuctionCreateView = () => {
           attributes.category == AuctionCategory.Single &&
           item.masterEdition
         ) {
-          item.winningConfigType = item.metadata.info.updateAuthority.equals(
-            wallet?.publicKey || SystemProgram.programId,
-          )
-            ? WinningConfigType.FullRightsTransfer
-            : WinningConfigType.TokenOnlyTransfer;
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              ? WinningConfigType.FullRightsTransfer
+              : WinningConfigType.TokenOnlyTransfer;
         }
         item.amountRanges = [
           new AmountRange({
@@ -408,7 +403,7 @@ export const AuctionCreateView = () => {
           : PriceFloorType.None,
         minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
       }),
-      tokenMint: QUOTE_MINT,
+      tokenMint: QUOTE_MINT.toBase58(),
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
       tickSize: attributes.priceTick
         ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
@@ -428,7 +423,7 @@ export const AuctionCreateView = () => {
       attributes.category === AuctionCategory.Open
         ? attributes.items[0]
         : attributes.participationNFT,
-      QUOTE_MINT,
+      QUOTE_MINT.toBase58(),
     );
     setAuctionObj(_auctionObj);
   };
@@ -1488,12 +1483,12 @@ const TierTableStep = (props: {
 
                     const newTiers = newImmutableTiers(props.attributes.tiers);
                     if (items[0]) {
-                      const existing = props.attributes.items.find(it =>
-                        it.metadata.pubkey.equals(items[0].metadata.pubkey),
+                      const existing = props.attributes.items.find(
+                        it => it.metadata.pubkey === items[0].metadata.pubkey,
                       );
                       if (!existing) newItems.push(items[0]);
-                      const index = newItems.findIndex(it =>
-                        it.metadata.pubkey.equals(items[0].metadata.pubkey),
+                      const index = newItems.findIndex(
+                        it => it.metadata.pubkey === items[0].metadata.pubkey,
                       );
 
                       const myNewTier = newTiers[configIndex].items[itemIndex];
@@ -1918,9 +1913,9 @@ const WaitingStep = (props: {
 
 const Congrats = (props: {
   auction?: {
-    vault: PublicKey;
-    auction: PublicKey;
-    auctionManager: PublicKey;
+    vault: StringPublicKey;
+    auction: StringPublicKey;
+    auctionManager: StringPublicKey;
   };
 }) => {
   const history = useHistory();

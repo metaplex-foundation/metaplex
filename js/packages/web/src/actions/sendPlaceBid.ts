@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   actions,
   sendTransactionWithRetry,
@@ -14,20 +9,23 @@ import {
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
+  toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintInfo } from '@solana/spl-token';
 import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
+
 const { createTokenAccount } = actions;
 const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
-  wallet: any,
-  bidderTokenAccount: PublicKey | undefined,
+  wallet: WalletSigner,
+  bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
@@ -61,8 +59,8 @@ export async function sendPlaceBid(
 
 export async function setupPlaceBid(
   connection: Connection,
-  wallet: any,
-  bidderTokenAccount: PublicKey | undefined,
+  wallet: WalletSigner,
+  bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
@@ -70,6 +68,8 @@ export async function setupPlaceBid(
   overallInstructions: TransactionInstruction[][],
   overallSigners: Keypair[][],
 ): Promise<BN> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
   let cleanupInstructions: TransactionInstruction[] = [];
@@ -86,16 +86,16 @@ export async function setupPlaceBid(
   ) as ParsedAccount<MintInfo>;
   let lamports = toLamports(amount, mint.info) + accountRentExempt;
 
-  let bidderPotTokenAccount: PublicKey;
+  let bidderPotTokenAccount: string;
   if (!auctionView.myBidderPot) {
     bidderPotTokenAccount = createTokenAccount(
       instructions,
       wallet.publicKey,
       accountRentExempt,
-      auctionView.auction.info.tokenMint,
-      auctionView.auction.pubkey,
+      toPublicKey(auctionView.auction.info.tokenMint),
+      toPublicKey(auctionView.auction.pubkey),
       signers,
-    );
+    ).toBase58();
   } else {
     bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot;
     if (!auctionView.auction.info.ended()) {
@@ -126,7 +126,7 @@ export async function setupPlaceBid(
   const transferAuthority = approve(
     instructions,
     cleanupInstructions,
-    payingSolAccount,
+    toPublicKey(payingSolAccount),
     wallet.publicKey,
     lamports - accountRentExempt,
   );
@@ -135,12 +135,12 @@ export async function setupPlaceBid(
 
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
-    wallet.publicKey,
+    wallet.publicKey.toBase58(),
     payingSolAccount,
     bidderPotTokenAccount,
     auctionView.auction.info.tokenMint,
-    transferAuthority.publicKey,
-    wallet.publicKey,
+    transferAuthority.publicKey.toBase58(),
+    wallet.publicKey.toBase58(),
     auctionView.auctionManager.vault,
     bid,
     instructions,

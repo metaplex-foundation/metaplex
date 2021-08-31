@@ -1,13 +1,13 @@
 import React from 'react';
-import { Row, Col, Divider, Layout, Tag, Button, Skeleton } from 'antd';
+import { Row, Col, Divider, Layout, Tag, Button, Skeleton, List, Card } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from './../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection, useWallet } from '@oyster/common';
+import { shortenAddress, useConnection } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { PublicKey } from '@solana/web3.js';
 import { ViewOn } from './../../components/ViewOn';
 import { ArtType } from '../../types';
 
@@ -15,7 +15,7 @@ const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
 
   const connection = useConnection();
   const art = useArt(id);
@@ -37,8 +37,9 @@ export const ArtView = () => {
   // }, new Map<string, TokenAccount>());
 
   const description = data?.description;
+  const attributes = data?.attributes;
 
-  const pubkey = wallet?.publicKey?.toBase58() || '';
+  const pubkey = wallet.publicKey?.toBase58() || '';
 
   const tag = (
     <div className="info-header">
@@ -126,7 +127,7 @@ export const ArtView = () => {
                                       await sendSignMetadata(
                                         connection,
                                         wallet,
-                                        new PublicKey(id),
+                                        id,
                                       );
                                     } catch (e) {
                                       console.error(e);
@@ -167,7 +168,7 @@ export const ArtView = () => {
                       return;
                     }
 
-                    const owner = wallet?.publicKey;
+                    const owner = wallet.publicKey;
 
                     if(!owner) {
                       return;
@@ -181,7 +182,7 @@ export const ArtView = () => {
                   Mark as Sold
                 </Button> */}
           </Col>
-          <Col span="24">
+          <Col span="12">
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
@@ -194,6 +195,25 @@ export const ArtView = () => {
 
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
+          </Col>
+          <Col span="12">
+            {attributes &&
+              <>
+                <Divider />
+                <br />
+                <div className="info-header">Attributes</div>
+                <List
+                  size="large"
+                  grid={{ column: 4 }}
+                >
+                  {attributes.map(attribute =>
+                    <List.Item>
+                      <Card title={attribute.trait_type}>{attribute.value}</Card>
+                    </List.Item>
+                  )}
+                </List>
+              </>
+            }
           </Col>
         </Row>
       </Col>

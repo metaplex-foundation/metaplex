@@ -1,5 +1,4 @@
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -7,7 +6,7 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import { findProgramAddress } from '../utils';
+import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const METADATA_PREFIX = 'metadata';
 export const EDITION = 'edition';
 export const RESERVATION = 'reservation';
@@ -61,6 +60,12 @@ export type MetadataFile = {
 
 export type FileOrString = MetadataFile | string;
 
+export type Attribute = {
+  trait_type?: string;
+  display_type?: string;
+  value: string | number;
+};
+
 export interface IMetadataExtension {
   name: string;
   symbol: string;
@@ -70,6 +75,8 @@ export interface IMetadataExtension {
   // preview image absolute URI
   image: string;
   animation_url?: string;
+
+  attributes?: Attribute[];
 
   // stores link to item on meta
   external_url: string;
@@ -92,7 +99,7 @@ export class MasterEditionV1 {
   supply: BN;
   maxSupply?: BN;
   /// Can be used to mint tokens that give one-time permission to mint a single limited edition.
-  printingMint: PublicKey;
+  printingMint: StringPublicKey;
   /// If you don't know how many printing tokens you are going to need, but you do know
   /// you are going to need some amount in the future, you can use a token from this mint.
   /// Coming back to token metadata with one of these tokens allows you to mint (one time)
@@ -103,14 +110,14 @@ export class MasterEditionV1 {
   /// but at the end we will. At the end it then burns this token with token-metadata to
   /// get the printing tokens it needs to give to bidders. Each bidder then redeems a printing token
   /// to get their limited editions.
-  oneTimePrintingAuthorizationMint: PublicKey;
+  oneTimePrintingAuthorizationMint: StringPublicKey;
 
   constructor(args: {
     key: MetadataKey;
     supply: BN;
     maxSupply?: BN;
-    printingMint: PublicKey;
-    oneTimePrintingAuthorizationMint: PublicKey;
+    printingMint: StringPublicKey;
+    oneTimePrintingAuthorizationMint: StringPublicKey;
   }) {
     this.key = MetadataKey.MasterEditionV1;
     this.supply = args.supply;
@@ -163,22 +170,30 @@ export class EditionMarker {
 export class Edition {
   key: MetadataKey;
   /// Points at MasterEdition struct
-  parent: PublicKey;
+  parent: StringPublicKey;
   /// Starting at 0 for master record, this is incremented for each edition minted.
   edition: BN;
 
-  constructor(args: { key: MetadataKey; parent: PublicKey; edition: BN }) {
+  constructor(args: {
+    key: MetadataKey;
+    parent: StringPublicKey;
+    edition: BN;
+  }) {
     this.key = MetadataKey.EditionV1;
     this.parent = args.parent;
     this.edition = args.edition;
   }
 }
 export class Creator {
-  address: PublicKey;
+  address: StringPublicKey;
   verified: boolean;
   share: number;
 
-  constructor(args: { address: PublicKey; verified: boolean; share: number }) {
+  constructor(args: {
+    address: StringPublicKey;
+    verified: boolean;
+    share: number;
+  }) {
     this.address = args.address;
     this.verified = args.verified;
     this.share = args.share;
@@ -208,22 +223,24 @@ export class Data {
 
 export class Metadata {
   key: MetadataKey;
-  updateAuthority: PublicKey;
-  mint: PublicKey;
+  updateAuthority: StringPublicKey;
+  mint: StringPublicKey;
   data: Data;
   primarySaleHappened: boolean;
   isMutable: boolean;
+  editionNonce: number | null;
 
   // set lazy
-  masterEdition?: PublicKey;
-  edition?: PublicKey;
+  masterEdition?: StringPublicKey;
+  edition?: StringPublicKey;
 
   constructor(args: {
-    updateAuthority: PublicKey;
-    mint: PublicKey;
+    updateAuthority: StringPublicKey;
+    mint: StringPublicKey;
     data: Data;
     primarySaleHappened: boolean;
     isMutable: boolean;
+    editionNonce: number | null;
   }) {
     this.key = MetadataKey.MetadataV1;
     this.updateAuthority = args.updateAuthority;
@@ -231,6 +248,7 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
+    this.editionNonce = args.editionNonce;
   }
 
   public async init() {
@@ -254,7 +272,7 @@ class UpdateMetadataArgs {
   instruction: number = 1;
   data: Data | null;
   // Not used by this app, just required for instruction
-  updateAuthority: PublicKey | null;
+  updateAuthority: StringPublicKey | null;
   primarySaleHappened: boolean | null;
   constructor(args: {
     data?: Data;
@@ -262,9 +280,7 @@ class UpdateMetadataArgs {
     primarySaleHappened: boolean | null;
   }) {
     this.data = args.data ? args.data : null;
-    this.updateAuthority = args.updateAuthority
-      ? new PublicKey(args.updateAuthority)
-      : null;
+    this.updateAuthority = args.updateAuthority ? args.updateAuthority : null;
     this.primarySaleHappened = args.primarySaleHappened;
   }
 }
@@ -305,7 +321,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
       fields: [
         ['instruction', 'u8'],
         ['data', { kind: 'option', type: Data }],
-        ['updateAuthority', { kind: 'option', type: 'pubkey' }],
+        ['updateAuthority', { kind: 'option', type: 'pubkeyAsString' }],
         ['primarySaleHappened', { kind: 'option', type: 'u8' }],
       ],
     },
@@ -339,8 +355,8 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['key', 'u8'],
         ['supply', 'u64'],
         ['maxSupply', { kind: 'option', type: 'u64' }],
-        ['printingMint', 'pubkey'],
-        ['oneTimePrintingAuthorizationMint', 'pubkey'],
+        ['printingMint', 'pubkeyAsString'],
+        ['oneTimePrintingAuthorizationMint', 'pubkeyAsString'],
       ],
     },
   ],
@@ -361,7 +377,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['parent', 'pubkey'],
+        ['parent', 'pubkeyAsString'],
         ['edition', 'u64'],
       ],
     },
@@ -384,7 +400,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
     {
       kind: 'struct',
       fields: [
-        ['address', 'pubkey'],
+        ['address', 'pubkeyAsString'],
         ['verified', 'u8'],
         ['share', 'u8'],
       ],
@@ -396,8 +412,8 @@ export const METADATA_SCHEMA = new Map<any, any>([
       kind: 'struct',
       fields: [
         ['key', 'u8'],
-        ['updateAuthority', 'pubkey'],
-        ['mint', 'pubkey'],
+        ['updateAuthority', 'pubkeyAsString'],
+        ['mint', 'pubkeyAsString'],
         ['data', Data],
         ['primarySaleHappened', 'u8'], // bool
         ['isMutable', 'u8'], // bool
@@ -416,12 +432,17 @@ export const METADATA_SCHEMA = new Map<any, any>([
   ],
 ]);
 
+const METADATA_REPLACE = new RegExp('\u0000', 'g');
+
 export const decodeMetadata = (buffer: Buffer): Metadata => {
   const metadata = deserializeUnchecked(
     METADATA_SCHEMA,
     Metadata,
     buffer,
   ) as Metadata;
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
   return metadata;
 };
 
@@ -460,10 +481,10 @@ export async function updateMetadata(
   data: Data | undefined,
   newUpdateAuthority: string | undefined,
   primarySaleHappened: boolean | null | undefined,
-  mintKey: PublicKey,
-  updateAuthority: PublicKey,
+  mintKey: StringPublicKey,
+  updateAuthority: StringPublicKey,
   instructions: TransactionInstruction[],
-  metadataAccount?: PublicKey,
+  metadataAccount?: StringPublicKey,
 ) {
   const metadataProgramId = programIds().metadata;
 
@@ -473,10 +494,10 @@ export async function updateMetadata(
       await findProgramAddress(
         [
           Buffer.from('metadata'),
-          metadataProgramId.toBuffer(),
-          mintKey.toBuffer(),
+          toPublicKey(metadataProgramId).toBuffer(),
+          toPublicKey(mintKey).toBuffer(),
         ],
-        metadataProgramId,
+        toPublicKey(metadataProgramId),
       )
     )[0];
 
@@ -491,12 +512,12 @@ export async function updateMetadata(
   const txnData = Buffer.from(serialize(METADATA_SCHEMA, value));
   const keys = [
     {
-      pubkey: metadataAccount,
+      pubkey: toPublicKey(metadataAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: updateAuthority,
+      pubkey: toPublicKey(updateAuthority),
       isSigner: true,
       isWritable: false,
     },
@@ -504,7 +525,7 @@ export async function updateMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data: txnData,
     }),
   );
@@ -514,11 +535,11 @@ export async function updateMetadata(
 
 export async function createMetadata(
   data: Data,
-  updateAuthority: PublicKey,
-  mintKey: PublicKey,
-  mintAuthorityKey: PublicKey,
+  updateAuthority: StringPublicKey,
+  mintKey: StringPublicKey,
+  mintAuthorityKey: StringPublicKey,
   instructions: TransactionInstruction[],
-  payer: PublicKey,
+  payer: StringPublicKey,
 ) {
   const metadataProgramId = programIds().metadata;
 
@@ -526,10 +547,10 @@ export async function createMetadata(
     await findProgramAddress(
       [
         Buffer.from('metadata'),
-        metadataProgramId.toBuffer(),
-        mintKey.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
   console.log('Data', data);
@@ -538,27 +559,27 @@ export async function createMetadata(
 
   const keys = [
     {
-      pubkey: metadataAccount,
+      pubkey: toPublicKey(metadataAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: mintKey,
+      pubkey: toPublicKey(mintKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: mintAuthorityKey,
+      pubkey: toPublicKey(mintAuthorityKey),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: updateAuthority,
+      pubkey: toPublicKey(updateAuthority),
       isSigner: false,
       isWritable: false,
     },
@@ -576,7 +597,7 @@ export async function createMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data: txnData,
     }),
   );
@@ -586,10 +607,10 @@ export async function createMetadata(
 
 export async function createMasterEdition(
   maxSupply: BN | undefined,
-  mintKey: PublicKey,
-  updateAuthorityKey: PublicKey,
-  mintAuthorityKey: PublicKey,
-  payer: PublicKey,
+  mintKey: StringPublicKey,
+  updateAuthorityKey: StringPublicKey,
+  mintAuthorityKey: StringPublicKey,
+  payer: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
@@ -598,10 +619,10 @@ export async function createMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        metadataProgramId.toBuffer(),
-        mintKey.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
 
@@ -609,11 +630,11 @@ export async function createMasterEdition(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        metadataProgramId.toBuffer(),
-        mintKey.toBuffer(),
+        toPublicKey(metadataProgramId).toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
         Buffer.from(EDITION),
       ],
-      metadataProgramId,
+      toPublicKey(metadataProgramId),
     )
   )[0];
 
@@ -622,32 +643,32 @@ export async function createMasterEdition(
 
   const keys = [
     {
-      pubkey: editionAccount,
+      pubkey: toPublicKey(editionAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: mintKey,
+      pubkey: toPublicKey(mintKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: updateAuthorityKey,
+      pubkey: toPublicKey(updateAuthorityKey),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: mintAuthorityKey,
+      pubkey: toPublicKey(mintAuthorityKey),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: metadataAccount,
+      pubkey: toPublicKey(metadataAccount),
       isSigner: false,
       isWritable: false,
     },
@@ -672,23 +693,23 @@ export async function createMasterEdition(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
-  newMint: PublicKey,
-  tokenMint: PublicKey,
-  newMintAuthority: PublicKey,
-  printingMint: PublicKey,
-  authorizationTokenHoldingAccount: PublicKey,
-  burnAuthority: PublicKey,
-  updateAuthorityOfMaster: PublicKey,
-  reservationList: PublicKey | undefined,
+  newMint: StringPublicKey,
+  tokenMint: StringPublicKey,
+  newMintAuthority: StringPublicKey,
+  printingMint: StringPublicKey,
+  authorizationTokenHoldingAccount: StringPublicKey,
+  burnAuthority: StringPublicKey,
+  updateAuthorityOfMaster: StringPublicKey,
+  reservationList: StringPublicKey | undefined,
   instructions: TransactionInstruction[],
-  payer: PublicKey,
+  payer: StringPublicKey,
 ) {
   const metadataProgramId = programIds().metadata;
 
@@ -701,57 +722,57 @@ export async function deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
 
   const keys = [
     {
-      pubkey: newMetadataKey,
+      pubkey: toPublicKey(newMetadataKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newEdition,
+      pubkey: toPublicKey(newEdition),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newMint,
+      pubkey: toPublicKey(newMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newMintAuthority,
+      pubkey: toPublicKey(newMintAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: printingMint,
+      pubkey: toPublicKey(printingMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: authorizationTokenHoldingAccount,
+      pubkey: toPublicKey(authorizationTokenHoldingAccount),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: burnAuthority,
+      pubkey: toPublicKey(burnAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: updateAuthorityOfMaster,
+      pubkey: toPublicKey(updateAuthorityOfMaster),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: masterMetadataKey,
+      pubkey: toPublicKey(masterMetadataKey),
       isSigner: false,
       isWritable: false,
     },
@@ -774,7 +795,7 @@ export async function deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
 
   if (reservationList) {
     keys.push({
-      pubkey: reservationList,
+      pubkey: toPublicKey(reservationList),
       isSigner: false,
       isWritable: true,
     });
@@ -782,21 +803,21 @@ export async function deprecatedMintNewEditionFromMasterEditionViaPrintingToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function mintNewEditionFromMasterEditionViaToken(
-  newMint: PublicKey,
-  tokenMint: PublicKey,
-  newMintAuthority: PublicKey,
-  newUpdateAuthority: PublicKey,
-  tokenOwner: PublicKey,
-  tokenAccount: PublicKey,
+  newMint: StringPublicKey,
+  tokenMint: StringPublicKey,
+  newMintAuthority: StringPublicKey,
+  newUpdateAuthority: StringPublicKey,
+  tokenOwner: StringPublicKey,
+  tokenAccount: StringPublicKey,
   instructions: TransactionInstruction[],
-  payer: PublicKey,
+  payer: StringPublicKey,
   edition: BN,
 ) {
   const metadataProgramId = programIds().metadata;
@@ -811,57 +832,57 @@ export async function mintNewEditionFromMasterEditionViaToken(
 
   const keys = [
     {
-      pubkey: newMetadataKey,
+      pubkey: toPublicKey(newMetadataKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newEdition,
+      pubkey: toPublicKey(newEdition),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newMint,
+      pubkey: toPublicKey(newMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: editionMarkPda,
+      pubkey: toPublicKey(editionMarkPda),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: newMintAuthority,
+      pubkey: toPublicKey(newMintAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: tokenOwner,
+      pubkey: toPublicKey(tokenOwner),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: tokenAccount,
+      pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: newUpdateAuthority,
+      pubkey: toPublicKey(newUpdateAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: masterMetadataKey,
+      pubkey: toPublicKey(masterMetadataKey),
       isSigner: false,
       isWritable: false,
     },
@@ -885,16 +906,16 @@ export async function mintNewEditionFromMasterEditionViaToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function updatePrimarySaleHappenedViaToken(
-  metadata: PublicKey,
-  owner: PublicKey,
-  tokenAccount: PublicKey,
+  metadata: StringPublicKey,
+  owner: StringPublicKey,
+  tokenAccount: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
@@ -903,17 +924,17 @@ export async function updatePrimarySaleHappenedViaToken(
 
   const keys = [
     {
-      pubkey: metadata,
+      pubkey: toPublicKey(metadata),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: owner,
+      pubkey: toPublicKey(owner),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: tokenAccount,
+      pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: false,
     },
@@ -921,18 +942,18 @@ export async function updatePrimarySaleHappenedViaToken(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function deprecatedCreateReservationList(
-  metadata: PublicKey,
-  masterEdition: PublicKey,
-  resource: PublicKey,
-  updateAuthority: PublicKey,
-  payer: PublicKey,
+  metadata: StringPublicKey,
+  masterEdition: StringPublicKey,
+  resource: StringPublicKey,
+  updateAuthority: StringPublicKey,
+  payer: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
@@ -945,33 +966,33 @@ export async function deprecatedCreateReservationList(
 
   const keys = [
     {
-      pubkey: reservationList,
+      pubkey: toPublicKey(reservationList),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: updateAuthority,
+      pubkey: toPublicKey(updateAuthority),
       isSigner: true,
       isWritable: false,
     },
 
     {
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: resource,
+      pubkey: toPublicKey(resource),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: metadata,
+      pubkey: toPublicKey(metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -989,15 +1010,15 @@ export async function deprecatedCreateReservationList(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function signMetadata(
-  metadata: PublicKey,
-  creator: PublicKey,
+  metadata: StringPublicKey,
+  creator: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
@@ -1006,12 +1027,12 @@ export async function signMetadata(
 
   const keys = [
     {
-      pubkey: metadata,
+      pubkey: toPublicKey(metadata),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: creator,
+      pubkey: toPublicKey(creator),
       isSigner: true,
       isWritable: false,
     },
@@ -1019,18 +1040,18 @@ export async function signMetadata(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function deprecatedMintPrintingTokens(
-  destination: PublicKey,
-  printingMint: PublicKey,
-  updateAuthority: PublicKey,
-  metadata: PublicKey,
-  masterEdition: PublicKey,
+  destination: StringPublicKey,
+  printingMint: StringPublicKey,
+  updateAuthority: StringPublicKey,
+  metadata: StringPublicKey,
+  masterEdition: StringPublicKey,
   supply: BN,
   instructions: TransactionInstruction[],
 ) {
@@ -1042,27 +1063,27 @@ export async function deprecatedMintPrintingTokens(
 
   const keys = [
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: printingMint,
+      pubkey: toPublicKey(printingMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: updateAuthority,
+      pubkey: toPublicKey(updateAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: metadata,
+      pubkey: toPublicKey(metadata),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: false,
     },
@@ -1080,16 +1101,16 @@ export async function deprecatedMintPrintingTokens(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
 export async function convertMasterEditionV1ToV2(
-  masterEdition: PublicKey,
-  oneTimeAuthMint: PublicKey,
-  printingMint: PublicKey,
+  masterEdition: StringPublicKey,
+  oneTimeAuthMint: StringPublicKey,
+  printingMint: StringPublicKey,
   instructions: TransactionInstruction[],
 ) {
   const metadataProgramId = programIds().metadata;
@@ -1098,17 +1119,17 @@ export async function convertMasterEditionV1ToV2(
 
   const keys = [
     {
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: oneTimeAuthMint,
+      pubkey: toPublicKey(oneTimeAuthMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: printingMint,
+      pubkey: toPublicKey(printingMint),
       isSigner: false,
       isWritable: true,
     },
@@ -1116,67 +1137,71 @@ export async function convertMasterEditionV1ToV2(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: metadataProgramId,
+      programId: toPublicKey(metadataProgramId),
       data,
     }),
   );
 }
 
-export async function getEdition(tokenMint: PublicKey): Promise<PublicKey> {
+export async function getEdition(
+  tokenMint: StringPublicKey,
+): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
-        tokenMint.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
+        toPublicKey(tokenMint).toBuffer(),
         Buffer.from(EDITION),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
 
-export async function getMetadata(tokenMint: PublicKey): Promise<PublicKey> {
+export async function getMetadata(
+  tokenMint: StringPublicKey,
+): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
-        tokenMint.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
+        toPublicKey(tokenMint).toBuffer(),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
 
 export async function deprecatedGetReservationList(
-  masterEdition: PublicKey,
-  resource: PublicKey,
-): Promise<PublicKey> {
+  masterEdition: StringPublicKey,
+  resource: StringPublicKey,
+): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
 
   return (
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
-        masterEdition.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
+        toPublicKey(masterEdition).toBuffer(),
         Buffer.from(RESERVATION),
-        resource.toBuffer(),
+        toPublicKey(resource).toBuffer(),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
 
 export async function getEditionMarkPda(
-  mint: PublicKey,
+  mint: StringPublicKey,
   edition: BN,
-): Promise<PublicKey> {
+): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
   const editionNumber = Math.floor(edition.toNumber() / 248);
 
@@ -1184,12 +1209,12 @@ export async function getEditionMarkPda(
     await findProgramAddress(
       [
         Buffer.from(METADATA_PREFIX),
-        PROGRAM_IDS.metadata.toBuffer(),
-        mint.toBuffer(),
+        toPublicKey(PROGRAM_IDS.metadata).toBuffer(),
+        toPublicKey(mint).toBuffer(),
         Buffer.from(EDITION),
         Buffer.from(editionNumber.toString()),
       ],
-      PROGRAM_IDS.metadata,
+      toPublicKey(PROGRAM_IDS.metadata),
     )
   )[0];
 }
