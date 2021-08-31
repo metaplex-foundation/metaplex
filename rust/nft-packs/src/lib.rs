@@ -20,7 +20,7 @@ pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::PREFIX;
 
-solana_program::declare_id!("TEST111111111111111111111111111111111111111");
+solana_program::declare_id!("Co1TG1QQyD9UyFxHWiUaEsPdWwH9adbYECwkuXKtQi5y");
 
 /// Default precision
 pub const PRECISION: u128 = 1000000000;

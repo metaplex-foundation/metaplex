@@ -25,6 +25,10 @@ pub mod delete_pack_voucher;
 pub mod edit_pack;
 pub mod edit_pack_card;
 pub mod edit_pack_voucher;
+
+use add_card_to_pack::*;
+
+pub mod add_card_to_pack;
 pub mod init_pack;
 pub mod prove_ownership;
 
@@ -37,15 +41,16 @@ impl Processor {
         accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
+        println!("test4");
         let instruction = NFTPacksInstruction::try_from_slice(input)?;
         match instruction {
             NFTPacksInstruction::InitPack(args) => {
                 msg!("Instruction: InitPack");
                 init_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddCardToPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::AddCardToPack(args) => {
+                msg!("Instruction: AddCardToPack");
+                add_card_to_pack(program_id, accounts, args)
             }
             NFTPacksInstruction::AddVoucherToPack => {
                 msg!("");

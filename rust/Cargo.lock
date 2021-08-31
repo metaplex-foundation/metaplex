@@ -1616,6 +1616,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "metaplex-tests"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "metaplex-nft-packs",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-token",
+ "spl-token-metadata",
+ "spl-token-vault",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"

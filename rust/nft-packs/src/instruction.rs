@@ -1,7 +1,8 @@
 //! Instruction types
+#![allow(missing_docs)]
 
 use crate::{
-    find_pack_card_program_address, find_proving_process_program_address,
+    find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
     state::{ActionOnProve, DistributionType},
 };
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -10,6 +11,19 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar,
 };
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct AddCardToPackArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// Fixed number / probability-based
+    pub probability_type: DistributionType,
+    /// Based on above property it's fixed number to receive or probability
+    pub probability: u64,
+    /// Index
+    pub index: u32,
+}
 
 /// Initialize a PackSet arguments
 #[repr(C)]
@@ -60,7 +74,7 @@ pub struct EditPackVoucherArgs {
 }
 
 /// Instruction definition
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum NFTPacksInstruction {
     /// InitPack
     ///
@@ -95,7 +109,7 @@ pub enum NFTPacksInstruction {
     /// - max_supply	Option<u32>
     /// - probability_type	enum[fixed number, probability based]
     /// - probability	u64
-    AddCardToPack,
+    AddCardToPack(AddCardToPackArgs),
 
     /// AddVoucherToPack
     ///
@@ -542,6 +556,42 @@ pub fn edit_pack_voucher(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::EditPackVoucher(args),
+        accounts,
+    )
+}
+
+/// Creates 'AddCardToPack' instruction.
+#[allow(clippy::too_many_arguments)]
+pub fn add_card_to_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    master_edition: &Pubkey,
+    master_metadata: &Pubkey,
+    mint: &Pubkey,
+    source: &Pubkey,
+    token_account: &Pubkey,
+    args: AddCardToPackArgs,
+) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, args.index);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(pack_card, false),
+        AccountMeta::new(*authority, true),
+        AccountMeta::new_readonly(*master_edition, false),
+        AccountMeta::new_readonly(*master_metadata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new(*source, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new(program_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::AddCardToPack(args),
         accounts,
     )
 }

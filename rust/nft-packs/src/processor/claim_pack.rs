@@ -18,47 +18,6 @@ use solana_program::{
 };
 use spl_token_metadata::state::{Creator, Edition, Metadata};
 
-/// Function wrap spl_token_metadata -> create_metadata_accounts call.
-fn spl_token_metadata_create_metadata_accounts<'a>(
-    new_metadata_account: &AccountInfo<'a>,
-    new_mint_account: &AccountInfo<'a>,
-    new_mint_authority_account: &AccountInfo<'a>,
-    user_wallet_account: &AccountInfo<'a>,
-    name: String,
-    symbol: String,
-    uri: String,
-    creators: Option<Vec<Creator>>,
-    seller_fee_basis_points: u16,
-    update_authority_is_signer: bool,
-    is_mutable: bool,
-) -> Result<(), ProgramError> {
-    Ok(invoke_signed(
-        &spl_token_metadata::instruction::create_metadata_accounts(
-            spl_token_metadata::id(),
-            *new_metadata_account.key,
-            *new_mint_account.key,
-            *new_mint_authority_account.key,
-            *user_wallet_account.key,
-            *user_wallet_account.key,
-            name,
-            symbol,
-            uri,
-            creators,
-            seller_fee_basis_points,
-            update_authority_is_signer,
-            is_mutable,
-        ),
-        &[
-            new_metadata_account.clone(),
-            new_mint_account.clone(),
-            new_mint_authority_account.clone(),
-            user_wallet_account.clone(),
-            user_wallet_account.clone(),
-        ],
-        &[],
-    )?)
-}
-
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
@@ -77,12 +36,11 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let edition_account = next_account_info(account_info_iter)?;
     let rent_account = next_account_info(account_info_iter)?;
     let randomness_oracle_account = next_account_info(account_info_iter)?;
-    let rent = &Rent::from_account_info(rent_account)?;
+    let _rent = &Rent::from_account_info(rent_account)?;
 
+    // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
     assert_owned_by(pack_card_account, program_id)?;
-
-    assert_rent_exempt(&rent, &pack_set_account)?;
 
     assert_signer(&user_wallet_account)?;
 
@@ -114,32 +72,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     // Check metadata mint
     assert_account_key(metadata_mint_account, &master_metadata.mint)?;
-
-    // Obtain master metadata mint instance
-    let master_mint = spl_token::state::Mint::unpack(&metadata_mint_account.data.borrow())?;
-
-    // Initialize mint
-    spl_initialize_mint(
-        new_mint_account.clone(),
-        new_mint_authority_account.clone(),
-        rent_account.clone(),
-        master_mint.decimals,
-    )?;
-
-    // Create new metadata account on-chain from master metadata account
-    spl_token_metadata_create_metadata_accounts(
-        new_metadata_account,
-        new_mint_account,
-        new_mint_authority_account,
-        user_wallet_account,
-        master_metadata.data.name.clone(),
-        master_metadata.data.symbol.clone(),
-        master_metadata.data.uri.clone(),
-        master_metadata.data.creators,
-        master_metadata.data.seller_fee_basis_points,
-        true,
-        master_metadata.is_mutable,
-    )?;
 
     match pack_card.distribution_type {
         DistributionType::FixedNumber => {

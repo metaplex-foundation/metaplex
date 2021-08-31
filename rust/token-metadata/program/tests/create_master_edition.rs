@@ -46,7 +46,6 @@ async fn success() {
     let mint = get_mint(&mut context, &test_master_edition.mint_pubkey).await;
     let new_authority = mint.mint_authority.unwrap();
 
-    assert_eq!(new_authority, new_authority);
     assert_ne!(old_authority, new_authority);
     assert_eq!(master_edition.supply, 0);
     assert_eq!(master_edition.max_supply.unwrap(), 10);
