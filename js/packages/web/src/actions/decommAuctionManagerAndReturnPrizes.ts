@@ -6,8 +6,9 @@ import {
   setAuctionAuthority,
   setVaultAuthority,
   TokenAccount,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AuctionView } from '../hooks';
 import { AuctionManagerStatus } from '../models/metaplex';
 import { decommissionAuctionManager } from '../models/metaplex/decommissionAuctionManager';
@@ -15,13 +16,15 @@ import { unwindVault } from './unwindVault';
 
 export async function decommAuctionManagerAndReturnPrizes(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
   safetyDepositBoxesByVaultAndIndex: Record<
     string,
     ParsedAccount<SafetyDepositBox>
   >,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 

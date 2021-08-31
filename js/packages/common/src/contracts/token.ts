@@ -11,16 +11,17 @@ import {
   Account,
   SystemProgram,
 } from '@solana/web3.js';
+import { WalletSigner } from '../contexts';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: {
-    publicKey: PublicKey;
-    signTransaction: (tx: Transaction) => Transaction;
-  },
+  wallet: WalletSigner,
   // SOL account
   owner: PublicKey,
 ) => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const TOKEN_PROGRAM_ID = new PublicKey(
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   );
