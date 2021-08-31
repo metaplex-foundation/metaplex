@@ -138,11 +138,13 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     new_mint_account: &AccountInfo<'a>,
     new_mint_authority_account: &AccountInfo<'a>,
     user_wallet_account: &AccountInfo<'a>,
+    program_authority_account: &AccountInfo<'a>,
     user_token_account: &AccountInfo<'a>,
     metadata_account: &AccountInfo<'a>,
     master_edition_account: &AccountInfo<'a>,
     metadata_mint_account: &AccountInfo<'a>,
     edition: u64,
+    signers_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
     let tx = spl_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
         spl_token_metadata::id(),
@@ -152,7 +154,7 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
         *new_mint_account.key,
         *new_mint_authority_account.key,
         *user_wallet_account.key,
-        *user_wallet_account.key,
+        *program_authority_account.key,
         *user_token_account.key,
         *user_wallet_account.key,
         *metadata_account.key,
@@ -170,12 +172,13 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
             new_mint_authority_account.clone(),
             user_wallet_account.clone(),
             user_wallet_account.clone(),
+            program_authority_account.clone(),
             user_token_account.clone(),
             user_wallet_account.clone(),
             metadata_account.clone(),
             metadata_mint_account.clone(),
         ],
-        &[],
+        &[&signers_seeds],
     )?;
 
     Ok(())

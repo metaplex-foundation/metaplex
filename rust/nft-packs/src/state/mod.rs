@@ -1,5 +1,6 @@
 //! State types
 use borsh::{BorshDeserialize, BorshSchema, BorshSerialize};
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
 mod pack_card;
 mod pack_set;
@@ -33,4 +34,22 @@ impl Default for AccountType {
     fn default() -> Self {
         AccountType::Uninitialized
     }
+}
+
+/// Trait for master edition holders
+pub trait MasterEditionHolder {
+    /// Returns pack set this holder belongs to
+    fn get_pack_set(&self) -> Pubkey;
+
+    /// Returns master edition key
+    fn get_master_edition(&self) -> Pubkey;
+
+    /// Returns master metadata key
+    fn get_master_metadata(&self) -> Pubkey;
+
+    /// Returns token account of master mint
+    fn get_token_account(&self) -> Pubkey;
+
+    /// Increment total supply
+    fn increment_supply(&mut self) -> Result<(), ProgramError>;
 }

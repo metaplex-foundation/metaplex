@@ -2264,6 +2264,7 @@ dependencies = [
 [[package]]
 name = "randomness-oracle-program"
 version = "0.1.0"
+source = "git+https://github.com/atticwip/randomness-oracle#c76c889b9b561b95e973c0d41b289065cc69a622"
 dependencies = [
  "borsh",
  "solana-program",

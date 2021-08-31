@@ -12,6 +12,7 @@ use delete_pack_voucher::delete_pack_voucher;
 use edit_pack::edit_pack;
 use edit_pack_card::edit_pack_card;
 use init_pack::init_pack;
+use mint_edition::{mint_edition_with_card, mint_edition_with_voucher};
 use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
@@ -30,18 +31,18 @@ use add_card_to_pack::*;
 
 pub mod add_card_to_pack;
 pub mod init_pack;
+pub mod mint_edition;
 pub mod prove_ownership;
 
 /// Program state handler.
 pub struct Processor {}
 impl Processor {
     /// Processes an instruction
-    pub fn process_instruction(
+    pub fn process_instruction<'a>(
         program_id: &Pubkey,
-        accounts: &[AccountInfo],
+        accounts: &'a [AccountInfo<'a>],
         input: &[u8],
     ) -> ProgramResult {
-        println!("test4");
         let instruction = NFTPacksInstruction::try_from_slice(input)?;
         match instruction {
             NFTPacksInstruction::InitPack(args) => {
@@ -103,6 +104,14 @@ impl Processor {
             NFTPacksInstruction::EditPackVoucher(args) => {
                 msg!("");
                 unimplemented!()
+            }
+            NFTPacksInstruction::MintEditionWithCard => {
+                msg!("Instruction: MintEditionWithCard");
+                mint_edition_with_card(program_id, accounts)
+            }
+            NFTPacksInstruction::MintEditionWithVoucher => {
+                msg!("Instruction: MintEditionWithVoucher");
+                mint_edition_with_voucher(program_id, accounts)
             }
         }
     }
