@@ -557,14 +557,15 @@ program
   .command('create_candy_machine')
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
-  .option('-p, --price', 'SOL price')
+  .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
 
     const { keypair } = cmd.opts();
-    const solPriceStr = program.getOptionValue('price') || '1';
+    const solPriceStr = cmd.getOptionValue('price') || '1';
+
     const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
 
     const cacheName = program.getOptionValue('cacheName') || 'temp';
