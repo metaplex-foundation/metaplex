@@ -4,8 +4,9 @@ use crate::instruction::NFTPacksInstruction;
 use activate::activate_pack;
 use borsh::BorshDeserialize;
 use change_authority::{transfer_authority, AuthorityToChange};
-use delete_pack::delete_pack;
+use claim_pack::claim_pack;
 use deactivate::deactivate_pack;
+use delete_pack::delete_pack;
 use edit_pack::edit_pack;
 use edit_pack_card::edit_pack_card;
 use init_pack::init_pack;
@@ -14,11 +15,16 @@ use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, 
 
 pub mod activate;
 pub mod change_authority;
-pub mod delete_pack;
+pub mod claim_pack;
 pub mod deactivate;
+pub mod delete_pack;
 pub mod edit_pack;
 pub mod edit_pack_card;
 pub mod edit_pack_voucher;
+
+use add_card_to_pack::*;
+
+pub mod add_card_to_pack;
 pub mod init_pack;
 pub mod prove_ownership;
 
@@ -31,15 +37,16 @@ impl Processor {
         accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
+        println!("test4");
         let instruction = NFTPacksInstruction::try_from_slice(input)?;
         match instruction {
             NFTPacksInstruction::InitPack(args) => {
                 msg!("Instruction: InitPack");
                 init_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddCardToPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::AddCardToPack(args) => {
+                msg!("Instruction: AddCardToPack");
+                add_card_to_pack(program_id, accounts, args)
             }
             NFTPacksInstruction::AddVoucherToPack => {
                 msg!("");
@@ -58,8 +65,8 @@ impl Processor {
                 prove_ownership(program_id, accounts)
             }
             NFTPacksInstruction::ClaimPack => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: ClaimPack");
+                claim_pack(program_id, accounts)
             }
             NFTPacksInstruction::TransferPackAuthority => {
                 msg!("Instruction: TransferPackAuthority");

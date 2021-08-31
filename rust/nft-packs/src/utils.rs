@@ -5,11 +5,20 @@ use solana_program::{
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
-    program_pack::Pack,
+    program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
     rent::Rent,
     system_instruction,
 };
+
+/// Assert unitialized
+pub fn assert_uninitialized<T: IsInitialized>(account: &T) -> ProgramResult {
+    if account.is_initialized() {
+        Err(ProgramError::AccountAlreadyInitialized)
+    } else {
+        Ok(())
+    }
+}
 
 /// Assert signer
 pub fn assert_signer(account: &AccountInfo) -> ProgramResult {
@@ -47,6 +56,41 @@ pub fn assert_rent_exempt(rent: &Rent, account_info: &AccountInfo) -> ProgramRes
     }
 }
 
+/// Initialize SPL account instruction.
+pub fn spl_initialize_account<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_account(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+    )?;
+
+    invoke(&ix, &[account, mint, authority, rent])
+}
+
+/// Initialize SPL mint instruction
+pub fn spl_initialize_mint<'a>(
+    mint: AccountInfo<'a>,
+    mint_authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+    decimals: u8,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_mint(
+        &spl_token::id(),
+        mint.key,
+        mint_authority.key,
+        None,
+        decimals,
+    )?;
+
+    invoke(&ix, &[mint, rent])
+}
+
 /// Create account (PDA)
 #[allow(clippy::too_many_arguments)]
 pub fn create_account<'a, S: Pack>(
@@ -65,6 +109,56 @@ pub fn create_account<'a, S: Pack>(
     );
 
     invoke_signed(&ix, &[from, to], signers_seeds)
+}
+
+/// Function wrap spl_token_metadata -> mint_new_edition_from_master_edition_via_token call.
+pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
+    new_metadata_account: &AccountInfo<'a>,
+    new_edition_account: &AccountInfo<'a>,
+    new_mint_account: &AccountInfo<'a>,
+    new_mint_authority_account: &AccountInfo<'a>,
+    user_wallet_account: &AccountInfo<'a>,
+    user_token_account: &AccountInfo<'a>,
+    metadata_account: &AccountInfo<'a>,
+    master_edition_account: &AccountInfo<'a>,
+    metadata_mint_account: &AccountInfo<'a>,
+    edition: u64,
+) -> Result<(), ProgramError> {
+    let tx = spl_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
+        spl_token_metadata::id(),
+        *new_metadata_account.key,
+        *new_edition_account.key,
+        *master_edition_account.key,
+        *new_mint_account.key,
+        *new_mint_authority_account.key,
+        *user_wallet_account.key,
+        *user_wallet_account.key,
+        *user_token_account.key,
+        *user_wallet_account.key,
+        *metadata_account.key,
+        *metadata_mint_account.key,
+        edition,
+    );
+
+    invoke_signed(
+        &tx,
+        &[
+            new_metadata_account.clone(),
+            new_edition_account.clone(),
+            master_edition_account.clone(),
+            new_mint_account.clone(),
+            new_mint_authority_account.clone(),
+            user_wallet_account.clone(),
+            user_wallet_account.clone(),
+            user_token_account.clone(),
+            user_wallet_account.clone(),
+            metadata_account.clone(),
+            metadata_mint_account.clone(),
+        ],
+        &[],
+    )?;
+
+    Ok(())
 }
 
 /// Burn tokens
@@ -104,10 +198,33 @@ pub fn close_token_account<'a>(
 }
 
 /// transfer all the SOL from source to receiver
-pub fn empty_account_balance(source: &AccountInfo, receiver: &AccountInfo) -> Result<(), ProgramError> {
+pub fn empty_account_balance(
+    source: &AccountInfo,
+    receiver: &AccountInfo,
+) -> Result<(), ProgramError> {
     let mut from = source.try_borrow_mut_lamports()?;
     let mut to = receiver.try_borrow_mut_lamports()?;
     **to += **from;
     **from = 0;
     Ok(())
+}
+
+/// SPL transfer instruction.
+pub fn spl_token_transfer<'a>(
+    source: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<(), ProgramError> {
+    let ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        source.key,
+        destination.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
 }

@@ -1,7 +1,8 @@
 //! Instruction types
+#![allow(missing_docs)]
 
 use crate::{
-    find_proving_process_program_address,
+    find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
     state::{ActionOnProve, DistributionType},
 };
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -10,6 +11,19 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar,
 };
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct AddCardToPackArgs {
+    /// How many instances of this card exists in all packs
+    pub max_supply: Option<u32>,
+    /// Fixed number / probability-based
+    pub probability_type: DistributionType,
+    /// Based on above property it's fixed number to receive or probability
+    pub probability: u64,
+    /// Index
+    pub index: u32,
+}
 
 /// Initialize a PackSet arguments
 #[repr(C)]
@@ -60,7 +74,7 @@ pub struct EditPackVoucherArgs {
 }
 
 /// Instruction definition
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum NFTPacksInstruction {
     /// InitPack
     ///
@@ -95,7 +109,7 @@ pub enum NFTPacksInstruction {
     /// - max_supply	Option<u32>
     /// - probability_type	enum[fixed number, probability based]
     /// - probability	u64
-    AddCardToPack,
+    AddCardToPack(AddCardToPackArgs),
 
     /// AddVoucherToPack
     ///
@@ -162,6 +176,14 @@ pub enum NFTPacksInstruction {
     /// - signer            user_wallet
     /// - read, write       pack_card (PDA, [pack, 'card', index])
     /// - write             user_token_acc (user token account ot hold new minted edition)
+    /// - read              new_metadata_acc
+    /// - read              new_edition_acc
+    /// - read              master_edition_acc
+    /// - read              new_mint_account
+    /// - read              new_mint_authority_acc
+    /// - read              metadata_acc
+    /// - read              metadata_mint_acc
+    /// - read              edition_acc
     ClaimPack,
 
     /// TransferPackAuthority
@@ -283,6 +305,49 @@ pub fn init_pack(
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::InitPack(args), accounts)
 }
 
+/// Create `ClaimPack` instruction
+pub fn claim_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    user_wallet: &Pubkey,
+    user_token: &Pubkey,
+    new_metadata: &Pubkey,
+    new_edition: &Pubkey,
+    master_edition: &Pubkey,
+    new_mint: &Pubkey,
+    new_mint_authority: &Pubkey,
+    metadata: &Pubkey,
+    metadata_mint: &Pubkey,
+    edition: &Pubkey,
+    index: u32,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(pack_card, false),
+        AccountMeta::new(*user_token, false),
+        AccountMeta::new(*new_metadata, false),
+        AccountMeta::new(*new_edition, false),
+        AccountMeta::new(*master_edition, false),
+        AccountMeta::new(*new_mint, false),
+        AccountMeta::new(*new_mint_authority, false),
+        AccountMeta::new(*metadata, false),
+        AccountMeta::new(*metadata_mint, false),
+        AccountMeta::new(*edition, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(randomness_oracle_program::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
+}
+
 /// Create `Activate` instruction
 pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
     let accounts = vec![
@@ -371,7 +436,12 @@ pub fn transfer_minting_authority(
 }
 
 /// Create `DeletePack` instruction
-pub fn delete_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey, refunder: &Pubkey) -> Instruction {
+pub fn delete_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new_readonly(*authority, true),
@@ -434,6 +504,42 @@ pub fn edit_pack_voucher(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::EditPackVoucher(args),
+        accounts,
+    )
+}
+
+/// Creates 'AddCardToPack' instruction.
+#[allow(clippy::too_many_arguments)]
+pub fn add_card_to_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    master_edition: &Pubkey,
+    master_metadata: &Pubkey,
+    mint: &Pubkey,
+    source: &Pubkey,
+    token_account: &Pubkey,
+    args: AddCardToPackArgs,
+) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, args.index);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(pack_card, false),
+        AccountMeta::new(*authority, true),
+        AccountMeta::new_readonly(*master_edition, false),
+        AccountMeta::new_readonly(*master_metadata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new(*source, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new(program_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::AddCardToPack(args),
         accounts,
     )
 }

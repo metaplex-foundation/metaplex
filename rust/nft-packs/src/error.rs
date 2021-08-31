@@ -16,6 +16,14 @@ pub enum NFTPacksError {
     #[error("Total packs amount should be more then 0")]
     WrongTotalPacksAmount,
 
+    /// Proved vouchers mismatch pack vourchers
+    #[error("Proved vouchers mismatch pack vourchers")]
+    ProvedVouchersMismatchPackVouchers,
+
+    /// Pack is already open
+    #[error("Pack is already open")]
+    PackIsAlreadyOpen,
+
     /// NFT pack set not fully configured
     #[error("NFT pack set not fully configured")]
     PackSetNotConfigured,
@@ -92,11 +100,13 @@ pub enum NFTPacksError {
     #[error("Number NFTs to open pack should be greater then zero")]
     WrongNumberToOpen,
 }
+
 impl From<NFTPacksError> for ProgramError {
     fn from(e: NFTPacksError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
+
 impl<T> DecodeError<T> for NFTPacksError {
     fn type_of() -> &'static str {
         "NFTPacksError"
