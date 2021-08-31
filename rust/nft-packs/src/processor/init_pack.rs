@@ -6,7 +6,6 @@ use crate::{
     state::{InitPackSetParams, PackSet},
     utils::*,
 };
-use borsh::BorshSerialize;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -29,9 +28,8 @@ pub fn init_pack(
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
-    assert_rent_exempt(&rent, &pack_set_account)?;
-
-    assert_signer(&authority_account)?;
+    assert_rent_exempt(rent, pack_set_account)?;
+    assert_signer(authority_account)?;
 
     if args.total_packs == 0 {
         return Err(NFTPacksError::WrongTotalPacksAmount.into());
@@ -51,7 +49,7 @@ pub fn init_pack(
         mutable: args.mutable,
     });
 
-    pack_set
-        .serialize(&mut *pack_set_account.data.borrow_mut())
-        .map_err(|e| e.into())
+    PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
+
+    Ok(())
 }

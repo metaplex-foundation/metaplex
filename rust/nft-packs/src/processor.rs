@@ -1,14 +1,32 @@
 //! Program state processor
 
-use crate::{error::NFTPacksError, instruction::NFTPacksInstruction};
+use crate::instruction::NFTPacksInstruction;
+use activate::activate_pack;
 use borsh::BorshDeserialize;
+use change_authority::{transfer_authority, AuthorityToChange};
+use claim_pack::claim_pack;
+use deactivate::deactivate_pack;
+use delete_pack::delete_pack;
+use edit_pack::edit_pack;
+use edit_pack_card::edit_pack_card;
 use init_pack::init_pack;
-use solana_program::{
-    account_info::next_account_info, account_info::AccountInfo, entrypoint::ProgramResult, msg,
-    pubkey::Pubkey,
-};
+use prove_ownership::prove_ownership;
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
+pub mod activate;
+pub mod change_authority;
+pub mod claim_pack;
+pub mod deactivate;
+pub mod delete_pack;
+pub mod edit_pack;
+pub mod edit_pack_card;
+pub mod edit_pack_voucher;
+
+use add_card_to_pack::*;
+
+pub mod add_card_to_pack;
 pub mod init_pack;
+pub mod prove_ownership;
 
 /// Program state handler.
 pub struct Processor {}
@@ -19,43 +37,48 @@ impl Processor {
         accounts: &[AccountInfo],
         input: &[u8],
     ) -> ProgramResult {
+        println!("test4");
         let instruction = NFTPacksInstruction::try_from_slice(input)?;
         match instruction {
             NFTPacksInstruction::InitPack(args) => {
                 msg!("Instruction: InitPack");
                 init_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddCardToPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::AddCardToPack(args) => {
+                msg!("Instruction: AddCardToPack");
+                add_card_to_pack(program_id, accounts, args)
             }
             NFTPacksInstruction::AddVoucherToPack => {
                 msg!("");
                 unimplemented!()
             }
             NFTPacksInstruction::Activate => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: Activate");
+                activate_pack(program_id, accounts)
             }
             NFTPacksInstruction::Deactivate => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: Deactivate");
+                deactivate_pack(program_id, accounts)
             }
             NFTPacksInstruction::ProveOwnership => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: ProveOwnership");
+                prove_ownership(program_id, accounts)
             }
             NFTPacksInstruction::ClaimPack => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: ClaimPack");
+                claim_pack(program_id, accounts)
             }
-            NFTPacksInstruction::TransferAuthority => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::TransferPackAuthority => {
+                msg!("Instruction: TransferPackAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::PackAuthority)
+            }
+            NFTPacksInstruction::TransferMintingAuthority => {
+                msg!("Instruction: TransferMintingAuthority");
+                transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
             }
             NFTPacksInstruction::DeletePack => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: DeletePack");
+                delete_pack(program_id, accounts)
             }
             NFTPacksInstruction::DeletePackCard => {
                 msg!("");
@@ -65,15 +88,15 @@ impl Processor {
                 msg!("");
                 unimplemented!()
             }
-            NFTPacksInstruction::EditPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::EditPack(args) => {
+                msg!("Instruction: EditPack");
+                edit_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackCard => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::EditPackCard(args) => {
+                msg!("Instruction: EditPackCard");
+                edit_pack_card(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackVoucher => {
+            NFTPacksInstruction::EditPackVoucher(args) => {
                 msg!("");
                 unimplemented!()
             }
