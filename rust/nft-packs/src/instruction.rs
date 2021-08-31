@@ -272,7 +272,7 @@ pub fn add_card_to_pack(
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(pack_card, false),
-        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*authority, true),
         AccountMeta::new_readonly(*master_edition, false),
         AccountMeta::new_readonly(*master_metadata, false),
         AccountMeta::new_readonly(*mint, false),

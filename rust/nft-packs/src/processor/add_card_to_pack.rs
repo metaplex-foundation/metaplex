@@ -6,7 +6,14 @@ use crate::{
     state::{InitPackCardParams, PackCard, PackSet},
     utils::*,
 };
-use solana_program::{account_info::{next_account_info, AccountInfo}, entrypoint::ProgramResult, msg, program_pack::Pack, pubkey::Pubkey, sysvar::{rent::Rent, Sysvar}};
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint::ProgramResult,
+    msg,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    sysvar::{rent::Rent, Sysvar},
+};
 use spl_token::state::Account;
 use spl_token_metadata::{
     error::MetadataError,
@@ -48,9 +55,6 @@ pub fn add_card_to_pack(
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
 
-    let mut pack_card = PackCard::unpack_unchecked(&pack_card_info.data.borrow_mut())?;
-    assert_uninitialized(&pack_card)?;
-
     let (pack_card_pubkey, bump_seed) =
         find_pack_card_program_address(program_id, pack_set_info.key, index);
     assert_account_key(pack_card_info, &pack_card_pubkey)?;
@@ -62,7 +66,7 @@ pub fn add_card_to_pack(
         &[bump_seed],
     ];
 
-    msg!("Creating pack card account");
+    msg!("Creating pack card account...");
     create_account::<PackCard>(
         program_id,
         authority_info.clone(),
@@ -70,6 +74,9 @@ pub fn add_card_to_pack(
         &[signers_seeds],
         rent,
     )?;
+
+    let mut pack_card = PackCard::unpack_unchecked(&pack_card_info.data.borrow_mut())?;
+    assert_uninitialized(&pack_card)?;
 
     let token_metadata_program_id = spl_token_metadata::id();
 
