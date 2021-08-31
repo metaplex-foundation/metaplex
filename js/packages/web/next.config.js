@@ -28,6 +28,7 @@ module.exports = withPlugins(plugins, {
     ignoreDuringBuilds: true,
   },
   env: {
+    NEXT_PUBLIC_ARWEAVE_CDN: process.env.ARWEAVE_CDN,
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
       process.env.STORE_OWNER_ADDRESS ||
       process.env.REACT_APP_STORE_OWNER_ADDRESS_ADDRESS,
