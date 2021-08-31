@@ -91,6 +91,26 @@ pub fn spl_initialize_mint<'a>(
     invoke(&ix, &[mint, rent])
 }
 
+/// SPL transfer instruction.
+pub fn spl_token_transfer<'a>(
+    source: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<(), ProgramError> {
+    let ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        source.key,
+        destination.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
+}
+
 /// Create account (PDA)
 #[allow(clippy::too_many_arguments)]
 pub fn create_account<'a, S: Pack>(
@@ -207,24 +227,4 @@ pub fn empty_account_balance(
     **to += **from;
     **from = 0;
     Ok(())
-}
-
-/// SPL transfer instruction.
-pub fn spl_token_transfer<'a>(
-    source: AccountInfo<'a>,
-    destination: AccountInfo<'a>,
-    authority: AccountInfo<'a>,
-    amount: u64,
-    signers_seeds: &[&[&[u8]]],
-) -> Result<(), ProgramError> {
-    let ix = spl_token::instruction::transfer(
-        &spl_token::id(),
-        source.key,
-        destination.key,
-        authority.key,
-        &[],
-        amount,
-    )?;
-
-    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
 }
