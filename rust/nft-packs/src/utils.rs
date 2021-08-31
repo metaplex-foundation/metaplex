@@ -5,11 +5,20 @@ use solana_program::{
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
-    program_pack::Pack,
+    program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
     rent::Rent,
     system_instruction,
 };
+
+/// Assert unitialized
+pub fn assert_uninitialized<T: IsInitialized>(account: &T) -> ProgramResult {
+    if account.is_initialized() {
+        Err(ProgramError::AccountAlreadyInitialized)
+    } else {
+        Ok(())
+    }
+}
 
 /// Assert signer
 pub fn assert_signer(account: &AccountInfo) -> ProgramResult {
@@ -45,6 +54,23 @@ pub fn assert_rent_exempt(rent: &Rent, account_info: &AccountInfo) -> ProgramRes
     } else {
         Ok(())
     }
+}
+
+/// Initialize SPL account instruction.
+pub fn spl_initialize_account<'a>(
+    account: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::initialize_account(
+        &spl_token::id(),
+        account.key,
+        mint.key,
+        authority.key,
+    )?;
+
+    invoke(&ix, &[account, mint, authority, rent])
 }
 
 /// Initialize SPL mint instruction
@@ -181,4 +207,24 @@ pub fn empty_account_balance(
     **to += **from;
     **from = 0;
     Ok(())
+}
+
+/// SPL transfer instruction.
+pub fn spl_token_transfer<'a>(
+    source: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    authority: AccountInfo<'a>,
+    amount: u64,
+    signers_seeds: &[&[&[u8]]],
+) -> Result<(), ProgramError> {
+    let ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        source.key,
+        destination.key,
+        authority.key,
+        &[],
+        amount,
+    )?;
+
+    invoke_signed(&ix, &[source, destination, authority], signers_seeds)
 }

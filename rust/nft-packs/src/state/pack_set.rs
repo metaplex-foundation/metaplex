@@ -63,6 +63,11 @@ impl PackSet {
         self.mutable = params.mutable;
         self.pack_state = PackSetState::NotActivated;
     }
+
+    /// Increase pack cards counter
+    pub fn add_pack_card(&mut self) {
+        self.pack_cards += 1;
+    }
 }
 
 /// Initialize a PackSet params
