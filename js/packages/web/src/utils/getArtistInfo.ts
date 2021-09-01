@@ -1,21 +1,22 @@
 import names from '../config/userNames.json';
 
-type ArtistInfo = Partial<{
-  name: string;
-  link: string;
-  image: string;
-  about: string;
-  description: string;
-}>;
+interface ArtistInfo {
+  name?: string;
+  link?: string;
+  image?: string;
+  about?: string;
+  description?: string;
+}
 
-type AddressField = { address: string };
-const namesList = names as Record<string, ArtistInfo>;
+const NAME_LIST: Record<string, ArtistInfo> = names;
 
 export const getArtistInfo = (address: string) => {
-  return namesList[address] || ({} as ArtistInfo);
+  return NAME_LIST[address] || ({} as ArtistInfo);
 };
 
-export const populateArtistInfo = <T extends AddressField>(artist: T) => {
-  const nameInfo = getArtistInfo(artist.address);
+export const populateArtistInfo = <T extends { address?: string | null }>(
+  artist: T,
+) => {
+  const nameInfo = artist.address ? getArtistInfo(artist.address) : '';
   return { ...nameInfo, ...artist };
 };

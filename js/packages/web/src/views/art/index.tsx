@@ -13,6 +13,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { useQueryArtwork } from '../../hooks';
 import { useExtendedArt } from '../../hooks/useArt2';
+import { useGetArtworksByIdQuery } from '../../generated/graphql';
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ArtContent } from '../../components/ArtContent/next';

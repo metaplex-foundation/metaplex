@@ -1,44 +1,12 @@
-import { gql } from 'urql';
+import { useGetArtworksQuery } from '../graphql';
 import { createQuery } from './createQuery';
-import {
-  ArtworkFragment,
-  ArtworkType,
-  processArtwork,
-} from './useQueryArtwork';
+import { processArtwork } from './useQueryArtwork';
 
-interface ArtworksQuery {
-  artworks: ArtworkType[];
-}
-
-const artworksQuery = gql<
-  ArtworksQuery,
-  {
-    storeId: string;
-    creatorId?: string;
-    ownerId?: string;
-    onlyVerified?: boolean;
-  }
->`
-  query getArtworks(
-    $storeId: String!
-    $creatorId: String
-    $ownerId: String
-    $onlyVerified: Boolean
-  ) {
-    artworks(
-      filter: {
-        storeId: $storeId
-        creatorId: $creatorId
-        ownerId: $ownerId
-        onlyVerified: $onlyVerified
-      }
-    ) {
-      ...ArtworkFragment
-    }
-  }
-  ${ArtworkFragment}
-`;
-
-export const useQueryArtworks = createQuery(artworksQuery, ({ artworks }) => ({
-  artworks: artworks.map(processArtwork),
-}));
+export const useQueryArtworks = createQuery(
+  useGetArtworksQuery,
+  ({ artworks }) => ({
+    artworks: artworks?.map(artwork =>
+      artwork ? processArtwork(artwork) : undefined,
+    ),
+  }),
+);

@@ -20,7 +20,8 @@
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",
-    "test": "lerna run test --concurrency 1 --stream"
+    "test": "lerna run test --concurrency 1 --stream",
+    "grapqhl:codegen": "lerna run grapqhl:codegen --scope web"
   },
   "lint-staged": {
     "packages/*/{src,test}/**/*.ts": [

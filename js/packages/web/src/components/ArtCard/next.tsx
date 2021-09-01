@@ -3,7 +3,9 @@ import { Card, CardProps, Button, Badge } from 'antd';
 import { ArtContent } from './../ArtContent/next';
 import { ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
-import { Artwork } from '../../hooks';
+import { Artwork } from '../../graphql';
+import { typeCast } from '../../utils/types';
+
 
 export interface ArtCardProps extends CardProps {
   art: Partial<Artwork>;
@@ -25,7 +27,7 @@ export const ArtCard = (props: ArtCardProps) => {
   } = props;
 
   const badge = getBadge(art);
-  const hasUnverifiedCreator = art?.creators?.some(c => !c.verified);
+  const hasUnverifiedCreator = art?.creators?.some(c => !c?.verified);
 
   const closeHandler: MouseEventHandler = e => {
     e.stopPropagation();
@@ -63,7 +65,7 @@ export const ArtCard = (props: ArtCardProps) => {
         title={art.title || ' '}
         description={
           <>
-            <MetaAvatar creators={art?.creators} size={32} />
+            <MetaAvatar creators={typeCast(art?.creators ?? [])} size={32} />
             <div className="edition-badge">{badge}</div>
           </>
         }

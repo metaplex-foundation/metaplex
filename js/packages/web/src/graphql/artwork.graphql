@@ -1,0 +1,40 @@
+fragment ArtworkFragment on Artwork {
+  pubkey
+  uri
+  title
+  creators {
+    address
+    share
+    verified
+  }
+  mint
+  sellerFeeBasisPoints
+  type
+  supply
+  maxSupply
+  edition
+}
+
+query getArtworks(
+  $storeId: String!
+  $creatorId: String
+  $ownerId: String
+  $onlyVerified: Boolean
+) {
+  artworks(
+    filter: {
+      storeId: $storeId
+      creatorId: $creatorId
+      ownerId: $ownerId
+      onlyVerified: $onlyVerified
+    }
+  ) {
+    ...ArtworkFragment
+  }
+}
+
+query getArtworksById($storeId: String!, $artId: String!) {
+  artwork(artId: $artId) {
+    ...ArtworkFragment
+  }
+}

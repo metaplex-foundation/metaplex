@@ -1,11 +1,13 @@
 import {
-  useQuery,
   TypedDocumentNode,
   CombinedError,
   OperationContext,
+  UseQueryArgs,
+  UseQueryResponse,
 } from 'urql';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '@oyster/common/dist/lib/contexts/index';
+import { typeCast } from '../utils/types';
 
 type Query<Data = any, Variables = object> =
   | string
@@ -27,40 +29,38 @@ export type QueryResultData<QueryHook extends () => any> = NonNullable<
   ReturnType<QueryHook>[0]
 >;
 
-export type QueryResultField<QueryHook extends () => any, T extends string> =
-  QueryResultData<QueryHook>[T];
+export type QueryResultField<
+  QueryHook extends (...args: any[]) => any,
+  T extends string,
+> = QueryResultData<QueryHook>[T];
 
-export function createQuery<Data = any, Variables = object>(
-  query: Query<Data, Variables>,
-): QueryHook<Data, Variables>;
-export function createQuery<Data = any, Variables = object, Result = object>(
-  query: Query<Data, Variables>,
-  fn: ProcessFn<Data, Result>,
-): QueryHook<Result, Variables>;
-
-export function createQuery<Data = any, Variables = object, Result = object>(
-  query: Query<Data, Variables>,
-  postProcess?: ProcessFn<Data, Result>,
-): QueryHook<Data, Variables> {
-  return variables => {
+export function createQuery<
+  TVars extends { storeId: string },
+  TResult,
+  TOutput = TResult,
+>(
+  useQueryFn: (
+    opts: Omit<UseQueryArgs<TVars>, 'query'>,
+  ) => UseQueryResponse<TResult>,
+  postProcess?: (args: TResult) => TOutput,
+) {
+  return (variables?: Omit<TVars, 'storeId'>) => {
     const { storeAddress } = useStore();
-
-    const [result, reexecuteQuery] = useQuery({
-      query,
-      variables: { storeId: storeAddress!, ...variables },
+    const [result, reexecuteQuery] = useQueryFn({
+      variables: typeCast({ storeId: storeAddress!, ...variables }),
       pause: !storeAddress,
     });
 
     const resultData = useMemo(() => {
       if (result.data && postProcess) {
-        return postProcess(result.data) as unknown as Data;
+        return postProcess(result.data);
       }
       return result.data;
     }, [result.data, postProcess]);
 
     // TODO: throw error if storeAddress is not configured
     return [
-      resultData as Data | undefined,
+      resultData as TOutput | undefined,
       {
         fetching: result.fetching || !storeAddress,
         error: result.error,

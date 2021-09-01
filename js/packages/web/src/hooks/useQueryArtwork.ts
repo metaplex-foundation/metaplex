@@ -1,72 +1,31 @@
-import { gql } from 'urql';
 import { populateArtistInfo } from '../utils/getArtistInfo';
-import { createQuery, QueryResultField } from './createQuery';
+import { createQuery } from './createQuery';
+import { Artwork, useGetArtworksByIdQuery } from '../../src/graphql';
 
-export type ArtworkType = {
-  pubkey: string; // PublicKey
-  type: number; // ArtType
-  title: string;
-  uri: string;
-  creators: ArtworkCreatorType[] | null;
-  edition: string | null; // BN
-  maxSupply: string | null; // BN
-  mint: string | null; // PublicKey
-  sellerFeeBasisPoints: number;
-  supply: string | null; // BN
-};
-
-type ArtworkCreatorType = {
-  address: string; // PublicKey
-  share: number;
-  verified: boolean;
-};
-
-interface ArtworkQuery {
-  artwork: ArtworkType;
-}
-
-export const ArtworkFragment = gql`
-  fragment ArtworkFragment on Artwork {
-    pubkey
-    uri
-    title
-    creators {
-      address
-      share
-      verified
-    }
-    mint
-    sellerFeeBasisPoints
-    type
-    supply
-    maxSupply
-    edition
-  }
-`;
-
-const artworkQuery = gql<ArtworkQuery, { storeId: string; artId: string }>`
-  query getArtworks($artId: String!) {
-    artwork(artId: $artId) {
-      ...ArtworkFragment
-    }
-  }
-  ${ArtworkFragment}
-`;
-
-export const useQueryArtwork = createQuery(artworkQuery, ({ artwork }) => ({
-  artwork: processArtwork(artwork),
-}));
-
-export const processArtwork = (art: ArtworkQuery['artwork']) => ({
+export const processArtwork = (art: Artwork) => ({
   ...art,
-  creators: art.creators?.map(populateArtistInfo).sort(sortCreators),
+  creators: art.creators
+    ?.map(p => (p ? populateArtistInfo(p) : undefined))
+    .filter(p => p)
+    .sort((a, b) => sortCreators(a!, b!)),
 });
 
-const sortCreators = <T extends { share: number; name?: string }>(
+export const useQueryArtwork = createQuery(
+  useGetArtworksByIdQuery,
+  ({ artwork }) =>
+    artwork
+      ? {
+          artwork: processArtwork(artwork),
+        }
+      : null,
+);
+
+const sortCreators = <T extends { share?: number; name?: string }>(
   a: T,
   b: T,
 ) => {
-  return b.share - a.share || (a.name || '').localeCompare(b.name || '');
+  return (
+    (b.share ?? 0) - (a.share ?? 0) ||
+    (a.name || '').localeCompare(b.name || '')
+  );
 };
-
-export type Artwork = QueryResultField<typeof useQueryArtwork, 'artwork'>;
