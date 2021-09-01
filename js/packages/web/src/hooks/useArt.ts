@@ -15,6 +15,16 @@ import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
 import { pubkeyToString } from '../utils/pubkeyToString';
 
+const ARWEAVE_CDN = process.env.NEXT_PUBLIC_ARWEAVE_CDN;
+
+const routeCDN = (uri: string) => {
+  if (ARWEAVE_CDN) {
+    return uri.replace('https://arweave.net', ARWEAVE_CDN);
+  }
+
+  return uri;
+};
+
 const metadataToArt = (
   info: Metadata | undefined,
   editions: Record<string, ParsedAccount<Edition>>,
@@ -169,19 +179,6 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
   useEffect(() => {
     if (inView && id && !data) {
-      const USE_CDN = false;
-      const routeCDN = (uri: string) => {
-        let result = uri;
-        if (USE_CDN) {
-          result = uri.replace(
-            'https://arweave.net/',
-            'https://coldcdn.com/api/cdn/bronil/',
-          );
-        }
-
-        return result;
-      };
-
       if (account && account.info.data.uri) {
         const uri = routeCDN(account.info.data.uri);
 
