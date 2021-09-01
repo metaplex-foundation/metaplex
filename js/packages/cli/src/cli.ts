@@ -389,11 +389,12 @@ program
             [],
             'single',
           );
+          console.info('transaction for arweave payment:', tx);
 
           // data.append('tags', JSON.stringify(tags));
           // payment transaction
           const data = new FormData();
-          data.append('transaction', tx);
+          data.append('transaction', tx['txid']);
           data.append('env', ENV);
           data.append('file[]', fs.createReadStream(image), `image.png`);
           data.append('file[]', manifestBuffer, 'metadata.json');
