@@ -16,7 +16,7 @@ Metaplex is comprised of two core components: an on-chain program, and a self-ho
 
 If you want to deep dive on the Architecture, you can do so here:
 
-https://www.notion.so/Metaplex-Developer-Guide-afefbc19841744c28587ab948a08cfac
+https://docs.metaplex.com/
 
 ## Installing
 
