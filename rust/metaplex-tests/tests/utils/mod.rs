@@ -27,15 +27,10 @@ use solana_sdk::{
 use spl_token::state::Mint;
 
 pub fn nft_packs_program_test() -> ProgramTest {
-    let mut program = ProgramTest::new(
-        "metaplex_nft_packs",
-        metaplex_nft_packs::id(),
-        processor!(metaplex_nft_packs::processor::Processor::process_instruction),
-    );
+    let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
     program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
     program
 }
-
 
 pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {
     context
@@ -57,11 +52,11 @@ pub async fn mint_tokens(
     account: &Pubkey,
     amount: u64,
     owner: &Pubkey,
-    additional_signer: Option<&Keypair>,
+    additional_signers: Option<Vec<&Keypair>>,
 ) -> transport::Result<()> {
     let mut signing_keypairs = vec![&context.payer];
-    if let Some(signer) = additional_signer {
-        signing_keypairs.push(signer);
+    if let Some(signers) = additional_signers {
+        signing_keypairs.extend(signers)
     }
 
     let tx = Transaction::new_signed_with_payer(

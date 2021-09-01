@@ -5,7 +5,6 @@ use metaplex_nft_packs::{
     state::{AccountType, DistributionType},
 };
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
 use utils::*;
 
 async fn setup() -> (
@@ -51,20 +50,7 @@ async fn setup() -> (
         .await
         .unwrap();
 
-    let payer_keypair = context.payer.to_bytes();
-    let payer = Keypair::from_bytes(&payer_keypair).unwrap();
-
     let user = add_user(&mut context, &test_master_edition).await.unwrap();
-    mint_tokens(
-        &mut context,
-        &test_metadata.mint.pubkey(),
-        &user.token_account,
-        1,
-        &user.owner.pubkey(),
-        Some(vec![&payer]),
-    )
-    .await
-    .unwrap();
 
     (
         context,
@@ -79,7 +65,7 @@ async fn setup() -> (
 async fn success() {
     let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
 
-    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let test_pack_card = TestPackCard::new(&test_pack_set, 0);
     test_pack_set
         .add_card(
             &mut context,
