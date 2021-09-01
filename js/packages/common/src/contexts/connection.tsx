@@ -159,7 +159,7 @@ export function ConnectionProvider({
   );
 }
 
-const CACHE_ENDPOINT = ''; //TODO: Give this a value
+const CACHE_ENDPOINT = 'http://localhost:2999/';
 
 interface ConnectionProxyConfig {
   connection: Connection;
@@ -173,16 +173,14 @@ interface ConnectionProxyConfig {
 }
 
 export function getConnectionProxy() {
-  let [connectionProxy, setConnectionProxy] = useState(
-    new Connection(DEFAULT, 'recent'),
-  );
-  useEffect(() => {
+  let connectionProxy = new Connection(DEFAULT, 'recent');
+  (() => {
     const getTheProxy = async () => {
       let proxy = await ConnectionProxy(DEFAULT, CACHE_ENDPOINT, 'recent');
-      setConnectionProxy(proxy);
+      connectionProxy = proxy;
     };
     getTheProxy();
-  }, []);
+  })();
   return connectionProxy;
 }
 
