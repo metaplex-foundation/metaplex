@@ -8,6 +8,23 @@ import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 
+const menu = (
+  <Menu>
+    <Menu.Item>
+      <Link to={`/art/create`}>
+        <Button className="app-btn">Create Single</Button>
+      </Link>
+    </Menu.Item>
+
+    <Menu.Item>
+      <Link to={`/art/create-batch`}>
+        <Button className="app-btn">Create Batch</Button>
+      </Link>
+    </Menu.Item>
+  </Menu>
+);
+
+
 const UserActions = () => {
   const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
@@ -28,9 +45,9 @@ const UserActions = () => {
             <Button className="app-btn">Bids</Button>
           </Link> */}
           {canCreate ? (
-            <Link to={`/art/create`}>
-              <Button className="app-btn">Create</Button>
-            </Link>
+            <Dropdown overlay={menu} placement="bottomLeft">
+              <Button>Create</Button>
+            </Dropdown>
           ) : null}
           <Link to={`/auction/create/0`}>
             <Button className="connector" type="primary">
