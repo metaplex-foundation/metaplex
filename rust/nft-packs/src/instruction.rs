@@ -15,7 +15,7 @@ use solana_program::{
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddCardToPackArgs {
-    /// How many instances of this card exists in all packs
+    /// How many instances of this card will exists in all packs
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
     pub probability_type: DistributionType,
@@ -23,6 +23,17 @@ pub struct AddCardToPackArgs {
     pub probability: u64,
     /// Index
     pub index: u32,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct AddVoucherToPackArgs {
+    /// How many instances of this voucher will exists in all packs
+    pub max_supply: Option<u32>,
+    /// How many vouchers of this type is required to open a pack
+    pub number_to_open: u32,
+    /// Burn / Redeem
+    pub action_on_prove: ActionOnProve,
 }
 
 /// Initialize a PackSet arguments
@@ -103,7 +114,11 @@ pub enum NFTPacksInstruction {
     /// - signer                        authority
     /// - read                          master_edition
     /// - read                          master_metadata
+    /// - read                          mint
+    /// - write                         source
     /// - write                         token_account (program account to hold MasterEdition token)
+    /// - read                          program_authority
+    /// - read                          rent
     ///
     /// Parameters:
     /// - max_supply	Option<u32>
@@ -122,13 +137,17 @@ pub enum NFTPacksInstruction {
     /// - signer                        authority
     /// - read                          master_edition
     /// - read                          master_metadata
+    /// - read                          mint
+    /// - write                         source
     /// - write                         token_account (program account to hold MasterEdition token)
+    /// - read                          program_authority
+    /// - read                          rent
     ///
     /// Parameters:
     /// - max_supply	Option<u32>
     /// - number_to_open	u32
     /// - action_on_prove	enum[burn, redeem]
-    AddVoucherToPack,
+    AddVoucherToPack(AddVoucherToPackArgs),
 
     /// Activate
     ///
@@ -634,6 +653,42 @@ pub fn add_card_to_pack(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::AddCardToPack(args),
+        accounts,
+    )
+}
+
+/// Creates `AddVoucherToPack` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn add_voucher_to_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_voucher: &Pubkey,
+    authority: &Pubkey,
+    master_edition: &Pubkey,
+    master_metadata: &Pubkey,
+    mint: &Pubkey,
+    source: &Pubkey,
+    token_account: &Pubkey,
+    args: AddVoucherToPackArgs,
+) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(*pack_voucher, false),
+        AccountMeta::new(*authority, true),
+        AccountMeta::new_readonly(*master_edition, false),
+        AccountMeta::new_readonly(*master_metadata, false),
+        AccountMeta::new_readonly(*mint, false),
+        AccountMeta::new(*source, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new(program_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::AddVoucherToPack(args),
         accounts,
     )
 }

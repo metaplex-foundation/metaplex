@@ -50,6 +50,9 @@ pub struct PackCard {
 }
 
 impl PackCard {
+    /// Prefix used to generate account
+    pub const PREFIX: &'static str = "card";
+
     /// Initialize a PackCard
     pub fn init(&mut self, params: InitPackCardParams) {
         self.account_type = AccountType::PackCard;
