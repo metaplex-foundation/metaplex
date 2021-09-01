@@ -2,6 +2,8 @@
 
 use crate::instruction::NFTPacksInstruction;
 use activate::activate_pack;
+use add_card_to_pack::add_card_to_pack;
+use add_voucher_to_pack::add_voucher_to_pack;
 use borsh::BorshDeserialize;
 use change_authority::{transfer_authority, AuthorityToChange};
 use claim_pack::claim_pack;
@@ -11,6 +13,7 @@ use delete_pack_card::delete_pack_card;
 use delete_pack_voucher::delete_pack_voucher;
 use edit_pack::edit_pack;
 use edit_pack_card::edit_pack_card;
+use edit_pack_voucher::edit_pack_voucher;
 use init_pack::init_pack;
 use mint_edition::{mint_edition_with_card, mint_edition_with_voucher};
 use prove_ownership::prove_ownership;
@@ -26,10 +29,8 @@ pub mod delete_pack_voucher;
 pub mod edit_pack;
 pub mod edit_pack_card;
 pub mod edit_pack_voucher;
-
-use add_card_to_pack::*;
-
 pub mod add_card_to_pack;
+pub mod add_voucher_to_pack;
 pub mod init_pack;
 pub mod mint_edition;
 pub mod prove_ownership;
@@ -53,9 +54,9 @@ impl Processor {
                 msg!("Instruction: AddCardToPack");
                 add_card_to_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddVoucherToPack => {
-                msg!("");
-                unimplemented!()
+            NFTPacksInstruction::AddVoucherToPack(args) => {
+                msg!("Instruction: AddVoucherToPack");
+                add_voucher_to_pack(program_id, accounts, args)
             }
             NFTPacksInstruction::Activate => {
                 msg!("Instruction: Activate");
@@ -102,8 +103,8 @@ impl Processor {
                 edit_pack_card(program_id, accounts, args)
             }
             NFTPacksInstruction::EditPackVoucher(args) => {
-                msg!("");
-                unimplemented!()
+                msg!("Instruction: EditPackVoucher");
+                edit_pack_voucher(program_id, accounts, args)
             }
             NFTPacksInstruction::MintEditionWithCard => {
                 msg!("Instruction: MintEditionWithCard");
