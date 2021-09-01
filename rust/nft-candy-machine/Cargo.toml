@@ -1,0 +1,22 @@
+[package]
+name = "nft-candy-machine"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "nft_candy_machine"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.13.2"
+arrayref = "0.3.6"
+spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
+spl-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
+
