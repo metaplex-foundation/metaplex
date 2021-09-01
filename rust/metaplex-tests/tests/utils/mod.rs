@@ -5,6 +5,7 @@ mod external_price;
 mod master_edition_v2;
 mod metadata;
 mod pack_card;
+mod pack_voucher;
 mod pack_set;
 mod user;
 mod vault;
@@ -15,6 +16,7 @@ pub use external_price::TestExternalPrice;
 pub use master_edition_v2::TestMasterEditionV2;
 pub use metadata::TestMetadata;
 pub use pack_card::TestPackCard;
+pub use pack_voucher::TestPackVoucher;
 pub use pack_set::TestPackSet;
 pub use user::*;
 pub use vault::TestVault;
@@ -26,8 +28,12 @@ use solana_sdk::{
 };
 use spl_token::state::Mint;
 
-pub fn nft_packs_program_test() -> ProgramTest {
-    let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
+pub fn nft_packs_program_test<'a>() -> ProgramTest {
+    let mut program = ProgramTest::new(
+        "metaplex_nft_packs",
+        metaplex_nft_packs::id(),
+        None,
+    );
     program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
     program
 }

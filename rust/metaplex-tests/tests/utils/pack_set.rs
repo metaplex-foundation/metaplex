@@ -102,4 +102,49 @@ impl TestPackSet {
 
         context.banks_client.process_transaction(tx).await
     }
+
+    pub async fn add_voucher(
+        &self,
+        context: &mut ProgramTestContext,
+        test_pack_voucher: &TestPackVoucher,
+        test_master_edition: &TestMasterEditionV2,
+        test_metadata: &TestMetadata,
+        user: &User,
+        args: instruction::AddVoucherToPackArgs,
+    ) -> transport::Result<()> {
+        let rent = context.banks_client.get_rent().await.unwrap();
+
+        let tx = Transaction::new_signed_with_payer(
+            &[
+                system_instruction::create_account(
+                    &context.payer.pubkey(),
+                    &test_pack_voucher.token_account.pubkey(),
+                    rent.minimum_balance(Account::LEN),
+                    Account::LEN as u64,
+                    &spl_token::id(),
+                ),
+                instruction::add_voucher_to_pack(
+                    &metaplex_nft_packs::id(),
+                    &self.keypair.pubkey(),
+                    &test_pack_voucher.pubkey,
+                    &self.authority.pubkey(),
+                    &test_master_edition.pubkey,
+                    &test_metadata.pubkey,
+                    &test_master_edition.mint_pubkey,
+                    &user.token_account,
+                    &test_pack_voucher.token_account.pubkey(),
+                    args.clone(),
+                ),
+            ],
+            Some(&context.payer.pubkey()),
+            &[
+                &context.payer,
+                &test_pack_voucher.token_account,
+                &self.authority,
+            ],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
 }
