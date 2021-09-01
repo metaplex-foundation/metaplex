@@ -68,6 +68,11 @@ impl PackSet {
     pub fn add_pack_card(&mut self) {
         self.pack_cards += 1;
     }
+
+    /// Increase pack voucher counter
+    pub fn add_pack_voucher(&mut self) {
+        self.pack_vouchers += 1;
+    }
 }
 
 /// Initialize a PackSet params

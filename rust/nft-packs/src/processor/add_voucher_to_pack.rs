@@ -1,9 +1,9 @@
-//! Add card to pack instruction processing
+//! Add voucher to pack instruction processing
 
 use crate::{
-    find_pack_card_program_address, find_program_authority,
-    instruction::AddCardToPackArgs,
-    state::{InitPackCardParams, PackCard, PackSet},
+    find_pack_voucher_program_address, find_program_authority,
+    instruction::AddVoucherToPackArgs,
+    state::{InitPackVoucherParams, PackVoucher, PackSet},
     utils::*,
     math::SafeMath,
 };
@@ -22,15 +22,15 @@ use spl_token_metadata::{
     utils::{assert_derivation, assert_initialized},
 };
 
-/// Process AddCardToPack instruction
-pub fn add_card_to_pack(
+/// Process AddVoucherToPack instruction
+pub fn add_voucher_to_pack(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    args: AddCardToPackArgs,
+    args: AddVoucherToPackArgs,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_info = next_account_info(account_info_iter)?;
-    let pack_card_info = next_account_info(account_info_iter)?;
+    let pack_voucher_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
     let master_edition_info = next_account_info(account_info_iter)?;
     let master_metadata_info = next_account_info(account_info_iter)?;
@@ -46,41 +46,40 @@ pub fn add_card_to_pack(
     assert_owned_by(master_edition_info, &spl_token_metadata::id())?;
     assert_owned_by(master_metadata_info, &spl_token_metadata::id())?;
 
-    let AddCardToPackArgs {
+    let AddVoucherToPackArgs {
         max_supply,
-        probability_type,
-        probability,
-        index,
+        number_to_open,
+        action_on_prove,
     } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
 
-    // new pack card index
-    let index = pack_set.pack_cards.error_increment()?;
+    // new pack voucher index
+    let index = pack_set.pack_vouchers.error_increment()?;
 
-    let (pack_card_pubkey, bump_seed) =
-        find_pack_card_program_address(program_id, pack_set_info.key, index);
-    assert_account_key(pack_card_info, &pack_card_pubkey)?;
+    let (pack_voucher_pubkey, bump_seed) =
+        find_pack_voucher_program_address(program_id, pack_set_info.key, index);
+    assert_account_key(pack_voucher_info, &pack_voucher_pubkey)?;
 
     let signers_seeds = &[
         &pack_set_info.key.to_bytes()[..32],
-        PackCard::PREFIX.as_bytes(),
+        PackVoucher::PREFIX.as_bytes(),
         &index.to_be_bytes(),
         &[bump_seed],
     ];
 
     msg!("Creating pack card account...");
-    create_account::<PackCard>(
+    create_account::<PackVoucher>(
         program_id,
         authority_info.clone(),
-        pack_card_info.clone(),
+        pack_voucher_info.clone(),
         &[signers_seeds],
         rent,
     )?;
 
-    let mut pack_card = PackCard::unpack_unchecked(&pack_card_info.data.borrow_mut())?;
-    assert_uninitialized(&pack_card)?;
+    let mut pack_voucher = PackVoucher::unpack_unchecked(&pack_voucher_info.data.borrow_mut())?;
+    assert_uninitialized(&pack_voucher)?;
 
     let token_metadata_program_id = spl_token_metadata::id();
 
@@ -125,19 +124,19 @@ pub fn add_card_to_pack(
         &[],
     )?;
 
-    pack_card.init(InitPackCardParams {
+    pack_voucher.init(InitPackVoucherParams{
         pack_set: *pack_set_info.key,
         master: *master_edition_info.key,
         metadata: *master_metadata_info.key,
         token_account: *token_account_info.key,
         max_supply,
-        distribution_type: probability_type,
-        number_in_pack: probability,
+        number_to_open,
+        action_on_prove,
     });
 
-    pack_set.add_pack_card();
+    pack_set.add_pack_voucher();
 
-    PackCard::pack(pack_card, *pack_card_info.data.borrow_mut())?;
+    PackVoucher::pack(pack_voucher, *pack_voucher_info.data.borrow_mut())?;
     PackSet::pack(pack_set, *pack_set_info.data.borrow_mut())?;
 
     Ok(())
