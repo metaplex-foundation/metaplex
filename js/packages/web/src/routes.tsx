@@ -10,6 +10,7 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
+  BatchCreate,
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
@@ -25,6 +26,11 @@ export function Routes() {
               exact
               path="/analytics"
               component={() => <AnalyticsView />}
+            />
+            <Route
+              exact
+              path="/art/batch/:step_param?"
+              component={() => <BatchCreate />}
             />
             <Route
               exact
@@ -49,6 +55,7 @@ export function Routes() {
               path="/auction/:id"
               component={() => <AuctionView />}
             />
+
             <Route
               exact
               path="/auction/:id/billing"

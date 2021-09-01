@@ -3,6 +3,7 @@ const withLess = require('next-with-less');
 
 const assetPrefix = process.env.ASSET_PREFIX || '';
 
+
 const plugins = [
   [
     withLess,
@@ -34,6 +35,8 @@ module.exports = withPlugins(plugins, {
     NEXT_PUBLIC_STORE_ADDRESS: process.env.STORE_ADDRESS,
     NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
+    W1: process.env.W1,
+    W2: process.env.W2
   },
   async rewrites() {
     return [
