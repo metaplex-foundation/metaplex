@@ -17,13 +17,16 @@ import { MetaState, UpdateStateValueFunc } from './types';
 export const subscribeAccountsChange = (
   connection: Connection,
   all: boolean,
-  getState: () => MetaState,
+  getState: () => MetaState | undefined,
   setState: (v: MetaState) => void,
 ) => {
   const subscriptions: number[] = [];
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
     const state = getState();
+    if (!state) {
+      return;
+    }
     const nextState = makeSetter({ ...state })(prop, key, value);
     setState(nextState);
   };
@@ -57,8 +60,10 @@ export const subscribeAccountsChange = (
         async (prop, key, value) => {
           if (prop === 'metadataByMint') {
             const state = getState();
-            const nextState = await metadataByMintUpdater(value, state, all);
-            setState(nextState);
+            if (state) {
+              const nextState = await metadataByMintUpdater(value, state, all);
+              setState(nextState);
+            }
           } else {
             updateStateValue(prop, key, value);
           }

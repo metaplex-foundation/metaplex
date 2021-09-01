@@ -3,7 +3,6 @@ import {
   getAuctionState,
   AuctionViewState,
 } from '@oyster/common/dist/lib/models/auction';
-import { MetaplexApi } from '../api';
 import { NexusGenInputs } from '../generated/typings';
 import { Auction } from '../sourceTypes';
 import { wrapPubkey } from '../utils/mapInfo';
@@ -25,36 +24,35 @@ export const getAuctionById = (
 };
 
 export const getAuctionsByStoreId = (
-  state: MetaState,
+  { auctionManagersByAuction, auctions }: MetaState,
   storeId?: string | null,
 ): Auction[] => {
-  return Object.values(state.auctionManagersByAuction)
+  return Object.values(auctionManagersByAuction)
     .filter(manager => {
-      const auction = state.auctions[manager.info.auction];
+      const auction = auctions[manager.info.auction];
       return auction && (!storeId || manager.info.store === storeId);
     })
-    .map(manager => {
-      const auction = state.auctions[manager.info.auction];
+    .reduce((memo, manager) => {
+      const auction = auctions[manager.info.auction];
       if (auction) {
-        return {
+        memo[memo.length] = {
           ...wrapPubkey(auction),
           manager: wrapPubkey(manager),
         };
       }
-      return null;
-    })
-    .filter(Boolean);
+      return memo;
+    }, [] as Auction[]);
 };
 
 export const filterByState = (
   { state }: Pick<NexusGenInputs['AuctionsInput'], 'state'>,
-  api: MetaplexApi,
+  metastate: MetaState,
 ) => {
   const isResaleMint = (mint: ParsedAccount<Metadata>) =>
     mint.info.primarySaleHappened;
 
   const hasResaleMint = (auction: Auction) => {
-    return getAuctionMetadata(auction, api.state).some(isResaleMint);
+    return getAuctionMetadata(auction, metastate).some(isResaleMint);
   };
 
   if (state === 'resale') {
@@ -82,9 +80,9 @@ export const filterByState = (
 
 export const filterByParticipant = (
   { participantId }: Pick<NexusGenInputs['AuctionsInput'], 'participantId'>,
-  api: MetaplexApi,
+  state: MetaState,
 ) => {
-  const bidders = Object.values(api.state.bidderMetadataByAuctionAndBidder);
+  const bidders = Object.values(state.bidderMetadataByAuctionAndBidder);
   return (auction: Auction) => {
     return (
       !participantId ||

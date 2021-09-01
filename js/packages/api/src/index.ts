@@ -1,4 +1,4 @@
-import { MetaplexApi } from './api';
+import { MetaplexApiDataSource } from './api';
 import { inspect } from 'util';
 // import { Connection } from '@solana/web3.js';
 // import { loadAccounts } from '@oyster/common/dist/lib/contexts/meta/loadAccounts';
@@ -7,6 +7,10 @@ import { inspect } from 'util';
 
 const ownerId = '7DAjuKLx8yHgcqfvTXaPwx5pUhDpWrF9XoTbBgT2fHrm';
 const storeId = '54VX6zEFJB4X2fX1RmYQ4jRULtdAFzJcXhKQPYHVTxrR';
+
+function asyncCount<T>(data: Promise<T[]>) {
+  return data.then(d => d.length);
+}
 
 export const getData = async (): Promise<any> => {
   // const endpoint = ENDPOINTS[2].endpoint;
@@ -19,16 +23,17 @@ export const getData = async (): Promise<any> => {
 
   // return getOwnedMeta(userAccounts, state);
   // return state;
-  MetaplexApi.load(true);
-  const api = new MetaplexApi();
-  await api.initialize({ context: {} });
+
+  const source = new MetaplexApiDataSource();
+  const api = source.ENTRIES[0];
+
   const au = [
-    api.getAuctions({ storeId, state: 'live' }).length,
-    api.getAuctions({ storeId, state: 'resale' }).length,
-    api.getAuctions({ storeId, state: 'ended' }).length,
-    api.getAuctions({ storeId, state: 'all' }).length,
-    api.getAuctions({ storeId, participantId: ownerId }).length,
-  ];
+    api.getAuctions({ storeId, state: 'live' }),
+    api.getAuctions({ storeId, state: 'resale' }),
+    api.getAuctions({ storeId, state: 'ended' }),
+    api.getAuctions({ storeId, state: 'all' }),
+    api.getAuctions({ storeId, participantId: ownerId }),
+  ].map(item => asyncCount(item));
   return au;
 };
 

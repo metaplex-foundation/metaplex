@@ -1,16 +1,20 @@
 import { ApolloServer } from 'apollo-server';
 import { ExpressContext } from 'apollo-server-express';
 import { makeSchema } from 'nexus';
-import { MetaplexApi } from './api';
+import { MetaplexApiDataSource } from './api';
 import * as types from './schema';
 import path from 'path';
+import { performance } from 'perf_hooks';
+
+const DIRNAME = __dirname.replace(/\/dist$/, '/src');
 
 async function startApolloServer() {
+  const api = new MetaplexApiDataSource();
   const schema = makeSchema({
     types,
     outputs: {
-      schema: __dirname + '/generated/schema.graphql',
-      typegen: __dirname + '/generated/typings.ts',
+      schema: path.join(DIRNAME, '/generated/schema.graphql'),
+      typegen: path.join(DIRNAME, '/generated/typings.ts'),
     },
     formatTypegen: (content, type) => {
       if (type === 'types') {
@@ -27,7 +31,7 @@ async function startApolloServer() {
     sourceTypes: {
       modules: [
         {
-          module: path.join(__dirname, 'sourceTypes.ts'),
+          module: path.join(DIRNAME, 'sourceTypes.ts'),
           alias: 'common',
         },
       ],
@@ -38,7 +42,7 @@ async function startApolloServer() {
       },
     },
     contextType: {
-      module: path.join(__dirname, 'context.ts'),
+      module: path.join(DIRNAME, 'context.ts'),
       export: 'Context',
     },
     features: {
@@ -49,7 +53,7 @@ async function startApolloServer() {
   });
 
   const dataSources = () => ({
-    api: new MetaplexApi(),
+    api,
   });
 
   const context = ({ req }: ExpressContext) => {
@@ -61,8 +65,12 @@ async function startApolloServer() {
   const { url } = await server.listen();
   console.log(`🚀 Server ready at ${url}`);
 
-  console.log('🌋 Warm up data');
-  MetaplexApi.load();
+  console.log('🌋 Start warm up data');
+  const start = performance.now();
+  api.preload().then(() => {
+    const end = performance.now();
+    console.log(`🌋 Finish warm up data ${((end - start) / 1000).toString(2)}`);
+  });
 }
 
-void startApolloServer();
+startApolloServer();

@@ -21,20 +21,20 @@ export const Artwork = objectType({
       resolve: item => item.data.sellerFeeBasisPoints || 0,
     });
     t.nonNull.int('type', {
-      resolve: (item, args, { dataSources: { api } }) =>
-        artType(item, api.state),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => artType(item, state)),
     });
     t.bn('supply', {
-      resolve: (item, args, { dataSources: { api } }) =>
-        artSupply(item, api.state),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => artSupply(item, state)),
     });
     t.bn('maxSupply', {
-      resolve: (item, args, { dataSources: { api } }) =>
-        artMaxSupply(item, api.state),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => artMaxSupply(item, state)),
     });
     t.bn('edition', {
-      resolve: (item, args, { dataSources: { api } }) =>
-        artEditionNumber(item, api.state),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => artEditionNumber(item, state)),
     });
   },
 });

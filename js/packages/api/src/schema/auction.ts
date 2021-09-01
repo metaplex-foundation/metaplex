@@ -112,13 +112,13 @@ export const Auction = objectType({
     });
     t.field('trumbnail', {
       type: Artwork,
-      resolve: (item, args, { dataSources: { api } }) =>
-        getAuctionThumbnail(item, api.state),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => getAuctionThumbnail(item, state)),
     });
     t.field('highestBid', {
       type: BidderMetadata,
-      resolve: (item, args, { dataSources: { api } }) =>
-        wrapPubkey(getAuctionHighestBid(item, api.state)),
+      resolve: (item, args, { api }) =>
+        api.state.then(state => wrapPubkey(getAuctionHighestBid(item, state))),
     });
     t.bn('numWinners', {
       resolve: item => item.bidState.max,

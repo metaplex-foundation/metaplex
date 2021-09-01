@@ -3595,6 +3595,14 @@ apollo-datasource@^3.0.3:
     apollo-server-caching "^3.0.1"
     apollo-server-env "^4.0.3"
 
+apollo-datasource@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/apollo-datasource/-/apollo-datasource-3.1.0.tgz#44153cb99c7602f4524397ebc8f13e486a010c09"
+  integrity sha512-ywcVjuWNo84eMB9uBOYygQI+00+Ne4ShyPIxJzT//sn1j1Fu3J+KStMNd6s1jyERWgjGZzxkiLn6nLmwsGymBg==
+  dependencies:
+    apollo-server-caching "^3.1.0"
+    apollo-server-env "^4.0.3"
+
 apollo-graphql@^0.9.0:
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/apollo-graphql/-/apollo-graphql-0.9.3.tgz#1ca6f625322ae10a66f57a39642849a07a7a5dc9"
@@ -3615,6 +3623,13 @@ apollo-server-caching@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/apollo-server-caching/-/apollo-server-caching-3.0.1.tgz#bb6e51442266cb3ff05611c24c4e2f2fe8d6949e"
   integrity sha512-Cd0imFQlU6IKrkm+RNY0MQvKTMBTME+518EuwCaw3TKNUYDpir1vOuIdc4bALXDANilOR73k/UQs/oPxayXfrg==
+  dependencies:
+    lru-cache "^6.0.0"
+
+apollo-server-caching@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/apollo-server-caching/-/apollo-server-caching-3.1.0.tgz#c68f2159ad8a25a0bdbb18ad6bdbbde59cd4647d"
+  integrity sha512-bZ4bo0kSAsax9LbMQPlpuMTkQ657idF2ehOYe4Iw+8vj7vfAYa39Ii9IlaVAFMC1FxCYzLNFz+leZBm/Stn/NA==
   dependencies:
     lru-cache "^6.0.0"
 
