@@ -88,8 +88,8 @@ pub struct InitPackCardParams {
 impl Sealed for PackCard {}
 
 impl Pack for PackCard {
-    // 1 + 32 + 32 + 32 + 32 + (1 + 4) + 1 + 8 + 4
-    const LEN: usize = 147;
+    // 1 + 32 + 32 + 32 + 32 + (1 + 8) + 1 + 8 + 4
+    const LEN: usize = 151;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
@@ -97,7 +97,8 @@ impl Pack for PackCard {
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        Self::try_from_slice(src).map_err(|_| {
+        let mut src_mut = src;
+        Self::deserialize(&mut src_mut).map_err(|e| {
             msg!("Failed to deserialize");
             ProgramError::InvalidAccountData
         })

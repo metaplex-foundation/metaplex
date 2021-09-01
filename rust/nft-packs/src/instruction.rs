@@ -649,6 +649,7 @@ pub fn add_card_to_pack(
         AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     Instruction::new_with_borsh(
@@ -686,6 +687,7 @@ pub fn add_voucher_to_pack(
         AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     Instruction::new_with_borsh(

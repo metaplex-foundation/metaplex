@@ -88,8 +88,8 @@ pub struct InitPackVoucherParams {
 impl Sealed for PackVoucher {}
 
 impl Pack for PackVoucher {
-    // 1 + 32 + 32 + 32 + 32 + (1 + 4) + 4 + 4 + 1
-    const LEN: usize = 143;
+    // 1 + 32 + 32 + 32 + 32 + (1 + 8) + 4 + 4 + 1
+    const LEN: usize = 147;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
@@ -97,7 +97,8 @@ impl Pack for PackVoucher {
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        Self::try_from_slice(src).map_err(|_| {
+        let mut src_mut = src;
+        Self::deserialize(&mut src_mut).map_err(|_| {
             msg!("Failed to deserialize");
             ProgramError::InvalidAccountData
         })
