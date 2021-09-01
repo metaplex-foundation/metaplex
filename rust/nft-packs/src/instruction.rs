@@ -9,7 +9,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
-    sysvar,
+    system_program, sysvar,
 };
 
 #[repr(C)]
@@ -648,6 +648,7 @@ pub fn add_card_to_pack(
         AccountMeta::new(*token_account, false),
         AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(
@@ -684,6 +685,7 @@ pub fn add_voucher_to_pack(
         AccountMeta::new(*token_account, false),
         AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(
@@ -725,8 +727,9 @@ pub fn mint_new_edition_from_card(
         AccountMeta::new_readonly(*new_metadata_update_authority, false),
         AccountMeta::new_readonly(*metadata, false),
         AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
     ];
 
     Instruction::new_with_borsh(
@@ -768,8 +771,9 @@ pub fn mint_new_edition_from_voucher(
         AccountMeta::new_readonly(*new_metadata_update_authority, false),
         AccountMeta::new_readonly(*metadata, false),
         AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
     ];
 
     Instruction::new_with_borsh(

@@ -3,9 +3,9 @@
 use crate::{
     find_pack_voucher_program_address, find_program_authority,
     instruction::AddVoucherToPackArgs,
-    state::{InitPackVoucherParams, PackVoucher, PackSet},
-    utils::*,
     math::SafeMath,
+    state::{InitPackVoucherParams, PackSet, PackVoucher},
+    utils::*,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -124,7 +124,7 @@ pub fn add_voucher_to_pack(
         &[],
     )?;
 
-    pack_voucher.init(InitPackVoucherParams{
+    pack_voucher.init(InitPackVoucherParams {
         pack_set: *pack_set_info.key,
         master: *master_edition_info.key,
         metadata: *master_metadata_info.key,

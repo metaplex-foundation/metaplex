@@ -20,6 +20,8 @@ use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
+pub mod add_card_to_pack;
+pub mod add_voucher_to_pack;
 pub mod change_authority;
 pub mod claim_pack;
 pub mod deactivate;
@@ -29,8 +31,6 @@ pub mod delete_pack_voucher;
 pub mod edit_pack;
 pub mod edit_pack_card;
 pub mod edit_pack_voucher;
-pub mod add_card_to_pack;
-pub mod add_voucher_to_pack;
 pub mod init_pack;
 pub mod mint_edition;
 pub mod prove_ownership;
