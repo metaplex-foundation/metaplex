@@ -13,7 +13,7 @@
     "@solana/spl-token-registry": "^0.2.202",
     "@solana/wallet-adapter-base": "^0.4.1",
     "@solana/wallet-adapter-react": "^0.7.1",
-    "@solana/web3.js": "^1.21.0",
+    "@solana/web3.js": "^1.24.1",
     "@welldone-software/why-did-you-render": "^6.0.5",
     "bn.js": "^5.1.3",
     "borsh": "^0.4.0",
