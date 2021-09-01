@@ -18,7 +18,7 @@ pub mod entrypoint;
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
 use solana_program::pubkey::Pubkey;
-use state::{PREFIX, PackCard, PackVoucher, ProvingProcess};
+use state::{PackCard, PackVoucher, ProvingProcess, PREFIX};
 
 solana_program::declare_id!("Co1TG1QQyD9UyFxHWiUaEsPdWwH9adbYECwkuXKtQi5y");
 
@@ -42,7 +42,11 @@ pub fn find_pack_card_program_address(
     index: u32,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[&pack.to_bytes(), PackCard::PREFIX.as_bytes(), &index.to_be_bytes()],
+        &[
+            &pack.to_bytes(),
+            PackCard::PREFIX.as_bytes(),
+            &index.to_be_bytes(),
+        ],
         program_id,
     )
 }
@@ -54,7 +58,11 @@ pub fn find_pack_voucher_program_address(
     index: u32,
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
-        &[&pack.to_bytes(), PackVoucher::PREFIX.as_bytes(), &index.to_be_bytes()],
+        &[
+            &pack.to_bytes(),
+            PackVoucher::PREFIX.as_bytes(),
+            &index.to_be_bytes(),
+        ],
         program_id,
     )
 }
