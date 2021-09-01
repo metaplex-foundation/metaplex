@@ -285,6 +285,46 @@ pub enum NFTPacksInstruction {
     /// - number_to_open Option<u32>
     /// - action_on_prove Option<enum[burn, redeem]>
     EditPackVoucher(EditPackVoucherArgs),
+
+    /// MintEditionWithCard
+    ///
+    /// Mint new editions from card master edition
+    ///
+    /// Accounts:
+    /// - read                     pack_set
+    /// - signer                   minting_authority
+    /// - write                    pack_card
+    /// - write                    new_metadata
+    /// - write                    new_edition
+    /// - write                    master_edition
+    /// - write                    new_mint
+    /// - signer                   new_mint_authority
+    /// - signer                   payer
+    /// - signer                   token_account_owner
+    /// - read                     token_account
+    /// - read                     new_metadata_update_authority
+    /// - read                     metadata
+    MintEditionWithCard,
+
+    /// MintEditionWithVoucher
+    ///
+    /// Mint new editions from voucher master edition
+    ///
+    /// Accounts:
+    /// - read                     pack_set
+    /// - signer                   minting_authority
+    /// - write                    pack_voucher
+    /// - write                    new_metadata
+    /// - write                    new_edition
+    /// - write                    master_edition
+    /// - write                    new_mint
+    /// - signer                   new_mint_authority
+    /// - signer                   payer
+    /// - signer                   token_account_owner
+    /// - read                     token_account
+    /// - read                     new_metadata_update_authority
+    /// - read                     metadata
+    MintEditionWithVoucher,
 }
 
 /// Create `InitPack` instruction
@@ -324,11 +364,13 @@ pub fn claim_pack(
     let (proving_process, _) =
         find_proving_process_program_address(program_id, pack_set, user_wallet);
     let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
+    let (program_authority, _) = find_program_authority(program_id);
 
     let accounts = vec![
         AccountMeta::new_readonly(*pack_set, false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new(pack_card, false),
         AccountMeta::new(*user_token, false),
         AccountMeta::new(*new_metadata, false),
@@ -592,6 +634,92 @@ pub fn add_card_to_pack(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::AddCardToPack(args),
+        accounts,
+    )
+}
+
+/// Create `MintEditionWithCard` instruction
+pub fn mint_new_edition_from_card(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    minting_authority: &Pubkey,
+    pack_card: &Pubkey,
+    new_metadata: &Pubkey,
+    new_edition: &Pubkey,
+    master_edition: &Pubkey,
+    new_mint: &Pubkey,
+    new_mint_authority: &Pubkey,
+    payer: &Pubkey,
+    token_account_owner: &Pubkey,
+    token_account: &Pubkey,
+    new_metadata_update_authority: &Pubkey,
+    metadata: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*minting_authority, true),
+        AccountMeta::new(*pack_card, false),
+        AccountMeta::new(*new_metadata, false),
+        AccountMeta::new(*new_edition, false),
+        AccountMeta::new(*master_edition, false),
+        AccountMeta::new(*new_mint, false),
+        AccountMeta::new_readonly(*new_mint_authority, true),
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*token_account_owner, true),
+        AccountMeta::new_readonly(*token_account, false),
+        AccountMeta::new_readonly(*new_metadata_update_authority, false),
+        AccountMeta::new_readonly(*metadata, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::MintEditionWithCard,
+        accounts,
+    )
+}
+
+/// Create `MintEditionWithVoucher` instruction
+pub fn mint_new_edition_from_voucher(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    minting_authority: &Pubkey,
+    pack_voucher: &Pubkey,
+    new_metadata: &Pubkey,
+    new_edition: &Pubkey,
+    master_edition: &Pubkey,
+    new_mint: &Pubkey,
+    new_mint_authority: &Pubkey,
+    payer: &Pubkey,
+    token_account_owner: &Pubkey,
+    token_account: &Pubkey,
+    new_metadata_update_authority: &Pubkey,
+    metadata: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*minting_authority, true),
+        AccountMeta::new(*pack_voucher, false),
+        AccountMeta::new(*new_metadata, false),
+        AccountMeta::new(*new_edition, false),
+        AccountMeta::new(*master_edition, false),
+        AccountMeta::new(*new_mint, false),
+        AccountMeta::new_readonly(*new_mint_authority, true),
+        AccountMeta::new(*payer, true),
+        AccountMeta::new_readonly(*token_account_owner, true),
+        AccountMeta::new_readonly(*token_account, false),
+        AccountMeta::new_readonly(*new_metadata_update_authority, false),
+        AccountMeta::new_readonly(*metadata, false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::MintEditionWithVoucher,
         accounts,
     )
 }

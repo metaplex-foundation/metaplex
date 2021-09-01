@@ -1,6 +1,7 @@
 //! Pack card definitions
 
 use super::*;
+use crate::math::SafeMath;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,
@@ -104,5 +105,29 @@ impl IsInitialized for PackCard {
     fn is_initialized(&self) -> bool {
         self.account_type != AccountType::Uninitialized
             && self.account_type == AccountType::PackCard
+    }
+}
+
+impl MasterEditionHolder for PackCard {
+    fn get_pack_set(&self) -> Pubkey {
+        self.pack_set
+    }
+
+    fn get_master_edition(&self) -> Pubkey {
+        self.master
+    }
+
+    fn get_master_metadata(&self) -> Pubkey {
+        self.metadata
+    }
+
+    fn get_token_account(&self) -> Pubkey {
+        self.token_account
+    }
+
+    fn increment_supply(&mut self) -> Result<(), ProgramError> {
+        self.current_supply = self.current_supply.error_increment()?;
+
+        Ok(())
     }
 }
