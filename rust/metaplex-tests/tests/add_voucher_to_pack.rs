@@ -1,8 +1,8 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
+    instruction::{AddVoucherToPackArgs, InitPackSetArgs},
+    state::{AccountType, DistributionType, ActionOnProve},
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -69,25 +69,24 @@ async fn setup() -> (
 async fn success() {
     let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
 
-    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
-    test_pack_set
-        .add_card(
-            &mut context,
-            &test_pack_card,
-            &test_master_edition,
-            &test_metadata,
-            &user,
-            AddCardToPackArgs {
-                max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
-                index: test_pack_card.index,
-            },
-        )
-        .await
-        .unwrap();
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
 
-    let pack_card = test_pack_card.get_data(&mut context).await;
+    test_pack_set.add_voucher(
+        &mut context,
+        &test_pack_voucher,
+        &test_master_edition,
+        &test_metadata,
+        &user,
+        AddVoucherToPackArgs{
+            max_supply: Some(5),
+            number_to_open: 4,
+            action_on_prove: ActionOnProve::Burn,
+        },
+    )
+    .await
+    .unwrap();
 
-    assert_eq!(pack_card.account_type, AccountType::PackCard);
+    let pack_voucher = test_pack_voucher.get_data(&mut context).await;
+
+    assert_eq!(pack_voucher.account_type, AccountType::PackVoucher);
 }

@@ -4,8 +4,8 @@ use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
     state::{AccountType, DistributionType},
 };
-use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_program_test::*;
 use utils::*;
 
 async fn setup() -> (
