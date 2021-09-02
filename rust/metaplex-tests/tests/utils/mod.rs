@@ -34,6 +34,13 @@ pub fn nft_packs_program_test<'a>() -> ProgramTest {
     program
 }
 
+pub async fn is_empty_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> bool {
+    match context.banks_client.get_account(*pubkey).await {
+        Ok(account) => account.is_none(),
+        Err(_) => false,
+    }
+}
+
 pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {
     context
         .banks_client
