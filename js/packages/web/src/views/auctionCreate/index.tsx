@@ -398,24 +398,32 @@ export const AuctionCreateView = () => {
       console.log('Tiered settings', tieredAttributes.items);
     }
 
+    const isInstantSale =
+      attributes.instantSalePrice &&
+      attributes.priceFloor === attributes.instantSalePrice;
+
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
-      endAuctionAt: new BN(
-        (attributes.auctionDuration || 0) *
-          (attributes.auctionDurationType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.auctionDurationType == 'hours'
-            ? 60 * 60 // 1 hour in seconds
-            : 60), // 1 minute in seconds
-      ), // endAuctionAt is actually auction duration, poorly named, in seconds
-      auctionGap: new BN(
-        (attributes.gapTime || 0) *
-          (attributes.gapTimeType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.gapTimeType == 'hours'
-            ? 60 * 60 // 1 hour in seconds
-            : 60), // 1 minute in seconds
-      ),
+      endAuctionAt: isInstantSale
+        ? null
+        : new BN(
+            (attributes.auctionDuration || 0) *
+              (attributes.auctionDurationType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.auctionDurationType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ), // endAuctionAt is actually auction duration, poorly named, in seconds
+      auctionGap: isInstantSale
+        ? null
+        : new BN(
+            (attributes.gapTime || 0) *
+              (attributes.gapTimeType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.gapTimeType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -816,40 +824,6 @@ const InstantSaleStep = (props: {
               }
             />
           </label>
-
-          <div className="action-field">
-            <span className="field-title">Sale Duration</span>
-            <span className="field-info">
-              This is how long the sale will last for.
-            </span>
-            <Input
-              addonAfter={
-                <Select
-                  defaultValue={props.attributes.auctionDurationType}
-                  onChange={value =>
-                    props.setAttributes({
-                      ...props.attributes,
-                      auctionDurationType: value,
-                    })
-                  }
-                >
-                  <Option value="minutes">Minutes</Option>
-                  <Option value="hours">Hours</Option>
-                  <Option value="days">Days</Option>
-                </Select>
-              }
-              autoFocus
-              type="number"
-              className="input"
-              placeholder="Set the sale duration"
-              onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
-                  auctionDuration: parseInt(info.target.value),
-                })
-              }
-            />
-          </div>
         </Col>
       </Row>
       <Row>
@@ -1829,7 +1803,9 @@ const ReviewStep = (props: {
           }}
           className="action-btn"
         >
-          Publish Auction
+          {props.attributes.category === AuctionCategory.InstantSale
+            ? 'List for Sale'
+            : 'Publish Auction'}
         </Button>
       </Row>
     </>
