@@ -3,6 +3,7 @@
 use crate::{
     error::NFTPacksError,
     find_pack_voucher_program_address,
+    math::SafeMath,
     state::{PackSet, PackSetState, PackVoucher},
     utils::*,
 };
@@ -34,7 +35,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     assert_account_key(authority_account, &pack_set.authority)?;
 
     // Ensure that PackSet is in valid state
-    if pack_set.pack_state != PackSetState::Deactivated {
+    if pack_set.pack_state == PackSetState::Activated {
         return Err(NFTPacksError::WrongPackState.into());
     }
 
@@ -54,7 +55,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
         spl_token::state::Account::unpack(&token_account.data.borrow())?;
 
     // Decrement PackVoucher's counter in PackSet instance
-    pack_set.pack_vouchers -= 1;
+    pack_set.pack_vouchers = pack_set.pack_vouchers.error_decrement()?;
 
     // Transfer PackVoucher tokens
     spl_token_transfer(

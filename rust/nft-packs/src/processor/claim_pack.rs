@@ -46,7 +46,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow())?;
     let mut proving_process = ProvingProcess::unpack(&proving_process_account.data.borrow_mut())?;
-    let index = proving_process.claimed_cards + 1;
+    let index = proving_process.claimed_cards.error_increment()?;
 
     assert_account_key(pack_set_account, &proving_process.pack_set)?;
     assert_account_key(user_wallet_account, &proving_process.user_wallet)?;
@@ -83,11 +83,12 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 return Err(NFTPacksError::PackIsAlreadyOpen.into());
             }
 
-            proving_process.claimed_card_editions += 1;
+            proving_process.claimed_card_editions =
+                proving_process.claimed_card_editions.error_increment()?;
 
             // Check if this pack is last for user
             if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
-                proving_process.claimed_cards += 1;
+                proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
                 proving_process.claimed_card_editions = 0;
             }
 
@@ -125,7 +126,8 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
             // If user win
             if random_value <= probability {
-                proving_process.claimed_card_editions += 1;
+                proving_process.claimed_card_editions =
+                    proving_process.claimed_card_editions.error_increment()?;
 
                 // Mint new tokens
                 spl_token_metadata_mint_new_edition_from_master_edition_via_token(
@@ -144,7 +146,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 )?;
             } else {
                 // User lose
-                proving_process.claimed_cards += 1;
+                proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
                 proving_process.claimed_card_editions = 0;
             }
         }

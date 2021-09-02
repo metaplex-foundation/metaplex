@@ -69,7 +69,7 @@ pub fn add_voucher_to_pack(
         &[bump_seed],
     ];
 
-    msg!("Creating pack card account...");
+    msg!("Creating pack voucher account...");
     create_account::<PackVoucher>(
         program_id,
         authority_info.clone(),
