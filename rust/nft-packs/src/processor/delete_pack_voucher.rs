@@ -2,9 +2,9 @@
 
 use crate::{
     error::NFTPacksError,
-    find_pack_voucher_program_address,
+    find_pack_voucher_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackSet, PackSetState, PackVoucher},
+    state::{PackSet, PackSetState, PackVoucher, PREFIX},
     utils::*,
 };
 use solana_program::{
@@ -21,14 +21,18 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     let pack_voucher_account = next_account_info(account_info_iter)?;
     let authority_account = next_account_info(account_info_iter)?;
     let refunder_account = next_account_info(account_info_iter)?;
-    let new_master_edition_owner = next_account_info(account_info_iter)?;
+    let new_master_edition_owner_account = next_account_info(account_info_iter)?;
     let token_account = next_account_info(account_info_iter)?;
+    let program_authority_account = next_account_info(account_info_iter)?;
 
     // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
     assert_owned_by(pack_voucher_account, program_id)?;
 
     assert_signer(&authority_account)?;
+
+    let (valid_program_authority, bump_seed) = find_program_authority(program_id);
+    assert_account_key(program_authority_account, &valid_program_authority)?;
 
     // Obtain PackSet instance
     let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
@@ -60,10 +64,10 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     // Transfer PackVoucher tokens
     spl_token_transfer(
         token_account.clone(),
-        new_master_edition_owner.clone(),
+        new_master_edition_owner_account.clone(),
         authority_account.clone(),
         pack_voucher_token_account.amount,
-        &[],
+        &[&[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]]],
     )?;
 
     // Transfer all SOL from PackVoucher and delete PackVoucher account
