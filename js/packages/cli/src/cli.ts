@@ -393,7 +393,7 @@ program
           // data.append('tags', JSON.stringify(tags));
           // payment transaction
           const data = new FormData();
-          data.append('transaction', tx);
+          data.append('transaction', JSON.stringify(tx));
           data.append('env', ENV);
           data.append('file[]', fs.createReadStream(image), `image.png`);
           data.append('file[]', manifestBuffer, 'metadata.json');
