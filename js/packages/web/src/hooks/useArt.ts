@@ -14,6 +14,8 @@ import { WhitelistedCreator } from '../models/metaplex';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
 import { pubkeyToString } from '../utils/pubkeyToString';
+import { maybeCDN } from '../utils/cdn';
+
 
 const ARWEAVE_CDN = process.env.NEXT_PUBLIC_ARWEAVE_CDN;
 
@@ -180,7 +182,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   useEffect(() => {
     if (inView && id && !data) {
       if (account && account.info.data.uri) {
-        const uri = routeCDN(account.info.data.uri);
+        const uri = maybeCDN(account.info.data.uri);
 
         const processJson = (extended: any) => {
           if (!extended || extended?.properties?.files?.length === 0) {
@@ -191,7 +193,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
             const file = extended.image.startsWith('http')
               ? extended.image
               : `${account.info.data.uri}/${extended.image}`;
-            extended.image = routeCDN(file);
+            extended.image = maybeCDN(file);
           }
 
           return extended;
