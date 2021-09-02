@@ -52,21 +52,15 @@ impl TestMetadata {
         creators: Option<Vec<Creator>>,
         seller_fee_basis_points: u16,
         is_mutable: bool,
-        token_acc: &Keypair,
+        token_account: &Keypair,
         token_owner: &Pubkey,
     ) -> transport::Result<()> {
         create_mint(context, &self.mint, &context.payer.pubkey(), None).await?;
-        create_token_account(
-            context,
-            &token_acc,
-            &self.mint.pubkey(),
-            token_owner,
-        )
-        .await?;
+        create_token_account(context, token_account, &self.mint.pubkey(), token_owner).await?;
         mint_tokens(
             context,
             &self.mint.pubkey(),
-            &token_acc.pubkey(),
+            &token_account.pubkey(),
             1,
             &context.payer.pubkey(),
             None,

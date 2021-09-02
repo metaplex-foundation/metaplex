@@ -1,16 +1,17 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
+    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
+    state::{AccountType, ActionOnProve, DistributionType},
 };
-use solana_sdk::{signature::Keypair, signer::Signer};
 use solana_program_test::*;
+use solana_sdk::{signature::Keypair, signer::Signer};
 use utils::*;
 
 async fn setup() -> (
     ProgramTestContext,
     TestPackSet,
+    TestPackCard,
     TestMetadata,
     TestMasterEditionV2,
     User,
@@ -34,7 +35,10 @@ async fn setup() -> (
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
     let user_token_acc = Keypair::new();
-    let user = User{owner: Keypair::new(), token_account: user_token_acc.pubkey()};
+    let user = User {
+        owner: Keypair::new(),
+        token_account: user_token_acc.pubkey(),
+    };
 
     test_metadata
         .create(
@@ -56,19 +60,7 @@ async fn setup() -> (
         .await
         .unwrap();
 
-    (
-        context,
-        test_pack_set,
-        test_metadata,
-        test_master_edition,
-        user,
-    )
-}
-
-#[tokio::test]
-async fn success() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
-
+    // Add pack card
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
         .add_card(
@@ -87,7 +79,58 @@ async fn success() {
         .await
         .unwrap();
 
-    let pack_card = test_pack_card.get_data(&mut context).await;
+    // Add pack voucher
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
 
-    assert_eq!(pack_card.account_type, AccountType::PackCard);
+    (
+        context,
+        test_pack_set,
+        test_pack_card,
+        test_metadata,
+        test_master_edition,
+        user,
+    )
+}
+
+#[tokio::test]
+async fn success() {
+    let (mut context, test_pack_set, test_pack_card, test_metadata, test_master_edition, user) =
+        setup().await;
+
+    /*let test_new_master_edition_owner = TestMasterEditionV2::new(&test_metadata);
+    test_master_edition
+        .create(&mut context, Some(10))
+        .await
+        .unwrap();*/
+
+    let pack_set = test_pack_set.get_data(&mut context).await;
+    println!("{:#?}", pack_set);
+
+    //test_pack_set.activate(&mut context).await.unwrap();
+
+    /*test_pack_set
+    .delete_pack_card(
+        &mut context,
+        &test_pack_card,
+        &user.pubkey(),
+        &test_new_master_edition_owner.pubkey,
+        &user.token_account,
+    )
+    .await
+    .unwrap();*/
 }

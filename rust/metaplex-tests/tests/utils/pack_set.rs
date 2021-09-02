@@ -1,6 +1,6 @@
 use crate::*;
 use metaplex_nft_packs::{instruction, state::PackSet};
-use solana_program::{program_pack::Pack, system_instruction};
+use solana_program::{program_pack::Pack, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
     signature::Signer, signer::keypair::Keypair, transaction::Transaction, transport,
@@ -97,6 +97,62 @@ impl TestPackSet {
                 &test_pack_card.token_account,
                 &self.authority,
             ],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn activate(&self, context: &mut ProgramTestContext) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::activate(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &self.authority.pubkey(),
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn deactivate(&self, context: &mut ProgramTestContext) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::deactivate(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &self.authority.pubkey(),
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn delete_card(
+        &self,
+        context: &mut ProgramTestContext,
+        test_pack_card: &TestPackCard,
+        refunder: &Pubkey,
+        new_master_edition_owner: &Pubkey,
+        token_account: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::delete_pack_card(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &test_pack_card.pubkey,
+                &self.authority.pubkey(),
+                refunder,
+                new_master_edition_owner,
+                token_account,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
             context.last_blockhash,
         );
 

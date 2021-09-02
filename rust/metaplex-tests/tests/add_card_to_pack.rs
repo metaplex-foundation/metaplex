@@ -34,7 +34,10 @@ async fn setup() -> (
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
     let user_token_acc = Keypair::new();
-    let user = User{owner: Keypair::new(), token_account: user_token_acc.pubkey()};
+    let user = User {
+        owner: Keypair::new(),
+        token_account: user_token_acc.pubkey(),
+    };
 
     test_metadata
         .create(
