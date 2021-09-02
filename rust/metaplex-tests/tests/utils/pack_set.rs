@@ -158,6 +158,31 @@ impl TestPackSet {
         context.banks_client.process_transaction(tx).await
     }
 
+    pub async fn delete_voucher(
+        &self,
+        context: &mut ProgramTestContext,
+        test_pack_voucher: &TestPackVoucher,
+        refunder: &Pubkey,
+        new_master_edition_owner_token_acc: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::delete_pack_voucher(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &test_pack_voucher.pubkey,
+                &self.authority.pubkey(),
+                refunder,
+                new_master_edition_owner_token_acc,
+                &test_pack_voucher.token_account.pubkey(),
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
     pub async fn add_voucher(
         &self,
         context: &mut ProgramTestContext,
