@@ -3,6 +3,7 @@
 use crate::{
     error::NFTPacksError,
     find_pack_card_program_address,
+    math::SafeMath,
     state::{PackCard, PackSet, PackSetState},
     utils::*,
 };
@@ -34,7 +35,7 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     assert_account_key(authority_account, &pack_set.authority)?;
 
     // Ensure that PackSet is in valid state
-    if pack_set.pack_state != PackSetState::Deactivated {
+    if pack_set.pack_state == PackSetState::Activated {
         return Err(NFTPacksError::WrongPackState.into());
     }
 
@@ -53,7 +54,7 @@ pub fn delete_pack_card(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     let pack_card_token_account = spl_token::state::Account::unpack(&token_account.data.borrow())?;
 
     // Decrement PackCard's counter in PackSet instance
-    pack_set.pack_cards -= 1;
+    pack_set.pack_cards = pack_set.pack_cards.error_decrement()?;
 
     // Transfer PackCard tokens
     spl_token_transfer(
