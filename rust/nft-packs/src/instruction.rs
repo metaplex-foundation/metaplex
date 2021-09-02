@@ -419,6 +419,8 @@ pub fn delete_pack_card(
     new_master_edition_owner: &Pubkey,
     token_account: &Pubkey,
 ) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(*pack_card, false),
@@ -426,6 +428,7 @@ pub fn delete_pack_card(
         AccountMeta::new(*refunder, false),
         AccountMeta::new(*new_master_edition_owner, false),
         AccountMeta::new(*token_account, false),
+        AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
     ];
@@ -443,6 +446,8 @@ pub fn delete_pack_voucher(
     new_master_edition_owner: &Pubkey,
     token_account: &Pubkey,
 ) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(*pack_voucher, false),
@@ -450,6 +455,7 @@ pub fn delete_pack_voucher(
         AccountMeta::new(*refunder, false),
         AccountMeta::new(*new_master_edition_owner, false),
         AccountMeta::new(*token_account, false),
+        AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
     ];
