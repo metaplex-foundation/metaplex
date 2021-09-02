@@ -33,6 +33,9 @@ async fn setup() -> (
     let test_metadata = TestMetadata::new();
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
+    let user_token_acc = Keypair::new();
+    let user = User{owner: Keypair::new(), token_account: user_token_acc.pubkey()};
+
     test_metadata
         .create(
             &mut context,
@@ -42,6 +45,8 @@ async fn setup() -> (
             None,
             10,
             false,
+            &user_token_acc,
+            &test_pack_set.authority.pubkey(),
         )
         .await
         .unwrap();
@@ -50,21 +55,6 @@ async fn setup() -> (
         .create(&mut context, Some(10))
         .await
         .unwrap();
-
-    let payer_keypair = context.payer.to_bytes();
-    let payer = Keypair::from_bytes(&payer_keypair).unwrap();
-
-    let user = add_user(&mut context, &test_master_edition).await.unwrap();
-    mint_tokens(
-        &mut context,
-        &test_metadata.mint.pubkey(),
-        &user.token_account,
-        1,
-        &user.owner.pubkey(),
-        Some(vec![&payer]),
-    )
-    .await
-    .unwrap();
 
     (
         context,

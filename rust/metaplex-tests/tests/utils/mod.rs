@@ -105,6 +105,34 @@ pub async fn create_token_account(
     context.banks_client.process_transaction(tx).await
 }
 
+pub async fn transfer_token(
+    context: &mut ProgramTestContext,
+    source: &Pubkey,
+    destination: &Pubkey,
+    authority: &Keypair,
+    amount: u64
+) -> transport::Result<()> {
+
+    let tx = Transaction::new_signed_with_payer(
+        &[
+            spl_token::instruction::transfer(
+                &spl_token::id(),
+                source,
+                destination,
+                &authority.pubkey(),
+                &[],
+                amount,
+            )
+            .unwrap(),
+        ],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, authority],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await
+}
+
 pub async fn create_account<S: Pack>(
     context: &mut ProgramTestContext,
     account: &Keypair,

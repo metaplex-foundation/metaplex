@@ -4,6 +4,7 @@ use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
     state::{AccountType, DistributionType},
 };
+use solana_sdk::{signature::Keypair, signer::Signer};
 use solana_program_test::*;
 use utils::*;
 
@@ -32,6 +33,9 @@ async fn setup() -> (
     let test_metadata = TestMetadata::new();
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
+    let user_token_acc = Keypair::new();
+    let user = User{owner: Keypair::new(), token_account: user_token_acc.pubkey()};
+
     test_metadata
         .create(
             &mut context,
@@ -41,6 +45,8 @@ async fn setup() -> (
             None,
             10,
             false,
+            &user_token_acc,
+            &test_pack_set.authority.pubkey(),
         )
         .await
         .unwrap();
@@ -49,8 +55,6 @@ async fn setup() -> (
         .create(&mut context, Some(10))
         .await
         .unwrap();
-
-    let user = add_user(&mut context, &test_master_edition).await.unwrap();
 
     (
         context,
@@ -65,7 +69,7 @@ async fn setup() -> (
 async fn success() {
     let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
 
-    let test_pack_card = TestPackCard::new(&test_pack_set, 0);
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
         .add_card(
             &mut context,
