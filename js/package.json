@@ -15,7 +15,8 @@
     "build": "lerna run build",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
     "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
-    "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}'",
+    "format:fix": "lerna run format:fix",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",
@@ -45,16 +46,14 @@
   "dependencies": {
     "cross-env": "^7.0.3",
     "next": "^11.0.1",
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
     "@types/animejs": "^3.1.3",
     "@types/jest": "^24.0.0",
-    "@types/react": "^16.9.50",
-    "@types/react-dom": "^16.9.8",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
     "eslint": "^6.6.0",
@@ -71,9 +70,5 @@
     "ts-jest": "^24.0.0",
     "ts-node": "^9.0.0",
     "typescript": "^4.1.3"
-  },
-  "resolutions": {
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
   }
 }
