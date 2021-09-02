@@ -1,12 +1,11 @@
 use {
     crate::{
         error::MetaplexError,
-        state::{WinningConfigType, PREFIX},
+        state::{CommonWinningIndexChecks, CommonWinningIndexReturn, WinningConfigType, PREFIX},
         utils::{
             assert_owned_by, common_redeem_checks, common_redeem_finish,
-            common_winning_config_checks, transfer_metadata_ownership,
-            transfer_safety_deposit_box_items, CommonRedeemCheckArgs, CommonRedeemFinishArgs,
-            CommonRedeemReturn, CommonWinningConfigCheckReturn,
+            transfer_metadata_ownership, transfer_safety_deposit_box_items, CommonRedeemCheckArgs,
+            CommonRedeemFinishArgs, CommonRedeemReturn,
         },
     },
     solana_program::{
@@ -48,6 +47,8 @@ pub fn process_full_rights_transfer_bid<'a>(
     let new_metadata_authority_info = next_account_info(account_info_iter)?;
     let transfer_authority_info = next_account_info(account_info_iter)?;
 
+    let safety_deposit_config_info = next_account_info(account_info_iter).ok();
+
     let CommonRedeemReturn {
         auction_manager,
         redemption_bump_seed,
@@ -71,6 +72,7 @@ pub fn process_full_rights_transfer_bid<'a>(
         token_metadata_program_info,
         store_info,
         rent_info,
+        safety_deposit_config_info,
         is_participation: false,
         user_provided_win_index: None,
         overwrite_win_index,
@@ -83,64 +85,62 @@ pub fn process_full_rights_transfer_bid<'a>(
     let mut winning_item_index = None;
     if !cancelled {
         if let Some(winning_index) = win_index {
-            if winning_index < auction_manager.settings.winning_configs.len() {
-                let CommonWinningConfigCheckReturn {
-                    winning_config_item,
-                    winning_item_index: wii,
-                } = common_winning_config_checks(
-                    &auction_manager,
-                    &safety_deposit_info,
-                    winning_index,
-                    false,
-                )?;
+            let CommonWinningIndexReturn {
+                amount: _a,
+                winning_config_type,
+                winning_config_item_index,
+            } = auction_manager.common_winning_index_checks(CommonWinningIndexChecks {
+                safety_deposit_info,
+                winning_index,
+                auction_manager_v1_ignore_claim: false,
+                safety_deposit_config_info,
+            })?;
 
-                winning_item_index = wii;
+            winning_item_index = winning_config_item_index;
 
-                if winning_config_item.winning_config_type != WinningConfigType::FullRightsTransfer
-                {
-                    return Err(MetaplexError::WrongBidEndpointForPrize.into());
-                }
-                // Someone is selling off their master edition. We need to transfer it, as well as ownership of their
-                // metadata.
+            if winning_config_type != WinningConfigType::FullRightsTransfer {
+                return Err(MetaplexError::WrongBidEndpointForPrize.into());
+            }
+            // Someone is selling off their master edition. We need to transfer it, as well as ownership of their
+            // metadata.
 
-                let auction_seeds = &[PREFIX.as_bytes(), &auction_manager.auction.as_ref()];
-                let (_, auction_bump_seed) =
-                    Pubkey::find_program_address(auction_seeds, &program_id);
-                let auction_authority_seeds = &[
-                    PREFIX.as_bytes(),
-                    &auction_manager.auction.as_ref(),
-                    &[auction_bump_seed],
-                ];
+            let auction_key = auction_manager.auction();
+            let auction_seeds = &[PREFIX.as_bytes(), auction_key.as_ref()];
+            let (_, auction_bump_seed) = Pubkey::find_program_address(auction_seeds, &program_id);
+            let auction_authority_seeds = &[
+                PREFIX.as_bytes(),
+                auction_key.as_ref(),
+                &[auction_bump_seed],
+            ];
 
-                let metadata = Metadata::from_account_info(metadata_info)?;
-                if metadata.update_authority == *auction_manager_info.key {
-                    // If this is a call for a broken auction manager that was forced to disbursing
-                    // by a distressed auctioneer, the metadata transfer may not have happened, so
-                    // we wrap in an if statement to avoid a fallout here.
-                    msg!("Transferring metadata authority!");
-                    transfer_metadata_ownership(
-                        token_metadata_program_info.clone(),
-                        metadata_info.clone(),
-                        auction_manager_info.clone(),
-                        new_metadata_authority_info.clone(),
-                        auction_authority_seeds,
-                    )?;
-                }
-
-                transfer_safety_deposit_box_items(
-                    token_vault_program_info.clone(),
-                    destination_info.clone(),
-                    safety_deposit_info.clone(),
-                    safety_deposit_token_store_info.clone(),
-                    vault_info.clone(),
-                    fraction_mint_info.clone(),
+            let metadata = Metadata::from_account_info(metadata_info)?;
+            if metadata.update_authority == *auction_manager_info.key {
+                // If this is a call for a broken auction manager that was forced to disbursing
+                // by a distressed auctioneer, the metadata transfer may not have happened, so
+                // we wrap in an if statement to avoid a fallout here.
+                msg!("Transferring metadata authority!");
+                transfer_metadata_ownership(
+                    token_metadata_program_info.clone(),
+                    metadata_info.clone(),
                     auction_manager_info.clone(),
-                    transfer_authority_info.clone(),
-                    rent_info.clone(),
-                    1,
+                    new_metadata_authority_info.clone(),
                     auction_authority_seeds,
                 )?;
             }
+
+            transfer_safety_deposit_box_items(
+                token_vault_program_info.clone(),
+                destination_info.clone(),
+                safety_deposit_info.clone(),
+                safety_deposit_token_store_info.clone(),
+                vault_info.clone(),
+                fraction_mint_info.clone(),
+                auction_manager_info.clone(),
+                transfer_authority_info.clone(),
+                rent_info.clone(),
+                1,
+                auction_authority_seeds,
+            )?;
         }
     };
 
@@ -154,6 +154,8 @@ pub fn process_full_rights_transfer_bid<'a>(
         payer_info,
         bid_redemption_info,
         redemption_bump_seed,
+        vault_info,
+        safety_deposit_config_info,
         winning_index: win_index,
         bid_redeemed: true,
         participation_redeemed: false,

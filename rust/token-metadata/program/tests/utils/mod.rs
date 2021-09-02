@@ -1,9 +1,11 @@
+mod assert;
 mod edition_marker;
 mod external_price;
 mod master_edition_v2;
 mod metadata;
 mod vault;
 
+pub use assert::*;
 pub use edition_marker::EditionMarker;
 pub use external_price::ExternalPrice;
 pub use master_edition_v2::MasterEditionV2;

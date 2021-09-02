@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import {
   AuctionView as Auction,
   AuctionViewItem,
@@ -23,9 +23,11 @@ import {
   useConnectionConfig,
   fromLamports,
   useMint,
-  useWallet,
   AuctionState,
+  StringPublicKey,
+  toPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
@@ -92,12 +94,13 @@ export const AuctionView = () => {
 
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
+  const attributes = data?.attributes;
 
   const items = [
     ...(auction?.items
       .flat()
       .reduce((agg, item) => {
-        agg.set(item.metadata.pubkey.toBase58(), item);
+        agg.set(item.metadata.pubkey, item);
         return agg;
       }, new Map<string, AuctionViewItem>())
       .values() || []),
@@ -109,7 +112,7 @@ export const AuctionView = () => {
 
     return (
       <AuctionItem
-        key={item.metadata.pubkey.toBase58()}
+        key={item.metadata.pubkey}
         item={item}
         index={index}
         size={arr.length}
@@ -155,7 +158,22 @@ export const AuctionView = () => {
                   No description provided.
                 </div>
               ))}
+
           </div>
+
+          {attributes &&
+            <>
+              <h6>Attributes</h6>
+              <List
+                grid={{ column: 4 }}
+              >
+                {attributes.map(attribute =>
+                  <List.Item>
+                    <Card title={attribute.trait_type}>{attribute.value}</Card>
+                  </List.Item>
+                )}
+              </List>
+            </>}
           {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>
@@ -224,9 +242,9 @@ const BidLine = (props: {
   isActive?: boolean;
 }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
-  const { wallet } = useWallet();
-  const bidder = bid.info.bidderPubkey.toBase58();
-  const isme = wallet?.publicKey?.toBase58() === bidder;
+  const { publicKey } = useWallet();
+  const bidder = bid.info.bidderPubkey;
+  const isme = publicKey?.toBase58() === bidder;
 
   // Get Twitter Handle from address
   const connection = useConnection();
@@ -234,12 +252,12 @@ const BidLine = (props: {
   useEffect(() => {
     const getTwitterHandle = async (
       connection: Connection,
-      bidder: PublicKey,
+      bidder: StringPublicKey,
     ): Promise<string | undefined> => {
       try {
         const [twitterHandle] = await getHandleAndRegistryKey(
           connection,
-          bidder,
+          toPublicKey(bidder),
         );
         setBidderTwitterHandle(twitterHandle);
       } catch (err) {
@@ -349,7 +367,7 @@ export const AuctionBids = ({
   const winnersCount = auctionView?.auction.info.bidState.max.toNumber() || 0;
   const activeBids = auctionView?.auction.info.bidState.bids || [];
   const activeBidders = useMemo(() => {
-    return new Set(activeBids.map(b => b.key.toBase58()));
+    return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
 
   const auctionState = auctionView

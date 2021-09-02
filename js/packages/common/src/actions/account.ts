@@ -7,11 +7,11 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import {
-  programIds,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   WRAPPED_SOL_MINT,
 } from '../utils/ids';
+import { programIds } from '../utils/programIds';
 import { TokenAccount } from '../models/account';
 import { cache, TokenAccountParser } from '../contexts/accounts';
 
@@ -275,7 +275,7 @@ export function ensureWrappedAccount(
 
   signers.push(account);
 
-  return account.publicKey;
+  return account.publicKey.toBase58();
 }
 
 // TODO: check if one of to accounts needs to be native sol ... if yes unwrap it ...
@@ -290,6 +290,7 @@ export function findOrCreateAccountByMint(
   excluded?: Set<string>,
 ): PublicKey {
   const accountToFind = mint.toBase58();
+  const ownerKey = owner.toBase58();
   const account = cache
     .byParser(TokenAccountParser)
     .map(id => cache.get(id))
@@ -297,14 +298,14 @@ export function findOrCreateAccountByMint(
       acc =>
         acc !== undefined &&
         acc.info.mint.toBase58() === accountToFind &&
-        acc.info.owner.toBase58() === owner.toBase58() &&
-        (excluded === undefined || !excluded.has(acc.pubkey.toBase58())),
+        acc.info.owner.toBase58() === ownerKey &&
+        (excluded === undefined || !excluded.has(acc.pubkey)),
     );
   const isWrappedSol = accountToFind === WRAPPED_SOL_MINT.toBase58();
 
   let toAccount: PublicKey;
   if (account && !isWrappedSol) {
-    toAccount = account.pubkey;
+    toAccount = new PublicKey(account.pubkey);
   } else {
     // creating depositor pool account
     toAccount = createTokenAccount(
