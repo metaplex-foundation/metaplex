@@ -610,7 +610,7 @@ program
       },
     );
 
-    console.log('Done');
+    console.log(`Done: CANDYMACHINE: ${candyMachine.toBase58()}`);
   });
 
 program
