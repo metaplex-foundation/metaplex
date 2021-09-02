@@ -1,5 +1,3 @@
-#![cfg(feature = "test-bpf")]
-
 mod utils;
 
 use metaplex_nft_packs::{
