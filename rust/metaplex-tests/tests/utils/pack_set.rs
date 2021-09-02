@@ -1,7 +1,7 @@
 use crate::*;
 use metaplex_nft_packs::{
-    instruction::{self, EditPackCardArgs, EditPackSetArgs},
-    state::{DistributionType, PackSet},
+    instruction::{self, EditPackCardArgs, EditPackSetArgs, EditPackVoucherArgs},
+    state::{ActionOnProve, DistributionType, PackSet},
 };
 use solana_program::{program_pack::Pack, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
@@ -180,6 +180,34 @@ impl TestPackSet {
                     distribution_type,
                     max_supply,
                     number_in_pack,
+                },
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn edit_voucher(
+        &self,
+        context: &mut ProgramTestContext,
+        test_pack_voucher: &TestPackVoucher,
+        action_on_prove: Option<ActionOnProve>,
+        max_supply: Option<u32>,
+        number_to_open: Option<u32>,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::edit_pack_voucher(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &test_pack_voucher.pubkey,
+                &self.authority.pubkey(),
+                EditPackVoucherArgs {
+                    action_on_prove,
+                    max_supply,
+                    number_to_open,
                 },
             )],
             Some(&context.payer.pubkey()),
