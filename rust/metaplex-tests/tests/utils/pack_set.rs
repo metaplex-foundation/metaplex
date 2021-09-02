@@ -1,7 +1,7 @@
 use crate::*;
 use metaplex_nft_packs::{
-    instruction::{self, EditPackSetArgs},
-    state::PackSet,
+    instruction::{self, EditPackCardArgs, EditPackSetArgs},
+    state::{DistributionType, PackSet},
 };
 use solana_program::{program_pack::Pack, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
@@ -152,6 +152,34 @@ impl TestPackSet {
                     mutable,
                     name,
                     total_packs,
+                },
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn edit_card(
+        &self,
+        context: &mut ProgramTestContext,
+        test_pack_card: &TestPackCard,
+        distribution_type: Option<DistributionType>,
+        max_supply: Option<u32>,
+        number_in_pack: Option<u64>,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::edit_pack_card(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &test_pack_card.pubkey,
+                &self.authority.pubkey(),
+                EditPackCardArgs {
+                    distribution_type,
+                    max_supply,
+                    number_in_pack,
                 },
             )],
             Some(&context.payer.pubkey()),
