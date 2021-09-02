@@ -156,7 +156,7 @@ export const useAuctions = (state?: AuctionViewState) => {
       );
 
       if (
-        nextAuctionView?.auction.pubkey.toBase58() ===
+        nextAuctionView?.auction.pubkey ===
         'FxXEav7X2iFAT78gBYTTE7b4C4TLzvA1UJ1xMkWaAdRR'
       ) {
         return agg;

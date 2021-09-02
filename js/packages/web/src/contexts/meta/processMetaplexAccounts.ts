@@ -136,7 +136,11 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         whitelistedCreator.address,
       );
 
-      if (creatorKeyIfCreatorWasPartOfThisStore === pubkey && whitelistedCreator.address.toBase58() !== 'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB') {
+      if (
+        creatorKeyIfCreatorWasPartOfThisStore === pubkey &&
+        whitelistedCreator.address !==
+          'CduMjFZLBeg3A9wMP3hQCoU1RQzzCpgSvQNXfCi1GCSB'
+      ) {
         const parsedAccount = cache.add(
           pubkey,
           account,

@@ -17,9 +17,12 @@ export const isMetadataPartOfStore = (
     return false;
   }
 
-  return  m.pubkey.toBase58() === 'faiJvmLWkEBdciXfntk8Wd27Qb6F3rvUg8VgvNhv7PX' || m.info.data.creators.some(
-    c =>
-    // only artworks where dude is co-creator
-    c.address.toBase58() === '3anukDBEijov9oVBNNbvCYsUkBc7yYioiCZiGvuWw61e',
+  return (
+    m.pubkey === 'faiJvmLWkEBdciXfntk8Wd27Qb6F3rvUg8VgvNhv7PX' ||
+    m.info.data.creators.some(
+      c =>
+        // only artworks where dude is co-creator
+        c.address === '3anukDBEijov9oVBNNbvCYsUkBc7yYioiCZiGvuWw61e',
+    )
   );
 };
