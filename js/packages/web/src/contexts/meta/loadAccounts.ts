@@ -85,46 +85,26 @@ async function getProgramAccounts(
   return data;
 }
 
-export const loadAccounts = async (connection: Connection, all: boolean) => {
-  const tempCache: MetaState = {
-    metadata: [],
-    metadataByMint: {},
-    masterEditions: {},
-    masterEditionsByPrintingMint: {},
-    masterEditionsByOneTimeAuthMint: {},
-    metadataByMasterEdition: {},
-    editions: {},
-    auctionManagersByAuction: {},
-    bidRedemptions: {},
-    auctions: {},
-    auctionDataExtended: {},
-    vaults: {},
-    payoutTickets: {},
-    store: null,
-    whitelistedCreatorsByCreator: {},
-    bidderMetadataByAuctionAndBidder: {},
-    bidderPotsByAuctionAndBidder: {},
-    safetyDepositBoxesByVaultAndIndex: {},
-    prizeTrackingTickets: {},
-    safetyDepositConfigsByAuctionManagerAndIndex: {},
-    bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
-    stores: {},
-  };
-  const updateTemp = makeSetter(tempCache);
-
+const getAccountPromises = (
+  connection: Connection,
+  tempCache: MetaState,
+  all: boolean,
+  updateTemp: (
+    prop: keyof MetaState,
+    key: string,
+    value: ParsedAccount<any>,
+  ) => MetaState,
+) => {
+  const additionalPromises: Promise<void>[] = [];
+  const IS_BIG_STORE =
+    process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
+  console.log(`Is big store: ${IS_BIG_STORE}`);
   const forEach =
     (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
       for (const account of accounts) {
         await fn(account, updateTemp, all);
       }
     };
-
-  const additionalPromises: Promise<void>[] = [];
-
-  const IS_BIG_STORE =
-    process.env.NEXT_PUBLIC_BIG_STORE?.toLowerCase() === 'true';
-  console.log(`Is big store: ${IS_BIG_STORE}`);
-
   const promises = [
     getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
     getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
@@ -196,6 +176,106 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
       }
     }),
   ];
+
+  return [promises, additionalPromises];
+};
+
+const pullEditionMetadata = async (
+  tempCache: MetaState,
+  connection: Connection,
+  all: boolean,
+  updateTemp: (
+    prop: keyof MetaState,
+    key: string,
+    value: ParsedAccount<any>,
+  ) => MetaState,
+) => {
+  console.log('Pulling editions for optimized metadata');
+  let setOf100MetadataEditionKeys: string[] = [];
+  const editionPromises = [];
+
+  for (let i = 0; i < tempCache.metadata.length; i++) {
+    let edition: StringPublicKey;
+    if (tempCache.metadata[i].info.editionNonce != null) {
+      edition = (
+        await PublicKey.createProgramAddress(
+          [
+            Buffer.from(METADATA_PREFIX),
+            toPublicKey(METADATA_PROGRAM_ID).toBuffer(),
+            toPublicKey(tempCache.metadata[i].info.mint).toBuffer(),
+            new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
+          ],
+          toPublicKey(METADATA_PROGRAM_ID),
+        )
+      ).toBase58();
+    } else {
+      edition = await getEdition(tempCache.metadata[i].info.mint);
+    }
+
+    setOf100MetadataEditionKeys.push(edition);
+
+    if (setOf100MetadataEditionKeys.length >= 100) {
+      editionPromises.push(
+        getMultipleAccounts(connection, setOf100MetadataEditionKeys, 'recent'),
+      );
+      setOf100MetadataEditionKeys = [];
+    }
+  }
+
+  const responses = await Promise.all(editionPromises);
+  for (let i = 0; i < responses.length; i++) {
+    const returnedAccounts = responses[i];
+    for (let j = 0; j < returnedAccounts.array.length; j++) {
+      processMetaData(
+        {
+          pubkey: returnedAccounts.keys[j],
+          account: returnedAccounts.array[j],
+        },
+        updateTemp,
+        all,
+      );
+    }
+  }
+  console.log(
+    'Edition size',
+    Object.keys(tempCache.editions).length,
+    Object.keys(tempCache.masterEditions).length,
+  );
+};
+
+export const loadAccounts = async (connection: Connection, all: boolean) => {
+  const tempCache: MetaState = {
+    metadata: [],
+    metadataByMint: {},
+    masterEditions: {},
+    masterEditionsByPrintingMint: {},
+    masterEditionsByOneTimeAuthMint: {},
+    metadataByMasterEdition: {},
+    editions: {},
+    auctionManagersByAuction: {},
+    bidRedemptions: {},
+    auctions: {},
+    auctionDataExtended: {},
+    vaults: {},
+    payoutTickets: {},
+    store: null,
+    whitelistedCreatorsByCreator: {},
+    bidderMetadataByAuctionAndBidder: {},
+    bidderPotsByAuctionAndBidder: {},
+    safetyDepositBoxesByVaultAndIndex: {},
+    prizeTrackingTickets: {},
+    safetyDepositConfigsByAuctionManagerAndIndex: {},
+    bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
+    stores: {},
+  };
+  const updateTemp = makeSetter(tempCache);
+
+  const [promises, additionalPromises] = getAccountPromises(
+    connection,
+    tempCache,
+    all,
+    updateTemp,
+  );
   await Promise.all(promises);
   await Promise.all(additionalPromises);
 
@@ -203,61 +283,7 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
   console.log('Metadata size', tempCache.metadata.length);
 
   if (additionalPromises.length > 0) {
-    console.log('Pulling editions for optimized metadata');
-    let setOf100MetadataEditionKeys: string[] = [];
-    const editionPromises = [];
-
-    for (let i = 0; i < tempCache.metadata.length; i++) {
-      let edition: StringPublicKey;
-      if (tempCache.metadata[i].info.editionNonce != null) {
-        edition = (
-          await PublicKey.createProgramAddress(
-            [
-              Buffer.from(METADATA_PREFIX),
-              toPublicKey(METADATA_PROGRAM_ID).toBuffer(),
-              toPublicKey(tempCache.metadata[i].info.mint).toBuffer(),
-              new Uint8Array([tempCache.metadata[i].info.editionNonce || 0]),
-            ],
-            toPublicKey(METADATA_PROGRAM_ID),
-          )
-        ).toBase58();
-      } else {
-        edition = await getEdition(tempCache.metadata[i].info.mint);
-      }
-
-      setOf100MetadataEditionKeys.push(edition);
-
-      if (setOf100MetadataEditionKeys.length >= 100) {
-        editionPromises.push(
-          getMultipleAccounts(
-            connection,
-            setOf100MetadataEditionKeys,
-            'recent',
-          ),
-        );
-        setOf100MetadataEditionKeys = [];
-      }
-    }
-
-    const responses = await Promise.all(editionPromises);
-    for (let i = 0; i < responses.length; i++) {
-      const returnedAccounts = responses[i];
-      for (let j = 0; j < returnedAccounts.array.length; j++) {
-        processMetaData(
-          {
-            pubkey: returnedAccounts.keys[j],
-            account: returnedAccounts.array[j],
-          },
-          updateTemp,
-          all,
-        );
-      }
-    }
-    console.log(
-      'Edition size',
-      Object.keys(tempCache.editions).length,
-      Object.keys(tempCache.masterEditions).length,
-    );
+    pullEditionMetadata(tempCache, connection, all, updateTemp);
   }
 
   return tempCache;
