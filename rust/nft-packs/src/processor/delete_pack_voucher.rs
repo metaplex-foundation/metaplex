@@ -65,7 +65,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     spl_token_transfer(
         token_account.clone(),
         new_master_edition_owner_account.clone(),
-        authority_account.clone(),
+        program_authority_account.clone(),
         pack_voucher_token_account.amount,
         &[&[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]]],
     )?;
