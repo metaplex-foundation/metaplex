@@ -40,26 +40,41 @@ interface IArweaveResult {
   }>;
 }
 
+interface Collection {
+  name: string;
+  family: string;
+}
+
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
+
+export interface mintMetadata {
+  name: string;
+  symbol: string;
+  description: string;
+  image: string | undefined;
+  animation_url: string | undefined;
+  external_url: string;
+  properties: any;
+  creators: Creator[] | null;
+  sellerFeeBasisPoints: number;
+  collection: Collection;
+  attributes: Attribute[];
+}
+
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletSigner | undefined,
   env: ENV,
   files: File[],
-  metadata: {
-    name: string;
-    symbol: string;
-    description: string;
-    image: string | undefined;
-    animation_url: string | undefined;
-    attributes: Attribute[] | undefined;
-    external_url: string;
-    properties: any;
-    creators: Creator[] | null;
-    sellerFeeBasisPoints: number;
-  },
+  metadata: mintMetadata,
   maxSupply?: number,
 ): Promise<{
   metadataAccount: StringPublicKey;
+  mintKey: StringPublicKey;
+  associatedTokenAddress: StringPublicKey;
 } | void> => {
   if (!wallet?.publicKey) return;
 
@@ -70,8 +85,9 @@ export const mintNFT = async (
     seller_fee_basis_points: metadata.sellerFeeBasisPoints,
     image: metadata.image,
     animation_url: metadata.animation_url,
-    attributes: metadata.attributes,
     external_url: metadata.external_url,
+    attributes: metadata.attributes,
+    collection: metadata.collection,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map(creator => {
@@ -302,7 +318,11 @@ export const mintNFT = async (
   // 1. Jordan: --- upload file and metadata to storage API
   // 2. pay for storage by hashing files and attaching memo for each file
 
-  return { metadataAccount };
+  return {
+    metadataAccount,
+    mintKey,
+    associatedTokenAddress: recipientKey
+  };
 };
 
 export const prepPayForFilesTxn = async (

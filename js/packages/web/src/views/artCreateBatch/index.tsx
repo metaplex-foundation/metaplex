@@ -1,6 +1,6 @@
 import React, { useEffect, useState, CSSProperties } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Row, Button, Col, Progress, InputNumber } from 'antd';
+import { Row, Button, Col, Progress, InputNumber, Input } from 'antd';
 import CSVReader, { IFileInfo } from 'react-csv-reader';
 import { Confetti } from './../../components/Confetti';
 import { mintNFT } from '../../actions';
@@ -17,9 +17,32 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { getLast } from '../../utils/utils';
 
+const attributesDefault = {
+  name: 'Noname',
+  symbol: '',
+  description: '',
+  external_url: 'https://www.example.com/',
+  image: '',
+  animation_url: undefined,
+  // 500 is 5%
+  seller_fee_basis_points: 500,
+  creators: [],
+  properties: {
+    files: [],
+    category: MetadataCategory.Image,
+    maxSupply: 0,
+  },
+  collection: {
+    name: 'OG Collection',
+    family: 'tb',
+  },
+};
+
+const artName = 'Art'
+
 const normalizeData = (data: string[][]) => {
   // first line is field names,
-  // rest will [ ["0000", "pelegreen", "silver"], [...] ]
+  // rest will [ ["props01", "props01", "silver"], [...] ]
   // filter any empty lines
   const [keys, ...values] = data.filter(el => el.length > 1);
   // console.log('data', data);
@@ -53,7 +76,7 @@ const normalizeData = (data: string[][]) => {
       },
     );
 
-  // [ { "name": "00000", "BG": "pelegreen" }, {...}, {...} ]
+  // [ { "name": "00000", "prop01": "prop11" }, {...}, {...} ]
   const keyValue = values.map(mapValuesToKeys);
 
   return keyValue;
@@ -156,6 +179,9 @@ export const ArtCreateBatchView = () => {
           />
           <br />
           <h3>Set is <b>{csvData.length}</b> length | You are going to mint <b>{csvDataPartial.length}</b> NFTs</h3>
+          <p>
+            Art name will be: <b>{artName} #0000</b>
+          </p>
         </Col>
         <Col span={12} style={{ textAlign: 'right' }}>
           <a
@@ -202,7 +228,7 @@ export const ArtCreateBatchView = () => {
         </>
       ) : (
         <>
-          <label className="action-field">
+          <div className="action-field">
             <Row>
               <Col span={8}>
                 <span className="field-title">
@@ -257,7 +283,7 @@ export const ArtCreateBatchView = () => {
               <br />
               <hr />
             </div>
-          </label>
+          </div>
           <Button
             type="primary"
             size="large"
@@ -270,8 +296,8 @@ export const ArtCreateBatchView = () => {
           <br />
 
           <pre style={styles.pre as CSSProperties}>
-            {csvDataPartial.map((row: any) => (
-              <div>{JSON.stringify(row.name, undefined, 2)} </div>
+            {csvDataPartial.map((row: any, index: number) => (
+              <div key={index}>{JSON.stringify(row.name, undefined, 2)} </div>
             ))}
           </pre>
         </>
@@ -359,28 +385,6 @@ const MintFromData = ({
   );
 };
 
-const attributesDefault = {
-  name: 'Noname Thug',
-  symbol: '',
-  description:
-    'You hold in your possession an OG thugbird. It was created with love for the Solana community by 0x_thug',
-  external_url: 'https://www.thugbirdz.com/',
-  image: '',
-  animation_url: undefined,
-  // 500 is 5%
-  seller_fee_basis_points: 500,
-  creators: [],
-  properties: {
-    files: [],
-    category: MetadataCategory.Image,
-    maxSupply: 0,
-  },
-  collection: {
-    name: 'OG Collection',
-    family: 'thugbirdz',
-  },
-};
-
 export const ArtCreateSingleItem = ({
   data,
   onComplete,
@@ -391,7 +395,7 @@ export const ArtCreateSingleItem = ({
 }: any) => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
-  const { wallet, connected } = useWallet();
+  const wallet = useWallet();
   const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
@@ -433,21 +437,21 @@ export const ArtCreateSingleItem = ({
 
         const attributesUpdated = {
           ...attributesDefault,
-          name: data.name,
+          name: `${artName} #${data.name}`,
           creators: [creator],
           image,
           attributes: data.traits,
           properties,
         };
 
-        // console.log('attributesUpdated', attributesUpdated);
+        console.log('attributesUpdated', attributesUpdated);
 
         await mint(attributesUpdated, file);
       }
     }
 
     fetchDetails();
-  }, [connected, wallet, idx]);
+  }, [wallet.connected, wallet, idx]);
 
   const createFile = async () => {
     const imageIdx = mintChunkSize * chunkIdx + idx + globalIdxOffset;
@@ -568,15 +572,10 @@ const WaitingStep = ({
 
   return (
     <div
-      style={{
-        marginTop: 10,
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-      }}
+      style={styles.thread as CSSProperties}
     >
       <Progress type="circle" percent={progress} width={50} />
-      <div className="waiting-title">
+      <div style={styles.waitingTitle}>
         Thread #{chunkIdx + 1}. Creation {idx + 1}/{mintChunkSize} (
         {itemsStartAt}-{itemsEndAt}) is being uploaded to the decentralized
         web...
@@ -623,4 +622,13 @@ const styles = {
     margin: '2em 0',
     padding: '2em',
   },
+  thread: {
+    marginTop: 10,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  waitingTitle: {
+    fontSize: '1em',
+  }
 };
