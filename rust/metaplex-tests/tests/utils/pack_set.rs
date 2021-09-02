@@ -138,8 +138,7 @@ impl TestPackSet {
         context: &mut ProgramTestContext,
         test_pack_card: &TestPackCard,
         refunder: &Pubkey,
-        new_master_edition_owner: &Pubkey,
-        token_account: &Pubkey,
+        new_master_edition_owner_token_acc: &Pubkey,
     ) -> transport::Result<()> {
         let tx = Transaction::new_signed_with_payer(
             &[instruction::delete_pack_card(
@@ -148,8 +147,8 @@ impl TestPackSet {
                 &test_pack_card.pubkey,
                 &self.authority.pubkey(),
                 refunder,
-                new_master_edition_owner,
-                token_account,
+                new_master_edition_owner_token_acc,
+                &test_pack_card.token_account.pubkey(),
             )],
             Some(&context.payer.pubkey()),
             &[&self.authority, &context.payer],

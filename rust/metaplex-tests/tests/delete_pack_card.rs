@@ -1,8 +1,8 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
-    state::{AccountType, ActionOnProve, DistributionType},
+    instruction::{AddCardToPackArgs, InitPackSetArgs},
+    state::DistributionType,
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -79,24 +79,6 @@ async fn setup() -> (
         .await
         .unwrap();
 
-    // Add pack voucher
-    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
-    test_pack_set
-        .add_voucher(
-            &mut context,
-            &test_pack_voucher,
-            &test_master_edition,
-            &test_metadata,
-            &user,
-            AddVoucherToPackArgs {
-                max_supply: Some(5),
-                number_to_open: 4,
-                action_on_prove: ActionOnProve::Burn,
-            },
-        )
-        .await
-        .unwrap();
-
     (
         context,
         test_pack_set,
@@ -109,28 +91,29 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, test_pack_card, test_metadata, test_master_edition, user) =
+    let (mut context, test_pack_set, test_pack_card, test_metadata, _test_master_edition, user) =
         setup().await;
 
-    /*let test_new_master_edition_owner = TestMasterEditionV2::new(&test_metadata);
-    test_master_edition
-        .create(&mut context, Some(10))
-        .await
-        .unwrap();*/
-
-    let pack_set = test_pack_set.get_data(&mut context).await;
-    println!("{:#?}", pack_set);
-
-    //test_pack_set.activate(&mut context).await.unwrap();
-
-    /*test_pack_set
-    .delete_pack_card(
+    let new_token_owner_acc = Keypair::new();
+    create_token_account(
         &mut context,
-        &test_pack_card,
-        &user.pubkey(),
-        &test_new_master_edition_owner.pubkey,
-        &user.token_account,
+        &new_token_owner_acc,
+        &test_metadata.mint.pubkey(),
+        &test_pack_set.authority.pubkey(),
     )
     .await
-    .unwrap();*/
+    .unwrap();
+
+    test_pack_set
+        .delete_card(
+            &mut context,
+            &test_pack_card,
+            &user.pubkey(),
+            &new_token_owner_acc.pubkey(),
+        )
+        .await
+        .unwrap();
+
+    let pack_set = test_pack_set.get_data(&mut context).await;
+    assert_eq!(pack_set.pack_cards, 0);
 }

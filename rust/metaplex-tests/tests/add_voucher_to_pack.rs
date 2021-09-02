@@ -2,7 +2,7 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
-    state::{AccountType, ActionOnProve, DistributionType},
+    state::{AccountType, ActionOnProve},
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -71,7 +71,6 @@ async fn setup() -> (
 #[tokio::test]
 async fn success() {
     let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
-
     let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
 
     test_pack_set
@@ -91,6 +90,5 @@ async fn success() {
         .unwrap();
 
     let pack_voucher = test_pack_voucher.get_data(&mut context).await;
-
     assert_eq!(pack_voucher.account_type, AccountType::PackVoucher);
 }
