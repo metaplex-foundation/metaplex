@@ -430,7 +430,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() > CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
+    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
