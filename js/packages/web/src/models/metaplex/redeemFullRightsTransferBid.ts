@@ -1,5 +1,6 @@
 import {
   programIds,
+  getAuctionExtended,
   VAULT_PREFIX,
   findProgramAddress,
   StringPublicKey,
