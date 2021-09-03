@@ -25,6 +25,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
+import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -254,8 +255,12 @@ export const AuctionCard = ({
   return (
     <div className="auction-container" style={style}>
       <Col>
-        <AuctionNumbers auctionView={auctionView} />
-        <br />
+        {!auctionView.isInstantSale && (
+          <>
+            <AuctionNumbers auctionView={auctionView} />
+            <br />
+          </>
+        )}
         {showRedemptionIssue && (
           <span>
             There was an issue redeeming or refunding your bid. Please try
@@ -377,7 +382,11 @@ export const AuctionCard = ({
               {loading ? (
                 <Spin />
               ) : auctionView.isInstantSale ? (
-                'Buy Now'
+                bids.length ? (
+                  'Claim Purchase'
+                ) : (
+                  'Buy Now'
+                )
               ) : (
                 'Place bid'
               )}
@@ -392,7 +401,8 @@ export const AuctionCard = ({
             onClick={connect}
             style={{ marginTop: 20 }}
           >
-            Connect wallet to place bid
+            Connect wallet to{' '}
+            {auctionView.isInstantSale ? 'purchase' : 'place bid'}
           </Button>
         )}
         {action}
@@ -442,8 +452,9 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your bid has been redeemed please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
+          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
+          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
+          .
         </p>
         <Button
           onClick={() => setShowRedeemedBidModal(false)}
@@ -493,9 +504,10 @@ export const AuctionCard = ({
                 // Placing a "bid" of the full amount results in a purchase to redeem.
                 if (
                   myPayingAccount &&
+                  bids.length === 0 &&
                   auctionView.auctionDataExtended?.info.instantSalePrice
                 ) {
-                  await sendPlaceBid(
+                  const bid = await sendPlaceBid(
                     connection,
                     wallet,
                     myPayingAccount.pubkey,
@@ -503,25 +515,29 @@ export const AuctionCard = ({
                     accountByMint,
                     auctionView.auctionDataExtended?.info.instantSalePrice,
                   );
-                  setShowBidModal(false);
+                  setLastBid(bid);
+                  // TODO: Remove this by propating necessary information to sendRedeemBid
+                  window.location.reload();
+                  return;
+                }
 
-                  // Redeem the purchase immediately.
-                  try {
-                    await sendRedeemBid(
-                      connection,
-                      wallet,
-                      myPayingAccount.pubkey,
-                      auctionView,
-                      accountByMint,
-                      prizeTrackingTickets,
-                      bidRedemptions,
-                      bids,
-                      // TODO: Replace with instant sale dialog
-                    ).then(() => setShowRedeemedBidModal(true));
-                  } catch (e) {
-                    console.error(e);
-                    setShowRedemptionIssue(true);
-                  }
+                setShowBidModal(false);
+
+                // Claim the purchase
+                try {
+                  await sendRedeemBid(
+                    connection,
+                    wallet,
+                    myPayingAccount.pubkey,
+                    auctionView,
+                    accountByMint,
+                    prizeTrackingTickets,
+                    bidRedemptions,
+                    bids,
+                  ).then(() => setShowRedeemedBidModal(true));
+                } catch (e) {
+                  console.error(e);
+                  setShowRedemptionIssue(true);
                 }
 
                 setLoading(false);
@@ -530,7 +546,9 @@ export const AuctionCard = ({
               return (
                 <>
                   <h2 className="modal-title">
-                    {auctionView.isInstantSale ? 'Instant Sale' : 'Place a bid'}
+                    {auctionView.isInstantSale
+                      ? 'Confirm Purchase'
+                      : 'Place a bid'}
                   </h2>
                   {!!gapTime && (
                     <div
@@ -552,9 +570,12 @@ export const AuctionCard = ({
                       )}
                     </div>
                   )}
-                  <br />
-                  <AuctionNumbers auctionView={auctionView} />
-
+                  {!auctionView.isInstantSale && (
+                    <>
+                      <br />
+                      <AuctionNumbers auctionView={auctionView} />
+                    </>
+                  )}
                   <br />
                   {tickSizeInvalid && tickSize && (
                     <span style={{ color: 'red' }}>
@@ -596,26 +617,35 @@ export const AuctionCard = ({
                         placeholder="Amount in SOL"
                       />
                     )}
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        margin: '5px 20px',
-                        fontWeight: 700,
-                      }}
-                    >
-                      ◎ {formatAmount(balance.balance, 2)}{' '}
-                      <span style={{ color: '#717171' }}>available</span>
-                    </div>
-                    <Link
-                      to="/addfunds"
-                      style={{
-                        float: 'right',
-                        margin: '5px 20px',
-                        color: '#5870EE',
-                      }}
-                    >
-                      Add funds
-                    </Link>
+                    {!(auctionView.isInstantSale && bids.length > 0) && (
+                      <>
+                        <div
+                          style={{
+                            color: '#FFFFFF',
+                            display: 'inline-block',
+                            margin: '5px 20px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ◎ {formatAmount(balance.balance, 2)}{' '}
+                          <span
+                            style={{ color: '#717171', paddingLeft: '5px' }}
+                          >
+                            available
+                          </span>
+                        </div>
+                        <Link
+                          to="/addfunds"
+                          style={{
+                            float: 'right',
+                            margin: '5px 20px',
+                            color: '#5870EE',
+                          }}
+                        >
+                          Add funds
+                        </Link>
+                      </>
+                    )}
                   </div>
 
                   <br />
@@ -623,7 +653,9 @@ export const AuctionCard = ({
                     type="primary"
                     size="large"
                     className="action-btn"
-                    onClick={auctionView.isInstantSale ? instantSale : placeBid}
+                    onClick={() =>
+                      auctionView.isInstantSale ? instantSale() : placeBid()
+                    }
                     disabled={
                       tickSizeInvalid ||
                       gapBidInvalid ||
@@ -638,7 +670,11 @@ export const AuctionCard = ({
                     {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
                       <Spin />
                     ) : auctionView.isInstantSale ? (
-                      'Confirm Purchase'
+                      bids.length ? (
+                        'Claim'
+                      ) : (
+                        'Purchase'
+                      )
                     ) : (
                       'Place Bid'
                     )}
