@@ -14,7 +14,8 @@ import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection, useWallet } from '@oyster/common';
+import { shortenAddress, useConnection } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ViewOn } from '../../components/ViewOn';
@@ -25,7 +26,7 @@ const { Content } = Layout;
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
 
   const connection = useConnection();
@@ -179,7 +180,7 @@ export const ArtView = () => {
                       return;
                     }
 
-                    const owner = wallet?.publicKey;
+                    const owner = wallet.publicKey;
 
                     if(!owner) {
                       return;

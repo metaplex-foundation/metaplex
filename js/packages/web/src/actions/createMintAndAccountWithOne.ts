@@ -8,6 +8,7 @@ import {
   StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function createMintAndAccountWithOne(
   wallet: any,
@@ -16,6 +17,8 @@ export async function createMintAndAccountWithOne(
   instructions: TransactionInstruction[],
   signers: Keypair[],
 ): Promise<{ mint: StringPublicKey; account: StringPublicKey }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const mint = createMint(
     instructions,
     wallet.publicKey,
