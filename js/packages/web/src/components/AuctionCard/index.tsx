@@ -25,7 +25,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
+// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -184,6 +184,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
+  const {update} = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -517,9 +518,10 @@ export const AuctionCard = ({
                   );
                   setLastBid(bid);
                   // TODO: Remove this by propating necessary information to sendRedeemBid
-                  window.location.reload();
-                  return;
+                  // window.location.reload();
                 }
+
+                await update();
 
                 setShowBidModal(false);
 

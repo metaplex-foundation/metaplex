@@ -1,4 +1,5 @@
 import {
+  getAuctionExtended,
   getBidderPotKey,
   programIds,
   StringPublicKey,
@@ -34,6 +35,11 @@ export async function claimBid(
   const value = new ClaimBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
 
+  const auctionExtendedKey = await getAuctionExtended({
+    auctionProgramId: PROGRAM_IDS.auction,
+    resource: vault,
+  });
+
   const keys = [
     {
       pubkey: toPublicKey(acceptPayment),
@@ -58,6 +64,11 @@ export async function claimBid(
     },
     {
       pubkey: toPublicKey(auctionKey),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(auctionExtendedKey),
       isSigner: false,
       isWritable: false,
     },
