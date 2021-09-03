@@ -17,13 +17,11 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { token } from '@project-serum/anchor/dist/utils';
 
 const CACHE_PATH = './.cache';
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
 );
-const ENV = 'devnet';
 const CANDY_MACHINE = 'candy_machine';
 
 const programId = new anchor.web3.PublicKey(
@@ -196,7 +194,6 @@ const createConfig = async function (
 
   const config = anchor.web3.Keypair.generate();
   const uuid = config.publicKey.toBase58().slice(0, 6);
-
   return {
     config: config.publicKey,
     uuid,
@@ -250,10 +247,12 @@ program
   .option('-s, --start-with', 'Image index to start with', '0')
   .option('-n, --number', 'Number of images to upload', '10000')
   .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-e, --env <name>', 'Environment')
   .action(async (files: string[], options, cmd) => {
     const extension = '.png';
     const { startWith, keypair } = cmd.opts();
     const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const ENV = program.getOptionValue('env') || 'devnet';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -512,7 +511,9 @@ program
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -559,7 +560,9 @@ program
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-p, --price <string>', 'SOL price')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -618,7 +621,9 @@ program
   .command('mint_one_token')
   .option('-k, --keypair <path>', `The purchaser's wallet key`)
   .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -710,7 +715,9 @@ program
 program
   .command('verify')
   .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, second, options) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
