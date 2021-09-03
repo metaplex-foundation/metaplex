@@ -1027,6 +1027,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fair-launch"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "arrayref",
+ "spl-token",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
