@@ -401,7 +401,7 @@ program
           try {
             const result = await (
               await fetch(
-                'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile3',
+                'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
                 {
                   method: 'POST',
                   body: data,
@@ -435,7 +435,7 @@ program
 
     try {
       await Promise.all(
-        chunks(Array.from(Array(images.length).keys()), 1000).map(
+        chunks(Array.from(Array(SIZE).keys()), 1000).map(
           async allIndexesInSlice => {
             for (
               let offset = 0;
@@ -445,7 +445,7 @@ program
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
                 const index = images[i].replace(extension, '').split('/').pop();
-                return cacheContent.items[index].onChain;
+                return cacheContent.items[index]?.onChain || false;
               });
               const ind = images[indexes[0]]
                 .replace(extension, '')
@@ -464,7 +464,7 @@ program
                   indexes.map(i => ({
                     uri: cacheContent.items[
                       images[i].replace(extension, '').split('/').pop()
-                    ].link,
+                    ]?.link,
                     name: cacheContent.items[
                       images[i].replace(extension, '').split('/').pop()
                     ].name,
