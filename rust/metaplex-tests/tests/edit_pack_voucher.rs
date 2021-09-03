@@ -99,12 +99,18 @@ async fn success() {
         _user,
     ) = setup().await;
 
-    assert_eq!(test_pack_voucher.get_data(&mut context).await.max_supply, Some(5));
+    assert_eq!(
+        test_pack_voucher.get_data(&mut context).await.max_supply,
+        Some(5)
+    );
 
     test_pack_set
         .edit_voucher(&mut context, &test_pack_voucher, None, Some(1337), None)
         .await
         .unwrap();
 
-    assert_eq!(test_pack_voucher.get_data(&mut context).await.max_supply, Some(1337));
+    assert_eq!(
+        test_pack_voucher.get_data(&mut context).await.max_supply,
+        Some(1337)
+    );
 }
