@@ -5,8 +5,8 @@ mod external_price;
 mod master_edition_v2;
 mod metadata;
 mod pack_card;
-mod pack_voucher;
 mod pack_set;
+mod pack_voucher;
 mod user;
 mod vault;
 
@@ -16,8 +16,8 @@ pub use external_price::TestExternalPrice;
 pub use master_edition_v2::TestMasterEditionV2;
 pub use metadata::TestMetadata;
 pub use pack_card::TestPackCard;
-pub use pack_voucher::TestPackVoucher;
 pub use pack_set::TestPackSet;
+pub use pack_voucher::TestPackVoucher;
 pub use user::*;
 pub use vault::TestVault;
 
@@ -29,13 +29,16 @@ use solana_sdk::{
 use spl_token::state::Mint;
 
 pub fn nft_packs_program_test<'a>() -> ProgramTest {
-    let mut program = ProgramTest::new(
-        "metaplex_nft_packs",
-        metaplex_nft_packs::id(),
-        None,
-    );
+    let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
     program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
     program
+}
+
+pub async fn is_empty_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> bool {
+    match context.banks_client.get_account(*pubkey).await {
+        Ok(account) => account.is_none(),
+        Err(_) => false,
+    }
 }
 
 pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {
@@ -116,21 +119,18 @@ pub async fn transfer_token(
     source: &Pubkey,
     destination: &Pubkey,
     authority: &Keypair,
-    amount: u64
+    amount: u64,
 ) -> transport::Result<()> {
-
     let tx = Transaction::new_signed_with_payer(
-        &[
-            spl_token::instruction::transfer(
-                &spl_token::id(),
-                source,
-                destination,
-                &authority.pubkey(),
-                &[],
-                amount,
-            )
-            .unwrap(),
-        ],
+        &[spl_token::instruction::transfer(
+            &spl_token::id(),
+            source,
+            destination,
+            &authority.pubkey(),
+            &[],
+            amount,
+        )
+        .unwrap()],
         Some(&context.payer.pubkey()),
         &[&context.payer, authority],
         context.last_blockhash,

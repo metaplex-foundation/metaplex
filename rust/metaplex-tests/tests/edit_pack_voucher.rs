@@ -1,8 +1,8 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
+    instruction::{AddVoucherToPackArgs, InitPackSetArgs},
+    state::ActionOnProve,
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -11,6 +11,7 @@ use utils::*;
 async fn setup() -> (
     ProgramTestContext,
     TestPackSet,
+    TestPackVoucher,
     TestMetadata,
     TestMasterEditionV2,
     User,
@@ -59,9 +60,28 @@ async fn setup() -> (
         .await
         .unwrap();
 
+    // Add pack card
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
+
     (
         context,
         test_pack_set,
+        test_pack_voucher,
         test_metadata,
         test_master_edition,
         user,
@@ -70,27 +90,27 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let (
+        mut context,
+        test_pack_set,
+        test_pack_voucher,
+        _test_metadata,
+        _test_master_edition,
+        _user,
+    ) = setup().await;
 
-    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    assert_eq!(
+        test_pack_voucher.get_data(&mut context).await.max_supply,
+        Some(5)
+    );
+
     test_pack_set
-        .add_card(
-            &mut context,
-            &test_pack_card,
-            &test_master_edition,
-            &test_metadata,
-            &user,
-            AddCardToPackArgs {
-                max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
-                index: test_pack_card.index,
-            },
-        )
+        .edit_voucher(&mut context, &test_pack_voucher, None, Some(1337), None)
         .await
         .unwrap();
 
-    let pack_card = test_pack_card.get_data(&mut context).await;
-
-    assert_eq!(pack_card.account_type, AccountType::PackCard);
+    assert_eq!(
+        test_pack_voucher.get_data(&mut context).await.max_supply,
+        Some(1337)
+    );
 }

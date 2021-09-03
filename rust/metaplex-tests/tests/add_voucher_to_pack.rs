@@ -2,7 +2,7 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType, ActionOnProve},
+    state::{AccountType, ActionOnProve},
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -34,7 +34,10 @@ async fn setup() -> (
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
     let user_token_acc = Keypair::new();
-    let user = User{owner: Keypair::new(), token_account: user_token_acc.pubkey()};
+    let user = User {
+        owner: Keypair::new(),
+        token_account: user_token_acc.pubkey(),
+    };
 
     test_metadata
         .create(
@@ -68,25 +71,24 @@ async fn setup() -> (
 #[tokio::test]
 async fn success() {
     let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
-
     let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
 
-    test_pack_set.add_voucher(
-        &mut context,
-        &test_pack_voucher,
-        &test_master_edition,
-        &test_metadata,
-        &user,
-        AddVoucherToPackArgs{
-            max_supply: Some(5),
-            number_to_open: 4,
-            action_on_prove: ActionOnProve::Burn,
-        },
-    )
-    .await
-    .unwrap();
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
 
     let pack_voucher = test_pack_voucher.get_data(&mut context).await;
-
     assert_eq!(pack_voucher.account_type, AccountType::PackVoucher);
 }

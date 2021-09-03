@@ -2,7 +2,7 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
+    state::DistributionType,
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -11,6 +11,7 @@ use utils::*;
 async fn setup() -> (
     ProgramTestContext,
     TestPackSet,
+    TestPackCard,
     TestMetadata,
     TestMasterEditionV2,
     User,
@@ -59,19 +60,7 @@ async fn setup() -> (
         .await
         .unwrap();
 
-    (
-        context,
-        test_pack_set,
-        test_metadata,
-        test_master_edition,
-        user,
-    )
-}
-
-#[tokio::test]
-async fn success() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
-
+    // Add pack card
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
         .add_card(
@@ -90,7 +79,33 @@ async fn success() {
         .await
         .unwrap();
 
-    let pack_card = test_pack_card.get_data(&mut context).await;
+    (
+        context,
+        test_pack_set,
+        test_pack_card,
+        test_metadata,
+        test_master_edition,
+        user,
+    )
+}
 
-    assert_eq!(pack_card.account_type, AccountType::PackCard);
+#[tokio::test]
+async fn success() {
+    let (mut context, test_pack_set, test_pack_card, _test_metadata, _test_master_edition, _user) =
+        setup().await;
+
+    assert_eq!(
+        test_pack_card.get_data(&mut context).await.max_supply,
+        Some(5)
+    );
+
+    test_pack_set
+        .edit_card(&mut context, &test_pack_card, None, Some(1337), None)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        test_pack_card.get_data(&mut context).await.max_supply,
+        Some(1337)
+    );
 }

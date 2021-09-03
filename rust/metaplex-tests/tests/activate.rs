@@ -1,8 +1,8 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::DistributionType,
+    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
+    state::{ActionOnProve, DistributionType, PackSetState},
 };
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
@@ -11,7 +11,6 @@ use utils::*;
 async fn setup() -> (
     ProgramTestContext,
     TestPackSet,
-    TestPackCard,
     TestMetadata,
     TestMasterEditionV2,
     User,
@@ -34,12 +33,23 @@ async fn setup() -> (
     let test_metadata = TestMetadata::new();
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
+    let test_metadata2 = TestMetadata::new();
+    let test_master_edition2 = TestMasterEditionV2::new(&test_metadata2);
+
     let user_token_acc = Keypair::new();
+    let user_token_acc2 = Keypair::new();
+
     let user = User {
         owner: Keypair::new(),
         token_account: user_token_acc.pubkey(),
     };
 
+    let user2 = User {
+        owner: Keypair::new(),
+        token_account: user_token_acc2.pubkey(),
+    };
+
+    // Create 1st metadata and master edition
     test_metadata
         .create(
             &mut context,
@@ -56,6 +66,27 @@ async fn setup() -> (
         .unwrap();
 
     test_master_edition
+        .create(&mut context, Some(10))
+        .await
+        .unwrap();
+
+    // Create 2nd metadata and master edition
+    test_metadata2
+        .create(
+            &mut context,
+            "Test2".to_string(),
+            "TST2".to_string(),
+            "uri2".to_string(),
+            None,
+            10,
+            false,
+            &user_token_acc2,
+            &test_pack_set.authority.pubkey(),
+        )
+        .await
+        .unwrap();
+
+    test_master_edition2
         .create(&mut context, Some(10))
         .await
         .unwrap();
@@ -79,10 +110,27 @@ async fn setup() -> (
         .await
         .unwrap();
 
+    // Add pack voucher
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition2,
+            &test_metadata2,
+            &user2,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
+
     (
         context,
         test_pack_set,
-        test_pack_card,
         test_metadata,
         test_master_edition,
         user,
@@ -91,32 +139,15 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, test_pack_card, test_metadata, _test_master_edition, user) =
-        setup().await;
+    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) = setup().await;
+    assert_eq!(
+        test_pack_set.get_data(&mut context).await.pack_state,
+        PackSetState::NotActivated
+    );
 
-    let new_token_owner_acc = Keypair::new();
-    create_token_account(
-        &mut context,
-        &new_token_owner_acc,
-        &test_metadata.mint.pubkey(),
-        &test_pack_set.authority.pubkey(),
-    )
-    .await
-    .unwrap();
-
-    let pack_set = test_pack_set.get_data(&mut context).await;
-    assert_eq!(pack_set.pack_cards, 1);
-
-    test_pack_set
-        .delete_card(
-            &mut context,
-            &test_pack_card,
-            &user.pubkey(),
-            &new_token_owner_acc.pubkey(),
-        )
-        .await
-        .unwrap();
-
-    let pack_set = test_pack_set.get_data(&mut context).await;
-    assert_eq!(pack_set.pack_cards, 0);
+    test_pack_set.activate(&mut context).await.unwrap();
+    assert_eq!(
+        test_pack_set.get_data(&mut context).await.pack_state,
+        PackSetState::Activated
+    );
 }

@@ -1,9 +1,6 @@
 mod utils;
 
-use metaplex_nft_packs::{
-    instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
-};
+use metaplex_nft_packs::instruction::InitPackSetArgs;
 use solana_program_test::*;
 use solana_sdk::{signature::Keypair, signer::Signer};
 use utils::*;
@@ -70,27 +67,14 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let (mut context, test_pack_set, _test_metadata, _test_master_edition, user) = setup().await;
 
-    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 5);
+
     test_pack_set
-        .add_card(
-            &mut context,
-            &test_pack_card,
-            &test_master_edition,
-            &test_metadata,
-            &user,
-            AddCardToPackArgs {
-                max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
-                index: test_pack_card.index,
-            },
-        )
+        .edit(&mut context, None, None, Some(1337))
         .await
         .unwrap();
 
-    let pack_card = test_pack_card.get_data(&mut context).await;
-
-    assert_eq!(pack_card.account_type, AccountType::PackCard);
+    assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 1337);
 }
