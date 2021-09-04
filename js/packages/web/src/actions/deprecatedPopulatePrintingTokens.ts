@@ -8,8 +8,9 @@ import {
   ParsedAccount,
   MetadataKey,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import BN from 'bn.js';
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
 
@@ -18,13 +19,15 @@ const BATCH_SIZE = 4;
 // for all relevant NFTs.
 export async function deprecatedPopulatePrintingTokens(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDepositConfigs: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
   safetyDepositConfigs: SafetyDepositInstructionTemplate[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
   let batchCounter = 0;

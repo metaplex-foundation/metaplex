@@ -3,8 +3,9 @@ import {
   SequenceType,
   sendTransactions,
   sendTransactionWithRetry,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { WhitelistedCreator } from '../models/metaplex';
 import { setStore } from '../models/metaplex/setStore';
 import { setWhitelistedCreator } from '../models/metaplex/setWhitelistedCreator';
@@ -13,10 +14,12 @@ import { setWhitelistedCreator } from '../models/metaplex/setWhitelistedCreator'
 // but given how little this should be used keep it simple
 export async function saveAdmin(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   isPublic: boolean,
   whitelistedCreators: WhitelistedCreator[],
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 

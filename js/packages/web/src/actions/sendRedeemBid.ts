@@ -16,19 +16,17 @@ import {
   sendTransactionsWithManualRetry,
   MasterEditionV1,
   MasterEditionV2,
-  findProgramAddress,
-  createAssociatedTokenAccountInstruction,
   deprecatedMintNewEditionFromMasterEditionViaPrintingToken,
   MetadataKey,
   TokenAccountParser,
   BidderMetadata,
   getEditionMarkPda,
   decodeEditionMarker,
-  BidStateType,
   StringPublicKey,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
 import { AuctionView, AuctionViewItem } from '../hooks';
 import {
@@ -43,13 +41,13 @@ import {
   PrizeTrackingTicket,
   getPrizeTrackingTicket,
   BidRedemptionTicket,
-  getBidRedemption,
 } from '../models/metaplex';
 import { claimBid } from '../models/metaplex/claimBid';
 import { setupCancelBid } from './cancelBid';
 import { deprecatedPopulateParticipationPrintingAccount } from '../models/metaplex/deprecatedPopulateParticipationPrintingAccount';
 import { setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
+import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
 import {
@@ -86,7 +84,7 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
 
 export async function sendRedeemBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -94,6 +92,8 @@ export async function sendRedeemBid(
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
   bids: ParsedAccount<BidderMetadata>[],
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Array<Keypair[]> = [];
   let instructions: Array<TransactionInstruction[]> = [];
 
@@ -121,7 +121,7 @@ export async function sendRedeemBid(
     MintLayout.span,
   );
 
-  let winnerIndex = null;
+  let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
@@ -296,12 +296,14 @@ async function setupRedeemInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let winningPrizeSigner: Keypair[] = [];
   let winningPrizeInstructions: TransactionInstruction[] = [];
 
@@ -353,13 +355,15 @@ async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let winningPrizeSigner: Keypair[] = [];
   let winningPrizeInstructions: TransactionInstruction[] = [];
 
@@ -400,70 +404,18 @@ async function setupRedeemFullRightsTransferInstructions(
     const metadata = await getMetadata(safetyDeposit.info.tokenMint);
     await updatePrimarySaleHappenedViaToken(
       metadata,
-      wallet.publicKey,
+      wallet.publicKey.toBase58(),
       newTokenAccount,
       winningPrizeInstructions,
     );
   }
 }
 
-async function createMintAndAccountWithOne(
-  wallet: any,
-  receiverWallet: StringPublicKey,
-  mintRent: any,
-  instructions: TransactionInstruction[],
-  signers: Keypair[],
-): Promise<{ mint: StringPublicKey; account: StringPublicKey }> {
-  const mint = createMint(
-    instructions,
-    wallet.publicKey,
-    mintRent,
-    0,
-    wallet.publicKey,
-    wallet.publicKey,
-    signers,
-  );
-
-  const PROGRAM_IDS = programIds();
-
-  const account: StringPublicKey = (
-    await findProgramAddress(
-      [
-        toPublicKey(receiverWallet).toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        mint.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
-    )
-  )[0];
-
-  createAssociatedTokenAccountInstruction(
-    instructions,
-    toPublicKey(account),
-    wallet.publicKey,
-    toPublicKey(receiverWallet),
-    mint,
-  );
-
-  instructions.push(
-    Token.createMintToInstruction(
-      PROGRAM_IDS.token,
-      mint,
-      toPublicKey(account),
-      wallet.publicKey,
-      [],
-      1,
-    ),
-  );
-
-  return { mint: mint.toBase58(), account };
-}
-
 export async function setupRedeemPrintingV2Instructions(
   connection: Connection,
   auctionView: AuctionView,
   mintRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   receiverWallet: StringPublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
@@ -472,6 +424,8 @@ export async function setupRedeemPrintingV2Instructions(
   winningIndex: number,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition || !item.metadata) {
     return;
   }
@@ -579,13 +533,15 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   winnerIndex: number,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition || !item.metadata) {
     return;
   }
@@ -666,7 +622,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
 }
 
 async function deprecatedRedeemPrintingV1Token(
-  wallet: any,
+  wallet: WalletSigner,
   updateAuth: StringPublicKey,
   item: AuctionViewItem,
   newTokenAccount: StringPublicKey,
@@ -676,6 +632,8 @@ async function deprecatedRedeemPrintingV1Token(
   instructions: TransactionInstruction[][],
   reservationList?: StringPublicKey,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition) return;
   let cashInLimitedPrizeAuthorizationTokenSigner: Keypair[] = [];
   let cashInLimitedPrizeAuthorizationTokenInstruction: TransactionInstruction[] =
@@ -752,7 +710,7 @@ export async function setupRedeemParticipationInstructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   receiverWallet: StringPublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined,
@@ -761,6 +719,8 @@ export async function setupRedeemParticipationInstructions(
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition || !item.metadata) {
     return;
   }
@@ -886,12 +846,14 @@ async function deprecatedSetupRedeemParticipationInstructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const me = item.masterEdition as ParsedAccount<MasterEditionV1>;
   const participationState: ParticipationStateV1 | null = (
     auctionView.auctionManager.instance.info as AuctionManagerV1
