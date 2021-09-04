@@ -9,7 +9,7 @@ import {
 } from '@oyster/common';
 import { setupMintEditionIntoWalletInstructions } from './setupMintEditionIntoWalletInstructions';
 import { Art } from '../types';
-import { WalletAdapter } from '@solana/wallet-base';
+import { WalletAdapter } from '@solana/wallet-adapter-base';
 
 // TODO: Refactor. Extract batching logic,
 //  as the similar one is used in settle.ts and convertMasterEditions.ts
