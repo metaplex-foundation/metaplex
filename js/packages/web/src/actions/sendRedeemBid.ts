@@ -16,15 +16,12 @@ import {
   sendTransactionsWithManualRetry,
   MasterEditionV1,
   MasterEditionV2,
-  findProgramAddress,
-  createAssociatedTokenAccountInstruction,
   deprecatedMintNewEditionFromMasterEditionViaPrintingToken,
   MetadataKey,
   TokenAccountParser,
   BidderMetadata,
   getEditionMarkPda,
   decodeEditionMarker,
-  BidStateType,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
@@ -44,13 +41,13 @@ import {
   PrizeTrackingTicket,
   getPrizeTrackingTicket,
   BidRedemptionTicket,
-  getBidRedemption,
 } from '../models/metaplex';
 import { claimBid } from '../models/metaplex/claimBid';
 import { setupCancelBid } from './cancelBid';
 import { deprecatedPopulateParticipationPrintingAccount } from '../models/metaplex/deprecatedPopulateParticipationPrintingAccount';
 import { setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
+import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
 import {
@@ -412,60 +409,6 @@ async function setupRedeemFullRightsTransferInstructions(
       winningPrizeInstructions,
     );
   }
-}
-
-async function createMintAndAccountWithOne(
-  wallet: WalletSigner,
-  receiverWallet: StringPublicKey,
-  mintRent: any,
-  instructions: TransactionInstruction[],
-  signers: Keypair[],
-): Promise<{ mint: StringPublicKey; account: StringPublicKey }> {
-  if (!wallet.publicKey) throw new WalletNotConnectedError();
-
-  const mint = createMint(
-    instructions,
-    wallet.publicKey,
-    mintRent,
-    0,
-    wallet.publicKey,
-    wallet.publicKey,
-    signers,
-  );
-
-  const PROGRAM_IDS = programIds();
-
-  const account: StringPublicKey = (
-    await findProgramAddress(
-      [
-        toPublicKey(receiverWallet).toBuffer(),
-        PROGRAM_IDS.token.toBuffer(),
-        mint.toBuffer(),
-      ],
-      PROGRAM_IDS.associatedToken,
-    )
-  )[0];
-
-  createAssociatedTokenAccountInstruction(
-    instructions,
-    toPublicKey(account),
-    wallet.publicKey,
-    toPublicKey(receiverWallet),
-    mint,
-  );
-
-  instructions.push(
-    Token.createMintToInstruction(
-      PROGRAM_IDS.token,
-      mint,
-      toPublicKey(account),
-      wallet.publicKey,
-      [],
-      1,
-    ),
-  );
-
-  return { mint: mint.toBase58(), account };
 }
 
 export async function setupRedeemPrintingV2Instructions(
