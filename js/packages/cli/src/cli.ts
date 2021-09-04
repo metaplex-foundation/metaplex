@@ -252,8 +252,9 @@ program
   .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (files: string[], options, cmd) => {
     const extension = '.png';
-    const { startWith, keypair } = cmd.opts();
+    const { startWith, keypair, url: cmdUrl } = cmd.opts();
     const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const url = cmdUrl || `https://api.${ENV}.solana.com/`;
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -303,9 +304,7 @@ program
     // const baseCost = fetch(``);
     // const increment = fetch(``);
 
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${ENV}.solana.com/`,
-    );
+    const solConnection = new anchor.web3.Connection(url);
 
     const walletWrapper = new anchor.Wallet(walletKey);
     const provider = new anchor.Provider(solConnection, walletWrapper, {
@@ -499,13 +498,19 @@ program
   });
 program
   .command('set_start_date')
+  .option(
+    '-u, --url',
+    'Solana cluster url',
+    'https://api.mainnet-beta.solana.com/',
+  )
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${ENV}.solana.com/`,
-    );
+    const { url: cmdUrl } = cmd.opts();
+    const url = cmdUrl || `https://api.${ENV}.solana.com/`;
+
+    const solConnection = new anchor.web3.Connection(url);
 
     const { keypair } = cmd.opts();
 
@@ -546,13 +551,19 @@ program
 
 program
   .command('create_candy_machine')
+  .option(
+    '-u, --url',
+    'Solana cluster url',
+    'https://api.mainnet-beta.solana.com/',
+  )
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${ENV}.solana.com/`,
-    );
+    const { url: cmdUrl } = cmd.opts();
+    const url = cmdUrl || `https://api.${ENV}.solana.com/`;
+
+    const solConnection = new anchor.web3.Connection(url);
 
     const { keypair } = cmd.opts();
     const solPriceStr = cmd.getOptionValue('price') || '1';
@@ -606,12 +617,18 @@ program
 
 program
   .command('mint_one_token')
+  .option(
+    '-u, --url',
+    'Solana cluster url',
+    'https://api.mainnet-beta.solana.com/',
+  )
   .option('-k, --keypair <path>', `The purchaser's wallet key`)
   .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (directory, cmd) => {
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${ENV}.solana.com/`,
-    );
+    const { url: cmdUrl } = cmd.opts();
+    const url = cmdUrl || `https://api.${ENV}.solana.com/`;
+
+    const solConnection = new anchor.web3.Connection(url);
 
     const { keypair } = cmd.opts();
     const solPriceStr = program.getOptionValue('price') || '1';
@@ -699,11 +716,17 @@ program
   });
 program
   .command('verify')
+  .option(
+    '-u, --url',
+    'Solana cluster url',
+    'https://api.mainnet-beta.solana.com/',
+  )
   .option('-c, --cache-name <path>', 'Cache file name')
-  .action(async (directory, second, options) => {
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${ENV}.solana.com/`,
-    );
+  .action(async (directory, cmd, options) => {
+    const { url: cmdUrl } = cmd.opts();
+    const url = cmdUrl || `https://api.${ENV}.solana.com/`;
+
+    const solConnection = new anchor.web3.Connection(url);
     const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
