@@ -351,6 +351,7 @@ pub mod nft_candy_machine {
                 position_from_right
             );
             if old_value_in_vec != data[my_position_in_vec] {
+                msg!("Increasing count");
                 new_count = new_count
                     .checked_add(1)
                     .ok_or(ErrorCode::NumericalOverflowError)?;
@@ -395,7 +396,7 @@ pub mod nft_candy_machine {
         }
 
         if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
-            != candy_machine.data.items_available as usize
+            < candy_machine.data.items_available as usize
         {
             return Err(ErrorCode::ConfigLineMismatch.into());
         }
@@ -610,6 +611,6 @@ pub enum ErrorCode {
     CandyMachineEmpty,
     #[msg("Candy machine is not live yet!")]
     CandyMachineNotLiveYet,
-    #[msg("Number of config lines must match items available")]
+    #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
 }
