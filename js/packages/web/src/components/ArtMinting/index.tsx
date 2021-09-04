@@ -11,6 +11,7 @@ import {
   MetaplexOverlay,
   useConnection,
   useUserAccounts,
+
 } from '@oyster/common';
 import { useArt } from '../../hooks';
 import { mintEditionsToWallet } from '../../actions/mintEditionsIntoWallet';
@@ -19,6 +20,7 @@ import { Confetti } from '../Confetti';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 
+
 interface ArtMintingProps {
   id: string;
   onMint: Function;
@@ -26,6 +28,7 @@ interface ArtMintingProps {
 
 export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
   const wallet = useWallet();
+
   const connection = useConnection();
   const { accountByMint } = useUserAccounts();
   const [showMintModal, setShowMintModal] = useState<boolean>(false);
@@ -154,7 +157,7 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
           <Modal
             visible={showMintModal}
             centered
-            okText="Mint"
+            okText="
             closable={!isLoading}
             okButtonProps={{
               disabled: isMintingDisabled,
