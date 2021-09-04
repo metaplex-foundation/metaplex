@@ -150,7 +150,7 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
         tempCache.whitelistedCreatorsByCreator,
       );
 
-      if (whitelistedCreators.length > 3) {
+      if (false) {
         console.log(' too many creators, pulling all nfts in one go');
         additionalPromises.push(
           getProgramAccounts(connection, METADATA_PROGRAM_ID).then(
