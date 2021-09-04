@@ -9,7 +9,7 @@ import {
 } from '@oyster/common';
 import { setupMintEditionIntoWalletInstructions } from './setupMintEditionIntoWalletInstructions';
 import { Art } from '../types';
-import { WalletAdapter } from '@solana/wallet-adapter-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // TODO: Refactor. Extract batching logic,
 //  as the similar one is used in settle.ts and convertMasterEditions.ts
@@ -18,7 +18,7 @@ const BATCH_SIZE = 10;
 
 export async function mintEditionsToWallet(
   art: Art,
-  wallet: WalletAdapter,
+  wallet: WalletContextState,
   connection: Connection,
   mintTokenAccount: TokenAccount,
   editions: number = 1,
