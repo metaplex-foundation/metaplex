@@ -451,7 +451,13 @@ pub struct AddConfigLines<'info> {
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
     config: ProgramAccount<'info, Config>,
-    #[account(mut, has_one = config, has_one = wallet, seeds=[PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(
+        mut,
+        has_one = config,
+        has_one = wallet,
+        seeds = [PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
+        bump = candy_machine.bump,
+    )]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -481,7 +487,12 @@ pub struct MintNFT<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateCandyMachine<'info> {
-    #[account(mut, has_one=authority, seeds=[PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(
+        mut,
+        has_one = authority,
+        seeds = [PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
+        bump = candy_machine.bump
+    )]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(signer)]
     authority: AccountInfo<'info>,
