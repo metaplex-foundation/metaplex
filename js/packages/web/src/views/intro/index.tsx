@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
 import { useMeta } from '../../contexts';
 
+
 export const IntroView = () => (
     <div className="has-dropcap">
         <h2>Ages past in the land of Terra, there lived a vibrant community of adventurers, jesters, historians, and artisans; bands of companions who gathered weekly to regale each other with tales of magic and mystery. Amidst this ritual they wielded quill, ink, and parchment to produce elaborate depictions of detailed maps, hideous monsters, adventurers’ likenesses and the magic items they carried on their quests. Much favor was heaped upon those most talented of artisans, and all was right and good.</h2>

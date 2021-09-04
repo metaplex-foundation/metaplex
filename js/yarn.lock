@@ -805,11 +805,6 @@
   resolved "https://registry.yarnpkg.com/@google/model-viewer/-/model-viewer-1.7.2.tgz#f8a5a2215616dc51d4e6b70861a6de16b4599322"
   integrity sha512-SoUTpYYlWPxIknfTM3gYQ240Q7eUqZuEHDH/YD2oMxuG7pWQB4DfW67O0EvgIh3vJ0rNG6eenXm0luqzK1i4Cw==
 
-"@google/model-viewer@^1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@google/model-viewer/-/model-viewer-1.8.0.tgz#398c0d9bbd3281933a3a4e6ed8f02da6789df768"
-  integrity sha512-qUwlu4q+sEFs2XOztZpaT5sGdv9G76jyLzEOdttcfAFb0/ZE0HnXU1KPN3Pq5gvdg+jW7fDUUHhsMxM1OBnpUQ==
-
 "@hapi/accept@5.0.2":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@hapi/accept/-/accept-5.0.2.tgz#ab7043b037e68b722f93f376afb05e85c0699523"

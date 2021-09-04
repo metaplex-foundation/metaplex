@@ -11,7 +11,8 @@ import {
   AuctionView,
   HomeView,
   IntroView,
-  RulesView,  
+  RulesView,
+  MetaView,  
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
@@ -59,6 +60,10 @@ export function Routes() {
             <Route
               exact path="/intro"
               component={() => <IntroView />}
+            />
+            <Route
+              exact path="/meta"
+              component={() => <MetaView />}
             />
             <Route
               exact path="/rules"

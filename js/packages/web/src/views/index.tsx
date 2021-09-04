@@ -9,3 +9,4 @@ export { ArtworksView } from './artworks';
 export { IntroView } from './intro';
 export { RulesView } from './rules';
 export { AnalyticsView } from './analytics';
+export { MetaView } from './meta';
