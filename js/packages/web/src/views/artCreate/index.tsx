@@ -356,9 +356,9 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-        <h3>Upload a cover image (PNG, JPG, GIF)</h3>
+        <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
-          accept=".png,.jpg,.gif,.mp4"
+          accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20 }}
           multiple={false}
           customRequest={info => {
@@ -373,7 +373,7 @@ const UploadStep = (props: {
         >
           <div className="ant-upload-drag-icon">
             <h3 style={{ fontWeight: 700 }}>
-              Upload your cover image (PNG, JPG, GIF)
+              Upload your cover image (PNG, JPG, GIF, SVG)
             </h3>
           </div>
           <p className="ant-upload-text">Drag and drop, or click to browse</p>
@@ -651,16 +651,12 @@ const InfoStep = (props: {
           <label className="action-field">
             <span className="field-title">Attributes</span>
           </label>
-          <Form
-            name="dynamic_attributes"
-            form={form}
-            autoComplete="off"
-          >
+          <Form name="dynamic_attributes" form={form} autoComplete="off">
             <Form.List name="attributes">
               {(fields, { add, remove }) => (
                 <>
                   {fields.map(({ key, name, fieldKey }) => (
-                      <Space key={key} align="baseline">
+                    <Space key={key} align="baseline">
                       <Form.Item
                         name={[name, 'trait_type']}
                         fieldKey={[fieldKey, 'trait_type']}
@@ -677,7 +673,6 @@ const InfoStep = (props: {
                         <Input placeholder="value" />
                       </Form.Item>
                       <Form.Item
-
                         name={[name, 'display_type']}
                         fieldKey={[fieldKey, 'display_type']}
                         hasFeedback
@@ -688,7 +683,12 @@ const InfoStep = (props: {
                     </Space>
                   ))}
                   <Form.Item>
-                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
                       Add attribute
                     </Button>
                   </Form.Item>
@@ -704,24 +704,23 @@ const InfoStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            form.validateFields()
-              .then(values => {
-                const nftAttributes = values.attributes;
-                // value is number if possible
-                for (const nftAttribute of nftAttributes || []) {
-                  const newValue = Number(nftAttribute.value);
-                  if (!isNaN(newValue)) {
-                    nftAttribute.value = newValue;
-                  }
+            form.validateFields().then(values => {
+              const nftAttributes = values.attributes;
+              // value is number if possible
+              for (const nftAttribute of nftAttributes || []) {
+                const newValue = Number(nftAttribute.value);
+                if (!isNaN(newValue)) {
+                  nftAttribute.value = newValue;
                 }
-                console.log('Adding NFT attributes:', nftAttributes)
-                props.setAttributes({
-                  ...props.attributes,
-                  attributes: nftAttributes,
-                });
+              }
+              console.log('Adding NFT attributes:', nftAttributes);
+              props.setAttributes({
+                ...props.attributes,
+                attributes: nftAttributes,
+              });
 
-                props.confirm();
-              })
+              props.confirm();
+            });
           }}
           className="action-btn"
         >

@@ -19,6 +19,7 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
+  placeBid,
   useWalletModal,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
