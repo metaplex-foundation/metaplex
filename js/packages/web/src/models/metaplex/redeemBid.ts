@@ -1,6 +1,11 @@
-import { findProgramAddress, programIds, VAULT_PREFIX } from '@oyster/common';
 import {
-  PublicKey,
+  findProgramAddress,
+  programIds,
+  StringPublicKey,
+  toPublicKey,
+  VAULT_PREFIX,
+} from '@oyster/common';
+import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -10,6 +15,7 @@ import { serialize } from 'borsh';
 import {
   getAuctionKeys,
   getBidderKeys,
+  getSafetyDepositConfig,
   ProxyCallAddress,
   RedeemBidArgs,
   RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
@@ -17,15 +23,15 @@ import {
 } from '.';
 
 export async function redeemBid(
-  vault: PublicKey,
-  safetyDepositTokenStore: PublicKey,
-  destination: PublicKey,
-  safetyDeposit: PublicKey,
-  fractionMint: PublicKey,
-  bidder: PublicKey,
-  payer: PublicKey,
-  masterEdition: PublicKey | undefined,
-  reservationList: PublicKey | undefined,
+  vault: StringPublicKey,
+  safetyDepositTokenStore: StringPublicKey,
+  destination: StringPublicKey,
+  safetyDeposit: StringPublicKey,
+  fractionMint: StringPublicKey,
+  bidder: StringPublicKey,
+  payer: StringPublicKey,
+  masterEdition: StringPublicKey | undefined,
+  reservationList: StringPublicKey | undefined,
   isPrintingType: boolean,
   instructions: TransactionInstruction[],
   // If this is an auctioneer trying to reclaim a specific winning index, pass it here,
@@ -46,16 +52,21 @@ export async function redeemBid(
     bidder,
   );
 
-  const transferAuthority: PublicKey = (
+  const transferAuthority: StringPublicKey = (
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
+        toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
+
+  const safetyDepositConfig = await getSafetyDepositConfig(
+    auctionManagerKey,
+    safetyDeposit,
+  );
 
   const value =
     auctioneerReclaimIndex !== undefined
@@ -67,57 +78,57 @@ export async function redeemBid(
   const data = Buffer.from(serialize(SCHEMA, value));
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDepositTokenStore,
+      pubkey: toPublicKey(safetyDepositTokenStore),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: destination,
+      pubkey: toPublicKey(destination),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: bidRedemption,
+      pubkey: toPublicKey(bidRedemption),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: safetyDeposit,
+      pubkey: toPublicKey(safetyDeposit),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: fractionMint,
+      pubkey: toPublicKey(fractionMint),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidMetadata,
+      pubkey: toPublicKey(bidMetadata),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: bidder,
+      pubkey: toPublicKey(bidder),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
@@ -127,12 +138,12 @@ export async function redeemBid(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.vault,
+      pubkey: toPublicKey(PROGRAM_IDS.vault),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.metadata,
+      pubkey: toPublicKey(PROGRAM_IDS.metadata),
       isSigner: false,
       isWritable: false,
     },
@@ -152,7 +163,12 @@ export async function redeemBid(
       isWritable: false,
     },
     {
-      pubkey: transferAuthority,
+      pubkey: toPublicKey(transferAuthority),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(safetyDepositConfig),
       isSigner: false,
       isWritable: false,
     },
@@ -160,12 +176,12 @@ export async function redeemBid(
 
   if (isPrintingType && masterEdition && reservationList) {
     keys.push({
-      pubkey: masterEdition,
+      pubkey: toPublicKey(masterEdition),
       isSigner: false,
       isWritable: true,
     });
     keys.push({
-      pubkey: reservationList,
+      pubkey: toPublicKey(reservationList),
       isSigner: false,
       isWritable: true,
     });
@@ -174,7 +190,7 @@ export async function redeemBid(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

@@ -13,9 +13,8 @@ export const solToUSD = async (): Promise<number> => {
   return resp.solana.usd;
 };
 
-const CoingeckoContext = React.createContext<CoingeckoContextState | null>(
-  null,
-);
+const CoingeckoContext =
+  React.createContext<CoingeckoContextState | null>(null);
 export function CoingeckoProvider({ children = null as any }) {
   const [solPrice, setSolPrice] = useState<number>(0);
 
@@ -31,10 +30,10 @@ export function CoingeckoProvider({ children = null as any }) {
       timerId = window.setTimeout(async () => {
         queryPrice();
       }, COINGECKO_POOL_INTERVAL);
-    }
+    };
 
     queryPrice();
-    return  () => {
+    return () => {
       clearTimeout(timerId);
     };
   }, [setSolPrice]);
@@ -55,4 +54,4 @@ export const useSolPrice = () => {
   const { solPrice } = useCoingecko();
 
   return solPrice;
-}
+};

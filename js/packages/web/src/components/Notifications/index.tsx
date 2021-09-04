@@ -5,13 +5,17 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  findProgramAddress,
   programIds,
+  StringPublicKey,
+  toPublicKey,
   useConnection,
   useUserAccounts,
-  useWallet,
   VaultState,
+  WalletSigner,
 } from '@oyster/common';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -21,11 +25,10 @@ import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { unwindVault } from '../../actions/unwindVault';
 import { settle } from '../../actions/settle';
 import { startAuctionManually } from '../../actions/startAuctionManually';
-
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
-import { WalletAdapter } from '@solana/wallet-base';
+
 interface NotificationCard {
   id: string;
   title: string;
@@ -96,12 +99,13 @@ function RunAction({
 }
 
 export async function getPersonalEscrowAta(
-  wallet: WalletAdapter | undefined,
-): Promise<PublicKey | undefined> {
+  wallet: WalletSigner | undefined,
+): Promise<StringPublicKey | undefined> {
   const PROGRAM_IDS = programIds();
-  if (!wallet?.publicKey) return undefined;
+  if (!wallet?.publicKey) return;
+
   return (
-    await PublicKey.findProgramAddress(
+    await findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         PROGRAM_IDS.token.toBuffer(),
@@ -118,7 +122,7 @@ export function useCollapseWrappedSol({
   notifications,
 }: {
   connection: Connection;
-  wallet: WalletAdapter | undefined;
+  wallet: WalletSigner;
   notifications: NotificationCard[];
 }) {
   const [showNotification, setShowNotification] = useState(false);
@@ -126,7 +130,9 @@ export function useCollapseWrappedSol({
     const ata = await getPersonalEscrowAta(wallet);
     if (ata) {
       try {
-        const balance = await connection.getTokenAccountBalance(ata);
+        const balance = await connection.getTokenAccountBalance(
+          toPublicKey(ata),
+        );
 
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
@@ -149,7 +155,7 @@ export function useCollapseWrappedSol({
         try {
           const ata = await getPersonalEscrowAta(wallet);
           if (ata) {
-            const data = await connection.getAccountInfo(ata);
+            const data = await connection.getAccountInfo(toPublicKey(ata));
             if (data?.data.length || 0 > 0)
               await closePersonalEscrow(connection, wallet, ata);
           }
@@ -170,11 +176,11 @@ export function useSettlementAuctions({
   notifications,
 }: {
   connection: Connection;
-  wallet: WalletAdapter | undefined;
+  wallet: WalletSigner;
   notifications: NotificationCard[];
 }) {
   const { accountByMint } = useUserAccounts();
-  const walletPubkey = wallet?.publicKey;
+  const walletPubkey = wallet?.publicKey?.toBase58();
   const { bidderPotsByAuctionAndBidder } = useMeta();
   const auctionsNeedingSettling = useAuctions(AuctionViewState.Ended);
 
@@ -186,7 +192,7 @@ export function useSettlementAuctions({
         .filter(
           a =>
             walletPubkey &&
-            a.auctionManager.info.authority.equals(walletPubkey) &&
+            a.auctionManager.authority === walletPubkey &&
             a.auction.info.ended(),
         )
         .sort(
@@ -196,11 +202,11 @@ export function useSettlementAuctions({
         );
       for (let i = 0; i < nextBatch.length; i++) {
         const av = nextBatch[i];
-        if (!CALLING_MUTEX[av.auctionManager.pubkey.toBase58()]) {
-          CALLING_MUTEX[av.auctionManager.pubkey.toBase58()] = true;
+        if (!CALLING_MUTEX[av.auctionManager.pubkey]) {
+          CALLING_MUTEX[av.auctionManager.pubkey] = true;
           try {
             const balance = await connection.getTokenAccountBalance(
-              av.auctionManager.info.acceptPayment,
+              toPublicKey(av.auctionManager.acceptPayment),
             );
             if (
               ((balance.value.uiAmount || 0) === 0 &&
@@ -211,8 +217,7 @@ export function useSettlementAuctions({
             ) {
               setValidDiscoveredEndedAuctions(old => ({
                 ...old,
-                [av.auctionManager.pubkey.toBase58()]:
-                  balance.value.uiAmount || 0,
+                [av.auctionManager.pubkey]: balance.value.uiAmount || 0,
               }));
             }
           } catch (e) {
@@ -226,26 +231,26 @@ export function useSettlementAuctions({
 
   Object.keys(validDiscoveredEndedAuctions).forEach(auctionViewKey => {
     const auctionView = auctionsNeedingSettling.find(
-      a => a.auctionManager.pubkey.toBase58() === auctionViewKey,
+      a => a.auctionManager.pubkey === auctionViewKey,
     );
     if (!auctionView) return;
     const winners = [...auctionView.auction.info.bidState.bids]
       .reverse()
-      .slice(0, auctionView.auctionManager.info.settings.winningConfigs.length)
+      .slice(0, auctionView.auctionManager.numWinners.toNumber())
       .reduce((acc: Record<string, boolean>, r) => {
-        acc[r.key.toBase58()] = true;
+        acc[r.key] = true;
         return acc;
       }, {});
 
     const myPayingAccount = accountByMint.get(
-      auctionView.auction.info.tokenMint.toBase58(),
+      auctionView.auction.info.tokenMint,
     );
-    const auctionKey = auctionView.auction.pubkey.toBase58();
+    const auctionKey = auctionView.auction.pubkey;
     const bidsToClaim = Object.values(bidderPotsByAuctionAndBidder).filter(
       b =>
-        winners[b.info.bidderAct.toBase58()] &&
+        winners[b.info.bidderAct] &&
         !b.info.emptied &&
-        b.info.auctionAct.toBase58() === auctionKey,
+        b.info.auctionAct === auctionKey,
     );
     if (bidsToClaim.length || validDiscoveredEndedAuctions[auctionViewKey] > 0)
       notifications.push({
@@ -269,7 +274,7 @@ export function useSettlementAuctions({
               myPayingAccount?.pubkey,
               accountByMint,
             );
-            if (wallet?.publicKey) {
+            if (wallet.publicKey) {
               const ata = await getPersonalEscrowAta(wallet);
               if (ata) await closePersonalEscrow(connection, wallet, ata);
             }
@@ -294,14 +299,15 @@ export function Notifications() {
   const possiblyBrokenAuctionManagerSetups = useAuctions(
     AuctionViewState.Defective,
   );
+
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
-  const walletPubkey = wallet?.publicKey?.toBase58() || '';
+  const walletPubkey = wallet.publicKey?.toBase58() || '';
 
   useCollapseWrappedSol({ connection, wallet, notifications });
 
@@ -311,7 +317,7 @@ export function Notifications() {
     () =>
       Object.values(vaults).filter(
         v =>
-          v.info.authority.toBase58() === walletPubkey &&
+          v.info.authority === walletPubkey &&
           v.info.state !== VaultState.Deactivated &&
           v.info.tokenTypeCount > 0,
       ),
@@ -320,7 +326,7 @@ export function Notifications() {
 
   vaultsNeedUnwinding.forEach(v => {
     notifications.push({
-      id: v.pubkey.toBase58(),
+      id: v.pubkey,
       title: 'You have items locked in a defective auction!',
       description: (
         <span>
@@ -346,10 +352,10 @@ export function Notifications() {
   });
 
   possiblyBrokenAuctionManagerSetups
-    .filter(v => v.auctionManager.info.authority.toBase58() === walletPubkey)
+    .filter(v => v.auctionManager.authority === walletPubkey)
     .forEach(v => {
       notifications.push({
-        id: v.auctionManager.pubkey.toBase58(),
+        id: v.auctionManager.pubkey,
         title: 'You have items locked in a defective auction!',
         description: (
           <span>
@@ -363,7 +369,7 @@ export function Notifications() {
               connection,
               wallet,
               v,
-              accountByMint,
+              safetyDepositBoxesByVaultAndIndex,
             );
           } catch (e) {
             console.error(e);
@@ -379,11 +385,11 @@ export function Notifications() {
       metadata.filter(m => {
         return (
           m.info.data.creators &&
-          (whitelistedCreatorsByCreator[m.info.updateAuthority.toBase58()]?.info
+          (whitelistedCreatorsByCreator[m.info.updateAuthority]?.info
             ?.activated ||
             store?.info.public) &&
           m.info.data.creators.find(
-            c => c.address.toBase58() === walletPubkey && !c.verified,
+            c => c.address === walletPubkey && !c.verified,
           )
         );
       }),
@@ -392,14 +398,14 @@ export function Notifications() {
 
   metaNeedsApproving.forEach(m => {
     notifications.push({
-      id: m.pubkey.toBase58(),
+      id: m.pubkey,
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {whitelistedCreatorsByCreator[m.info.updateAuthority.toBase58()]?.info
-            ?.name || m.pubkey.toBase58()}{' '}
+          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
+            m.pubkey}{' '}
           wants you to approve that you helped create their art{' '}
-          <Link to={`/art/${m.pubkey.toBase58()}`}>here.</Link>
+          <Link to={`/art/${m.pubkey}`}>here.</Link>
         </span>
       ),
       action: async () => {
@@ -415,10 +421,10 @@ export function Notifications() {
   });
 
   upcomingAuctions
-    .filter(v => v.auctionManager.info.authority.toBase58() === walletPubkey)
+    .filter(v => v.auctionManager.authority === walletPubkey)
     .forEach(v => {
       notifications.push({
-        id: v.auctionManager.pubkey.toBase58(),
+        id: v.auctionManager.pubkey,
         title: 'You have an auction which is not started yet!',
         description: <span>You can activate it now if you wish.</span>,
         action: async () => {
@@ -481,7 +487,7 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <h1 className="title">M</h1>
+      <h1 className="title">J</h1>
     </Popover>
   );
 
