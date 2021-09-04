@@ -15,8 +15,8 @@ clap = "2.33.3"
 rand = "*"
 solana-clap-utils = "1.6"
 solana-cli-config = "1.6"
-solana-client = "1.7.6"
-solana-program = "1.7.6"
-solana-sdk = "1.7.6"
+solana-client = "1.7.8"
+solana-program = "1.7.8"
+solana-sdk = "1.7.8"
 spl-auction = { path = "../program", features = [ "no-entrypoint" ] }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
