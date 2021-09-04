@@ -20,7 +20,6 @@ import { Confetti } from '../Confetti';
 import { Link } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-
 interface ArtMintingProps {
   id: string;
   onMint: Function;

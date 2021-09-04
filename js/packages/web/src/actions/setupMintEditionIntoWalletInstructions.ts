@@ -8,11 +8,11 @@ import {
 } from '@oyster/common';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { Art } from '../types';
-import { WalletAdapter } from '@solana/wallet-base';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 export async function setupMintEditionIntoWalletInstructions(
   art: Art,
-  wallet: WalletAdapter,
+  wallet: WalletContextState,
   connection: Connection,
   mintTokenAccount: TokenAccount,
   edition: BN,
