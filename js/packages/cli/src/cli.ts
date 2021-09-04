@@ -389,11 +389,12 @@ program
             [],
             'single',
           );
+          console.info('transaction for arweave payment:', tx);
 
           // data.append('tags', JSON.stringify(tags));
           // payment transaction
           const data = new FormData();
-          data.append('transaction', tx);
+          data.append('transaction', tx['txid']);
           data.append('env', ENV);
           data.append('file[]', fs.createReadStream(image), `image.png`);
           data.append('file[]', manifestBuffer, 'metadata.json');
@@ -432,9 +433,10 @@ program
       }
     }
 
+    const keys = Object.keys(cacheContent.items);
     try {
       await Promise.all(
-        chunks(Array.from(Array(images.length).keys()), 1000).map(
+        chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
             for (
               let offset = 0;
@@ -443,30 +445,23 @@ program
             ) {
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
-                const index = images[i].replace(extension, '').split('/').pop();
-                return cacheContent.items[index].onChain;
+                const index = keys[i];
+                return cacheContent.items[index]?.onChain;
               });
-              const ind = images[indexes[0]]
-                .replace(extension, '')
-                .split('/')
-                .pop();
+              const ind = keys[indexes[0]];
 
               if (onChain.length != indexes.length) {
                 console.log(
                   'Writing indices ',
                   ind,
                   '-',
-                  parseInt(ind) + indexes.length,
+                  keys[indexes[indexes.length - 1]],
                 );
                 const txId = await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
-                    uri: cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ].link,
-                    name: cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ].name,
+                    uri: cacheContent.items[keys[i]].link,
+                    name: cacheContent.items[keys[i]].name,
                   })),
                   {
                     accounts: {
@@ -477,12 +472,8 @@ program
                   },
                 );
                 indexes.forEach(i => {
-                  cacheContent.items[
-                    images[i].replace(extension, '').split('/').pop()
-                  ] = {
-                    ...cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ],
+                  cacheContent.items[keys[i]] = {
+                    ...cacheContent.items[keys[i]],
                     onChain: true,
                   };
                 });
@@ -610,12 +601,12 @@ program
       },
     );
 
-    console.log('Done');
+    console.log(`Done: CANDYMACHINE: ${candyMachine.toBase58()}`);
   });
 
 program
-  .command('mint_token_as_candy_machine_owner')
-  .option('-k, --keypair <path>', 'Solana wallet')
+  .command('mint_one_token')
+  .option('-k, --keypair <path>', `The purchaser's wallet key`)
   .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (directory, cmd) => {
     const solConnection = new anchor.web3.Connection(
@@ -648,6 +639,7 @@ program
       config,
       cachedContent.program.uuid,
     );
+    const candy = await anchorProgram.account.candyMachine.fetch(candyMachine);
     const metadata = await getMetadata(mint.publicKey);
     const masterEdition = await getMasterEdition(mint.publicKey);
     const tx = await anchorProgram.rpc.mintNft({
@@ -655,7 +647,8 @@ program
         config: config,
         candyMachine: candyMachine,
         payer: walletKey.publicKey,
-        wallet: walletKey.publicKey,
+        //@ts-ignore
+        wallet: candy.wallet,
         mint: mint.publicKey,
         metadata,
         masterEdition,
@@ -720,6 +713,8 @@ program
     const config = await solConnection.getAccountInfo(
       new PublicKey(cachedContent.program.config),
     );
+    const number = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+    console.log('Number', number.toNumber());
 
     const keys = Object.keys(cachedContent.items);
     for (let i = 0; i < keys.length; i++) {
