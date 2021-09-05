@@ -332,4 +332,31 @@ impl TestPackSet {
 
         context.banks_client.process_transaction(tx).await
     }
+
+    pub async fn prove_voucher_ownership(
+        &self,
+        context: &mut ProgramTestContext,
+        edition: &Pubkey,
+        edition_mint: &Pubkey,
+        user_wallet: &Keypair,
+        user_token_account: &Pubkey,
+        voucher: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::prove_ownership(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                edition,
+                edition_mint,
+                &user_wallet.pubkey(),
+                user_token_account,
+                voucher,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, user_wallet],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
 }

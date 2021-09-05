@@ -142,13 +142,19 @@ impl TestEditionMarker {
         Ok(context.banks_client.process_transaction(tx).await?)
     }
 
-    pub async fn create(&self, context: &mut ProgramTestContext) -> transport::Result<()> {
-        create_mint(context, &self.mint, &context.payer.pubkey(), None).await?;
+    pub async fn create(
+        &self,
+        context: &mut ProgramTestContext,
+        authority: &Keypair,
+        token_authority: &Keypair,
+        master_token_acc: &Pubkey,
+    ) -> transport::Result<()> {
+        create_mint(context, &self.mint, &authority.pubkey(), None).await?;
         create_token_account(
             context,
             &self.token,
             &self.mint.pubkey(),
-            &context.payer.pubkey(),
+            &authority.pubkey(),
         )
         .await?;
         mint_tokens(
@@ -156,8 +162,8 @@ impl TestEditionMarker {
             &self.mint.pubkey(),
             &self.token.pubkey(),
             1,
-            &context.payer.pubkey(),
-            None,
+            &authority.pubkey(),
+            Some(vec![authority]),
         )
         .await?;
 
@@ -168,17 +174,17 @@ impl TestEditionMarker {
                 self.new_edition_pubkey,
                 self.master_edition_pubkey,
                 self.mint.pubkey(),
+                authority.pubkey(),
                 context.payer.pubkey(),
-                context.payer.pubkey(),
-                context.payer.pubkey(),
-                self.metadata_token_pubkey,
+                token_authority.pubkey(),
+                *master_token_acc,
                 context.payer.pubkey(),
                 self.metadata_pubkey,
                 self.metadata_mint_pubkey,
                 self.edition,
             )],
             Some(&context.payer.pubkey()),
-            &[&context.payer, &context.payer],
+            &[&context.payer, authority, token_authority],
             context.last_blockhash,
         );
 
