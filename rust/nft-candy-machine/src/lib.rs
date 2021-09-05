@@ -27,6 +27,116 @@ pub mod nft_candy_machine {
 
     use super::*;
 
+    pub fn release_nft<'info>(ctx: Context<'_, '_, '_, 'info, ReleaseNFT<'info>>) -> ProgramResult {
+
+        let candy_machine = &mut ctx.accounts.candy_machine;
+        let config = &ctx.accounts.config;
+
+        match candy_machine.data.go_live_date {
+            None => {
+                if *ctx.accounts.payer.key != candy_machine.authority {
+                    return Err(ErrorCode::CandyMachineNotLiveYet.into());
+                }
+            }
+            Some(val) => {
+                if clock.unix_timestamp < val {
+                    if *ctx.accounts.payer.key != candy_machine.authority {
+                        return Err(ErrorCode::CandyMachineNotLiveYet.into());
+                    }
+                }
+            }
+        }
+
+        // @todo need to restrict double-dipping
+        // between minting & releasing.
+        if candy_machine.items_released >= candy_machine.data.items_available {
+            return Err(ErrorCode::CandyMachineEmpty.into());
+        }
+
+        if let Some(mint) = candy_machine.token_mint {
+            let token_account_info = &ctx.remaining_accounts[0];
+            let transfer_authority_info = &ctx.remaining_accounts[1];
+            let token_account: Account = assert_initialized(&token_account_info)?;
+
+            assert_owned_by(&token_account_info, &spl_token::id())?;
+
+            if token_account.mint != mint {
+                return Err(ErrorCode::MintMismatch.into());
+            }
+
+            if token_account.amount < candy_machine.data.price {
+                return Err(ErrorCode::NotEnoughTokens.into());
+            }
+
+            spl_token_transfer(TokenTransferParams {
+                source: token_account_info.clone(),
+                destination: ctx.accounts.wallet.clone(),
+                authority: transfer_authority_info.clone(),
+                authority_signer_seeds: &[],
+                token_program: ctx.accounts.token_program.clone(),
+                amount: candy_machine.data.price,
+            })?;
+        } else {
+            if ctx.accounts.payer.lamports() < candy_machine.data.price {
+                return Err(ErrorCode::NotEnoughSOL.into());
+            }
+
+            invoke(
+                &system_instruction::transfer(
+                    &ctx.accounts.payer.key,
+                    ctx.accounts.wallet.key,
+                    candy_machine.data.price,
+                ),
+                &[
+                    ctx.accounts.payer.clone(),
+                    ctx.accounts.wallet.clone(),
+                    ctx.accounts.system_program.clone(),
+                ],
+            )?;
+        }
+
+        candy_machine.items_released = candy_machine
+            .items_released
+            .checked_add(1)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
+        // @todo needs to be corrrect
+        // pass token
+        spl_token_transfer(TokenTransferParams {
+            source: token_account_info.clone(),
+            destination: ctx.accounts.wallet.clone(),
+            authority: transfer_authority_info.clone(),
+            authority_signer_seeds: &[],
+            token_program: ctx.accounts.token_program.clone(),
+            amount: candy_machine.data.price,
+        })?;
+
+        // handle metadata
+        let mut new_update_authority = Some(candy_machine.authority);
+
+        if !ctx.accounts.config.data.retain_authority {
+            new_update_authority = Some(ctx.accounts.update_authority.key());
+        }
+
+        invoke_signed(
+            &update_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                candy_machine.key(),
+                new_update_authority,
+                None,
+                Some(true),
+            ),
+            &[
+                ctx.accounts.token_metadata_program.clone(),
+                ctx.accounts.metadata.clone(),
+                candy_machine.to_account_info().clone(),
+            ],
+            &[&authority_seeds],
+        )?;
+        Ok(())
+    }
+
     pub fn mint_nft<'info>(ctx: Context<'_, '_, '_, 'info, MintNFT<'info>>) -> ProgramResult {
         let candy_machine = &mut ctx.accounts.candy_machine;
         let config = &ctx.accounts.config;
@@ -49,6 +159,22 @@ pub mod nft_candy_machine {
 
         if candy_machine.items_redeemed >= candy_machine.data.items_available {
             return Err(ErrorCode::CandyMachineEmpty.into());
+        }
+
+        if config.data.mint_to_vault {
+            if *ctx.accounts.vault.key != candy_machine.vault.key() {
+                return Err(ErrorCode::VaultMismatch.into());
+            }
+            if *ctx.accounts.vault.key != config.vault.key() {
+                return Err(ErrorCode::VaultMismatch.into());
+            }
+            if *ctx.accounts.vault.key != candy_machine.authority {
+                return Err(ErrorCode::VaultMismatch.into());
+            }
+        } else {
+            if *ctx.accounts.vault.key == candy_machine.authority {
+                return Err(ErrorCode::VaultMismatch.into());
+            }
         }
 
         if let Some(mint) = candy_machine.token_mint {
@@ -236,9 +362,20 @@ pub mod nft_candy_machine {
             return Err(ErrorCode::UuidMustBeExactly6Length.into());
         }
 
+        if data.mint_to_vault {
+            if *ctx.accounts.vault.key != *ctx.accounts.authority.key {
+                return Err(ErrorCode::VaultMismatchInConfig.into());
+            }
+        } else {
+            if *ctx.accounts.vault.key == *ctx.accounts.authority.key {
+                return Err(ErrorCode::VaultMismatchInConfig.into());
+            }
+        }
+
         let mut config = Config {
             data,
             authority: *ctx.accounts.authority.key,
+            vault: *ctx.accounts.vault.key,
         };
 
         let mut array_of_zeroes = vec![];
@@ -377,6 +514,13 @@ pub mod nft_candy_machine {
         candy_machine.data = data;
         candy_machine.wallet = *ctx.accounts.wallet.key;
         candy_machine.authority = *ctx.accounts.authority.key;
+        // @todo make a vault optional
+        if ctx.accounts.config.data.mint_to_vault {
+            if ctx.accounts.config.vault != *ctx.accounts.authority.key {
+                return Err(ErrorCode::VaultMismatchInConfig.into());
+            }
+            candy_machine.vault = ctx.accounts.config.vault;
+        }
         candy_machine.config = ctx.accounts.config.key();
         candy_machine.bump = bump;
         if ctx.remaining_accounts.len() > 0 {
@@ -434,6 +578,8 @@ pub struct InitializeConfig<'info> {
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
+    #[account()]
+    vault: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
@@ -466,9 +612,11 @@ pub struct MintNFT<'info> {
     mint_authority: AccountInfo<'info>,
     #[account(signer)]
     update_authority: AccountInfo<'info>,
+    #[account()]
+    vault: AccountInfo<'info>,
     #[account(mut)]
     master_edition: AccountInfo<'info>,
-    #[account(address = spl_token_metadata::id())]
+    // #[account(address = spl_token_metadata::id())]
     token_metadata_program: AccountInfo<'info>,
     #[account(address = spl_token::id())]
     token_program: AccountInfo<'info>,
@@ -490,11 +638,13 @@ pub struct UpdateCandyMachine<'info> {
 #[derive(Default)]
 pub struct CandyMachine {
     pub authority: Pubkey,
+    pub vault: Pubkey,
     pub wallet: Pubkey,
     pub token_mint: Option<Pubkey>,
     pub config: Pubkey,
     pub data: CandyMachineData,
     pub items_redeemed: u64,
+    pub items_released: u64,
     pub bump: u8,
 }
 
@@ -520,6 +670,7 @@ pub const CONFIG_ARRAY_START: usize = 32 + // authority
 #[derive(Default)]
 pub struct Config {
     pub authority: Pubkey,
+    pub vault: Pubkey,
     pub data: ConfigData,
     // there's a borsh vec u32 denoting how many actual lines of data there are currently (eventually equals max number of lines)
     // There is actually lines and lines of data after this but we explicitly never want them deserialized.
@@ -538,6 +689,7 @@ pub struct ConfigData {
     pub max_supply: u64,
     pub is_mutable: bool,
     pub retain_authority: bool,
+    pub mint_to_vault: bool,
     pub max_number_of_lines: u32,
 }
 
@@ -590,6 +742,10 @@ pub enum ErrorCode {
     Uninitialized,
     #[msg("Mint Mismatch!")]
     MintMismatch,
+    #[msg("Vault Mismatch!")]
+    VaultMismatch,
+    #[msg("Vault mismatch in Config!")]
+    VaultMismatchInConfig,
     #[msg("Index greater than length!")]
     IndexGreaterThanLength,
     #[msg("Config must have atleast one entry!")]
