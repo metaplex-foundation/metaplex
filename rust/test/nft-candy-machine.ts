@@ -17,12 +17,10 @@ const TOKEN_PROGRAM_ID = new PublicKey(
 const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
-// const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-//   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-// );
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-  "DGmNLuQmS69WUTbuXjUFLmVkYXB57ZQ2KJDY7MNM2oUv"
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
+
 function fromUTF8Array(data: number[]) {
   // array of bytes
   let str = "",
@@ -135,7 +133,7 @@ describe("nft-candy-machine", function () {
   );
   const myWallet = anchor.web3.Keypair.fromSecretKey(
     new Uint8Array(
-      JSON.parse(require("fs").readFileSync("/Users/edgarpavlovsky/.config/solana/id.json", "utf8"))
+      JSON.parse(require("fs").readFileSync("~/.config/solana/id.json", "utf8"))
     )
   );
 
@@ -149,11 +147,8 @@ describe("nft-candy-machine", function () {
   // );
 
   // Address of the deployed program.
-  // const programId = new anchor.web3.PublicKey(
-  //   "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
-  // );
   const programId = new anchor.web3.PublicKey(
-    "FWgzNgkDQL3e9NRBxt1Q3qUFyqCuBVjPL6HpNDEDDV7K"
+    "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
   );
 
   const walletWrapper = new anchor.Wallet(myWallet);
