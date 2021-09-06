@@ -424,7 +424,8 @@ program
       }
     }
 
-    const keys = Object.keys(cacheContent.items);    try {
+    const keys = Object.keys(cacheContent.items);
+    try {
       await Promise.all(
         chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
