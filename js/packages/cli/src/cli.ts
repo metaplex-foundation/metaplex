@@ -21,7 +21,6 @@ const CACHE_PATH = './.cache';
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
 );
-const ENV = 'devnet';
 const CANDY_MACHINE = 'candy_machine';
 
 const programId = new anchor.web3.PublicKey(
@@ -130,13 +129,6 @@ const getCandyMachine = async (config: anchor.web3.PublicKey, uuid: string) => {
   );
 };
 
-// const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
-//   return await anchor.web3.PublicKey.findProgramAddress(
-//     [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
-//     programId,
-//   );
-// };
-
 const getMetadata = async (
   mint: anchor.web3.PublicKey,
 ): Promise<anchor.web3.PublicKey> => {
@@ -194,7 +186,6 @@ const createConfig = async function (
 
   const config = anchor.web3.Keypair.generate();
   const uuid = config.publicKey.toBase58().slice(0, 6);
-
   return {
     config: config.publicKey,
     uuid,
@@ -248,10 +239,12 @@ program
   .option('-s, --start-with', 'Image index to start with', '0')
   .option('-n, --number', 'Number of images to upload', '10000')
   .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-e, --env <name>', 'Environment')
   .action(async (files: string[], options, cmd) => {
     const extension = '.png';
     const { keypair } = cmd.opts();
     const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const ENV = program.getOptionValue('env') || 'devnet';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -327,7 +320,7 @@ program
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link || !cacheContent.program.uuid) {
-        //const imageBuffer = Buffer.from(fs.readFileSync(image));
+        // const imageBuffer = Buffer.from(fs.readFileSync(image));
         const manifestPath = image.replace(extension, '.json');
         const manifestContent = fs
           .readFileSync(manifestPath)
@@ -444,7 +437,7 @@ program
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
                 const index = keys[i];
-                return cacheContent.items[index]?.onChain;
+                return cacheContent.items[index]?.onChain || false;
               });
               const ind = keys[indexes[0]];
 
@@ -500,7 +493,9 @@ program
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -547,7 +542,9 @@ program
   .option('-k, --keypair <path>', 'Solana wallet')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-p, --price <string>', 'SOL price')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -606,14 +603,16 @@ program
   .command('mint_one_token')
   .option('-k, --keypair <path>', `The purchaser's wallet key`)
   .option('-c, --cache-name <path>', 'Cache file name')
+  .option('-e, --env <name>', 'Environment')
   .action(async (directory, cmd) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
 
     const { keypair } = cmd.opts();
     // const solPriceStr = program.getOptionValue('price') || '1';
-    //const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+    // const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
 
     const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
@@ -698,7 +697,9 @@ program
 program
   .command('verify')
   .option('-c, --cache-name <path>', 'Cache file name')
-  .action(async () => {
+  .option('-e, --env <name>', 'Environment')
+  .action(async (directory, second, options) => {
+    const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );
@@ -711,8 +712,6 @@ program
     const config = await solConnection.getAccountInfo(
       new PublicKey(cachedContent.program.config),
     );
-    const number = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
-    console.log('Number', number.toNumber());
 
     const keys = Object.keys(cachedContent.items);
     for (let i = 0; i < keys.length; i++) {
