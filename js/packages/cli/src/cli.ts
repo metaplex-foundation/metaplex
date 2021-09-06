@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import Arweave from 'arweave';
 import * as path from 'path';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
@@ -17,7 +16,6 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { token } from '@project-serum/anchor/dist/utils';
 
 const CACHE_PATH = './.cache';
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
@@ -132,12 +130,12 @@ const getCandyMachine = async (config: anchor.web3.PublicKey, uuid: string) => {
   );
 };
 
-const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
-  return await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
-    programId,
-  );
-};
+// const getConfig = async (authority: anchor.web3.PublicKey, uuid: string) => {
+//   return await anchor.web3.PublicKey.findProgramAddress(
+//     [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
+//     programId,
+//   );
+// };
 
 const getMetadata = async (
   mint: anchor.web3.PublicKey,
@@ -252,7 +250,7 @@ program
   .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (files: string[], options, cmd) => {
     const extension = '.png';
-    const { startWith, keypair } = cmd.opts();
+    const { keypair } = cmd.opts();
     const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
@@ -317,7 +315,7 @@ program
       ? new anchor.web3.PublicKey(cacheContent.program.config)
       : undefined;
 
-    const block = await solConnection.getRecentBlockhash();
+    await solConnection.getRecentBlockhash();
     for (let i = 0; i < SIZE; i++) {
       const image = images[i];
       const imageName = path.basename(image);
@@ -329,7 +327,7 @@ program
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link || !cacheContent.program.uuid) {
-        const imageBuffer = Buffer.from(fs.readFileSync(image));
+        //const imageBuffer = Buffer.from(fs.readFileSync(image));
         const manifestPath = image.replace(extension, '.json');
         const manifestContent = fs
           .readFileSync(manifestPath)
@@ -339,7 +337,7 @@ program
         const manifest = JSON.parse(manifestContent);
 
         const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-        const sizeInBytes = imageBuffer.length + manifestBuffer.length;
+        // const sizeInBytes = imageBuffer.length + manifestBuffer.length;
 
         if (i === 0 && !cacheContent.program.uuid) {
           // initialize config
@@ -374,7 +372,7 @@ program
         }
 
         if (!link) {
-          let instructions = [
+          const instructions = [
             anchor.web3.SystemProgram.transfer({
               fromPubkey: walletKey.publicKey,
               toPubkey: PAYMENT_WALLET,
@@ -457,7 +455,7 @@ program
                   '-',
                   keys[indexes[indexes.length - 1]],
                 );
-                const txId = await anchorProgram.rpc.addConfigLines(
+                await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
                     uri: cacheContent.items[keys[i]].link,
@@ -526,7 +524,7 @@ program
     });
     const idl = await anchor.Program.fetchIdl(programId, provider);
     const anchorProgram = new anchor.Program(idl, programId, provider);
-    const [candyMachine, _] = await getCandyMachine(
+    const [candyMachine] = await getCandyMachine(
       new anchor.web3.PublicKey(cachedContent.program.config),
       cachedContent.program.uuid,
     );
@@ -579,7 +577,7 @@ program
       config,
       cachedContent.program.uuid,
     );
-    const tx = await anchorProgram.rpc.initializeCandyMachine(
+    await anchorProgram.rpc.initializeCandyMachine(
       bump,
       {
         uuid: cachedContent.program.uuid,
@@ -614,8 +612,8 @@ program
     );
 
     const { keypair } = cmd.opts();
-    const solPriceStr = program.getOptionValue('price') || '1';
-    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+    // const solPriceStr = program.getOptionValue('price') || '1';
+    //const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
 
     const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
@@ -635,7 +633,7 @@ program
     const idl = await anchor.Program.fetchIdl(programId, provider);
     const anchorProgram = new anchor.Program(idl, programId, provider);
     const config = new anchor.web3.PublicKey(cachedContent.program.config);
-    const [candyMachine, bump] = await getCandyMachine(
+    const [candyMachine] = await getCandyMachine(
       config,
       cachedContent.program.uuid,
     );
@@ -700,7 +698,7 @@ program
 program
   .command('verify')
   .option('-c, --cache-name <path>', 'Cache file name')
-  .action(async (directory, second, options) => {
+  .action(async () => {
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
     );

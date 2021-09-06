@@ -24,8 +24,8 @@ export async function mintEditionsToWallet(
   editions: number = 1,
   mintDestination: StringPublicKey,
 ) {
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];
