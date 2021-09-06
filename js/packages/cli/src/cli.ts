@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
 import * as path from 'path';
-import fetch from 'node-fetch';
 import FormData from 'form-data';
 import {program} from 'commander';
 import * as anchor from '@project-serum/anchor';
@@ -10,7 +9,7 @@ import {MintLayout, Token} from '@solana/spl-token';
 
 import {chunks, fromUTF8Array, loadCache, parsePrice, saveCache, upload} from './helpers/various';
 import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
-import {createAssociatedTokenAccountInstruction, createConfigAccount} from './helpers/instructions';
+import {createAssociatedTokenAccountInstruction} from './helpers/instructions';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
@@ -65,10 +64,10 @@ program
     const {number, keypair, env, cacheName} = cmd.opts();
     const parsedNumber = parseInt(number);
 
-    let pngFileCount = files.filter(it => {
+    const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG)
     }).length;
-    let jsonFileCount = files.filter(it => {
+    const jsonFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_JSON)
     }).length;
 
@@ -174,7 +173,7 @@ program
         }
 
         if (!link) {
-          let instructions = [
+          const instructions = [
             anchor.web3.SystemProgram.transfer({
               fromPubkey: walletKeyPair.publicKey,
               toPubkey: PAYMENT_WALLET,
@@ -303,7 +302,7 @@ program
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
-    let configAddress = new PublicKey(cacheContent.program.config);
+    const configAddress = new PublicKey(cacheContent.program.config);
     const config = await anchorProgram.provider.connection.getAccountInfo(configAddress);
     let allGood = true;
 
@@ -338,7 +337,7 @@ program
       }
     }
 
-    if (!allGood){
+    if (!allGood) {
       throw new Error(`not all NFTs checked out. check out logs above for details`)
     }
 
@@ -434,6 +433,7 @@ program
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [candyMachine, _] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
       cacheContent.program.uuid,
@@ -479,6 +479,7 @@ program
     );
 
     const configAddress = new PublicKey(cacheContent.program.config);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [candyMachineAddress, bump] = await getCandyMachineAddress(
       configAddress,
       cacheContent.program.uuid,
