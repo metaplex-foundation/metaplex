@@ -38,8 +38,8 @@ export async function createVault(
 
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -53,7 +53,7 @@ export async function createVault(
     MAX_VAULT_SIZE,
   );
 
-  let vault = Keypair.generate();
+  const vault = Keypair.generate();
 
   const vaultAuthority = (
     await findProgramAddress(

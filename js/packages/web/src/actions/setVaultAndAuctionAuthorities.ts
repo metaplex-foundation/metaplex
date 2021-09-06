@@ -19,8 +19,8 @@ export async function setVaultAndAuctionAuthorities(
 }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   await setAuctionAuthority(
     auction,

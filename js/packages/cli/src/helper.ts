@@ -35,7 +35,7 @@ export const sendTransactionWithRetryWithKeypair = async (
   block?: BlockhashAndFeeCalculator,
   beforeSend?: () => void,
 ) => {
-  let transaction = new Transaction();
+  const transaction = new Transaction();
   instructions.forEach(instruction => transaction.add(instruction));
   transaction.recentBlockhash = (
     block || (await connection.getRecentBlockhash(commitment))
@@ -135,7 +135,9 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
-    } catch (e) {}
+    } catch (e) {
+      console.error('Simulate Transaction error', e);
+    }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
@@ -198,6 +200,7 @@ async function awaitTransactionSignatureConfirmation(
     err: null,
   };
   let subId = 0;
+  // eslint-disable-next-line no-async-promise-executor
   status = await new Promise(async (resolve, reject) => {
     setTimeout(() => {
       if (done) {
