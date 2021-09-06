@@ -1,9 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
 
-import useWindowDimensions from '../../utils/layout';
-
-import { HowToBuyModal } from '../HowToBuyModal';
 
 export const Banner = (props: {
   src: string;
@@ -13,7 +10,6 @@ export const Banner = (props: {
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
 }) => {
-  const { width } = useWindowDimensions();
 
   useEffect(() => {
     const mainBg = document.getElementById('main-bg');

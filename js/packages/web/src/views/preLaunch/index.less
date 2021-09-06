@@ -1,0 +1,116 @@
+
+&#pre-launch-layout {
+  min-height: 100vh;
+  //color: @metaplex-primary-color;
+  background: linear-gradient(100.3deg, fade(@metaplex-primary-color, 32%) 8.28%, fade(@metaplex-primary-color, 0%) 45%),
+              linear-gradient(235.61deg, fade(@black-100, 0%) 34.14%, @black-100 72%) !important;
+
+  #width-layout {
+    max-width: 1440px;
+  }
+
+  .pre-main-content {
+    max-width: 884px;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    padding: 68px;
+  }
+
+  .upper-content {
+    display: flex;
+    flex-direction: column;
+    .logo {
+      height: 40px;
+      margin-bottom: 48px;
+    }
+    .pre-title {
+      /* 48 - Bold - Solid */
+      font-weight: 600;
+      font-size: 48px;
+      line-height: 48px;
+      margin-bottom: 16px;
+    }
+    .pre-context {
+      font-size: 24px;
+      line-height: 30px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 32px;
+    }
+    .pre-input {
+      max-width: 480px;
+      height: 56px;
+      position: relative;
+      button.sign-up {
+        width: 140px;
+        height: 48px;
+        box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+        border-radius: 8px;
+        position: absolute;
+        top: 4px;
+        right: 4px;
+      }
+      .ant-input:focus, .ant-input:hover {
+        border-color: initial !important;
+        border-right-width: 0 !important;
+        outline: 0;
+      }
+
+      input {
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 16px;
+      }
+    }
+  }
+  .lower-content {
+    display: flex;
+    flex-direction: column;
+    .how-to-get {
+      font-size: 24px;
+      line-height: 24px;
+      display: flex;
+      align-items: center;
+      color: #FFFFFF;
+      margin-bottom: 32px;
+    }
+    .how-to-step {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      &.fst {
+        margin-bottom: 16px;
+      }
+      .how-to-logo {
+        height: 56px;
+        flex-basis: 56px;
+        flex-grow: 0;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 56px;
+        &.email {
+          background-image: url("/preLaunch/mail.svg");
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+        &.wallet {
+          background-image: url("/preLaunch/wallet.svg");
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+      }
+      .how-to-description {
+        font-weight: normal;
+        font-size: 18px;
+        line-height: 24px;
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.7);
+        margin-left: 16px;
+      }
+    }
+  }
+}
