@@ -556,14 +556,12 @@ const setStartDate = sharedOptionsCommand('set_start_date')
 const createCandyMachine = sharedOptionsCommand('create_candy_machine')
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, url } = cmd.opts();
+    const { keypair, url, cacheName } = cmd.opts();
 
     const solConnection = new anchor.web3.Connection(url);
     const solPriceStr = cmd.getOptionValue('price') || '1';
 
     const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
-
-    const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -610,14 +608,13 @@ const createCandyMachine = sharedOptionsCommand('create_candy_machine')
 
 const mintOneToken = sharedOptionsCommand('mint_one_token').action(
   async (directory, cmd) => {
-    const { keypair, url } = cmd.opts();
+    const { keypair, url, cacheName } = cmd.opts();
 
     const solConnection = new anchor.web3.Connection(url);
 
     const solPriceStr = program.getOptionValue('price') || '1';
     const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
 
-    const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
