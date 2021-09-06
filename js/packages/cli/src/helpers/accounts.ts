@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from '@solana/web3.js';
+import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
 import {
   CANDY_MACHINE,
   CANDY_MACHINE_PROGRAM_ID,
@@ -8,6 +8,58 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
+import BN from "bn.js";
+import {createConfigAccount} from "./instructions";
+
+export const createConfig = async function (
+  anchorProgram: anchor.Program,
+  payerWallet: Keypair,
+  configData: {
+    maxNumberOfLines: BN;
+    symbol: string;
+    sellerFeeBasisPoints: number;
+    isMutable: boolean;
+    maxSupply: BN;
+    retainAuthority: boolean;
+    creators: {
+      address: PublicKey;
+      verified: boolean;
+      share: number;
+    }[];
+  },
+) {
+  const configAccount = Keypair.generate();
+  const uuid = configAccount.publicKey.toBase58().slice(0, 6);
+
+  return {
+    config: configAccount.publicKey,
+    uuid,
+    txId: await anchorProgram.rpc.initializeConfig(
+      {
+        uuid,
+        ...configData,
+      },
+      {
+        accounts: {
+          config: configAccount.publicKey,
+          authority: payerWallet.publicKey,
+          payer: payerWallet.publicKey,
+          systemProgram: SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [payerWallet, configAccount],
+        instructions: [
+          await createConfigAccount(
+            anchorProgram,
+            configData,
+            payerWallet.publicKey,
+            configAccount.publicKey,
+          ),
+        ],
+      },
+    ),
+  };
+};
 
 export const getTokenWallet = async function (
   wallet: PublicKey,

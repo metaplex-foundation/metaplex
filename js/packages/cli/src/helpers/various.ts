@@ -1,11 +1,9 @@
-import { PublicKey } from '@solana/web3.js';
-import {
-  CACHE_PATH,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from './constants';
+import {LAMPORTS_PER_SOL} from '@solana/web3.js';
+import {CACHE_PATH,} from './constants';
 import path from 'path';
 import fs from 'fs';
+import FormData from "form-data";
+import fetch from 'node-fetch';
 
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
@@ -74,4 +72,22 @@ export function loadCache(cacheName: string, env: string) {
 
 export function saveCache(cacheName: string, env: string, cacheContent) {
   fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
+}
+
+export function parsePrice(price) {
+  return parseInt(price) * LAMPORTS_PER_SOL;
+}
+
+export async function upload(data: FormData, manifest, index) {
+  console.log(`trying to upload ${index}.png: ${manifest.name}`)
+  return await (
+    await fetch(
+      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+      {
+        method: 'POST',
+        // @ts-ignore
+        body: data,
+      },
+    )
+  ).json();
 }

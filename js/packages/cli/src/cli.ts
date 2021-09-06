@@ -3,38 +3,27 @@ import * as fs from 'fs';
 import * as path from 'path';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
-import { program } from 'commander';
+import {program} from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
-import { MintLayout, Token } from '@solana/spl-token';
+import {MintLayout, Token} from '@solana/spl-token';
 
-import {
-  cachePath,
-  chunks,
-  fromUTF8Array,
-  loadCache,
-  saveCache,
-} from './helpers/various';
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-} from '@solana/web3.js';
-import {
-  createAssociatedTokenAccountInstruction,
-  createConfigAccount,
-} from './helpers/instructions';
+import {chunks, fromUTF8Array, loadCache, parsePrice, saveCache, upload} from './helpers/various';
+import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
+import {createAssociatedTokenAccountInstruction, createConfigAccount} from './helpers/instructions';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
+  EXTENSION_JSON,
+  EXTENSION_PNG,
   PAYMENT_WALLET,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from './helpers/constants';
-import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
+import {sendTransactionWithRetryWithKeypair} from './helpers/transactions';
 import {
+  createConfig,
   getCandyMachineAddress,
   getMasterEdition,
   getMetadata,
@@ -42,62 +31,13 @@ import {
   loadAnchorProgram,
   loadWalletKey,
 } from './helpers/accounts';
+import {Config} from "./types";
 
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
-
-const createConfig = async function (
-  anchorProgram: anchor.Program,
-  payerWallet: Keypair,
-  configData: {
-    maxNumberOfLines: BN;
-    symbol: string;
-    sellerFeeBasisPoints: number;
-    isMutable: boolean;
-    maxSupply: BN;
-    retainAuthority: boolean;
-    creators: {
-      address: PublicKey;
-      verified: boolean;
-      share: number;
-    }[];
-  },
-) {
-  const configAccount = Keypair.generate();
-  const uuid = configAccount.publicKey.toBase58().slice(0, 6);
-
-  return {
-    config: configAccount.publicKey,
-    uuid,
-    txId: await anchorProgram.rpc.initializeConfig(
-      {
-        uuid,
-        ...configData,
-      },
-      {
-        accounts: {
-          config: configAccount.publicKey,
-          authority: payerWallet.publicKey,
-          payer: payerWallet.publicKey,
-          systemProgram: SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        },
-        signers: [payerWallet, configAccount],
-        instructions: [
-          await createConfigAccount(
-            anchorProgram,
-            configData,
-            payerWallet.publicKey,
-            configAccount.publicKey,
-          ),
-        ],
-      },
-    ),
-  };
-};
 
 program
   .command('upload')
@@ -109,7 +49,7 @@ program
     },
   )
   .option(
-    '-e, --env',
+    '-e, --env <string>',
     'Solana cluster env name',
     'devnet', //mainnet-beta, testnet, devnet
   )
@@ -119,12 +59,26 @@ program
     '--keypair not provided',
   )
   // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
-  .option('-s, --start-with <number>', 'Image index to start with', '0')
   .option('-n, --number <number>', 'Number of images to upload', '10000')
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (files: string[], options, cmd) => {
-    const extension = '.png';
-    const { startWith, keypair, env, cacheName } = cmd.opts();
+    const {number, keypair, env, cacheName} = cmd.opts();
+    const parsedNumber = parseInt(number);
+
+    let pngFileCount = files.filter(it => {
+      return it.endsWith(EXTENSION_PNG)
+    }).length;
+    let jsonFileCount = files.filter(it => {
+      return it.endsWith(EXTENSION_JSON)
+    }).length;
+
+    if (pngFileCount !== jsonFileCount) {
+      throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`)
+    }
+
+    if (parsedNumber < pngFileCount) {
+      throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`)
+    }
 
     const savedContent = loadCache(cacheName, env);
     const cacheContent = savedContent || {};
@@ -144,8 +98,8 @@ program
     const newFiles = [];
 
     files.forEach(f => {
-      if (!seen[f.replace(extension, '').split('/').pop()]) {
-        seen[f.replace(extension, '').split('/').pop()] = true;
+      if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
+        seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
         newFiles.push(f);
       }
     });
@@ -156,8 +110,8 @@ program
       }
     });
 
-    const images = newFiles.filter(val => path.extname(val) === extension);
-    const SIZE = images.length; // images.length;
+    const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+    const SIZE = images.length;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
@@ -166,11 +120,10 @@ program
       ? new PublicKey(cacheContent.program.config)
       : undefined;
 
-    const block = await anchorProgram.provider.connection.getRecentBlockhash();
     for (let i = 0; i < SIZE; i++) {
       const image = images[i];
       const imageName = path.basename(image);
-      const index = imageName.replace(extension, '');
+      const index = imageName.replace(EXTENSION_PNG, '');
 
       console.log(`Processing file: ${index}`);
 
@@ -178,7 +131,7 @@ program
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link || !cacheContent.program.uuid) {
-        const manifestPath = image.replace(extension, '.json');
+        const manifestPath = image.replace(EXTENSION_PNG, '.json');
         const manifestContent = fs
           .readFileSync(manifestPath)
           .toString()
@@ -190,9 +143,10 @@ program
 
         if (i === 0 && !cacheContent.program.uuid) {
           // initialize config
+          console.log(`initializing config`)
           try {
             const res = await createConfig(anchorProgram, walletKeyPair, {
-              maxNumberOfLines: new BN(SIZE),
+              maxNumberOfLines: new BN(parsedNumber),
               symbol: manifest.symbol,
               sellerFeeBasisPoints: manifest.seller_fee_basis_points,
               isMutable: true,
@@ -201,7 +155,7 @@ program
               creators: manifest.properties.creators.map(creator => {
                 return {
                   address: new PublicKey(creator.address),
-                  verified: false,
+                  verified: true,
                   share: creator.share,
                 };
               }),
@@ -209,6 +163,8 @@ program
             cacheContent.program.uuid = res.uuid;
             cacheContent.program.config = res.config.toBase58();
             config = res.config;
+
+            console.log(`initialized config for a candy machine with uuid: ${res.uuid}`)
 
             saveCache(cacheName, env, cacheContent);
           } catch (exx) {
@@ -218,7 +174,7 @@ program
         }
 
         if (!link) {
-          const instructions = [
+          let instructions = [
             anchor.web3.SystemProgram.transfer({
               fromPubkey: walletKeyPair.publicKey,
               toPubkey: PAYMENT_WALLET,
@@ -240,18 +196,10 @@ program
           const data = new FormData();
           data.append('transaction', tx['txid']);
           data.append('env', env);
-          data.append('file[]', fs.createReadStream(image), `image.png`);
+          data.append('file[]', fs.createReadStream(image), {filename: `image.png`, contentType: 'image/png'});
           data.append('file[]', manifestBuffer, 'metadata.json');
           try {
-            const result = await (
-              await fetch(
-                'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile3',
-                {
-                  method: 'POST',
-                  body: data,
-                },
-              )
-            ).json();
+            const result = await upload(data, manifest, index);
 
             const metadataFile = result.messages?.find(
               m => m.filename === 'manifest.json',
@@ -334,9 +282,9 @@ program
   });
 
 program
-  .command('set_start_date')
+  .command('verify')
   .option(
-    '-e, --env',
+    '-e, --env <string>',
     'Solana cluster env name',
     'devnet', //mainnet-beta, testnet, devnet
   )
@@ -345,12 +293,138 @@ program
     `Solana wallet location`,
     '--keypair not provided',
   )
-  .option('-c, --cache-name <path>', 'Cache file name', 'temp')
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+  .action(async (directory, cmd) => {
+    const {env, keypair, cacheName} = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+
+    let configAddress = new PublicKey(cacheContent.program.config);
+    const config = await anchorProgram.provider.connection.getAccountInfo(configAddress);
+    let allGood = true;
+
+    const keys = Object.keys(cacheContent.items);
+    for (let i = 0; i < keys.length; i++) {
+      console.log('Looking at key ', i);
+      const key = keys[i];
+      const thisSlice = config.data.slice(
+        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
+        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * (i + 1),
+      );
+      const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+      const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+      const cacheItem = cacheContent.items[key];
+      if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+        console.log(
+          'Name',
+          name,
+          'or uri',
+          uri,
+          'didnt match cache values of',
+          cacheItem.name,
+          'and',
+          cacheItem.link,
+          ' marking to rerun for image',
+          key,
+        );
+        cacheItem.onChain = false;
+        allGood = false;
+      } else {
+        console.debug('Name', name, 'with', uri, 'checked out');
+      }
+    }
+
+    if (!allGood){
+      throw new Error(`not all NFTs checked out. check out logs above for details`)
+    }
+
+    const configData = await anchorProgram.account.config.fetch(
+      configAddress,
+    ) as Config;
+
+    const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+
+    console.log(`uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines})`)
+    if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
+      throw new Error(`predefined number of NFTs (${configData.data.maxNumberOfLines}) is smaller than the uploaded one (${lineCount.toNumber()})`)
+    } else {
+      console.log("ready to deploy!")
+    }
+
+    saveCache(cacheName, env, cacheContent);
+  });
+
+program
+  .command('create_candy_machine')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+  .option('-p, --price <string>', 'SOL price', '1')
+  .action(async (directory, cmd) => {
+    const {keypair, env, price, cacheName, date} = cmd.opts();
+
+    const lamports = parsePrice(price);
+    const cacheContent = loadCache(cacheName, env);
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+
+    const config = new PublicKey(cacheContent.program.config);
+    const [candyMachine, bump] = await getCandyMachineAddress(
+      config,
+      cacheContent.program.uuid,
+    );
+    await anchorProgram.rpc.initializeCandyMachine(
+      bump,
+      {
+        uuid: cacheContent.program.uuid,
+        price: new anchor.BN(lamports),
+        itemsAvailable: new anchor.BN(Object.keys(cacheContent.items).length),
+        goLiveDate: null,
+      },
+      {
+        accounts: {
+          candyMachine,
+          wallet: walletKeyPair.publicKey,
+          config: config,
+          authority: walletKeyPair.publicKey,
+          payer: walletKeyPair.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+      },
+    );
+
+    console.log(`create_candy_machine Done: ${candyMachine.toBase58()}`);
+  });
+
+program
+  .command('set_start_date')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const { keypair, env, date } = cmd.opts();
-
-    const cacheName = cmd.getOptionValue('cacheName') || 'temp';
+    const {keypair, env, date, cacheName} = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
@@ -373,13 +447,13 @@ program
       },
     );
 
-    console.log('Done', secondsSinceEpoch, tx);
+    console.log('set_start_date Done', secondsSinceEpoch, tx);
   });
 
 program
-  .command('create_candy_machine')
+  .command('update_price')
   .option(
-    '-e, --env',
+    '-e, --env <string>',
     'Solana cluster env name',
     'devnet', //mainnet-beta, testnet, devnet
   )
@@ -388,53 +462,40 @@ program
     `Solana wallet location`,
     '--keypair not provided',
   )
-  .option('-c, --cache-name <path>', 'Cache file name', 'temp')
-  .option('-p, --price <string>', 'SOL price', '1')
-  .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+  .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, date } = cmd.opts();
-    const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
+    const {keypair, env, cacheName, price} = cmd.opts();
 
-    const lamports = parseInt(price) * LAMPORTS_PER_SOL;
+    const lamports = parsePrice(price);
+
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
-    const config = new PublicKey(cacheContent.program.config);
-    const [candyMachine, bump] = await getCandyMachineAddress(
-      config,
+    const [candyMachine, _] = await getCandyMachineAddress(
+      new PublicKey(cacheContent.program.config),
       cacheContent.program.uuid,
     );
-    await anchorProgram.rpc.initializeCandyMachine(
-      bump,
-      {
-        uuid: cacheContent.program.uuid,
-        price: new anchor.BN(lamports),
-        itemsAvailable: new anchor.BN(Object.keys(cacheContent.items).length),
-        goLiveDate: secondsSinceEpoch,
-      },
+    const tx = await anchorProgram.rpc.updateCandyMachine(
+      new anchor.BN(lamports),
+      null,
       {
         accounts: {
           candyMachine,
-          wallet: walletKeyPair.publicKey,
-          config: config,
           authority: walletKeyPair.publicKey,
-          payer: walletKeyPair.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [],
       },
     );
 
-    console.log(`Done: CANDYMACHINE: ${candyMachine.toBase58()}`);
+    console.log('update_price Done', lamports, tx);
   });
 
 program
   .command('mint_one_token')
   .option(
-    '-e, --env',
+    '-e, --env <string>',
     'Solana cluster env name',
     'devnet', //mainnet-beta, testnet, devnet
   )
@@ -443,9 +504,9 @@ program
     `Solana wallet location`,
     '--keypair not provided',
   )
-  .option('-c, --cache-name <path>', 'Cache file name', 'temp')
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName } = cmd.opts();
+    const {keypair, env, cacheName} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const mint = Keypair.generate();
@@ -524,61 +585,7 @@ program
     console.log('Done', tx);
   });
 
-program
-  .command('verify')
-  .option(
-    '-e, --env',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option('-c, --cache-name <path>', 'Cache file name', 'temp')
-  .action(async (directory, cmd) => {
-    const { env, cacheName } = cmd.opts();
-
-    const solConnection = new anchor.web3.Connection(
-      `https://api.${env}.solana.com/`,
-    );
-
-    const cacheContent = loadCache(cacheName, env);
-
-    const config = await solConnection.getAccountInfo(
-      new PublicKey(cacheContent.program.config),
-    );
-    const number = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
-    console.log('Number', number.toNumber());
-
-    const keys = Object.keys(cacheContent.items);
-    for (let i = 0; i < keys.length; i++) {
-      console.log('Looking at key ', i);
-      const key = keys[i];
-      const thisSlice = config.data.slice(
-        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
-        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * (i + 1),
-      );
-      const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
-      const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-      const cacheItem = cacheContent.items[key];
-      if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-        console.log(
-          'Name',
-          name,
-          'or uri',
-          uri,
-          'didnt match cache values of',
-          cacheItem.name,
-          'and',
-          cacheItem.link,
-          ' marking to rerun for image',
-          key,
-        );
-        cacheItem.onChain = false;
-      } else {
-        console.log('Name', name, 'with', uri, 'checked out');
-      }
-    }
-    saveCache(cacheName, env, cacheContent);
-  });
-
-program.command('find-wallets').action(() => {});
+program.command('find-wallets').action(() => {
+});
 
 program.parse(process.argv);
