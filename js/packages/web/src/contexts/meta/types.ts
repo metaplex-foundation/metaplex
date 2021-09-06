@@ -12,7 +12,7 @@ import {
   MasterEditionV2,
   PublicKeyStringAndAccount,
 } from '@oyster/common';
-import { AccountInfo, PublicKey } from '@solana/web3.js';
+import { AccountInfo } from '@solana/web3.js';
 import {
   BidRedemptionTicket,
   Store,

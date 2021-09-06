@@ -35,17 +35,17 @@ export async function createExternalPriceAccount(
 
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   const epaRentExempt = await connection.getMinimumBalanceForRentExemption(
     MAX_EXTERNAL_ACCOUNT_SIZE,
   );
 
-  let externalPriceAccount = Keypair.generate();
-  let key = externalPriceAccount.publicKey.toBase58();
+  const externalPriceAccount = Keypair.generate();
+  const key = externalPriceAccount.publicKey.toBase58();
 
-  let epaStruct = new ExternalPriceAccount({
+  const epaStruct = new ExternalPriceAccount({
     pricePerShare: new BN(0),
     priceMint: QUOTE_MINT.toBase58(),
     allowedToCombine: true,

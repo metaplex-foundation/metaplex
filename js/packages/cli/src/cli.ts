@@ -178,7 +178,6 @@ program
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link || !cacheContent.program.uuid) {
-        const imageBuffer = Buffer.from(fs.readFileSync(image));
         const manifestPath = image.replace(extension, '.json');
         const manifestContent = fs
           .readFileSync(manifestPath)
@@ -188,7 +187,6 @@ program
         const manifest = JSON.parse(manifestContent);
 
         const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-        const sizeInBytes = imageBuffer.length + manifestBuffer.length;
 
         if (i === 0 && !cacheContent.program.uuid) {
           // initialize config
@@ -220,7 +218,7 @@ program
         }
 
         if (!link) {
-          let instructions = [
+          const instructions = [
             anchor.web3.SystemProgram.transfer({
               fromPubkey: walletKeyPair.publicKey,
               toPubkey: PAYMENT_WALLET,
@@ -300,7 +298,7 @@ program
                   '-',
                   keys[indexes[indexes.length - 1]],
                 );
-                const txId = await anchorProgram.rpc.addConfigLines(
+                await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
                     uri: cacheContent.items[keys[i]].link,
@@ -408,7 +406,7 @@ program
       config,
       cacheContent.program.uuid,
     );
-    const tx = await anchorProgram.rpc.initializeCandyMachine(
+    await anchorProgram.rpc.initializeCandyMachine(
       bump,
       {
         uuid: cacheContent.program.uuid,
