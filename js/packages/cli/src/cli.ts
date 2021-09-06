@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
-import Arweave from 'arweave';
 import * as path from 'path';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
@@ -17,13 +16,17 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { token } from '@project-serum/anchor/dist/utils';
 
 const CACHE_PATH = './.cache';
+
+const DEFAULT_CACHE_NAME = 'temp';
+
+const DEFAULT_CLUSTER_URL = 'https://api.mainnet-beta.solana.com/';
+
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
 );
-const ENV = 'devnet';
+
 const CANDY_MACHINE = 'candy_machine';
 
 const programId = new anchor.web3.PublicKey(
@@ -231,8 +234,15 @@ const createConfig = async function (
   };
 };
 
-program
-  .command('upload')
+const sharedOptionsCommand = function (name) {
+  return program
+    .createCommand(name)
+    .option('-u, --url <url>', 'Solana cluster url', DEFAULT_CLUSTER_URL)
+    .option('-k, --keypair <path>', 'Solana wallet')
+    .option('-c, --cache-name <path>', 'Cache file name', DEFAULT_CACHE_NAME);
+};
+
+const upload = sharedOptionsCommand('upload')
   .argument(
     '<directory>',
     'Directory containing images named from 0-n',
@@ -240,21 +250,13 @@ program
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option(
-    '-u, --url',
-    'Solana cluster url',
-    'https://api.mainnet-beta.solana.com/',
-  )
-  .option('-k, --keypair <path>', 'Solana wallet')
   // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
   .option('-s, --start-with', 'Image index to start with', '0')
   .option('-n, --number', 'Number of images to upload', '10000')
-  .option('-c, --cache-name <path>', 'Cache file name')
   .action(async (files: string[], options, cmd) => {
-    const url = options.url;
     const extension = '.png';
-    const { startWith, keypair } = cmd.opts();
-    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const { keypair, cacheName, url } = cmd.opts();
+
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -316,7 +318,7 @@ program
       ? new anchor.web3.PublicKey(cacheContent.program.config)
       : undefined;
 
-    const block = await solConnection.getRecentBlockhash();
+    await solConnection.getRecentBlockhash();
     for (let i = 0; i < SIZE; i++) {
       const image = images[i];
       const imageName = path.basename(image);
@@ -338,7 +340,6 @@ program
         const manifest = JSON.parse(manifestContent);
 
         const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-        const sizeInBytes = imageBuffer.length + manifestBuffer.length;
 
         if (i === 0 && !cacheContent.program.uuid) {
           // initialize config
@@ -394,7 +395,7 @@ program
           // payment transaction
           const data = new FormData();
           data.append('transaction', tx['txid']);
-          data.append('env', ENV);
+          data.append('url', url);
           data.append('file[]', fs.createReadStream(image), `image.png`);
           data.append('file[]', manifestBuffer, 'metadata.json');
           try {
@@ -496,21 +497,13 @@ program
     console.log('Done');
     // TODO: start candy machine
   });
-program
-  .command('set_start_date')
-  .option(
-    '-u, --url',
-    'Solana cluster url',
-    'https://api.mainnet-beta.solana.com/',
-  )
-  .option('-k, --keypair <path>', 'Solana wallet')
-  .option('-c, --cache-name <path>', 'Cache file name')
+
+const setStartDate = sharedOptionsCommand('set_start_date')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const { keypair, url } = cmd.opts();
+    const { keypair, url, cacheName } = cmd.opts();
     const solConnection = new anchor.web3.Connection(url);
 
-    const cacheName = cmd.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -545,15 +538,7 @@ program
     console.log('Done', secondsSinceEpoch, tx);
   });
 
-program
-  .command('create_candy_machine')
-  .option(
-    '-u, --url',
-    'Solana cluster url',
-    'https://api.mainnet-beta.solana.com/',
-  )
-  .option('-k, --keypair <path>', 'Solana wallet')
-  .option('-c, --cache-name <path>', 'Cache file name')
+const createCandyMachine = sharedOptionsCommand('create_candy_machine')
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
     const { keypair, url } = cmd.opts();
@@ -583,7 +568,7 @@ program
       config,
       cachedContent.program.uuid,
     );
-    const tx = await anchorProgram.rpc.initializeCandyMachine(
+    await anchorProgram.rpc.initializeCandyMachine(
       bump,
       {
         uuid: cachedContent.program.uuid,
@@ -608,16 +593,8 @@ program
     console.log(`Done: CANDYMACHINE: ${candyMachine.toBase58()}`);
   });
 
-program
-  .command('mint_one_token')
-  .option(
-    '-u, --url',
-    'Solana cluster url',
-    'https://api.mainnet-beta.solana.com/',
-  )
-  .option('-k, --keypair <path>', `The purchaser's wallet key`)
-  .option('-c, --cache-name <path>', 'Cache file name')
-  .action(async (directory, cmd) => {
+const mintOneToken = sharedOptionsCommand('mint_one_token').action(
+  async (directory, cmd) => {
     const { keypair, url } = cmd.opts();
 
     const solConnection = new anchor.web3.Connection(url);
@@ -704,18 +681,16 @@ program
     });
 
     console.log('Done', tx);
-  });
+  },
+);
+
 program
   .command('verify')
-  .option(
-    '-u, --url',
-    'Solana cluster url',
-    'https://api.mainnet-beta.solana.com/',
-  )
-  .option('-c, --cache-name <path>', 'Cache file name')
-  .action(async (directory, second, options) => {
+  .option('-u, --url', 'Solana cluster url', DEFAULT_CLUSTER_URL)
+  .option('-c, --cache-name <path>', 'Cache file name', DEFAULT_CACHE_NAME)
+  .action(async (directory, second, options, cmd) => {
     const solConnection = new anchor.web3.Connection(options.url);
-    const cacheName = program.getOptionValue('cacheName') || 'temp';
+    const { cacheName } = cmd.opts();
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -763,5 +738,11 @@ program
   });
 
 program.command('find-wallets').action(() => {});
+
+program
+  .addCommand(upload)
+  .addCommand(createCandyMachine)
+  .addCommand(setStartDate)
+  .addCommand(mintOneToken);
 
 program.parse(process.argv);
