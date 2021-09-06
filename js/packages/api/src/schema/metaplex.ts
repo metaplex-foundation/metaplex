@@ -102,9 +102,7 @@ export const WhitelistedCreator = objectType({
     t.list.field('artworks', {
       type: Metadata,
       resolve: (creator, _, { dataSources }) => {
-        return dataSources.dataApi.getCreatorArtworks(
-          creator.address.toBase58(),
-        );
+        return dataSources.dataApi.getCreatorArtworks(creator.address);
       },
     });
   },

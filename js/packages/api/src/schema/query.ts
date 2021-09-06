@@ -1,6 +1,5 @@
-import { queryType, stringArg, list, nonNull, nullable } from 'nexus';
-import { AccountWithStore, AccountWithWhitelistedCreator } from './account';
-import { WhitelistedCreator } from './metaplex';
+import { queryType, stringArg, list, nonNull } from 'nexus';
+import { Store, WhitelistedCreator } from './metaplex';
 
 export const Query = queryType({
   definition(t) {
@@ -14,12 +13,12 @@ export const Query = queryType({
         Object.keys(dataSources.dataApi.state.stores).length,
     });
     t.field('stores', {
-      type: list(AccountWithStore),
+      type: list(Store),
       resolve: (_, args, { dataSources }) =>
-        Object.values(dataSources.dataApi.state.stores),
+        Object.values(dataSources.dataApi.state.stores).map(({ info }) => info),
     });
     t.field('store', {
-      type: AccountWithStore,
+      type: Store,
       args: {
         id: nonNull(
           stringArg({
@@ -28,7 +27,7 @@ export const Query = queryType({
         ),
       },
       resolve: (_, { id }, { dataSources }) =>
-        dataSources.dataApi.state.stores[id],
+        dataSources.dataApi.state.stores[id].info,
     });
     t.field('creatorsCount', {
       type: 'Int',

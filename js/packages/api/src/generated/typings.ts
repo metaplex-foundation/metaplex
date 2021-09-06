@@ -662,8 +662,8 @@ export interface NexusGenFieldTypes {
     > | null; // [AccountWithWhitelistedCreator]
     creatorsCount: number | null; // Int
     hello: string | null; // String
-    store: NexusGenRootTypes['AccountWithStore'] | null; // AccountWithStore
-    stores: Array<NexusGenRootTypes['AccountWithStore'] | null> | null; // [AccountWithStore]
+    store: NexusGenRootTypes['Store'] | null; // Store
+    stores: Array<NexusGenRootTypes['Store'] | null> | null; // [Store]
     storesCount: number | null; // Int
   };
   SafetyDepositBox: {

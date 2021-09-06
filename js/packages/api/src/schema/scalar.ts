@@ -5,11 +5,17 @@ import BN from 'bn.js';
 export const PublicKeyScalar = scalarType({
   name: 'PublicKey',
   asNexusMethod: 'pubkey',
+  // parseValue(value: string) {
+  //   return new PublicKey(value);
+  // },
+  // serialize(value: PublicKey) {
+  //   return value.toBase58();
+  // },
   parseValue(value: string) {
-    return new PublicKey(value);
+    return value;
   },
-  serialize(value: PublicKey) {
-    return value.toBase58();
+  serialize(value: string) {
+    return value;
   },
 });
 

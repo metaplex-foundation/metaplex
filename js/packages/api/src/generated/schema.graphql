@@ -364,8 +364,8 @@ type Query {
   store(
     """Store ID, processed from Store Owner Address"""
     id: String!
-  ): AccountWithStore
-  stores: [AccountWithStore]
+  ): Store
+  stores: [Store]
   storesCount: Int
 }
 

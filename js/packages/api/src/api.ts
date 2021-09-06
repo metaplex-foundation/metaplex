@@ -58,23 +58,20 @@ export class DataApi {
     let creators = mapInfo(Object.values(DataApi.state.creators));
 
     if (creatorId) {
-      creators = creators.filter(
-        ({ address }) => address.toBase58() === creatorId,
-      );
+      creators = creators.filter(({ address }) => address === creatorId);
     }
     return creators;
   }
 
   async getCreatorsByStore(storeId: string) {
     const creators = Object.values(DataApi.state.creators);
-    const store = new PublicKey(storeId);
     const creatorsByStore = [];
 
     for (const creator of creators) {
       const isLookedCreator = await isCreatorPartOfTheStore(
         creator.info.address,
         creator.pubkey,
-        store,
+        storeId,
       );
       if (isLookedCreator) {
         creatorsByStore.push(creator.info);
@@ -85,18 +82,13 @@ export class DataApi {
 
   async getCreatorByStore(storeId: string, creatorId: string) {
     const creators = await this.getCreatorsByStore(storeId);
-    return (
-      creators.find(({ address }) => address.toBase58() === creatorId) || null
-    );
+    return creators.find(({ address }) => address === creatorId) || null;
   }
 
   getCreatorArtworks(creatorId: string) {
     const artworks = mapInfo(DataApi.state.metadata);
-    console.log('@', DataApi.state.metadata.length);
     return artworks.filter(({ data }) => {
-      return data.creators?.some(
-        ({ address }) => address.toBase58() === creatorId,
-      );
+      return data.creators?.some(({ address }) => address === creatorId);
     });
   }
 }
