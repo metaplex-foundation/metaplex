@@ -222,6 +222,7 @@ program
       }
     }
 
+    let updateSuccessful = true;
     const keys = Object.keys(cacheContent.items);
     try {
       await Promise.all(
@@ -241,32 +242,34 @@ program
 
               if (onChain.length != indexes.length) {
                 console.log(
-                  'Writing indices ',
-                  ind,
-                  '-',
-                  keys[indexes[indexes.length - 1]],
+                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`
                 );
-                await anchorProgram.rpc.addConfigLines(
-                  ind,
-                  indexes.map(i => ({
-                    uri: cacheContent.items[keys[i]].link,
-                    name: cacheContent.items[keys[i]].name,
-                  })),
-                  {
-                    accounts: {
-                      config,
-                      authority: walletKeyPair.publicKey,
+                try {
+                  await anchorProgram.rpc.addConfigLines(
+                    ind,
+                    indexes.map(i => ({
+                      uri: cacheContent.items[keys[i]].link,
+                      name: cacheContent.items[keys[i]].name,
+                    })),
+                    {
+                      accounts: {
+                        config,
+                        authority: walletKeyPair.publicKey,
+                      },
+                      signers: [walletKeyPair],
                     },
-                    signers: [walletKeyPair],
-                  },
-                );
-                indexes.forEach(i => {
-                  cacheContent.items[keys[i]] = {
-                    ...cacheContent.items[keys[i]],
-                    onChain: true,
-                  };
-                });
-                saveCache(cacheName, env, cacheContent);
+                  );
+                  indexes.forEach(i => {
+                    cacheContent.items[keys[i]] = {
+                      ...cacheContent.items[keys[i]],
+                      onChain: true,
+                    };
+                  });
+                  saveCache(cacheName, env, cacheContent);
+                } catch (e) {
+                  console.log(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
+                  updateSuccessful = false;
+                }
               }
             }
           },
@@ -277,8 +280,7 @@ program
     } finally {
       saveCache(cacheName, env, cacheContent);
     }
-    console.log('Done');
-    // TODO: start candy machine
+    console.log(`Done. Successful = ${updateSuccessful}. If 'false' - rerun`);
   });
 
 program
