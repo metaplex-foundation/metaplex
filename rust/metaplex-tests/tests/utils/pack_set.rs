@@ -136,6 +136,43 @@ impl TestPackSet {
         context.banks_client.process_transaction(tx).await
     }
 
+    pub async fn mint_edition_with_card(
+        &self,
+        context: &mut ProgramTestContext,
+        test_metadata: &TestMetadata,
+        test_pack_card: &TestPackCard,
+        test_new_metadata: &TestMetadata,
+        test_new_edition: &TestEditionMarker,
+        test_master_edition: &TestMasterEditionV2,
+        new_mint: &Pubkey,
+        new_mint_authority: &Pubkey,
+        new_metadata_update_authority: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::mint_new_edition_from_card(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &self.authority.pubkey(),
+                &test_pack_card.pubkey,
+                &test_new_metadata.pubkey,
+                &test_new_edition.pubkey,
+                &test_master_edition.pubkey,
+                new_mint,
+                new_mint_authority,
+                &context.payer.pubkey(),
+                &self.authority.pubkey(),
+                &test_pack_card.token_account.pubkey(),
+                new_metadata_update_authority,
+                &test_metadata.pubkey,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
     pub async fn edit(
         &self,
         context: &mut ProgramTestContext,
