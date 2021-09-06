@@ -25,7 +25,7 @@ const MAINNET_CLUSTER_URL = 'https://api.mainnet-beta.solana.com/';
 const DEVNET_CLUSTER_URL = 'https://api.devnet.solana.com/';
 const TESTNET_CLUSTER_URL = 'https://api.testnet.solana.com/';
 
-const DEFAULT_CLUSTER_URL = MAINNET_CLUSTER_URL;
+const DEFAULT_CLUSTER_URL = DEVNET_CLUSTER_URL;
 
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
@@ -554,14 +554,13 @@ const setStartDate = sharedOptionsCommand('set_start_date')
   });
 
 const createCandyMachine = sharedOptionsCommand('create_candy_machine')
-  .option('-p, --price <string>', 'SOL price')
+  .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
-    const { keypair, url, cacheName } = cmd.opts();
+    const { keypair, url, cacheName, price } = cmd.opts();
 
     const solConnection = new anchor.web3.Connection(url);
-    const solPriceStr = cmd.getOptionValue('price') || '1';
 
-    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+    const lamports = parseInt(price) * LAMPORTS_PER_SOL;
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -608,12 +607,11 @@ const createCandyMachine = sharedOptionsCommand('create_candy_machine')
 
 const mintOneToken = sharedOptionsCommand('mint_one_token').action(
   async (directory, cmd) => {
-    const { keypair, url, cacheName } = cmd.opts();
+    const { keypair, url, cacheName, price } = cmd.opts();
 
     const solConnection = new anchor.web3.Connection(url);
 
-    const solPriceStr = program.getOptionValue('price') || '1';
-    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+    const lamports = parseInt(price) * LAMPORTS_PER_SOL;
 
     const cachePath = path.join(CACHE_PATH, cacheName);
     const cachedContent = fs.existsSync(cachePath)
