@@ -371,7 +371,7 @@ program
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
-    const {keypair, env, price, cacheName, date} = cmd.opts();
+    const {keypair, env, price, cacheName} = cmd.opts();
 
     const lamports = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -448,48 +448,6 @@ program
     );
 
     console.log('set_start_date Done', secondsSinceEpoch, tx);
-  });
-
-program
-  .command('update_price')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
-  .option('-p, --price <string>', 'SOL price')
-  .action(async (directory, cmd) => {
-    const {keypair, env, cacheName, price} = cmd.opts();
-
-    const lamports = parsePrice(price);
-
-    const cacheContent = loadCache(cacheName, env);
-
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-
-    const [candyMachine, _] = await getCandyMachineAddress(
-      new PublicKey(cacheContent.program.config),
-      cacheContent.program.uuid,
-    );
-    const tx = await anchorProgram.rpc.updateCandyMachine(
-      new anchor.BN(lamports),
-      null,
-      {
-        accounts: {
-          candyMachine,
-          authority: walletKeyPair.publicKey,
-        },
-      },
-    );
-
-    console.log('update_price Done', lamports, tx);
   });
 
 program
