@@ -21,7 +21,11 @@ const CACHE_PATH = './.cache';
 
 const DEFAULT_CACHE_NAME = 'temp';
 
-const DEFAULT_CLUSTER_URL = 'https://api.mainnet-beta.solana.com/';
+const MAINNET_CLUSTER_URL = 'https://api.mainnet-beta.solana.com/';
+const DEVNET_CLUSTER_URL = 'https://api.devnet.solana.com/';
+const TESTNET_CLUSTER_URL = 'https://api.testnet.solana.com/';
+
+const DEFAULT_CLUSTER_URL = MAINNET_CLUSTER_URL;
 
 const PAYMENT_WALLET = new anchor.web3.PublicKey(
   'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
@@ -257,6 +261,17 @@ const upload = sharedOptionsCommand('upload')
     const extension = '.png';
     const { keypair, cacheName, url } = cmd.opts();
 
+    let env: string; // default same as url default
+
+    switch (url) {
+      case MAINNET_CLUSTER_URL:
+        env = 'mainnet';
+      case TESTNET_CLUSTER_URL:
+        env = 'testnet';
+      case DEVNET_CLUSTER_URL:
+        env = 'devnet';
+    }
+
     const cachePath = path.join(CACHE_PATH, cacheName);
     const savedContent = fs.existsSync(cachePath)
       ? JSON.parse(fs.readFileSync(cachePath).toString())
@@ -395,7 +410,7 @@ const upload = sharedOptionsCommand('upload')
           // payment transaction
           const data = new FormData();
           data.append('transaction', tx['txid']);
-          data.append('url', url);
+          data.append('env', env);
           data.append('file[]', fs.createReadStream(image), `image.png`);
           data.append('file[]', manifestBuffer, 'metadata.json');
           try {
