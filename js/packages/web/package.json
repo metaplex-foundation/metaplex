@@ -39,6 +39,10 @@
     "three": "^0.128.0",
     "use-wallet": "^0.8.1"
   },
+  "resolutions": {
+    "graceful-fs": "4.2.4"
+  },
+
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
     "start": "next dev",

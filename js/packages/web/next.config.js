@@ -27,6 +27,14 @@ module.exports = withPlugins(plugins, {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config, { isServer }) => {
+    // Fixes npm packages that depend on `fs` module
+    if (!isServer) {
+      config.resolve.fallback.fs = false;
+    }
+  
+    return config
+  },
   env: {
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
       process.env.STORE_OWNER_ADDRESS ||
@@ -44,3 +52,5 @@ module.exports = withPlugins(plugins, {
     ];
   },
 });
+
+

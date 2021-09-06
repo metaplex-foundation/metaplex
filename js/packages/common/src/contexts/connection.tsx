@@ -66,7 +66,7 @@ export const ENDPOINTS = [
   },
 ];
 
-const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT = ENDPOINTS[4].endpoint;
 
 interface ConnectionConfig {
   connection: Connection;
@@ -81,7 +81,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
   setEndpoint: () => {},
   connection: new Connection(DEFAULT, 'recent'),
-  env: ENDPOINTS[0].name,
+  env: ENDPOINTS[4].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
 });
@@ -89,7 +89,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
 export function ConnectionProvider({ children = undefined as any }) {
   const [endpoint, setEndpoint] = useLocalStorageState(
     'connectionEndpoint',
-    ENDPOINTS[0].endpoint,
+    ENDPOINTS[4].endpoint,
   );
 
   const connection = useMemo(
