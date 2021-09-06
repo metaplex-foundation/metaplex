@@ -235,7 +235,7 @@ program
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
                 const index = keys[i];
-                return cacheContent.items[index]?.onChain;
+                return cacheContent.items[index]?.onChain || false;
               });
               const ind = keys[indexes[0]];
 
