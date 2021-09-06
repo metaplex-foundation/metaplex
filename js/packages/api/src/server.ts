@@ -69,7 +69,7 @@ async function startApolloServer() {
   const start = performance.now();
   api.preload().then(() => {
     const end = performance.now();
-    console.log(`🌋 Finish warm up data ${((end - start) / 1000).toString(2)}`);
+    console.log(`🌋 Finish warm up data ${((end - start) / 1000).toFixed(0)}s`);
   });
 }
 

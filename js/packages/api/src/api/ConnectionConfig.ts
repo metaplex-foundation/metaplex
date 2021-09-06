@@ -89,6 +89,34 @@ function iterateObject<T>(obj: Record<string, T>): IterableIterator<T> {
 }
 
 export class ConnectionConfig {
+  static setter(
+    state: MetaState,
+    prop: keyof MetaState,
+    key: string,
+    value: ParsedAccount<any>,
+  ) {
+    if (prop === 'store') {
+      state[prop] = value;
+    } else if (prop !== 'metadata') {
+      state[prop][key] = value;
+    }
+    return state;
+  }
+
+  static async metadataByMintUpdater(
+    metadata: ParsedAccount<Metadata>,
+    state: MetaState,
+  ) {
+    const key = metadata.info.mint;
+    await metadata.info.init();
+    const masterEditionKey = metadata.info?.masterEdition;
+    if (masterEditionKey) {
+      state.metadataByMasterEdition[masterEditionKey] = metadata;
+    }
+    state.metadataByMint[key] = metadata;
+    state.metadata.push(metadata);
+  }
+
   private state?: MetaState;
   readonly connection: Connection;
   constructor(
@@ -99,20 +127,6 @@ export class ConnectionConfig {
     this.connection = new Connection(endpoint, 'recent');
   }
   private defer: Promise<void> | undefined;
-
-  setter = (
-    state: MetaState,
-    prop: keyof MetaState,
-    key: string,
-    value: ParsedAccount<any>,
-  ) => {
-    if (prop === 'store') {
-      state[prop] = value;
-    } else if (prop !== 'metadata') {
-      state[prop][key] = value;
-    }
-    return state;
-  };
 
   load() {
     if (this.defer) {
@@ -129,7 +143,7 @@ export class ConnectionConfig {
         data,
         (prop, key, value) => {
           if (this.state) {
-            this.setter(this.state, prop, key, value); // Apply to current state
+            ConnectionConfig.setter(this.state, prop, key, value); // Apply to current state
           } else {
             container.push({ prop, key, value });
           }
@@ -143,7 +157,7 @@ export class ConnectionConfig {
       .then(state => {
         console.log(`🏝️  ${this.name} meta loaded`);
         container.forEach(({ prop, key, value }) =>
-          this.setter(state, prop, key, value),
+          ConnectionConfig.setter(state, prop, key, value),
         );
         this.state = state; // maybe sent to anoter state
         this.flowControl.finish();
@@ -175,9 +189,9 @@ export class ConnectionConfig {
     },
   ];
 
-  private async loadData(emiter?: Emitter) {
+  private async loadData(emitter?: Emitter) {
     const preloading = ConnectionConfig.CONFIG.map(config =>
-      this.loadDataByConfig(config, emiter),
+      this.loadDataByConfig(config, emitter),
     );
     const processingData = await Promise.all(preloading);
 
@@ -192,7 +206,8 @@ export class ConnectionConfig {
           async item => {
             config.fn(
               item,
-              (prop, key, value) => this.setter(state, prop, key, value),
+              (prop, key, value) =>
+                ConnectionConfig.setter(state, prop, key, value),
               true,
             );
           },
@@ -206,10 +221,10 @@ export class ConnectionConfig {
     await createPipelineExecutor(
       iterateObject(state.metadataByMint),
       async metadata => {
-        await this.metadataByMintUpdater(metadata, state);
+        await ConnectionConfig.metadataByMintUpdater(metadata, state);
       },
       {
-        delay: 10,
+        delay: 0,
         jobsCount: 3,
         name: 'Metadata',
       },
@@ -217,25 +232,11 @@ export class ConnectionConfig {
     return state;
   }
 
-  private metadataByMintUpdater = async (
-    metadata: ParsedAccount<Metadata>,
-    state: MetaState,
-  ) => {
-    const key = metadata.info.mint;
-    await metadata.info.init();
-    const masterEditionKey = metadata.info?.masterEdition;
-    if (masterEditionKey) {
-      state.metadataByMasterEdition[masterEditionKey] = metadata;
-    }
-    state.metadataByMint[key] = metadata;
-    state.metadata.push(metadata);
-  };
-
   private async loadDataByConfig(
     config: IConfig,
-    emiter?: Emitter,
+    emitter?: Emitter,
   ): Promise<IConfigWithData> {
-    const subscrtionId = !emiter
+    const subscrtionId = !emitter
       ? undefined
       : this.connection.onProgramAccountChange(
           toPublicKey(config.key),
@@ -244,7 +245,7 @@ export class ConnectionConfig {
               pubkey: pubkeyToString(block.accountId),
               account: block.accountInfo,
             };
-            emiter?.emit('data', [item, config]);
+            emitter?.emit('data', [item, config]);
           },
         );
     const data = await getProgramAccounts(this.connection, config.key);

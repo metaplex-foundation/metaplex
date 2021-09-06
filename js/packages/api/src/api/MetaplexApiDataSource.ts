@@ -25,14 +25,11 @@ export class MetaplexApiDataSource<
     api: MetaplexApi;
   },
 > extends DataSource<TContext> {
-  private readonly flowControl = this.initFlowControl(ENDPOINTS.length);
+  private readonly flowControl = MetaplexApiDataSource.initFlowControl(
+    ENDPOINTS.length,
+  );
 
-  readonly ENTRIES = ENDPOINTS.map(
-    ({ name, endpoint }, index) =>
-      new ConnectionConfig(name, endpoint, this.flowControl[index]),
-  ).map(config => new MetaplexApi(config));
-
-  private initFlowControl(size: number) {
+  static initFlowControl(size: number) {
     const len = size - 1;
     const promises = new Array<Promise<void>>(len);
     const resolvers = new Array<() => void>(len);
@@ -49,6 +46,11 @@ export class MetaplexApiDataSource<
     }
     return result;
   }
+
+  readonly ENTRIES = ENDPOINTS.map(
+    ({ name, endpoint }, index) =>
+      new ConnectionConfig(name, endpoint, this.flowControl[index]),
+  ).map(config => new MetaplexApi(config));
 
   // preload all data endpoints
   preload() {
