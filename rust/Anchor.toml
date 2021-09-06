@@ -5,6 +5,9 @@ url = "https://anchor.projectserum.com"
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
+[programs.mainnet]
+nft_candy_machine = "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
+
 [scripts]
 test = "mocha -t 1000000 tests/"
 

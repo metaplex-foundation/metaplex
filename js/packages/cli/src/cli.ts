@@ -433,9 +433,10 @@ program
       }
     }
 
+    const keys = Object.keys(cacheContent.items);
     try {
       await Promise.all(
-        chunks(Array.from(Array(images.length).keys()), 1000).map(
+        chunks(Array.from(Array(keys.length).keys()), 1000).map(
           async allIndexesInSlice => {
             for (
               let offset = 0;
@@ -444,30 +445,23 @@ program
             ) {
               const indexes = allIndexesInSlice.slice(offset, offset + 10);
               const onChain = indexes.filter(i => {
-                const index = images[i].replace(extension, '').split('/').pop();
-                return cacheContent.items[index].onChain;
+                const index = keys[i];
+                return cacheContent.items[index]?.onChain;
               });
-              const ind = images[indexes[0]]
-                .replace(extension, '')
-                .split('/')
-                .pop();
+              const ind = keys[indexes[0]];
 
               if (onChain.length != indexes.length) {
                 console.log(
                   'Writing indices ',
                   ind,
                   '-',
-                  parseInt(ind) + indexes.length,
+                  keys[indexes[indexes.length - 1]],
                 );
                 const txId = await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
-                    uri: cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ].link,
-                    name: cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ].name,
+                    uri: cacheContent.items[keys[i]].link,
+                    name: cacheContent.items[keys[i]].name,
                   })),
                   {
                     accounts: {
@@ -478,12 +472,8 @@ program
                   },
                 );
                 indexes.forEach(i => {
-                  cacheContent.items[
-                    images[i].replace(extension, '').split('/').pop()
-                  ] = {
-                    ...cacheContent.items[
-                      images[i].replace(extension, '').split('/').pop()
-                    ],
+                  cacheContent.items[keys[i]] = {
+                    ...cacheContent.items[keys[i]],
                     onChain: true,
                   };
                 });
@@ -723,6 +713,8 @@ program
     const config = await solConnection.getAccountInfo(
       new PublicKey(cachedContent.program.config),
     );
+    const number = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+    console.log('Number', number.toNumber());
 
     const keys = Object.keys(cachedContent.items);
     for (let i = 0; i < keys.length; i++) {
