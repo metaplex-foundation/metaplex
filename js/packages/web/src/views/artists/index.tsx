@@ -28,12 +28,15 @@ export const ArtistsView = () => {
         const id = m.info.address;
         return (
           <Link to={`/artists/${id}`} key={idx}>
-            <ArtistCard key={id} artist={{
-              address: m.info.address,
-              name: m.info.name || '',
-              image: m.info.image || '',
-              link: m.info.twitter || ''
-            }} />
+            <ArtistCard
+              key={id}
+              artist={{
+                address: m.info.address,
+                name: m.info.name || '',
+                image: m.info.image || '',
+                link: m.info.twitter || '',
+              }}
+            />
           </Link>
         );
       })}

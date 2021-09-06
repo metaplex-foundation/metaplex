@@ -6,15 +6,15 @@ import {
   SafetyDepositBox,
   deprecatedGetReservationList,
   MasterEditionV1,
-  MasterEditionV2,
   findProgramAddress,
   programIds,
   createAssociatedTokenAccountInstruction,
   MetadataKey,
   BidderMetadata,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { AuctionView, AuctionViewItem } from '../hooks';
 import {
@@ -74,7 +74,7 @@ export async function findEligibleParticipationBidsForRedemption(
 
 export async function claimUnusedPrizes(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
@@ -143,7 +143,7 @@ export async function claimUnusedPrizes(
     }
   }
 
-  let printingV2ByMint: Record<string, AuctionViewItem> = {};
+  const printingV2ByMint: Record<string, AuctionViewItem> = {};
 
   for (
     let winnerIndex = 0;
@@ -188,7 +188,7 @@ export async function claimUnusedPrizes(
             winnerIndex,
           );
           break;
-        case WinningConfigType.PrintingV2:
+        case WinningConfigType.PrintingV2: {
           const winningBidder =
             auctionView.auction.info.bidState.getWinnerAt(winnerIndex);
           if (winningBidder) {
@@ -214,6 +214,7 @@ export async function claimUnusedPrizes(
           }
           printingV2ByMint[item.metadata.info.mint] = item;
           break;
+        }
         case WinningConfigType.FullRightsTransfer:
           console.log('Redeeming Full Rights');
           await setupRedeemFullRightsTransferInstructions(
@@ -245,9 +246,9 @@ export async function claimUnusedPrizes(
     }
   }
 
-  let allV2s = Object.values(printingV2ByMint);
+  const allV2s = Object.values(printingV2ByMint);
   for (let i = 0; i < allV2s.length; i++) {
-    let item = allV2s[i];
+    const item = allV2s[i];
     await setupWithdrawMasterEditionInstructions(
       connection,
       auctionView,
@@ -264,14 +265,16 @@ async function setupRedeemInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
   winningConfigIndex: number,
 ) {
-  let winningPrizeSigner: Keypair[] = [];
-  let winningPrizeInstructions: TransactionInstruction[] = [];
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const winningPrizeSigner: Keypair[] = [];
+  const winningPrizeInstructions: TransactionInstruction[] = [];
 
   signers.push(winningPrizeSigner);
   instructions.push(winningPrizeInstructions);
@@ -315,15 +318,17 @@ async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
   winningConfigIndex: number,
 ) {
-  let winningPrizeSigner: Keypair[] = [];
-  let winningPrizeInstructions: TransactionInstruction[] = [];
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const winningPrizeSigner: Keypair[] = [];
+  const winningPrizeInstructions: TransactionInstruction[] = [];
   const claimed = auctionView.auctionManager.isItemClaimed(
     winningConfigIndex,
     safetyDeposit.info.order,
@@ -363,12 +368,14 @@ async function setupRedeemFullRightsTransferInstructions(
 async function setupWithdrawMasterEditionInstructions(
   connection: Connection,
   auctionView: AuctionView,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition || !item.metadata) {
     return;
   }
@@ -416,13 +423,15 @@ async function deprecatedSetupRedeemPrintingInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
   winningConfigIndex: number,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   if (!item.masterEdition || !item.metadata) {
     return;
   }
@@ -443,8 +452,8 @@ async function deprecatedSetupRedeemPrintingInstructions(
     );
     console.log('This state item is', claimed);
     if (!claimed) {
-      let winningPrizeSigner: Keypair[] = [];
-      let winningPrizeInstructions: TransactionInstruction[] = [];
+      const winningPrizeSigner: Keypair[] = [];
+      const winningPrizeInstructions: TransactionInstruction[] = [];
 
       signers.push(winningPrizeSigner);
       instructions.push(winningPrizeInstructions);

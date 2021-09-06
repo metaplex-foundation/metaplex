@@ -1,6 +1,7 @@
-
-import React, { useState, useMemo } from 'react';
-import { Layout, Row, Col, Tabs, Button } from 'antd';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Col, Layout, Row, Tabs, Button } from 'antd';
+import BN from 'bn.js';
+import React, { useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { HowToBuyModal } from '../../components/HowToBuyModal';
 
@@ -10,8 +11,7 @@ import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link, useHistory } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
-import BN from 'bn.js';
-import { programIds, useConnection, useWallet } from '@oyster/common';
+import { programIds, useConnection} from '@oyster/common';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Banner } from '../../components/Banner';
@@ -31,7 +31,7 @@ export const AuctionListView = () => {
   const auctionsEnded = useAuctions(AuctionViewState.Ended);
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
-  const { wallet, connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -85,8 +85,7 @@ export const AuctionListView = () => {
         .concat(auctionsEnded)
         .filter(
           (m, idx) =>
-            m.myBidderMetadata?.info.bidderPubkey ==
-            wallet?.publicKey?.toBase58(),
+            m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
         );
       break;
     case LiveAuctionViewState.Resale:

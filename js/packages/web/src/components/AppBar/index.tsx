@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, useWallet } from '@oyster/common';
+import { ConnectButton } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
@@ -83,10 +84,10 @@ export const AppBar = () => {
       </div>
       <div className="app-right">
         {!connected && <HowToBuyModal buttonClassName="modal-button-default" />}
-        {!connected && <ConnectButton style={{ height: 48 }} />}
+        {!connected && <ConnectButton style={{ height: 48 }} allowWalletChange />}
         {connected && (
           <>
-            <CurrentUserBadge showBalance={false} showAddress iconSize={24} />
+            <CurrentUserBadge showBalance={false} showAddress={true} iconSize={24} />
             <Notifications />
             <Cog />
           </>

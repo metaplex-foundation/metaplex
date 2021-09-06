@@ -22,7 +22,6 @@ import { mintNFT } from '../../actions';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   IMetadataExtension,
   Attribute,
   MetadataCategory,
@@ -34,6 +33,7 @@ import {
   MetadataFile,
   StringPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
@@ -50,7 +50,7 @@ const { Text } = Typography;
 export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
@@ -356,9 +356,9 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-        <h3>Upload a cover image (PNG, JPG, GIF)</h3>
+        <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
-          accept=".png,.jpg,.gif,.mp4"
+          accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20 }}
           multiple={false}
           customRequest={info => {
@@ -373,7 +373,7 @@ const UploadStep = (props: {
         >
           <div className="ant-upload-drag-icon">
             <h3 style={{ fontWeight: 700 }}>
-              Upload your cover image (PNG, JPG, GIF)
+              Upload your cover image (PNG, JPG, GIF, SVG)
             </h3>
           </div>
           <p className="ant-upload-text">Drag and drop, or click to browse</p>
@@ -651,16 +651,12 @@ const InfoStep = (props: {
           <label className="action-field">
             <span className="field-title">Attributes</span>
           </label>
-          <Form
-            name="dynamic_attributes"
-            form={form}
-            autoComplete="off"
-          >
+          <Form name="dynamic_attributes" form={form} autoComplete="off">
             <Form.List name="attributes">
               {(fields, { add, remove }) => (
                 <>
                   {fields.map(({ key, name, fieldKey }) => (
-                      <Space key={key} align="baseline">
+                    <Space key={key} align="baseline">
                       <Form.Item
                         name={[name, 'trait_type']}
                         fieldKey={[fieldKey, 'trait_type']}
@@ -677,7 +673,6 @@ const InfoStep = (props: {
                         <Input placeholder="value" />
                       </Form.Item>
                       <Form.Item
-
                         name={[name, 'display_type']}
                         fieldKey={[fieldKey, 'display_type']}
                         hasFeedback
@@ -688,7 +683,12 @@ const InfoStep = (props: {
                     </Space>
                   ))}
                   <Form.Item>
-                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
                       Add attribute
                     </Button>
                   </Form.Item>
@@ -704,24 +704,23 @@ const InfoStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            form.validateFields()
-              .then(values => {
-                const nftAttributes = values.attributes;
-                // value is number if possible
-                for (const nftAttribute of nftAttributes || []) {
-                  const newValue = Number(nftAttribute.value);
-                  if (!isNaN(newValue)) {
-                    nftAttribute.value = newValue;
-                  }
+            form.validateFields().then(values => {
+              const nftAttributes = values.attributes;
+              // value is number if possible
+              for (const nftAttribute of nftAttributes || []) {
+                const newValue = Number(nftAttribute.value);
+                if (!isNaN(newValue)) {
+                  nftAttribute.value = newValue;
                 }
-                console.log('Adding NFT attributes:', nftAttributes)
-                props.setAttributes({
-                  ...props.attributes,
-                  attributes: nftAttributes,
-                });
+              }
+              console.log('Adding NFT attributes:', nftAttributes);
+              props.setAttributes({
+                ...props.attributes,
+                attributes: nftAttributes,
+              });
 
-                props.confirm();
-              })
+              props.confirm();
+            });
           }}
           className="action-btn"
         >
@@ -809,8 +808,7 @@ const RoyaltiesStep = (props: {
   confirm: () => void;
 }) => {
   // const file = props.attributes.image;
-  const { wallet, connected } = useWallet();
-
+  const { publicKey, connected } = useWallet();
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [fixedCreators, setFixedCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
@@ -819,8 +817,8 @@ const RoyaltiesStep = (props: {
   const [isShowErrors, setIsShowErrors] = useState<boolean>(false);
 
   useEffect(() => {
-    if (wallet?.publicKey) {
-      const key = wallet.publicKey.toBase58();
+    if (publicKey) {
+      const key = publicKey.toBase58();
       setFixedCreators([
         {
           key,
@@ -966,7 +964,7 @@ const RoyaltiesStep = (props: {
               c =>
                 new Creator({
                   address: c.value,
-                  verified: c.value === wallet?.publicKey?.toBase58(),
+                  verified: c.value === publicKey?.toBase58(),
                   share:
                     royalties.find(r => r.creatorKey === c.value)?.amount ||
                     Math.round(100 / royalties.length),

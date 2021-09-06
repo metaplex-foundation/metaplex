@@ -10,6 +10,7 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
+  WalletSigner,
   toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
@@ -18,10 +19,11 @@ import { AuctionView } from '../hooks';
 import { BidRedemptionTicket, PrizeTrackingTicket } from '../models/metaplex';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendCancelBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -29,8 +31,10 @@ export async function sendCancelBid(
   bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
   prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   if (
     auctionView.auction.info.ended() &&
@@ -62,7 +66,7 @@ export async function sendCancelBid(
   );
 
   if (
-    wallet?.publicKey?.equals(
+    wallet.publicKey.equals(
       toPublicKey(auctionView.auctionManager.authority),
     ) &&
     auctionView.auction.info.ended()
@@ -102,15 +106,17 @@ export async function setupCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: any,
+  wallet: WalletSigner,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
-  let cancelSigners: Keypair[] = [];
-  let cancelInstructions: TransactionInstruction[] = [];
-  let cleanupInstructions: TransactionInstruction[] = [];
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
+  const cancelSigners: Keypair[] = [];
+  const cancelInstructions: TransactionInstruction[] = [];
+  const cleanupInstructions: TransactionInstruction[] = [];
+
+  const tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   if (mint && auctionView.myBidderPot) {

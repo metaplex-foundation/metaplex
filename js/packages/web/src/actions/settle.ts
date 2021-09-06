@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   ParsedAccount,
   SequenceType,
@@ -16,6 +11,7 @@ import {
   AuctionState,
   TokenAccount,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -24,13 +20,14 @@ import { claimBid } from '../models/metaplex/claimBid';
 import { emptyPaymentAccount } from '../models/metaplex/emptyPaymentAccount';
 import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 const BATCH_SIZE = 10;
 const SETTLE_TRANSACTION_SIZE = 6;
 const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
   payingAccount: string | undefined,
@@ -40,8 +37,8 @@ export async function settle(
     auctionView.auction.info.ended() &&
     auctionView.auction.info.state !== AuctionState.Ended
   ) {
-    let signers: Keypair[][] = [];
-    let instructions: TransactionInstruction[][] = [];
+    const signers: Keypair[][] = [];
+    const instructions: TransactionInstruction[][] = [];
 
     await setupPlaceBid(
       connection,
@@ -68,19 +65,21 @@ export async function settle(
 
 async function emptyPaymentAccountForAllTokens(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = programIds();
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let settleSigners: Keypair[] = [];
   let settleInstructions: TransactionInstruction[] = [];
-  let ataLookup: Record<string, boolean> = {};
+  const ataLookup: Record<string, boolean> = {};
   // TODO replace all this with payer account so user doesnt need to click approve several times.
 
   // Overall we have 10 parallel txns, of up to 4 settlements per txn
@@ -211,12 +210,12 @@ async function emptyPaymentAccountForAllTokens(
 
 async function claimAllBids(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[],
 ) {
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];

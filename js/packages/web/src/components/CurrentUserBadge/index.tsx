@@ -1,18 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   formatUSD,
   Identicon,
-  useWallet,
   useNativeAccount,
   formatNumber,
   shortenAddress,
   Settings,
   MetaplexModal,
   ENDPOINTS,
-  useConnectionConfig,
+  useConnectionConfig, useWalletModal,
 } from '@oyster/common';
+'@solana/wallet-adapter-base';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Popover, Button, Select } from 'antd';
 import { useSolPrice, useMeta } from '../../contexts';
 import { Link } from 'react-router-dom';
@@ -24,9 +25,9 @@ const btnStyle: React.CSSProperties = {
 };
 
 const UserActions = () => {
-  const { wallet } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
+  const pubkey = publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
     return (
@@ -69,16 +70,18 @@ export const CurrentUserBadge = (props: {
   showAddress?: boolean;
   iconSize?: number;
 }) => {
-  const { wallet, disconnect } = useWallet();
+  const { wallet, publicKey, disconnect} = useWallet();
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
 
   const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
 
+  if (!wallet || !publicKey) {
+    return null;
+  }
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
-  if (!wallet || !wallet.publicKey) return null;
 
   const iconStyle: React.CSSProperties = {
     display: 'flex',
@@ -86,14 +89,14 @@ export const CurrentUserBadge = (props: {
     borderRadius: 50,
   };
 
-  let name = props.showAddress ? shortenAddress(`${wallet.publicKey}`) : '';
+  let name = props.showAddress ? shortenAddress(`${publicKey}`) : '';
   const unknownWallet = wallet as any;
-  if (unknownWallet.name) {
+  if (unknownWallet.name && !props.showAddress) {
     name = unknownWallet.name;
   }
 
   let image = (
-    <Identicon address={wallet.publicKey?.toBase58()} style={iconStyle} />
+    <Identicon address={publicKey?.toBase58()} style={iconStyle} />
   );
 
   if (unknownWallet.image) {
@@ -258,7 +261,7 @@ export const CurrentUserBadge = (props: {
           <Button
             onClick={() => {
               window.open(
-                `https://ftx.com/pay/request?coin=SOL&address=${wallet?.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
+                `https://ftx.com/pay/request?coin=SOL&address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
                 '_blank',
                 'resizable,width=680,height=860',
               );
@@ -295,7 +298,8 @@ export const CurrentUserBadge = (props: {
 
 export const Cog = () => {
   const { endpoint, setEndpoint } = useConnectionConfig();
-  const { select } = useWallet();
+  const { setVisible } = useWalletModal();
+  const open = useCallback(() => setVisible(true), [setVisible]);
 
   return (
     <div className="wallet-wrapper">
@@ -337,7 +341,7 @@ export const Cog = () => {
             <Button
               className="metaplex-button-default"
               style={btnStyle}
-              onClick={select}
+              onClick={open}
             >
               Change wallet
             </Button>

@@ -1,195 +1,84 @@
-import { WalletAdapter } from "@solana/wallet-base";
-
-import Wallet from '@project-serum/sol-wallet-adapter';
-import { Button, Collapse } from "antd";
+import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base';
+import {
+  useWallet,
+  WalletProvider as BaseWalletProvider,
+} from '@solana/wallet-adapter-react';
+import {
+  getLedgerWallet,
+  getMathWallet,
+  getPhantomWallet,
+  getSolflareWallet,
+  getSolletWallet,
+  getSolongWallet,
+  getTorusWallet,
+  WalletName,
+} from '@solana/wallet-adapter-wallets';
+import { Button, Collapse } from 'antd';
 import React, {
+  createContext,
+  FC,
+  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
-import { notify } from './../utils/notifications';
-import { useConnectionConfig } from './connection';
-import { useLocalStorageState } from '../utils/utils';
-import { PhantomWalletAdapter } from '../wallet-adapters/phantom';
-import { useLocation } from 'react-router';
-import { MetaplexModal } from '../components/MetaplexModal';
-import { TorusWalletAdapter } from '../wallet-adapters/torus';
-import { SolflareWalletAdapter } from '../wallet-adapters/solflare';
+import { notify } from '../utils';
+import { MetaplexModal } from '../components';
 
 const { Panel } = Collapse;
 
-const ASSETS_URL =
-  'https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/';
-export const WALLET_PROVIDERS = [
-  {
-    name: 'Phantom',
-    url: 'https://www.phantom.app',
-    icon: `https://www.phantom.app/img/logo.png`,
-    adapter: PhantomWalletAdapter,
-  },
-  {
-    name: 'Solflare',
-    url: 'https://solflare.com',
-    icon: `${ASSETS_URL}solflare.svg`,
-    adapter: SolflareWalletAdapter,
-  },
-  {
-    name: 'Sollet',
-    url: 'https://www.sollet.io',
-    icon: `${ASSETS_URL}sollet.svg`,
-  },
-  {
-    name: 'MathWallet',
-    url: 'https://mathwallet.org',
-    icon: `${ASSETS_URL}mathwallet.svg`,
-  },
-  {
-    name: 'Torus',
-    url: 'https://tor.us',
-    icon: `${ASSETS_URL}torus.svg`,
-    adapter: TorusWalletAdapter,
-  },
-];
+export interface WalletModalContextState {
+  visible: boolean;
+  setVisible: (open: boolean) => void;
+}
 
-const WalletContext = React.createContext<{
-  wallet: WalletAdapter | undefined;
-  connected: boolean;
-  select: () => void;
-  provider: typeof WALLET_PROVIDERS[number] | undefined;
-}>({
-  wallet: undefined,
-  connected: false,
-  select() {},
-  provider: undefined,
-});
+export const WalletModalContext = createContext<WalletModalContextState>(
+  {} as WalletModalContextState,
+);
 
-export function WalletProvider({ children = null as any }) {
-  const { endpoint } = useConnectionConfig();
-  const location = useLocation();
-  const [autoConnect, setAutoConnect] = useState(
-    location.pathname.indexOf('result=') >= 0 || false,
-  );
-  const [providerUrl, setProviderUrl] = useLocalStorageState('walletProvider');
+export function useWalletModal(): WalletModalContextState {
+  return useContext(WalletModalContext);
+}
 
-  const provider = useMemo(
-    () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
-    [providerUrl],
-  );
-
-  const wallet = useMemo(
-    function () {
-      if (provider) {
-        return new (provider.adapter || Wallet)(
-          providerUrl,
-          endpoint,
-        ) as WalletAdapter;
-      }
-    },
-    [provider, providerUrl, endpoint],
-  );
-
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    if (wallet?.publicKey && connected) {
-      const walletPublicKey = wallet.publicKey.toBase58();
-      const keyToDisplay =
-        walletPublicKey.length > 20
-          ? `${walletPublicKey.substring(0, 7)}.....${walletPublicKey.substring(
-              walletPublicKey.length - 7,
-              walletPublicKey.length,
-            )}`
-          : walletPublicKey;
-      notify({
-        message: 'Wallet update',
-        description: 'Connected to wallet ' + keyToDisplay,
-      });
-    }
-  }, [connected]);
-
-  useEffect(() => {
-    if (wallet) {
-      wallet.on('connect', () => {
-        if (wallet.publicKey) {
-          setConnected(true);
-        }
-      });
-
-      wallet.on('disconnect', () => {
-        setConnected(false);
-        notify({
-          message: 'Wallet update',
-          description: 'Disconnected from wallet',
-        });
-      });
-    }
-
-    return () => {
-      setConnected(false);
-      if (wallet) {
-        wallet.disconnect();
-      }
-    };
-  }, [wallet]);
-
-  useEffect(() => {
-    if (wallet && autoConnect) {
-      wallet.connect();
-      setAutoConnect(false);
-    }
-
-    return () => {};
-  }, [wallet, autoConnect]);
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const select = useCallback(() => setIsModalVisible(true), []);
+export const WalletModal: FC = () => {
+  const { wallets, wallet: selected, select } = useWallet();
+  const { visible, setVisible } = useWalletModal();
+  const [showWallets, setShowWallets] = useState(false);
   const close = useCallback(() => {
-    setIsModalVisible(false)
-  }, []);
+    setVisible(false);
+    setShowWallets(false);
+  }, [setVisible, setShowWallets]);
 
-  const pp = WALLET_PROVIDERS.find(wp => wp.name === 'Phantom');
+  const phatomWallet = useMemo(() => getPhantomWallet(), [])
 
   return (
-    <WalletContext.Provider
-      value={{
-        wallet,
-        connected,
-        select,
-        provider,
-      }}
-    >
-      {children}
-      <MetaplexModal
+    <MetaplexModal
         title="Connect Wallet"
-        visible={isModalVisible}
+        visible={visible}
         onCancel={close}
+    >
+      <span style={{
+        color: "rgba(255, 255, 255, 0.75)",
+        fontSize: "14px",
+        lineHeight: "14px",
+        fontFamily: "GraphikWeb",
+        letterSpacing: "0.02em",
+        marginBottom: 14
+      }}>RECOMMENDED</span>
+
+      <Button
+        className="phantom-button metaplex-button"
+        onClick={() => {
+          console.log(phatomWallet.name)
+          select(phatomWallet.name)
+          close();
+        }}
       >
-
-        <span style={{
-          color: "rgba(255, 255, 255, 0.75)",
-          fontSize: "14px",
-          lineHeight: "14px",
-          fontFamily: "GraphikWeb",
-          letterSpacing: "0.02em",
-          marginBottom: 14
-        }}>RECOMMENDED</span>
-
-        <Button
-          className="phantom-button metaplex-button"
-          onClick={() => {
-            setProviderUrl(pp?.url);
-            setAutoConnect(true);
-            close();
-          }}
-          disabled={providerUrl === pp?.url}
-        >
-          <img src={pp?.icon} style={{ width: '1.2rem' }} />&nbsp;Connect to Phantom
-        </Button>
-
-        <Collapse ghost expandIcon={
+        <img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />&nbsp;Connect to Phantom
+      </Button>
+      <Collapse ghost expandIcon={
           (panelProps) => panelProps.isActive ? (
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 7.5L10 12.5L5 7.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -206,9 +95,8 @@ export function WalletProvider({ children = null as any }) {
             lineHeight: "16px",
             letterSpacing: "-0.01em"
           }}>Other Wallets</span>} key="1">
-            {WALLET_PROVIDERS.map((provider, idx) => {
-              if (provider.url === providerUrl) return null
-              if (provider.name === "Phantom") return null
+            {wallets.map((wallet, idx) => {
+              if (wallet.name === "Phantom") return null
 
               return (
                 <Button
@@ -217,37 +105,105 @@ export function WalletProvider({ children = null as any }) {
                   style={{
                     marginBottom: 5,
                   }}
-                  disabled={providerUrl === provider.url}
                   onClick={() => {
-                    setProviderUrl(provider.url);
-                    setAutoConnect(true);
+                    select(wallet.name);
                     close();
                   }}
                 >
-                  Connect to {provider.name}
+                  Connect to {wallet.name}
                 </Button>
               )
             })}
           </Panel>
         </Collapse>
-
-      </MetaplexModal>
-    </WalletContext.Provider>
+    </MetaplexModal>
   );
-}
-
-export const useWallet = () => {
-  const { wallet, connected, provider, select } = useContext(WalletContext);
-  return {
-    wallet,
-    connected,
-    provider,
-    select,
-    connect() {
-      wallet ? wallet.connect() : select();
-    },
-    disconnect() {
-      wallet?.disconnect();
-    },
-  };
 };
+
+export const WalletModalProvider: FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const { publicKey } = useWallet();
+  const [connected, setConnected] = useState(!!publicKey);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (publicKey) {
+      const base58 = publicKey.toBase58();
+      const keyToDisplay =
+        base58.length > 20
+          ? `${base58.substring(0, 7)}.....${base58.substring(
+              base58.length - 7,
+              base58.length,
+            )}`
+          : base58;
+
+      notify({
+        message: 'Wallet update',
+        description: 'Connected to wallet ' + keyToDisplay,
+      });
+    }
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (!publicKey && connected) {
+      notify({
+        message: 'Wallet update',
+        description: 'Disconnected from wallet',
+      });
+    }
+    setConnected(!!publicKey);
+  }, [publicKey, connected, setConnected]);
+
+  return (
+    <WalletModalContext.Provider
+      value={{
+        visible,
+        setVisible,
+      }}
+    >
+      {children}
+      <WalletModal />
+    </WalletModalContext.Provider>
+  );
+};
+
+export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const wallets = useMemo(
+    () => [
+       getPhantomWallet(),
+      getSolflareWallet(),
+      // getTorusWallet({
+      //   options: {
+      //     // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
+      //     clientId:
+      //       'BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ',
+      //   },
+      // }),
+      getLedgerWallet(),
+      getSolongWallet(),
+      getMathWallet(),
+      getSolletWallet(),
+    ],
+    [],
+  );
+
+  const onError = useCallback((error: WalletError) => {
+    console.error(error);
+    notify({
+      message: 'Wallet error',
+      description: error.message,
+    });
+  }, []);
+
+  return (
+    <BaseWalletProvider wallets={wallets} onError={onError} autoConnect>
+      <WalletModalProvider>{children}</WalletModalProvider>
+    </BaseWalletProvider>
+  );
+};
+
+export type WalletSigner = Pick<
+  WalletAdapter,
+  'publicKey' | 'signTransaction' | 'signAllTransactions'
+>;

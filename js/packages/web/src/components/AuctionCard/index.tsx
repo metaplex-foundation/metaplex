@@ -1,11 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Col, Button, InputNumber, Spin, Row, Skeleton } from 'antd';
-import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { Button, InputNumber, Spin } from 'antd';
+import { Link } from 'react-router-dom';
 
 import {
   useConnection,
   useUserAccounts,
-  contexts,
   MetaplexModal,
   MetaplexOverlay,
   formatAmount,
@@ -22,6 +21,8 @@ import {
   MAX_EDITION_LEN,
   Identicon,
   fromLamports,
+  placeBid,
+  useWalletModal,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -29,6 +30,7 @@ import {
   useBidsForAuction,
   useUserBalance,
 } from '../../hooks';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 import { AuctionCountdown, AuctionNumbers } from './../AuctionNumbers';
 import {
@@ -52,8 +54,6 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
 } from '../../models/metaplex';
 import {AuctionManagerV1} from "../../models/metaplex/deprecatedStates";
-
-const { useWallet } = contexts.Wallet;
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -193,7 +193,14 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { wallet, connected, connect } = useWallet();
+
+  const wallet = useWallet();
+  const { setVisible } = useWalletModal();
+  const connect = useCallback(
+    () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
+    [wallet.wallet, wallet.connect, setVisible],
+  );
+
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
   const { prizeTrackingTickets, bidRedemptions } = useMeta();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
@@ -208,7 +215,7 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  const [modalHistory, setModalHistory] = useState<any>();
+  // const [modalHistory, setModalHistory] = useState<any>();
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
 
@@ -218,7 +225,7 @@ export const AuctionCard = ({
   const balance = useUserBalance(mintKey);
 
   const myPayingAccount = balance.accounts[0];
-  let winnerIndex = null;
+  let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
@@ -250,8 +257,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !==
-    wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
@@ -287,15 +293,12 @@ export const AuctionCard = ({
     !accountByMint.get(QUOTE_MINT.toBase58());
 
   useEffect(() => {
-    if (wallet) {
-      wallet.on('connect', () => {
-        if (wallet.publicKey && !showPlaceBid) setShowPlaceBid(true);
-      });
-      wallet.on('disconnect', () => {
-        if (showPlaceBid) setShowPlaceBid(false);
-      });
+    if (wallet.connected) {
+      if (wallet.publicKey && !showPlaceBid) setShowPlaceBid(true);
+    } else {
+      if (showPlaceBid) setShowPlaceBid(false);
     }
-  }, [wallet]);
+  }, [wallet.connected]);
 
   return (
     <div className="auction-container" style={style}>
@@ -351,7 +354,7 @@ export const AuctionCard = ({
               <HowAuctionsWorkModal buttonClassName="how-auctions-work" />
               {!hideDefaultAction &&
                 !auctionView.auction.info.ended() &&
-                (connected && isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+                (wallet.connected && isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
                   <Button
                     className="secondary-btn"
                     disabled={loading}
@@ -372,7 +375,7 @@ export const AuctionCard = ({
                   <Button
                     className="secondary-btn"
                     onClick={() => {
-                      if (connected) setShowPlaceBid(true);
+                      if (wallet.connected) setShowPlaceBid(true);
                       else connect();
                     }}
                   >
@@ -380,7 +383,7 @@ export const AuctionCard = ({
                   </Button>
                 ))}
               {!hideDefaultAction &&
-                connected &&
+                wallet.connected &&
                 auctionView.auction.info.ended() && (
                   <Button
                     className="secondary-btn"
@@ -459,7 +462,7 @@ export const AuctionCard = ({
         </div>
         {showPlaceBid &&
           !hideDefaultAction &&
-          connected &&
+          wallet.connected &&
           !auctionView.auction.info.ended() && (
             <div
               style={{
@@ -844,7 +847,7 @@ export const AuctionCard = ({
               <Button
                 onClick={() => {
                   window.open(
-                    `https://ftx.com/pay/request?coin=SOL&address=${wallet?.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
+                    `https://ftx.com/pay/request?coin=SOL&address=${wallet.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
                     '_blank',
                     'resizable,width=680,height=860',
                   );
@@ -887,7 +890,7 @@ export const AuctionCard = ({
       >
         <h3 style={{ color: 'white' }}>
           Warning: There may be some items in this auction that still are
-          required by the auction for printing bidders' limited or open edition
+          required by the auction for printing bidders&apos; limited or open edition
           NFTs. If you wish to withdraw them, you are agreeing to foot the cost
           of up to an estimated ◎<b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b>{' '}
           plus transaction fees to redeem their bids for them right now.

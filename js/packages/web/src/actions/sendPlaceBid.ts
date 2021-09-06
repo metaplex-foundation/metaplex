@@ -10,28 +10,30 @@ import {
   toLamports,
   ParsedAccount,
   toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
-
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintInfo } from '@solana/spl-token';
 import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
+
 const { createTokenAccount } = actions;
 const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
   amount: number,
 ) {
-  let signers: Keypair[][] = [];
-  let instructions: TransactionInstruction[][] = [];
-  let bid = await setupPlaceBid(
+  const signers: Keypair[][] = [];
+  const instructions: TransactionInstruction[][] = [];
+  const bid = await setupPlaceBid(
     connection,
     wallet,
     bidderTokenAccount,
@@ -57,7 +59,7 @@ export async function sendPlaceBid(
 
 export async function setupPlaceBid(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -66,9 +68,11 @@ export async function setupPlaceBid(
   overallInstructions: TransactionInstruction[][],
   overallSigners: Keypair[][],
 ): Promise<BN> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   let signers: Keypair[] = [];
   let instructions: TransactionInstruction[] = [];
-  let cleanupInstructions: TransactionInstruction[] = [];
+  const cleanupInstructions: TransactionInstruction[] = [];
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -80,7 +84,7 @@ export async function setupPlaceBid(
   const mint = cache.get(
     tokenAccount ? tokenAccount.info.mint : QUOTE_MINT,
   ) as ParsedAccount<MintInfo>;
-  let lamports = toLamports(amount, mint.info) + accountRentExempt;
+  const lamports = toLamports(amount, mint.info) + accountRentExempt;
 
   let bidderPotTokenAccount: string;
   if (!auctionView.myBidderPot) {
@@ -95,8 +99,8 @@ export async function setupPlaceBid(
   } else {
     bidderPotTokenAccount = auctionView.myBidderPot?.info.bidderPot;
     if (!auctionView.auction.info.ended()) {
-      let cancelSigners: Keypair[][] = [];
-      let cancelInstr: TransactionInstruction[][] = [];
+      const cancelSigners: Keypair[][] = [];
+      const cancelInstr: TransactionInstruction[][] = [];
       await setupCancelBid(
         auctionView,
         accountsByMint,

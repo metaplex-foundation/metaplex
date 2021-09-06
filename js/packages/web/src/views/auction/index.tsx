@@ -24,11 +24,11 @@ import {
   useConnection,
   useConnectionConfig,
   useMint,
-  useWallet,
   AuctionState,
   StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
@@ -154,8 +154,8 @@ export const AuctionView = () => {
             <List
               grid={{ column: 4 }}
             >
-              {attributes.map(attribute =>
-                <List.Item>
+              {attributes.map((attribute, index) =>
+                <List.Item key={`${attribute.value}-${index}`}>
                   <Card title={attribute.trait_type}>{attribute.value}</Card>
                 </List.Item>
               )}
@@ -257,9 +257,9 @@ const BidLine = (props: {
   isActive?: boolean;
 }) => {
   const { bid, index, mint, isCancelled, isActive } = props;
-  const { wallet } = useWallet();
+  const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
-  const isme = wallet?.publicKey?.toBase58() === bidder;
+  const isme = publicKey?.toBase58() === bidder;
 
   // Get Twitter Handle from address
   const connection = useConnection();
