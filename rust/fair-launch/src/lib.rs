@@ -1,25 +1,60 @@
 pub mod utils;
 
 use {
-    crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
+    crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams, assert_data_valid, assert_derivation},
     anchor_lang::{
         prelude::*,
         solana_program::{clock::UnixTimestamp, program_pack::Pack, system_program},
         AnchorDeserialize, AnchorSerialize,
     },
-    anchor_spl::token::{self, TokenAccount},
-    spl_token::state::{Account, Mint},
+    anchor_spl::token::{self, TokenAccount, Mint},
+    spl_token::state::Account,
 };
 
 pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str="lottery";
+pub const MAX_GRANULARITY:u64 = 100;
 
 #[program]
 pub mod fair_launch {
     use super::*;
-    pub fn initialize(ctx: Context<InitializeFairLaunch>) -> ProgramResult {
+    pub fn initialize_fair_launch(ctx: Context<InitializeFairLaunch>, bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+
+        assert_data_valid(&data)?;
+        fair_launch.data = data;
+        fair_launch.authority = *ctx.accounts.authority.key;
+        fair_launch.bump = bump;
+        fair_launch.treasury_bump = treasury_bump;
+        fair_launch.token_mint_bump = token_mint_bump;
+
+        fair_launch.token_mint = ctx.accounts.token_mint.key();
+        assert_owned_by(&ctx.accounts.token_mint.to_account_info(), &spl_token::id())?; //paranoia
+        
+        let token_mint_key = ctx.accounts.token_mint.key();
+        let treasury_seeds = &[PREFIX.as_bytes(), token_mint_key.as_ref(), TREASURY.as_bytes()];
+        let treasury_info = &ctx.accounts.treasury;
+        fair_launch.treasury = *treasury_info.key;
+        assert_derivation(ctx.program_id, treasury_info, treasury_seeds)?;
+
+        if ctx.remaining_accounts.len() > 0 {
+            let treasury_mint_info = &ctx.remaining_accounts[0];
+            let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
+
+            assert_owned_by(&treasury_mint_info, &spl_token::id())?;
+
+            fair_launch.treasury_mint = Some(*treasury_mint_info.key);
+
+            // make the treasury token account
+        } else {
+            // Nothing to do but check that it does not already exist, we can begin transferring sol to it.
+            if !treasury_info.data_is_empty() || treasury_info.lamports() > 0 || treasury_info.owner != ctx.program_id {
+                return Err(ErrorCode::TreasuryAlreadyExists.into())
+            }
+        }
+
         Ok(())
     }
 }
@@ -29,9 +64,8 @@ pub mod fair_launch {
 pub struct InitializeFairLaunch<'info> {
     #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref()], payer=payer, bump=bump, space=FAIR_LAUNCH_SPACE_VEC_START+16*(((data.price_range_end - data.price_range_start).checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)? + 1)) as usize)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
-    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), data.uuid.as_bytes()], payer=payer, bump=token_mint_bump, space=Mint::LEN)]
-    token_mint: AccountInfo<'info>,
-    #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref(), TREASURY.as_bytes()], payer=payer, bump=treasury_bump, space=Account::LEN)]
+    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), data.uuid.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=token_mint_bump)]
+    token_mint: CpiAccount<'info, Mint>,
     treasury: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0)]
     authority: AccountInfo<'info>,
@@ -47,7 +81,7 @@ pub struct InitializeFairLaunch<'info> {
 /// Can only update fair launch before phase 1 start.
 #[derive(Accounts)]
 pub struct UpdateFairLaunch<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=authority)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -56,7 +90,7 @@ pub struct UpdateFairLaunch<'info> {
 /// Limited Update that only sets phase 3 dates once bitmap is in place.
 #[derive(Accounts)]
 pub struct StartPhaseThree<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=authority)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()],  bump=fair_launch.bump,has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -66,7 +100,7 @@ pub struct StartPhaseThree<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct CreateFairLaunchLotteryBitmap<'info> {
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=authority)]
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes()],  payer=payer, bump=bump, space= FAIR_LAUNCH_LOTTERY_SIZE + (fair_launch.number_tickets_sold_in_phase_1.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize) + 1)]
     fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
@@ -82,9 +116,9 @@ pub struct CreateFairLaunchLotteryBitmap<'info> {
 /// Can only set the fair launch lottery bitmap after phase 2 has ended.
 #[derive(Accounts)]
 pub struct UpdateFairLaunchLotteryBitmap<'info> {
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=authority)]
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes(), &[fair_launch_lottery_bitmap.bump]])]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes()], bump=fair_launch_lottery_bitmap.bump)]
     fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -94,7 +128,7 @@ pub struct UpdateFairLaunchLotteryBitmap<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8, amount: u64)]
 pub struct PurchaseTicket<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=treasury)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=treasury)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
@@ -121,9 +155,9 @@ pub struct PurchaseTicket<'info> {
 #[derive(Accounts)]
 #[instruction(amount: u64)]
 pub struct AdjustTicket<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref(), &[fair_launch_ticket.bump]], has_one=buyer, has_one=fair_launch)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  bump=fair_launch_ticket.bump,has_one=buyer, has_one=fair_launch)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]])]
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
@@ -136,15 +170,15 @@ pub struct AdjustTicket<'info> {
 }
 #[derive(Accounts)]
 pub struct PunchTicket<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref(), &[fair_launch_ticket.bump]], has_one=buyer, has_one=fair_launch)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()], bump=fair_launch_ticket.bump, has_one=buyer, has_one=fair_launch)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &[fair_launch.bump]], has_one=token_mint)]
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=token_mint)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut, signer)]
     buyer: AccountInfo<'info>,
-    #[account(mut, owner=spl_token::id(), token::mint=token_mint, token::authority=buyer)]
+    #[account(mut, constraint=&buyer_token_account.mint == token_mint.key && buyer_token_account.to_account_info().owner == &spl_token::id())]
     buyer_token_account: CpiAccount<'info, TokenAccount>,
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()])]
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
     token_mint: AccountInfo<'info>,
     #[account(address = spl_token::id())]
     token_program: AccountInfo<'info>,
@@ -211,6 +245,7 @@ pub struct MedianTuple(pub u64, pub u64);
 pub struct FairLaunch {
     pub token_mint: Pubkey,
     pub treasury: Pubkey,
+    pub treasury_mint: Option<Pubkey>,
     pub authority: Pubkey,
     pub bump: u8,
     pub treasury_bump: u8,
@@ -268,4 +303,24 @@ pub enum ErrorCode {
     TokenTransferFailed,
     #[msg("Numerical overflow error")]
     NumericalOverflowError,
+    #[msg("Timestamps of phases should line up")]
+    TimestampsDontLineUp,
+    #[msg("Cant set phase 3 dates yet")]
+    CantSetPhaseThreeDatesYet,
+    #[msg("Uuid must be exactly of 6 length")]
+    UuidMustBeExactly6Length,
+    #[msg("Tick size too small")]
+    TickSizeTooSmall,
+    #[msg("Cannot give zero tokens")]
+    CannotGiveZeroTokens,
+    #[msg("Invalid price ranges")]
+    InvalidPriceRanges,
+    #[msg("With this tick size and price range, you will have too many ticks(>" + MAX_GRANULARITY + ") - choose less granularity")]
+    TooMuchGranularityInRange,
+    #[msg("Cannot use a tick size with a price range that results in a remainder when doing (end-start)/ticksize")]
+    CannotUseTickSizeThatGivesRemainder,
+    #[msg("Derived key invalid")]
+    DerivedKeyInvalid,
+    #[msg("Treasury Already Exists")]
+    TreasuryAlreadyExists
 }
