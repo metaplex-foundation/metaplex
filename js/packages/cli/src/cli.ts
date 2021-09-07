@@ -552,7 +552,7 @@ program
     const { keypair } = cmd.opts();
     const solPriceStr = cmd.getOptionValue('price') || '1';
 
-    const lamports = parseInt(solPriceStr) * LAMPORTS_PER_SOL;
+    const lamports = Math.ceil(parseFloat(solPriceStr) * LAMPORTS_PER_SOL);
 
     const cacheName = program.getOptionValue('cacheName') || 'temp';
     const cachePath = path.join(CACHE_PATH, cacheName);
