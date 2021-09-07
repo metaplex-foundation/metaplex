@@ -1,10 +1,12 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 
-import {Button, Col, Input, Layout, Modal, Row} from "antd";
-import { ModalProps } from 'antd/lib/modal';
-import { LogoLink } from "../../components/AppBar";
-import { textContent } from "./textContent";
-const { Content } = Layout;
+import {Button, Input, Layout, Form, Modal} from "antd";
+import {ModalProps} from 'antd/lib/modal';
+import {LogoLink} from "../../components/AppBar";
+import {textContent} from "./textContent";
+import useMagicLink from "../../hooks/magicLink/useMagicLink";
+
+const {Content} = Layout;
 
 export interface GotEmailButtonProps
   extends ModalProps,
@@ -15,9 +17,8 @@ export interface GotEmailButtonProps
   extraButton?: JSX.Element,
 }
 
-
 const PreLaunchModal = (props: GotEmailButtonProps) => {
-  const { onCancel, visible, titleText, descriptionText, extraButton, className, ...rest } = props;
+  const {onCancel, visible, titleText, descriptionText, extraButton, className, ...rest} = props;
   const handleOnCancel = useCallback((e) => {
     if (onCancel) return onCancel(e);
     return null;
@@ -55,7 +56,23 @@ export const PreLaunchView = () => {
   const [submitted, setSubmitted] = useState(false)
   const [gotVisible, setGotVisible] = useState(false)
   const [sentVisible, setSentVisible] = useState(false)
+  const auth = useMagicLink()
+  const verifyUser = async () => {
+    if (auth.loggedIn) {
+      const user = await auth.magic.user.getMetadata();
+      setGotVisible(false)
+      setEmail(user.email)
+      setVerified(true)
+    }
+  }
+  const saveTypeForm = async () => {
+    setSubmitted(true)
 
+
+  }
+  useEffect(() => {
+    verifyUser()
+  }, [auth.loggedIn])
   return (
     <Layout id={'pre-launch-layout'}>
       <PreLaunchModal
@@ -80,7 +97,7 @@ export const PreLaunchView = () => {
           >
             <div className={"upper-content"}>
               <div className={"logo"}>
-                <LogoLink />
+                <LogoLink/>
               </div>
               <div className={"pre-title"}>
                 {textContent.mainTitle}
@@ -89,8 +106,31 @@ export const PreLaunchView = () => {
                 {textContent.titleDescription}
               </div>
               <div className={"pre-input"}>
-                <Input value={email} placeholder={"Email"} onChange={(val) => setEmail(val.target.value)} />
-                <Button className={"secondary-btn sign-up"} onClick={() => setGotVisible(true)}>Sign Up</Button>
+                <Form
+                  className={'footer-sign-up'}
+                  onFinish={(values) => {
+                     auth.login(values.email)
+                    setGotVisible(true)
+                  }}
+                >
+                  <Form.Item
+                    name='email'
+                    rules={[
+                      {
+                        type: 'email',message: 'Input is not a valid email!'
+                      },
+                      { required: true, message: 'Please input your email!' }
+                    ]}
+                    style={{ display: 'flex !important'}}
+                  >
+                    <Input
+                      className={'footer-input'}
+                      placeholder="Email Address"
+                      name="email"
+                    />
+                  </Form.Item>
+                  <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
+                </Form>
               </div>
             </div>
             <div className={"lower-content"}>
@@ -116,7 +156,7 @@ export const PreLaunchView = () => {
             className={"pre-main-content second"}
           >
             <div className={"logo"}>
-              <LogoLink />
+              <LogoLink/>
             </div>
             <div className={"verify-message"}>
               <span>Thanks for verifying</span>
@@ -125,7 +165,7 @@ export const PreLaunchView = () => {
             <div className={"pre-input wallet"}>
               <Input value={walletAddress} placeholder={"Wallet address"}
                      onChange={(val) => setWalletAddress(val.target.value)} />
-              <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
+              <Button className={"secondary-btn sign-up"} onClick={() => saveTypeForm()}>Submit</Button>
             </div>
           </Content>
         ) : (
