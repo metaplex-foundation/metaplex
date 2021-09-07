@@ -98,7 +98,7 @@ pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
         return Err(ErrorCode::CannotGiveZeroTokens.into())
     }
 
-    if data.price_range_end < data.price_range_start || data.price_range_end  ==  data.price_range_start {
+    if data.price_range_end <= data.price_range_start {
         return Err(ErrorCode::InvalidPriceRanges.into())
     }
 

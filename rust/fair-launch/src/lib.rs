@@ -7,7 +7,7 @@ use {
     },
     anchor_lang::{
         prelude::*,
-        solana_program::{clock::UnixTimestamp, program_pack::Pack, system_program},
+        solana_program::{program_pack::Pack, system_program},
         AnchorDeserialize, AnchorSerialize,
     },
     anchor_spl::token::{self, Mint, TokenAccount},
@@ -113,10 +113,111 @@ pub mod fair_launch {
         let mut start = fair_launch.data.price_range_start;
         while start <= fair_launch.data.price_range_end {
             counts_at_each_tick.push(0);
-            start = start.checked_add(fair_launch.data.tick_size).ok_or(ErrorCode::NumericalOverflowError)?;
+            start = start
+                .checked_add(fair_launch.data.tick_size)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
         }
 
         fair_launch.counts_at_each_tick = counts_at_each_tick;
+
+        Ok(())
+    }
+
+    pub fn update_fair_launch(
+        ctx: Context<UpdateFairLaunch>,
+        data: FairLaunchData,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+
+        assert_data_valid(&data)?;
+        fair_launch.data = data;
+
+        Ok(())
+    }
+
+    pub fn start_phase_three(
+        ctx: Context<StartPhaseThree>,
+        phase_three_start: i64,
+        phase_three_end: i64,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let fair_launch_lottery_bitmap = &ctx.accounts.fair_launch_lottery_bitmap;
+
+        if fair_launch_lottery_bitmap.bitmap_ones != fair_launch.number_tickets_sold_in_phase_1 {
+            return Err(ErrorCode::LotteryBitmapOnesMustEqualNumberOfTicketsSold.into());
+        }
+
+        if phase_three_start < fair_launch.data.phase_two_end {
+            return Err(ErrorCode::TimestampsDontLineUp.into());
+        }
+
+        if phase_three_end <= phase_three_start {
+            return Err(ErrorCode::TimestampsDontLineUp.into());
+        }
+
+        fair_launch.data.phase_three_start = Some(phase_three_start);
+        fair_launch.data.phase_three_end = Some(phase_three_end);
+
+        Ok(())
+    }
+
+    pub fn update_fair_launch_lottery_bitmap(
+        ctx: Context<UpdateFairLaunchLotteryBitmap>,
+        index: u32,
+        bytes: Vec<u8>
+    ) -> ProgramResult {
+        let fair_launch_lottery_bitmap = &mut ctx.accounts.fair_launch_lottery_bitmap;
+       
+        let fair_launch_lottery_bitmap_info = fair_launch_lottery_bitmap.to_account_info();
+        let mut lottery_data = fair_launch_lottery_bitmap_info.data.borrow_mut();
+        let mut number_of_ones_changed: i64 = 0;
+        let mut curr_pos = FAIR_LAUNCH_LOTTERY_SIZE + (index as usize);
+        for byte in bytes {
+            let curr_byte = lottery_data[curr_pos];
+            msg!("Curr byte is {}", curr_byte);
+            for bit_position in 0..7 {
+                msg!("Looking for position {}", bit_position);
+                let mask = u8::pow(2, bit_position as u32);
+                let curr_byte_masked = curr_byte | mask;
+                let byte_masked = byte | mask;
+                msg!("Mask is {} and this led to curr byte masked {} and new byte masked {}", mask, curr_byte_masked, byte_masked);
+                if curr_byte_masked > byte_masked {
+                    msg!("Subtracting 1");
+                    number_of_ones_changed -= 1; // we went from a 1 to a 0
+                } else if curr_byte_masked < byte_masked {
+                    msg!("Adding 1");
+                    number_of_ones_changed += 1 // We went from a 0 to 1
+                } else {
+                    msg!("No change here"); // 1 and 1 or 0 and 0
+                }
+            }
+            lottery_data[curr_pos] = byte;
+            curr_pos += 1;
+        }
+
+        let new_number_of_ones: u64;
+        // if less than zero, do a checked sub and convert negative to positive,
+        // otherwise, just do normal conversion and addition.
+        // Dont convert bitmap_ones to i64 because in conversion you lose bit of information to sign...
+        // better to be verbose and stick to u64...what if its very large number?
+        if number_of_ones_changed < 0 {
+            new_number_of_ones = fair_launch_lottery_bitmap.bitmap_ones.checked_sub((-number_of_ones_changed) as u64).ok_or(ErrorCode::NumericalOverflowError)?;
+        } else {
+            new_number_of_ones = fair_launch_lottery_bitmap.bitmap_ones.checked_add(number_of_ones_changed as u64).ok_or(ErrorCode::NumericalOverflowError)?;
+        }
+
+        lottery_data[FAIR_LAUNCH_LOTTERY_SIZE-4..FAIR_LAUNCH_LOTTERY_SIZE].copy_from_slice(&new_number_of_ones.to_le_bytes());
+
+        Ok(())
+    }
+
+    pub fn create_fair_launch_lottery_bitmap(
+        ctx: Context<CreateFairLaunchLotteryBitmap>,
+        bump: u8,
+    ) -> ProgramResult {
+        let fair_launch_lottery_bitmap = &mut ctx.accounts.fair_launch_lottery_bitmap;
+        fair_launch_lottery_bitmap.fair_launch = ctx.accounts.fair_launch.key();
+        fair_launch_lottery_bitmap.bump = bump;
 
         Ok(())
     }
@@ -150,11 +251,13 @@ pub struct UpdateFairLaunch<'info> {
     authority: AccountInfo<'info>,
 }
 
-/// Limited Update that only sets phase 3 dates once bitmap is in place.
+/// Limited Update that only sets phase 3 dates once bitmap is in place and fully setup.
 #[derive(Accounts)]
 pub struct StartPhaseThree<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()],  bump=fair_launch.bump,has_one=authority)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes()], constraint=fair_launch_lottery_bitmap.to_account_info().data_len() > 0, bump=fair_launch_lottery_bitmap.bump, has_one=fair_launch)]
+    fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
     #[account(signer)]
     authority: AccountInfo<'info>,
 }
@@ -249,7 +352,7 @@ pub struct PunchTicket<'info> {
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
 32 + // fair launch
 1 + // bump
-4; // size of bitmask ones
+8; // size of bitmask ones
 
 pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 32 + // token_mint
@@ -271,7 +374,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tickets sold in phase 1
 8 + // number of tickets remaining at the end in phase 2
 8 + // number of tickets punched in phase 3
-9 + // decided median,
+8 + // current median,
 4; // u32 representing number of amounts in vec so far
 
 pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
@@ -291,15 +394,14 @@ pub struct FairLaunchData {
     pub uuid: String,
     pub price_range_start: u64,
     pub price_range_end: u64,
-    pub phase_one_start: UnixTimestamp,
-    pub phase_one_end: UnixTimestamp,
-    pub phase_two_end: UnixTimestamp,
-    pub phase_three_start: Option<UnixTimestamp>,
-    pub phase_three_end: Option<UnixTimestamp>,
+    pub phase_one_start: i64,
+    pub phase_one_end: i64,
+    pub phase_two_end: i64,
+    pub phase_three_start: Option<i64>,
+    pub phase_three_end: Option<i64>,
     pub tick_size: u64,
     pub number_of_tokens: u64,
 }
-
 
 #[account]
 pub struct FairLaunch {
@@ -314,7 +416,7 @@ pub struct FairLaunch {
     pub number_tickets_sold_in_phase_1: u64,
     pub number_tickets_remaining_in_phase_2: u64,
     pub number_tickets_punched_in_phase_3: u64,
-    pub decided_median: Option<u64>,
+    pub current_median: u64,
     pub counts_at_each_tick: Vec<u64>,
 }
 
@@ -323,7 +425,7 @@ pub struct FairLaunchLotteryBitmap {
     pub fair_launch: Pubkey,
     pub bump: u8,
     /// This must be exactly the number of winners and is incremented precisely in each strip addition
-    pub bitmap_ones: u32,
+    pub bitmap_ones: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -381,4 +483,6 @@ pub enum ErrorCode {
     DerivedKeyInvalid,
     #[msg("Treasury Already Exists")]
     TreasuryAlreadyExists,
+    #[msg("The number of ones in the lottery must equal the number of tickets sold in phase 1")]
+    LotteryBitmapOnesMustEqualNumberOfTicketsSold,
 }
