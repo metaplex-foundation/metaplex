@@ -15,7 +15,6 @@
     "@solana/wallet-adapter-base": "^0.4.1",
     "@solana/wallet-adapter-react": "^0.7.1",
     "@solana/web3.js": "^1.21.0",
-    "@typeform/embed-react": "^1.1.1",
     "@welldone-software/why-did-you-render": "^6.0.5",
     "async-sema": "^3.1.1",
     "bn.js": "^5.1.3",
