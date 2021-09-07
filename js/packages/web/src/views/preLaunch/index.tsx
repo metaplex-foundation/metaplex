@@ -6,7 +6,7 @@ import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
 
-const {Content} = Layout;
+const { Content } = Layout;
 
 export interface GotEmailButtonProps
   extends ModalProps,
@@ -18,7 +18,7 @@ export interface GotEmailButtonProps
 }
 
 const PreLaunchModal = (props: GotEmailButtonProps) => {
-  const {onCancel, visible, titleText, descriptionText, extraButton, className, ...rest} = props;
+  const { onCancel, visible, titleText, descriptionText, extraButton, className, ...rest } = props;
   const handleOnCancel = useCallback((e) => {
     if (onCancel) return onCancel(e);
     return null;
@@ -43,7 +43,7 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
         {descriptionText}
       </div>
       {extraButton && (
-        {extraButton}
+        { extraButton }
       )}
     </Modal>
   );
@@ -119,9 +119,9 @@ export const PreLaunchView = () => {
                       {
                         type: 'email', message: 'Input is not a valid email!'
                       },
-                      {required: true, message: 'Please input your email!'}
+                      { required: true, message: 'Please input your email!' }
                     ]}
-                    style={{display: 'flex !important'}}
+                    style={{ display: 'flex !important' }}
                   >
                     <Input
                       className={'footer-input'}
