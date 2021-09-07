@@ -6,6 +6,7 @@ import {
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
+  AuctionView,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
@@ -15,7 +16,6 @@ import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import { TokenAccount } from '@oyster/common/dist/lib/models/account';
 
 import { AccountLayout, MintInfo } from '@solana/spl-token';
-import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';

@@ -4,11 +4,12 @@ import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
+import { AuctionView, AuctionViewState } from '@oyster/common';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { CardLoader } from '../../components/MyLoader';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { useMeta } from '../../contexts';
-import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
+import { useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
 

@@ -108,19 +108,7 @@ export interface NexusGenObjects {
     share: number; // Int!
     verified: boolean; // Boolean!
   };
-  AuctionData: {
-    // root type
-    auctionGap?: NexusGenScalars['BN'] | null; // BN
-    authority?: NexusGenScalars['PublicKey'] | null; // PublicKey
-    bidRedemptionKey?: NexusGenScalars['PublicKey'] | null; // PublicKey
-    bidState?: NexusGenRootTypes['BidState'] | null; // BidState
-    endAuctionAt?: NexusGenScalars['BN'] | null; // BN
-    endedAt?: NexusGenScalars['BN'] | null; // BN
-    lastBid?: NexusGenScalars['BN'] | null; // BN
-    priceFloor?: NexusGenRootTypes['PriceFloor'] | null; // PriceFloor
-    state?: NexusGenEnums['AuctionState'] | null; // AuctionState
-    tokenMint?: NexusGenScalars['PublicKey'] | null; // PublicKey
-  };
+  Auction: common.Auction;
   AuctionDataExtended: {
     // root type
     gapTickSizePercentage?: number | null; // Int
@@ -302,7 +290,7 @@ export interface NexusGenFieldTypes {
     share: number; // Int!
     verified: boolean; // Boolean!
   };
-  AuctionData: {
+  Auction: {
     // field return type
     auctionGap: NexusGenScalars['BN'] | null; // BN
     authority: NexusGenScalars['PublicKey'] | null; // PublicKey
@@ -498,7 +486,7 @@ export interface NexusGenFieldTypeNames {
     share: 'Int';
     verified: 'Boolean';
   };
-  AuctionData: {
+  Auction: {
     // field return type name
     auctionGap: 'BN';
     authority: 'PublicKey';

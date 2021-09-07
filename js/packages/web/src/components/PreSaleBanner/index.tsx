@@ -1,7 +1,8 @@
 import React from 'react';
 import { Col, Row, Button, Skeleton } from 'antd';
 
-import { AuctionView, useArt } from '../../hooks';
+import { AuctionView } from '@oyster/common';
+import { useArt } from '../../hooks';
 import { ArtContent } from '../ArtContent';
 import { AuctionCard } from '../AuctionCard';
 import { Link } from 'react-router-dom';

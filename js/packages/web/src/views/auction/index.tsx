@@ -5,7 +5,6 @@ import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
-  AuctionView as Auction,
   useArt,
   useAuction,
   useBidsForAuction,
@@ -21,6 +20,7 @@ import {
   shortenAddress,
   useConnection,
   useConnectionConfig,
+  AuctionView as Auction,
   fromLamports,
   useMint,
   AuctionState,

@@ -9,13 +9,13 @@ import {
   programIds,
   createAssociatedTokenAccountInstruction,
   MetadataKey,
+  AuctionView,
   BidderMetadata,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
-import { AuctionView } from '../hooks';
 import {
   WinningConfigType,
   redeemBid,
@@ -166,7 +166,7 @@ export async function claimUnusedPrizes(
       }
       if (
         winnerIndex < auctionView.auction.info.bidState.bids.length &&
-        item.winningConfigType != WinningConfigType.PrintingV2
+        item.winningConfigType !== WinningConfigType.PrintingV2
       ) {
         continue;
       }

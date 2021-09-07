@@ -39,7 +39,7 @@ export async function deprecatedPopulatePrintingTokens(
   let currInstructions: TransactionInstruction[] = [];
   for (let i = 0; i < safetyDepositConfigs.length; i++) {
     const nft = safetyDepositConfigs[i];
-    if (nft.draft.masterEdition?.info.key != MetadataKey.MasterEditionV1) {
+    if (nft.draft.masterEdition?.info.key !== MetadataKey.MasterEditionV1) {
       continue;
     }
     const printingMint = (

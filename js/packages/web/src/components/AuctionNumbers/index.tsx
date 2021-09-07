@@ -5,10 +5,12 @@ import {
   formatTokenAmount,
   useMint,
   fromLamports,
+  AuctionView,
+  AuctionViewState,
   CountdownState,
   PriceFloorType,
 } from '@oyster/common';
-import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
+import { useBidsForAuction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 
 export const AuctionNumbers = (props: { auctionView: AuctionView }) => {

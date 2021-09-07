@@ -14,10 +14,11 @@ import {
   getAuctionExtended,
   Metadata,
   ParsedAccount,
+  AuctionView,
   programIds,
   useMint,
 } from '@oyster/common';
-import { AuctionView, useAuctions } from '../../hooks';
+import { useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
 

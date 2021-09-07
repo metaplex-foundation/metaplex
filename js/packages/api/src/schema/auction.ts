@@ -60,8 +60,8 @@ export const PriceFloor = objectType({
   },
 });
 
-export const AuctionData = objectType({
-  name: 'AuctionData',
+export const Auction = objectType({
+  name: 'Auction',
   definition(t) {
     t.pubkey('authority', {
       description:

@@ -4,7 +4,6 @@ import { Row, Col, Layout, Spin, Button, Table } from 'antd';
 import {
   useArt,
   useAuction,
-  AuctionView,
   useBidsForAuction,
   useUserBalance,
 } from '../../hooks';
@@ -15,6 +14,7 @@ import {
   ParsedAccount,
   cache,
   BidderPot,
+  AuctionView,
   fromLamports,
   useMint,
   getBidderPotKey,

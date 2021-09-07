@@ -20,13 +20,13 @@ import {
   BidderMetadata,
   getEditionMarkPda,
   decodeEditionMarker,
+  AuctionView,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
-import { AuctionView } from '../hooks';
 import {
   AuctionManagerV1,
   ParticipationStateV1,
@@ -810,7 +810,7 @@ export async function setupRedeemParticipationInstructions(
       payingSolAccount,
       mint,
       me.info.supply.add(new BN(1)),
-      winnerIndex != null && winnerIndex != undefined
+      winnerIndex !== null && winnerIndex !== undefined
         ? new BN(winnerIndex)
         : null,
       myInstructions,

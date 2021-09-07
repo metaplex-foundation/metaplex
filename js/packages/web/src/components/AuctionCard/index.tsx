@@ -21,9 +21,10 @@ import {
   MAX_EDITION_LEN,
   placeBid,
   useWalletModal,
+  AuctionView,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
+import { useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
@@ -240,7 +241,7 @@ export const AuctionCard = ({
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
-    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() != 0
+    (value * LAMPORTS_PER_SOL) % tickSize.toNumber() !== 0
   );
 
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);

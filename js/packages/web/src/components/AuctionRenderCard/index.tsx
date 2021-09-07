@@ -3,17 +3,14 @@ import { Card, CardProps } from 'antd';
 import {
   formatTokenAmount,
   CountdownState,
+  AuctionView,
+  AuctionViewState,
   PriceFloorType,
   fromLamports,
   useMint,
 } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
-import {
-  AuctionView,
-  AuctionViewState,
-  useArt,
-  useBidsForAuction,
-} from '../../hooks';
+import { useArt, useBidsForAuction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { useHighestBidForAuction } from '../../hooks';
 import { BN } from 'bn.js';

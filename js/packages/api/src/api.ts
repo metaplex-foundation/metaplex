@@ -3,11 +3,12 @@ import { loadAccounts } from '@oyster/common/dist/lib/contexts/meta/loadAccounts
 import { MetaState } from '@oyster/common/dist/lib/contexts/meta/types';
 import { subscribeAccountsChange } from '@oyster/common/dist/lib/contexts/meta/subscribeAccountsChange';
 import { isCreatorPartOfTheStore } from '@oyster/common/dist/lib/models/index';
-import { ParsedAccount } from '@oyster/common/dist/lib/contexts/accounts/types';
 import { Context } from './context';
 import { NexusGenInputs } from './generated/typings';
-import { loadUserTokenAccounts } from './loaders/loadUserTokenAccounts';
+import { loadUserTokenAccounts } from './utils/loadUserTokenAccounts';
 import { filterByOwner, filterByStoreAndCreator } from './artwork/filters';
+import { auctionView } from './auction/mappers';
+import { mapInfo, wrapPubkey } from './utils/mapInfo';
 
 // XXX: re-use list from `contexts/connection` ?
 export const ENDPOINTS = [
@@ -158,13 +159,11 @@ export class MetaplexApi {
     const art = this.state.metadata.find(({ pubkey }) => pubkey === artId);
     return art ? wrapPubkey(art) : null;
   }
+
+  async getAuctions() {
+    const auctions = Object.values(this.state.auctions);
+    return auctions.map(auction => {
+      return auctionView(auction, this.state);
+    });
+  }
 }
-
-const mapInfo = <T>(list: ParsedAccount<T>[]) => {
-  return list.map(wrapPubkey);
-};
-
-const wrapPubkey = <T>({ pubkey, info }: ParsedAccount<T>) => ({
-  ...info,
-  pubkey,
-});

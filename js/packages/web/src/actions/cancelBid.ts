@@ -10,12 +10,12 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
+  AuctionView,
   WalletSigner,
   toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
 import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
-import { AuctionView } from '../hooks';
 import {
   BidRedemptionTicket,
   PrizeTrackingTicket,

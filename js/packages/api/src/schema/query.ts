@@ -19,6 +19,11 @@ export const Query = queryType({
       type: 'Int',
       resolve: (_, args, { dataSources: { api } }) => api.state.metadata.length,
     });
+    t.field('auctionsCount', {
+      type: 'Int',
+      resolve: (_, args, { dataSources: { api } }) =>
+        Object.values(api.state.auctions).length,
+    });
     t.field('store', {
       type: Store,
       args: {

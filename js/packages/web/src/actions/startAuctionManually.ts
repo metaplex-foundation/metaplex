@@ -1,7 +1,12 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import { startAuction } from '@oyster/common/dist/lib/models/metaplex/index';
-import { notify, sendTransactionWithRetry, WalletSigner } from '@oyster/common';
-import { AuctionView } from '../hooks';
+import {} from '../hooks';
+import {
+  notify,
+  sendTransactionWithRetry,
+  AuctionView,
+  WalletSigner,
+} from '@oyster/common';
 
 export async function startAuctionManually(
   connection: Connection,

@@ -33,7 +33,7 @@ input ArtworksInput {
   storeId: String!
 }
 
-type AuctionData {
+type Auction {
   """
   Gap time is the amount of time in slots after the previous bid at which the auction ends.
   """
@@ -284,6 +284,7 @@ type Query {
   artwork(artId: String!): Artwork
   artworks(filter: ArtworksInput!): [Artwork]
   artworksCount: Int
+  auctionsCount: Int
   creator(creatorId: String!, storeId: String!): Creator
   creators(storeId: String!): [Creator]
   creatorsCount: Int
