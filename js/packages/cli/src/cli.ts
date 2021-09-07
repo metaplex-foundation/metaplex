@@ -2,14 +2,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import FormData from 'form-data';
-import {program} from 'commander';
+import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
-import {MintLayout, Token} from '@solana/spl-token';
+import { MintLayout, Token } from '@solana/spl-token';
 
-import {chunks, fromUTF8Array, loadCache, parsePrice, saveCache, upload} from './helpers/various';
-import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
-import {createAssociatedTokenAccountInstruction} from './helpers/instructions';
+import {
+  chunks,
+  fromUTF8Array,
+  loadCache,
+  parsePrice,
+  saveCache,
+  upload,
+} from './helpers/various';
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
@@ -20,7 +27,7 @@ import {
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from './helpers/constants';
-import {sendTransactionWithRetryWithKeypair} from './helpers/transactions';
+import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
 import {
   createConfig,
   getCandyMachineAddress,
@@ -30,7 +37,7 @@ import {
   loadAnchorProgram,
   loadWalletKey,
 } from './helpers/accounts';
-import {Config} from "./types";
+import { Config } from './types';
 
 program.version('0.0.1');
 
@@ -61,22 +68,26 @@ program
   .option('-n, --number <number>', 'Number of images to upload', '10000')
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (files: string[], options, cmd) => {
-    const {number, keypair, env, cacheName} = cmd.opts();
+    const { number, keypair, env, cacheName } = cmd.opts();
     const parsedNumber = parseInt(number);
 
     const pngFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_PNG)
+      return it.endsWith(EXTENSION_PNG);
     }).length;
     const jsonFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_JSON)
+      return it.endsWith(EXTENSION_JSON);
     }).length;
 
     if (pngFileCount !== jsonFileCount) {
-      throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`)
+      throw new Error(
+        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
     }
 
     if (parsedNumber < pngFileCount) {
-      throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`)
+      throw new Error(
+        `max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      );
     }
 
     const savedContent = loadCache(cacheName, env);
@@ -142,7 +153,7 @@ program
 
         if (i === 0 && !cacheContent.program.uuid) {
           // initialize config
-          console.log(`initializing config`)
+          console.log(`initializing config`);
           try {
             const res = await createConfig(anchorProgram, walletKeyPair, {
               maxNumberOfLines: new BN(parsedNumber),
@@ -163,7 +174,9 @@ program
             cacheContent.program.config = res.config.toBase58();
             config = res.config;
 
-            console.log(`initialized config for a candy machine with uuid: ${res.uuid}`)
+            console.log(
+              `initialized config for a candy machine with uuid: ${res.uuid}`,
+            );
 
             saveCache(cacheName, env, cacheContent);
           } catch (exx) {
@@ -195,7 +208,10 @@ program
           const data = new FormData();
           data.append('transaction', tx['txid']);
           data.append('env', env);
-          data.append('file[]', fs.createReadStream(image), {filename: `image.png`, contentType: 'image/png'});
+          data.append('file[]', fs.createReadStream(image), {
+            filename: `image.png`,
+            contentType: 'image/png',
+          });
           data.append('file[]', manifestBuffer, 'metadata.json');
           try {
             const result = await upload(data, manifest, index);
@@ -241,7 +257,7 @@ program
 
               if (onChain.length != indexes.length) {
                 console.log(
-                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`
+                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
                 );
                 try {
                   await anchorProgram.rpc.addConfigLines(
@@ -266,7 +282,12 @@ program
                   });
                   saveCache(cacheName, env, cacheContent);
                 } catch (e) {
-                  console.log(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
+                  console.log(
+                    `saving config line ${ind}-${
+                      keys[indexes[indexes.length - 1]]
+                    } failed`,
+                    e,
+                  );
                   updateSuccessful = false;
                 }
               }
@@ -296,14 +317,16 @@ program
   )
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (directory, cmd) => {
-    const {env, keypair, cacheName} = cmd.opts();
+    const { env, keypair, cacheName } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
     const configAddress = new PublicKey(cacheContent.program.config);
-    const config = await anchorProgram.provider.connection.getAccountInfo(configAddress);
+    const config = await anchorProgram.provider.connection.getAccountInfo(
+      configAddress,
+    );
     let allGood = true;
 
     const keys = Object.keys(cacheContent.items);
@@ -338,20 +361,30 @@ program
     }
 
     if (!allGood) {
-      throw new Error(`not all NFTs checked out. check out logs above for details`)
+      throw new Error(
+        `not all NFTs checked out. check out logs above for details`,
+      );
     }
 
-    const configData = await anchorProgram.account.config.fetch(
+    const configData = (await anchorProgram.account.config.fetch(
       configAddress,
-    ) as Config;
+    )) as Config;
 
     const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
 
-    console.log(`uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines})`)
+    console.log(
+      `uploaded (${lineCount.toNumber()}) out of (${
+        configData.data.maxNumberOfLines
+      })`,
+    );
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
-      throw new Error(`predefined number of NFTs (${configData.data.maxNumberOfLines}) is smaller than the uploaded one (${lineCount.toNumber()})`)
+      throw new Error(
+        `predefined number of NFTs (${
+          configData.data.maxNumberOfLines
+        }) is smaller than the uploaded one (${lineCount.toNumber()})`,
+      );
     } else {
-      console.log("ready to deploy!")
+      console.log('ready to deploy!');
     }
 
     saveCache(cacheName, env, cacheContent);
@@ -372,7 +405,7 @@ program
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
-    const {keypair, env, price, cacheName} = cmd.opts();
+    const { keypair, env, price, cacheName } = cmd.opts();
 
     const lamports = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -425,7 +458,7 @@ program
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const {keypair, env, date, cacheName} = cmd.opts();
+    const { keypair, env, date, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
@@ -466,7 +499,7 @@ program
   )
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName} = cmd.opts();
+    const { keypair, env, cacheName } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const mint = Keypair.generate();
@@ -546,7 +579,6 @@ program
     console.log('Done', tx);
   });
 
-program.command('find-wallets').action(() => {
-});
+program.command('find-wallets').action(() => {});
 
 program.parse(process.argv);

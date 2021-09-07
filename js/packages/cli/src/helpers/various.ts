@@ -1,8 +1,8 @@
-import {LAMPORTS_PER_SOL} from '@solana/web3.js';
-import {CACHE_PATH,} from './constants';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { CACHE_PATH } from './constants';
 import path from 'path';
 import fs from 'fs';
-import FormData from "form-data";
+import FormData from 'form-data';
 import fetch from 'node-fetch';
 
 export const getUnixTs = () => {
@@ -74,12 +74,12 @@ export function saveCache(cacheName: string, env: string, cacheContent) {
   fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
 }
 
-export function parsePrice(price) {
-  return parseInt(price) * LAMPORTS_PER_SOL;
+export function parsePrice(price): number {
+  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
 }
 
 export async function upload(data: FormData, manifest, index) {
-  console.log(`trying to upload ${index}.png: ${manifest.name}`)
+  console.log(`trying to upload ${index}.png: ${manifest.name}`);
   return await (
     await fetch(
       'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
