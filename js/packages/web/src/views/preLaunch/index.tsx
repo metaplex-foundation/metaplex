@@ -177,8 +177,18 @@ export const PreLaunchView = () => {
           </Content>
         ) : (
           <Content
-            className={"pre-main-content"}
+            className={"pre-main-content third"}
           >
+            <div className={"logo"}>
+              <LogoLink />
+            </div>
+
+            <div className={"verify-message"}>
+              <span className={'display-block mb32'}>Your NFT is on the way.</span>
+              <span className={"high-light"} style={{marginLeft: 0}}>{email}</span>
+              <span className={"high-light"}>{walletAddress}</span>
+            </div>
+            <DiscordButton />
           </Content>
         )}
       </Layout>
