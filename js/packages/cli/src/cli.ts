@@ -698,7 +698,7 @@ program
   .command('verify')
   .option('-c, --cache-name <path>', 'Cache file name')
   .option('-e, --env <name>', 'Environment')
-  .action(async (directory, second, options) => {
+  .action(async () => {
     const ENV = program.getOptionValue('env') || 'devnet';
     const solConnection = new anchor.web3.Connection(
       `https://api.${ENV}.solana.com/`,
