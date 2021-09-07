@@ -75,6 +75,9 @@ export function saveCache(cacheName: string, env: string, cacheContent) {
 }
 
 export function parsePrice(price) {
+  if (price === 'free' || price === '0') {
+    return 1;
+  }
   return parseInt(price) * LAMPORTS_PER_SOL;
 }
 

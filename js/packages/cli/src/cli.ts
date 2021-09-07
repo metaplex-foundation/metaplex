@@ -318,18 +318,12 @@ program
       const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
       const cacheItem = cacheContent.items[key];
       if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-        console.log(
-          'Name',
-          name,
-          'or uri',
-          uri,
-          'didnt match cache values of',
-          cacheItem.name,
-          'and',
-          cacheItem.link,
-          ' marking to rerun for image',
-          key,
-        );
+        //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
+        // console.log(
+        //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
+        //   `and (${cacheItem.link}). marking to rerun for image`,
+        //   key,
+        // );
         cacheItem.onChain = false;
         allGood = false;
       } else {
@@ -338,7 +332,7 @@ program
     }
 
     if (!allGood) {
-      throw new Error(`not all NFTs checked out. check out logs above for details`)
+      throw new Error(`not all NFTs checked out. rerun the upload script`)
     }
 
     const configData = await anchorProgram.account.config.fetch(
@@ -433,8 +427,7 @@ program
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [candyMachine, _] = await getCandyMachineAddress(
+    const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
       cacheContent.program.uuid,
     );
@@ -450,6 +443,48 @@ program
     );
 
     console.log('set_start_date Done', secondsSinceEpoch, tx);
+  });
+
+program
+  .command('update_price')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+  .option('-p, --price <string>', 'SOL price')
+  .action(async (directory, cmd) => {
+    const {keypair, env, cacheName, price} = cmd.opts();
+
+    const lamports = parsePrice(price);
+
+    const cacheContent = loadCache(cacheName, env);
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+
+    const [candyMachine] = await getCandyMachineAddress(
+      new PublicKey(cacheContent.program.config),
+      cacheContent.program.uuid,
+    );
+    const tx = await anchorProgram.rpc.updateCandyMachine(
+      new anchor.BN(lamports),
+      null,
+      {
+        accounts: {
+          candyMachine,
+          authority: walletKeyPair.publicKey,
+        },
+      },
+    );
+
+    console.log('update_price Done', lamports, tx);
   });
 
 program
@@ -479,8 +514,7 @@ program
     );
 
     const configAddress = new PublicKey(cacheContent.program.config);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [candyMachineAddress, bump] = await getCandyMachineAddress(
+    const [candyMachineAddress] = await getCandyMachineAddress(
       configAddress,
       cacheContent.program.uuid,
     );

@@ -66,14 +66,21 @@ pub mod nft_candy_machine {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
 
-            spl_token_transfer(TokenTransferParams {
+            //sending lamports to creators instead of the authority
+            for c in &config.data.creators {
+              let share_price = candy_machine.data.price
+                .checked_mul(c.share as u64).ok_or(ErrorCode::NumericalOverflowError)?
+                .checked_div(100).ok_or(ErrorCode::NumericalOverflowError)?;
+
+              spl_token_transfer(TokenTransferParams {
                 source: token_account_info.clone(),
                 destination: ctx.accounts.wallet.clone(),
                 authority: transfer_authority_info.clone(),
                 authority_signer_seeds: &[],
                 token_program: ctx.accounts.token_program.clone(),
-                amount: candy_machine.data.price,
-            })?;
+                amount: share_price,
+              })?;
+            }
         } else {
             if ctx.accounts.payer.lamports() < candy_machine.data.price {
                 return Err(ErrorCode::NotEnoughSOL.into());
@@ -408,6 +415,32 @@ pub mod nft_candy_machine {
 
         Ok(())
     }
+
+  pub fn sign_metadata(ctx: Context<SignMetadata>) {
+
+  }
+}
+
+#[derive(Accounts)]
+// #[instruction(bump: u8, data: CandyMachineData)]
+pub struct SignMetadata<'info> {
+  #[account(constraint= wallet.owner == &spl_token::id() || (wallet.data_is_empty() && wallet.lamports() > 0) )]
+  wallet: AccountInfo<'info>,
+  #[account(mut, has_one = authority)]
+  config: ProgramAccount<'info, Config>,
+  authority: AccountInfo<'info>,
+  #[account(address = spl_token_metadata::id())]
+  token_metadata_program: AccountInfo<'info>,
+  #[account(mut)]
+  metadata: AccountInfo<'info>,
+  #[account(mut)]
+  mint: AccountInfo<'info>,
+  #[account(signer)]
+  mint_authority: AccountInfo<'info>,
+  #[account(signer)]
+  update_authority: AccountInfo<'info>,
+  #[account(mut)]
+  master_edition: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
