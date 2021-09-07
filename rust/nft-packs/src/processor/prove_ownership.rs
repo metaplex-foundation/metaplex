@@ -46,20 +46,20 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         return Err(NFTPacksError::PackSetNotActivated.into());
     }
 
-    assert_derivation(
-        program_id,
-        proving_process_account,
-        &[
-            pack_set_account.key.as_ref(),
-            ProvingProcess::PREFIX.as_bytes(),
-            user_wallet_account.key.as_ref(),
-        ],
-    )?;
+    let proving_process_seeds = &[
+        pack_set_account.key.as_ref(),
+        ProvingProcess::PREFIX.as_bytes(),
+        user_wallet_account.key.as_ref(),
+    ];
+    let bump_seed = assert_derivation(program_id, proving_process_account, proving_process_seeds)?;
 
     let mut proving_process = get_proving_process_data(
+        program_id,
         proving_process_account,
-        user_wallet_account.key,
+        user_wallet_account,
         pack_set_account.key,
+        proving_process_seeds,
+        bump_seed,
         rent,
     )?;
 
@@ -72,7 +72,7 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
             &proving_process
                 .proved_vouchers
                 .error_increment()?
-                .to_le_bytes(),
+                .to_be_bytes(),
         ],
     )?;
 
@@ -142,10 +142,13 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
 }
 
 /// Returns deserialized proving process data or initialized if it wasn't initialized yet
-pub fn get_proving_process_data(
-    account_info: &AccountInfo,
-    user_wallet: &Pubkey,
+pub fn get_proving_process_data<'a>(
+    program_id: &Pubkey,
+    account_info: &AccountInfo<'a>,
+    user_wallet: &AccountInfo<'a>,
     pack_set: &Pubkey,
+    signers_seeds: &[&[u8]],
+    bump_seed: u8,
     rent: &Rent,
 ) -> Result<ProvingProcess, ProgramError> {
     let unpack = ProvingProcess::unpack(&account_info.data.borrow_mut());
@@ -153,11 +156,18 @@ pub fn get_proving_process_data(
     let proving_process = match unpack {
         Ok(data) => Ok(data),
         Err(_) => {
-            assert_rent_exempt(rent, account_info)?;
+            create_account::<ProvingProcess>(
+                program_id,
+                user_wallet.clone(),
+                account_info.clone(),
+                &[&[signers_seeds, &[&[bump_seed]]].concat()],
+                rent,
+            )?;
+
             let mut data = ProvingProcess::unpack_unchecked(&account_info.data.borrow_mut())?;
 
             data.init(InitProvingProcessParams {
-                user_wallet: *user_wallet,
+                user_wallet: *user_wallet.key,
                 pack_set: *pack_set,
             });
             Ok(data)

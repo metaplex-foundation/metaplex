@@ -506,9 +506,11 @@ pub fn prove_ownership(
         AccountMeta::new(*edition_mint, false),
         AccountMeta::new(*voucher, false),
         AccountMeta::new(proving_process, false),
-        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(*user_wallet, true),
         AccountMeta::new(*user_token_acc, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
