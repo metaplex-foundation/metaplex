@@ -3,7 +3,6 @@
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
-    msg,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack},
@@ -167,14 +166,6 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
         edition,
     );
 
-    msg!("spl_token_metadata: {}", spl_token_metadata::id());
-    msg!("user_wallet_account: {}", user_wallet_account.key);
-    msg!(
-        "program_authority_account: {}",
-        program_authority_account.key
-    );
-    msg!("edition_mark_account: {}", edition_mark_account.key);
-
     invoke_signed(
         &tx,
         &[
@@ -195,8 +186,6 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
         ],
         &[&signers_seeds],
     )?;
-
-    msg!("AFTER_CALL");
 
     Ok(())
 }
