@@ -1,26 +1,38 @@
 pub mod utils;
 
 use {
-    crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams, assert_data_valid, assert_derivation},
+    crate::utils::{
+        assert_data_valid, assert_derivation, assert_initialized, assert_owned_by,
+        create_or_allocate_account_raw, spl_token_transfer, TokenTransferParams,
+    },
     anchor_lang::{
         prelude::*,
         solana_program::{clock::UnixTimestamp, program_pack::Pack, system_program},
         AnchorDeserialize, AnchorSerialize,
     },
-    anchor_spl::token::{self, TokenAccount, Mint},
-    spl_token::state::Account,
+    anchor_spl::token::{self, Mint, TokenAccount},
+    spl_token::{instruction::initialize_account2, state::Account},
 };
 
 pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
-pub const LOTTERY: &str="lottery";
-pub const MAX_GRANULARITY:u64 = 100;
+pub const LOTTERY: &str = "lottery";
+pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
 pub mod fair_launch {
+
+    use anchor_lang::solana_program::program::invoke_signed;
+
     use super::*;
-    pub fn initialize_fair_launch(ctx: Context<InitializeFairLaunch>, bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData) -> ProgramResult {
+    pub fn initialize_fair_launch<'info>(
+        ctx: Context<'_, '_, '_, 'info, InitializeFairLaunch<'info>>,
+        bump: u8,
+        treasury_bump: u8,
+        token_mint_bump: u8,
+        data: FairLaunchData,
+    ) -> ProgramResult {
         let fair_launch = &mut ctx.accounts.fair_launch;
 
         assert_data_valid(&data)?;
@@ -32,9 +44,13 @@ pub mod fair_launch {
 
         fair_launch.token_mint = ctx.accounts.token_mint.key();
         assert_owned_by(&ctx.accounts.token_mint.to_account_info(), &spl_token::id())?; //paranoia
-        
+
         let token_mint_key = ctx.accounts.token_mint.key();
-        let treasury_seeds = &[PREFIX.as_bytes(), token_mint_key.as_ref(), TREASURY.as_bytes()];
+        let treasury_seeds = &[
+            PREFIX.as_bytes(),
+            token_mint_key.as_ref(),
+            TREASURY.as_bytes(),
+        ];
         let treasury_info = &ctx.accounts.treasury;
         fair_launch.treasury = *treasury_info.key;
         assert_derivation(ctx.program_id, treasury_info, treasury_seeds)?;
@@ -48,12 +64,59 @@ pub mod fair_launch {
             fair_launch.treasury_mint = Some(*treasury_mint_info.key);
 
             // make the treasury token account
+
+            let signer_seeds = &[
+                PREFIX.as_bytes(),
+                token_mint_key.as_ref(),
+                TREASURY.as_bytes(),
+                &[fair_launch.treasury_bump],
+            ];
+
+            create_or_allocate_account_raw(
+                *ctx.accounts.token_program.key,
+                treasury_info,
+                &ctx.accounts.rent.to_account_info(),
+                &ctx.accounts.system_program,
+                &ctx.accounts.payer,
+                Account::LEN,
+                signer_seeds,
+            )?;
+
+            invoke_signed(
+                &initialize_account2(
+                    &ctx.accounts.token_program.key,
+                    treasury_info.key,
+                    treasury_mint_info.key,
+                    &fair_launch.key(),
+                )
+                .unwrap(),
+                &[
+                    ctx.accounts.token_program.clone(),
+                    treasury_info.clone(),
+                    fair_launch.to_account_info().clone(),
+                    treasury_mint_info.clone(),
+                ],
+                &[signer_seeds],
+            )?;
         } else {
             // Nothing to do but check that it does not already exist, we can begin transferring sol to it.
-            if !treasury_info.data_is_empty() || treasury_info.lamports() > 0 || treasury_info.owner != ctx.program_id {
-                return Err(ErrorCode::TreasuryAlreadyExists.into())
+            if !treasury_info.data_is_empty()
+                || treasury_info.lamports() > 0
+                || treasury_info.owner != ctx.program_id
+            {
+                return Err(ErrorCode::TreasuryAlreadyExists.into());
             }
         }
+
+        // now we do the counts.
+        let mut counts_at_each_tick: Vec<u64> = vec![];
+        let mut start = fair_launch.data.price_range_start;
+        while start <= fair_launch.data.price_range_end {
+            counts_at_each_tick.push(0);
+            start = start.checked_add(fair_launch.data.tick_size).ok_or(ErrorCode::NumericalOverflowError)?;
+        }
+
+        fair_launch.counts_at_each_tick = counts_at_each_tick;
 
         Ok(())
     }
@@ -62,7 +125,7 @@ pub mod fair_launch {
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
 pub struct InitializeFairLaunch<'info> {
-    #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref()], payer=payer, bump=bump, space=FAIR_LAUNCH_SPACE_VEC_START+16*(((data.price_range_end - data.price_range_start).checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)? + 1)) as usize)]
+    #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref()], payer=payer, bump=bump, space=FAIR_LAUNCH_SPACE_VEC_START+8*(((data.price_range_end - data.price_range_start).checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)? + 1)) as usize)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), data.uuid.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=token_mint_bump)]
     token_mint: CpiAccount<'info, Mint>,
@@ -146,7 +209,6 @@ pub struct PurchaseTicket<'info> {
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
 }
-
 
 /// IN phase 1, you can adjust up or down in any way
 /// In phase 2, you can adjust up or down in any way
@@ -238,8 +300,6 @@ pub struct FairLaunchData {
     pub number_of_tokens: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct MedianTuple(pub u64, pub u64);
 
 #[account]
 pub struct FairLaunch {
@@ -255,15 +315,15 @@ pub struct FairLaunch {
     pub number_tickets_remaining_in_phase_2: u64,
     pub number_tickets_punched_in_phase_3: u64,
     pub decided_median: Option<u64>,
-    pub median: Vec<MedianTuple>,
+    pub counts_at_each_tick: Vec<u64>,
 }
 
 #[account]
 pub struct FairLaunchLotteryBitmap {
     pub fair_launch: Pubkey,
-    pub bump: u8, 
+    pub bump: u8,
     /// This must be exactly the number of winners and is incremented precisely in each strip addition
-    pub bitmap_ones: u32 
+    pub bitmap_ones: u32,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -283,13 +343,11 @@ pub struct FairLaunchTicket {
     pub seq: u64,
 }
 
-
 #[account]
 pub struct FairLaunchTicketSeqLookup {
     pub fair_launch_ticket: Pubkey,
     pub seq: u64,
 }
-
 
 #[error]
 pub enum ErrorCode {
@@ -322,5 +380,5 @@ pub enum ErrorCode {
     #[msg("Derived key invalid")]
     DerivedKeyInvalid,
     #[msg("Treasury Already Exists")]
-    TreasuryAlreadyExists
+    TreasuryAlreadyExists,
 }
