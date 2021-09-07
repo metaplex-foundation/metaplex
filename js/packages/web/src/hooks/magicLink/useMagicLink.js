@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import EventEmitter from 'event-emitter';
 import unfetch from 'isomorphic-unfetch';
 import { Sema } from 'async-sema';
@@ -67,7 +67,7 @@ export default function useMagicLink() {
     throw new Error('Magic Link publishableKey required');
   }
 
-  const { endpoint } = useConnectionConfig();
+  const {endpoint} = useConnectionConfig();
 
   const [loggedIn, setLoggedIn] = useState(
     currentLoginState !== null ? currentLoginState : false,
@@ -83,7 +83,7 @@ export default function useMagicLink() {
 
     try {
       const magic = await loadMagicLink(magicLinkKey, endpoint);
-      const token = await magic.auth.loginWithMagicLink({ email });
+      const token = await magic.auth.loginWithMagicLink({email});
       currentLoginState = true;
       setToken(token);
       loginEvents.emit('loggedIn', true);
@@ -137,6 +137,7 @@ export default function useMagicLink() {
     function watchLoggedIn(state) {
       setLoggedIn(state);
     }
+
     loginEvents.on('loggedIn', watchLoggedIn);
 
     return () => {

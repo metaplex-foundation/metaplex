@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
-import {Button, Input, Layout, Form, Modal} from "antd";
-import {ModalProps} from 'antd/lib/modal';
-import {LogoLink} from "../../components/AppBar";
-import {textContent} from "./textContent";
+import { Button, Form, Input, Layout, Modal } from "antd";
+import { ModalProps } from 'antd/lib/modal';
+import { LogoLink } from "../../components/AppBar";
+import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
 
 const {Content} = Layout;
@@ -109,7 +109,7 @@ export const PreLaunchView = () => {
                 <Form
                   className={'footer-sign-up'}
                   onFinish={(values) => {
-                     auth.login(values.email)
+                    auth.login(values.email)
                     setGotVisible(true)
                   }}
                 >
@@ -117,11 +117,11 @@ export const PreLaunchView = () => {
                     name='email'
                     rules={[
                       {
-                        type: 'email',message: 'Input is not a valid email!'
+                        type: 'email', message: 'Input is not a valid email!'
                       },
-                      { required: true, message: 'Please input your email!' }
+                      {required: true, message: 'Please input your email!'}
                     ]}
-                    style={{ display: 'flex !important'}}
+                    style={{display: 'flex !important'}}
                   >
                     <Input
                       className={'footer-input'}
@@ -164,7 +164,7 @@ export const PreLaunchView = () => {
             </div>
             <div className={"pre-input wallet"}>
               <Input value={walletAddress} placeholder={"Wallet address"}
-                     onChange={(val) => setWalletAddress(val.target.value)} />
+                     onChange={(val) => setWalletAddress(val.target.value)}/>
               <Button className={"secondary-btn sign-up"} onClick={() => saveTypeForm()}>Submit</Button>
             </div>
           </Content>
