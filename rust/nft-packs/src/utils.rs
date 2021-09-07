@@ -3,6 +3,7 @@
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
+    msg,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack},
@@ -140,9 +141,13 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     user_wallet_account: &AccountInfo<'a>,
     program_authority_account: &AccountInfo<'a>,
     user_token_account: &AccountInfo<'a>,
-    metadata_account: &AccountInfo<'a>,
+    master_metadata_account: &AccountInfo<'a>,
     master_edition_account: &AccountInfo<'a>,
-    metadata_mint_account: &AccountInfo<'a>,
+    master_metadata_mint_account: &AccountInfo<'a>,
+    edition_mark_account: &AccountInfo<'a>,
+    token_program_account: &AccountInfo<'a>,
+    system_program_account: &AccountInfo<'a>,
+    rent_program_account: &AccountInfo<'a>,
     edition: u64,
     signers_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
@@ -157,10 +162,18 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
         *program_authority_account.key,
         *user_token_account.key,
         *user_wallet_account.key,
-        *metadata_account.key,
-        *metadata_mint_account.key,
+        *master_metadata_account.key,
+        *master_metadata_mint_account.key,
         edition,
     );
+
+    msg!("spl_token_metadata: {}", spl_token_metadata::id());
+    msg!("user_wallet_account: {}", user_wallet_account.key);
+    msg!(
+        "program_authority_account: {}",
+        program_authority_account.key
+    );
+    msg!("edition_mark_account: {}", edition_mark_account.key);
 
     invoke_signed(
         &tx,
@@ -169,17 +182,21 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
             new_edition_account.clone(),
             master_edition_account.clone(),
             new_mint_account.clone(),
+            edition_mark_account.clone(),
             new_mint_authority_account.clone(),
-            user_wallet_account.clone(),
             user_wallet_account.clone(),
             program_authority_account.clone(),
             user_token_account.clone(),
             user_wallet_account.clone(),
-            metadata_account.clone(),
-            metadata_mint_account.clone(),
+            master_metadata_account.clone(),
+            token_program_account.clone(),
+            system_program_account.clone(),
+            rent_program_account.clone(),
         ],
         &[&signers_seeds],
     )?;
+
+    msg!("AFTER_CALL");
 
     Ok(())
 }
