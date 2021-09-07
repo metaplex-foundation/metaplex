@@ -55,7 +55,7 @@ program
     '--keypair not provided',
   )
   // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
-  .option('-n, --number <number>', 'Number of images to upload', '10000')
+  .option('-n, --number <number>', 'Number of images to upload')
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (files: string[], options, cmd) => {
     const {number, keypair, env, cacheName} = cmd.opts();

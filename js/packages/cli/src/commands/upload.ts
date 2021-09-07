@@ -78,7 +78,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
         console.log(`initializing config`)
         try {
           const res = await createConfig(anchorProgram, walletKeyPair, {
-            maxNumberOfLines: new BN(totalNFTs),
+            maxNumberOfLines: new BN(totalNFTs || SIZE),
             symbol: manifest.symbol,
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
             isMutable: true,
