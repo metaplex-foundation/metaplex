@@ -14,7 +14,7 @@ use solana_program::{
     program_pack::Pack,
     pubkey::Pubkey,
 };
-use spl_token_metadata::state::Edition;
+use spl_token_metadata::state::{Edition, MasterEditionV2};
 
 ///
 pub struct MintEditionAccountsArgs<'a> {
@@ -175,7 +175,7 @@ pub fn mint_edition<T: MasterEditionHolder>(
     let (program_authority, bump_seed) = find_program_authority(program_id);
     assert_account_key(accounts.owner_account, &program_authority)?;
 
-    let edition = Edition::from_account_info(accounts.master_edition_account)?;
+    let master_edition = MasterEditionV2::from_account_info(accounts.master_edition_account)?;
 
     spl_token_metadata_mint_new_edition_from_master_edition_via_token(
         accounts.new_metadata_account,
@@ -188,7 +188,7 @@ pub fn mint_edition<T: MasterEditionHolder>(
         accounts.master_metadata_account,
         accounts.master_edition_account,
         accounts.master_mint_account,
-        edition.edition.error_increment()?,
+        master_edition.supply.error_increment()?,
         &[program_id.as_ref(), &[bump_seed]],
     )?;
 
