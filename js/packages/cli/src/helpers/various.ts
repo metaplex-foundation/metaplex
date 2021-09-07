@@ -81,7 +81,7 @@ export function parsePrice(price) {
   return parseInt(price) * LAMPORTS_PER_SOL;
 }
 
-export async function upload(data: FormData, manifest, index) {
+export async function uploadToArweave(data: FormData, manifest, index) {
   console.log(`trying to upload ${index}.png: ${manifest.name}`)
   return await (
     await fetch(

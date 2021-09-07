@@ -26,6 +26,7 @@ pub mod nft_candy_machine {
     };
 
     use super::*;
+    use std::str::FromStr;
 
     pub fn mint_nft<'info>(ctx: Context<'_, '_, '_, 'info, MintNFT<'info>>) -> ProgramResult {
         let candy_machine = &mut ctx.accounts.candy_machine;
@@ -415,32 +416,6 @@ pub mod nft_candy_machine {
 
         Ok(())
     }
-
-  pub fn sign_metadata(ctx: Context<SignMetadata>) {
-
-  }
-}
-
-#[derive(Accounts)]
-// #[instruction(bump: u8, data: CandyMachineData)]
-pub struct SignMetadata<'info> {
-  #[account(constraint= wallet.owner == &spl_token::id() || (wallet.data_is_empty() && wallet.lamports() > 0) )]
-  wallet: AccountInfo<'info>,
-  #[account(mut, has_one = authority)]
-  config: ProgramAccount<'info, Config>,
-  authority: AccountInfo<'info>,
-  #[account(address = spl_token_metadata::id())]
-  token_metadata_program: AccountInfo<'info>,
-  #[account(mut)]
-  metadata: AccountInfo<'info>,
-  #[account(mut)]
-  mint: AccountInfo<'info>,
-  #[account(signer)]
-  mint_authority: AccountInfo<'info>,
-  #[account(signer)]
-  update_authority: AccountInfo<'info>,
-  #[account(mut)]
-  master_edition: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]

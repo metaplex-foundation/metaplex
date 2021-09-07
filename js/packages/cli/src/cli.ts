@@ -1,28 +1,24 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
 import * as path from 'path';
-import FormData from 'form-data';
-import {program} from 'commander';
+import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
-import {MintLayout, Token} from '@solana/spl-token';
+import { MintLayout, Token } from '@solana/spl-token';
 
-import {chunks, fromUTF8Array, loadCache, parsePrice, saveCache, upload} from './helpers/various';
-import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
-import {createAssociatedTokenAccountInstruction} from './helpers/instructions';
+import { fromUTF8Array, loadCache, parsePrice, saveCache } from './helpers/various';
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
-  PAYMENT_WALLET,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from './helpers/constants';
-import {sendTransactionWithRetryWithKeypair} from './helpers/transactions';
 import {
-  createConfig,
   getCandyMachineAddress,
   getMasterEdition,
   getMetadata,
@@ -30,7 +26,8 @@ import {
   loadAnchorProgram,
   loadWalletKey,
 } from './helpers/accounts';
-import {Config} from "./types";
+import { Config } from "./types";
+import { upload } from "./commands/upload";
 
 program.version('0.0.1');
 
@@ -79,207 +76,15 @@ program
       throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`)
     }
 
-    const savedContent = loadCache(cacheName, env);
-    const cacheContent = savedContent || {};
-
-    if (!cacheContent.program) {
-      cacheContent.program = {};
-    }
-
-    let existingInCache = [];
-    if (!cacheContent.items) {
-      cacheContent.items = {};
-    } else {
-      existingInCache = Object.keys(cacheContent.items);
-    }
-
-    const seen = {};
-    const newFiles = [];
-
-    files.forEach(f => {
-      if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-        seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
-        newFiles.push(f);
-      }
-    });
-    existingInCache.forEach(f => {
-      if (!seen[f]) {
-        seen[f] = true;
-        newFiles.push(f + '.png');
-      }
-    });
-
-    const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
-    const SIZE = images.length;
-
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-
-    let config = cacheContent.program.config
-      ? new PublicKey(cacheContent.program.config)
-      : undefined;
-
-    for (let i = 0; i < SIZE; i++) {
-      const image = images[i];
-      const imageName = path.basename(image);
-      const index = imageName.replace(EXTENSION_PNG, '');
-
-      console.log(`Processing file: ${index}`);
-
-      const storageCost = 10;
-
-      let link = cacheContent?.items?.[index]?.link;
-      if (!link || !cacheContent.program.uuid) {
-        const manifestPath = image.replace(EXTENSION_PNG, '.json');
-        const manifestContent = fs
-          .readFileSync(manifestPath)
-          .toString()
-          .replace(imageName, 'image.png')
-          .replace(imageName, 'image.png');
-        const manifest = JSON.parse(manifestContent);
-
-        const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-        if (i === 0 && !cacheContent.program.uuid) {
-          // initialize config
-          console.log(`initializing config`)
-          try {
-            const res = await createConfig(anchorProgram, walletKeyPair, {
-              maxNumberOfLines: new BN(parsedNumber),
-              symbol: manifest.symbol,
-              sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-              isMutable: true,
-              maxSupply: new BN(0),
-              retainAuthority: true,
-              creators: manifest.properties.creators.map(creator => {
-                return {
-                  address: new PublicKey(creator.address),
-                  verified: true,
-                  share: creator.share,
-                };
-              }),
-            });
-            cacheContent.program.uuid = res.uuid;
-            cacheContent.program.config = res.config.toBase58();
-            config = res.config;
-
-            console.log(`initialized config for a candy machine with uuid: ${res.uuid}`)
-
-            saveCache(cacheName, env, cacheContent);
-          } catch (exx) {
-            console.error('Error deploying config to Solana network.', exx);
-            // console.error(exx);
-          }
-        }
-
-        if (!link) {
-          const instructions = [
-            anchor.web3.SystemProgram.transfer({
-              fromPubkey: walletKeyPair.publicKey,
-              toPubkey: PAYMENT_WALLET,
-              lamports: storageCost,
-            }),
-          ];
-
-          const tx = await sendTransactionWithRetryWithKeypair(
-            anchorProgram.provider.connection,
-            walletKeyPair,
-            instructions,
-            [],
-            'single',
-          );
-          console.info('transaction for arweave payment:', tx);
-
-          // data.append('tags', JSON.stringify(tags));
-          // payment transaction
-          const data = new FormData();
-          data.append('transaction', tx['txid']);
-          data.append('env', env);
-          data.append('file[]', fs.createReadStream(image), {filename: `image.png`, contentType: 'image/png'});
-          data.append('file[]', manifestBuffer, 'metadata.json');
-          try {
-            const result = await upload(data, manifest, index);
-
-            const metadataFile = result.messages?.find(
-              m => m.filename === 'manifest.json',
-            );
-            if (metadataFile?.transactionId) {
-              link = `https://arweave.net/${metadataFile.transactionId}`;
-              console.log(`File uploaded: ${link}`);
-            }
-
-            cacheContent.items[index] = {
-              link,
-              name: manifest.name,
-              onChain: false,
-            };
-            saveCache(cacheName, env, cacheContent);
-          } catch (er) {
-            console.error(`Error uploading file ${index}`, er);
-          }
-        }
+    for (; ;) {
+      const successful = await upload(files, cacheName, env, keypair, parsedNumber);
+      if (successful) {
+        break;
+      } else {
+        console.log("upload was not successful, rerunning")
       }
     }
 
-    let updateSuccessful = true;
-    const keys = Object.keys(cacheContent.items);
-    try {
-      await Promise.all(
-        chunks(Array.from(Array(keys.length).keys()), 1000).map(
-          async allIndexesInSlice => {
-            for (
-              let offset = 0;
-              offset < allIndexesInSlice.length;
-              offset += 10
-            ) {
-              const indexes = allIndexesInSlice.slice(offset, offset + 10);
-              const onChain = indexes.filter(i => {
-                const index = keys[i];
-                return cacheContent.items[index]?.onChain || false;
-              });
-              const ind = keys[indexes[0]];
-
-              if (onChain.length != indexes.length) {
-                console.log(
-                  `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`
-                );
-                try {
-                  await anchorProgram.rpc.addConfigLines(
-                    ind,
-                    indexes.map(i => ({
-                      uri: cacheContent.items[keys[i]].link,
-                      name: cacheContent.items[keys[i]].name,
-                    })),
-                    {
-                      accounts: {
-                        config,
-                        authority: walletKeyPair.publicKey,
-                      },
-                      signers: [walletKeyPair],
-                    },
-                  );
-                  indexes.forEach(i => {
-                    cacheContent.items[keys[i]] = {
-                      ...cacheContent.items[keys[i]],
-                      onChain: true,
-                    };
-                  });
-                  saveCache(cacheName, env, cacheContent);
-                } catch (e) {
-                  console.log(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
-                  updateSuccessful = false;
-                }
-              }
-            }
-          },
-        ),
-      );
-    } catch (e) {
-      console.error(e);
-    } finally {
-      saveCache(cacheName, env, cacheContent);
-    }
-    console.log(`Done. Successful = ${updateSuccessful}. If 'false' - rerun`);
   });
 
 program
@@ -506,10 +311,10 @@ program
     const cacheContent = loadCache(cacheName, env);
     const mint = Keypair.generate();
 
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const userKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(userKeyPair, env);
     const userTokenAccountAddress = await getTokenWallet(
-      walletKeyPair.publicKey,
+      userKeyPair.publicKey,
       mint.publicKey,
     );
 
@@ -521,30 +326,31 @@ program
     const candyMachine = await anchorProgram.account.candyMachine.fetch(
       candyMachineAddress,
     );
+
     const metadataAddress = await getMetadata(mint.publicKey);
     const masterEdition = await getMasterEdition(mint.publicKey);
     const tx = await anchorProgram.rpc.mintNft({
       accounts: {
         config: configAddress,
         candyMachine: candyMachineAddress,
-        payer: walletKeyPair.publicKey,
+        payer: userKeyPair.publicKey,
         //@ts-ignore
         wallet: candyMachine.wallet,
         mint: mint.publicKey,
         metadata: metadataAddress,
         masterEdition,
-        mintAuthority: walletKeyPair.publicKey,
-        updateAuthority: walletKeyPair.publicKey,
+        mintAuthority: userKeyPair.publicKey,
+        updateAuthority: userKeyPair.publicKey,
         tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
-      signers: [mint, walletKeyPair],
+      signers: [mint, userKeyPair],
       instructions: [
         anchor.web3.SystemProgram.createAccount({
-          fromPubkey: walletKeyPair.publicKey,
+          fromPubkey: userKeyPair.publicKey,
           newAccountPubkey: mint.publicKey,
           space: MintLayout.span,
           lamports:
@@ -557,20 +363,20 @@ program
           TOKEN_PROGRAM_ID,
           mint.publicKey,
           0,
-          walletKeyPair.publicKey,
-          walletKeyPair.publicKey,
+          userKeyPair.publicKey,
+          userKeyPair.publicKey,
         ),
         createAssociatedTokenAccountInstruction(
           userTokenAccountAddress,
-          walletKeyPair.publicKey,
-          walletKeyPair.publicKey,
+          userKeyPair.publicKey,
+          userKeyPair.publicKey,
           mint.publicKey,
         ),
         Token.createMintToInstruction(
           TOKEN_PROGRAM_ID,
           mint.publicKey,
           userTokenAccountAddress,
-          walletKeyPair.publicKey,
+          userKeyPair.publicKey,
           [],
           1,
         ),
