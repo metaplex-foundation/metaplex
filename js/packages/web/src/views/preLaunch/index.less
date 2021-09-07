@@ -1,14 +1,16 @@
-
+.mb32 {
+  margin-bottom: 32px !important;
+}.mb40 {
+  margin-bottom: 40px !important;
+}
 &#pre-launch-layout {
   min-height: 100vh;
-  //color: @metaplex-primary-color;
   background: linear-gradient(100.3deg, fade(@metaplex-primary-color, 32%) 8.28%, fade(@metaplex-primary-color, 0%) 45%),
               linear-gradient(235.61deg, fade(@black-100, 0%) 34.14%, @black-100 72%) !important;
 
   #width-layout {
     max-width: 1440px;
   }
-
   .pre-main-content {
     max-width: 884px;
     display: flex;
@@ -17,6 +19,83 @@
     padding: 68px;
     &.second {
       justify-content: flex-start;
+
+      .pre-input.wallet {
+        height: 56px;
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 64px;
+        input {
+          width: 384px;
+          height: 100%;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          font-size: 16px;
+          line-height: 16px;
+          padding: 20px;
+          margin-bottom: 64px;
+        }
+        button {
+          width: 128px;
+          box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+          border-radius: 8px;
+          margin-left: 8px;
+        }
+      }
+      .verify-message {
+        font-weight: 600;
+        font-size: 24px;
+        line-height: 30px;
+        margin-bottom: 14px;
+        .email {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          padding: 8px 16px;
+          margin-left: 8px;
+        }
+      }
+      .steps {
+        max-width: 520px;
+        .step {
+          display: flex;
+          flex-direction: column;
+          & > * {
+          }
+          .step-title {
+            font-weight: 600;
+            font-size: 18px;
+            line-height: 18px;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            margin-top: 24px;
+          }
+          .step-desc {
+            font-weight: normal;
+            font-size: 18px;
+            line-height: 18px;
+            letter-spacing: -0.02em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 16px;
+          }
+          .step-asset {
+            width: 520px;
+            height: 260px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background-size: cover;
+            margin-bottom: 16px;
+            &.step1 {
+              background-image: url("/preLaunch/step1.png");
+            }
+            &.step2 {
+              background-image: url("/preLaunch/step2.png");
+            }
+            &.step3 {
+              background-image: url("/preLaunch/step3.png");
+            }
+          }
+        }
+      }
     }
   }
 
@@ -52,11 +131,6 @@
         position: absolute;
         top: 4px;
         right: 4px;
-      }
-      .ant-input:focus, .ant-input:hover {
-        border-color: initial !important;
-        border-right-width: 0 !important;
-        outline: 0;
       }
 
       input {
@@ -164,4 +238,10 @@
       line-height: 24px;
     }
   }
+}
+
+.ant-input:focus, .ant-input:hover {
+  border-color: initial !important;
+  border-right-width: 0 !important;
+  outline: 0;
 }

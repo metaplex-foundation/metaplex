@@ -122,10 +122,43 @@ export const PreLaunchView = () => {
               <span>Thanks for verifying</span>
               <span className={"email"}>{email}</span>
             </div>
+            <div className={"verify-message mb32"}>
+              <span>Paste your Solana wallet address here.</span>
+            </div>
             <div className={"pre-input wallet"}>
               <Input value={walletAddress} placeholder={"Wallet address"}
                      onChange={(val) => setWalletAddress(val.target.value)} />
               <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
+            </div>
+            <div className={"verify-message mb40"}>
+              <span>How to create a wallet:</span>
+            </div>
+            <div className={"steps"}>
+              <div className={"step"}>
+                <span className={"step-title"}>Step 1</span>
+                <span className={"step-desc"}>Install Phantom.</span>
+                <div className={"step-asset step1"}></div>
+                <span className={"step-desc"}>
+                  Install the Phantom wallet in Google Chrome, Firefox, Brave, or Edge
+                  via Phantom’s website. It’s free to use!
+                </span>
+              </div>
+              <div className={"step"}>
+                <span className={"step-title"}>Step 2</span>
+                <span className={"step-desc"}>Create a new wallet.</span>
+                <div className={"step-asset step2"}></div>
+                <span className={"step-desc"}>Once it’s installed, follow the steps to create a new wallet.</span>
+              </div>
+              <div className={"step"}>
+                <span className={"step-title"}>Step 3</span>
+                <span className={"step-desc"}>Copy your wallet address.</span>
+                <div className={"step-asset step3"}></div>
+                <span className={"step-desc"}>
+                  Once you’re signed in click the top bar to copy your wallet address.
+                  In Phantom it displays a condensed version (ex: CRWJ...ch67),
+                  but when you paste it here, you should see a long string of letters and numbers.
+                </span>
+              </div>
             </div>
           </Content>
         ) : (
