@@ -14,8 +14,8 @@ export async function sendSignMetadata(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   await signMetadata(metadata, wallet.publicKey.toBase58(), instructions);
 

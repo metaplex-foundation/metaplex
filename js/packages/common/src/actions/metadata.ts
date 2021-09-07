@@ -432,6 +432,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
   ],
 ]);
 
+// eslint-disable-next-line no-control-regex
 const METADATA_REPLACE = new RegExp('\u0000', 'g');
 
 export const decodeMetadata = (buffer: Buffer): Metadata => {

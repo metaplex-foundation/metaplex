@@ -1,4 +1,4 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
   updatePrimarySaleHappenedViaToken,
   WalletSigner,
@@ -15,8 +15,8 @@ export async function markItemsThatArentMineAsSold(
 
   const publicKey = wallet.publicKey.toBase58();
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   let markSigners: Keypair[] = [];
   let markInstructions: TransactionInstruction[] = [];
