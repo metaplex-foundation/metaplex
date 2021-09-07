@@ -174,7 +174,7 @@ export const PreLaunchView = () => {
             </div>
             <div className={"verify-message"}>
               <span>Thanks for verifying</span>
-              <span className={"email"}>{email}</span>
+              <span className={"high-light"}>{email}</span>
             </div>
             <div className={"verify-message mb32"}>
               <span>Paste your Solana wallet address here.</span>
