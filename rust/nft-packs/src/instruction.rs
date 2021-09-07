@@ -506,9 +506,11 @@ pub fn prove_ownership(
         AccountMeta::new(*edition_mint, false),
         AccountMeta::new(*voucher, false),
         AccountMeta::new(proving_process, false),
-        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(*user_wallet, true),
         AccountMeta::new(*user_token_acc, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
@@ -730,7 +732,7 @@ pub fn mint_new_edition_from_card(
         AccountMeta::new(*new_mint, false),
         AccountMeta::new_readonly(*new_mint_authority, true),
         AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*token_account_owner, true),
+        AccountMeta::new_readonly(*token_account_owner, false),
         AccountMeta::new_readonly(*token_account, false),
         AccountMeta::new_readonly(*new_metadata_update_authority, false),
         AccountMeta::new_readonly(*metadata, false),
@@ -774,7 +776,7 @@ pub fn mint_new_edition_from_voucher(
         AccountMeta::new(*new_mint, false),
         AccountMeta::new_readonly(*new_mint_authority, true),
         AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*token_account_owner, true),
+        AccountMeta::new_readonly(*token_account_owner, false),
         AccountMeta::new_readonly(*token_account, false),
         AccountMeta::new_readonly(*new_metadata_update_authority, false),
         AccountMeta::new_readonly(*metadata, false),
