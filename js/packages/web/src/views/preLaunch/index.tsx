@@ -50,6 +50,7 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
 
 export const PreLaunchView = () => {
   const [email, setEmail] = useState("")
+  const [walletAddress, setWalletAddress] = useState("")
   const [verified, setVerified] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [gotVisible, setGotVisible] = useState(false)
@@ -61,7 +62,10 @@ export const PreLaunchView = () => {
         titleText={textContent.gotEmail}
         descriptionText={textContent.gotEmailDescription}
         visible={gotVisible}
-        onCancel={() => setGotVisible(false)}
+        onCancel={() => {
+          setGotVisible(false);
+          //setVerified(true) //remove later
+        }}
       />
       <PreLaunchModal
         titleText={textContent.sentNFT}
@@ -109,10 +113,19 @@ export const PreLaunchView = () => {
           </Content>
         ) : verified && !submitted ? (
           <Content
-            className={"pre-main-content"}
+            className={"pre-main-content second"}
           >
             <div className={"logo"}>
               <LogoLink />
+            </div>
+            <div className={"verify-message"}>
+              <span>Thanks for verifying</span>
+              <span className={"email"}>{email}</span>
+            </div>
+            <div className={"pre-input wallet"}>
+              <Input value={walletAddress} placeholder={"Wallet address"}
+                     onChange={(val) => setWalletAddress(val.target.value)} />
+              <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
             </div>
           </Content>
         ) : (
