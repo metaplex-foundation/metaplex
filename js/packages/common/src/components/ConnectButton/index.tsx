@@ -12,7 +12,7 @@ export interface ConnectButtonProps
 }
 
 export const ConnectButton = (props: ConnectButtonProps) => {
-  const { onClick, children, disabled, allowWalletChange, className, ...rest } = props;
+  const { children, disabled, allowWalletChange, className, ...rest } = props;
   const { wallet, connect, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);

@@ -6,4 +6,7 @@ export const textContent = {
   ////
   gotEmail: `We got your email!`,
   gotEmailDescription: `Check your inbox for a message from ${LABELS.STORE_NAME} with next steps.`,
+  ////
+  sentNFT: `Your NFT is on the way.`,
+  sentNFTDescription: `Keep an eye on your Phantom wallet.`,
 };

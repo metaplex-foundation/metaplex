@@ -17,13 +17,13 @@
     padding: 68px;
   }
 
+  .logo {
+    height: 40px;
+    margin-bottom: 48px;
+  }
   .upper-content {
     display: flex;
     flex-direction: column;
-    .logo {
-      height: 40px;
-      margin-bottom: 48px;
-    }
     .pre-title {
       /* 48 - Bold - Solid */
       font-weight: 600;
@@ -77,31 +77,7 @@
       color: #FFFFFF;
       margin-bottom: 32px;
     }
-    .how-to-step {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      &.fst {
-        margin-bottom: 16px;
-      }
-      .how-to-logo {
-        height: 56px;
-        flex-basis: 56px;
-        flex-grow: 0;
-        flex-shrink: 0;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 56px;
-        &.email {
-          background-image: url("/preLaunch/mail.svg");
-          background-repeat: no-repeat;
-          background-position: center;
-        }
-        &.wallet {
-          background-image: url("/preLaunch/wallet.svg");
-          background-repeat: no-repeat;
-          background-position: center;
-        }
-      }
+
       .how-to-description {
         font-weight: normal;
         font-size: 18px;
@@ -111,6 +87,78 @@
         color: rgba(255, 255, 255, 0.7);
         margin-left: 16px;
       }
+  }
+}
+.how-to-step {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  &.fst {
+    margin-bottom: 16px;
+  }
+
+  .how-to-logo {
+    height: 56px;
+    flex-basis: 56px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 56px;
+    &.s64 {
+      height: 64px;
+      flex-basis: 64px;
+      border-radius: 64px;
+
+    }
+
+    &.email {
+      background-image: url("/preLaunch/mail.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    &.wallet {
+      background-image: url("/preLaunch/wallet.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    &.ok {
+      background-image: url("/preLaunch/check.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+  }
+}
+
+.pre-modal {
+  .ant-modal-content {
+    border-radius: 12px;
+    max-width: 500px;
+  }
+  .ant-modal-body {
+    border-radius: 12px;
+    background: linear-gradient(180deg, fade(@metaplex-primary-color, 20%) 27.5%, fade(@metaplex-primary-color, 0%) 100%), #2A2A2A;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 100px 56px;
+
+    .how-to-step {
+      width: 64px;
+      margin-bottom: 36px;
+    }
+
+    .got-title {
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
+      margin-bottom: 20px;
+    }
+    .got-description {
+      font-weight: normal;
+      font-size: 18px;
+      line-height: 24px;
     }
   }
 }
