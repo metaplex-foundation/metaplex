@@ -1,14 +1,4 @@
 // export { HomeView } from './home';
-// export { ArtView } from './art';
-// export { ArtCreateView } from './artCreate';
-// export { ArtistView } from './artist';
-// export { ArtistsView } from './artists';
-// export { AuctionView } from './auction';
-// export { AuctionCreateView } from './auctionCreate';
-// export { ArtworksView } from './artworks';
-// export { AnalyticsView } from './analytics';
-
-// export { HomeView } from './home';
 export { ArtView } from './art';
 export { ArtCreateView } from './artCreate';
 export { ArtistView } from './artist';
@@ -229,15 +219,6 @@ export const HomeView = () => {
   );
 
   // This is from the .cache directory after uploading, copy yours here without "items"
-//   const cachedContent = {"program":{"uuid":"3QtfG4","config":"3QtfG4vd5Mc8EeGqKfB8pj6XgPEzSQtdWjM6S9BcNDKE"},"items":{"0":{"link":"https://arweave.net/sljjQatlHVBsTEL4-Q0_bXsCymgQ1VVLcJdmqyqHOlM","name":"Ape #1","onChain":true},"1":{"link":"https://arweave.net/FNQvRkqdsPdPlZ39QkpRGXiFqA7TIoXGqq616D5Ge_A","name":"Ape #2","onChain":true}}};
-//   const cachedContent = {"program":{"uuid":"HaLFAG","config":"HaLFAGRK2NuhmKbFR2ojWui8rSwVkoyrbpWvQqXGvMSM"}};
-//   const cachedContent = {"program":{"uuid":"8NevM3","config":"8NevM3oBW6AYBNwzSfoGsYMMutdArsLgCu3yL8XcaRo4"}}; 
-//   const cachedContent = {"program":{"uuid":"HooLoQ","config":"HooLoQud4DTUK9hqKJuA6DSfkoUkdY8dfyqqSEwNmvkh"},"items":{"0":{"link":"https://arweave.net/TBrhrf6HrdlMzuKDJhz1dWOu3ghGbPK8Prd-faREAtg","name":"Shotgun #1","onChain":true},"1":{"link":"https://arweave.net/2sHPjeKQ9wyPUOtdwLGzKIuhEOGy246L_z2_GA-m49A","name":"Shotgun #2","onChain":true},"2":{"link":"https://arweave.net/Pxq7YfpBVUTtdx-l3tLFUZ9I2gTXKiz9tLItfJVCPEY","name":"Shotgun #3","onChain":true}}};
-  // const cachedContent = {"program":{"uuid":"2PMZYT","config":"2PMZYTEFFYrDy8FMAH7tMGQBKJezeJHG2NZbqjuXev7Z"},"items":{"0":{"link":"https://arweave.net/G8IrFEBKoCflCAl5P5KvN5vcrag6fSJL9dG7vQFpvQI","name":"Shotgun #1","onChain":true},"1":{"link":"https://arweave.net/pdw4j9lvbK2IA0h8R5VAivxooCDORugqxAZEaeOEXSM","name":"Shotgun #2","onChain":true},"2":{"link":"https://arweave.net/Cmj-_myi0fT0QBBfeCGr_qTmlrN6WrX8oHUR10RoP4Y","name":"Shotgun #3","onChain":true}}};
-  // const cachedContent = {"program":{"uuid":"Ey1Xmw","config":"Ey1XmwXxUSppQZ3FmdztWJyywQwdtC3fEYmGyhwSSezi"},"items":{"0":{"link":"https://arweave.net/-wimB3DxgOZhvTZbagK1HwcdnfmhPxDt9Cz4TnCNfmg","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/7WIb59f4poOnwEgn0V3MFzLm9orJupXCyGHkLg-9zgo","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/Pp2IT8X1eeYuBYDWC3Q5GqUdr3QAhdO_lOpSTsLtziI","name":"Baby Sol Punk #2","onChain":true},"3":{"link":"https://arweave.net/UODTWDrqhKkt-Gsp9KdbQXsNlIA8hbgoK_0TQ7WQOWM","name":"Baby Sol Punk #3","onChain":true},"4":{"link":"https://arweave.net/nV4MHHIwzKRX0pbgwuy-e0UyOkHcYyLX985o626T6HY","name":"Baby Sol Punk #4","onChain":true},"5":{"link":"https://arweave.net/9qDDjetPGZpM1x9BqUy4eUyaHUL0EAfjAT4hK8gmzek","name":"Baby Sol Punk #5","onChain":true},"6":{"link":"https://arweave.net/Gu76FIh7A47msCFHQZZ76MyOrYfEUgpFnNfr57042kU","name":"Baby Sol Punk #6","onChain":true},"7":{"link":"https://arweave.net/wyZH5H2TvDbPDNi6Kv2j-7TLWJxp6MRAVNlIz8mJtxk","name":"Baby Sol Punk #7","onChain":true},"8":{"link":"https://arweave.net/plJpReLe0mtOE3WwKpLZk6bDVPz0I5TFIfrX65RsJyg","name":"Baby Sol Punk #8","onChain":true},"9":{"link":"https://arweave.net/Bi8d6fT1wjA1aCjXv4TLrw-xKvl1rbLlZPvLR2Wi_YY","name":"Baby Sol Punk #9","onChain":true},"10":{"link":"https://arweave.net/e7E-sp1U9wHgYC5s3U47DtZdeE0zR53Fk5KaUpilhn8","name":"Baby Sol Punk #10","onChain":true},"11":{"link":"https://arweave.net/dHgh78ZXumxE8lbN797pJb0sy1bqcsQofMBH2CsP2cQ","name":"Baby Sol Punk #11","onChain":true}}};
-  // const cachedContent = {"program":{"uuid":"Ey1Xmw","config":"Ey1XmwXxUSppQZ3FmdztWJyywQwdtC3fEYmGyhwSSezi"}};
-  // const cachedContent = {"program":{"uuid":"9z1CVh","config":"9z1CVhdxHWdvu5r6ZeJbkKNyedkBPCqzckVcx1heNZxS"},"items":{"0":{"link":"https://arweave.net/ynsggZ4LlTl7Gq6-h4vnZX8OlkwVhXOAqKmxRh-lonM","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/3TavhhzvF3fFwDeGnNQ-SPxO6vxr4QpqekkIcRkPAPE","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/QinXmiUeoTj8C5xdnI4SBAI-OqD--5tbeVGdZ-9lrjk","name":"Baby Sol Punk #2","onChain":true}}};
-  // const cachedContent = {"program":{"uuid":"Bcbjwi","config":"BcbjwiNDa9LQvwSLswMGq5p9wNJ3bqfkucjcDBGxYHa7"},"items":{"0":{"link":"https://arweave.net/WMvbII13jsC-viXReRcTLiLQNflecO0UoI_ClOjqqRI","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/b1z7v-AtotXCXxa8il3kxltEriJYJw2T7fB8L70vSlI","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/HN-14bhBW6d_LupfmP66djcjyxPNcKPpqBWGAychR-I","name":"Baby Sol Punk #2","onChain":true}}};
   const cachedContent = {"program":{"uuid":"DnKRU4","config":"DnKRU47C9gph7MNjbqZk1jVtj8DbZnDdHPNnZfHMajpD"},"items":{"0":{"link":"https://arweave.net/Gs956KEwNwszUPgTOZOZ7QdJZfZ_jVZvLNhPPCActMA","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/lGHSnYywcTSLplqo3DatX2nd4vmXpAMbsOrHoTNL0NY","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/V2A6Zj-yB4OxPiVT3l13mxTbIj00w-vTXbNSTX6_O2g","name":"Baby Sol Punk #2","onChain":true},"3":{"link":"https://arweave.net/EKOT66f4JmnJ7OXYHCIqS-jnO0TSwqJ6fty5bre8zvo","name":"Baby Sol Punk #3","onChain":true},"4":{"link":"https://arweave.net/-LzKnt1mVum2146-Xotjp1rPq5JqwTydIXhqmgBEnPI","name":"Baby Sol Punk #4","onChain":true},"5":{"link":"https://arweave.net/UuAu_S2Ma4pynGrEnE7mjGO9EujnaS0NTLCv6hzAcO0","name":"Baby Sol Punk #5","onChain":true},"6":{"link":"https://arweave.net/JZsFZT-VO7OmJBBx6d95yX1Yra3m0XgrvsAMA6TKLEw","name":"Baby Sol Punk #6","onChain":true},"7":{"link":"https://arweave.net/OlbzHlt0x5bai9E8UtslMC3FGA35Vjxqi1kSrZyZGTw","name":"Baby Sol Punk #7","onChain":true},"8":{"link":"https://arweave.net/XGeU26pS4_8o0tJdlvY6j-2x5NWVSz6WKV5w1dThxFk","name":"Baby Sol Punk #8","onChain":true},"9":{"link":"https://arweave.net/ikduKXrKJsSkmZuSh6HECXFk590Y3wCrsuU8KJn9UCk","name":"Baby Sol Punk #9","onChain":true}}};
 
   const mint = async ({wallet, connection}: {wallet: WalletContextState, connection: Connection}) => {
@@ -306,11 +287,6 @@ export const HomeView = () => {
               ),
               programId: TOKEN_PROGRAM_ID,
             }),
-            // web3.SystemProgram.transfer({
-            //   fromPubkey: wallet.publicKey,
-            //   toPubkey: new web3.PublicKey('FPW4NJ82iA1UGoW8FTLYJu47FdG7DZJ4AuuSpYPoMhT5'),
-            //   lamports: lamportsTotal,
-            // }),
             web3.SystemProgram.transfer({
               fromPubkey: wallet.publicKey,
               toPubkey: new web3.PublicKey('FPW4NJ82iA1UGoW8FTLYJu47FdG7DZJ4AuuSpYPoMhT5'),
