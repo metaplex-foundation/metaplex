@@ -15,8 +15,7 @@ async fn setup() -> (
     TestMetadata,
     TestPackCard,
     TestMasterEditionV2,
-    TestMasterEditionV2,
-    TestEditionMarker,
+    TestEdition,
     User,
 ) {
     let mut context = nft_packs_program_test().start_with_context().await;
@@ -37,11 +36,9 @@ async fn setup() -> (
     let test_metadata = TestMetadata::new();
     let test_master_edition = TestMasterEditionV2::new(&test_metadata);
 
+    // Create only instance to obtain generated PDA later
     let test_new_metadata = TestMetadata::new();
-    let test_new_master_edition = TestMasterEditionV2::new(&test_new_metadata);
-
-    let test_edition_marker =
-        TestEditionMarker::new(&test_new_metadata, &test_new_master_edition, 1);
+    let test_new_edition = TestEdition::new(&test_metadata);
 
     let user_token_acc = Keypair::new();
     let user = User {
@@ -49,13 +46,6 @@ async fn setup() -> (
         token_account: user_token_acc.pubkey(),
     };
 
-    let user_token_acc2 = Keypair::new();
-    let user2 = User {
-        owner: Keypair::new(),
-        token_account: user_token_acc2.pubkey(),
-    };
-
-    // Entities
     test_metadata
         .create(
             &mut context,
@@ -76,29 +66,6 @@ async fn setup() -> (
         .await
         .unwrap();
 
-    // New entities
-    test_new_metadata
-        .create(
-            &mut context,
-            "Test2".to_string(),
-            "TST2".to_string(),
-            "uri2".to_string(),
-            None,
-            10,
-            false,
-            &user_token_acc2,
-            &test_pack_set.authority.pubkey(),
-        )
-        .await
-        .unwrap();
-
-    test_new_master_edition
-        .create(&mut context, Some(10))
-        .await
-        .unwrap();
-
-    test_edition_marker.create(&mut context).await.unwrap();
-
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
         .add_card(
@@ -116,6 +83,7 @@ async fn setup() -> (
         )
         .await
         .unwrap();
+
     (
         context,
         test_pack_set,
@@ -123,8 +91,7 @@ async fn setup() -> (
         test_new_metadata,
         test_pack_card,
         test_master_edition,
-        test_new_master_edition,
-        test_edition_marker,
+        test_new_edition,
         user,
     )
 }
@@ -138,17 +105,11 @@ async fn success() {
         test_new_metadata,
         test_pack_card,
         test_master_edition,
-        _test_new_master_edition,
         test_new_edition,
         _user,
     ) = setup().await;
 
     let payer_pubkey = context.payer.pubkey();
-
-    let new_mint = Keypair::new();
-    create_mint(&mut context, &new_mint, &payer_pubkey, None)
-        .await
-        .unwrap();
 
     test_pack_set
         .mint_edition_with_card(
@@ -158,7 +119,6 @@ async fn success() {
             &test_new_metadata,
             &test_new_edition,
             &test_master_edition,
-            &new_mint.pubkey(),
             &payer_pubkey,
             &payer_pubkey,
         )

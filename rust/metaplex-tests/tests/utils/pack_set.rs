@@ -1,5 +1,6 @@
 use crate::*;
 use metaplex_nft_packs::{
+    find_program_authority,
     instruction::{self, EditPackCardArgs, EditPackSetArgs, EditPackVoucherArgs},
     state::{ActionOnProve, DistributionType, PackSet},
 };
@@ -142,12 +143,40 @@ impl TestPackSet {
         test_metadata: &TestMetadata,
         test_pack_card: &TestPackCard,
         test_new_metadata: &TestMetadata,
-        test_new_edition: &TestEditionMarker,
+        test_new_edition: &TestEdition,
         test_master_edition: &TestMasterEditionV2,
-        new_mint: &Pubkey,
         new_mint_authority: &Pubkey,
         new_metadata_update_authority: &Pubkey,
     ) -> transport::Result<()> {
+        let new_mint = Keypair::new();
+        let dummy_token_account = Keypair::new();
+
+        create_mint(context, &new_mint, &new_mint_authority, None)
+            .await
+            .unwrap();
+
+        create_token_account(
+            context,
+            &dummy_token_account,
+            &new_mint.pubkey(),
+            &context.payer.pubkey(),
+        )
+        .await
+        .unwrap();
+
+        mint_tokens(
+            context,
+            &new_mint.pubkey(),
+            &dummy_token_account.pubkey(),
+            1,
+            &context.payer.pubkey(),
+            None,
+        )
+        .await
+        .unwrap();
+
+        let (program_authority, _) = find_program_authority(&metaplex_nft_packs::id());
+
         let tx = Transaction::new_signed_with_payer(
             &[instruction::mint_new_edition_from_card(
                 &metaplex_nft_packs::id(),
@@ -157,10 +186,10 @@ impl TestPackSet {
                 &test_new_metadata.pubkey,
                 &test_new_edition.pubkey,
                 &test_master_edition.pubkey,
-                new_mint,
+                &new_mint.pubkey(),
                 new_mint_authority,
                 &context.payer.pubkey(),
-                &self.authority.pubkey(),
+                &program_authority,
                 &test_pack_card.token_account.pubkey(),
                 new_metadata_update_authority,
                 &test_metadata.pubkey,
