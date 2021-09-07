@@ -1,4 +1,4 @@
-import { PublicKey, AccountInfo, Account } from '@solana/web3.js';
+import { PublicKey, AccountInfo } from '@solana/web3.js';
 
 export type StringPublicKey = string;
 

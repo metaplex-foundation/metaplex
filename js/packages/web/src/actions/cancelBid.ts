@@ -33,8 +33,8 @@ export async function sendCancelBid(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   if (
     auctionView.auction.info.ended() &&
@@ -112,11 +112,11 @@ export async function setupCancelBid(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let cancelSigners: Keypair[] = [];
-  let cancelInstructions: TransactionInstruction[] = [];
-  let cleanupInstructions: TransactionInstruction[] = [];
+  const cancelSigners: Keypair[] = [];
+  const cancelInstructions: TransactionInstruction[] = [];
+  const cleanupInstructions: TransactionInstruction[] = [];
 
-  let tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
+  const tokenAccount = accountsByMint.get(auctionView.auction.info.tokenMint);
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   if (mint && auctionView.myBidderPot) {
