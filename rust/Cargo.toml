@@ -9,6 +9,8 @@ members = [
   "metaplex/test",
   "token-vault/test",
   "token-metadata/test",
+  "graphql-server/program",
+  "graphql-server/cli"
 ]
 exclude = [
 ]
