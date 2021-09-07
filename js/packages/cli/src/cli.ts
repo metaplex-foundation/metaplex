@@ -65,7 +65,7 @@ program
     '--keypair not provided',
   )
   // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
-  .option('-n, --number <number>', 'Number of images to upload', '10000')
+  .option('-n, --number <number>', 'Number of images to upload')
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (files: string[], options, cmd) => {
     const { number, keypair, env, cacheName } = cmd.opts();
@@ -156,7 +156,7 @@ program
           console.log(`initializing config`);
           try {
             const res = await createConfig(anchorProgram, walletKeyPair, {
-              maxNumberOfLines: new BN(parsedNumber),
+              maxNumberOfLines: new BN(parsedNumber || SIZE),
               symbol: manifest.symbol,
               sellerFeeBasisPoints: manifest.seller_fee_basis_points,
               isMutable: true,
@@ -223,7 +223,7 @@ program
               link = `https://arweave.net/${metadataFile.transactionId}`;
               console.log(`File uploaded: ${link}`);
             }
-
+            console.log('setting cache for ', index);
             cacheContent.items[index] = {
               link,
               name: manifest.name,
@@ -361,6 +361,8 @@ program
     }
 
     if (!allGood) {
+      saveCache(cacheName, env, cacheContent);
+
       throw new Error(
         `not all NFTs checked out. check out logs above for details`,
       );
