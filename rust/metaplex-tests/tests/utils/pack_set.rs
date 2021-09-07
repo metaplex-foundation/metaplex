@@ -204,6 +204,73 @@ impl TestPackSet {
         context.banks_client.process_transaction(tx).await
     }
 
+    pub async fn mint_edition_with_voucher(
+        &self,
+        context: &mut ProgramTestContext,
+        test_metadata: &TestMetadata,
+        test_pack_voucher: &TestPackVoucher,
+        test_new_metadata: &TestMetadata,
+        test_master_edition: &TestMasterEditionV2,
+        new_mint_authority: &Pubkey,
+        new_metadata_update_authority: &Pubkey,
+        index: u64,
+    ) -> transport::Result<()> {
+        let dummy_token_account = Keypair::new();
+
+        create_mint(context, &test_new_metadata.mint, &new_mint_authority, None)
+            .await
+            .unwrap();
+
+        create_token_account(
+            context,
+            &dummy_token_account,
+            &test_new_metadata.mint.pubkey(),
+            &context.payer.pubkey(),
+        )
+        .await
+        .unwrap();
+
+        mint_tokens(
+            context,
+            &test_new_metadata.mint.pubkey(),
+            &dummy_token_account.pubkey(),
+            1,
+            &context.payer.pubkey(),
+            None,
+        )
+        .await
+        .unwrap();
+
+        let test_new_edition = TestEdition::new(&test_new_metadata.mint.pubkey());
+        let (program_authority, _) = find_program_authority(&metaplex_nft_packs::id());
+
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::mint_new_edition_from_voucher(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &self.minting_authority.pubkey(),
+                &test_pack_voucher.pubkey,
+                &test_new_metadata.pubkey,
+                &test_new_edition.pubkey,
+                &test_master_edition.pubkey,
+                &test_new_metadata.mint.pubkey(),
+                new_mint_authority,
+                &context.payer.pubkey(),
+                &program_authority,
+                &test_pack_voucher.token_account.pubkey(),
+                new_metadata_update_authority,
+                &test_metadata.pubkey,
+                &test_metadata.mint.pubkey(),
+                index,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.minting_authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
     pub async fn edit(
         &self,
         context: &mut ProgramTestContext,
