@@ -6,6 +6,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  SafetyDepositDraft,
 } from '@oyster/common';
 import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
 import { approve } from '@oyster/common/dist/lib/models/account';
@@ -17,7 +18,6 @@ import {
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
-import { SafetyDepositDraft } from './createAuctionManager';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export interface SafetyDepositInstructionTemplate {

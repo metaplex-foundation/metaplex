@@ -31,6 +31,7 @@ import {
   IPartialCreateAuctionArgs,
   MetadataKey,
   StringPublicKey,
+  SafetyDepositDraft,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -42,10 +43,7 @@ import {
   AmountRange,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import moment from 'moment';
-import {
-  createAuctionManager,
-  SafetyDepositDraft,
-} from '../../actions/createAuctionManager';
+import { createAuctionManager } from '../../actions/createAuctionManager';
 import BN from 'bn.js';
 import { constants } from '@oyster/common';
 import { DateTimePicker } from '../../components/DateTimePicker';

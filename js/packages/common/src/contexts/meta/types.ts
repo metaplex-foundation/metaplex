@@ -79,11 +79,6 @@ export interface MetaContextState extends MetaState {
   isLoading: boolean;
 }
 
-export type AccountAndPubkey = {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-};
-
 export type UpdateStateValueFunc = (
   prop: keyof MetaState,
   key: string,

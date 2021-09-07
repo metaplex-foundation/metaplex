@@ -1,4 +1,7 @@
-export type { Metadata } from '@oyster/common';
-export type { WhitelistedCreator } from '@oyster/common/dist/lib/models/index';
+import type { Metadata as Meta } from '@oyster/common';
+import type { WhitelistedCreator } from '@oyster/common/dist/lib/models/index';
 
-// TODO: Metadata & { pubkey: string }
+type FieldPubkey = { pubkey: string };
+
+export type Artwork = Meta & FieldPubkey;
+export type Creator = WhitelistedCreator & FieldPubkey;

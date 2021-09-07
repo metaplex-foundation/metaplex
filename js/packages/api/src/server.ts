@@ -12,6 +12,18 @@ async function startApolloServer() {
       schema: __dirname + '/generated/schema.graphql',
       typegen: __dirname + '/generated/typings.ts',
     },
+    formatTypegen: (content, type) => {
+      if (type === 'types') {
+        content = `/* eslint-disable */ \n ${content}`;
+      }
+      return require('prettier').format(content, {
+        arrowParens: 'avoid',
+        semi: true,
+        singleQuote: true,
+        trailingComma: 'all',
+        parser: type === 'types' ? 'typescript' : 'graphql',
+      });
+    },
     sourceTypes: {
       modules: [
         {
@@ -20,8 +32,8 @@ async function startApolloServer() {
         },
       ],
       mapping: {
-        Artwork: 'common.Metadata',
-        Creator: 'common.WhitelistedCreator',
+        Artwork: 'common.Artwork',
+        Creator: 'common.Creator',
       },
     },
     contextType: {

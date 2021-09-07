@@ -5,14 +5,11 @@ import {
   SystemProgram,
 } from '@solana/web3.js';
 import {
-  Metadata,
   ParsedAccount,
   MasterEditionV1,
-  MasterEditionV2,
   SequenceType,
   sendTransactions,
   getSafetyDepositBox,
-  Edition,
   getEdition,
   programIds,
   Creator,
@@ -25,6 +22,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  SafetyDepositDraft,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -35,8 +33,6 @@ import {
   getWhitelistedCreator,
   startAuction,
   WhitelistedCreator,
-  AmountRange,
-  ParticipationConfigV2,
   TupleNumericType,
   SafetyDepositConfig,
   ParticipationStateV2,
@@ -83,17 +79,6 @@ interface byType {
   deprecatedValidateParticipation?: normalPattern;
   deprecatedBuildAndPopulateOneTimeAuthorizationAccount?: normalPattern;
   deprecatedPopulatePrintingTokens: arrayPattern;
-}
-
-export interface SafetyDepositDraft {
-  metadata: ParsedAccount<Metadata>;
-  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
-  edition?: ParsedAccount<Edition>;
-  holding: StringPublicKey;
-  printingMintHolding?: StringPublicKey;
-  winningConfigType: WinningConfigType;
-  amountRanges: AmountRange[];
-  participationConfig?: ParticipationConfigV2;
 }
 
 // This is a super command that executes many transactions to create a Vault, Auction, and AuctionManager starting

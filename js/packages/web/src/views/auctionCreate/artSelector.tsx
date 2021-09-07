@@ -3,7 +3,7 @@ import { Row, Button, Modal, ButtonProps } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { useUserArts } from '../../hooks';
 import Masonry from 'react-masonry-css';
-import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { SafetyDepositDraft } from '@oyster/common';
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[];

@@ -1,4 +1,3 @@
-import { PublicKey } from '@solana/web3.js';
 import { scalarType } from 'nexus';
 import BN from 'bn.js';
 

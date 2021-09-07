@@ -6,6 +6,8 @@ import { isCreatorPartOfTheStore } from '@oyster/common/dist/lib/models/index';
 import { ParsedAccount } from '@oyster/common/dist/lib/contexts/accounts/types';
 import { Context } from './context';
 import { NexusGenInputs } from './generated/typings';
+import { loadUserTokenAccounts } from './loaders/loadUserTokenAccounts';
+import { filterByOwner, filterByStoreAndCreator } from './artwork/filters';
 
 // XXX: re-use list from `contexts/connection` ?
 export const ENDPOINTS = [
@@ -38,6 +40,7 @@ interface ConnectionConfig {
 
 export class MetaplexApi {
   state!: MetaState;
+  config!: ConnectionConfig;
 
   private static configs: Record<string, ConnectionConfig> = {};
   private static states: Record<string, MetaState> = {};
@@ -88,10 +91,18 @@ export class MetaplexApi {
     return this.states[name || ''] || MetaplexApi.states[DEFAULT_ENDPOINT.name];
   }
 
+  // instance methods
+
   async initialize({ context }: { context: Omit<Context, 'dataSources'> }) {
     MetaplexApi.load();
-    await MetaplexApi.configByName(context.network).loader;
+    this.config = MetaplexApi.configByName(context.network);
+    await this.config.loader;
     this.state = MetaplexApi.stateByName(context.network);
+  }
+
+  loadUserAccounts(ownerId: string) {
+    const { connection } = this.config;
+    return loadUserTokenAccounts(connection, ownerId);
   }
 
   // meta methods
@@ -128,28 +139,19 @@ export class MetaplexApi {
   async getArtworks({
     storeId,
     creatorId,
+    ownerId,
     onlyVerified,
   }: NexusGenInputs['ArtworksInput']) {
-    const whitelistedCreators = await this.getCreators(storeId);
-    const creator =
-      (creatorId &&
-        whitelistedCreators.find(({ address }) => address === creatorId)) ||
-      null;
+    const storeFilter = await filterByStoreAndCreator(
+      { storeId, creatorId, onlyVerified },
+      this,
+    );
 
-    return mapInfo(this.state.metadata).filter(({ data }) => {
-      return data.creators?.some(({ address, verified }) => {
-        const inStore = whitelistedCreators.some(
-          creator => creator.address === address,
-        );
-        const fromCreator = creator && address === creator.address;
+    const ownerFilter = await filterByOwner({ ownerId }, this);
 
-        return (
-          (!onlyVerified || verified) &&
-          (!storeId || inStore) &&
-          (!creatorId || fromCreator)
-        );
-      });
-    });
+    return mapInfo(this.state.metadata).filter(
+      art => storeFilter(art) && ownerFilter(art),
+    );
   }
 
   async getArtwork(artId: string) {

@@ -1,10 +1,10 @@
-import { enumType, objectType } from 'nexus';
+import { objectType } from 'nexus';
 import {
   artEditionNumber,
   artMaxSupply,
   artSupply,
   artType,
-} from '../mappers/art';
+} from '../artwork/mappers';
 
 export const Artwork = objectType({
   name: 'Artwork',
