@@ -15,7 +15,6 @@ async fn setup() -> (
     TestMetadata,
     TestPackCard,
     TestMasterEditionV2,
-    TestEdition,
     User,
 ) {
     let mut context = nft_packs_program_test().start_with_context().await;
@@ -38,7 +37,6 @@ async fn setup() -> (
 
     // Create only instance to obtain generated PDA later
     let test_new_metadata = TestMetadata::new();
-    let test_new_edition = TestEdition::new(&test_metadata);
 
     let user_token_acc = Keypair::new();
     let user = User {
@@ -91,7 +89,6 @@ async fn setup() -> (
         test_new_metadata,
         test_pack_card,
         test_master_edition,
-        test_new_edition,
         user,
     )
 }
@@ -105,7 +102,6 @@ async fn success() {
         test_new_metadata,
         test_pack_card,
         test_master_edition,
-        test_new_edition,
         _user,
     ) = setup().await;
 
@@ -117,11 +113,13 @@ async fn success() {
             &test_metadata,
             &test_pack_card,
             &test_new_metadata,
-            &test_new_edition,
             &test_master_edition,
             &payer_pubkey,
             &payer_pubkey,
+            1,
         )
         .await
         .unwrap();
+
+    assert!(!is_empty_account(&mut context, &test_new_metadata.pubkey).await);
 }

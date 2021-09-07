@@ -143,22 +143,21 @@ impl TestPackSet {
         test_metadata: &TestMetadata,
         test_pack_card: &TestPackCard,
         test_new_metadata: &TestMetadata,
-        test_new_edition: &TestEdition,
         test_master_edition: &TestMasterEditionV2,
         new_mint_authority: &Pubkey,
         new_metadata_update_authority: &Pubkey,
+        index: u64,
     ) -> transport::Result<()> {
-        let new_mint = Keypair::new();
         let dummy_token_account = Keypair::new();
 
-        create_mint(context, &new_mint, &new_mint_authority, None)
+        create_mint(context, &test_new_metadata.mint, &new_mint_authority, None)
             .await
             .unwrap();
 
         create_token_account(
             context,
             &dummy_token_account,
-            &new_mint.pubkey(),
+            &test_new_metadata.mint.pubkey(),
             &context.payer.pubkey(),
         )
         .await
@@ -166,7 +165,7 @@ impl TestPackSet {
 
         mint_tokens(
             context,
-            &new_mint.pubkey(),
+            &test_new_metadata.mint.pubkey(),
             &dummy_token_account.pubkey(),
             1,
             &context.payer.pubkey(),
@@ -175,27 +174,30 @@ impl TestPackSet {
         .await
         .unwrap();
 
+        let test_new_edition = TestEdition::new(&test_new_metadata.mint.pubkey());
         let (program_authority, _) = find_program_authority(&metaplex_nft_packs::id());
 
         let tx = Transaction::new_signed_with_payer(
             &[instruction::mint_new_edition_from_card(
                 &metaplex_nft_packs::id(),
                 &self.keypair.pubkey(),
-                &self.authority.pubkey(),
+                &self.minting_authority.pubkey(),
                 &test_pack_card.pubkey,
                 &test_new_metadata.pubkey,
                 &test_new_edition.pubkey,
                 &test_master_edition.pubkey,
-                &new_mint.pubkey(),
+                &test_new_metadata.mint.pubkey(),
                 new_mint_authority,
                 &context.payer.pubkey(),
                 &program_authority,
                 &test_pack_card.token_account.pubkey(),
                 new_metadata_update_authority,
                 &test_metadata.pubkey,
+                &test_metadata.mint.pubkey(),
+                index,
             )],
             Some(&context.payer.pubkey()),
-            &[&self.authority, &context.payer],
+            &[&self.minting_authority, &context.payer],
             context.last_blockhash,
         );
 
