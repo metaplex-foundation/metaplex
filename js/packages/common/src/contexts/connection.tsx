@@ -22,7 +22,7 @@ import {
   ENV as ChainId,
 } from '@solana/spl-token-registry';
 import { WalletSigner } from './wallet';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { WalletAdapterNetwork, WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -35,33 +35,37 @@ export type ENV =
   | 'mainnet-beta (Serum)'
   | 'testnet'
   | 'devnet'
-  | 'localnet'
-  | 'lending';
+  | 'localnet';
 
 export const ENDPOINTS = [
   {
     name: 'mainnet-beta' as ENV,
     endpoint: 'https://api.metaplex.solana.com/',
+    network: WalletAdapterNetwork.Mainnet,
     ChainId: ChainId.MainnetBeta,
   },
   {
     name: 'mainnet-beta (Solana)' as ENV,
     endpoint: 'https://api.mainnet-beta.solana.com',
+    network: WalletAdapterNetwork.Mainnet,
     ChainId: ChainId.MainnetBeta,
   },
   {
     name: 'mainnet-beta (Serum)' as ENV,
     endpoint: 'https://solana-api.projectserum.com/',
+    network: WalletAdapterNetwork.Mainnet,
     ChainId: ChainId.MainnetBeta,
   },
   {
     name: 'testnet' as ENV,
     endpoint: clusterApiUrl('testnet'),
+    network: WalletAdapterNetwork.Testnet,
     ChainId: ChainId.Testnet,
   },
   {
     name: 'devnet' as ENV,
     endpoint: clusterApiUrl('devnet'),
+    network: WalletAdapterNetwork.Devnet,
     ChainId: ChainId.Devnet,
   },
 ];
@@ -75,6 +79,7 @@ interface ConnectionConfig {
   setEndpoint: (val: string) => void;
   tokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
+  network: WalletAdapterNetwork;
 }
 
 const ConnectionContext = React.createContext<ConnectionConfig>({
@@ -84,6 +89,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
+  network: ENDPOINTS[0].network,
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
@@ -99,6 +105,8 @@ export function ConnectionProvider({ children = undefined as any }) {
 
   const env =
     ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
+  const network =
+    ENDPOINTS.find(end => end.endpoint === endpoint)?.network || ENDPOINTS[0].network;
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
@@ -152,6 +160,7 @@ export function ConnectionProvider({ children = undefined as any }) {
         tokens,
         tokenMap,
         env,
+        network,
       }}
     >
       {children}
@@ -171,6 +180,7 @@ export function useConnectionConfig() {
     env: context.env,
     tokens: context.tokens,
     tokenMap: context.tokenMap,
+    network: context.network,
   };
 }
 
