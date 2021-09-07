@@ -8,6 +8,26 @@
   background: linear-gradient(100.3deg, fade(@metaplex-primary-color, 32%) 8.28%, fade(@metaplex-primary-color, 0%) 45%),
               linear-gradient(235.61deg, fade(@black-100, 0%) 34.14%, @black-100 72%) !important;
 
+  .main-asset-banner {
+    position: absolute;
+    min-width: calc(50% - 128px);
+    right: 0;
+    top: 0;
+    background-image: url("/main-banner.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% auto;
+    height: 720px;
+    .right-gradient {
+      background: linear-gradient(180deg, #121212 4.17%, rgba(18, 18, 18, 0) 100%);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+      filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
+    }
+  }
+
   #width-layout {
     max-width: 1440px;
   }
@@ -16,7 +36,7 @@
     display: flex;
     justify-content: space-between;
     flex-direction: column;
-    padding: 68px;
+    padding: 64px;
     &.second {
       justify-content: flex-start;
 
@@ -147,6 +167,7 @@
     display: flex;
     flex-direction: column;
     .how-to-get {
+      font-weight: 600;
       font-size: 24px;
       line-height: 24px;
       display: flex;
@@ -244,4 +265,31 @@
   border-color: initial !important;
   border-right-width: 0 !important;
   outline: 0;
+}
+.discord-button {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 56px;
+  width: 200px;
+  background: #FFFFFF;
+  box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  padding: 20px;
+  background-size: cover;
+  margin-top: 32px;
+  color: @black-100;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 17px;
+  /* identical to box height, or 106% */
+
+  text-align: center;
+  letter-spacing: -0.02em;
+  span {
+    background-image: url("/preLaunch/discord.svg");
+    margin-right: 10px;
+    width: 24px;
+    height: 18px;
+  }
 }

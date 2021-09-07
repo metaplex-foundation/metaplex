@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useState} from 'react'
 
-import {Button, Col, Input, Layout, Modal, Row} from "antd";
+import {Button, Input, Layout, Modal} from "antd";
 import { ModalProps } from 'antd/lib/modal';
 import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
@@ -14,6 +14,12 @@ export interface GotEmailButtonProps
   visible?: boolean;
   extraButton?: JSX.Element,
 }
+
+const DiscordButton = () => (
+  <a className={"discord-button"} target={"_blank"} href={"https://discord.com/invite/metaplex"}>
+    <span></span> Join our Discord
+  </a>
+)
 
 
 const PreLaunchModal = (props: GotEmailButtonProps) => {
@@ -42,7 +48,7 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
         {descriptionText}
       </div>
       {extraButton && (
-        {extraButton}
+        extraButton
       )}
     </Modal>
   );
@@ -58,20 +64,28 @@ export const PreLaunchView = () => {
 
   return (
     <Layout id={'pre-launch-layout'}>
+      <div className={"main-asset-banner"}>
+        {/*Gradient does not match*/}
+        {/*<div className={"right-gradient"}></div>*/}
+      </div>
       <PreLaunchModal
         titleText={textContent.gotEmail}
         descriptionText={textContent.gotEmailDescription}
         visible={gotVisible}
         onCancel={() => {
           setGotVisible(false);
-          //setVerified(true) //remove later
+          setVerified(true) //remove later
         }}
       />
       <PreLaunchModal
         titleText={textContent.sentNFT}
         descriptionText={textContent.sentNFTDescription}
         visible={sentVisible}
-        onCancel={() => setSentVisible(false)}
+        onCancel={() => {
+          setSentVisible(false)
+          setSubmitted(true)
+        }}
+        extraButton={<DiscordButton />}
       />
       <Layout id={'width-layout'}>
         {!verified ? (
@@ -170,4 +184,4 @@ export const PreLaunchView = () => {
       </Layout>
     </Layout>
   );
-}
+};
