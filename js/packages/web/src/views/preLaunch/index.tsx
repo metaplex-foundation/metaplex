@@ -5,6 +5,7 @@ import { ModalProps } from 'antd/lib/modal';
 import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
+import {shortenAddress} from "@oyster/common";
 
 const { Content } = Layout;
 
@@ -225,7 +226,7 @@ export const PreLaunchView = () => {
             <div className={"verify-message"}>
               <span className={'display-block mb32'}>Your NFT is on the way.</span>
               <span className={"high-light"} style={{marginLeft: 0}}>{email}</span>
-              <span className={"high-light"}>{walletAddress}</span>
+              <span className={"high-light"}>{shortenAddress(walletAddress)}</span>
             </div>
             <DiscordButton />
           </Content>

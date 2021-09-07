@@ -2635,18 +2635,6 @@
   resolved "https://registry.yarnpkg.com/@typechain/ethers-v4/-/ethers-v4-1.0.1.tgz#268b619c2660bf7689cda86e30798bd30753ae94"
   integrity sha512-G8S2PqKmzJTORIAuvgVtyyDMEyoecVW0g3aqV8EONC3Wmeb4jjgG3oUsK3dzmvz8hjR+xH7qs907S4vZ4yR0OQ==
 
-"@typeform/embed-react@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@typeform/embed-react/-/embed-react-1.1.1.tgz#43c59396836ae340f6dd2aae23e865a1e26cc9ba"
-  integrity sha512-1zlAIl58C8dCEPLy7bpBa7/jX8FU82et8CvHe3jWgknXrSmxgkG6rEF8ARVj1tHrMUcc4ffFK3ij/3R9IoXZxw==
-  dependencies:
-    "@typeform/embed" "^1.10.0"
-
-"@typeform/embed@^1.10.0":
-  version "1.18.1"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.18.1.tgz#b9b724002cf65fa8067dc4deb5b8a2152f02611a"
-  integrity sha512-L9icCzZArjRmns2W08T+x9ZHUZ20gXo4Ry1YxDPl3Vcp6MUQtCcOPCxM24Z3xc/QY0WT3na4OnPgjOLuoSgIXg==
-
 "@types/animejs@^3.1.3":
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/@types/animejs/-/animejs-3.1.3.tgz#da720ea98272b3e29f595bb15efccadb9dc04dd4"
