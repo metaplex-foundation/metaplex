@@ -28,7 +28,7 @@
     "next": "^11.0.1",
     "next-compose-plugins": "^2.2.1",
     "next-with-less": "^1.0.0",
-    "react": "17.0.2",
+    "react": "^17.0.2",
     "react-chartjs-2": "^3.0.4",
     "react-content-loader": "^6.0.3",
     "react-dom": "17.0.2",
@@ -65,9 +65,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metaplex-foundation/metaplex"
+    "url": "https://github.com/jdim21/metaplex"
   },
-  "homepage": ".",
+  "homepage": "https://jdim21.github.io/metaplex/",
   "devDependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
