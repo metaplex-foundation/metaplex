@@ -404,6 +404,7 @@ pub fn claim_pack(
         AccountMeta::new_readonly(randomness_oracle_program::id(), false),
         AccountMeta::new_readonly(spl_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
@@ -721,7 +722,25 @@ pub fn mint_new_edition_from_card(
     token_account: &Pubkey,
     new_metadata_update_authority: &Pubkey,
     metadata: &Pubkey,
+    metadata_mint: &Pubkey,
+    index: u64,
 ) -> Instruction {
+    let edition_number = index
+        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .unwrap();
+    let as_string = edition_number.to_string();
+
+    let (edition_mark_pda, _) = Pubkey::find_program_address(
+        &[
+            spl_token_metadata::state::PREFIX.as_bytes(),
+            spl_token_metadata::id().as_ref(),
+            metadata_mint.as_ref(),
+            spl_token_metadata::state::EDITION.as_bytes(),
+            as_string.as_bytes(),
+        ],
+        &spl_token_metadata::id(),
+    );
+
     let accounts = vec![
         AccountMeta::new_readonly(*pack_set, false),
         AccountMeta::new_readonly(*minting_authority, true),
@@ -736,6 +755,8 @@ pub fn mint_new_edition_from_card(
         AccountMeta::new_readonly(*token_account, false),
         AccountMeta::new_readonly(*new_metadata_update_authority, false),
         AccountMeta::new_readonly(*metadata, false),
+        AccountMeta::new_readonly(*metadata_mint, false),
+        AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),

@@ -34,9 +34,12 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let metadata_account = next_account_info(account_info_iter)?;
     let metadata_mint_account = next_account_info(account_info_iter)?;
     let edition_account = next_account_info(account_info_iter)?;
-    let rent_account = next_account_info(account_info_iter)?;
+    let rent_program_account = next_account_info(account_info_iter)?;
     let randomness_oracle_account = next_account_info(account_info_iter)?;
-    let _rent = &Rent::from_account_info(rent_account)?;
+    let _token_metadata_account = next_account_info(account_info_iter)?;
+    let token_program_account = next_account_info(account_info_iter)?;
+    let system_program_account = next_account_info(account_info_iter)?;
+    let _rent = &Rent::from_account_info(rent_program_account)?;
 
     // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
@@ -103,7 +106,11 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 user_token_account,
                 metadata_account,
                 master_edition_account,
+                master_edition_account,
                 metadata_mint_account,
+                token_program_account,
+                system_program_account,
+                rent_program_account,
                 edition.edition.error_increment()?,
                 &[program_id.as_ref(), &[bump_seed]],
             )?;
@@ -138,9 +145,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                     user_wallet_account,
                     program_authority_account,
                     user_token_account,
+                    master_edition_account,
                     metadata_account,
                     master_edition_account,
                     metadata_mint_account,
+                    token_program_account,
+                    system_program_account,
+                    rent_program_account,
                     edition.edition.error_increment()?,
                     &[program_id.as_ref(), &[bump_seed]],
                 )?;

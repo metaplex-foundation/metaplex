@@ -1,20 +1,19 @@
 //! MintEditionWithCard and MintEditionWithVoucher instructions processing
 
 use crate::{
-    error::NFTPacksError,
     find_program_authority,
     math::SafeMath,
-    state::{MasterEditionHolder, PackCard, PackSet, PackSetState, PackVoucher},
+    state::{MasterEditionHolder, PackCard, PackSet, PackVoucher},
     utils::*,
+    PREFIX,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
-    program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
 };
-use spl_token_metadata::state::{Edition, MasterEditionV2};
+use spl_token_metadata::state::MasterEditionV2;
 
 ///
 pub struct MintEditionAccountsArgs<'a> {
@@ -45,7 +44,15 @@ pub struct MintEditionAccountsArgs<'a> {
     ///
     pub master_metadata_account: &'a AccountInfo<'a>,
     ///
-    pub master_mint_account: &'a AccountInfo<'a>,
+    pub master_metadata_mint_account: &'a AccountInfo<'a>,
+    ///
+    pub edition_mark_account: &'a AccountInfo<'a>,
+    ///
+    pub token_program_account: &'a AccountInfo<'a>,
+    ///
+    pub system_program_account: &'a AccountInfo<'a>,
+    ///
+    pub rent_program_account: &'a AccountInfo<'a>,
 }
 
 /// Process MintEditionWithCard instruction
@@ -69,7 +76,11 @@ pub fn mint_edition_with_card<'a>(
         token_account: next_account_info(account_info_iter)?,
         update_authority_account: next_account_info(account_info_iter)?,
         master_metadata_account: next_account_info(account_info_iter)?,
-        master_mint_account: next_account_info(account_info_iter)?,
+        master_metadata_mint_account: next_account_info(account_info_iter)?,
+        edition_mark_account: next_account_info(account_info_iter)?,
+        token_program_account: next_account_info(account_info_iter)?,
+        system_program_account: next_account_info(account_info_iter)?,
+        rent_program_account: next_account_info(account_info_iter)?,
     };
 
     let mut pack_card: PackCard = PackCard::unpack(
@@ -115,7 +126,11 @@ pub fn mint_edition_with_voucher<'a>(
         token_account: next_account_info(account_info_iter)?,
         update_authority_account: next_account_info(account_info_iter)?,
         master_metadata_account: next_account_info(account_info_iter)?,
-        master_mint_account: next_account_info(account_info_iter)?,
+        master_metadata_mint_account: next_account_info(account_info_iter)?,
+        edition_mark_account: next_account_info(account_info_iter)?,
+        token_program_account: next_account_info(account_info_iter)?,
+        system_program_account: next_account_info(account_info_iter)?,
+        rent_program_account: next_account_info(account_info_iter)?,
     };
 
     let mut pack_voucher = PackVoucher::unpack(
@@ -187,9 +202,13 @@ pub fn mint_edition<T: MasterEditionHolder>(
         accounts.token_account,
         accounts.master_metadata_account,
         accounts.master_edition_account,
-        accounts.master_mint_account,
+        accounts.master_metadata_mint_account,
+        accounts.edition_mark_account,
+        accounts.token_program_account,
+        accounts.system_program_account,
+        accounts.rent_program_account,
         master_edition.supply.error_increment()?,
-        &[program_id.as_ref(), &[bump_seed]],
+        &[PREFIX.as_ref(), program_id.as_ref(), &[bump_seed]],
     )?;
 
     Ok(())
