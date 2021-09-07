@@ -34,7 +34,7 @@ const MeshArtContent = ({
         uri={uri}
         className={className}
         preview={false}
-        style={{ width: 300, ...style }}
+        style={{ width: '100%', ...style }}
       />
     );
   }
