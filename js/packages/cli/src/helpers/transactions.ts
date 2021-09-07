@@ -1,30 +1,24 @@
-// const createPaymentTransaction = () => {
-//   // TODO:
-//   const tx = new Transaction();
-//   tx.add(SystemProgram.transfer({
-//     fromPubkey: walletKey.publicKey,
-//     toPubkey: PAYMENT_WALLET,
-//     lamports: storageCost,
-//   }));
-
 import {
-  Connection,
-  Keypair,
-  TransactionInstruction,
+  Blockhash,
   Commitment,
-  Transaction,
+  Connection,
+  FeeCalculator,
+  Keypair,
   RpcResponseAndContext,
   SignatureStatus,
   SimulatedTransactionResponse,
+  Transaction,
+  TransactionInstruction,
   TransactionSignature,
-  FeeCalculator,
-  Blockhash,
 } from '@solana/web3.js';
+import { getUnixTs, sleep } from './various';
+import { DEFAULT_TIMEOUT } from './constants';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
   feeCalculator: FeeCalculator;
 }
+
 export const sendTransactionWithRetryWithKeypair = async (
   connection: Connection,
   wallet: Keypair,
@@ -68,11 +62,6 @@ export const sendTransactionWithRetryWithKeypair = async (
 
   return { txid, slot };
 };
-
-export const getUnixTs = () => {
-  return new Date().getTime() / 1000;
-};
-const DEFAULT_TIMEOUT = 15000;
 
 export async function sendSignedTransaction({
   signedTransaction,
@@ -273,48 +262,4 @@ async function awaitTransactionSignatureConfirmation(
   done = true;
   console.log('Returning status', status);
   return status;
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-export function fromUTF8Array(data: number[]) {
-  // array of bytes
-  let str = '',
-    i;
-
-  for (i = 0; i < data.length; i++) {
-    const value = data[i];
-
-    if (value < 0x80) {
-      str += String.fromCharCode(value);
-    } else if (value > 0xbf && value < 0xe0) {
-      str += String.fromCharCode(((value & 0x1f) << 6) | (data[i + 1] & 0x3f));
-      i += 1;
-    } else if (value > 0xdf && value < 0xf0) {
-      str += String.fromCharCode(
-        ((value & 0x0f) << 12) |
-          ((data[i + 1] & 0x3f) << 6) |
-          (data[i + 2] & 0x3f),
-      );
-      i += 2;
-    } else {
-      // surrogate pair
-      const charCode =
-        (((value & 0x07) << 18) |
-          ((data[i + 1] & 0x3f) << 12) |
-          ((data[i + 2] & 0x3f) << 6) |
-          (data[i + 3] & 0x3f)) -
-        0x010000;
-
-      str += String.fromCharCode(
-        (charCode >> 10) | 0xd800,
-        (charCode & 0x03ff) | 0xdc00,
-      );
-      i += 3;
-    }
-  }
-
-  return str;
 }
