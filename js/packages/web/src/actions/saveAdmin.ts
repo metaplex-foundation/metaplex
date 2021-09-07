@@ -20,11 +20,11 @@ export async function saveAdmin(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
-  let storeSigners: Keypair[] = [];
-  let storeInstructions: TransactionInstruction[] = [];
+  const storeSigners: Keypair[] = [];
+  const storeInstructions: TransactionInstruction[] = [];
 
   await setStore(
     isPublic,
@@ -37,8 +37,8 @@ export async function saveAdmin(
 
   for (let i = 0; i < whitelistedCreators.length; i++) {
     const wc = whitelistedCreators[i];
-    let wcSigners: Keypair[] = [];
-    let wcInstructions: TransactionInstruction[] = [];
+    const wcSigners: Keypair[] = [];
+    const wcInstructions: TransactionInstruction[] = [];
 
     await setWhitelistedCreator(
       wc.address,

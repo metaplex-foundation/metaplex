@@ -23,9 +23,9 @@ export async function closePersonalEscrow(
 
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
+  const signers: Keypair[] = [];
 
-  let instructions: TransactionInstruction[] = [
+  const instructions: TransactionInstruction[] = [
     Token.createCloseAccountInstruction(
       PROGRAM_IDS.token,
       toPublicKey(ata),
