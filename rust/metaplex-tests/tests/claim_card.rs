@@ -53,7 +53,7 @@ async fn success() {
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
+                total_packs: 1,
                 mutable: true,
             },
         )
@@ -105,8 +105,8 @@ async fn success() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::FixedNumber,
+                probability: 1,
                 index: test_pack_card.index,
             },
         )
@@ -124,7 +124,7 @@ async fn success() {
             &voucher_master_token_holder,
             AddVoucherToPackArgs {
                 max_supply: Some(5),
-                number_to_open: 4,
+                number_to_open: 1,
                 action_on_prove: ActionOnProve::Burn,
             },
         )
@@ -155,6 +155,35 @@ async fn success() {
 
     assert_eq!(proving_process.pack_set, test_pack_set.keypair.pubkey());
     // proved vouchers should be zero because it requires 4 edition to prove it
-    assert_eq!(proving_process.proved_vouchers, 0);
-    assert_eq!(proving_process.proved_voucher_editions, 1);
+    assert_eq!(proving_process.proved_vouchers, 1);
+    assert_eq!(proving_process.proved_voucher_editions, 0);
+
+    let new_mint = Keypair::new();
+    let new_mint_token_acc = Keypair::new();
+
+    let hardcoded_randomness_oracle = Keypair::new();
+
+    test_pack_set.claim_pack(
+        &mut context,
+        &edition_authority,
+        &test_pack_card.token_account.pubkey(),
+        &card_master_edition.pubkey,
+        &new_mint,
+        &new_mint_token_acc,
+        &edition_authority,
+        &card_metadata.pubkey,
+        &card_master_edition.mint_pubkey,
+        &hardcoded_randomness_oracle.pubkey(),
+        1,
+    )
+    .await
+    .unwrap();
+
+    let proving_process_data = get_account(&mut context, &proving_process_key).await;
+    let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
+
+    let card_master_edition = card_master_edition.get_data(&mut context).await;
+
+    assert_eq!(proving_process.claimed_cards, 1);
+    assert_eq!(card_master_edition.supply, 1);
 }

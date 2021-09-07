@@ -4,7 +4,7 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{DistributionType, PackCard, PackSet, ProvingProcess},
+    state::{DistributionType, PackCard, PackSet, ProvingProcess, PREFIX,},
     utils::*,
     PRECISION,
 };
@@ -15,7 +15,7 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
-use spl_token_metadata::state::{Edition, Metadata};
+use spl_token_metadata::state::{Metadata, MasterEditionV2};
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -33,13 +33,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let new_mint_authority_account = next_account_info(account_info_iter)?;
     let metadata_account = next_account_info(account_info_iter)?;
     let metadata_mint_account = next_account_info(account_info_iter)?;
-    let edition_account = next_account_info(account_info_iter)?;
-    let rent_program_account = next_account_info(account_info_iter)?;
+    let edition_marker_account = next_account_info(account_info_iter)?;
+    let rent_account = next_account_info(account_info_iter)?;
     let randomness_oracle_account = next_account_info(account_info_iter)?;
     let _token_metadata_account = next_account_info(account_info_iter)?;
     let token_program_account = next_account_info(account_info_iter)?;
     let system_program_account = next_account_info(account_info_iter)?;
-    let _rent = &Rent::from_account_info(rent_program_account)?;
+    let _rent = &Rent::from_account_info(rent_account)?;
 
     // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
@@ -67,11 +67,10 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         return Err(NFTPacksError::ProvedVouchersMismatchPackVouchers.into());
     }
 
-    // Obtain edition instance
-    let edition = Edition::from_account_info(edition_account)?;
-
     // Obtain master metadata instance
     let master_metadata = Metadata::from_account_info(metadata_account)?;
+
+    let master_edition = MasterEditionV2::from_account_info(master_edition_account)?;
 
     // Check metadata mint
     assert_account_key(metadata_mint_account, &master_metadata.mint)?;
@@ -106,13 +105,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 user_token_account,
                 metadata_account,
                 master_edition_account,
-                master_edition_account,
                 metadata_mint_account,
+                edition_marker_account,
                 token_program_account,
                 system_program_account,
-                rent_program_account,
-                edition.edition.error_increment()?,
-                &[program_id.as_ref(), &[bump_seed]],
+                rent_account,
+                master_edition.supply.error_increment()?,
+                &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
             )?;
         }
         DistributionType::ProbabilityBased => {
@@ -136,7 +135,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 proving_process.claimed_card_editions =
                     proving_process.claimed_card_editions.error_increment()?;
 
-                // Mint new tokens
+                // Mint token
                 spl_token_metadata_mint_new_edition_from_master_edition_via_token(
                     new_metadata_account,
                     new_edition_account,
@@ -145,15 +144,15 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                     user_wallet_account,
                     program_authority_account,
                     user_token_account,
-                    master_edition_account,
                     metadata_account,
                     master_edition_account,
                     metadata_mint_account,
+                    edition_marker_account,
                     token_program_account,
                     system_program_account,
-                    rent_program_account,
-                    edition.edition.error_increment()?,
-                    &[program_id.as_ref(), &[bump_seed]],
+                    rent_account,
+                    master_edition.supply.error_increment()?,
+                    &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
                 )?;
             } else {
                 // User lose

@@ -359,4 +359,62 @@ impl TestPackSet {
 
         context.banks_client.process_transaction(tx).await
     }
+
+    pub async fn claim_pack(
+        &self,
+        context: &mut ProgramTestContext,
+        user_wallet: &Keypair,
+        master_token_account: &Pubkey,
+        master_edition_account: &Pubkey,
+        new_mint: &Keypair,
+        new_mint_token_acc: &Keypair,
+        new_mint_authority: &Keypair,
+        master_metadata: &Pubkey,
+        master_mint: &Pubkey,
+        randomness_oracle: &Pubkey,
+        index: u32,
+    ) -> transport::Result<()> {
+        create_mint(context, new_mint, &new_mint_authority.pubkey(), None).await.unwrap();
+        create_token_account(context, new_mint_token_acc, &new_mint.pubkey(), &user_wallet.pubkey()).await.unwrap();
+        mint_tokens(context, &new_mint.pubkey(), &new_mint_token_acc.pubkey(), 1, &new_mint_authority.pubkey(), Some(vec![new_mint_authority])).await.unwrap();
+
+        let mint_key = new_mint.pubkey();
+        let spl_token_metadata_key = spl_token_metadata::id();
+
+        let metadata_seeds = &[spl_token_metadata::state::PREFIX.as_bytes(), spl_token_metadata_key.as_ref(), mint_key.as_ref()];
+        let (new_metadata_pubkey, _) = Pubkey::find_program_address(metadata_seeds, &spl_token_metadata::id());
+
+        let master_edition_seeds = &[
+            spl_token_metadata::state::PREFIX.as_bytes(),
+            spl_token_metadata_key.as_ref(),
+            mint_key.as_ref(),
+            spl_token_metadata::state::EDITION.as_bytes(),
+        ];
+        let (new_edition_pubkey, _) = Pubkey::find_program_address(master_edition_seeds, &spl_token_metadata::id());
+
+        let tx = Transaction::new_signed_with_payer(
+            &[
+                instruction::claim_pack(
+                    &metaplex_nft_packs::id(),
+                    &self.keypair.pubkey(),
+                    &user_wallet.pubkey(),
+                    master_token_account,
+                    &new_metadata_pubkey,
+                    &new_edition_pubkey,
+                    master_edition_account,
+                    &new_mint.pubkey(),
+                    &new_mint_authority.pubkey(),
+                    master_metadata,
+                    master_mint,
+                    randomness_oracle,
+                    index,
+                )
+            ],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, user_wallet, &new_mint_authority],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
 }

@@ -377,7 +377,7 @@ pub fn claim_pack(
     new_mint_authority: &Pubkey,
     metadata: &Pubkey,
     metadata_mint: &Pubkey,
-    edition: &Pubkey,
+    randomness_oracle: &Pubkey,
     index: u32,
 ) -> Instruction {
     let (proving_process, _) =
@@ -385,10 +385,23 @@ pub fn claim_pack(
     let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
     let (program_authority, _) = find_program_authority(program_id);
 
+    let edition_number = (index as u64).checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE).unwrap();
+    let as_string = edition_number.to_string();
+    let (edition_mark_pda, _) = Pubkey::find_program_address(
+        &[
+            spl_token_metadata::state::PREFIX.as_bytes(),
+            spl_token_metadata::id().as_ref(),
+            metadata_mint.as_ref(),
+            spl_token_metadata::state::EDITION.as_bytes(),
+            as_string.as_bytes(),
+        ],
+        &spl_token_metadata::id(),
+    );
+
     let accounts = vec![
         AccountMeta::new_readonly(*pack_set, false),
         AccountMeta::new(proving_process, false),
-        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(*user_wallet, true),
         AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new(pack_card, false),
         AccountMeta::new(*user_token, false),
@@ -396,12 +409,12 @@ pub fn claim_pack(
         AccountMeta::new(*new_edition, false),
         AccountMeta::new(*master_edition, false),
         AccountMeta::new(*new_mint, false),
-        AccountMeta::new(*new_mint_authority, false),
+        AccountMeta::new(*new_mint_authority, true),
         AccountMeta::new(*metadata, false),
         AccountMeta::new(*metadata_mint, false),
-        AccountMeta::new(*edition, false),
+        AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(randomness_oracle_program::id(), false),
+        AccountMeta::new_readonly(*randomness_oracle, false),
         AccountMeta::new_readonly(spl_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
