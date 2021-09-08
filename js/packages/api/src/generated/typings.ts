@@ -513,6 +513,7 @@ export interface NexusGenFieldTypes {
   };
   Subscription: {
     // field return type
+    auction: NexusGenRootTypes['Auction'] | null; // Auction
     truths: boolean | null; // Boolean
   };
   Vault: {
@@ -745,6 +746,7 @@ export interface NexusGenFieldTypeNames {
   };
   Subscription: {
     // field return type name
+    auction: 'Auction';
     truths: 'Boolean';
   };
   Vault: {

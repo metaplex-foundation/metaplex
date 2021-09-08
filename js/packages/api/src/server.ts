@@ -1,6 +1,6 @@
 import { ApolloServer, ExpressContext } from 'apollo-server-express';
 import { makeSchema } from 'nexus';
-import { MetaplexApiDataSource } from './api';
+import { IBaseContext, MetaplexApiDataSource } from './api';
 import * as types from './schema';
 import path from 'path';
 import { performance } from 'perf_hooks';
@@ -85,7 +85,15 @@ async function startApolloServer() {
   const httpServer = createServer(app);
 
   SubscriptionServer.create(
-    { schema, execute, subscribe },
+    {
+      schema,
+      execute,
+      subscribe,
+      onConnect(context: IBaseContext) {
+        api.initContext(context);
+        return context;
+      },
+    },
     { server: httpServer, path: server.graphqlPath },
   );
 

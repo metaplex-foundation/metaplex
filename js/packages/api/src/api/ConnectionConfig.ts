@@ -40,6 +40,12 @@ interface IConfig {
   configOrCommitment?: GetProgramAccountsConfig | Commitment;
 }
 
+export interface IEvent {
+  prop: keyof MetaState;
+  key: string;
+  value: ParsedAccount<any>;
+}
+
 interface IConfigWithData extends IConfig {
   data: AccountAndPubkey[];
   subscrtionId: number | undefined;
@@ -127,6 +133,44 @@ export class ConnectionConfig {
     this.connection = new Connection(endpoint, 'recent');
   }
   private defer: Promise<void> | undefined;
+
+  private readonly subscribers = new Map<
+    keyof MetaState,
+    ((event: IEvent) => void)[]
+  >();
+
+  awaitChanges(prop: keyof MetaState): Promise<IEvent> {
+    return new Promise<IEvent>(resolve => {
+      const orignalData = this.subscribers.get(prop);
+      const data = orignalData ?? [];
+      data.push(resolve);
+      if (!orignalData) {
+        this.subscribers.set(prop, data);
+      }
+    });
+  }
+  /**
+   * send event to Subscribers
+   */
+  private sendEvent(
+    prop: keyof MetaState,
+    key: string,
+    value: ParsedAccount<any>,
+  ) {
+    console.log('event', prop, key, value);
+    const subscribers = this.subscribers.get(prop);
+    if (!subscribers?.length) {
+      return;
+    }
+    const event: IEvent = {
+      prop,
+      key,
+      value,
+    };
+    subscribers.forEach(send => send(event));
+    // cleanup subscribers
+    this.subscribers.set(prop, []);
+  }
 
   load() {
     if (this.defer) {

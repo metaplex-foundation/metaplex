@@ -364,6 +364,7 @@ type Store {
 }
 
 type Subscription {
+  auction: Auction
   truths: Boolean
 }
 

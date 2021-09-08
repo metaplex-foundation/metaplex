@@ -19,8 +19,13 @@ const ENDPOINTS = [
   },
 ];
 
+export interface IBaseContext {
+  network: string | undefined;
+  api: MetaplexApi;
+}
+
 export class MetaplexApiDataSource<
-  TContext extends { network: string | undefined; api: MetaplexApi } = {
+  TContext extends IBaseContext = {
     network: string | undefined;
     api: MetaplexApi;
   },
@@ -57,12 +62,15 @@ export class MetaplexApiDataSource<
     return Promise.all(this.ENTRIES.map(entry => entry.state));
   }
 
-  // implementation for DataSource of apollo-datasource
-  async initialize(config: DataSourceConfig<TContext>) {
+  initContext(context: TContext) {
     const entry =
-      this.ENTRIES.find(
-        entry => entry.config.name === config.context.network,
-      ) ?? this.ENTRIES[0];
-    config.context.api = entry;
+      this.ENTRIES.find(entry => entry.config.name === context.network) ??
+      this.ENTRIES[0];
+    context.api = entry;
+  }
+
+  // implementation for DataSource of apollo-datasource
+  async initialize({ context }: DataSourceConfig<TContext>) {
+    this.initContext(context);
   }
 }
