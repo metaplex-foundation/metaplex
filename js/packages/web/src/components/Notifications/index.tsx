@@ -1,4 +1,7 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  BellFilled,
+  BellOutlined,
   CheckCircleTwoTone,
   LoadingOutlined,
   PlayCircleOutlined,
@@ -17,7 +20,6 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
@@ -481,13 +483,8 @@ export function Notifications() {
   );
 
   const justContent = (
-    <Popover
-      className="noty-popover"
-      placement="bottomLeft"
-      content={content}
-      trigger="click"
-    >
-      <h1 className="title">M</h1>
+    <Popover placement="bottomLeft" content={content} trigger="click">
+      <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
     </Popover>
   );
 
