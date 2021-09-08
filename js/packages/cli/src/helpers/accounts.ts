@@ -1,4 +1,4 @@
-import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
   CANDY_MACHINE,
   CANDY_MACHINE_PROGRAM_ID,
@@ -9,7 +9,7 @@ import {
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
 import BN from "bn.js";
-import {createConfigAccount} from "./instructions";
+import { createConfigAccount } from "./instructions";
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -29,7 +29,7 @@ export const createConfig = async function (
   },
 ) {
   const configAccount = Keypair.generate();
-  const uuid = configAccount.publicKey.toBase58().slice(0, 6);
+  const uuid = uuidFromConfigPubkey(configAccount.publicKey);
 
   return {
     config: configAccount.publicKey,
@@ -60,6 +60,10 @@ export const createConfig = async function (
     ),
   };
 };
+
+export function uuidFromConfigPubkey(configAccount: PublicKey) {
+  return configAccount.toBase58().slice(0, 6);
+}
 
 export const getTokenWallet = async function (
   wallet: PublicKey,
@@ -125,9 +129,11 @@ export const getMasterEdition = async (
 };
 
 export function loadWalletKey(keypair): Keypair {
-  return Keypair.fromSecretKey(
+  const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
   );
+  console.log(`wallet public key: ${loaded.publicKey}`)
+  return loaded;
 }
 
 export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
@@ -140,5 +146,7 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   });
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
-  return new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
+  const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
+  console.log("program id from anchor", program.programId.toBase58());
+  return program;
 }
