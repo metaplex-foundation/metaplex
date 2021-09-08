@@ -219,16 +219,16 @@ export const HomeView = () => {
   );
 
   // This is from the .cache directory after uploading, copy yours here without "items"
-  const cachedContent = {"program":{"uuid":"DnKRU4","config":"DnKRU47C9gph7MNjbqZk1jVtj8DbZnDdHPNnZfHMajpD"},"items":{"0":{"link":"https://arweave.net/Gs956KEwNwszUPgTOZOZ7QdJZfZ_jVZvLNhPPCActMA","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/lGHSnYywcTSLplqo3DatX2nd4vmXpAMbsOrHoTNL0NY","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/V2A6Zj-yB4OxPiVT3l13mxTbIj00w-vTXbNSTX6_O2g","name":"Baby Sol Punk #2","onChain":true},"3":{"link":"https://arweave.net/EKOT66f4JmnJ7OXYHCIqS-jnO0TSwqJ6fty5bre8zvo","name":"Baby Sol Punk #3","onChain":true},"4":{"link":"https://arweave.net/-LzKnt1mVum2146-Xotjp1rPq5JqwTydIXhqmgBEnPI","name":"Baby Sol Punk #4","onChain":true},"5":{"link":"https://arweave.net/UuAu_S2Ma4pynGrEnE7mjGO9EujnaS0NTLCv6hzAcO0","name":"Baby Sol Punk #5","onChain":true},"6":{"link":"https://arweave.net/JZsFZT-VO7OmJBBx6d95yX1Yra3m0XgrvsAMA6TKLEw","name":"Baby Sol Punk #6","onChain":true},"7":{"link":"https://arweave.net/OlbzHlt0x5bai9E8UtslMC3FGA35Vjxqi1kSrZyZGTw","name":"Baby Sol Punk #7","onChain":true},"8":{"link":"https://arweave.net/XGeU26pS4_8o0tJdlvY6j-2x5NWVSz6WKV5w1dThxFk","name":"Baby Sol Punk #8","onChain":true},"9":{"link":"https://arweave.net/ikduKXrKJsSkmZuSh6HECXFk590Y3wCrsuU8KJn9UCk","name":"Baby Sol Punk #9","onChain":true}}};
+  // const cachedContent = {"program":{"uuid":"DnKRU4","config":"DnKRU47C9gph7MNjbqZk1jVtj8DbZnDdHPNnZfHMajpD"},"items":{"0":{"link":"https://arweave.net/Gs956KEwNwszUPgTOZOZ7QdJZfZ_jVZvLNhPPCActMA","name":"Baby Sol Punk #0","onChain":true},"1":{"link":"https://arweave.net/lGHSnYywcTSLplqo3DatX2nd4vmXpAMbsOrHoTNL0NY","name":"Baby Sol Punk #1","onChain":true},"2":{"link":"https://arweave.net/V2A6Zj-yB4OxPiVT3l13mxTbIj00w-vTXbNSTX6_O2g","name":"Baby Sol Punk #2","onChain":true},"3":{"link":"https://arweave.net/EKOT66f4JmnJ7OXYHCIqS-jnO0TSwqJ6fty5bre8zvo","name":"Baby Sol Punk #3","onChain":true},"4":{"link":"https://arweave.net/-LzKnt1mVum2146-Xotjp1rPq5JqwTydIXhqmgBEnPI","name":"Baby Sol Punk #4","onChain":true},"5":{"link":"https://arweave.net/UuAu_S2Ma4pynGrEnE7mjGO9EujnaS0NTLCv6hzAcO0","name":"Baby Sol Punk #5","onChain":true},"6":{"link":"https://arweave.net/JZsFZT-VO7OmJBBx6d95yX1Yra3m0XgrvsAMA6TKLEw","name":"Baby Sol Punk #6","onChain":true},"7":{"link":"https://arweave.net/OlbzHlt0x5bai9E8UtslMC3FGA35Vjxqi1kSrZyZGTw","name":"Baby Sol Punk #7","onChain":true},"8":{"link":"https://arweave.net/XGeU26pS4_8o0tJdlvY6j-2x5NWVSz6WKV5w1dThxFk","name":"Baby Sol Punk #8","onChain":true},"9":{"link":"https://arweave.net/ikduKXrKJsSkmZuSh6HECXFk590Y3wCrsuU8KJn9UCk","name":"Baby Sol Punk #9","onChain":true}}};
+  // const cachedContent = {"program":{"uuid":"EM1fUL","config":"EM1fULUw9ZB7dAJ8kCknCBw975PsxAqq57t2cpPj2ziR"}};
+  // const cachedContent = {"program":{"uuid":"X7K9jP","config":"X7K9jPHtXdUU4bDKp1n47Tmqe5Az7stBjC3ExvZz2Hq"}}; 
+  // const cachedContent = {"program":{"uuid":"6jk4wx","config":"6jk4wxGGiwntsZZyg6cJZeCe7udYvzTtgLvaYudNtgWc"}};
+  const cachedContent = {"program":{"uuid":"Frwys6","config":"Frwys6zs1TxaBhmwQQGrgSQHCTdxZVaac7vuEARrMeaT"}};
 
   const mint = async ({wallet, connection}: {wallet: WalletContextState, connection: Connection}) => {
     // Set price here to the same you specified when setting up candy mashine
-    const priceDoc = 0.00511;
-    const priceFoush = 0.01022;
-    const priceTotal = 0.01533;
-    const lamportsDoc =  priceDoc * LAMPORTS_PER_SOL;
-    const lamportsFoush =  priceFoush * LAMPORTS_PER_SOL;
-    const lamportsTotal =  priceTotal * LAMPORTS_PER_SOL;
+    // const priceTotal = 1.5;
+    // const lamportsTotal =  priceTotal * LAMPORTS_PER_SOL;
 
     const mint = web3.Keypair.generate();
 
@@ -254,73 +254,62 @@ export const HomeView = () => {
 
       if ((candy as any)?.itemsRedeemed?.toNumber() - (candy as any)?.data?.itemsAvailable?.toNumber() === 0) {
         alert('All NFTs have been sold');
-      } else {
-
-        const metadata = await getMetadata(mint.publicKey);
-        const masterEdition = await getMasterEdition(mint.publicKey);
-        const tx = await anchorProgram.rpc.mintNft({
-          accounts: {
-            config: config,
-            candyMachine: candyMachine,
-            payer: wallet.publicKey,
-            //@ts-ignore
-            wallet: candy.wallet,
-            mint: mint.publicKey,
-            metadata,
-            masterEdition,
-            mintAuthority: wallet.publicKey,
-            updateAuthority: wallet.publicKey,
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-            rent:SYSVAR_RENT_PUBKEY,
-            clock:SYSVAR_CLOCK_PUBKEY,
-          },
-          signers: [mint],
-          instructions: [
-            web3.SystemProgram.createAccount({
-              fromPubkey: wallet.publicKey,
-              newAccountPubkey: mint.publicKey,
-              space: MintLayout.span,
-              lamports: await provider.connection.getMinimumBalanceForRentExemption(
-                MintLayout.span,
-              ),
-              programId: TOKEN_PROGRAM_ID,
-            }),
-            web3.SystemProgram.transfer({
-              fromPubkey: wallet.publicKey,
-              toPubkey: new web3.PublicKey('FPW4NJ82iA1UGoW8FTLYJu47FdG7DZJ4AuuSpYPoMhT5'),
-              lamports: lamportsFoush,
-            }),
-            web3.SystemProgram.transfer({
-              fromPubkey: wallet.publicKey,
-              toPubkey: new web3.PublicKey('JAUPCTCny5dco34NRQQ2JDLCyUot6euTShsAxk83uqWr'),
-              lamports: lamportsDoc,
-            }),
-            Token.createInitMintInstruction(
-              TOKEN_PROGRAM_ID,
-              mint.publicKey,
-              0,
-              wallet.publicKey,
-              wallet.publicKey,
-            ),
-            createAssociatedTokenAccountInstruction(
-              token,
-              wallet.publicKey,
-              wallet.publicKey,
-              mint.publicKey,
-            ),
-            Token.createMintToInstruction(
-              TOKEN_PROGRAM_ID,
-              mint.publicKey,
-              token,
-              wallet.publicKey,
-              [],
-              1,
-            ),
-          ],
-        });
       }
+
+      const metadata = await getMetadata(mint.publicKey);
+      const masterEdition = await getMasterEdition(mint.publicKey);
+      const tx = await anchorProgram.rpc.mintNft({
+        accounts: {
+          config: config,
+          candyMachine: candyMachine,
+          payer: wallet.publicKey,
+          //@ts-ignore
+          wallet: candy.wallet,
+          mint: mint.publicKey,
+          metadata,
+          masterEdition,
+          mintAuthority: wallet.publicKey,
+          updateAuthority: wallet.publicKey,
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          rent:SYSVAR_RENT_PUBKEY,
+          clock:SYSVAR_CLOCK_PUBKEY,
+        },
+        signers: [mint],
+        instructions: [
+          web3.SystemProgram.createAccount({
+            fromPubkey: wallet.publicKey,
+            newAccountPubkey: mint.publicKey,
+            space: MintLayout.span,
+            lamports: await provider.connection.getMinimumBalanceForRentExemption(
+              MintLayout.span,
+            ),
+            programId: TOKEN_PROGRAM_ID,
+          }),
+          Token.createInitMintInstruction(
+            TOKEN_PROGRAM_ID,
+            mint.publicKey,
+            0,
+            wallet.publicKey,
+            wallet.publicKey,
+          ),
+          createAssociatedTokenAccountInstruction(
+            token,
+            wallet.publicKey,
+            wallet.publicKey,
+            mint.publicKey,
+          ),
+          Token.createMintToInstruction(
+            TOKEN_PROGRAM_ID,
+            mint.publicKey,
+            token,
+            wallet.publicKey,
+            [],
+            1,
+          ),
+        ],
+      });
     } 
   }
 
