@@ -1,5 +1,11 @@
+@prelauch-gradient-color: @metaplex-primary-color; //Change for store
+
 .magic-iframe {
   display: none !important;
+}
+
+body {
+  background-color: @black-100;
 }
 
 .mb32 {
@@ -12,7 +18,7 @@
 
 &#pre-launch-layout {
   min-height: 100vh;
-  background: linear-gradient(100.3deg, fade(@metaplex-primary-color, 32%) 8.28%, fade(@metaplex-primary-color, 0%) 45%),
+  background: linear-gradient(100.3deg, fade(@prelauch-gradient-color, 32%) 8.28%, fade(@prelauch-gradient-color, 0%) 45%),
   linear-gradient(235.61deg, fade(@black-100, 0%) 34.14%, @black-100 72%) !important;
 
   .main-asset-banner {
@@ -30,12 +36,11 @@
       width: 100%;
     }
     .right-gradient {
-      background: linear-gradient(180deg, #121212 4.17%, rgba(18, 18, 18, 0) 100%);
+      background: linear-gradient(90deg, #121212 4.17%, rgba(18, 18, 18, 0) 100%);
       position: relative;
       width: 100%;
       height: 100%;
-      transform: rotate(-90deg);
-      filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
+      //filter: drop-shadow(0px 4px 24px rgba(0, 0, 0, 0.2));
     }
   }
 
@@ -111,6 +116,9 @@
           box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
           border-radius: 8px;
           margin-left: 8px;
+          position: relative;
+          top: 0;
+          height: 56px;
           @media (max-width: @mobile-breakpoint) {
             margin-left: 0;
             width: 100%;
@@ -320,7 +328,7 @@
 
   .ant-modal-body {
     border-radius: 12px;
-    background: linear-gradient(180deg, fade(@metaplex-primary-color, 20%) 27.5%, fade(@metaplex-primary-color, 0%) 100%), #2A2A2A;
+    background: linear-gradient(180deg, fade(@prelauch-gradient-color, 20%) 27.5%, fade(@prelauch-gradient-color, 0%) 100%), #2A2A2A;
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -82,8 +82,7 @@ export const PreLaunchView = () => {
   return (
     <Layout id={'pre-launch-layout'}>
       <div className={"main-asset-banner"}>
-        {/*Gradient does not match*/}
-        {/*<div className={"right-gradient"}></div>*/}
+        <div className={"right-gradient"}></div>
       </div>
       <PreLaunchModal
         titleText={textContent.gotEmail}
