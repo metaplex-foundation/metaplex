@@ -352,6 +352,7 @@ export function processAccountsIntoAuctionView(
     if (existingAuctionView && existingAuctionView.totallyComplete) {
       // If totally complete, we know we arent updating anythign else, let's speed things up
       // and only update the two things that could possibly change
+      existingAuctionView.auction = auction;
       existingAuctionView.myBidderPot = bidderPot;
       existingAuctionView.myBidderMetadata = bidderMetadata;
       existingAuctionView.myBidRedemption = bidRedemption;
