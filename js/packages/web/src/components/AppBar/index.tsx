@@ -43,6 +43,11 @@ const UserActions = () => {
                 </Button>
               </Link>
             </Menu.Item>
+            <Menu.Item>
+              <Link to={`/sign-up`}>
+                <Button className="app-btn">Sign up</Button>
+              </Link>
+            </Menu.Item>
           </Menu>
           <div className="divider" />
         </>
