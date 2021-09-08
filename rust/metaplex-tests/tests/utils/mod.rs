@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 mod assert;
+mod edition;
 mod edition_marker;
 mod external_price;
 mod master_edition_v2;
@@ -11,6 +12,7 @@ mod user;
 mod vault;
 
 pub use assert::*;
+pub use edition::*;
 pub use edition_marker::TestEditionMarker;
 pub use external_price::TestExternalPrice;
 pub use master_edition_v2::TestMasterEditionV2;

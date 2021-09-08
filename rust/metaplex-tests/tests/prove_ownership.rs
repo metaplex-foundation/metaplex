@@ -3,7 +3,7 @@ mod utils;
 use metaplex_nft_packs::{
     find_proving_process_program_address,
     instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
-    state::{AccountType, ActionOnProve, DistributionType, ProvingProcess},
+    state::{ActionOnProve, DistributionType, ProvingProcess},
 };
 use solana_program::{program_pack::Pack, system_instruction};
 use solana_program_test::*;
