@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
-import {Button, Input, Layout, Modal, Form} from "antd";
+import { Button, Input, Layout, Modal, Form } from "antd";
 import { ModalProps } from 'antd/lib/modal';
 import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
-import {shortenAddress} from "@oyster/common";
+import { shortenAddress } from "@oyster/common";
 
 const { Content } = Layout;
 
@@ -102,7 +102,7 @@ export const PreLaunchView = () => {
           setSentVisible(false)
           setSubmitted(true)
         }}
-        extraButton={<DiscordButton />}
+        extraButton={<DiscordButton/>}
       />
       <Layout id={'width-layout'}>
         {!verified ? (
@@ -170,7 +170,7 @@ export const PreLaunchView = () => {
             className={"pre-main-content second"}
           >
             <div className={"logo"}>
-              <LogoLink />
+              <LogoLink/>
             </div>
             <div className={"verify-message"}>
               <span>Thanks for verifying</span>
@@ -181,7 +181,7 @@ export const PreLaunchView = () => {
             </div>
             <div className={"pre-input wallet"}>
               <Input value={walletAddress} placeholder={"Wallet address"}
-                     onChange={(val) => setWalletAddress(val.target.value)} />
+                     onChange={(val) => setWalletAddress(val.target.value)}/>
               <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
             </div>
             <div className={"verify-message mb40"}>
@@ -220,18 +220,75 @@ export const PreLaunchView = () => {
             className={"pre-main-content third"}
           >
             <div className={"logo"}>
-              <LogoLink />
+              <LogoLink/>
             </div>
 
             <div className={"verify-message"}>
               <span className={'display-block mb32'}>Your NFT is on the way.</span>
-              <span className={"high-light"} style={{marginLeft: 0}}>{email}</span>
+              <span className={"high-light"} style={{ marginLeft: 0 }}>{email}</span>
               <span className={"high-light"}>{shortenAddress(walletAddress)}</span>
             </div>
-            <DiscordButton />
+            <DiscordButton/>
           </Content>
         )}
       </Layout>
     </Layout>
   );
 };
+
+export const ComingSoonView = () => {
+  return (
+    <Layout id={'pre-launch-layout'}>
+      <div className={"main-asset-banner"}>
+        {/*Gradient does not match*/}
+        {/*<div className={"right-gradient"}></div>*/}
+      </div>
+      <Layout id={'width-layout'}>
+        <Content
+          className={"pre-main-content"}
+        >
+          <div className={"logo"}>
+            <LogoLink/>
+          </div>
+          <div className={"full-height-content"}>
+            <div className={"pre-title"}>
+              {textContent.comingSoonTitle}
+            </div>
+            <div className={"pre-context"}>
+              {textContent.comingSoonTitleDescription}
+            </div>
+            <div className={"pre-input"}>
+              <Form
+                className={'footer-sign-up'}
+                onFinish={(values) => {
+                  console.log(values)
+                }}
+              >
+                <Form.Item
+                  name='email'
+                  rules={[
+                    {
+                      type: 'email', message: 'Input is not a valid email!'
+                    },
+                    { required: true, message: 'Please input your email!' }
+                  ]}
+                  style={{ display: 'flex !important' }}
+                >
+                  <Input
+                    className={'footer-input'}
+                    placeholder="Email Address"
+                    name="email"
+                  />
+                </Form.Item>
+                <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
+              </Form>
+            </div>
+          </div>
+          <div className={"lower-content"}>
+            <DiscordButton/>
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
