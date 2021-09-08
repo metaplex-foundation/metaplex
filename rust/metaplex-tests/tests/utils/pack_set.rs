@@ -136,6 +136,26 @@ impl TestPackSet {
         context.banks_client.process_transaction(tx).await
     }
 
+    pub async fn transfer_pack_authority(
+        &self,
+        context: &mut ProgramTestContext,
+        new_authority: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[instruction::transfer_pack_authority(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &self.authority.pubkey(),
+                &new_authority,
+            )],
+            Some(&context.payer.pubkey()),
+            &[&self.authority, &context.payer],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
     pub async fn edit(
         &self,
         context: &mut ProgramTestContext,
