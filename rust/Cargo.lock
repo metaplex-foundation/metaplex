@@ -1543,6 +1543,7 @@ version = "0.1.0"
 dependencies = [
  "borsh",
  "metaplex-nft-packs",
+ "randomness-oracle-program",
  "solana-program",
  "solana-program-test",
  "solana-sdk",

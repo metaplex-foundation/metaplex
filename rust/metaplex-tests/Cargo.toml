@@ -12,8 +12,9 @@ borsh = "0.9.1"
 spl-token = { version="3.2.0", features = [ "no-entrypoint" ] }
 spl-token-vault = { path = "../token-vault/program", features = [ "no-entrypoint" ] }
 spl-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
+randomness-oracle-program = { git = "https://github.com/atticwip/randomness-oracle", features = [ "no-entrypoint" ] }
+metaplex-nft-packs = { path = "../nft-packs", features = [ "no-entrypoint" ] }
 
 [dev-dependencies]
 solana-program-test = "1.7.11"
 solana-sdk = "1.7.11"
-metaplex-nft-packs = { path = "../nft-packs", features = [ "no-entrypoint" ] }

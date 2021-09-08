@@ -10,6 +10,7 @@ mod pack_set;
 mod pack_voucher;
 mod user;
 mod vault;
+mod randomness_oracle;
 
 pub use assert::*;
 pub use edition::*;
@@ -22,6 +23,7 @@ pub use pack_set::TestPackSet;
 pub use pack_voucher::TestPackVoucher;
 pub use user::*;
 pub use vault::TestVault;
+pub use randomness_oracle::TestRandomnessOracle;
 
 use solana_program_test::*;
 use solana_sdk::{
@@ -33,6 +35,7 @@ use spl_token::state::Mint;
 pub fn nft_packs_program_test<'a>() -> ProgramTest {
     let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
     program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
+    program.add_program("randomness_oracle_program", randomness_oracle_program::id(), None);
     program
 }
 
