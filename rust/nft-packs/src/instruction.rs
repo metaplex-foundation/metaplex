@@ -418,6 +418,7 @@ pub fn claim_pack(
         AccountMeta::new_readonly(spl_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)

@@ -15,6 +15,9 @@ pub use proving_process::*;
 /// Global prefix for program addresses
 pub const PREFIX: &str = "packs";
 
+/// Max count of slots for lag
+pub const MAX_LAG_SLOTS: u64 = 5;
+
 /// Enum representing the account type managed by the program
 #[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
 pub enum AccountType {

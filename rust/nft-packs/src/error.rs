@@ -99,6 +99,10 @@ pub enum NFTPacksError {
     /// Number NFTs to open pack should be greater then zero
     #[error("Number NFTs to open pack should be greater then zero")]
     WrongNumberToOpen,
+
+    /// Random oracle updated long time ago
+    #[error("Random oracle updated long time ago")]
+    RandomOracleOutOfDate,
 }
 
 impl From<NFTPacksError> for ProgramError {
