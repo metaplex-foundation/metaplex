@@ -1,7 +1,11 @@
 import { Form, Input, Button, Checkbox } from 'antd';
+import {useWallet} from '@solana/wallet-adapter-react';
 
 export const SignUpForm = () => {
+  const wallet = useWallet()
   const onFinish = (values: any) => {
+    // @ts-ignore
+    values.wallet = wallet.publicKey.toString();
     console.log('Success:', values);
   };
 
