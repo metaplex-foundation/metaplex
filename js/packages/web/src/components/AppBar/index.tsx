@@ -38,6 +38,9 @@ const UserActions = () => {
               Sell
             </Button>
           </Link>
+          <Link to={`/sign-up`}>
+            <Button className="app-btn">Sign up</Button>
+          </Link>
         </>
       )}
     </>
