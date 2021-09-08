@@ -363,6 +363,10 @@ type Store {
   tokenVaultProgram: PublicKey
 }
 
+type Subscription {
+  truths: Boolean
+}
+
 enum TupleNumericType {
   U8
   U16
