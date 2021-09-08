@@ -1,33 +1,19 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
-import { MintLayout, Token } from '@solana/spl-token';
 
-import { fromUTF8Array, loadCache, parsePrice, saveCache } from './helpers/various';
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
-import {
-  CACHE_PATH,
-  CONFIG_ARRAY_START,
-  CONFIG_LINE_SIZE,
-  EXTENSION_JSON,
-  EXTENSION_PNG,
-  TOKEN_METADATA_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from './helpers/constants';
-import {
-  getCandyMachineAddress,
-  getMasterEdition,
-  getMetadata,
-  getTokenWallet,
-  loadAnchorProgram,
-  loadWalletKey,
-} from './helpers/accounts';
-import { Config } from "./types";
-import { upload } from "./commands/upload";
+import { fromUTF8Array, parsePrice } from './helpers/various';
+import { PublicKey } from '@solana/web3.js';
+import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
+import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
+import { Config } from './types';
+import { upload } from './commands/upload';
+import { loadCache, saveCache } from './helpers/cache';
+import { mint } from "./commands/mint";
+import { signAllUnapprovedMetadata, signMetadata } from "./commands/sign";
 
 program.version('0.0.1');
 
@@ -35,8 +21,7 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 
-program
-  .command('upload')
+programCommand('upload')
   .argument(
     '<directory>',
     'Directory containing images named from 0-n',
@@ -44,36 +29,24 @@ program
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  // .argument('[second]', 'integer argument', (val) => parseInt(val), 1000)
   .option('-n, --number <number>', 'Number of images to upload')
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .action(async (files: string[], options, cmd) => {
     const {number, keypair, env, cacheName} = cmd.opts();
     const parsedNumber = parseInt(number);
 
     const pngFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_PNG)
+      return it.endsWith(EXTENSION_PNG);
     }).length;
     const jsonFileCount = files.filter(it => {
-      return it.endsWith(EXTENSION_JSON)
+      return it.endsWith(EXTENSION_JSON);
     }).length;
 
     if (pngFileCount !== jsonFileCount) {
-      throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`)
+      throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`);
     }
 
     if (parsedNumber < pngFileCount) {
-      throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`)
+      throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
     }
 
     for (; ;) {
@@ -81,25 +54,13 @@ program
       if (successful) {
         break;
       } else {
-        console.log("upload was not successful, rerunning")
+        console.log("upload was not successful, rerunning");
       }
     }
 
   });
 
-program
-  .command('verify')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+programCommand('verify')
   .action(async (directory, cmd) => {
     const {env, keypair, cacheName} = cmd.opts();
 
@@ -137,7 +98,7 @@ program
     }
 
     if (!allGood) {
-      throw new Error(`not all NFTs checked out. rerun the upload script`)
+      throw new Error(`not all NFTs checked out. rerun the upload script`);
     }
 
     const configData = await anchorProgram.account.config.fetch(
@@ -148,27 +109,15 @@ program
 
     console.log(`uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines})`)
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
-      throw new Error(`predefined number of NFTs (${configData.data.maxNumberOfLines}) is smaller than the uploaded one (${lineCount.toNumber()})`)
+      throw new Error(`predefined number of NFTs (${configData.data.maxNumberOfLines}) is smaller than the uploaded one (${lineCount.toNumber()})`);
     } else {
-      console.log("ready to deploy!")
+      console.log("ready to deploy!");
     }
 
     saveCache(cacheName, env, cacheContent);
   });
 
-program
-  .command('create_candy_machine')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+programCommand('create_candy_machine')
   .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
     const {keypair, env, price, cacheName} = cmd.opts();
@@ -209,19 +158,7 @@ program
     console.log(`create_candy_machine Done: ${candyMachine.toBase58()}`);
   });
 
-program
-  .command('set_start_date')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+programCommand('set_start_date')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
     const {keypair, env, date, cacheName} = cmd.opts();
@@ -250,19 +187,7 @@ program
     console.log('set_start_date Done', secondsSinceEpoch, tx);
   });
 
-program
-  .command('update_price')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+programCommand('update_price')
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
     const {keypair, env, cacheName, price} = cmd.opts();
@@ -292,101 +217,55 @@ program
     console.log('update_price Done', lamports, tx);
   });
 
-program
-  .command('mint_one_token')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '--keypair not provided',
-  )
-  .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+programCommand('mint_one_token')
   .action(async (directory, cmd) => {
     const {keypair, env, cacheName} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
-    const mint = Keypair.generate();
-
-    const userKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(userKeyPair, env);
-    const userTokenAccountAddress = await getTokenWallet(
-      userKeyPair.publicKey,
-      mint.publicKey,
-    );
-
     const configAddress = new PublicKey(cacheContent.program.config);
-    const [candyMachineAddress] = await getCandyMachineAddress(
-      configAddress,
-      cacheContent.program.uuid,
-    );
-    const candyMachine = await anchorProgram.account.candyMachine.fetch(
-      candyMachineAddress,
-    );
-
-    const metadataAddress = await getMetadata(mint.publicKey);
-    const masterEdition = await getMasterEdition(mint.publicKey);
-    const tx = await anchorProgram.rpc.mintNft({
-      accounts: {
-        config: configAddress,
-        candyMachine: candyMachineAddress,
-        payer: userKeyPair.publicKey,
-        //@ts-ignore
-        wallet: candyMachine.wallet,
-        mint: mint.publicKey,
-        metadata: metadataAddress,
-        masterEdition,
-        mintAuthority: userKeyPair.publicKey,
-        updateAuthority: userKeyPair.publicKey,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-      },
-      signers: [mint, userKeyPair],
-      instructions: [
-        anchor.web3.SystemProgram.createAccount({
-          fromPubkey: userKeyPair.publicKey,
-          newAccountPubkey: mint.publicKey,
-          space: MintLayout.span,
-          lamports:
-            await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
-              MintLayout.span,
-            ),
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitMintInstruction(
-          TOKEN_PROGRAM_ID,
-          mint.publicKey,
-          0,
-          userKeyPair.publicKey,
-          userKeyPair.publicKey,
-        ),
-        createAssociatedTokenAccountInstruction(
-          userTokenAccountAddress,
-          userKeyPair.publicKey,
-          userKeyPair.publicKey,
-          mint.publicKey,
-        ),
-        Token.createMintToInstruction(
-          TOKEN_PROGRAM_ID,
-          mint.publicKey,
-          userTokenAccountAddress,
-          userKeyPair.publicKey,
-          [],
-          1,
-        ),
-      ],
-    });
+    const tx = await mint(keypair, env, configAddress);
 
     console.log('Done', tx);
   });
 
-program.command('find-wallets').action(() => {
-});
+programCommand('sign')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .option('-m, --metadata <string>', 'base58 metadata account id')
+  .action(async (directory, cmd) => {
+    const {keypair, env, metadata} = cmd.opts();
+
+    await signMetadata(
+      metadata,
+      keypair,
+      env
+    );
+  });
+
+programCommand('sign_all')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const {keypair, env} = cmd.opts();
+
+    await signAllUnapprovedMetadata(
+      keypair,
+      env
+    );
+  });
+
+function programCommand(name: string) {
+  return program
+    .command(name)
+    .option(
+      '-e, --env <string>',
+      'Solana cluster env name',
+      'devnet', //mainnet-beta, testnet, devnet
+    )
+    .option(
+      '-k, --keypair <path>',
+      `Solana wallet location`,
+      '--keypair not provided',
+    )
+    .option('-c, --cache-name <string>', 'Cache file name', 'temp');
+}
 
 program.parse(process.argv);

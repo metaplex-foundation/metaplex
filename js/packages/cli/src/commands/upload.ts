@@ -1,5 +1,4 @@
 import { EXTENSION_PNG, ARWEAVE_PAYMENT_WALLET } from "../helpers/constants";
-import { chunks, loadCache, saveCache, uploadToArweave } from "../helpers/various";
 import path from "path";
 import { createConfig, loadAnchorProgram, loadWalletKey } from "../helpers/accounts";
 import { PublicKey } from "@solana/web3.js";
@@ -8,6 +7,8 @@ import BN from "bn.js";
 import * as anchor from "@project-serum/anchor";
 import { sendTransactionWithRetryWithKeypair } from "../helpers/transactions";
 import FormData from "form-data";
+import { loadCache, saveCache } from "../helpers/cache";
+import fetch from 'node-fetch';
 
 export async function upload(files: string[], cacheName: string, env: string, keypair: string, totalNFTs: number): Promise<boolean> {
   let uploadSuccessful = true;
@@ -215,4 +216,24 @@ export async function upload(files: string[], cacheName: string, env: string, ke
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
+}
+
+async function uploadToArweave(data: FormData, manifest, index) {
+  console.log(`trying to upload ${index}.png: ${manifest.name}`)
+  return await (
+    await fetch(
+      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+      {
+        method: 'POST',
+        // @ts-ignore
+        body: data,
+      },
+    )
+  ).json();
+}
+
+function chunks(array, size) {
+  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+    (_, index) => array.slice(index * size, (index + 1) * size),
+  );
 }

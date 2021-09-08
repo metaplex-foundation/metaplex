@@ -29,7 +29,7 @@ export const createConfig = async function (
   },
 ) {
   const configAccount = Keypair.generate();
-  const uuid = configAccount.publicKey.toBase58().slice(0, 6);
+  const uuid = uuidFromConfigPubkey(configAccount.publicKey);
 
   return {
     config: configAccount.publicKey,
@@ -60,6 +60,10 @@ export const createConfig = async function (
     ),
   };
 };
+
+export function uuidFromConfigPubkey(configAccount: PublicKey) {
+  return configAccount.toBase58().slice(0, 6);
+}
 
 export const getTokenWallet = async function (
   wallet: PublicKey,
