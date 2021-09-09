@@ -4,18 +4,19 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{DistributionType, PackCard, PackSet, ProvingProcess, PREFIX,},
+    state::{DistributionType, PackCard, PackSet, ProvingProcess, MAX_LAG_SLOTS, PREFIX},
     utils::*,
     PRECISION,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
+    msg,
     program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
-use spl_token_metadata::state::{Metadata, MasterEditionV2};
+use spl_token_metadata::state::{MasterEditionV2, Metadata};
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -39,11 +40,14 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let _token_metadata_account = next_account_info(account_info_iter)?;
     let token_program_account = next_account_info(account_info_iter)?;
     let system_program_account = next_account_info(account_info_iter)?;
+    let clock_info = next_account_info(account_info_iter)?;
+    let clock = solana_program::clock::Clock::from_account_info(clock_info)?;
     let _rent = &Rent::from_account_info(rent_account)?;
 
     // Validate owners
     assert_owned_by(pack_set_account, program_id)?;
     assert_owned_by(pack_card_account, program_id)?;
+    assert_owned_by(randomness_oracle_account, &randomness_oracle_program::id())?;
 
     assert_signer(&user_wallet_account)?;
 
@@ -80,6 +84,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     match pack_card.distribution_type {
         DistributionType::FixedNumber => {
+            msg!("Fixed number distribution type");
             // Check if user already open pack
             if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
                 return Err(NFTPacksError::PackIsAlreadyOpen.into());
@@ -93,6 +98,8 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
                 proving_process.claimed_card_editions = 0;
             }
+
+            msg!("Mint NFT for user");
 
             // Mint token
             spl_token_metadata_mint_new_edition_from_master_edition_via_token(
@@ -115,23 +122,30 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
             )?;
         }
         DistributionType::ProbabilityBased => {
+            msg!("Probability based distribution type");
+
             // Calculate probability number
             let probability = pack_card.number_in_pack as u128 * PRECISION
                 / (pack_card.number_in_pack as u128 + PRECISION);
 
             // From oracle
-            let (oracle_random_value, _slot) =
+            let (oracle_random_value, slot) =
                 randomness_oracle_program::read_value(randomness_oracle_account)?;
+
+            if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
+                return Err(NFTPacksError::RandomOracleOutOfDate.into());
+            }
 
             // Convert oracle random byte array to number
             let mut random_value: [u8; 4] = [0u8; 4];
-            random_value.copy_from_slice(&oracle_random_value);
+            random_value.copy_from_slice(&oracle_random_value[..4]);
             let random_value = u32::from_le_bytes(random_value);
 
             let random_value = (random_value as u128) * PRECISION / (u32::MAX as u128);
 
-            // If user win
             if random_value <= probability {
+                msg!("User get NFT");
+
                 proving_process.claimed_card_editions =
                     proving_process.claimed_card_editions.error_increment()?;
 
@@ -155,7 +169,8 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                     &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
                 )?;
             } else {
-                // User lose
+                msg!("User does not get NFT");
+
                 proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
                 proving_process.claimed_card_editions = 0;
             }

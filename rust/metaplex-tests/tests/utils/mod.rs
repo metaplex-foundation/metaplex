@@ -8,6 +8,7 @@ mod metadata;
 mod pack_card;
 mod pack_set;
 mod pack_voucher;
+mod randomness_oracle;
 mod user;
 mod vault;
 
@@ -20,6 +21,7 @@ pub use metadata::TestMetadata;
 pub use pack_card::TestPackCard;
 pub use pack_set::TestPackSet;
 pub use pack_voucher::TestPackVoucher;
+pub use randomness_oracle::TestRandomnessOracle;
 pub use user::*;
 pub use vault::TestVault;
 
@@ -33,6 +35,11 @@ use spl_token::state::Mint;
 pub fn nft_packs_program_test<'a>() -> ProgramTest {
     let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
     program.add_program("spl_token_metadata", spl_token_metadata::id(), None);
+    program.add_program(
+        "randomness_oracle_program",
+        randomness_oracle_program::id(),
+        None,
+    );
     program
 }
 

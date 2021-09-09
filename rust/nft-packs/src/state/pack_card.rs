@@ -98,7 +98,7 @@ impl Pack for PackCard {
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
         let mut src_mut = src;
-        Self::deserialize(&mut src_mut).map_err(|e| {
+        Self::deserialize(&mut src_mut).map_err(|_| {
             msg!("Failed to deserialize");
             ProgramError::InvalidAccountData
         })

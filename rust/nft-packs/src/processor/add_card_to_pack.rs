@@ -50,7 +50,7 @@ pub fn add_card_to_pack(
         max_supply,
         probability_type,
         probability,
-        index,
+        index: _,
     } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;

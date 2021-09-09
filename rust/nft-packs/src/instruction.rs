@@ -385,7 +385,9 @@ pub fn claim_pack(
     let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
     let (program_authority, _) = find_program_authority(program_id);
 
-    let edition_number = (index as u64).checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE).unwrap();
+    let edition_number = (index as u64)
+        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .unwrap();
     let as_string = edition_number.to_string();
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
@@ -418,6 +420,7 @@ pub fn claim_pack(
         AccountMeta::new_readonly(spl_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
