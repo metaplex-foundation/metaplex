@@ -121,7 +121,7 @@ pub mod nft_candy_machine {
         for c in &config.data.creators {
             creators.push(spl_token_metadata::state::Creator {
                 address: c.address,
-                verified: false,
+                verified: true,
                 share: c.share,
             });
         }
@@ -351,6 +351,7 @@ pub mod nft_candy_machine {
                 position_from_right
             );
             if old_value_in_vec != data[my_position_in_vec] {
+                msg!("Increasing count");
                 new_count = new_count
                     .checked_add(1)
                     .ok_or(ErrorCode::NumericalOverflowError)?;
@@ -395,7 +396,7 @@ pub mod nft_candy_machine {
         }
 
         if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
-            != candy_machine.data.items_available as usize
+            < candy_machine.data.items_available as usize
         {
             return Err(ErrorCode::ConfigLineMismatch.into());
         }
@@ -430,7 +431,7 @@ pub struct InitializeCandyMachine<'info> {
 #[derive(Accounts)]
 #[instruction(data: ConfigData)]
 pub struct InitializeConfig<'info> {
-    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() > CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
+    #[account(mut, constraint= config.to_account_info().owner == program_id && config.to_account_info().data_len() >= CONFIG_ARRAY_START+4+(data.max_number_of_lines as usize)*CONFIG_LINE_SIZE + 4 + (data.max_number_of_lines.checked_div(8).ok_or(ErrorCode::NumericalOverflowError)? as usize))]
     config: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0 )]
     authority: AccountInfo<'info>,
@@ -450,7 +451,13 @@ pub struct AddConfigLines<'info> {
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
     config: ProgramAccount<'info, Config>,
-    #[account(mut, has_one = config, has_one = wallet, seeds=[PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(
+        mut,
+        has_one = config,
+        has_one = wallet,
+        seeds = [PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
+        bump = candy_machine.bump,
+    )]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -480,7 +487,12 @@ pub struct MintNFT<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateCandyMachine<'info> {
-    #[account(mut, has_one=authority, seeds=[PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes(), &[candy_machine.bump]])]
+    #[account(
+        mut,
+        has_one = authority,
+        seeds = [PREFIX.as_bytes(), candy_machine.config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
+        bump = candy_machine.bump
+    )]
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(signer)]
     authority: AccountInfo<'info>,
@@ -610,6 +622,6 @@ pub enum ErrorCode {
     CandyMachineEmpty,
     #[msg("Candy machine is not live yet!")]
     CandyMachineNotLiveYet,
-    #[msg("Number of config lines must match items available")]
+    #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
 }

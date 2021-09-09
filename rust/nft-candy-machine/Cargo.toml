@@ -15,8 +15,7 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.13.2"
+anchor-lang = "0.14.0"
 arrayref = "0.3.6"
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 spl-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
-
