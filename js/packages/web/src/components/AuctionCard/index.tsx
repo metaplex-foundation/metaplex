@@ -268,7 +268,7 @@ export const AuctionCard = ({
     auctionView.auctionManager.participationConfig?.fixedPrice ||
     0;
   const participationOnly =
-    (auctionView.auctionManager.instance.info as AuctionManagerV1).settings?.winningConfigs?.length === 0;
+    auctionView.auctionManager.numWinners.toNumber() === 0;
 
   const minBid =
     tickSize &&
