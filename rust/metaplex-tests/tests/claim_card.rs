@@ -163,21 +163,22 @@ async fn success() {
 
     let hardcoded_randomness_oracle = Keypair::new();
 
-    test_pack_set.claim_pack(
-        &mut context,
-        &edition_authority,
-        &test_pack_card.token_account.pubkey(),
-        &card_master_edition.pubkey,
-        &new_mint,
-        &new_mint_token_acc,
-        &edition_authority,
-        &card_metadata.pubkey,
-        &card_master_edition.mint_pubkey,
-        &hardcoded_randomness_oracle.pubkey(),
-        1,
-    )
-    .await
-    .unwrap();
+    test_pack_set
+        .claim_pack(
+            &mut context,
+            &edition_authority,
+            &test_pack_card.token_account.pubkey(),
+            &card_master_edition.pubkey,
+            &new_mint,
+            &new_mint_token_acc,
+            &edition_authority,
+            &card_metadata.pubkey,
+            &card_master_edition.mint_pubkey,
+            &hardcoded_randomness_oracle.pubkey(),
+            1,
+        )
+        .await
+        .unwrap();
 
     let proving_process_data = get_account(&mut context, &proving_process_key).await;
     let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();

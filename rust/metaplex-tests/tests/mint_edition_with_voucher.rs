@@ -4,8 +4,11 @@ use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
     state::ActionOnProve,
 };
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
 async fn setup() -> (
@@ -121,4 +124,43 @@ async fn success() {
         .unwrap();
 
     assert!(!is_empty_account(&mut context, &test_new_metadata.pubkey).await);
+}
+
+#[tokio::test]
+async fn fail_invalid_token_account() {
+    let (
+        mut context,
+        test_pack_set,
+        test_metadata,
+        test_new_metadata,
+        mut test_pack_voucher,
+        test_master_edition,
+        _user,
+    ) = setup().await;
+
+    let payer_pubkey = context.payer.pubkey();
+
+    // Change PackVoucher token account to fake one
+    test_pack_voucher.token_account = Keypair::new();
+
+    let result = test_pack_set
+        .mint_edition_with_voucher(
+            &mut context,
+            &test_metadata,
+            &test_pack_voucher,
+            &test_new_metadata,
+            &test_master_edition,
+            &payer_pubkey,
+            &payer_pubkey,
+            0,
+        )
+        .await;
+
+    assert_transport_error!(
+        result.unwrap_err(),
+        TransportError::TransactionError(TransactionError::InstructionError(
+            0,
+            InstructionError::InvalidArgument
+        ))
+    );
 }
