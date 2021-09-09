@@ -8,6 +8,7 @@ import BN from 'bn.js';
 import { MintLayout, Token } from '@solana/spl-token';
 
 import {
+  asyncForEach,
   chunks,
   fromUTF8Array,
   loadCache,
@@ -129,9 +130,7 @@ program
     let config = cacheContent.program.config
       ? new PublicKey(cacheContent.program.config)
       : undefined;
-
-    for (let i = 0; i < SIZE; i++) {
-      const image = images[i];
+    await asyncForEach(images, async (image, i) => {
       const imageName = path.basename(image);
       const index = imageName.replace(EXTENSION_PNG, '');
 
@@ -235,7 +234,7 @@ program
           }
         }
       }
-    }
+    });
 
     let updateSuccessful = true;
     const keys = Object.keys(cacheContent.items);
