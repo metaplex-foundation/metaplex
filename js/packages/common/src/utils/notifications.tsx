@@ -6,7 +6,7 @@ export function notify({
   message = '',
   description = undefined as any,
   txid = '',
-  type = '',
+  type = 'info',
   placement = 'bottomLeft',
 }) {
   if (txid) {
