@@ -6,7 +6,7 @@ export const getUser = async (email: string) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getWalletAddress = async (user: any) => {
-  return '';
+  return 'wallet';
 };
 
 export const saveUser = async (

@@ -78,12 +78,12 @@ export const PreLaunchView = () => {
 
   const verifyUser = async () => {
     if (auth.loggedIn) {
-      setVerified(true)
+      setLoadingUser(true)
       const verifiedEmail = (await auth.magic.user.getMetadata()).email;
       setEmail(verifiedEmail)
-      setLoadingUser(true)
       const user = await getUser(verifiedEmail)
-      if(user){
+      setVerified(true)
+      if (user) {
         const wallet = await getWalletAddress(user)
         setWalletAddress(wallet)
         await handleSaveWallet(verifiedEmail, wallet)
@@ -135,7 +135,7 @@ export const PreLaunchView = () => {
                 {textContent.titleDescription}
               </div>
               <div className={"pre-input"}>
-                {auth.loading ? (
+                {auth.loading || loadingUser ? (
                   <Spin />
                 ) : (
                   <Form

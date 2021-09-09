@@ -373,7 +373,7 @@ body {
   padding: 20px;
   background-size: cover;
   margin-top: 32px;
-  color: @black-100;
+  color: @black-100 !important;
   font-weight: 600;
   font-size: 16px;
   line-height: 17px;
@@ -381,6 +381,9 @@ body {
 
   text-align: center;
   letter-spacing: -0.02em;
+  &:link, &:active, &:visited {
+    color: @black-100 !important;
+  }
 
   span {
     background-image: url("/preLaunch/discord.svg");
