@@ -86,7 +86,9 @@ export const PreLaunchView = () => {
       if (user) {
         const wallet = await getWalletAddress(user)
         setWalletAddress(wallet)
-        await handleSaveWallet(verifiedEmail, wallet)
+        setSentVisible(true)
+        setSubmitted(true)
+        auth.logout()
       }
       setLoadingUser(false)
     }
