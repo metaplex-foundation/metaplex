@@ -3,7 +3,8 @@ pub mod utils;
 use {
     crate::utils::{
         assert_data_valid, assert_derivation, assert_initialized, assert_owned_by,
-        create_or_allocate_account_raw, spl_token_transfer, TokenTransferParams,
+        assert_valid_amount, create_or_allocate_account_raw, spl_token_transfer,
+        TokenTransferParams,
     },
     anchor_lang::{
         prelude::*,
@@ -12,18 +13,23 @@ use {
     },
     anchor_spl::token::{self, Mint, TokenAccount},
     spl_token::{instruction::initialize_account2, state::Account},
+    std::str::FromStr,
 };
 
 pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str = "lottery";
+pub const ASSOCIATED_TOKEN_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
 pub mod fair_launch {
 
-    use anchor_lang::solana_program::program::invoke_signed;
+    use anchor_lang::solana_program::{
+        program::{invoke, invoke_signed},
+        system_instruction,
+    };
 
     use super::*;
     pub fn initialize_fair_launch<'info>(
@@ -164,10 +170,20 @@ pub mod fair_launch {
     pub fn update_fair_launch_lottery_bitmap(
         ctx: Context<UpdateFairLaunchLotteryBitmap>,
         index: u32,
-        bytes: Vec<u8>
+        bytes: Vec<u8>,
     ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+
+        if fair_launch.data.phase_three_start.is_some() {
+            return Err(ErrorCode::CannotUpdateFairLaunchLotteryOncePhaseThreeLocked.into());
+        }
+
+        if fair_launch.number_tickets_un_seqed > 0 {
+            return Err(ErrorCode::CannotSetFairLaunchLotteryUntilAllTicketsAreSequenced.into());
+        }
+
         let fair_launch_lottery_bitmap = &mut ctx.accounts.fair_launch_lottery_bitmap;
-       
+
         let fair_launch_lottery_bitmap_info = fair_launch_lottery_bitmap.to_account_info();
         let mut lottery_data = fair_launch_lottery_bitmap_info.data.borrow_mut();
         let mut number_of_ones_changed: i64 = 0;
@@ -180,7 +196,12 @@ pub mod fair_launch {
                 let mask = u8::pow(2, bit_position as u32);
                 let curr_byte_masked = curr_byte | mask;
                 let byte_masked = byte | mask;
-                msg!("Mask is {} and this led to curr byte masked {} and new byte masked {}", mask, curr_byte_masked, byte_masked);
+                msg!(
+                    "Mask is {} and this led to curr byte masked {} and new byte masked {}",
+                    mask,
+                    curr_byte_masked,
+                    byte_masked
+                );
                 if curr_byte_masked > byte_masked {
                     msg!("Subtracting 1");
                     number_of_ones_changed -= 1; // we went from a 1 to a 0
@@ -201,12 +222,19 @@ pub mod fair_launch {
         // Dont convert bitmap_ones to i64 because in conversion you lose bit of information to sign...
         // better to be verbose and stick to u64...what if its very large number?
         if number_of_ones_changed < 0 {
-            new_number_of_ones = fair_launch_lottery_bitmap.bitmap_ones.checked_sub((-number_of_ones_changed) as u64).ok_or(ErrorCode::NumericalOverflowError)?;
+            new_number_of_ones = fair_launch_lottery_bitmap
+                .bitmap_ones
+                .checked_sub((-number_of_ones_changed) as u64)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
         } else {
-            new_number_of_ones = fair_launch_lottery_bitmap.bitmap_ones.checked_add(number_of_ones_changed as u64).ok_or(ErrorCode::NumericalOverflowError)?;
+            new_number_of_ones = fair_launch_lottery_bitmap
+                .bitmap_ones
+                .checked_add(number_of_ones_changed as u64)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
         }
 
-        lottery_data[FAIR_LAUNCH_LOTTERY_SIZE-4..FAIR_LAUNCH_LOTTERY_SIZE].copy_from_slice(&new_number_of_ones.to_le_bytes());
+        lottery_data[FAIR_LAUNCH_LOTTERY_SIZE - 4..FAIR_LAUNCH_LOTTERY_SIZE]
+            .copy_from_slice(&new_number_of_ones.to_le_bytes());
 
         Ok(())
     }
@@ -215,10 +243,143 @@ pub mod fair_launch {
         ctx: Context<CreateFairLaunchLotteryBitmap>,
         bump: u8,
     ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let clock = &mut ctx.accounts.clock;
+
+        if clock.unix_timestamp < fair_launch.data.phase_two_end {
+            return Err(ErrorCode::CannotCreateFairLaunchLotteryBitmapBeforePhaseTwoEnd.into());
+        }
+
         let fair_launch_lottery_bitmap = &mut ctx.accounts.fair_launch_lottery_bitmap;
         fair_launch_lottery_bitmap.fair_launch = ctx.accounts.fair_launch.key();
         fair_launch_lottery_bitmap.bump = bump;
 
+        Ok(())
+    }
+
+    pub fn purchase_ticket<'info>(
+        ctx: Context<'_, '_, '_, 'info, PurchaseTicket<'info>>,
+        bump: u8,
+        amount: u64,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
+        let buyer = &ctx.accounts.buyer;
+        let clock = &ctx.accounts.clock;
+
+        if clock.unix_timestamp < fair_launch.data.phase_one_start
+            || clock.unix_timestamp > fair_launch.data.phase_one_end
+        {
+            return Err(ErrorCode::CannotBuyTicketsOutsidePhaseOne.into());
+        }
+
+        assert_valid_amount(&fair_launch.data, amount)?;
+
+        fair_launch_ticket.fair_launch = fair_launch.key();
+        fair_launch_ticket.buyer = *buyer.key;
+        fair_launch_ticket.amount = amount;
+        fair_launch_ticket.state = FairLaunchTicketState::NoSequenceStruct; // Be verbose even though it's 0
+        fair_launch_ticket.bump = bump;
+        fair_launch_ticket.seq = fair_launch.number_tickets_sold_in_phase_1;
+
+        fair_launch.number_tickets_sold_in_phase_1 = fair_launch
+            .number_tickets_sold_in_phase_1
+            .checked_add(1)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
+        fair_launch.number_tickets_un_seqed = fair_launch.number_tickets_un_seqed.checked_add(1).ok_or(ErrorCode::NumericalOverflowError)?;
+
+        if let Some(treasury_mint) = fair_launch.treasury_mint {
+            let treasury_mint_info = &ctx.remaining_accounts[0];
+            let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
+
+            let buyer_token_account_info = &ctx.remaining_accounts[1];
+            let buyer_token_account: Account = assert_initialized(&buyer_token_account_info)?;
+
+            let transfer_authority_info = &ctx.remaining_accounts[2];
+
+            let token_program = &ctx.remaining_accounts[3];
+
+            if token_program.key != &spl_token::id() {
+                return Err(ErrorCode::InvalidTokenProgram.into());
+            }
+
+            if *treasury_mint_info.key != treasury_mint {
+                return Err(ErrorCode::TreasuryMintMismatch.into());
+            }
+
+            assert_owned_by(treasury_mint_info, &token_program.key)?;
+            assert_owned_by(buyer_token_account_info, &token_program.key)?;
+
+            // assert is an ATA
+            assert_derivation(
+                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                buyer_token_account_info,
+                &[
+                    buyer.key.as_ref(),
+                    token_program.key.as_ref(),
+                    &treasury_mint_info.key.as_ref(),
+                ],
+            )?;
+
+            if buyer_token_account.amount < amount {
+                return Err(ErrorCode::NotEnoughTokens.into());
+            }
+
+            spl_token_transfer(TokenTransferParams {
+                source: buyer_token_account_info.clone(),
+                destination: ctx.accounts.treasury.clone(),
+                authority: transfer_authority_info.clone(),
+                authority_signer_seeds: &[],
+                token_program: token_program.clone(),
+                amount: amount,
+            })?;
+        } else {
+            if buyer.lamports() < amount {
+                return Err(ErrorCode::NotEnoughSOL.into());
+            }
+
+            invoke(
+                &system_instruction::transfer(buyer.key, ctx.accounts.treasury.key, amount),
+                &[
+                    buyer.clone(),
+                    ctx.accounts.treasury.clone(),
+                    ctx.accounts.system_program.clone(),
+                ],
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn create_ticket_seq<'info>(
+        ctx: Context<CreateTicketSeq<'info>>,
+        bump: u8,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+
+        let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
+        let fair_launch_ticket_seq_lookup = &mut ctx.accounts.fair_launch_ticket_seq_lookup;
+        
+        if fair_launch_ticket.state.clone() as u8 != FairLaunchTicketState::NoSequenceStruct as u8 {
+            // Due to anchor this should never happen but if it does, i want to be sure.
+            return Err(ErrorCode::SeqAlreadyExists.into())
+        }
+        // Literally duplicative but I am paranoid of Anchor not doing this right.
+        assert_derivation(
+            ctx.program_id,
+            &fair_launch_ticket_seq_lookup.to_account_info(),
+            &[
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                &fair_launch_ticket.seq.to_le_bytes(),
+            ],
+        )?;
+        fair_launch_ticket_seq_lookup.bump = bump;
+        fair_launch_ticket_seq_lookup.fair_launch_ticket = fair_launch_ticket.key();
+
+        fair_launch_ticket.state = FairLaunchTicketState::Unpunched;
+        fair_launch.number_tickets_un_seqed = fair_launch.number_tickets_un_seqed.checked_sub(1).ok_or(ErrorCode::NumericalOverflowError)?;
         Ok(())
     }
 }
@@ -240,6 +401,8 @@ pub struct InitializeFairLaunch<'info> {
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
+    // Remaining accounts in this order if using spl tokens for payment:
+    // [optional] treasury mint
 }
 
 /// Can only update fair launch before phase 1 start.
@@ -277,6 +440,7 @@ pub struct CreateFairLaunchLotteryBitmap<'info> {
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
+    clock: Sysvar<'info, Clock>,
 }
 
 /// Can only set the fair launch lottery bitmap after phase 2 has ended.
@@ -300,14 +464,33 @@ pub struct PurchaseTicket<'info> {
     treasury: AccountInfo<'info>,
     #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SIZE)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &fair_launch.number_tickets_sold_in_phase_1.to_le_bytes()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SEQ_SIZE)]
-    fair_launch_ticket_seq_lookup: ProgramAccount<'info, FairLaunchTicket>,
     #[account(mut, signer, constraint= (treasury.owner == &spl_token::id() && buyer.owner == &spl_token::id()) || (treasury.owner != &spl_token::id() && buyer.data_is_empty() && buyer.lamports() > 0) )]
     buyer: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
-    #[account(address = spl_token::id())]
-    token_program: AccountInfo<'info>,
+    #[account(address = system_program::ID)]
+    system_program: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
+    clock: Sysvar<'info, Clock>,
+    // Remaining accounts in this order if using spl tokens for payment:
+    // [Writable/optional] treasury mint
+    // [Writable/optional] buyer token account (must be ata)
+    // [optional] transfer authority to transfer amount from buyer token account
+    // [optional] token program
+}
+
+// permissionless, anybody can make this if for some reason the UI messes up.
+#[derive(Accounts)]
+#[instruction(bump: u8)]
+pub struct CreateTicketSeq<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), fair_launch_ticket.buyer.as_ref()], bump=fair_launch_ticket.bump, has_one=fair_launch)]
+    fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
+    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &fair_launch_ticket.seq.to_le_bytes()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SEQ_SIZE)]
+    fair_launch_ticket_seq_lookup: ProgramAccount<'info, FairLaunchTicketSeqLookup>,
+    #[account(mut, signer)]
+    payer: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
@@ -328,11 +511,10 @@ pub struct AdjustTicket<'info> {
     treasury: AccountInfo<'info>,
     #[account(mut, signer)]
     buyer: AccountInfo<'info>,
-    #[account(address = spl_token::id())]
-    token_program: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
 }
+
 #[derive(Accounts)]
 pub struct PunchTicket<'info> {
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()], bump=fair_launch_ticket.bump, has_one=buyer, has_one=fair_launch)]
@@ -371,6 +553,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 9 + // phase three end
 8 + // tick size
 8 + // number of tokens
+8 + // number of tickets unseq'ed
 8 + // number of tickets sold in phase 1
 8 + // number of tickets remaining at the end in phase 2
 8 + // number of tickets punched in phase 3
@@ -387,7 +570,8 @@ pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
 
 pub const FAIR_LAUNCH_TICKET_SEQ_SIZE: usize = 8 + //discriminator
 32 + // fair launch ticket reverse lookup
-8; //seq
+8 + //seq
+1; // bump
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct FairLaunchData {
@@ -413,6 +597,7 @@ pub struct FairLaunch {
     pub treasury_bump: u8,
     pub token_mint_bump: u8,
     pub data: FairLaunchData,
+    pub number_tickets_un_seqed: u64,
     pub number_tickets_sold_in_phase_1: u64,
     pub number_tickets_remaining_in_phase_2: u64,
     pub number_tickets_punched_in_phase_3: u64,
@@ -430,6 +615,7 @@ pub struct FairLaunchLotteryBitmap {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum FairLaunchTicketState {
+    NoSequenceStruct,
     Unpunched,
     Punched,
     Withdrawn,
@@ -449,6 +635,7 @@ pub struct FairLaunchTicket {
 pub struct FairLaunchTicketSeqLookup {
     pub fair_launch_ticket: Pubkey,
     pub seq: u64,
+    pub bump: u8,
 }
 
 #[error]
@@ -485,4 +672,24 @@ pub enum ErrorCode {
     TreasuryAlreadyExists,
     #[msg("The number of ones in the lottery must equal the number of tickets sold in phase 1")]
     LotteryBitmapOnesMustEqualNumberOfTicketsSold,
+    #[msg("Amount must be between price ranges and at a tick mark")]
+    InvalidPurchaseAmount,
+    #[msg("Treasury mint does not match")]
+    TreasuryMintMismatch,
+    #[msg("Not enough tokens to pay for this minting")]
+    NotEnoughTokens,
+    #[msg("Not enough SOL to pay for this minting")]
+    NotEnoughSOL,
+    #[msg("Sent up invalid token program")]
+    InvalidTokenProgram,
+    #[msg("Cannot buy tickets outside phase one")]
+    CannotBuyTicketsOutsidePhaseOne,
+    #[msg("Cannot create the bitmap before phase two end")]
+    CannotCreateFairLaunchLotteryBitmapBeforePhaseTwoEnd,
+    #[msg("Cannot update fair launch lottery once phase three locked")]
+    CannotUpdateFairLaunchLotteryOncePhaseThreeLocked,
+    #[msg("Seq already exists")]
+    SeqAlreadyExists,
+    #[msg("Cannot set lottery until all tickets have sequence lookups using permissionless crank endpoint. Use CLI to make.")]
+    CannotSetFairLaunchLotteryUntilAllTicketsAreSequenced
 }

@@ -117,6 +117,19 @@ pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
     Ok(())
 }
 
+pub fn assert_valid_amount(data: &FairLaunchData, amount: u64) -> ProgramResult {
+    
+    if amount < data.price_range_start || amount > data.price_range_end {
+        return Err(ErrorCode::InvalidPurchaseAmount.into())
+    }
+
+    if amount.checked_rem(data.tick_size).is_some() {
+        return Err(ErrorCode::InvalidPurchaseAmount.into())
+    }
+
+    Ok(())
+}
+
 pub fn assert_derivation(
     program_id: &Pubkey,
     account: &AccountInfo,
