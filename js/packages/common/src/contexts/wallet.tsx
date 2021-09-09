@@ -66,7 +66,7 @@ export const WalletModal: FC = () => {
           marginBottom: 10,
         }}
       >
-        BabySolPunks
+        BSP
       </div>
 
       <h2>{selected ? 'Change provider' : 'Welcome to BabySolPunks'}</h2>
