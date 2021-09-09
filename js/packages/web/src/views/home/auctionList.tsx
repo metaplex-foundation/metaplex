@@ -25,7 +25,7 @@ export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [
     ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow).filter((auction) => !auction.myBidderPot?.info.emptied)
+    ...useAuctions(AuctionViewState.BuyNow).filter((auction) => Number(auction.myBidderPot?.info.emptied) === 0)
   ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
