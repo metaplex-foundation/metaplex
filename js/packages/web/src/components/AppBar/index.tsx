@@ -113,13 +113,13 @@ export const AppBar = () => {
 
   return (
     <>
-      <div className="app-left app-bar-box">
+      {/* <div className="app-left app-bar-box">
         {window.location.hash !== '#/analytics' && <Notifications />}
         <div className="divider" />
         <MetaplexMenu />
-      </div>
+      </div> */}
       {connected ? (
-        <div className="app-right app-bar-box">
+        <div className="app-right app-bar-box" style={{justifyContent: 'right'}} >
           <UserActions />
           <CurrentUserBadge
             showBalance={false}

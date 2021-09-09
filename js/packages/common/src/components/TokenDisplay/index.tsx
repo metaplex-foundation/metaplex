@@ -31,7 +31,8 @@ export const TokenDisplay = (props: {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          // justifyContent: 'space-between',
+          justifyContent: 'right',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>

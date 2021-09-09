@@ -612,7 +612,7 @@ export const AuctionCard = ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '0 10px',
-                  justifyContent: 'space-between',
+                  justifyContent: 'right',
                   fontWeight: 700,
                 }}
               >

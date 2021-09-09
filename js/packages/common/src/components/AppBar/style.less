@@ -1,6 +1,5 @@
 .App-Bar {
   -webkit-box-pack: justify;
-  justify-content: space-between !important;
   -webkit-box-align: center;
   align-items: center;
   flex-direction: row;
@@ -53,5 +52,46 @@
   flex-direction: row;
   -webkit-box-align: center;
   align-items: center;
-  justify-self: flex-end;
+  justify-content: right;
+  // justify-self: flex-end;
+  justify-self: right;
+}
+
+.App-Bar2 {
+  justify-content: right;
+  -webkit-box-pack: justify;
+  -webkit-box-align: center;
+  align-items: center;
+  flex-direction: row;
+  display: flex;
+  width: 100%;
+  top: 0px;
+  position: relative;
+  padding: 1rem;
+  z-index: 2;
+
+  .ant-menu-horizontal {
+    border-bottom-color: transparent;
+    background-color: transparent;
+    line-height: inherit;
+    font-size: 16px;
+    margin: 0 10px;
+
+    .ant-menu-item {
+      margin: 0 10px;
+      color: lightgrey;
+      height: 35px;
+      line-height: 35px;
+      border-width: 0px !important;
+    }
+
+    .ant-menu-item:hover {
+      color: white;
+      border-width: 0px !important;
+    }
+
+    .ant-menu-item-selected {
+      font-weight: bold;
+    }
+  }
 }

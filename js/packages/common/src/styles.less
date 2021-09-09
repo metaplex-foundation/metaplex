@@ -4,3 +4,191 @@
 @import './components/Identicon/style.less';
 @import './components/MetaplexModal/index.less';
 @import './components/CurrentUserBadge/styles.less';
+
+  
+  @font-face {
+    font-family: early_gameboy;
+    src: url(/webfontkit-20210908-001042/early_gameboy-webfont.woff);
+  }
+  
+  body {
+    margin: 0;
+    font-size: 18px;
+    text-align: center;
+    font-family: early_gameboy;
+    background-color: #96eeff;
+    color: white;
+  }
+
+  .gif {
+    width:auto;
+    text-align:center;
+    margin-top: 60px;
+}
+  .babygif {
+      width:11%;
+      height:11%;
+      border: 1px solid black;
+      border-radius: 10px;
+}
+
+  .socials {
+      width: 40px;
+      height: 40px;
+      padding-top: 25px;
+      padding-bottom: 20px;
+      padding-right: 10px;
+      padding-left: 15px;
+  }
+
+  .socials2 {
+    width: 40px;
+    height: 40px;
+    padding-top: 25px;
+    padding-bottom: 20px;
+    z-index: 0;
+  }
+
+  .heading {
+    font-size: 30px;
+    text-align: center;
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+     0   -1px 0 #000,
+     1px -1px 0 #000,
+     1px  0   0 #000,
+     1px  1px 0 #000,
+     0    1px 0 #000,
+    -1px  1px 0 #000,
+    -1px  0   0 #000;
+  }
+
+  .desc {
+    font-size: 14px;
+    padding-top: 5px;
+    text-align: center;
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+     0   -1px 0 #000,
+     1px -1px 0 #000,
+     1px  0   0 #000,
+     1px  1px 0 #000,
+     0    1px 0 #000,
+    -1px  1px 0 #000,
+    -1px  0   0 #000;
+  }
+
+  .mint-left {
+    font-size: 18px;
+    padding-top: 30px;
+    text-align: center;
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+     0   -1px 0 #000,
+     1px -1px 0 #000,
+     1px  0   0 #000,
+     1px  1px 0 #000,
+     0    1px 0 #000,
+    -1px  1px 0 #000,
+    -1px  0   0 #000;
+  }
+
+  .remaining {
+    font-size: 12px;
+    padding-top: 0px;
+    text-align: center;
+    color: white;
+    text-shadow:
+    -1px -1px 0 #000,
+     0   -1px 0 #000,
+     1px -1px 0 #000,
+     1px  0   0 #000,
+     1px  1px 0 #000,
+     0    1px 0 #000,
+    -1px  1px 0 #000,
+    -1px  0   0 #000;
+  }
+
+  
+  .button {background-image: linear-gradient(to right, #FF57EE 0%, #00FFAF  51%, #FF57EE  100%)}
+  .button {
+    margin: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 15px 35px;
+    text-align: center;
+    text-transform: uppercase;
+    transition: 0.5s;
+    background-size: 200% auto;
+    color: white;            
+    border: 1px solid black;
+    font-size: 14px;
+    border-radius: 10px;
+    display: block;
+    font-family: early_gameboy;
+    text-shadow:
+    -1px -1px 0 #000,
+     0   -1px 0 #000,
+     1px -1px 0 #000,
+     1px  0   0 #000,
+     1px  1px 0 #000,
+     0    1px 0 #000,
+    -1px  1px 0 #000,
+    -1px  0   0 #000;
+  }
+
+  .button:hover {
+    background-position: right center; 
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  #navbar {
+    overflow: auto;
+    background-color: #7edff3;
+  }
+  
+  #navbar a {
+    float: left;
+    display: block;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 26px 16px;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  
+  #navbar a:hover {
+    color: #8b83fe;
+  }
+
+  #navbar a.active {
+    color: #8b83fe;
+  }
+  
+  .content {
+    padding: 16px;
+  }
+  
+  .sticky {
+    position: fixed;
+    top: 0;
+    width: 100%;
+  }
+  
+  .sticky + .content {
+    padding-top: 60px;
+  }
+
+  .footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #7edff3;
+    color: white;
+    text-align: center;
+  }

@@ -12,6 +12,7 @@ import { Layout, Button } from 'antd';
 import React, { createContext, useCallback, useContext }  from 'react';
 // import { useConnection, useWalletModal } from '@oyster/common';
 import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
+// import twitter from '../../public/img/twitter.png';
 
 import { Provider, Program, web3 } from '@project-serum/anchor';
 import { clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
@@ -311,9 +312,21 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <Button type="primary" className="app-btn" onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
-        {!wallet.connected ? 'Connect' : 'Mint'} 
+      <Button type="primary" className="button" style={{ fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
+        {!wallet.connected ? 'Connect' : 'Adopt (1.5 SOL)'} 
       </Button>{' '}
+      <RenderFooter></RenderFooter>
     </Layout>
+  );
+};
+
+const RenderFooter = () => {
+  return (
+    <>
+    <div className={"footer"} style={{margin:0}}>
+        <a href="https://twitter.com/BabySolPunks" target="_blank"> <img src="https://i.imgur.com/teeoetV.png" className={"socials2"}></img></a>
+        <a href="https://discord.gg/BabySolPunks" target="_blank"> <img src="/img/discord.webp" className={"socials"}></img></a>
+    </div>
+    </>
   );
 };
