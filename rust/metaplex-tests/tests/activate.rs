@@ -1,11 +1,16 @@
 mod utils;
 
 use metaplex_nft_packs::{
+    error::NFTPacksError,
     instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
     state::{ActionOnProve, DistributionType, PackSetState},
 };
+use num_traits::FromPrimitive;
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
 async fn setup() -> (
@@ -150,4 +155,15 @@ async fn success() {
         test_pack_set.get_data(&mut context).await.pack_state,
         PackSetState::Activated
     );
+}
+
+#[tokio::test]
+async fn fail_invalid_state() {
+    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) = setup().await;
+    test_pack_set.activate(&mut context).await.unwrap();
+
+    context.warp_to_slot(3).unwrap();
+
+    let result = test_pack_set.activate(&mut context).await;
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::PackAlreadyActivated);
 }
