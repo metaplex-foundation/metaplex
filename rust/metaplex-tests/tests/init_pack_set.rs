@@ -4,7 +4,9 @@ use metaplex_nft_packs::{
     instruction,
     state::{AccountType, PackSetState},
 };
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
+use solana_sdk::{transaction::TransactionError, transport::TransportError};
 use utils::*;
 
 #[tokio::test]
@@ -31,4 +33,29 @@ async fn success() {
     assert_eq!(pack_set.pack_state, PackSetState::NotActivated);
     assert_eq!(pack_set.pack_cards, 0);
     assert_eq!(pack_set.pack_vouchers, 0);
+}
+
+#[tokio::test]
+async fn fail_invalid_total_packs() {
+    let mut context = nft_packs_program_test().start_with_context().await;
+
+    let test_pack_set = TestPackSet::new();
+    let result = test_pack_set
+        .init(
+            &mut context,
+            instruction::InitPackSetArgs {
+                name: [7; 32],
+                total_packs: 0,
+                mutable: true,
+            },
+        )
+        .await;
+
+    assert_transport_error!(
+        result.unwrap_err(),
+        TransportError::TransactionError(TransactionError::InstructionError(
+            1,
+            InstructionError::Custom(0)
+        ))
+    );
 }

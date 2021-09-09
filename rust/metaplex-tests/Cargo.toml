@@ -14,6 +14,7 @@ spl-token-vault = { path = "../token-vault/program", features = [ "no-entrypoint
 spl-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
 
 [dev-dependencies]
+num-traits = "0.2.14"
 solana-program-test = "1.7.11"
 solana-sdk = "1.7.11"
 metaplex-nft-packs = { path = "../nft-packs", features = [ "no-entrypoint" ] }

@@ -4,8 +4,11 @@ use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
     state::{AccountType, ActionOnProve},
 };
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
 async fn setup() -> (
@@ -91,4 +94,52 @@ async fn success() {
 
     let pack_voucher = test_pack_voucher.get_data(&mut context).await;
     assert_eq!(pack_voucher.account_type, AccountType::PackVoucher);
+}
+
+#[tokio::test]
+async fn fail_invalid_index() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
+
+    context.warp_to_slot(3).unwrap();
+
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+    let result = test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await;
+
+    assert_transport_error!(
+        result.unwrap_err(),
+        TransportError::TransactionError(TransactionError::InstructionError(
+            1,
+            InstructionError::InvalidArgument
+        ))
+    );
 }
