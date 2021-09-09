@@ -446,7 +446,7 @@ program
   });
 
 program
-  .command('set_start_date')
+  .command('update_candy_machine')
   .option(
     '-e, --env <string>',
     'Solana cluster env name',
@@ -459,11 +459,13 @@ program
   )
   .option('-c, --cache-name <string>', 'Cache file name', 'temp')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, cacheName } = cmd.opts();
+    const { keypair, env, date, price, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
-    const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
+    const secondsSinceEpoch = date ? Date.parse(date) / 1000 : null;
+    const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
@@ -474,8 +476,8 @@ program
       cacheContent.program.uuid,
     );
     const tx = await anchorProgram.rpc.updateCandyMachine(
-      null,
-      new anchor.BN(secondsSinceEpoch),
+      lamports ? new anchor.BN(lamports) : null,
+      secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
       {
         accounts: {
           candyMachine,
@@ -484,7 +486,9 @@ program
       },
     );
 
-    console.log('set_start_date Done', secondsSinceEpoch, tx);
+    if (date) console.log(` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`)
+    if (lamports) console.log(` - updated price: ${lamports} lamports (${price} SOL)`)
+    console.log('updated_candy_machine Done', tx);
   });
 
 program
