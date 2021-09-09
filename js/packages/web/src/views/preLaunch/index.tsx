@@ -6,6 +6,7 @@ import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
 import { shortenAddress } from "@oyster/common";
+import { getUser, getWalletAddress, saveUser } from "./userInfo";
 
 const { Content } = Layout;
 
@@ -64,31 +65,33 @@ export const PreLaunchView = () => {
   const [submitted, setSubmitted] = useState(false)
   const [gotVisible, setGotVisible] = useState(false)
   const [sentVisible, setSentVisible] = useState(false)
+  const [loadingUser, setLoadingUser] = useState(false)
   const auth = useMagicLink()
 
-  const getUser =  async (email) => {
-    return null
+  const handleSaveWallet = async (verifiedEmail, wallet) => {
+    await saveUser(verifiedEmail, wallet, () => {
+      setSentVisible(true)
+      setSubmitted(true)
+      auth.logout()
+    })
   }
+
   const verifyUser = async () => {
     if (auth.loggedIn) {
       setVerified(true)
       const verifiedEmail = (await auth.magic.user.getMetadata()).email;
-      setGotVisible(false)
+      setEmail(verifiedEmail)
+      setLoadingUser(true)
       const user = await getUser(verifiedEmail)
       if(user){
-        setVerified(true)
-        setSubmitted(true)
-      }else{
-        setEmail(verifiedEmail)
+        const wallet = await getWalletAddress(user)
+        setWalletAddress(wallet)
+        await handleSaveWallet(verifiedEmail, wallet)
       }
+      setLoadingUser(false)
     }
   }
-  const saveUser = async () => {
-    setSentVisible(true)
-    console.log({walletAddress, email})
-    setSentVisible(false)
-    setSubmitted(true)
-  }
+
   useEffect(() => {
     verifyUser()
   }, [auth.loggedIn])
@@ -195,11 +198,17 @@ export const PreLaunchView = () => {
             <div className={"verify-message mb32"}>
               <span>Paste your Solana wallet address here.</span>
             </div>
-            <div className={"pre-input wallet"}>
-              <Input value={walletAddress} placeholder={"Wallet address"}
-                     onChange={(val) => setWalletAddress(val.target.value)}/>
-              <Button className={"secondary-btn sign-up"} onClick={saveUser}>Submit</Button>
-            </div>
+            {loadingUser ? (
+              <Spin />
+            ):(
+              <div className={"pre-input wallet"}>
+                <Input value={walletAddress} placeholder={"Wallet address"}
+                       onChange={(val) => setWalletAddress(val.target.value)}/>
+                <Button className={"secondary-btn sign-up"} onClick={async () => {
+                  await handleSaveWallet(email, walletAddress)
+                }}>Submit</Button>
+              </div>
+            )}
             <div className={"verify-message mb40"}>
               <span>How to create a wallet:</span>
             </div>
