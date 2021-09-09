@@ -364,8 +364,13 @@ type Store {
 }
 
 type Subscription {
-  auction: Auction
-  truths: Boolean
+  auction(id: String!): Auction
+  auctions: Auction
+  creator(id: String!): Creator
+  creators: Creator
+  store(id: String!): Store
+  stores: Store
+  ticks: Boolean
 }
 
 enum TupleNumericType {

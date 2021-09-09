@@ -31,6 +31,13 @@ import {
 } from '@oyster/common/dist/lib/utils/web3';
 import { Metadata } from '@oyster/common/dist/lib/actions/metadata';
 import EventEmitter from 'eventemitter3';
+import { PubSub, withFilter } from 'graphql-subscriptions';
+export declare type FilterFn<T = any> = (
+  rootValue?: T,
+  args?: any,
+  context?: any,
+  info?: any,
+) => boolean | Promise<boolean>;
 
 type MessageData = [PublicKeyStringAndAccount<Buffer>, IConfig];
 type Emitter = EventEmitter<'data'>;
@@ -134,20 +141,20 @@ export class ConnectionConfig {
   }
   private defer: Promise<void> | undefined;
 
-  private readonly subscribers = new Map<
-    keyof MetaState,
-    ((event: IEvent) => void)[]
-  >();
+  private readonly pubsub = new PubSub();
 
-  awaitChanges(prop: keyof MetaState): Promise<IEvent> {
-    return new Promise<IEvent>(resolve => {
-      const orignalData = this.subscribers.get(prop);
-      const data = orignalData ?? [];
-      data.push(resolve);
-      if (!orignalData) {
-        this.subscribers.set(prop, data);
+  subscribeIterator(prop: keyof MetaState, key?: string | FilterFn<IEvent>) {
+    const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
+    if (key !== undefined) {
+      if (typeof key === 'string') {
+        return withFilter(iter, (payload: IEvent) => {
+          return payload.key === key;
+        });
+      } else {
+        return withFilter(iter, key);
       }
-    });
+    }
+    return iter;
   }
   /**
    * send event to Subscribers
@@ -157,19 +164,12 @@ export class ConnectionConfig {
     key: string,
     value: ParsedAccount<any>,
   ) {
-    console.log('event', prop, key, value);
-    const subscribers = this.subscribers.get(prop);
-    if (!subscribers?.length) {
-      return;
-    }
     const event: IEvent = {
       prop,
       key,
       value,
     };
-    subscribers.forEach(send => send(event));
-    // cleanup subscribers
-    this.subscribers.set(prop, []);
+    this.pubsub.publish(prop, event);
   }
 
   load() {
@@ -187,7 +187,10 @@ export class ConnectionConfig {
         data,
         (prop, key, value) => {
           if (this.state) {
-            ConnectionConfig.setter(this.state, prop, key, value); // Apply to current state
+            // Apply to current state
+            ConnectionConfig.setter(this.state, prop, key, value);
+            // We send events only after state would be formed
+            this.sendEvent(prop, key, value);
           } else {
             container.push({ prop, key, value });
           }
@@ -214,6 +217,31 @@ export class ConnectionConfig {
     return defer.then(() => this.state!);
   }
 
+  runTestSubscribtionsEvents(prop: keyof MetaState, delay = 1000) {
+    const id = setInterval(() => {
+      if (prop === 'metadata') {
+        const data = this.state?.[prop];
+        if (!data) {
+          return;
+        }
+        const index = Math.floor(Math.random() * data.length);
+        const item = data[index];
+        this.sendEvent(prop, `${index}`, item);
+      } else {
+        const data = this.state?.[prop];
+        if (!data) {
+          return;
+        }
+        const keys = Object.keys(data);
+        const index = Math.floor(Math.random() * keys.length);
+        const key = keys[index];
+        const item = (data as any)[key];
+        this.sendEvent(prop, key, item);
+      }
+    }, delay);
+    return () => clearInterval(id);
+  }
+
   static readonly CONFIG: IConfig[] = [
     {
       key: VAULT_ID,
@@ -234,11 +262,12 @@ export class ConnectionConfig {
   ];
 
   private async loadData(emitter?: Emitter) {
+    console.log(`⏱ ${this.name} - start loading data`);
     const preloading = ConnectionConfig.CONFIG.map(config =>
       this.loadDataByConfig(config, emitter),
     );
     const processingData = await Promise.all(preloading);
-
+    console.log(`⏱ ${this.name} - data loaded and start processing data`);
     const state: MetaState = getEmptyMetaState();
 
     // processing loading data, It may take a lot of time
@@ -255,12 +284,12 @@ export class ConnectionConfig {
               true,
             );
           },
-          { delay: 0, jobsCount: 2, name: 'Data' },
+          { delay: 0, jobsCount: 2, name: `⛏ ${this.name} - data` },
         );
       },
       { delay: 0, jobsCount: 1 },
     );
-
+    console.log(`⏱ ${this.name} - start processing metadata`);
     // processing metadata
     await createPipelineExecutor(
       iterateObject(state.metadataByMint),
@@ -270,7 +299,7 @@ export class ConnectionConfig {
       {
         delay: 0,
         jobsCount: 3,
-        name: 'Metadata',
+        name: `⛏ ${this.name} - metadata`,
       },
     );
     return state;
@@ -292,7 +321,17 @@ export class ConnectionConfig {
             emitter?.emit('data', [item, config]);
           },
         );
-    const data = await getProgramAccounts(this.connection, config.key);
+    console.log(`🤞 ${this.name} - loading program accounts ${config.key}`);
+    const data = await getProgramAccounts(this.connection, config.key).then(
+      data => {
+        console.log(`🍀 ${this.name} - loaded ${config.key}`);
+        return data;
+      },
+      err => {
+        console.error(`🐛 ${this.name} - failed loaded ${config.key}`);
+        throw err;
+      },
+    );
     return {
       ...config,
       subscrtionId,

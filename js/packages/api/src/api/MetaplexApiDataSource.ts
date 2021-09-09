@@ -1,23 +1,7 @@
-import { clusterApiUrl } from '@solana/web3.js';
 import { DataSource, DataSourceConfig } from 'apollo-datasource';
 import { ConnectionConfig } from './ConnectionConfig';
 import { MetaplexApi } from './MetaplexApi';
-
-// XXX: re-use list from `contexts/connection` ?
-const ENDPOINTS = [
-  {
-    name: 'mainnet-beta',
-    endpoint: 'https://api.metaplex.solana.com/',
-  },
-  {
-    name: 'testnet',
-    endpoint: clusterApiUrl('testnet'),
-  },
-  {
-    name: 'devnet',
-    endpoint: clusterApiUrl('devnet'),
-  },
-];
+import { ENDPOINTS } from './endpoints';
 
 export interface IBaseContext {
   network: string | undefined;
@@ -30,8 +14,12 @@ export class MetaplexApiDataSource<
     api: MetaplexApi;
   },
 > extends DataSource<TContext> {
+  constructor(private endpoints = ENDPOINTS) {
+    super();
+  }
+
   private readonly flowControl = MetaplexApiDataSource.initFlowControl(
-    ENDPOINTS.length,
+    this.endpoints.length,
   );
 
   static initFlowControl(size: number) {
@@ -52,10 +40,12 @@ export class MetaplexApiDataSource<
     return result;
   }
 
-  readonly ENTRIES = ENDPOINTS.map(
-    ({ name, endpoint }, index) =>
-      new ConnectionConfig(name, endpoint, this.flowControl[index]),
-  ).map(config => new MetaplexApi(config));
+  readonly ENTRIES = this.endpoints
+    .map(
+      ({ name, endpoint }, index) =>
+        new ConnectionConfig(name, endpoint, this.flowControl[index]),
+    )
+    .map(config => new MetaplexApi(config));
 
   // preload all data endpoints
   preload() {

@@ -514,7 +514,12 @@ export interface NexusGenFieldTypes {
   Subscription: {
     // field return type
     auction: NexusGenRootTypes['Auction'] | null; // Auction
-    truths: boolean | null; // Boolean
+    auctions: NexusGenRootTypes['Auction'] | null; // Auction
+    creator: NexusGenRootTypes['Creator'] | null; // Creator
+    creators: NexusGenRootTypes['Creator'] | null; // Creator
+    store: NexusGenRootTypes['Store'] | null; // Store
+    stores: NexusGenRootTypes['Store'] | null; // Store
+    ticks: boolean | null; // Boolean
   };
   Vault: {
     // field return type
@@ -747,7 +752,12 @@ export interface NexusGenFieldTypeNames {
   Subscription: {
     // field return type name
     auction: 'Auction';
-    truths: 'Boolean';
+    auctions: 'Auction';
+    creator: 'Creator';
+    creators: 'Creator';
+    store: 'Store';
+    stores: 'Store';
+    ticks: 'Boolean';
   };
   Vault: {
     // field return type name
@@ -795,6 +805,20 @@ export interface NexusGenArgTypes {
     store: {
       // args
       storeId: string; // String!
+    };
+  };
+  Subscription: {
+    auction: {
+      // args
+      id: string; // String!
+    };
+    creator: {
+      // args
+      id: string; // String!
+    };
+    store: {
+      // args
+      id: string; // String!
     };
   };
 }

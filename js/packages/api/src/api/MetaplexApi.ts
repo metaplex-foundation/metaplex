@@ -9,9 +9,7 @@ import {
   getAuctionsByStoreId,
 } from '../auction/filters';
 import { mapInfo, wrapPubkey } from '../utils/mapInfo';
-import { ConnectionConfig, IEvent } from './ConnectionConfig';
-import { MetaState } from '@oyster/common';
-
+import { ConnectionConfig } from './ConnectionConfig';
 export class MetaplexApi {
   constructor(public readonly config: ConnectionConfig) {}
 
@@ -22,9 +20,7 @@ export class MetaplexApi {
 
   // meta methods
 
-  awaitChanges(prop: keyof MetaState): Promise<IEvent> {
-    return this.config.awaitChanges(prop);
-  }
+  subscribeIterator = this.config.subscribeIterator.bind(this.config);
 
   get state() {
     return this.config.load();

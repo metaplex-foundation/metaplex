@@ -1,6 +1,6 @@
 import { ApolloServer, ExpressContext } from 'apollo-server-express';
 import { makeSchema } from 'nexus';
-import { IBaseContext, MetaplexApiDataSource } from './api';
+import { IBaseContext, MetaplexApiDataSource, ENDPOINTS } from './api';
 import * as types from './schema';
 import path from 'path';
 import { performance } from 'perf_hooks';
@@ -12,7 +12,11 @@ import { createServer } from 'http';
 const DIRNAME = __dirname.replace(/\/dist$/, '/src');
 
 async function startApolloServer() {
-  const api = new MetaplexApiDataSource();
+  const endpoints = process.env.NETWORK
+    ? ENDPOINTS.filter(({ name }) => name === process.env.NETWORK)
+    : ENDPOINTS;
+
+  const api = new MetaplexApiDataSource(endpoints);
   const schema = makeSchema({
     types,
     outputs: {
@@ -102,6 +106,12 @@ async function startApolloServer() {
     console.log(`🚀 Query endpoint ready at ${URL_GRAPHQL}`);
     console.log(`🚀 Subscription endpoint ready at ${URL_GRAPHQL_WS}`);
   });
+
+  if (process.env.SUBSCRIBTIONS_SIMULATION) {
+    api.ENTRIES.forEach(entry => {
+      entry.config.runTestSubscribtionsEvents('auctions');
+    });
+  }
 
   if (!process.env.WARN_UP_DISABLE) {
     console.log('🌋 Start warm up data');
