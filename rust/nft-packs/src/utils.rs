@@ -132,6 +132,7 @@ pub fn create_account<'a, S: Pack>(
 }
 
 /// Function wrap spl_token_metadata -> mint_new_edition_from_master_edition_via_token call.
+#[allow(clippy::too_many_arguments)]
 pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     new_metadata_account: &AccountInfo<'a>,
     new_edition_account: &AccountInfo<'a>,

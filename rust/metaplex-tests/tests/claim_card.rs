@@ -13,7 +13,13 @@ use solana_program::{
     system_instruction, system_program, sysvar,
 };
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk::{
+    instruction::InstructionError,
+    signature::Keypair,
+    signer::Signer,
+    transaction::{Transaction, TransactionError},
+    transport::TransportError,
+};
 use utils::*;
 
 async fn create_master_edition(
@@ -588,12 +594,11 @@ async fn fails_wrong_user_wallet() {
         .err()
         .unwrap();
 
-    // ugly check because of issue with equal implementation in TransactionError
-    assert_eq!(
-        tx_result.to_string(),
-        String::from(
-            "transport transaction error: Error processing Instruction 0: invalid program argument"
-        )
+    assert_transport_error!(
+        tx_result,
+        TransportError::TransactionError(TransactionError::InstructionError(
+            0,
+            InstructionError::InvalidArgument
+        ))
     );
-    // TransactionError::InstructionError(0, InstructionError::InvalidArgument);
 }

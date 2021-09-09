@@ -119,6 +119,8 @@ pub enum NFTPacksInstruction {
     /// - write                         token_account (program account to hold MasterEdition token)
     /// - read                          program_authority
     /// - read                          rent
+    /// - read                          system_program
+    /// - read                          spl_token program
     ///
     /// Parameters:
     /// - max_supply	Option<u32>
@@ -142,6 +144,8 @@ pub enum NFTPacksInstruction {
     /// - write                         token_account (program account to hold MasterEdition token)
     /// - read                          program_authority
     /// - read                          rent
+    /// - read                          system_program
+    /// - read                          spl_token program
     ///
     /// Parameters:
     /// - max_supply	Option<u32>
@@ -177,11 +181,15 @@ pub enum NFTPacksInstruction {
     ///
     /// Accounts:
     /// - read             pack_set
+    /// - read             edition_data
+    /// - write            edition_mint
+    /// - write            voucher (PDA, [pack, 'voucher', index])
     /// - write            proving_process (PDA, [pack, 'proving', user_wallet])
     /// - signer           user_wallet
-    /// - read             pack_voucher (PDA, [pack, 'voucher', index])
-    /// - read             master_metadata
     /// - write            user_token_acc (account with edition token)
+    /// - read             rent
+    /// - read             spl_token program
+    /// - read             system_program
     ProveOwnership,
 
     /// ClaimPack
@@ -199,7 +207,7 @@ pub enum NFTPacksInstruction {
     /// - read              new_edition_acc
     /// - read              master_edition_acc
     /// - read              new_mint_account
-    /// - read              new_mint_authority_acc
+    /// - signer              new_mint_authority_acc
     /// - read              metadata_acc
     /// - read              metadata_mint_acc
     /// - read              edition_acc
@@ -246,6 +254,10 @@ pub enum NFTPacksInstruction {
     /// - signer           authority
     /// - write            refunder
     /// - write            new_master_edition_owner
+    /// - write            token_account
+    /// - read             program_authority
+    /// - read             rent
+    /// - read             spl_token program
     DeletePackCard,
 
     /// DeletePackVoucher
@@ -259,6 +271,10 @@ pub enum NFTPacksInstruction {
     /// - signer           authority
     /// - write            refunder
     /// - write            new_master_edition_owner
+    /// - write            token_account
+    /// - read             program_authority
+    /// - read             rent
+    /// - read             spl_token program
     DeletePackVoucher,
 
     /// EditPack
@@ -272,7 +288,7 @@ pub enum NFTPacksInstruction {
     /// Parameters:
     /// - name Option<[u8; 32]>
     /// - total_packs Option<u32>
-    /// mutable	Option<bool> (only can be changed from true to false)
+    /// - mutable	Option<bool> (only can be changed from true to false)
     EditPack(EditPackSetArgs),
 
     /// EditPackCard
@@ -323,6 +339,12 @@ pub enum NFTPacksInstruction {
     /// - read                     token_account
     /// - read                     new_metadata_update_authority
     /// - read                     metadata
+    /// - read                     metadata_mint
+    /// - write                    edition_mark_pda
+    /// - read                     spl_token program
+    /// - read                     system_program
+    /// - read                     rent
+    /// - read                     spl_token_metadata program
     MintEditionWithCard,
 
     /// MintEditionWithVoucher
@@ -343,6 +365,12 @@ pub enum NFTPacksInstruction {
     /// - read                     token_account
     /// - read                     new_metadata_update_authority
     /// - read                     metadata
+    /// - read                     metadata_mint
+    /// - write                    edition_mark_pda
+    /// - read                     spl_token program
+    /// - read                     system_program
+    /// - read                     rent
+    /// - read                     spl_token_metadata program
     MintEditionWithVoucher,
 }
 
@@ -362,288 +390,6 @@ pub fn init_pack(
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::InitPack(args), accounts)
-}
-
-/// Create `ClaimPack` instruction
-pub fn claim_pack(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    user_wallet: &Pubkey,
-    user_token: &Pubkey,
-    new_metadata: &Pubkey,
-    new_edition: &Pubkey,
-    master_edition: &Pubkey,
-    new_mint: &Pubkey,
-    new_mint_authority: &Pubkey,
-    metadata: &Pubkey,
-    metadata_mint: &Pubkey,
-    randomness_oracle: &Pubkey,
-    index: u32,
-) -> Instruction {
-    let (proving_process, _) =
-        find_proving_process_program_address(program_id, pack_set, user_wallet);
-    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
-    let (program_authority, _) = find_program_authority(program_id);
-
-    let edition_number = (index as u64)
-        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
-        .unwrap();
-    let as_string = edition_number.to_string();
-    let (edition_mark_pda, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            metadata_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
-            as_string.as_bytes(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new(proving_process, false),
-        AccountMeta::new(*user_wallet, true),
-        AccountMeta::new_readonly(program_authority, false),
-        AccountMeta::new(pack_card, false),
-        AccountMeta::new(*user_token, false),
-        AccountMeta::new(*new_metadata, false),
-        AccountMeta::new(*new_edition, false),
-        AccountMeta::new(*master_edition, false),
-        AccountMeta::new(*new_mint, false),
-        AccountMeta::new(*new_mint_authority, true),
-        AccountMeta::new(*metadata, false),
-        AccountMeta::new(*metadata_mint, false),
-        AccountMeta::new(edition_mark_pda, false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(*randomness_oracle, false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(sysvar::clock::id(), false),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
-}
-
-/// Create `DeletePackCard` instruction
-pub fn delete_pack_card(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    pack_card: &Pubkey,
-    authority: &Pubkey,
-    refunder: &Pubkey,
-    new_master_edition_owner: &Pubkey,
-    token_account: &Pubkey,
-) -> Instruction {
-    let (program_authority, _) = find_program_authority(program_id);
-
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new(*pack_card, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*refunder, false),
-        AccountMeta::new(*new_master_edition_owner, false),
-        AccountMeta::new(*token_account, false),
-        AccountMeta::new_readonly(program_authority, false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePackCard, accounts)
-}
-
-/// Create `DeletePackVoucher` instruction
-pub fn delete_pack_voucher(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    pack_voucher: &Pubkey,
-    authority: &Pubkey,
-    refunder: &Pubkey,
-    new_master_edition_owner: &Pubkey,
-    token_account: &Pubkey,
-) -> Instruction {
-    let (program_authority, _) = find_program_authority(program_id);
-
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new(*pack_voucher, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*refunder, false),
-        AccountMeta::new(*new_master_edition_owner, false),
-        AccountMeta::new(*token_account, false),
-        AccountMeta::new_readonly(program_authority, false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::DeletePackVoucher,
-        accounts,
-    )
-}
-
-/// Create `Activate` instruction
-pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Activate, accounts)
-}
-
-/// Create `Deactivate` instruction
-pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
-}
-
-/// Create `ProveOwnership` instruction
-pub fn prove_ownership(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    edition_data: &Pubkey,
-    edition_mint: &Pubkey,
-    user_wallet: &Pubkey,
-    user_token_acc: &Pubkey,
-    voucher: &Pubkey,
-) -> Instruction {
-    let (proving_process, _) =
-        find_proving_process_program_address(program_id, pack_set, user_wallet);
-
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new_readonly(*edition_data, false),
-        AccountMeta::new(*edition_mint, false),
-        AccountMeta::new(*voucher, false),
-        AccountMeta::new(proving_process, false),
-        AccountMeta::new(*user_wallet, true),
-        AccountMeta::new(*user_token_acc, false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(system_program::id(), false),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
-}
-
-/// Create `TransferPackAuthority` instruction
-pub fn transfer_pack_authority(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    authority: &Pubkey,
-    new_authority: &Pubkey,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new_readonly(*new_authority, false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::TransferPackAuthority,
-        accounts,
-    )
-}
-
-/// Create `TransferMintingAuthority` instruction
-pub fn transfer_minting_authority(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    authority: &Pubkey,
-    new_authority: &Pubkey,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new_readonly(*new_authority, false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::TransferMintingAuthority,
-        accounts,
-    )
-}
-
-/// Create `DeletePack` instruction
-pub fn delete_pack(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    authority: &Pubkey,
-    refunder: &Pubkey,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*refunder, false),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePack, accounts)
-}
-
-/// Create `EditPack` instruction
-pub fn edit_pack(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    authority: &Pubkey,
-    args: EditPackSetArgs,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-    ];
-
-    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
-}
-
-/// Create `EditPackCard` instruction
-pub fn edit_pack_card(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    pack_card: &Pubkey,
-    authority: &Pubkey,
-    args: EditPackCardArgs,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*pack_card, false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::EditPackCard(args),
-        accounts,
-    )
-}
-
-/// Create `EditPackVoucher` instruction
-pub fn edit_pack_voucher(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    pack_voucher: &Pubkey,
-    authority: &Pubkey,
-    args: EditPackVoucherArgs,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*pack_voucher, false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::EditPackVoucher(args),
-        accounts,
-    )
 }
 
 /// Creates 'AddCardToPack' instruction.
@@ -722,7 +468,291 @@ pub fn add_voucher_to_pack(
     )
 }
 
+/// Create `Activate` instruction
+pub fn activate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Activate, accounts)
+}
+
+/// Create `Deactivate` instruction
+pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
+}
+
+/// Create `ProveOwnership` instruction
+pub fn prove_ownership(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    edition_data: &Pubkey,
+    edition_mint: &Pubkey,
+    user_wallet: &Pubkey,
+    user_token_acc: &Pubkey,
+    voucher: &Pubkey,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*edition_data, false),
+        AccountMeta::new(*edition_mint, false),
+        AccountMeta::new(*voucher, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new(*user_wallet, true),
+        AccountMeta::new(*user_token_acc, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ProveOwnership, accounts)
+}
+
+/// Create `ClaimPack` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn claim_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    user_wallet: &Pubkey,
+    user_token: &Pubkey,
+    new_metadata: &Pubkey,
+    new_edition: &Pubkey,
+    master_edition: &Pubkey,
+    new_mint: &Pubkey,
+    new_mint_authority: &Pubkey,
+    metadata: &Pubkey,
+    metadata_mint: &Pubkey,
+    randomness_oracle: &Pubkey,
+    index: u32,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+    let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
+    let (program_authority, _) = find_program_authority(program_id);
+
+    let edition_number = (index as u64)
+        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .unwrap();
+    let as_string = edition_number.to_string();
+    let (edition_mark_pda, _) = Pubkey::find_program_address(
+        &[
+            spl_token_metadata::state::PREFIX.as_bytes(),
+            spl_token_metadata::id().as_ref(),
+            metadata_mint.as_ref(),
+            spl_token_metadata::state::EDITION.as_bytes(),
+            as_string.as_bytes(),
+        ],
+        &spl_token_metadata::id(),
+    );
+
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new(*user_wallet, true),
+        AccountMeta::new_readonly(program_authority, false),
+        AccountMeta::new(pack_card, false),
+        AccountMeta::new(*user_token, false),
+        AccountMeta::new(*new_metadata, false),
+        AccountMeta::new(*new_edition, false),
+        AccountMeta::new(*master_edition, false),
+        AccountMeta::new(*new_mint, false),
+        AccountMeta::new(*new_mint_authority, true),
+        AccountMeta::new(*metadata, false),
+        AccountMeta::new(*metadata_mint, false),
+        AccountMeta::new(edition_mark_pda, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(*randomness_oracle, false),
+        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClaimPack, accounts)
+}
+
+/// Create `TransferPackAuthority` instruction
+pub fn transfer_pack_authority(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    new_authority: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*new_authority, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::TransferPackAuthority,
+        accounts,
+    )
+}
+
+/// Create `TransferMintingAuthority` instruction
+pub fn transfer_minting_authority(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    new_authority: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*new_authority, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::TransferMintingAuthority,
+        accounts,
+    )
+}
+
+/// Create `DeletePack` instruction
+pub fn delete_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePack, accounts)
+}
+
+/// Create `DeletePackCard` instruction
+pub fn delete_pack_card(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_card: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+    new_master_edition_owner: &Pubkey,
+    token_account: &Pubkey,
+) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(*pack_card, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+        AccountMeta::new(*new_master_edition_owner, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new_readonly(program_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::DeletePackCard, accounts)
+}
+
+/// Create `DeletePackVoucher` instruction
+pub fn delete_pack_voucher(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_voucher: &Pubkey,
+    authority: &Pubkey,
+    refunder: &Pubkey,
+    new_master_edition_owner: &Pubkey,
+    token_account: &Pubkey,
+) -> Instruction {
+    let (program_authority, _) = find_program_authority(program_id);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(*pack_voucher, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*refunder, false),
+        AccountMeta::new(*new_master_edition_owner, false),
+        AccountMeta::new(*token_account, false),
+        AccountMeta::new_readonly(program_authority, false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::DeletePackVoucher,
+        accounts,
+    )
+}
+
+/// Create `EditPack` instruction
+pub fn edit_pack(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackSetArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
+}
+
+/// Create `EditPackCard` instruction
+pub fn edit_pack_card(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_card: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackCardArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*pack_card, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::EditPackCard(args),
+        accounts,
+    )
+}
+
+/// Create `EditPackVoucher` instruction
+pub fn edit_pack_voucher(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    pack_voucher: &Pubkey,
+    authority: &Pubkey,
+    args: EditPackVoucherArgs,
+) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new(*pack_voucher, false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::EditPackVoucher(args),
+        accounts,
+    )
+}
+
 /// Create `MintEditionWithCard` instruction
+#[allow(clippy::too_many_arguments)]
 pub fn mint_new_edition_from_card(
     program_id: &Pubkey,
     pack_set: &Pubkey,
@@ -787,6 +817,7 @@ pub fn mint_new_edition_from_card(
 }
 
 /// Create `MintEditionWithVoucher` instruction
+#[allow(clippy::too_many_arguments)]
 pub fn mint_new_edition_from_voucher(
     program_id: &Pubkey,
     pack_set: &Pubkey,
