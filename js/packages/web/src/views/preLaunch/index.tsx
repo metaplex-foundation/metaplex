@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { Button, Input, Layout, Modal, Form } from "antd";
+import { Button, Input, Layout, Modal, Form, Spin } from "antd";
 import { ModalProps } from 'antd/lib/modal';
 import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
@@ -65,15 +65,28 @@ export const PreLaunchView = () => {
   const [gotVisible, setGotVisible] = useState(false)
   const [sentVisible, setSentVisible] = useState(false)
   const auth = useMagicLink()
+
+  const getUser =  async (email) => {
+    return null
+  }
   const verifyUser = async () => {
     if (auth.loggedIn) {
-      const user = await auth.magic.user.getMetadata();
-      setGotVisible(false)
-      setEmail(user.email)
       setVerified(true)
+      const verifiedEmail = (await auth.magic.user.getMetadata()).email;
+      setGotVisible(false)
+      const user = await getUser(verifiedEmail)
+      if(user){
+        setVerified(true)
+        setSubmitted(true)
+      }else{
+        setEmail(verifiedEmail)
+      }
     }
   }
-  const saveTypeForm = async () => {
+  const saveUser = async () => {
+    setSentVisible(true)
+    console.log({walletAddress, email})
+    setSentVisible(false)
     setSubmitted(true)
   }
   useEffect(() => {
@@ -119,31 +132,35 @@ export const PreLaunchView = () => {
                 {textContent.titleDescription}
               </div>
               <div className={"pre-input"}>
-                <Form
-                  className={'footer-sign-up'}
-                  onFinish={(values) => {
-                    auth.login(values.email)
-                    setGotVisible(true)
-                  }}
-                >
-                  <Form.Item
-                    name='email'
-                    rules={[
-                      {
-                        type: 'email', message: 'Input is not a valid email!'
-                      },
-                      { required: true, message: 'Please input your email!' }
-                    ]}
-                    style={{ display: 'flex !important' }}
+                {auth.loading ? (
+                  <Spin />
+                ) : (
+                  <Form
+                    className={'footer-sign-up'}
+                    onFinish={(values) => {
+                      auth.login(values.email)
+                      setGotVisible(true)
+                    }}
                   >
-                    <Input
-                      className={'footer-input'}
-                      placeholder="Email Address"
-                      name="email"
-                    />
-                  </Form.Item>
-                  <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
-                </Form>
+                    <Form.Item
+                      name='email'
+                      rules={[
+                        {
+                          type: 'email', message: 'Input is not a valid email!'
+                        },
+                        { required: true, message: 'Please input your email!' }
+                      ]}
+                      style={{ display: 'flex !important' }}
+                    >
+                      <Input
+                        className={'footer-input'}
+                        placeholder="Email Address"
+                        name="email"
+                      />
+                    </Form.Item>
+                    <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
+                  </Form>
+                )}
               </div>
             </div>
             <div className={"lower-content"}>
@@ -181,7 +198,7 @@ export const PreLaunchView = () => {
             <div className={"pre-input wallet"}>
               <Input value={walletAddress} placeholder={"Wallet address"}
                      onChange={(val) => setWalletAddress(val.target.value)}/>
-              <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
+              <Button className={"secondary-btn sign-up"} onClick={saveUser}>Submit</Button>
             </div>
             <div className={"verify-message mb40"}>
               <span>How to create a wallet:</span>
