@@ -219,8 +219,7 @@ export const HomeView = () => {
   );
 
   // This is from the .cache directory after uploading, copy yours here without "items"
-  // const cachedContent = {"program":{"uuid":"Frwys6","config":"Frwys6zs1TxaBhmwQQGrgSQHCTdxZVaac7vuEARrMeaT"}};
-  const cachedContent = {"program":{"uuid":"4j2Zb9","config":"4j2Zb9oyusnzUhZm8sQ4cWeJotPg4R5rNMyiBF5rB1Ki"}};
+  const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
 
   const mint = async ({wallet, connection}: {wallet: WalletContextState, connection: Connection}) => {
     // Set price here to the same you specified when setting up candy mashine
