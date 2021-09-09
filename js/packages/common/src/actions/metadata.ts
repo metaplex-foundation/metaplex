@@ -7,12 +7,7 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import {
-  findProgramAddress,
-  METADATA_PROGRAM_ID,
-  StringPublicKey,
-  toPublicKey,
-} from '../utils';
+import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const METADATA_PREFIX = 'metadata';
 export const EDITION = 'edition';
 export const RESERVATION = 'reservation';

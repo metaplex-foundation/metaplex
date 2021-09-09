@@ -19,7 +19,6 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
-  placeBid,
   useWalletModal,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -252,6 +251,11 @@ export const AuctionCard = ({
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
+
+  //if instant sale auction bid and claimed hide buttons
+  if (auctionView.isInstantSale && auctionView.myBidderPot?.info.emptied) {
+    return <></>
+  }
 
   return (
     <div className="auction-container" style={style}>
@@ -517,13 +521,9 @@ export const AuctionCard = ({
                     auctionView.auctionDataExtended?.info.instantSalePrice,
                   );
                   setLastBid(bid);
-                  // TODO: Remove this by propating necessary information to sendRedeemBid
-                  // window.location.reload();
                 }
 
                 await update();
-
-                setShowBidModal(false);
 
                 // Claim the purchase
                 try {
@@ -536,7 +536,11 @@ export const AuctionCard = ({
                     prizeTrackingTickets,
                     bidRedemptions,
                     bids,
-                  ).then(() => setShowRedeemedBidModal(true));
+                  ).then(async () => {
+                    await update();
+                    setShowBidModal(false);
+                    setShowRedeemedBidModal(true);
+                  });
                 } catch (e) {
                   console.error(e);
                   setShowRedemptionIssue(true);
