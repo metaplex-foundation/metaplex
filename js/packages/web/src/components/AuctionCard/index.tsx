@@ -512,15 +512,23 @@ export const AuctionCard = ({
                   bids.length === 0 &&
                   auctionView.auctionDataExtended?.info.instantSalePrice
                 ) {
-                  const bid = await sendPlaceBid(
-                    connection,
-                    wallet,
-                    myPayingAccount.pubkey,
-                    auctionView,
-                    accountByMint,
-                    auctionView.auctionDataExtended?.info.instantSalePrice,
-                  );
-                  setLastBid(bid);
+                  try {
+                    const bid = await sendPlaceBid(
+                      connection,
+                      wallet,
+                      myPayingAccount.pubkey,
+                      auctionView,
+                      accountByMint,
+                      auctionView.auctionDataExtended?.info.instantSalePrice,
+                    );
+                    setLastBid(bid);
+                  } catch (e) {
+                    console.error('sendPlaceBid', e)
+                    setShowBidModal(false);
+                    setLoading(false);
+                    return;
+                  }
+
                 }
 
                 await update();
