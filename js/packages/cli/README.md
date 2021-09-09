@@ -10,7 +10,7 @@
 
 ## Quick Start
 
-Install dependencies in root of this folder
+Install dependencies in the root of this folder
 
 ```bash
 yarn install
@@ -43,7 +43,7 @@ Verify assets
  metaplex verify -k path_to_your_keypair
 ```
 
-Start candy-machine
+Start candy_machine
 
 ```bash
 metaplex create_candy_machine  -e devnet -k path_to_your_keypair
