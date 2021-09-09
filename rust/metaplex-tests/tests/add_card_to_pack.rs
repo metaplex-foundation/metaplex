@@ -4,8 +4,11 @@ use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
     state::{AccountType, DistributionType},
 };
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
 async fn setup() -> (
@@ -93,4 +96,54 @@ async fn success() {
     let pack_card = test_pack_card.get_data(&mut context).await;
 
     assert_eq!(pack_card.account_type, AccountType::PackCard);
+}
+
+#[tokio::test]
+async fn fail_invalid_index() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    test_pack_set
+        .add_card(
+            &mut context,
+            &test_pack_card,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddCardToPackArgs {
+                max_supply: Some(5),
+                probability_type: DistributionType::ProbabilityBased,
+                probability: 1000000,
+                index: test_pack_card.index,
+            },
+        )
+        .await
+        .unwrap();
+
+    context.warp_to_slot(3).unwrap();
+
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let result = test_pack_set
+        .add_card(
+            &mut context,
+            &test_pack_card,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddCardToPackArgs {
+                max_supply: Some(5),
+                probability_type: DistributionType::ProbabilityBased,
+                probability: 1000000,
+                index: test_pack_card.index,
+            },
+        )
+        .await;
+
+    assert_transport_error!(
+        result.unwrap_err(),
+        TransportError::TransactionError(TransactionError::InstructionError(
+            1,
+            InstructionError::InvalidArgument
+        ))
+    );
 }
