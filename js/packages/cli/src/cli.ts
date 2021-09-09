@@ -62,7 +62,7 @@ programCommand('upload')
 
 programCommand('verify')
   .action(async (directory, cmd) => {
-    const { env, keypair, cacheName } = cmd.opts();
+    const {env, keypair, cacheName} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
@@ -134,7 +134,7 @@ programCommand('verify')
 programCommand('create_candy_machine')
   .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName } = cmd.opts();
+    const {keypair, env, price, cacheName} = cmd.opts();
 
     const lamports = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -147,6 +147,9 @@ programCommand('create_candy_machine')
       config,
       cacheContent.program.uuid,
     );
+    const slot = await anchorProgram.provider.connection.getSlot();
+    cacheContent.initialSlot = slot;
+    cacheContent.lastVerifiedSlot = slot;
     await anchorProgram.rpc.initializeCandyMachine(
       bump,
       {
@@ -169,13 +172,14 @@ programCommand('create_candy_machine')
       },
     );
 
+    saveCache(cacheName, env, cacheContent);
     console.log(`create_candy_machine Done: ${candyMachine.toBase58()}`);
   });
 
 programCommand('set_start_date')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, cacheName } = cmd.opts();
+    const {keypair, env, date, cacheName} = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
@@ -228,11 +232,12 @@ programCommand('sign')
 programCommand('sign_all')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async (directory, cmd) => {
-    const {keypair, env} = cmd.opts();
+    const {keypair, env, cacheName} = cmd.opts();
 
     await signAllUnapprovedMetadata(
       keypair,
-      env
+      env,
+      cacheName
     );
   });
 
@@ -252,6 +257,7 @@ function programCommand(name: string) {
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }
 
-program.command('find-wallets').action(() => {});
+program.command('find-wallets').action(() => {
+});
 
 program.parse(process.argv);

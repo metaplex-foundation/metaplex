@@ -14,5 +14,7 @@ export function loadCache(cacheName: string, env: string) {
 }
 
 export function saveCache(cacheName: string, env: string, cacheContent) {
+  cacheContent.env = env;
+  cacheContent.cacheName = cacheName;
   fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
 }

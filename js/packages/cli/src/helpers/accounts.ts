@@ -10,6 +10,7 @@ import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
 import BN from "bn.js";
 import { createConfigAccount } from "./instructions";
+import { web3 } from "@project-serum/anchor";
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -80,7 +81,7 @@ export const getTokenWallet = async function (
 export const getCandyMachineAddress = async (
   config: anchor.web3.PublicKey,
   uuid: string,
-) => {
+): Promise<[PublicKey, number]> => {
   return await anchor.web3.PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), config.toBuffer(), Buffer.from(uuid)],
     CANDY_MACHINE_PROGRAM_ID,
@@ -90,7 +91,7 @@ export const getCandyMachineAddress = async (
 export const getConfig = async (
   authority: anchor.web3.PublicKey,
   uuid: string,
-) => {
+): Promise<[PublicKey, number]> => {
   return await anchor.web3.PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
     CANDY_MACHINE_PROGRAM_ID,
@@ -137,9 +138,8 @@ export function loadWalletKey(keypair): Keypair {
 }
 
 export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
-  const solConnection = new anchor.web3.Connection(
-    `https://api.${env}.solana.com/`,
-  );
+  // @ts-ignore
+  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
   const walletWrapper = new anchor.Wallet(walletKeyPair);
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
