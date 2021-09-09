@@ -1,14 +1,21 @@
 mod utils;
 
 use metaplex_nft_packs::{
+    error::NFTPacksError,
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
     state::ActionOnProve,
 };
+use num_traits::FromPrimitive;
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
-async fn setup() -> (
+async fn setup(
+    mutable: bool,
+) -> (
     ProgramTestContext,
     TestPackSet,
     TestPackVoucher,
@@ -25,7 +32,7 @@ async fn setup() -> (
             InitPackSetArgs {
                 name: [7; 32],
                 total_packs: 5,
-                mutable: true,
+                mutable: mutable,
             },
         )
         .await
@@ -97,7 +104,7 @@ async fn success() {
         _test_metadata,
         _test_master_edition,
         _user,
-    ) = setup().await;
+    ) = setup(true).await;
 
     assert_eq!(
         test_pack_voucher.get_data(&mut context).await.max_supply,
@@ -113,4 +120,22 @@ async fn success() {
         test_pack_voucher.get_data(&mut context).await.max_supply,
         Some(1337)
     );
+}
+
+#[tokio::test]
+async fn fail_immutable() {
+    let (
+        mut context,
+        test_pack_set,
+        test_pack_voucher,
+        _test_metadata,
+        _test_master_edition,
+        _user,
+    ) = setup(false).await;
+
+    let result = test_pack_set
+        .edit_voucher(&mut context, &test_pack_voucher, None, Some(1337), None)
+        .await;
+
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet);
 }

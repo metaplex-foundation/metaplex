@@ -1,11 +1,17 @@
 mod utils;
 
-use metaplex_nft_packs::instruction::InitPackSetArgs;
+use metaplex_nft_packs::{error::NFTPacksError, instruction::InitPackSetArgs};
+use num_traits::FromPrimitive;
+use solana_program::instruction::InstructionError;
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer};
+use solana_sdk::{
+    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+};
 use utils::*;
 
-async fn setup() -> (
+async fn setup(
+    mutable: bool,
+) -> (
     ProgramTestContext,
     TestPackSet,
     TestMetadata,
@@ -21,7 +27,7 @@ async fn setup() -> (
             InitPackSetArgs {
                 name: [7; 32],
                 total_packs: 5,
-                mutable: true,
+                mutable: mutable,
             },
         )
         .await
@@ -67,7 +73,8 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, _test_metadata, _test_master_edition, user) = setup().await;
+    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) =
+        setup(true).await;
 
     assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 5);
 
@@ -77,4 +84,16 @@ async fn success() {
         .unwrap();
 
     assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 1337);
+}
+
+#[tokio::test]
+async fn fail_immutable() {
+    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) =
+        setup(false).await;
+
+    let result = test_pack_set
+        .edit(&mut context, None, None, Some(1337))
+        .await;
+
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet);
 }
