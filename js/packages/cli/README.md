@@ -1,18 +1,69 @@
-# Candy Machine!
 
-Install dependencies
-```
-yarn
-```
+# Candy Machine! aka @metaplex/cli
+## Format
+
+* Folder with files named from 0-1.png
+* JSON file with attributes, format
+    - Array with indices matching images
+    - Contains: title, description and array of traits ({"display_type":"number","trait_type":"generation","value":2})
 
 
-## usage
-```shell
-metaplex upload /path/to/assets -e devnet --keypair /path/to/admin-payer -n 3
-metaplex create_candy_machine -e devnet --keypair /path/to/admin-payer --price 1.5
-metaplex set_start_date -e devnet --keypair /path/to/admin-payer
-metaplex mint_one_token -e devnet --keypair /path/to/user-payer
+## Quick Start
+
+Install dependencies in root of this folder
+
+```bash
+yarn install
+yarn build
 ```
+
+Build `metaplex` cli tool
+
+```bash
+yarn run package:macos
+// or
+npx pkg . -d --targets node14-macos-x64 --output bin/macos/metaplex
+```
+
+Add metaplex cli to $PATH
+
+```bash
+cp bin/macos/metaplex /usr/local/bin
+```
+
+Upload assets to the arweave and register for candy-machine (get keypair path with `solana config get`). Should follow [Metaplex NFT Standard](https://docs.metaplex.com/nft-standard)
+
+```bash
+metaplex upload ./assets --env devnet -k path_to_your_keypair
+```
+
+Verify assets
+
+```bash
+ metaplex verify -k path_to_your_keypair
+```
+
+Start candy-machine
+
+```bash
+metaplex create_candy_machine  -e devnet -k path_to_your_keypair
+```
+Set sale start date
+
+```bash
+metaplex set_start_date -d "09 Sep 2021 15:20:00 GMT" -k path_to_your_keypair
+```
+
+Mint NFT to your wallet
+```bash
+metaplex mint_one_token -e devnet -k path_to_your_keypair
+```
+
+Verify NFT inside your wallet. Should be one new token with balance `1`
+```bash
+spl-token accounts
+```
+
 
 ## assets folder
 * Folder with file pairs named from with growing integer numbers starting from  0.png and 0.json
@@ -64,10 +115,9 @@ metaplex mint_one_token -e devnet --keypair /path/to/user-payer
     "category": "video",
     "creators": [
       {
-        "address": "SOLFLR15asd9d21325bsadythp547912501b",
+        "address": "creator_sol_address",
         "share": 100
       }
     ]
   }
 }
-```
