@@ -15,7 +15,7 @@ export const getLast = <T>(arr: T[]) => {
 };
 
 export const getConfig = () => {
-  return require('../config/config.json');
+  return require('../config/app_config.json');
 };
 
 export const isPubkeyAdmin = (pubkey: any) => {
