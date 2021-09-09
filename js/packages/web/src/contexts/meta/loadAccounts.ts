@@ -17,6 +17,7 @@ import {
   getEdition,
   getMultipleAccounts,
   MAX_CREATOR_LEN,
+  MAX_CREATOR_LIMIT,
   MAX_NAME_LENGTH,
   MAX_SYMBOL_LENGTH,
   MAX_URI_LENGTH,
@@ -25,7 +26,6 @@ import {
   ParsedAccount,
 } from '@oyster/common';
 import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models/metaplex';
-const MAX_CREATOR_LIMIT = 10;
 async function getProgramAccounts(
   connection: Connection,
   programId: StringPublicKey,

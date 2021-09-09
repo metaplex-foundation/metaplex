@@ -40,7 +40,7 @@ pub const MAX_EDITION_LEN: usize = 1 + 32 + 8 + 200;
 // by rewriting it.
 pub const MAX_MASTER_EDITION_LEN: usize = 1 + 9 + 8 + 264;
 
-pub const MAX_CREATOR_LIMIT: usize = 5;
+pub const MAX_CREATOR_LIMIT: usize = 10;
 
 pub const MAX_CREATOR_LEN: usize = 32 + 1 + 1;
 
