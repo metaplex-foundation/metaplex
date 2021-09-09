@@ -13,3 +13,11 @@ export const getLast = <T>(arr: T[]) => {
 
   return arr[arr.length - 1];
 };
+
+export const getConfig = () => {
+  return require('../config/config.json');
+};
+
+export const isPubkeyAdmin = (pubkey: any) => {
+  return getConfig().admin.includes(pubkey);
+};

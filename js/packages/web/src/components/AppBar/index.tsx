@@ -7,6 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { isPubkeyAdmin } from '../../utils/utils';
 
 const UserActions = () => {
   const { publicKey } = useWallet();
@@ -19,6 +20,8 @@ const UserActions = () => {
       whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
+
+  const hasAccess = isPubkeyAdmin(pubkey);
 
   return (
     <>
@@ -37,6 +40,11 @@ const UserActions = () => {
               Sell
             </Button>
           </Link>
+          { hasAccess ? (
+            <Link to={`/admin`}>
+              <Button className="app-btn">Admin</Button>
+            </Link>
+          ) : null}
         </>
       )}
     </>

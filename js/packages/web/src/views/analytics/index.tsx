@@ -17,11 +17,17 @@ import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
 import { AuctionManagerV1 } from '../../models/metaplex/deprecatedStates';
+import { AccessForbidden } from '../../components/Access';
+import { isPubkeyAdmin } from '../../utils/utils';
+import { useWallet } from '@solana/wallet-adapter-react';
+
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
   const mint = useMint(QUOTE_MINT);
-  return mint ? <InnerAnalytics mint={mint} /> : <Spin />;
+  const wallet = useWallet();
+  const hasAccess = isPubkeyAdmin(wallet.publicKey?.toString())
+  return mint ? <InnerAnalytics mint={mint} hasAccess={hasAccess} /> : <Spin />;
 };
 
 enum AuctionType {
@@ -285,7 +291,7 @@ const MemoizedPie = React.memo(
   },
 );
 
-function InnerAnalytics({ mint }: { mint: MintInfo }) {
+function InnerAnalytics({ mint, hasAccess }: { mint: MintInfo, hasAccess: boolean }) {
   const [usersWithMetadata, setUsersWithMetadata] = useState<
     Record<string, boolean>
   >({});
@@ -319,60 +325,64 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
 
   const auctionViews = useAuctions();
 
-  return (
-    <Content>
-      <Col style={{ marginTop: 10 }}>
-        <Button
-          type="primary"
-          size="large"
-          className="action-btn"
-          onClick={() =>
-            rerun({
-              auctionViews,
-              auctionManagersByAuction,
-              usersEngaged,
-              auctionDataExtended,
-              bidderPotsByAuctionAndBidder,
-              metadata,
-              setByType,
-              setAverageBids,
-              setUsersPublished,
-              setAverageSale,
-              setHighestSale,
-              setSortedSales,
-              setUsersWithMetadata,
-              setUsersBid,
-              setUsersEngaged,
-            })
-          }
-        >
-          RERUN CALCULATION
-        </Button>
-        <h1>Overview</h1>
-        <h3>
-          Total NFTs: {totalNFTs} Total Marketplaces: {totalMarketplaces}
-        </h3>
-        <h1>User Breakdown</h1>
-        <h3>Any Engagement: {Object.values(usersEngaged).length}</h3>
-        <h3>That bid: {Object.values(usersBid).length}</h3>
-        <h3>That sold items: {Object.values(usersPublished).length}</h3>
-        <h3>That minted NFTs: {Object.values(usersWithMetadata).length}</h3>
-        <h1>Sale Info</h1>
-        <h3>
-          Total Sales: ◎
-          {fromLamports(
-            sortedSales.reduce((acc, r) => (acc += r), 0),
-            mint,
-          )}
-        </h3>
-        <MemoizedBar sortedSales={sortedSales} mint={mint} />
+  if(!hasAccess) {
+    return (<AccessForbidden/>)
+  } else {
+    return (
+      <Content>
+        <Col style={{ marginTop: 10 }}>
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            onClick={() =>
+              rerun({
+                auctionViews,
+                auctionManagersByAuction,
+                usersEngaged,
+                auctionDataExtended,
+                bidderPotsByAuctionAndBidder,
+                metadata,
+                setByType,
+                setAverageBids,
+                setUsersPublished,
+                setAverageSale,
+                setHighestSale,
+                setSortedSales,
+                setUsersWithMetadata,
+                setUsersBid,
+                setUsersEngaged,
+              })
+            }
+          >
+            RERUN CALCULATION
+          </Button>
+          <h1>Overview</h1>
+          <h3>
+            Total NFTs: {totalNFTs} Total Marketplaces: {totalMarketplaces}
+          </h3>
+          <h1>User Breakdown</h1>
+          <h3>Any Engagement: {Object.values(usersEngaged).length}</h3>
+          <h3>That bid: {Object.values(usersBid).length}</h3>
+          <h3>That sold items: {Object.values(usersPublished).length}</h3>
+          <h3>That minted NFTs: {Object.values(usersWithMetadata).length}</h3>
+          <h1>Sale Info</h1>
+          <h3>
+            Total Sales: ◎
+            {fromLamports(
+              sortedSales.reduce((acc, r) => (acc += r), 0),
+              mint,
+            )}
+          </h3>
+          <MemoizedBar sortedSales={sortedSales} mint={mint} />
 
-        <h3>Highest Sale: ◎ {fromLamports(highestSale, mint)}</h3>
-        <h3>Average Sale: ◎ {fromLamports(averageSale, mint)}</h3>
-        <h1>Auction Info</h1>
-        <h3>Average Bids per Auction: {averageBids}</h3>
-        <MemoizedPie byType={byType} />
-      </Col>
-    </Content>
-  );
+          <h3>Highest Sale: ◎ {fromLamports(highestSale, mint)}</h3>
+          <h3>Average Sale: ◎ {fromLamports(averageSale, mint)}</h3>
+          <h1>Auction Info</h1>
+          <h3>Average Bids per Auction: {averageBids}</h3>
+          <MemoizedPie byType={byType} />
+        </Col>
+      </Content>
+    );
+  }
 }

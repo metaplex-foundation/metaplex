@@ -34,6 +34,8 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { isPubkeyAdmin } from '../../utils/utils';
+import { AccessForbidden } from '../../components/Access';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -73,6 +75,7 @@ export const AdminView = () => {
             connection={connection}
             wallet={wallet}
             connected={wallet.connected}
+            hasAccess={isPubkeyAdmin(wallet.publicKey?.toString())}
           />
           {!isConfigured && (
             <>
@@ -166,6 +169,7 @@ function InnerAdminView({
   connection,
   wallet,
   connected,
+  hasAccess,
 }: {
   store: ParsedAccount<Store>;
   whitelistedCreatorsByCreator: Record<
@@ -175,6 +179,7 @@ function InnerAdminView({
   connection: Connection;
   wallet: WalletSigner;
   connected: boolean;
+  hasAccess: boolean;
 }) {
   const [newStore, setNewStore] = useState(
     store && store.info && new Store(store.info),
@@ -257,103 +262,111 @@ function InnerAdminView({
       ),
     },
   ];
-
-  return (
-    <Content>
-      <Col style={{ marginTop: 10 }}>
-        <Row>
-          <Col span={21}>
-            <ArtistModal
-              setUpdatedCreators={setUpdatedCreators}
-              uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
-            />
-            <Button
-              onClick={async () => {
-                notify({
-                  message: 'Saving...',
-                  type: 'info',
-                });
-                await saveAdmin(
-                  connection,
-                  wallet,
-                  newStore.public,
-                  Object.values(updatedCreators),
-                );
-                notify({
-                  message: 'Saved',
-                  type: 'success',
-                });
-              }}
-              type="primary"
-            >
-              Submit
-            </Button>
-          </Col>
-          <Col span={3}>
-            <Switch
-              checkedChildren="Public"
-              unCheckedChildren="Whitelist Only"
-              checked={newStore.public}
-              onChange={val => {
-                setNewStore(_ => {
-                  const newS = new Store(store.info);
-                  newS.public = val;
-                  return newS;
-                });
-              }}
-            />
-          </Col>
-        </Row>
-        <Row>
-          <Table
-            className="artist-whitelist-table"
-            columns={columns}
-            dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-              key,
-              address: uniqueCreatorsWithUpdates[key].address,
-              activated: uniqueCreatorsWithUpdates[key].activated,
-              name:
-                uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(uniqueCreatorsWithUpdates[key].address),
-              image: uniqueCreatorsWithUpdates[key].image,
-            }))}
-          ></Table>
-        </Row>
-      </Col>
-
-      {!store.info.public && (
-        <>
-          <h1>
-            You have {filteredMetadata?.available.length} MasterEditionV1s that
-            can be converted right now and{' '}
-            {filteredMetadata?.unavailable.length} still in unfinished auctions
-            that cannot be converted yet.
-          </h1>
-          <Col>
-            <Row>
+  if (!hasAccess) {
+    return (<AccessForbidden/>)
+  } else {
+    return ( 
+      <Content>
+        <Col style={{ marginTop: 10 }}>
+          <Row>
+            <Col span={21}>
+              <ArtistModal
+                setUpdatedCreators={setUpdatedCreators}
+                uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
+              />
               <Button
-                disabled={loading}
                 onClick={async () => {
-                  setLoading(true);
-                  await convertMasterEditions(
+                  notify({
+                    message: 'Saving...',
+                    type: 'info',
+                  });
+                  await saveAdmin(
                     connection,
                     wallet,
-                    filteredMetadata?.available || [],
-                    accountByMint,
+                    newStore.public,
+                    Object.values(updatedCreators),
                   );
-                  setLoading(false);
+                  notify({
+                    message: 'Saved',
+                    type: 'success',
+                  });
                 }}
+                type="primary"
               >
-                {loading ? (
-                  <Spin />
-                ) : (
-                  <span>Convert Eligible Master Editions</span>
-                )}
+                Submit
               </Button>
-            </Row>
-          </Col>{' '}
-        </>
-      )}
-    </Content>
-  );
+              <Link to='/analytics'>
+                <Button style={{ marginLeft: 50 }}>
+                  Analytics
+                </Button>
+              </Link>
+            </Col>
+            <Col span={3}>
+              <Switch
+                checkedChildren="Public"
+                unCheckedChildren="Whitelist Only"
+                checked={newStore.public}
+                onChange={val => {
+                  setNewStore(_ => {
+                    const newS = new Store(store.info);
+                    newS.public = val;
+                    return newS;
+                  });
+                }}
+              />
+            </Col>
+          </Row>
+          <Row>
+            <Table
+              className="artist-whitelist-table"
+              columns={columns}
+              dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+                key,
+                address: uniqueCreatorsWithUpdates[key].address,
+                activated: uniqueCreatorsWithUpdates[key].activated,
+                name:
+                  uniqueCreatorsWithUpdates[key].name ||
+                  shortenAddress(uniqueCreatorsWithUpdates[key].address),
+                image: uniqueCreatorsWithUpdates[key].image,
+              }))}
+            ></Table>
+          </Row>
+        </Col>
+  
+        {!store.info.public && (
+          <>
+            <h1>
+              You have {filteredMetadata?.available.length} MasterEditionV1s that
+              can be converted right now and{' '}
+              {filteredMetadata?.unavailable.length} still in unfinished auctions
+              that cannot be converted yet.
+            </h1>
+            <Col>
+              <Row>
+                <Button
+                  disabled={loading}
+                  onClick={async () => {
+                    setLoading(true);
+                    await convertMasterEditions(
+                      connection,
+                      wallet,
+                      filteredMetadata?.available || [],
+                      accountByMint,
+                    );
+                    setLoading(false);
+                  }}
+                >
+                  {loading ? (
+                    <Spin />
+                  ) : (
+                    <span>Convert Eligible Master Editions</span>
+                  )}
+                </Button>
+              </Row>
+            </Col>{' '}
+          </>
+        )}
+      </Content>
+    );
+  }
 }
