@@ -128,7 +128,7 @@ async fn success() {
 
 #[tokio::test]
 async fn fail_invalid_state() {
-    let (mut context, test_pack_set, test_pack_card, _test_metadata, _test_master_edition, user) =
+    let (mut context, test_pack_set, test_pack_card, _test_metadata, _test_master_edition, _user) =
         setup().await;
 
     let test_metadata2 = TestMetadata::new();

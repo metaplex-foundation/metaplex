@@ -5,9 +5,15 @@ use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
     state::{ActionOnProve, DistributionType, ProvingProcess},
 };
+use solana_program::instruction::InstructionError;
 use solana_program::{program_pack::Pack, system_instruction};
 use solana_program_test::*;
-use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk::{
+    signature::Keypair,
+    signer::Signer,
+    transaction::{Transaction, TransactionError},
+    transport::TransportError,
+};
 use utils::*;
 
 async fn create_master_edition(
@@ -157,4 +163,128 @@ async fn success() {
     // proved vouchers should be zero because it requires 4 edition to prove it
     assert_eq!(proving_process.proved_vouchers, 0);
     assert_eq!(proving_process.proved_voucher_editions, 1);
+}
+
+#[tokio::test]
+async fn fail_prove_twice() {
+    let mut context = nft_packs_program_test().start_with_context().await;
+
+    let test_pack_set = TestPackSet::new();
+    test_pack_set
+        .init(
+            &mut context,
+            InitPackSetArgs {
+                name: [7; 32],
+                total_packs: 5,
+                mutable: true,
+            },
+        )
+        .await
+        .unwrap();
+
+    let (card_metadata, card_master_edition, card_master_token_holder) =
+        create_master_edition(&mut context, &test_pack_set).await;
+
+    let (voucher_metadata, voucher_master_edition, voucher_master_token_holder) =
+        create_master_edition(&mut context, &test_pack_set).await;
+
+    let voucher_edition = TestEditionMarker::new(&voucher_metadata, &voucher_master_edition, 1);
+
+    let edition_authority = Keypair::new();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[system_instruction::create_account(
+            &context.payer.pubkey(),
+            &edition_authority.pubkey(),
+            100000000000000,
+            0,
+            &solana_program::system_program::id(),
+        )],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &edition_authority],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    voucher_edition
+        .create(
+            &mut context,
+            &edition_authority,
+            &test_pack_set.authority,
+            &voucher_master_token_holder.token_account,
+        )
+        .await
+        .unwrap();
+
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    test_pack_set
+        .add_card(
+            &mut context,
+            &test_pack_card,
+            &card_master_edition,
+            &card_metadata,
+            &card_master_token_holder,
+            AddCardToPackArgs {
+                max_supply: Some(5),
+                probability_type: DistributionType::ProbabilityBased,
+                probability: 1000000,
+                index: test_pack_card.index,
+            },
+        )
+        .await
+        .unwrap();
+
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+
+    test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &voucher_master_edition,
+            &voucher_metadata,
+            &voucher_master_token_holder,
+            AddVoucherToPackArgs {
+                max_supply: Some(5),
+                number_to_open: 4,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await
+        .unwrap();
+
+    test_pack_set.activate(&mut context).await.unwrap();
+
+    test_pack_set
+        .prove_voucher_ownership(
+            &mut context,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
+            &edition_authority,
+            &voucher_edition.token.pubkey(),
+            &test_pack_voucher.pubkey,
+        )
+        .await
+        .unwrap();
+
+    context.warp_to_slot(3).unwrap();
+
+    let result = test_pack_set
+        .prove_voucher_ownership(
+            &mut context,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
+            &edition_authority,
+            &voucher_edition.token.pubkey(),
+            &test_pack_voucher.pubkey,
+        )
+        .await;
+
+    assert_transport_error!(
+        result.unwrap_err(),
+        TransportError::TransactionError(TransactionError::InstructionError(
+            0,
+            InstructionError::InvalidAccountData
+        ))
+    );
 }
