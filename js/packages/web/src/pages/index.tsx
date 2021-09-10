@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic';
 import { NextPageContext } from 'next';
 import Head from 'next/head';
