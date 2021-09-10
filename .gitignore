@@ -17,6 +17,7 @@ yarn-error.log*
 *.css.map
 !js/packages/metaplex/src/fonts/fonts.css
 !js/packages/metaplex/src/utils/globals.css
+js/.eslintcache
 target
 .env
 .vscode

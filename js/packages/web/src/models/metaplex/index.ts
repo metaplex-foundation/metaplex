@@ -9,7 +9,6 @@ import {
   Vault,
   Metadata,
   MasterEditionV1,
-  MetadataKey,
   SafetyDepositBox,
   MasterEditionV2,
   toPublicKey,
@@ -205,7 +204,7 @@ export class AuctionManager {
             metadataByMint[boxes[it.safetyDepositBoxIndex]?.info.tokenMint];
           if (!metadata) {
             // Means is a limited edition v1, so the tokenMint is the printingMint
-            let masterEdition =
+            const masterEdition =
               masterEditionsByPrintingMint[
                 boxes[it.safetyDepositBoxIndex]?.info.tokenMint
               ];
@@ -645,7 +644,7 @@ export class SafetyDepositConfig {
       this.winningConfigType = args.data[41];
       this.amountType = args.data[42];
       this.lengthType = args.data[43];
-      let lengthOfArray = new BN(args.data.slice(44, 48), 'le');
+      const lengthOfArray = new BN(args.data.slice(44, 48), 'le');
       this.amountRanges = [];
       let offset = 48;
       for (let i = 0; i < lengthOfArray.toNumber(); i++) {
@@ -716,7 +715,7 @@ export class SafetyDepositConfig {
   getAmountForWinner(winner: BN): BN {
     let start = new BN(0);
     for (let i = 0; i < this.amountRanges.length; i++) {
-      let end = start.add(this.amountRanges[i].length);
+      const end = start.add(this.amountRanges[i].length);
       if (winner.gte(start) && winner.lt(end)) {
         return this.amountRanges[i].amount;
       }

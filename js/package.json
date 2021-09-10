@@ -14,8 +14,9 @@
     "bootstrap": "lerna link && lerna bootstrap",
     "build": "lerna run build",
     "start": "cross-env CI=true lerna run start --scope @oyster/common --stream --parallel --scope web",
-    "lint": "eslint 'packages/*/{src,test}/**/*.ts' && prettier -c 'packages/*/{src,test}/**/*.ts'",
-    "lint:fix": "eslint --fix 'packages/*/{src,test}/**/*.ts' && prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}'",
+    "lint": "prettier -c 'packages/*/{src,test}/**/*.ts' && npm run lint:eslint",
+    "lint:eslint": "eslint 'packages/*/{src,test}/**/*.ts'",
+    "lint:fix": "prettier --write 'packages/*/{src,test}/**/*.{ts,tsx}' && eslint --fix 'packages/*/{src,test}/**/*.ts'",
     "format:fix": "lerna run format:fix",
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
@@ -24,7 +25,8 @@
   },
   "lint-staged": {
     "packages/*/{src,test}/**/*.ts": [
-      "prettier --write"
+      "prettier --write",
+      "eslint --cache --fix --max-warnings=0"
     ]
   },
   "husky": {
@@ -56,6 +58,7 @@
     "@types/jest": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
+    "eslint-plugin-react": "^7.25.1",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "^6.15.0",
     "gh-pages": "^3.1.0",

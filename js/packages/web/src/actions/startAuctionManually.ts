@@ -10,7 +10,7 @@ export async function startAuctionManually(
 ) {
   try {
     const signers: Keypair[] = [];
-    let instructions: TransactionInstruction[] = [];
+    const instructions: TransactionInstruction[] = [];
 
     await startAuction(
       auctionView.vault.pubkey,
