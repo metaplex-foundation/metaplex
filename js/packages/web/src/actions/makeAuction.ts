@@ -27,8 +27,8 @@ export async function makeAuction(
 
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
   const auctionKey = (
     await findProgramAddress(
       [

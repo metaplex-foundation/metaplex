@@ -23,8 +23,8 @@ export async function deprecatedCreateReservationListForTokens(
 
   let batchCounter = 0;
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];

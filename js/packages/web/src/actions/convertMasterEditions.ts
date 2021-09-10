@@ -53,7 +53,7 @@ export async function filterMetadata(
       console.log('Reviewing', masterEdition.pubkey);
       let printingBal = 0;
       try {
-        let printingBalResp = await connection.getTokenSupply(
+        const printingBalResp = await connection.getTokenSupply(
           toPublicKey(masterEdition.info.printingMint),
         );
         printingBal = printingBalResp.value.uiAmount || 0;
@@ -83,7 +83,7 @@ export async function filterMetadata(
       } else {
         let oneTimeBal = 0;
         try {
-          let oneTimeBalResp = await connection.getTokenSupply(
+          const oneTimeBalResp = await connection.getTokenSupply(
             toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
           );
           oneTimeBal = oneTimeBalResp.value.uiAmount || 0;
@@ -133,8 +133,8 @@ export async function convertMasterEditions(
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const PROGRAM_IDS = programIds();
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];

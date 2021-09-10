@@ -1,9 +1,4 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   ParsedAccount,
   SequenceType,
@@ -42,8 +37,8 @@ export async function settle(
     auctionView.auction.info.ended() &&
     auctionView.auction.info.state !== AuctionState.Ended
   ) {
-    let signers: Keypair[][] = [];
-    let instructions: TransactionInstruction[][] = [];
+    const signers: Keypair[][] = [];
+    const instructions: TransactionInstruction[][] = [];
 
     await setupPlaceBid(
       connection,
@@ -76,15 +71,15 @@ async function emptyPaymentAccountForAllTokens(
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   const PROGRAM_IDS = programIds();
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let settleSigners: Keypair[] = [];
   let settleInstructions: TransactionInstruction[] = [];
-  let ataLookup: Record<string, boolean> = {};
+  const ataLookup: Record<string, boolean> = {};
   // TODO replace all this with payer account so user doesnt need to click approve several times.
 
   // Overall we have 10 parallel txns, of up to 4 settlements per txn
@@ -219,8 +214,8 @@ async function claimAllBids(
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[],
 ) {
-  let signers: Array<Array<Keypair[]>> = [];
-  let instructions: Array<Array<TransactionInstruction[]>> = [];
+  const signers: Array<Array<Keypair[]>> = [];
+  const instructions: Array<Array<TransactionInstruction[]>> = [];
 
   let currSignerBatch: Array<Keypair[]> = [];
   let currInstrBatch: Array<TransactionInstruction[]> = [];

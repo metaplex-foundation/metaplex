@@ -80,8 +80,7 @@ export const AuctionListView = () => {
         .concat(auctionsEnded)
         .filter(
           (m, idx) =>
-            m.myBidderMetadata?.info.bidderPubkey ==
-            publicKey?.toBase58(),
+            m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
         );
       break;
     case LiveAuctionViewState.Resale:
