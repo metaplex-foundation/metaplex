@@ -64,8 +64,8 @@ pub fn add_card_to_pack(
     assert_account_key(pack_card_info, &pack_card_pubkey)?;
 
     let signers_seeds = &[
-        &pack_set_info.key.to_bytes()[..32],
         PackCard::PREFIX.as_bytes(),
+        &pack_set_info.key.to_bytes()[..32],
         &index.to_be_bytes(),
         &[bump_seed],
     ];

@@ -43,8 +43,8 @@ pub fn find_pack_card_program_address(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &pack.to_bytes(),
             PackCard::PREFIX.as_bytes(),
+            &pack.to_bytes(),
             &index.to_be_bytes(),
         ],
         program_id,
@@ -59,8 +59,8 @@ pub fn find_pack_voucher_program_address(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &pack.to_bytes(),
             PackVoucher::PREFIX.as_bytes(),
+            &pack.to_bytes(),
             &index.to_be_bytes(),
         ],
         program_id,
@@ -75,8 +75,8 @@ pub fn find_proving_process_program_address(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            &pack.to_bytes(),
             ProvingProcess::PREFIX.as_bytes(),
+            &pack.to_bytes(),
             &user_wallet.to_bytes(),
         ],
         program_id,

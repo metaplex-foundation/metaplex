@@ -47,8 +47,8 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
     }
 
     let proving_process_seeds = &[
-        pack_set_account.key.as_ref(),
         ProvingProcess::PREFIX.as_bytes(),
+        pack_set_account.key.as_ref(),
         user_wallet_account.key.as_ref(),
     ];
     let bump_seed = assert_derivation(program_id, proving_process_account, proving_process_seeds)?;
@@ -67,8 +67,8 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         program_id,
         voucher_account,
         &[
-            pack_set_account.key.as_ref(),
             PackVoucher::PREFIX.as_bytes(),
+            pack_set_account.key.as_ref(),
             &proving_process
                 .proved_vouchers
                 .error_increment()?
