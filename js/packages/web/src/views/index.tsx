@@ -9,7 +9,7 @@ export { ArtworksView } from './artworks';
 export { AnalyticsView } from './analytics';
 
 import { Layout, Button } from 'antd';
-import React, { createContext, useCallback, useContext }  from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState }  from 'react';
 // import { useConnection, useWalletModal } from '@oyster/common';
 import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
 // import twitter from '../../public/img/twitter.png';
@@ -212,6 +212,9 @@ const getMasterEdition = async (
 export const HomeView = () => {
   const wallet = useWallet();
   const connection = useConnection();
+  const [remaining, setRemaining] = useState<number>(9999);
+  // This is from the .cache directory after uploading, copy yours here without "items"
+  const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
 
   const { setVisible } = useWalletModal();
   const connect = useCallback(
@@ -219,8 +222,31 @@ export const HomeView = () => {
     [wallet.wallet, wallet.connect, setVisible],
   );
 
-  // This is from the .cache directory after uploading, copy yours here without "items"
-  const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
+  useEffect(() => {
+    if (wallet && wallet.wallet && wallet.publicKey) {
+      const provider = new Provider(connection, {
+        ...wallet.wallet,
+        signAllTransactions: wallet.signAllTransactions,
+        signTransaction: wallet.signTransaction,
+        publicKey: wallet.publicKey
+      }, {
+        preflightCommitment: 'recent',
+      });
+      Program.fetchIdl(programId, provider).then(idl => {
+        const anchorProgram = new Program(idl, programId, provider);
+        const config = new web3.PublicKey(cachedContent.program.config);
+        getCandyMachine(
+          config,
+          cachedContent.program.uuid,
+        ).then(([candyMachine, bump]) => {
+          anchorProgram.account.candyMachine.fetch(candyMachine).then(candy => {
+            const remaining = ((candy as any)?.data?.itemsAvailable?.toNumber() - (candy as any)?.itemsRedeemed?.toNumber())
+            setRemaining(remaining);
+          });
+        });
+      });
+    }
+  }, [wallet, wallet.wallet, wallet.publicKey]);
 
   const mint = async ({wallet, connection}: {wallet: WalletContextState, connection: Connection}) => {
     // Set price here to the same you specified when setting up candy mashine
@@ -312,9 +338,10 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <Button type="primary" className="button" style={{ fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
+      <Button type="primary" className="button remaining" style={{ fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
         {!wallet.connected ? 'Connect' : 'Adopt (1.5 SOL)'} 
       </Button>{' '}
+      <h1 className="desc">Remaining: {remaining}/ 9999</h1>
       <RenderFooter></RenderFooter>
     </Layout>
   );
