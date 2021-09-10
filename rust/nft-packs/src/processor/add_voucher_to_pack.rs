@@ -63,8 +63,8 @@ pub fn add_voucher_to_pack(
     assert_account_key(pack_voucher_info, &pack_voucher_pubkey)?;
 
     let signers_seeds = &[
-        &pack_set_info.key.to_bytes()[..32],
         PackVoucher::PREFIX.as_bytes(),
+        &pack_set_info.key.to_bytes()[..32],
         &index.to_be_bytes(),
         &[bump_seed],
     ];
