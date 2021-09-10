@@ -17,6 +17,8 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 use spl_token_metadata::state::{MasterEditionV2, Metadata};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -136,9 +138,13 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 return Err(NFTPacksError::RandomOracleOutOfDate.into());
             }
 
-            // Convert oracle random byte array to number
+            // Hash random value from the oracle with current slot and receive new random u32
+            let mut hasher = DefaultHasher::new();
+            hasher.write(oracle_random_value.as_ref());
+            hasher.write_u64(clock.slot);
+
             let mut random_value: [u8; 4] = [0u8; 4];
-            random_value.copy_from_slice(&oracle_random_value[..4]);
+            random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..4]);
             let random_value = u32::from_le_bytes(random_value);
 
             let random_value = (random_value as u128) * PRECISION / (u32::MAX as u128);
