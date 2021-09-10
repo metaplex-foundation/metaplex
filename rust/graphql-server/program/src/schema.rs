@@ -1,30 +1,55 @@
 use solana_program::pubkey::Pubkey;
-use juniper::{FieldResult, FieldError, EmptySubscription, EmptyMutation, RootNode };
+use juniper::{FieldResult, FieldError, EmptyMutation, RootNode, graphql_subscription };
+
 use {
     crate::state::SharedState
 };
 use juniper::{GraphQLEnum, GraphQLObject};
 use std::str::FromStr;
+use futures::Stream;
+use std::sync::{RwLock, Arc};
+use std::pin::Pin;
 
-pub struct Ctx(SharedState);
 
+pub struct Ctx {
+  state: Arc<RwLock<SharedState>>
+}
 
 impl Ctx {
     pub fn new() -> Ctx {
         let state = SharedState::new();
-        Ctx(state)
+        Ctx {
+          state: Arc::new(RwLock::new(state))
+        }
     }
-    pub fn preload(&mut self) {
-      self.0.preload()
-    }
-    pub fn find_vault(&self, key: &str) -> Option<&spl_token_vault::state::Vault> {
-      match Pubkey::from_str(key) {
-        Ok(id) => self.0.vaults.get(&id),
-        Err(_) => Option::None
+    pub fn clone(ctx: &Ctx) -> Ctx {
+      let state = Arc::clone(&ctx.state);
+      Ctx {
+        state: state
       }
     }
+
+    pub fn preload<'a>(&'a mut self) {
+      if let Ok(mut state) = self.state.try_write() {
+        state.preload()
+      }
+    }
+    pub fn find_vault(&self, key: &str) -> Option<Vault> {
+      let res = self.state
+        .try_read()
+        .map(|st| {
+          match Pubkey::from_str(key) {
+            Ok(id) => st.vaults.get(&id).map(|v| Vault::from(v)),
+            Err(_) => None,
+          }
+        });
+      res.unwrap_or(None)
+    }
     pub fn vaults(&self) -> Vec<Vault> {
-      self.0.vaults.values().map(|v| Vault::from(v)).collect()
+      match self.state.try_read() {
+        Ok(state) => state.vaults.values().map(|v| Vault::from(v)).collect(),
+        Err(_) => Vec::new(),
+      }
     }
 }
 
@@ -129,7 +154,7 @@ pub struct QueryRoot;
 impl QueryRoot {
   /// get vault by id
   fn vault(context: &Ctx, id: String) -> FieldResult<Vault> {
-    let result = context.find_vault(&id).map(|v| Vault::from(v));
+    let result = context.find_vault(&id);
     if let Some(v) = result {
       Ok(v)
     } else {
@@ -143,8 +168,21 @@ impl QueryRoot {
   }
 }
 
-pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<Ctx>, EmptySubscription<Ctx>>;
+type StringStream = Pin<Box<dyn Stream<Item = Result<String, FieldError>> + Send>>;
+pub struct Subscription;
+#[graphql_subscription(context = Ctx)]
+impl Subscription {
+  async fn hello_world() -> StringStream {
+    let stream = futures::stream::iter(vec![
+      Ok(String::from("Hello")),
+      Ok(String::from("World!"))
+    ]);
+    Box::pin(stream)
+  }
+}
+
+pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<Ctx>, Subscription>;
 
 pub fn create_schema() -> Schema {
-    Schema::new(QueryRoot {}, EmptyMutation::new(), EmptySubscription::new())
+    Schema::new(QueryRoot {}, EmptyMutation::new(), Subscription {})
 }

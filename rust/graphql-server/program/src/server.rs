@@ -1,79 +1,69 @@
-
-
-use actix_cors::Cors;
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-use juniper::http::graphiql::graphiql_source;
-use juniper::http::GraphQLRequest;
+use std::{ collections::HashMap, convert::Infallible };
+use juniper_warp::subscriptions::serve_graphql_ws;
+use juniper_graphql_ws::ConnectionConfig;
+use juniper_warp::{playground_filter};
+use futures::FutureExt;
+use warp::Filter;
+use juniper::InputValue;
 use std::sync::Arc;
-use std::sync::RwLock;
-use std::io;
 use crate::schema::{Schema, Ctx};
 
 pub struct AppServer {
-    schema: Arc<Schema>,
-    context: Arc<RwLock<Ctx>>
-}
-
-
-async fn graphiql() -> HttpResponse {
-    let html = graphiql_source("http://127.0.0.1:8080/graphql", None);
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-}
-
-async fn graphql(
-    st: web::Data<Arc<Schema>>,
-    ctx: web::Data<Arc<RwLock<Ctx>>>,
-    data: web::Json<GraphQLRequest>,
-) -> Result<HttpResponse, actix_web::Error> {
-    let user = web::block(move || {
-        match ctx.get_ref().try_read() {
-            Ok(context) => {
-                let res = data.execute_sync(&st, &context);
-                let json = serde_json::to_string(&res)?;
-                return Ok::<_, serde_json::error::Error>(json);
-            }
-            Err(e) => {
-                let json_str = format!("{{\"error\":\"{}\"}}", e.to_string());
-                let json = serde_json::to_string(&json_str)?;
-                return Ok::<_, serde_json::error::Error>(json);
-            }
-        }
-    }).await?;
-    Ok(HttpResponse::Ok()
-        .content_type("application/json")
-        .body(user))
+  create_schema: Box<fn() -> Schema>,
+  context: Ctx
 }
 
 impl AppServer {
-    pub fn new(schema: Arc<Schema>, context: Arc<RwLock<Ctx>>) -> Self {
+    pub fn new(create_schema: fn() -> Schema, context: Ctx) -> Self {
         AppServer {
-            schema: schema,
-            context: context
+          create_schema: Box::new(create_schema),
+          context: context
         }
     }
-    pub async fn run(self) -> io::Result<()> {
-        let schema = self.schema;
-        let context = self.context;
-        // Start http server
-        HttpServer::new(move || {
-            App::new()
-                .data(schema.clone())
-                .data(context.clone())
-                .wrap(middleware::Logger::default())
-                .wrap(
-                    Cors::new()
-                        .allowed_methods(vec!["POST", "GET"])
-                        .supports_credentials()
-                        .max_age(3600)
-                        .finish(),
-                )
-                .service(web::resource("/graphql").route(web::post().to(graphql)))
-                .service(web::resource("/graphiql").route(web::get().to(graphiql)))
+    pub async fn run(self) {
+      let qm_schema = (*self.create_schema)();
+      let base_context = Arc::new(self.context);
+
+      let context = Arc::clone(&base_context);
+      let qm_state = warp::any().map(move || {
+        return Ctx::clone(&context);
+      });
+      let qm_graphql_filter = juniper_warp::make_graphql_filter(qm_schema, qm_state.boxed());
+      let root_node = Arc::new((*self.create_schema)());
+      let log = warp::log("warp_subscriptions");
+      let context = Arc::clone(&base_context);
+      let routes = (warp::path("subscriptions")
+        .and(warp::ws())
+        .map(move |ws: warp::ws::Ws| {
+            let root_node = Arc::clone(&root_node);
+            let context = Arc::clone(&context);
+
+            let ctx = Ctx::clone(&context);
+            ws.on_upgrade(move |websocket| async move {
+                let connection_config = move |_: HashMap<String, InputValue>| async move {
+                  Ok(ConnectionConfig::new(ctx)) as Result<_, Infallible>
+                };
+
+                serve_graphql_ws(websocket, root_node, connection_config)
+                    .map(|r| {
+                      if let Err(e) = r {
+                        println!("Websocket error: {}", e);
+                      }
+                    })
+                    .await
+            })
+        }))
+        .map(|reply| {
+            // TODO#584: remove this workaround
+            warp::reply::with_header(reply, "Sec-WebSocket-Protocol", "graphql-ws")
         })
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
-    }
+        .or(warp::post()
+            .and(warp::path("graphql"))
+            .and(qm_graphql_filter))
+        .or(warp::get()
+            .and(warp::path("playground"))
+            .and(playground_filter("/graphql", Some("/subscriptions"))))
+        .with(log);
+    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+  }
 }

@@ -6,13 +6,18 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "3.3.2"
-actix-cors = "0.4.0"
+warp = "0.3"
 env_logger = "0.8"
 serde = "1.0.103"
+futures = "0.3"
 serde_json = "1.0.44"
 serde_derive = "1.0.103"
+
 juniper = "0.15"
+juniper_graphql_ws = "0.3.0"
+juniper_warp = { version = "0.7.0", features = ["subscriptions"] }
+async-stream = "0.3"
+
 solana-client = "1.7.8"
 solana-program = "1.7.8"
 spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
