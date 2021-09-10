@@ -30,11 +30,10 @@ impl Ctx {
         }
     }
     pub fn find_vault(&self, key: &str) -> Option<Vault> {
-        let res = self.state.try_read().map(|st| match Pubkey::from_str(key) {
+        self.state.try_read().map(|st| match Pubkey::from_str(key) {
             Ok(id) => st.vaults.get(&id).map(|v| Vault::from(v)),
             Err(_) => None,
-        });
-        res.unwrap_or(None)
+        }).unwrap_or(None)
     }
     pub fn vaults(&self) -> Vec<Vault> {
         match self.state.try_read() {
