@@ -25,7 +25,10 @@ export const Banner = (props: {
     return () => {
       const mainBg = document.getElementById('main-bg');
       const gradient = document.getElementById('bg-gradient');
-      if (mainBg && props.useBannerBg) mainBg.style.backgroundImage = '';
+      if (mainBg && props.useBannerBg) {
+        mainBg.style.backgroundImage = '';
+        mainBg.style.display = 'none';
+      }
       if (gradient) gradient.style.display = 'none';
     };
   }, [props.src, props.useBannerBg]);
