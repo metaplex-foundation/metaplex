@@ -1,15 +1,17 @@
-
 use {
-    crate::{ErrorCode,FairLaunchData,MAX_GRANULARITY},
+    crate::{ErrorCode, FairLaunch, FairLaunchData, MAX_GRANULARITY},
     anchor_lang::{
-        prelude::{AccountInfo, ProgramError, ProgramResult, Pubkey, Rent, msg, SolanaSysvar},
+        prelude::{
+            msg, AccountInfo, ProgramAccount, ProgramError, ProgramResult, Pubkey, Rent,
+            SolanaSysvar,
+        },
         solana_program::{
-            program::{invoke_signed, invoke},
-            system_instruction,
+            program::{invoke, invoke_signed},
             program_pack::{IsInitialized, Pack},
+            system_instruction,
         },
     },
-    std::convert::TryInto
+    std::convert::TryInto,
 };
 
 pub fn assert_initialized<T: Pack + IsInitialized>(
@@ -73,58 +75,142 @@ pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult 
     result.map_err(|_| ErrorCode::TokenTransferFailed.into())
 }
 
+pub fn adjust_counts(
+    fair_launch: &mut ProgramAccount<FairLaunch>,
+    new_amount: u64,
+    old_amount: Option<u64>,
+) -> ProgramResult {
+    let price_range_offset = fair_launch
+        .data
+        .price_range_start
+        .checked_div(fair_launch.data.tick_size)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+
+    if let Some(old) = old_amount {
+        if old >= fair_launch.data.price_range_start {
+            let mut index = old
+                .checked_div(fair_launch.data.tick_size)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            index = index
+                .checked_sub(price_range_offset)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+            let place = index as usize;
+            fair_launch.counts_at_each_tick[place] = fair_launch.counts_at_each_tick[place]
+                .checked_sub(1)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+        }
+    }
+
+    if new_amount >= fair_launch.data.price_range_start {
+        let mut index = new_amount
+            .checked_div(fair_launch.data.tick_size)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+        index = index
+            .checked_sub(price_range_offset)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+        let place = index as usize;
+        fair_launch.counts_at_each_tick[place] = fair_launch.counts_at_each_tick[place]
+            .checked_add(1)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+    }
+
+    let mut total_counts: u64 = 0;
+    for n in &fair_launch.counts_at_each_tick {
+        total_counts = total_counts
+            .checked_add(*n)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+    }
+
+    let median_location = total_counts
+        .checked_div(2)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+
+    let mut counter: u64 = 0;
+    let mut ticks: u64 = 0;
+    for n in &fair_launch.counts_at_each_tick {
+        counter = counter
+            .checked_add(*n)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+        if counter > median_location {
+            break;
+        }
+        ticks = ticks
+            .checked_add(fair_launch.data.tick_size)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+    }
+
+    fair_launch.current_median = ticks
+        .checked_add(fair_launch.data.price_range_start)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+
+    Ok(())
+}
+
+pub fn get_mask_and_index_for_seq(seq: u64) -> Result<(u8, usize), ProgramError> {
+    let my_position_in_index = seq
+        .checked_div(8)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+    let my_position_from_right = 7 - seq
+        .checked_div(8)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+    let mask = u8::pow(2, my_position_from_right as u32);
+    Ok((mask, my_position_in_index as usize))
+}
+
 pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
     if data.phase_one_end < data.phase_one_start {
-        return Err(ErrorCode::TimestampsDontLineUp.into())
+        return Err(ErrorCode::TimestampsDontLineUp.into());
     }
 
     if data.phase_two_end < data.phase_one_end {
-        return Err(ErrorCode::TimestampsDontLineUp.into())
-    }
-
-    if data.phase_three_start.is_some() || data.phase_three_end.is_some() {
-        return Err(ErrorCode::CantSetPhaseThreeDatesYet.into())
+        return Err(ErrorCode::TimestampsDontLineUp.into());
     }
 
     if data.uuid.len() != 6 {
-        return Err(ErrorCode::UuidMustBeExactly6Length.into())
+        return Err(ErrorCode::UuidMustBeExactly6Length.into());
     }
 
     if data.tick_size == 0 {
-        return Err(ErrorCode::TickSizeTooSmall.into())
+        return Err(ErrorCode::TickSizeTooSmall.into());
     }
 
     if data.number_of_tokens == 0 {
-        return Err(ErrorCode::CannotGiveZeroTokens.into())
+        return Err(ErrorCode::CannotGiveZeroTokens.into());
     }
 
     if data.price_range_end <= data.price_range_start {
-        return Err(ErrorCode::InvalidPriceRanges.into())
+        return Err(ErrorCode::InvalidPriceRanges.into());
     }
 
-    let difference = data.price_range_start.checked_sub(data.price_range_end).ok_or(ErrorCode::NumericalOverflowError)?;
-    let possible_valid_user_prices = difference.checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)?;
-    let remainder = difference.checked_rem(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)?;
+    let difference = data
+        .price_range_start
+        .checked_sub(data.price_range_end)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+    let possible_valid_user_prices = difference
+        .checked_div(data.tick_size)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+    let remainder = difference
+        .checked_rem(data.tick_size)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
 
     if remainder > 0 {
-        return Err(ErrorCode::CannotUseTickSizeThatGivesRemainder.into())
+        return Err(ErrorCode::CannotUseTickSizeThatGivesRemainder.into());
     }
 
     if possible_valid_user_prices > MAX_GRANULARITY {
-        return Err(ErrorCode::TooMuchGranularityInRange.into())
+        return Err(ErrorCode::TooMuchGranularityInRange.into());
     }
 
     Ok(())
 }
 
 pub fn assert_valid_amount(data: &FairLaunchData, amount: u64) -> ProgramResult {
-    
     if amount < data.price_range_start || amount > data.price_range_end {
-        return Err(ErrorCode::InvalidPurchaseAmount.into())
+        return Err(ErrorCode::InvalidPurchaseAmount.into());
     }
 
     if amount.checked_rem(data.tick_size).is_some() {
-        return Err(ErrorCode::InvalidPurchaseAmount.into())
+        return Err(ErrorCode::InvalidPurchaseAmount.into());
     }
 
     Ok(())
@@ -141,7 +227,6 @@ pub fn assert_derivation(
     }
     Ok(bump)
 }
-
 
 /// Create account almost from scratch, lifted from
 /// https://github.com/solana-labs/solana-program-library/blob/7d4873c61721aca25464d42cc5ef651a7923ca79/associated-token-account/program/src/processor.rs#L51-L98
@@ -191,4 +276,27 @@ pub fn create_or_allocate_account_raw<'a>(
     msg!("Completed assignation!");
 
     Ok(())
+}
+
+pub fn spl_token_mint_to<'a: 'b, 'b>(
+    mint: AccountInfo<'a>,
+    destination: AccountInfo<'a>,
+    amount: u64,
+    authority: AccountInfo<'a>,
+    authority_signer_seeds: &'b [&'b [u8]],
+    token_program: AccountInfo<'a>,
+) -> ProgramResult {
+    let result = invoke_signed(
+        &spl_token::instruction::mint_to(
+            token_program.key,
+            mint.key,
+            destination.key,
+            authority.key,
+            &[],
+            amount,
+        )?,
+        &[mint, destination, authority, token_program],
+        &[authority_signer_seeds],
+    );
+    result.map_err(|_| ErrorCode::TokenMintToFailed.into())
 }
