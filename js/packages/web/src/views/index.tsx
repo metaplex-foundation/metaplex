@@ -212,7 +212,7 @@ const getMasterEdition = async (
 export const HomeView = () => {
   const wallet = useWallet();
   const connection = useConnection();
-  const [remaining, setRemaining] = useState<number>(9999);
+  const [remaining, setRemaining] = useState<string>("????");
   // This is from the .cache directory after uploading, copy yours here without "items"
   const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
 
@@ -241,7 +241,7 @@ export const HomeView = () => {
         ).then(([candyMachine, bump]) => {
           anchorProgram.account.candyMachine.fetch(candyMachine).then(candy => {
             const remaining = ((candy as any)?.data?.itemsAvailable?.toNumber() - (candy as any)?.itemsRedeemed?.toNumber())
-            setRemaining(remaining);
+            setRemaining(remaining.toString());
           });
         });
       });
