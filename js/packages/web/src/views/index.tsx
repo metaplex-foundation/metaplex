@@ -343,6 +343,7 @@ export const HomeView = () => {
       </Button>{' '}
       <h1 className="desc">Remaining: {remaining}/ 9999</h1>
       <div className="desc" style={{fontSize:'12px'}}>Mint price:  1.5  SOL</div>
+      <img style={{marginTop:'1.5rem'}} src="/img/babygif.gif"></img>
       <RenderFooter></RenderFooter>
     </Layout>
   );
