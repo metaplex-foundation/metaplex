@@ -246,7 +246,7 @@ export const HomeView = () => {
         });
       });
     }
-  }, [wallet.wallet]);
+  }, [wallet, wallet.wallet, wallet.publicKey]);
 
   const mint = async ({wallet, connection}: {wallet: WalletContextState, connection: Connection}) => {
     // Set price here to the same you specified when setting up candy mashine
