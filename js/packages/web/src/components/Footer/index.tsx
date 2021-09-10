@@ -1,7 +1,6 @@
 import React from 'react';
 import { SendOutlined } from '@ant-design/icons';
 import { Button, Form, Input } from 'antd';
-import MailchimpSubscribe from 'react-mailchimp-subscribe';
 import { footerConf } from './footerData';
 import { LABELS } from "../../constants";
 
@@ -12,7 +11,6 @@ export const Footer = () => {
     },
   };
 
-  const url = process.env.NEXT_PUBLIC_MAILCHIMP_SUSCRIBER_URL || ``;
 
   const CustomForm = (props: {
     status: any;
@@ -90,18 +88,11 @@ export const Footer = () => {
   };
 
   const NewsLetterForm = () => (
-    <MailchimpSubscribe
-      url={url}
-      render={({ subscribe, status, message }) => (
-        <>
-          <CustomForm
-            status={status}
-            message={message}
-            onValidated={(formData: any) => subscribe(formData)}
-          />
-        </>
-      )}
-    />
+      <CustomForm
+        status={status}
+        message={""}
+        onValidated={() => {}}
+      />
   );
 
   return (
