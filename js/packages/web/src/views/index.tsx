@@ -353,8 +353,8 @@ const RenderFooter = () => {
   return (
     <>
     <div className={"footer"} style={{margin:0}}>
-        <a href="https://twitter.com/BabySolPunks" target="_blank"> <img src="https://i.imgur.com/teeoetV.png" className={"socials2"}></img></a>
-        <a href="https://discord.gg/BabySolPunks" target="_blank"> <img src="/img/discord.webp" className={"socials"}></img></a>
+        <a href="https://twitter.com/BabySolPunks" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/twitter.png"></img></a>
+        <a href="https://discord.gg/BabySolPunks" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/discord.png"></img></a>
     </div>
     </>
   );
