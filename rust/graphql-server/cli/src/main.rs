@@ -13,7 +13,7 @@ async fn main() {
 
     let server = AppServer::new(create_schema, context);
     thread::spawn(move || {
-      ctx.preload();
+        ctx.preload();
     });
 
     server.run().await
