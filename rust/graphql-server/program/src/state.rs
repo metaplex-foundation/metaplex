@@ -2,6 +2,7 @@ use solana_client::rpc_client::RpcClient;
 use solana_program::account_info::{AccountInfo, IntoAccountInfo};
 use solana_program::pubkey::ParsePubkeyError;
 use solana_program::pubkey::Pubkey;
+use solana_program::sysvar::slot_history::ProgramError;
 use spl_token_vault::state::{SafetyDepositBox, Vault};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -40,26 +41,71 @@ impl SharedState {
                     if *account_info.owner != key {
                         continue;
                     }
-                    if is_byte(&account_info, 1) {
-                        // SafetyDepositBox
-                        let value = SafetyDepositBox::from_account_info(&account_info);
-                        if let Ok(data) = value {
-                            self.safety_deposit_boxs.insert(*account_info.key, data);
-                        }
-                    } else if is_byte(&account_info, 3) {
-                        // VaultV1
-                        let value = Vault::from_account_info(&account_info);
-                        if let Ok(data) = value {
-                            self.vaults.insert(*account_info.key, data);
-                        }
-                    }
+                    SafetyDepositBox::convert(&account_info).map(|data| {
+                        self.safety_deposit_boxs.insert(*account_info.key, data);
+                    });
+                    Vault::convert(&account_info).map(|data| {
+                        self.vaults.insert(*account_info.key, data);
+                    });
                 }
             }
         }
     }
 }
 
-fn is_byte(account_info: &AccountInfo, val: u8) -> bool {
-    let data = account_info.data.borrow();
-    return data[0] == val;
+trait Processor {
+    const ID: &'static str;
+    fn process_account_info(
+        state: &mut SharedState,
+        account_info: &solana_program::account_info::AccountInfo,
+    );
+    fn process(state: &mut SharedState, client: &RpcClient) {
+        if let Ok(key) = Pubkey::from_str(VAULT_ID) {
+            if let Ok(response) = client.get_program_accounts(&key) {
+                for mut item in response {
+                    let account_info = IntoAccountInfo::into_account_info(&mut item);
+                    if *account_info.owner != key {
+                        continue;
+                    }
+                    Self::process_account_info(state, &account_info);
+                }
+            }
+        }
+    }
+}
+
+trait TypeConverter {
+    const BYTE: u8;
+    type Item;
+    fn from_account_info(a: &AccountInfo) -> Result<Self::Item, ProgramError>;
+
+    fn convert(a: &AccountInfo) -> Option<Self::Item> {
+        if Self::is_byte(&a) {
+            return Self::from_account_info(&a).ok();
+        }
+        None
+    }
+
+    fn is_byte(account_info: &AccountInfo) -> bool {
+        account_info
+            .data
+            .try_borrow()
+            .map(|data| data[0] == Self::BYTE)
+            .unwrap_or(false)
+    }
+}
+
+impl TypeConverter for SafetyDepositBox {
+    const BYTE: u8 = 1;
+    type Item = SafetyDepositBox;
+    fn from_account_info(a: &AccountInfo) -> Result<Self::Item, ProgramError> {
+        SafetyDepositBox::from_account_info(&a)
+    }
+}
+impl TypeConverter for Vault {
+    const BYTE: u8 = 3;
+    type Item = Vault;
+    fn from_account_info(a: &AccountInfo) -> Result<Self::Item, ProgramError> {
+        Vault::from_account_info(&a)
+    }
 }
