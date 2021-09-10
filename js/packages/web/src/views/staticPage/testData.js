@@ -3,10 +3,39 @@ export const example1 = {
     title: 'Shooting for the Gold',
     subtitle: 'Latest Drop',
     bannerImage:
-      'https://i.pinimg.com/originals/bc/fd/04/bcfd04615bf2d75b9a281983490bc501.jpg',
+      '/staticpage/banner.png',
     author: {
       name: 'by Walter Iooss Jr. ',
       avatar: 'https://mdbcdn.b-cdn.net/img/new/avatars/2.jpg',
+    },
+  },
+
+  leftContent: {
+    author: {
+      name: 'Walter Iooss Jr. ',
+      avatar: '/staticpage/author.png',
+      details: "b. 1943, Temple ,Texas",
+      stats: [
+        "Joined 2021",
+        "321 Followers",
+        "Following 8",
+        "45,002 Views",
+        "2,403,110 SOL to Charit",
+      ],
+      connectWith: [
+        {
+          "label": "Website",
+          "url": "https://www.facebook.com/",
+        },
+        {
+          "label": "Instagram",
+          "url": "https://www.facebook.com/",
+        },
+        {
+          "label": "Facebook",
+          "url": "https://www.facebook.com/",
+        }
+      ]
     },
   },
   midContent: {
@@ -19,11 +48,11 @@ export const example1 = {
           'Now, in 2021, Solana is poised to become the new “green box” on the sidelines, breaking ground with their innovative blockchain and NFT platform Metaplex. To honor this moment and celebrate the closing of the 2021 Olympics, Immutable Image is releasing these images as our debut drop on the Metaplex network. Immutable Image is dedicated to bringing the best of photography directly from the artist onto the blockchain, and no better images than these to kick the whole thing off!',
           'Almost forty years ago, this series helped to change color photography. Forty years from now, will this drop be remembered as the NFTs that helped usher in the very best of photography in this new space? We hope so and we hope you’ll enjoy this exhibition and drop as we all Shoot for the Gold.',
         ],
-        image: 'https://wallpapercave.com/wp/wp3499823.jpg',
+        image: '/staticpage/caption.png',
         caption: {
           text: 'Image Caption with',
           linkText: 'link.',
-          linkUrl: 'https://wallpapercave.com/wp/wp3499823.jpg',
+          linkUrl: '/staticpage/caption.png',
         },
       },
       {

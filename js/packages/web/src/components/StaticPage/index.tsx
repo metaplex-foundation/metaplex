@@ -9,9 +9,17 @@ import { useMeta } from '../../contexts';
 import { AuctionRenderCard } from '../AuctionRenderCard';
 import { AuctionViewState, useAuctions } from '../../hooks';
 
+interface Connect {
+  label: string;
+  url: string;
+}
+
 interface Author {
   name: string;
   avatar?: string;
+  details?: string;
+  stats?: string[]
+  connectWith?: Connect[]
 }
 
 interface HeadContent {
@@ -38,6 +46,10 @@ interface MidContent {
   sections: ArticleSection[];
 }
 
+interface LeftContent {
+  author: Author;
+}
+
 //https://stackoverflow.com/questions/1480133/how-can-i-get-an-objects-absolute-position-on-the-page-in-javascript
 const cumulativeOffset = (element: HTMLElement) => {
   let top = 0,
@@ -59,6 +71,7 @@ const cumulativeOffset = (element: HTMLElement) => {
 };
 export const StaticPage = (props: {
   headContent: HeadContent;
+  leftContent?: LeftContent;
   midContent: MidContent;
   bottomContent: boolean;
 }) => {
@@ -73,6 +86,7 @@ export const StaticPage = (props: {
         width: window.innerWidth,
       });
     }
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   });
@@ -100,14 +114,14 @@ export const StaticPage = (props: {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+          const id = m.auction.pubkey;
+          return (
+            <Link to={`/auction/${id}`} key={idx}>
+              <AuctionRenderCard key={id} auctionView={m}/>
+            </Link>
+          );
+        })
+        : [...Array(10)].map((_, idx) => <CardLoader key={idx}/>)}
     </Masonry>
   );
 
@@ -151,7 +165,7 @@ export const StaticPage = (props: {
       <Row>
         <Col span={24} xl={8} className="header-left">
           <p className="header-subtitle">{props.headContent.subtitle}</p>
-          <Divider />
+          <Divider/>
           <p className="header-title">{props.headContent.title}</p>
 
           {props.headContent.author && (
@@ -180,11 +194,32 @@ export const StaticPage = (props: {
       </Row>
     </section>
   );
-
+  const leftSection = (
+    <section id="left-container" className="author-container">
+      <img
+        src={props.leftContent?.author.avatar}
+        className="author-avatar"
+        alt="author image"
+      />
+      <p className="author-name">{props.leftContent?.author.name}</p>
+      <div className="author-details">
+        <p className="author-subtitle">Details</p>
+        <p>{props.leftContent?.author.details}</p>
+      </div>
+      <div className="author-stats">
+        <p className="author-subtitle">Stats</p>
+        {props.leftContent?.author.stats?.map((e, i) => <p key={i}>{e}</p>)}
+      </div>
+      <div className="author-connect">
+        <p className="author-subtitle">Connect with the artist</p>
+        {props.leftContent?.author.connectWith?.map((e, i) => <p><a key={i} href={e.url}>{e.label}</a></p>)}
+      </div>
+    </section>
+  )
   const middleSection = (
     <section id="middle-container">
-      {props.midContent.sections.map(section => (
-        <div className="mid-section-item">
+      {props.midContent.sections.map((section, i) => (
+        <div key={i} className="mid-section-item">
           {section.title && <span className="mid-title">{section.title}</span>}
           {section.paragraphs?.map(paragraph => (
             <p className="paragraph-text">{paragraph}</p>
@@ -212,7 +247,11 @@ export const StaticPage = (props: {
       ))}
     </section>
   );
+  const rightSection = (
+    <section id="right-container">
 
+    </section>
+  );
   const finalSection = (
     <section id="bottom-container">
       <p className="bottom-title">Shop the Collection</p>
@@ -223,7 +262,18 @@ export const StaticPage = (props: {
   return (
     <Fragment>
       {headerSection}
-      {middleSection}
+      <Row className="static-page-container">
+        <Col xs={24} md={4}>
+          {leftSection}
+        </Col>
+        <Col  xs={24} md={16}>
+          {middleSection}
+        </Col>
+        <Col  xs={24} md={4}>
+          {rightSection}
+        </Col>
+
+      </Row>
       {props.bottomContent && finalSection}
     </Fragment>
   );
