@@ -78,8 +78,7 @@ async fn setup(
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )
@@ -107,7 +106,7 @@ async fn success() {
     );
 
     test_pack_set
-        .edit_card(&mut context, &test_pack_card, None, Some(1337), None)
+        .edit_card(&mut context, &test_pack_card, None, Some(1337))
         .await
         .unwrap();
 
@@ -123,7 +122,7 @@ async fn fail_immutable() {
         setup(false).await;
 
     let result = test_pack_set
-        .edit_card(&mut context, &test_pack_card, None, Some(1337), None)
+        .edit_card(&mut context, &test_pack_card, None, Some(1337))
         .await;
 
     assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet);

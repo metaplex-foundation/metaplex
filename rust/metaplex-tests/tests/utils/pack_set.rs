@@ -343,7 +343,6 @@ impl TestPackSet {
         test_pack_card: &TestPackCard,
         distribution_type: Option<DistributionType>,
         max_supply: Option<u32>,
-        number_in_pack: Option<u64>,
     ) -> transport::Result<()> {
         let tx = Transaction::new_signed_with_payer(
             &[instruction::edit_pack_card(
@@ -354,7 +353,6 @@ impl TestPackSet {
                 EditPackCardArgs {
                     distribution_type,
                     max_supply,
-                    number_in_pack,
                 },
             )],
             Some(&context.payer.pubkey()),

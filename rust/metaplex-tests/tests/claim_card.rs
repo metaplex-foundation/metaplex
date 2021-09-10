@@ -117,8 +117,7 @@ async fn success() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::FixedNumber,
-                probability: 1,
+                probability_type: DistributionType::FixedNumber(1),
                 index: test_pack_card.index,
             },
         )
@@ -263,8 +262,7 @@ async fn success_with_oracle() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: (1 * PRECISION as u64), // set 1/2 probability
+                probability_type: DistributionType::ProbabilityBased(1 * PRECISION as u64),
                 index: test_pack_card.index,
             },
         )
@@ -422,8 +420,7 @@ async fn fails_wrong_user_wallet() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::FixedNumber,
-                probability: 1,
+                probability_type: DistributionType::FixedNumber(1),
                 index: test_pack_card.index,
             },
         )

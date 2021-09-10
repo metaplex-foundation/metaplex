@@ -85,8 +85,7 @@ async fn success() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )
@@ -112,8 +111,7 @@ async fn fail_invalid_index() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )
@@ -132,8 +130,7 @@ async fn fail_invalid_index() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )

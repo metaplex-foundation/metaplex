@@ -49,7 +49,6 @@ pub fn add_card_to_pack(
     let AddCardToPackArgs {
         max_supply,
         probability_type,
-        probability,
         index: _,
     } = args;
 
@@ -132,7 +131,6 @@ pub fn add_card_to_pack(
         token_account: *token_account_info.key,
         max_supply,
         distribution_type: probability_type,
-        number_in_pack: probability,
     });
 
     pack_set.add_pack_card();

@@ -85,10 +85,10 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     assert_account_key(program_authority_account, &program_authority_key)?;
 
     match pack_card.distribution_type {
-        DistributionType::FixedNumber => {
+        DistributionType::FixedNumber(number_in_pack) => {
             msg!("Fixed number distribution type");
             // Check if user already open pack
-            if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
+            if proving_process.claimed_card_editions as u64 == number_in_pack {
                 return Err(NFTPacksError::PackIsAlreadyOpen.into());
             }
 
@@ -96,7 +96,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 proving_process.claimed_card_editions.error_increment()?;
 
             // Check if this pack is last for user
-            if proving_process.claimed_card_editions as u64 == pack_card.number_in_pack {
+            if proving_process.claimed_card_editions as u64 == number_in_pack {
                 proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
                 proving_process.claimed_card_editions = 0;
             }
@@ -123,12 +123,12 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
                 &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
             )?;
         }
-        DistributionType::ProbabilityBased => {
+        DistributionType::ProbabilityBased(cards_average) => {
             msg!("Probability based distribution type");
 
             // Calculate probability number
-            let probability = pack_card.number_in_pack as u128 * PRECISION
-                / (pack_card.number_in_pack as u128 + PRECISION);
+            let probability = cards_average as u128 * PRECISION
+                / (cards_average as u128 + PRECISION);
 
             // From oracle
             let (oracle_random_value, slot) =
