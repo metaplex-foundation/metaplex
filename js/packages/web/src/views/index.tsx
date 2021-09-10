@@ -338,10 +338,10 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      <Button type="primary" className="button" style={{ fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
+      <Button type="primary" className="button remaining" style={{ fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
         {!wallet.connected ? 'Connect' : 'Adopt (1.5 SOL)'} 
       </Button>{' '}
-      <div>Remaining: {remaining}/ 9999</div>
+      <h1 className="desc">Remaining: {remaining}/ 9999</h1>
       <RenderFooter></RenderFooter>
     </Layout>
   );
