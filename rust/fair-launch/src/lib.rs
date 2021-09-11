@@ -727,7 +727,7 @@ pub mod fair_launch {
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
 pub struct InitializeFairLaunch<'info> {
-    #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref()], payer=payer, bump=bump, space=FAIR_LAUNCH_SPACE_VEC_START+8*(((data.price_range_end - data.price_range_start).checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)? + 1)) as usize)]
+    #[account(init, seeds=[PREFIX.as_bytes(), token_mint.key.as_ref()], payer=payer, bump=bump, space=FAIR_LAUNCH_SPACE_VEC_START+8u64.checked_mul((data.price_range_end - data.price_range_start).checked_div(data.tick_size).ok_or(ErrorCode::NumericalOverflowError)?.checked_add(2).ok_or(ErrorCode::NumericalOverflowError)?).ok_or(ErrorCode::NumericalOverflowError)? as usize)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), data.uuid.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=token_mint_bump)]
     token_mint: CpiAccount<'info, Mint>,

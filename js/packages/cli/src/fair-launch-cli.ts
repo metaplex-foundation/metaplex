@@ -158,7 +158,7 @@ program
     '--keypair not provided',
   )
   .option('-u, --uuid <string>', 'uuid')
-  .action(async (files: string[], options, cmd) => {
+  .action(async (options, cmd) => {
     const { env, uuid, keypair } = cmd.opts();
     const realUuid = uuid.slice(0, 6);
 
@@ -172,7 +172,122 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunch,
     );
-    console.log('Fair launch object', fairLaunchObj);
+
+    //@ts-ignore
+    console.log('Token Mint', fairLaunchObj.tokenMint.toBase58());
+    //@ts-ignore
+    console.log('Treasury', fairLaunchObj.treasury.toBase58());
+    //@ts-ignore
+    console.log('Treasury Mint', fairLaunchObj.treasuryMint?.toBase58());
+    //@ts-ignore
+    console.log('Authority', fairLaunchObj.authority.toBase58());
+    //@ts-ignore
+    console.log('Bump', fairLaunchObj.bump);
+    //@ts-ignore
+    console.log('Treasury Bump', fairLaunchObj.treasuryBump);
+    //@ts-ignore
+    console.log('Token Mint Bump', fairLaunchObj.tokenMintBump);
+    console.log(
+      'Price Range Start',
+      //@ts-ignore
+      fairLaunchObj.data.priceRangeStart.toNumber(),
+    );
+    console.log(
+      'Price Range Start',
+      //@ts-ignore
+      fairLaunchObj.data.priceRangeEnd.toNumber(),
+    );
+
+    console.log(
+      'Tick Size        ',
+      //@ts-ignore
+      fairLaunchObj.data.tickSize.toNumber(),
+    );
+
+    console.log(
+      'Fees             ',
+      //@ts-ignore
+      fairLaunchObj.data.fee.toNumber(),
+    );
+
+    console.log(
+      'Phase One Start',
+      //@ts-ignore
+      new Date(fairLaunchObj.data.phaseOneStart.toNumber() * 1000),
+    );
+    console.log(
+      'Phase One End  ',
+      //@ts-ignore
+      new Date(fairLaunchObj.data.phaseOneEnd.toNumber() * 1000),
+    );
+    console.log(
+      'Phase Two End  ',
+      //@ts-ignore
+      new Date(fairLaunchObj.data.phaseTwoEnd.toNumber() * 1000),
+    );
+
+    console.log(
+      'Number of Tokens',
+      //@ts-ignore
+      fairLaunchObj.data.numberOfTokens.toNumber(),
+    );
+
+    console.log(
+      'Number of Tickets Un-Sequenced     ',
+      //@ts-ignore
+      fairLaunchObj.numberTicketsUnSeqed.toNumber(),
+    );
+
+    console.log(
+      'Number of Tickets Sold             ',
+      //@ts-ignore
+      fairLaunchObj.numberTicketsSold.toNumber(),
+    );
+
+    console.log(
+      'Number of Tickets Dropped          ',
+      //@ts-ignore
+      fairLaunchObj.numberTicketsDropped.toNumber(),
+    );
+
+    console.log(
+      'Number of Tickets Punched          ',
+      //@ts-ignore
+      fairLaunchObj.numberTicketsPunched.toNumber(),
+    );
+
+    console.log(
+      'Number of Tickets Dropped + Punched',
+      //@ts-ignore
+      fairLaunchObj.numberTicketsDropped.toNumber() +
+        //@ts-ignore
+        fairLaunchObj.numberTicketsPunched.toNumber(),
+    );
+
+    console.log(
+      'Phase Three Started',
+      //@ts-ignore
+      fairLaunchObj.phaseThreeStarted,
+    );
+
+    console.log(
+      'Current Median',
+      //@ts-ignore
+      fairLaunchObj.currentMedian.toNumber(),
+    );
+
+    console.log('Counts at Each Tick');
+    //@ts-ignore
+    fairLaunchObj.countsAtEachTick.forEach((c, i) =>
+      console.log(
+        //@ts-ignore
+        fairLaunchObj.data.priceRangeStart.toNumber() +
+          //@ts-ignore
+          i * fairLaunchObj.data.tickSize.toNumber(),
+        ':',
+        c.toNumber(),
+      ),
+    );
   });
 
 program.parse(process.argv);
