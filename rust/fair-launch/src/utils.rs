@@ -121,6 +121,12 @@ pub fn adjust_counts(
             .ok_or(ErrorCode::NumericalOverflowError)?;
     }
 
+    if total_counts == 1 {
+        // degen case
+        fair_launch.current_median = new_amount;
+        return Ok(());
+    }
+
     let median_location = total_counts
         .checked_div(2)
         .ok_or(ErrorCode::NumericalOverflowError)?;

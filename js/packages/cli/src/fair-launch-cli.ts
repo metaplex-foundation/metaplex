@@ -320,8 +320,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     const remainingAccounts = [];
     const instructions = [];
@@ -395,6 +396,60 @@ program
     console.log(
       `update fair launch ticket Done: ${fairLaunchTicket.toBase58()}.`,
     );
+  });
+
+program
+  .command('create_fair_launch_lottery')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const [fairLaunchLotteryBitmap, bump] = await getFairLaunchLotteryBitmap(
+      //@ts-ignore
+      fairLaunchObj.tokenMint,
+    );
+
+    const exists = await anchorProgram.provider.connection.getAccountInfo(
+      fairLaunchLotteryBitmap,
+    );
+    if (!exists) {
+      await anchorProgram.rpc.createFairLaunchLotteryBitmap(bump, {
+        accounts: {
+          fairLaunch,
+          fairLaunchLotteryBitmap,
+          authority: walletKeyPair.publicKey,
+          payer: walletKeyPair.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+        },
+      });
+
+      console.log(
+        `created fair launch lottery bitmap Done: ${fairLaunchLotteryBitmap.toBase58()}.`,
+      );
+    } else {
+      console.log(
+        `checked fair launch lottery bitmap, exists: ${fairLaunchLotteryBitmap.toBase58()}.`,
+      );
+    }
   });
 
 program
