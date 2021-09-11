@@ -6,7 +6,7 @@ import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 import { MintLayout, Token } from '@solana/spl-token';
-
+import {signAllMetadataFromCandyMachine} from './signer'
 import {
   chunks,
   fromUTF8Array,
@@ -582,5 +582,43 @@ program
   });
 
 program.command('find-wallets').action(() => {});
+
+program
+  .command('sign_candy_machine_metadata')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '',
+  )
+  .option('-cndy, --candy-address <string>', 'Candy machine address', '')
+  .option('-b, --batch-size <string>', 'Batch size', '10')
+  .action(async (directory, cmd) => {
+    const { keypair, env, candyAddress, batchSize } = cmd.opts();
+    if (!keypair || keypair == '') {
+      console.log("Keypair required!"); 
+      return;
+    }
+    if (!candyAddress || candyAddress == '') {
+      console.log("Candy machine address required!")
+      return;
+    }
+    let bVal = parseInt(batchSize)
+    if (!parseInt(batchSize)){
+      console.log("Batch size needs to be an integer!")
+      return;
+    }
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    console.log("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
+    console.log("Environment: ", env)
+    console.log("Candy machine address: ", candyAddress)
+    console.log("Batch Size: ", bVal)
+    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, bVal)
+  });
 
 program.parse(process.argv);
