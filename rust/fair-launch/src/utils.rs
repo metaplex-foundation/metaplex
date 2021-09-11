@@ -209,8 +209,10 @@ pub fn assert_valid_amount(data: &FairLaunchData, amount: u64) -> ProgramResult 
         return Err(ErrorCode::InvalidPurchaseAmount.into());
     }
 
-    if amount.checked_rem(data.tick_size).is_some() {
-        return Err(ErrorCode::InvalidPurchaseAmount.into());
+    if let Some(val) = amount.checked_rem(data.tick_size) {
+        if val > 0 {
+            return Err(ErrorCode::InvalidPurchaseAmount.into());
+        }
     }
 
     Ok(())

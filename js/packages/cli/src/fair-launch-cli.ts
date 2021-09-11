@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-
+import { Token } from '@solana/spl-token';
 import { CACHE_PATH, TOKEN_PROGRAM_ID } from './helpers/constants';
 import {
   loadFairLaunchProgram,
@@ -11,7 +11,11 @@ import {
   getTokenMint,
   getFairLaunch,
   getTreasury,
+  getFairLaunchTicket,
+  getAtaForMint,
+  getFairLaunchTicketSeqLookup,
 } from './helpers/accounts';
+import { sleep } from './helpers/various';
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -143,6 +147,137 @@ program
     );
 
     console.log(`create fair launch Done: ${fairLaunch.toBase58()}`);
+  });
+
+program
+  .command('purchase_ticket')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-a, --amount <string>', 'amount')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch, amount } = cmd.opts();
+    let amountNumber = parseFloat(amount);
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+    const [fairLaunchTicket, bump] = await getFairLaunchTicket(
+      //@ts-ignore
+      fairLaunchObj.tokenMint,
+      walletKeyPair.publicKey,
+    );
+
+    const remainingAccounts = [];
+    const instructions = [];
+    const signers = [];
+
+    //@ts-ignore
+    if (!fairLaunchObj.treasuryMint) {
+      amountNumber = Math.ceil(amountNumber * LAMPORTS_PER_SOL);
+    } else {
+      const transferAuthority = anchor.web3.Keypair.generate();
+      signers.push(transferAuthority);
+
+      instructions.push(
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          //@ts-ignore
+          fairLaunchObj.treasuryMint,
+          transferAuthority.publicKey,
+          walletKeyPair.publicKey,
+          [],
+          //@ts-ignore
+          amountNumber + fairLaunchObj.data.fees.toNumber(),
+        ),
+      );
+
+      remainingAccounts.push({
+        //@ts-ignore
+        pubkey: fairLaunchObj.treasuryMint,
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: (
+          await getAtaForMint(
+            //@ts-ignore
+            fairLaunchObj.treasuryMint,
+            walletKeyPair.publicKey,
+          )
+        )[0],
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: transferAuthority.publicKey,
+        isWritable: false,
+        isSigner: true,
+      });
+      remainingAccounts.push({
+        pubkey: TOKEN_PROGRAM_ID,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    await anchorProgram.rpc.purchaseTicket(bump, new anchor.BN(amountNumber), {
+      accounts: {
+        fairLaunchTicket,
+        fairLaunch,
+        //@ts-ignore
+        treasury: fairLaunchObj.treasury,
+        buyer: walletKeyPair.publicKey,
+        payer: walletKeyPair.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+      //__private: { logAccounts: true },
+      remainingAccounts,
+      signers,
+      instructions: instructions.length > 0 ? instructions : undefined,
+    });
+
+    console.log(
+      `create fair launch ticket Done: ${fairLaunchTicket.toBase58()}. Trying to create seq now...we may or may not get a validator with data on chain. Either way, your ticket is secure.`,
+    );
+
+    await sleep(5000);
+    const fairLaunchTicketObj =
+      await anchorProgram.account.fairLaunchTicket.fetch(fairLaunchTicket);
+
+    const [fairLaunchTicketSeqLookup, seqBump] =
+      await getFairLaunchTicketSeqLookup(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        //@ts-ignore
+        fairLaunchTicketObj.seq,
+      );
+
+    await anchorProgram.rpc.createTicketSeq(seqBump, {
+      accounts: {
+        fairLaunchTicketSeqLookup,
+        fairLaunch,
+        fairLaunchTicket,
+        payer: walletKeyPair.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      },
+      signers: [],
+    });
   });
 
 program
@@ -290,4 +425,51 @@ program
     );
   });
 
+program
+  .command('show_ticket')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (options, cmd) => {
+    const { env, fairLaunch, keypair } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunch,
+    );
+
+    const fairLaunchTicket = (
+      await getFairLaunchTicket(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const fairLaunchTicketObj =
+      await anchorProgram.account.fairLaunchTicket.fetch(fairLaunchTicket);
+
+    //@ts-ignore
+    console.log('Buyer', fairLaunchTicketObj.buyer.toBase58());
+    //@ts-ignore
+    console.log('Fair Launch', fairLaunchTicketObj.fairLaunch.toBase58());
+    //@ts-ignore
+    console.log('Current Amount', fairLaunchTicketObj.amount.toNumber());
+    //@ts-ignore
+    console.log('State', fairLaunchTicketObj.state);
+    //@ts-ignore
+    console.log('Bump', fairLaunchTicketObj.bump);
+    //@ts-ignore
+    console.log('Sequence', fairLaunchTicketObj.seq.toNumber());
+  });
 program.parse(process.argv);

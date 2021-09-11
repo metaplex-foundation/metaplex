@@ -799,13 +799,13 @@ pub struct UpdateFairLaunchLotteryBitmap<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8, amount: u64)]
 pub struct PurchaseTicket<'info> {
+    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SIZE)]
+    fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=treasury)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
-    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SIZE)]
-    fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(mut, signer, constraint= (treasury.owner == &spl_token::id() && buyer.owner == &spl_token::id()) || (treasury.owner != &spl_token::id() && buyer.data_is_empty() && buyer.lamports() > 0) )]
+    #[account(mut, signer, constraint= buyer.data_is_empty() && buyer.lamports() > 0)]
     buyer: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -824,12 +824,12 @@ pub struct PurchaseTicket<'info> {
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct CreateTicketSeq<'info> {
+    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &fair_launch_ticket.seq.to_le_bytes()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SEQ_SIZE)]
+    fair_launch_ticket_seq_lookup: ProgramAccount<'info, FairLaunchTicketSeqLookup>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), fair_launch_ticket.buyer.as_ref()], bump=fair_launch_ticket.bump, has_one=fair_launch)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(init, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), &fair_launch_ticket.seq.to_le_bytes()],  payer=payer, bump=bump, space=FAIR_LAUNCH_TICKET_SEQ_SIZE)]
-    fair_launch_ticket_seq_lookup: ProgramAccount<'info, FairLaunchTicketSeqLookup>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
     #[account(address = system_program::ID)]
