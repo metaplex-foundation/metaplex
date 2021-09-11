@@ -133,7 +133,7 @@ export const getFairLaunchTicketSeqLookup = async (
   seq: anchor.BN,
 ): Promise<[anchor.web3.PublicKey, number]> => {
   return await anchor.web3.PublicKey.findProgramAddress(
-    [Buffer.from('fair_launch'), tokenMint.toBuffer(), seq.toBuffer()],
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), seq.toBuffer('le', 8)],
     FAIR_LAUNCH_PROGRAM_ID,
   );
 };

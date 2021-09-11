@@ -127,12 +127,29 @@ pub fn adjust_counts(
 
     let mut counter: u64 = 0;
     let mut ticks: u64 = 0;
+    let mut last_seen_tick_value_with_positive_counts: u64 = 0;
     for n in &fair_launch.counts_at_each_tick {
         counter = counter
             .checked_add(*n)
             .ok_or(ErrorCode::NumericalOverflowError)?;
         if counter > median_location {
+            if let Some(val) = median_location.checked_rem(2) {
+                if val == 0 {
+                    let half_way = ticks
+                        .checked_sub(last_seen_tick_value_with_positive_counts)
+                        .ok_or(ErrorCode::NumericalOverflowError)?;
+                    ticks = half_way
+                        .checked_div(2)
+                        .ok_or(ErrorCode::NumericalOverflowError)?;
+                    ticks = last_seen_tick_value_with_positive_counts
+                        .checked_add(ticks)
+                        .ok_or(ErrorCode::NumericalOverflowError)?;
+                }
+            }
             break;
+        }
+        if n > &0 {
+            last_seen_tick_value_with_positive_counts = ticks;
         }
         ticks = ticks
             .checked_add(fair_launch.data.tick_size)

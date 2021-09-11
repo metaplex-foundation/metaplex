@@ -4,7 +4,11 @@ import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Token } from '@solana/spl-token';
-import { CACHE_PATH, TOKEN_PROGRAM_ID } from './helpers/constants';
+import {
+  CACHE_PATH,
+  FAIR_LAUNCH_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from './helpers/constants';
 import {
   loadFairLaunchProgram,
   loadWalletKey,
@@ -278,6 +282,79 @@ program
       },
       signers: [],
     });
+
+    console.log('Created seq');
+  });
+program
+  .command('create_missing_sequences')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+    const fairLaunchTicketSeqStart = 8 + 32 + 32 + 8 + 1 + 1;
+    const fairLaunchTicketState = 8 + 32 + 32 + 8;
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunch,
+    );
+    const tickets = await anchorProgram.provider.connection.getProgramAccounts(
+      FAIR_LAUNCH_PROGRAM_ID,
+      {
+        filters: [
+          {
+            memcmp: {
+              offset: 8,
+              bytes: fairLaunch,
+            },
+          },
+        ],
+      },
+    );
+
+    for (let i = 0; i < tickets.length; i++) {
+      const accountAndPubkey = tickets[i];
+      const { account, pubkey } = accountAndPubkey;
+      const state = account.data[fairLaunchTicketState];
+      if (state == 0) {
+        console.log('Missing sequence for ticket', pubkey.toBase58());
+        const [fairLaunchTicketSeqLookup, seqBump] =
+          await getFairLaunchTicketSeqLookup(
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+            new anchor.BN(
+              account.data.slice(
+                fairLaunchTicketSeqStart,
+                fairLaunchTicketSeqStart + 8,
+              ),
+              undefined,
+              'le',
+            ),
+          );
+
+        await anchorProgram.rpc.createTicketSeq(seqBump, {
+          accounts: {
+            fairLaunchTicketSeqLookup,
+            fairLaunch,
+            fairLaunchTicket: pubkey,
+            payer: walletKeyPair.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          },
+          signers: [],
+        });
+        console.log('Created...');
+      }
+    }
   });
 
 program
@@ -292,17 +369,12 @@ program
     `Solana wallet location`,
     '--keypair not provided',
   )
-  .option('-u, --uuid <string>', 'uuid')
+  .option('-f, --fair-launch <string>', 'fair launch id')
   .action(async (options, cmd) => {
-    const { env, uuid, keypair } = cmd.opts();
-    const realUuid = uuid.slice(0, 6);
+    const { env, fairLaunch, keypair } = cmd.opts();
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
-    const tokenMint = (
-      await getTokenMint(walletKeyPair.publicKey, realUuid)
-    )[0];
-    const fairLaunch = (await getFairLaunch(tokenMint))[0];
 
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunch,
