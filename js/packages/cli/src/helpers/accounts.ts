@@ -1,15 +1,16 @@
-import {Keypair, PublicKey, SystemProgram} from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
   CANDY_MACHINE,
   CANDY_MACHINE_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
+  FAIR_LAUNCH_PROGRAM_ID,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from "bn.js";
-import {createConfigAccount} from "./instructions";
+import BN from 'bn.js';
+import { createConfigAccount } from './instructions';
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -93,6 +94,39 @@ export const getConfig = async (
   );
 };
 
+export const getTokenMint = async (
+  authority: anchor.web3.PublicKey,
+  uuid: string,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('fair_launch'),
+      authority.toBuffer(),
+      Buffer.from('mint'),
+      Buffer.from(uuid),
+    ],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getFairLaunch = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer()],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getTreasury = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), Buffer.from('treasury')],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
 export const getMetadata = async (
   mint: anchor.web3.PublicKey,
 ): Promise<anchor.web3.PublicKey> => {
@@ -130,7 +164,7 @@ export function loadWalletKey(keypair): Keypair {
   );
 }
 
-export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
+export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
   const solConnection = new anchor.web3.Connection(
     `https://api.${env}.solana.com/`,
   );
@@ -141,4 +175,20 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   return new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
+}
+
+export async function loadFairLaunchProgram(
+  walletKeyPair: Keypair,
+  env: string,
+) {
+  const solConnection = new anchor.web3.Connection(
+    `https://api.${env}.solana.com/`,
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(FAIR_LAUNCH_PROGRAM_ID, provider);
+
+  return new anchor.Program(idl, FAIR_LAUNCH_PROGRAM_ID, provider);
 }

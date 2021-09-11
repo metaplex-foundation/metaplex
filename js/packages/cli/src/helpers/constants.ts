@@ -17,6 +17,9 @@ export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
 export const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 );
+export const FAIR_LAUNCH_PROGRAM_ID = new PublicKey(
+  '7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF',
+);
 
 export const CONFIG_ARRAY_START =
   32 + // authority

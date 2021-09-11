@@ -34,7 +34,7 @@ import {
   getMasterEdition,
   getMetadata,
   getTokenWallet,
-  loadAnchorProgram,
+  loadCandyProgram,
   loadWalletKey,
 } from './helpers/accounts';
 import { Config } from './types';
@@ -124,7 +124,7 @@ program
     const SIZE = images.length;
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     let config = cacheContent.program.config
       ? new PublicKey(cacheContent.program.config)
@@ -321,7 +321,7 @@ program
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     const configAddress = new PublicKey(cacheContent.program.config);
     const config = await anchorProgram.provider.connection.getAccountInfo(
@@ -413,7 +413,7 @@ program
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     const config = new PublicKey(cacheContent.program.config);
     const [candyMachine, bump] = await getCandyMachineAddress(
@@ -466,7 +466,7 @@ program
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [candyMachine, _] = await getCandyMachineAddress(
@@ -507,7 +507,7 @@ program
     const mint = Keypair.generate();
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
     const userTokenAccountAddress = await getTokenWallet(
       walletKeyPair.publicKey,
       mint.publicKey,

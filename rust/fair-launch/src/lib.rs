@@ -8,14 +8,16 @@ use {
     },
     anchor_lang::{
         prelude::*,
-        
-        solana_program::{program_pack::Pack, system_program, system_instruction, program::{invoke, invoke_signed}},
+        solana_program::{
+            program::{invoke, invoke_signed},
+            program_pack::Pack,
+            system_instruction, system_program,
+        },
         AnchorDeserialize, AnchorSerialize,
     },
     anchor_spl::token::Mint,
     spl_token::{instruction::initialize_account2, state::Account},
-    std::{str::FromStr, convert::TryFrom},
-
+    std::str::FromStr,
 };
 
 pub const PREFIX: &str = "fair_launch";
@@ -57,6 +59,13 @@ pub mod fair_launch {
         fair_launch.treasury = *treasury_info.key;
         assert_derivation(ctx.program_id, treasury_info, treasury_seeds)?;
 
+        let signer_seeds = &[
+            PREFIX.as_bytes(),
+            token_mint_key.as_ref(),
+            TREASURY.as_bytes(),
+            &[fair_launch.treasury_bump],
+        ];
+
         if ctx.remaining_accounts.len() > 0 {
             let treasury_mint_info = &ctx.remaining_accounts[0];
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
@@ -66,13 +75,6 @@ pub mod fair_launch {
             fair_launch.treasury_mint = Some(*treasury_mint_info.key);
 
             // make the treasury token account
-
-            let signer_seeds = &[
-                PREFIX.as_bytes(),
-                token_mint_key.as_ref(),
-                TREASURY.as_bytes(),
-                &[fair_launch.treasury_bump],
-            ];
 
             create_or_allocate_account_raw(
                 *ctx.accounts.token_program.key,
@@ -104,10 +106,16 @@ pub mod fair_launch {
             // Nothing to do but check that it does not already exist, we can begin transferring sol to it.
             if !treasury_info.data_is_empty()
                 || treasury_info.lamports() > 0
-                || treasury_info.owner != ctx.program_id
+                || treasury_info.owner != ctx.accounts.system_program.key
             {
                 return Err(ErrorCode::TreasuryAlreadyExists.into());
             }
+
+            invoke_signed(
+                &system_instruction::assign(treasury_info.key, &ctx.program_id),
+                &[ctx.accounts.system_program.clone(), treasury_info.clone()],
+                &[signer_seeds],
+            )?;
         }
 
         // now we do the counts.
@@ -273,6 +281,10 @@ pub mod fair_launch {
 
         adjust_counts(fair_launch, amount, None)?;
 
+        let charged_amount = amount
+            .checked_add(fair_launch.data.fee)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
         if let Some(treasury_mint) = fair_launch.treasury_mint {
             let treasury_mint_info = &ctx.remaining_accounts[0];
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
@@ -310,7 +322,7 @@ pub mod fair_launch {
                 ],
             )?;
 
-            if buyer_token_account.amount < amount {
+            if buyer_token_account.amount < charged_amount {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
 
@@ -320,15 +332,15 @@ pub mod fair_launch {
                 authority: transfer_authority_info.clone(),
                 authority_signer_seeds: &[],
                 token_program: token_program.clone(),
-                amount: amount,
+                amount: charged_amount,
             })?;
         } else {
-            if buyer.lamports() < amount {
+            if buyer.lamports() < charged_amount {
                 return Err(ErrorCode::NotEnoughSOL.into());
             }
 
             invoke(
-                &system_instruction::transfer(buyer.key, ctx.accounts.treasury.key, amount),
+                &system_instruction::transfer(buyer.key, ctx.accounts.treasury.key, charged_amount),
                 &[
                     buyer.clone(),
                     ctx.accounts.treasury.clone(),
@@ -393,9 +405,8 @@ pub mod fair_launch {
             ],
         )?;
 
-
         if fair_launch_ticket.state.clone() as u8 != FairLaunchTicketState::Unpunched as u8 {
-            return Err(ErrorCode::InvalidFairLaunchTicketState.into())
+            return Err(ErrorCode::InvalidFairLaunchTicketState.into());
         }
 
         if fair_launch.phase_three_started {
@@ -421,9 +432,8 @@ pub mod fair_launch {
                 }
             }
         } else if !buyer.is_signer {
-            return Err(ErrorCode::DuringPhaseTwoAndOneBuyerMustBeSigner.into())
+            return Err(ErrorCode::DuringPhaseTwoAndOneBuyerMustBeSigner.into());
         }
-        
 
         if amount != 0 {
             assert_valid_amount(&fair_launch.data, amount)?;
@@ -568,7 +578,7 @@ pub mod fair_launch {
         let token_mint = &ctx.accounts.token_mint;
 
         if fair_launch_ticket.state.clone() as u8 != FairLaunchTicketState::Unpunched as u8 {
-            return Err(ErrorCode::InvalidFairLaunchTicketState.into())
+            return Err(ErrorCode::InvalidFairLaunchTicketState.into());
         }
 
         let (mask, index) = get_mask_and_index_for_seq(fair_launch_ticket.seq)?;
@@ -633,12 +643,14 @@ pub mod fair_launch {
         let treasury = &mut ctx.accounts.treasury;
         let authority = &mut ctx.accounts.authority;
 
-        if fair_launch.number_tickets_sold > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched {
-            return Err(ErrorCode::CannotCashOutUntilAllRefundsAndPunchesHaveBeenProcessed.into())
-        } 
+        if fair_launch.number_tickets_sold
+            > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
+        {
+            return Err(ErrorCode::CannotCashOutUntilAllRefundsAndPunchesHaveBeenProcessed.into());
+        }
 
         if !fair_launch.phase_three_started {
-            return Err(ErrorCode::CannotCashOutUntilPhaseThree.into())
+            return Err(ErrorCode::CannotCashOutUntilPhaseThree.into());
         }
 
         let signer_seeds = [
@@ -652,7 +664,8 @@ pub mod fair_launch {
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
 
             let authority_token_account_info = &ctx.remaining_accounts[1];
-            let authority_token_account: Account = assert_initialized(&authority_token_account_info)?;
+            let authority_token_account: Account =
+                assert_initialized(&authority_token_account_info)?;
             let treasury_account: Account = assert_initialized(treasury)?;
 
             let token_program = &ctx.remaining_accounts[2];
@@ -707,7 +720,6 @@ pub mod fair_launch {
             )?;
         }
 
-
         Ok(())
     }
 }
@@ -719,6 +731,7 @@ pub struct InitializeFairLaunch<'info> {
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), data.uuid.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=token_mint_bump)]
     token_mint: CpiAccount<'info, Mint>,
+    #[account(mut)]
     treasury: AccountInfo<'info>,
     #[account(constraint= authority.data_is_empty() && authority.lamports() > 0)]
     authority: AccountInfo<'info>,
@@ -902,6 +915,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // phase two end
 8 + // tick size
 8 + // number of tokens
+8 + // fee
 8 + // number of tickets unseq'ed
 8 + // number of tickets sold
 8 + // number of tickets dropped
@@ -934,6 +948,7 @@ pub struct FairLaunchData {
     pub phase_two_end: i64,
     pub tick_size: u64,
     pub number_of_tokens: u64,
+    pub fee: u64,
 }
 
 #[account]
@@ -1060,5 +1075,5 @@ pub enum ErrorCode {
     #[msg("Cannot cash out until all refunds and punches (permissionless calls) have been processed. Use the CLI.")]
     CannotCashOutUntilAllRefundsAndPunchesHaveBeenProcessed,
     #[msg("Cannot cash out until phase three")]
-    CannotCashOutUntilPhaseThree
+    CannotCashOutUntilPhaseThree,
 }

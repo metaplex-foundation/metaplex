@@ -183,8 +183,8 @@ pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
     }
 
     let difference = data
-        .price_range_start
-        .checked_sub(data.price_range_end)
+        .price_range_end
+        .checked_sub(data.price_range_start)
         .ok_or(ErrorCode::NumericalOverflowError)?;
     let possible_valid_user_prices = difference
         .checked_div(data.tick_size)
