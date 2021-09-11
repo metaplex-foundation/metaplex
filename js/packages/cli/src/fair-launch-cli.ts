@@ -18,6 +18,7 @@ import {
   getFairLaunchTicket,
   getAtaForMint,
   getFairLaunchTicketSeqLookup,
+  getFairLaunchLotteryBitmap,
 } from './helpers/accounts';
 import { sleep } from './helpers/various';
 program.version('0.0.1');
@@ -285,6 +286,117 @@ program
 
     console.log('Created seq');
   });
+
+program
+  .command('adjust_ticket')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-a, --amount <string>', 'amount')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch, amount } = cmd.opts();
+    let amountNumber = parseFloat(amount);
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+    const fairLaunchTicket = (
+      await getFairLaunchTicket(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+
+    const remainingAccounts = [];
+    const instructions = [];
+    const signers = [];
+
+    //@ts-ignore
+    if (!fairLaunchObj.treasuryMint) {
+      amountNumber = Math.ceil(amountNumber * LAMPORTS_PER_SOL);
+    } else {
+      const transferAuthority = anchor.web3.Keypair.generate();
+      signers.push(transferAuthority);
+
+      instructions.push(
+        Token.createApproveInstruction(
+          TOKEN_PROGRAM_ID,
+          //@ts-ignore
+          fairLaunchObj.treasuryMint,
+          transferAuthority.publicKey,
+          walletKeyPair.publicKey,
+          [],
+          //@ts-ignore
+          amountNumber + fairLaunchObj.data.fees.toNumber(),
+        ),
+      );
+
+      remainingAccounts.push({
+        //@ts-ignore
+        pubkey: fairLaunchObj.treasuryMint,
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: (
+          await getAtaForMint(
+            //@ts-ignore
+            fairLaunchObj.treasuryMint,
+            walletKeyPair.publicKey,
+          )
+        )[0],
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: transferAuthority.publicKey,
+        isWritable: false,
+        isSigner: true,
+      });
+      remainingAccounts.push({
+        pubkey: TOKEN_PROGRAM_ID,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    await anchorProgram.rpc.adjustTicket(new anchor.BN(amountNumber), {
+      accounts: {
+        fairLaunchTicket,
+        fairLaunch,
+        fairLaunchLotteryBitmap,
+        //@ts-ignore
+        treasury: fairLaunchObj.treasury,
+        buyer: walletKeyPair.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      //__private: { logAccounts: true },
+      remainingAccounts,
+      signers,
+      instructions: instructions.length > 0 ? instructions : undefined,
+    });
+
+    console.log(
+      `update fair launch ticket Done: ${fairLaunchTicket.toBase58()}.`,
+    );
+  });
+
 program
   .command('create_missing_sequences')
   .option(
@@ -380,6 +492,22 @@ program
       fairLaunch,
     );
 
+    let treasuryAmount = 0;
+    // @ts-ignore
+    if (fairLaunchObj.treasuryMint) {
+      const token =
+        await anchorProgram.provider.connection.getTokenAccountBalance(
+          // @ts-ignore
+          fairLaunchObj.treasury,
+        );
+      treasuryAmount = token.value.uiAmount;
+    } else {
+      treasuryAmount = await anchorProgram.provider.connection.getBalance(
+        // @ts-ignore
+        fairLaunchObj.treasury,
+      );
+    }
+
     //@ts-ignore
     console.log('Token Mint', fairLaunchObj.tokenMint.toBase58());
     //@ts-ignore
@@ -395,27 +523,29 @@ program
     //@ts-ignore
     console.log('Token Mint Bump', fairLaunchObj.tokenMintBump);
     console.log(
-      'Price Range Start',
+      'Price Range Start        ',
       //@ts-ignore
       fairLaunchObj.data.priceRangeStart.toNumber(),
     );
     console.log(
-      'Price Range Start',
+      'Price Range End          ',
       //@ts-ignore
       fairLaunchObj.data.priceRangeEnd.toNumber(),
     );
 
     console.log(
-      'Tick Size        ',
+      'Tick Size                ',
       //@ts-ignore
       fairLaunchObj.data.tickSize.toNumber(),
     );
 
     console.log(
-      'Fees             ',
+      'Fees                     ',
       //@ts-ignore
       fairLaunchObj.data.fee.toNumber(),
     );
+
+    console.log('Current Treasury Holdings', treasuryAmount);
 
     console.log(
       'Phase One Start',

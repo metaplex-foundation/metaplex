@@ -448,12 +448,6 @@ pub mod fair_launch {
 
         adjust_counts(fair_launch, amount, Some(fair_launch_ticket.amount))?;
 
-        let signer_seeds = [
-            PREFIX.as_bytes(),
-            fair_launch.token_mint.as_ref(),
-            &[fair_launch.bump],
-        ];
-
         if let Some(treasury_mint) = fair_launch.treasury_mint {
             let treasury_mint_info = &ctx.remaining_accounts[0];
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
@@ -494,6 +488,12 @@ pub mod fair_launch {
             if buyer_token_account.delegate.is_some() {
                 return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
             }
+
+            let signer_seeds = [
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                &[fair_launch.bump],
+            ];
 
             if amount > fair_launch_ticket.amount {
                 let difference = amount
@@ -551,6 +551,13 @@ pub mod fair_launch {
                     .checked_sub(amount)
                     .ok_or(ErrorCode::NumericalOverflowError)?;
 
+                let treasury_signer_seeds = [
+                    PREFIX.as_bytes(),
+                    fair_launch.token_mint.as_ref(),
+                    TREASURY.as_bytes(),
+                    &[fair_launch.treasury_bump],
+                ];
+
                 invoke_signed(
                     &system_instruction::transfer(ctx.accounts.treasury.key, buyer.key, difference),
                     &[
@@ -558,7 +565,7 @@ pub mod fair_launch {
                         ctx.accounts.treasury.clone(),
                         ctx.accounts.system_program.clone(),
                     ],
-                    &[&signer_seeds],
+                    &[&treasury_signer_seeds],
                 )?;
             }
         }

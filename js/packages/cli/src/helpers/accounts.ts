@@ -128,6 +128,15 @@ export const getFairLaunchTicket = async (
   );
 };
 
+export const getFairLaunchLotteryBitmap = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), Buffer.from('lottery')],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
 export const getFairLaunchTicketSeqLookup = async (
   tokenMint: anchor.web3.PublicKey,
   seq: anchor.BN,
