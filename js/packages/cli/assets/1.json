@@ -1,38 +1,38 @@
 {
-    "name": "Solflare X NFT #0001",
-    "symbol": "",
-    "description": "Hello World! 🌏",
-    "seller_fee_basis_points": 500,
-    "image": "image.png",
-    "animation_url": "",
-    "external_url": "",
-    "attributes": [
-      {
-        "trait_type": "web",
-        "value": "yes"
-      },
-      {
-        "trait_type": "mobile",
-        "value": "yes"
-     }
-    ],
-    "collection": {
-      "name": "Solflare X NFT",
-      "family": "Solflare"
+  "name": "Solflare X NFT #0001",
+  "symbol": "",
+  "description": "Hello World! 🌏",
+  "seller_fee_basis_points": 500,
+  "image": "image.png",
+  "animation_url": "",
+  "external_url": "",
+  "attributes": [
+    {
+      "trait_type": "web",
+      "value": "yes"
     },
-    "properties": {
-      "files": [
-        {
-          "uri": "image.png",
-          "type": "image/png"
-        }
-      ],
-      "category": "image",
-      "creators": [
-        {
-          "address": "SOLFLR15asd9d21325bsadythp547912501b",
-          "share": 100
-        }
-      ]
+    {
+      "trait_type": "mobile",
+      "value": "yes"
     }
+  ],
+  "collection": {
+    "name": "Solflare X NFT",
+    "family": "Solflare"
+  },
+  "properties": {
+    "files": [
+      {
+        "uri": "image.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "CBBUMHRmbVUck99mTCip5sHP16kzGj3QTYB8K3XxwmQx",
+        "share": 100
+      }
+    ]
   }
+}
