@@ -138,6 +138,11 @@ pub mod fair_launch {
         data: FairLaunchData,
     ) -> ProgramResult {
         let fair_launch = &mut ctx.accounts.fair_launch;
+        let clock = &mut ctx.accounts.clock;
+
+        if clock.unix_timestamp > fair_launch.data.phase_one_start {
+            return Err(ErrorCode::CannotUpdateFairLaunchDataOnceInProgress.into());
+        }
 
         assert_data_valid(&data)?;
         fair_launch.data = data;
@@ -760,6 +765,7 @@ pub struct UpdateFairLaunch<'info> {
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(signer)]
     authority: AccountInfo<'info>,
+    clock: Sysvar<'info, Clock>,
 }
 
 /// Limited Update that only sets phase 3 dates once bitmap is in place and fully setup.
@@ -1083,4 +1089,6 @@ pub enum ErrorCode {
     CannotCashOutUntilAllRefundsAndPunchesHaveBeenProcessed,
     #[msg("Cannot cash out until phase three")]
     CannotCashOutUntilPhaseThree,
+    #[msg("Cannot update fair launch variables once it is in progress")]
+    CannotUpdateFairLaunchDataOnceInProgress,
 }

@@ -20,12 +20,16 @@ import {
   getFairLaunchTicketSeqLookup,
   getFairLaunchLotteryBitmap,
 } from './helpers/accounts';
-import { sleep } from './helpers/various';
+import { chunks, getMultipleAccounts, sleep } from './helpers/various';
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
+
+const FAIR_LAUNCH_TICKET_AMOUNT_LOC = 8 + 32 + 32;
+const FAIR_LAUNCH_TICKET_STATE_LOC = FAIR_LAUNCH_TICKET_AMOUNT_LOC + 8;
+const FAIR_LAUNCH_TICKET_SEQ_LOC = FAIR_LAUNCH_TICKET_STATE_LOC + 1 + 1;
 
 program
   .command('new_fair_launch')
@@ -152,6 +156,111 @@ program
     );
 
     console.log(`create fair launch Done: ${fairLaunch.toBase58()}`);
+  });
+
+program
+  .command('update_fair_launch')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-u, --uuid <string>', 'uuid')
+  .option('-f, --fee <string>', 'price range end', '2')
+  .option('-s, --price-range-start <string>', 'price range start', '1')
+  .option('-e, --price-range-end <string>', 'price range end', '2')
+  .option(
+    '-pos, --phase-one-start-date <string>',
+    'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
+  )
+  .option(
+    '-poe, --phase-one-end-date <string>',
+    'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
+  )
+  .option(
+    '-pte, --phase-two-end-date <string>',
+    'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
+  )
+  .option('-ts, --tick-size <string>', 'tick size', '0.1')
+  .option('-n, --number-of-tokens <number>', 'Number of tokens to sell')
+  .option(
+    '-mint, --token-mint <string>',
+    'token mint to take as payment instead of sol',
+  )
+  .action(async (_, cmd) => {
+    const {
+      keypair,
+      env,
+      priceRangeStart,
+      priceRangeEnd,
+      phaseOneStartDate,
+      phaseOneEndDate,
+      phaseTwoEndDate,
+      tickSize,
+      numberOfTokens,
+      fee,
+      mint,
+      uuid,
+    } = cmd.opts();
+    const parsedNumber = parseInt(numberOfTokens);
+    let priceRangeStartNumber = parseFloat(priceRangeStart);
+    let priceRangeEndNumber = parseFloat(priceRangeEnd);
+    let tickSizeNumber = parseFloat(tickSize);
+    let feeNumber = parseFloat(fee);
+    const realUuid = uuid.slice(0, 6);
+    const phaseOneStartDateActual =
+      (phaseOneStartDate ? Date.parse(phaseOneStartDate) : Date.now()) / 1000;
+    const phaseOneEndDateActual =
+      (phaseOneEndDate ? Date.parse(phaseOneEndDate) : Date.now() + 86400000) /
+      1000;
+    const phaseTwoEndDateActual =
+      (phaseTwoEndDate
+        ? Date.parse(phaseTwoEndDate)
+        : Date.now() + 2 * 86400000) / 1000;
+
+    if (!mint) {
+      priceRangeStartNumber = Math.ceil(
+        priceRangeStartNumber * LAMPORTS_PER_SOL,
+      );
+      priceRangeEndNumber = Math.ceil(priceRangeEndNumber * LAMPORTS_PER_SOL);
+      tickSizeNumber = Math.ceil(tickSizeNumber * LAMPORTS_PER_SOL);
+      feeNumber = Math.ceil(feeNumber * LAMPORTS_PER_SOL);
+    }
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+    const tokenMint = (
+      await getTokenMint(walletKeyPair.publicKey, realUuid)
+    )[0];
+    const fairLaunch = (await getFairLaunch(tokenMint))[0];
+
+    await anchorProgram.rpc.updateFairLaunch(
+      {
+        uuid: realUuid,
+        priceRangeStart: new anchor.BN(priceRangeStartNumber),
+        priceRangeEnd: new anchor.BN(priceRangeEndNumber),
+        phaseOneStart: new anchor.BN(phaseOneStartDateActual),
+        phaseOneEnd: new anchor.BN(phaseOneEndDateActual),
+        phaseTwoEnd: new anchor.BN(phaseTwoEndDateActual),
+        tickSize: new anchor.BN(tickSizeNumber),
+        numberOfTokens: new anchor.BN(parsedNumber),
+        fee: new anchor.BN(feeNumber),
+      },
+      {
+        accounts: {
+          fairLaunch,
+          authority: walletKeyPair.publicKey,
+          clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+        },
+      },
+    );
+
+    console.log(`Updated fair launch Done: ${fairLaunch.toBase58()}`);
   });
 
 program
@@ -320,9 +429,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const remainingAccounts = [];
     const instructions = [];
@@ -450,6 +558,181 @@ program
         `checked fair launch lottery bitmap, exists: ${fairLaunchLotteryBitmap.toBase58()}.`,
       );
     }
+
+    const seqKeys = [];
+    //@ts-ignore
+    for (let i = 0; i < fairLaunchObj.number_tickets_sold; i++) {
+      seqKeys.push(
+        await getFairLaunchTicketSeqLookup(
+          //@ts-ignore
+          fairLaunchObj.tokenMint,
+          new anchor.BN(i),
+        ),
+      );
+    }
+
+    const ticketKeys: anchor.web3.PublicKey[][] = await Promise.all(
+      chunks(Array.from(Array(seqKeys.length).keys()), 1000).map(
+        async allIndexesInSlice => {
+          let ticketKeys = [];
+          for (let i = 0; i < allIndexesInSlice.length; i += 100) {
+            console.log(
+              'Pulling ticket seqs for slice',
+              allIndexesInSlice[i],
+              allIndexesInSlice[i + 100],
+            );
+            const slice = allIndexesInSlice
+              .slice(i, i + 100)
+              .map(index => seqKeys[index]);
+            const result = await getMultipleAccounts(
+              anchorProgram.provider.connection,
+              slice,
+              'recent',
+            );
+            ticketKeys = ticketKeys.concat(
+              result.array.map(
+                a =>
+                  new anchor.web3.PublicKey(
+                    new Uint8Array(a.data.slice(8, 8 + 32)),
+                  ),
+              ),
+            );
+            return ticketKeys;
+          }
+        },
+      ),
+    );
+
+    const ticketsFlattened = ticketKeys.flat();
+
+    const states: { seq: anchor.BN; eligible: boolean }[][] = await Promise.all(
+      chunks(Array.from(Array(ticketsFlattened.length).keys()), 1000).map(
+        async allIndexesInSlice => {
+          let states = [];
+          for (let i = 0; i < allIndexesInSlice.length; i += 100) {
+            console.log(
+              'Pulling states for slice',
+              allIndexesInSlice[i],
+              allIndexesInSlice[i + 100],
+            );
+            const slice = allIndexesInSlice
+              .slice(i, i + 100)
+              .map(index => ticketsFlattened[index]);
+            const result = await getMultipleAccounts(
+              anchorProgram.provider.connection,
+              slice,
+              'recent',
+            );
+            states = states.concat(
+              result.array.map(a => ({
+                seq: new anchor.BN(
+                  a.data.slice(
+                    FAIR_LAUNCH_TICKET_SEQ_LOC,
+                    FAIR_LAUNCH_TICKET_SEQ_LOC + 8,
+                  ),
+                  undefined,
+                  'le',
+                ),
+                eligible:
+                  a.data[FAIR_LAUNCH_TICKET_STATE_LOC] == 1 &&
+                  new anchor.BN(
+                    a.data.slice(
+                      FAIR_LAUNCH_TICKET_AMOUNT_LOC,
+                      FAIR_LAUNCH_TICKET_AMOUNT_LOC + 8,
+                    ),
+                    undefined,
+                    'le',
+                    //@ts-ignore
+                  ).toNumber() >= fairLaunchObj.currentMedian.toNumber(),
+              })),
+            );
+            return states;
+          }
+        },
+      ),
+    );
+
+    const statesFlat = states.flat();
+
+    //@ts-ignore;
+    let numWinnersRemaining = fairLaunchObj.data.numberOfTokens;
+
+    let chosen: { seq: anchor.BN; eligible: boolean; chosen: boolean }[];
+    if (numWinnersRemaining >= statesFlat.length) {
+      console.log('More or equal nfts than winners, everybody wins.');
+      chosen = statesFlat.map(s => ({ ...s, chosen: true }));
+    } else {
+      console.log('Doing lottery.');
+      chosen = statesFlat.map(s => ({ ...s, chosen: false }));
+      while (numWinnersRemaining > 0) {
+        const rand = Math.round(Math.random() * (chosen.length - 1));
+        chosen[rand].chosen = true;
+        numWinnersRemaining--;
+      }
+    }
+    const sorted = chosen.sort((a, b) => a.seq.toNumber() - b.seq.toNumber());
+    console.log('Lottery results', sorted);
+
+    await Promise.all(
+      // each 8 entries is 1 byte, we want to send up 1000 bytes at a time.
+      // be specific here.
+      chunks(Array.from(Array(sorted.length).keys()), 8 * 1000).map(
+        async allIndexesInSlice => {
+          const bytes = [];
+          const correspondingArrayOfBits = [];
+          const startingOffset = allIndexesInSlice[0];
+          let positionFromRight = 7;
+          let currByte = 0;
+          let currByteAsBits = [];
+          for (let i = 0; i < allIndexesInSlice.length; i++) {
+            if (chosen[allIndexesInSlice[i]].chosen) {
+              const mask = Math.pow(2, positionFromRight);
+              currByte = currByte & mask;
+              currByteAsBits.push(1);
+            } else {
+              currByteAsBits.push(0);
+            }
+            positionFromRight--;
+            if (positionFromRight < 0) {
+              bytes.push(currByte);
+              correspondingArrayOfBits.push(currByteAsBits);
+              currByte = 0;
+              currByteAsBits = [];
+              positionFromRight = 7;
+            }
+          }
+
+          if (positionFromRight != 7) {
+            // grab the last one if the loop hasnt JUST ended exactly right before on an additional add.
+            bytes.push(currByte);
+            correspondingArrayOfBits.push(currByteAsBits);
+          }
+
+          console.log(
+            'Setting bytes array for',
+            startingOffset,
+            'to',
+            allIndexesInSlice[allIndexesInSlice.length - 1],
+            'as (with split out by bits for ease of reading)',
+            bytes.map((e, i) => [e, correspondingArrayOfBits[i]]),
+          );
+
+          await anchorProgram.rpc.updateFairLaunchLotteryBitmap(
+            startingOffset,
+            bytes,
+            {
+              accounts: {
+                fairLaunch,
+                fairLaunchLotteryBitmap,
+                authority: walletKeyPair.publicKey,
+              },
+            },
+          );
+        },
+      ),
+    );
+
+    console.log('All done');
   });
 
 program
@@ -729,4 +1012,94 @@ program
     //@ts-ignore
     console.log('Sequence', fairLaunchTicketObj.seq.toNumber());
   });
+/*
+program
+  .command('show_lottery')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (options, cmd) => {
+    const { env, fairLaunch, keypair } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunch,
+    );
+
+    const fairLaunchLottery = (
+      await getFairLaunchLotteryBitmap(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+      )
+    )[0];
+
+    const fairLaunchLotteryBitmapObj =
+      await anchorProgram.account.fairLaunchLotteryBitmap.fetch(
+        fairLaunchLottery,
+      );
+
+    const seqKeys = [];
+    //@ts-ignore
+    for (let i = 0; i < fairLaunchObj.number_tickets_sold; i++) {
+      seqKeys.push(
+        await getFairLaunchTicketSeqLookup(
+          //@ts-ignore
+          fairLaunchObj.tokenMint,
+          new anchor.BN(i),
+        ),
+      );
+    }
+
+    const ticketKeys: { seq: anchor.BN; ticket: anchor.web3.PublicKey }[][] =
+      await Promise.all(
+        chunks(Array.from(Array(seqKeys.length).keys()), 1000).map(
+          async allIndexesInSlice => {
+            let ticketKeys = [];
+            for (let i = 0; i < allIndexesInSlice.length; i += 100) {
+              console.log(
+                'Pulling ticket seqs for slice',
+                allIndexesInSlice[i],
+                allIndexesInSlice[i + 100],
+              );
+              const slice = allIndexesInSlice
+                .slice(i, i + 100)
+                .map(index => seqKeys[index]);
+              const result = await getMultipleAccounts(
+                anchorProgram.provider.connection,
+                slice,
+                'recent',
+              );
+              ticketKeys = ticketKeys.concat(
+                result.array.map(a => ({
+                  ticket: new anchor.web3.PublicKey(
+                    new Uint8Array(a.data.slice(8, 8 + 32)),
+                  ),
+                  seq: new anchor.BN(
+                    a.data.slice(8 + 32 + 32, 8 + 32 + 32 + 8),
+                    undefined,
+                    'le',
+                  ),
+                })),
+              );
+
+              return ticketKeys;
+            }
+          },
+        ),
+      );
+
+     const ticketsFlattened = ticketKeys
+      .flat()
+      .sort((a, b) => a.seq.toNumber() - b.seq.toNumber());
+  });*/
 program.parse(process.argv);
