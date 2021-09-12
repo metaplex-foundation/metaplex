@@ -82,7 +82,7 @@ export async function upload(data: FormData, manifest, index) {
   console.log(`trying to upload ${index}.png: ${manifest.name}`);
   return await (
     await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile10',
       {
         method: 'POST',
         // @ts-ignore
