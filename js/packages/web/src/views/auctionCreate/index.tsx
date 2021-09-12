@@ -172,11 +172,13 @@ export const AuctionCreateView = () => {
     if (attributes.category === AuctionCategory.InstantSale) {
       if (attributes.items.length > 0) {
         const item = attributes.items[0];
-        item.winningConfigType =
-          item.metadata.info.updateAuthority ===
-          (wallet?.publicKey || SystemProgram.programId).toBase58()
-            ? WinningConfigType.FullRightsTransfer
-            : WinningConfigType.TokenOnlyTransfer;
+        if (!attributes.editions) {
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              ? WinningConfigType.FullRightsTransfer
+              : WinningConfigType.TokenOnlyTransfer;
+        }
         item.amountRanges = [
           new AmountRange({
             amount: new BN(1),
@@ -770,37 +772,37 @@ const InstantSaleStep = (props: {
             Select NFT
           </ArtSelector>
 
-          {/*<label className="action-field">*/}
-          {/*  <Checkbox*/}
-          {/*    defaultChecked={false}*/}
-          {/*    checked={copiesChecked}*/}
-          {/*    disabled={!copiesEnabled}*/}
-          {/*    onChange={e => setCopiesChecked(e.target.checked)}*/}
-          {/*  >*/}
-          {/*    <span className="field-title">*/}
-          {/*      Create copies of a Master Edition NFT?*/}
-          {/*    </span>*/}
-          {/*  </Checkbox>*/}
-          {/*  {copiesChecked && copiesEnabled && (*/}
-          {/*    <>*/}
-          {/*      <span className="field-info">*/}
-          {/*        Each copy will be given unique edition number e.g. 1 of 30*/}
-          {/*      </span>*/}
-          {/*      <Input*/}
-          {/*        autoFocus*/}
-          {/*        className="input"*/}
-          {/*        placeholder="Enter number of copies sold"*/}
-          {/*        allowClear*/}
-          {/*        onChange={info =>*/}
-          {/*          props.setAttributes({*/}
-          {/*            ...props.attributes,*/}
-          {/*            editions: parseInt(info.target.value),*/}
-          {/*          })*/}
-          {/*        }*/}
-          {/*      />*/}
-          {/*    </>*/}
-          {/*  )}*/}
-          {/*</label>*/}
+          <label className="action-field">
+            <Checkbox
+              defaultChecked={false}
+              checked={copiesChecked}
+              disabled={!copiesEnabled}
+              onChange={e => setCopiesChecked(e.target.checked)}
+            >
+              <span className="field-title">
+                Create copies of a Master Edition NFT?
+              </span>
+            </Checkbox>
+            {copiesChecked && copiesEnabled && (
+              <>
+                <span className="field-info">
+                  Each copy will be given unique edition number e.g. 1 of 30
+                </span>
+                <Input
+                  autoFocus
+                  className="input"
+                  placeholder="Enter number of copies sold"
+                  allowClear
+                  onChange={info =>
+                    props.setAttributes({
+                      ...props.attributes,
+                      editions: parseInt(info.target.value),
+                    })
+                  }
+                />
+              </>
+            )}
+          </label>
 
           <label className="action-field">
             <span className="field-title">Price</span>

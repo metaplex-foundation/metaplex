@@ -76,7 +76,14 @@ export interface MetaState {
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
-  update: () => void;
+  update: (
+    auctionAddress?: any,
+    bidderAddress?: any,
+  ) => [
+    ParsedAccount<AuctionData>,
+    ParsedAccount<BidderPot>,
+    ParsedAccount<BidderMetadata>,
+  ];
 }
 
 export type AccountAndPubkey = {

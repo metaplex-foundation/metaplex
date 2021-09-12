@@ -20,6 +20,7 @@ import {
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
   useWalletModal,
+  VaultState,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -183,7 +184,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const {update} = useMeta();
+  const { update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -253,8 +254,14 @@ export const AuctionCard = ({
     auctionView.auction.info.state === AuctionState.Created;
 
   //if instant sale auction bid and claimed hide buttons
-  if (auctionView.isInstantSale && auctionView.myBidderPot?.info.emptied) {
-    return <></>
+  if (
+    (auctionView.isInstantSale &&
+      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+      isAuctionManagerAuthorityNotWalletOwner &&
+      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
+    auctionView.vault.info.state === VaultState.Deactivated
+  ) {
+    return <></>;
   }
 
   return (
@@ -387,7 +394,9 @@ export const AuctionCard = ({
               {loading ? (
                 <Spin />
               ) : auctionView.isInstantSale ? (
-                bids.length ? (
+                !isAuctionManagerAuthorityNotWalletOwner ? (
+                  'Claim master'
+                ) : auctionView.myBidderPot ? (
                   'Claim Purchase'
                 ) : (
                   'Buy Now'
@@ -509,7 +518,8 @@ export const AuctionCard = ({
                 // Placing a "bid" of the full amount results in a purchase to redeem.
                 if (
                   myPayingAccount &&
-                  bids.length === 0 &&
+                  !auctionView.myBidderPot &&
+                  isAuctionManagerAuthorityNotWalletOwner &&
                   auctionView.auctionDataExtended?.info.instantSalePrice
                 ) {
                   try {
@@ -523,15 +533,20 @@ export const AuctionCard = ({
                     );
                     setLastBid(bid);
                   } catch (e) {
-                    console.error('sendPlaceBid', e)
+                    console.error('sendPlaceBid', e);
                     setShowBidModal(false);
                     setLoading(false);
                     return;
                   }
-
                 }
 
-                await update();
+                const newAuctionState = await update(
+                  auctionView.auction.pubkey,
+                  wallet.publicKey,
+                );
+                auctionView.auction = newAuctionState[0];
+                auctionView.myBidderPot = newAuctionState[1];
+                auctionView.myBidderMetadata = newAuctionState[2];
 
                 // Claim the purchase
                 try {
@@ -684,7 +699,8 @@ export const AuctionCard = ({
                     {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
                       <Spin />
                     ) : auctionView.isInstantSale ? (
-                      bids.length ? (
+                      auctionView.myBidderPot ||
+                      !isAuctionManagerAuthorityNotWalletOwner ? (
                         'Claim'
                       ) : (
                         'Purchase'
