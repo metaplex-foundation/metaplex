@@ -425,12 +425,8 @@ pub mod fair_launch {
                     [FAIR_LAUNCH_LOTTERY_SIZE + index]
                     & mask;
 
-                if is_winner == 1 {
-                    let difference = fair_launch_ticket
-                        .amount
-                        .checked_sub(fair_launch.current_median)
-                        .ok_or(ErrorCode::NumericalOverflowError)?;
-                    if amount != difference {
+                if is_winner > 0 {
+                    if amount != fair_launch.current_median {
                         return Err(ErrorCode::CanOnlySubmitDifferenceDuringPhaseThree.into());
                     }
                 } else if amount != 0 {
@@ -943,7 +939,8 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tickets punched 
 1 + // phase three started
 8 + // current median,
-4; // u32 representing number of amounts in vec so far
+4 + // u32 representing number of amounts in vec so far
+100; // padding
 
 pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
 32 + // fair launch reverse lookup
@@ -951,13 +948,15 @@ pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
 8 + // amount paid in so far
 1 + // state
 1 + // bump
-8; // seq
+8 + // seq
+50; //padding
 
 pub const FAIR_LAUNCH_TICKET_SEQ_SIZE: usize = 8 + //discriminator
 32 + // fair launch ticket reverse lookup
 32 + // buyer,
 8 + //seq
-1; // bump
+1 + // bump
+50; // padding;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct AntiRugSetting {

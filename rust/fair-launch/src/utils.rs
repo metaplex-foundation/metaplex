@@ -175,8 +175,9 @@ pub fn get_mask_and_index_for_seq(seq: u64) -> Result<(u8, usize), ProgramError>
         .checked_div(8)
         .ok_or(ErrorCode::NumericalOverflowError)?;
     let my_position_from_right = 7 - seq
-        .checked_div(8)
+        .checked_rem(8)
         .ok_or(ErrorCode::NumericalOverflowError)?;
+
     let mask = u8::pow(2, my_position_from_right as u32);
     Ok((mask, my_position_in_index as usize))
 }
