@@ -9,6 +9,7 @@ import { sendTransactionWithRetryWithKeypair } from "../helpers/transactions";
 import FormData from "form-data";
 import { loadCache, saveCache } from "../helpers/cache";
 import fetch from 'node-fetch';
+import log from "loglevel";
 
 export async function upload(files: string[], cacheName: string, env: string, keypair: string, totalNFTs: number): Promise<boolean> {
   let uploadSuccessful = true;
@@ -58,7 +59,10 @@ export async function upload(files: string[], cacheName: string, env: string, ke
     const imageName = path.basename(image);
     const index = imageName.replace(EXTENSION_PNG, '');
 
-    console.log(`Processing file: ${index}`);
+    log.debug(`Processing file: ${i}`);
+    if (i % 50 === 0) {
+      log.info(`Processing file: ${i}`);
+    }
 
     const storageCost = 10;
 
@@ -76,7 +80,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
 
       if (i === 0 && !cacheContent.program.uuid) {
         // initialize config
-        console.log(`initializing config`)
+        log.info(`initializing config`)
         try {
           const res = await createConfig(anchorProgram, walletKeyPair, {
             maxNumberOfLines: new BN(totalNFTs),
@@ -97,11 +101,11 @@ export async function upload(files: string[], cacheName: string, env: string, ke
           cacheContent.program.config = res.config.toBase58();
           config = res.config;
 
-          console.log(`initialized config for a candy machine with uuid: ${res.uuid}`)
+          log.info(`initialized config for a candy machine with publickey: ${res.config.toBase58()}`)
 
           saveCache(cacheName, env, cacheContent);
         } catch (exx) {
-          console.error('Error deploying config to Solana network.', exx);
+          log.error('Error deploying config to Solana network.', exx);
           throw exx;
         }
       }
@@ -122,7 +126,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
           [],
           'single',
         );
-        console.info('transaction for arweave payment:', tx);
+        log.debug('transaction for arweave payment:', tx);
 
         // data.append('tags', JSON.stringify(tags));
         // payment transaction
@@ -139,7 +143,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
           );
           if (metadataFile?.transactionId) {
             link = `https://arweave.net/${metadataFile.transactionId}`;
-            console.log(`File uploaded: ${link}`);
+            log.debug(`File uploaded: ${link}`);
           }
 
           cacheContent.items[index] = {
@@ -150,7 +154,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
           saveCache(cacheName, env, cacheContent);
         } catch (er) {
           uploadSuccessful = false;
-          console.error(`Error uploading file ${index}`, er);
+          log.error(`Error uploading file ${index}`, er);
         }
       }
     }
@@ -175,9 +179,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
             const ind = keys[indexes[0]];
 
             if (onChain.length != indexes.length) {
-              console.log(
-                `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`
-              );
+              log.info(`Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`);
               try {
                 await anchorProgram.rpc.addConfigLines(
                   ind,
@@ -201,7 +203,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
                 });
                 saveCache(cacheName, env, cacheContent);
               } catch (e) {
-                console.log(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
+                log.error(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
                 uploadSuccessful = false;
               }
             }
@@ -210,7 +212,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
       ),
     );
   } catch (e) {
-    console.error(e);
+    log.error(e);
   } finally {
     saveCache(cacheName, env, cacheContent);
   }
@@ -219,7 +221,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
 }
 
 async function uploadToArweave(data: FormData, manifest, index) {
-  console.log(`trying to upload ${index}.png: ${manifest.name}`)
+  log.debug(`trying to upload ${index}.png: ${manifest.name}`)
   return await (
     await fetch(
       'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',

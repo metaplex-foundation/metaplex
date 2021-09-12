@@ -6,6 +6,7 @@ import { Program } from "@project-serum/anchor";
 import { Config } from "../types";
 import { sleep } from "../helpers/various";
 import { loadCache, saveCache } from "../helpers/cache";
+import log from "loglevel";
 
 const METADATA_SIGNATURE = Buffer.from([7]);//now thats some voodoo magic. WTF metaplex? XD
 const SLEEP_AT_THE_END_OF_CHAIN = 200; // amount of time [ms] to wait between requests
@@ -75,7 +76,7 @@ async function scanForNFTMints(anchorProgram, cacheContent) {
     cacheContent.program.uuid,
   );
 
-  console.log(`candyMachineAddress = ${candyMachineAddress}`)
+  log.info(`candyMachineAddress = ${candyMachineAddress}`)
 
   const config = (await anchorProgram.account.config.fetch(
     configAddress,
@@ -84,11 +85,11 @@ async function scanForNFTMints(anchorProgram, cacheContent) {
   let slot = cacheContent.lastVerifiedSlot;
   let nftCounter = cacheContent.verifiedNfts || 0;
 
-  console.log(`[${slot}] slot is the last checked. ${nftCounter} nfts have been verified before. starting scan`);
+  log.info(`[${slot}] slot is the last checked. ${nftCounter} nfts have been verified before. starting scan`);
 
   for (; ;) {
     if (slot % 100 == 0) {
-      console.log(`[${slot}] slot`);
+      log.info(`[${slot}] slot`);
     }
 
 
@@ -103,12 +104,12 @@ async function scanForNFTMints(anchorProgram, cacheContent) {
 
     // we've reached the end of the chain, so break
     if (block.blockTime == null) {
-      console.info(`[${slot}] end of chain...`);
+      log.info(`[${slot}] end of chain...`);
       await sleep(SLEEP_AT_THE_END_OF_CHAIN);
       continue;
     }
     if (nftCounter >= config.data.maxNumberOfLines) {
-      console.log("All verified, rejoice!");
+      log.info("All verified, rejoice!");
       return;
     }
 
@@ -118,13 +119,13 @@ async function scanForNFTMints(anchorProgram, cacheContent) {
         const metadataKey = await getMetadata(mintKey);
 
         if (!metadataKey.equals(message.accountKeys[5])) {
-          console.error("someone is trying to cheat!");
+          log.error("someone is trying to cheat!");
           continue;
         }
-        console.log(`[${slot}] new metadata key found:${metadataKey.toBase58()}`);
-        console.log("[ ^^^^^^^^ ] mint keys is:", mintKey.toBase58());
+        log.info(`[${slot}] new metadata key found:${metadataKey.toBase58()}`);
+        log.info("[ ^^^^^^^^ ] mint keys is:", mintKey.toBase58());
         await signWithRetry(anchorProgram, anchorProgram.provider.wallet.payer, metadataKey);
-        console.log("NFT signed!");
+        log.info("NFT signed!");
         nftCounter++;
       }
     }
