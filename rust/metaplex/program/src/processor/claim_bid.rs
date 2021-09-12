@@ -12,7 +12,7 @@ use {
     },
     spl_auction::{
         instruction::claim_bid_instruction,
-        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot},
+        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot, AuctionDataExtended},
     },
 };
 
@@ -115,8 +115,11 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     if auction_manager.vault() != *vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
-    if auction.state != AuctionState::Ended {
-        return Err(MetaplexError::AuctionHasNotEnded.into());
+    let instant_sale_price = AuctionDataExtended::get_instant_sale_price(&auction_extended_info.data.borrow());
+    if !instant_sale_price.is_some() {
+        if auction.state != AuctionState::Ended {
+            return Err(MetaplexError::AuctionHasNotEnded.into());
+        }
     }
 
     if auction_manager.status() != AuctionManagerStatus::Disbursing
