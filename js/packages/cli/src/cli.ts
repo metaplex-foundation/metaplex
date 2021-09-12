@@ -14,6 +14,8 @@ import {
   parsePrice,
   saveCache,
   upload,
+  updateCandyMachineList,
+  getCandyMachineList
 } from './helpers/various';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
@@ -414,7 +416,6 @@ program
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-
     const config = new PublicKey(cacheContent.program.config);
     const [candyMachine, bump] = await getCandyMachineAddress(
       config,
@@ -441,7 +442,7 @@ program
         signers: [],
       },
     );
-
+    updateCandyMachineList(candyMachine.toBase58(), env)
     console.log(`create_candy_machine Done: ${candyMachine.toBase58()}`);
   });
 
@@ -598,15 +599,20 @@ program
   .option('-cndy, --candy-address <string>', 'Candy machine address', '')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .action(async (directory, cmd) => {
-    const { keypair, env, candyAddress, batchSize } = cmd.opts();
+    let { keypair, env, candyAddress, batchSize } = cmd.opts();
     if (!keypair || keypair == '') {
       console.log("Keypair required!"); 
       return;
     }
     if (!candyAddress || candyAddress == '') {
-      console.log("Candy machine address required!")
-      return;
-    }
+      console.log("Candy machine address required! Using from saved list.")
+      let address = getCandyMachineList(env);
+      if (!address) {
+        console.log("Could not find candy machine address list!")
+        return;
+      }
+      candyAddress = address.candyList[0]
+    } 
     let bVal = parseInt(batchSize)
     if (!parseInt(batchSize)){
       console.log("Batch size needs to be an integer!")
