@@ -400,6 +400,7 @@ pub mod fair_launch {
         let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
         let fair_launch_lottery_bitmap_info = &ctx.accounts.fair_launch_lottery_bitmap;
         let buyer = &mut ctx.accounts.buyer;
+        let clock = &mut ctx.accounts.clock;
 
         assert_derivation(
             ctx.program_id,
@@ -439,6 +440,8 @@ pub mod fair_launch {
             }
         } else if !buyer.is_signer {
             return Err(ErrorCode::DuringPhaseTwoAndOneBuyerMustBeSigner.into());
+        } else if clock.unix_timestamp > fair_launch.data.phase_two_end {
+            return Err(ErrorCode::PhaseTwoEnded.into());
         }
 
         if amount != 0 {
@@ -868,6 +871,7 @@ pub struct AdjustTicket<'info> {
     buyer: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
+    clock: Sysvar<'info, Clock>,
     // Remaining accounts in this order if using spl tokens for payment:
     // [Writable/optional] treasury mint
     // [Writable/optional] buyer token account (must be ata)
@@ -1092,4 +1096,6 @@ pub enum ErrorCode {
     CannotCashOutUntilPhaseThree,
     #[msg("Cannot update fair launch variables once it is in progress")]
     CannotUpdateFairLaunchDataOnceInProgress,
+    #[msg("Not able to adjust tickets between phase two and three")]
+    PhaseTwoEnded,
 }

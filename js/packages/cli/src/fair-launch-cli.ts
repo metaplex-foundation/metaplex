@@ -499,6 +499,7 @@ program
         treasury: fairLaunchObj.treasury,
         buyer: walletKeyPair.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
       //__private: { logAccounts: true },
       remainingAccounts,
@@ -1125,7 +1126,7 @@ program
         'Ticket',
         buyer.seq,
         buyer.buyer.toBase58(),
-        isWinner == 1 ? 'won' : 'lost',
+        isWinner > 0 ? 'won' : 'lost',
       );
     }
   });
