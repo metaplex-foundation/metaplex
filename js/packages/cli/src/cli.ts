@@ -15,7 +15,7 @@ import {
   saveCache,
   upload,
 } from './helpers/various';
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram , Transaction} from '@solana/web3.js';
 import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
 import {
   CACHE_PATH,
@@ -137,7 +137,7 @@ program
 
       console.log(`Processing file: ${index}`);
 
-      const storageCost = 10;
+      const storageCost = 341500; // in lamports (around 0.05$ per file)
 
       let link = cacheContent?.items?.[index]?.link;
       if (!link || !cacheContent.program.uuid) {
@@ -186,27 +186,19 @@ program
         }
 
         if (!link) {
-          const instructions = [
-            anchor.web3.SystemProgram.transfer({
-              fromPubkey: walletKeyPair.publicKey,
-              toPubkey: PAYMENT_WALLET,
-              lamports: storageCost,
-            }),
-          ];
-
-          const tx = await sendTransactionWithRetryWithKeypair(
-            anchorProgram.provider.connection,
-            walletKeyPair,
-            instructions,
-            [],
-            'single',
-          );
-          console.info('transaction for arweave payment:', tx);
+          const tx = new Transaction();
+          tx.recentBlockhash = (await anchorProgram.provider.connection.getRecentBlockhash()).blockhash;
+          tx.add(anchor.web3.SystemProgram.transfer({
+            fromPubkey: walletKeyPair.publicKey,
+            toPubkey: PAYMENT_WALLET,
+            lamports: storageCost,
+          }));
+          tx.sign(walletKeyPair);
 
           // data.append('tags', JSON.stringify(tags));
           // payment transaction
           const data = new FormData();
-          data.append('transaction', tx['txid']);
+          data.append('transactionData', tx.serialize().toString('base64'));
           data.append('env', env);
           data.append('file[]', fs.createReadStream(image), {
             filename: `image.png`,
