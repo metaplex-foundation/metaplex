@@ -14,12 +14,15 @@ import { upload } from './commands/upload';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from "./commands/mint";
 import { signAllUnapprovedMetadata, signMetadata } from "./commands/sign";
+import log from 'loglevel';
 
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
+
+log.setLevel(log.levels.INFO);
 
 programCommand('upload')
   .argument(
@@ -49,14 +52,19 @@ programCommand('upload')
       throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
     }
 
+    const startMs = Date.now();
+    log.info("started at: " + startMs.toString())
     for (; ;) {
       const successful = await upload(files, cacheName, env, keypair, parsedNumber);
       if (successful) {
         break;
       } else {
-        console.log("upload was not successful, rerunning");
+        log.warn("upload was not successful, rerunning");
       }
     }
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
 
   });
 
@@ -76,7 +84,7 @@ programCommand('verify')
 
     const keys = Object.keys(cacheContent.items);
     for (let i = 0; i < keys.length; i++) {
-      console.log('Looking at key ', i);
+      log.debug('Looking at key ', i);
       const key = keys[i];
       const thisSlice = config.data.slice(
         CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
@@ -95,7 +103,7 @@ programCommand('verify')
         cacheItem.onChain = false;
         allGood = false;
       } else {
-        console.debug('Name', name, 'with', uri, 'checked out');
+        log.debug('Name', name, 'with', uri, 'checked out');
       }
     }
 
@@ -113,7 +121,7 @@ programCommand('verify')
 
     const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
 
-    console.log(
+    log.info(
       `uploaded (${lineCount.toNumber()}) out of (${
         configData.data.maxNumberOfLines
       })`,
@@ -125,7 +133,7 @@ programCommand('verify')
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
-      console.log('ready to deploy!');
+      log.info('ready to deploy!');
     }
 
     saveCache(cacheName, env, cacheContent);
@@ -169,7 +177,8 @@ programCommand('create_candy_machine')
       },
     );
 
-    console.log(`create_candy_machine Done: ${candyMachine.toBase58()}`);
+    saveCache(cacheName, env, cacheContent);
+    log.info(`create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`);
   });
 
 programCommand('set_start_date')
@@ -198,7 +207,7 @@ programCommand('set_start_date')
       },
     );
 
-    console.log('set_start_date Done', secondsSinceEpoch, tx);
+    log.info('set_start_date Done', secondsSinceEpoch, tx);
   });
 
 programCommand('mint_one_token')
@@ -209,7 +218,7 @@ programCommand('mint_one_token')
     const configAddress = new PublicKey(cacheContent.program.config);
     const tx = await mint(keypair, env, configAddress);
 
-    console.log('Done', tx);
+    log.info('Done', tx);
   });
 
 programCommand('sign')
@@ -249,9 +258,20 @@ function programCommand(name: string) {
       `Solana wallet location`,
       '--keypair not provided',
     )
+    .option('-l, --log-level <string>', 'log level', setLogLevel)
     .option('-c, --cache-name <string>', 'Cache file name', 'temp');
 }
 
-program.command('find-wallets').action(() => {});
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function setLogLevel(value, prev) {
+  if (value === undefined || value === null){
+    return
+  }
+  log.info("setting the log value to: " + value);
+  log.setLevel(value);
+}
+
+program.command('find-wallets').action(() => {
+});
 
 program.parse(process.argv);

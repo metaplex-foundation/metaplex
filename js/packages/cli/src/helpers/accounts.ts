@@ -10,6 +10,8 @@ import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
 import BN from "bn.js";
 import { createConfigAccount } from "./instructions";
+import { web3 } from "@project-serum/anchor";
+import log from "loglevel";
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -80,7 +82,7 @@ export const getTokenWallet = async function (
 export const getCandyMachineAddress = async (
   config: anchor.web3.PublicKey,
   uuid: string,
-) => {
+): Promise<[PublicKey, number]> => {
   return await anchor.web3.PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), config.toBuffer(), Buffer.from(uuid)],
     CANDY_MACHINE_PROGRAM_ID,
@@ -90,7 +92,7 @@ export const getCandyMachineAddress = async (
 export const getConfig = async (
   authority: anchor.web3.PublicKey,
   uuid: string,
-) => {
+): Promise<[PublicKey, number]> => {
   return await anchor.web3.PublicKey.findProgramAddress(
     [Buffer.from(CANDY_MACHINE), authority.toBuffer(), Buffer.from(uuid)],
     CANDY_MACHINE_PROGRAM_ID,
@@ -132,14 +134,13 @@ export function loadWalletKey(keypair): Keypair {
   const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
   );
-  console.log(`wallet public key: ${loaded.publicKey}`)
+  log.info(`wallet public key: ${loaded.publicKey}`)
   return loaded;
 }
 
 export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
-  const solConnection = new anchor.web3.Connection(
-    `https://api.${env}.solana.com/`,
-  );
+  // @ts-ignore
+  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
   const walletWrapper = new anchor.Wallet(walletKeyPair);
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
@@ -147,6 +148,6 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
-  console.log("program id from anchor", program.programId.toBase58());
+  log.info("program id from anchor", program.programId.toBase58());
   return program;
 }

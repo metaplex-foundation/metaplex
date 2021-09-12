@@ -48,6 +48,9 @@ export function fromUTF8Array(data: number[]) {
   return str;
 }
 
-export function parsePrice(price): number {
-  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
+export function parsePrice(price) {
+  if (price === 'free' || price === '0') {
+    return 1;
+  }
+  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);;
 }
