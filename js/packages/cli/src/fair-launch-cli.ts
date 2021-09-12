@@ -726,6 +726,7 @@ program
     const exists = await anchorProgram.provider.connection.getAccountInfo(
       fairLaunchLotteryBitmap,
     );
+
     if (!exists) {
       await anchorProgram.rpc.createFairLaunchLotteryBitmap(bump, {
         accounts: {

@@ -3,8 +3,9 @@ pub mod utils;
 use {
     crate::utils::{
         adjust_counts, assert_data_valid, assert_derivation, assert_initialized, assert_owned_by,
-        assert_valid_amount, create_or_allocate_account_raw, get_mask_and_index_for_seq,
-        spl_token_mint_to, spl_token_transfer, TokenTransferParams,
+        assert_valid_amount, calculate_refund_amount, calculate_withdraw_amount,
+        create_or_allocate_account_raw, get_mask_and_index_for_seq, spl_token_burn,
+        spl_token_mint_to, spl_token_transfer, TokenBurnParams, TokenTransferParams,
     },
     anchor_lang::{
         prelude::*,
@@ -660,6 +661,7 @@ pub mod fair_launch {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let treasury = &mut ctx.accounts.treasury;
         let authority = &mut ctx.accounts.authority;
+        let token_mint = &ctx.accounts.token_mint;
 
         if fair_launch.number_tickets_sold
             > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
@@ -671,9 +673,12 @@ pub mod fair_launch {
             return Err(ErrorCode::CannotCashOutUntilPhaseThree.into());
         }
 
+        let mint: spl_token::state::Mint = assert_initialized(token_mint)?;
+        let tokens = mint.supply;
+
         let signer_seeds = [
             PREFIX.as_bytes(),
-            fair_launch.token_mint.as_ref(),
+            &token_mint.key.as_ref(),
             &[fair_launch.bump],
         ];
 
@@ -719,17 +724,39 @@ pub mod fair_launch {
                 return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
             }
 
+            if fair_launch.treasury_snapshot.is_none() {
+                fair_launch.treasury_snapshot = Some(treasury_account.amount)
+            }
+
+            let amount = calculate_withdraw_amount(
+                &fair_launch.data,
+                tokens,
+                fair_launch.treasury_snapshot.unwrap(),
+                treasury_account.amount,
+            )?;
+
             spl_token_transfer(TokenTransferParams {
                 source: treasury.to_account_info(),
                 destination: authority_token_account_info.clone(),
                 authority: fair_launch.to_account_info(),
                 authority_signer_seeds: &signer_seeds,
                 token_program: token_program.clone(),
-                amount: treasury_account.amount,
+                amount,
             })?;
         } else {
+            if fair_launch.treasury_snapshot.is_none() {
+                fair_launch.treasury_snapshot = Some(treasury.lamports())
+            }
+
+            let amount = calculate_withdraw_amount(
+                &fair_launch.data,
+                tokens,
+                fair_launch.treasury_snapshot.unwrap(),
+                treasury.lamports(),
+            )?;
+
             invoke(
-                &system_instruction::transfer(treasury.key, authority.key, treasury.lamports()),
+                &system_instruction::transfer(treasury.key, authority.key, amount),
                 &[
                     treasury.to_account_info(),
                     authority.clone(),
@@ -740,6 +767,117 @@ pub mod fair_launch {
 
         Ok(())
     }
+}
+
+pub fn receive_refund<'info>(
+    ctx: Context<'_, '_, '_, 'info, ReceiveRefund<'info>>,
+) -> ProgramResult {
+    let fair_launch = &mut ctx.accounts.fair_launch;
+    let treasury = &mut ctx.accounts.treasury;
+    let buyer = &mut ctx.accounts.buyer;
+    let token_mint = &ctx.accounts.token_mint;
+    let token_program = &ctx.accounts.token_program;
+    let clock = &ctx.accounts.clock;
+    let buyer_token_account = &mut ctx.accounts.buyer_token_account;
+    let transfer_authority = &mut ctx.accounts.transfer_authority;
+
+    let signer_seeds = [
+        PREFIX.as_bytes(),
+        &token_mint.key.as_ref(),
+        &[fair_launch.bump],
+    ];
+
+    if fair_launch.number_tickets_sold
+        > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
+    {
+        return Err(ErrorCode::CannotRefundUntilAllTicketsHaveBeenPunchedOrDropped.into());
+    }
+
+    if !fair_launch.phase_three_started {
+        return Err(ErrorCode::CannotRefundUntilPhaseThree.into());
+    }
+
+    fair_launch.number_tokens_burned_for_refunds = fair_launch
+        .number_tokens_burned_for_refunds
+        .checked_add(1)
+        .ok_or(ErrorCode::NumericalOverflowError)?;
+
+    spl_token_burn(TokenBurnParams {
+        mint: token_mint.clone(),
+        source: buyer_token_account.clone(),
+        amount: 1,
+        authority: transfer_authority.clone(),
+        authority_signer_seeds: None,
+        token_program: token_program.clone(),
+    })?;
+
+    if let Some(treasury_mint) = fair_launch.treasury_mint {
+        let treasury_mint_info = &ctx.remaining_accounts[0];
+        let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
+
+        let buyer_payment_account_info = &ctx.remaining_accounts[1];
+        let buyer_payment_account: Account = assert_initialized(&buyer_payment_account_info)?;
+        let treasury_account: Account = assert_initialized(treasury)?;
+
+        if *treasury_mint_info.key != treasury_mint {
+            return Err(ErrorCode::TreasuryMintMismatch.into());
+        }
+
+        assert_owned_by(treasury_mint_info, &token_program.key)?;
+        assert_owned_by(buyer_payment_account_info, &token_program.key)?;
+        assert_owned_by(treasury, &token_program.key)?;
+
+        if buyer_payment_account.mint != *treasury_mint_info.key {
+            return Err(ErrorCode::TreasuryMintMismatch.into());
+        }
+
+        // assert is an ATA
+        assert_derivation(
+            &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+            buyer_payment_account_info,
+            &[
+                buyer.key.as_ref(),
+                token_program.key.as_ref(),
+                &treasury_mint_info.key.as_ref(),
+            ],
+        )?;
+
+        if buyer_payment_account.delegate.is_some() {
+            return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+        }
+
+        if fair_launch.treasury_snapshot.is_none() {
+            fair_launch.treasury_snapshot = Some(treasury_account.amount)
+        }
+
+        let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
+
+        spl_token_transfer(TokenTransferParams {
+            source: treasury.to_account_info(),
+            destination: buyer_payment_account_info.clone(),
+            authority: fair_launch.to_account_info(),
+            authority_signer_seeds: &signer_seeds,
+            token_program: token_program.clone(),
+            amount,
+        })?;
+    } else {
+        if fair_launch.treasury_snapshot.is_none() {
+            fair_launch.treasury_snapshot = Some(treasury.lamports())
+        }
+
+        let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
+
+        invoke(
+            &system_instruction::transfer(treasury.key, buyer.key, amount),
+            &[
+                treasury.to_account_info(),
+                buyer.clone(),
+                ctx.accounts.system_program.clone(),
+            ],
+        )?;
+    }
+
+    Ok(())
 }
 
 #[derive(Accounts)]
@@ -901,18 +1039,44 @@ pub struct PunchTicket<'info> {
 
 #[derive(Accounts)]
 pub struct WithdrawFunds<'info> {
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority, has_one=treasury)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority, has_one=treasury)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
     #[account(mut)]
     authority: AccountInfo<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
+    token_mint: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     // Remaining accounts in this order if using spl tokens for payment:
     // [Writable/optional] treasury mint
     // [Writable/optional] buyer token account (must be ata)
     // [optional] token program
+}
+
+#[derive(Accounts)]
+pub struct ReceiveRefund<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=treasury)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(mut)]
+    treasury: AccountInfo<'info>,
+    #[account(mut)]
+    buyer: AccountInfo<'info>,
+    #[account(mut)]
+    buyer_token_account: AccountInfo<'info>,
+    #[account(signer)]
+    transfer_authority: AccountInfo<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
+    token_mint: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+    #[account(address = system_program::ID)]
+    system_program: AccountInfo<'info>,
+    clock: Sysvar<'info, Clock>,
+    // Remaining accounts in this order if using spl tokens for payment:
+    // [Writable/optional] treasury mint
+    // [Writable/optional] buyer payment token account (must be ata)
 }
 
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
@@ -944,7 +1108,10 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tickets sold
 8 + // number of tickets dropped
 8 + // number of tickets punched 
+8 + // number of tokens burned for refunds
+8 + // number of tokens preminted
 1 + // phase three started
+9 + // treasury snapshot
 8 + // current median,
 4 + // u32 representing number of amounts in vec so far
 100; // padding
@@ -1000,11 +1167,22 @@ pub struct FairLaunch {
     pub treasury_bump: u8,
     pub token_mint_bump: u8,
     pub data: FairLaunchData,
+    /// Tickets that are missing a corresponding seq pda. Crank it.
     pub number_tickets_un_seqed: u64,
+    /// If I have to explain this, you're an idiot.
     pub number_tickets_sold: u64,
+    /// People that withdrew in phase 2 because they dislike you.
     pub number_tickets_dropped: u64,
+    /// People who won the lottery and punched ticket in exchange for token. Good job!
     pub number_tickets_punched: u64,
+    /// if you go past refund date, here is how many people lost faith in you.
+    pub number_tokens_burned_for_refunds: u64,
+    /// here is how many tokens you preminted before people had access. SHAME. *bell*
+    pub number_tokens_preminted: u64,
+    /// Yes.
     pub phase_three_started: bool,
+    /// Snapshot of treasury taken on first withdrawal.
+    pub treasury_snapshot: Option<u64>,
     pub current_median: u64,
     pub counts_at_each_tick: Vec<u64>,
 }
@@ -1121,4 +1299,22 @@ pub enum ErrorCode {
     PhaseTwoEnded,
     #[msg("Cannot punch ticket when having paid less than median.")]
     CannotPunchTicketWhenHavingPaidLessThanMedian,
+    #[msg("You have already withdrawn your seed capital alotment from the treasury.")]
+    AlreadyWithdrawnCapitalAlotment,
+    #[msg("No anti rug settings on this fair launch. Should've checked twice.")]
+    NoAntiRugSetting,
+    #[msg("Self destruct date has not passed yet, so you are not eligible for a refund.")]
+    SelfDestructNotPassed,
+    #[msg("Token burn failed")]
+    TokenBurnFailed,
+    #[msg("No treasury snapshot present")]
+    NoTreasurySnapshot,
+    #[msg("Cannot refund until all existing tickets have been dropped or punched")]
+    CannotRefundUntilAllTicketsHaveBeenPunchedOrDropped,
+    #[msg("Cannot refund until phase three")]
+    CannotRefundUntilPhaseThree,
+    #[msg("Invalid reserve bp")]
+    InvalidReserveBp,
+    #[msg("Anti Rug Token Requirement must be less than or equal to number of tokens being sold")]
+    InvalidAntiRugTokenRequirement,
 }
