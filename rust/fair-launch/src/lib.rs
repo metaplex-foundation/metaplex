@@ -154,7 +154,7 @@ pub mod fair_launch {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let fair_launch_lottery_bitmap = &ctx.accounts.fair_launch_lottery_bitmap;
 
-        if fair_launch_lottery_bitmap.bitmap_ones != fair_launch.number_tickets_sold {
+        if fair_launch_lottery_bitmap.bitmap_ones != fair_launch.data.number_of_tokens {
             return Err(ErrorCode::LotteryBitmapOnesMustEqualNumberOfTicketsSold.into());
         }
 
@@ -182,8 +182,8 @@ pub mod fair_launch {
         let mut curr_pos = FAIR_LAUNCH_LOTTERY_SIZE + (index as usize);
         for byte in bytes {
             let curr_byte = lottery_data[curr_pos];
-            msg!("Curr byte is {}", curr_byte);
-            for bit_position in 0..7 {
+            msg!("Curr byte is {}, new byte is {}", curr_byte, byte);
+            for bit_position in 0..8 {
                 msg!("Looking for position {}", bit_position);
                 let mask = u8::pow(2, bit_position as u32);
                 let curr_byte_masked = curr_byte & mask;
@@ -224,9 +224,8 @@ pub mod fair_launch {
                 .checked_add(number_of_ones_changed as u64)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
         }
-
-        lottery_data[FAIR_LAUNCH_LOTTERY_SIZE - 4..FAIR_LAUNCH_LOTTERY_SIZE]
-            .copy_from_slice(&(new_number_of_ones as u32).to_le_bytes());
+        msg!("new number of ones is {}", new_number_of_ones);
+        fair_launch_lottery_bitmap.bitmap_ones = new_number_of_ones;
 
         Ok(())
     }
@@ -934,6 +933,10 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // tick size
 8 + // number of tokens
 8 + // fee
+1 + // anti rug option
+2 + // anti rug bp
+8 + // anti rug token count
+8 + // self destruct date
 8 + // number of tickets unseq'ed
 8 + // number of tickets sold
 8 + // number of tickets dropped
@@ -957,6 +960,17 @@ pub const FAIR_LAUNCH_TICKET_SEQ_SIZE: usize = 8 + //discriminator
 1; // bump
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct AntiRugSetting {
+    /// basis points kept in the treasury until conditions are met
+    pub reserve_bp: u16,
+    /// The supply of the fair launch mint must be below this amount
+    /// to unlock the reserve
+    pub token_requirement: u64,
+    /// if you don't meet your promise by this date, pro-rated refunds are allowed
+    pub self_destruct_date: i64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct FairLaunchData {
     pub uuid: String,
     pub price_range_start: u64,
@@ -967,6 +981,7 @@ pub struct FairLaunchData {
     pub tick_size: u64,
     pub number_of_tokens: u64,
     pub fee: u64,
+    pub anti_rug_setting: Option<AntiRugSetting>,
 }
 
 #[account]

@@ -135,12 +135,13 @@ pub fn adjust_counts(
     let mut ticks: u64 = 0;
     let mut last_seen_tick_value_with_positive_counts: u64 = 0;
     for n in &fair_launch.counts_at_each_tick {
+        let is_possible_perfect_split = counter == median_location;
         counter = counter
             .checked_add(*n)
             .ok_or(ErrorCode::NumericalOverflowError)?;
         if counter > median_location {
-            if let Some(val) = median_location.checked_rem(2) {
-                if val == 0 {
+            if let Some(val) = total_counts.checked_rem(2) {
+                if val == 0 && is_possible_perfect_split {
                     let half_way = ticks
                         .checked_sub(last_seen_tick_value_with_positive_counts)
                         .ok_or(ErrorCode::NumericalOverflowError)?;

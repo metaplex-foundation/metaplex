@@ -49,9 +49,21 @@ program
     '--keypair not provided',
   )
   .option('-u, --uuid <string>', 'uuid')
-  .option('-f, --fee <string>', 'price range end', '2')
+  .option('-f, --fee <string>', 'fee', '2')
   .option('-s, --price-range-start <string>', 'price range start', '1')
   .option('-e, --price-range-end <string>', 'price range end', '2')
+  .option(
+    '-arbp, --anti-rug-reserve-bp <string>',
+    'optional anti-rug treasury reserve basis points (1-10000)',
+  )
+  .option(
+    '-atc, --anti-rug-token-requirement <string>',
+    'optional anti-rug token requirement when reserve opens - 100 means 100 tokens remaining out of total supply',
+  )
+  .option(
+    '-sd, --self-destruct-date <string>',
+    'optional date when funds from anti-rug setting will be returned - eg "04 Dec 1995 00:12:00 GMT"',
+  )
   .option(
     '-pos, --phase-one-start-date <string>',
     'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
@@ -84,7 +96,31 @@ program
       fee,
       mint,
       uuid,
+      selfDestructDate,
+      antiRugTokenRequirement,
+      antiRugReserveBp,
     } = cmd.opts();
+    const antiRugTokenRequirementNumber = antiRugTokenRequirement
+      ? parseInt(antiRugTokenRequirement)
+      : null;
+    const antiRugReserveBpNumber = antiRugReserveBp
+      ? parseFloat(antiRugReserveBp)
+      : null;
+    const selfDestructDateActual = selfDestructDate
+      ? Date.parse(selfDestructDate) / 1000
+      : null;
+
+    const antiRug =
+      antiRugTokenRequirementNumber &&
+      antiRugReserveBpNumber &&
+      selfDestructDateActual
+        ? {
+            reserveBp: antiRugReserveBpNumber,
+            tokenRequirement: antiRugTokenRequirementNumber,
+            selfDestructDate: selfDestructDateActual,
+          }
+        : null;
+
     const parsedNumber = parseInt(numberOfTokens);
     let priceRangeStartNumber = parseFloat(priceRangeStart);
     let priceRangeEndNumber = parseFloat(priceRangeEnd);
@@ -132,7 +168,6 @@ program
       fairLaunchBump,
       treasuryBump,
       tokenBump,
-
       {
         uuid: realUuid,
         priceRangeStart: new anchor.BN(priceRangeStartNumber),
@@ -143,6 +178,7 @@ program
         tickSize: new anchor.BN(tickSizeNumber),
         numberOfTokens: new anchor.BN(parsedNumber),
         fee: new anchor.BN(feeNumber),
+        antiRugSetting: antiRug,
       },
       {
         accounts: {
@@ -180,6 +216,18 @@ program
   .option('-s, --price-range-start <string>', 'price range start', '1')
   .option('-e, --price-range-end <string>', 'price range end', '2')
   .option(
+    '-arbp, --anti-rug-reserve-bp <string>',
+    'optional anti-rug treasury reserve basis points (1-10000)',
+  )
+  .option(
+    '-atc, --anti-rug-token-requirement <string>',
+    'optional anti-rug token requirement when reserve opens - 100 means 100 tokens remaining out of total supply',
+  )
+  .option(
+    '-sd, --self-destruct-date <string>',
+    'optional date when funds from anti-rug setting will be returned - eg "04 Dec 1995 00:12:00 GMT"',
+  )
+  .option(
     '-pos, --phase-one-start-date <string>',
     'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
   )
@@ -211,7 +259,30 @@ program
       fee,
       mint,
       uuid,
+      selfDestructDate,
+      antiRugTokenRequirement,
+      antiRugReserveBp,
     } = cmd.opts();
+    const antiRugTokenRequirementNumber = antiRugTokenRequirement
+      ? parseInt(antiRugTokenRequirement)
+      : null;
+    const antiRugReserveBpNumber = antiRugReserveBp
+      ? parseFloat(antiRugReserveBp)
+      : null;
+    const selfDestructDateActual = selfDestructDate
+      ? Date.parse(selfDestructDate) / 1000
+      : null;
+
+    const antiRug =
+      antiRugTokenRequirementNumber &&
+      antiRugReserveBpNumber &&
+      selfDestructDateActual
+        ? {
+            reserveBp: antiRugReserveBpNumber,
+            tokenRequirement: antiRugTokenRequirementNumber,
+            selfDestructDate: selfDestructDateActual,
+          }
+        : null;
     const parsedNumber = parseInt(numberOfTokens);
     let priceRangeStartNumber = parseFloat(priceRangeStart);
     let priceRangeEndNumber = parseFloat(priceRangeEnd);
@@ -255,6 +326,7 @@ program
         tickSize: new anchor.BN(tickSizeNumber),
         numberOfTokens: new anchor.BN(parsedNumber),
         fee: new anchor.BN(feeNumber),
+        antiRugSetting: antiRug,
       },
       {
         accounts: {
@@ -434,8 +506,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     const remainingAccounts = [];
     const instructions = [];
@@ -510,6 +583,44 @@ program
     console.log(
       `update fair launch ticket Done: ${fairLaunchTicket.toBase58()}.`,
     );
+  });
+
+program
+  .command('start_phase_three')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
+
+    await anchorProgram.rpc.startPhaseThree({
+      accounts: {
+        fairLaunch,
+        fairLaunchLotteryBitmap,
+        authority: walletKeyPair.publicKey,
+      },
+    });
+
+    console.log(`Dang son, phase three.`);
   });
 
 program
@@ -1056,6 +1167,10 @@ program
     const fairLaunchLotteryBitmapObj =
       await anchorProgram.provider.connection.getAccountInfo(fairLaunchLottery);
 
+    const fairLaunchLotteryBitmapAnchorObj =
+      await anchorProgram.account.fairLaunchLotteryBitmap.fetch(
+        fairLaunchLottery,
+      );
     const seqKeys = [];
     //@ts-ignore
     for (let i = 0; i < fairLaunchObj.numberTicketsSold; i++) {
@@ -1129,5 +1244,11 @@ program
         isWinner > 0 ? 'won' : 'lost',
       );
     }
+
+    console.log(
+      'Bit Map ones',
+      //@ts-ignore
+      fairLaunchLotteryBitmapAnchorObj.bitmapOnes.toNumber(),
+    );
   });
 program.parse(process.argv);
