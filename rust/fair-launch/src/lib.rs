@@ -450,7 +450,10 @@ pub mod fair_launch {
             fair_launch_ticket.state = FairLaunchTicketState::Withdrawn
         }
 
-        adjust_counts(fair_launch, amount, Some(fair_launch_ticket.amount))?;
+        if clock.unix_timestamp <= fair_launch.data.phase_one_end {
+            // freeze counts after phase one ends...
+            adjust_counts(fair_launch, amount, Some(fair_launch_ticket.amount))?;
+        }
 
         if let Some(treasury_mint) = fair_launch.treasury_mint {
             let treasury_mint_info = &ctx.remaining_accounts[0];
@@ -598,8 +601,12 @@ pub mod fair_launch {
             [FAIR_LAUNCH_LOTTERY_SIZE + index]
             & mask;
 
-        if is_winner != 1 {
+        if is_winner == 0 {
             return Err(ErrorCode::DidNotWinLotteryCanOnlyWithdraw.into());
+        }
+
+        if fair_launch_ticket.amount < fair_launch.current_median {
+            return Err(ErrorCode::CannotPunchTicketWhenHavingPaidLessThanMedian.into());
         }
 
         // assert is an ATA owned by the buyer on the fair launch ticket, has no delegates, is a token account,
@@ -878,7 +885,7 @@ pub struct AdjustTicket<'info> {
 pub struct PunchTicket<'info> {
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), fair_launch_ticket.buyer.as_ref()], bump=fair_launch_ticket.bump, has_one=fair_launch)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=token_mint)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=token_mint)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes()], bump=fair_launch_lottery_bitmap.bump)]
     fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
@@ -886,7 +893,7 @@ pub struct PunchTicket<'info> {
     payer: AccountInfo<'info>,
     #[account(mut)]
     buyer_token_account: AccountInfo<'info>,
-    #[account(seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
     token_mint: AccountInfo<'info>,
     #[account(address = spl_token::id())]
     token_program: AccountInfo<'info>,
@@ -1112,4 +1119,6 @@ pub enum ErrorCode {
     CannotUpdateFairLaunchDataOnceInProgress,
     #[msg("Not able to adjust tickets between phase two and three")]
     PhaseTwoEnded,
+    #[msg("Cannot punch ticket when having paid less than median.")]
+    CannotPunchTicketWhenHavingPaidLessThanMedian,
 }

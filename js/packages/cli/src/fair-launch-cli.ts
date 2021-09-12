@@ -21,6 +21,7 @@ import {
   getFairLaunchLotteryBitmap,
 } from './helpers/accounts';
 import { chunks, getMultipleAccounts, sleep } from './helpers/various';
+import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -582,6 +583,77 @@ program
 
     console.log(
       `update fair launch ticket Done: ${fairLaunchTicket.toBase58()}.`,
+    );
+  });
+
+program
+  .command('punch_ticket')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const fairLaunchTicket = (
+      await getFairLaunchTicket(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
+
+    const buyerTokenAccount = (
+      await getAtaForMint(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    await anchorProgram.rpc.punchTicket({
+      accounts: {
+        fairLaunchTicket,
+        fairLaunch,
+        fairLaunchLotteryBitmap,
+        payer: walletKeyPair.publicKey,
+        buyerTokenAccount,
+        //@ts-ignore
+        tokenMint: fairLaunchObj.tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      },
+      instructions: [
+        createAssociatedTokenAccountInstruction(
+          buyerTokenAccount,
+          walletKeyPair.publicKey,
+          walletKeyPair.publicKey,
+          //@ts-ignore
+          fairLaunchObj.tokenMint,
+        ),
+      ],
+    });
+
+    console.log(
+      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
     );
   });
 
