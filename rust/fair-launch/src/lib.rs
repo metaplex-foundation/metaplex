@@ -186,8 +186,8 @@ pub mod fair_launch {
             for bit_position in 0..7 {
                 msg!("Looking for position {}", bit_position);
                 let mask = u8::pow(2, bit_position as u32);
-                let curr_byte_masked = curr_byte | mask;
-                let byte_masked = byte | mask;
+                let curr_byte_masked = curr_byte & mask;
+                let byte_masked = byte & mask;
                 msg!(
                     "Mask is {} and this led to curr byte masked {} and new byte masked {}",
                     mask,
@@ -226,7 +226,7 @@ pub mod fair_launch {
         }
 
         lottery_data[FAIR_LAUNCH_LOTTERY_SIZE - 4..FAIR_LAUNCH_LOTTERY_SIZE]
-            .copy_from_slice(&new_number_of_ones.to_le_bytes());
+            .copy_from_slice(&(new_number_of_ones as u32).to_le_bytes());
 
         Ok(())
     }
@@ -382,6 +382,7 @@ pub mod fair_launch {
         fair_launch_ticket_seq_lookup.bump = bump;
         fair_launch_ticket_seq_lookup.fair_launch_ticket = fair_launch_ticket.key();
         fair_launch_ticket_seq_lookup.buyer = fair_launch_ticket.buyer;
+        fair_launch_ticket_seq_lookup.seq = fair_launch_ticket.seq;
 
         fair_launch_ticket.state = FairLaunchTicketState::Unpunched;
         fair_launch.number_tickets_un_seqed = fair_launch

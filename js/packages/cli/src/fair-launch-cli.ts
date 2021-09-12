@@ -30,6 +30,11 @@ if (!fs.existsSync(CACHE_PATH)) {
 const FAIR_LAUNCH_TICKET_AMOUNT_LOC = 8 + 32 + 32;
 const FAIR_LAUNCH_TICKET_STATE_LOC = FAIR_LAUNCH_TICKET_AMOUNT_LOC + 8;
 const FAIR_LAUNCH_TICKET_SEQ_LOC = FAIR_LAUNCH_TICKET_STATE_LOC + 1 + 1;
+const FAIR_LAUNCH_LOTTERY_SIZE =
+  8 + // discriminator
+  32 + // fair launch
+  1 + // bump
+  8; // size of bitmask ones
 
 program
   .command('new_fair_launch')
@@ -561,13 +566,15 @@ program
 
     const seqKeys = [];
     //@ts-ignore
-    for (let i = 0; i < fairLaunchObj.number_tickets_sold; i++) {
+    for (let i = 0; i < fairLaunchObj.numberTicketsSold; i++) {
       seqKeys.push(
-        await getFairLaunchTicketSeqLookup(
-          //@ts-ignore
-          fairLaunchObj.tokenMint,
-          new anchor.BN(i),
-        ),
+        (
+          await getFairLaunchTicketSeqLookup(
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+            new anchor.BN(i),
+          )
+        )[0],
       );
     }
 
@@ -586,7 +593,7 @@ program
               .map(index => seqKeys[index]);
             const result = await getMultipleAccounts(
               anchorProgram.provider.connection,
-              slice,
+              slice.map(s => s.toBase58()),
               'recent',
             );
             ticketKeys = ticketKeys.concat(
@@ -620,7 +627,7 @@ program
               .map(index => ticketsFlattened[index]);
             const result = await getMultipleAccounts(
               anchorProgram.provider.connection,
-              slice,
+              slice.map(s => s.toBase58()),
               'recent',
             );
             states = states.concat(
@@ -666,8 +673,10 @@ program
       chosen = statesFlat.map(s => ({ ...s, chosen: false }));
       while (numWinnersRemaining > 0) {
         const rand = Math.round(Math.random() * (chosen.length - 1));
-        chosen[rand].chosen = true;
-        numWinnersRemaining--;
+        if (chosen[rand].chosen != true && chosen[rand].eligible) {
+          chosen[rand].chosen = true;
+          numWinnersRemaining--;
+        }
       }
     }
     const sorted = chosen.sort((a, b) => a.seq.toNumber() - b.seq.toNumber());
@@ -687,7 +696,7 @@ program
           for (let i = 0; i < allIndexesInSlice.length; i++) {
             if (chosen[allIndexesInSlice[i]].chosen) {
               const mask = Math.pow(2, positionFromRight);
-              currByte = currByte & mask;
+              currByte = currByte | mask;
               currByteAsBits.push(1);
             } else {
               currByteAsBits.push(0);
@@ -719,7 +728,7 @@ program
 
           await anchorProgram.rpc.updateFairLaunchLotteryBitmap(
             startingOffset,
-            bytes,
+            Buffer.from(bytes),
             {
               accounts: {
                 fairLaunch,
@@ -1012,7 +1021,7 @@ program
     //@ts-ignore
     console.log('Sequence', fairLaunchTicketObj.seq.toNumber());
   });
-/*
+
 program
   .command('show_lottery')
   .option(
@@ -1044,23 +1053,22 @@ program
     )[0];
 
     const fairLaunchLotteryBitmapObj =
-      await anchorProgram.account.fairLaunchLotteryBitmap.fetch(
-        fairLaunchLottery,
-      );
+      await anchorProgram.provider.connection.getAccountInfo(fairLaunchLottery);
 
     const seqKeys = [];
     //@ts-ignore
-    for (let i = 0; i < fairLaunchObj.number_tickets_sold; i++) {
+    for (let i = 0; i < fairLaunchObj.numberTicketsSold; i++) {
       seqKeys.push(
-        await getFairLaunchTicketSeqLookup(
-          //@ts-ignore
-          fairLaunchObj.tokenMint,
-          new anchor.BN(i),
-        ),
+        (
+          await getFairLaunchTicketSeqLookup(
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+            new anchor.BN(i),
+          )
+        )[0],
       );
     }
-
-    const ticketKeys: { seq: anchor.BN; ticket: anchor.web3.PublicKey }[][] =
+    const buyers: { seq: anchor.BN; buyer: anchor.web3.PublicKey }[][] =
       await Promise.all(
         chunks(Array.from(Array(seqKeys.length).keys()), 1000).map(
           async allIndexesInSlice => {
@@ -1076,13 +1084,13 @@ program
                 .map(index => seqKeys[index]);
               const result = await getMultipleAccounts(
                 anchorProgram.provider.connection,
-                slice,
+                slice.map(s => s.toBase58()),
                 'recent',
               );
               ticketKeys = ticketKeys.concat(
                 result.array.map(a => ({
-                  ticket: new anchor.web3.PublicKey(
-                    new Uint8Array(a.data.slice(8, 8 + 32)),
+                  buyer: new anchor.web3.PublicKey(
+                    new Uint8Array(a.data.slice(8 + 32, 8 + 32 + 32)),
                   ),
                   seq: new anchor.BN(
                     a.data.slice(8 + 32 + 32, 8 + 32 + 32 + 8),
@@ -1098,8 +1106,27 @@ program
         ),
       );
 
-     const ticketsFlattened = ticketKeys
+    const buyersFlattened = buyers
       .flat()
       .sort((a, b) => a.seq.toNumber() - b.seq.toNumber());
-  });*/
+
+    for (let i = 0; i < buyersFlattened.length; i++) {
+      const buyer = buyersFlattened[i];
+
+      const myByte =
+        fairLaunchLotteryBitmapObj.data[
+          FAIR_LAUNCH_LOTTERY_SIZE + Math.floor(buyer.seq.toNumber() / 8)
+        ];
+
+      const positionFromRight = 7 - (buyer.seq.toNumber() % 8);
+      const mask = Math.pow(2, positionFromRight);
+      const isWinner = myByte & mask;
+      console.log(
+        'Ticket',
+        buyer.seq,
+        buyer.buyer.toBase58(),
+        isWinner == 1 ? 'won' : 'lost',
+      );
+    }
+  });
 program.parse(process.argv);
