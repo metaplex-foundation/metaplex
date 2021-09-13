@@ -1,56 +1,19 @@
-#!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
-<<<<<<< HEAD
-import { MintLayout, Token } from '@solana/spl-token';
-import {signAllMetadataFromCandyMachine} from './signer'
-import {
-  chunks,
-  fromUTF8Array,
-  loadCache,
-  parsePrice,
-  saveCache,
-  upload,
-  updateCandyMachineList,
-  getCandyMachineList
-} from './helpers/various';
-import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
-import {
-  CACHE_PATH,
-  CONFIG_ARRAY_START,
-  CONFIG_LINE_SIZE,
-  EXTENSION_JSON,
-  EXTENSION_PNG,
-  PAYMENT_WALLET,
-  TOKEN_METADATA_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from './helpers/constants';
-import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
-import {
-  createConfig,
-  getCandyMachineAddress,
-  getMasterEdition,
-  getMetadata,
-  getTokenWallet,
-  loadAnchorProgram,
-  loadWalletKey,
-} from './helpers/accounts';
-=======
 
-import { fromUTF8Array, parsePrice } from './helpers/various';
+import { fromUTF8Array, parsePrice, updateCandyMachineList, getCandyMachineList } from './helpers/various';
 import { PublicKey } from '@solana/web3.js';
 import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
 import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
->>>>>>> master
 import { Config } from './types';
 import { upload } from './commands/upload';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from "./commands/mint";
 import { signAllUnapprovedMetadata, signMetadata } from "./commands/sign";
+import { signAllMetadataFromCandyMachine } from './signer';
 import log from 'loglevel';
 
 program.version('0.0.1');

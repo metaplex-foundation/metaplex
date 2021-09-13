@@ -1,6 +1,5 @@
 import { Keypair, PublicKey, TransactionInstruction, Connection, AccountInfo } from '@solana/web3.js';
 import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
-import BN from "bn.js";
 import * as borsh from "borsh"
 import {
   MAX_NAME_LENGTH,
