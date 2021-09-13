@@ -148,6 +148,6 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
-  log.info("program id from anchor", program.programId.toBase58());
+  log.debug("program id from anchor", program.programId.toBase58());
   return program;
 }
