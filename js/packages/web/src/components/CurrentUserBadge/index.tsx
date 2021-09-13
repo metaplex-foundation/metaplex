@@ -188,7 +188,7 @@ export const CurrentUserBadge = (props: {
                       className="metaplex-button-default"
                       style={btnStyle}
                     >
-                      Art workers
+                      My items
                     </Button>
                   </a>
                   &nbsp;&nbsp;
