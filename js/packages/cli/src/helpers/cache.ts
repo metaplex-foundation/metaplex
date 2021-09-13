@@ -1,6 +1,6 @@
-import path from 'path';
-import { CACHE_PATH } from './constants';
-import fs from 'fs';
+import path from "path";
+import { CACHE_PATH } from "./constants";
+import fs from "fs";
 
 export function cachePath(env: string, cacheName: string) {
   return path.join(CACHE_PATH, `${env}-${cacheName}`);
