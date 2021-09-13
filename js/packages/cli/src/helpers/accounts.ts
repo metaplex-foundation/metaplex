@@ -8,10 +8,10 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from "bn.js";
-import { createConfigAccount } from "./instructions";
-import { web3 } from "@project-serum/anchor";
-import log from "loglevel";
+import BN from 'bn.js';
+import { createConfigAccount } from './instructions';
+import { web3 } from '@project-serum/anchor';
+import log from 'loglevel';
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -134,7 +134,7 @@ export function loadWalletKey(keypair): Keypair {
   const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
   );
-  log.info(`wallet public key: ${loaded.publicKey}`)
+  log.info(`wallet public key: ${loaded.publicKey}`);
   return loaded;
 }
 
@@ -148,6 +148,6 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
-  log.info("program id from anchor", program.programId.toBase58());
+  log.info('program id from anchor', program.programId.toBase58());
   return program;
 }
