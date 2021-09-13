@@ -13,7 +13,7 @@ import {
 } from '@solana/web3.js';
 import { getUnixTs, sleep } from './various';
 import { DEFAULT_TIMEOUT } from './constants';
-import log from "loglevel";
+import log from 'loglevel';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;

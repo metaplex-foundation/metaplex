@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
   getCandyMachineAddress,
   getMasterEdition,
@@ -6,14 +6,21 @@ import {
   getTokenWallet,
   loadAnchorProgram,
   loadWalletKey,
-  uuidFromConfigPubkey
-} from "../helpers/accounts";
-import { TOKEN_METADATA_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../helpers/constants";
-import * as anchor from "@project-serum/anchor";
-import { MintLayout, Token } from "@solana/spl-token";
-import { createAssociatedTokenAccountInstruction } from "../helpers/instructions";
+  uuidFromConfigPubkey,
+} from '../helpers/accounts';
+import {
+  TOKEN_METADATA_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '../helpers/constants';
+import * as anchor from '@project-serum/anchor';
+import { MintLayout, Token } from '@solana/spl-token';
+import { createAssociatedTokenAccountInstruction } from '../helpers/instructions';
 
-export async function mint(keypair: string, env: string, configAddress: PublicKey): Promise<string> {
+export async function mint(
+  keypair: string,
+  env: string,
+  configAddress: PublicKey,
+): Promise<string> {
   const mint = Keypair.generate();
 
   const userKeyPair = loadWalletKey(keypair);
