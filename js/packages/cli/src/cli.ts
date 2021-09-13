@@ -43,12 +43,16 @@ programCommand('upload')
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
+    const parsedNumber = parseInt(number);
+    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+
     if (pngFileCount !== jsonFileCount) {
       throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`);
     }
 
-    const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+    if (elemCount < pngFileCount) {
+      throw new Error(`max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
+    }
 
     log.info(`Beginning the upload for ${elemCount} (png+json) pairs`)
 
