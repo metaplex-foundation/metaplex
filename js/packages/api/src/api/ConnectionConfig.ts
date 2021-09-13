@@ -143,6 +143,27 @@ export class ConnectionConfig {
 
   private readonly pubsub = new PubSub();
 
+  setupFetch(
+    preload?: (...args: any[]) => Promise<any>,
+    postload?: (response: any, ...args: any[]) => void,
+  ) {
+    const conn = this.connection as any;
+    const _rpcRequest = conn._rpcRequest.bind(this.connection);
+    conn._rpcRequest = async function (...args: any[]) {
+      try {
+        let data: any = await preload?.(...args);
+        if (data === undefined) {
+          data = await _rpcRequest(...args);
+          postload?.(data, ...args);
+        }
+        return data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    };
+  }
+
   subscribeIterator(prop: keyof MetaState, key?: string | FilterFn<IEvent>) {
     const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
     if (key !== undefined) {

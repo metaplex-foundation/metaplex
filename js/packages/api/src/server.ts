@@ -8,6 +8,12 @@ import { SubscriptionServer } from 'subscriptions-transport-ws';
 import { execute, subscribe } from 'graphql';
 import express from 'express';
 import { createServer } from 'http';
+import fs from 'fs';
+import util from 'util';
+import { tmpdir } from 'os';
+import mkdirp from 'mkdirp';
+const writeFileAsync = util.promisify(fs.writeFile);
+const readFileAsync = util.promisify(fs.readFile);
 
 const DIRNAME = __dirname.replace(/\/dist$/, '/src');
 
@@ -17,6 +23,15 @@ async function startApolloServer() {
     : ENDPOINTS;
 
   const api = new MetaplexApiDataSource(endpoints);
+  if (process.env.SNAPSHOT) {
+    const dir = [':tmp', '1'].includes(process.env.SNAPSHOT)
+      ? tmpdir()
+      : process.env.SNAPSHOT;
+    snapshot(api, dir).catch(err => {
+      console.log('❌ Snapshot error', err);
+    });
+  }
+
   const schema = makeSchema({
     types,
     outputs: {
@@ -123,6 +138,43 @@ async function startApolloServer() {
       );
     });
   }
+}
+
+async function snapshot(api: MetaplexApiDataSource, dir = tmpdir()) {
+  let checkDir = false;
+  console.log(`📖 Start read/write from/to snapshot`);
+  api.ENTRIES.map(entry => {
+    entry.config.setupFetch(
+      async (name: string, args: any[]) => {
+        if (!checkDir) {
+          await mkdirp(dir);
+          checkDir = true;
+        }
+
+        if (name === 'getProgramAccounts' && Array.isArray(args)) {
+          const filename = `${entry.config.name}-${name}-${args[0]}.json`;
+          const filepath = path.join(dir, filename);
+          try {
+            const d = await readFileAsync(filepath);
+            const json = JSON.parse(d.toString());
+            console.log(`📖 Read from cache ${filepath}`);
+            return json;
+          } catch (_) {
+            console.log('📖 Read from network', name, args);
+          }
+        }
+      },
+      async (resp, name: string, args: any[]) => {
+        if (name === 'getProgramAccounts' && Array.isArray(args)) {
+          const filename = `${entry.config.name}-${name}-${args[0]}.json`;
+          const filepath = path.join(dir, filename);
+          const data = JSON.stringify(resp);
+          await writeFileAsync(filepath, data);
+          console.log(`✍  Write: ${filepath}`);
+        }
+      },
+    );
+  });
 }
 
 startApolloServer();
