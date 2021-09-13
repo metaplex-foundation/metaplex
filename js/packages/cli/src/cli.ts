@@ -64,13 +64,13 @@ programCommand('upload')
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
-    log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
+    log.info(`ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`)
 
   });
 
 programCommand('verify')
   .action(async (directory, cmd) => {
-    const {env, keypair, cacheName} = cmd.opts();
+    const { env, keypair, cacheName } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
@@ -142,7 +142,7 @@ programCommand('verify')
 programCommand('create_candy_machine')
   .option('-p, --price <string>', 'SOL price', '1')
   .action(async (directory, cmd) => {
-    const {keypair, env, price, cacheName} = cmd.opts();
+    const { keypair, env, price, cacheName } = cmd.opts();
 
     const lamports = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -155,9 +155,7 @@ programCommand('create_candy_machine')
       config,
       cacheContent.program.uuid,
     );
-    const slot = await anchorProgram.provider.connection.getSlot();
-    cacheContent.initialSlot = slot;
-    cacheContent.lastVerifiedSlot = slot;
+
     await anchorProgram.rpc.initializeCandyMachine(
       bump,
       {
@@ -180,6 +178,7 @@ programCommand('create_candy_machine')
       },
     );
 
+    cacheContent.candyMachineAddress = candyMachine.toBase58();
     saveCache(cacheName, env, cacheContent);
     log.info(`create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`);
   });
@@ -187,13 +186,14 @@ programCommand('create_candy_machine')
 programCommand('set_start_date')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
   .action(async (directory, cmd) => {
-    const {keypair, env, date, cacheName} = cmd.opts();
+    const { keypair, env, date, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const slot = await anchorProgram.provider.connection.getSlot();
 
     const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
@@ -210,6 +210,10 @@ programCommand('set_start_date')
       },
     );
 
+    cacheContent.initialSlot = slot;
+    cacheContent.lastVerifiedSlot = slot;
+    cacheContent.startDate = secondsSinceEpoch;
+    saveCache(cacheName, env, cacheContent);
     log.info('set_start_date Done', secondsSinceEpoch, tx);
   });
 
