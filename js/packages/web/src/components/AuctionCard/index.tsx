@@ -44,6 +44,7 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
+  WinningConfigType,
 } from '../../models/metaplex';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -395,7 +396,7 @@ export const AuctionCard = ({
                 <Spin />
               ) : auctionView.isInstantSale ? (
                 !isAuctionManagerAuthorityNotWalletOwner ? (
-                  'Claim master'
+                  'Claim item'
                 ) : auctionView.myBidderPot ? (
                   'Claim Purchase'
                 ) : (
@@ -514,14 +515,26 @@ export const AuctionCard = ({
 
               const instantSale = async () => {
                 setLoading(true);
-
-                // Placing a "bid" of the full amount results in a purchase to redeem.
-                if (
+                const instantSalePrice =
+                  auctionView.auctionDataExtended?.info.instantSalePrice;
+                const winningConfigType =
+                  auctionView.items[0][0].winningConfigType;
+                const isAuctionItemMaster =
+                  winningConfigType === WinningConfigType.FullRightsTransfer ||
+                  winningConfigType === WinningConfigType.TokenOnlyTransfer;
+                const allowBidToPublic =
                   myPayingAccount &&
                   !auctionView.myBidderPot &&
                   isAuctionManagerAuthorityNotWalletOwner &&
-                  auctionView.auctionDataExtended?.info.instantSalePrice
-                ) {
+                  instantSalePrice;
+                const allowBidToAuctionOwner =
+                  myPayingAccount &&
+                  !isAuctionManagerAuthorityNotWalletOwner &&
+                  isAuctionItemMaster &&
+                  instantSalePrice;
+
+                // Placing a "bid" of the full amount results in a purchase to redeem.
+                if (allowBidToPublic || allowBidToAuctionOwner) {
                   try {
                     const bid = await sendPlaceBid(
                       connection,
