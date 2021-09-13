@@ -5,11 +5,11 @@ import {
 } from '@solana/wallet-adapter-react';
 import {
   getLedgerWallet,
-  getMathWallet,
   getPhantomWallet,
+  getSlopeWallet,
   getSolflareWallet,
   getSolletWallet,
-  getSolongWallet,
+  getSolletExtensionWallet,
   getTorusWallet,
   WalletName,
 } from '@solana/wallet-adapter-wallets';
@@ -26,6 +26,7 @@ import React, {
 } from 'react';
 import { notify } from '../utils';
 import { MetaplexModal } from '../components';
+import { useConnectionConfig } from './connection';
 
 export interface WalletModalContextState {
   visible: boolean;
@@ -191,10 +192,13 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
 };
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const { network } = useConnectionConfig();
+
   const wallets = useMemo(
     () => [
       getPhantomWallet(),
       getSolflareWallet(),
+      getSlopeWallet(),
       getTorusWallet({
         options: {
           // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
@@ -203,11 +207,10 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
         },
       }),
       getLedgerWallet(),
-      getSolongWallet(),
-      getMathWallet(),
-      getSolletWallet(),
+      getSolletWallet({ network }),
+      getSolletExtensionWallet({ network }),
     ],
-    [],
+    [network],
   );
 
   const onError = useCallback((error: WalletError) => {
@@ -225,7 +228,4 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-export type WalletSigner = Pick<
-  WalletAdapter,
-  'publicKey' | 'signTransaction' | 'signAllTransactions'
->;
+export type WalletSender = Pick<WalletAdapter, 'publicKey' | 'sendTransaction'>;

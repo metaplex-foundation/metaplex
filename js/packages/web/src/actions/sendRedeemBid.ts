@@ -24,7 +24,7 @@ import {
   decodeEditionMarker,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
@@ -84,7 +84,7 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
 
 export async function sendRedeemBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -296,7 +296,7 @@ async function setupRedeemInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   winnerIndex: number,
   signers: Array<Keypair[]>,
@@ -355,7 +355,7 @@ async function setupRedeemFullRightsTransferInstructions(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   winnerIndex: number,
@@ -415,7 +415,7 @@ export async function setupRedeemPrintingV2Instructions(
   connection: Connection,
   auctionView: AuctionView,
   mintRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   receiverWallet: StringPublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
@@ -533,7 +533,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   winnerIndex: number,
@@ -622,7 +622,7 @@ async function deprecatedSetupRedeemPrintingV1Instructions(
 }
 
 async function deprecatedRedeemPrintingV1Token(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   updateAuth: StringPublicKey,
   item: AuctionViewItem,
   newTokenAccount: StringPublicKey,
@@ -710,7 +710,7 @@ export async function setupRedeemParticipationInstructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   receiverWallet: StringPublicKey,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined,
@@ -847,7 +847,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
   mintRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDeposit: ParsedAccount<SafetyDepositBox>,
   item: AuctionViewItem,
   signers: Array<Keypair[]>,

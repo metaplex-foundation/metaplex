@@ -12,7 +12,7 @@ import {
   useConnection,
   useUserAccounts,
   VaultState,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -99,7 +99,7 @@ function RunAction({
 }
 
 export async function getPersonalEscrowAta(
-  wallet: WalletSigner | undefined,
+  wallet: WalletSender | undefined,
 ): Promise<StringPublicKey | undefined> {
   const PROGRAM_IDS = programIds();
   if (!wallet?.publicKey) return;
@@ -122,7 +122,7 @@ export function useCollapseWrappedSol({
   notifications,
 }: {
   connection: Connection;
-  wallet: WalletSigner;
+  wallet: WalletSender;
   notifications: NotificationCard[];
 }) {
   const [showNotification, setShowNotification] = useState(false);
@@ -176,7 +176,7 @@ export function useSettlementAuctions({
   notifications,
 }: {
   connection: Connection;
-  wallet: WalletSigner;
+  wallet: WalletSender;
   notifications: NotificationCard[];
 }) {
   const { accountByMint } = useUserAccounts();

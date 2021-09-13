@@ -3,7 +3,7 @@ import {
   SequenceType,
   sendTransactions,
   sendTransactionWithRetry,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { WhitelistedCreator } from '../models/metaplex';
@@ -14,7 +14,7 @@ import { setWhitelistedCreator } from '../models/metaplex/setWhitelistedCreator'
 // but given how little this should be used keep it simple
 export async function saveAdmin(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   isPublic: boolean,
   whitelistedCreators: WhitelistedCreator[],
 ) {
@@ -57,14 +57,10 @@ export async function saveAdmin(
         wallet,
         instructions[0],
         signers[0],
-        'single',
+        { commitment: 'single' },
       )
-    : await sendTransactions(
-        connection,
-        wallet,
-        instructions,
-        signers,
-        SequenceType.StopOnFailure,
-        'single',
-      );
+    : await sendTransactions(connection, wallet, instructions, signers, {
+        sequenceType: SequenceType.StopOnFailure,
+        commitment: 'single',
+      });
 }

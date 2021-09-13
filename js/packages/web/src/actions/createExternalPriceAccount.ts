@@ -9,7 +9,7 @@ import {
   actions,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import BN from 'bn.js';
@@ -24,7 +24,7 @@ const {
 // This command creates the external pricing oracle
 export async function createExternalPriceAccount(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
 ): Promise<{
   priceMint: StringPublicKey;
   externalPriceAccount: StringPublicKey;

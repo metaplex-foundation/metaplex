@@ -11,7 +11,7 @@ import {
   decodeExternalPriceAccount,
   findProgramAddress,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 
 import BN from 'bn.js';
@@ -23,7 +23,7 @@ const BATCH_SIZE = 1;
 // Given a vault you own, unwind all the tokens out of it.
 export async function unwindVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   vault: ParsedAccount<Vault>,
   safetyDepositBoxesByVaultAndIndex: Record<
     string,

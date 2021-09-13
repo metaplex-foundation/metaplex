@@ -10,7 +10,7 @@ import {
   toLamports,
   ParsedAccount,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintInfo } from '@solana/spl-token';
@@ -24,7 +24,7 @@ const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -49,7 +49,7 @@ export async function sendPlaceBid(
     wallet,
     instructions[0],
     signers[0],
-    'single',
+    { commitment: 'single' },
   );
 
   return {
@@ -59,7 +59,7 @@ export async function sendPlaceBid(
 
 export async function setupPlaceBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,

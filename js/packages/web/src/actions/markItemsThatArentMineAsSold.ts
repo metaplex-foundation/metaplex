@@ -1,14 +1,14 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
   updatePrimarySaleHappenedViaToken,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { SafetyDepositDraft } from './createAuctionManager';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 const SALE_TRANSACTION_SIZE = 10;
 
 export async function markItemsThatArentMineAsSold(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDepositDrafts: SafetyDepositDraft[],
 ): Promise<{ instructions: TransactionInstruction[][]; signers: Keypair[][] }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();

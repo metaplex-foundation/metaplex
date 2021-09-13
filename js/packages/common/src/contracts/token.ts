@@ -1,17 +1,11 @@
 import { MintLayout, AccountLayout, Token } from '@solana/spl-token';
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  Account,
-  SystemProgram,
-} from '@solana/web3.js';
-import { WalletSigner } from '../contexts';
+import { Connection, PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
+import { sendTransaction, WalletSender } from '../contexts';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   // SOL account
   owner: PublicKey,
 ) => {
@@ -35,13 +29,7 @@ export const mintNFT = async (
     AccountLayout.span,
   );
 
-  let transaction = new Transaction();
-  const signers = [mintAccount, tokenAccount];
-  transaction.recentBlockhash = (
-    await connection.getRecentBlockhash('max')
-  ).blockhash;
-
-  transaction.add(
+  const instructions = [
     SystemProgram.createAccount({
       fromPubkey: wallet.publicKey,
       newAccountPubkey: mintAccount.publicKey,
@@ -49,9 +37,6 @@ export const mintNFT = async (
       space: MintLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
-  );
-
-  transaction.add(
     SystemProgram.createAccount({
       fromPubkey: wallet.publicKey,
       newAccountPubkey: tokenAccount.publicKey,
@@ -59,9 +44,6 @@ export const mintNFT = async (
       space: AccountLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
-  );
-
-  transaction.add(
     Token.createInitMintInstruction(
       TOKEN_PROGRAM_ID,
       mintAccount.publicKey,
@@ -69,16 +51,12 @@ export const mintNFT = async (
       wallet.publicKey,
       wallet.publicKey,
     ),
-  );
-  transaction.add(
     Token.createInitAccountInstruction(
       TOKEN_PROGRAM_ID,
       mintAccount.publicKey,
       tokenAccount.publicKey,
       owner,
     ),
-  );
-  transaction.add(
     Token.createMintToInstruction(
       TOKEN_PROGRAM_ID,
       mintAccount.publicKey,
@@ -87,8 +65,6 @@ export const mintNFT = async (
       [],
       1,
     ),
-  );
-  transaction.add(
     Token.createSetAuthorityInstruction(
       TOKEN_PROGRAM_ID,
       mintAccount.publicKey,
@@ -97,20 +73,16 @@ export const mintNFT = async (
       wallet.publicKey,
       [],
     ),
+  ];
+
+  const signers = [mintAccount, tokenAccount];
+
+  const { txid } = await sendTransaction(
+    connection,
+    wallet,
+    instructions,
+    signers,
   );
-
-  transaction.setSigners(wallet.publicKey, ...signers.map(s => s.publicKey));
-  if (signers.length > 0) {
-    transaction.partialSign(...signers);
-  }
-  transaction = await wallet.signTransaction(transaction);
-  const rawTransaction = transaction.serialize();
-  const options = {
-    skipPreflight: true,
-    commitment: 'singleGossip',
-  };
-
-  const txid = await connection.sendRawTransaction(rawTransaction, options);
 
   return { txid, mint: mintAccount.publicKey, account: tokenAccount.publicKey };
 };

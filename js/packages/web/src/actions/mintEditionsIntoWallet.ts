@@ -90,8 +90,10 @@ export async function mintEditionsToWallet(
         wallet,
         instructionBatch,
         signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
+        {
+          sequenceType: SequenceType.StopOnFailure,
+          commitment: 'single',
+        },
       );
     else
       await sendTransactionWithRetry(
@@ -99,7 +101,7 @@ export async function mintEditionsToWallet(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        { commitment: 'single' },
       );
     console.log('Done');
   }

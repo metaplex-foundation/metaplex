@@ -25,7 +25,7 @@ import {
   MetadataKey,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, Token } from '@solana/spl-token';
@@ -102,7 +102,7 @@ export interface SafetyDepositDraft {
 // from some AuctionManagerSettings.
 export async function createAuctionManager(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -338,7 +338,7 @@ export async function createAuctionManager(
           wallet,
           instructions[0],
           filteredSigners[0],
-          'single',
+          { commitment: 'single' },
         );
         stopPoint = 1;
       } else {
@@ -347,8 +347,10 @@ export async function createAuctionManager(
           wallet,
           instructions,
           filteredSigners,
-          SequenceType.StopOnFailure,
-          'single',
+          {
+            sequenceType: SequenceType.StopOnFailure,
+            commitment: 'single',
+          },
         );
       }
     } catch (e) {
@@ -371,7 +373,7 @@ export async function createAuctionManager(
 }
 
 async function buildSafetyDepositArray(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDeposits: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
 ): Promise<SafetyDepositInstructionTemplate[]> {
@@ -505,7 +507,7 @@ async function buildSafetyDepositArray(
 }
 
 async function setupAuctionManagerInstructions(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   vault: StringPublicKey,
   paymentMint: StringPublicKey,
   accountRentExempt: number,
@@ -564,7 +566,7 @@ async function setupAuctionManagerInstructions(
 }
 
 async function setupStartAuction(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   vault: StringPublicKey,
 ): Promise<{
   instructions: TransactionInstruction[];
@@ -581,7 +583,7 @@ async function setupStartAuction(
 }
 
 async function deprecatedValidateParticipationHelper(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   auctionManager: StringPublicKey,
   whitelistedCreatorsByCreator: Record<
     string,
@@ -666,7 +668,7 @@ async function findValidWhitelistedCreator(
 }
 
 async function validateBoxes(
-  wallet: WalletSigner,
+  wallet: WalletSender,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -752,7 +754,7 @@ async function validateBoxes(
 
 async function deprecatedBuildAndPopulateOneTimeAuthorizationAccount(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   oneTimePrintingAuthorizationMint: StringPublicKey | undefined,
 ): Promise<{
   instructions: TransactionInstruction[];

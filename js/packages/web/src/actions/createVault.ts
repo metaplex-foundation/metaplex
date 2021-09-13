@@ -11,7 +11,7 @@ import {
   findProgramAddress,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -23,7 +23,7 @@ const { createTokenAccount, initVault, MAX_VAULT_SIZE, VAULT_PREFIX } = actions;
 // This gets the vault ready for adding the tokens.
 export async function createVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   priceMint: StringPublicKey,
   externalPriceAccount: StringPublicKey,
 ): Promise<{

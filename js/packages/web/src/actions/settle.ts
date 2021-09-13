@@ -11,7 +11,7 @@ import {
   AuctionState,
   TokenAccount,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 
 import { AuctionView } from '../hooks';
@@ -27,7 +27,7 @@ const SETTLE_TRANSACTION_SIZE = 6;
 const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
   payingAccount: string | undefined,
@@ -65,7 +65,7 @@ export async function settle(
 
 async function emptyPaymentAccountForAllTokens(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   auctionView: AuctionView,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -194,8 +194,10 @@ async function emptyPaymentAccountForAllTokens(
         wallet,
         instructionBatch,
         signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
+        {
+          sequenceType: SequenceType.StopOnFailure,
+          commitment: 'single',
+        },
       );
     else
       await sendTransactionWithRetry(
@@ -203,14 +205,14 @@ async function emptyPaymentAccountForAllTokens(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        { commitment: 'single' },
       );
   }
 }
 
 async function claimAllBids(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   auctionView: AuctionView,
   bids: ParsedAccount<BidderPot>[],
 ) {
@@ -279,8 +281,10 @@ async function claimAllBids(
         wallet,
         instructionBatch,
         signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
+        {
+          sequenceType: SequenceType.StopOnFailure,
+          commitment: 'single',
+        },
       );
     else
       await sendTransactionWithRetry(
@@ -288,7 +292,7 @@ async function claimAllBids(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        { commitment: 'single' },
       );
     console.log('Done');
   }

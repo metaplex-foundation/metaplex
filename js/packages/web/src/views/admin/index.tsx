@@ -23,7 +23,7 @@ import {
   useStore,
   useUserAccounts,
   useWalletModal,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -173,7 +173,7 @@ function InnerAdminView({
     ParsedAccount<WhitelistedCreator>
   >;
   connection: Connection;
-  wallet: WalletSigner;
+  wallet: WalletSender;
   connected: boolean;
 }) {
   const [newStore, setNewStore] = useState(

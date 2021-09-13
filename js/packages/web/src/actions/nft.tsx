@@ -13,7 +13,7 @@ import {
   findProgramAddress,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
   Attribute,
 } from '@oyster/common';
 import React from 'react';
@@ -42,7 +42,7 @@ interface IArweaveResult {
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: WalletSigner | undefined,
+  wallet: WalletSender | undefined,
   env: ENV,
   files: File[],
   metadata: {
@@ -306,7 +306,7 @@ export const mintNFT = async (
 };
 
 export const prepPayForFilesTxn = async (
-  wallet: WalletSigner,
+  wallet: WalletSender,
   files: File[],
   metadata: any,
 ): Promise<{

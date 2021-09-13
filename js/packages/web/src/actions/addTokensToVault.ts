@@ -7,7 +7,7 @@ import {
   MetadataKey,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 
 import { AccountLayout } from '@solana/spl-token';
@@ -33,7 +33,7 @@ const BATCH_SIZE = 1;
 // the vault for use. It issues a series of transaction instructions and signers for the sendTransactions batch.
 export async function addTokensToVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   vault: StringPublicKey,
   nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{

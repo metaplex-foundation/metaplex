@@ -10,7 +10,7 @@ import {
   ParsedAccount,
   BidderMetadata,
   StringPublicKey,
-  WalletSigner,
+  WalletSender,
   toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
@@ -23,7 +23,7 @@ import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendCancelBid(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -90,23 +90,19 @@ export async function sendCancelBid(
         wallet,
         instructions[0],
         signers[0],
-        'single',
+        { commitment: 'single' },
       )
-    : await sendTransactions(
-        connection,
-        wallet,
-        instructions,
-        signers,
-        SequenceType.StopOnFailure,
-        'single',
-      );
+    : await sendTransactions(connection, wallet, instructions, signers, {
+        sequenceType: SequenceType.StopOnFailure,
+        commitment: 'single',
+      });
 }
 
 export async function setupCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   accountRentExempt: number,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {

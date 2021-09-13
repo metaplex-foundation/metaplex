@@ -23,7 +23,7 @@ import {
   useUserAccounts,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -366,7 +366,7 @@ export const InnerBillingView = ({
   mint,
 }: {
   auctionView: AuctionView;
-  wallet: WalletSigner;
+  wallet: WalletSender;
   connection: Connection;
   mint: MintInfo;
 }) => {

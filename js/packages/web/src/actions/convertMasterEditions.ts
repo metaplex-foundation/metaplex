@@ -12,7 +12,7 @@ import {
   TokenAccount,
   programIds,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
@@ -126,7 +126,7 @@ export async function filterMetadata(
 // Given a vault you own, unwind all the tokens out of it.
 export async function convertMasterEditions(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   masterEditions: ParsedAccount<MasterEditionV1>[],
   accountsByMint: Map<string, TokenAccount>,
 ) {
@@ -251,8 +251,10 @@ export async function convertMasterEditions(
         wallet,
         instructionBatch,
         signerBatch,
-        SequenceType.StopOnFailure,
-        'single',
+        {
+          sequenceType: SequenceType.StopOnFailure,
+          commitment: 'single',
+        },
       );
     else
       await sendTransactionWithRetry(
@@ -260,7 +262,7 @@ export async function convertMasterEditions(
         wallet,
         instructionBatch[0],
         signerBatch[0],
-        'single',
+        { commitment: 'single' },
       );
     console.log('Done');
   }

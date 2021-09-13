@@ -4,7 +4,7 @@ import {
   sendTransactionWithRetry,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
@@ -16,7 +16,7 @@ import { Token } from '@solana/spl-token';
 // notification. All we do is then transfer the lamports out of the account.
 export async function closePersonalEscrow(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   ata: StringPublicKey,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -35,11 +35,7 @@ export async function closePersonalEscrow(
     ),
   ];
 
-  await sendTransactionWithRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-    'single',
-  );
+  await sendTransactionWithRetry(connection, wallet, instructions, signers, {
+    commitment: 'single',
+  });
 }

@@ -4,7 +4,7 @@ import {
   models,
   StringPublicKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout } from '@solana/spl-token';
@@ -16,7 +16,7 @@ const { approve } = models;
 // authority (that may or may not exist yet.)
 export async function closeVault(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   vault: StringPublicKey,
   fractionMint: StringPublicKey,
   fractionTreasury: StringPublicKey,

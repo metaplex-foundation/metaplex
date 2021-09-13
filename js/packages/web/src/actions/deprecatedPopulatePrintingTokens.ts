@@ -8,7 +8,7 @@ import {
   ParsedAccount,
   MetadataKey,
   toPublicKey,
-  WalletSigner,
+  WalletSender,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import BN from 'bn.js';
@@ -19,7 +19,7 @@ const BATCH_SIZE = 4;
 // for all relevant NFTs.
 export async function deprecatedPopulatePrintingTokens(
   connection: Connection,
-  wallet: WalletSigner,
+  wallet: WalletSender,
   safetyDepositConfigs: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
