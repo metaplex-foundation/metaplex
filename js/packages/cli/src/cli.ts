@@ -10,10 +10,10 @@ import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTEN
 import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
-import { loadCache, saveCache, updateCandyMachineList, getCandyMachineList } from './helpers/cache';
+import { loadCache, saveCache } from './helpers/cache';
 import { mint } from "./commands/mint";
-import { signAllUnapprovedMetadata, signMetadata } from "./commands/sign";
-import { signAllMetadataFromCandyMachine } from './signer';
+import { signMetadata } from "./commands/sign";
+import { signAllMetadataFromCandyMachine } from "./commands/signAll";
 import log from 'loglevel';
 
 program.version('0.0.1');
@@ -34,7 +34,7 @@ programCommand('upload')
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
-    const {number, keypair, env, cacheName} = cmd.opts();
+    const { number, keypair, env, cacheName } = cmd.opts();
     let parsedNumber = parseInt(number);
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -51,7 +51,7 @@ programCommand('upload')
       throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
     }
     //if no number specified, take the whole folder.
-    if (!parsedNumber) {parsedNumber = pngFileCount}
+    if (!parsedNumber) { parsedNumber = pngFileCount }
     const startMs = Date.now();
     log.info("started at: " + startMs.toString())
     //only try a few times
@@ -69,7 +69,7 @@ programCommand('upload')
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
-    if(warn) {log.info("not all images have been uplaoded, rerun this step.")}
+    if (warn) { log.info("not all images have been uplaoded, rerun this step.") }
   });
 
 programCommand('verify')
@@ -126,14 +126,12 @@ programCommand('verify')
     const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${
-        configData.data.maxNumberOfLines
+      `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
       })`,
     );
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
       throw new Error(
-        `predefined number of NFTs (${
-          configData.data.maxNumberOfLines
+        `predefined number of NFTs (${configData.data.maxNumberOfLines
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
@@ -179,7 +177,6 @@ programCommand('create_candy_machine')
         signers: [],
       },
     );
-    updateCandyMachineList(candyMachine.toBase58(), env)
     saveCache(cacheName, env, cacheContent);
     log.info(`create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`);
   });
@@ -215,7 +212,7 @@ programCommand('set_start_date')
 
 programCommand('mint_one_token')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName} = cmd.opts();
+    const { keypair, env, cacheName } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
@@ -228,7 +225,7 @@ programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')
   .action(async (directory, cmd) => {
-    const {keypair, env, metadata} = cmd.opts();
+    const { keypair, env, metadata } = cmd.opts();
 
     await signMetadata(
       metadata,
@@ -256,44 +253,34 @@ function programCommand(name: string) {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
-  if (value === undefined || value === null){
+  if (value === undefined || value === null) {
     return
   }
   log.info("setting the log value to: " + value);
   log.setLevel(value);
 }
 
-program
-  .command('sign_candy_machine_metadata')
-  .option(
-    '-e, --env <string>',
-    'Solana cluster env name',
-    'devnet', //mainnet-beta, testnet, devnet
-  )
-  .option(
-    '-k, --keypair <path>',
-    `Solana wallet location`,
-    '',
-  )
+programCommand("sign_candy_machine_metadata")
   .option('-cndy, --candy-address <string>', 'Candy machine address', '')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .action(async (directory, cmd) => {
-    let { keypair, env, candyAddress, batchSize } = cmd.opts();
+    let { keypair, env, cacheName, candyAddress, batchSize } = cmd.opts();
     if (!keypair || keypair == '') {
-      log.info("Keypair required!"); 
+      log.info("Keypair required!");
       return;
     }
     if (!candyAddress || candyAddress == '') {
       log.info("Candy machine address required! Using from saved list.")
-      let address = getCandyMachineList(env);
-      if (!address) {
-        log.info("Could not find candy machine address list!")
-        return;
-      }
-      candyAddress = address.candyList[0]
-    } 
+      const cacheContent = loadCache(cacheName, env);
+      const config = new PublicKey(cacheContent.program.config);
+      const [candyMachine, bump] = await getCandyMachineAddress(
+        config,
+        cacheContent.program.uuid,  
+      );
+      candyAddress = candyMachine.toBase58();
+    }
     let batchSizeParsed = parseInt(batchSize)
-    if (!parseInt(batchSize)){
+    if (!parseInt(batchSize)) {
       log.info("Batch size needs to be an integer!")
       return;
     }

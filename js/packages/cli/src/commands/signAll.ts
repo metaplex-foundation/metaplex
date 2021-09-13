@@ -1,5 +1,5 @@
 import { Keypair, PublicKey, TransactionInstruction, Connection, AccountInfo } from '@solana/web3.js';
-import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
+import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import * as borsh from "borsh"
 import {
   MAX_NAME_LENGTH,
@@ -7,12 +7,12 @@ import {
   MAX_SYMBOL_LENGTH,
   MAX_CREATOR_LEN,
   TOKEN_METADATA_PROGRAM_ID,
-} from './helpers/constants';
+} from '../helpers/constants';
 import {
   AccountAndPubkey,
   Metadata,
   METADATA_SCHEMA
-} from './types'
+} from '../types'
 /*
  Get accounts by candy machine creator address
  Get only verified ones
