@@ -3,7 +3,7 @@
 https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-bf0e-db0ccc972ff7.mp4
 
 ## assets folder
-* Folder with file pairs named from with inrementing integer numbers starting from  0.png and 0.json
+* Folder with file pairs named with inrementing integer numbers starting from  0.png and 0.json
 * the image HAS TO be a `PNG`
 * JSON format can be checked out here: https://docs.metaplex.com/nft-standard. example below:
 ```json
