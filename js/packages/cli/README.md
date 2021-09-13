@@ -1,4 +1,13 @@
 
+
+https://user-images.githubusercontent.com/81876372/133098938-dc2c91a6-1280-4ee1-bf0e-db0ccc972ff7.mp4
+
+
+
+
+
+
+
 Format
 
 * Folder with files named from 0-1.png
@@ -12,6 +21,10 @@ Install and build
 yarn install 
 yarn build
 yarn run package:linuxb
+OR
+yarn run package:linux
+OR 
+yarn run package:macos
 ```
 
 You can now either use `metaplex` OR the `ts-node cli` to execute the following commands. 
