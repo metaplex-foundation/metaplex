@@ -54,30 +54,6 @@ export function parsePrice(price) {
   return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
 }
 
-export function updateCandyMachineList(candyAddress: string, env: string) {
-  const fp = `${CACHE_PATH}/${env}_candyMachineList.json`
-  if (!fs.existsSync(fp)){
-      let cList = {
-          candyList: [
-              candyAddress
-          ]
-      }
-      fs.writeFileSync(fp, JSON.stringify(cList));
-  
-  } else {
-      let dataJSON = fs.readFileSync(fp, "utf-8");
-      let data = JSON.parse(dataJSON);
-      data.candyList.unshift(candyAddress);
-      fs.writeFileSync(fp, JSON.stringify(data));
-  }
-}
-export function getCandyMachineList(env: string) {
-  const fp = `${CACHE_PATH}/${env}_candyMachineList.json`;
-  let dataJSON = fs.readFileSync(fp, "utf-8");
-  let data = JSON.parse(dataJSON);
-  return data;
-}  
-
 export async function upload(data: FormData, manifest, index) {
   console.log(`trying to upload ${index}.png: ${manifest.name}`);
   return await (

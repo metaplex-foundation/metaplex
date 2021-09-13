@@ -4,13 +4,13 @@ import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 
-import { fromUTF8Array, parsePrice, updateCandyMachineList, getCandyMachineList } from './helpers/various';
+import { fromUTF8Array, parsePrice } from './helpers/various';
 import { PublicKey } from '@solana/web3.js';
 import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
 import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
-import { loadCache, saveCache } from './helpers/cache';
+import { loadCache, saveCache, updateCandyMachineList, getCandyMachineList } from './helpers/cache';
 import { mint } from "./commands/mint";
 import { signAllUnapprovedMetadata, signMetadata } from "./commands/sign";
 import { signAllMetadataFromCandyMachine } from './signer';
@@ -29,7 +29,6 @@ programCommand('upload')
     '<directory>',
     'Directory containing images named from 0-n',
     val => {
-      console.log(val)
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
@@ -100,7 +99,7 @@ programCommand('verify')
       const cacheItem = cacheContent.items[key];
       if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
         //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-        // console.log(
+        // log.info(
         //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
         //   `and (${cacheItem.link}). marking to rerun for image`,
         //   key,
@@ -238,17 +237,6 @@ programCommand('sign')
     );
   });
 
-programCommand('sign_all')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .action(async (directory, cmd) => {
-    const {keypair, env} = cmd.opts();
-
-    await signAllUnapprovedMetadata(
-      keypair,
-      env
-    );
-  });
-
 function programCommand(name: string) {
   return program
     .command(name)
@@ -275,9 +263,6 @@ function setLogLevel(value, prev) {
   log.setLevel(value);
 }
 
-program.command('find-wallets').action(() => {
-});
-
 program
   .command('sign_candy_machine_metadata')
   .option(
@@ -295,29 +280,29 @@ program
   .action(async (directory, cmd) => {
     let { keypair, env, candyAddress, batchSize } = cmd.opts();
     if (!keypair || keypair == '') {
-      console.log("Keypair required!"); 
+      log.info("Keypair required!"); 
       return;
     }
     if (!candyAddress || candyAddress == '') {
-      console.log("Candy machine address required! Using from saved list.")
+      log.info("Candy machine address required! Using from saved list.")
       let address = getCandyMachineList(env);
       if (!address) {
-        console.log("Could not find candy machine address list!")
+        log.info("Could not find candy machine address list!")
         return;
       }
       candyAddress = address.candyList[0]
     } 
     let batchSizeParsed = parseInt(batchSize)
     if (!parseInt(batchSize)){
-      console.log("Batch size needs to be an integer!")
+      log.info("Batch size needs to be an integer!")
       return;
     }
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-    console.log("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
-    console.log("Environment: ", env)
-    console.log("Candy machine address: ", candyAddress)
-    console.log("Batch Size: ", batchSizeParsed)
+    log.info("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
+    log.info("Environment: ", env)
+    log.info("Candy machine address: ", candyAddress)
+    log.info("Batch Size: ", batchSizeParsed)
     await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, batchSizeParsed)
   });
 
