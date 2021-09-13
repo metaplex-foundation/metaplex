@@ -111,8 +111,7 @@ async fn success() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )
@@ -227,8 +226,7 @@ async fn fail_prove_twice() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )

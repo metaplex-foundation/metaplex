@@ -19,8 +19,6 @@ pub struct AddCardToPackArgs {
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
     pub probability_type: DistributionType,
-    /// Based on above property it's fixed number to receive or probability
-    pub probability: u64,
     /// Index
     pub index: u32,
 }
@@ -68,8 +66,6 @@ pub struct EditPackCardArgs {
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
     pub distribution_type: Option<DistributionType>,
-    /// Average number of cards in pack multiplied by 10^9 and truncated
-    pub number_in_pack: Option<u64>,
 }
 
 /// Edit a PackVoucher arguments

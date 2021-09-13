@@ -69,12 +69,5 @@ fn apply_changes(pack_card: &mut PackCard, changes: EditPackCardArgs) -> Result<
         pack_card.distribution_type = new_distribution_type;
     }
 
-    if let Some(new_number_in_pack) = changes.number_in_pack {
-        if new_number_in_pack == pack_card.number_in_pack {
-            return Err(NFTPacksError::CantSetTheSameValue.into());
-        }
-        pack_card.number_in_pack = new_number_in_pack;
-    }
-
     Ok(())
 }

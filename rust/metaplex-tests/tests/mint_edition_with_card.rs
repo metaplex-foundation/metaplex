@@ -77,8 +77,7 @@ async fn setup() -> (
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased,
-                probability: 1000000,
+                probability_type: DistributionType::ProbabilityBased(1000000),
                 index: test_pack_card.index,
             },
         )
