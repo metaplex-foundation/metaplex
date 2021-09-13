@@ -613,7 +613,7 @@ program
       }
       candyAddress = address.candyList[0]
     } 
-    let bVal = parseInt(batchSize)
+    let batchSizeParsed = parseInt(batchSize)
     if (!parseInt(batchSize)){
       console.log("Batch size needs to be an integer!")
       return;
@@ -623,8 +623,8 @@ program
     console.log("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
     console.log("Environment: ", env)
     console.log("Candy machine address: ", candyAddress)
-    console.log("Batch Size: ", bVal)
-    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, bVal)
+    console.log("Batch Size: ", batchSizeParsed)
+    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, batchSizeParsed)
   });
 
 program.parse(process.argv);

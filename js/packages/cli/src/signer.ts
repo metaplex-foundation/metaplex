@@ -2,6 +2,18 @@ import { Keypair, PublicKey, TransactionInstruction, Connection, AccountInfo } f
 import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
 import BN from "bn.js";
 import * as borsh from "borsh"
+import {
+  MAX_NAME_LENGTH,
+  MAX_URI_LENGTH,
+  MAX_SYMBOL_LENGTH,
+  MAX_CREATOR_LEN,
+  TOKEN_METADATA_PROGRAM_ID,
+} from './helpers/constants';
+import {
+  AccountAndPubkey,
+  Metadata,
+  METADATA_SCHEMA
+} from './types'
 /*
  Get accounts by candy machine creator address
  Get only verified ones
@@ -10,238 +22,6 @@ import * as borsh from "borsh"
 
  PS: Don't sign candy machine addresses that you do not know about. Signing verifies your participation.
 */
-const MAX_NAME_LENGTH = 32;
-const MAX_URI_LENGTH = 200;
-const MAX_SYMBOL_LENGTH = 10;
-const MAX_CREATOR_LEN = 32 + 1 + 1;
-const METADATA_PROGRAM_ID = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-type AccountAndPubkey = {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-};
-
-enum MetadataKey {
-  Uninitialized = 0,
-  MetadataV1 = 4,
-  EditionV1 = 1,
-  MasterEditionV1 = 2,
-  MasterEditionV2 = 6,
-  EditionMarker = 7
-}
-
-class MasterEditionV1 {
-  key: MetadataKey;
-  supply: BN;
-  maxSupply?: BN;
-  printingMint: PublicKey;
-  oneTimePrintingAuthorizationMint: PublicKey;
-  constructor(args: {
-    key: MetadataKey;
-    supply: BN;
-    maxSupply?: BN;
-    printingMint: PublicKey;
-    oneTimePrintingAuthorizationMint: PublicKey;
-  }) {
-    this.key = MetadataKey.MasterEditionV1;
-    this.supply = args.supply;
-    this.maxSupply = args.maxSupply;
-    this.printingMint = args.printingMint;
-    this.oneTimePrintingAuthorizationMint =
-      args.oneTimePrintingAuthorizationMint;
-  };
-}
-
-class MasterEditionV2 {
-  key: MetadataKey;
-  supply: BN;
-  maxSupply?: BN;
-  constructor(args: {
-    key: MetadataKey;
-    supply: BN;
-    maxSupply?: BN;
-  }) {
-    this.key = MetadataKey.MasterEditionV2;
-    this.supply = args.supply;
-    this.maxSupply = args.maxSupply;
-  };
-}
-
-class EditionMarker {
-  key: MetadataKey;
-  ledger: number[];
-  constructor(args: {
-    key: MetadataKey;
-    ledger: number[];
-  }) {
-    this.key = MetadataKey.EditionMarker;
-    this.ledger = args.ledger;
-  };
-}
-
-class Edition {
-  key: MetadataKey;
-  parent: PublicKey;
-  edition: BN;
-  constructor(args: {
-    key: MetadataKey;
-    parent: PublicKey;
-    edition: BN;
-  }) {
-    this.key = MetadataKey.EditionV1;
-    this.parent = args.parent;
-    this.edition = args.edition;
-  };
-}
-
-class Creator {
-  address: string;
-  verified: boolean;
-  share: number;
-
-  constructor(args: {
-    address: string;
-    verified: boolean;
-    share: number;
-  }) {
-    this.address = args.address;
-    this.verified = args.verified;
-    this.share = args.share;
-  }
-}
-
-class Data {
-  name: string;
-  symbol: string;
-  uri: string;
-  sellerFeeBasisPoints: number;
-  creators: Creator[] | null;
-  constructor(args: {
-    name: string;
-    symbol: string;
-    uri: string;
-    sellerFeeBasisPoints: number;
-    creators: Creator[] | null;
-  }) {
-    this.name = args.name;
-    this.symbol = args.symbol;
-    this.uri = args.uri;
-    this.sellerFeeBasisPoints = args.sellerFeeBasisPoints;
-    this.creators = args.creators;
-  };
-}
-
-class Metadata {
-  key: MetadataKey;
-  updateAuthority: PublicKey;
-  mint: PublicKey;
-  data: Data;
-  primarySaleHappened: boolean;
-  isMutable: boolean;
-  masterEdition?: PublicKey;
-  edition?: PublicKey;
-  constructor(args: {
-    updateAuthority: PublicKey;
-    mint: PublicKey;
-    data: Data;
-    primarySaleHappened: boolean;
-    isMutable: boolean;
-    masterEdition?: PublicKey;
-  }) {
-    this.key = MetadataKey.MetadataV1;
-    this.updateAuthority = args.updateAuthority;
-    this.mint = args.mint;
-    this.data = args.data;
-    this.primarySaleHappened = args.primarySaleHappened;
-    this.isMutable = args.isMutable;
-  };
-}
-
-const METADATA_SCHEMA = new Map<any, any>([
-  [
-    MasterEditionV1,
-    {
-      kind: 'struct',
-      fields: [
-        ['key', 'u8'],
-        ['supply', 'u64'],
-        ['maxSupply', { kind: 'option', type: 'u64' }],
-        ['printingMint', 'pubkey'],
-        ['oneTimePrintingAuthorizationMint', [32]],
-      ],
-    },
-  ],
-  [
-    MasterEditionV2,
-    {
-      kind: 'struct',
-      fields: [
-        ['key', 'u8'],
-        ['supply', 'u64'],
-        ['maxSupply', { kind: 'option', type: 'u64' }],
-      ],
-    },
-  ],
-  [
-    Edition,
-    {
-      kind: 'struct',
-      fields: [
-        ['key', 'u8'],
-        ['parent', [32]],
-        ['edition', 'u64'],
-      ],
-    },
-  ],
-  [
-    Data,
-    {
-      kind: 'struct',
-      fields: [
-        ['name', 'string'],
-        ['symbol', 'string'],
-        ['uri', 'string'],
-        ['sellerFeeBasisPoints', 'u16'],
-        ['creators', { kind: 'option', type: [Creator] }],
-      ],
-    },
-  ],
-  [
-    Creator,
-    {
-      kind: 'struct',
-      fields: [
-        ['address', [32]],
-        ['verified', 'u8'],
-        ['share', 'u8'],
-      ],
-    },
-  ],
-  [
-    Metadata,
-    {
-      kind: 'struct',
-      fields: [
-        ['key', 'u8'],
-        ['updateAuthority', [32]],
-        ['mint', [32]],
-        ['data', Data],
-        ['primarySaleHappened', 'u8'],
-        ['isMutable', 'u8'],
-      ],
-    },
-  ],
-  [
-    EditionMarker,
-    {
-      kind: 'struct',
-      fields: [
-        ['key', 'u8'],
-        ['ledger', [31]],
-      ],
-    },
-  ],
-]);
-
 async function decodeMetadata(buffer) {
   const metadata = borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
   return metadata;
@@ -315,7 +95,7 @@ export async function signAllMetadataFromCandyMachine(
 }
 
 async function getAccountsByCreatorAddress(creatorAddress, connection) {
-  let metadataAccounts = await getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+  let metadataAccounts = await getProgramAccounts(connection, TOKEN_METADATA_PROGRAM_ID.toBase58(), {
     filters: [
       {
         memcmp: {
@@ -407,7 +187,6 @@ async function signMetadataSingle(
   creator,
   instructions,
 ) {
-  const metadataProgramId = new PublicKey(METADATA_PROGRAM_ID)
   const data = Buffer.from([7]);
   const keys = [
     {
@@ -424,7 +203,7 @@ async function signMetadataSingle(
   instructions.push(
     ({
       keys,
-      programId: METADATA_PROGRAM_ID,
+      programId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
       data,
     }),
   );
