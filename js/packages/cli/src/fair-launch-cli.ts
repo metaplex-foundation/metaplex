@@ -101,11 +101,12 @@ program
       antiRugTokenRequirement,
       antiRugReserveBp,
     } = cmd.opts();
+
     const antiRugTokenRequirementNumber = antiRugTokenRequirement
       ? parseInt(antiRugTokenRequirement)
       : null;
     const antiRugReserveBpNumber = antiRugReserveBp
-      ? parseFloat(antiRugReserveBp)
+      ? parseInt(antiRugReserveBp)
       : null;
     const selfDestructDateActual = selfDestructDate
       ? Date.parse(selfDestructDate) / 1000
@@ -117,8 +118,8 @@ program
       selfDestructDateActual
         ? {
             reserveBp: antiRugReserveBpNumber,
-            tokenRequirement: antiRugTokenRequirementNumber,
-            selfDestructDate: selfDestructDateActual,
+            tokenRequirement: new anchor.BN(antiRugTokenRequirementNumber),
+            selfDestructDate: new anchor.BN(selfDestructDateActual),
           }
         : null;
 
@@ -126,6 +127,7 @@ program
     let priceRangeStartNumber = parseFloat(priceRangeStart);
     let priceRangeEndNumber = parseFloat(priceRangeEnd);
     let tickSizeNumber = parseFloat(tickSize);
+
     let feeNumber = parseFloat(fee);
     const realUuid = uuid.slice(0, 6);
     const phaseOneStartDateActual =
@@ -155,7 +157,7 @@ program
     );
     const [fairLaunch, fairLaunchBump] = await getFairLaunch(tokenMint);
     const [treasury, treasuryBump] = await getTreasury(tokenMint);
-    console.log('Mint is', mint);
+
     const remainingAccounts = !mint
       ? []
       : [
@@ -268,7 +270,7 @@ program
       ? parseInt(antiRugTokenRequirement)
       : null;
     const antiRugReserveBpNumber = antiRugReserveBp
-      ? parseFloat(antiRugReserveBp)
+      ? parseInt(antiRugReserveBp)
       : null;
     const selfDestructDateActual = selfDestructDate
       ? Date.parse(selfDestructDate) / 1000
@@ -280,8 +282,8 @@ program
       selfDestructDateActual
         ? {
             reserveBp: antiRugReserveBpNumber,
-            tokenRequirement: antiRugTokenRequirementNumber,
-            selfDestructDate: selfDestructDateActual,
+            tokenRequirement: new anchor.BN(antiRugTokenRequirementNumber),
+            selfDestructDate: new anchor.BN(selfDestructDateActual),
           }
         : null;
     const parsedNumber = parseInt(numberOfTokens);
@@ -1358,6 +1360,25 @@ program
     console.log('Treasury Bump', fairLaunchObj.treasuryBump);
     //@ts-ignore
     console.log('Token Mint Bump', fairLaunchObj.tokenMintBump);
+    //@ts-ignore
+    if (fairLaunchObj.data.antiRugSetting) {
+      console.log('Anti-Rug Settings:');
+      //@ts-ignore
+      console.log('Reserve bps', fairLaunchObj.data.antiRugSetting.reserveBp);
+      //@ts-ignore
+      console.log(
+        'Number of tokens remaining in circulation below which you are allowed to retrieve treasury in full:',
+        //@ts-ignore
+        fairLaunchObj.data.antiRugSetting.tokenRequirement.toNumber(),
+      );
+      console.log(
+        'Self destruct date - Date at which refunds are allowed (but not required):',
+        //@ts-ignore
+        new Date(fairLaunchObj.data.antiRugSetting.selfDestructDate * 1000),
+      );
+    } else {
+      console.log('Anti-Rug Settings: None');
+    }
     console.log(
       'Price Range Start        ',
       //@ts-ignore
@@ -1382,6 +1403,12 @@ program
     );
 
     console.log('Current Treasury Holdings', treasuryAmount);
+
+    console.log(
+      'Treasury Snapshot At Peak',
+      //@ts-ignore
+      fairLaunchObj.treasurySnapshot?.toNumber(),
+    );
 
     console.log(
       'Phase One Start',
@@ -1435,6 +1462,18 @@ program
       fairLaunchObj.numberTicketsDropped.toNumber() +
         //@ts-ignore
         fairLaunchObj.numberTicketsPunched.toNumber(),
+    );
+
+    console.log(
+      'Number of Tokens Refunded          ',
+      //@ts-ignore
+      fairLaunchObj.numberTokensBurnedForRefunds.toNumber(),
+    );
+
+    console.log(
+      'Number of Tokens Preminted         ',
+      //@ts-ignore
+      fairLaunchObj.numberTokensPreminted.toNumber(),
     );
 
     console.log(
