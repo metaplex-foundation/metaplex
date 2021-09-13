@@ -604,9 +604,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await adjustTicket({
       amountNumber,
@@ -648,6 +647,11 @@ program
         fairLaunchObj.tokenMint,
       )
     )[0];
+
+    const fairLaunchLotteryBitmapObj =
+      await anchorProgram.provider.connection.getAccountInfo(
+        fairLaunchLotteryBitmap,
+      );
 
     const seqKeys = [];
     //@ts-ignore
@@ -758,23 +762,63 @@ program
                   anchorProgram,
                 });
               } else {
-                console.log(
-                  'Punching ticket for buyer',
-                  ticket.model.buyer.toBase58(),
-                );
-                const diff =
-                  ticket.model.amount.toNumber() -
-                  //@ts-ignore
-                  fairLaunchObj.currentMedian.toNumber();
-                if (diff > 0) {
+                const myByte =
+                  fairLaunchLotteryBitmapObj.data[
+                    FAIR_LAUNCH_LOTTERY_SIZE +
+                      Math.floor(ticket.model.seq.toNumber() / 8)
+                  ];
+
+                const positionFromRight = 7 - (ticket.model.seq.toNumber() % 8);
+                const mask = Math.pow(2, positionFromRight);
+                const isWinner = myByte & mask;
+                if (isWinner > 0) {
                   console.log(
-                    'Refunding first',
-                    diff,
-                    'to buyer before punching',
+                    'Punching ticket for buyer',
+                    ticket.model.buyer.toBase58(),
+                  );
+                  const diff =
+                    ticket.model.amount.toNumber() -
+                    //@ts-ignore
+                    fairLaunchObj.currentMedian.toNumber();
+                  if (diff > 0) {
+                    console.log(
+                      'Refunding first',
+                      diff,
+                      'to buyer before punching',
+                    );
+                    await adjustTicket({
+                      //@ts-ignore
+                      amountNumber: fairLaunchObj.currentMedian.toNumber,
+                      fairLaunchObj,
+                      adjuster: ticket.model.buyer,
+                      fairLaunch,
+                      fairLaunchTicket: ticket.key,
+                      fairLaunchLotteryBitmap,
+                      anchorProgram,
+                    });
+                  }
+                  const buyerTokenAccount = await punchTicket({
+                    payer: walletKeyPair,
+                    puncher: ticket.model.buyer,
+                    anchorProgram,
+                    fairLaunchTicket: ticket.key,
+                    fairLaunch,
+                    fairLaunchLotteryBitmap,
+                    fairLaunchObj,
+                  });
+
+                  console.log(
+                    `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+                  );
+                } else {
+                  console.log(
+                    'Buyer ',
+                    ticket.model.buyer.toBase58(),
+                    'was eligible but lost lottery, refunding',
                   );
                   await adjustTicket({
                     //@ts-ignore
-                    amountNumber: fairLaunchObj.currentMedian.toNumber,
+                    amountNumber: 0,
                     fairLaunchObj,
                     adjuster: ticket.model.buyer,
                     fairLaunch,
@@ -782,20 +826,8 @@ program
                     fairLaunchLotteryBitmap,
                     anchorProgram,
                   });
+                  console.log('Refunded.');
                 }
-                const buyerTokenAccount = await punchTicket({
-                  payer: walletKeyPair,
-                  puncher: ticket.model.buyer,
-                  anchorProgram,
-                  fairLaunchTicket: ticket.key,
-                  fairLaunch,
-                  fairLaunchLotteryBitmap,
-                  fairLaunchObj,
-                });
-
-                console.log(
-                  `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
-                );
               }
             } else if (ticket.model.state.withdrawn) {
               console.log(
@@ -898,9 +930,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1022,9 +1053,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
@@ -1103,6 +1133,99 @@ program
     });
 
     console.log(`Now you rich, give me some.`);
+  });
+
+program
+  .command('receive_refund')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const buyerTokenAccount = (
+      await getAtaForMint(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const transferAuthority = anchor.web3.Keypair.generate();
+
+    const signers = [transferAuthority];
+    const instructions = [
+      Token.createApproveInstruction(
+        TOKEN_PROGRAM_ID,
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        transferAuthority.publicKey,
+        walletKeyPair.publicKey,
+        [],
+        //@ts-ignore
+        1,
+      ),
+    ];
+
+    const remainingAccounts = [];
+
+    //@ts-ignore
+    if (fairLaunchObj.treasuryMint) {
+      remainingAccounts.push({
+        //@ts-ignore
+        pubkey: fairLaunchObj.treasuryMint,
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: (
+          await getAtaForMint(
+            //@ts-ignore
+            fairLaunchObj.treasuryMint,
+            walletKeyPair.publicKey,
+          )
+        )[0],
+        isWritable: true,
+        isSigner: false,
+      });
+    }
+
+    const txid = await anchorProgram.rpc.receiveRefund({
+      accounts: {
+        fairLaunch,
+        // @ts-ignore
+        treasury: fairLaunchObj.treasury,
+        buyer: walletKeyPair.publicKey,
+        buyerTokenAccount,
+        transferAuthority: transferAuthority.publicKey,
+        // @ts-ignore
+        tokenMint: fairLaunchObj.tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+      remainingAccounts,
+      instructions,
+      signers,
+    });
+
+    console.log(`You received a refund, traitor. ${txid}`);
   });
 
 program

@@ -783,119 +783,118 @@ pub mod fair_launch {
 
         Ok(())
     }
-}
 
-pub fn receive_refund<'info>(
-    ctx: Context<'_, '_, '_, 'info, ReceiveRefund<'info>>,
-) -> ProgramResult {
-    let fair_launch = &mut ctx.accounts.fair_launch;
-    let treasury = &mut ctx.accounts.treasury;
-    let buyer = &mut ctx.accounts.buyer;
-    let token_mint = &ctx.accounts.token_mint;
-    let token_program = &ctx.accounts.token_program;
-    let clock = &ctx.accounts.clock;
-    let buyer_token_account = &mut ctx.accounts.buyer_token_account;
-    let transfer_authority = &mut ctx.accounts.transfer_authority;
+    pub fn receive_refund<'info>(
+        ctx: Context<'_, '_, '_, 'info, ReceiveRefund<'info>>,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let treasury = &mut ctx.accounts.treasury;
+        let buyer = &mut ctx.accounts.buyer;
+        let token_mint = &ctx.accounts.token_mint;
+        let token_program = &ctx.accounts.token_program;
+        let clock = &ctx.accounts.clock;
+        let buyer_token_account = &mut ctx.accounts.buyer_token_account;
+        let transfer_authority = &mut ctx.accounts.transfer_authority;
 
-    let signer_seeds = [
-        PREFIX.as_bytes(),
-        &token_mint.key.as_ref(),
-        &[fair_launch.bump],
-    ];
+        let signer_seeds = [
+            PREFIX.as_bytes(),
+            &token_mint.key.as_ref(),
+            &[fair_launch.bump],
+        ];
 
-    if fair_launch.number_tickets_sold
-        > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
-    {
-        return Err(ErrorCode::CannotRefundUntilAllTicketsHaveBeenPunchedOrDropped.into());
-    }
-
-    if !fair_launch.phase_three_started {
-        return Err(ErrorCode::CannotRefundUntilPhaseThree.into());
-    }
-
-    fair_launch.number_tokens_burned_for_refunds = fair_launch
-        .number_tokens_burned_for_refunds
-        .checked_add(1)
-        .ok_or(ErrorCode::NumericalOverflowError)?;
-
-    spl_token_burn(TokenBurnParams {
-        mint: token_mint.clone(),
-        source: buyer_token_account.clone(),
-        amount: 1,
-        authority: transfer_authority.clone(),
-        authority_signer_seeds: None,
-        token_program: token_program.clone(),
-    })?;
-
-    if let Some(treasury_mint) = fair_launch.treasury_mint {
-        let treasury_mint_info = &ctx.remaining_accounts[0];
-        let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
-
-        let buyer_payment_account_info = &ctx.remaining_accounts[1];
-        let buyer_payment_account: Account = assert_initialized(&buyer_payment_account_info)?;
-        let treasury_account: Account = assert_initialized(treasury)?;
-
-        if *treasury_mint_info.key != treasury_mint {
-            return Err(ErrorCode::TreasuryMintMismatch.into());
+        if fair_launch.number_tickets_sold
+            > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
+        {
+            return Err(ErrorCode::CannotRefundUntilAllTicketsHaveBeenPunchedOrDropped.into());
         }
 
-        assert_owned_by(treasury_mint_info, &token_program.key)?;
-        assert_owned_by(buyer_payment_account_info, &token_program.key)?;
-        assert_owned_by(treasury, &token_program.key)?;
-
-        if buyer_payment_account.mint != *treasury_mint_info.key {
-            return Err(ErrorCode::TreasuryMintMismatch.into());
+        if !fair_launch.phase_three_started {
+            return Err(ErrorCode::CannotRefundUntilPhaseThree.into());
         }
 
-        // assert is an ATA
-        assert_derivation(
-            &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
-            buyer_payment_account_info,
-            &[
-                buyer.key.as_ref(),
-                token_program.key.as_ref(),
-                &treasury_mint_info.key.as_ref(),
-            ],
-        )?;
+        fair_launch.number_tokens_burned_for_refunds = fair_launch
+            .number_tokens_burned_for_refunds
+            .checked_add(1)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
 
-        if buyer_payment_account.delegate.is_some() {
-            return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
-        }
-
-        if fair_launch.treasury_snapshot.is_none() {
-            fair_launch.treasury_snapshot = Some(treasury_account.amount)
-        }
-
-        let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
-
-        spl_token_transfer(TokenTransferParams {
-            source: treasury.to_account_info(),
-            destination: buyer_payment_account_info.clone(),
-            authority: fair_launch.to_account_info(),
-            authority_signer_seeds: &signer_seeds,
+        spl_token_burn(TokenBurnParams {
+            mint: token_mint.clone(),
+            source: buyer_token_account.clone(),
+            amount: 1,
+            authority: transfer_authority.clone(),
+            authority_signer_seeds: None,
             token_program: token_program.clone(),
-            amount,
         })?;
-    } else {
-        if fair_launch.treasury_snapshot.is_none() {
-            fair_launch.treasury_snapshot = Some(treasury.lamports())
+
+        if let Some(treasury_mint) = fair_launch.treasury_mint {
+            let treasury_mint_info = &ctx.remaining_accounts[0];
+            let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
+
+            let buyer_payment_account_info = &ctx.remaining_accounts[1];
+            let buyer_payment_account: Account = assert_initialized(&buyer_payment_account_info)?;
+            let treasury_account: Account = assert_initialized(treasury)?;
+
+            if *treasury_mint_info.key != treasury_mint {
+                return Err(ErrorCode::TreasuryMintMismatch.into());
+            }
+
+            assert_owned_by(treasury_mint_info, &token_program.key)?;
+            assert_owned_by(buyer_payment_account_info, &token_program.key)?;
+            assert_owned_by(treasury, &token_program.key)?;
+
+            if buyer_payment_account.mint != *treasury_mint_info.key {
+                return Err(ErrorCode::TreasuryMintMismatch.into());
+            }
+
+            // assert is an ATA
+            assert_derivation(
+                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                buyer_payment_account_info,
+                &[
+                    buyer.key.as_ref(),
+                    token_program.key.as_ref(),
+                    &treasury_mint_info.key.as_ref(),
+                ],
+            )?;
+
+            if buyer_payment_account.delegate.is_some() {
+                return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            }
+
+            if fair_launch.treasury_snapshot.is_none() {
+                fair_launch.treasury_snapshot = Some(treasury_account.amount)
+            }
+
+            let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
+
+            spl_token_transfer(TokenTransferParams {
+                source: treasury.to_account_info(),
+                destination: buyer_payment_account_info.clone(),
+                authority: fair_launch.to_account_info(),
+                authority_signer_seeds: &signer_seeds,
+                token_program: token_program.clone(),
+                amount,
+            })?;
+        } else {
+            if fair_launch.treasury_snapshot.is_none() {
+                fair_launch.treasury_snapshot = Some(treasury.lamports())
+            }
+
+            let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
+
+            invoke(
+                &system_instruction::transfer(treasury.key, buyer.key, amount),
+                &[
+                    treasury.to_account_info(),
+                    buyer.clone(),
+                    ctx.accounts.system_program.clone(),
+                ],
+            )?;
         }
 
-        let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
-
-        invoke(
-            &system_instruction::transfer(treasury.key, buyer.key, amount),
-            &[
-                treasury.to_account_info(),
-                buyer.clone(),
-                ctx.accounts.system_program.clone(),
-            ],
-        )?;
+        Ok(())
     }
-
-    Ok(())
 }
-
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
 pub struct InitializeFairLaunch<'info> {
