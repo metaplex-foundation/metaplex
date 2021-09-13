@@ -22,6 +22,7 @@ import {
 } from './helpers/accounts';
 import { chunks, getMultipleAccounts, sleep } from './helpers/various';
 import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
+import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
 program.version('0.0.1');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -761,6 +762,27 @@ program
                   'Punching ticket for buyer',
                   ticket.model.buyer.toBase58(),
                 );
+                const diff =
+                  ticket.model.amount.toNumber() -
+                  //@ts-ignore
+                  fairLaunchObj.currentMedian.toNumber();
+                if (diff > 0) {
+                  console.log(
+                    'Refunding first',
+                    diff,
+                    'to buyer before punching',
+                  );
+                  await adjustTicket({
+                    //@ts-ignore
+                    amountNumber: fairLaunchObj.currentMedian.toNumber,
+                    fairLaunchObj,
+                    adjuster: ticket.model.buyer,
+                    fairLaunch,
+                    fairLaunchTicket: ticket.key,
+                    fairLaunchLotteryBitmap,
+                    anchorProgram,
+                  });
+                }
                 const buyerTokenAccount = await punchTicket({
                   payer: walletKeyPair,
                   puncher: ticket.model.buyer,
@@ -880,6 +902,29 @@ program
       await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
     )[0];
 
+    const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
+      fairLaunchTicket,
+    );
+
+    const diff =
+      //@ts-ignore
+      ticket.amount.toNumber() -
+      //@ts-ignore
+      fairLaunchObj.currentMedian.toNumber();
+    if (diff > 0) {
+      console.log('Refunding first', diff, 'to buyer before punching');
+      await adjustTicket({
+        //@ts-ignore
+        amountNumber: fairLaunchObj.currentMedian.toNumber,
+        fairLaunchObj,
+        //@ts-ignore
+        adjuster: ticket.buyer,
+        fairLaunch,
+        fairLaunchTicket,
+        fairLaunchLotteryBitmap,
+        anchorProgram,
+      });
+    }
     const buyerTokenAccount = await punchTicket({
       puncher: walletKeyPair.publicKey,
       payer: walletKeyPair,
@@ -892,6 +937,65 @@ program
 
     console.log(
       `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+    );
+  });
+
+program
+  .command('burn_fair_launch_tokens_warning_irreversible')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-n, --number <string>', 'number to burn')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch, number } = cmd.opts();
+
+    const actual = parseInt(number);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const myTokenAccount = (
+      await getAtaForMint(
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const instructions = [
+      Token.createBurnInstruction(
+        TOKEN_PROGRAM_ID,
+        //@ts-ignore
+        fairLaunchObj.tokenMint,
+        myTokenAccount,
+        walletKeyPair.publicKey,
+        [],
+        actual,
+      ),
+    ];
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      instructions,
+      [],
+      'single',
+    );
+
+    console.log(
+      `Burned ${actual} tokens in account ${myTokenAccount.toBase58()}.`,
     );
   });
 

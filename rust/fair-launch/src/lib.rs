@@ -600,6 +600,10 @@ pub mod fair_launch {
             return Err(ErrorCode::CannotPunchTicketUntilPhaseThree.into());
         }
 
+        if fair_launch_ticket.amount != fair_launch.current_median {
+            return Err(ErrorCode::CannotPunchTicketUntilEqualized.into());
+        }
+
         let (mask, index) = get_mask_and_index_for_seq(fair_launch_ticket.seq)?;
 
         let is_winner = fair_launch_lottery_bitmap.to_account_info().data.borrow()
@@ -1331,4 +1335,6 @@ pub enum ErrorCode {
     InvalidAntiRugTokenRequirement,
     #[msg("Cannot punch ticket until phase three")]
     CannotPunchTicketUntilPhaseThree,
+    #[msg("Cannot punch ticket until you have refunded the difference between your given price and the median.")]
+    CannotPunchTicketUntilEqualized,
 }
