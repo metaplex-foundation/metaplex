@@ -4,7 +4,7 @@
   "main": "./build/cli.js",
   "license": "MIT",
   "bin": {
-    "metaplex": "./build/cli.js"
+    "metaplex": "./build/candy-machine-cli.js"
   },
   "scripts": {
     "build": "tsc -p ./src",

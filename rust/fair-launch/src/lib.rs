@@ -596,6 +596,10 @@ pub mod fair_launch {
             return Err(ErrorCode::InvalidFairLaunchTicketState.into());
         }
 
+        if !fair_launch.phase_three_started {
+            return Err(ErrorCode::CannotPunchTicketUntilPhaseThree.into());
+        }
+
         let (mask, index) = get_mask_and_index_for_seq(fair_launch_ticket.seq)?;
 
         let is_winner = fair_launch_lottery_bitmap.to_account_info().data.borrow()
@@ -755,13 +759,21 @@ pub mod fair_launch {
                 treasury.lamports(),
             )?;
 
-            invoke(
+            let treasury_signer_seeds = [
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                TREASURY.as_bytes(),
+                &[fair_launch.treasury_bump],
+            ];
+
+            invoke_signed(
                 &system_instruction::transfer(treasury.key, authority.key, amount),
                 &[
                     treasury.to_account_info(),
                     authority.clone(),
                     ctx.accounts.system_program.clone(),
                 ],
+                &[&treasury_signer_seeds],
             )?;
         }
 
@@ -1043,7 +1055,7 @@ pub struct WithdrawFunds<'info> {
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
-    #[account(mut)]
+    #[account(signer, mut)]
     authority: AccountInfo<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
     token_mint: AccountInfo<'info>,
@@ -1317,4 +1329,6 @@ pub enum ErrorCode {
     InvalidReserveBp,
     #[msg("Anti Rug Token Requirement must be less than or equal to number of tokens being sold")]
     InvalidAntiRugTokenRequirement,
+    #[msg("Cannot punch ticket until phase three")]
+    CannotPunchTicketUntilPhaseThree,
 }
