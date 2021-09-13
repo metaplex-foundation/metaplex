@@ -23,8 +23,8 @@ export const mintNFT = async (
   //const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
   //  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   //);
-  const mintAccount = new Account();
-  const tokenAccount = new Account();
+  const mintAccount = new Keypair();
+  const tokenAccount = new Keypair();
 
   // Allocate memory for the account
   const mintRent = await connection.getMinimumBalanceForRentExemption(

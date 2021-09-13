@@ -92,7 +92,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   network: ENDPOINTS[0].network,
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({ children }: { children?: ReactNode }) {
   const [endpoint, setEndpoint] = useLocalStorageState(
     'connectionEndpoint',
     ENDPOINTS[0].endpoint,
@@ -106,7 +106,8 @@ export function ConnectionProvider({ children = undefined as any }) {
   const env =
     ENDPOINTS.find(end => end.endpoint === endpoint)?.name || ENDPOINTS[0].name;
   const network =
-    ENDPOINTS.find(end => end.endpoint === endpoint)?.network || ENDPOINTS[0].network;
+    ENDPOINTS.find(end => end.endpoint === endpoint)?.network ||
+    ENDPOINTS[0].network;
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
@@ -188,7 +189,7 @@ export const getErrorForTransaction = async (
   connection: Connection,
   txid: string,
 ) => {
-  // wait for all confirmation before geting transaction
+  // wait for all confirmation before getting transaction
   await connection.confirmTransaction(txid, 'max');
 
   const tx = await connection.getParsedConfirmedTransaction(txid);
@@ -229,7 +230,7 @@ export async function sendTransactionsWithManualRetry(
   let stopPoint = 0;
   let tries = 0;
   let lastInstructionsLength = null;
-  let toRemoveSigners: Record<number, boolean> = {};
+  const toRemoveSigners: Record<number, boolean> = {};
   instructions = instructions.filter((instr, i) => {
     if (instr.length > 0) {
       return true;
@@ -439,8 +440,8 @@ export const sendTransaction = async (
         message: 'Transaction failed...',
         description: (
           <>
-            {errors.map(err => (
-              <div>{err}</div>
+            {errors.map((err, idx) => (
+              <div key={idx}>{err}</div>
             ))}
             <ExplorerLink address={txid} type="transaction" />
           </>
@@ -634,6 +635,7 @@ async function awaitTransactionSignatureConfirmation(
     err: null,
   };
   let subId = 0;
+  // eslint-disable-next-line no-async-promise-executor
   status = await new Promise(async (resolve, reject) => {
     setTimeout(() => {
       if (done) {
