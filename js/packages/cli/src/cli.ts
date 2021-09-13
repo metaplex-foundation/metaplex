@@ -35,7 +35,6 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
     const {number, keypair, env, cacheName} = cmd.opts();
-    const parsedNumber = parseInt(number);
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -48,14 +47,15 @@ programCommand('upload')
       throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`);
     }
 
-    if (parsedNumber < pngFileCount) {
-      throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
-    }
+    const parsedNumber = parseInt(number);
+    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
+
+    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`)
 
     const startMs = Date.now();
     log.info("started at: " + startMs.toString())
     for (; ;) {
-      const successful = await upload(files, cacheName, env, keypair, parsedNumber);
+      const successful = await upload(files, cacheName, env, keypair, elemCount);
       if (successful) {
         break;
       } else {
