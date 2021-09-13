@@ -29,14 +29,14 @@ programCommand('upload')
     '<directory>',
     'Directory containing images named from 0-n',
     val => {
+      console.log(val)
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
     const {number, keypair, env, cacheName} = cmd.opts();
-    const parsedNumber = parseInt(number);
-
+    let parsedNumber = parseInt(number);
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
     }).length;
@@ -51,21 +51,26 @@ programCommand('upload')
     if (parsedNumber < pngFileCount) {
       throw new Error(`max number (${parsedNumber})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
     }
-
+    //if no number specified, take the whole folder.
+    if (!parsedNumber) {parsedNumber = pngFileCount}
     const startMs = Date.now();
     log.info("started at: " + startMs.toString())
-    for (; ;) {
+    //only try a few times
+    let warn = false;
+    for (let i = 0; i < 10; i++) {
       const successful = await upload(files, cacheName, env, keypair, parsedNumber);
       if (successful) {
+        warn = false;
         break;
       } else {
+        warn = true;
         log.warn("upload was not successful, rerunning");
       }
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
-
+    if(warn) {log.info("not all images have been uplaoded, rerun this step.")}
   });
 
 programCommand('verify')
