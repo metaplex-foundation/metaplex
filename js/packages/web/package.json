@@ -12,7 +12,7 @@
     "@solana/spl-token": "0.1.6",
     "@solana/spl-token-registry": "^0.2.202",
     "@solana/wallet-adapter-base": "^0.5.2",
-    "@solana/wallet-adapter-react": "^0.9.2",
+    "@solana/wallet-adapter-react": "^0.10.2",
     "@solana/web3.js": "^1.21.0",
     "@welldone-software/why-did-you-render": "^6.0.5",
     "bn.js": "^5.1.3",
