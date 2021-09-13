@@ -1,6 +1,5 @@
-import { programIds } from '@oyster/common';
+import { programIds, StringPublicKey, toPublicKey } from '@oyster/common';
 import {
-  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -17,11 +16,11 @@ import {
 } from '.';
 
 export async function initAuctionManagerV2(
-  vault: PublicKey,
-  auctionManagerAuthority: PublicKey,
-  payer: PublicKey,
-  acceptPaymentAccount: PublicKey,
-  store: PublicKey,
+  vault: StringPublicKey,
+  auctionManagerAuthority: StringPublicKey,
+  payer: StringPublicKey,
+  acceptPaymentAccount: StringPublicKey,
+  store: StringPublicKey,
   amountType: TupleNumericType,
   lengthType: TupleNumericType,
   maxRanges: BN,
@@ -44,43 +43,43 @@ export async function initAuctionManagerV2(
 
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: tokenTracker,
+      pubkey: toPublicKey(tokenTracker),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: vault,
+      pubkey: toPublicKey(vault),
       isSigner: false,
       isWritable: false,
     },
 
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: auctionManagerAuthority,
+      pubkey: toPublicKey(auctionManagerAuthority),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: payer,
+      pubkey: toPublicKey(payer),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: acceptPaymentAccount,
+      pubkey: toPublicKey(acceptPaymentAccount),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: store,
+      pubkey: toPublicKey(store),
       isSigner: false,
       isWritable: false,
     },
@@ -98,7 +97,7 @@ export async function initAuctionManagerV2(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );

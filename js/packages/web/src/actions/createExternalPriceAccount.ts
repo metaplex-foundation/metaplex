@@ -1,14 +1,20 @@
 import {
   Keypair,
   Connection,
-  PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { utils, actions } from '@oyster/common';
-
+import {
+  utils,
+  actions,
+  StringPublicKey,
+  toPublicKey,
+  WalletSigner,
+} from '@oyster/common';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import BN from 'bn.js';
 import { QUOTE_MINT } from '../constants';
+
 const {
   updateExternalPriceAccount,
   ExternalPriceAccount,
@@ -18,27 +24,30 @@ const {
 // This command creates the external pricing oracle
 export async function createExternalPriceAccount(
   connection: Connection,
-  wallet: any,
+  wallet: WalletSigner,
 ): Promise<{
-  priceMint: PublicKey;
-  externalPriceAccount: PublicKey;
+  priceMint: StringPublicKey;
+  externalPriceAccount: StringPublicKey;
   instructions: TransactionInstruction[];
   signers: Keypair[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   const epaRentExempt = await connection.getMinimumBalanceForRentExemption(
     MAX_EXTERNAL_ACCOUNT_SIZE,
   );
 
-  let externalPriceAccount = Keypair.generate();
+  const externalPriceAccount = Keypair.generate();
+  const key = externalPriceAccount.publicKey.toBase58();
 
-  let epaStruct = new ExternalPriceAccount({
+  const epaStruct = new ExternalPriceAccount({
     pricePerShare: new BN(0),
-    priceMint: QUOTE_MINT,
+    priceMint: QUOTE_MINT.toBase58(),
     allowedToCombine: true,
   });
 
@@ -47,20 +56,16 @@ export async function createExternalPriceAccount(
     newAccountPubkey: externalPriceAccount.publicKey,
     lamports: epaRentExempt,
     space: MAX_EXTERNAL_ACCOUNT_SIZE,
-    programId: PROGRAM_IDS.vault,
+    programId: toPublicKey(PROGRAM_IDS.vault),
   });
   instructions.push(uninitializedEPA);
   signers.push(externalPriceAccount);
 
-  await updateExternalPriceAccount(
-    externalPriceAccount.publicKey,
-    epaStruct,
-    instructions,
-  );
+  await updateExternalPriceAccount(key, epaStruct, instructions);
 
   return {
-    externalPriceAccount: externalPriceAccount.publicKey,
-    priceMint: QUOTE_MINT,
+    externalPriceAccount: key,
+    priceMint: QUOTE_MINT.toBase58(),
     instructions,
     signers,
   };

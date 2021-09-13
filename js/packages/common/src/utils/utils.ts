@@ -56,14 +56,11 @@ export const findProgramAddress = async (
     'pda-' +
     seeds.reduce((agg, item) => agg + item.toString('hex'), '') +
     programId.toString();
-  let cached = localStorage.getItem(key);
+  const cached = localStorage.getItem(key);
   if (cached) {
     const value = JSON.parse(cached);
 
-    return [new PublicKey(value.key), parseInt(value.nonce)] as [
-      PublicKey,
-      number,
-    ];
+    return [value.key, parseInt(value.nonce)] as [string, number];
   }
 
   const result = await PublicKey.findProgramAddress(seeds, programId);
@@ -80,7 +77,7 @@ export const findProgramAddress = async (
     // ignore
   }
 
-  return result;
+  return [result[0].toBase58(), result[1]] as [string, number];
 };
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
@@ -210,14 +207,14 @@ export const tryParseKey = (key: string): PublicKey | null => {
   }
 };
 
-var SI_SYMBOL = ['', 'k', 'M', 'G', 'T', 'P', 'E'];
+const SI_SYMBOL = ['', 'k', 'M', 'G', 'T', 'P', 'E'] as const;
 
 const abbreviateNumber = (number: number, precision: number) => {
-  let tier = (Math.log10(number) / 3) | 0;
+  const tier = (Math.log10(number) / 3) | 0;
   let scaled = number;
-  let suffix = SI_SYMBOL[tier];
+  const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    let scale = Math.pow(10, tier * 3);
+    const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
 
@@ -290,7 +287,7 @@ export function convert(
     typeof account === 'number' ? account : account.info.amount?.toNumber();
 
   const precision = Math.pow(10, mint?.decimals || 0);
-  let result = (amount / precision) * rate;
+  const result = (amount / precision) * rate;
 
   return result;
 }

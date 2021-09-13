@@ -1,11 +1,12 @@
+import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import { utils, sendTransactionWithRetry } from '@oyster/common';
-
+  utils,
+  sendTransactionWithRetry,
+  StringPublicKey,
+  toPublicKey,
+  WalletSigner,
+} from '@oyster/common';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
 // When you are an artist and you receive royalties, due to the design of the system
 // it is to a permanent ATA WSOL account. This is because the auctioneer can't transfer monies
@@ -15,17 +16,19 @@ import { Token } from '@solana/spl-token';
 // notification. All we do is then transfer the lamports out of the account.
 export async function closePersonalEscrow(
   connection: Connection,
-  wallet: any,
-  ata: PublicKey,
+  wallet: WalletSigner,
+  ata: StringPublicKey,
 ) {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
+  const signers: Keypair[] = [];
 
-  let instructions: TransactionInstruction[] = [
+  const instructions: TransactionInstruction[] = [
     Token.createCloseAccountInstruction(
       PROGRAM_IDS.token,
-      ata,
+      toPublicKey(ata),
       wallet.publicKey,
       wallet.publicKey,
       [],

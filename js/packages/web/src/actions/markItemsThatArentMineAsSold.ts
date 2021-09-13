@@ -1,14 +1,22 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
-import { updatePrimarySaleHappenedViaToken } from '@oyster/common';
+import { Keypair, TransactionInstruction } from '@solana/web3.js';
+import {
+  updatePrimarySaleHappenedViaToken,
+  WalletSigner,
+} from '@oyster/common';
 import { SafetyDepositDraft } from './createAuctionManager';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 const SALE_TRANSACTION_SIZE = 10;
 
 export async function markItemsThatArentMineAsSold(
-  wallet: any,
+  wallet: WalletSigner,
   safetyDepositDrafts: SafetyDepositDraft[],
 ): Promise<{ instructions: TransactionInstruction[][]; signers: Keypair[][] }> {
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const publicKey = wallet.publicKey.toBase58();
+
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   let markSigners: Keypair[] = [];
   let markInstructions: TransactionInstruction[] = [];
@@ -19,7 +27,7 @@ export async function markItemsThatArentMineAsSold(
     const item = safetyDepositDrafts[i].metadata;
 
     if (
-      !item.info.data.creators?.find(c => c.address.equals(wallet.publicKey)) &&
+      !item.info.data.creators?.find(c => c.address === publicKey) &&
       !item.info.primarySaleHappened
     ) {
       console.log(
@@ -29,7 +37,7 @@ export async function markItemsThatArentMineAsSold(
       );
       await updatePrimarySaleHappenedViaToken(
         item.pubkey,
-        wallet.publicKey,
+        publicKey,
         safetyDepositDrafts[i].holding,
         markInstructions,
       );
