@@ -43,6 +43,7 @@ export const Banner = (props: {
           {props.actionComponent}
         </div>
         {props.children}
+        <div className="powered-by"><span>POWERED BY METAPLEX</span></div>
       </div>
     </div>
   );
