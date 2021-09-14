@@ -144,6 +144,51 @@ programCommand('verify')
     saveCache(cacheName, env, cacheContent);
   });
 
+programCommand('verify_price')
+  .option('-p, --price <string>')
+  .option('--cache-path <string>')
+  .action(async (directory, cmd) => {
+    const { keypair, env, price, cacheName, cachePath } = cmd.opts();
+    const lamports = parsePrice(price);
+
+    if (isNaN(lamports)) {
+      return log.error(`verify_price requires a --price to be set`);
+    }
+
+    log.info(`Expected price is: ${lamports}`);
+
+    const cacheContent = loadCache(cacheName, env, cachePath);
+
+    if (!cacheContent) {
+      return log.error(
+        `No cache found, can't continue. Make sure you are in the correct directory where the assets are located or use the --cache-path option.`,
+      );
+    }
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+
+    const [candyMachine] = await getCandyMachineAddress(
+      new PublicKey(cacheContent.program.config),
+      cacheContent.program.uuid,
+    );
+
+    const machine = await anchorProgram.account.candyMachine.fetch(
+      candyMachine,
+    );
+
+    //@ts-ignore
+    const candyMachineLamports = machine.data.price.toNumber();
+
+    log.info(`Candymachine price is: ${candyMachineLamports}`);
+
+    if (lamports != candyMachineLamports) {
+      throw new Error(`Expected price and CandyMachine's price do not match!`);
+    }
+
+    log.info(`Good to go!`);
+  });
+
 programCommand('create_candy_machine')
   .option('-p, --price <string>', 'Price denominated in SOL or spl-token override', '1')
   .option('-t, --spl-token <string>', 'SPL token used to price NFT mint. To use SOL leave this empty.')
