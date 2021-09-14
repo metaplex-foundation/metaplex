@@ -1,12 +1,17 @@
-import { Form, Input, Button, Checkbox } from 'antd';
+import { Form, Input, Button } from 'antd';
 import {useWallet} from '@solana/wallet-adapter-react';
+import {useHistory} from "react-router-dom";
 
 export const SignUpForm = () => {
-  const wallet = useWallet()
+  const wallet = useWallet();
+  const history = useHistory();
   const onFinish = (values: any) => {
     // @ts-ignore
     values.wallet = wallet.publicKey.toString();
     console.log('Success:', values);
+    let token = "sadwaas"
+    sessionStorage.setItem('token', token);
+    history.push('/')
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -36,10 +41,6 @@ export const SignUpForm = () => {
         rules={[{ required: true, message: 'Please input your password!' }]}
       >
         <Input.Password />
-      </Form.Item>
-
-      <Form.Item name="remember" valuePropName="checked" wrapperCol={{ offset: 8, span: 16 }}>
-        <Checkbox>Remember me</Checkbox>
       </Form.Item>
 
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>

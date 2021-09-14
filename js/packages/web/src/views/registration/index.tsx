@@ -7,7 +7,7 @@ export const RegistrationView = () => {
     <>
       <Row>
         <Col span={24}>
-          <Divider>Registration</Divider>
+          <Divider>Sign up</Divider>
         </Col>
       </Row>
       <Row>
