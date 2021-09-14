@@ -2,17 +2,17 @@ import path from "path";
 import { CACHE_PATH } from "./constants";
 import fs from "fs";
 
-export function cachePath(env: string, cacheName: string) {
-  return path.join(CACHE_PATH, `${env}-${cacheName}`);
+export function cachePath(env: string, cacheName: string, cPath: string = CACHE_PATH) {
+  return path.join(cPath, `${env}-${cacheName}`);
 }
 
-export function loadCache(cacheName: string, env: string) {
-  const path = cachePath(env, cacheName);
+export function loadCache(cacheName: string, env: string, cPath: string = CACHE_PATH) {
+  const path = cachePath(env, cacheName, cPath);
   return fs.existsSync(path)
     ? JSON.parse(fs.readFileSync(path).toString())
     : undefined;
 }
 
-export function saveCache(cacheName: string, env: string, cacheContent) {
-  fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
+export function saveCache(cacheName: string, env: string, cacheContent, cPath: string = CACHE_PATH) {
+  fs.writeFileSync(cachePath(env, cacheName, cPath), JSON.stringify(cacheContent));
 }
