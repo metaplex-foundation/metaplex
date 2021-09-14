@@ -99,6 +99,7 @@ export async function upload(
             isMutable: true,
             maxSupply: new BN(0),
             retainAuthority: true,
+            isTemplatedMetadata: false,
             creators: manifest.properties.creators.map(creator => {
               return {
                 address: new PublicKey(creator.address),

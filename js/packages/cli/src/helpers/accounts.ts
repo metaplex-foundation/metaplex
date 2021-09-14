@@ -24,6 +24,7 @@ export const createConfig = async function (
     isMutable: boolean;
     maxSupply: BN;
     retainAuthority: boolean;
+    isTemplatedMetadata: boolean;
     creators: {
       address: PublicKey;
       verified: boolean;

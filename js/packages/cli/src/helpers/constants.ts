@@ -35,7 +35,8 @@ export const CONFIG_ARRAY_START =
   8 + //max supply
   1 + //is mutable
   1 + // retain authority
-  4; // max number of lines;
+  4 + // max number of lines
+  1; // is templated
 export const CONFIG_LINE_SIZE = 4 + 32 + 4 + 200;
 
 export const CACHE_PATH = './.cache';

@@ -95,6 +95,7 @@ pub mod nft_candy_machine {
 
         let config_line = get_config_line(
             &config.to_account_info(),
+            config.data.is_templated_metadata,
             candy_machine.items_redeemed as usize,
         )?;
 
@@ -397,11 +398,11 @@ pub mod nft_candy_machine {
 
         if get_config_count(&ctx.accounts.config.to_account_info().data.borrow())?
             < candy_machine.data.items_available as usize
+            && ctx.accounts.config.data.is_templated_metadata != true
         {
             return Err(ErrorCode::ConfigLineMismatch.into());
         }
-
-        let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), 0) {
+        let _config_line = match get_config_line(&ctx.accounts.config.to_account_info(), ctx.accounts.config.data.is_templated_metadata, 0) {
             Ok(val) => val,
             Err(_) => return Err(ErrorCode::ConfigMustHaveAtleastOneEntry.into()),
         };
@@ -526,7 +527,8 @@ pub const CONFIG_ARRAY_START: usize = 32 + // authority
 8 + //max supply
 1 + // is mutable
 1 + // retain authority
-4; // max number of lines;
+4 + // max number of lines
+1; // is templated;
 
 #[account]
 #[derive(Default)]
@@ -551,6 +553,7 @@ pub struct ConfigData {
     pub is_mutable: bool,
     pub retain_authority: bool,
     pub max_number_of_lines: u32,
+    pub is_templated_metadata: bool,
 }
 
 pub fn get_config_count(data: &Ref<&mut [u8]>) -> core::result::Result<usize, ProgramError> {
@@ -559,8 +562,16 @@ pub fn get_config_count(data: &Ref<&mut [u8]>) -> core::result::Result<usize, Pr
 
 pub fn get_config_line(
     a: &AccountInfo,
-    index: usize,
+    is_templated_metadatas:bool,
+    in_index: usize,
 ) -> core::result::Result<ConfigLine, ProgramError> {
+
+    let requested_index:usize = in_index + 1;
+    let index:usize = match is_templated_metadatas {
+        true => 0,
+        false => in_index
+    };
+
     let arr = a.data.borrow();
 
     let total = get_config_count(&arr)?;
@@ -571,8 +582,14 @@ pub fn get_config_line(
         ..CONFIG_ARRAY_START + 4 + (index + 1) * (CONFIG_LINE_SIZE)];
 
     let config_line: ConfigLine = ConfigLine::try_from_slice(data_array)?;
-
-    Ok(config_line)
+    if is_templated_metadatas {
+        Ok(ConfigLine {
+            name: config_line.name.replace("{i}", requested_index.to_string().as_str()).to_string(),
+            uri: config_line.uri.replace("{i}", requested_index.to_string().as_str()).to_string(),
+        })
+    } else {
+        Ok(config_line)
+    }
 }
 
 pub const CONFIG_LINE_SIZE: usize = 4 + MAX_NAME_LENGTH + 4 + MAX_URI_LENGTH;
