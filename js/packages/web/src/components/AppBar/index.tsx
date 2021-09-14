@@ -9,10 +9,16 @@ import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 import { SwapOutlined } from '@ant-design/icons';
 
+function logOut() {
+  sessionStorage.removeItem('token');
+}
+
 const UserActions = () => {
   const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
+  const token = sessionStorage.getItem('token');
+  let isAuth = !!token;
 
   const canCreate = useMemo(() => {
     return (
@@ -44,8 +50,8 @@ const UserActions = () => {
               </Link>
             </Menu.Item>
             <Menu.Item>
-              <Link to={`/sign-up`}>
-                <Button className="app-btn">Sign up</Button>
+              <Link to={isAuth ? '/' : `/sign-up`}>
+                <Button onClick={logOut} className="app-btn">{isAuth ? 'Logout' : 'Signup'}</Button>
               </Link>
             </Menu.Item>
           </Menu>
