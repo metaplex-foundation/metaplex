@@ -78,6 +78,7 @@ program
     '-pte, --phase-two-end-date <string>',
     'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
   )
+  .option('-ld, --lottery-duration <string>', 'seconds eg 86400')
   .option('-ts, --tick-size <string>', 'tick size', '0.1')
   .option('-n, --number-of-tokens <number>', 'Number of tokens to sell')
   .option(
@@ -101,6 +102,7 @@ program
       selfDestructDate,
       antiRugTokenRequirement,
       antiRugReserveBp,
+      lotteryDuration,
     } = cmd.opts();
 
     const antiRugTokenRequirementNumber = antiRugTokenRequirement
@@ -140,7 +142,10 @@ program
       (phaseTwoEndDate
         ? Date.parse(phaseTwoEndDate)
         : Date.now() + 2 * 86400000) / 1000;
+    const lotteryDurationActual = lotteryDuration ? lotteryDuration : 86400;
 
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
     if (!mint) {
       priceRangeStartNumber = Math.ceil(
         priceRangeStartNumber * LAMPORTS_PER_SOL,
@@ -148,10 +153,24 @@ program
       priceRangeEndNumber = Math.ceil(priceRangeEndNumber * LAMPORTS_PER_SOL);
       tickSizeNumber = Math.ceil(tickSizeNumber * LAMPORTS_PER_SOL);
       feeNumber = Math.ceil(feeNumber * LAMPORTS_PER_SOL);
+    } else {
+      const token = new Token(
+        anchorProgram.provider.connection,
+        //@ts-ignore
+        fairLaunchObj.treasuryMint,
+        TOKEN_PROGRAM_ID,
+        walletKeyPair,
+      );
+
+      const mintInfo = await token.getMintInfo();
+
+      const mantissa = 10 ** mintInfo.decimals;
+      priceRangeStartNumber = Math.ceil(priceRangeStartNumber * mantissa);
+      priceRangeEndNumber = Math.ceil(priceRangeEndNumber * mantissa);
+      tickSizeNumber = Math.ceil(tickSizeNumber * mantissa);
+      feeNumber = Math.ceil(feeNumber * mantissa);
     }
 
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
     const [tokenMint, tokenBump] = await getTokenMint(
       walletKeyPair.publicKey,
       realUuid,
@@ -179,6 +198,7 @@ program
         phaseOneStart: new anchor.BN(phaseOneStartDateActual),
         phaseOneEnd: new anchor.BN(phaseOneEndDateActual),
         phaseTwoEnd: new anchor.BN(phaseTwoEndDateActual),
+        lotteryDuration: new anchor.BN(lotteryDurationActual),
         tickSize: new anchor.BN(tickSizeNumber),
         numberOfTokens: new anchor.BN(parsedNumber),
         fee: new anchor.BN(feeNumber),
@@ -239,6 +259,7 @@ program
     '-poe, --phase-one-end-date <string>',
     'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
   )
+  .option('-ld, --lottery-duration <string>', 'seconds eg 86400')
   .option(
     '-pte, --phase-two-end-date <string>',
     'timestamp - eg "04 Dec 1995 00:12:00 GMT"',
@@ -266,6 +287,7 @@ program
       selfDestructDate,
       antiRugTokenRequirement,
       antiRugReserveBp,
+      lotteryDuration,
     } = cmd.opts();
     const antiRugTokenRequirementNumber = antiRugTokenRequirement
       ? parseInt(antiRugTokenRequirement)
@@ -302,7 +324,10 @@ program
       (phaseTwoEndDate
         ? Date.parse(phaseTwoEndDate)
         : Date.now() + 2 * 86400000) / 1000;
+    const lotteryDurationActual = lotteryDuration ? lotteryDuration : 86400;
 
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
     if (!mint) {
       priceRangeStartNumber = Math.ceil(
         priceRangeStartNumber * LAMPORTS_PER_SOL,
@@ -310,10 +335,24 @@ program
       priceRangeEndNumber = Math.ceil(priceRangeEndNumber * LAMPORTS_PER_SOL);
       tickSizeNumber = Math.ceil(tickSizeNumber * LAMPORTS_PER_SOL);
       feeNumber = Math.ceil(feeNumber * LAMPORTS_PER_SOL);
+    } else {
+      const token = new Token(
+        anchorProgram.provider.connection,
+        //@ts-ignore
+        fairLaunchObj.treasuryMint,
+        TOKEN_PROGRAM_ID,
+        walletKeyPair,
+      );
+
+      const mintInfo = await token.getMintInfo();
+
+      const mantissa = 10 ** mintInfo.decimals;
+      priceRangeStartNumber = Math.ceil(priceRangeStartNumber * mantissa);
+      priceRangeEndNumber = Math.ceil(priceRangeEndNumber * mantissa);
+      tickSizeNumber = Math.ceil(tickSizeNumber * mantissa);
+      feeNumber = Math.ceil(feeNumber * mantissa);
     }
 
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
     const tokenMint = (
       await getTokenMint(walletKeyPair.publicKey, realUuid)
     )[0];
@@ -327,6 +366,7 @@ program
         phaseOneStart: new anchor.BN(phaseOneStartDateActual),
         phaseOneEnd: new anchor.BN(phaseOneEndDateActual),
         phaseTwoEnd: new anchor.BN(phaseTwoEndDateActual),
+        lotteryDuration: new anchor.BN(lotteryDurationActual),
         tickSize: new anchor.BN(tickSizeNumber),
         numberOfTokens: new anchor.BN(parsedNumber),
         fee: new anchor.BN(feeNumber),
@@ -385,7 +425,15 @@ program
     } else {
       const transferAuthority = anchor.web3.Keypair.generate();
       signers.push(transferAuthority);
+      const token = new Token(
+        anchorProgram.provider.connection,
+        //@ts-ignore
+        fairLaunchObj.treasuryMint,
+        TOKEN_PROGRAM_ID,
+        walletKeyPair,
+      );
 
+      const mintInfo = await token.getMintInfo();
       instructions.push(
         Token.createApproveInstruction(
           TOKEN_PROGRAM_ID,
@@ -394,8 +442,10 @@ program
           transferAuthority.publicKey,
           walletKeyPair.publicKey,
           [],
-          //@ts-ignore
-          amountNumber + fairLaunchObj.data.fees.toNumber(),
+
+          amountNumber * 10 ** mintInfo.decimals +
+            //@ts-ignore
+            fairLaunchObj.data.fees.toNumber(),
         ),
       );
 
@@ -476,7 +526,46 @@ program
 
     console.log('Created seq');
   });
+/*
+program
+  .command('create_dummy_payment_mint')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch, amount } = cmd.opts();
+    let amountNumber = parseFloat(amount);
 
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+    const [fairLaunchTicket, bump] = await getFairLaunchTicket(
+      //@ts-ignore
+      fairLaunchObj.tokenMint,
+      walletKeyPair.publicKey,
+    );
+
+    const remainingAccounts = [];
+    const instructions = [];
+    const signers = [];
+
+    console.log(
+      `create fair launch ticket Done: ${fairLaunchTicket.toBase58()}. Trying to create seq now...we may or may not get a validator with data on chain. Either way, your ticket is secure.`,
+    );
+
+    console.log('Created seq');
+  });*/
 async function adjustTicket({
   amountNumber,
   fairLaunchObj,
@@ -485,9 +574,11 @@ async function adjustTicket({
   fairLaunchTicket,
   fairLaunchLotteryBitmap,
   anchorProgram,
+  payer,
 }: {
   amountNumber: number;
   fairLaunchObj: any;
+  payer: anchor.web3.Keypair;
   adjuster: anchor.web3.PublicKey;
   fairLaunch: anchor.web3.PublicKey;
   fairLaunchTicket: anchor.web3.PublicKey;
@@ -504,7 +595,14 @@ async function adjustTicket({
   } else {
     const transferAuthority = anchor.web3.Keypair.generate();
     signers.push(transferAuthority);
+    const token = new Token(
+      anchorProgram.provider.connection,
+      fairLaunchObj.treasuryMint,
+      TOKEN_PROGRAM_ID,
+      payer,
+    );
 
+    const mintInfo = await token.getMintInfo();
     if (amountNumber > 0) {
       instructions.push(
         Token.createApproveInstruction(
@@ -515,7 +613,8 @@ async function adjustTicket({
           adjuster,
           [],
           //@ts-ignore
-          amountNumber + fairLaunchObj.data.fees.toNumber(),
+          amountNumber * 10 ** mintInfo.decimals +
+            fairLaunchObj.data.fees.toNumber(),
         ),
       );
     }
@@ -604,8 +703,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await adjustTicket({
       amountNumber,
@@ -615,6 +715,7 @@ program
       fairLaunchTicket,
       fairLaunchLotteryBitmap,
       anchorProgram,
+      payer: walletKeyPair,
     });
   });
 
@@ -760,6 +861,7 @@ program
                   fairLaunchTicket: ticket.key,
                   fairLaunchLotteryBitmap,
                   anchorProgram,
+                  payer: walletKeyPair,
                 });
               } else {
                 const myByte =
@@ -795,6 +897,7 @@ program
                       fairLaunchTicket: ticket.key,
                       fairLaunchLotteryBitmap,
                       anchorProgram,
+                      payer: walletKeyPair,
                     });
                   }
                   const buyerTokenAccount = await punchTicket({
@@ -825,6 +928,7 @@ program
                     fairLaunchTicket: ticket.key,
                     fairLaunchLotteryBitmap,
                     anchorProgram,
+                    payer: walletKeyPair,
                   });
                   console.log('Refunded.');
                 }
@@ -930,8 +1034,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -954,6 +1059,7 @@ program
         fairLaunchTicket,
         fairLaunchLotteryBitmap,
         anchorProgram,
+        payer: walletKeyPair,
       });
     }
     const buyerTokenAccount = await punchTicket({
@@ -1053,14 +1159,16 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
         fairLaunch,
         fairLaunchLotteryBitmap,
         authority: walletKeyPair.publicKey,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
     });
 
@@ -1133,6 +1241,35 @@ program
     });
 
     console.log(`Now you rich, give me some.`);
+  });
+
+program
+  .command('restart_phase_2')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    await anchorProgram.rpc.restartPhaseTwo({
+      accounts: {
+        fairLaunch,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+    });
+
+    console.log(`Clock restart on phase 2`);
   });
 
 program
@@ -1452,6 +1589,7 @@ program
                 fairLaunch,
                 fairLaunchLotteryBitmap,
                 authority: walletKeyPair.publicKey,
+                clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
               },
             },
           );
@@ -1638,19 +1776,31 @@ program
     );
 
     console.log(
-      'Phase One Start',
+      'Phase One Start   ',
       //@ts-ignore
       new Date(fairLaunchObj.data.phaseOneStart.toNumber() * 1000),
     );
     console.log(
-      'Phase One End  ',
+      'Phase One End     ',
       //@ts-ignore
       new Date(fairLaunchObj.data.phaseOneEnd.toNumber() * 1000),
     );
     console.log(
-      'Phase Two End  ',
+      'Phase Two End     ',
       //@ts-ignore
       new Date(fairLaunchObj.data.phaseTwoEnd.toNumber() * 1000),
+    );
+
+    console.log(
+      'Lottery Period End',
+      //@ts-ignore
+      new Date(
+        //@ts-ignore
+        (fairLaunchObj.data.phaseTwoEnd.toNumber() +
+          //@ts-ignore
+          fairLaunchObj.data.lotteryDuration.toNumber()) *
+          1000,
+      ),
     );
 
     console.log(

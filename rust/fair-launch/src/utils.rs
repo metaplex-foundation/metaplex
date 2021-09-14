@@ -207,6 +207,10 @@ pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
         return Err(ErrorCode::InvalidPriceRanges.into());
     }
 
+    if data.lottery_duration < 0 {
+        return Err(ErrorCode::InvalidLotteryDuration.into());
+    }
+
     if let Some(anti_rug) = &data.anti_rug_setting {
         if anti_rug.reserve_bp > 10000 {
             return Err(ErrorCode::InvalidReserveBp.into());

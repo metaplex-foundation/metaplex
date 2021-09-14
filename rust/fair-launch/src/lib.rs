@@ -155,7 +155,12 @@ pub mod fair_launch {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let fair_launch_lottery_bitmap = &ctx.accounts.fair_launch_lottery_bitmap;
 
-        if fair_launch_lottery_bitmap.bitmap_ones != fair_launch.data.number_of_tokens {
+        if fair_launch_lottery_bitmap.bitmap_ones
+            != std::cmp::min(
+                fair_launch.data.number_of_tokens,
+                fair_launch.number_tickets_sold,
+            )
+        {
             return Err(ErrorCode::LotteryBitmapOnesMustEqualNumberOfTicketsSold.into());
         }
 
@@ -894,6 +899,35 @@ pub mod fair_launch {
 
         Ok(())
     }
+
+    pub fn restart_phase_two<'info>(
+        ctx: Context<'_, '_, '_, 'info, RestartPhaseTwo<'info>>,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let clock = &mut ctx.accounts.clock;
+
+        if fair_launch.phase_three_started {
+            return Err(ErrorCode::PhaseThreeAlreadyStarted.into());
+        }
+
+        if clock.unix_timestamp < fair_launch.data.phase_two_end {
+            return Err(ErrorCode::PhaseTwoHasntEndedYet.into());
+        }
+
+        if clock.unix_timestamp
+            < fair_launch
+                .data
+                .phase_two_end
+                .checked_add(fair_launch.data.lottery_duration)
+                .ok_or(ErrorCode::NumericalOverflowError)?
+        {
+            return Err(ErrorCode::LotteryDurationHasntEndedYet.into());
+        }
+
+        fair_launch.data.phase_two_end = clock.unix_timestamp + fair_launch.data.lottery_duration;
+
+        Ok(())
+    }
 }
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
@@ -936,6 +970,14 @@ pub struct StartPhaseThree<'info> {
     fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
     #[account(signer)]
     authority: AccountInfo<'info>,
+}
+
+/// Restarts phase two with as much time as the lottery duration had if duration is passed
+#[derive(Accounts)]
+pub struct RestartPhaseTwo<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    clock: Sysvar<'info, Clock>,
 }
 
 /// Can only create the fair launch lottery bitmap after phase 1 has ended.
@@ -1112,6 +1154,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // phase one start
 8 + // phase one end
 8 + // phase two end
+8 + // lottery duration
 8 + // tick size
 8 + // number of tokens
 8 + // fee
@@ -1166,6 +1209,7 @@ pub struct FairLaunchData {
     pub phase_one_start: i64,
     pub phase_one_end: i64,
     pub phase_two_end: i64,
+    pub lottery_duration: i64,
     pub tick_size: u64,
     pub number_of_tokens: u64,
     pub fee: u64,
@@ -1336,4 +1380,12 @@ pub enum ErrorCode {
     CannotPunchTicketUntilPhaseThree,
     #[msg("Cannot punch ticket until you have refunded the difference between your given price and the median.")]
     CannotPunchTicketUntilEqualized,
+    #[msg("Invalid lottery duration")]
+    InvalidLotteryDuration,
+    #[msg("Phase two already started")]
+    PhaseThreeAlreadyStarted,
+    #[msg("Phase two hasnt ended yet")]
+    PhaseTwoHasntEndedYet,
+    #[msg("Lottery duration hasnt ended yet")]
+    LotteryDurationHasntEndedYet,
 }
