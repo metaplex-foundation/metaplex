@@ -6,6 +6,7 @@ import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 
 import { fromUTF8Array, parsePrice } from './helpers/various';
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
 import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
@@ -144,15 +145,53 @@ programCommand('verify')
   });
 
 programCommand('create_candy_machine')
-  .option('-p, --price <string>', 'SOL price', '1')
+  .option('-p, --price <string>', 'Price denominated in SOL or spl-token override', '1')
+  .option('-t, --spl-token <string>', 'SPL token used to price NFT mint. To use SOL leave this empty.')
+  .option('-t, --spl-token-account <string>', 'SPL token account that receives mint payments. Only required if spl-token is specified.')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName } = cmd.opts();
+    const { keypair, env, price, cacheName, splToken, splTokenAccount } = cmd.opts();
 
-    const lamports = parsePrice(price);
+    let parsedPrice = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+
+    let wallet = walletKeyPair.publicKey;
+    const remainingAccounts = [];
+    if (splToken || splTokenAccount) {
+      if (!splToken) {
+        throw new Error("If spl-token-account is set, spl-token must also be set")
+      }
+      const splTokenKey = new PublicKey(splToken);
+      const splTokenAccountKey = new PublicKey(splTokenAccount);
+      if (!splTokenAccount) {
+        throw new Error("If spl-token is set, spl-token-account must also be set")
+      }
+
+      const token = new Token(
+        anchorProgram.provider.connection,
+        splTokenKey,
+        TOKEN_PROGRAM_ID,
+        walletKeyPair
+      );
+
+      const mintInfo = await token.getMintInfo();
+      if (!mintInfo.isInitialized) {
+        throw new Error(`The specified spl-token is not initialized`);
+      }
+      const tokenAccount = await token.getAccountInfo(splTokenAccountKey);
+      if (!tokenAccount.isInitialized) {
+        throw new Error(`The specified spl-token-account is not initialized`);
+      }
+      if (!tokenAccount.mint.equals(splTokenKey)) {
+        throw new Error(`The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`);
+      }
+
+      wallet = splTokenAccountKey;
+      parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
+      remainingAccounts.push({ pubkey: splTokenKey, isWritable: false, isSigner: false });
+    }
 
     const config = new PublicKey(cacheContent.program.config);
     const [candyMachine, bump] = await getCandyMachineAddress(
@@ -163,14 +202,14 @@ programCommand('create_candy_machine')
       bump,
       {
         uuid: cacheContent.program.uuid,
-        price: new anchor.BN(lamports),
+        price: new anchor.BN(parsedPrice),
         itemsAvailable: new anchor.BN(Object.keys(cacheContent.items).length),
         goLiveDate: null,
       },
       {
         accounts: {
           candyMachine,
-          wallet: walletKeyPair.publicKey,
+          wallet,
           config: config,
           authority: walletKeyPair.publicKey,
           payer: walletKeyPair.publicKey,
@@ -178,6 +217,7 @@ programCommand('create_candy_machine')
           rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
         signers: [],
+        remainingAccounts,
       },
     );
 
@@ -215,12 +255,14 @@ programCommand('set_start_date')
   });
 
 programCommand('mint_one_token')
+  .option('-t, --spl-token-account <string>', 'SPL token account to payfrom')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName} = cmd.opts();
+    const {keypair, env, cacheName, splTokenAccount} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    const tx = await mint(keypair, env, configAddress);
+    const splTokenAccountKey = splTokenAccount ? new PublicKey(splTokenAccount) :  undefined;
+    const tx = await mint(keypair, env, configAddress, splTokenAccountKey);
 
     log.info('Done', tx);
   });

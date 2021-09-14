@@ -48,6 +48,6 @@ export function fromUTF8Array(data: number[]) {
   return str;
 }
 
-export function parsePrice(price) {
-  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
+export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
+  return Math.ceil(parseFloat(price) * mantissa);
 }
