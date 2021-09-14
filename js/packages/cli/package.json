@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@project-serum/anchor": "^0.13.2",
+    "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",
     "bn.js": "^5.2.0",
     "borsh": "^0.4.0",
