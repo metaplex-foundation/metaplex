@@ -177,30 +177,6 @@ export const CurrentUserBadge = (props: {
                     Disconnect
                   </Button>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    marginBottom: 10,
-                  }}
-                >
-                  <a href="#/artworks">
-                    <Button
-                      className="metaplex-button-default"
-                      style={btnStyle}
-                    >
-                      My items
-                    </Button>
-                  </a>
-                  &nbsp;&nbsp;
-                  <a href="#/artists">
-                    <Button
-                      className="metaplex-button-default"
-                      style={btnStyle}
-                    >
-                      Creators
-                    </Button>
-                  </a>
-                </div>
                 <UserActions />
               </div>
             }

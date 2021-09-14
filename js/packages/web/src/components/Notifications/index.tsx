@@ -491,7 +491,7 @@ export function Notifications() {
   if (notifications.length === 0) return justContent;
   else
     return (
-      <Badge count={notifications.length} style={{ backgroundColor: 'white' }}>
+      <Badge count={notifications.length} style={{ backgroundColor: 'white', color: 'black' }}>
         {justContent}
       </Badge>
     );

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
 import { ConnectButton } from '@oyster/common';
@@ -6,21 +6,20 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
-import { useMeta } from '../../contexts';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { CurrentUserBadge, Cog } from '../CurrentUserBadge';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    // <Link to={`/artwork`} key={'artwork'}>
-    //   <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
-    // </Link>,
-    // <Link to={`/artists`} key={'artists'}>
-    //   <Button className="app-btn">Creators</Button>
-    // </Link>,
-    // <Link to={`/artistAlley`} key={'artistalley'}>
-    //   <Button className="app-btn">Artist Alley</Button>
-    // </Link>,
+    <Link to={`/`} key={'explore'}>
+      <Button className="app-btn">Explore</Button>
+    </Link>,
+    <Link to={`/artworks`} key={'artwork'}>
+      <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
+    </Link>,
+    <Link to={`/artists`} key={'artists'}>
+      <Button className="app-btn">Creators</Button>
+    </Link>,
   ];
 };
 
