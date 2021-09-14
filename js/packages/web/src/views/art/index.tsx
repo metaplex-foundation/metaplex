@@ -9,7 +9,6 @@ import {
   Skeleton,
   List,
   Card,
-  AutoComplete,
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from '../../hooks';
