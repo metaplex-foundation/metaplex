@@ -1917,10 +1917,10 @@
   resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-phantom/-/wallet-adapter-phantom-0.5.3.tgz#193cd7cf03ab131dd15497468dac8e483dec5285"
   integrity sha512-DQLBTdu10oXu9HFtzI0CXPPeqUnLEh+UQpgZyAhF6ZqHDofUmwGpLvGcuGXrRbYPEkGpd8tjA4eHNtejncUhvA==
 
-"@solana/wallet-adapter-react@^0.10.2":
-  version "0.10.2"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.10.2.tgz#88351f663476a4343ed080a2985c7d6a40561d3c"
-  integrity sha512-RI/5R2rctLFPBcVo0A3isCCc2HlYM2AfKEFP4MWC6hQXRVCCqE5WiPFn6zsUuYoFwFiQ/B3gft1lEeOhXLTPhg==
+"@solana/wallet-adapter-react@^0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.11.0.tgz#b5bf5a578c2e511cefe8d914d9200f4834815662"
+  integrity sha512-rJl+EPB2teAbxhuM0NbnpUEOaRc9rb6Kq65CQtNMGZBI3VhKb6Np8zus4jRdbO0R+sUKad75mmEPfyhWUQTT0A==
   dependencies:
     "@types/react" "^17.0.16"
 
@@ -1963,10 +1963,10 @@
     "@toruslabs/openlogin-ed25519" "^0.10.1"
     "@types/keccak" "^3.0.1"
 
-"@solana/wallet-adapter-wallets@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-wallets/-/wallet-adapter-wallets-0.8.0.tgz#e62f4bd4ed0833f1985dc2787d6be11eedad4bdb"
-  integrity sha512-OZsi7kA0jKJ49J4o3L57N3GXO/CjNDjl49r7wnC2yDFTZSwkT8AOYcjtKFBSTVQYvOTypRlQeFrX+i0Cc81mKQ==
+"@solana/wallet-adapter-wallets@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-wallets/-/wallet-adapter-wallets-0.9.0.tgz#7e44978808dc0deebf288bcf71e35bd52b48b4ba"
+  integrity sha512-Fn3GCX6ZZl+QBwtzJWWQkBDg0T2e42vMKRx4UKAh1uC6qHYWrojwWNxWz+yhENNOSFbMC0pQZubHQuXcA/uRcQ==
   dependencies:
     "@solana/wallet-adapter-bitpie" "^0.1.2"
     "@solana/wallet-adapter-blocto" "^0.1.1"
