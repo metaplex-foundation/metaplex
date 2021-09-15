@@ -52,7 +52,7 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-} from '../../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import {AuctionManagerV1} from "../../models/metaplex/deprecatedStates";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
