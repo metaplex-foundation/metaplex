@@ -25,7 +25,6 @@ pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str = "lottery";
-pub const ASSOCIATED_TOKEN_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
@@ -324,7 +323,7 @@ pub mod fair_launch {
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_token_account_info,
                 &[
                     buyer.key.as_ref(),
@@ -490,7 +489,7 @@ pub mod fair_launch {
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_token_account_info,
                 &[
                     buyer.key.as_ref(),
@@ -627,7 +626,7 @@ pub mod fair_launch {
         // assert is an ATA owned by the buyer on the fair launch ticket, has no delegates, is a token account,
         // etc Since this is a permissionless endpoint (for cranks)
         assert_derivation(
-            &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+            &spl_associated_token_account::id(),
             buyer_token_account_info,
             &[
                 fair_launch_ticket.buyer.as_ref(),
@@ -725,7 +724,7 @@ pub mod fair_launch {
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 authority_token_account_info,
                 &[
                     authority.key.as_ref(),
@@ -853,8 +852,14 @@ pub mod fair_launch {
             }
 
             // assert is an ATA
+            msg!(
+                "keys {} {} {}",
+                buyer.key,
+                token_program.key,
+                treasury_mint_info.key
+            );
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_payment_account_info,
                 &[
                     buyer.key.as_ref(),
