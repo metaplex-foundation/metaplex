@@ -270,13 +270,15 @@ programCommand('create_candy_machine')
     log.info(`create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`);
   });
 
-programCommand('set_start_date')
+programCommand('update_candy_machine')
   .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, cacheName } = cmd.opts();
+    const { keypair, env, date, price, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
-    const secondsSinceEpoch = (date ? Date.parse(date) : Date.now()) / 1000;
+    const secondsSinceEpoch = date ? Date.parse(date) / 1000 : null;
+    const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
@@ -286,8 +288,8 @@ programCommand('set_start_date')
       cacheContent.program.uuid,
     );
     const tx = await anchorProgram.rpc.updateCandyMachine(
-      null,
-      new anchor.BN(secondsSinceEpoch),
+      lamports ? new anchor.BN(lamports) : null,
+      secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
       {
         accounts: {
           candyMachine,
@@ -296,7 +298,9 @@ programCommand('set_start_date')
       },
     );
 
-    log.info('set_start_date Done', secondsSinceEpoch, tx);
+    if (date) log.info(` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`)
+    if (lamports) log.info(` - updated price: ${lamports} lamports (${price} SOL)`)
+    log.info('updated_candy_machine Done', tx);
   });
 
 programCommand('mint_one_token')
