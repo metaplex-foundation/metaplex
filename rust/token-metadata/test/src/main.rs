@@ -599,22 +599,18 @@ fn pull_llama_arweave_uris(app_matches: &ArgMatches, payer: Keypair, client: Rpc
         .unwrap();
 }
 
-fn update_llamas(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
+fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let update_authority = read_keypair_file(
         app_matches
             .value_of("update_authority")
             .unwrap_or_else(|| app_matches.value_of("keypair").unwrap()),
     )
     .unwrap();
-    let offset = app_matches
-        .value_of("offset")
-        .unwrap()
-        .parse::<i32>()
-        .unwrap();
+
     let metadata_program = spl_token_metadata::id();
 
     let participation_trophy =
-        Pubkey::from_str("GA92VgVwPVqmA9g8XWHXJSB95nRYzsdCh5LZFDAsPmyB").unwrap();
+        Pubkey::from_str("AFe2hrpDKdLuq2auxyBX8iumjyBsLFnEc68pNVXFUSSv").unwrap();
 
     let metadata_seeds = &[
         PREFIX.as_bytes(),
@@ -660,175 +656,120 @@ fn update_llamas(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let mut file = File::open(app_matches.value_of("file").unwrap()).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
-    let keys: Vec<(String, String)> = serde_json::from_str(&contents).unwrap();
+    let keys: Vec<(String, u8)> = serde_json::from_str(&contents).unwrap();
     let token_key = spl_token::id();
     let len = keys.len();
-    let mut i = 0;
-    let tuco_mod = 25;
-    let mut tuco_counter = 1;
+    let mut i = 2121;
     while i < len {
         println!("At {} out of {}", i, len);
         let key = &keys[i];
+        let mut j: usize = 0;
+        while j < key.1.into() {
+            let mut signers = vec![&update_authority];
+            let mut instructions = vec![];
 
-        let arweave_txn = &key.0;
-        let metadata_key = Pubkey::from_str(&key.1).unwrap();
-        let metadata_account = client.get_account(&metadata_key).unwrap();
-        let metadata: Metadata = try_from_slice_unchecked(&metadata_account.data).unwrap();
+            let new_mint_key = Keypair::new();
+            let added_token_account = Keypair::new();
+            let new_mint_pub = new_mint_key.pubkey();
 
-        let new_data = Data {
-            name: metadata.data.name,
-            symbol: metadata.data.symbol,
-            uri: "https://www.arweave.net/".to_owned() + &arweave_txn,
-            seller_fee_basis_points: metadata.data.seller_fee_basis_points,
-            creators: metadata.data.creators,
-        };
+            println!("Granting nft {} to key {}", j, key.0);
 
-        let mut signers = vec![&update_authority];
-        let mut instructions = vec![update_metadata_accounts(
-            metadata_program,
-            metadata_key,
-            update_authority.pubkey(),
-            None,
-            Some(new_data),
-            Some(true),
-        )];
-
-        let new_mint_key = Keypair::new();
-        let added_token_account = Keypair::new();
-        let new_mint_pub = new_mint_key.pubkey();
-        // remove if you want tucos.
-        if i.checked_rem(tuco_mod) == Some(0) && false {
-            println!("Granting participation");
-            let filters = vec![
-                RpcFilterType::DataSize(u64::try_from(spl_token::state::Account::LEN).unwrap()),
-                RpcFilterType::Memcmp(Memcmp {
-                    offset: 0,
-                    bytes: MemcmpEncodedBytes::Binary(metadata.mint.to_string()),
-                    encoding: None,
-                }),
+            let metadata_seeds = &[
+                PREFIX.as_bytes(),
+                &metadata_program.as_ref(),
+                &new_mint_pub.as_ref(),
             ];
-            let all_accounts = client
-                .get_program_accounts_with_config(
+            let (new_metadata_key, _) =
+                Pubkey::find_program_address(metadata_seeds, &metadata_program);
+
+            let edition_seeds = &[
+                PREFIX.as_bytes(),
+                &metadata_program.as_ref(),
+                &new_mint_pub.as_ref(),
+                EDITION.as_bytes(),
+            ];
+            let (edition_key, _) = Pubkey::find_program_address(edition_seeds, &metadata_program);
+
+            signers.push(&new_mint_key);
+            signers.push(&added_token_account);
+            instructions.push(create_account(
+                &payer.pubkey(),
+                &new_mint_key.pubkey(),
+                client
+                    .get_minimum_balance_for_rent_exemption(Mint::LEN)
+                    .unwrap(),
+                Mint::LEN as u64,
+                &token_key,
+            ));
+            instructions.push(
+                initialize_mint(
                     &token_key,
-                    RpcProgramAccountsConfig {
-                        filters: Some(filters),
-                        account_config: RpcAccountInfoConfig {
-                            encoding: Some(solana_account_decoder::UiAccountEncoding::Base64),
-                            ..RpcAccountInfoConfig::default()
-                        },
-                        ..RpcProgramAccountsConfig::default()
-                    },
-                )
-                .unwrap();
-            let mut account_target = None;
-            for acct in all_accounts {
-                let token = Account::unpack_unchecked(&acct.1.data).unwrap();
-                if token.amount > 0 {
-                    account_target = Some(token.owner);
-                }
-            }
-
-            if let Some(acct_targ) = account_target {
-                let metadata_seeds = &[
-                    PREFIX.as_bytes(),
-                    &metadata_program.as_ref(),
-                    &new_mint_pub.as_ref(),
-                ];
-                let (new_metadata_key, _) =
-                    Pubkey::find_program_address(metadata_seeds, &metadata_program);
-
-                let edition_seeds = &[
-                    PREFIX.as_bytes(),
-                    &metadata_program.as_ref(),
-                    &new_mint_pub.as_ref(),
-                    EDITION.as_bytes(),
-                ];
-                let (edition_key, _) =
-                    Pubkey::find_program_address(edition_seeds, &metadata_program);
-
-                signers.push(&new_mint_key);
-                signers.push(&added_token_account);
-                instructions.push(create_account(
-                    &payer.pubkey(),
                     &new_mint_key.pubkey(),
-                    client
-                        .get_minimum_balance_for_rent_exemption(Mint::LEN)
-                        .unwrap(),
-                    Mint::LEN as u64,
-                    &token_key,
-                ));
-                instructions.push(
-                    initialize_mint(
-                        &token_key,
-                        &new_mint_key.pubkey(),
-                        &payer.pubkey(),
-                        Some(&payer.pubkey()),
-                        0,
-                    )
-                    .unwrap(),
-                );
-                instructions.push(create_account(
                     &payer.pubkey(),
-                    &added_token_account.pubkey(),
-                    client
-                        .get_minimum_balance_for_rent_exemption(Account::LEN)
-                        .unwrap(),
-                    Account::LEN as u64,
+                    Some(&payer.pubkey()),
+                    0,
+                )
+                .unwrap(),
+            );
+            instructions.push(create_account(
+                &payer.pubkey(),
+                &added_token_account.pubkey(),
+                client
+                    .get_minimum_balance_for_rent_exemption(Account::LEN)
+                    .unwrap(),
+                Account::LEN as u64,
+                &token_key,
+            ));
+
+            instructions.push(
+                initialize_account(
                     &token_key,
-                ));
+                    &added_token_account.pubkey(),
+                    &new_mint_key.pubkey(),
+                    &Pubkey::from_str(&key.0).unwrap(),
+                )
+                .unwrap(),
+            );
+            instructions.push(
+                mint_to(
+                    &token_key,
+                    &new_mint_key.pubkey(),
+                    &added_token_account.pubkey(),
+                    &payer.pubkey(),
+                    &[&payer.pubkey()],
+                    1,
+                )
+                .unwrap(),
+            );
 
-                instructions.push(
-                    initialize_account(
-                        &token_key,
-                        &added_token_account.pubkey(),
-                        &new_mint_key.pubkey(),
-                        &acct_targ,
-                    )
-                    .unwrap(),
-                );
-                instructions.push(
-                    mint_to(
-                        &token_key,
-                        &new_mint_key.pubkey(),
-                        &added_token_account.pubkey(),
-                        &payer.pubkey(),
-                        &[&payer.pubkey()],
-                        1,
-                    )
-                    .unwrap(),
-                );
+            instructions.push(mint_new_edition_from_master_edition_via_token(
+                metadata_program,
+                new_metadata_key,
+                edition_key,
+                master_edition_key,
+                new_mint_key.pubkey(),
+                payer.pubkey(),
+                payer.pubkey(),
+                payer.pubkey(),
+                existing_token_account,
+                Pubkey::from_str(&key.0).unwrap(),
+                master_metadata_key,
+                master_metadata.mint,
+                master_edition.supply as u64 + i as u64 + j as u64 + 1,
+            ));
 
-                instructions.push(mint_new_edition_from_master_edition_via_token(
-                    metadata_program,
-                    new_metadata_key,
-                    edition_key,
-                    master_edition_key,
-                    new_mint_key.pubkey(),
-                    payer.pubkey(),
-                    payer.pubkey(),
-                    payer.pubkey(),
-                    existing_token_account,
-                    acct_targ,
-                    master_metadata_key,
-                    master_metadata.mint,
-                    (offset as u64 + i as u64),
-                ));
-            }
-        }
+            let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
+            let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
-        let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
-        let recent_blockhash = client.get_recent_blockhash().unwrap().0;
-
-        transaction.sign(&signers, recent_blockhash);
-        match client.send_transaction(&transaction) {
-            Ok(_) => {
-                i += 1;
-                if i.checked_rem(tuco_mod) == Some(0) {
-                    tuco_counter += 1;
+            transaction.sign(&signers, recent_blockhash);
+            match client.send_transaction(&transaction) {
+                Ok(_) => {
+                    i += 1;
+                    j += 1
                 }
-            }
-            Err(err) => {
-                println!("Transaction failed. Retry {:?}", err);
+                Err(err) => {
+                    println!("Transaction failed. Retry {:?}", err);
+                }
             }
         }
     }
@@ -1521,20 +1462,13 @@ fn main() {
                 )
                         .about("")
         ).subcommand(
-            SubCommand::with_name("update_llamas").arg(
+            SubCommand::with_name("airdrop").arg(
                 Arg::with_name("file")
                     .long("file")
                     .value_name("FILE")
                     .takes_value(true)
                     .required(true)
                     .help("file"),
-            ).arg(
-                Arg::with_name("offset")
-                    .long("offset")
-                    .value_name("OFFSET")
-                    .takes_value(true)
-                    .required(true)
-                    .help("offset"),
             )
                     .about("")
     ).subcommand(
@@ -1684,8 +1618,8 @@ fn main() {
         ("pull_llama_arweave_uris", Some(arg_matches)) => {
             pull_llama_arweave_uris(arg_matches, payer, client);
         }
-        ("update_llamas", Some(arg_matches)) => {
-            update_llamas(arg_matches, payer, client);
+        ("airdrop", Some(arg_matches)) => {
+            airdrop(arg_matches, payer, client);
         }
         ("create_new_llamas", Some(arg_matches)) => {
             create_new_llamas(arg_matches, payer, client);
