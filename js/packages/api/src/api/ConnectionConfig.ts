@@ -3,6 +3,7 @@ import {
   Connection,
   GetProgramAccountsConfig,
 } from '@solana/web3.js';
+import after from 'lodash/after';
 import { getEmptyMetaState } from '@oyster/common/dist/lib/contexts/meta/getEmptyMetaState';
 import {
   MetaState,
@@ -56,49 +57,6 @@ export interface IEvent {
 interface IConfigWithData extends IConfig {
   data: AccountAndPubkey[];
   subscrtionId: number | undefined;
-}
-
-async function createPipelineExecutor<T>(
-  data: IterableIterator<T>,
-  executor: (d: T, index: number) => Promise<void>,
-  {
-    delay,
-    jobsCount,
-    name,
-  }: { delay: number; jobsCount: number; name?: string },
-) {
-  let index = 0;
-  let complete = 0;
-  async function next() {
-    const iter = data.next();
-    if (iter.done) {
-      return;
-    }
-    index++;
-    await executor(iter.value, index);
-    complete++;
-    if (complete % 100 === 0) {
-      console.log(`${name ? name + ': ' : ''}${complete} tasks was processes`);
-    }
-    if (delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-    await next();
-  }
-  const result = new Array<Promise<void>>(jobsCount);
-  for (let i = 0; i < jobsCount; i++) {
-    result[i] = next();
-  }
-  await Promise.all(result);
-}
-
-function iterateObject<T>(obj: Record<string, T>): IterableIterator<T> {
-  function* gen() {
-    for (const key in obj) {
-      yield obj[key];
-    }
-  }
-  return gen();
 }
 
 export class ConnectionConfig {
@@ -283,34 +241,37 @@ export class ConnectionConfig {
   ];
 
   private async loadData(emitter?: Emitter) {
-    console.log(`⏱ ${this.name} - start loading data`);
+    console.log(`⏱  ${this.name} - start loading data`);
     const preloading = ConnectionConfig.CONFIG.map(config =>
       this.loadDataByConfig(config, emitter),
     );
     const processingData = await Promise.all(preloading);
-    console.log(`⏱ ${this.name} - data loaded and start processing data`);
+    console.log(`⏱  ${this.name} - data loaded and start processing data`);
     const state: MetaState = getEmptyMetaState();
 
-    // processing loading data, It may take a lot of time
-    await createPipelineExecutor(
-      processingData.values(),
-      async config => {
-        await createPipelineExecutor(
-          config.data.values(),
-          async item => {
-            config.fn(
-              item,
-              (prop, key, value) =>
-                ConnectionConfig.setter(state, prop, key, value),
-              true,
-            );
-          },
-          { delay: 0, jobsCount: 2, name: `⛏ ${this.name} - data` },
-        );
-      },
-      { delay: 0, jobsCount: 1 },
-    );
-    console.log(`⏱ ${this.name} - start processing metadata`);
+    const arr = processingData.map(async config => {
+      await createPipelineExecutor(
+        config.data.values(),
+        async item => {
+          config.fn(
+            item,
+            (prop, key, value) =>
+              ConnectionConfig.setter(state, prop, key, value),
+            true,
+          );
+        },
+        {
+          delay: 0,
+          jobsCount: 2,
+          sequence: 10,
+          completeGroup: 10000,
+          name: `⛏  ${this.name} - data`,
+        },
+      );
+    });
+    await Promise.all(arr);
+
+    console.log(`⏱  ${this.name} - start processing metadata`);
     // processing metadata
     await createPipelineExecutor(
       iterateObject(state.metadataByMint),
@@ -320,7 +281,9 @@ export class ConnectionConfig {
       {
         delay: 0,
         jobsCount: 3,
-        name: `⛏ ${this.name} - metadata`,
+        name: `⛏  ${this.name} - metadata`,
+        sequence: 10,
+        completeGroup: 10000,
       },
     );
     return state;
@@ -359,4 +322,70 @@ export class ConnectionConfig {
       data,
     };
   }
+}
+
+async function createPipelineExecutor<T>(
+  data: IterableIterator<T>,
+  executor: (d: T, index: number, cb?: (err?: Error) => void) => void,
+  {
+    delay,
+    jobsCount,
+    name,
+    sequence = 0,
+    completeGroup = 100,
+  }: {
+    delay: number;
+    jobsCount: number;
+    name?: string;
+    sequence?: number;
+    completeGroup?: number;
+  },
+) {
+  let index = 0;
+  let complete = 0;
+
+  function execute<T>(iter: IteratorResult<T, any>) {
+    index++;
+    const numIndex = index;
+    executor(iter.value, numIndex);
+    complete++;
+    if (name && complete % completeGroup === 0) {
+      console.log(`${name}: ${complete} tasks were processed`);
+    }
+  }
+
+  async function next() {
+    const iter = data.next();
+    if (iter.done) {
+      return;
+    }
+    if (sequence <= 1) {
+      execute(iter);
+    } else {
+      const exec = after(sequence, () => execute(iter));
+      for (let i = 0; i < sequence; i++) {
+        exec();
+      }
+    }
+    if (delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } else {
+      await Promise.resolve();
+    }
+    await next();
+  }
+  const result = new Array<Promise<void>>(jobsCount);
+  for (let i = 0; i < jobsCount; i++) {
+    result[i] = next();
+  }
+  await Promise.all(result);
+}
+
+function iterateObject<T>(obj: Record<string, T>): IterableIterator<T> {
+  function* gen() {
+    for (const key in obj) {
+      yield obj[key];
+    }
+  }
+  return gen();
 }
