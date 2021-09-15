@@ -672,7 +672,6 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
         /*if j < cache_keys.len() {
             j = cache_keys[i].1 as usize;
         }*/
-
         while j < key.1.into() {
             let mut signers = vec![&update_authority];
             let mut instructions = vec![];
@@ -772,17 +771,14 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
 
             transaction.sign(&signers, recent_blockhash);
             match client.send_transaction(&transaction) {
-                Ok(_) => {
-                    i += 1;
-                    j += 1
-                }
+                Ok(_) => j += 1,
                 Err(err) => {
                     println!("Transaction failed. No retry! {:?}", err);
-                    i += 1;
                     j += 1
                 }
             }
         }
+        i += 1
     }
 }
 
