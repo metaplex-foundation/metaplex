@@ -1,7 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import Countdown from "react-countdown";
-import { Button, CircularProgress, Slider, Snackbar } from "@material-ui/core";
+import { Box, CircularProgress, Slider, Snackbar } from "@material-ui/core";
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
+import Grid from '@material-ui/core/Grid';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+
 import Alert from "@material-ui/lab/Alert";
 
 import * as anchor from "@project-serum/anchor";
@@ -20,7 +31,9 @@ import {
 
 import {
   FairLaunchState,
-  getFairLaunchState
+  getFairLaunchState,
+  purchaseTicket,
+  withdrawFunds
 } from "./fair-launch";
 
 import { AnchorProgram, formatNumber, toDate } from './utils';
@@ -32,6 +45,57 @@ const CounterText = styled.span``; // add your styles here
 const MintContainer = styled.div``; // add your styles here
 
 const MintButton = styled(Button)``; // add your styles here
+
+
+function getStepContent(step: number, min?: number, max?: number) {
+  switch (step) {
+    case 0:
+      return 'We are preparing for fair launch please wait for countdown to finish.';
+    case 1:
+      return `Welcome to Fair Launch Registration phase.
+              During this phase of fair launch, you can bid SOL funds between ${min || 0} and ${max || 0}.
+              Once phase ends median price will be calculated to decide a price of this mint.
+              If you don't like that price you will be able to withdraw your bid.`;
+    case 2:
+      return 'An ad group contains one or more ads which target a shared set of keywords.';
+    case 3:
+      return 'An ad group contains one or more ads which target a shared set of keywords.';
+    case 4:
+      return `Try out different ad text to see what brings in the most customers,
+              and learn how to enhance your ads using features like ad extensions.
+              If you run into any problems with your ads, find out how to tell if
+              they're running and how to resolve approval issues.`;
+    default:
+      return 'Unknown step';
+  }
+}
+
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: any;
+  value: any;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box p={3}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
 
 export interface HomeProps {
   candyMachineId: anchor.web3.PublicKey;
@@ -49,6 +113,29 @@ const Home = (props: HomeProps) => {
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
+  const [selectedTab, setSelectedTab] = useState(0);
+  const wallet = useWallet();
+
+  const anchorWallet = useMemo(() => {
+    if (
+      !wallet ||
+      !wallet.publicKey ||
+      !wallet.signAllTransactions ||
+      !wallet.signTransaction
+    ) {
+      return;
+    }
+
+    return {
+      publicKey: wallet.publicKey,
+      signAllTransactions: wallet.signAllTransactions,
+      signTransaction: wallet.signTransaction,
+    } as anchor.Wallet;
+  }, [wallet, wallet.publicKey]);
+
+  const onTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+    setSelectedTab(newValue);
+  };
 
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
@@ -57,13 +144,7 @@ const Home = (props: HomeProps) => {
   });
 
   const [fairLaunchState, setFairLaunchState] = useState<FairLaunchState>();
-
   const [startDate, setStartDate] = useState(new Date(props.startDate));
-  // const [startDate, setStartDate] = useState(new Date(props.startDate));
-  // const [startDate, setStartDate] = useState(new Date(props.startDate));
-  // const [startDate, setStartDate] = useState(new Date(props.startDate));
-
-  const wallet = useWallet();
   const [candyMachine, setCandyMachine] = useState<AnchorProgram>();
 
   const onMint = async () => {
@@ -135,28 +216,21 @@ const Home = (props: HomeProps) => {
   useEffect(() => {
     (async () => {
       if (wallet?.publicKey) {
-        const balance = await props.connection.getBalance(wallet.publicKey);
-        setBalance(balance / LAMPORTS_PER_SOL);
+        try {
+          const balance = await props.connection.getBalance(wallet.publicKey);
+          setBalance(balance / LAMPORTS_PER_SOL);
+        } catch {
+          // ignore connection error
+        }
       }
     })();
   }, [wallet, props.connection]);
 
   useEffect(() => {
     (async () => {
-      if (
-        !wallet ||
-        !wallet.publicKey ||
-        !wallet.signAllTransactions ||
-        !wallet.signTransaction
-      ) {
+      if(!anchorWallet) {
         return;
       }
-
-      const anchorWallet = {
-        publicKey: wallet.publicKey,
-        signAllTransactions: wallet.signAllTransactions,
-        signTransaction: wallet.signTransaction,
-      } as anchor.Wallet;
 
       try {
         const state = await getFairLaunchState(anchorWallet,
@@ -185,7 +259,7 @@ const Home = (props: HomeProps) => {
           console.log('Problem getting candy machine state');
         }
     })();
-  }, [wallet, props.candyMachineId, props.connection]);
+  }, [anchorWallet, props.candyMachineId, props.connection]);
 
   const min = formatNumber.asNumber(fairLaunchState?.data.priceRangeStart);
   const max = formatNumber.asNumber(fairLaunchState?.data.priceRangeEnd);
@@ -210,17 +284,10 @@ const Home = (props: HomeProps) => {
       value: max || 0,
       label: `${max} SOL`,
     },
-  ].filter(_ => _ !== undefined) as any;
-  return (
-    <main>
-      <p>Fair Launch phase 1</p>
+  ].filter(_ => _ !== undefined && _.value !== 0) as any;
 
-      <p>Phase 1 starts at: {toDate(fairLaunchState?.data.phaseOneStart)?.toString()}</p>
-      <p>Phase 1 ends at: {toDate(fairLaunchState?.data.phaseOneEnd)?.toString()}</p>
-      <p>Phase 2 ends at: {toDate(fairLaunchState?.data.phaseTwoEnd)?.toString()}</p>
-
-      <p>Current median price: {formatNumber.format(median)}</p>
-
+  const actionRender = (title: string, onClick: () => void) => {
+    return <>
       <Slider
         min={min}
         marks={marks}
@@ -230,10 +297,80 @@ const Home = (props: HomeProps) => {
         onChange={(ev, val) => setContributed(val as any)}
         valueLabelDisplay="auto"
         style={{ width: 200, marginLeft: 20 }} />
+      <p>Balance: {balance?.toFixed(2) || '--'} SOL</p>
 
-      <p>Total raised</p>
-      <p>Your contribution</p>
+      <MintButton
+        onClick={onClick}
+        variant="contained"
+      >
+        {title}
+      </MintButton>
+    </>
+  }
 
+  const onDeposit = () => {
+    if (!anchorWallet) {
+      return;
+    }
+
+    console.log('deposit');
+
+    purchaseTicket(
+      contributed,
+      anchorWallet,
+      fairLaunchState
+    );
+  };
+
+  const onWithdraw = () => {
+    if (!anchorWallet) {
+      return;
+    }
+
+    console.log('withdraw');
+
+    withdrawFunds(
+      contributed,
+      anchorWallet,
+      fairLaunchState
+    );
+  };
+
+  return (
+    <main>
+      <Grid container spacing={3}>
+        <Grid item md={6}>
+          <Paper>
+            <Tabs
+              value={selectedTab}
+              onChange={onTabChange}
+              indicatorColor="primary"
+              textColor="primary"
+              variant="scrollable"
+              scrollButtons="auto"
+              aria-label="scrollable auto tabs example"
+            >
+              <Tab label="Deposit" />
+              <Tab label="Withdraw" />
+            </Tabs>
+            <TabPanel value={selectedTab} index={0}>
+              {actionRender('Deposit', onDeposit)}
+            </TabPanel>
+            <TabPanel value={selectedTab} index={1}>
+              {actionRender('Withdraw', onWithdraw)}
+            </TabPanel>
+
+            <p>Phase 1 starts at: {toDate(fairLaunchState?.data.phaseOneStart)?.toString()}</p>
+            <p>Phase 1 ends at: {toDate(fairLaunchState?.data.phaseOneEnd)?.toString()}</p>
+            <p>Phase 2 ends at: {toDate(fairLaunchState?.data.phaseTwoEnd)?.toString()}</p>
+
+            <p>Current median price: {formatNumber.format(median)}</p>
+
+            <p>Total raised</p>
+            <p>Your contribution</p>
+          </Paper>
+        </Grid>
+      </Grid>
 
       <p>GO LIVE: {startDate.toString()}</p>
       <p>TODO: add timer</p>
