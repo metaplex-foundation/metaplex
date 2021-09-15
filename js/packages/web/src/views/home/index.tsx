@@ -12,7 +12,7 @@ export const HomeView = () => {
   
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {showAuctions ? 'Home page (TODO)' : <Redirect to="/auction" />}
+      {showAuctions ? 'Home page (TODO)' : <Redirect to="/auctions" />}
     </Layout>
   );
 };
