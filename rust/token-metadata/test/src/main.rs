@@ -657,13 +657,22 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
     let keys: Vec<(String, u8)> = serde_json::from_str(&contents).unwrap();
+
+    /* let mut file = File::open(app_matches.value_of("cache").unwrap()).unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).unwrap();
+    let cache_keys: Vec<(String, u8)> = serde_json::from_str(&contents).unwrap();*/
     let token_key = spl_token::id();
     let len = keys.len();
-    let mut i = 2121;
+    let mut i = 0;
     while i < len {
         println!("At {} out of {}", i, len);
         let key = &keys[i];
         let mut j: usize = 0;
+        /*if j < cache_keys.len() {
+            j = cache_keys[i].1 as usize;
+        }*/
+
         while j < key.1.into() {
             let mut signers = vec![&update_authority];
             let mut instructions = vec![];
@@ -755,20 +764,22 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
                 Pubkey::from_str(&key.0).unwrap(),
                 master_metadata_key,
                 master_metadata.mint,
-                master_edition.supply as u64 + i as u64 + j as u64 + 1,
+                0 + i as u64 + j as u64 + 1,
             ));
 
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
             transaction.sign(&signers, recent_blockhash);
-            match client.send_transaction(&transaction) {
+            match client.send_and_confirm_transaction(&transaction) {
                 Ok(_) => {
                     i += 1;
                     j += 1
                 }
                 Err(err) => {
-                    println!("Transaction failed. Retry {:?}", err);
+                    println!("Transaction failed. No retry! {:?}", err);
+                    i += 1;
+                    j += 1
                 }
             }
         }
