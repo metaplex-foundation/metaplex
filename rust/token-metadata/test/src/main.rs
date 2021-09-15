@@ -771,7 +771,7 @@ fn airdrop(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
 
             transaction.sign(&signers, recent_blockhash);
-            match client.send_and_confirm_transaction(&transaction) {
+            match client.send_transaction(&transaction) {
                 Ok(_) => {
                     i += 1;
                     j += 1
