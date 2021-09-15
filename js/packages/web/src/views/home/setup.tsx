@@ -1,11 +1,15 @@
-import { useConnection, useStore, useWalletModal } from '@oyster/common';
+import {
+  useConnection,
+  useStore,
+  useWalletModal,
+  WhitelistedCreator,
+} from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { useMeta } from '../../contexts';
-import { WhitelistedCreator } from '../../models/metaplex';
 import { SetupVariables } from '../../components/SetupVariables';
 
 export const SetupView = () => {

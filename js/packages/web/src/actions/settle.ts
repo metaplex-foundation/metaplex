@@ -16,8 +16,8 @@ import {
 
 import { AuctionView } from '../hooks';
 
-import { claimBid } from '../models/metaplex/claimBid';
-import { emptyPaymentAccount } from '../models/metaplex/emptyPaymentAccount';
+import { claimBid } from '@oyster/common/dist/lib/models/metaplex/claimBid';
+import { emptyPaymentAccount } from '@oyster/common/dist/lib/models/metaplex/emptyPaymentAccount';
 import { QUOTE_MINT } from '../constants';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
