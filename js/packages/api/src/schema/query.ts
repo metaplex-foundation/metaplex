@@ -14,7 +14,7 @@ export const Query = queryType({
     t.field('creatorsCount', {
       type: 'Int',
       resolve: (_, args, { api }) =>
-        api.state.then(({ creators }) => Object.values(creators).length),
+        api.state.then(({ creators }) => creators.size),
     });
     t.field('artworksCount', {
       type: 'Int',
@@ -24,7 +24,7 @@ export const Query = queryType({
     t.field('auctionsCount', {
       type: 'Int',
       resolve: (_, args, { api }) =>
-        api.state.then(({ auctions }) => Object.values(auctions).length),
+        api.state.then(({ auctions }) => auctions.size),
     });
     t.field('store', {
       type: Store,

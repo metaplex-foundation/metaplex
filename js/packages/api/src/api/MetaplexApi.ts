@@ -28,7 +28,7 @@ export class MetaplexApi {
 
   async getStore(storeId: string) {
     const { stores } = await this.state;
-    const store = stores[storeId];
+    const store = stores.get(storeId);
     return store ? wrapPubkey(store) : null;
   }
 
@@ -37,7 +37,7 @@ export class MetaplexApi {
       this.state,
       this.getStore(storeId),
     ]);
-    const creators = Object.values(state.creators);
+    const creators = state.creators.values();
 
     const creatorsByStore = [];
     if (!store) return [];

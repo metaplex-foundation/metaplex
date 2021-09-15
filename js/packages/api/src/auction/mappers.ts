@@ -1,5 +1,9 @@
 import { AuctionData } from '@oyster/common/dist/lib/actions/auction';
-import type { MetaState, ParsedAccount } from '@oyster/common';
+import type {
+  MetaState,
+  ParsedAccount,
+  SafetyDepositBox,
+} from '@oyster/common';
 import {
   processAccountsIntoAuctionView,
   getAuctionBids,
@@ -7,24 +11,26 @@ import {
 import { MetaplexKey } from '@oyster/common/dist/lib/models/metaplex/index';
 import { mapInfo, wrapPubkey } from '../utils/mapInfo';
 import { Auction } from '../sourceTypes';
+import { SMetaState } from '../api';
 
-export const getAuctionMetadata = (auction: Auction, state: MetaState) => {
-  const safetyDeposits = Object.values(state.safetyDepositBoxesByVaultAndIndex);
-
+export const getAuctionMetadata = (auction: Auction, state: SMetaState) => {
   const vaultId = auction.manager.vault;
-  const boxes = safetyDeposits.filter(box => {
-    return box.info.vault === vaultId;
-  });
-
+  const boxes: ParsedAccount<SafetyDepositBox>[] = [];
+  for (const box of state.safetyDepositBoxesByVaultAndIndex.values()) {
+    if (box.info.vault === vaultId) {
+      boxes.push(box);
+    }
+  }
   return boxes
     .map(box => {
-      let metadata = state.metadataByMint[box.info.tokenMint];
+      let metadata = state.metadataByMint.get(box.info.tokenMint);
       if (auction.manager.key === MetaplexKey.AuctionManagerV1 && !metadata) {
         // Means is a limited edition v1, so the tokenMint is the printingMint
-        const masterEdition =
-          state.masterEditionsByPrintingMint[box.info.tokenMint];
+        const masterEdition = state.masterEditionsByPrintingMint.get(
+          box.info.tokenMint,
+        );
         if (masterEdition) {
-          metadata = state.metadataByMasterEdition[masterEdition.pubkey];
+          metadata = state.metadataByMasterEdition.get(masterEdition.pubkey);
         }
       }
       return metadata;
@@ -32,14 +38,14 @@ export const getAuctionMetadata = (auction: Auction, state: MetaState) => {
     .filter(Boolean);
 };
 
-export const getAuctionThumbnail = (auction: Auction, state: MetaState) => {
+export const getAuctionThumbnail = (auction: Auction, state: SMetaState) => {
   const metadata = getAuctionMetadata(auction, state)[0];
   return metadata ? wrapPubkey(metadata) : null;
 };
 
-export const getAuctionHighestBid = (auction: Auction, state: MetaState) => {
+export const getAuctionHighestBid = (auction: Auction, state: SMetaState) => {
   const bids = getAuctionBids(
-    Object.values(state.bidderMetadataByAuctionAndBidder),
+    Array.from(state.bidderMetadataByAuctionAndBidder.values()),
     auction.pubkey,
   );
   return bids?.[0];

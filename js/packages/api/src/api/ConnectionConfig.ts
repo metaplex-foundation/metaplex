@@ -4,7 +4,6 @@ import {
   GetProgramAccountsConfig,
 } from '@solana/web3.js';
 import after from 'lodash/after';
-import { getEmptyMetaState } from '@oyster/common/dist/lib/contexts/meta/getEmptyMetaState';
 import {
   MetaState,
   ProcessAccountsFunc,
@@ -59,36 +58,69 @@ interface IConfigWithData extends IConfig {
   subscrtionId: number | undefined;
 }
 
+type Convertor<T> = {
+  [K in keyof T]: Map<keyof T[K], T[K][keyof T[K]]>;
+};
+
+export type SMetaState = Convertor<Omit<MetaState, 'store' | 'metadata'>> &
+  Pick<MetaState, 'store' | 'metadata'>;
+
+export const getEmptyMetaState = (): SMetaState => ({
+  metadata: [],
+  metadataByMint: new Map(),
+  masterEditions: new Map(),
+  masterEditionsByPrintingMint: new Map(),
+  masterEditionsByOneTimeAuthMint: new Map(),
+  metadataByMasterEdition: new Map(),
+  editions: new Map(),
+  auctionManagersByAuction: new Map(),
+  bidRedemptions: new Map(),
+  auctions: new Map(),
+  auctionDataExtended: new Map(),
+  vaults: new Map(),
+  payoutTickets: new Map(),
+  store: null,
+  whitelistedCreatorsByCreator: new Map(),
+  bidderMetadataByAuctionAndBidder: new Map(),
+  bidderPotsByAuctionAndBidder: new Map(),
+  safetyDepositBoxesByVaultAndIndex: new Map(),
+  prizeTrackingTickets: new Map(),
+  safetyDepositConfigsByAuctionManagerAndIndex: new Map(),
+  bidRedemptionV2sByAuctionManagerAndWinningIndex: new Map(),
+  stores: new Map(),
+  creators: new Map(),
+});
+
 export class ConnectionConfig {
   static setter(
-    state: MetaState,
-    prop: keyof MetaState,
+    state: SMetaState,
+    prop: keyof SMetaState,
     key: string,
     value: ParsedAccount<any>,
   ) {
     if (prop === 'store') {
-      state[prop] = value;
+      state.store = value;
     } else if (prop !== 'metadata') {
-      state[prop][key] = value;
+      state[prop].set(key, value);
     }
     return state;
   }
 
   static async metadataByMintUpdater(
     metadata: ParsedAccount<Metadata>,
-    state: MetaState,
+    state: SMetaState,
   ) {
     const key = metadata.info.mint;
     await metadata.info.init();
     const masterEditionKey = metadata.info?.masterEdition;
     if (masterEditionKey) {
-      state.metadataByMasterEdition[masterEditionKey] = metadata;
+      state.metadataByMasterEdition.set(masterEditionKey, metadata);
     }
-    state.metadataByMint[key] = metadata;
+    state.metadataByMint.set(key, metadata);
     state.metadata.push(metadata);
   }
 
-  private state?: MetaState;
+  private state?: SMetaState;
   readonly connection: Connection;
   constructor(
     public readonly name: string,
@@ -240,14 +272,14 @@ export class ConnectionConfig {
     },
   ];
 
-  private async loadData(emitter?: Emitter) {
+  private async loadData(emitter?: Emitter): Promise<SMetaState> {
     console.log(`⏱  ${this.name} - start loading data`);
     const preloading = ConnectionConfig.CONFIG.map(config =>
       this.loadDataByConfig(config, emitter),
     );
     const processingData = await Promise.all(preloading);
     console.log(`⏱  ${this.name} - data loaded and start processing data`);
-    const state: MetaState = getEmptyMetaState();
+    const state: SMetaState = getEmptyMetaState();
 
     const arr = processingData.map(async config => {
       await createPipelineExecutor(
@@ -272,9 +304,10 @@ export class ConnectionConfig {
     await Promise.all(arr);
 
     console.log(`⏱  ${this.name} - start processing metadata`);
+
     // processing metadata
     await createPipelineExecutor(
-      iterateObject(state.metadataByMint),
+      state.metadataByMint.values(),
       async metadata => {
         await ConnectionConfig.metadataByMintUpdater(metadata, state);
       },
@@ -379,13 +412,4 @@ async function createPipelineExecutor<T>(
     result[i] = next();
   }
   await Promise.all(result);
-}
-
-function iterateObject<T>(obj: Record<string, T>): IterableIterator<T> {
-  function* gen() {
-    for (const key in obj) {
-      yield obj[key];
-    }
-  }
-  return gen();
 }

@@ -1,19 +1,22 @@
-import type { ParsedAccount, Metadata, MetaState } from '@oyster/common';
+import type { ParsedAccount, Metadata } from '@oyster/common';
 import {
   getAuctionState,
   AuctionViewState,
 } from '@oyster/common/dist/lib/models/auction';
+import { SMetaState } from '../api';
 import { NexusGenInputs } from '../generated/typings';
 import { Auction } from '../sourceTypes';
 import { wrapPubkey } from '../utils/mapInfo';
 import { getAuctionMetadata } from './mappers';
 
 export const getAuctionById = (
-  state: MetaState,
+  state: SMetaState,
   auctionId: string,
 ): Auction | null => {
-  const auction = state.auctions[auctionId];
-  const manager = state.auctionManagersByAuction[auction?.pubkey];
+  const auction = state.auctions.get(auctionId);
+  const manager = auction?.pubkey
+    ? state.auctionManagersByAuction.get(auction?.pubkey)
+    : undefined;
   if (!auction || !manager) {
     return null;
   }
@@ -24,16 +27,16 @@ export const getAuctionById = (
 };
 
 export const getAuctionsByStoreId = (
-  { auctionManagersByAuction, auctions }: MetaState,
+  { auctionManagersByAuction, auctions }: SMetaState,
   storeId?: string | null,
 ): Auction[] => {
-  return Object.values(auctionManagersByAuction)
+  return Array.from(auctionManagersByAuction.values())
     .filter(manager => {
-      const auction = auctions[manager.info.auction];
+      const auction = auctions.get(manager.info.auction);
       return auction && (!storeId || manager.info.store === storeId);
     })
     .reduce((memo, manager) => {
-      const auction = auctions[manager.info.auction];
+      const auction = auctions.get(manager.info.auction);
       if (auction) {
         memo[memo.length] = {
           ...wrapPubkey(auction),
@@ -46,7 +49,7 @@ export const getAuctionsByStoreId = (
 
 export const filterByState = (
   { state }: Pick<NexusGenInputs['AuctionsInput'], 'state'>,
-  metastate: MetaState,
+  metastate: SMetaState,
 ) => {
   const isResaleMint = (mint: ParsedAccount<Metadata>) =>
     mint.info.primarySaleHappened;
@@ -80,17 +83,21 @@ export const filterByState = (
 
 export const filterByParticipant = (
   { participantId }: Pick<NexusGenInputs['AuctionsInput'], 'participantId'>,
-  state: MetaState,
+  state: SMetaState,
 ) => {
-  const bidders = Object.values(state.bidderMetadataByAuctionAndBidder);
+  const bidders = Array.from(state.bidderMetadataByAuctionAndBidder.values());
   return (auction: Auction) => {
-    return (
-      !participantId ||
-      bidders.some(
-        ({ info }) =>
-          info.auctionPubkey == auction.pubkey &&
-          info.bidderPubkey === participantId,
-      )
-    );
+    if (!participantId) {
+      return true;
+    }
+    for (const { info } of bidders) {
+      if (
+        info.auctionPubkey == auction.pubkey &&
+        info.bidderPubkey === participantId
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 };
