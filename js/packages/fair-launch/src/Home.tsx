@@ -30,7 +30,7 @@ import {
 } from "./candy-machine";
 
 import {
-  FairLaunchState,
+  FairLaunchAccount,
   getFairLaunchState,
   purchaseTicket,
   withdrawFunds
@@ -143,7 +143,7 @@ const Home = (props: HomeProps) => {
     severity: undefined,
   });
 
-  const [fairLaunchState, setFairLaunchState] = useState<FairLaunchState>();
+  const [fairLaunch, setFairLaunch] = useState<FairLaunchAccount>();
   const [startDate, setStartDate] = useState(new Date(props.startDate));
   const [candyMachine, setCandyMachine] = useState<AnchorProgram>();
 
@@ -215,16 +215,16 @@ const Home = (props: HomeProps) => {
 
   useEffect(() => {
     (async () => {
-      if (wallet?.publicKey) {
+      if (anchorWallet?.publicKey) {
         try {
-          const balance = await props.connection.getBalance(wallet.publicKey);
+          const balance = await props.connection.getBalance(anchorWallet.publicKey);
           setBalance(balance / LAMPORTS_PER_SOL);
         } catch {
           // ignore connection error
         }
       }
     })();
-  }, [wallet, props.connection]);
+  }, [anchorWallet, props.connection]);
 
   useEffect(() => {
     (async () => {
@@ -238,7 +238,7 @@ const Home = (props: HomeProps) => {
           props.connection
         );
 
-        setFairLaunchState(state);
+        setFairLaunch(state);
 
         console.log()
       } catch {
@@ -261,10 +261,10 @@ const Home = (props: HomeProps) => {
     })();
   }, [anchorWallet, props.candyMachineId, props.connection]);
 
-  const min = formatNumber.asNumber(fairLaunchState?.data.priceRangeStart);
-  const max = formatNumber.asNumber(fairLaunchState?.data.priceRangeEnd);
-  const step = formatNumber.asNumber(fairLaunchState?.data.tickSize);
-  const median = formatNumber.asNumber(fairLaunchState?.currentMedian);
+  const min = formatNumber.asNumber(fairLaunch?.state.data.priceRangeStart);
+  const max = formatNumber.asNumber(fairLaunch?.state.data.priceRangeEnd);
+  const step = formatNumber.asNumber(fairLaunch?.state.data.tickSize);
+  const median = formatNumber.asNumber(fairLaunch?.state.currentMedian);
   const marks = [
     {
       value: min || 0,
@@ -318,7 +318,7 @@ const Home = (props: HomeProps) => {
     purchaseTicket(
       contributed,
       anchorWallet,
-      fairLaunchState
+      fairLaunch,
     );
   };
 
@@ -332,7 +332,7 @@ const Home = (props: HomeProps) => {
     withdrawFunds(
       contributed,
       anchorWallet,
-      fairLaunchState
+      fairLaunch
     );
   };
 
@@ -360,9 +360,9 @@ const Home = (props: HomeProps) => {
               {actionRender('Withdraw', onWithdraw)}
             </TabPanel>
 
-            <p>Phase 1 starts at: {toDate(fairLaunchState?.data.phaseOneStart)?.toString()}</p>
-            <p>Phase 1 ends at: {toDate(fairLaunchState?.data.phaseOneEnd)?.toString()}</p>
-            <p>Phase 2 ends at: {toDate(fairLaunchState?.data.phaseTwoEnd)?.toString()}</p>
+            <p>Phase 1 starts at: {toDate(fairLaunch?.state.data.phaseOneStart)?.toString()}</p>
+            <p>Phase 1 ends at: {toDate(fairLaunch?.state.data.phaseOneEnd)?.toString()}</p>
+            <p>Phase 2 ends at: {toDate(fairLaunch?.state.data.phaseTwoEnd)?.toString()}</p>
 
             <p>Current median price: {formatNumber.format(median)}</p>
 

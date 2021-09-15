@@ -12,10 +12,13 @@ export const FAIR_LAUNCH_PROGRAM = new anchor.web3.PublicKey(
   "7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF"
 );
 
+export interface FairLaunchAccount {
+  id: anchor.web3.PublicKey;
+  program: anchor.Program;
+  state: FairLaunchState;
+}
 
 export interface FairLaunchState {
-  anchorProgram: AnchorProgram;
-
   authority: anchor.web3.PublicKey;
   bump: number;
 
@@ -51,7 +54,7 @@ export const getFairLaunchState = async (
   anchorWallet: anchor.Wallet,
   fairLaunchId: anchor.web3.PublicKey,
   connection: anchor.web3.Connection,
-): Promise<FairLaunchState> => {
+): Promise<FairLaunchAccount> => {
   const provider = new anchor.Provider(connection, anchorWallet, {
     preflightCommitment: "recent",
   });
@@ -62,29 +65,19 @@ export const getFairLaunchState = async (
   );
 
   const program = new anchor.Program(idl, FAIR_LAUNCH_PROGRAM, provider);
-  const anchorProgram = {
-    id: fairLaunchId,
-    connection,
-    program,
-  }
-
   const state: any = await program.account.fairLaunch.fetch(fairLaunchId);
-
-  console.log(state?.treasury.toBase58());
   const accountInfo = await connection.getAccountInfo(state?.treasury);
-  console.log(accountInfo);
 
   return {
-    anchorProgram,
-    ...state,
-  } as FairLaunchState;
+    id: fairLaunchId,
+    state,
+    program,
+  };
 }
 
 const punchTicker = async (
   anchorWallet: anchor.Wallet,
-  fairLaunchId: anchor.web3.PublicKey,
-  connection: anchor.web3.Connection,
-  fairLaunch: FairLaunchState) => {
+  fairLaunch: FairLaunchAccount) => {
   const fairLaunchTicket = (
     await getFairLaunchTicket(
       //@ts-ignore
@@ -105,10 +98,10 @@ const punchTicker = async (
     )
   )[0];
 
-  await fairLaunch.anchorProgram.program.rpc.punchTicket({
+  await fairLaunch.program.rpc.punchTicket({
     accounts: {
       fairLaunchTicket,
-      fairLaunch: fairLaunchId,
+      fairLaunch: fairLaunch.id,
       fairLaunchLotteryBitmap,
       payer: anchorWallet.publicKey,
       buyerTokenAccount,
@@ -141,7 +134,7 @@ export const getFairLaunchTicket = async (
 export const purchaseTicket = async (
   amount: number,
   anchorWallet: anchor.Wallet,
-  fairLaunch: FairLaunchState | undefined) => {
+  fairLaunch: FairLaunchAccount | undefined) => {
 
   if (!fairLaunch) {
     return;
@@ -149,7 +142,7 @@ export const purchaseTicket = async (
 
   const [fairLaunchTicket, bump] = await getFairLaunchTicket(
     //@ts-ignore
-    fairLaunch.tokenMint,
+    fairLaunch.state.tokenMint,
     anchorWallet.publicKey,
   );
 
@@ -159,7 +152,7 @@ export const purchaseTicket = async (
 
   let amountLamports = 0;
   //@ts-ignore
-  if (!fairLaunch.treasuryMint) {
+  if (!fairLaunch.state.treasuryMint) {
     amountLamports = Math.ceil(amount * LAMPORTS_PER_SOL);
   } else {
     const transferAuthority = anchor.web3.Keypair.generate();
@@ -169,18 +162,18 @@ export const purchaseTicket = async (
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
         //@ts-ignore
-        fairLaunch.treasuryMint,
+        fairLaunch.state.treasuryMint,
         transferAuthority.publicKey,
         anchorWallet.publicKey,
         [],
         //@ts-ignore
-        amountNumber + fairLaunch.data.fees.toNumber(),
+        amountNumber + fairLaunch.state.data.fees.toNumber(),
       ),
     );
 
     remainingAccounts.push({
       //@ts-ignore
-      pubkey: fairLaunch.treasuryMint,
+      pubkey: fairLaunch.state.treasuryMint,
       isWritable: true,
       isSigner: false,
     });
@@ -188,7 +181,7 @@ export const purchaseTicket = async (
       pubkey: (
         await getAtaForMint(
           //@ts-ignore
-          fairLaunch.treasuryMint,
+          fairLaunch.state.treasuryMint,
           anchorWallet.publicKey,
         )
       )[0],
@@ -207,15 +200,15 @@ export const purchaseTicket = async (
     });
   }
 
-  await fairLaunch.anchorProgram.program.rpc.purchaseTicket(
+  await fairLaunch.program.rpc.purchaseTicket(
     bump,
     new anchor.BN(amountLamports),
     {
       accounts: {
         fairLaunchTicket,
-        fairLaunch: fairLaunch.anchorProgram.id,
+        fairLaunch: fairLaunch.id,
         //@ts-ignore
-        treasury: fairLaunch.treasury,
+        treasury: fairLaunch.state.treasury,
         buyer: anchorWallet.publicKey,
         payer: anchorWallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -232,7 +225,7 @@ export const purchaseTicket = async (
 export const withdrawFunds = async (
   amount: number,
   anchorWallet: anchor.Wallet,
-  fairLaunch: FairLaunchState | undefined) => {
+  fairLaunch: FairLaunchAccount | undefined) => {
 
   if (!fairLaunch) {
     return;
@@ -244,10 +237,10 @@ export const withdrawFunds = async (
     const remainingAccounts = [];
 
     //@ts-ignore
-    if (fairLaunch.treasuryMint) {
+    if (fairLaunch.state.treasuryMint) {
       remainingAccounts.push({
         //@ts-ignore
-        pubkey: fairLaunch.treasuryMint,
+        pubkey: fairLaunch.state.treasuryMint,
         isWritable: true,
         isSigner: false,
       });
@@ -255,7 +248,7 @@ export const withdrawFunds = async (
         pubkey: (
           await getAtaForMint(
             //@ts-ignore
-            fairLaunch.treasuryMint,
+            fairLaunch.state.treasuryMint,
             anchorWallet.publicKey,
           )
         )[0],
@@ -269,14 +262,14 @@ export const withdrawFunds = async (
       });
     }
 
-    await fairLaunch.anchorProgram.program.rpc.withdrawFunds({
+    await fairLaunch.program.rpc.withdrawFunds({
       accounts: {
-        fairLaunch,
+        fairLaunch: fairLaunch.id,
         // @ts-ignore
-        treasury: fairLaunch.treasury,
+        treasury: fairLaunch.state.treasury,
         authority: anchorWallet.publicKey,
         // @ts-ignore
-        tokenMint: fairLaunch.tokenMint,
+        tokenMint: fairLaunch.state.tokenMint,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
       remainingAccounts,
