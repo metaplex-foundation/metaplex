@@ -98,8 +98,9 @@ pub mod fair_launch {
                 &[
                     ctx.accounts.token_program.clone(),
                     treasury_info.clone(),
-                    fair_launch.to_account_info().clone(),
+                    fair_launch.to_account_info(),
                     treasury_mint_info.clone(),
+                    ctx.accounts.rent.to_account_info(),
                 ],
                 &[signer_seeds],
             )?;

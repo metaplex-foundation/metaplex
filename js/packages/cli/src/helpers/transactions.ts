@@ -46,10 +46,10 @@ export const sendTransactionWithRetryWithKeypair = async (
   }
 
   if (signers.length > 0) {
-    transaction.partialSign(...signers);
+    transaction.sign(...[wallet, ...signers]);
+  } else {
+    transaction.sign(wallet);
   }
-
-  transaction.sign(wallet);
 
   if (beforeSend) {
     beforeSend();
