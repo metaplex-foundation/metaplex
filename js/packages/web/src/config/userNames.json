@@ -29,4 +29,10 @@
     "description": "Account used by Solana to mint official NFTs.",
     "background": ""
   }
+  "3ANVZo8XUydS9xdPWHqhBJsTpEGg8hZN8WBRYiK2tpDi": {
+    "name": "DATAbstract",
+    "image": "../../../../assets/wallets/DAlogo400x400.png",
+    "description": "DATAbstrat Account to mint data driven abstract art",
+    "background": ""
+  }
 }
