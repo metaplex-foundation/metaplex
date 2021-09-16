@@ -259,7 +259,7 @@ export const AuctionCard = ({
     (auctionView.isInstantSale &&
       Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
       isAuctionManagerAuthorityNotWalletOwner &&
-      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
+      auctionView.auction.info.bidState.max.toNumber() === auctionView.auction.info.bidState.bids.length) ||
     auctionView.vault.info.state === VaultState.Deactivated
   ) {
     return <></>;
