@@ -17,7 +17,7 @@ import { signMetadata } from "./commands/sign";
 import { signAllMetadataFromCandyMachine } from "./commands/signAll";
 import log from 'loglevel';
 
-program.version('0.0.1');
+program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
@@ -34,8 +34,23 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
+  .option('-s, --storage <string>', 'Database to use for storage (arweave, ipfs)', 'arweave')
+  .option('--ipfs-infura-project-id', 'Infura IPFS project id (required if using IPFS)')
+  .option('--ipfs-infura-secret', 'Infura IPFS scret key (required if using IPFS)')
+  .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .action(async (files: string[], options, cmd) => {
-    const {number, keypair, env, cacheName} = cmd.opts();
+    const {number, keypair, env, cacheName, storage, ipfsInfuraProjectId, ipfsInfuraSecret, retainAuthority} = cmd.opts();
+
+    if ((storage === 'ipfs') && ((!ipfsInfuraProjectId) || (!ipfsInfuraSecret))) {
+      throw new Error('IPFS selected as storage option but Infura project id or secret key were not provided.')
+    }
+    if (!((storage === 'arweave') || (storage === 'ipfs'))) {
+      throw new Error("Storage option must either be 'arweave' or 'ipfs'.")
+    }
+    const ipfsCredentials = {
+      projectId: ipfsInfuraProjectId,
+      secretKey: ipfsInfuraSecret
+    }
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -61,7 +76,7 @@ programCommand('upload')
     log.info("started at: " + startMs.toString())
     let warn = false;
     for (; ;) {
-      const successful = await upload(files, cacheName, env, keypair, elemCount);
+      const successful = await upload(files, cacheName, env, keypair, elemCount, storage, retainAuthority, ipfsCredentials);
       if (successful) {
         warn = false;
         break;
@@ -359,7 +374,8 @@ programCommand("sign_candy_machine_metadata")
   .option('-cndy, --candy-address <string>', 'Candy machine address', '')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .action(async (directory, cmd) => {
-    let { keypair, env, cacheName, candyAddress, batchSize } = cmd.opts();
+    const { keypair, env, cacheName, batchSize } = cmd.opts();
+    let { candyAddress } = cmd.opts();
     if (!keypair || keypair == '') {
       log.info("Keypair required!");
       return;
@@ -368,13 +384,13 @@ programCommand("sign_candy_machine_metadata")
       log.info("Candy machine address required! Using from saved list.")
       const cacheContent = loadCache(cacheName, env);
       const config = new PublicKey(cacheContent.program.config);
-      const [candyMachine, bump] = await getCandyMachineAddress(
+      const [candyMachine, ] = await getCandyMachineAddress(
         config,
         cacheContent.program.uuid,  
       );
       candyAddress = candyMachine.toBase58();
     }
-    let batchSizeParsed = parseInt(batchSize)
+    const batchSizeParsed = parseInt(batchSize)
     if (!parseInt(batchSize)) {
       log.info("Batch size needs to be an integer!")
       return;

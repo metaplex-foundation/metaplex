@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, TransactionInstruction, Connection, AccountInfo } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction, Connection, AccountInfo } from '@solana/web3.js';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import * as borsh from "borsh"
 import {
@@ -24,7 +24,7 @@ import {
 async function decodeMetadata(buffer) {
   const metadata = borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
   return metadata;
-};
+}
 
 async function getProgramAccounts(
   connection: Connection,
@@ -86,15 +86,15 @@ export async function signAllMetadataFromCandyMachine(
   candyMachineAddress, 
   batchSize
   ){
-  let metadataByCandyMachine = await getAccountsByCreatorAddress(candyMachineAddress, connection)
+  const metadataByCandyMachine = await getAccountsByCreatorAddress(candyMachineAddress, connection)
   console.log(`Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`)
-  let candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(metadataByCandyMachine, candyMachineAddress, wallet.publicKey.toBase58())
+  const candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(metadataByCandyMachine, candyMachineAddress, wallet.publicKey.toBase58())
   console.log(`Found ${candyVerifiedListToSign.length} nft's to sign by  ${wallet.publicKey.toBase58()}`)
   await sendSignMetadata(connection, wallet, candyVerifiedListToSign, batchSize)
 }
 
 async function getAccountsByCreatorAddress(creatorAddress, connection) {
-  let metadataAccounts = await getProgramAccounts(connection, TOKEN_METADATA_PROGRAM_ID.toBase58(), {
+  const metadataAccounts = await getProgramAccounts(connection, TOKEN_METADATA_PROGRAM_ID.toBase58(), {
     filters: [
       {
         memcmp: {
@@ -117,19 +117,19 @@ async function getAccountsByCreatorAddress(creatorAddress, connection) {
       },
     ],
   })
-  let decodedAccounts = []
+  const decodedAccounts = []
   for (let i = 0; i < metadataAccounts.length; i++) {
-    let e = metadataAccounts[i];
-    let decoded = await decodeMetadata(e.account.data)
-    let accountPubkey = e.pubkey
-    let store = [decoded, accountPubkey]
+    const e = metadataAccounts[i];
+    const decoded = await decodeMetadata(e.account.data)
+    const accountPubkey = e.pubkey
+    const store = [decoded, accountPubkey]
     decodedAccounts.push(store)
   }
   return decodedAccounts
 }
 
 async function getCandyMachineVerifiedMetadata(metadataList, candyAddress, creatorAddress){
-  let verifiedList = [];
+  const verifiedList = [];
   metadataList.forEach(meta => {
     let verifiedCandy = false;
     let verifiedCreator = true;
@@ -161,7 +161,7 @@ async function sendSignMetadata(
     if (metadataList.length < batchsize) {
       sliceAmount = metadataList.length;
     }
-    var removed = metadataList.splice(0,sliceAmount);
+    const removed = metadataList.splice(0,sliceAmount);
     total += sliceAmount;
     await delay(500)
     await signMetadataBatch(removed, connection, wallet)
@@ -171,8 +171,7 @@ async function sendSignMetadata(
 }
 
 async function signMetadataBatch(metadataList, connection, keypair){
-  
-  const signers: Keypair[] = [];
+
   const instructions: TransactionInstruction[] = [];
   for (let i = 0; i < metadataList.length; i++) {
     const meta = metadataList[i];

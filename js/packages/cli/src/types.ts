@@ -89,7 +89,7 @@ export class MasterEditionV1 {
     this.printingMint = args.printingMint;
     this.oneTimePrintingAuthorizationMint =
       args.oneTimePrintingAuthorizationMint;
-  };
+  }
 }
 
 export class MasterEditionV2 {
@@ -104,7 +104,7 @@ export class MasterEditionV2 {
     this.key = MetadataKey.MasterEditionV2;
     this.supply = args.supply;
     this.maxSupply = args.maxSupply;
-  };
+  }
 }
 
 export class EditionMarker {
@@ -116,7 +116,7 @@ export class EditionMarker {
   }) {
     this.key = MetadataKey.EditionMarker;
     this.ledger = args.ledger;
-  };
+  }
 }
 
 export class Edition {
@@ -131,7 +131,7 @@ export class Edition {
     this.key = MetadataKey.EditionV1;
     this.parent = args.parent;
     this.edition = args.edition;
-  };
+  }
 }
 
 export class Data {
@@ -152,7 +152,7 @@ export class Data {
     this.uri = args.uri;
     this.sellerFeeBasisPoints = args.sellerFeeBasisPoints;
     this.creators = args.creators;
-  };
+  }
 }
 
 export class Metadata {
@@ -178,7 +178,7 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
-  };
+  }
 }
 
 export const METADATA_SCHEMA = new Map<any, any>([
