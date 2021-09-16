@@ -64,11 +64,8 @@ Install and build
 ```
 yarn install 
 yarn build
-yarn run package:linuxb
-OR
-yarn run package:linux
-OR 
-yarn run package:macos
+npx pkg . -d --targets node14-linux-x64 --output bin/linux/metaplex
+mv bin/linux/metaplex /home/user/bin/metaplex
 ```
 
 You can now either use `metaplex` OR the `ts-node cli` to execute the following commands. 
