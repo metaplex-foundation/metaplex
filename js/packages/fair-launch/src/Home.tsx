@@ -385,7 +385,12 @@ const Home = (props: HomeProps) => {
 
           <Grid justifyContent="center">
             <Typography>Your bid</Typography>
-            <Typography>1 SOL</Typography>
+            <Typography>
+              {formatNumber.format(
+                (ticket?.amount.toNumber() || 0) / LAMPORTS_PER_SOL,
+              )}{' '}
+              SOL
+            </Typography>
           </Grid>
 
           <Grid>
