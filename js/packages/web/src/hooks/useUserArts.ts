@@ -12,7 +12,7 @@ import {
   ParticipationConfigV2,
   WinningConfigType,
   WinningConstraint,
-} from '../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { useMeta } from './../contexts';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
