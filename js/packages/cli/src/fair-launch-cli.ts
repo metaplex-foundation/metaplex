@@ -238,7 +238,7 @@ program
   .option('-u, --uuid <string>', 'uuid')
   .option('-f, --fee <string>', 'price range end', '2')
   .option('-s, --price-range-start <string>', 'price range start', '1')
-  .option('-e, --price-range-end <string>', 'price range end', '2')
+  .option('-pe, --price-range-end <string>', 'price range end', '2')
   .option(
     '-arbp, --anti-rug-reserve-bp <string>',
     'optional anti-rug treasury reserve basis points (1-10000)',
@@ -491,7 +491,6 @@ program
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
-      //__private: { logAccounts: true },
       remainingAccounts,
       signers,
       instructions: instructions.length > 0 ? instructions : undefined,
@@ -799,8 +798,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await adjustTicket({
       amountNumber,
@@ -1129,8 +1129,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1253,8 +1254,9 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {

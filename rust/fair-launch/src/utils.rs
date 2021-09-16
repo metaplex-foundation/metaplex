@@ -59,6 +59,8 @@ pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult 
         authority_signer_seeds,
     } = params;
 
+    let val = &[authority_signer_seeds];
+
     let result = invoke_signed(
         &spl_token::instruction::transfer(
             token_program.key,
@@ -69,7 +71,11 @@ pub fn spl_token_transfer(params: TokenTransferParams<'_, '_>) -> ProgramResult 
             amount,
         )?,
         &[source, destination, authority, token_program],
-        &[authority_signer_seeds],
+        if authority_signer_seeds.len() == 0 {
+            &[]
+        } else {
+            val
+        },
     );
 
     result.map_err(|_| ErrorCode::TokenTransferFailed.into())
@@ -183,11 +189,11 @@ pub fn get_mask_and_index_for_seq(seq: u64) -> Result<(u8, usize), ProgramError>
 }
 
 pub fn assert_data_valid(data: &FairLaunchData) -> ProgramResult {
-    if data.phase_one_end < data.phase_one_start {
+    if data.phase_one_end <= data.phase_one_start {
         return Err(ErrorCode::TimestampsDontLineUp.into());
     }
 
-    if data.phase_two_end < data.phase_one_end {
+    if data.phase_two_end <= data.phase_one_end {
         return Err(ErrorCode::TimestampsDontLineUp.into());
     }
 

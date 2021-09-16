@@ -18,7 +18,6 @@ use {
     },
     anchor_spl::token::Mint,
     spl_token::{instruction::initialize_account2, state::Account},
-    std::str::FromStr,
 };
 
 pub const PREFIX: &str = "fair_launch";
@@ -318,6 +317,11 @@ pub mod fair_launch {
                 return Err(ErrorCode::TreasuryMintMismatch.into());
             }
 
+            if buyer_token_account.delegate.is_some() {
+                msg!("Delegate {}", buyer_token_account.delegate.unwrap());
+                return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            }
+
             assert_owned_by(treasury_mint_info, &token_program.key)?;
             assert_owned_by(buyer_token_account_info, &token_program.key)?;
 
@@ -335,7 +339,7 @@ pub mod fair_launch {
             if buyer_token_account.amount < charged_amount {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
-
+            msg!("b4 {}", buyer_token_account_info.key);
             spl_token_transfer(TokenTransferParams {
                 source: buyer_token_account_info.clone(),
                 destination: ctx.accounts.treasury.clone(),
@@ -344,6 +348,7 @@ pub mod fair_launch {
                 token_program: token_program.clone(),
                 amount: charged_amount,
             })?;
+            msg!("aft");
         } else {
             if buyer.lamports() < charged_amount {
                 return Err(ErrorCode::NotEnoughSOL.into());
