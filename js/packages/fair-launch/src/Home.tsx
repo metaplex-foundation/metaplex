@@ -137,6 +137,7 @@ const Home = (props: HomeProps) => {
   const [contributed, setContributed] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
   const [ticket, setTicket] = useState<FairLaunchTicket | null>(null);
+  const [treasury, setTreasury] = useState<number | null>(null);
 
   const wallet = useWallet();
 
@@ -277,6 +278,11 @@ const Home = (props: HomeProps) => {
           )) as FairLaunchTicket | null;
         setTicket(ticket);
 
+        const treasury = await state.program.provider.connection.getBalance(
+          state.state.treasury,
+        );
+        setTreasury(treasury);
+
         console.log();
       } catch {
         console.log('Problem getting fair launch state');
@@ -379,7 +385,12 @@ const Home = (props: HomeProps) => {
 
           <Grid justifyContent="center">
             <Typography>Your bid</Typography>
-            <Typography>1 SOL</Typography>
+            <Typography>
+              {formatNumber.format(
+                (ticket?.amount.toNumber() || 0) / LAMPORTS_PER_SOL,
+              )}{' '}
+              SOL
+            </Typography>
           </Grid>
 
           <Grid>
@@ -413,7 +424,10 @@ const Home = (props: HomeProps) => {
 
           <p>Current median price: {formatNumber.format(median)}</p>
 
-          <p>Total raised</p>
+          <p>
+            Total raised:{' '}
+            {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
+          </p>
         </Paper>
       </Container>
 
