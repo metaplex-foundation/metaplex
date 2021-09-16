@@ -45,7 +45,7 @@ import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
-} from '../../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,

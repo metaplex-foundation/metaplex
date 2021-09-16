@@ -33,7 +33,7 @@ import {
   NonWinningConstraint,
   PayoutTicket,
   WinningConstraint,
-} from '../../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';

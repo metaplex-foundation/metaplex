@@ -8,7 +8,7 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import { AccountParser } from '../contexts';
+import { AccountParser } from '../contexts/accounts/types';
 import moment from 'moment';
 import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const AUCTION_PREFIX = 'auction';
@@ -696,7 +696,7 @@ export async function createAuction(
   );
 }
 
-export async function startAuction(
+export async function startAuctionWithResource(
   resource: StringPublicKey,
   creator: StringPublicKey,
   instructions: TransactionInstruction[],

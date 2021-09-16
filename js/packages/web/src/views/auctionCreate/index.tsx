@@ -36,7 +36,11 @@ import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { WinningConfigType, AmountRange } from '../../models/metaplex';
+import { capitalize } from 'lodash';
+import {
+  WinningConfigType,
+  AmountRange,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import moment from 'moment';
 import {
   createAuctionManager,
