@@ -17,7 +17,8 @@ const useStyles = makeStyles((theme: Theme) =>
         alignContent: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#616161',
+        background: '#C4C4C4',
+        color: '#000000',
         borderRadius: 5,
         fontSize: 10,
       },
@@ -57,7 +58,7 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
 }) => {
   const classes = useStyles();
 
-  const [isFixed, setIsFixed] = useState(start && end && date ? start.getTime() - Date.now() >= 0 : true);
+  const [isFixed, setIsFixed] = useState(start && end && date ? start.getTime() - Date.now() < 0 : false);
 
   const renderCountdown = ({ days, hours, minutes, seconds, completed }: CountdownRender) => {
     hours += days * 24

@@ -338,8 +338,8 @@ const Home = (props: HomeProps) => {
                               status="Phase 1 Started" />
             </Grid>
           </LimitedBackdrop>
-          <Paper style={{ padding: 10 }}>
-            <Grid container>
+          <Paper style={{ padding: 24, background: '#1C1B1D', borderRadius: 6 }}>
+            <Grid container style={{ marginBottom: 10 }}>
               <Grid xs={6} justifyContent="center" direction="column">
                 <Typography component="h2" >Phase 1</Typography>
                 <Typography>Set price phase</Typography>
@@ -349,7 +349,7 @@ const Home = (props: HomeProps) => {
               </Grid>
             </Grid>
 
-            <Grid>
+            <Grid justifyContent="center">
               <Typography>Your bid</Typography>
               <Typography>1 SOL</Typography>
             </Grid>
@@ -363,7 +363,7 @@ const Home = (props: HomeProps) => {
                 value={contributed}
                 onChange={(ev, val) => setContributed(val as any)}
                 valueLabelDisplay="auto"
-                style={{ width: 200, marginLeft: 20 }} />
+                style={{ width: 'calc(100% - 40px)', marginLeft: 20 }} />
             </Grid>
 
             <MintButton
@@ -392,7 +392,7 @@ const Home = (props: HomeProps) => {
       </Container>
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
-        <Paper style={{ padding: 10 }} elevation={3}>
+        <Paper style={{ padding: 24 }} elevation={3}>
           <Grid container>
             <Grid xs={6} justifyContent="center" direction="column">
               <Typography>Phase 2</Typography>
