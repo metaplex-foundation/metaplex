@@ -1,11 +1,8 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  actions,
   sendTransactionWithRetry,
   placeBid,
-  models,
   cache,
-  TokenAccount,
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
@@ -13,14 +10,15 @@ import {
   WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { approve } from '@oyster/common/dist/lib/models/account';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+import { TokenAccount } from '@oyster/common/dist/lib/models/account';
+
 import { AccountLayout, MintInfo } from '@solana/spl-token';
 import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
-
-const { createTokenAccount } = actions;
-const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
