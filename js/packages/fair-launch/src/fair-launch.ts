@@ -2,7 +2,10 @@ import * as anchor from '@project-serum/anchor';
 
 import { TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { getAtaForMint } from './utils';
+import {
+  createAssociatedTokenAccountInstruction,
+  getAtaForMint,
+} from './utils';
 
 export const FAIR_LAUNCH_PROGRAM = new anchor.web3.PublicKey(
   '7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF',
@@ -49,6 +52,7 @@ export interface FairLaunchState {
   bump: number;
 
   currentMedian: anchor.BN;
+  currentEligibleHolders: anchor.BN;
   data: {
     antiRugSetting?: AntiRugSetting;
     fee: anchor.BN;
@@ -121,8 +125,8 @@ export const getFairLaunchState = async (
     },
   };
 };
-/*
-const punchTicket = async (
+
+export const punchTicket = async (
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount,
 ) => {
@@ -134,9 +138,8 @@ const punchTicket = async (
     )
   )[0];
 
-  const fairLaunchLotteryBitmap = ( //@ts-ignore
-    await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-  )[0];
+  const fairLaunchLotteryBitmap = //@ts-ignore
+  (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
   const buyerTokenAccount = (
     await getAtaForMint(
@@ -167,7 +170,7 @@ const punchTicket = async (
       ),
     ],
   });
-};*/
+};
 
 export const getFairLaunchTicket = async (
   tokenMint: anchor.web3.PublicKey,
@@ -276,8 +279,9 @@ export const purchaseTicket = async (
   );
 
   if (ticket) {
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
+    )[0];
     console.log(
       'Anchor wallet',
       anchorWallet.publicKey.toBase58(),
