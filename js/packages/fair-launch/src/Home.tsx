@@ -357,13 +357,13 @@ const Home = (props: HomeProps) => {
               Raffle starts
             </Typography>
             <PhaseCountdown
-              date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+              date={toDate(fairLaunch?.state.data.phaseOneStart)}
               onComplete={() => setIsPhase1Active(true)}
               status="Phase 1 Started"
             />
           </Grid>
         </LimitedBackdrop>
-        <Paper style={{ padding: 10 }}>
+        <Paper style={{ padding: 24 }}>
           <Grid container>
             <Grid xs={6} justifyContent="center" direction="column">
               <Typography component="h2">Phase 1</Typography>
@@ -371,7 +371,7 @@ const Home = (props: HomeProps) => {
             </Grid>
             <Grid xs={6}>
               <PhaseCountdown
-                date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                date={toDate(fairLaunch?.state.data.phaseOneEnd)}
                 style={{ justifyContent: 'flex-end' }}
               />
             </Grid>
@@ -391,7 +391,7 @@ const Home = (props: HomeProps) => {
               value={contributed}
               onChange={(ev, val) => setContributed(val as any)}
               valueLabelDisplay="auto"
-              style={{ width: 200, marginLeft: 20 }}
+              style={{ width: 'calc(100% - 40px)', marginLeft: 20 }}
             />
           </Grid>
 

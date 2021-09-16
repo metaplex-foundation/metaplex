@@ -12,6 +12,15 @@ export interface FairLaunchAccount {
   id: anchor.web3.PublicKey;
   program: anchor.Program;
   state: FairLaunchState;
+
+  ticket: {
+    pubkey: anchor.web3.PublicKey;
+    bump: number;
+    data?: FairLaunchTicket;
+  };
+  lotteryBitmap: {
+    pubkey: anchor.web3.PublicKey;
+  };
 }
 
 export interface FairLaunchTicket {
@@ -81,10 +90,35 @@ export const getFairLaunchState = async (
   const program = new anchor.Program(idl, FAIR_LAUNCH_PROGRAM, provider);
   const state: any = await program.account.fairLaunch.fetch(fairLaunchId);
 
+  const [fairLaunchTicket, bump] = await getFairLaunchTicket(
+    //@ts-ignore
+    state.tokenMint,
+    anchorWallet.publicKey,
+  );
+
+  let fairLaunchData: any;
+
+  try {
+    fairLaunchData = await program.account.fairLaunchTicket.fetch(fairLaunchTicket);
+  } catch {
+    console.log('No ticket');
+  }
+
+  const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(state.tokenMint))[0];
+
   return {
     id: fairLaunchId,
     state,
     program,
+    ticket: {
+      pubkey: fairLaunchTicket,
+      bump,
+      data:fairLaunchData,
+    },
+    lotteryBitmap: {
+      pubkey: fairLaunchLotteryBitmap
+    },
   };
 };
 /*
