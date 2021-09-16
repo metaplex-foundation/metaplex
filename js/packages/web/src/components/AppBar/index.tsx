@@ -50,8 +50,8 @@ const UserActions = () => {
               </Link>
             </Menu.Item>
             <Menu.Item>
-              <Link to={isAuth ? '/' : `/sign-up`}>
-                <Button onClick={logOut} className="app-btn">{isAuth ? 'Logout' : 'Signup'}</Button>
+              <Link to={isAuth ? '/' : `/login`}>
+                <Button onClick={logOut} className="app-btn">{isAuth ? 'Logout' : 'Login'}</Button>
               </Link>
             </Menu.Item>
           </Menu>
