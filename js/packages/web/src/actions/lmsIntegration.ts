@@ -9,6 +9,7 @@ export async function signUp(values) {
   if (values.password !== values.confirmPassword) {
     throw Error('Password and confirm password do not match');
   }
+  delete values.confirmPassword;
   const response = await fetch(registrationUrl, {
     method: 'POST',
     headers: {

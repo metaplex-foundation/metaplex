@@ -41,7 +41,7 @@ export const SignUpForm = () => {
       <Form.ErrorList errors={[error]} />
       <Form.Item
         label="Username"
-        name="username"
+        name="login"
         rules={[{ required: true, message: 'Please input your username!' }]}
       >
         <Input />
