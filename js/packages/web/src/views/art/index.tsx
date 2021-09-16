@@ -29,7 +29,7 @@ export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const wallet = useWallet();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
-  let [attributes, setAttributes] = useState(false);
+  let [attributes, setAttributes] = useState({});
 
   const connection = useConnection();
   const art = useArt(id);
@@ -52,17 +52,16 @@ export const ArtView = () => {
 
   const description = data?.description;
   // const attributes = data?.attributes;
-  // TODO: Change getting attributes!!!
   useEffect(() => {
-    if (data !== undefined && !attributes) {
+    if (data !== undefined) {
       getAttributesByNftId(id).then(res => {
         setAttributes(res);
       }).catch(e => {
         console.log(e);
-        setAttributes(true)
       })
     }
-  })
+    return;
+  }, [data])
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
