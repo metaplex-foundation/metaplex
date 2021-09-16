@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
-import Countdown from "react-countdown";
-import { Box, CircularProgress, Container, Slider, Snackbar } from "@material-ui/core";
+import { useEffect, useMemo, useState } from 'react';
+import styled from 'styled-components';
+import Countdown from 'react-countdown';
+import {
+  Box,
+  CircularProgress,
+  Container,
+  Slider,
+  Snackbar,
+} from '@material-ui/core';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -12,34 +18,40 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import { withStyles } from "@material-ui/core/styles";
-import Backdrop from "@material-ui/core/Backdrop";
+import { withStyles } from '@material-ui/core/styles';
+import Backdrop from '@material-ui/core/Backdrop';
 import { PhaseCountdown } from './countdown';
 
-import Alert from "@material-ui/lab/Alert";
+import Alert from '@material-ui/lab/Alert';
 
-import * as anchor from "@project-serum/anchor";
+import * as anchor from '@project-serum/anchor';
 
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 
 import {
   awaitTransactionSignatureConfirmation,
   getCandyMachineState,
   mintOneToken,
   shortenAddress,
-} from "./candy-machine";
+} from './candy-machine';
 
 import {
   FairLaunchAccount,
+  FairLaunchTicket,
   getFairLaunchState,
   purchaseTicket,
-  withdrawFunds
-} from "./fair-launch";
+  withdrawFunds,
+} from './fair-launch';
 
-import { AnchorProgram, formatNumber, toDate } from './utils';
+import {
+  AnchorProgram,
+  formatNumber,
+  getFairLaunchTicket,
+  toDate,
+} from './utils';
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -49,14 +61,15 @@ const MintContainer = styled.div``; // add your styles here
 
 const MintButton = styled(Button)``; // add your styles here
 
-
 function getStepContent(step: number, min?: number, max?: number) {
   switch (step) {
     case 0:
       return 'We are preparing for fair launch please wait for countdown to finish.';
     case 1:
       return `Welcome to Fair Launch Registration phase.
-              During this phase of fair launch, you can bid SOL funds between ${min || 0} and ${max || 0}.
+              During this phase of fair launch, you can bid SOL funds between ${
+                min || 0
+              } and ${max || 0}.
               Once phase ends median price will be calculated to decide a price of this mint.
               If you don't like that price you will be able to withdraw your bid.`;
     case 2:
@@ -72,7 +85,6 @@ function getStepContent(step: number, min?: number, max?: number) {
       return 'Unknown step';
   }
 }
-
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -102,9 +114,9 @@ function TabPanel(props: TabPanelProps) {
 
 const LimitedBackdrop = withStyles({
   root: {
-    position: "absolute",
-    zIndex: 1
-  }
+    position: 'absolute',
+    zIndex: 1,
+  },
 })(Backdrop);
 
 export interface HomeProps {
@@ -124,6 +136,8 @@ const Home = (props: HomeProps) => {
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [ticket, setTicket] = useState<FairLaunchTicket | null>(null);
+
   const wallet = useWallet();
 
   const anchorWallet = useMemo(() => {
@@ -149,7 +163,7 @@ const Home = (props: HomeProps) => {
 
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
-    message: "",
+    message: '',
     severity: undefined,
   });
 
@@ -165,39 +179,39 @@ const Home = (props: HomeProps) => {
           candyMachine,
           props.config,
           wallet.publicKey,
-          props.treasury
+          props.treasury,
         );
 
         const status = await awaitTransactionSignatureConfirmation(
           mintTxId,
           props.txTimeout,
           props.connection,
-          "singleGossip",
-          false
+          'singleGossip',
+          false,
         );
 
         if (!status?.err) {
           setAlertState({
             open: true,
-            message: "Congratulations! Mint succeeded!",
-            severity: "success",
+            message: 'Congratulations! Mint succeeded!',
+            severity: 'success',
           });
         } else {
           setAlertState({
             open: true,
-            message: "Mint failed! Please try again!",
-            severity: "error",
+            message: 'Mint failed! Please try again!',
+            severity: 'error',
           });
         }
       }
     } catch (error: any) {
       // TODO: blech:
-      let message = error.msg || "Minting failed! Please try again!";
+      let message = error.msg || 'Minting failed! Please try again!';
       if (!error.msg) {
-        if (error.message.indexOf("0x138")) {
-        } else if (error.message.indexOf("0x137")) {
+        if (error.message.indexOf('0x138')) {
+        } else if (error.message.indexOf('0x137')) {
           message = `SOLD OUT!`;
-        } else if (error.message.indexOf("0x135")) {
+        } else if (error.message.indexOf('0x135')) {
           message = `Insufficient funds to mint. Please fund your wallet.`;
         }
       } else {
@@ -212,7 +226,7 @@ const Home = (props: HomeProps) => {
       setAlertState({
         open: true,
         message,
-        severity: "error",
+        severity: 'error',
       });
     } finally {
       if (wallet?.publicKey) {
@@ -227,7 +241,9 @@ const Home = (props: HomeProps) => {
     (async () => {
       if (anchorWallet?.publicKey) {
         try {
-          const balance = await props.connection.getBalance(anchorWallet.publicKey);
+          const balance = await props.connection.getBalance(
+            anchorWallet.publicKey,
+          );
           setBalance(balance / LAMPORTS_PER_SOL);
         } catch {
           // ignore connection error
@@ -238,19 +254,30 @@ const Home = (props: HomeProps) => {
 
   useEffect(() => {
     (async () => {
-      if(!anchorWallet) {
+      if (!anchorWallet) {
         return;
       }
 
       try {
-        const state = await getFairLaunchState(anchorWallet,
+        const state = await getFairLaunchState(
+          anchorWallet,
           props.fairLaunchId,
-          props.connection
+          props.connection,
         );
 
         setFairLaunch(state);
+        const [fairLaunchTicket, _] = await getFairLaunchTicket(
+          state.state.tokenMint,
+          anchorWallet.publicKey,
+        );
 
-        console.log()
+        const ticket: FairLaunchTicket | null =
+          (await state.program.account.fairLaunchTicket.fetch(
+            fairLaunchTicket,
+          )) as FairLaunchTicket | null;
+        setTicket(ticket);
+
+        console.log();
       } catch {
         console.log('Problem getting fair launch state');
       }
@@ -260,14 +287,14 @@ const Home = (props: HomeProps) => {
           await getCandyMachineState(
             anchorWallet,
             props.candyMachineId,
-            props.connection
+            props.connection,
           );
         setIsSoldOut(itemsRemaining === 0);
         setStartDate(goLiveDate);
         setCandyMachine(candyMachine);
-        } catch {
-          console.log('Problem getting candy machine state');
-        }
+      } catch {
+        console.log('Problem getting candy machine state');
+      }
     })();
   }, [anchorWallet, props.candyMachineId, props.connection]);
 
@@ -303,11 +330,7 @@ const Home = (props: HomeProps) => {
 
     console.log('deposit');
 
-    purchaseTicket(
-      contributed,
-      anchorWallet,
-      fairLaunch,
-    );
+    purchaseTicket(contributed, anchorWallet, fairLaunch, ticket);
   };
 
   const onWithdraw = () => {
@@ -317,78 +340,81 @@ const Home = (props: HomeProps) => {
 
     console.log('withdraw');
 
-    withdrawFunds(
-      contributed,
-      anchorWallet,
-      fairLaunch
-    );
+    withdrawFunds(contributed, anchorWallet, fairLaunch);
   };
 
-  const [isPhase1Active, setIsPhase1Active] = useState((toDate(fairLaunch?.state.data.phaseOneStart) || Date.now()) <= Date.now());
+  const [isPhase1Active, setIsPhase1Active] = useState(
+    (toDate(fairLaunch?.state.data.phaseOneStart) || Date.now()) <= Date.now(),
+  );
 
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="sm" style={{ position: 'relative' }}>
-          {/* Display timer before the drop */}
-          <LimitedBackdrop open={!isPhase1Active}>
-            <Grid container direction="column" alignItems="center">
-              <Typography component="h2" color="textPrimary" >Raffle starts</Typography>
-              <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                              onComplete={() => setIsPhase1Active(true)}
-                              status="Phase 1 Started" />
+        {/* Display timer before the drop */}
+        <LimitedBackdrop open={!isPhase1Active}>
+          <Grid container direction="column" alignItems="center">
+            <Typography component="h2" color="textPrimary">
+              Raffle starts
+            </Typography>
+            <PhaseCountdown
+              date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+              onComplete={() => setIsPhase1Active(true)}
+              status="Phase 1 Started"
+            />
+          </Grid>
+        </LimitedBackdrop>
+        <Paper style={{ padding: 10 }}>
+          <Grid container>
+            <Grid xs={6} justifyContent="center" direction="column">
+              <Typography component="h2">Phase 1</Typography>
+              <Typography>Set price phase</Typography>
             </Grid>
-          </LimitedBackdrop>
-          <Paper style={{ padding: 24, background: '#1C1B1D', borderRadius: 6 }}>
-            <Grid container style={{ marginBottom: 10 }}>
-              <Grid xs={6} justifyContent="center" direction="column">
-                <Typography component="h2" >Phase 1</Typography>
-                <Typography>Set price phase</Typography>
-              </Grid>
-              <Grid xs={6}>
-                <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)} style={{ justifyContent: 'flex-end' }} />
-              </Grid>
+            <Grid xs={6}>
+              <PhaseCountdown
+                date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                style={{ justifyContent: 'flex-end' }}
+              />
             </Grid>
+          </Grid>
 
-            <Grid justifyContent="center">
-              <Typography>Your bid</Typography>
-              <Typography>1 SOL</Typography>
-            </Grid>
+          <Grid justifyContent="center">
+            <Typography>Your bid</Typography>
+            <Typography>1 SOL</Typography>
+          </Grid>
 
-            <Grid>
-              <Slider
-                min={min}
-                marks={marks}
-                max={max}
-                step={step}
-                value={contributed}
-                onChange={(ev, val) => setContributed(val as any)}
-                valueLabelDisplay="auto"
-                style={{ width: 'calc(100% - 40px)', marginLeft: 20 }} />
-            </Grid>
+          <Grid>
+            <Slider
+              min={min}
+              marks={marks}
+              max={max}
+              step={step}
+              value={contributed}
+              onChange={(ev, val) => setContributed(val as any)}
+              valueLabelDisplay="auto"
+              style={{ width: 200, marginLeft: 20 }}
+            />
+          </Grid>
 
-            <MintButton
-              onClick={onDeposit}
-              variant="contained"
-            >
-              Place a bid
-            </MintButton>
+          <MintButton onClick={onDeposit} variant="contained">
+            {!ticket ? 'Place a bid' : 'Adjust your bid'}
+          </MintButton>
 
-            <Grid>
-              <Typography>How raffles works</Typography>
-            </Grid>
+          <Grid>
+            <Typography>How raffles works</Typography>
+          </Grid>
 
-            {wallet.connected && (
-              <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || "")}</p>
-            )}
+          {wallet.connected && (
+            <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}</p>
+          )}
 
-            {wallet.connected && (
-              <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
-            )}
+          {wallet.connected && (
+            <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
+          )}
 
-            <p>Current median price: {formatNumber.format(median)}</p>
+          <p>Current median price: {formatNumber.format(median)}</p>
 
-            <p>Total raised</p>
-          </Paper>
+          <p>Total raised</p>
+        </Paper>
       </Container>
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
@@ -399,11 +425,13 @@ const Home = (props: HomeProps) => {
               <Typography>Raffle</Typography>
             </Grid>
             <Grid xs={6}>
-              <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                              start={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                              end={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                              style={{ justifyContent: 'flex-end' }} />
-              </Grid>
+              <PhaseCountdown
+                date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                start={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                end={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                style={{ justifyContent: 'flex-end' }}
+              />
+            </Grid>
           </Grid>
 
           <MintContainer>
@@ -416,12 +444,12 @@ const Home = (props: HomeProps) => {
                 variant="contained"
               >
                 {isSoldOut ? (
-                  "SOLD OUT"
+                  'SOLD OUT'
                 ) : isActive ? (
                   isMinting ? (
                     <CircularProgress />
                   ) : (
-                    "MINT"
+                    'MINT'
                   )
                 ) : (
                   <Countdown
@@ -456,7 +484,7 @@ const Home = (props: HomeProps) => {
 interface AlertState {
   open: boolean;
   message: string;
-  severity: "success" | "info" | "warning" | "error" | undefined;
+  severity: 'success' | 'info' | 'warning' | 'error' | undefined;
 }
 
 const renderCounter = ({ days, hours, minutes, seconds, completed }: any) => {

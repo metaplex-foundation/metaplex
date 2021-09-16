@@ -1037,6 +1037,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "arrayref",
+ "spl-associated-token-account",
  "spl-token",
 ]
 

@@ -18,14 +18,12 @@ use {
     },
     anchor_spl::token::Mint,
     spl_token::{instruction::initialize_account2, state::Account},
-    std::str::FromStr,
 };
 
 pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str = "lottery";
-pub const ASSOCIATED_TOKEN_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
@@ -319,12 +317,17 @@ pub mod fair_launch {
                 return Err(ErrorCode::TreasuryMintMismatch.into());
             }
 
+            if buyer_token_account.delegate.is_some() {
+                msg!("Delegate {}", buyer_token_account.delegate.unwrap());
+                return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            }
+
             assert_owned_by(treasury_mint_info, &token_program.key)?;
             assert_owned_by(buyer_token_account_info, &token_program.key)?;
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_token_account_info,
                 &[
                     buyer.key.as_ref(),
@@ -336,7 +339,7 @@ pub mod fair_launch {
             if buyer_token_account.amount < charged_amount {
                 return Err(ErrorCode::NotEnoughTokens.into());
             }
-
+            msg!("b4 {}", buyer_token_account_info.key);
             spl_token_transfer(TokenTransferParams {
                 source: buyer_token_account_info.clone(),
                 destination: ctx.accounts.treasury.clone(),
@@ -345,6 +348,7 @@ pub mod fair_launch {
                 token_program: token_program.clone(),
                 amount: charged_amount,
             })?;
+            msg!("aft");
         } else {
             if buyer.lamports() < charged_amount {
                 return Err(ErrorCode::NotEnoughSOL.into());
@@ -405,7 +409,7 @@ pub mod fair_launch {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
         let fair_launch_lottery_bitmap_info = &ctx.accounts.fair_launch_lottery_bitmap;
-        let buyer = &mut ctx.accounts.buyer;
+        let buyer = &ctx.remaining_accounts[0];
         let clock = &mut ctx.accounts.clock;
 
         assert_derivation(
@@ -417,6 +421,20 @@ pub mod fair_launch {
                 LOTTERY.as_bytes(),
             ],
         )?;
+
+        assert_derivation(
+            ctx.program_id,
+            &fair_launch_ticket.to_account_info(),
+            &[
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                buyer.key.as_ref(),
+            ],
+        )?;
+
+        if fair_launch_ticket.fair_launch != fair_launch.key() {
+            return Err(ErrorCode::FairLaunchMismatch.into());
+        }
 
         if fair_launch_ticket.state.clone() as u8 != FairLaunchTicketState::Unpunched as u8 {
             return Err(ErrorCode::InvalidFairLaunchTicketState.into());
@@ -463,15 +481,15 @@ pub mod fair_launch {
         }
 
         if let Some(treasury_mint) = fair_launch.treasury_mint {
-            let treasury_mint_info = &ctx.remaining_accounts[0];
+            let treasury_mint_info = &ctx.remaining_accounts[1];
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
 
-            let buyer_token_account_info = &ctx.remaining_accounts[1];
+            let buyer_token_account_info = &ctx.remaining_accounts[2];
             let buyer_token_account: Account = assert_initialized(&buyer_token_account_info)?;
 
-            let transfer_authority_info = &ctx.remaining_accounts[2];
+            let transfer_authority_info = &ctx.remaining_accounts[3];
 
-            let token_program = &ctx.remaining_accounts[3];
+            let token_program = &ctx.remaining_accounts[4];
 
             if token_program.key != &spl_token::id() {
                 return Err(ErrorCode::InvalidTokenProgram.into());
@@ -490,7 +508,7 @@ pub mod fair_launch {
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_token_account_info,
                 &[
                     buyer.key.as_ref(),
@@ -627,7 +645,7 @@ pub mod fair_launch {
         // assert is an ATA owned by the buyer on the fair launch ticket, has no delegates, is a token account,
         // etc Since this is a permissionless endpoint (for cranks)
         assert_derivation(
-            &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+            &spl_associated_token_account::id(),
             buyer_token_account_info,
             &[
                 fair_launch_ticket.buyer.as_ref(),
@@ -725,7 +743,7 @@ pub mod fair_launch {
 
             // assert is an ATA
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 authority_token_account_info,
                 &[
                     authority.key.as_ref(),
@@ -853,8 +871,14 @@ pub mod fair_launch {
             }
 
             // assert is an ATA
+            msg!(
+                "keys {} {} {}",
+                buyer.key,
+                token_program.key,
+                treasury_mint_info.key
+            );
             assert_derivation(
-                &Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID).unwrap(),
+                &spl_associated_token_account::id(),
                 buyer_payment_account_info,
                 &[
                     buyer.key.as_ref(),
@@ -1058,18 +1082,18 @@ pub struct CreateTicketSeq<'info> {
 /// adjust down, never up.
 #[derive(Accounts)]
 pub struct AdjustTicket<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  bump=fair_launch_ticket.bump,has_one=buyer, has_one=fair_launch)]
+    #[account(mut)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     fair_launch_lottery_bitmap: AccountInfo<'info>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
-    #[account(mut)]
-    buyer: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
+    // Remaining REQUIRED account put in remaining due to anchor cli bug:
+    // [writable/signer ONLY in phase 1/2] buyer
     // Remaining accounts in this order if using spl tokens for payment:
     // [Writable/optional] treasury mint
     // [Writable/optional] buyer token account (must be ata)
@@ -1389,4 +1413,6 @@ pub enum ErrorCode {
     PhaseTwoHasntEndedYet,
     #[msg("Lottery duration hasnt ended yet")]
     LotteryDurationHasntEndedYet,
+    #[msg("Fair launch ticket and fair launch key mismatch")]
+    FairLaunchMismatch,
 }
