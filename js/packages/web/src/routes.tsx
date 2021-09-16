@@ -23,7 +23,7 @@ export function Routes() {
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
-            <Route exact path="/sign-up" component={() => <RegistrationView />} />
+            <Route exact path="/login" component={() => <RegistrationView />} />
             <Route
               exact
               path="/analytics"
