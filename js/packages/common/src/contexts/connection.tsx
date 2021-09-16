@@ -39,7 +39,7 @@ export type ENV =
   | 'lending';
 
 export const ENDPOINTS = [
-  {
+  /* {
     name: 'mainnet-beta' as ENV,
     endpoint: 'https://api.metaplex.solana.com/',
     ChainId: ChainId.MainnetBeta,
@@ -58,7 +58,7 @@ export const ENDPOINTS = [
     name: 'testnet' as ENV,
     endpoint: clusterApiUrl('testnet'),
     ChainId: ChainId.Testnet,
-  },
+  }, */
   {
     name: 'devnet' as ENV,
     endpoint: clusterApiUrl('devnet'),
@@ -551,7 +551,7 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Timeout Error caught', err);
     if (err.timeout) {
       throw new Error('Timed out awaiting confirmation on transaction');

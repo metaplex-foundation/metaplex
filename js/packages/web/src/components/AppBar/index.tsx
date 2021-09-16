@@ -7,6 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { isPubkeyAdmin } from '../../utils/utils';
 
 const UserActions = () => {
   const { publicKey } = useWallet();
@@ -19,6 +20,8 @@ const UserActions = () => {
       whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
+
+  const hasAccess = isPubkeyAdmin(pubkey);
 
   return (
     <>
@@ -37,6 +40,11 @@ const UserActions = () => {
               Sell
             </Button>
           </Link>
+          { hasAccess ? (
+            <Link to={`/admin`}>
+              <Button className="app-btn">Admin</Button>
+            </Link>
+          ) : null}
         </>
       )}
     </>
@@ -53,7 +61,10 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       }}
     >
       <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
+        <Button className="app-btn">Home</Button>
+      </Link>
+      <Link to={`/auctions`}>
+        <Button className="app-btn">Auctions</Button>
       </Link>
       <Link to={`/artworks`}>
         <Button className="app-btn">
@@ -82,7 +93,12 @@ const MetaplexMenu = () => {
             <Menu>
               <Menu.Item>
                 <Link to={`/`}>
-                  <Button className="app-btn">Explore</Button>
+                  <Button className="app-btn">Home</Button>
+                </Link>
+              </Menu.Item>
+              <Menu.Item>
+                <Link to={`/auctions`}>
+                  <Button className="app-btn">Auctions</Button>
                 </Link>
               </Menu.Item>
               <Menu.Item>

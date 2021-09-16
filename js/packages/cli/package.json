@@ -21,6 +21,7 @@
     "scripts": "./build/**/*.js"
   },
   "dependencies": {
+    "@types/offscreencanvas": "^2019.6.3",
     "@project-serum/anchor": "^0.13.2",
     "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",
