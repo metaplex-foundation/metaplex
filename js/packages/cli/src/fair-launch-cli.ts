@@ -750,7 +750,6 @@ async function adjustTicket({
       fairLaunchLotteryBitmap,
       //@ts-ignore
       treasury: fairLaunchObj.treasury,
-      buyer: adjuster,
       systemProgram: anchor.web3.SystemProgram.programId,
       clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
     },

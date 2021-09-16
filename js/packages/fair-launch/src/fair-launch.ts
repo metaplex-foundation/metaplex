@@ -242,10 +242,13 @@ export const purchaseTicket = async (
   );
 
   if (ticket) {
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
-    )[0];
-    console.log('Anchor wallet', anchorWallet.publicKey.toBase58());
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
+    console.log(
+      'Anchor wallet',
+      anchorWallet.publicKey.toBase58(),
+      amountLamports,
+    );
     await fairLaunch.program.rpc.adjustTicket(new anchor.BN(amountLamports), {
       accounts: {
         fairLaunchTicket,
@@ -256,7 +259,7 @@ export const purchaseTicket = async (
         systemProgram: anchor.web3.SystemProgram.programId,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
-      // __private: { logAccounts: true },
+      __private: { logAccounts: true },
       remainingAccounts: [
         {
           pubkey: anchorWallet.publicKey,
