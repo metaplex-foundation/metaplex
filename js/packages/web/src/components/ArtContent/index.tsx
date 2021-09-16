@@ -113,7 +113,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -188,7 +188,13 @@ const HTMLContent = ({
       />
     );
   }
-  return <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" sandbox="allow-scripts" frameBorder="0" src={htmlURL} className={className} style={style}></iframe>;
+  return (
+    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+      sandbox="allow-scripts"
+      frameBorder="0"
+      src={htmlURL}
+      className={className}
+      style={style}></iframe>);
 };
 
 
@@ -256,19 +262,6 @@ export const ArtContent = ({
     );
   }
 
-  if (category === 'html' || animationUrlExt === 'html'
-  ) {
-    return (
-      <HTMLContent
-        uri={uri}
-        animationUrl={animationURL}
-        className={className}
-        style={style}
-        files={files}
-      />
-    );
-  }
-
   const content =
     category === 'video' ? (
       <VideoArtContent
@@ -278,6 +271,14 @@ export const ArtContent = ({
         uri={uri}
         animationURL={animationURL}
         active={active}
+      />
+    ) : (category === 'html' || animationUrlExt === 'html') ? (
+      <HTMLContent
+        uri={uri}
+        animationUrl={animationURL}
+        className={className}
+        style={style}
+        files={files}
       />
     ) : (
       <CachedImageContent
