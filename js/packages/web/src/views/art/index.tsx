@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Row,
   Col,
@@ -21,6 +21,7 @@ import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ViewOn } from '../../components/ViewOn';
 import { ArtType } from '../../types';
 import { ArtMinting } from '../../components/ArtMinting';
+import {getAttributesByNftId} from "../../actions/lmsIntegration";
 
 const { Content } = Layout;
 
@@ -28,6 +29,7 @@ export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const wallet = useWallet();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
+  let [attributes, setAttributes] = useState(false);
 
   const connection = useConnection();
   const art = useArt(id);
@@ -49,7 +51,18 @@ export const ArtView = () => {
   // }, new Map<string, TokenAccount>());
 
   const description = data?.description;
-  const attributes = data?.attributes;
+  // const attributes = data?.attributes;
+  // TODO: Change getting attributes!!!
+  useEffect(() => {
+    if (data !== undefined && !attributes) {
+      getAttributesByNftId(id).then(res => {
+        setAttributes(res);
+      }).catch(e => {
+        console.log(e);
+        setAttributes(true)
+      })
+    }
+  })
 
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
@@ -211,6 +224,8 @@ export const ArtView = () => {
             <br />
             {/*
               TODO: add info about artist
+
+
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
@@ -221,10 +236,10 @@ export const ArtView = () => {
                 <br />
                 <div className="info-header">Attributes</div>
                 <List size="large" grid={{ column: 4 }}>
-                  {attributes.map(attribute => (
-                    <List.Item key={attribute.trait_type}>
-                      <Card title={attribute.trait_type}>
-                        {attribute.value}
+                  {Object.entries(attributes).map((item: [string, any], idx) => (
+                    <List.Item key={idx}>
+                      <Card title={item[0]}>
+                        {item[1]}
                       </Card>
                     </List.Item>
                   ))}
