@@ -20,13 +20,14 @@ import {
 import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { isPubkeyAdmin } from '../../utils/utils';
+import { AccessForbidden } from '../../components/Access';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
   const mint = useMint(QUOTE_MINT);
-  const wallet = useWallet();
-  const hasAccess = isPubkeyAdmin(wallet.publicKey?.toString())
-  return mint ? <InnerAnalytics mint={mint} hasAccess={hasAccess} /> : <Spin />;
+  return mint ? <InnerAnalytics mint={mint} /> : <Spin />;
 };
 
 enum AuctionType {
@@ -290,7 +291,7 @@ const MemoizedPie = React.memo(
   },
 );
 
-function InnerAnalytics({ mint, hasAccess }: { mint: MintInfo, hasAccess: boolean }) {
+function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [usersWithMetadata, setUsersWithMetadata] = useState<
     Record<string, boolean>
   >({});
@@ -323,9 +324,11 @@ function InnerAnalytics({ mint, hasAccess }: { mint: MintInfo, hasAccess: boolea
   const totalMarketplaces = Object.values(stores).length;
 
   const auctionViews = useAuctions();
+  const wallet = useWallet();
+  const hasAccess = isPubkeyAdmin(wallet.publicKey?.toString())
 
-  if(!hasAccess) {
-    return (<AccessForbidden/>)
+  if (!hasAccess) {
+    return (<AccessForbidden/>);
   } else {
     return (
       <Content>
