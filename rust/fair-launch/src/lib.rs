@@ -409,7 +409,7 @@ pub mod fair_launch {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
         let fair_launch_lottery_bitmap_info = &ctx.accounts.fair_launch_lottery_bitmap;
-        let buyer = &mut ctx.accounts.buyer;
+        let buyer = &ctx.remaining_accounts[0];
         let clock = &mut ctx.accounts.clock;
 
         assert_derivation(
@@ -421,6 +421,20 @@ pub mod fair_launch {
                 LOTTERY.as_bytes(),
             ],
         )?;
+
+        assert_derivation(
+            ctx.program_id,
+            &fair_launch_ticket.to_account_info(),
+            &[
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                buyer.key.as_ref(),
+            ],
+        )?;
+
+        if fair_launch_ticket.fair_launch != fair_launch.key() {
+            return Err(ErrorCode::FairLaunchMismatch.into());
+        }
 
         if fair_launch_ticket.state.clone() as u8 != FairLaunchTicketState::Unpunched as u8 {
             return Err(ErrorCode::InvalidFairLaunchTicketState.into());
@@ -467,15 +481,15 @@ pub mod fair_launch {
         }
 
         if let Some(treasury_mint) = fair_launch.treasury_mint {
-            let treasury_mint_info = &ctx.remaining_accounts[0];
+            let treasury_mint_info = &ctx.remaining_accounts[1];
             let _treasury_mint: spl_token::state::Mint = assert_initialized(&treasury_mint_info)?;
 
-            let buyer_token_account_info = &ctx.remaining_accounts[1];
+            let buyer_token_account_info = &ctx.remaining_accounts[2];
             let buyer_token_account: Account = assert_initialized(&buyer_token_account_info)?;
 
-            let transfer_authority_info = &ctx.remaining_accounts[2];
+            let transfer_authority_info = &ctx.remaining_accounts[3];
 
-            let token_program = &ctx.remaining_accounts[3];
+            let token_program = &ctx.remaining_accounts[4];
 
             if token_program.key != &spl_token::id() {
                 return Err(ErrorCode::InvalidTokenProgram.into());
@@ -1068,18 +1082,18 @@ pub struct CreateTicketSeq<'info> {
 /// adjust down, never up.
 #[derive(Accounts)]
 pub struct AdjustTicket<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), buyer.key.as_ref()],  bump=fair_launch_ticket.bump,has_one=buyer, has_one=fair_launch)]
+    #[account(mut)]
     fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     fair_launch_lottery_bitmap: AccountInfo<'info>,
     #[account(mut)]
     treasury: AccountInfo<'info>,
-    #[account(mut)]
-    buyer: AccountInfo<'info>,
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     clock: Sysvar<'info, Clock>,
+    // Remaining REQUIRED account put in remaining due to anchor cli bug:
+    // [writable/signer ONLY in phase 1/2] buyer
     // Remaining accounts in this order if using spl tokens for payment:
     // [Writable/optional] treasury mint
     // [Writable/optional] buyer token account (must be ata)
@@ -1399,4 +1413,6 @@ pub enum ErrorCode {
     PhaseTwoHasntEndedYet,
     #[msg("Lottery duration hasnt ended yet")]
     LotteryDurationHasntEndedYet,
+    #[msg("Fair launch ticket and fair launch key mismatch")]
+    FairLaunchMismatch,
 }

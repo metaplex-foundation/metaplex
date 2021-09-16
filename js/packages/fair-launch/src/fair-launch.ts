@@ -253,23 +253,15 @@ export const purchaseTicket = async (
         fairLaunchLotteryBitmap,
         //@ts-ignore
         treasury: fairLaunch.state.treasury,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
-      __private: { logAccounts: true },
+      // __private: { logAccounts: true },
       remainingAccounts: [
         {
           pubkey: anchorWallet.publicKey,
           isSigner: true,
           isWritable: true,
-        },
-        {
-          pubkey: anchor.web3.SystemProgram.programId,
-          isSigner: false,
-          isWritable: false,
-        },
-        {
-          pubkey: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-          isSigner: false,
-          isWritable: false,
         },
         ...remainingAccounts,
       ],

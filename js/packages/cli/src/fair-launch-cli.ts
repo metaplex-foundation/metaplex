@@ -755,7 +755,14 @@ async function adjustTicket({
       clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
     },
     //__private: { logAccounts: true },
-    remainingAccounts,
+    remainingAccounts: [
+      {
+        pubkey: adjuster,
+        isSigner: adjuster.equals(payer.publicKey),
+        isWritable: true,
+      },
+      ...remainingAccounts,
+    ],
     signers,
     instructions: instructions.length > 0 ? instructions : undefined,
   });
