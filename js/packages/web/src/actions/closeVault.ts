@@ -1,16 +1,15 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
-import {
-  actions,
-  models,
-  StringPublicKey,
-  toPublicKey,
-  WalletSigner,
-} from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { StringPublicKey, toPublicKey, WalletSigner } from '@oyster/common';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+import {
+  activateVault,
+  combineVault,
+} from '@oyster/common/dist/lib/actions/vault';
+import { approve } from '@oyster/common/dist/lib/models/account';
+
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
-const { createTokenAccount, activateVault, combineVault } = actions;
-const { approve } = models;
 
 // This command "closes" the vault, by activating & combining it in one go, handing it over to the auction manager
 // authority (that may or may not exist yet.)
@@ -32,8 +31,8 @@ export async function closeVault(
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
   );
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   await activateVault(
     new BN(0),
@@ -62,7 +61,7 @@ export async function closeVault(
     signers,
   );
 
-  let transferAuthority = Keypair.generate();
+  const transferAuthority = Keypair.generate();
 
   // Shouldn't need to pay anything since we activated vault with 0 shares, but we still
   // need this setup anyway.

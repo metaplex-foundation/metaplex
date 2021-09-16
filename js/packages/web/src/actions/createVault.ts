@@ -6,18 +6,21 @@ import {
 } from '@solana/web3.js';
 import {
   utils,
-  actions,
   createMint,
   findProgramAddress,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
+import {
+  initVault,
+  MAX_VAULT_SIZE,
+  VAULT_PREFIX,
+} from '@oyster/common/dist/lib/actions/vault';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-
-const { createTokenAccount, initVault, MAX_VAULT_SIZE, VAULT_PREFIX } = actions;
 
 // This command creates the external pricing oracle a vault
 // This gets the vault ready for adding the tokens.
@@ -38,8 +41,8 @@ export async function createVault(
 
   const PROGRAM_IDS = utils.programIds();
 
-  let signers: Keypair[] = [];
-  let instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
+  const instructions: TransactionInstruction[] = [];
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -53,7 +56,7 @@ export async function createVault(
     MAX_VAULT_SIZE,
   );
 
-  let vault = Keypair.generate();
+  const vault = Keypair.generate();
 
   const vaultAuthority = (
     await findProgramAddress(

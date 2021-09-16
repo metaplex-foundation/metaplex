@@ -13,7 +13,8 @@ import {
 } from '../utils/ids';
 import { programIds } from '../utils/programIds';
 import { TokenAccount } from '../models/account';
-import { cache, TokenAccountParser } from '../contexts/accounts';
+import { cache } from '../contexts/accounts/cache';
+import { TokenAccountParser } from '../contexts/accounts/parsesrs';
 
 export function ensureSplAccount(
   instructions: TransactionInstruction[],

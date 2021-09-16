@@ -6,7 +6,7 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { SafetyDepositInstructionTemplate } from './addTokensToVault';
-import { WinningConfigType } from '../models/metaplex';
+import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
 
 const BATCH_SIZE = 10;
 // This command batches out creating reservation lists for those tokens who are being sold in PrintingV1 mode.
@@ -23,8 +23,8 @@ export async function deprecatedCreateReservationListForTokens(
 
   let batchCounter = 0;
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];

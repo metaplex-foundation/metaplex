@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Layout,
   Row,
@@ -12,7 +12,10 @@ import {
   Divider,
 } from 'antd';
 import { useMeta } from '../../contexts';
-import { Store, WhitelistedCreator } from '../../models/metaplex';
+import {
+  Store,
+  WhitelistedCreator,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import {
   MasterEditionV1,
   notify,
@@ -21,7 +24,8 @@ import {
   StringPublicKey,
   useConnection,
   useStore,
-  useUserAccounts, useWalletModal,
+  useUserAccounts,
+  useWalletModal,
   WalletSigner,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';

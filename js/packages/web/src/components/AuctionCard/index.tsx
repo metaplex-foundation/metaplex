@@ -19,6 +19,7 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
+  placeBid,
   useWalletModal,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -42,7 +43,7 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-} from '../../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,

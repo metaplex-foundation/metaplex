@@ -3,9 +3,9 @@ import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
+import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
   AuctionView as Auction,
-  AuctionViewItem,
   useArt,
   useAuction,
   useBidsForAuction,
@@ -159,22 +159,20 @@ export const AuctionView = () => {
                   No description provided.
                 </div>
               ))}
-
           </div>
 
-          {attributes &&
+          {attributes && (
             <>
               <h6>Attributes</h6>
-              <List
-                grid={{ column: 4 }}
-              >
-                {attributes.map(attribute =>
+              <List grid={{ column: 4 }}>
+                {attributes.map(attribute => (
                   <List.Item>
                     <Card title={attribute.trait_type}>{attribute.value}</Card>
                   </List.Item>
-                )}
+                ))}
               </List>
-            </>}
+            </>
+          )}
           {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>
