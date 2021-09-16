@@ -131,6 +131,15 @@ export const getFairLaunchTicket = async (
   );
 };
 
+export const getFairLaunchLotteryBitmap = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), Buffer.from('lottery')],
+    FAIR_LAUNCH_PROGRAM,
+  );
+};
+
 export const purchaseTicket = async (
   amount: number,
   anchorWallet: anchor.Wallet,
@@ -145,6 +154,8 @@ export const purchaseTicket = async (
     fairLaunch.state.tokenMint,
     anchorWallet.publicKey,
   );
+
+
 
   const remainingAccounts = [];
   const instructions = [];
@@ -167,6 +178,8 @@ export const purchaseTicket = async (
         anchorWallet.publicKey,
         [],
         //@ts-ignore
+
+        // TODO: get mint decimals
         amountNumber + fairLaunch.state.data.fees.toNumber(),
       ),
     );
@@ -200,6 +213,33 @@ export const purchaseTicket = async (
     });
   }
 
+  const ticket = await fairLaunch.program.provider.connection.getAccountInfo(fairLaunchTicket);
+  if(ticket) {
+
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
+
+    debugger;
+    await fairLaunch.program.rpc.adjustTicket(new anchor.BN(amountLamports), {
+      accounts: {
+        fairLaunchTicket,
+        fairLaunch: fairLaunch.id,
+        fairLaunchLotteryBitmap,
+        //@ts-ignore
+        treasury: fairLaunch.state.treasury,
+        buyer: anchorWallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+      //__private: { logAccounts: true },
+      remainingAccounts,
+      signers,
+      instructions: instructions.length > 0 ? instructions : undefined,
+    });
+
+    return;
+  }
+
   await fairLaunch.program.rpc.purchaseTicket(
     bump,
     new anchor.BN(amountLamports),
@@ -230,7 +270,6 @@ export const withdrawFunds = async (
   if (!fairLaunch) {
     return;
   }
-  debugger;
 
   // TODO: create sequence ticket
 

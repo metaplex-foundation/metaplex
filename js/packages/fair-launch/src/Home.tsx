@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import Countdown from "react-countdown";
-import { Box, CircularProgress, Slider, Snackbar } from "@material-ui/core";
+import { Box, CircularProgress, Container, Slider, Snackbar } from "@material-ui/core";
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -12,6 +12,9 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import { withStyles } from "@material-ui/core/styles";
+import Backdrop from "@material-ui/core/Backdrop";
+import { PhaseCountdown } from './countdown';
 
 import Alert from "@material-ui/lab/Alert";
 
@@ -96,6 +99,13 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
+
+const LimitedBackdrop = withStyles({
+  root: {
+    position: "absolute",
+    zIndex: 1
+  }
+})(Backdrop);
 
 export interface HomeProps {
   candyMachineId: anchor.web3.PublicKey;
@@ -286,28 +296,6 @@ const Home = (props: HomeProps) => {
     },
   ].filter(_ => _ !== undefined && _.value !== 0) as any;
 
-  const actionRender = (title: string, onClick: () => void) => {
-    return <>
-      <Slider
-        min={min}
-        marks={marks}
-        max={max}
-        step={step}
-        value={contributed}
-        onChange={(ev, val) => setContributed(val as any)}
-        valueLabelDisplay="auto"
-        style={{ width: 200, marginLeft: 20 }} />
-      <p>Balance: {balance?.toFixed(2) || '--'} SOL</p>
-
-      <MintButton
-        onClick={onClick}
-        variant="contained"
-      >
-        {title}
-      </MintButton>
-    </>
-  }
-
   const onDeposit = () => {
     if (!anchorWallet) {
       return;
@@ -336,81 +324,118 @@ const Home = (props: HomeProps) => {
     );
   };
 
-  return (
-    <main>
-      <Grid container spacing={3}>
-        <Grid item md={6}>
-          <Paper>
-            <Tabs
-              value={selectedTab}
-              onChange={onTabChange}
-              indicatorColor="primary"
-              textColor="primary"
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="scrollable auto tabs example"
-            >
-              <Tab label="Deposit" />
-              <Tab label="Withdraw" />
-            </Tabs>
-            <TabPanel value={selectedTab} index={0}>
-              {actionRender('Deposit', onDeposit)}
-            </TabPanel>
-            <TabPanel value={selectedTab} index={1}>
-              {actionRender('Withdraw', onWithdraw)}
-            </TabPanel>
+  const [isPhase1Active, setIsPhase1Active] = useState((toDate(fairLaunch?.state.data.phaseOneStart) || Date.now()) <= Date.now());
 
-            <p>Phase 1 starts at: {toDate(fairLaunch?.state.data.phaseOneStart)?.toString()}</p>
-            <p>Phase 1 ends at: {toDate(fairLaunch?.state.data.phaseOneEnd)?.toString()}</p>
-            <p>Phase 2 ends at: {toDate(fairLaunch?.state.data.phaseTwoEnd)?.toString()}</p>
+  return (
+    <Container style={{ marginTop: 100 }}>
+      <Container maxWidth="sm" style={{ position: 'relative' }}>
+          {/* Display timer before the drop */}
+          <LimitedBackdrop open={!isPhase1Active}>
+            <Grid container direction="column" alignItems="center">
+              <Typography component="h2" color="textPrimary" >Raffle starts</Typography>
+              <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                              onComplete={() => setIsPhase1Active(true)}
+                              status="Phase 1 Started" />
+            </Grid>
+          </LimitedBackdrop>
+          <Paper style={{ padding: 10 }}>
+            <Grid container>
+              <Grid xs={6} justifyContent="center" direction="column">
+                <Typography component="h2" >Phase 1</Typography>
+                <Typography>Set price phase</Typography>
+              </Grid>
+              <Grid xs={6}>
+                <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)} style={{ justifyContent: 'flex-end' }} />
+              </Grid>
+            </Grid>
+
+            <Grid>
+              <Typography>Your bid</Typography>
+              <Typography>1 SOL</Typography>
+            </Grid>
+
+            <Grid>
+              <Slider
+                min={min}
+                marks={marks}
+                max={max}
+                step={step}
+                value={contributed}
+                onChange={(ev, val) => setContributed(val as any)}
+                valueLabelDisplay="auto"
+                style={{ width: 200, marginLeft: 20 }} />
+            </Grid>
+
+            <MintButton
+              onClick={onDeposit}
+              variant="contained"
+            >
+              Place a bid
+            </MintButton>
+
+            <Grid>
+              <Typography>How raffles works</Typography>
+            </Grid>
+
+            {wallet.connected && (
+              <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || "")}</p>
+            )}
+
+            {wallet.connected && (
+              <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
+            )}
 
             <p>Current median price: {formatNumber.format(median)}</p>
 
             <p>Total raised</p>
-            <p>Your contribution</p>
           </Paper>
-        </Grid>
-      </Grid>
+      </Container>
 
-      <p>GO LIVE: {startDate.toString()}</p>
-      <p>TODO: add timer</p>
+      <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
+        <Paper style={{ padding: 10 }} elevation={3}>
+          <Grid container>
+            <Grid xs={6} justifyContent="center" direction="column">
+              <Typography>Phase 2</Typography>
+              <Typography>Raffle</Typography>
+            </Grid>
+            <Grid xs={6}>
+              <PhaseCountdown date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                              start={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                              end={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                              style={{ justifyContent: 'flex-end' }} />
+              </Grid>
+          </Grid>
 
-      {wallet.connected && (
-        <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || "")}</p>
-      )}
-
-      {wallet.connected && (
-        <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
-      )}
-
-      <MintContainer>
-        {!wallet.connected ? (
-          <ConnectButton>Connect Wallet</ConnectButton>
-        ) : (
-          <MintButton
-            disabled={isSoldOut || isMinting || !isActive}
-            onClick={onMint}
-            variant="contained"
-          >
-            {isSoldOut ? (
-              "SOLD OUT"
-            ) : isActive ? (
-              isMinting ? (
-                <CircularProgress />
-              ) : (
-                "MINT"
-              )
+          <MintContainer>
+            {!wallet.connected ? (
+              <ConnectButton>Connect Wallet</ConnectButton>
             ) : (
-              <Countdown
-                date={startDate}
-                onMount={({ completed }) => completed && setIsActive(true)}
-                onComplete={() => setIsActive(true)}
-                renderer={renderCounter}
-              />
+              <MintButton
+                disabled={isSoldOut || isMinting || !isActive}
+                onClick={onMint}
+                variant="contained"
+              >
+                {isSoldOut ? (
+                  "SOLD OUT"
+                ) : isActive ? (
+                  isMinting ? (
+                    <CircularProgress />
+                  ) : (
+                    "MINT"
+                  )
+                ) : (
+                  <Countdown
+                    date={startDate}
+                    onMount={({ completed }) => completed && setIsActive(true)}
+                    onComplete={() => setIsActive(true)}
+                    renderer={renderCounter}
+                  />
+                )}
+              </MintButton>
             )}
-          </MintButton>
-        )}
-      </MintContainer>
+          </MintContainer>
+        </Paper>
+      </Container>
 
       <Snackbar
         open={alertState.open}
@@ -424,7 +449,7 @@ const Home = (props: HomeProps) => {
           {alertState.message}
         </Alert>
       </Snackbar>
-    </main>
+    </Container>
   );
 };
 
