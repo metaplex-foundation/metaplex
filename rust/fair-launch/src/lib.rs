@@ -157,7 +157,7 @@ pub mod fair_launch {
         if fair_launch_lottery_bitmap.bitmap_ones
             != std::cmp::min(
                 fair_launch.data.number_of_tokens,
-                fair_launch.number_tickets_sold,
+                fair_launch.current_eligible_holders,
             )
         {
             return Err(ErrorCode::LotteryBitmapOnesMustEqualNumberOfTicketsSold.into());
@@ -1195,6 +1195,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tokens preminted
 1 + // phase three started
 9 + // treasury snapshot
+8 + // current_eligible_holders
 8 + // current median,
 4 + // u32 representing number of amounts in vec so far
 100; // padding
@@ -1267,6 +1268,7 @@ pub struct FairLaunch {
     pub phase_three_started: bool,
     /// Snapshot of treasury taken on first withdrawal.
     pub treasury_snapshot: Option<u64>,
+    pub current_eligible_holders: u64,
     pub current_median: u64,
     pub counts_at_each_tick: Vec<u64>,
 }

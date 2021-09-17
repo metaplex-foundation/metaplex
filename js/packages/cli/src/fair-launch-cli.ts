@@ -1617,16 +1617,27 @@ program
 
     const statesFlat = states.flat();
 
-    //@ts-ignore;
-    let numWinnersRemaining = fairLaunchObj.data.numberOfTokens;
+    let numWinnersRemaining = Math.min(
+      //@ts-ignore;
+      fairLaunchObj.data.numberOfTokens,
+      //@ts-ignore;
+      statesFlat.filter(s => s.eligible).length,
+    );
+
+    console.log(
+      'Dunn',
+      //@ts-ignore;
+      fairLaunchObj.numberTicketsSold - fairLaunchObj.numberTicketsDropped,
+    );
 
     let chosen: { seq: anchor.BN; eligible: boolean; chosen: boolean }[];
     if (numWinnersRemaining >= statesFlat.length) {
       console.log('More or equal nfts than winners, everybody wins.');
       chosen = statesFlat.map(s => ({ ...s, chosen: true }));
     } else {
-      console.log('Doing lottery.');
       chosen = statesFlat.map(s => ({ ...s, chosen: false }));
+
+      console.log('Doing lottery for', numWinnersRemaining);
       while (numWinnersRemaining > 0) {
         const rand = Math.round(Math.random() * (chosen.length - 1));
         if (chosen[rand].chosen != true && chosen[rand].eligible) {
@@ -1958,6 +1969,12 @@ program
       'Phase Three Started',
       //@ts-ignore
       fairLaunchObj.phaseThreeStarted,
+    );
+
+    console.log(
+      'Current Eligible Holders',
+      //@ts-ignore
+      fairLaunchObj.currentEligibleHolders.toNumber(),
     );
 
     console.log(

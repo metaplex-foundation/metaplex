@@ -41,7 +41,9 @@ import {
 import {
   FairLaunchAccount,
   FairLaunchTicket,
+  getFairLaunchLotteryBitmap,
   getFairLaunchState,
+  punchTicket,
   purchaseTicket,
   withdrawFunds,
 } from './fair-launch';
@@ -129,6 +131,30 @@ export interface HomeProps {
   txTimeout: number;
 }
 
+const FAIR_LAUNCH_LOTTERY_SIZE =
+  8 + // discriminator
+  32 + // fair launch
+  1 + // bump
+  8; // size of bitmask ones
+
+const isWinner = (
+  phaseThree: boolean | undefined,
+  lottery: Uint8Array | null,
+  sequence: anchor.BN | undefined,
+): boolean => {
+  if (!lottery || !lottery.length || !sequence || !phaseThree) {
+    return false;
+  }
+
+  const myByte =
+    lottery[FAIR_LAUNCH_LOTTERY_SIZE + Math.floor(sequence.toNumber() / 8)];
+
+  const positionFromRight = 7 - (sequence.toNumber() % 8);
+  const mask = Math.pow(2, positionFromRight);
+  const isWinner = myByte & mask;
+  return isWinner > 0;
+};
+
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
   const [isActive, setIsActive] = useState(false); // true when countdown completes
@@ -138,6 +164,7 @@ const Home = (props: HomeProps) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [ticket, setTicket] = useState<FairLaunchTicket | null>(null);
   const [treasury, setTreasury] = useState<number | null>(null);
+  const [lottery, setLottery] = useState<Uint8Array | null>(null);
 
   const wallet = useWallet();
 
@@ -282,6 +309,19 @@ const Home = (props: HomeProps) => {
           state.state.treasury,
         );
         setTreasury(treasury);
+        const fairLaunchLotteryBitmap = (
+          await getFairLaunchLotteryBitmap(
+            //@ts-ignore
+            fairLaunchObj.tokenMint,
+          )
+        )[0];
+
+        const fairLaunchLotteryBitmapObj =
+          await state.program.provider.connection.getAccountInfo(
+            fairLaunchLotteryBitmap,
+          );
+
+        setLottery(new Uint8Array(fairLaunchLotteryBitmapObj?.data || []));
 
         console.log();
       } catch {
@@ -337,6 +377,16 @@ const Home = (props: HomeProps) => {
     console.log('deposit');
 
     purchaseTicket(contributed, anchorWallet, fairLaunch, ticket);
+  };
+
+  const onPunchTicket = () => {
+    if (!anchorWallet || !fairLaunch) {
+      return;
+    }
+
+    console.log('punch');
+
+    punchTicket(anchorWallet, fairLaunch);
   };
 
   const onWithdraw = () => {
@@ -411,9 +461,19 @@ const Home = (props: HomeProps) => {
               {!ticket ? 'Place a bid' : 'Adjust your bid'}
             </MintButton>
 
-            <Grid>
-              <Typography>How raffles works</Typography>
-            </Grid>
+          {isWinner(
+            fairLaunch?.state.phaseThreeStarted,
+            lottery,
+            ticket?.seq,
+          ) && (
+            <MintButton onClick={onPunchTicket} variant="contained">
+              Punch Ticket
+            </MintButton>
+          )}
+
+          <Grid>
+            <Typography>How raffles works</Typography>
+          </Grid>
 
             {wallet.connected && (
               <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}</p>
