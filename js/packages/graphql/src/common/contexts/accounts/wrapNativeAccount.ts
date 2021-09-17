@@ -1,0 +1,33 @@
+import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { u64 } from "@solana/spl-token";
+import { TokenAccount } from "../../models";
+import { StringPublicKey, WRAPPED_SOL_MINT } from "../../utils/ids";
+
+export function wrapNativeAccount(
+  pubkey: StringPublicKey,
+  account?: AccountInfo<Buffer>
+): TokenAccount | undefined {
+  if (!account) {
+    return undefined;
+  }
+
+  const key = new PublicKey(pubkey);
+
+  return {
+    pubkey: pubkey,
+    account,
+    info: {
+      address: key,
+      mint: WRAPPED_SOL_MINT,
+      owner: key,
+      amount: new u64(account.lamports),
+      delegate: null,
+      delegatedAmount: new u64(0),
+      isInitialized: true,
+      isFrozen: false,
+      isNative: true,
+      rentExemptReserve: null,
+      closeAuthority: null,
+    },
+  };
+}
