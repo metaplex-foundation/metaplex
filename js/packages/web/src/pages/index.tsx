@@ -22,7 +22,11 @@ export async function getServerSideProps(context: NextPageContext) {
     return acc;
   }, {});
   const host = (forwarded?.host || headers.host) as string;
-  const subdomain = host.split(':')[0].split('.')[0];
+  let subdomain = host.split(':')[0].split('.')[0];
+
+  if (process.env.SUBDOMAIN) {
+    subdomain = process.env.SUBDOMAIN
+  }
 
   const storefront = await getStorefront(subdomain);
 
