@@ -79,7 +79,7 @@ export const ArtView = () => {
         <Row ref={ref}>
           <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
             <ArtContent
-              style={{ width: 300 }}
+              style={{ width: '300px', height: '300px', margin: '0 auto' }}
               height={300}
               width={300}
               className="artwork-image"
