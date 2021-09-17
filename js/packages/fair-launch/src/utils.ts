@@ -1,20 +1,24 @@
-import * as anchor from "@project-serum/anchor";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { SystemProgram } from "@solana/web3.js";
-import { LAMPORTS_PER_SOL, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
+import * as anchor from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { SystemProgram } from '@solana/web3.js';
+import {
+  LAMPORTS_PER_SOL,
+  SYSVAR_RENT_PUBKEY,
+  TransactionInstruction,
+} from '@solana/web3.js';
 
 export const FAIR_LAUNCH_PROGRAM_ID = new anchor.web3.PublicKey(
   '7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF',
 );
 
 export interface AnchorProgram {
-  id: anchor.web3.PublicKey,
+  id: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   program: anchor.Program;
 }
 
 export const toDate = (value?: anchor.BN) => {
-  if(!value) {
+  if (!value) {
     return;
   }
 
@@ -36,7 +40,7 @@ export const formatNumber = {
     return numberFormater.format(val);
   },
   asNumber: (val?: anchor.BN) => {
-    if(!val) {
+    if (!val) {
       return undefined;
     }
 
@@ -44,9 +48,22 @@ export const formatNumber = {
   },
 };
 
-export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new anchor.web3.PublicKey(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-);
+export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID =
+  new anchor.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+export const getFairLaunchTicketSeqLookup = async (
+  tokenMint: anchor.web3.PublicKey,
+  seq: anchor.BN,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('fair_launch'),
+      tokenMint.toBuffer(),
+      seq.toArrayLike(Buffer, 'le', 8),
+    ],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
 
 export const getAtaForMint = async (
   mint: anchor.web3.PublicKey,
