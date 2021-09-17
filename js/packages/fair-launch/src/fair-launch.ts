@@ -5,6 +5,7 @@ import { LAMPORTS_PER_SOL, TransactionInstruction } from '@solana/web3.js';
 import {
   createAssociatedTokenAccountInstruction,
   getAtaForMint,
+  getFairLaunchTicketSeqLookup,
 } from './utils';
 
 export const FAIR_LAUNCH_PROGRAM = new anchor.web3.PublicKey(
@@ -152,13 +153,19 @@ export const punchTicket = async (
   )[0];
 
   if (ticket.amount.toNumber() > fairLaunch.state.currentMedian.toNumber()) {
-    console.log('Adjusting down...');
+    console.log(
+      'Adjusting down...',
+      ticket.amount.toNumber(),
+      fairLaunch.state.currentMedian.toNumber(),
+    );
     const { remainingAccounts, instructions, signers } =
       await getSetupForTicketing(
+        fairLaunch.program,
         fairLaunch.state.currentMedian.toNumber(),
         anchorWallet,
         fairLaunch,
         ticket,
+        fairLaunchTicket,
       );
     await fairLaunch.program.rpc.adjustTicket(fairLaunch.state.currentMedian, {
       accounts: {
@@ -227,10 +234,12 @@ export const getFairLaunchLotteryBitmap = async (
 };
 
 const getSetupForTicketing = async (
+  anchorProgram: anchor.Program,
   amount: number,
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount | undefined,
   ticket: FairLaunchTicket | null,
+  ticketKey: anchor.web3.PublicKey,
 ): Promise<{
   remainingAccounts: {
     pubkey: anchor.web3.PublicKey | null;
@@ -322,6 +331,33 @@ const getSetupForTicketing = async (
     });
   }
 
+  if (ticket) {
+    const [fairLaunchTicketSeqLookup, seqBump] =
+      await getFairLaunchTicketSeqLookup(
+        fairLaunch.state.tokenMint,
+        ticket.seq,
+      );
+
+    const seq = await anchorProgram.provider.connection.getAccountInfo(
+      fairLaunchTicketSeqLookup,
+    );
+    if (!seq) {
+      instructions.push(
+        await anchorProgram.instruction.createTicketSeq(seqBump, {
+          accounts: {
+            fairLaunchTicketSeqLookup,
+            fairLaunch: fairLaunch.id,
+            fairLaunchTicket: ticketKey,
+            payer: anchorWallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          },
+          signers: [],
+        }),
+      );
+    }
+  }
+
   return {
     remainingAccounts,
     instructions,
@@ -339,13 +375,21 @@ export const purchaseTicket = async (
     return;
   }
 
-  const { remainingAccounts, instructions, signers, amountLamports } =
-    await getSetupForTicketing(amount, anchorWallet, fairLaunch, ticket);
   const [fairLaunchTicket, bump] = await getFairLaunchTicket(
     //@ts-ignore
     fairLaunch.state.tokenMint,
     anchorWallet.publicKey,
   );
+
+  const { remainingAccounts, instructions, signers, amountLamports } =
+    await getSetupForTicketing(
+      fairLaunch.program,
+      amount,
+      anchorWallet,
+      fairLaunch,
+      ticket,
+      fairLaunchTicket,
+    );
 
   if (ticket) {
     const fairLaunchLotteryBitmap = ( //@ts-ignore

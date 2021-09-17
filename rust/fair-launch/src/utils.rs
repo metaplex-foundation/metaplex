@@ -352,13 +352,13 @@ pub fn get_expected_capital_alotment_size(
     Ok(divided as u64)
 }
 
-pub fn assert_valid_amount(data: &FairLaunchData, amount: u64) -> ProgramResult {
-    if amount < data.price_range_start || amount > data.price_range_end {
+pub fn assert_valid_amount(fair_launch: &FairLaunch, amount: u64) -> ProgramResult {
+    if amount < fair_launch.data.price_range_start || amount > fair_launch.data.price_range_end {
         return Err(ErrorCode::InvalidPurchaseAmount.into());
     }
 
-    if let Some(val) = amount.checked_rem(data.tick_size) {
-        if val > 0 {
+    if let Some(val) = amount.checked_rem(fair_launch.data.tick_size) {
+        if val > 0 && amount != fair_launch.current_median {
             return Err(ErrorCode::InvalidPurchaseAmount.into());
         }
     }
