@@ -5,6 +5,8 @@ import {
   Box,
   CircularProgress,
   Container,
+  IconButton,
+  Modal,
   Slider,
   Snackbar,
 } from '@material-ui/core';
@@ -18,9 +20,13 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import { withStyles } from '@material-ui/core/styles';
+import { createStyles, Theme, withStyles } from '@material-ui/core/styles';
 import Backdrop from '@material-ui/core/Backdrop';
 import { PhaseCountdown } from './countdown';
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import CloseIcon from '@material-ui/icons/Close';
 
 import Alert from '@material-ui/lab/Alert';
 
@@ -74,55 +80,23 @@ const MintButton = styled(Button)`
 
 `; // add your styles here
 
-function getStepContent(step: number, min?: number, max?: number) {
-  switch (step) {
-    case 0:
-      return 'We are preparing for fair launch please wait for countdown to finish.';
-    case 1:
-      return `Welcome to Fair Launch Registration phase.
-              During this phase of fair launch, you can bid SOL funds between ${
-                min || 0
-              } and ${max || 0}.
-              Once phase ends median price will be calculated to decide a price of this mint.
-              If you don't like that price you will be able to withdraw your bid.`;
-    case 2:
-      return 'An ad group contains one or more ads which target a shared set of keywords.';
-    case 3:
-      return 'An ad group contains one or more ads which target a shared set of keywords.';
-    case 4:
-      return `Try out different ad text to see what brings in the most customers,
-              and learn how to enhance your ads using features like ad extensions.
-              If you run into any problems with your ads, find out how to tell if
-              they're running and how to resolve approval issues.`;
-    default:
-      return 'Unknown step';
-  }
-}
-
+const dialogStyles = (theme: Theme) =>
+  createStyles({
+    root: {
+      margin: 0,
+      padding: theme.spacing(2),
+    },
+    closeButton: {
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+      color: theme.palette.grey[500],
+    },
+  });
 interface TabPanelProps {
   children?: React.ReactNode;
   index: any;
   value: any;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box p={3}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
 }
 
 const LimitedBackdrop = withStyles({
@@ -220,10 +194,6 @@ const Home = (props: HomeProps) => {
       signTransaction: wallet.signTransaction,
     } as anchor.Wallet;
   }, [wallet, wallet.publicKey]);
-
-  const onTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
-    setSelectedTab(newValue);
-  };
 
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
@@ -487,6 +457,7 @@ const Home = (props: HomeProps) => {
                 <PhaseCountdown
                   date={toDate(fairLaunch?.state.data.phaseOneEnd)}
                   style={{ justifyContent: 'flex-end' }}
+                  status="Completed"
                 />
               </Grid>
             </Grid>
@@ -572,6 +543,29 @@ const Home = (props: HomeProps) => {
             <Grid justifyContent="center">
               <Typography align="center" color="textSecondary">How this raffles works</Typography>
             </Grid>
+            <Dialog open={true}>
+            <MuiDialogTitle disableTypography >
+                <Typography variant="h6">How it works</Typography>
+                <IconButton aria-label="close" className={dialogStyles}>
+                  <CloseIcon />
+                </IconButton>
+              </MuiDialogTitle>
+              <MuiDialogContent dividers>
+                <Typography variant="h6">Phase 1 - Set the fair price:</Typography>
+                <Typography gutterBottom color="textSecondary">
+                  Enter a bid in the range provided by the artist. The median of all bids will be the "fair" price of the lottery ticket.
+                </Typography>
+                <Typography  variant="h6">Phase 2 - Grace period:</Typography>
+                <Typography gutterBottom color="textSecondary">
+                  If your bid was at or above the fair price, you automatically get a raffle ticket at that price. There's nothing else you need to do. If your bid is below the median price, you can still opt in at the fair price during this phase.
+                </Typography>
+                <Typography variant="h6">Phase 3 - The Lottery:</Typography>
+                <Typography gutterBottom color="textSecondary">
+                  Everyone who got a raffle ticket at the fair price is entered to win an NFT.
+                  If you win an NFT, congrats. If you don’t, no worries, your SOL will go right back into your wallet.
+                </Typography>
+              </MuiDialogContent>
+            </Dialog>
 
             {wallet.connected && (
               <p>
@@ -595,7 +589,7 @@ const Home = (props: HomeProps) => {
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
         <Paper style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}>
-          <Grid container justifyContent="center" direction="column">
+          <Grid container justifyContent="center" direction="row">
             <Grid xs={6} justifyContent="center" direction="column">
               <Typography>Phase 2</Typography>
               <Typography>Raffle</Typography>
