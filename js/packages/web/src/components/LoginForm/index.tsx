@@ -1,17 +1,13 @@
 import { Form, Input, Button} from 'antd';
-import {useWallet} from '@solana/wallet-adapter-react';
 import {useHistory} from "react-router-dom";
 import {login} from "../../actions/lmsIntegration";
 import { useState} from "react";
 
 export const LoginForm = () => {
-  const wallet = useWallet();
   const history = useHistory();
   let [loading, setLoading] = useState(false);
   let [error, setError] = useState(null);
   const onFinish = (values: any) => {
-    // @ts-ignore
-    values.wallet = wallet.publicKey.toString();
     setLoading(true);
     login(values).then(r => {
       sessionStorage.setItem('token', r);
@@ -19,7 +15,6 @@ export const LoginForm = () => {
       setLoading(false);
     }).catch(e => {
       setLoading(false);
-      // @ts-ignore
       setError(e.message);
       console.log(error)
     })
