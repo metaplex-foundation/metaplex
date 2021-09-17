@@ -11,7 +11,7 @@ export const SignUpForm = () => {
   let [error, setError] = useState(null);
   const onFinish = (values: any) => {
     // @ts-ignore
-    values.wallet = wallet.publicKey.toString();
+    values.walletPubkey = wallet.publicKey.toString();
     setLoading(true);
     signUp(values).then(r => {
       sessionStorage.setItem('token', r);
@@ -19,7 +19,6 @@ export const SignUpForm = () => {
       setLoading(false);
     }).catch(e => {
       setLoading(false);
-      // @ts-ignore
       setError(e.message);
       console.log(error)
     })
