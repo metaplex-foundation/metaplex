@@ -269,7 +269,7 @@ pub mod fair_launch {
             return Err(ErrorCode::CannotBuyTicketsOutsidePhaseOne.into());
         }
 
-        assert_valid_amount(&fair_launch.data, amount)?;
+        assert_valid_amount(&fair_launch, amount)?;
 
         fair_launch_ticket.fair_launch = fair_launch.key();
         fair_launch_ticket.buyer = *buyer.key;
@@ -465,7 +465,7 @@ pub mod fair_launch {
         }
 
         if amount != 0 {
-            assert_valid_amount(&fair_launch.data, amount)?;
+            assert_valid_amount(&fair_launch, amount)?;
         } else {
             // going from not zero to zero
             fair_launch.number_tickets_dropped = fair_launch

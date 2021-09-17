@@ -110,9 +110,8 @@ export const getFairLaunchState = async (
     console.log('No ticket');
   }
 
-  const fairLaunchLotteryBitmap = ( //@ts-ignore
-    await getFairLaunchLotteryBitmap(state.tokenMint)
-  )[0];
+  const fairLaunchLotteryBitmap = //@ts-ignore
+  (await getFairLaunchLotteryBitmap(state.tokenMint))[0];
 
   return {
     id: fairLaunchId,
@@ -142,9 +141,8 @@ export const punchTicket = async (
     )
   )[0];
 
-  const fairLaunchLotteryBitmap = ( //@ts-ignore
-    await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
-  )[0];
+  const fairLaunchLotteryBitmap = //@ts-ignore
+  (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
 
   const buyerTokenAccount = (
     await getAtaForMint(
@@ -155,7 +153,11 @@ export const punchTicket = async (
   )[0];
 
   if (ticket.amount.toNumber() > fairLaunch.state.currentMedian.toNumber()) {
-    console.log('Adjusting down...');
+    console.log(
+      'Adjusting down...',
+      ticket.amount.toNumber(),
+      fairLaunch.state.currentMedian.toNumber(),
+    );
     const { remainingAccounts, instructions, signers } =
       await getSetupForTicketing(
         fairLaunch.program,
@@ -390,8 +392,9 @@ export const purchaseTicket = async (
     );
 
   if (ticket) {
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
+    )[0];
     console.log(
       'Anchor wallet',
       anchorWallet.publicKey.toBase58(),
