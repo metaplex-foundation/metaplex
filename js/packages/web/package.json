@@ -46,7 +46,7 @@
     "start:prod": "next start",
     "test": "jest",
     "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
-    "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/whales-in-dream/metaplex -t true",
+    "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo git@github.com:whales-in-dream/metaplex.git -t true",
     "deploy": "yarn build && yarn deploy:gh",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
