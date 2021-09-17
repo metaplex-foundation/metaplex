@@ -299,33 +299,44 @@ const Home = (props: HomeProps) => {
           anchorWallet.publicKey,
         );
 
-        const ticket: FairLaunchTicket | null =
-          (await state.program.account.fairLaunchTicket.fetch(
-            fairLaunchTicket,
-          )) as FairLaunchTicket | null;
-        setTicket(ticket);
+        try {
+          const ticket: FairLaunchTicket | null =
+            (await state.program.account.fairLaunchTicket.fetch(
+              fairLaunchTicket,
+            )) as FairLaunchTicket | null;
+          setTicket(ticket);
+        } catch (e) {
+          console.log('Could not find fair launch ticket.');
+        }
 
         const treasury = await state.program.provider.connection.getBalance(
           state.state.treasury,
         );
+
         setTreasury(treasury);
-        const fairLaunchLotteryBitmap = (
-          await getFairLaunchLotteryBitmap(
-            //@ts-ignore
-            fairLaunchObj.tokenMint,
-          )
-        )[0];
+        try {
+          const fairLaunchLotteryBitmap = (
+            await getFairLaunchLotteryBitmap(
+              //@ts-ignore
+              state.state.tokenMint,
+            )
+          )[0];
 
-        const fairLaunchLotteryBitmapObj =
-          await state.program.provider.connection.getAccountInfo(
-            fairLaunchLotteryBitmap,
-          );
+          const fairLaunchLotteryBitmapObj =
+            await state.program.provider.connection.getAccountInfo(
+              fairLaunchLotteryBitmap,
+            );
 
-        setLottery(new Uint8Array(fairLaunchLotteryBitmapObj?.data || []));
+          setLottery(new Uint8Array(fairLaunchLotteryBitmapObj?.data || []));
+        } catch (e) {
+          console.log('Could not find fair launch lottery.');
+          console.log(e);
+        }
 
         console.log();
-      } catch {
+      } catch (e) {
         console.log('Problem getting fair launch state');
+        console.log(e);
       }
 
       try {
@@ -380,13 +391,13 @@ const Home = (props: HomeProps) => {
   };
 
   const onPunchTicket = () => {
-    if (!anchorWallet || !fairLaunch) {
+    if (!anchorWallet || !fairLaunch || !ticket) {
       return;
     }
 
     console.log('punch');
 
-    punchTicket(anchorWallet, fairLaunch);
+    punchTicket(anchorWallet, fairLaunch, ticket);
   };
 
   const onWithdraw = () => {
@@ -466,7 +477,11 @@ const Home = (props: HomeProps) => {
             lottery,
             ticket?.seq,
           ) && (
-            <MintButton onClick={onPunchTicket} variant="contained">
+            <MintButton
+              onClick={onPunchTicket}
+              variant="contained"
+              disabled={ticket?.state.punched !== undefined}
+            >
               Punch Ticket
             </MintButton>
           )}
