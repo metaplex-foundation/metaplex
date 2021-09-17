@@ -525,16 +525,14 @@ export const AuctionCard = ({
                 const allowBidToPublic =
                   myPayingAccount &&
                   !auctionView.myBidderPot &&
-                  isAuctionManagerAuthorityNotWalletOwner &&
-                  instantSalePrice;
+                  isAuctionManagerAuthorityNotWalletOwner;
                 const allowBidToAuctionOwner =
                   myPayingAccount &&
                   !isAuctionManagerAuthorityNotWalletOwner &&
-                  isAuctionItemMaster &&
-                  instantSalePrice;
+                  isAuctionItemMaster;
 
                 // Placing a "bid" of the full amount results in a purchase to redeem.
-                if (allowBidToPublic || allowBidToAuctionOwner) {
+                if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
                   try {
                     const bid = await sendPlaceBid(
                       connection,
@@ -542,7 +540,7 @@ export const AuctionCard = ({
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
-                      auctionView.auctionDataExtended?.info.instantSalePrice,
+                      instantSalePrice,
                     );
                     setLastBid(bid);
                   } catch (e) {
