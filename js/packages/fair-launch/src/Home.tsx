@@ -370,70 +370,72 @@ const Home = (props: HomeProps) => {
           </Grid>
         </LimitedBackdrop>
         <Paper style={{ padding: 24 }}>
-          <Grid container>
-            <Grid xs={6} justifyContent="center" direction="column">
-              <Typography component="h2">Phase 1</Typography>
-              <Typography>Set price phase</Typography>
+          <Grid container justifyContent="center" direction="column">
+            <Grid container justifyContent="center" >
+              <Grid xs={6} justifyContent="center" direction="column">
+                <Typography component="h2">Phase 1</Typography>
+                <Typography>Set price phase</Typography>
+              </Grid>
+              <Grid xs={6}>
+                <PhaseCountdown
+                  date={toDate(fairLaunch?.state.data.phaseOneEnd)}
+                  style={{ justifyContent: 'flex-end' }}
+                />
+              </Grid>
             </Grid>
-            <Grid xs={6}>
-              <PhaseCountdown
-                date={toDate(fairLaunch?.state.data.phaseOneEnd)}
-                style={{ justifyContent: 'flex-end' }}
+
+            <Grid justifyContent="center">
+              <Typography>Your bid</Typography>
+              <Typography>
+                {formatNumber.format(
+                  (ticket?.amount.toNumber() || 0) / LAMPORTS_PER_SOL,
+                )}{' '}
+                SOL
+              </Typography>
+            </Grid>
+
+            <Grid>
+              <Slider
+                min={min}
+                marks={marks}
+                max={max}
+                step={step}
+                value={contributed}
+                onChange={(ev, val) => setContributed(val as any)}
+                valueLabelDisplay="auto"
+                style={{ width: 'calc(100% - 40px)', marginLeft: 20 }}
               />
             </Grid>
+
+            <MintButton onClick={onDeposit} variant="contained">
+              {!ticket ? 'Place a bid' : 'Adjust your bid'}
+            </MintButton>
+
+            <Grid>
+              <Typography>How raffles works</Typography>
+            </Grid>
+
+            {wallet.connected && (
+              <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}</p>
+            )}
+
+            {wallet.connected && (
+              <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
+            )}
+
+            <p>Current median price: {formatNumber.format(median)}</p>
+
+            <p>
+              Total raised:{' '}
+              {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
+            </p>
           </Grid>
-
-          <Grid justifyContent="center">
-            <Typography>Your bid</Typography>
-            <Typography>
-              {formatNumber.format(
-                (ticket?.amount.toNumber() || 0) / LAMPORTS_PER_SOL,
-              )}{' '}
-              SOL
-            </Typography>
-          </Grid>
-
-          <Grid>
-            <Slider
-              min={min}
-              marks={marks}
-              max={max}
-              step={step}
-              value={contributed}
-              onChange={(ev, val) => setContributed(val as any)}
-              valueLabelDisplay="auto"
-              style={{ width: 'calc(100% - 40px)', marginLeft: 20 }}
-            />
-          </Grid>
-
-          <MintButton onClick={onDeposit} variant="contained">
-            {!ticket ? 'Place a bid' : 'Adjust your bid'}
-          </MintButton>
-
-          <Grid>
-            <Typography>How raffles works</Typography>
-          </Grid>
-
-          {wallet.connected && (
-            <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}</p>
-          )}
-
-          {wallet.connected && (
-            <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
-          )}
-
-          <p>Current median price: {formatNumber.format(median)}</p>
-
-          <p>
-            Total raised:{' '}
-            {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
-          </p>
         </Paper>
       </Container>
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
         <Paper style={{ padding: 24 }} elevation={3}>
-          <Grid container>
+          <Grid container justifyContent="center" direction="column">
             <Grid xs={6} justifyContent="center" direction="column">
               <Typography>Phase 2</Typography>
               <Typography>Raffle</Typography>
