@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+
+    /* Basic Options */
+    "target": "ES2019",
+    "module": "commonjs",
+    "sourceMap": true,
+    // "outFile": "./",
+    "outDir": "./dist",
+    "noImplicitAny": true,
+    // "rootDir": "./",
+
+    "strict": true,
+
+    /* Module Resolution Options */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}
