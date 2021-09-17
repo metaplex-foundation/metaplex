@@ -61,7 +61,18 @@ const CounterText = styled.span``; // add your styles here
 
 const MintContainer = styled.div``; // add your styles here
 
-const MintButton = styled(Button)``; // add your styles here
+const MintButton = styled(Button)`
+  width: 100%;
+  height: 60px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  background: linear-gradient(180deg, #604AE5 0%, #813EEE 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+
+
+`; // add your styles here
 
 function getStepContent(step: number, min?: number, max?: number) {
   switch (step) {
@@ -461,16 +472,16 @@ const Home = (props: HomeProps) => {
             <PhaseCountdown
               date={toDate(fairLaunch?.state.data.phaseOneStart)}
               onComplete={() => setIsPhase1Active(true)}
-              status="Phase 1 Started"
+              status="Completed"
             />
           </Grid>
         </LimitedBackdrop>
-        <Paper style={{ padding: 24 }}>
+        <Paper style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}>
           <Grid container justifyContent="center" direction="column">
             <Grid container justifyContent="center">
               <Grid xs={6} justifyContent="center" direction="column">
-                <Typography component="h2">Phase 1</Typography>
-                <Typography>Set price phase</Typography>
+                <Typography variant="h5">Phase 1</Typography>
+                <Typography variant="body1" color="textSecondary">Set price phase</Typography>
               </Grid>
               <Grid xs={6}>
                 <PhaseCountdown
@@ -480,7 +491,7 @@ const Home = (props: HomeProps) => {
               </Grid>
             </Grid>
 
-            <Grid justifyContent="center">
+            <Grid container direction="column" justifyContent="center" alignItems="center" style={{ height: 200}}>
               <Typography>Your bid</Typography>
               <Typography>
                 {formatNumber.format(
@@ -499,7 +510,7 @@ const Home = (props: HomeProps) => {
                 value={contributed}
                 onChange={(ev, val) => setContributed(val as any)}
                 valueLabelDisplay="auto"
-                style={{ width: 'calc(100% - 40px)', marginLeft: 20 }}
+                style={{ width: 'calc(100% - 40px)', marginLeft: 20, height: 30 }}
               />
             </Grid>
 
@@ -558,8 +569,8 @@ const Home = (props: HomeProps) => {
               </div>
             )}
 
-            <Grid>
-              <Typography>How raffles works</Typography>
+            <Grid justifyContent="center">
+              <Typography align="center" color="textSecondary">How this raffles works</Typography>
             </Grid>
 
             {wallet.connected && (
@@ -583,7 +594,7 @@ const Home = (props: HomeProps) => {
       </Container>
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
-        <Paper style={{ padding: 24 }} elevation={3}>
+        <Paper style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}>
           <Grid container justifyContent="center" direction="column">
             <Grid xs={6} justifyContent="center" direction="column">
               <Typography>Phase 2</Typography>

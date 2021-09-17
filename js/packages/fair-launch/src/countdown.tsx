@@ -62,6 +62,7 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
 
   const renderCountdown = ({ days, hours, minutes, seconds, completed }: CountdownRender) => {
     hours += days * 24
+    debugger;
     if (completed) {
       return <p>{status}</p>
     } else {
@@ -94,7 +95,6 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
       )
     }
   }
-
 
   if (date && start && end) {
     if (isFixed) {
