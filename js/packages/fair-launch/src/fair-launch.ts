@@ -60,6 +60,7 @@ export interface FairLaunchState {
     phaseTwoEnd: anchor.BN;
     priceRangeEnd: anchor.BN;
     priceRangeStart: anchor.BN;
+    lotteryDuration: anchor.BN;
     tickSize: anchor.BN;
     uuid: string;
   };
@@ -159,7 +160,7 @@ export const punchTicket = async (
         fairLaunch,
         ticket,
       );
-    fairLaunch.program.rpc.adjustTicket(fairLaunch.state.currentMedian, {
+    await fairLaunch.program.rpc.adjustTicket(fairLaunch.state.currentMedian, {
       accounts: {
         fairLaunchTicket,
         fairLaunch: fairLaunch.id,
@@ -169,6 +170,7 @@ export const punchTicket = async (
         systemProgram: anchor.web3.SystemProgram.programId,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
+      __private: { logAccounts: true },
       instructions: instructions.length > 0 ? instructions : undefined,
       remainingAccounts: [
         {

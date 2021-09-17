@@ -155,6 +155,31 @@ const isWinner = (
   return isWinner > 0;
 };
 
+enum LotteryState {
+  Brewing = 'Brewing',
+  Finished = 'Finished',
+  PastDue = 'Past Due',
+}
+
+const getLotteryState = (
+  phaseThree: boolean | undefined,
+  lottery: Uint8Array | null,
+  lotteryDuration: anchor.BN,
+  phaseTwoEnd: anchor.BN,
+): LotteryState => {
+  if (
+    !phaseThree &&
+    (!lottery || lottery.length == 0) &&
+    phaseTwoEnd.add(lotteryDuration).lt(new anchor.BN(Date.now() / 1000))
+  ) {
+    return LotteryState.PastDue;
+  } else if (phaseThree) {
+    return LotteryState.Finished;
+  } else {
+    return LotteryState.Brewing;
+  }
+};
+
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
   const [isActive, setIsActive] = useState(false); // true when countdown completes
@@ -390,6 +415,16 @@ const Home = (props: HomeProps) => {
     purchaseTicket(contributed, anchorWallet, fairLaunch, ticket);
   };
 
+  const onRefundTicket = () => {
+    if (!anchorWallet) {
+      return;
+    }
+
+    console.log('refund');
+
+    purchaseTicket(0, anchorWallet, fairLaunch, ticket);
+  };
+
   const onPunchTicket = () => {
     if (!anchorWallet || !fairLaunch || !ticket) {
       return;
@@ -432,7 +467,7 @@ const Home = (props: HomeProps) => {
         </LimitedBackdrop>
         <Paper style={{ padding: 24 }}>
           <Grid container justifyContent="center" direction="column">
-            <Grid container justifyContent="center" >
+            <Grid container justifyContent="center">
               <Grid xs={6} justifyContent="center" direction="column">
                 <Typography component="h2">Phase 1</Typography>
                 <Typography>Set price phase</Typography>
@@ -468,30 +503,69 @@ const Home = (props: HomeProps) => {
               />
             </Grid>
 
-            <MintButton onClick={onDeposit} variant="contained">
-              {!ticket ? 'Place a bid' : 'Adjust your bid'}
-            </MintButton>
+            {fairLaunch?.state.data.phaseTwoEnd.lt(
+              new anchor.BN(Date.now() / 1000),
+            ) && !fairLaunch.state.phaseThreeStarted ? (
+              <div>
+                <p>
+                  We're now in the lottery. No further action is required on
+                  your part until it is over.
+                </p>
+                Lottery State:{' '}
+                {getLotteryState(
+                  fairLaunch?.state.phaseThreeStarted,
+                  lottery,
+                  fairLaunch?.state.data.lotteryDuration,
+                  fairLaunch?.state.data.phaseTwoEnd,
+                )}
+              </div>
+            ) : (
+              <div>
+                {!fairLaunch?.state.phaseThreeStarted && (
+                  <MintButton onClick={onDeposit} variant="contained">
+                    {!ticket ? 'Place a bid' : 'Adjust your bid'}
+                  </MintButton>
+                )}
 
-          {isWinner(
-            fairLaunch?.state.phaseThreeStarted,
-            lottery,
-            ticket?.seq,
-          ) && (
-            <MintButton
-              onClick={onPunchTicket}
-              variant="contained"
-              disabled={ticket?.state.punched !== undefined}
-            >
-              Punch Ticket
-            </MintButton>
-          )}
+                {isWinner(
+                  fairLaunch?.state.phaseThreeStarted,
+                  lottery,
+                  ticket?.seq,
+                ) && (
+                  <MintButton
+                    onClick={onPunchTicket}
+                    variant="contained"
+                    disabled={ticket?.state.punched !== undefined}
+                  >
+                    Punch Ticket
+                  </MintButton>
+                )}
 
-          <Grid>
-            <Typography>How raffles works</Typography>
-          </Grid>
+                {fairLaunch?.state.phaseThreeStarted &&
+                  !isWinner(
+                    fairLaunch?.state.phaseThreeStarted,
+                    lottery,
+                    ticket?.seq,
+                  ) && (
+                    <MintButton
+                      onClick={onRefundTicket}
+                      variant="contained"
+                      disabled={ticket?.state.withdrawn !== undefined}
+                    >
+                      Refund Ticket
+                    </MintButton>
+                  )}
+              </div>
+            )}
+
+            <Grid>
+              <Typography>How raffles works</Typography>
+            </Grid>
 
             {wallet.connected && (
-              <p>Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}</p>
+              <p>
+                Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}
+              </p>
             )}
 
             {wallet.connected && (
