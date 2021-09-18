@@ -418,6 +418,16 @@ program
     const remainingAccounts = [];
     const instructions = [];
     const signers = [];
+    //@ts-ignore
+    const tokenAta = fairLaunchObj.treasuryMint
+      ? (
+          await getAtaForMint(
+            //@ts-ignore
+            fairLaunchObj.treasuryMint,
+            walletKeyPair.publicKey,
+          )
+        )[0]
+      : undefined;
 
     //@ts-ignore
     if (!fairLaunchObj.treasuryMint) {
@@ -434,13 +444,6 @@ program
       );
       const mintInfo = await token.getMintInfo();
       amountNumber = Math.ceil(amountNumber * 10 ** mintInfo.decimals);
-      const tokenAta = (
-        await getAtaForMint(
-          //@ts-ignore
-          fairLaunchObj.treasuryMint,
-          walletKeyPair.publicKey,
-        )
-      )[0];
 
       instructions.push(
         Token.createApproveInstruction(
@@ -479,30 +482,60 @@ program
       });
     }
 
-    await anchorProgram.rpc.purchaseTicket(bump, new anchor.BN(amountNumber), {
-      accounts: {
-        fairLaunchTicket,
-        fairLaunch,
-        //@ts-ignore
-        treasury: fairLaunchObj.treasury,
-        buyer: walletKeyPair.publicKey,
-        payer: walletKeyPair.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-      },
-      remainingAccounts,
-      signers,
-      instructions: instructions.length > 0 ? instructions : undefined,
-    });
+    instructions.push(
+      await anchorProgram.instruction.purchaseTicket(
+        bump,
+        new anchor.BN(amountNumber),
+        {
+          accounts: {
+            fairLaunchTicket,
+            fairLaunch,
+            //@ts-ignore
+            treasury: fairLaunchObj.treasury,
+            buyer: walletKeyPair.publicKey,
+            payer: walletKeyPair.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          },
+          remainingAccounts,
+        },
+      ),
+    );
 
+    if (tokenAta) {
+      instructions.push(
+        Token.createRevokeInstruction(
+          TOKEN_PROGRAM_ID,
+          tokenAta,
+          walletKeyPair.publicKey,
+          [],
+        ),
+      );
+    }
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      instructions,
+      signers,
+      'max',
+    );
     console.log(
       `create fair launch ticket Done: ${fairLaunchTicket.toBase58()}. Trying to create seq now...we may or may not get a validator with data on chain. Either way, your ticket is secure.`,
     );
 
-    await sleep(5000);
-    const fairLaunchTicketObj =
-      await anchorProgram.account.fairLaunchTicket.fetch(fairLaunchTicket);
+    let fairLaunchTicketObj;
+    for (let i = 0; i < 10; i++) {
+      await sleep(5000);
+      try {
+        fairLaunchTicketObj =
+          await anchorProgram.account.fairLaunchTicket.fetch(fairLaunchTicket);
+        break;
+      } catch (e) {
+        console.log('Not found. Trying again...');
+      }
+    }
 
     const [fairLaunchTicketSeqLookup, seqBump] =
       await getFairLaunchTicketSeqLookup(
@@ -683,7 +716,16 @@ async function adjustTicket({
   const remainingAccounts = [];
   const instructions = [];
   const signers = [];
-
+  //@ts-ignore
+  const tokenAta = fairLaunchObj.treasuryMint
+    ? (
+        await getAtaForMint(
+          //@ts-ignore
+          fairLaunchObj.treasuryMint,
+          adjuster,
+        )
+      )[0]
+    : undefined;
   //@ts-ignore
   if (!fairLaunchObj.treasuryMint) {
     amountNumber = Math.ceil(amountNumber * LAMPORTS_PER_SOL);
@@ -698,18 +740,17 @@ async function adjustTicket({
     );
 
     const mintInfo = await token.getMintInfo();
+    amountNumber = Math.ceil(amountNumber * 10 ** mintInfo.decimals);
     if (amountNumber > 0) {
       instructions.push(
         Token.createApproveInstruction(
           TOKEN_PROGRAM_ID,
-          //@ts-ignore
-          fairLaunchObj.treasuryMint,
+          tokenAta,
           transferAuthority.publicKey,
           adjuster,
           [],
           //@ts-ignore
-          amountNumber * 10 ** mintInfo.decimals +
-            fairLaunchObj.data.fees.toNumber(),
+          amountNumber,
         ),
       );
     }
@@ -721,13 +762,7 @@ async function adjustTicket({
       isSigner: false,
     });
     remainingAccounts.push({
-      pubkey: (
-        await getAtaForMint(
-          //@ts-ignore
-          fairLaunchObj.treasuryMint,
-          adjuster,
-        )
-      )[0],
+      pubkey: tokenAta,
       isWritable: true,
       isSigner: false,
     });
@@ -743,28 +778,47 @@ async function adjustTicket({
     });
   }
 
-  await anchorProgram.rpc.adjustTicket(new anchor.BN(amountNumber), {
-    accounts: {
-      fairLaunchTicket,
-      fairLaunch,
-      fairLaunchLotteryBitmap,
-      //@ts-ignore
-      treasury: fairLaunchObj.treasury,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
-    },
-    //__private: { logAccounts: true },
-    remainingAccounts: [
-      {
-        pubkey: adjuster,
-        isSigner: adjuster.equals(payer.publicKey),
-        isWritable: true,
+  instructions.push(
+    await anchorProgram.instruction.adjustTicket(new anchor.BN(amountNumber), {
+      accounts: {
+        fairLaunchTicket,
+        fairLaunch,
+        fairLaunchLotteryBitmap,
+        //@ts-ignore
+        treasury: fairLaunchObj.treasury,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       },
-      ...remainingAccounts,
-    ],
+      //__private: { logAccounts: true },
+      remainingAccounts: [
+        {
+          pubkey: adjuster,
+          isSigner: adjuster.equals(payer.publicKey),
+          isWritable: true,
+        },
+        ...remainingAccounts,
+      ],
+    }),
+  );
+
+  //@ts-ignore
+  if (fairLaunchObj.treasuryMint && amountNumber > 0) {
+    instructions.push(
+      Token.createRevokeInstruction(
+        FAIR_LAUNCH_PROGRAM_ID,
+        tokenAta,
+        payer.publicKey,
+        [],
+      ),
+    );
+  }
+
+  await sendTransactionWithRetryWithKeypair(
+    anchorProgram.provider.connection,
+    payer,
+    instructions,
     signers,
-    instructions: instructions.length > 0 ? instructions : undefined,
-  });
+  );
 
   console.log(
     `update fair launch ticket Done: ${fairLaunchTicket.toBase58()}.`,
@@ -1412,7 +1466,7 @@ program
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
         //@ts-ignore
-        fairLaunchObj.tokenMint,
+        buyerTokenAccount,
         transferAuthority.publicKey,
         walletKeyPair.publicKey,
         [],

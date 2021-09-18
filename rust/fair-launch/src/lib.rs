@@ -11,6 +11,7 @@ use {
         prelude::*,
         solana_program::{
             program::{invoke, invoke_signed},
+            program_option::COption,
             program_pack::Pack,
             system_instruction, system_program,
         },
@@ -317,9 +318,10 @@ pub mod fair_launch {
                 return Err(ErrorCode::TreasuryMintMismatch.into());
             }
 
-            if buyer_token_account.delegate.is_some() {
-                msg!("Delegate {}", buyer_token_account.delegate.unwrap());
-                return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            if let COption::Some(val) = buyer_token_account.delegate {
+                if val != *transfer_authority_info.key {
+                    return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+                }
             }
 
             assert_owned_by(treasury_mint_info, &token_program.key)?;
@@ -517,8 +519,10 @@ pub mod fair_launch {
                 ],
             )?;
 
-            if buyer_token_account.delegate.is_some() {
-                return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            if let COption::Some(val) = buyer_token_account.delegate {
+                if val != *transfer_authority_info.key {
+                    return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+                }
             }
 
             let signer_seeds = [
