@@ -10,3 +10,8 @@ steps:
   - 'build-gcr'
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['run', 'deploy', 'circlepod-web-nfts-app-services', '--image', 'asia.gcr.io/$PROJECT_ID/circlepod-web-nfts-app:$REVISION_ID', '--region', 'asia-east1', '--platform', 'managed', '--memory', '512Mi', '--set-env-vars', 'NODE_ENV=production,HOST=0.0.0.0','--allow-unauthenticated']
+  id: 'deploy-gcr'
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['run', 'services', 'update-traffic', circlepod-web-nfts-app-services', '--to-latest']
+  waitFor:
+  - 'deploy-gcr'
