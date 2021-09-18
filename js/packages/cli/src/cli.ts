@@ -248,8 +248,6 @@ programCommand('create_candy_machine')
       wallet = solAccountKey;
     }
 
-    log.info(wallet.toBase58());
-
     const config = new PublicKey(cacheContent.program.config);
     const [candyMachine, bump] = await getCandyMachineAddress(
       config,
