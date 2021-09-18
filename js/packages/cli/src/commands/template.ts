@@ -52,7 +52,7 @@ export async function initializeTemplatedMetadataConfiguration(templatePath:stri
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
 
-    const res = await createConfig(anchorProgram, walletKeyPair, {
+    const res = await createConfig(anchorProgram, walletKeyPair, true, {
       maxNumberOfLines: new BN(1), // only the template is stored on chain
       symbol: manifest.symbol,
       sellerFeeBasisPoints: manifest.seller_fee_basis_points,

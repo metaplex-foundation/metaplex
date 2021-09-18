@@ -92,7 +92,7 @@ export async function upload(
         // initialize config
         log.info(`initializing config`);
         try {
-          const res = await createConfig(anchorProgram, walletKeyPair, {
+          const res = await createConfig(anchorProgram, walletKeyPair, false, {
             maxNumberOfLines: new BN(totalNFTs),
             symbol: manifest.symbol,
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,

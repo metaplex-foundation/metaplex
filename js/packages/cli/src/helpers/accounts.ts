@@ -17,6 +17,7 @@ import log from 'loglevel';
 export const createConfig = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
+  isTemplated: boolean,
   configData: {
     maxNumberOfLines: BN;
     symbol: string;
@@ -38,11 +39,12 @@ export const createConfig = async function (
   return {
     config: configAccount.publicKey,
     uuid,
-    txId: await anchorProgram.rpc.initializeConfig(
+    txId: await anchorProgram.rpc.initializeConfigV2(
       {
         uuid,
         ...configData,
       },
+      isTemplated,
       {
         accounts: {
           config: configAccount.publicKey,
