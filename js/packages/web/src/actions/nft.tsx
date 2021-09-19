@@ -25,10 +25,11 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import crypto from 'crypto';
-import { getAssetCostToStore } from '../utils/assets';
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
+
 const RESERVED_TXN_MANIFEST = 'manifest.json';
+const RESERVED_METADATA = 'metadata.json';
 
 interface IArweaveResult {
   error?: string;
@@ -39,6 +40,18 @@ interface IArweaveResult {
     error?: string;
   }>;
 }
+
+const uploadToArweave = async (data: FormData): Promise<IArweaveResult> =>
+  (
+    await fetch(
+      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+      {
+        method: 'POST',
+        // @ts-ignore
+        body: data,
+      },
+    )
+  ).json();
 
 export const mintNFT = async (
   connection: Connection,
@@ -85,7 +98,7 @@ export const mintNFT = async (
 
   const realFiles: File[] = [
     ...files,
-    new File([JSON.stringify(metadataContent)], 'metadata.json'),
+    new File([JSON.stringify(metadataContent)], RESERVED_METADATA),
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
@@ -170,6 +183,7 @@ export const mintNFT = async (
     wallet,
     instructions,
     signers,
+    'single',
   );
 
   try {
@@ -184,6 +198,8 @@ export const mintNFT = async (
 
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
+  data.append('transaction', txid);
+  data.append('env', env);
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
@@ -193,23 +209,10 @@ export const mintNFT = async (
     {},
   );
   data.append('tags', JSON.stringify(tags));
-  data.append('transaction', txid);
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
-
-  const result: IArweaveResult = await (
-    await fetch(
-      // TODO: add CNAME
-      env.startsWith('mainnet-beta')
-        ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
-        : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
-      {
-        method: 'POST',
-        body: data,
-      },
-    )
-  ).json();
+  const result: IArweaveResult = await uploadToArweave(data);
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,
@@ -323,7 +326,7 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: await getAssetCostToStore(files),
+        lamports: 10,
       }),
     );
 
