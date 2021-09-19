@@ -1,56 +1,73 @@
-import fs from "fs";
-import { createConfig, loadAnchorProgram, loadWalletKey } from "../helpers/accounts";
-import { PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
-import { loadCache, saveCache } from "../helpers/cache";
-import log from "loglevel";
-import readline from "readline";
+import fs from 'fs';
+import {
+  createConfig,
+  loadCandyProgram,
+  loadWalletKey,
+} from '../helpers/accounts';
+import { PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
+import { loadCache, saveCache } from '../helpers/cache';
+import log from 'loglevel';
+import readline from 'readline';
 
-export async function initializeTemplatedMetadataConfiguration(templatePath:string, uriTemplate:string, cacheName: string, env: string, keypair: string): Promise<boolean> {
+export async function initializeTemplatedMetadataConfiguration(
+  templatePath: string,
+  uriTemplate: string,
+  cacheName: string,
+  env: string,
+  keypair: string,
+): Promise<boolean> {
   if (uriTemplate == null) {
-    console.warn('Error: the URI template (--uri) is mandatory when generating templated metadatas')
-    process.exit(1)
+    console.warn(
+      'Error: the URI template (--uri) is mandatory when generating templated metadatas',
+    );
+    process.exit(1);
   }
   const savedContent = loadCache(cacheName, env);
   if (savedContent != null) {
     const input = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
-    await new Promise((resolve) => {
-      input.question(`An existing cache (${savedContent.program.uuid}) has been found, confirm overwrite? (y/[n])\n`, function(answer) {
-        if (answer == 'y') {
-          resolve(null);
-        } else {
-          process.exit(0)
-        }
-      })
+    await new Promise(resolve => {
+      input.question(
+        `An existing cache (${savedContent.program.uuid}) has been found, confirm overwrite? (y/[n])\n`,
+        function (answer) {
+          if (answer == 'y') {
+            resolve(null);
+          } else {
+            process.exit(0);
+          }
+        },
+      );
     });
-    input.close()
+    input.close();
   }
-  
+
   if (!fs.existsSync(templatePath)) {
-    console.warn(`Error: template not found: ${templatePath}`)
-    return false
+    console.warn(`Error: template not found: ${templatePath}`);
+    return false;
   }
-  const templateContent = fs
-    .readFileSync(templatePath)
-    .toString()
+  const templateContent = fs.readFileSync(templatePath).toString();
   const manifest = JSON.parse(templateContent);
 
   if (manifest.name.indexOf('{i}') == -1) {
-    console.warn('Warning: your manifest name does not contain an {i} placehoder')
+    console.warn(
+      'Warning: your manifest name does not contain an {i} placehoder',
+    );
   }
   if (uriTemplate.indexOf('{i}') == -1) {
-    console.warn('Warning: your URI template does not contain an {i} placehoder')
+    console.warn(
+      'Warning: your URI template does not contain an {i} placehoder',
+    );
   }
 
   // initialize config
-  log.info('initializing new config')
-  let cacheContent
+  log.info('initializing new config');
+  let cacheContent;
   try {
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     const res = await createConfig(anchorProgram, walletKeyPair, true, {
       maxNumberOfLines: new BN(1), // only the template is stored on chain
@@ -66,23 +83,27 @@ export async function initializeTemplatedMetadataConfiguration(templatePath:stri
           verified: true,
           share: creator.share,
         };
-      })
+      }),
     });
     cacheContent = {
       program: {
         uuid: res.uuid,
-        config: res.config.toBase58()
+        config: res.config.toBase58(),
       },
-      isTemplated: true
+      isTemplated: true,
     };
-    log.info(`initialized config for a candy machine with publickey: ${res.config.toBase58()}`)
+    log.info(
+      `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
+    );
 
     await anchorProgram.rpc.addConfigLines(
       0,
-      [{
-        name: manifest.name,
-        uri: uriTemplate
-      }],
+      [
+        {
+          name: manifest.name,
+          uri: uriTemplate,
+        },
+      ],
       {
         accounts: {
           config: res.config,
@@ -90,7 +111,7 @@ export async function initializeTemplatedMetadataConfiguration(templatePath:stri
         },
         signers: [walletKeyPair],
       },
-    )
+    );
 
     saveCache(cacheName, env, cacheContent);
   } catch (exx) {

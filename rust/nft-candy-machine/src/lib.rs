@@ -270,19 +270,23 @@ pub mod nft_candy_machine {
 
         let vec_start =
             CONFIG_ARRAY_START + 4 + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE;
+
+        // previous CLI versions used a smaller configuration account, that's why we must check
+        // the configuration account size before writing this information
+        let is_new_configuration = data.len() >= vec_start + 5;
+        if is_new_configuration {
+            data[vec_start] = u8::from(templated);
+        }
+
         let as_bytes = (config
             .data
             .max_number_of_lines
             .checked_div(8)
             .ok_or(ErrorCode::NumericalOverflowError)? as u32)
             .to_le_bytes();
+        let shift = if is_new_configuration { 1 as usize } else { 0 as usize };
         for i in 0..4 {
-            data[vec_start + i] = as_bytes[i]
-        }
-        // previous CLI versions used a smaller configuration account, that's why we must check
-        // the configuration account size before writing this information
-        if data.len() >= vec_start + 5 {
-            data[vec_start + 5] = u8::from(templated);
+            data[vec_start + i + shift] = as_bytes[i]
         }
         Ok(())
     }
@@ -296,7 +300,8 @@ pub mod nft_candy_machine {
         let account = config.to_account_info();
         let current_count = get_config_count(&account.data.borrow())?;
         let mut data = account.data.borrow_mut();
-
+        let is_new_configuration = data.len() >= CONFIG_ARRAY_START + 4 + (current_count as usize) * CONFIG_LINE_SIZE + 5;
+        msg!("is_new_configuration: {} for {} and {} lines", is_new_configuration, data.len(), current_count);
         let mut fixed_config_lines = vec![];
 
         if index > config.data.max_number_of_lines - 1 {
@@ -328,11 +333,12 @@ pub mod nft_candy_machine {
             &mut data[position..position + fixed_config_lines.len() * CONFIG_LINE_SIZE];
         array_slice.copy_from_slice(serialized);
 
+        let shift = if is_new_configuration { 1 as usize } else { 0 as usize };
         let bit_mask_vec_start = CONFIG_ARRAY_START
             + 4
             + (config.data.max_number_of_lines as usize) * CONFIG_LINE_SIZE
+            + shift
             + 4;
-
         let mut new_count = current_count;
         for i in 0..fixed_config_lines.len() {
             let position = (index as usize)
@@ -546,9 +552,9 @@ pub struct Config {
     pub data: ConfigData,
     // there's a borsh vec u32 denoting how many actual lines of data there are currently (eventually equals max number of lines)
     // There is actually lines and lines of data after this but we explicitly never want them deserialized.
+    // here there is a flag determining if a template is used to generate the configuration lines of this candy machine (warning: this flag did not exist in the previous versions of the configuration)
     // here there is a borsh vec u32 indicating number of bytes in bitmask array.
     // here there is a number of bytes equal to ceil(max_number_of_lines/8) and it is a bit mask used to figure out when to increment borsh vec u32
-    // here there is a flag determining if a template is used to generate the configuration lines of this candy machine
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -574,12 +580,15 @@ pub fn is_config_templated(data: &Ref<&mut [u8]>) -> core::result::Result<bool, 
     let config_count = get_config_count(data).unwrap();
     let bitmask_size = config_count/8 + (config_count%8 != 0) as usize;
     let templatable_config_expected_size = CONFIG_ARRAY_START + 4 +
-        config_count*CONFIG_LINE_SIZE + 4 +
-        bitmask_size +
-        1;
+        config_count*CONFIG_LINE_SIZE +
+        1 +
+        4 +
+        bitmask_size;
     msg!("templatable_config_expected_size {} current {} for {} lines", templatable_config_expected_size, data.len(), config_count);
     if templatable_config_expected_size == data.len() {
-        return Ok(data[data.len() - 1] == 1);
+        let templated_pos = CONFIG_ARRAY_START + 4 + config_count*CONFIG_LINE_SIZE;
+        msg!("checking {} at {}", data[templated_pos], templated_pos);
+        return Ok(data[templated_pos] == 1);
     }
     return Ok(false);
 }
