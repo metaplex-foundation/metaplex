@@ -86,21 +86,15 @@ programCommand('verify_token_metadata')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
-  .action(async (files: string[], options, cmd) => {
+  .action((files: string[], options, cmd) => {
     const { number, keypair, env, cacheName } = cmd.opts();
 
     const startMs = Date.now();
     log.info("started at: " + startMs.toString())
-    let warn = false;
-    for (; ;) {
-      const successful = await verifyTokenMetadata({ files, uploadElementsCount: number});
-      if (successful) {
-        warn = false;
-        break;
-      } else {
-        warn = true;
-        log.warn("upload was not successful, rerunning");
-      }
+    try {
+      verifyTokenMetadata({ files, uploadElementsCount: number});
+    } catch (e) {
+      throw e;
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
