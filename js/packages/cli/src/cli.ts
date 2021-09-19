@@ -35,7 +35,7 @@ programCommand('upload')
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
-    const {number, keypair, env, cacheName} = cmd.opts();
+    const { number, keypair, env, cacheName } = cmd.opts();
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -193,9 +193,10 @@ programCommand('verify_price')
 programCommand('create_candy_machine')
   .option('-p, --price <string>', 'Price denominated in SOL or spl-token override', '1')
   .option('-t, --spl-token <string>', 'SPL token used to price NFT mint. To use SOL leave this empty.')
-  .option('-t, --spl-token-account <string>', 'SPL token account that receives mint payments. Only required if spl-token is specified.')
+  .option('-a, --spl-token-account <string>', 'SPL token account that receives mint payments. Only required if spl-token is specified.')
+  .option('-s, --sol-treasury-account <string>', 'SOL account that receives mint payments.')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, splToken, splTokenAccount } = cmd.opts();
+    const { keypair, env, price, cacheName, splToken, splTokenAccount, solTreasuryAccount } = cmd.opts();
 
     let parsedPrice = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -206,6 +207,9 @@ programCommand('create_candy_machine')
     let wallet = walletKeyPair.publicKey;
     const remainingAccounts = [];
     if (splToken || splTokenAccount) {
+      if (solTreasuryAccount) {
+        throw new Error("If spl-token-account or spl-token is set then sol-treasury-account cannot be set")
+      }
       if (!splToken) {
         throw new Error("If spl-token-account is set, spl-token must also be set")
       }
@@ -237,6 +241,11 @@ programCommand('create_candy_machine')
       wallet = splTokenAccountKey;
       parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
       remainingAccounts.push({ pubkey: splTokenKey, isWritable: false, isSigner: false });
+    }
+
+    if (solTreasuryAccount) {
+      const solAccountKey = new PublicKey(solTreasuryAccount);
+      wallet = solAccountKey;
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -306,11 +315,11 @@ programCommand('update_candy_machine')
 programCommand('mint_one_token')
   .option('-t, --spl-token-account <string>', 'SPL token account to payfrom')
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName, splTokenAccount} = cmd.opts();
+    const { keypair, env, cacheName, splTokenAccount } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
-    const splTokenAccountKey = splTokenAccount ? new PublicKey(splTokenAccount) :  undefined;
+    const splTokenAccountKey = splTokenAccount ? new PublicKey(splTokenAccount) : undefined;
     const tx = await mint(keypair, env, configAddress, splTokenAccountKey);
 
     log.info('Done', tx);
@@ -370,7 +379,7 @@ programCommand("sign_candy_machine_metadata")
       const config = new PublicKey(cacheContent.program.config);
       const [candyMachine, bump] = await getCandyMachineAddress(
         config,
-        cacheContent.program.uuid,  
+        cacheContent.program.uuid,
       );
       candyAddress = candyMachine.toBase58();
     }

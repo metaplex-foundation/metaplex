@@ -63,6 +63,9 @@ pub enum AuctionInstruction {
     StartAuction(StartAuctionArgs),
 
     /// Update the authority for an auction account.
+    ///   0. `[writable]` auction (pda of ['auction', program id, resource id])
+    ///   1. `[signer]` authority
+    ///   2. `[]` newAuthority
     SetAuthority,
 
     /// Place a bid on a running auction.
