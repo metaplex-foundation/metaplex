@@ -11,6 +11,7 @@ import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTEN
 import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
+import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from "./commands/mint";
 import { signMetadata } from "./commands/sign";
@@ -74,6 +75,36 @@ programCommand('upload')
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
     if (warn) { log.info("not all images have been uplaoded, rerun this step.") }
+  });
+
+programCommand('verify_token_metadata')
+  .argument(
+    '<directory>',
+    'Directory containing images and metadata files named from 0-n',
+    val => {
+      return fs.readdirSync(`${val}`).map(file => path.join(process.cwd(), val, file));
+    },
+  )
+  .option('-n, --number <number>', 'Number of images to upload')
+  .action(async (files: string[], options, cmd) => {
+    const { number, keypair, env, cacheName } = cmd.opts();
+
+    const startMs = Date.now();
+    log.info("started at: " + startMs.toString())
+    let warn = false;
+    for (; ;) {
+      const successful = await verifyTokenMetadata({ files, uploadElementsCount: number});
+      if (successful) {
+        warn = false;
+        break;
+      } else {
+        warn = true;
+        log.warn("upload was not successful, rerunning");
+      }
+    }
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
   });
 
 programCommand('verify')
