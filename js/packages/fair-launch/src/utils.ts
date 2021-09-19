@@ -11,12 +11,6 @@ export const FAIR_LAUNCH_PROGRAM_ID = new anchor.web3.PublicKey(
   '7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF',
 );
 
-export interface AnchorProgram {
-  id: anchor.web3.PublicKey;
-  connection: anchor.web3.Connection;
-  program: anchor.Program;
-}
-
 export const toDate = (value?: anchor.BN) => {
   if (!value) {
     return;

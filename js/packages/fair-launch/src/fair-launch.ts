@@ -22,9 +22,11 @@ export interface FairLaunchAccount {
     bump: number;
     data?: FairLaunchTicket;
   };
-  lotteryBitmap: {
+  lottery: {
     pubkey: anchor.web3.PublicKey;
+    data?: Uint8Array;
   };
+  treasury: number;
 }
 
 export interface FairLaunchTicket {
@@ -110,8 +112,29 @@ export const getFairLaunchState = async (
     console.log('No ticket');
   }
 
-  const fairLaunchLotteryBitmap = //@ts-ignore
-  (await getFairLaunchLotteryBitmap(state.tokenMint))[0];
+  const treasury = await state.program.provider.connection.getBalance(
+    state.state.treasury,
+  );
+
+  let lotteryData: Uint8Array = new Uint8Array([]);
+  let fairLaunchLotteryBitmap = (
+    await getFairLaunchLotteryBitmap(
+      //@ts-ignore
+      state.state.tokenMint,
+    )
+  )[0];
+
+  try {
+    const fairLaunchLotteryBitmapObj =
+      await state.program.provider.connection.getAccountInfo(
+        fairLaunchLotteryBitmap,
+      );
+
+    lotteryData = new Uint8Array(fairLaunchLotteryBitmapObj?.data || []);
+  } catch (e) {
+    console.log('Could not find fair launch lottery.');
+    console.log(e);
+  }
 
   return {
     id: fairLaunchId,
@@ -122,16 +145,17 @@ export const getFairLaunchState = async (
       bump,
       data: fairLaunchData,
     },
-    lotteryBitmap: {
+    lottery: {
       pubkey: fairLaunchLotteryBitmap,
+      data: lotteryData,
     },
+    treasury,
   };
 };
 
 export const punchTicket = async (
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount,
-  ticket: FairLaunchTicket,
 ) => {
   const fairLaunchTicket = (
     await getFairLaunchTicket(
@@ -140,6 +164,8 @@ export const punchTicket = async (
       anchorWallet.publicKey,
     )
   )[0];
+
+  const ticket = fairLaunch.ticket;
 
   const fairLaunchLotteryBitmap = //@ts-ignore
   (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
@@ -152,10 +178,13 @@ export const punchTicket = async (
     )
   )[0];
 
-  if (ticket.amount.toNumber() > fairLaunch.state.currentMedian.toNumber()) {
+  if (
+    ticket.data?.amount.toNumber() ||
+    0 > fairLaunch.state.currentMedian.toNumber()
+  ) {
     console.log(
       'Adjusting down...',
-      ticket.amount.toNumber(),
+      ticket.data?.amount.toNumber(),
       fairLaunch.state.currentMedian.toNumber(),
     );
     const { remainingAccounts, instructions, signers } =
@@ -164,7 +193,6 @@ export const punchTicket = async (
         fairLaunch.state.currentMedian.toNumber(),
         anchorWallet,
         fairLaunch,
-        ticket,
         fairLaunchTicket,
       );
     await fairLaunch.program.rpc.adjustTicket(fairLaunch.state.currentMedian, {
@@ -238,7 +266,6 @@ const getSetupForTicketing = async (
   amount: number,
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount | undefined,
-  ticket: FairLaunchTicket | null,
   ticketKey: anchor.web3.PublicKey,
 ): Promise<{
   remainingAccounts: {
@@ -258,6 +285,7 @@ const getSetupForTicketing = async (
       amountLamports: 0,
     };
   }
+  const ticket = fairLaunch.ticket;
 
   const remainingAccounts = [];
   const instructions = [];
@@ -331,11 +359,11 @@ const getSetupForTicketing = async (
     });
   }
 
-  if (ticket) {
+  if (ticket.data) {
     const [fairLaunchTicketSeqLookup, seqBump] =
       await getFairLaunchTicketSeqLookup(
         fairLaunch.state.tokenMint,
-        ticket.seq,
+        ticket.data?.seq,
       );
 
     const seq = await anchorProgram.provider.connection.getAccountInfo(
@@ -369,11 +397,12 @@ export const purchaseTicket = async (
   amount: number,
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount | undefined,
-  ticket: FairLaunchTicket | null,
 ) => {
   if (!fairLaunch) {
     return;
   }
+
+  const ticket = fairLaunch.ticket;
 
   const [fairLaunchTicket, bump] = await getFairLaunchTicket(
     //@ts-ignore
@@ -387,7 +416,6 @@ export const purchaseTicket = async (
       amount,
       anchorWallet,
       fairLaunch,
-      ticket,
       fairLaunchTicket,
     );
 
@@ -455,7 +483,6 @@ export const purchaseTicket = async (
 };
 
 export const withdrawFunds = async (
-  amount: number,
   anchorWallet: anchor.Wallet,
   fairLaunch: FairLaunchAccount | undefined,
 ) => {

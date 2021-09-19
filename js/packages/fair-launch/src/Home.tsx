@@ -32,6 +32,7 @@ import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 
 import {
   awaitTransactionSignatureConfirmation,
+  CandyMachineAccount,
   getCandyMachineState,
   mintOneToken,
   shortenAddress,
@@ -47,12 +48,7 @@ import {
   withdrawFunds,
 } from './fair-launch';
 
-import {
-  AnchorProgram,
-  formatNumber,
-  getFairLaunchTicket,
-  toDate,
-} from './utils';
+import { formatNumber, toDate } from './utils';
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -65,12 +61,10 @@ const MintButton = styled(Button)`
   height: 60px;
   margin-top: 10px;
   margin-bottom: 5px;
-  background: linear-gradient(180deg, #604AE5 0%, #813EEE 100%);
+  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
   color: white;
   font-size: 16px;
   font-weight: bold;
-
-
 `; // add your styles here
 
 const dialogStyles: any = (theme: Theme) =>
@@ -87,13 +81,11 @@ const dialogStyles: any = (theme: Theme) =>
     },
   });
 
-
 const ValueSlider = styled(Slider)({
   color: '#C0D5FE',
   height: 8,
   '& > *': {
     height: 4,
-
   },
   '& .MuiSlider-track': {
     border: 'none',
@@ -114,15 +106,14 @@ const ValueSlider = styled(Slider)({
   },
   '& .MuiSlider-valueLabel': {
     '& > *': {
-
-    background: 'linear-gradient(180deg, #604AE5 0%, #813EEE 100%)',
+      background: 'linear-gradient(180deg, #604AE5 0%, #813EEE 100%)',
     },
     lineHeight: 1.2,
     fontSize: 12,
     padding: 0,
     width: 32,
     height: 32,
-    marginLeft: 9
+    marginLeft: 9,
   },
 });
 
@@ -132,6 +123,71 @@ const LimitedBackdrop = withStyles({
     zIndex: 1,
   },
 })(Backdrop);
+
+enum Phase {
+  Phase0,
+  Phase1,
+  Phase2,
+  Lottery,
+  Phase3,
+  Phase4,
+  Unknown,
+}
+
+const Header = (props: {
+  phaseName: string;
+  desc: string;
+  date: anchor.BN | undefined;
+}) => {
+  const { phaseName, desc, date } = props;
+  return (
+    <Grid container justifyContent="center">
+      <Grid xs={6} justifyContent="center" direction="column">
+        <Typography variant="h5">{phaseName}</Typography>
+        <Typography variant="body1" color="textSecondary">
+          {desc}
+        </Typography>
+      </Grid>
+      <Grid xs={6} container justifyContent="flex-end">
+        <PhaseCountdown
+          date={toDate(date)}
+          style={{ justifyContent: 'flex-end' }}
+          status="COMPLETE"
+        />
+      </Grid>
+    </Grid>
+  );
+};
+
+function getPhase(
+  fairLaunch: FairLaunchAccount | undefined,
+  candyMachine: CandyMachineAccount | undefined,
+): Phase {
+  const curr = new Date().getTime();
+
+  const phaseOne = toDate(fairLaunch?.state.data.phaseOneStart)?.getTime();
+  const phaseOneEnd = toDate(fairLaunch?.state.data.phaseOneEnd)?.getTime();
+  const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
+  const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
+
+  if (phaseOne && curr < phaseOne) {
+    return Phase.Phase0;
+  } else if (phaseOneEnd && curr <= phaseOneEnd) {
+    return Phase.Phase1;
+  } else if (phaseTwoEnd && curr <= phaseTwoEnd) {
+    return Phase.Phase2;
+  } else if (!fairLaunch?.state.phaseThreeStarted) {
+    return Phase.Lottery;
+  } else if (
+    fairLaunch?.state.phaseThreeStarted &&
+    candyMachineGoLive &&
+    curr > candyMachineGoLive
+  ) {
+    return Phase.Phase4;
+  }
+
+  return Phase.Unknown;
+}
 
 export interface HomeProps {
   candyMachineId: anchor.web3.PublicKey;
@@ -149,19 +205,23 @@ const FAIR_LAUNCH_LOTTERY_SIZE =
   1 + // bump
   8; // size of bitmask ones
 
-const isWinner = (
-  phaseThree: boolean | undefined,
-  lottery: Uint8Array | null,
-  sequence: anchor.BN | undefined,
-): boolean => {
-  if (!lottery || !lottery.length || !sequence || !phaseThree) {
+const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
+  if (
+    !fairLaunch?.lottery.data ||
+    !fairLaunch?.lottery.data.length ||
+    !fairLaunch?.ticket.data?.seq ||
+    !fairLaunch?.state.phaseThreeStarted
+  ) {
     return false;
   }
 
   const myByte =
-    lottery[FAIR_LAUNCH_LOTTERY_SIZE + Math.floor(sequence.toNumber() / 8)];
+    fairLaunch.lottery.data[
+      FAIR_LAUNCH_LOTTERY_SIZE +
+        Math.floor(fairLaunch.ticket.data?.seq.toNumber() / 8)
+    ];
 
-  const positionFromRight = 7 - (sequence.toNumber() % 8);
+  const positionFromRight = 7 - (fairLaunch.ticket.data?.seq.toNumber() % 8);
   const mask = Math.pow(2, positionFromRight);
   const isWinner = myByte & mask;
   return isWinner > 0;
@@ -194,13 +254,8 @@ const getLotteryState = (
 
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
-  const [isActive, setIsActive] = useState(false); // true when countdown completes
-  const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
-  const [ticket, setTicket] = useState<FairLaunchTicket | null>(null);
-  const [treasury, setTreasury] = useState<number | null>(null);
-  const [lottery, setLottery] = useState<Uint8Array | null>(null);
 
   const wallet = useWallet();
 
@@ -228,8 +283,7 @@ const Home = (props: HomeProps) => {
   });
 
   const [fairLaunch, setFairLaunch] = useState<FairLaunchAccount>();
-  const [startDate, setStartDate] = useState(new Date(props.startDate));
-  const [candyMachine, setCandyMachine] = useState<AnchorProgram>();
+  const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [howToOpen, setHowToOpen] = useState(false);
 
   const onMint = async () => {
@@ -278,7 +332,7 @@ const Home = (props: HomeProps) => {
       } else {
         if (error.code === 311) {
           message = `SOLD OUT!`;
-          setIsSoldOut(true);
+          window.location.reload();
         } else if (error.code === 312) {
           message = `Minting period hasn't started yet.`;
         }
@@ -327,61 +381,18 @@ const Home = (props: HomeProps) => {
         );
 
         setFairLaunch(state);
-        const [fairLaunchTicket, _] = await getFairLaunchTicket(
-          state.state.tokenMint,
-          anchorWallet.publicKey,
-        );
-
-        try {
-          const ticket: FairLaunchTicket | null =
-            (await state.program.account.fairLaunchTicket.fetch(
-              fairLaunchTicket,
-            )) as FairLaunchTicket | null;
-          setTicket(ticket);
-        } catch (e) {
-          console.log('Could not find fair launch ticket.');
-        }
-
-        const treasury = await state.program.provider.connection.getBalance(
-          state.state.treasury,
-        );
-
-        setTreasury(treasury);
-        try {
-          const fairLaunchLotteryBitmap = (
-            await getFairLaunchLotteryBitmap(
-              //@ts-ignore
-              state.state.tokenMint,
-            )
-          )[0];
-
-          const fairLaunchLotteryBitmapObj =
-            await state.program.provider.connection.getAccountInfo(
-              fairLaunchLotteryBitmap,
-            );
-
-          setLottery(new Uint8Array(fairLaunchLotteryBitmapObj?.data || []));
-        } catch (e) {
-          console.log('Could not find fair launch lottery.');
-          console.log(e);
-        }
-
-        console.log();
       } catch (e) {
         console.log('Problem getting fair launch state');
         console.log(e);
       }
 
       try {
-        const { candyMachine, goLiveDate, itemsRemaining } =
-          await getCandyMachineState(
-            anchorWallet,
-            props.candyMachineId,
-            props.connection,
-          );
-        setIsSoldOut(itemsRemaining === 0);
-        setStartDate(goLiveDate);
-        setCandyMachine(candyMachine);
+        const cndy = await getCandyMachineState(
+          anchorWallet,
+          props.candyMachineId,
+          props.connection,
+        );
+        setCandyMachine(cndy);
       } catch {
         console.log('Problem getting candy machine state');
       }
@@ -420,7 +431,7 @@ const Home = (props: HomeProps) => {
 
     console.log('deposit');
 
-    purchaseTicket(contributed, anchorWallet, fairLaunch, ticket);
+    purchaseTicket(contributed, anchorWallet, fairLaunch);
   };
 
   const onRefundTicket = () => {
@@ -430,17 +441,17 @@ const Home = (props: HomeProps) => {
 
     console.log('refund');
 
-    purchaseTicket(0, anchorWallet, fairLaunch, ticket);
+    purchaseTicket(0, anchorWallet, fairLaunch);
   };
 
   const onPunchTicket = () => {
-    if (!anchorWallet || !fairLaunch || !ticket) {
+    if (!anchorWallet || !fairLaunch || !fairLaunch.ticket) {
       return;
     }
 
     console.log('punch');
 
-    punchTicket(anchorWallet, fairLaunch, ticket);
+    punchTicket(anchorWallet, fairLaunch);
   };
 
   const onWithdraw = () => {
@@ -450,165 +461,258 @@ const Home = (props: HomeProps) => {
 
     console.log('withdraw');
 
-    withdrawFunds(contributed, anchorWallet, fairLaunch);
+    withdrawFunds(anchorWallet, fairLaunch);
   };
 
-  const [isPhase1Active, setIsPhase1Active] = useState(
-    (toDate(fairLaunch?.state.data.phaseOneStart) || Date.now()) <= Date.now(),
-  );
+  const phase = getPhase(fairLaunch, candyMachine);
 
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="sm" style={{ position: 'relative' }}>
         {/* Display timer before the drop */}
-        <LimitedBackdrop open={!isPhase1Active}>
+        <LimitedBackdrop open={phase == Phase.Phase4}>
           <Grid container direction="column" alignItems="center">
             <Typography component="h2" color="textPrimary">
-              Raffle starts
+              Candy Machine Opens
             </Typography>
             <PhaseCountdown
-              date={toDate(fairLaunch?.state.data.phaseOneStart)}
-              onComplete={() => setIsPhase1Active(true)}
-              status="Completed"
+              date={toDate(candyMachine?.state.goLiveDate)}
+              status="Open"
             />
           </Grid>
         </LimitedBackdrop>
-        <Paper style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}>
+        <Paper
+          style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
+        >
           <Grid container justifyContent="center" direction="column">
-            <Grid container justifyContent="center">
-              <Grid xs={6} justifyContent="center" direction="column">
-                <Typography variant="h5">Phase 1</Typography>
-                <Typography variant="body1" color="textSecondary">Set price phase</Typography>
-              </Grid>
-              <Grid xs={6} container justifyContent="flex-end">
-                <PhaseCountdown
-                  date={toDate(fairLaunch?.state.data.phaseOneEnd)}
-                  style={{ justifyContent: 'flex-end' }}
-                  status="COMPLETE"
-                />
-              </Grid>
-            </Grid>
-
-            {ticket && <Grid container direction="column" justifyContent="center" alignItems="center" style={{ height: 200}}>
-              <Typography>Your bid</Typography>
-              <Typography>
-                {formatNumber.format(
-                  (ticket?.amount.toNumber() || 0) / LAMPORTS_PER_SOL,
-                )}{' '}
-                SOL
-              </Typography>
-            </Grid>}
-
-            <Grid style={{ marginTop: 40, marginBottom: 20 }}>
-              <ValueSlider
-                min={min}
-                marks={marks}
-                max={max}
-                step={step}
-                value={contributed}
-                onChange={(ev, val) => setContributed(val as any)}
-                valueLabelDisplay="auto"
-                style={{ width: 'calc(100% - 40px)', marginLeft: 20, height: 30 }}
+            {phase == Phase.Phase0 && (
+              <Header
+                phaseName={'Phase 0'}
+                desc={'Anticipation Phase'}
+                date={fairLaunch?.state.data.phaseOneStart}
               />
-            </Grid>
+            )}
+            {phase == Phase.Phase1 && (
+              <Header
+                phaseName={'Phase 1'}
+                desc={'Set price phase'}
+                date={fairLaunch?.state.data.phaseOneEnd}
+              />
+            )}
 
-            {fairLaunch?.state.data.phaseTwoEnd.lt(
-              new anchor.BN(Date.now() / 1000),
-            ) && !fairLaunch.state.phaseThreeStarted ? (
-              <div>
-                <p>
-                  We're now in the lottery. No further action is required on
-                  your part until it is over.
-                </p>
-                Lottery State:{' '}
-                {getLotteryState(
-                  fairLaunch?.state.phaseThreeStarted,
-                  lottery,
+            {phase == Phase.Phase2 && (
+              <Header
+                phaseName={'Phase 2'}
+                desc={'Grace period'}
+                date={fairLaunch?.state.data.phaseTwoEnd}
+              />
+            )}
+
+            {phase == Phase.Lottery && (
+              <Header
+                phaseName={'Phase 3'}
+                desc={'Lottery is running...'}
+                date={fairLaunch?.state.data.phaseTwoEnd.add(
                   fairLaunch?.state.data.lotteryDuration,
-                  fairLaunch?.state.data.phaseTwoEnd,
                 )}
-              </div>
+              />
+            )}
+
+            {phase == Phase.Phase3 && (
+              <Grid container justifyContent="center">
+                <Grid xs={6} justifyContent="center" direction="column">
+                  <Typography variant="h5">Phase 3</Typography>
+                  <Typography variant="body1" color="textSecondary">
+                    The Lottery is complete!
+                  </Typography>
+                </Grid>
+                <Grid xs={6} container justifyContent="flex-end">
+                  <PhaseCountdown
+                    date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
+                    style={{ justifyContent: 'flex-end' }}
+                    status="COMPLETE"
+                  />
+                </Grid>
+              </Grid>
+            )}
+
+            {fairLaunch?.ticket && (
+              <Grid
+                container
+                direction="column"
+                justifyContent="center"
+                alignItems="center"
+                style={{ height: 200 }}
+              >
+                <Typography>Your bid</Typography>
+                <Typography>
+                  {formatNumber.format(
+                    (fairLaunch?.ticket.data?.amount.toNumber() || 0) /
+                      LAMPORTS_PER_SOL,
+                  )}{' '}
+                  SOL
+                </Typography>
+              </Grid>
+            )}
+
+            {[Phase.Phase1, Phase.Phase2].includes(phase) && (
+              <>
+                <Grid style={{ marginTop: 40, marginBottom: 20 }}>
+                  <ValueSlider
+                    min={min}
+                    marks={marks}
+                    max={max}
+                    step={step}
+                    value={contributed}
+                    onChange={(ev, val) => setContributed(val as any)}
+                    valueLabelDisplay="auto"
+                    style={{
+                      width: 'calc(100% - 40px)',
+                      marginLeft: 20,
+                      height: 30,
+                    }}
+                  />
+                </Grid>
+              </>
+            )}
+
+            {!wallet.connected ? (
+              <ConnectButton>Connect Wallet</ConnectButton>
             ) : (
               <div>
-                {!fairLaunch?.state.phaseThreeStarted && (
-                  <MintButton onClick={onDeposit} variant="contained">
-                    {!ticket ? 'Place a bid' : 'Adjust your bid'}
-                  </MintButton>
-                )}
-
-                {isWinner(
-                  fairLaunch?.state.phaseThreeStarted,
-                  lottery,
-                  ticket?.seq,
-                ) && (
+                {[Phase.Phase1, Phase.Phase2].includes(phase) && (
                   <MintButton
-                    onClick={onPunchTicket}
+                    onClick={onDeposit}
                     variant="contained"
-                    disabled={ticket?.state.punched !== undefined}
+                    disabled={!fairLaunch?.ticket && phase == Phase.Phase2}
                   >
-                    Punch Ticket
+                    {!fairLaunch?.ticket ? 'Place a bid' : 'Adjust your bid'}
                   </MintButton>
                 )}
 
-                {fairLaunch?.state.phaseThreeStarted &&
-                  !isWinner(
-                    fairLaunch?.state.phaseThreeStarted,
-                    lottery,
-                    ticket?.seq,
-                  ) && (
-                    <MintButton
-                      onClick={onRefundTicket}
-                      variant="contained"
-                      disabled={ticket?.state.withdrawn !== undefined}
-                    >
-                      Refund Ticket
-                    </MintButton>
-                  )}
+                {[Phase.Phase3].includes(phase) && (
+                  <>
+                    {isWinner(fairLaunch) && (
+                      <MintButton
+                        onClick={onPunchTicket}
+                        variant="contained"
+                        disabled={
+                          fairLaunch?.ticket.data?.state.punched !== undefined
+                        }
+                      >
+                        Punch Ticket
+                      </MintButton>
+                    )}
+
+                    {!isWinner(fairLaunch) && (
+                      <MintButton
+                        onClick={onRefundTicket}
+                        variant="contained"
+                        disabled={
+                          fairLaunch?.ticket.data?.state.withdrawn !== undefined
+                        }
+                      >
+                        Refund Ticket
+                      </MintButton>
+                    )}
+                  </>
+                )}
+
+                <MintContainer>
+                  <MintButton
+                    disabled={
+                      candyMachine?.state.isSoldOut ||
+                      isMinting ||
+                      !candyMachine?.state.isActive
+                    }
+                    onClick={onMint}
+                    variant="contained"
+                  >
+                    {candyMachine?.state.isSoldOut ? (
+                      'SOLD OUT'
+                    ) : candyMachine?.state.isActive ? (
+                      isMinting ? (
+                        <CircularProgress />
+                      ) : (
+                        'MINT'
+                      )
+                    ) : (
+                      <PhaseCountdown
+                        date={toDate(candyMachine?.state.goLiveDate)}
+                        style={{ justifyContent: 'flex-end' }}
+                      />
+                    )}
+                  </MintButton>
+                </MintContainer>
               </div>
             )}
 
             <Grid container justifyContent="center" color="textSecondary">
               <Link
-                  component="button"
-                  variant="body2"
-                  color="textSecondary"
-                  align="center"
-                  onClick={() => {
-                    setHowToOpen(true)
-                  }}
-                >
-                  How this raffles works
-                </Link>
+                component="button"
+                variant="body2"
+                color="textSecondary"
+                align="center"
+                onClick={() => {
+                  setHowToOpen(true);
+                }}
+              >
+                How this raffle works
+              </Link>
             </Grid>
-            <Dialog open={howToOpen} onClose={() => setHowToOpen(false)} PaperProps={{ style: { backgroundColor: '#222933', borderRadius: 6 } }}>
-              <MuiDialogTitle disableTypography style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'  }} >
+            <Dialog
+              open={howToOpen}
+              onClose={() => setHowToOpen(false)}
+              PaperProps={{
+                style: { backgroundColor: '#222933', borderRadius: 6 },
+              }}
+            >
+              <MuiDialogTitle
+                disableTypography
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Link
                   component="button"
                   variant="h6"
                   color="textSecondary"
                   onClick={() => {
-                    setHowToOpen(true)
+                    setHowToOpen(true);
                   }}
                 >
                   How it works
                 </Link>
-                <IconButton aria-label="close" className={dialogStyles.closeButton} onClick={() => setHowToOpen(false)}>
+                <IconButton
+                  aria-label="close"
+                  className={dialogStyles.closeButton}
+                  onClick={() => setHowToOpen(false)}
+                >
                   <CloseIcon />
                 </IconButton>
               </MuiDialogTitle>
               <MuiDialogContent>
-                <Typography variant="h6">Phase 1 - Set the fair price:</Typography>
-                <Typography gutterBottom color="textSecondary">
-                  Enter a bid in the range provided by the artist. The median of all bids will be the "fair" price of the lottery ticket.
+                <Typography variant="h6">
+                  Phase 1 - Set the fair price:
                 </Typography>
-                <Typography  variant="h6">Phase 2 - Grace period:</Typography>
                 <Typography gutterBottom color="textSecondary">
-                  If your bid was at or above the fair price, you automatically get a raffle ticket at that price. There's nothing else you need to do. If your bid is below the median price, you can still opt in at the fair price during this phase.
+                  Enter a bid in the range provided by the artist. The median of
+                  all bids will be the "fair" price of the lottery ticket.
+                </Typography>
+                <Typography variant="h6">Phase 2 - Grace period:</Typography>
+                <Typography gutterBottom color="textSecondary">
+                  If your bid was at or above the fair price, you automatically
+                  get a raffle ticket at that price. There's nothing else you
+                  need to do. If your bid is below the median price, you can
+                  still opt in at the fair price during this phase.
                 </Typography>
                 <Typography variant="h6">Phase 3 - The Lottery:</Typography>
                 <Typography gutterBottom color="textSecondary">
-                  Everyone who got a raffle ticket at the fair price is entered to win an NFT.
-                  If you win an NFT, congrats. If you don’t, no worries, your SOL will go right back into your wallet.
+                  Everyone who got a raffle ticket at the fair price is entered
+                  to win an NFT. If you win an NFT, congrats. If you don’t, no
+                  worries, your SOL will go right back into your wallet.
                 </Typography>
               </MuiDialogContent>
             </Dialog>
@@ -627,72 +731,45 @@ const Home = (props: HomeProps) => {
       </Container>
 
       <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
-        <Paper style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}>
-          <Grid container justifyContent="center" direction="row">
-            <Grid xs={6} justifyContent="center" direction="column">
-              <Typography>Phase 2</Typography>
-              <Typography>Raffle</Typography>
-            </Grid>
-            <Grid xs={6}>
-              <PhaseCountdown
-                date={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                start={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                end={toDate(fairLaunch?.state.data.phaseTwoEnd)}
-                style={{ justifyContent: 'flex-end' }}
-              />
-            </Grid>
-          </Grid>
-
-          <MintContainer>
-            {!wallet.connected ? (
-              <ConnectButton>Connect Wallet</ConnectButton>
-            ) : (
-              <MintButton
-                disabled={isSoldOut || isMinting || !isActive}
-                onClick={onMint}
-                variant="contained"
-              >
-                {isSoldOut ? (
-                  'SOLD OUT'
-                ) : isActive ? (
-                  isMinting ? (
-                    <CircularProgress />
-                  ) : (
-                    'MINT'
-                  )
-                ) : (
-                  <Countdown
-                    date={startDate}
-                    onMount={({ completed }) => completed && setIsActive(true)}
-                    onComplete={() => setIsActive(true)}
-                    renderer={renderCounter}
-                  />
-                )}
-              </MintButton>
-            )}
-          </MintContainer>
-        </Paper>
-      </Container>
-
-      <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
-        <div  style={{ margin: 20}}>
+        <div style={{ margin: 20 }}>
           <Grid container direction="row" wrap="nowrap">
             <Grid container md={4} direction="column">
-              <Typography variant="body2" color="textSecondary">Bids</Typography>
-              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
+              <Typography variant="body2" color="textSecondary">
+                Bids
+              </Typography>
+              <Typography
+                variant="h6"
+                color="textPrimary"
+                style={{ fontWeight: 'bold' }}
+              >
                 {fairLaunch?.state.numberTicketsSold.toNumber() || 0}
               </Typography>
             </Grid>
             <Grid container md={4} direction="column">
-              <Typography variant="body2" color="textSecondary">Median bid</Typography>
-              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
+              <Typography variant="body2" color="textSecondary">
+                Median bid
+              </Typography>
+              <Typography
+                variant="h6"
+                color="textPrimary"
+                style={{ fontWeight: 'bold' }}
+              >
                 {formatNumber.format(median)} SOL
               </Typography>
             </Grid>
             <Grid container md={4} direction="column">
-              <Typography variant="body2" color="textSecondary">Total raised</Typography>
-              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
-                {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
+              <Typography variant="body2" color="textSecondary">
+                Total raised
+              </Typography>
+              <Typography
+                variant="h6"
+                color="textPrimary"
+                style={{ fontWeight: 'bold' }}
+              >
+                {formatNumber.format(
+                  (fairLaunch?.treasury || 0) / LAMPORTS_PER_SOL,
+                )}{' '}
+                SOL
               </Typography>
             </Grid>
           </Grid>
