@@ -112,23 +112,19 @@ export const getFairLaunchState = async (
     console.log('No ticket');
   }
 
-  const treasury = await state.program.provider.connection.getBalance(
-    state.state.treasury,
-  );
+  const treasury = await program.provider.connection.getBalance(state.treasury);
 
   let lotteryData: Uint8Array = new Uint8Array([]);
   let fairLaunchLotteryBitmap = (
     await getFairLaunchLotteryBitmap(
       //@ts-ignore
-      state.state.tokenMint,
+      state.tokenMint,
     )
   )[0];
 
   try {
     const fairLaunchLotteryBitmapObj =
-      await state.program.provider.connection.getAccountInfo(
-        fairLaunchLotteryBitmap,
-      );
+      await program.provider.connection.getAccountInfo(fairLaunchLotteryBitmap);
 
     lotteryData = new Uint8Array(fairLaunchLotteryBitmapObj?.data || []);
   } catch (e) {
@@ -165,10 +161,11 @@ export const punchTicket = async (
     )
   )[0];
 
-  const ticket = fairLaunch.ticket;
+  const ticket = fairLaunch.ticket.data;
 
-  const fairLaunchLotteryBitmap = //@ts-ignore
-  (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
+  const fairLaunchLotteryBitmap = ( //@ts-ignore
+    await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
+  )[0];
 
   const buyerTokenAccount = (
     await getAtaForMint(
@@ -178,13 +175,10 @@ export const punchTicket = async (
     )
   )[0];
 
-  if (
-    ticket.data?.amount.toNumber() ||
-    0 > fairLaunch.state.currentMedian.toNumber()
-  ) {
+  if (ticket?.amount.gt(fairLaunch.state.currentMedian)) {
     console.log(
       'Adjusting down...',
-      ticket.data?.amount.toNumber(),
+      ticket?.amount.toNumber(),
       fairLaunch.state.currentMedian.toNumber(),
     );
     const { remainingAccounts, instructions, signers } =
@@ -402,7 +396,7 @@ export const purchaseTicket = async (
     return;
   }
 
-  const ticket = fairLaunch.ticket;
+  const ticket = fairLaunch.ticket.data;
 
   const [fairLaunchTicket, bump] = await getFairLaunchTicket(
     //@ts-ignore
@@ -420,9 +414,8 @@ export const purchaseTicket = async (
     );
 
   if (ticket) {
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunch.state.tokenMint))[0];
     console.log(
       'Anchor wallet',
       anchorWallet.publicKey.toBase58(),
