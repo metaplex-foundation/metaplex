@@ -1,45 +1,46 @@
-import "./App.css";
-import { useMemo } from "react";
+import './App.css';
+import { useMemo } from 'react';
 
-import Home from "./Home";
+import Home from './Home';
 
-import * as anchor from "@project-serum/anchor";
-import { clusterApiUrl } from "@solana/web3.js";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import * as anchor from '@project-serum/anchor';
+import { clusterApiUrl } from '@solana/web3.js';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
   getPhantomWallet,
   getSolflareWallet,
   getSolletWallet,
-} from "@solana/wallet-adapter-wallets";
+} from '@solana/wallet-adapter-wallets';
 
 import {
   ConnectionProvider,
   WalletProvider,
-} from "@solana/wallet-adapter-react";
+} from '@solana/wallet-adapter-react';
 
-import { WalletDialogProvider } from "@solana/wallet-adapter-material-ui";
-import { ThemeProvider, createTheme } from "@material-ui/core";
+import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
+import { ThemeProvider, createTheme } from '@material-ui/core';
+import { ConfettiProvider } from './confetti';
 
 const theme = createTheme({
   palette: {
-    type: "dark",
-  }
+    type: 'dark',
+  },
 });
 
 const treasury = new anchor.web3.PublicKey(
-  process.env.REACT_APP_TREASURY_ADDRESS!
+  process.env.REACT_APP_TREASURY_ADDRESS!,
 );
 
 const config = new anchor.web3.PublicKey(
-  process.env.REACT_APP_CANDY_MACHINE_CONFIG!
+  process.env.REACT_APP_CANDY_MACHINE_CONFIG!,
 );
 
 const candyMachineId = new anchor.web3.PublicKey(
-  process.env.REACT_APP_CANDY_MACHINE_ID!
+  process.env.REACT_APP_CANDY_MACHINE_ID!,
 );
 
 const fairLaunchId = new anchor.web3.PublicKey(
-  process.env.REACT_APP_FAIR_LAUNCH_ID!
+  process.env.REACT_APP_FAIR_LAUNCH_ID!,
 );
 
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
@@ -56,7 +57,7 @@ const App = () => {
 
   const wallets = useMemo(
     () => [getPhantomWallet(), getSolflareWallet(), getSolletWallet()],
-    []
+    [],
   );
 
   return (
@@ -64,15 +65,17 @@ const App = () => {
       <ConnectionProvider endpoint={endpoint}>
         <WalletProvider wallets={wallets} autoConnect>
           <WalletDialogProvider>
-            <Home
-              candyMachineId={candyMachineId}
-              fairLaunchId={fairLaunchId}
-              config={config}
-              connection={connection}
-              startDate={startDateSeed}
-              treasury={treasury}
-              txTimeout={txTimeout}
-            />
+            <ConfettiProvider>
+              <Home
+                candyMachineId={candyMachineId}
+                fairLaunchId={fairLaunchId}
+                config={config}
+                connection={connection}
+                startDate={startDateSeed}
+                treasury={treasury}
+                txTimeout={txTimeout}
+              />
+            </ConfettiProvider>
           </WalletDialogProvider>
         </WalletProvider>
       </ConnectionProvider>

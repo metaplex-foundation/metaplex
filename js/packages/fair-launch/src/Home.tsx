@@ -389,6 +389,9 @@ const Home = (props: HomeProps) => {
         );
 
         setFairLaunch(state);
+        setContributed(
+          state.state.data.priceRangeStart.toNumber() / LAMPORTS_PER_SOL,
+        );
       } catch (e) {
         console.log('Problem getting fair launch state');
         console.log(e);
@@ -433,48 +436,72 @@ const Home = (props: HomeProps) => {
     },
   ].filter(_ => _ !== undefined && _.value !== 0) as any;
 
-  const onDeposit = () => {
+  const onDeposit = async () => {
     if (!anchorWallet) {
       return;
     }
 
     console.log('deposit');
 
-    purchaseTicket(contributed, anchorWallet, fairLaunch);
+    await purchaseTicket(contributed, anchorWallet, fairLaunch);
+
+    setAlertState({
+      open: true,
+      message: `Congratulations! Bid ${
+        fairLaunch?.ticket.data ? 'updated' : 'inserted'
+      }!`,
+      severity: 'success',
+    });
   };
 
-  const onRefundTicket = () => {
+  const onRefundTicket = async () => {
     if (!anchorWallet) {
       return;
     }
 
     console.log('refund');
 
-    purchaseTicket(0, anchorWallet, fairLaunch);
+    await purchaseTicket(0, anchorWallet, fairLaunch);
+    setAlertState({
+      open: true,
+      message:
+        'Congratulations! Funds withdrawn. This is an irreversible action.',
+      severity: 'success',
+    });
   };
 
-  const onPunchTicket = () => {
+  const onPunchTicket = async () => {
     if (!anchorWallet || !fairLaunch || !fairLaunch.ticket) {
       return;
     }
 
     console.log('punch');
 
-    punchTicket(anchorWallet, fairLaunch);
+    await punchTicket(anchorWallet, fairLaunch);
+    setAlertState({
+      open: true,
+      message: 'Congratulations! Ticket punched!',
+      severity: 'success',
+    });
   };
 
-  const onWithdraw = () => {
+  const onWithdraw = async () => {
     if (!anchorWallet) {
       return;
     }
 
     console.log('withdraw');
 
-    withdrawFunds(anchorWallet, fairLaunch);
+    await withdrawFunds(anchorWallet, fairLaunch);
+
+    setAlertState({
+      open: true,
+      message: 'Congratulations! Funds withdrawn!',
+      severity: 'success',
+    });
   };
 
   const phase = getPhase(fairLaunch, candyMachine);
-  console.log('Phase is', phase);
 
   return (
     <Container style={{ marginTop: 100 }}>
@@ -556,13 +583,33 @@ const Home = (props: HomeProps) => {
                   )}{' '}
                   SOL
                 </Typography>
-                {median &&
+                {[Phase.Phase1, Phase.Phase2].includes(phase) &&
+                  fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
-                  median > fairLaunch?.ticket?.data?.amount.toNumber() && (
-                    <Alert severity="warning">
-                      Your bid is currently below the median and will not be
-                      eligible for the raffle.
-                    </Alert>
+                  fairLaunch.state.currentMedian.gt(
+                    fairLaunch?.ticket?.data?.amount,
+                  ) && (
+                    <div style={{ paddingTop: '15px' }}>
+                      <Alert severity="warning">
+                        Your bid is currently below the median and will not be
+                        eligible for the raffle.
+                      </Alert>
+                    </div>
+                  )}
+                {[Phase.Phase3, Phase.Lottery].includes(phase) &&
+                  fairLaunch.state.currentMedian &&
+                  fairLaunch?.ticket?.data?.amount &&
+                  fairLaunch.state.currentMedian.gt(
+                    fairLaunch?.ticket?.data?.amount,
+                  ) && (
+                    <div style={{ paddingTop: '15px' }}>
+                      <Alert severity="error">
+                        Your bid was below the median and was not included in
+                        the raffle. You may click Issue Refund when the lottery
+                        ends or you will be automatically issued one when the
+                        Fair Launch authority withdraws from the treasury.
+                      </Alert>
+                    </div>
                   )}
               </Grid>
             )}
