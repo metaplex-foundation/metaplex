@@ -2,24 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Countdown from 'react-countdown';
 import {
-  Box,
   CircularProgress,
   Container,
   IconButton,
-  Modal,
+  Link,
   Slider,
   Snackbar,
 } from '@material-ui/core';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
 import { createStyles, Theme, withStyles } from '@material-ui/core/styles';
 import Backdrop from '@material-ui/core/Backdrop';
 import { PhaseCountdown } from './countdown';
@@ -80,7 +73,7 @@ const MintButton = styled(Button)`
 
 `; // add your styles here
 
-const dialogStyles = (theme: Theme) =>
+const dialogStyles: any = (theme: Theme) =>
   createStyles({
     root: {
       margin: 0,
@@ -93,11 +86,45 @@ const dialogStyles = (theme: Theme) =>
       color: theme.palette.grey[500],
     },
   });
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: any;
-  value: any;
-}
+
+
+const ValueSlider = styled(Slider)({
+  color: '#C0D5FE',
+  height: 8,
+  '& > *': {
+    height: 4,
+
+  },
+  '& .MuiSlider-track': {
+    border: 'none',
+    height: 4,
+  },
+  '& .MuiSlider-thumb': {
+    height: 24,
+    width: 24,
+    marginTop: -10,
+    background: 'linear-gradient(180deg, #604AE5 0%, #813EEE 100%)',
+    border: '2px solid currentColor',
+    '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
+      boxShadow: 'inherit',
+    },
+    '&:before': {
+      display: 'none',
+    },
+  },
+  '& .MuiSlider-valueLabel': {
+    '& > *': {
+
+    background: 'linear-gradient(180deg, #604AE5 0%, #813EEE 100%)',
+    },
+    lineHeight: 1.2,
+    fontSize: 12,
+    padding: 0,
+    width: 32,
+    height: 32,
+    marginLeft: 9
+  },
+});
 
 const LimitedBackdrop = withStyles({
   root: {
@@ -154,7 +181,7 @@ const getLotteryState = (
 ): LotteryState => {
   if (
     !phaseThree &&
-    (!lottery || lottery.length == 0) &&
+    (!lottery || lottery.length === 0) &&
     phaseTwoEnd.add(lotteryDuration).lt(new anchor.BN(Date.now() / 1000))
   ) {
     return LotteryState.PastDue;
@@ -171,7 +198,6 @@ const Home = (props: HomeProps) => {
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
-  const [selectedTab, setSelectedTab] = useState(0);
   const [ticket, setTicket] = useState<FairLaunchTicket | null>(null);
   const [treasury, setTreasury] = useState<number | null>(null);
   const [lottery, setLottery] = useState<Uint8Array | null>(null);
@@ -204,6 +230,7 @@ const Home = (props: HomeProps) => {
   const [fairLaunch, setFairLaunch] = useState<FairLaunchAccount>();
   const [startDate, setStartDate] = useState(new Date(props.startDate));
   const [candyMachine, setCandyMachine] = useState<AnchorProgram>();
+  const [howToOpen, setHowToOpen] = useState(false);
 
   const onMint = async () => {
     try {
@@ -453,16 +480,16 @@ const Home = (props: HomeProps) => {
                 <Typography variant="h5">Phase 1</Typography>
                 <Typography variant="body1" color="textSecondary">Set price phase</Typography>
               </Grid>
-              <Grid xs={6}>
+              <Grid xs={6} container justifyContent="flex-end">
                 <PhaseCountdown
                   date={toDate(fairLaunch?.state.data.phaseOneEnd)}
                   style={{ justifyContent: 'flex-end' }}
-                  status="Completed"
+                  status="COMPLETE"
                 />
               </Grid>
             </Grid>
 
-            <Grid container direction="column" justifyContent="center" alignItems="center" style={{ height: 200}}>
+            {ticket && <Grid container direction="column" justifyContent="center" alignItems="center" style={{ height: 200}}>
               <Typography>Your bid</Typography>
               <Typography>
                 {formatNumber.format(
@@ -470,10 +497,10 @@ const Home = (props: HomeProps) => {
                 )}{' '}
                 SOL
               </Typography>
-            </Grid>
+            </Grid>}
 
-            <Grid>
-              <Slider
+            <Grid style={{ marginTop: 40, marginBottom: 20 }}>
+              <ValueSlider
                 min={min}
                 marks={marks}
                 max={max}
@@ -540,17 +567,36 @@ const Home = (props: HomeProps) => {
               </div>
             )}
 
-            <Grid justifyContent="center">
-              <Typography align="center" color="textSecondary">How this raffles works</Typography>
+            <Grid container justifyContent="center" color="textSecondary">
+              <Link
+                  component="button"
+                  variant="body2"
+                  color="textSecondary"
+                  align="center"
+                  onClick={() => {
+                    setHowToOpen(true)
+                  }}
+                >
+                  How this raffles works
+                </Link>
             </Grid>
-            <Dialog open={true}>
-            <MuiDialogTitle disableTypography >
-                <Typography variant="h6">How it works</Typography>
-                <IconButton aria-label="close" className={dialogStyles}>
+            <Dialog open={howToOpen} onClose={() => setHowToOpen(false)} PaperProps={{ style: { backgroundColor: '#222933', borderRadius: 6 } }}>
+              <MuiDialogTitle disableTypography style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between'  }} >
+                <Link
+                  component="button"
+                  variant="h6"
+                  color="textSecondary"
+                  onClick={() => {
+                    setHowToOpen(true)
+                  }}
+                >
+                  How it works
+                </Link>
+                <IconButton aria-label="close" className={dialogStyles.closeButton} onClick={() => setHowToOpen(false)}>
                   <CloseIcon />
                 </IconButton>
               </MuiDialogTitle>
-              <MuiDialogContent dividers>
+              <MuiDialogContent>
                 <Typography variant="h6">Phase 1 - Set the fair price:</Typography>
                 <Typography gutterBottom color="textSecondary">
                   Enter a bid in the range provided by the artist. The median of all bids will be the "fair" price of the lottery ticket.
@@ -567,7 +613,7 @@ const Home = (props: HomeProps) => {
               </MuiDialogContent>
             </Dialog>
 
-            {wallet.connected && (
+            {/* {wallet.connected && (
               <p>
                 Address: {shortenAddress(wallet.publicKey?.toBase58() || '')}
               </p>
@@ -575,14 +621,7 @@ const Home = (props: HomeProps) => {
 
             {wallet.connected && (
               <p>Balance: {(balance || 0).toLocaleString()} SOL</p>
-            )}
-
-            <p>Current median price: {formatNumber.format(median)}</p>
-
-            <p>
-              Total raised:{' '}
-              {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
-            </p>
+            )} */}
           </Grid>
         </Paper>
       </Container>
@@ -635,6 +674,30 @@ const Home = (props: HomeProps) => {
         </Paper>
       </Container>
 
+      <Container maxWidth="sm" style={{ position: 'relative', marginTop: 10 }}>
+        <div  style={{ margin: 20}}>
+          <Grid container direction="row" wrap="nowrap">
+            <Grid container md={4} direction="column">
+              <Typography variant="body2" color="textSecondary">Bids</Typography>
+              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
+                {fairLaunch?.state.numberTicketsSold.toNumber() || 0}
+              </Typography>
+            </Grid>
+            <Grid container md={4} direction="column">
+              <Typography variant="body2" color="textSecondary">Median bid</Typography>
+              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
+                {formatNumber.format(median)} SOL
+              </Typography>
+            </Grid>
+            <Grid container md={4} direction="column">
+              <Typography variant="body2" color="textSecondary">Total raised</Typography>
+              <Typography variant="h6" color="textPrimary" style={{ fontWeight: 'bold' }}>
+                {formatNumber.format((treasury || 0) / LAMPORTS_PER_SOL)} SOL
+              </Typography>
+            </Grid>
+          </Grid>
+        </div>
+      </Container>
       <Snackbar
         open={alertState.open}
         autoHideDuration={6000}

@@ -1,5 +1,5 @@
 import { Paper } from '@material-ui/core';
-import Countdown, { CountdownRenderProps } from 'react-countdown';
+import Countdown from 'react-countdown';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
 import { useState } from 'react';
 
@@ -17,11 +17,25 @@ const useStyles = makeStyles((theme: Theme) =>
         alignContent: 'center',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#C4C4C4',
-        color: '#000000',
+        background: '#384457',
+        color: 'white',
         borderRadius: 5,
         fontSize: 10,
       },
+    },
+    done: {
+      display: 'flex',
+      margin: theme.spacing(1),
+      padding: theme.spacing(1),
+      flexDirection: 'column',
+      alignContent: 'center',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#384457',
+      color: 'white',
+      borderRadius: 5,
+      fontWeight: 'bold',
+      fontSize: 18,
     },
     item: {
       fontWeight: 'bold',
@@ -63,7 +77,7 @@ export const PhaseCountdown: React.FC<PhaseCountdownProps> = ({
   const renderCountdown = ({ days, hours, minutes, seconds, completed }: CountdownRender) => {
     hours += days * 24
     if (completed) {
-      return <p>{status}</p>
+      return status ? <span className={classes.done}  >{status}</span> : null;
     } else {
       return (
         <div className={classes.root} style={style} >
