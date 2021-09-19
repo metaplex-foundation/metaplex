@@ -34,11 +34,11 @@ import {
   StringPublicKey,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
+import { LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { cleanName, getLast } from '../../utils/utils';
+import { getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
@@ -497,7 +497,11 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
+              animation_url:
+                props.attributes.properties?.category !==
+                  MetadataCategory.Image && customURL
+                  ? customURL
+                  : mainFile && mainFile.name,
             });
             props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
             props.confirm();
@@ -1027,31 +1031,12 @@ const LaunchStep = (props: {
   const files = props.files;
   const metadata = props.attributes;
   useEffect(() => {
-    const rentCall = Promise.all([
+    Promise.all([
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
       props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
-    ]);
-    if (files.length)
-      getAssetCostToStore([
-        ...files,
-        new File([JSON.stringify(metadata)], 'metadata.json'),
-      ]).then(async lamports => {
-        const sol = lamports / LAMPORT_MULTIPLIER;
-
-        // TODO: cache this and batch in one call
-        const [mintRent, metadataRent] = await rentCall;
-
-        // const uriStr = 'x';
-        // let uriBuilder = '';
-        // for (let i = 0; i < MAX_URI_LENGTH; i++) {
-        //   uriBuilder += uriStr;
-        // }
-
-        const additionalSol = (metadataRent + mintRent) / LAMPORT_MULTIPLIER;
-
-        // TODO: add fees based on number of transactions and signers
-        setCost(sol + additionalSol);
-      });
+    ]).then(([mintRent, metadataRent]) => {
+      setCost((metadataRent + mintRent) / LAMPORT_MULTIPLIER);
+    });
   }, [files, metadata, setCost]);
 
   return (
@@ -1157,7 +1142,7 @@ const Congrats = (props: {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
       url: `${
         window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
