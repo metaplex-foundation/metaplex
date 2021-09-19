@@ -6,7 +6,6 @@ import { validate } from 'jsonschema';
 import { EXTENSION_JSON, EXTENSION_PNG } from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
-// Temporary until the script has been validated
 type TokenMetadata = {
   image: string;
   properties: {
