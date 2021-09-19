@@ -1,11 +1,4 @@
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { CACHE_PATH } from './constants';
-import path from 'path';
-import fs from 'fs';
-import FormData from 'form-data';
-import fetch from 'node-fetch';
-import { AccountInfo } from '@solana/web3.js';
-
+import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
@@ -60,23 +53,8 @@ export function chunks(array, size) {
   );
 }
 
-export function cachePath(env: string, cacheName: string) {
-  return path.join(CACHE_PATH, `${env}-${cacheName}`);
-}
-
-export function loadCache(cacheName: string, env: string) {
-  const path = cachePath(env, cacheName);
-  return fs.existsSync(path)
-    ? JSON.parse(fs.readFileSync(path).toString())
-    : undefined;
-}
-
-export function saveCache(cacheName: string, env: string, cacheContent) {
-  fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
-}
-
-export function parsePrice(price): number {
-  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
+export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
+  return Math.ceil(parseFloat(price) * mantissa);
 }
 
 export async function upload(data: FormData, manifest, index) {

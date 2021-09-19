@@ -36,6 +36,10 @@ export const toPublicKey = (key: string | PublicKey) => {
   return result;
 };
 
+export const pubkeyToString = (key: PublicKey | null | string = '') => {
+  return typeof key === 'string' ? key : key?.toBase58() || '';
+};
+
 export interface PublicKeyStringAndAccount<T> {
   pubkey: string;
   account: AccountInfo<T>;
