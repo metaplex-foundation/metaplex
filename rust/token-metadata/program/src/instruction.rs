@@ -145,7 +145,6 @@ pub enum MetadataInstruction {
     DeprecatedCreateReservationList,
 
     /// Sign a piece of metadata that has you as an unverified creator so that it is now verified.
-    ///
     ///   0. `[writable]` Metadata (pda of ['metadata', program id, mint id])
     ///   1. `[signer]` Creator
     SignMetadata,
