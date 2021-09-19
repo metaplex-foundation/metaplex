@@ -91,10 +91,10 @@ metaplex create_candy_machine -k ~/.config/solana/id.json -p 1
 ts-node cli create_candy_machine -k ~/.config/solana/id.json -p 3
 ```
 
-4. Set the start date for your candy machine.
+4. Set the start date and update the price of your candy machine.
 ```
-metaplex set_start_date -k ~/.config/solana/id.json -d "20 Apr 2021 04:20:00 GMT"
-ts-node cli set_start_date -k ~/.config/solana/id.json -d "20 Apr 2021 04:20:00 GMT"
+metaplex update_candy_machine -k ~/.config/solana/id.json -d "20 Apr 2021 04:20:00 GMT" -p 0.1
+ts-node cli update_candy_machine -k ~/.config/solana/id.json -d "20 Apr 2021 04:20:00 GMT" -p 0.1
 ```
 
 5. Test mint a token (provided it's after the start date)
