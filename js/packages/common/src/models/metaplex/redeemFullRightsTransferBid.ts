@@ -188,7 +188,7 @@ export async function redeemFullRightsTransferBid(
     },
 
     {
-      pubkey: auctionExtended,
+      pubkey: toPublicKey(auctionExtended),
       isSigner: false,
       isWritable: false,
     },

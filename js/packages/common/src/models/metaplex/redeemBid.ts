@@ -178,7 +178,7 @@ export async function redeemBid(
       isWritable: false,
     },
     {
-      pubkey: auctionExtended,
+      pubkey: toPublicKey(auctionExtended),
       isSigner: false,
       isWritable: false,
     },
