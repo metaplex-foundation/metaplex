@@ -43,6 +43,7 @@ import {
 } from './fair-launch';
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
+import Countdown from 'react-countdown';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -189,7 +190,7 @@ function getPhase(
 }
 
 export interface HomeProps {
-  candyMachineId: anchor.web3.PublicKey;
+  candyMachineId?: anchor.web3.PublicKey;
   fairLaunchId: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
@@ -258,6 +259,7 @@ const Home = (props: HomeProps) => {
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [howToOpen, setHowToOpen] = useState(false);
   const [refundExplainerOpen, setRefundExplainerOpen] = useState(false);
+  const [antiRugPolicyOpen, setAnitRugPolicyOpen] = useState(false);
 
   const onMint = async () => {
     try {
@@ -366,17 +368,20 @@ const Home = (props: HomeProps) => {
         console.log('Problem getting fair launch state');
         console.log(e);
       }
-
-      try {
-        const cndy = await getCandyMachineState(
-          anchorWallet,
-          props.candyMachineId,
-          props.connection,
-        );
-        setCandyMachine(cndy);
-      } catch (e) {
-        console.log('Problem getting candy machine state');
-        console.log(e);
+      if (props.candyMachineId) {
+        try {
+          const cndy = await getCandyMachineState(
+            anchorWallet,
+            props.candyMachineId,
+            props.connection,
+          );
+          setCandyMachine(cndy);
+        } catch (e) {
+          console.log('Problem getting candy machine state');
+          console.log(e);
+        }
+      } else {
+        console.log('No candy machine detected in configuration.');
       }
     })();
   }, [
@@ -428,7 +433,22 @@ const Home = (props: HomeProps) => {
       severity: 'success',
     });
   };
+  const onRugRefund = async () => {
+    if (!anchorWallet) {
+      return;
+    }
 
+    console.log('refund');
+    setIsMinting(true);
+    await purchaseTicket(0, anchorWallet, fairLaunch);
+    setIsMinting(false);
+    setAlertState({
+      open: true,
+      message:
+        'Congratulations! Funds withdrawn. This is an irreversible action.',
+      severity: 'success',
+    });
+  };
   const onRefundTicket = async () => {
     if (!anchorWallet) {
       return;
@@ -471,6 +491,27 @@ const Home = (props: HomeProps) => {
 
   return (
     <Container style={{ marginTop: 100 }}>
+      <Container maxWidth="sm" style={{ position: 'relative' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Link
+            component="button"
+            variant="body2"
+            color="textSecondary"
+            align="right"
+            onClick={() => {
+              setAnitRugPolicyOpen(true);
+            }}
+          >
+            Anti-Rug Policy
+          </Link>
+        </div>
+      </Container>
       <Container maxWidth="sm" style={{ position: 'relative' }}>
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
@@ -536,7 +577,7 @@ const Home = (props: HomeProps) => {
               />
             )}
 
-            {fairLaunch?.ticket && (
+            {fairLaunch && (
               <Grid
                 container
                 direction="column"
@@ -561,9 +602,23 @@ const Home = (props: HomeProps) => {
                       SOL
                     </Typography>
                   </>
+                ) : [Phase.Phase0, Phase.Phase1].includes(phase) ? (
+                  <Typography>
+                    You haven't entered this raffle yet. <br />
+                    {fairLaunch?.state?.data?.fee && (
+                      <span>
+                        <b>
+                          All initial bids will incur a ◎{' '}
+                          {fairLaunch?.state?.data?.fee.toNumber() /
+                            LAMPORTS_PER_SOL}{' '}
+                          fee.
+                        </b>
+                      </span>
+                    )}
+                  </Typography>
                 ) : (
                   <Typography>
-                    You didn't participated in this raffle
+                    You didn't participate in this raffle.
                   </Typography>
                 )}
                 {[
@@ -686,7 +741,7 @@ const Home = (props: HomeProps) => {
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
-                        {isMinting ? <CircularProgress /> : 'Refund Ticket'}
+                        {isMinting ? <CircularProgress /> : 'Withdraw'}
                       </MintButton>
                     )}
                   </>
@@ -731,7 +786,7 @@ const Home = (props: HomeProps) => {
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
-                        {isMinting ? <CircularProgress /> : 'Refund Ticket'}
+                        {isMinting ? <CircularProgress /> : 'Withdraw'}
                       </MintButton>
                     )}
                   </>
@@ -789,6 +844,78 @@ const Home = (props: HomeProps) => {
               </MuiDialogContent>
             </Dialog>
             <Dialog
+              open={antiRugPolicyOpen}
+              onClose={() => {
+                setAnitRugPolicyOpen(false);
+              }}
+              PaperProps={{
+                style: { backgroundColor: '#222933', borderRadius: 6 },
+              }}
+            >
+              <MuiDialogContent style={{ padding: 24 }}>
+                {!fairLaunch?.state.data.antiRugSetting && (
+                  <span>This Fair Launch has no anti-rug settings.</span>
+                )}
+                {fairLaunch?.state.data.antiRugSetting &&
+                  fairLaunch.state.data.antiRugSetting.selfDestructDate && (
+                    <div>
+                      <p>
+                        This Fair Launch will retain ◎{' '}
+                        {(fairLaunch?.treasury *
+                          fairLaunch.state.data.antiRugSetting.reserveBp) /
+                          (LAMPORTS_PER_SOL * 10000)}{' '}
+                        ({fairLaunch.state.data.antiRugSetting.reserveBp / 100}
+                        %) of the treasury in a locked state until the Fair
+                        Launch Authority is able to buy back or sell enough NFTs
+                        to Fair Launch token holders such that{' '}
+                        {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
+                        tokens are remaining.
+                      </p>
+                      <p>
+                        {' '}
+                        If the Fair Launch authority is not able to convince
+                        enough people through a Candy Machine or other means by
+                        the refund date of{' '}
+                        {toDate(
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate,
+                        )?.toLocaleString()}{' '}
+                        you will have the option of refunding{' '}
+                        {fairLaunch.state.data.antiRugSetting.reserveBp / 100}%
+                        of the cost of your token against this locked treasury
+                        up until the Fair Launch Authority meets their
+                        obligations.
+                      </p>
+                      <MintButton
+                        onClick={onRugRefund}
+                        variant="contained"
+                        disabled={
+                          Date.now() / 1000 <
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
+                        }
+                      >
+                        {isMinting ? (
+                          <CircularProgress />
+                        ) : Date.now() / 1000 <
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber() ? (
+                          <span>
+                            Refund in...
+                            <Countdown
+                              date={toDate(
+                                fairLaunch.state.data.antiRugSetting
+                                  .selfDestructDate,
+                              )}
+                            />
+                          </span>
+                        ) : (
+                          'Refund'
+                        )}
+                        {}
+                      </MintButton>
+                    </div>
+                  )}
+              </MuiDialogContent>
+            </Dialog>
+            <Dialog
               open={howToOpen}
               onClose={() => setHowToOpen(false)}
               PaperProps={{
@@ -827,7 +954,17 @@ const Home = (props: HomeProps) => {
                 </Typography>
                 <Typography gutterBottom color="textSecondary">
                   Enter a bid in the range provided by the artist. The median of
-                  all bids will be the "fair" price of the raffle ticket.
+                  all bids will be the "fair" price of the raffle ticket.{' '}
+                  {fairLaunch?.state?.data?.fee && (
+                    <span>
+                      <b>
+                        All bids will incur a ◎{' '}
+                        {fairLaunch?.state?.data?.fee.toNumber() /
+                          LAMPORTS_PER_SOL}{' '}
+                        fee.
+                      </b>
+                    </span>
+                  )}
                 </Typography>
                 <Typography variant="h6">Phase 2 - Grace period:</Typography>
                 <Typography gutterBottom color="textSecondary">
@@ -920,7 +1057,7 @@ const Home = (props: HomeProps) => {
                   color="textPrimary"
                   style={{ fontWeight: 'bold' }}
                 >
-                  {formatNumber.format(median)} SOL
+                  ◎ {formatNumber.format(median)}
                 </Typography>
               </Grid>
               <Grid container md={4} direction="column">
@@ -932,10 +1069,10 @@ const Home = (props: HomeProps) => {
                   color="textPrimary"
                   style={{ fontWeight: 'bold' }}
                 >
+                  ◎{' '}
                   {formatNumber.format(
                     (fairLaunch?.treasury || 0) / LAMPORTS_PER_SOL,
-                  )}{' '}
-                  SOL
+                  )}
                 </Typography>
               </Grid>
             </Grid>

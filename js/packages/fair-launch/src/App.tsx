@@ -27,9 +27,9 @@ const theme = createTheme({
   },
 });
 
-const candyMachineId = new anchor.web3.PublicKey(
-  process.env.REACT_APP_CANDY_MACHINE_ID!,
-);
+const candyMachineId = process.env.REACT_APP_CANDY_MACHINE_ID
+  ? new anchor.web3.PublicKey(process.env.REACT_APP_CANDY_MACHINE_ID)
+  : undefined;
 
 const fairLaunchId = new anchor.web3.PublicKey(
   process.env.REACT_APP_FAIR_LAUNCH_ID!,
