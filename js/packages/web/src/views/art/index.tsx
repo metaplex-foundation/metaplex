@@ -86,6 +86,7 @@ export const ArtView = () => {
               pubkey={id}
               active={true}
               allowMeshRender={true}
+              artView={true}
             />
           </Col>
           {/* <Divider /> */}
