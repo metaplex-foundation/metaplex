@@ -210,8 +210,6 @@ export const ArtView = () => {
             <br />
             {/*
               TODO: add info about artist
-
-
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
