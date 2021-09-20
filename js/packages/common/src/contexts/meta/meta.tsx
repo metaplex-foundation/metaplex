@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
-import { loadAccounts } from './loadAccounts';
+import { limitedLoadAccounts, loadAccounts } from './loadAccounts';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
@@ -57,7 +57,7 @@ export function MetaProvider({ children = null as any }) {
 
       console.log('-----> Query started');
 
-      const nextState = await loadAccounts(connection, all);
+      const nextState = await limitedLoadAccounts(connection);
 
       console.log('------->Query finished');
 
