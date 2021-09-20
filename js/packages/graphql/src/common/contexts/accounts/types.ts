@@ -12,6 +12,6 @@ export type AccountParser = (
   data: AccountInfo<Buffer>
 ) => ParsedAccountBase | undefined;
 
-export interface ParsedAccount<T> extends ParsedAccountBase {
+export interface ParsedAccount<T> extends Omit<ParsedAccountBase, "account"> {
   info: T;
 }

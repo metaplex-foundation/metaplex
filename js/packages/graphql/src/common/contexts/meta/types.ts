@@ -55,7 +55,6 @@ export interface MetaState {
   auctions: Record<string, ParsedAccount<AuctionData>>;
   auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
   vaults: Record<string, ParsedAccount<Vault>>;
-  store: ParsedAccount<Store> | null;
   bidderMetadataByAuctionAndBidder: Record<
     string,
     ParsedAccount<BidderMetadata>
@@ -87,8 +86,7 @@ export type UpdateStateValueFunc = (
 
 export type ProcessAccountsFunc = (
   account: PublicKeyStringAndAccount<Buffer>,
-  setter: UpdateStateValueFunc,
-  useAll: boolean
+  setter: UpdateStateValueFunc
 ) => void;
 
 export type CheckAccountFunc = (account: AccountInfo<Buffer>) => boolean;

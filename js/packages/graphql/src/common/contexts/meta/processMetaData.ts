@@ -12,7 +12,7 @@ import {
   MetadataKey,
 } from "../../actions";
 import { ParsedAccount } from "../accounts/types";
-import { METADATA_PROGRAM_ID } from "../../utils";
+import { METADATA_PROGRAM_ID, pubkeyToString } from "../../utils";
 
 export const processMetaData: ProcessAccountsFunc = (
   { account, pubkey },
@@ -30,7 +30,6 @@ export const processMetaData: ProcessAccountsFunc = (
       ) {
         const parsedAccount: ParsedAccount<Metadata> = {
           pubkey,
-          account,
           info: metadata,
         };
         setter("metadataByMint", metadata.mint, parsedAccount);
@@ -41,7 +40,6 @@ export const processMetaData: ProcessAccountsFunc = (
       const edition = decodeEdition(account.data);
       const parsedAccount: ParsedAccount<Edition> = {
         pubkey,
-        account,
         info: edition,
       };
       setter("editions", pubkey, parsedAccount);
@@ -53,7 +51,6 @@ export const processMetaData: ProcessAccountsFunc = (
       if (isMasterEditionV1(masterEdition)) {
         const parsedAccount: ParsedAccount<MasterEditionV1> = {
           pubkey,
-          account,
           info: masterEdition,
         };
         setter("masterEditions", pubkey, parsedAccount);
@@ -72,7 +69,6 @@ export const processMetaData: ProcessAccountsFunc = (
       } else {
         const parsedAccount: ParsedAccount<MasterEditionV2> = {
           pubkey,
-          account,
           info: masterEdition,
         };
         setter("masterEditions", pubkey, parsedAccount);
@@ -84,12 +80,8 @@ export const processMetaData: ProcessAccountsFunc = (
   }
 };
 
-const isMetadataAccount = (account: AccountInfo<Buffer>) => {
-  return (
-    (account.owner as unknown as any) === METADATA_PROGRAM_ID ||
-    (account.owner.toBase58 && account.owner.toBase58() === METADATA_PROGRAM_ID)
-  );
-};
+const isMetadataAccount = (account: AccountInfo<Buffer>) =>
+  pubkeyToString(account.owner) === METADATA_PROGRAM_ID;
 
 const isMetadataV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetadataKey.MetadataV1;
@@ -103,6 +95,4 @@ const isMasterEditionAccount = (account: AccountInfo<Buffer>) =>
 
 const isMasterEditionV1 = (
   me: MasterEditionV1 | MasterEditionV2
-): me is MasterEditionV1 => {
-  return me.key === MetadataKey.MasterEditionV1;
-};
+): me is MasterEditionV1 => me.key === MetadataKey.MasterEditionV1;
