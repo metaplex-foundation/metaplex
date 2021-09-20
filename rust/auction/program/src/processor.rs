@@ -713,7 +713,7 @@ impl BidState {
     pub fn lowest_winning_bid_is_instant_bid_price(&self, instant_sale_amount: u64) -> bool {
         match self {
             // In a capped auction, track the limited number of winners.
-            BidState::EnglishAuction { bids, max } | BidState::OpenEdition { bids, max } => {
+            BidState::EnglishAuction { bids, max } => {
                 // bids.len() - max = index of the last winner bid
                 bids.len() >= *max && bids[bids.len() - *max].1 >= instant_sale_amount
             }
