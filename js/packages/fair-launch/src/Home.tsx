@@ -45,14 +45,14 @@ import {
 import { formatNumber, getAtaForMint, toDate } from './utils';
 
 const ConnectButton = styled(WalletDialogButton)`
-width: 100%;
-height: 60px;
-margin-top: 10px;
-margin-bottom: 5px;
-background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
-color: white;
-font-size: 16px;
-font-weight: bold;
+  width: 100%;
+  height: 60px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
 `;
 
 const MintContainer = styled.div``; // add your styles here
@@ -138,7 +138,9 @@ const Header = (props: {
   return (
     <Grid container justifyContent="center">
       <Grid xs={6} justifyContent="center" direction="column">
-        <Typography variant="h5" style={{ fontWeight: 600 }}>{phaseName}</Typography>
+        <Typography variant="h5" style={{ fontWeight: 600 }}>
+          {phaseName}
+        </Typography>
         <Typography variant="body1" color="textSecondary">
           {desc}
         </Typography>
@@ -377,7 +379,12 @@ const Home = (props: HomeProps) => {
         console.log(e);
       }
     })();
-  }, [anchorWallet, props.candyMachineId, props.connection, props.fairLaunchId]);
+  }, [
+    anchorWallet,
+    props.candyMachineId,
+    props.connection,
+    props.fairLaunchId,
+  ]);
 
   const min = formatNumber.asNumber(fairLaunch?.state.data.priceRangeStart);
   const max = formatNumber.asNumber(fairLaunch?.state.data.priceRangeEnd);
@@ -535,19 +542,30 @@ const Home = (props: HomeProps) => {
                 direction="column"
                 justifyContent="center"
                 alignItems="center"
-                style={{ height: 200, marginTop: 20, marginBottom: 20, background: '#384457', borderRadius: 6 }}
+                style={{
+                  height: 200,
+                  marginTop: 20,
+                  marginBottom: 20,
+                  background: '#384457',
+                  borderRadius: 6,
+                }}
               >
-                {fairLaunch.ticket.data ? (<>
-                  <Typography>Your bid</Typography>
-                  <Typography variant="h6" style={{ fontWeight: 900 }}>
-                    {formatNumber.format(
-                      (fairLaunch?.ticket.data?.amount.toNumber() || 0) /
-                        LAMPORTS_PER_SOL,
-                    )}{' '}
-                    SOL
-                  </Typography></>) :
-                  <Typography>You didn't participated in this raffle</Typography>
-                }
+                {fairLaunch.ticket.data ? (
+                  <>
+                    <Typography>Your bid</Typography>
+                    <Typography variant="h6" style={{ fontWeight: 900 }}>
+                      {formatNumber.format(
+                        (fairLaunch?.ticket.data?.amount.toNumber() || 0) /
+                          LAMPORTS_PER_SOL,
+                      )}{' '}
+                      SOL
+                    </Typography>
+                  </>
+                ) : (
+                  <Typography>
+                    You didn't participated in this raffle
+                  </Typography>
+                )}
                 {[
                   Phase.Phase1,
                   Phase.Phase2,
@@ -586,9 +604,9 @@ const Home = (props: HomeProps) => {
                     <div style={{ paddingTop: '15px' }}>
                       <Alert severity="error">
                         Your bid was below the median and was not included in
-                        the raffle. You may click <em>Withdraw</em> when the raffle
-                        ends or you will be automatically issued one when the
-                        Fair Launch authority withdraws from the treasury.
+                        the raffle. You may click <em>Withdraw</em> when the
+                        raffle ends or you will be automatically issued one when
+                        the Fair Launch authority withdraws from the treasury.
                       </Alert>
                     </div>
                   )}
@@ -617,14 +635,21 @@ const Home = (props: HomeProps) => {
             )}
 
             {!wallet.connected ? (
-              <ConnectButton>Connect {[Phase.Phase1].includes(phase) ? 'to bid': 'to see status'}</ConnectButton>
+              <ConnectButton>
+                Connect{' '}
+                {[Phase.Phase1].includes(phase) ? 'to bid' : 'to see status'}
+              </ConnectButton>
             ) : (
               <div>
                 {[Phase.Phase1, Phase.Phase2].includes(phase) && (
                   <MintButton
                     onClick={onDeposit}
                     variant="contained"
-                    disabled={isMinting && !fairLaunch?.ticket.data && phase === Phase.Phase2}
+                    disabled={
+                      isMinting &&
+                      !fairLaunch?.ticket.data &&
+                      phase === Phase.Phase2
+                    }
                   >
                     {isMinting ? (
                       <CircularProgress />
@@ -758,8 +783,8 @@ const Home = (props: HomeProps) => {
               }}
             >
               <MuiDialogContent style={{ padding: 24 }}>
-                During raffle phases, or if you are a winner, or if this
-                website is not configured to be a fair launch but simply a candy
+                During raffle phases, or if you are a winner, or if this website
+                is not configured to be a fair launch but simply a candy
                 machine, refunds are disallowed.
               </MuiDialogContent>
             </Dialog>
