@@ -34,8 +34,8 @@ export async function unwindVault(
 
   let batchCounter = 0;
   const PROGRAM_IDS = programIds();
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
@@ -48,7 +48,7 @@ export async function unwindVault(
     if (epa) {
       const decoded = decodeExternalPriceAccount(epa.data);
       // "Closing" it here actually brings it to Combined state which means we can withdraw tokens.
-      let { instructions: cvInstructions, signers: cvSigners } =
+      const { instructions: cvInstructions, signers: cvSigners } =
         await closeVault(
           connection,
           wallet,
@@ -66,7 +66,7 @@ export async function unwindVault(
   }
 
   const vaultKey = vault.pubkey;
-  let boxes: ParsedAccount<SafetyDepositBox>[] = [];
+  const boxes: ParsedAccount<SafetyDepositBox>[] = [];
 
   let box = safetyDepositBoxesByVaultAndIndex[vaultKey + '-0'];
   if (box) {
@@ -80,7 +80,7 @@ export async function unwindVault(
   }
   console.log('Found boxes', boxes);
   for (let i = 0; i < boxes.length; i++) {
-    let nft = boxes[i];
+    const nft = boxes[i];
     const ata = (
       await findProgramAddress(
         [

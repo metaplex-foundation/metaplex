@@ -18,14 +18,15 @@ import { useMeta } from '../contexts';
 import {
   AuctionManager,
   AuctionManagerStatus,
+  AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
   BidRedemptionTicketV2,
   getBidderKeys,
   SafetyDepositConfig,
   WinningConfigType,
-} from '../models/metaplex';
-import { AuctionManagerV1 } from '../models/metaplex/deprecatedStates';
+  AuctionViewItem,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 export enum AuctionViewState {
   Live = '0',
@@ -33,14 +34,6 @@ export enum AuctionViewState {
   Ended = '2',
   BuyNow = '3',
   Defective = '-1',
-}
-
-export interface AuctionViewItem {
-  winningConfigType: WinningConfigType;
-  amount: BN;
-  metadata: ParsedAccount<Metadata>;
-  safetyDeposit: ParsedAccount<SafetyDepositBox>;
-  masterEdition?: ParsedAccount<MasterEditionV1 | MasterEditionV2>;
 }
 
 // Flattened surface item for easy display
@@ -288,13 +281,13 @@ export function processAccountsIntoAuctionView(
     const vault = vaults[auctionManagerInstance.info.vault];
     const auctionManagerKey = auctionManagerInstance.pubkey;
 
-    let safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
+    const safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
       buildListWhileNonZero(
         safetyDepositConfigsByAuctionManagerAndIndex,
         auctionManagerKey,
       );
 
-    let bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
+    const bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
       buildListWhileNonZero(
         bidRedemptionV2sByAuctionManagerAndWinningIndex,
         auctionManagerKey,
@@ -309,7 +302,7 @@ export function processAccountsIntoAuctionView(
 
     const boxesExpected = auctionManager.safetyDepositBoxesExpected.toNumber();
 
-    let bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
+    const bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
       cachedRedemptionKeysByWallet[auction.pubkey]?.info
         ? (cachedRedemptionKeysByWallet[
             auction.pubkey
@@ -336,7 +329,7 @@ export function processAccountsIntoAuctionView(
               metadataByMint[curr.safetyDeposit.info.tokenMint];
             if (!foundMetadata) {
               // Means is a limited edition, so the tokenMint is the printingMint
-              let masterEdition =
+              const masterEdition =
                 masterEditionsByPrintingMint[curr.safetyDeposit.info.tokenMint];
               if (masterEdition) {
                 foundMetadata = metadataByMasterEdition[masterEdition.pubkey];
@@ -350,7 +343,8 @@ export function processAccountsIntoAuctionView(
             !curr.masterEdition &&
             curr.metadata.info.masterEdition
           ) {
-            let foundMaster = masterEditions[curr.metadata.info.masterEdition];
+            const foundMaster =
+              masterEditions[curr.metadata.info.masterEdition];
 
             curr.masterEdition = foundMaster;
           }
@@ -361,7 +355,7 @@ export function processAccountsIntoAuctionView(
     }
 
     const vaultKey = auctionManager.vault;
-    let boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
+    const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
@@ -394,7 +388,7 @@ export function processAccountsIntoAuctionView(
         }
       }
 
-      let view: Partial<AuctionView> = {
+      const view: Partial<AuctionView> = {
         auction,
         auctionManager,
         state,

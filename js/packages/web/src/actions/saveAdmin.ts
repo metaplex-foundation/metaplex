@@ -5,10 +5,10 @@ import {
   sendTransactionWithRetry,
   WalletSigner,
 } from '@oyster/common';
+import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
+import { setStore } from '@oyster/common/dist/lib/models/metaplex/setStore';
+import { setWhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/setWhitelistedCreator';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { WhitelistedCreator } from '../models/metaplex';
-import { setStore } from '../models/metaplex/setStore';
-import { setWhitelistedCreator } from '../models/metaplex/setWhitelistedCreator';
 
 // TODO if this becomes very slow move to batching txns like we do with settle.ts
 // but given how little this should be used keep it simple
@@ -20,11 +20,11 @@ export async function saveAdmin(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
 
-  let storeSigners: Keypair[] = [];
-  let storeInstructions: TransactionInstruction[] = [];
+  const storeSigners: Keypair[] = [];
+  const storeInstructions: TransactionInstruction[] = [];
 
   await setStore(
     isPublic,
@@ -37,8 +37,8 @@ export async function saveAdmin(
 
   for (let i = 0; i < whitelistedCreators.length; i++) {
     const wc = whitelistedCreators[i];
-    let wcSigners: Keypair[] = [];
-    let wcInstructions: TransactionInstruction[] = [];
+    const wcSigners: Keypair[] = [];
+    const wcInstructions: TransactionInstruction[] = [];
 
     await setWhitelistedCreator(
       wc.address,

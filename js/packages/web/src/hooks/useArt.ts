@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMeta } from '../contexts';
 import { Art, Artist, ArtType } from '../types';
 import {
@@ -9,11 +9,12 @@ import {
   Metadata,
   ParsedAccount,
   StringPublicKey,
+  useLocalStorage,
+  pubkeyToString,
 } from '@oyster/common';
-import { WhitelistedCreator } from '../models/metaplex';
+import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
-import { pubkeyToString } from '../utils/pubkeyToString';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -159,6 +160,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
 
   const [data, setData] = useState<IMetadataExtension>();
   const { ref, inView } = useInView();
+  const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
 
