@@ -350,6 +350,7 @@ export function processAccountsIntoAuctionView(
       existingAuctionView.myBidderMetadata = bidderMetadata;
       existingAuctionView.myBidRedemption = bidRedemption;
       existingAuctionView.auctionDataExtended = auctionDataExt || undefined;
+      existingAuctionView.vault = vault;
       existingAuctionView.isInstantSale = isInstantSale(
         auctionDataExt,
         auction,

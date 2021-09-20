@@ -259,7 +259,7 @@ export const AuctionCard = ({
     (auctionView.isInstantSale &&
       Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
       isAuctionManagerAuthorityNotWalletOwner &&
-      auctionView.auction.info.bidState.max.toNumber() === auctionView.auction.info.bidState.bids.length) ||
+      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
     auctionView.vault.info.state === VaultState.Deactivated
   ) {
     return <></>;
@@ -559,6 +559,8 @@ export const AuctionCard = ({
                 auctionView.myBidderPot = newAuctionState[1];
                 auctionView.myBidderMetadata = newAuctionState[2];
 
+                console.log('vault state before redeem');
+                console.log(auctionView.vault.info.state === VaultState.Deactivated);
                 // Claim the purchase
                 try {
                   await sendRedeemBid(
@@ -574,6 +576,8 @@ export const AuctionCard = ({
                     await update();
                     setShowBidModal(false);
                     setShowRedeemedBidModal(true);
+                    console.log('vault state after redeem');
+                    console.log(auctionView.vault.info.state === VaultState.Deactivated);
                   });
                 } catch (e) {
                   console.error(e);
