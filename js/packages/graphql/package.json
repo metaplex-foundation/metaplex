@@ -18,10 +18,13 @@
     "start": "node dist/server.js",
     "server": "ts-node-dev --transpile-only src/server.ts",
     "tsc": "tsc",
-    "tscCheck": "tsc --noEmit"
+    "tscCheck": "tsc --noEmit",
+    "setup:@metaplex/js": "cd node_modules/@metaplex/js-sdk && yarn && yarn build && cd .. && rm -rf ./js && ln -s ./js-sdk/api/lib ./js",
+    "postinstall": "npm run setup:@metaplex/js"
   },
   "license": "MIT",
   "devDependencies": {
+    "@metaplex/js-sdk": "https://github.com/metaplex/js.git#main-gql",
     "@types/bn.js": "^5.1.0",
     "@types/bs58": "^4.0.1",
     "@types/dedent": "^0.7.0",
