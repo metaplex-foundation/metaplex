@@ -281,6 +281,18 @@ const CategoryStep = (props: {
               </div>
             </Button>
           </Row>
+          <Row>
+            <Button
+              className="type-btn"
+              size="large"
+              onClick={() => props.confirm(MetadataCategory.HTML)}
+            >
+              <div>
+                <div>HTML Asset</div>
+                <div className="type-btn-description">HTML</div>
+              </div>
+            </Button>
+          </Row>
         </Col>
       </Row>
     </>
@@ -323,6 +335,8 @@ const UploadStep = (props: {
         return 'Upload your video creation (MP4, MOV, GLB)';
       case MetadataCategory.VR:
         return 'Upload your AR/VR creation (GLB)';
+      case MetadataCategory.HTML:
+        return 'Upload your HTML File (HTML)';
       default:
         return 'Please go back and choose a category';
     }
@@ -338,6 +352,8 @@ const UploadStep = (props: {
         return '.mp4,.mov,.webm';
       case MetadataCategory.VR:
         return '.glb';
+      case MetadataCategory.HTML:
+        return '.html';
       default:
         return '';
     }
@@ -477,7 +493,7 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: mainFile && mainFile.name,
+              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
             });
             props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
             props.confirm();
@@ -1136,7 +1152,7 @@ const Congrats = (props: {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
       url: `${
         window.location.origin
-      }/#/art/${props.nft?.metadataAccount.toString()}`,
+        }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
