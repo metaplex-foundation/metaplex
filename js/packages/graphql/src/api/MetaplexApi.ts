@@ -9,21 +9,19 @@ import {
   getAuctionsByStoreId,
 } from "../auction/filters";
 import { listWrapPubkey, wrapPubkey } from "../utils/mapInfo";
-import { ConnectionConfig } from "./ConnectionConfig";
+import { StateProvider } from "./StateProvider";
 export class MetaplexApi {
-  constructor(public readonly config: ConnectionConfig) {}
+  constructor(public readonly provider: StateProvider) {}
 
   loadUserAccounts(ownerId: string) {
-    const { connection } = this.config;
+    const { connection } = this.provider;
     return loadUserTokenAccounts(connection, ownerId);
   }
 
   // meta methods
 
-  subscribeIterator = this.config.subscribeIterator.bind(this.config);
-
   get state() {
-    return this.config.load();
+    return this.provider.load();
   }
 
   async getStores() {

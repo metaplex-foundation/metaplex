@@ -1,5 +1,5 @@
 import { DataSource, DataSourceConfig } from "apollo-datasource";
-import { ConnectionConfig } from "./ConnectionConfig";
+import { StateProvider } from "./StateProvider";
 import { MetaplexApi } from "./MetaplexApi";
 import { ENDPOINTS } from "./endpoints";
 import { Context } from "../types/context";
@@ -36,7 +36,7 @@ export class MetaplexApiDataSource<
   readonly ENTRIES = this.endpoints
     .map(
       ({ name, endpoint }, index) =>
-        new ConnectionConfig(name, endpoint, this.flowControl[index])
+        new StateProvider(name, endpoint, this.flowControl[index])
     )
     .map((config) => new MetaplexApi(config));
 
@@ -47,7 +47,7 @@ export class MetaplexApiDataSource<
 
   initContext(context: TContext) {
     const entry =
-      this.ENTRIES.find((entry) => entry.config.name === context.network) ??
+      this.ENTRIES.find((entry) => entry.provider.name === context.network) ??
       this.ENTRIES[0];
     context.api = entry;
   }

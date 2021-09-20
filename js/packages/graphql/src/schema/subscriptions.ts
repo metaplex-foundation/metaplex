@@ -28,7 +28,7 @@ export const truths = subscriptionType({
       t.field(endpoint, {
         type: ttype,
         subscribe(_, _1, context) {
-          return context.api.config.subscribeIterator(prop)();
+          return context.api.provider.subscribeIterator(prop)();
         },
         resolve(obj: any) {
           return obj.value;
@@ -45,7 +45,7 @@ export const truths = subscriptionType({
         type: ttype,
         args: { id: nonNull(stringArg()) },
         subscribe(_, { id }, context) {
-          return context.api.config.subscribeIterator(prop, id)();
+          return context.api.provider.subscribeIterator(prop, id)();
         },
         resolve(obj: any) {
           return obj.value;

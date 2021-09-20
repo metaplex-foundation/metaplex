@@ -67,7 +67,7 @@ export interface MetaContextState extends MetaState {
 }
 
 export type UpdateStateValueFunc = (
-  prop: keyof MetaState,
+  prop: keyof Omit<MetaState, "metadata">,
   key: string,
   value: ParsedAccount<any>
 ) => void;
