@@ -47,7 +47,8 @@ export const processVaultData: ProcessAccountsFunc = (
 };
 
 const isVaultAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === VAULT_ID;
+  (account.owner as unknown as any) === VAULT_ID ||
+  (account.owner.toBase58 && account.owner.toBase58() === VAULT_ID);
 
 const isSafetyDepositBoxV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === VaultKey.SafetyDepositBoxV1;

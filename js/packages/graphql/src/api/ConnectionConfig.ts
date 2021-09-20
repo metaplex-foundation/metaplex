@@ -190,6 +190,7 @@ export class ConnectionConfig {
       config.fn(
         data,
         (prop, key, value) => {
+          console.log(`⚡ event - ${config.key}`, prop, key);
           if (this.state) {
             // Apply to current state
             ConnectionConfig.setter(this.state, prop, key, value);
