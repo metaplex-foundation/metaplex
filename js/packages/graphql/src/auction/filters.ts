@@ -3,15 +3,15 @@ import {
   Metadata,
   getAuctionState,
   AuctionViewState,
+  MetaState,
 } from "../common";
-import { SMetaState } from "../api";
 import { NexusGenInputs } from "../generated/typings";
 import { Auction } from "../types/sourceTypes";
 import { wrapPubkey } from "../utils/mapInfo";
 import { getAuctionMetadata } from "./mappers";
 
 export const getAuctionById = (
-  state: SMetaState,
+  state: MetaState,
   auctionId: string
 ): Auction | null => {
   const auction = state.auctions.get(auctionId);
@@ -28,7 +28,7 @@ export const getAuctionById = (
 };
 
 export const getAuctionsByStoreId = (
-  { auctionManagersByAuction, auctions }: SMetaState,
+  { auctionManagersByAuction, auctions }: MetaState,
   storeId?: string | null
 ): Auction[] => {
   return Array.from(auctionManagersByAuction.values())
@@ -50,7 +50,7 @@ export const getAuctionsByStoreId = (
 
 export const filterByState = (
   { state }: Pick<NexusGenInputs["AuctionsInput"], "state">,
-  metastate: SMetaState
+  metastate: MetaState
 ) => {
   const isResaleMint = (mint?: ParsedAccount<Metadata>): boolean =>
     !!mint?.info.primarySaleHappened;
@@ -84,7 +84,7 @@ export const filterByState = (
 
 export const filterByParticipant = (
   { participantId }: Pick<NexusGenInputs["AuctionsInput"], "participantId">,
-  state: SMetaState
+  state: MetaState
 ) => {
   const bidders = Array.from(state.bidderMetadataByAuctionAndBidder.values());
   return (auction: Auction) => {

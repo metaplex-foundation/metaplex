@@ -1,7 +1,7 @@
-import { SMetaState } from "../api";
+import { MetaState } from "../common";
 import { Artwork } from "../types/sourceTypes";
 
-export const artEditions = (item: Artwork, state: SMetaState) => {
+export const artEditions = (item: Artwork, state: MetaState) => {
   const edition = item.edition ? state.editions.get(item.edition) : undefined;
   const meEdition = edition?.info.parent
     ? state.masterEditions.get(edition?.info.parent)
@@ -12,7 +12,7 @@ export const artEditions = (item: Artwork, state: SMetaState) => {
   return { edition, meEdition, masterEdition };
 };
 
-export const artType = (item: Artwork, state: SMetaState) => {
+export const artType = (item: Artwork, state: MetaState) => {
   const { meEdition, masterEdition } = artEditions(item, state);
   if (meEdition) {
     return 1;
@@ -23,17 +23,17 @@ export const artType = (item: Artwork, state: SMetaState) => {
   return 2;
 };
 
-export const artEditionNumber = (item: Artwork, state: SMetaState) => {
+export const artEditionNumber = (item: Artwork, state: MetaState) => {
   const { edition, meEdition } = artEditions(item, state);
   return meEdition ? edition?.info.edition : undefined;
 };
 
-export const artSupply = (item: Artwork, state: SMetaState) => {
+export const artSupply = (item: Artwork, state: MetaState) => {
   const { meEdition, masterEdition } = artEditions(item, state);
   return meEdition?.info.supply || masterEdition?.info.supply;
 };
 
-export const artMaxSupply = (item: Artwork, state: SMetaState) => {
+export const artMaxSupply = (item: Artwork, state: MetaState) => {
   const { masterEdition } = artEditions(item, state);
   return masterEdition?.info.maxSupply;
 };
