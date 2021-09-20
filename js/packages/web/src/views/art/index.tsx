@@ -14,7 +14,12 @@ import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection } from '@oyster/common';
+import {
+  shortenAddress,
+  TokenAccount,
+  useConnection,
+  useUserAccounts
+} from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
@@ -29,7 +34,7 @@ export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const wallet = useWallet();
   const [remountArtMinting, setRemountArtMinting] = useState(0);
-  let [attributes, setAttributes] = useState({});
+  let [attributes, setAttributes] = useState([]);
 
   const connection = useConnection();
   const art = useArt(id);
@@ -43,18 +48,22 @@ export const ArtView = () => {
   }
   const { ref, data } = useExtendedArt(id);
 
-  // const { userAccounts } = useUserAccounts();
+  const { userAccounts } = useUserAccounts();
 
-  // const accountByMint = userAccounts.reduce((prev, acc) => {
-  //   prev.set(acc.info.mint.toBase58(), acc);
-  //   return prev;
-  // }, new Map<string, TokenAccount>());
+  const accountByMint = userAccounts.reduce((prev, acc) => {
+    prev.set(acc.info.mint.toBase58(), acc);
+    return prev;
+  }, new Map<string, TokenAccount>());
 
   const description = data?.description;
   // const attributes = data?.attributes;
   useEffect(() => {
     if (data !== undefined) {
-      getAttributesByNftId(id).then(res => {
+      let token_acc;
+      if (art.mint != null) {
+        token_acc = accountByMint.get(art?.mint)
+      }
+      getAttributesByNftId(token_acc.pubkey).then(res => {
         setAttributes(res);
       }).catch(e => {
         console.log(e);
@@ -235,10 +244,10 @@ export const ArtView = () => {
                 <br />
                 <div className="info-header">Attributes</div>
                 <List size="large" grid={{ column: 4 }}>
-                  {Object.entries(attributes).map((item: [string, any], idx) => (
+                  {attributes.map((attr: any, idx) => (
                     <List.Item key={idx}>
-                      <Card title={item[0]}>
-                        {item[1]}
+                      <Card title={attr.name}>
+                        {attr.value}
                       </Card>
                     </List.Item>
                   ))}
