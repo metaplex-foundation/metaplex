@@ -1,4 +1,4 @@
-import { PublicKey, AccountInfo, Account } from '@solana/web3.js';
+import { PublicKey, AccountInfo } from '@solana/web3.js';
 
 export type StringPublicKey = string;
 
@@ -34,6 +34,10 @@ export const toPublicKey = (key: string | PublicKey) => {
   }
 
   return result;
+};
+
+export const pubkeyToString = (key: PublicKey | null | string = '') => {
+  return typeof key === 'string' ? key : key?.toBase58() || '';
 };
 
 export interface PublicKeyStringAndAccount<T> {

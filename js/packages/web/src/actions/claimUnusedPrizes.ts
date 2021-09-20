@@ -1,12 +1,10 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  actions,
   ParsedAccount,
   TokenAccount,
   SafetyDepositBox,
   deprecatedGetReservationList,
   MasterEditionV1,
-  MasterEditionV2,
   findProgramAddress,
   programIds,
   createAssociatedTokenAccountInstruction,
@@ -17,7 +15,7 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
-import { AuctionView, AuctionViewItem } from '../hooks';
+import { AuctionView } from '../hooks';
 import {
   WinningConfigType,
   redeemBid,
@@ -26,13 +24,14 @@ import {
   BidRedemptionTicket,
   getBidRedemption,
   PrizeTrackingTicket,
-} from '../models/metaplex';
+  AuctionViewItem,
+} from '@oyster/common/dist/lib/models/metaplex/index';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import {
   eligibleForParticipationPrizeGivenWinningIndex,
   setupRedeemParticipationInstructions,
   setupRedeemPrintingV2Instructions,
 } from './sendRedeemBid';
-const { createTokenAccount } = actions;
 
 export async function findEligibleParticipationBidsForRedemption(
   auctionView: AuctionView,
@@ -144,7 +143,7 @@ export async function claimUnusedPrizes(
     }
   }
 
-  let printingV2ByMint: Record<string, AuctionViewItem> = {};
+  const printingV2ByMint: Record<string, AuctionViewItem> = {};
 
   for (
     let winnerIndex = 0;
@@ -189,7 +188,7 @@ export async function claimUnusedPrizes(
             winnerIndex,
           );
           break;
-        case WinningConfigType.PrintingV2:
+        case WinningConfigType.PrintingV2: {
           const winningBidder =
             auctionView.auction.info.bidState.getWinnerAt(winnerIndex);
           if (winningBidder) {
@@ -215,6 +214,7 @@ export async function claimUnusedPrizes(
           }
           printingV2ByMint[item.metadata.info.mint] = item;
           break;
+        }
         case WinningConfigType.FullRightsTransfer:
           console.log('Redeeming Full Rights');
           await setupRedeemFullRightsTransferInstructions(
@@ -246,9 +246,9 @@ export async function claimUnusedPrizes(
     }
   }
 
-  let allV2s = Object.values(printingV2ByMint);
+  const allV2s = Object.values(printingV2ByMint);
   for (let i = 0; i < allV2s.length; i++) {
-    let item = allV2s[i];
+    const item = allV2s[i];
     await setupWithdrawMasterEditionInstructions(
       connection,
       auctionView,
@@ -273,8 +273,8 @@ async function setupRedeemInstructions(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let winningPrizeSigner: Keypair[] = [];
-  let winningPrizeInstructions: TransactionInstruction[] = [];
+  const winningPrizeSigner: Keypair[] = [];
+  const winningPrizeInstructions: TransactionInstruction[] = [];
 
   signers.push(winningPrizeSigner);
   instructions.push(winningPrizeInstructions);
@@ -327,8 +327,8 @@ async function setupRedeemFullRightsTransferInstructions(
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-  let winningPrizeSigner: Keypair[] = [];
-  let winningPrizeInstructions: TransactionInstruction[] = [];
+  const winningPrizeSigner: Keypair[] = [];
+  const winningPrizeInstructions: TransactionInstruction[] = [];
   const claimed = auctionView.auctionManager.isItemClaimed(
     winningConfigIndex,
     safetyDeposit.info.order,
@@ -452,8 +452,8 @@ async function deprecatedSetupRedeemPrintingInstructions(
     );
     console.log('This state item is', claimed);
     if (!claimed) {
-      let winningPrizeSigner: Keypair[] = [];
-      let winningPrizeInstructions: TransactionInstruction[] = [];
+      const winningPrizeSigner: Keypair[] = [];
+      const winningPrizeInstructions: TransactionInstruction[] = [];
 
       signers.push(winningPrizeSigner);
       instructions.push(winningPrizeInstructions);

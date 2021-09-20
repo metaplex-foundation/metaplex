@@ -1,6 +1,6 @@
 // credit https://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
 export function toUTF8Array(str: string) {
-  let utf8 = [];
+  const utf8: number[] = [];
   for (let i = 0; i < str.length; i++) {
     let charcode = str.charCodeAt(i);
     if (charcode < 0x80) utf8.push(charcode);

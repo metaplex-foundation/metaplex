@@ -12,7 +12,7 @@ import {
   ParticipationConfigV2,
   WinningConfigType,
   WinningConstraint,
-} from '../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { useMeta } from './../contexts';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
@@ -38,10 +38,10 @@ export const useUserArts = (): SafetyDepositDraft[] => {
     m.info.masterEdition ? masterEditions[m.info.masterEdition] : undefined,
   );
 
-  let safetyDeposits: SafetyDepositDraft[] = [];
+  const safetyDeposits: SafetyDepositDraft[] = [];
   let i = 0;
   ownedMetadata.forEach(m => {
-    let a = accountByMint.get(m.info.mint);
+    const a = accountByMint.get(m.info.mint);
     let masterA;
     const masterEdition = possibleMasterEditions[i];
     if (masterEdition?.info.key == MetadataKey.MasterEditionV1) {
