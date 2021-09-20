@@ -461,9 +461,9 @@ const Home = (props: HomeProps) => {
     }
 
     console.log('deposit');
-
+    setIsMinting(true);
     await purchaseTicket(contributed, anchorWallet, fairLaunch);
-
+    setIsMinting(false);
     setAlertState({
       open: true,
       message: `Congratulations! Bid ${
@@ -479,8 +479,9 @@ const Home = (props: HomeProps) => {
     }
 
     console.log('refund');
-
+    setIsMinting(true);
     await purchaseTicket(0, anchorWallet, fairLaunch);
+    setIsMinting(false);
     setAlertState({
       open: true,
       message:
@@ -495,8 +496,9 @@ const Home = (props: HomeProps) => {
     }
 
     console.log('punch');
-
+    setIsMinting(true);
     await punchTicket(anchorWallet, fairLaunch);
+    setIsMinting(false);
     setAlertState({
       open: true,
       message: 'Congratulations! Ticket punched!',
@@ -510,9 +512,9 @@ const Home = (props: HomeProps) => {
     }
 
     console.log('withdraw');
-
+    setIsMinting(true);
     await withdrawFunds(anchorWallet, fairLaunch);
-
+    setIsMinting(false);
     setAlertState({
       open: true,
       message: 'Congratulations! Funds withdrawn!',
@@ -610,9 +612,24 @@ const Home = (props: HomeProps) => {
                   )}{' '}
                   SOL
                 </Typography>
+                {[
+                  Phase.Phase1,
+                  Phase.Phase2,
+                  Phase.Phase3,
+                  Phase.Lottery,
+                ].includes(phase) &&
+                  fairLaunch?.ticket?.data?.state.withdrawn && (
+                    <div style={{ paddingTop: '15px' }}>
+                      <Alert severity="error">
+                        Your bid was withdrawn and cannot be adjusted or
+                        re-inserted.
+                      </Alert>
+                    </div>
+                  )}
                 {[Phase.Phase1, Phase.Phase2].includes(phase) &&
                   fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
+                  !fairLaunch?.ticket?.data?.state.withdrawn &&
                   fairLaunch.state.currentMedian.gt(
                     fairLaunch?.ticket?.data?.amount,
                   ) && (
@@ -626,6 +643,7 @@ const Home = (props: HomeProps) => {
                 {[Phase.Phase3, Phase.Lottery].includes(phase) &&
                   fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
+                  !fairLaunch?.ticket?.data?.state.withdrawn &&
                   fairLaunch.state.currentMedian.gt(
                     fairLaunch?.ticket?.data?.amount,
                   ) && (
@@ -672,9 +690,14 @@ const Home = (props: HomeProps) => {
                     variant="contained"
                     disabled={!fairLaunch?.ticket.data && phase == Phase.Phase2}
                   >
-                    {!fairLaunch?.ticket.data
-                      ? 'Place a bid'
-                      : 'Adjust your bid'}
+                    {isMinting ? (
+                      <CircularProgress />
+                    ) : !fairLaunch?.ticket.data ? (
+                      'Place a bid'
+                    ) : (
+                      'Adjust your bid'
+                    )}
+                    {}
                   </MintButton>
                 )}
 
@@ -688,7 +711,7 @@ const Home = (props: HomeProps) => {
                           fairLaunch?.ticket.data?.state.punched !== undefined
                         }
                       >
-                        Punch Ticket
+                        {isMinting ? <CircularProgress /> : 'Punch Ticket'}
                       </MintButton>
                     )}
 
@@ -700,7 +723,7 @@ const Home = (props: HomeProps) => {
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
-                        Refund Ticket
+                        {isMinting ? <CircularProgress /> : 'Refund Ticket'}
                       </MintButton>
                     )}
                   </>
@@ -743,7 +766,7 @@ const Home = (props: HomeProps) => {
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
-                        Refund Ticket
+                        {isMinting ? <CircularProgress /> : 'Refund Ticket'}
                       </MintButton>
                     )}
                   </>
@@ -845,8 +868,10 @@ const Home = (props: HomeProps) => {
                 <Typography gutterBottom color="textSecondary">
                   If your bid was at or above the fair price, you automatically
                   get a raffle ticket at that price. There's nothing else you
-                  need to do. If your bid is below the median price, you can
-                  still opt in at the fair price during this phase.
+                  need to do. Your excess SOL will be returned to you when the
+                  Fair Launch authority withdraws from the treasury. If your bid
+                  is below the median price, you can still opt in at the fair
+                  price during this phase.
                 </Typography>
                 {candyMachinePredatesFairLaunch ? (
                   <>
