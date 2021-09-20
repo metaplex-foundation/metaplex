@@ -1,4 +1,4 @@
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AccountInfo } from "@solana/web3.js";
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -6,56 +6,41 @@ import {
   decodeAuctionManager,
   decodeBidRedemptionTicket,
   decodeStore,
-  isCreatorPartOfTheStore,
   MetaplexKey,
   Store,
   WhitelistedCreator,
-  WhitelistedCreatorParser,
   PayoutTicket,
   decodePayoutTicket,
   PrizeTrackingTicket,
   decodePrizeTrackingTicket,
+  decodeWhitelistedCreator,
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
 } from "../../models/metaplex";
 import { ProcessAccountsFunc } from "./types";
-import { METAPLEX_ID, programIds } from "../../utils";
+import { METAPLEX_ID, pubkeyToString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
-import { cache } from "../accounts/cache";
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
-  setter,
-  useAll
+  setter
 ) => {
   if (!isMetaplexAccount(account)) return;
 
   try {
-    const STORE_ID = programIds().store;
-
     if (
       isAuctionManagerV1Account(account) ||
       isAuctionManagerV2Account(account)
     ) {
-      const storeKey = new PublicKey(account.data.slice(1, 33));
+      const auctionManager = decodeAuctionManager(account.data);
 
-      if ((STORE_ID && storeKey.equals(STORE_ID)) || useAll) {
-        const auctionManager = decodeAuctionManager(account.data);
-
-        const parsedAccount: ParsedAccount<
-          AuctionManagerV1 | AuctionManagerV2
-        > = {
+      const parsedAccount: ParsedAccount<AuctionManagerV1 | AuctionManagerV2> =
+        {
           pubkey,
-          account,
           info: auctionManager,
         };
-        setter(
-          "auctionManagersByAuction",
-          auctionManager.auction,
-          parsedAccount
-        );
-      }
+      setter("auctionManagersByAuction", auctionManager.auction, parsedAccount);
     }
 
     if (
@@ -65,7 +50,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       const ticket = decodeBidRedemptionTicket(account.data);
       const parsedAccount: ParsedAccount<BidRedemptionTicket> = {
         pubkey,
-        account,
         info: ticket,
       };
       setter("bidRedemptions", pubkey, parsedAccount);
@@ -86,7 +70,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       const ticket = decodePayoutTicket(account.data);
       const parsedAccount: ParsedAccount<PayoutTicket> = {
         pubkey,
-        account,
         info: ticket,
       };
       setter("payoutTickets", pubkey, parsedAccount);
@@ -96,7 +79,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       const ticket = decodePrizeTrackingTicket(account.data);
       const parsedAccount: ParsedAccount<PrizeTrackingTicket> = {
         pubkey,
-        account,
         info: ticket,
       };
       setter("prizeTrackingTickets", pubkey, parsedAccount);
@@ -106,12 +88,8 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       const store = decodeStore(account.data);
       const parsedAccount: ParsedAccount<Store> = {
         pubkey,
-        account,
         info: store,
       };
-      if (STORE_ID && pubkey === STORE_ID.toBase58()) {
-        setter("store", pubkey, parsedAccount);
-      }
       setter("stores", pubkey, parsedAccount);
     }
 
@@ -119,7 +97,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       const config = decodeSafetyDepositConfig(account.data);
       const parsedAccount: ParsedAccount<SafetyDepositConfig> = {
         pubkey,
-        account,
         info: config,
       };
       setter(
@@ -130,36 +107,16 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     }
 
     if (isWhitelistedCreatorV1Account(account)) {
-      const parsedAccount = cache.add(
+      const creator = decodeWhitelistedCreator(account.data);
+      const parsedAccount: ParsedAccount<WhitelistedCreator> = {
         pubkey,
-        account,
-        WhitelistedCreatorParser,
-        false
-      ) as ParsedAccount<WhitelistedCreator>;
-
-      // TODO: figure out a way to avoid generating creator addresses during parsing
-      // should we store store id inside creator?
-      if (STORE_ID) {
-        const isWhitelistedCreator = await isCreatorPartOfTheStore(
-          parsedAccount.info.address,
-          pubkey
-        );
-        if (isWhitelistedCreator) {
-          setter(
-            "whitelistedCreatorsByCreator",
-            parsedAccount.info.address,
-            parsedAccount
-          );
-        }
-      }
-
-      if (useAll) {
-        setter(
-          "creators",
-          parsedAccount.info.address + "-" + pubkey,
-          parsedAccount
-        );
-      }
+        info: creator,
+      };
+      setter(
+        "creators",
+        parsedAccount.info.address + "-" + pubkey,
+        parsedAccount
+      );
     }
   } catch {
     // ignore errors
@@ -168,8 +125,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 };
 
 const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === METAPLEX_ID ||
-  (account.owner.toBase58 && account.owner.toBase58() === METAPLEX_ID);
+  pubkeyToString(account.owner) === METAPLEX_ID;
 
 const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;

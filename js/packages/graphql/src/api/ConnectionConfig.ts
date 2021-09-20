@@ -56,7 +56,7 @@ type Convertor<T> = {
 };
 
 export type SMetaState = Convertor<Omit<MetaState, "store" | "metadata">> &
-  Pick<MetaState, "store" | "metadata">;
+  Pick<MetaState, "metadata">;
 
 export const getEmptyMetaState = (): SMetaState => ({
   metadata: [],
@@ -72,7 +72,6 @@ export const getEmptyMetaState = (): SMetaState => ({
   auctionDataExtended: new Map(),
   vaults: new Map(),
   payoutTickets: new Map(),
-  store: null,
   whitelistedCreatorsByCreator: new Map(),
   bidderMetadataByAuctionAndBidder: new Map(),
   bidderPotsByAuctionAndBidder: new Map(),
@@ -91,9 +90,7 @@ export class ConnectionConfig {
     key: string,
     value: ParsedAccount<any>
   ) {
-    if (prop === "store") {
-      state.store = value;
-    } else if (prop !== "metadata") {
+    if (prop !== "metadata") {
       state[prop].set(key, value);
     }
     return state;
@@ -187,21 +184,17 @@ export class ConnectionConfig {
       value: ParsedAccount<any>;
     }> = [];
     emitter.on("data", ([data, config]: MessageData) => {
-      config.fn(
-        data,
-        (prop, key, value) => {
-          console.log(`⚡ event - ${config.key}`, prop, key);
-          if (this.state) {
-            // Apply to current state
-            ConnectionConfig.setter(this.state, prop, key, value);
-            // We send events only after state would be formed
-            this.sendEvent(prop, key, value);
-          } else {
-            container.push({ prop, key, value });
-          }
-        },
-        true
-      );
+      config.fn(data, (prop, key, value) => {
+        console.log(`⚡ event - ${config.key}`, prop, key);
+        if (this.state) {
+          // Apply to current state
+          ConnectionConfig.setter(this.state, prop, key, value);
+          // We send events only after state would be formed
+          this.sendEvent(prop, key, value);
+        } else {
+          container.push({ prop, key, value });
+        }
+      });
     });
 
     const defer = (this.defer = this.flowControl.promise
@@ -279,11 +272,8 @@ export class ConnectionConfig {
       await createPipelineExecutor(
         config.data.values(),
         async (item) => {
-          config.fn(
-            item,
-            (prop, key, value) =>
-              ConnectionConfig.setter(state, prop, key, value),
-            true
+          config.fn(item, (prop, key, value) =>
+            ConnectionConfig.setter(state, prop, key, value)
           );
         },
         {
