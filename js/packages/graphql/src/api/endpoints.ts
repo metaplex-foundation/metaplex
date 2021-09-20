@@ -1,6 +1,5 @@
 import { clusterApiUrl } from "@solana/web3.js";
 
-// XXX: re-use list from `contexts/connection` ?
 export const ENDPOINTS = [
   {
     name: "mainnet-beta",

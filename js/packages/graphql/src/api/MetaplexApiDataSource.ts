@@ -2,17 +2,10 @@ import { DataSource, DataSourceConfig } from "apollo-datasource";
 import { ConnectionConfig } from "./ConnectionConfig";
 import { MetaplexApi } from "./MetaplexApi";
 import { ENDPOINTS } from "./endpoints";
-
-export interface IBaseContext {
-  network: string | undefined;
-  api: MetaplexApi;
-}
+import { Context } from "../types/context";
 
 export class MetaplexApiDataSource<
-  TContext extends IBaseContext = {
-    network: string | undefined;
-    api: MetaplexApi;
-  }
+  TContext extends Context = Context
 > extends DataSource<TContext> {
   constructor(private endpoints = ENDPOINTS) {
     super();

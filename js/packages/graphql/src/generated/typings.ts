@@ -4,8 +4,8 @@
  * Do not make changes to this file directly
  */
 
-import type * as common from "./../sourceTypes";
-import type { Context } from "./../context";
+import type * as common from "./../types/sourceTypes";
+import type { Context } from "./../types/context";
 import type { core } from "nexus";
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
