@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import Countdown from 'react-countdown';
 import {
   CircularProgress,
   Container,
@@ -35,13 +34,10 @@ import {
   CandyMachineAccount,
   getCandyMachineState,
   mintOneToken,
-  shortenAddress,
 } from './candy-machine';
 
 import {
   FairLaunchAccount,
-  FairLaunchTicket,
-  getFairLaunchLotteryBitmap,
   getFairLaunchState,
   punchTicket,
   purchaseTicket,
@@ -50,7 +46,16 @@ import {
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
 
-const ConnectButton = styled(WalletDialogButton)``;
+const ConnectButton = styled(WalletDialogButton)`
+width: 100%;
+height: 60px;
+margin-top: 10px;
+margin-bottom: 5px;
+background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
+color: white;
+font-size: 16px;
+font-weight: bold;
+`;
 
 const CounterText = styled.span``; // add your styles here
 
@@ -144,7 +149,7 @@ const Header = (props: {
   return (
     <Grid container justifyContent="center">
       <Grid xs={6} justifyContent="center" direction="column">
-        <Typography variant="h5">{phaseName}</Typography>
+        <Typography variant="h5" style={{ fontWeight: 600 }}>{phaseName}</Typography>
         <Typography variant="body1" color="textSecondary">
           {desc}
         </Typography>
@@ -536,14 +541,14 @@ const Home = (props: HomeProps) => {
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
           <Grid container justifyContent="center" direction="column">
-            {phase == Phase.Phase0 && (
+            {phase === Phase.Phase0 && (
               <Header
                 phaseName={'Phase 0'}
                 desc={'Anticipation Phase'}
                 date={fairLaunch?.state.data.phaseOneStart}
               />
             )}
-            {phase == Phase.Phase1 && (
+            {phase === Phase.Phase1 && (
               <Header
                 phaseName={'Phase 1'}
                 desc={'Set price phase'}
@@ -551,7 +556,7 @@ const Home = (props: HomeProps) => {
               />
             )}
 
-            {phase == Phase.Phase2 && (
+            {phase === Phase.Phase2 && (
               <Header
                 phaseName={'Phase 2'}
                 desc={'Grace period'}
@@ -559,38 +564,38 @@ const Home = (props: HomeProps) => {
               />
             )}
 
-            {phase == Phase.Lottery && (
+            {phase === Phase.Lottery && (
               <Header
                 phaseName={'Phase 3'}
-                desc={'Lottery is running...'}
+                desc={'Raffle in progress'}
                 date={fairLaunch?.state.data.phaseTwoEnd.add(
                   fairLaunch?.state.data.lotteryDuration,
                 )}
               />
             )}
 
-            {phase == Phase.Phase3 && !candyMachine && (
+            {phase === Phase.Phase3 && !candyMachine && (
               <Header
                 phaseName={'Phase 3'}
-                desc={'The Lottery is complete!'}
+                desc={'Raffle finished!'}
                 date={fairLaunch?.state.data.phaseTwoEnd}
               />
             )}
 
-            {phase == Phase.Phase3 && candyMachine && (
+            {phase === Phase.Phase3 && candyMachine && (
               <Header
                 phaseName={'Phase 3'}
-                desc={'The Lottery is complete! Minting starts in...'}
+                desc={'Minting starts in...'}
                 date={candyMachine?.state.goLiveDate}
               />
             )}
 
-            {phase == Phase.Phase4 && (
+            {phase === Phase.Phase4 && (
               <Header
                 phaseName={
                   candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'
                 }
-                desc={'Candy Machine Time!'}
+                desc={'Candy Time 🍬 🍬 🍬'}
                 date={candyMachine?.state.goLiveDate}
                 status="LIVE"
               />
@@ -602,16 +607,19 @@ const Home = (props: HomeProps) => {
                 direction="column"
                 justifyContent="center"
                 alignItems="center"
-                style={{ height: 200 }}
+                style={{ height: 200, marginTop: 20, marginBottom: 20, background: '#384457', borderRadius: 6 }}
               >
-                <Typography>Your bid</Typography>
-                <Typography>
-                  {formatNumber.format(
-                    (fairLaunch?.ticket.data?.amount.toNumber() || 0) /
-                      LAMPORTS_PER_SOL,
-                  )}{' '}
-                  SOL
-                </Typography>
+                {fairLaunch.ticket.data ? (<>
+                  <Typography>Your bid</Typography>
+                  <Typography variant="h6" style={{ fontWeight: 900 }}>
+                    {formatNumber.format(
+                      (fairLaunch?.ticket.data?.amount.toNumber() || 0) /
+                        LAMPORTS_PER_SOL,
+                    )}{' '}
+                    SOL
+                  </Typography></>) :
+                  <Typography>You didn't participated in this raffle</Typography>
+                }
                 {[
                   Phase.Phase1,
                   Phase.Phase2,
@@ -650,7 +658,7 @@ const Home = (props: HomeProps) => {
                     <div style={{ paddingTop: '15px' }}>
                       <Alert severity="error">
                         Your bid was below the median and was not included in
-                        the raffle. You may click Issue Refund when the lottery
+                        the raffle. You may click <em>Withdraw</em> when the raffle
                         ends or you will be automatically issued one when the
                         Fair Launch authority withdraws from the treasury.
                       </Alert>
@@ -681,21 +689,21 @@ const Home = (props: HomeProps) => {
             )}
 
             {!wallet.connected ? (
-              <ConnectButton>Connect Wallet</ConnectButton>
+              <ConnectButton>Connect {[Phase.Phase1].includes(phase) ? 'to bid': 'to see status'}</ConnectButton>
             ) : (
               <div>
                 {[Phase.Phase1, Phase.Phase2].includes(phase) && (
                   <MintButton
                     onClick={onDeposit}
                     variant="contained"
-                    disabled={!fairLaunch?.ticket.data && phase == Phase.Phase2}
+                    disabled={isMinting && !fairLaunch?.ticket.data && phase === Phase.Phase2}
                   >
                     {isMinting ? (
                       <CircularProgress />
                     ) : !fairLaunch?.ticket.data ? (
-                      'Place a bid'
+                      'Place bid'
                     ) : (
-                      'Adjust your bid'
+                      'Change bid'
                     )}
                     {}
                   </MintButton>
@@ -720,6 +728,8 @@ const Home = (props: HomeProps) => {
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
+                          isMinting ||
+                          fairLaunch?.ticket.data === undefined ||
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
@@ -729,7 +739,7 @@ const Home = (props: HomeProps) => {
                   </>
                 )}
 
-                {phase == Phase.Phase4 && (
+                {phase === Phase.Phase4 && (
                   <>
                     {(!fairLaunch || isWinner(fairLaunch)) && (
                       <MintContainer>
@@ -739,13 +749,13 @@ const Home = (props: HomeProps) => {
                             isMinting ||
                             !candyMachine?.state.isActive ||
                             (fairLaunch?.ticket?.data?.state.punched &&
-                              fairLaunchBalance == 0)
+                              fairLaunchBalance === 0)
                           }
                           onClick={onMint}
                           variant="contained"
                         >
                           {fairLaunch?.ticket?.data?.state.punched &&
-                          fairLaunchBalance == 0 ? (
+                          fairLaunchBalance === 0 ? (
                             'MINTED'
                           ) : candyMachine?.state.isSoldOut ? (
                             'SOLD OUT'
@@ -763,6 +773,8 @@ const Home = (props: HomeProps) => {
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
+                          isMinting ||
+                          fairLaunch?.ticket.data === undefined ||
                           fairLaunch?.ticket.data?.state.withdrawn !== undefined
                         }
                       >
@@ -798,7 +810,7 @@ const Home = (props: HomeProps) => {
                 onClick={() => {
                   if (
                     !fairLaunch ||
-                    phase == Phase.Lottery ||
+                    phase === Phase.Lottery ||
                     isWinner(fairLaunch)
                   ) {
                     setRefundExplainerOpen(true);
@@ -807,7 +819,7 @@ const Home = (props: HomeProps) => {
                   }
                 }}
               >
-                Issue Refund
+                Withdraw funds
               </Link>
             </Grid>
             <Dialog
@@ -817,8 +829,8 @@ const Home = (props: HomeProps) => {
                 style: { backgroundColor: '#222933', borderRadius: 6 },
               }}
             >
-              <MuiDialogContent>
-                During lottery phases, or if you are a winner, or if this
+              <MuiDialogContent style={{ padding: 24 }}>
+                During raffle phases, or if you are a winner, or if this
                 website is not configured to be a fair launch but simply a candy
                 machine, refunds are disallowed.
               </MuiDialogContent>
@@ -862,7 +874,7 @@ const Home = (props: HomeProps) => {
                 </Typography>
                 <Typography gutterBottom color="textSecondary">
                   Enter a bid in the range provided by the artist. The median of
-                  all bids will be the "fair" price of the lottery ticket.
+                  all bids will be the "fair" price of the raffle ticket.
                 </Typography>
                 <Typography variant="h6">Phase 2 - Grace period:</Typography>
                 <Typography gutterBottom color="textSecondary">
