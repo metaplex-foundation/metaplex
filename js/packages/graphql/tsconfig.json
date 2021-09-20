@@ -9,12 +9,16 @@
     // "outFile": "./",
     "outDir": "./dist",
     "noImplicitAny": true,
-    // "rootDir": "./",
+    "baseUrl": "./",
 
     "strict": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
 
     /* Module Resolution Options */
     "esModuleInterop": true,
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
