@@ -1,5 +1,5 @@
 import type { ParsedAccount } from "../common";
-import { FieldPubkey } from "../sourceTypes";
+import { FieldPubkey } from "../types/sourceTypes";
 
 export const mapInfo = <T>(list: ParsedAccount<T>[]) => {
   return list.map((i) => wrapPubkey(i));

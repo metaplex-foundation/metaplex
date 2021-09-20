@@ -1,5 +1,5 @@
 import { SMetaState } from "../api";
-import { Artwork } from "../sourceTypes";
+import { Artwork } from "../types/sourceTypes";
 
 export const artEditions = (item: Artwork, state: SMetaState) => {
   const edition = item.edition ? state.editions.get(item.edition) : undefined;

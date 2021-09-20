@@ -1,7 +1,7 @@
 import type { TokenAccount } from "../common";
 import { MetaplexApi } from "../api";
 import { NexusGenInputs } from "../generated/typings";
-import { Artwork } from "../sourceTypes";
+import { Artwork } from "../types/sourceTypes";
 
 export const filterByStoreAndCreator = async (
   {

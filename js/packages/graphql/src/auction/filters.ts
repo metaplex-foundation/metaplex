@@ -6,7 +6,7 @@ import {
 } from "../common";
 import { SMetaState } from "../api";
 import { NexusGenInputs } from "../generated/typings";
-import { Auction } from "../sourceTypes";
+import { Auction } from "../types/sourceTypes";
 import { wrapPubkey } from "../utils/mapInfo";
 import { getAuctionMetadata } from "./mappers";
 

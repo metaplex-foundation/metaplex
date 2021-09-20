@@ -736,15 +736,6 @@ apollo-server-types@^3.2.0:
     apollo-server-caching "^3.1.0"
     apollo-server-env "^4.0.3"
 
-apollo-server@^3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/apollo-server/-/apollo-server-3.3.0.tgz#4c0c9d20185d89cbe83aec2c797564b5b5968ecb"
-  integrity sha512-vJE+lIOQMgno3IaJvwo66S53m0CU4fq7qAgnOCubitIGNKEHiUL6yXKL0rMGfOPZqeed2S2QWQrOsCGQDIudMw==
-  dependencies:
-    apollo-server-core "^3.3.0"
-    apollo-server-express "^3.3.0"
-    express "^4.17.1"
-
 arg@^4.1.0:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
@@ -1208,7 +1199,7 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dotenv@10.0.0:
+dotenv@10.0.0, dotenv@^10.0.0:
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-10.0.0.tgz#3d4227b8fb95f81096cdd2b66653fb2c7085ba81"
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
@@ -1735,7 +1726,7 @@ graphql-tag@^2.11.0:
   dependencies:
     tslib "^2.1.0"
 
-graphql@*, graphql@^15.5.1:
+graphql@*, graphql@^15.5.3:
   version "15.5.3"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.5.3.tgz#c72349017d5c9f5446a897fe6908b3186db1da00"
   integrity sha512-sM+jXaO5KinTui6lbK/7b7H/Knj9BpjGxZ+Ki35v7YbUJxxdBCUqNM0h3CRVU1ZF9t5lNiBzvBCSYPvIwxPOQA==

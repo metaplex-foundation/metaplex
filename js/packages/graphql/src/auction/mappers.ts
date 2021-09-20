@@ -9,7 +9,7 @@ import {
 } from "../common";
 
 import { mapInfo, wrapPubkey } from "../utils/mapInfo";
-import { Auction } from "../sourceTypes";
+import { Auction } from "../types/sourceTypes";
 import { SMetaState } from "../api";
 
 export const getAuctionMetadata = (auction: Auction, state: SMetaState) => {
