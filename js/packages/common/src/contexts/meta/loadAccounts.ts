@@ -337,12 +337,6 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
     await forEach(processMetaplexAccounts)(creators);
   };
 
-  const additionalPromises: Promise<void>[] = getAdditionalPromises(
-    connection,
-    tempCache,
-    forEach,
-  );
-
   const basePromises = [
     getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
     getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
@@ -358,6 +352,12 @@ export const loadAccounts = async (connection: Connection, all: boolean) => {
     }).then(pullMetadata),
   ];
   await Promise.all(basePromises);
+  const additionalPromises: Promise<void>[] = getAdditionalPromises(
+    connection,
+    tempCache,
+    forEach,
+  );
+
   await Promise.all(additionalPromises);
 
   await postProcessMetadata(tempCache, all);
