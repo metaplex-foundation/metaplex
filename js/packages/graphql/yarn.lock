@@ -230,13 +230,6 @@
   dependencies:
     buffer "~6.0.3"
 
-"@solana/spl-token-registry@^0.2.247":
-  version "0.2.247"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.247.tgz#b39eeb3e4ed1a68fef476b680581dce247d8df59"
-  integrity sha512-aAz6jHsntgaZ3LxTv8t3rPjfKErxSotBNtUk3RfA3KyKSx/toC0CcV6I5SaVaMFTdYJZeJdjkmvDPYvrEea9Ug==
-  dependencies:
-    cross-fetch "3.0.6"
-
 "@solana/spl-token@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.8.tgz#f06e746341ef8d04165e21fc7f555492a2a0faa6"
@@ -248,13 +241,6 @@
     buffer "6.0.3"
     buffer-layout "^1.2.0"
     dotenv "10.0.0"
-
-"@solana/wallet-adapter-base@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-base/-/wallet-adapter-base-0.4.1.tgz#3264220c7eef5abaf7eca0e77cc51403f4f0fcf6"
-  integrity sha512-VkMB0g89FNnfBY3PSrZh6gULWvLcvAUrQtAzKpojYdkSxL/Cm2sH9JsLylXXhT0r1vOvEc72aR/otwrX5YHm2g==
-  dependencies:
-    eventemitter3 "^4.0.7"
 
 "@solana/web3.js@^1.21.0":
   version "1.27.0"
@@ -1089,13 +1075,6 @@ create-require@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/create-require/-/create-require-1.1.1.tgz#c1d7e8f1e5f6cfc9ff65f9cd352d37348756c333"
   integrity sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==
-
-cross-fetch@3.0.6:
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.0.6.tgz#3a4040bc8941e653e0e9cf17f29ebcd177d3365c"
-  integrity sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ==
-  dependencies:
-    node-fetch "2.6.1"
 
 cross-fetch@^3.1.4:
   version "3.1.4"
@@ -2180,7 +2159,7 @@ lodash.truncate@^4.4.2:
   resolved "https://registry.yarnpkg.com/lodash.truncate/-/lodash.truncate-4.4.2.tgz#5a350da0b1113b837ecfffd5812cbe58d6eae193"
   integrity sha1-WjUNoLERO4N+z//VgSy+WNbq4ZM=
 
-lodash@^4.17.20:
+lodash@^4.17.20, lodash@^4.17.21:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
