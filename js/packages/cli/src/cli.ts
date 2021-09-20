@@ -5,7 +5,7 @@ import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 
-import { fromUTF8Array, parsePrice } from './helpers/various';
+import { fromUTF8Array, parseDate, parsePrice } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
@@ -36,7 +36,7 @@ programCommand('upload')
   )
   .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
-    const { number, keypair, env, cacheName } = cmd.opts();
+    const {number, keypair, env, cacheName} = cmd.opts();
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -74,12 +74,14 @@ programCommand('upload')
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(`ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`)
-    if (warn) { log.info("not all images have been uplaoded, rerun this step.") }
+    if (warn) {
+      log.info("not all images have been uplaoded, rerun this step.")
+    }
   });
 
 programCommand('verify')
   .action(async (directory, cmd) => {
-    const { env, keypair, cacheName } = cmd.opts();
+    const {env, keypair, cacheName} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
@@ -150,7 +152,7 @@ programCommand('verify_price')
   .option('-p, --price <string>')
   .option('--cache-path <string>')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, cachePath } = cmd.opts();
+    const {keypair, env, price, cacheName, cachePath} = cmd.opts();
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
@@ -197,7 +199,7 @@ programCommand('create_candy_machine')
   .option('-a, --spl-token-account <string>', 'SPL token account that receives mint payments. Only required if spl-token is specified.')
   .option('-s, --sol-treasury-account <string>', 'SOL account that receives mint payments.')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, splToken, splTokenAccount, solTreasuryAccount } = cmd.opts();
+    const {keypair, env, price, cacheName, splToken, splTokenAccount, solTreasuryAccount} = cmd.opts();
 
     let parsedPrice = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
@@ -241,7 +243,7 @@ programCommand('create_candy_machine')
 
       wallet = splTokenAccountKey;
       parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
-      remainingAccounts.push({ pubkey: splTokenKey, isWritable: false, isSigner: false });
+      remainingAccounts.push({pubkey: splTokenKey, isWritable: false, isSigner: false});
     }
 
     if (solTreasuryAccount) {
@@ -283,36 +285,30 @@ programCommand('create_candy_machine')
   });
 
 programCommand('update_candy_machine')
-  .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT" or "now"')
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, price, cacheName } = cmd.opts();
+    const {keypair, env, date, price, cacheName} = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
-    const secondsSinceEpoch = date ? Date.parse(date) / 1000 : null;
+    const secondsSinceEpoch = date ? parseDate(date) : null;
     const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-    const slot = await anchorProgram.provider.connection.getSlot();
 
-    const [candyMachine] = await getCandyMachineAddress(
-      new PublicKey(cacheContent.program.config),
-      cacheContent.program.uuid,
-    );
+    const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
     const tx = await anchorProgram.rpc.updateCandyMachine(
       lamports ? new anchor.BN(lamports) : null,
       secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
       {
         accounts: {
-          candyMachine,
+          candyAddress,
           authority: walletKeyPair.publicKey,
         },
       },
     );
 
-    cacheContent.initialSlot = slot;
-    cacheContent.lastVerifiedSlot = slot;
     cacheContent.startDate = secondsSinceEpoch;
     saveCache(cacheName, env, cacheContent);
     if (date) log.info(` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`)
@@ -323,7 +319,7 @@ programCommand('update_candy_machine')
 programCommand('mint_one_token')
   .option('-t, --spl-token-account <string>', 'SPL token account to payfrom')
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, splTokenAccount } = cmd.opts();
+    const {keypair, env, cacheName, splTokenAccount} = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
@@ -337,7 +333,7 @@ programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')
   .action(async (directory, cmd) => {
-    const { keypair, env, metadata } = cmd.opts();
+    const {keypair, env, metadata} = cmd.opts();
 
     await signMetadata(
       metadata,
@@ -346,16 +342,26 @@ programCommand('sign')
     );
   });
 
-programCommand('sign_all')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+programCommand("sign_all")
+  .option('-b, --batch-size <string>', 'Batch size', '10')
+  .option('-d, --daemon', 'Run signing continuously', false)
   .action(async (directory, cmd) => {
-    const {keypair, env, cacheName} = cmd.opts();
+    const {keypair, env, cacheName, batchSize, daemon} = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const candyAddress = cacheContent.candyMachineAddress;
 
-    await signAllUnapprovedMetadata(
-      keypair,
-      env,
-      cacheName
-    );
+    const batchSizeParsed = parseInt(batchSize)
+    if (!parseInt(batchSize)) {
+      throw new Error("Batch size needs to be an integer!");
+    }
+
+    log.debug("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
+    log.debug("Environment: ", env)
+    log.debug("Candy machine address: ", candyAddress)
+    log.debug("Batch Size: ", batchSizeParsed)
+    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, batchSizeParsed, daemon)
   });
 
 function programCommand(name: string) {
@@ -384,37 +390,6 @@ function setLogLevel(value, prev) {
   log.setLevel(value);
 }
 
-programCommand("sign_candy_machine_metadata")
-  .option('-cndy, --candy-address <string>', 'Candy machine address', '')
-  .option('-b, --batch-size <string>', 'Batch size', '10')
-  .action(async (directory, cmd) => {
-    let { keypair, env, cacheName, candyAddress, batchSize } = cmd.opts();
-    if (!keypair || keypair == '') {
-      log.info("Keypair required!");
-      return;
-    }
-    if (!candyAddress || candyAddress == '') {
-      log.info("Candy machine address required! Using from saved list.")
-      const cacheContent = loadCache(cacheName, env);
-      const config = new PublicKey(cacheContent.program.config);
-      const [candyMachine, bump] = await getCandyMachineAddress(
-        config,
-        cacheContent.program.uuid,
-      );
-      candyAddress = candyMachine.toBase58();
-    }
-    let batchSizeParsed = parseInt(batchSize)
-    if (!parseInt(batchSize)) {
-      log.info("Batch size needs to be an integer!")
-      return;
-    }
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-    log.info("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
-    log.info("Environment: ", env)
-    log.info("Candy machine address: ", candyAddress)
-    log.info("Batch Size: ", batchSizeParsed)
-    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, batchSizeParsed)
-  });
+
 
 program.parse(process.argv);

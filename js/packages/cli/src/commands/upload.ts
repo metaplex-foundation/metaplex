@@ -151,6 +151,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
             name: manifest.name,
             onChain: false,
           };
+          cacheContent.authority = walletKeyPair.publicKey.toBase58();
           saveCache(cacheName, env, cacheContent);
         } catch (er) {
           uploadSuccessful = false;
