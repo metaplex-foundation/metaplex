@@ -1,12 +1,19 @@
 import type { ParsedAccount } from "../common";
-import { FieldPubkey } from "../types/sourceTypes";
+import { Fields } from "../types/sourceTypes";
 
-export const mapInfo = <T>(list: ParsedAccount<T>[]) => {
-  return list.map((i) => wrapPubkey(i));
-};
+export function listWrapPubkey<T>(
+  list: Map<string, ParsedAccount<T>>
+): Fields<T>[];
+export function listWrapPubkey<T>(list: ParsedAccount<T>[]): Fields<T>[];
+export function listWrapPubkey<T>(
+  list: ParsedAccount<T>[] | Map<string, ParsedAccount<T>>
+) {
+  const array = Array.isArray(list) ? list : Array.from(list.values());
+  return array.map((i) => wrapPubkey(i));
+}
 
 export function wrapPubkey(data: undefined | null): null;
-export function wrapPubkey<T>(data: ParsedAccount<T>): T & FieldPubkey;
+export function wrapPubkey<T>(data: ParsedAccount<T>): Fields<T>;
 export function wrapPubkey<T>(data?: ParsedAccount<T> | null) {
   return data
     ? {

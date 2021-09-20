@@ -8,7 +8,7 @@ import {
   getAuctionById,
   getAuctionsByStoreId,
 } from "../auction/filters";
-import { mapInfo, wrapPubkey } from "../utils/mapInfo";
+import { listWrapPubkey, wrapPubkey } from "../utils/mapInfo";
 import { ConnectionConfig } from "./ConnectionConfig";
 export class MetaplexApi {
   constructor(public readonly config: ConnectionConfig) {}
@@ -26,6 +26,11 @@ export class MetaplexApi {
     return this.config.load();
   }
 
+  async getStores() {
+    const { stores } = await this.state;
+    return listWrapPubkey(stores);
+  }
+
   async getStore(storeId: string) {
     const { stores } = await this.state;
     const store = stores.get(storeId);
@@ -33,16 +38,15 @@ export class MetaplexApi {
   }
 
   async getCreators(storeId: string) {
-    const [state, store] = await Promise.all([
+    const [{ creators }, store] = await Promise.all([
       this.state,
       this.getStore(storeId),
     ]);
-    const creators = state.creators.values();
 
     const creatorsByStore = [];
     if (!store) return [];
 
-    for (const creator of creators) {
+    for (const creator of creators.values()) {
       const isWhitelistedCreator = await isCreatorPartOfTheStore(
         creator.info.address,
         creator.pubkey,
@@ -52,7 +56,7 @@ export class MetaplexApi {
         creatorsByStore.push(creator);
       }
     }
-    return mapInfo(creatorsByStore);
+    return listWrapPubkey(creatorsByStore);
   }
 
   async getCreator(storeId: string, creatorId?: string | null) {
@@ -72,7 +76,7 @@ export class MetaplexApi {
       filterByOwner({ ownerId }, this),
     ]);
 
-    return mapInfo(metadata).filter(
+    return listWrapPubkey(metadata).filter(
       (art) => storeFilter(art) && ownerFilter(art)
     );
   }
