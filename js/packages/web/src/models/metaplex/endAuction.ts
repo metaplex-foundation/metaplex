@@ -1,12 +1,17 @@
-import { getAuctionExtended, programIds } from '@oyster/common';
+import {
+  EndAuctionArgs,
+  getAuctionExtended,
+  getAuctionKeys,
+  programIds,
+  toPublicKey,
+  SCHEMA,
+} from '@oyster/common';
 import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js';
 import { serialize } from 'borsh';
-
-import { EndAuctionArgs, getAuctionKeys, SCHEMA } from '.';
 
 export async function endAuction(
   vault: PublicKey,
@@ -19,47 +24,49 @@ export async function endAuction(
     throw new Error('Store not initialized');
   }
 
-  const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
+  const { auctionKey, auctionManagerKey } = await getAuctionKeys(
+    vault.toString(),
+  );
   const auctionExtended = await getAuctionExtended({
     auctionProgramId: PROGRAM_IDS.auction,
-    resource: vault,
+    resource: vault.toString(),
   });
   const value = new EndAuctionArgs({ reveal: null });
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [
     {
-      pubkey: auctionManagerKey,
+      pubkey: toPublicKey(auctionManagerKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionKey,
+      pubkey: toPublicKey(auctionKey),
       isSigner: false,
       isWritable: true,
     },
     {
-      pubkey: auctionExtended,
+      pubkey: toPublicKey(auctionExtended),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: auctionManagerAuthority,
+      pubkey: toPublicKey(auctionManagerAuthority),
       isSigner: true,
       isWritable: false,
     },
     {
-      pubkey: store,
+      pubkey: toPublicKey(store),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.auction,
+      pubkey: toPublicKey(PROGRAM_IDS.auction),
       isSigner: false,
       isWritable: false,
     },
     {
-      pubkey: SYSVAR_CLOCK_PUBKEY,
+      pubkey: toPublicKey(SYSVAR_CLOCK_PUBKEY),
       isSigner: false,
       isWritable: false,
     },
@@ -68,7 +75,7 @@ export async function endAuction(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: PROGRAM_IDS.metaplex,
+      programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
     }),
   );
