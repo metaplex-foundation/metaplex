@@ -1,22 +1,26 @@
-import { Keypair, PublicKey, TransactionInstruction } from "@solana/web3.js";
-import { TOKEN_METADATA_PROGRAM_ID } from "../helpers/constants";
-import { sendTransactionWithRetryWithKeypair } from "../helpers/transactions";
-import { loadAnchorProgram, loadWalletKey } from "../helpers/accounts";
-import { Program } from "@project-serum/anchor";
+import { Keypair, PublicKey, TransactionInstruction } from '@solana/web3.js';
+import { TOKEN_METADATA_PROGRAM_ID } from '../helpers/constants';
+import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
+import { loadAnchorProgram, loadWalletKey } from '../helpers/accounts';
+import { Program } from '@project-serum/anchor';
 
-const METADATA_SIGNATURE = Buffer.from([7]);//now thats some voodoo magic. WTF metaplex? XD
+const METADATA_SIGNATURE = Buffer.from([7]); //now thats some voodoo magic. WTF metaplex? XD
 
 export async function signMetadata(
   metadata: string,
   keypair: string,
-  env: string
+  env: string,
 ) {
   const creatorKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadAnchorProgram(creatorKeyPair, env);
   await signWithRetry(anchorProgram, creatorKeyPair, new PublicKey(metadata));
 }
 
-async function signWithRetry(anchorProgram: Program, creatorKeyPair: Keypair, metadataAddress: PublicKey) {
+async function signWithRetry(
+  anchorProgram: Program,
+  creatorKeyPair: Keypair,
+  metadataAddress: PublicKey,
+) {
   await sendTransactionWithRetryWithKeypair(
     anchorProgram.provider.connection,
     creatorKeyPair,
@@ -50,4 +54,3 @@ export function signMetadataInstruction(
     data,
   });
 }
-

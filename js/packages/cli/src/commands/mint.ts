@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
   getCandyMachineAddress,
   getMasterEdition,
@@ -6,14 +6,22 @@ import {
   getTokenWallet,
   loadAnchorProgram,
   loadWalletKey,
-  uuidFromConfigPubkey
-} from "../helpers/accounts";
-import { TOKEN_METADATA_PROGRAM_ID, TOKEN_PROGRAM_ID } from "../helpers/constants";
-import * as anchor from "@project-serum/anchor";
-import { MintLayout, Token } from "@solana/spl-token";
-import { createAssociatedTokenAccountInstruction } from "../helpers/instructions";
+  uuidFromConfigPubkey,
+} from '../helpers/accounts';
+import {
+  TOKEN_METADATA_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '../helpers/constants';
+import * as anchor from '@project-serum/anchor';
+import { MintLayout, Token } from '@solana/spl-token';
+import { createAssociatedTokenAccountInstruction } from '../helpers/instructions';
 
-export async function mint(keypair: string, env: string, configAddress: PublicKey, splTokenAccountKey?: PublicKey): Promise<string> {
+export async function mint(
+  keypair: string,
+  env: string,
+  configAddress: PublicKey,
+  splTokenAccountKey?: PublicKey,
+): Promise<string> {
   const mint = Keypair.generate();
 
   const userKeyPair = loadWalletKey(keypair);
@@ -28,7 +36,7 @@ export async function mint(keypair: string, env: string, configAddress: PublicKe
     configAddress,
     uuid,
   );
-  const candyMachine : any = await anchorProgram.account.candyMachine.fetch(
+  const candyMachine: any = await anchorProgram.account.candyMachine.fetch(
     candyMachineAddress,
   );
 
@@ -36,26 +44,42 @@ export async function mint(keypair: string, env: string, configAddress: PublicKe
   if (splTokenAccountKey) {
     const candyMachineTokenMintKey = candyMachine.tokenMint;
     if (!candyMachineTokenMintKey) {
-      throw new Error('Candy machine data does not have token mint configured. Can\'t use spl-token-account');
+      throw new Error(
+        "Candy machine data does not have token mint configured. Can't use spl-token-account",
+      );
     }
     const token = new Token(
       anchorProgram.provider.connection,
       candyMachine.tokenMint,
       TOKEN_PROGRAM_ID,
-      userKeyPair
+      userKeyPair,
     );
 
     const tokenAccount = await token.getAccountInfo(splTokenAccountKey);
     if (!candyMachine.tokenMint.equals(tokenAccount.mint)) {
-      throw new Error(`Specified spl-token-account's mint (${tokenAccount.mint.toString()}) does not match candy machine's token mint (${candyMachine.tokenMint.toString()})`);
+      throw new Error(
+        `Specified spl-token-account's mint (${tokenAccount.mint.toString()}) does not match candy machine's token mint (${candyMachine.tokenMint.toString()})`,
+      );
     }
 
     if (!tokenAccount.owner.equals(userKeyPair.publicKey)) {
-      throw new Error(`Specified spl-token-account's owner (${tokenAccount.owner.toString()}) does not match user public key (${userKeyPair.publicKey})`);
+      throw new Error(
+        `Specified spl-token-account's owner (${tokenAccount.owner.toString()}) does not match user public key (${
+          userKeyPair.publicKey
+        })`,
+      );
     }
 
-    remainingAccounts.push({ pubkey: splTokenAccountKey, isWritable: true, isSigner: false });
-    remainingAccounts.push({ pubkey: userKeyPair.publicKey, isWritable: false, isSigner: true });
+    remainingAccounts.push({
+      pubkey: splTokenAccountKey,
+      isWritable: true,
+      isSigner: false,
+    });
+    remainingAccounts.push({
+      pubkey: userKeyPair.publicKey,
+      isWritable: false,
+      isSigner: true,
+    });
   }
 
   const metadataAddress = await getMetadata(mint.publicKey);

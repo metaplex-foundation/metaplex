@@ -14,20 +14,20 @@ export const Providers: FC = ({ children }) => {
   return (
     <ConnectionProvider>
       <WalletProvider>
-          <AccountsProvider>
-            <CoingeckoProvider>
-              <StoreProvider
-                ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
-                storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
-              >
-                <MetaProvider>
-                  <ConfettiProvider>
-                    <AppLayout>{children}</AppLayout>
-                  </ConfettiProvider>
-                </MetaProvider>
-              </StoreProvider>
-            </CoingeckoProvider>
-          </AccountsProvider>
+        <AccountsProvider>
+          <CoingeckoProvider>
+            <StoreProvider
+              ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
+              storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
+            >
+              <MetaProvider>
+                <ConfettiProvider>
+                  <AppLayout>{children}</AppLayout>
+                </ConfettiProvider>
+              </MetaProvider>
+            </StoreProvider>
+          </CoingeckoProvider>
+        </AccountsProvider>
       </WalletProvider>
     </ConnectionProvider>
   );

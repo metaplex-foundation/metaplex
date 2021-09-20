@@ -493,7 +493,11 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
+              animation_url:
+                props.attributes.properties?.category !==
+                  MetadataCategory.Image && customURL
+                  ? customURL
+                  : mainFile && mainFile.name,
             });
             props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
             props.confirm();
@@ -1152,7 +1156,7 @@ const Congrats = (props: {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
       url: `${
         window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
