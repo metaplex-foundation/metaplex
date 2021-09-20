@@ -26,6 +26,8 @@ import {
   AuctionState,
   StringPublicKey,
   toPublicKey,
+  useUserAccounts,
+  TokenAccount,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
@@ -81,7 +83,7 @@ export const AuctionView = () => {
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
-  let [attributes, setAttributes] = useState({});
+  let [attributes, setAttributes] = useState([]);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
@@ -99,10 +101,23 @@ export const AuctionView = () => {
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   // const attributes = data?.attributes;
+
+  const { userAccounts } = useUserAccounts();
+
+  const accountByMint = userAccounts.reduce((prev, acc) => {
+    prev.set(acc.info.mint.toBase58(), acc);
+    return prev;
+  }, new Map<string, TokenAccount>());
+
   useEffect(() => {
     if (data !== undefined) {
-      getAttributesByNftId(id).then(res => {
+      let token_acc;
+      if (art.mint != null) {
+        token_acc = accountByMint.get(art?.mint)
+      }
+      getAttributesByNftId(token_acc.pubkey).then(res => {
         setAttributes(res);
+        console.log(res)
       }).catch(e => {
         console.log(e);
       })
@@ -177,9 +192,9 @@ export const AuctionView = () => {
             <>
               <h6>Attributes</h6>
               <List grid={{ column: 4 }}>
-                {Object.entries(attributes).map((item: [string, any], idx) =>  (
+                {attributes.map((attr: any, idx) =>  (
                   <List.Item key={idx}>
-                    <Card title={item[0]}>{item[1]}</Card>
+                    <Card title={attr.name}>{attr.value}</Card>
                   </List.Item>
                 ))}
               </List>
