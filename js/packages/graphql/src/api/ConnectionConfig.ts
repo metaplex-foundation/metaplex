@@ -22,9 +22,11 @@ import {
   AccountAndPubkey,
   getProgramAccounts,
   Metadata,
+  getEmptyState,
 } from "../common";
 import EventEmitter from "eventemitter3";
 import { PubSub, withFilter } from "graphql-subscriptions";
+
 export declare type FilterFn<T = any> = (
   rootValue?: T,
   args?: any,
@@ -51,42 +53,10 @@ interface IConfigWithData extends IConfig {
   subscrtionId: number | undefined;
 }
 
-type Convertor<T> = {
-  [K in keyof T]: Map<keyof T[K], T[K][keyof T[K]]>;
-};
-
-export type SMetaState = Convertor<Omit<MetaState, "store" | "metadata">> &
-  Pick<MetaState, "metadata">;
-
-export const getEmptyMetaState = (): SMetaState => ({
-  metadata: [],
-  metadataByMint: new Map(),
-  masterEditions: new Map(),
-  masterEditionsByPrintingMint: new Map(),
-  masterEditionsByOneTimeAuthMint: new Map(),
-  metadataByMasterEdition: new Map(),
-  editions: new Map(),
-  auctionManagersByAuction: new Map(),
-  bidRedemptions: new Map(),
-  auctions: new Map(),
-  auctionDataExtended: new Map(),
-  vaults: new Map(),
-  payoutTickets: new Map(),
-  whitelistedCreatorsByCreator: new Map(),
-  bidderMetadataByAuctionAndBidder: new Map(),
-  bidderPotsByAuctionAndBidder: new Map(),
-  safetyDepositBoxesByVaultAndIndex: new Map(),
-  prizeTrackingTickets: new Map(),
-  safetyDepositConfigsByAuctionManagerAndIndex: new Map(),
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: new Map(),
-  stores: new Map(),
-  creators: new Map(),
-});
-
 export class ConnectionConfig {
   static setter(
-    state: SMetaState,
-    prop: keyof SMetaState,
+    state: MetaState,
+    prop: keyof MetaState,
     key: string,
     value: ParsedAccount<any>
   ) {
@@ -98,7 +68,7 @@ export class ConnectionConfig {
 
   static async metadataByMintUpdater(
     metadata: ParsedAccount<Metadata>,
-    state: SMetaState
+    state: MetaState
   ) {
     const key = metadata.info.mint;
     await metadata.info.init();
@@ -110,7 +80,7 @@ export class ConnectionConfig {
     state.metadata.push(metadata);
   }
 
-  private state?: SMetaState;
+  private state?: MetaState;
   readonly connection: Connection;
   constructor(
     public readonly name: string,
@@ -259,14 +229,14 @@ export class ConnectionConfig {
     },
   ];
 
-  private async loadData(emitter?: Emitter): Promise<SMetaState> {
+  private async loadData(emitter?: Emitter): Promise<MetaState> {
     console.log(`⏱  ${this.name} - start loading data`);
     const preloading = ConnectionConfig.CONFIG.map((config) =>
       this.loadDataByConfig(config, emitter)
     );
     const processingData = await Promise.all(preloading);
     console.log(`⏱  ${this.name} - data loaded and start processing data`);
-    const state: SMetaState = getEmptyMetaState();
+    const state: MetaState = getEmptyState();
 
     const arr = processingData.map(async (config) => {
       await createPipelineExecutor(

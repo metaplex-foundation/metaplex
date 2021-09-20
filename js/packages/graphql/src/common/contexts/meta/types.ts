@@ -27,51 +27,39 @@ import { ParsedAccount } from "../accounts/types";
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
-  metadataByMint: Record<string, ParsedAccount<Metadata>>;
-  metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
-  editions: Record<string, ParsedAccount<Edition>>;
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >;
-  masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEditionV1>>;
-  masterEditionsByOneTimeAuthMint: Record<
-    string,
-    ParsedAccount<MasterEditionV1>
-  >;
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>;
-  auctionManagersByAuction: Record<
+  metadataByMint: Map<string, ParsedAccount<Metadata>>;
+  metadataByMasterEdition: Map<string, ParsedAccount<Metadata>>;
+  editions: Map<string, ParsedAccount<Edition>>;
+  masterEditions: Map<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>;
+  masterEditionsByPrintingMint: Map<string, ParsedAccount<MasterEditionV1>>;
+  masterEditionsByOneTimeAuthMint: Map<string, ParsedAccount<MasterEditionV1>>;
+  prizeTrackingTickets: Map<string, ParsedAccount<PrizeTrackingTicket>>;
+  auctionManagersByAuction: Map<
     string,
     ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
   >;
-  safetyDepositConfigsByAuctionManagerAndIndex: Record<
+  safetyDepositConfigsByAuctionManagerAndIndex: Map<
     string,
     ParsedAccount<SafetyDepositConfig>
   >;
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: Record<
+  bidRedemptionV2sByAuctionManagerAndWinningIndex: Map<
     string,
     ParsedAccount<BidRedemptionTicketV2>
   >;
-  auctions: Record<string, ParsedAccount<AuctionData>>;
-  auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
-  vaults: Record<string, ParsedAccount<Vault>>;
-  bidderMetadataByAuctionAndBidder: Record<
-    string,
-    ParsedAccount<BidderMetadata>
-  >;
-  safetyDepositBoxesByVaultAndIndex: Record<
+  auctions: Map<string, ParsedAccount<AuctionData>>;
+  auctionDataExtended: Map<string, ParsedAccount<AuctionDataExtended>>;
+  vaults: Map<string, ParsedAccount<Vault>>;
+  bidderMetadataByAuctionAndBidder: Map<string, ParsedAccount<BidderMetadata>>;
+  safetyDepositBoxesByVaultAndIndex: Map<
     string,
     ParsedAccount<SafetyDepositBox>
   >;
-  bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>;
-  whitelistedCreatorsByCreator: Record<
-    string,
-    ParsedAccount<WhitelistedCreator>
-  >;
-  payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
-  stores: Record<string, ParsedAccount<Store>>;
-  creators: Record<string, ParsedAccount<WhitelistedCreator>>;
+  bidderPotsByAuctionAndBidder: Map<string, ParsedAccount<BidderPot>>;
+  bidRedemptions: Map<string, ParsedAccount<BidRedemptionTicket>>;
+  whitelistedCreatorsByCreator: Map<string, ParsedAccount<WhitelistedCreator>>;
+  payoutTickets: Map<string, ParsedAccount<PayoutTicket>>;
+  stores: Map<string, ParsedAccount<Store>>;
+  creators: Map<string, ParsedAccount<WhitelistedCreator>>;
 }
 
 export interface MetaContextState extends MetaState {
