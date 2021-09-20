@@ -213,6 +213,23 @@ export const punchTicket = async (
     });
   }
 
+  const accountExists =
+    await fairLaunch.program.provider.connection.getAccountInfo(
+      buyerTokenAccount,
+    );
+
+  const instructions = !accountExists
+    ? [
+        createAssociatedTokenAccountInstruction(
+          buyerTokenAccount,
+          anchorWallet.publicKey,
+          anchorWallet.publicKey,
+          //@ts-ignore
+          fairLaunch.state.tokenMint,
+        ),
+      ]
+    : [];
+
   await fairLaunch.program.rpc.punchTicket({
     accounts: {
       fairLaunchTicket,
@@ -224,15 +241,7 @@ export const punchTicket = async (
       tokenMint: fairLaunch.state.tokenMint,
       tokenProgram: TOKEN_PROGRAM_ID,
     },
-    instructions: [
-      createAssociatedTokenAccountInstruction(
-        buyerTokenAccount,
-        anchorWallet.publicKey,
-        anchorWallet.publicKey,
-        //@ts-ignore
-        fairLaunch.state.tokenMint,
-      ),
-    ],
+    instructions: instructions.length > 0 ? instructions : undefined,
   });
 };
 

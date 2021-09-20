@@ -376,20 +376,15 @@ programCommand('update_candy_machine')
     log.info('updated_candy_machine Done', tx);
   });
 
-programCommand('mint_one_token')
-  .option('-t, --spl-token-account <string>', 'SPL token account to payfrom')
-  .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, splTokenAccount } = cmd.opts();
+programCommand('mint_one_token').action(async (directory, cmd) => {
+  const { keypair, env, cacheName } = cmd.opts();
 
-    const cacheContent = loadCache(cacheName, env);
-    const configAddress = new PublicKey(cacheContent.program.config);
-    const splTokenAccountKey = splTokenAccount
-      ? new PublicKey(splTokenAccount)
-      : undefined;
-    const tx = await mint(keypair, env, configAddress, splTokenAccountKey);
+  const cacheContent = loadCache(cacheName, env);
+  const configAddress = new PublicKey(cacheContent.program.config);
+  const tx = await mint(keypair, env, configAddress);
 
-    log.info('Done', tx);
-  });
+  log.info('Done', tx);
+});
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

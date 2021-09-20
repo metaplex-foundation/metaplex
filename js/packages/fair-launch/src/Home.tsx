@@ -48,7 +48,7 @@ import {
   withdrawFunds,
 } from './fair-launch';
 
-import { formatNumber, toDate } from './utils';
+import { formatNumber, getAtaForMint, toDate } from './utils';
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -179,14 +179,14 @@ function getPhase(
     return Phase.Phase2;
   } else if (!fairLaunch?.state.phaseThreeStarted) {
     return Phase.Lottery;
-  } else if (fairLaunch?.state.phaseThreeStarted) {
-    return Phase.Phase3;
   } else if (
     fairLaunch?.state.phaseThreeStarted &&
     candyMachineGoLive &&
     curr > candyMachineGoLive
   ) {
     return Phase.Phase4;
+  } else if (fairLaunch?.state.phaseThreeStarted) {
+    return Phase.Phase3;
   }
 
   return Phase.Unknown;
@@ -257,6 +257,7 @@ const getLotteryState = (
 
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
+  const [fairLaunchBalance, setFairLaunchBalance] = useState<number>();
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
 
@@ -298,12 +299,7 @@ const Home = (props: HomeProps) => {
           await onPunchTicket();
         }
 
-        const mintTxId = await mintOneToken(
-          candyMachine,
-          props.config,
-          wallet.publicKey,
-          props.treasury,
-        );
+        const mintTxId = await mintOneToken(candyMachine, wallet.publicKey);
 
         const status = await awaitTransactionSignatureConfirmation(
           mintTxId,
@@ -331,7 +327,9 @@ const Home = (props: HomeProps) => {
       // TODO: blech:
       let message = error.msg || 'Minting failed! Please try again!';
       if (!error.msg) {
-        if (error.message.indexOf('0x138')) {
+        if (!error.message) {
+          message = 'Transaction Timeout! Please try again.';
+        } else if (error.message.indexOf('0x138')) {
         } else if (error.message.indexOf('0x137')) {
           message = `SOLD OUT!`;
         } else if (error.message.indexOf('0x135')) {
@@ -389,8 +387,31 @@ const Home = (props: HomeProps) => {
         );
 
         setFairLaunch(state);
+
+        try {
+          if (state.state.tokenMint) {
+            const fairLaunchBalance =
+              await props.connection.getTokenAccountBalance(
+                (
+                  await getAtaForMint(
+                    state.state.tokenMint,
+                    anchorWallet.publicKey,
+                  )
+                )[0],
+              );
+            console.log('Heyyyo', fairLaunchBalance);
+            if (fairLaunchBalance.value) {
+              setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
+            }
+          }
+        } catch (e) {
+          console.log('Problem getting fair launch token balance');
+          console.log(e);
+        }
         setContributed(
-          state.state.data.priceRangeStart.toNumber() / LAMPORTS_PER_SOL,
+          (
+            state.state.currentMedian || state.state.data.priceRangeStart
+          ).toNumber() / LAMPORTS_PER_SOL,
         );
       } catch (e) {
         console.log('Problem getting fair launch state');
@@ -503,6 +524,11 @@ const Home = (props: HomeProps) => {
 
   const phase = getPhase(fairLaunch, candyMachine);
 
+  const candyMachinePredatesFairLaunch =
+    candyMachine?.state.goLiveDate &&
+    fairLaunch?.state.data.phaseTwoEnd &&
+    candyMachine?.state.goLiveDate.lt(fairLaunch?.state.data.phaseTwoEnd);
+
   return (
     <Container style={{ marginTop: 100 }}>
       <Container maxWidth="sm" style={{ position: 'relative' }}>
@@ -543,7 +569,7 @@ const Home = (props: HomeProps) => {
               />
             )}
 
-            {phase == Phase.Phase3 && (
+            {phase == Phase.Phase3 && !candyMachine && (
               <Header
                 phaseName={'Phase 3'}
                 desc={'The Lottery is complete!'}
@@ -551,15 +577,18 @@ const Home = (props: HomeProps) => {
               />
             )}
 
+            {phase == Phase.Phase3 && candyMachine && (
+              <Header
+                phaseName={'Phase 3'}
+                desc={'The Lottery is complete! Minting starts in...'}
+                date={candyMachine?.state.goLiveDate}
+              />
+            )}
+
             {phase == Phase.Phase4 && (
               <Header
                 phaseName={
-                  candyMachine?.state.goLiveDate &&
-                  fairLaunch?.state.data.phaseTwoEnd &&
-                  candyMachine?.state.goLiveDate <
-                    fairLaunch?.state.data.phaseTwoEnd
-                    ? 'Phase 3'
-                    : 'Phase 4'
+                  candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'
                 }
                 desc={'Candy Machine Time!'}
                 date={candyMachine?.state.goLiveDate}
@@ -680,32 +709,46 @@ const Home = (props: HomeProps) => {
                 )}
 
                 {phase == Phase.Phase4 && (
-                  <MintContainer>
-                    <MintButton
-                      disabled={
-                        candyMachine?.state.isSoldOut ||
-                        isMinting ||
-                        !candyMachine?.state.isActive
-                      }
-                      onClick={onMint}
-                      variant="contained"
-                    >
-                      {candyMachine?.state.isSoldOut ? (
-                        'SOLD OUT'
-                      ) : candyMachine?.state.isActive ? (
-                        isMinting ? (
-                          <CircularProgress />
-                        ) : (
-                          'MINT'
-                        )
-                      ) : (
-                        <PhaseCountdown
-                          date={toDate(candyMachine?.state.goLiveDate)}
-                          style={{ justifyContent: 'flex-end' }}
-                        />
-                      )}
-                    </MintButton>
-                  </MintContainer>
+                  <>
+                    {(!fairLaunch || isWinner(fairLaunch)) && (
+                      <MintContainer>
+                        <MintButton
+                          disabled={
+                            candyMachine?.state.isSoldOut ||
+                            isMinting ||
+                            !candyMachine?.state.isActive ||
+                            (fairLaunch?.ticket?.data?.state.punched &&
+                              fairLaunchBalance == 0)
+                          }
+                          onClick={onMint}
+                          variant="contained"
+                        >
+                          {fairLaunch?.ticket?.data?.state.punched &&
+                          fairLaunchBalance == 0 ? (
+                            'MINTED'
+                          ) : candyMachine?.state.isSoldOut ? (
+                            'SOLD OUT'
+                          ) : isMinting ? (
+                            <CircularProgress />
+                          ) : (
+                            'MINT'
+                          )}
+                        </MintButton>
+                      </MintContainer>
+                    )}
+
+                    {!isWinner(fairLaunch) && (
+                      <MintButton
+                        onClick={onRefundTicket}
+                        variant="contained"
+                        disabled={
+                          fairLaunch?.ticket.data?.state.withdrawn !== undefined
+                        }
+                      >
+                        Refund Ticket
+                      </MintButton>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -807,7 +850,7 @@ const Home = (props: HomeProps) => {
                   need to do. If your bid is below the median price, you can
                   still opt in at the fair price during this phase.
                 </Typography>
-                {candyMachine?.state.isActive ? (
+                {candyMachinePredatesFairLaunch ? (
                   <>
                     <Typography variant="h6">
                       Phase 3 - The Candy Machine:
