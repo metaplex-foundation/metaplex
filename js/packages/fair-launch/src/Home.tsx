@@ -866,16 +866,16 @@ const Home = (props: HomeProps) => {
                           (LAMPORTS_PER_SOL * 10000)}{' '}
                         ({fairLaunch.state.data.antiRugSetting.reserveBp / 100}
                         %) of the treasury in a locked state until the Fair
-                        Launch Authority is able to buy back or sell enough NFTs
-                        to Fair Launch token holders such that{' '}
+                        Launch Authority is able to buy back enough tokens or
+                        sell enough NFTs to Fair Launch token holders such that{' '}
                         {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
                         tokens are remaining.
                       </p>
                       <p>
                         {' '}
                         If the Fair Launch authority is not able to convince
-                        enough people through a Candy Machine or other means by
-                        the refund date of{' '}
+                        enough people through a Candy Machine or other means to
+                        return tokens by the refund date of{' '}
                         {toDate(
                           fairLaunch.state.data.antiRugSetting.selfDestructDate,
                         )?.toLocaleString()}{' '}
