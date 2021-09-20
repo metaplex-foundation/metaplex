@@ -1,5 +1,7 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-
+import path from "path";
+import { CACHE_PATH } from "./constants";
+import fs from "fs";
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
@@ -48,9 +50,6 @@ export function fromUTF8Array(data: number[]) {
   return str;
 }
 
-export function parsePrice(price) {
-  if (price === 'free' || price === '0') {
-    return 1;
-  }
-  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);;
+export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
+  return Math.ceil(parseFloat(price) * mantissa);
 }

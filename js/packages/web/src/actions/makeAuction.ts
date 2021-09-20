@@ -1,7 +1,6 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
   utils,
-  actions,
   findProgramAddress,
   IPartialCreateAuctionArgs,
   CreateAuctionArgs,
@@ -9,9 +8,11 @@ import {
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
+import {
+  AUCTION_PREFIX,
+  createAuction,
+} from '@oyster/common/dist/lib/actions/auction';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-
-const { AUCTION_PREFIX, createAuction } = actions;
 
 // This command makes an auction
 export async function makeAuction(
