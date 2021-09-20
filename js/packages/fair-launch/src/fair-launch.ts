@@ -82,6 +82,31 @@ export interface FairLaunchState {
   treasurySnapshot: null;
 }
 
+export enum LotteryState {
+  Brewing = 'Brewing',
+  Finished = 'Finished',
+  PastDue = 'Past Due',
+}
+
+export const getLotteryState = (
+  phaseThree: boolean | undefined,
+  lottery: Uint8Array | null,
+  lotteryDuration: anchor.BN,
+  phaseTwoEnd: anchor.BN,
+): LotteryState => {
+  if (
+    !phaseThree &&
+    (!lottery || lottery.length === 0) &&
+    phaseTwoEnd.add(lotteryDuration).lt(new anchor.BN(Date.now() / 1000))
+  ) {
+    return LotteryState.PastDue;
+  } else if (phaseThree) {
+    return LotteryState.Finished;
+  } else {
+    return LotteryState.Brewing;
+  }
+};
+
 export const getFairLaunchState = async (
   anchorWallet: anchor.Wallet,
   fairLaunchId: anchor.web3.PublicKey,

@@ -12,8 +12,7 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import { createStyles, Theme, withStyles } from '@material-ui/core/styles';
-import Backdrop from '@material-ui/core/Backdrop';
+import { createStyles, Theme } from '@material-ui/core/styles';
 import { PhaseCountdown } from './countdown';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
@@ -41,7 +40,6 @@ import {
   getFairLaunchState,
   punchTicket,
   purchaseTicket,
-  withdrawFunds,
 } from './fair-launch';
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
@@ -56,8 +54,6 @@ color: white;
 font-size: 16px;
 font-weight: bold;
 `;
-
-const CounterText = styled.span``; // add your styles here
 
 const MintContainer = styled.div``; // add your styles here
 
@@ -121,13 +117,6 @@ const ValueSlider = styled(Slider)({
     marginLeft: 9,
   },
 });
-
-const LimitedBackdrop = withStyles({
-  root: {
-    position: 'absolute',
-    zIndex: 1,
-  },
-})(Backdrop);
 
 enum Phase {
   Phase0,
@@ -233,33 +222,7 @@ const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
   return isWinner > 0;
 };
 
-enum LotteryState {
-  Brewing = 'Brewing',
-  Finished = 'Finished',
-  PastDue = 'Past Due',
-}
-
-const getLotteryState = (
-  phaseThree: boolean | undefined,
-  lottery: Uint8Array | null,
-  lotteryDuration: anchor.BN,
-  phaseTwoEnd: anchor.BN,
-): LotteryState => {
-  if (
-    !phaseThree &&
-    (!lottery || lottery.length === 0) &&
-    phaseTwoEnd.add(lotteryDuration).lt(new anchor.BN(Date.now() / 1000))
-  ) {
-    return LotteryState.PastDue;
-  } else if (phaseThree) {
-    return LotteryState.Finished;
-  } else {
-    return LotteryState.Brewing;
-  }
-};
-
 const Home = (props: HomeProps) => {
-  const [balance, setBalance] = useState<number>();
   const [fairLaunchBalance, setFairLaunchBalance] = useState<number>();
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
@@ -281,7 +244,7 @@ const Home = (props: HomeProps) => {
       signAllTransactions: wallet.signAllTransactions,
       signTransaction: wallet.signTransaction,
     } as anchor.Wallet;
-  }, [wallet, wallet.publicKey]);
+  }, [wallet]);
 
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
@@ -353,28 +316,9 @@ const Home = (props: HomeProps) => {
         severity: 'error',
       });
     } finally {
-      if (wallet?.publicKey) {
-        const balance = await props.connection.getBalance(wallet?.publicKey);
-        setBalance(balance / LAMPORTS_PER_SOL);
-      }
       setIsMinting(false);
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      if (anchorWallet?.publicKey) {
-        try {
-          const balance = await props.connection.getBalance(
-            anchorWallet.publicKey,
-          );
-          setBalance(balance / LAMPORTS_PER_SOL);
-        } catch {
-          // ignore connection error
-        }
-      }
-    })();
-  }, [anchorWallet, props.connection]);
 
   useEffect(() => {
     (async () => {
@@ -433,7 +377,7 @@ const Home = (props: HomeProps) => {
         console.log(e);
       }
     })();
-  }, [anchorWallet, props.candyMachineId, props.connection]);
+  }, [anchorWallet, props.candyMachineId, props.connection, props.fairLaunchId]);
 
   const min = formatNumber.asNumber(fairLaunch?.state.data.priceRangeStart);
   const max = formatNumber.asNumber(fairLaunch?.state.data.priceRangeEnd);
@@ -507,22 +451,6 @@ const Home = (props: HomeProps) => {
     setAlertState({
       open: true,
       message: 'Congratulations! Ticket punched!',
-      severity: 'success',
-    });
-  };
-
-  const onWithdraw = async () => {
-    if (!anchorWallet) {
-      return;
-    }
-
-    console.log('withdraw');
-    setIsMinting(true);
-    await withdrawFunds(anchorWallet, fairLaunch);
-    setIsMinting(false);
-    setAlertState({
-      open: true,
-      message: 'Congratulations! Funds withdrawn!',
       severity: 'success',
     });
   };
@@ -1010,13 +938,5 @@ interface AlertState {
   message: string;
   severity: 'success' | 'info' | 'warning' | 'error' | undefined;
 }
-
-const renderCounter = ({ days, hours, minutes, seconds, completed }: any) => {
-  return (
-    <CounterText>
-      {hours} hours, {minutes} minutes, {seconds} seconds
-    </CounterText>
-  );
-};
 
 export default Home;

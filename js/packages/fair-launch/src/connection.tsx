@@ -1,6 +1,5 @@
 import {
   Keypair,
-  clusterApiUrl,
   Commitment,
   Connection,
   RpcResponseAndContext,
@@ -14,7 +13,6 @@ import {
 } from '@solana/web3.js';
 
 import {
-  WalletAdapter,
   WalletNotConnectedError,
 } from '@solana/wallet-adapter-base';
 
@@ -275,6 +273,7 @@ export const sendTransaction = async (
     if (confirmation?.err) {
       const errors = await getErrorForTransaction(connection, txid);
 
+      console.log(errors);
       throw new Error(`Raw transaction ${txid} failed`);
     }
   }
