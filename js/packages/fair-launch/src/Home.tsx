@@ -492,7 +492,7 @@ const Home = (props: HomeProps) => {
 
   return (
     <Container style={{ marginTop: 100 }}>
-      <Container maxWidth="sm" style={{ position: 'relative' }}>
+      <Container maxWidth="xs" style={{ position: 'relative' }}>
         <div
           style={{
             display: 'flex',
@@ -513,7 +513,7 @@ const Home = (props: HomeProps) => {
           </Link>
         </div>
       </Container>
-      <Container maxWidth="sm" style={{ position: 'relative' }}>
+      <Container maxWidth="xs" style={{ position: 'relative' }}>
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
@@ -816,7 +816,7 @@ const Home = (props: HomeProps) => {
               >
                 How this raffle works
               </Link>
-              <Link
+              {fairLaunch?.ticket.data && <Link
                 component="button"
                 variant="body2"
                 color="textSecondary"
@@ -834,7 +834,7 @@ const Home = (props: HomeProps) => {
                 }}
               >
                 Withdraw funds
-              </Link>
+              </Link>}
             </Grid>
             <Dialog
               open={refundExplainerOpen}
@@ -1052,7 +1052,7 @@ const Home = (props: HomeProps) => {
 
       {fairLaunch && (
         <Container
-          maxWidth="sm"
+          maxWidth="xs"
           style={{ position: 'relative', marginTop: 10 }}
         >
           <div style={{ margin: 20 }}>
