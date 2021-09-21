@@ -19,7 +19,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
-  const { isReady, storeAddress } = useStore();
+  const { isReady, storeAddress, ownerAddress } = useStore();
   const searchParams = useQuerySearch();
   const all = searchParams.get('all') == 'true';
 
@@ -63,7 +63,7 @@ export function MetaProvider({ children = null as any }) {
 
       const nextState = !USE_SPEED_RUN
         ? await loadAccounts(connection, all)
-        : await limitedLoadAccounts(connection);
+        : await limitedLoadAccounts(ownerAddress as string, connection);
 
       console.log('------->Query finished');
 

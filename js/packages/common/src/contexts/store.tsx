@@ -18,6 +18,8 @@ interface StoreConfig {
   isReady: boolean;
   // recalculate store address for specified owner address
   setStoreForOwner: (ownerAddress?: string) => Promise<string | undefined>;
+
+  ownerAddress?: StringPublicKey;
 }
 
 export const StoreContext = createContext<StoreConfig>(null!);
@@ -62,7 +64,7 @@ export const StoreProvider: FC<{
   }, [initOwnerAddress]);
 
   return (
-    <StoreContext.Provider value={{ ...store, setStoreForOwner, isConfigured }}>
+    <StoreContext.Provider value={{ ...store, setStoreForOwner, isConfigured, ownerAddress }}>
       {children}
     </StoreContext.Provider>
   );

@@ -36,7 +36,7 @@ import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 
-export const USE_SPEED_RUN = false;
+export const USE_SPEED_RUN = true;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
 const WHITELISTED_AUCTION = ['D8wMB5iLZnsV7XQjpwqXaDynUtFuDs7cRXvEGNj1NF1e'];
 const AUCTION_TO_METADATA: Record<string, string[]> = {
@@ -85,6 +85,10 @@ async function getProgramAccounts(
     args,
   );
 
+  if (unsafeRes.error) {
+    throw new Error(unsafeRes.error.message)
+  }
+
   const data = (
     unsafeRes.result as Array<{
       account: AccountInfo<[string, string]>;
@@ -107,7 +111,8 @@ async function getProgramAccounts(
   return data;
 }
 
-export const limitedLoadAccounts = async (connection: Connection) => {
+
+export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, connection: Connection) => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
@@ -117,6 +122,38 @@ export const limitedLoadAccounts = async (connection: Connection) => {
         await fn(account, updateTemp, false);
       }
     };
+
+  const getMetadataByCreatorAddress = async (ownerAddrsss: StringPublicKey) => {
+    const creatorSearches: Promise<void>[] = [];
+
+    for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+      creatorSearches.push(
+        getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+          filters: [
+            {
+              memcmp: {
+                offset:
+                  1 + // key
+                  32 + // update auth
+                  32 + // mint
+                  4 + // name string length
+                  MAX_NAME_LENGTH + // name
+                  4 + // uri string length
+                  MAX_URI_LENGTH + // uri
+                  4 + // symbol string length
+                  MAX_SYMBOL_LENGTH + // symbol
+                  2 + // seller fee basis points
+                  1 + // whether or not there is a creators vec
+                  4 + // creators vec length
+                  i * MAX_CREATOR_LEN,
+                bytes: ownerAddrsss,
+              },
+            },
+          ],
+        }).then(forEach(processMetaData))
+      );
+    }
+  }
 
   const pullMetadata = async (metadata: string) => {
     const mdKey = new PublicKey(metadata);
@@ -216,8 +253,9 @@ export const limitedLoadAccounts = async (connection: Connection) => {
     }
   };
 
+
   const promises = [
-    ...WHITELISTED_METADATA.map(md => pullMetadata(md)),
+    getMetadataByCreatorAddress(ownerAddrsss),
     ...WHITELISTED_AUCTION.map(a => pullAuction(a)),
     ...WHITELISTED_AUCTION_MANAGER.map(a => pullAuctionManager(a)),
     ...WHITELISTED_VAULT.map(a => pullVault(a)),
@@ -481,14 +519,14 @@ const getAdditionalPromises = (
 
 export const makeSetter =
   (state: MetaState) =>
-  (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
-    if (prop === 'store') {
-      state[prop] = value;
-    } else if (prop !== 'metadata') {
-      state[prop][key] = value;
-    }
-    return state;
-  };
+    (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
+      if (prop === 'store') {
+        state[prop] = value;
+      } else if (prop !== 'metadata') {
+        state[prop][key] = value;
+      }
+      return state;
+    };
 
 const postProcessMetadata = async (tempCache: MetaState, all: boolean) => {
   const values = Object.values(tempCache.metadataByMint);
