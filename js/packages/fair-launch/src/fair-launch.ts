@@ -78,7 +78,7 @@ export interface FairLaunchState {
   tokenMintBump: number;
   treasury: anchor.web3.PublicKey;
   treasuryBump: number;
-  treasuryMint: null; // only for SPL tokens
+  treasuryMint: anchor.web3.PublicKey; // only for SPL tokens
   treasurySnapshot: null;
 }
 
@@ -420,6 +420,78 @@ const getSetupForTicketing = async (
     signers,
     amountLamports,
   };
+};
+
+export const receiveRefund = async (
+  anchorWallet: anchor.Wallet,
+  fairLaunch: FairLaunchAccount | undefined,
+) => {
+  if (!fairLaunch) {
+    return;
+  }
+
+  const buyerTokenAccount = (
+    await getAtaForMint(fairLaunch.state.tokenMint, anchorWallet.publicKey)
+  )[0];
+
+  const transferAuthority = anchor.web3.Keypair.generate();
+
+  const signers = [transferAuthority];
+  const instructions = [
+    Token.createApproveInstruction(
+      TOKEN_PROGRAM_ID,
+      buyerTokenAccount,
+      transferAuthority.publicKey,
+      anchorWallet.publicKey,
+      [],
+      1,
+    ),
+  ];
+
+  const remainingAccounts = [];
+
+  if (fairLaunch.state.treasuryMint) {
+    remainingAccounts.push({
+      pubkey: fairLaunch.state.treasuryMint,
+      isWritable: true,
+      isSigner: false,
+    });
+    remainingAccounts.push({
+      pubkey: (
+        await getAtaForMint(
+          fairLaunch.state.treasuryMint,
+          anchorWallet.publicKey,
+        )
+      )[0],
+      isWritable: true,
+      isSigner: false,
+    });
+  }
+
+  console.log(
+    'tfr',
+    fairLaunch.state.treasury.toBase58(),
+    anchorWallet.publicKey.toBase58(),
+    buyerTokenAccount.toBase58(),
+  );
+  await fairLaunch.program.rpc.receiveRefund({
+    accounts: {
+      fairLaunch: fairLaunch.id,
+      treasury: fairLaunch.state.treasury,
+      buyer: anchorWallet.publicKey,
+      buyerTokenAccount,
+      transferAuthority: transferAuthority.publicKey,
+      tokenMint: fairLaunch.state.tokenMint,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+    },
+
+    __private: { logAccounts: true },
+    remainingAccounts,
+    instructions,
+    signers,
+  });
 };
 export const purchaseTicket = async (
   amount: number,

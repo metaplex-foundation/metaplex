@@ -40,6 +40,7 @@ import {
   getFairLaunchState,
   punchTicket,
   purchaseTicket,
+  receiveRefund,
 } from './fair-launch';
 
 import { formatNumber, getAtaForMint, toDate } from './utils';
@@ -440,12 +441,12 @@ const Home = (props: HomeProps) => {
 
     console.log('refund');
     setIsMinting(true);
-    await purchaseTicket(0, anchorWallet, fairLaunch);
+    await receiveRefund(anchorWallet, fairLaunch);
     setIsMinting(false);
     setAlertState({
       open: true,
       message:
-        'Congratulations! Funds withdrawn. This is an irreversible action.',
+        'Congratulations! You have received a refund. This is an irreversible action.',
       severity: 'success',
     });
   };
@@ -621,6 +622,11 @@ const Home = (props: HomeProps) => {
                     You didn't participate in this raffle.
                   </Typography>
                 )}
+              </Grid>
+            )}
+
+            {fairLaunch && (
+              <>
                 {[
                   Phase.Phase1,
                   Phase.Phase2,
@@ -665,7 +671,7 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
-              </Grid>
+              </>
             )}
 
             {[Phase.Phase1, Phase.Phase2].includes(phase) && (
@@ -889,8 +895,10 @@ const Home = (props: HomeProps) => {
                         onClick={onRugRefund}
                         variant="contained"
                         disabled={
+                          !!!fairLaunch.ticket.data ||
+                          !fairLaunch.ticket.data.state.punched ||
                           Date.now() / 1000 <
-                          fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
+                            fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
                         }
                       >
                         {isMinting ? (
@@ -911,6 +919,19 @@ const Home = (props: HomeProps) => {
                         )}
                         {}
                       </MintButton>
+                      <div style={{ textAlign: 'center', marginTop: '-5px' }}>
+                        {!!!fairLaunch.ticket.data && (
+                          <small>
+                            You currently have no Fair Launch ticket.
+                          </small>
+                        )}
+                        {!fairLaunch?.ticket?.data?.state.punched && (
+                          <small>
+                            You currently have a ticket but it has not been
+                            punched yet, so cannot be refunded.
+                          </small>
+                        )}
+                      </div>
                     </div>
                   )}
               </MuiDialogContent>

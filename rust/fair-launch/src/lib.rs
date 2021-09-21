@@ -916,13 +916,21 @@ pub mod fair_launch {
 
             let amount = calculate_refund_amount(fair_launch, clock.unix_timestamp)?;
 
-            invoke(
+            let signer_seeds = &[
+                PREFIX.as_bytes(),
+                fair_launch.token_mint.as_ref(),
+                TREASURY.as_bytes(),
+                &[fair_launch.treasury_bump],
+            ];
+
+            invoke_signed(
                 &system_instruction::transfer(treasury.key, buyer.key, amount),
                 &[
                     treasury.to_account_info(),
                     buyer.clone(),
                     ctx.accounts.system_program.clone(),
                 ],
+                &[signer_seeds],
             )?;
         }
 
