@@ -1,37 +1,45 @@
 import React, { useMemo } from 'react';
-import './index.less';
 import { Link } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useWallet } from '@oyster/common';
+import { ConnectButton, CurrentUserBadge } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 
+
 const UserActions = () => {
-  const { wallet } = useWallet();
+  const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
-  const pubkey = wallet?.publicKey?.toBase58() || '';
+  const pubkey = publicKey?.toBase58() || '';
 
   const canCreate = useMemo(() => {
-    return store &&
-      store.info &&
-      (store.info.public ||
-        whitelistedCreatorsByCreator[pubkey]?.info
-          ?.activated);
+    return (
+      store?.info?.public ||
+      whitelistedCreatorsByCreator[pubkey]?.info?.activated
+    );
   }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
     <>
-      {/* <Link to={`#`}>
-        <Button className="app-btn">Bids</Button>
-      </Link> */}
-      {canCreate ? (<Link to={`/art/create`}>
-        <Button className="app-btn">Create</Button>
-      </Link>) : null}
-      <Link to={`/auction/create/0`}>
-        <Button className="connector" type="primary" >Sell</Button>
-      </Link>
+      {store && (
+        <>
+          {/* <Link to={`#`}>
+            <Button className="app-btn">Bids</Button>
+          </Link> */}
+          {canCreate ? (
+            <Link to={`/art/create`}>
+              <Button className="app-btn">Create</Button>
+            </Link>
+          ) : null}
+          <Link to={`/auction/create/0`}>
+            <Button className="connector" type="primary">
+              Sell
+            </Button>
+          </Link>
+        </>
+      )}
     </>
   );
 };
@@ -44,17 +52,24 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       flexDirection: vertical ? "column" : "row",
     }}>
       <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
+        <Button className="app-btn">Home</Button>
+      </Link>
+      <Link to={`/intro`}>
+        <Button className="app-btn">Backstory</Button>
+      </Link>
+      <Link to={`/rules`}>
+        <Button className="app-btn">Mission</Button>
       </Link>
       <Link to={`/artworks`}>
-        <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
+        <Button className="app-btn">{connected ? "My Items" : "Items"}</Button>
       </Link>
       <Link to={`/artists`}>
         <Button className="app-btn">Creators</Button>
       </Link>
+
     </div>
-  )
-}
+  );
+};
 
 const MetaplexMenu = () => {
   const { width } = useWindowDimensions();
@@ -68,12 +83,22 @@ const MetaplexMenu = () => {
       overlay={<Menu>
         <Menu.Item>
           <Link to={`/`}>
-            <Button className="app-btn">Explore</Button>
+            <Button className="app-btn">Home</Button>
           </Link>
-        </Menu.Item>
+          </Menu.Item>
+        <Menu.Item>
+          <Link to={`/intro`}>
+            <Button className="app-btn">Backstory</Button>
+          </Link>
+          </Menu.Item>
+        <Menu.Item>
+          <Link to={`/rules`}>
+            <Button className="app-btn">Mission</Button>
+          </Link>
+          </Menu.Item>
         <Menu.Item>
           <Link to={`/artworks`}>
-            <Button className="app-btn">{connected ? "My Items" : "Artworks"}</Button>
+            <Button className="app-btn">{connected ? "My Items" : "Items"}</Button>
           </Link>
         </Menu.Item>
         <Menu.Item>
@@ -87,8 +112,8 @@ const MetaplexMenu = () => {
     </Dropdown>
   </>
 
-  return <DefaultActions />
-}
+  return <DefaultActions />;
+};
 
 export const AppBar = () => {
   const { connected } = useWallet();
@@ -96,12 +121,11 @@ export const AppBar = () => {
   return (
     <>
       <div className="app-left app-bar-box">
-        <Notifications />
+        {window.location.hash !== '#/analytics' && <Notifications />}
         <div className="divider" />
         <MetaplexMenu />
       </div>
-      {!connected && <ConnectButton type="primary" />}
-      {connected && (
+      {connected ? (
         <div className="app-right app-bar-box">
           <UserActions />
           <CurrentUserBadge
@@ -110,6 +134,8 @@ export const AppBar = () => {
             iconSize={24}
           />
         </div>
+      ) : (
+        <ConnectButton type="primary" allowWalletChange />
       )}
     </>
   );

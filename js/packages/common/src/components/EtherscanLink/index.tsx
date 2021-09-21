@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 import { shortenAddress } from '../../utils/utils';
 
 export const EtherscanLink = (props: {
-  address: string ;
+  address: string;
   type: string;
   code?: boolean;
   style?: React.CSSProperties;

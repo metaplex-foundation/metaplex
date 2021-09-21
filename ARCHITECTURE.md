@@ -61,27 +61,24 @@ Now that we've gone over the contracts, let's run through an example of how the 
 
     Note that the flow on the front end is a bit different - we put a dummy URI in place during this call, just to get the mint and metadata made, so that we can then push these values up to Arweave. Then we take the Arweave URL, and do a follow-up update_metadata_account call to update the Metadata with a proper URI that points to the metadata on the Arweave chain. It's a chicken-or-egg problem work-around because we need to have the Metadata existing to put it on Arweave, but we need the Arweave URI to place it in the Metadata. We simplify the case for this example.
 
-3. Next up, you need to turn this normal run of the mill NFT into a Master Edition. Right now you can still mint any number of tokens as you retain minting authority. The point of Metadata is to label mints - not just NFTs. So you call the create_master_edition endpoint on the Token Metadata contract which takes minting authority away from you, and creates a new Master Edition pda that contains information about how large a supply you want to have and links to your printing mint among other things. 
+3. Next up, you need to turn this normal run of the mill NFT into a Master Edition. Right now you can still mint any number of tokens as you retain minting authority. The point of Metadata is to label mints - not just NFTs. So you call the create_master_edition endpoint on the Token Metadata contract which takes minting authority away from you, and creates a new Master Edition pda that contains information about how large a supply you want to have.
 
-    When you want to mint Editions now, you'll need to ask the token metadata contract for printing tokens from this printing mint, and then use these with the `mint_new_edition_from_master_edition_via_token` endpoint to produce a new Edition. 
+    When you want to mint Editions now, you'll need to present a token account containing the token from this Master Edition mint as proof of ownership and authority to do so. This is why we will later hand this token over to the Auction Manager, so that it can do the same to print off Editions for winners!
 
-4. Now that your token account has a bonafide NFT Master Edition in it, we can run an auction where we auction off Limited Edition prints! Let's say we want to auction off three such prints. First, we'll need to get ourselves some printing tokens from the `printing_mint`, because rather than paying for and pre-minting Limited Editions ourselves which is wasteful, we'd rather just mint printing tokens and sell those. Then if we can't actually sell them to people, we can just burn them off and not have wasted our valuable Edition space. To do this we call the `mint_printing_tokens` endpoint to mint 3 printing tokens to an associated token account we made of the `printing_mint` mint type.
-5. Next, we create a token vault using the `init_vault` endpoint of the token vault contract. We'll store our 3 printing tokens in it by adding them to the vault using the `add_token_to_inactive_vault` endpoint. This will create a safety deposit box in the vault that contains the three printing tokens. 
+4. Now that your token account has a bonafide NFT Master Edition in it, we can run an auction where we auction off Limited Edition prints! Let's say we want to auction off three such prints.
+5. Next, we create a token vault using the `init_vault` endpoint of the token vault contract. We'll store our master edition token in it by adding it to the vault using the `add_token_to_inactive_vault` endpoint. This will create a safety deposit box in the vault that contains the the token.
 6. Then we will call the `activate_vault` command which **Activates** the vault, locking everything inside.
 7. We now **Combine** the vault using `combine_vault`, which is to say, we "open it," so the current authority could if they wanted withdraw the tokens inside it. The Auction Manager can only work with vaults in this state, which is why we have to go through the **Activation** phase to get here even though it seems a little nonsensical. See the in depth guide for more color on why these different states exist.
 8. Next up, we create the auction, and we say its resource is this vault. The auction has not yet been started, but it has the right resource (the vault). We do this via the `create_auction` command on the Auction contract.
-
-    It's possible at this point in the flow to create a Reservation List if you care about preserving the order and place of Editions in sequence for a given Master Edition NFT. For instance, if you want to guarantee that the winners of the auction get their editions minted in the order that they win the auction. However, we'll discuss this advanced material in the contract specifics.
-
 9. Now that we have an auction and a vault, we can go and call the `init_auction_manager` endpoint on the Metaplex contract with both of these accounts among a few others to create an AuctionManager, which ties them both together. Note that `init_auction_manager` takes a special struct called AuctionManagerSettings that allows one to specify how many winners there are and what winners get which items from which safety deposit box. At this point, we can't yet start the auction. The AuctionManager is in an invalidated state and we need to validate it by validating that the safety deposit boxes we provided to it in the vault are actually what we said are in them when we provided the AuctionManager with it's settings struct.
-10. Before we begin validation, we call `set_authority` on both the vault and auction to change its authority to the auction manager, so that it has control over both of those structs. This is a requirement for the validation phase and the rest of the contract lifecycle. Now you no longer have control over your items.
+10. Before we begin validation, we call `set_authority` on both the vault and auction to change its authority to the auction manager, so that it has control over both of those structs. This is a requirement for the validation phase and the rest of the contract lifecycle. **Now you no longer have control over your items.**
 11. We call the `validate_safety_deposit_box` endpoint on the Metaplex contract with the one safety deposit box in the vault, and the logic in this endpoint checks that there are exactly 3 printing tokens from the right mint in this box, matching the 3 printing tokens we promised it would have in our AuctionManagerSettings. Once we do this, and because this is the only safety deposit box in the vault, the AuctionManager is now validated.
 12. We now call `start_auction` on the Metaplex contract, which, because the AuctionManager has authority over the Auction, calls `start_auction` on the Auction contract, and the auction begins!
 13. Users can go and call `place_bid` on the Auction contract to place bids. When they do this, tokens of the `token_mint` type used by the auction are taken from the account they provide, tied to their main wallet, and stored in bidder pot accounts in the auction contract.
 14. In order to update a bid, a user must first cancel the original bid, and then place a new bid.
 15. Once the auction is over, a user can refund their bid if they did not win by calling `cancel_bid` again. Winners of the auction cannot cancel their bids.
-16. The winner of a bid calls the `redeem_bid` endpoint on the Metaplex contract. This gives them a single printing token. They then create a new mint, a new token account of that mint type, and mint a single token to it. They then take the new mint, the new token account, and the printing token, and call the `mint_new_edition_from_master_edition_via_token` endpoint. This endpoint burns the printing token, creates a new Metadata and Edition PDA pointing at this mint, and this token is now *officially* a Limited Edition of the "Bob's Cool NFT" Master Edition NFT!
-17. You, the auctioneer, visits /#/auction/id/billing and hits the settle button. This first iterates over all three bidders and for each wallet used, calls `claim_bid` on the Metaplex contract, which proxy-calls a `claim_bid` on the Auction contract, telling it to dump the winner's payment into an escrow account called `accept_payment` on the AuctionManager struct. It has the same token type as the auction. Once all payments have been collected, the front end then calls the `empty_payment_account` endpoint one time (since you are the only creator on the Metadata being sold) and the funds in this escrow are paid out to a token account provided of the same type owned by you.
+16. The winner of a bid creates a mint with decimals 0, a token account with 1 token in it, and calls the `redeem_printing_v2_bid` endpoint on the Metaplex contract, all in a single transaction. This token is now *officially* a Limited Edition of the "Bob's Cool NFT" Master Edition NFT!
+17. You, the auctioneer, visits /#/auction/id/billing and hit the settle button. This first iterates over all three bidders and for each wallet used, calls `claim_bid` on the Metaplex contract, which proxy-calls a `claim_bid` on the Auction contract, telling it to dump the winner's payment into an escrow account called `accept_payment` on the AuctionManager struct. It has the same token type as the auction. Once all payments have been collected, the front end then calls the `empty_payment_account` endpoint one time (since you are the only creator on the Metadata being sold) and the funds in this escrow are paid out to a token account provided of the same type owned by you.
 
     Note that our front end reference implementation uses SOL as the "token type." This has some special caveats, namely that SOL isn't really an "spl token." It instead has a work-around called the "Wrapped SOL mint." This is a special mint that is often used in a transient account. What this means is that when we place a bid, we actually make a one-off system account, transfer lamports to it of your bid amount + rent, then label it an spl-token account of the wrapped sol type, use it to place the bid, then close it all in one transaction.
 
@@ -108,16 +105,6 @@ Minting an NFT requires creating a new SPL Mint with the supply of one and decim
 Below is the Rust representation of the structs that are stored on-chain. 
 
 ```rust
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub enum Key {
-    Uninitialized,
-    EditionV1,
-    MasterEditionV1,
-    ReservationListV1,
-    MetadataV1,
-    ReservationListV2,
-}
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
@@ -155,21 +142,6 @@ pub struct MasterEdition {
     pub supply: u64,
 
     pub max_supply: Option<u64>,
-
-    /// Can be used to mint tokens that give one-time permission to mint a single limited edition.
-    pub printing_mint: Pubkey,
-
-    /// If you don't know how many printing tokens you are going to need, but you do know
-    /// you are going to need some amount in the future, you can use a token from this mint.
-    /// Coming back to token metadata with one of these tokens allows you to mint (one time)
-    /// any number of printing tokens you want. This is used for instance by Auction Manager
-    /// with participation NFTs, where we dont know how many people will bid and need participation
-    /// printing tokens to redeem, so we give it ONE of these tokens to use after the auction is over,
-    /// because when the auction begins we just dont know how many printing tokens we will need,
-    /// but at the end we will. At the end it then burns this token with token-metadata to
-    /// get the printing tokens it needs to give to bidders. Each bidder then redeems a printing token
-    /// to get their limited editions.
-    pub one_time_printing_authorization_mint: Pubkey,
 }
 
 #[repr(C)]
@@ -199,26 +171,9 @@ pub struct Creator {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct ReservationListV2 {
-pub key: Key,
-    /// Present for reverse lookups
-    pub master_edition: Pubkey,
-
-    /// What supply counter was on master_edition when this reservation was created.
-    pub supply_snapshot: Option<u64>,
-    pub reservations: Vec<Reservation>,
-    /// How many reservations there are going to be, given on first set_reservation call
-    pub total_reservation_spots: u64,
-    /// Cached count of reservation spots in the reservation vec to save on CPU.
-    pub current_reservation_spots: u64,
-}
-
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct Reservation {
-    pub address: Pubkey,
-    pub spots_remaining: u64,
-    pub total_spots: u64,
+pub struct EditionMarker {
+    pub key: Key,
+    pub ledger: [u8; 31],
 }
 
 ```
@@ -237,37 +192,23 @@ Metadata accounts are simply PDA addresses with derived key of `['metaplex', met
 
 In addition to simple metadata, a Master Edition object can be created. Master Editions act similar to a token mint and allows the holder to create new number editions while tracking provenance of the items. A Master Edition token, when minted, represents both a non-fungible token on Solana and metadata that allows creators to control the provenance of prints created from the master edition. A Master Edition object can only be created for mints with supply of one and decimals of zero.
 
-The rights to create prints are tokenized itself in the `printing_mint`, and the owner of the master edition can distribute tokens that allow users to create prints from master editions. Additionally, the creator can set the maximum supply of the master edition just like a regular mint on Solana, with the main difference being that each print is a numbered edition created from it. Tokens from this mint can be retrieved via the `mint_printing_tokens` or `mint_printing_tokens_via_token` end point, because the owner of the metadata will not have authority over the `printing_mint`.
-
-Additionally, for Master Editions with no maximum supply, the `one_time_printing_authorization_mint` can be used (you will retain authority to this) to print a token that grants the bearer the ability to one time via the `mint_printing_tokens_via_token` endpoint to print any number of printing tokens using the `printing_mint`. This is how Metaplex funds all the printing tokens for participation NFT winners when it does not a priori know how many people will bid in an auction and need a participation NFT!
-
-A notable and desirable effect of Master Editions is that as prints are sold, the artwork will still remain visible in the artist's wallet as a master edition while the prints appear in the purchaser's wallets.
+The creator can set the maximum supply of the master edition just like a regular mint on Solana, with the main difference being that each print is a numbered edition created from it. To mint a new limited edition, this master edition token must be presented, along with a new mint + token, to the `mint_new_edition_from_master_edition_via_token` endpoint.
 
 Master Edition accounts are PDA addresses of `['metaplex', metaplex_program_id, mint_id, 'edition']`.
 
 ### Edition
 
-An edition represents a copy of an NFT, and is created from a Master Edition. Each print has an edition number associated with it.  Normally, prints can be created during Open Edition or Limited Edition auction, but they could also be created by the creator manually using a printing token.
+An edition represents a copy of an NFT, and is created from a Master Edition. Each print has an edition number associated with it.  Normally, prints can be created during Open Edition or Limited Edition auction, but they could also be created by the creator manually.
 
-Editions are created by presenting a printing token created from the `printing_mint` on a Master Edition, along with a new mint that lacks a Metadata account and a token account containing one token from that mint to the `mint_new_edition_from_master_edition_via_token` endpoint. This endpoint will create both an immutable Metadata based on the parent Metadata and a special Edition struct based on the parent Master Edition struct. 
+Editions are created by presenting the Master Edition token, along with a new mint that lacks a Metadata account and a token account containing one token from that mint to the `mint_new_edition_from_master_edition_via_token` endpoint. This endpoint will create both an immutable Metadata based on the parent Metadata and a special Edition struct based on the parent Master Edition struct. 
 
 The Edition has the same PDA as a Master Edition to force collision and prevent a user from having a mint with both, `['metaplex', metaplex_program_id, mint_id, 'edition']`.
-
-### Reservation List
-
-A Reservation List is used to preserve ordering among winners during an auction and also external to an auction for a given Master Edition. Let's say you do an auction for your Master Edition and when you kick off the Auction there are 3 Editions already minted and you're auctioning off Editions 4, 5, and 6 to three lucky winners. When the auction is over, what if winner #3 is the first to mint his Edition? Won't he get Edition #4? 
-
-This is where a Reservation List comes in. A Reservation List keeps track of what the current edition was when the reservation list was made, and a list of addresses of who belongs to what edition. When those users come with their printing tokens to mint their Editions, they MUST present their reservation list if it exists. They then get the Edition number denoted on the reservation. Reservation Lists also support users getting more than one Edition.
-
-The Reservation List has a PDA of `['metaplex', metaplex_program_id, mint_id, 'reservation', resource_id]` where resource_id is the resource to which this reservation is tied. Usually in Metaplex this is the AuctionManager. We use it to make sure that the winners of Limited Edition auctions get their limited editions in the order they expect to get them.
-
-Please note that we plan to deprecate this concept in exchange for an authority based system soon as it has become quite confusing. You will grant an authority the right to request x spots in the future, and once those spots are locked in, that authority will be able to delegate editions within that spot range via a signed call to the token metadata program.
 
 ## Concepts
 
 ### Decoration as PDA Extensions
 
-The whole idea of the Token Metadata program is to be a decorator to a Token Mint. Each struct acts as further decoration. The Metadata struct gives a mint a name and a symbol and points to some external URI that can be anything. The Master Edition gives it printing capabilities. The Edition labels it as a child of something. The Reservation List demarcates it as having reserved spots.
+The whole idea of the Token Metadata program is to be a decorator to a Token Mint. Each struct acts as further decoration. The Metadata struct gives a mint a name and a symbol and points to some external URI that can be anything. The Master Edition gives it printing capabilities. The Edition labels it as a child of something. 
 
 This is important to internalize, because it means you as a Rust developer can take it a step further. There is nothing stopping you from building a new contract on top of ours that makes it's own PDAs and and extending this still further. Why not build a CookingRecipes PDA, that has seed `['your-app', your_program_id, mint_id, 'recipes']`? You can require that a Metadata PDA from our contract exists to make a PDA in your program, and then you can further decorate mints on top of our decorations. The idea is to compose mints with further information than they ever had before, and then build clients that can consume that information in new and interesting ways.
 
@@ -676,6 +617,7 @@ pub enum Key {
     PayoutTicketV1,
     SafetyDepositValidationTicketV1,
     AuctionManagerV1,
+		PrizeTrackingTicketV1,
 }
 
 #[repr(C)]
@@ -696,6 +638,9 @@ pub struct AuctionManager {
     pub state: AuctionManagerState,
 
     pub settings: AuctionManagerSettings,
+
+		/// True if this is only winning configs of one item each, used for optimization in saving.
+    pub straight_shot_optimization: bool,
 }
 
 #[repr(C)]
@@ -782,7 +727,7 @@ pub enum NonWinningConstraint {
 #[repr(C)]
 #[derive(Clone, PartialEq, BorshSerialize, BorshDeserialize, Copy, Debug)]
 pub enum WinningConfigType {
-    /// You may be selling your one-of-a-kind NFT for the first time, but not it's accompanying Metadata,
+		/// You may be selling your one-of-a-kind NFT for the first time, but not it's accompanying Metadata,
     /// of which you would like to retain ownership. You get 100% of the payment the first sale, then
     /// royalties forever after.
     ///
@@ -799,8 +744,11 @@ pub enum WinningConfigType {
     /// token itself. The other person will be able to mint authorization tokens and make changes to the
     /// artwork.
     FullRightsTransfer,
-    /// Means you are using authorization tokens to print off editions during the auction
-    Printing,
+    /// Means you are using authorization tokens to print off editions during the auction using
+    /// from a MasterEditionV1
+    PrintingV1,
+    /// Means you are using the MasterEditionV2 to print off editions
+    PrintingV2,
 }
 
 #[repr(C)]
@@ -895,6 +843,15 @@ pub struct SafetyDepositValidationTicket {
     pub address: Pubkey,
 }
 
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize, Copy, Debug)]
+pub struct PrizeTrackingTicket {
+    pub key: Key,
+    pub metadata: Pubkey,
+    pub supply_snapshot: u64,
+    pub expected_redemptions: u64,
+    pub redemptions: u64,
+}
 ```
 
 The instruction set for metaplex can be found here: [https://github.com/metaplex-foundation/metaplex/blob/master/rust/metaplex/program/src/instruction.rs](https://github.com/metaplex-foundation/metaplex/blob/master/rust/token-vault/program/src/instruction.rs)
@@ -915,7 +872,9 @@ It contains embedded within it a separate `state` and `settings` struct. It is s
 
 **Disbursing**: The underlying Auction is over and now the AuctionManager is in the business of disbursing royalties to the auctioneer and creators, prizes and participation NFTs to the winners, and possibly participation NFTs to the non-winners.
 
-**Finished:** All funds and prizes disbursed.
+**Finished:** All funds and prizes disbursed. 
+
+This state is not currently in use as switching to it requires an iteration over prizes to review all items for claimed-ness and this costs CPU that is too precious during the redemption call OR adding new endpoint that is not guaranteed to be called. We will revisit it later to bring it back during a refactoring, for now it is considered a NOOP state.
 
 AuctionManagers always have PDAs of seed `['metaplex', metaplex_program_id, auction_id]` where metaplex_program_id is the id of the Metaplex contract and `auction_id` is the address of the Auction being passed to the AuctionManager.
 
@@ -933,11 +892,7 @@ Notice that AuctionManagerSettings really doesn't contain settings about the auc
 
 I consciously made the decision to keep AuctionManagerSettings identical to what you send up when you initialize AuctionManager. However, other things related to WinningConfigs, WinningConfigItems, etc change as the AuctionManager moves through its motions. These changes are recorded in AuctionManagerState, a kind of mirror object that is instantiated during the `init_auction_manager` action.
 
-Specifically, for each WinningConfigItem, we need to record at the time of creation whether the primary sale had happened for later royalties measurement (because this could be changed during auction) and we need to record whether or not this particular WinningConfigItem has been claimed by the winner yet. 
-
-In ParticipationState we have an escrow holding account for holding all the printing tokens that will be awarded to those who have earned one. How are these tokens made, and how does the Auction Manager know a priori how many to make without knowing how many total bidders there will be? The answer is the `one_time_printing_authorization_mint`. The prize in the participation NFT safety deposit box is actually a single coin from this `one_time_printing_authorization_mint` mint. This token is used by the very first person to attempt to redeem a participation NFT (without their knowledge) by the UI to call `populate_participation_printing_account`, which then goes on to mint X coins from the `printing_mint` via a special `mint_printing_tokens_via_token` CPI call where X is the number of people who are owed participation NFTs. These coins are stored in the `printing_authorization_token_account` for disbursement.
-
-We also keep track of the `primary_sale_happened` boolean from time of creation for the participation NFT here, how much has been moved to `accept_payment` from fixed price charges, and whether or not the participation NFT has been validated (as validation happens separately in a different endpoint.)
+Specifically, for each WinningConfigItem, we need to record at the time of creation whether the primary sale had happened for later royalties measurement (because this could be changed during auction) and we need to record whether or not this particular WinningConfigItem has been claimed by the winner yet. We do similar things for Participation prize in it's own config.
 
 ### BidRedemptionTicket
 
@@ -977,21 +932,27 @@ These are created during FullRightsTransfers. When a FullRightsTransfer is happe
 
 OriginalAuthorityLookups always have PDAs with seed of `['metaplex', auction_id, metadata_key]` where `auction_id` is the address of the Auction and `metadata_key` is the address of the actual Metadata struct.
 
+### PrizeTrackingTicket
+
+Created on a distinct WinningConfigItem basis (ie by WinningConfigType AND mint) across all WinningConfigs, one PrizeTrackingTicket is created to keep track of how many expected redemptions there will be across all winners for a given MasterEdition, and what the supply was when the first person hit redeem, to keep track of the relative edition offsets each person should get relative to winner #1, #2, etc. This is used for redeeming PrintingV2 bids, to ensure winner #1 gets edition #1, and so on.
+
 ### Concepts
 
 ### Types of Token Sales
 
-There are four major types of token sales supported by the Metaplex protocol. Three are covered in the WinningConfigType enum, but this is a bit limiting as it is really only considering sales to *winners*, and leaves out the all-important Participation NFT which is a different kind of sale we will consider separately.
+There are five major types of token sales supported by the Metaplex protocol. Four are covered in the WinningConfigType enum, but this is a bit limiting as it is really only considering sales to *winners*, and leaves out the all-important Participation NFT which is a different kind of sale we will consider separately.
 
-**TokenOnlyTransfer:** Probably the easiest to understand, this is a straight up spl_token_transfer command wrapped in a bunch of Metaplex magic. At the end of the day, the auctioneer still owns the Metadata struct and any other associated PDAs, but someone else now has the physical token in their wallets. These tokens will still show up and work just fine in Phantom and other supported wallet clients because those clients can still look up the Metadata. This is the difference between owning the Metadata and owning the token. For a token that is an Edition, the difference is nominal, as an Edition has zero printing rights. However, for a token that is a MasterEdition, the difference is *substantial*, as the owner of the Metadata can still mint printing tokens and one time authorization tokens (that themselves confer the right to mint printing tokens one time), allowing that owner to mint other Editions.
+**TokenOnlyTransfer:** Probably the easiest to understand, this is a straight up spl_token_transfer command wrapped in a bunch of Metaplex magic. At the end of the day, the auctioneer still owns the Metadata struct and any other associated PDAs, but someone else now has the physical token in their wallets. These tokens will still show up and work just fine in Phantom and other supported wallet clients because those clients can still look up the Metadata. This is the difference between owning the Metadata and owning the token. For a token that is an Edition, the difference is nominal, as an Edition has zero printing rights and is immutable. However, for a token that is a MasterEdition, the difference is *substantial*, as the owner of the Metadata can rename it, change its symbol, it's URI, and creators array.
 
-Note that owning the token itself is the *only* requirement for using the `update_primary_sale_happened_via_token` endpoint on the token metadata program.
+Note that owning the token itself is the *only* requirement for using the `update_primary_sale_happened_via_token` endpoint on the token metadata program *and* for using the `mint_new_edition_from_master_edition_via_token`.
 
 **FullRightsTransfer:** This is a TokenOnlyTransfer, except in addition, the `updateAuthority` on the Metadata struct is set to the new owner as well, so they now have all the rights and privileges associated with the original owner, including the right to mint printing tokens. They can even change the name and URI of your token, so be careful!
 
-**Printing:** In this case, the safety deposit box in question does not contain the actual token, but a token from the token's Master Edition's `printing_mint`. This printing token gives the bearer the authorization to label any mint they have that has a supply of one and decimals zero as a child Edition of that Master Edition one time. This is how Metaplex does a Printing sale. It doesn't grant the winning bidder a Limited Edition NFT. It grants them a printing token, they make their own mint/token account combo, and take the printing token to the token metadata contract and label it themselves.
+**PrintingV1:** This token type represents a deprecated logic flow that will be removed in future editions and can only be accessed if using a MasterEditionV1 type of NFT. In this case, the safety deposit box in question does not contain the actual token, but a token from the token's Master Edition's `printing_mint`. This printing token gives the bearer the authorization to label any mint they have that has a supply of one and decimals zero as a child Edition of that Master Edition one time. This is how Metaplex used to do a Printing sale. It doesn't grant the winning bidder a Limited Edition NFT. It grants them a printing token, they make their own mint/token account combo, and take the printing token to the token metadata contract and label it themselves.
 
-**Participation NFTs:** A special case in pain. So with participation NFTs, if non-winners also get them, you are always dealing with a Master Edition that has an unlimited supply and you don't know a priori how many printing tokens you are going to need. So you can't store printing tokens in your vault - you could never know how many you will need. These are thus handled differently. We instead put a single token - from the `one_time_printing_authorization_mint` - into the Vault, and we have a separate validation endpoint that validates this safety deposit box. When the auction ends, we now know exactly how many people are eligible to receive the prize. We use the `mint_printing_tokens_via_token` endpoint on the token metadata contract to burn this one token and store all the printing tokens we need in the `printing_authorization_token_account` escrow account on ParticipationState. From then on it's very identical to the Printing case.
+**PrintingV2:** The Auction holds the Master Edition in the safety deposit box and uses it via the special `mint_new_edition_from_master_edition_via_vault_proxy` call on Token Metadata to mint editions for auction winners. Once all bids have been redeemed, the auction releases the Master Edition from this escrow via the `withdraw_master_edition` call on Metaplex. This flow makes use of the PrizeTrackingTicket to keep track of the starting supply when the first redemption happens so that as each bidder comes in to redeem, everybody gets the correct offset for their edition relative to the #1 winner.
+
+**Participation NFTs:** Treated just like a PrintingV2, except these are first-come-first-serve as far as edition-numbering goes. This endpoint will also collect payment if the participation config has a fixed price setting or is using the "use last bid" setting to charge the user based on their last bid. Note that charging users for participation NFTs only can happen if they lose. Since the user previously cancelled their bid if they lost, they will net no change or net the difference between their last bid and the fixed price.
 
 ### Royalties
 
@@ -1003,8 +964,6 @@ Now, anybody (permissionless) can cycle through each creator PLUS the auctioneer
 
 Our front end implementation immediately calls the `update_primary_sale_happened` endpoint on token metadata for any token once redeemed for users so that if they re-sell, the `primary_sale_happened` boolean is taken into account in the `empty_payment_account` logic and only the basis points given in `seller_fee_basis_points` goes to the creators instead of the whole pie. The remaining part of the pie goes to the auctioneer doing the reselling.
 
-Note that Limited Edition prints end up with brand new Metadata structs, not the Master Edition's Metadata itself, so selling printing tokens is *not the same as* selling the Master Edition token, and will not end up with the Master Edition's Metadata having it's `primary_sale_happened` flipped.
-
 We don't do weighted items in winning baskets right now - if a winning basket has 3 unique metadata in it right now, it is split three ways, even if one of the metadata is disbursing 3 tokens while the other is disbursing 2. This may come in a future version. Once this cycle is complete, the escrow account is usually empty.
 
 Things get a little complex when participation NFTs come into play. When a participation NFT has a fixed price, it is only paid in the case of non-winners. What they first do is cancel their bid, getting a refund, and then they redeem their participation bid with the `redeem_participation_bid` endpoint. This charges them the fixed price and dumps those funds into the `accept_payment` account. At intervals, someone must come and turn the crank to dump the proceeds to the creators of the Participation NFT from the latest redeemers of that NFT because they will only receive proceeds as people come and redeem and pay for them.
@@ -1013,10 +972,10 @@ Note because our front end implementation chooses to use SOL instead of a generi
 
 ### Validation
 
-Just because you provide a vault to an AuctionManager and an AuctionManagerSettings declaring this vault is filled with wonderful prizes *does not* believe that Metaplex will believe you. For every safety deposit box indexed in a WinningConfigItem, there must be a call to `validate_safety_deposit_box` after initiation where the safety deposit box is provided for inspection to the Metaplex contract so that it can verify that there are enough tokens, and of the right type, to pay off all winners in the auction. There is a similar validation for Participation NFTs at `validate_participation`.
+Just because you provide a vault to an AuctionManager and an AuctionManagerSettings declaring this vault is filled with wonderful prizes *does not* believe that Metaplex will believe you. For every safety deposit box indexed in a WinningConfigItem, there must be a call to `validate_safety_deposit_box` after initiation where the safety deposit box is provided for inspection to the Metaplex contract so that it can verify that there are enough tokens, and of the right type, to pay off all winners in the auction. 
 
 Given how irritating this process is, we may in the future merge token-vault with metaplex, or simply copy over the parts of it that are relevant, leaving token-vault out for those interested in experimenting with fractionalization. 
 
 ### Unwon Items
 
-Any items unwon in an Auction can be returned to the Auction Manager by calling the redeem_unused_winning_config_items_as_auctioneer end point for each item. It acts as a proxy, calling the redeem_bid or redeem_full_rights_transfer_bid depending on how it is parameterized, and passing in a winning_index that overrides the actual winning_index that would be detected for the bidder_info key being passed in (which is the auctioneer's in this case.) In this way the auctioneer acts not as a winning bidder but as a generic "non-bidder" who empties each prize that has no bidder using the same redemption flow.
+Any Token Only Transfer item, or MasterEditionV1/MasterEditionV2 stored for a Full Rights Transfer unwon in an Auction can be returned to the Auction Manager by calling the  `redeem_unused_winning_config_items_as_auctioneer` end point. It acts as a proxy, calling the `redeem_bid` or `redeem_full_rights_transfer_bid` depending on how it is parameterized, and passing in a winning_index that overrides the actual winning_index that would be detected for the bidder_info key being passed in (which is the auctioneer's in this case.) In this way the auctioneer acts not as a winning bidder but as a generic "non-bidder" who empties each prize that has no bidder using the same redemption flow. For MasterEditionV2s stored for PrintingV2 or Participation prizes, these can be withdrawn using `withdraw_edition`.

@@ -10,7 +10,7 @@ import { TOKEN_PROGRAM_ID } from '../utils/ids';
 import BufferLayout from 'buffer-layout';
 
 export interface TokenAccount {
-  pubkey: PublicKey;
+  pubkey: string;
   account: AccountInfo<Buffer>;
   info: TokenAccountInfo;
 }
@@ -62,7 +62,7 @@ export function approve(
   const tokenProgram = TOKEN_PROGRAM_ID;
 
   const transferAuthority = existingTransferAuthority || Keypair.generate();
-  const delegateKey = delegate ?? transferAuthority.publicKey;
+  //const delegateKey = delegate ?? transferAuthority.publicKey;
 
   instructions.push(
     Token.createApproveInstruction(

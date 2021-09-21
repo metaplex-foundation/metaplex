@@ -1,9 +1,4 @@
-import {
-  MintLayout,
-  AccountLayout,
-  Token,
-  AuthorityType,
-} from '@solana/spl-token';
+import { MintLayout, AccountLayout, Token } from '@solana/spl-token';
 import {
   Connection,
   PublicKey,
@@ -11,22 +6,23 @@ import {
   Account,
   SystemProgram,
 } from '@solana/web3.js';
+import { WalletSigner } from '../contexts';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export const mintNFT = async (
   connection: Connection,
-  wallet: {
-    publicKey: PublicKey;
-    signTransaction: (tx: Transaction) => Transaction;
-  },
+  wallet: WalletSigner,
   // SOL account
   owner: PublicKey,
 ) => {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const TOKEN_PROGRAM_ID = new PublicKey(
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   );
-  const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
-    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-  );
+  //const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
+  //  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+  //);
   const mintAccount = new Account();
   const tokenAccount = new Account();
 
@@ -36,7 +32,7 @@ export const mintNFT = async (
   );
 
   const accountRent = await connection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
+    AccountLayout.span,
   );
 
   let transaction = new Transaction();
@@ -109,7 +105,7 @@ export const mintNFT = async (
   }
   transaction = await wallet.signTransaction(transaction);
   const rawTransaction = transaction.serialize();
-  let options = {
+  const options = {
     skipPreflight: true,
     commitment: 'singleGossip',
   };

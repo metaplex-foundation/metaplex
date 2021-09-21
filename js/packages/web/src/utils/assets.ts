@@ -1,8 +1,4 @@
-import {
-  getTokenName,
-  getVerboseTokenName,
-  KnownTokenMap,
-} from '@oyster/common';
+import { useLocalStorage } from '@oyster/common';
 import { TokenInfo } from '@solana/spl-token-registry';
 
 export const LAMPORT_MULTIPLIER = 10 ** 9;
@@ -13,6 +9,7 @@ export const filterModalSolTokens = (tokens: TokenInfo[]) => {
 };
 
 export async function getAssetCostToStore(files: File[]) {
+  const localStorage = useLocalStorage();
   const totalBytes = files.reduce((sum, f) => (sum += f.size), 0);
   console.log('Total bytes', totalBytes);
   const txnFeeInWinstons = parseInt(
@@ -51,8 +48,16 @@ export async function getAssetCostToStore(files: File[]) {
       expiry: Date.now() + 5 * 60 * 1000,
     };
 
-    if (conversionRates.value.solana)
-      localStorage.setItem('conversionRates', JSON.stringify(conversionRates));
+    if (conversionRates.value.solana) {
+      try {
+        localStorage.setItem(
+          'conversionRates',
+          JSON.stringify(conversionRates),
+        );
+      } catch {
+        // ignore
+      }
+    }
   }
 
   // To figure out how many lamports are required, multiply ar byte cost by this number

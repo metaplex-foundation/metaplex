@@ -1,7 +1,8 @@
-
 * {
-  font-family: "GraphikWeb";
+  font-family: "Luminari", "GraphikWeb";
 }
+
+
 
 .ant-layout-content {
   overflow: auto !important;
@@ -14,6 +15,7 @@
   text-align: left;
   display: flex;
   flex-direction: column;
+  background-color: rgba(0, 0, 0, 0.6);
 
   h2 {
     font-style: normal;
@@ -22,28 +24,33 @@
     line-height: 40px;
     display: flex;
     align-items: center;
-
     color: #FFFFFF;
+    background-color: rgba(0, 0, 0, 0.6);
   }
 
   p {
-    color: #6d6d6d;
+    color: #FFFFFF;
+    font-family: "Times New Roman";
     font-style: normal;
     font-size: 20px;
+    background-color: rgba(0, 0, 0, 0.6);
   }
 }
 
 .ant-row.content-action > span {
   width: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .art-content {
   max-width: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .content-action-stretch {
-  :first-child{
+  :first-child {
     width: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -62,23 +69,22 @@
   height: 80px;
   width: 450px;
   border-radius: 8px;
-  background-color: #1d1d1d;
   border-width: 0px;
   margin-bottom: 20px;
   text-align: left;
-
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
 
-  background: linear-gradient(270deg, #616774 7.29%, #403F4C 100%);
+  background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
   border-radius: 8px;
 }
 
 .type-btn:hover {
-  background: linear-gradient(270deg, #616774 7.29%, #403F4C 100%) !important;
+  background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%) !important;
 }
 .type-btn:disabled {
   pointer-events: none;
@@ -86,14 +92,13 @@
 
 .type-btn-description {
   color: #aaa;
-  font-size: 0.7rem;
+  font: "Times New Roman";
+  font-size: 1rem;
 }
 
 .action-btn {
   width: 100%;
   margin-bottom: 20px;
-
-
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -101,7 +106,7 @@
   padding: 20px 10px;
 
   /* button/primary/default */
-  background: linear-gradient(180deg, #768BF9 0%, #5870EE 100%);
+  background: linear-gradient(180deg, #768bf9 0%, #5870ee 100%);
   border-radius: 8px;
   height: 58px;
 
@@ -119,6 +124,7 @@
 
   /* text/default */
   color: #fff;
+
 }
 
 .connector {
@@ -127,13 +133,19 @@
   border-color: #fff;
 }
 
-.connector:hover, .connector:focus {
+.connector:hover,
+.connector:focus {
   background: #fff;
   border-color: #141414;
   color: #141414;
 }
 
-.ant-btn-primary:hover, .ant-btn-primary:focus {
+.ant-badge-count {
+  color: black;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
   color: #5969d4;
   background: transparent;
   border-color: #5969d4;
@@ -165,7 +177,7 @@
     font-weight: 600;
     font-size: 36px;
     line-height: 44px;
-    color: #FFFFFF;
+    color: #ffffff;
     flex: none;
     order: 0;
     flex-grow: 0;
@@ -182,25 +194,26 @@
   .field-title {
     text-align: left;
     font-style: normal;
-    font-weight: normal;
-    font-size: 18px;
+    font-weight: bold;
+    font-size: 22pt;
     line-height: 22px;
     display: flex;
     align-items: center;
-    color: rgba(255, 255, 255, 0.7);
-
+    color: rgba(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 12px;
     flex: none;
     order: 0;
     align-self: stretch;
     flex-grow: 0;
-    margin-bottom: 12px;
   }
 
   .field-info {
     text-align: left;
-
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 12px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255);
+    font-size: 14pt;
+    font-family: "Times New Roman";
   }
 
   margin-bottom: 30px;
@@ -215,8 +228,8 @@
 }
 
 .selected-card {
-  border-width:  3px;
-  border-color: #5870EE !important;
+  border-width: 3px;
+  border-color: #5870ee !important;
   border-style: solid;
 }
 
@@ -240,7 +253,7 @@
 .waiting-title {
   font-weight: 600;
   font-size: 2rem;
-  color: #FFFFFF;
+  color: #ffffff;
   text-align: center;
 }
 
@@ -265,7 +278,7 @@
   align-items: center;
 
   margin: 5px auto;
-  background: linear-gradient(270deg, #616774 7.29%, #403F4C 100%);
+  background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
   border-radius: 8px;
 
   font-size: 1rem;
@@ -275,7 +288,7 @@
 .particle {
   position: absolute;
   opacity: 0.9;
-  background: linear-gradient(180deg, #D329FC 0%, #8F6DDE 49.48%, #19E6AD 100%);
+  background: linear-gradient(180deg, #d329fc 0%, #8f6dde 49.48%, #19e6ad 100%);
 }
 
 .slider-elem {
@@ -287,7 +300,7 @@
 }
 
 .ant-slider-step {
-  background: linear-gradient(270deg, #616774 7.29%, #403F4C 100%);
+  background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
   border-radius: 4px;
   height: 10px;
 }

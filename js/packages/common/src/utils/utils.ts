@@ -6,6 +6,7 @@ import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { WAD, ZERO } from '../constants';
 import { TokenInfo } from '@solana/spl-token-registry';
+import { useLocalStorage } from './useLocalStorage';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -16,6 +17,7 @@ export const formatPriceNumber = new Intl.NumberFormat('en-US', {
 });
 
 export function useLocalStorageState(key: string, defaultState?: string) {
+  const localStorage = useLocalStorage();
   const [state, setState] = useState(() => {
     // NOTE: Not sure if this is ok
     const storedState = localStorage.getItem(key);
@@ -35,7 +37,11 @@ export function useLocalStorageState(key: string, defaultState?: string) {
       if (newState === null) {
         localStorage.removeItem(key);
       } else {
-        localStorage.setItem(key, JSON.stringify(newState));
+        try {
+          localStorage.setItem(key, JSON.stringify(newState));
+        } catch {
+          // ignore
+        }
       }
     },
     [state, key],
@@ -48,31 +54,33 @@ export const findProgramAddress = async (
   seeds: (Buffer | Uint8Array)[],
   programId: PublicKey,
 ) => {
+  const localStorage = useLocalStorage();
   const key =
     'pda-' +
     seeds.reduce((agg, item) => agg + item.toString('hex'), '') +
     programId.toString();
-  let cached = localStorage.getItem(key);
+  const cached = localStorage.getItem(key);
   if (cached) {
     const value = JSON.parse(cached);
 
-    return [new PublicKey(value.key), parseInt(value.nonce)] as [
-      PublicKey,
-      number,
-    ];
+    return [value.key, parseInt(value.nonce)] as [string, number];
   }
 
   const result = await PublicKey.findProgramAddress(seeds, programId);
 
-  localStorage.setItem(
-    key,
-    JSON.stringify({
-      key: result[0].toBase58(),
-      nonce: result[1],
-    }),
-  );
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        key: result[0].toBase58(),
+        nonce: result[1],
+      }),
+    );
+  } catch {
+    // ignore
+  }
 
-  return result;
+  return [result[0].toBase58(), result[1]] as [string, number];
 };
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
@@ -202,14 +210,14 @@ export const tryParseKey = (key: string): PublicKey | null => {
   }
 };
 
-var SI_SYMBOL = ['', 'k', 'M', 'G', 'T', 'P', 'E'];
+const SI_SYMBOL = ['', 'k', 'M', 'G', 'T', 'P', 'E'] as const;
 
 const abbreviateNumber = (number: number, precision: number) => {
-  let tier = (Math.log10(number) / 3) | 0;
+  const tier = (Math.log10(number) / 3) | 0;
   let scaled = number;
-  let suffix = SI_SYMBOL[tier];
+  const suffix = SI_SYMBOL[tier];
   if (tier !== 0) {
-    let scale = Math.pow(10, tier * 3);
+    const scale = Math.pow(10, tier * 3);
     scaled = number / scale;
   }
 
@@ -282,7 +290,7 @@ export function convert(
     typeof account === 'number' ? account : account.info.amount?.toNumber();
 
   const precision = Math.pow(10, mint?.decimals || 0);
-  let result = (amount / precision) * rate;
+  const result = (amount / precision) * rate;
 
   return result;
 }

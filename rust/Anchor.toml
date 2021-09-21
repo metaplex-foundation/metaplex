@@ -1,0 +1,15 @@
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[programs.mainnet]
+nft_candy_machine = "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
+
+[scripts]
+test = "ts-mocha -p ./tsconfig.json -t 1000000 test/*.ts"
+
+[workspace]
+members = ["nft-candy-machine"]

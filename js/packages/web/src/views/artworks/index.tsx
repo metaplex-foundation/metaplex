@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
-import { useWallet } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 const { TabPane } = Tabs;
 
@@ -19,9 +19,9 @@ export enum ArtworkViewState {
 }
 
 export const ArtworksView = () => {
-  const { connected, wallet } = useWallet();
+  const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
-  const createdMetadata = useCreatorArts(wallet?.publicKey?.toBase58() || '');
+  const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
@@ -32,14 +32,14 @@ export const ArtworksView = () => {
   };
 
   const items =
-    (activeKey === ArtworkViewState.Owned
+    activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
-      : (activeKey === ArtworkViewState.Created 
-        ? createdMetadata 
-        : metadata));
+      : activeKey === ArtworkViewState.Created
+      ? createdMetadata
+      : metadata;
 
   useEffect(() => {
-    if(connected) {
+    if (connected) {
       setActiveKey(ArtworkViewState.Owned);
     } else {
       setActiveKey(ArtworkViewState.Metaplex);
@@ -54,7 +54,7 @@ export const ArtworksView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-            const id = m.pubkey.toBase58();
+            const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
                 <ArtCard
@@ -73,7 +73,7 @@ export const ArtworksView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
+      <Content style={{ display: 'flex', flexWrap: 'wrap', objectFit: 'contain' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
           <Row>
             <Tabs

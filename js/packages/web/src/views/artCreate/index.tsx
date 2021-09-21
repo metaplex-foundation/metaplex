@@ -13,17 +13,17 @@ import {
   InputNumber,
   Form,
   Typography,
+  Space,
 } from 'antd';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
-import './../styles.less';
 import { mintNFT } from '../../actions';
 import {
   MAX_METADATA_LEN,
   useConnection,
-  useWallet,
   IMetadataExtension,
+  Attribute,
   MetadataCategory,
   useConnectionConfig,
   Creator,
@@ -31,14 +31,17 @@ import {
   MetaplexModal,
   MetaplexOverlay,
   MetadataFile,
+  StringPublicKey,
 } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -47,7 +50,7 @@ const { Text } = Typography;
 export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
-  const { wallet } = useWallet();
+  const wallet = useWallet();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
@@ -55,9 +58,8 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [progress, setProgress] = useState<number>(0);
-  const [nft, setNft] = useState<{ metadataAccount: PublicKey } | undefined>(
-    undefined,
-  );
+  const [nft, setNft] =
+    useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
@@ -66,6 +68,7 @@ export const ArtCreateView = () => {
     external_url: '',
     image: '',
     animation_url: undefined,
+    attributes: undefined,
     seller_fee_basis_points: 0,
     creators: [],
     properties: {
@@ -97,6 +100,7 @@ export const ArtCreateView = () => {
       sellerFeeBasisPoints: attributes.seller_fee_basis_points,
       image: attributes.image,
       animation_url: attributes.animation_url,
+      attributes: attributes.attributes,
       external_url: attributes.external_url,
       properties: {
         files: attributes.properties.files,
@@ -214,33 +218,7 @@ export const ArtCreateView = () => {
   );
 };
 
-const CategoryStep = (props: {
-  confirm: (category: MetadataCategory) => void;
-}) => {
-  const { width } = useWindowDimensions();
-  return (
-    <>
-      <Row className="call-to-action">
-        <h2>Create a new item</h2>
-        <p>
-          First time creating on Metaplex?{' '}
-          <a href="#">Read our creators’ guide.</a>
-        </p>
-      </Row>
-      <Row justify={width < 768 ? 'center' : 'start'}>
-        <Col>
-          <Row>
-            <Button
-              className="type-btn"
-              size="large"
-              onClick={() => props.confirm(MetadataCategory.Image)}
-            >
-              <div>
-                <div>Image</div>
-                <div className="type-btn-description">JPG, PNG, GIF</div>
-              </div>
-            </Button>
-          </Row>
+/* Removed buttons to upload video and audio.
           <Row>
             <Button
               className="type-btn"
@@ -265,6 +243,36 @@ const CategoryStep = (props: {
               </div>
             </Button>
           </Row>
+          */
+
+
+const CategoryStep = (props: {
+  confirm: (category: MetadataCategory) => void;
+}) => {
+  const { width } = useWindowDimensions();
+  return (
+    <>
+      <Row className="call-to-action">
+        <h2>Create a new item</h2>
+        <p>
+          First time creating on Metaplex?{' '}
+          <a href="https://docs.google.com/document/d/1RbJQTOWp1WL6t5hkB4Ib7uSTAAlmjg6Uw-2-_EKrJcs/edit">Read our creators’ guide.</a>
+        </p>
+      </Row>
+      <Row justify={width < 768 ? 'center' : 'start'}>
+        <Col>
+          <Row>
+            <Button
+              className="type-btn"
+              size="large"
+              onClick={() => props.confirm(MetadataCategory.Image)}
+            >
+              <div>
+                <div>Image</div>
+                <div className="type-btn-description">JPG, PNG, GIF</div>
+              </div>
+            </Button>
+          </Row>
           <Row>
             <Button
               className="type-btn"
@@ -274,6 +282,18 @@ const CategoryStep = (props: {
               <div>
                 <div>AR/3D</div>
                 <div className="type-btn-description">GLB</div>
+              </div>
+            </Button>
+          </Row>
+          <Row>
+            <Button
+              className="type-btn"
+              size="large"
+              onClick={() => props.confirm(MetadataCategory.HTML)}
+            >
+              <div>
+                <div>HTML Asset</div>
+                <div className="type-btn-description">HTML</div>
               </div>
             </Button>
           </Row>
@@ -319,6 +339,8 @@ const UploadStep = (props: {
         return 'Upload your video creation (MP4, MOV, GLB)';
       case MetadataCategory.VR:
         return 'Upload your AR/VR creation (GLB)';
+      case MetadataCategory.HTML:
+        return 'Upload your HTML File (HTML)';
       default:
         return 'Please go back and choose a category';
     }
@@ -334,6 +356,8 @@ const UploadStep = (props: {
         return '.mp4,.mov,.webm';
       case MetadataCategory.VR:
         return '.glb';
+      case MetadataCategory.HTML:
+        return '.html';
       default:
         return '';
     }
@@ -352,9 +376,9 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-        <h3>Upload a cover image (PNG, JPG, GIF)</h3>
+        <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
-          accept=".png,.jpg,.gif,.mp4"
+          accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20 }}
           multiple={false}
           customRequest={info => {
@@ -369,7 +393,7 @@ const UploadStep = (props: {
         >
           <div className="ant-upload-drag-icon">
             <h3 style={{ fontWeight: 700 }}>
-              Upload your cover image (PNG, JPG, GIF)
+              Upload your cover image (PNG, JPG, GIF, SVG)
             </h3>
           </div>
           <p className="ant-upload-text">Drag and drop, or click to browse</p>
@@ -473,7 +497,7 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: mainFile && mainFile.name,
+              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
             });
             props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
             props.confirm();
@@ -548,6 +572,7 @@ const InfoStep = (props: {
     props.files,
     props.attributes,
   );
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setRoyalties(
@@ -562,8 +587,7 @@ const InfoStep = (props: {
       <Row className="call-to-action">
         <h2>Describe your item</h2>
         <p>
-          Provide detailed description of your creative process to engage with
-          your audience.
+          Give detailed specifications on the powers of the item. There is no character limit, but line breaks will not register.
         </p>
       </Row>
       <Row className="content-action" justify="space-around">
@@ -585,7 +609,7 @@ const InfoStep = (props: {
             <Input
               autoFocus
               className="input"
-              placeholder="Max 50 characters"
+              placeholder="Max 32 characters"
               allowClear
               value={props.attributes.name}
               onChange={info =>
@@ -616,7 +640,7 @@ const InfoStep = (props: {
             <span className="field-title">Description</span>
             <Input.TextArea
               className="input textarea"
-              placeholder="Max 500 characters"
+              placeholder="WARNING: Line breaks will not register!"
               value={props.attributes.description}
               onChange={info =>
                 props.setAttributes({
@@ -643,6 +667,54 @@ const InfoStep = (props: {
               className="royalties-input"
             />
           </label>
+          <label className="action-field">
+            <span className="field-title">Attributes</span>
+          </label>
+          <Form name="dynamic_attributes" form={form} autoComplete="off">
+            <Form.List name="attributes">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, fieldKey }) => (
+                    <Space key={key} align="baseline">
+                      <Form.Item
+                        name={[name, 'trait_type']}
+                        fieldKey={[fieldKey, 'trait_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="trait_type (Optional)" />
+                      </Form.Item>
+                      <Form.Item
+                        name={[name, 'value']}
+                        fieldKey={[fieldKey, 'value']}
+                        rules={[{ required: true, message: 'Missing value' }]}
+                        hasFeedback
+                      >
+                        <Input placeholder="value" />
+                      </Form.Item>
+                      <Form.Item
+                        name={[name, 'display_type']}
+                        fieldKey={[fieldKey, 'display_type']}
+                        hasFeedback
+                      >
+                        <Input placeholder="display_type (Optional)" />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
+                      Add attribute
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </Form>
         </Col>
       </Row>
 
@@ -651,11 +723,23 @@ const InfoStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-            });
+            form.validateFields().then(values => {
+              const nftAttributes = values.attributes;
+              // value is number if possible
+              for (const nftAttribute of nftAttributes || []) {
+                const newValue = Number(nftAttribute.value);
+                if (!isNaN(newValue)) {
+                  nftAttribute.value = newValue;
+                }
+              }
+              console.log('Adding NFT attributes:', nftAttributes);
+              props.setAttributes({
+                ...props.attributes,
+                attributes: nftAttributes,
+              });
 
-            props.confirm();
+              props.confirm();
+            });
           }}
           className="action-btn"
         >
@@ -698,9 +782,8 @@ const RoyaltiesSplitter = (props: {
           };
 
           return (
-            <Col span={24}>
+            <Col span={24} key={idx}>
               <Row
-                key={idx}
                 align="middle"
                 gutter={[0, 16]}
                 style={{ margin: '5px auto' }}
@@ -744,8 +827,7 @@ const RoyaltiesStep = (props: {
   confirm: () => void;
 }) => {
   // const file = props.attributes.image;
-  const { wallet, connected } = useWallet();
-
+  const { publicKey, connected } = useWallet();
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [fixedCreators, setFixedCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
@@ -754,8 +836,8 @@ const RoyaltiesStep = (props: {
   const [isShowErrors, setIsShowErrors] = useState<boolean>(false);
 
   useEffect(() => {
-    if (wallet?.publicKey) {
-      const key = wallet.publicKey.toBase58();
+    if (publicKey) {
+      const key = publicKey.toBase58();
       setFixedCreators([
         {
           key,
@@ -900,8 +982,8 @@ const RoyaltiesStep = (props: {
             ].map(
               c =>
                 new Creator({
-                  address: new PublicKey(c.value),
-                  verified: c.value === wallet?.publicKey?.toBase58(),
+                  address: c.value,
+                  verified: c.value === publicKey?.toBase58(),
                   share:
                     royalties.find(r => r.creatorKey === c.value)?.amount ||
                     Math.round(100 / royalties.length),
@@ -1063,7 +1145,7 @@ const WaitingStep = (props: {
 
 const Congrats = (props: {
   nft?: {
-    metadataAccount: PublicKey;
+    metadataAccount: StringPublicKey;
   };
 }) => {
   const history = useHistory();
@@ -1073,7 +1155,7 @@ const Congrats = (props: {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
       url: `${
         window.location.origin
-      }/#/art/${props.nft?.metadataAccount.toString()}`,
+        }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',

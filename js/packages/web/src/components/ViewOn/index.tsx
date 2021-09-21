@@ -1,11 +1,7 @@
 import React from 'react';
 import { Col, Button } from 'antd';
-import {
-  useArt,
-} from '../../hooks';
-import {
-  useConnectionConfig,
-} from '@oyster/common';
+import { useArt } from '../../hooks';
+import { useConnectionConfig } from '@oyster/common';
 
 export const ViewOn = ({ id }: { id: string }) => {
   const { env } = useConnectionConfig();
@@ -14,7 +10,7 @@ export const ViewOn = ({ id }: { id: string }) => {
   return (
     <>
       <Col>
-        <h6>View on</h6>
+        <h6>View on:</h6>
         <div style={{ display: 'flex' }}>
           <Button
             className="tag"

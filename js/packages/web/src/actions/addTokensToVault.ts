@@ -1,28 +1,33 @@
-import {
-  Keypair,
-  Connection,
-  PublicKey,
-  TransactionInstruction,
-} from '@solana/web3.js';
+import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   utils,
-  actions,
-  models,
   findProgramAddress,
   MetadataKey,
+  StringPublicKey,
+  toPublicKey,
+  WalletSigner,
 } from '@oyster/common';
+import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
+import { approve } from '@oyster/common/dist/lib/models/account';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+import {
+  addTokenToInactiveVault,
+  VAULT_PREFIX,
+} from '@oyster/common/dist/lib/actions/vault';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { SafetyDepositDraft } from './createAuctionManager';
-const { createTokenAccount, addTokenToInactiveVault, VAULT_PREFIX } = actions;
-const { approve } = models;
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
-export interface SafetyDepositInstructionConfig {
-  tokenAccount?: PublicKey;
-  tokenMint: PublicKey;
-  amount: BN;
+export interface SafetyDepositInstructionTemplate {
+  box: {
+    tokenAccount?: StringPublicKey;
+    tokenMint: StringPublicKey;
+    amount: BN;
+  };
   draft: SafetyDepositDraft;
+  config: SafetyDepositConfig;
 }
 
 const BATCH_SIZE = 1;
@@ -30,14 +35,16 @@ const BATCH_SIZE = 1;
 // the vault for use. It issues a series of transaction instructions and signers for the sendTransactions batch.
 export async function addTokensToVault(
   connection: Connection,
-  wallet: any,
-  vault: PublicKey,
-  nfts: SafetyDepositInstructionConfig[],
+  wallet: WalletSigner,
+  vault: StringPublicKey,
+  nfts: SafetyDepositInstructionTemplate[],
 ): Promise<{
   instructions: Array<TransactionInstruction[]>;
   signers: Array<Keypair[]>;
-  safetyDepositTokenStores: PublicKey[];
+  safetyDepositTokenStores: StringPublicKey[];
 }> {
+  if (!wallet.publicKey) throw new WalletNotConnectedError();
+
   const PROGRAM_IDS = utils.programIds();
 
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
@@ -48,40 +55,40 @@ export async function addTokensToVault(
     await findProgramAddress(
       [
         Buffer.from(VAULT_PREFIX),
-        PROGRAM_IDS.vault.toBuffer(),
-        vault.toBuffer(),
+        toPublicKey(PROGRAM_IDS.vault).toBuffer(),
+        toPublicKey(vault).toBuffer(),
       ],
-      PROGRAM_IDS.vault,
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
   let batchCounter = 0;
 
-  let signers: Array<Keypair[]> = [];
-  let instructions: Array<TransactionInstruction[]> = [];
-  let newStores: PublicKey[] = [];
+  const signers: Array<Keypair[]> = [];
+  const instructions: Array<TransactionInstruction[]> = [];
+  const newStores: StringPublicKey[] = [];
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
   for (let i = 0; i < nfts.length; i++) {
-    let nft = nfts[i];
-    if (nft.tokenAccount) {
+    const nft = nfts[i];
+    if (nft.box.tokenAccount) {
       const newStoreAccount = createTokenAccount(
         currInstructions,
         wallet.publicKey,
         accountRentExempt,
-        nft.tokenMint,
-        vaultAuthority,
+        toPublicKey(nft.box.tokenMint),
+        toPublicKey(vaultAuthority),
         currSigners,
       );
-      newStores.push(newStoreAccount);
+      newStores.push(newStoreAccount.toBase58());
 
       const transferAuthority = approve(
         currInstructions,
         [],
-        nft.tokenAccount,
+        toPublicKey(nft.box.tokenAccount),
         wallet.publicKey,
-        nft.amount.toNumber(),
+        nft.box.amount.toNumber(),
       );
 
       currSigners.push(transferAuthority);
@@ -90,14 +97,14 @@ export async function addTokensToVault(
         nft.draft.masterEdition &&
           nft.draft.masterEdition.info.key === MetadataKey.MasterEditionV2
           ? new BN(1)
-          : nft.amount,
-        nft.tokenMint,
-        nft.tokenAccount,
-        newStoreAccount,
+          : nft.box.amount,
+        nft.box.tokenMint,
+        nft.box.tokenAccount,
+        newStoreAccount.toBase58(),
         vault,
-        wallet.publicKey,
-        wallet.publicKey,
-        transferAuthority.publicKey,
+        wallet.publicKey.toBase58(),
+        wallet.publicKey.toBase58(),
+        transferAuthority.publicKey.toBase58(),
         currInstructions,
       );
 

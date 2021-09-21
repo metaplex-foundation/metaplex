@@ -1,3 +1,4 @@
+
 {
   "EDshWM3jBy2YUszMiFLAFLx3WkbtqR9An7JZzvg22R1P": {
     "name": "Deployer Admin",
@@ -36,6 +37,29 @@
   },
   "5c16Jj148KW5eerddKfSCrXH5UqUHpw3FvnKKhVD2SV": {
     "name": "Ghost Outfit",
+    "image": "https://magicitems.org/img/ghosty.gif",
+    "description": "Ghost Outfit founded the Magic Items Marketplace, and never considered themselves much of an artist. The ghost of Ghost Outfit roams the marketplace from room to room, haunting the merchants that would try to scam unwitting travelers with shitty items.",
+    "background": ""
+  },
+  "H9T4jRTnxJGV5Mv8GiqVbSujkFuDh3hvx2QfYyGjLoiv": {
+    "name": "Momo",
+    "image": "https://magicitems.org/img/deziflies.gif",
+    "description": "Momo is the mother of the child of Ghost Outfit. She watches over the marketplace with a kind and attentive eye.",
+    "background": ""
+  },
+  "4QxKv7Hx79kRJwGm2n5Rn5aNuxwmbx3yadAue5S9LSZX": {
+    "name": "A-Mad-Hollow",
+    "image": "https://magicitems.org/img/madhollow.gif",
+    "description": "",
+    "background": ""
+  },
+  "2dqe4XjHnotsiSx3JRWEmJBdgaeyYEePZQZkpMGLeZco": {
+    "name": "AstroZombie",
+    "image": "https://magicitems.org/img/misfits.gif",
+    "description": "Fuck You",
+    "background": ""
+  },
+=======
     "image": "https://pbs.twimg.com/profile_images/1393353972371623938/ZMWvvptg_400x400.jpg",
     "description": "",
     "background": ""
@@ -45,6 +69,7 @@
     "image": "https://pbs.twimg.com/profile_images/1299400345144049665/sPxnVXa7_400x400.jpg",
     "description": "Account used by Solana to mint official NFTs.",
     "background": ""
-
   }
 }
+
+
