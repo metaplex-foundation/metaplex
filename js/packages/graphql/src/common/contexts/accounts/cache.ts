@@ -1,9 +1,10 @@
-import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { MintInfo } from "@solana/spl-token";
 import { TokenAccount } from "../../models";
 import { EventEmitter } from "../../utils/eventEmitter";
 import { ParsedAccountBase, AccountParser } from "./types";
 import { deserializeMint } from "./deserialize";
+import { AccountInfoOwnerString } from "../../../common/utils/types";
 
 export const genericCache = new Map<string, ParsedAccountBase>();
 const mintCache = new Map<string, MintInfo>();
@@ -54,8 +55,11 @@ export const cache = {
       if (!data) {
         throw new Error("Account not found");
       }
-
-      return cache.add(id, data, parser);
+      const item: AccountInfoOwnerString<Buffer> = {
+        ...data,
+        owner: data.owner.toBase58(),
+      };
+      return cache.add(id, item, parser);
     }) as Promise<TokenAccount>;
     pendingCalls.set(address, query as any);
 
@@ -63,7 +67,7 @@ export const cache = {
   },
   add: (
     id: PublicKey | string,
-    obj: AccountInfo<Buffer>,
+    obj: AccountInfoOwnerString<Buffer>,
     parser?: AccountParser,
     isActive?: boolean | undefined | ((parsed: any) => boolean)
   ) => {
@@ -174,7 +178,7 @@ export const cache = {
 
     return mintCache.get(key);
   },
-  addMint: (pubKey: PublicKey, obj: AccountInfo<Buffer>) => {
+  addMint: (pubKey: PublicKey, obj: AccountInfoOwnerString<Buffer>) => {
     const mint = deserializeMint(obj.data);
     const id = pubKey.toBase58();
     mintCache.set(id, mint);

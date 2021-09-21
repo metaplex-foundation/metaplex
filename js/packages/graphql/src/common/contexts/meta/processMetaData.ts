@@ -1,4 +1,3 @@
-import { AccountInfo } from "@solana/web3.js";
 import { ProcessAccountsFunc } from "./types";
 import { isValidHttpUrl } from "../../utils/isValidHttpUrl";
 import {
@@ -12,7 +11,7 @@ import {
   MetadataKey,
 } from "../../actions";
 import { ParsedAccount } from "../accounts/types";
-import { METADATA_PROGRAM_ID, pubkeyToString } from "../../utils";
+import { METADATA_PROGRAM_ID, AccountInfoOwnerString } from "../../utils";
 
 export const processMetaData: ProcessAccountsFunc = (
   { account, pubkey },
@@ -80,16 +79,17 @@ export const processMetaData: ProcessAccountsFunc = (
   }
 };
 
-const isMetadataAccount = (account: AccountInfo<Buffer>) =>
-  pubkeyToString(account.owner) === METADATA_PROGRAM_ID;
+const isMetadataAccount = (account: AccountInfoOwnerString<Buffer>) => {
+  return account.owner === METADATA_PROGRAM_ID;
+};
 
-const isMetadataV1Account = (account: AccountInfo<Buffer>) =>
+const isMetadataV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetadataKey.MetadataV1;
 
-const isEditionV1Account = (account: AccountInfo<Buffer>) =>
+const isEditionV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetadataKey.EditionV1;
 
-const isMasterEditionAccount = (account: AccountInfo<Buffer>) =>
+const isMasterEditionAccount = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetadataKey.MasterEditionV1 ||
   account.data[0] === MetadataKey.MasterEditionV2;
 

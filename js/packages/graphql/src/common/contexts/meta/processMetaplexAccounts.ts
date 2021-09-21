@@ -1,4 +1,3 @@
-import { AccountInfo } from "@solana/web3.js";
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -19,7 +18,7 @@ import {
   SafetyDepositConfig,
 } from "../../models/metaplex";
 import { ProcessAccountsFunc } from "./types";
-import { METAPLEX_ID, pubkeyToString } from "../../utils";
+import { METAPLEX_ID, AccountInfoOwnerString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
@@ -124,32 +123,37 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
   }
 };
 
-const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  pubkeyToString(account.owner) === METAPLEX_ID;
+const isMetaplexAccount = (account: AccountInfoOwnerString<Buffer>) =>
+  account.owner === METAPLEX_ID;
 
-const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
+const isAuctionManagerV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;
 
-const isAuctionManagerV2Account = (account: AccountInfo<Buffer>) =>
+const isAuctionManagerV2Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV2;
 
-const isBidRedemptionTicketV1Account = (account: AccountInfo<Buffer>) =>
-  account.data[0] === MetaplexKey.BidRedemptionTicketV1;
+const isBidRedemptionTicketV1Account = (
+  account: AccountInfoOwnerString<Buffer>
+) => account.data[0] === MetaplexKey.BidRedemptionTicketV1;
 
-const isBidRedemptionTicketV2Account = (account: AccountInfo<Buffer>) =>
-  account.data[0] === MetaplexKey.BidRedemptionTicketV2;
+const isBidRedemptionTicketV2Account = (
+  account: AccountInfoOwnerString<Buffer>
+) => account.data[0] === MetaplexKey.BidRedemptionTicketV2;
 
-const isPayoutTicketV1Account = (account: AccountInfo<Buffer>) =>
+const isPayoutTicketV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetaplexKey.PayoutTicketV1;
 
-const isPrizeTrackingTicketV1Account = (account: AccountInfo<Buffer>) =>
-  account.data[0] === MetaplexKey.PrizeTrackingTicketV1;
+const isPrizeTrackingTicketV1Account = (
+  account: AccountInfoOwnerString<Buffer>
+) => account.data[0] === MetaplexKey.PrizeTrackingTicketV1;
 
-const isStoreV1Account = (account: AccountInfo<Buffer>) =>
+const isStoreV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetaplexKey.StoreV1;
 
-const isSafetyDepositConfigV1Account = (account: AccountInfo<Buffer>) =>
-  account.data[0] === MetaplexKey.SafetyDepositConfigV1;
+const isSafetyDepositConfigV1Account = (
+  account: AccountInfoOwnerString<Buffer>
+) => account.data[0] === MetaplexKey.SafetyDepositConfigV1;
 
-const isWhitelistedCreatorV1Account = (account: AccountInfo<Buffer>) =>
-  account.data[0] === MetaplexKey.WhitelistedCreatorV1;
+const isWhitelistedCreatorV1Account = (
+  account: AccountInfoOwnerString<Buffer>
+) => account.data[0] === MetaplexKey.WhitelistedCreatorV1;

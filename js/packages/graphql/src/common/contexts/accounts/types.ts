@@ -1,15 +1,14 @@
-import { AccountInfo } from "@solana/web3.js";
-import { StringPublicKey } from "../../utils";
+import { StringPublicKey, AccountInfoOwnerString } from "../../utils";
 
 export interface ParsedAccountBase {
   pubkey: StringPublicKey;
-  account: AccountInfo<Buffer>;
+  account: AccountInfoOwnerString<Buffer>;
   info: any; // TODO: change to unknown
 }
 
 export type AccountParser = (
   pubkey: StringPublicKey,
-  data: AccountInfo<Buffer>
+  data: AccountInfoOwnerString<Buffer>
 ) => ParsedAccountBase | undefined;
 
 export interface ParsedAccount<T> extends Omit<ParsedAccountBase, "account"> {

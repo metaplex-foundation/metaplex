@@ -1,4 +1,3 @@
-import { AccountInfo } from "@solana/web3.js";
 import {
   AuctionData,
   AuctionDataExtended,
@@ -22,7 +21,7 @@ import {
   Store,
   WhitelistedCreator,
 } from "../../models/metaplex";
-import { PublicKeyStringAndAccount } from "../../utils";
+import { PublicKeyStringAndAccount, AccountInfoOwnerString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
 
 export interface MetaState {
@@ -77,4 +76,6 @@ export type ProcessAccountsFunc = (
   setter: UpdateStateValueFunc
 ) => void;
 
-export type CheckAccountFunc = (account: AccountInfo<Buffer>) => boolean;
+export type CheckAccountFunc = (
+  account: AccountInfoOwnerString<Buffer>
+) => boolean;

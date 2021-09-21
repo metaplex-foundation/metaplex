@@ -222,7 +222,10 @@ export class StateProvider {
       (block) => {
         const account: PublicKeyStringAndAccount<Buffer> = {
           pubkey: pubkeyToString(block.accountId),
-          account: block.accountInfo,
+          account: {
+            ...block.accountInfo,
+            owner: pubkeyToString(block.accountInfo.owner),
+          },
         };
         // We send events only after data processed
         const process = this.changesQueue.autostart

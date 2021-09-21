@@ -1,4 +1,3 @@
-import { AccountInfo } from "@solana/web3.js";
 import {
   decodeSafetyDeposit,
   decodeVault,
@@ -6,7 +5,7 @@ import {
   Vault,
   VaultKey,
 } from "../../actions";
-import { VAULT_ID, pubkeyToString } from "../../utils";
+import { VAULT_ID, AccountInfoOwnerString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
 import { ProcessAccountsFunc } from "./types";
 
@@ -44,11 +43,11 @@ export const processVaultData: ProcessAccountsFunc = (
   }
 };
 
-const isVaultAccount = (account: AccountInfo<Buffer>) =>
-  pubkeyToString(account.owner) === VAULT_ID;
+const isVaultAccount = (account: AccountInfoOwnerString<Buffer>) =>
+  account.owner === VAULT_ID;
 
-const isSafetyDepositBoxV1Account = (account: AccountInfo<Buffer>) =>
+const isSafetyDepositBoxV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === VaultKey.SafetyDepositBoxV1;
 
-const isVaultV1Account = (account: AccountInfo<Buffer>) =>
+const isVaultV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === VaultKey.VaultV1;
