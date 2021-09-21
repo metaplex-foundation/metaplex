@@ -266,6 +266,7 @@ pub enum MetaplexInstruction {
     ///   9. `[]` Auction program
     ///   10. `[]` Clock sysvar
     ///   11. `[]` Token program
+    ///   12. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     ClaimBid,
 
     /// At any time, the auction manager authority may empty whatever funds are in the accept payment account
