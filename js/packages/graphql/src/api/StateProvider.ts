@@ -21,6 +21,7 @@ import {
 import queue from "queue";
 import { PubSub, withFilter } from "graphql-subscriptions";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
+import { createConnection } from "./createConnection";
 
 export declare type FilterFn<T = any> = (
   rootValue?: T,
@@ -123,7 +124,7 @@ export class StateProvider {
     endpoint: string,
     private flowControl = { promise: Promise.resolve(), finish: () => {} }
   ) {
-    this.connection = new Connection(endpoint, "recent");
+    this.connection = createConnection(endpoint, "recent");
   }
 
   subscribeIterator(prop: keyof MetaState, key?: string | FilterFn<IEvent>) {
