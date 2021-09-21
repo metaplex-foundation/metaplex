@@ -875,12 +875,6 @@ pub mod fair_launch {
             }
 
             // assert is an ATA
-            msg!(
-                "keys {} {} {}",
-                buyer.key,
-                token_program.key,
-                treasury_mint_info.key
-            );
             assert_derivation(
                 &spl_associated_token_account::id(),
                 buyer_payment_account_info,
