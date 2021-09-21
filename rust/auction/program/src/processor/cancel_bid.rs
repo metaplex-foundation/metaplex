@@ -129,6 +129,10 @@ pub fn cancel_bid(
         return Err(AuctionError::IncorrectMint.into());
     }
 
+    // Load auction extended account to check instant_sale_price
+    // and update cancelled bids if auction still active
+    let mut auction_extended = AuctionDataExtended::from_account_info(accounts.auction_extended)?;
+
     // Load the clock, used for various auction timing.
     let clock = Clock::from_account_info(accounts.clock_sysvar)?;
 
@@ -175,8 +179,18 @@ pub fn cancel_bid(
     }
 
     // Refuse to cancel if the auction ended and this person is a winning account.
-    if auction.ended(clock.unix_timestamp)? && auction.is_winner(accounts.bidder.key).is_some() {
+    let winner_bid_index = auction.is_winner(accounts.bidder.key);
+    if auction.ended(clock.unix_timestamp)? && winner_bid_index.is_some() {
         return Err(AuctionError::InvalidState.into());
+    }
+
+    // Refuse to cancel if bidder set price above or equal instant_sale_price
+    if let Some(bid_index) = winner_bid_index {
+        if let Some(instant_sale_price) = auction_extended.instant_sale_price {
+            if auction.bid_state.amount(bid_index) >= instant_sale_price {
+                return Err(AuctionError::InvalidState.into());
+            }
+        }
     }
 
     // Confirm we're looking at the real SPL account for this bidder.
@@ -219,8 +233,6 @@ pub fn cancel_bid(
                 EXTENDED.as_bytes(),
             ],
         )?;
-        let mut auction_extended =
-            AuctionDataExtended::from_account_info(accounts.auction_extended)?;
 
         msg!("Already cancelled is {:?}", already_cancelled);
 

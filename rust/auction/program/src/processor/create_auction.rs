@@ -3,8 +3,8 @@ use mem::size_of;
 use crate::{
     errors::AuctionError,
     processor::{
-        AuctionData, AuctionDataExtended, AuctionState, Bid, BidState, PriceFloor, WinnerLimit,
-        BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
+        AuctionData, AuctionDataExtended, AuctionName, AuctionState, Bid, BidState, PriceFloor,
+        WinnerLimit, BASE_AUCTION_DATA_SIZE, MAX_AUCTION_DATA_EXTENDED_SIZE,
     },
     utils::{assert_derivation, assert_owned_by, create_or_allocate_account_raw},
     EXTENDED, PREFIX,
@@ -73,6 +73,8 @@ pub fn create_auction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     args: CreateAuctionArgs,
+    instant_sale_price: Option<u64>,
+    name: Option<AuctionName>,
 ) -> ProgramResult {
     msg!("+ Processing CreateAuction");
     let accounts = parse_accounts(program_id, accounts)?;
@@ -156,6 +158,8 @@ pub fn create_auction(
         total_uncancelled_bids: 0,
         tick_size: args.tick_size,
         gap_tick_size_percentage: args.gap_tick_size_percentage,
+        instant_sale_price,
+        name,
     }
     .serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 

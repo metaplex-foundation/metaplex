@@ -2,7 +2,7 @@ import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { serialize } from 'borsh';
 
 import { getAuctionKeys, ClaimBidArgs, SCHEMA } from '.';
-import { getBidderPotKey } from '../../actions';
+import { getBidderPotKey, getAuctionExtended } from '../../actions';
 import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function claimBid(
@@ -29,6 +29,11 @@ export async function claimBid(
 
   const value = new ClaimBidArgs();
   const data = Buffer.from(serialize(SCHEMA, value));
+
+  const auctionExtendedKey = await getAuctionExtended({
+    auctionProgramId: PROGRAM_IDS.auction,
+    resource: vault,
+  });
 
   const keys = [
     {
@@ -89,6 +94,11 @@ export async function claimBid(
     },
     {
       pubkey: PROGRAM_IDS.token,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(auctionExtendedKey),
       isSigner: false,
       isWritable: false,
     },

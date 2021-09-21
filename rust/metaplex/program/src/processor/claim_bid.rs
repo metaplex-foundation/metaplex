@@ -12,7 +12,7 @@ use {
     },
     spl_auction::{
         instruction::claim_bid_instruction,
-        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot},
+        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot, AuctionDataExtended},
     },
 };
 
@@ -20,6 +20,7 @@ use {
 pub fn issue_claim_bid<'a>(
     auction_program: AccountInfo<'a>,
     auction: AccountInfo<'a>,
+    auction_extended: Option<AccountInfo<'a>>,
     accept_payment: AccountInfo<'a>,
     authority: AccountInfo<'a>,
     bidder: AccountInfo<'a>,
@@ -31,6 +32,24 @@ pub fn issue_claim_bid<'a>(
     vault: Pubkey,
     signer_seeds: &[&[u8]],
 ) -> ProgramResult {
+    let mut account_infos = vec![
+        auction_program.clone(),
+        authority.clone(),
+        auction,
+        clock,
+        token_mint.clone(),
+        bidder.clone(),
+        bidder_pot_token_acct.clone(),
+        bidder_pot,
+        accept_payment.clone(),
+        token_program,
+    ];
+
+    let mut auction_extended_key: Option<Pubkey> = None;
+    if let Some(auction_extended_account) = auction_extended {
+        auction_extended_key = Some(*auction_extended_account.key);
+        account_infos.push(auction_extended_account);
+    }
     invoke_signed(
         &claim_bid_instruction(
             *auction_program.key,
@@ -39,20 +58,10 @@ pub fn issue_claim_bid<'a>(
             *bidder.key,
             *bidder_pot_token_acct.key,
             *token_mint.key,
+            auction_extended_key,
             ClaimBidArgs { resource: vault },
         ),
-        &[
-            auction_program,
-            authority,
-            auction,
-            clock,
-            token_mint,
-            bidder,
-            bidder_pot_token_acct,
-            bidder_pot,
-            accept_payment,
-            token_program,
-        ],
+        account_infos.as_ref(),
         &[&signer_seeds],
     )?;
 
@@ -73,6 +82,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     let auction_program_info = next_account_info(account_info_iter)?;
     let clock_info = next_account_info(account_info_iter)?;
     let token_program_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     let mut auction_manager = get_auction_manager(auction_manager_info)?;
     let store = Store::from_account_info(store_info)?;
@@ -87,6 +97,9 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     assert_owned_by(token_mint_info, &spl_token::id())?;
     assert_owned_by(vault_info, &store.token_vault_program)?;
     assert_owned_by(store_info, program_id)?;
+    if let Some(auction_extended) = auction_extended_info {
+        assert_owned_by(auction_extended, &store.auction_program)?;
+    }
 
     if auction_manager.store() != *store_info.key {
         return Err(MetaplexError::AuctionManagerStoreMismatch.into());
@@ -111,8 +124,15 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     if auction_manager.vault() != *vault_info.key {
         return Err(MetaplexError::AuctionManagerVaultMismatch.into());
     }
-    if auction.state != AuctionState::Ended {
-        return Err(MetaplexError::AuctionHasNotEnded.into());
+
+    let mut instant_sale_price: Option<u64> = None;
+    if let Some(auction_extended) = auction_extended_info {
+        instant_sale_price = AuctionDataExtended::get_instant_sale_price(&auction_extended.data.borrow());
+    }
+    if !instant_sale_price.is_some() {
+        if auction.state != AuctionState::Ended {
+            return Err(MetaplexError::AuctionHasNotEnded.into());
+        }
     }
 
     if auction_manager.status() != AuctionManagerStatus::Disbursing
@@ -138,6 +158,7 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
     issue_claim_bid(
         auction_program_info.clone(),
         auction_info.clone(),
+        auction_extended_info.map_or(None, |acc| Some(acc.clone())),
         accept_payment_info.clone(),
         auction_manager_info.clone(),
         bidder_info.clone(),
