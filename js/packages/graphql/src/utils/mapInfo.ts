@@ -8,8 +8,13 @@ export function listWrapPubkey<T>(list: ParsedAccount<T>[]): Fields<T>[];
 export function listWrapPubkey<T>(
   list: ParsedAccount<T>[] | Map<string, ParsedAccount<T>>
 ) {
-  const array = Array.isArray(list) ? list : Array.from(list.values());
-  return array.map((i) => wrapPubkey(i));
+  const len = Array.isArray(list) ? list.length : list.size;
+  const result = new Array<T>(len);
+  let i = 0;
+  for (const item of list.values()) {
+    result[i++] = wrapPubkey(item);
+  }
+  return result;
 }
 
 export function wrapPubkey(data: undefined | null): null;
