@@ -609,12 +609,7 @@ export const AuctionCard = ({
                       )}
                     </div>
                   )}
-                  {!auctionView.isInstantSale && (
-                    <>
-                      <br />
-                      <AuctionNumbers auctionView={auctionView} />
-                    </>
-                  )}
+                  <AuctionNumbers auctionView={auctionView} />
                   <br />
                   {tickSizeInvalid && tickSize && (
                     <span style={{ color: 'red' }}>

@@ -50,7 +50,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
   return (
     <div style={{ minWidth: 350 }}>
       <Row>
-        {!ended && (
+        {(!ended || auctionView.isInstantSale) && (
           <Col span={12}>
             {(isUpcoming || bids.length === 0) && (
               <AmountLabel
@@ -74,9 +74,9 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
           </Col>
         )}
 
-        <Col span={ended ? 24 : 12}>
-          <Countdown state={state} />
-        </Col>
+        {!ended && <Col span={ended ? 24 : 12}>
+          <Countdown state={state}/>
+        </Col>}
       </Row>
     </div>
   );
