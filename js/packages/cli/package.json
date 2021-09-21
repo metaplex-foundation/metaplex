@@ -4,7 +4,7 @@
   "main": "./build/cli.js",
   "license": "MIT",
   "bin": {
-    "metaplex": "./build/cli.js"
+    "metaplex": "./build/candy-machine-cli.js"
   },
   "scripts": {
     "build": "tsc -p ./src",
@@ -21,7 +21,7 @@
     "scripts": "./build/**/*.js"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.13.2",
+    "@project-serum/anchor": "^0.14.0",
     "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",
     "bn.js": "^5.2.0",
