@@ -63,11 +63,6 @@ export async function claimBid(
       isWritable: false,
     },
     {
-      pubkey: toPublicKey(auctionExtendedKey),
-      isSigner: false,
-      isWritable: false,
-    },
-    {
       pubkey: toPublicKey(bidder),
       isSigner: false,
       isWritable: false,
@@ -99,6 +94,11 @@ export async function claimBid(
     },
     {
       pubkey: PROGRAM_IDS.token,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(auctionExtendedKey),
       isSigner: false,
       isWritable: false,
     },
