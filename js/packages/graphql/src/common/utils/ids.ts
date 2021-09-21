@@ -1,4 +1,5 @@
-import { PublicKey, AccountInfo } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
+import { AccountInfoOwnerString } from "./types";
 
 export type StringPublicKey = string;
 
@@ -42,7 +43,7 @@ export const pubkeyToString = (key: PublicKey | null | string = "") => {
 
 export interface PublicKeyStringAndAccount<T> {
   pubkey: string;
-  account: AccountInfo<T>;
+  account: AccountInfoOwnerString<T>;
 }
 
 export const WRAPPED_SOL_MINT = new PublicKey(

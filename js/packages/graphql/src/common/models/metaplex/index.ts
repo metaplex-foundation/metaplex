@@ -1,4 +1,4 @@
-import { AccountInfo, SystemProgram } from "@solana/web3.js";
+import { SystemProgram } from "@solana/web3.js";
 import BN from "bn.js";
 import bs58 from "bs58";
 import { deserializeUnchecked } from "borsh";
@@ -18,6 +18,7 @@ import {
   programIds,
   toPublicKey,
   StringPublicKey,
+  AccountInfoOwnerString,
 } from "../../utils";
 import {
   AuctionManagerV1,
@@ -454,7 +455,7 @@ export const decodeWhitelistedCreator = (buffer: Buffer) => {
 
 export const WhitelistedCreatorParser: AccountParser = (
   pubkey: StringPublicKey,
-  account: AccountInfo<Buffer>
+  account: AccountInfoOwnerString<Buffer>
 ) => ({
   pubkey,
   account,

@@ -1,15 +1,10 @@
 import {
-  AccountInfo,
   Commitment,
   Connection,
   GetProgramAccountsConfig,
 } from "@solana/web3.js";
 import { StringPublicKey } from "./ids";
-
-export type AccountAndPubkey = {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-};
+import { AccountAndPubkey, AccountInfoOwnerString } from "./types";
 
 export async function getProgramAccounts(
   connection: Connection,
@@ -47,7 +42,6 @@ export async function getProgramAccounts(
     "getProgramAccounts",
     args
   );
-
   return unsafeResAccounts(unsafeRes.result);
 }
 
@@ -100,7 +94,9 @@ export async function getAccountInfoAndContext(
   return unsafeAccount(unsafeRes.result.value);
 }
 
-export function unsafeAccount(account: AccountInfo<[string, string]>) {
+export function unsafeAccount(
+  account: AccountInfoOwnerString<[string, string]>
+): AccountInfoOwnerString<Buffer> {
   return {
     // TODO: possible delay parsing could be added here
     data: Buffer.from(account.data[0], "base64"),
@@ -108,12 +104,12 @@ export function unsafeAccount(account: AccountInfo<[string, string]>) {
     lamports: account.lamports,
     // TODO: maybe we can do it in lazy way? or just use string
     owner: account.owner,
-  } as AccountInfo<Buffer>;
+  };
 }
 
 export function unsafeResAccounts(
   data: Array<{
-    account: AccountInfo<[string, string]>;
+    account: AccountInfoOwnerString<[string, string]>;
     pubkey: string;
   }>
 ) {

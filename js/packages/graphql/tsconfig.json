@@ -9,7 +9,7 @@
     // "outFile": "./",
     "outDir": "./dist",
     "noImplicitAny": true,
-    "baseUrl": "./",
+    "baseUrl": "./src",
 
     "strict": true,
     "strictNullChecks": true,

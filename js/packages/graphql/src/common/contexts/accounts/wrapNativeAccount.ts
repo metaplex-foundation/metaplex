@@ -1,11 +1,15 @@
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { TokenAccount } from "../../models";
-import { StringPublicKey, WRAPPED_SOL_MINT } from "../../utils/ids";
+import {
+  StringPublicKey,
+  WRAPPED_SOL_MINT,
+  AccountInfoOwnerString,
+} from "../../utils";
 
 export function wrapNativeAccount(
   pubkey: StringPublicKey,
-  account?: AccountInfo<Buffer>
+  account?: AccountInfoOwnerString<Buffer>
 ): TokenAccount | undefined {
   if (!account) {
     return undefined;
