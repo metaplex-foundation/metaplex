@@ -35,7 +35,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy:gh": "gh-pages -d ./build/ --repo https://github.com/bhgames/metaplex -t true --branch gh-pages",
+    "deploy:gh": "gh-pages -d ./build/ --repo https://github.com/metaplex-foundation/metaplex -t true --branch gh-pages",
     "deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh"
   },
   "eslintConfig": {
