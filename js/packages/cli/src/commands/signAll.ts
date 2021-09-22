@@ -1,6 +1,11 @@
-import { Keypair, PublicKey, TransactionInstruction, Connection, AccountInfo } from '@solana/web3.js';
+import {
+  PublicKey,
+  TransactionInstruction,
+  Connection,
+  AccountInfo,
+} from '@solana/web3.js';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
-import * as borsh from "borsh"
+import * as borsh from 'borsh';
 import {
   MAX_NAME_LENGTH,
   MAX_URI_LENGTH,
@@ -8,11 +13,7 @@ import {
   MAX_CREATOR_LEN,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../helpers/constants';
-import {
-  AccountAndPubkey,
-  Metadata,
-  METADATA_SCHEMA
-} from '../types'
+import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
 /*
  Get accounts by candy machine creator address
  Get only verified ones
@@ -22,9 +23,13 @@ import {
  PS: Don't sign candy machine addresses that you do not know about. Signing verifies your participation.
 */
 async function decodeMetadata(buffer) {
-  const metadata = borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
+  const metadata = borsh.deserializeUnchecked(
+    METADATA_SCHEMA,
+    Metadata,
+    buffer,
+  );
   return metadata;
-};
+}
 
 async function getProgramAccounts(
   connection: Connection,
@@ -81,111 +86,142 @@ async function getProgramAccounts(
 }
 
 export async function signAllMetadataFromCandyMachine(
-  connection, 
-  wallet, 
-  candyMachineAddress, 
-  batchSize
-  ){
-  let metadataByCandyMachine = await getAccountsByCreatorAddress(candyMachineAddress, connection)
-  console.log(`Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`)
-  let candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(metadataByCandyMachine, candyMachineAddress, wallet.publicKey.toBase58())
-  console.log(`Found ${candyVerifiedListToSign.length} nft's to sign by  ${wallet.publicKey.toBase58()}`)
-  await sendSignMetadata(connection, wallet, candyVerifiedListToSign, batchSize)
+  connection,
+  wallet,
+  candyMachineAddress,
+  batchSize,
+) {
+  const metadataByCandyMachine = await getAccountsByCreatorAddress(
+    candyMachineAddress,
+    connection,
+  );
+  console.log(
+    `Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`,
+  );
+  const candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(
+    metadataByCandyMachine,
+    candyMachineAddress,
+    wallet.publicKey.toBase58(),
+  );
+  console.log(
+    `Found ${
+      candyVerifiedListToSign.length
+    } nft's to sign by  ${wallet.publicKey.toBase58()}`,
+  );
+  await sendSignMetadata(
+    connection,
+    wallet,
+    candyVerifiedListToSign,
+    batchSize,
+  );
 }
 
 async function getAccountsByCreatorAddress(creatorAddress, connection) {
-  let metadataAccounts = await getProgramAccounts(connection, TOKEN_METADATA_PROGRAM_ID.toBase58(), {
-    filters: [
-      {
-        memcmp: {
-          offset:
-            1 + // key
-            32 + // update auth
-            32 + // mint
-            4 + // name string length
-            MAX_NAME_LENGTH + // name
-            4 + // uri string length
-            MAX_URI_LENGTH + // uri*
-            4 + // symbol string length
-            MAX_SYMBOL_LENGTH + // symbol
-            2 + // seller fee basis points
-            1 + // whether or not there is a creators vec
-            4 + // creators vec length
-            0 * MAX_CREATOR_LEN,
-          bytes: creatorAddress,
+  const metadataAccounts = await getProgramAccounts(
+    connection,
+    TOKEN_METADATA_PROGRAM_ID.toBase58(),
+    {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32 + // update auth
+              32 + // mint
+              4 + // name string length
+              MAX_NAME_LENGTH + // name
+              4 + // uri string length
+              MAX_URI_LENGTH + // uri*
+              4 + // symbol string length
+              MAX_SYMBOL_LENGTH + // symbol
+              2 + // seller fee basis points
+              1 + // whether or not there is a creators vec
+              4 + // creators vec length
+              0 * MAX_CREATOR_LEN,
+            bytes: creatorAddress,
+          },
         },
-      },
-    ],
-  })
-  let decodedAccounts = []
+      ],
+    },
+  );
+  const decodedAccounts = [];
   for (let i = 0; i < metadataAccounts.length; i++) {
-    let e = metadataAccounts[i];
-    let decoded = await decodeMetadata(e.account.data)
-    let accountPubkey = e.pubkey
-    let store = [decoded, accountPubkey]
-    decodedAccounts.push(store)
+    const e = metadataAccounts[i];
+    const decoded = await decodeMetadata(e.account.data);
+    const accountPubkey = e.pubkey;
+    const store = [decoded, accountPubkey];
+    decodedAccounts.push(store);
   }
-  return decodedAccounts
+  return decodedAccounts;
 }
 
-async function getCandyMachineVerifiedMetadata(metadataList, candyAddress, creatorAddress){
-  let verifiedList = [];
+async function getCandyMachineVerifiedMetadata(
+  metadataList,
+  candyAddress,
+  creatorAddress,
+) {
+  const verifiedList = [];
   metadataList.forEach(meta => {
     let verifiedCandy = false;
     let verifiedCreator = true;
     meta[0].data.creators.forEach(creator => {
-      if (new PublicKey(creator.address).toBase58() == candyAddress && creator.verified === 1) {
+      if (
+        new PublicKey(creator.address).toBase58() == candyAddress &&
+        creator.verified === 1
+      ) {
         verifiedCandy = true;
       }
-      if (new PublicKey(creator.address).toBase58() == creatorAddress && creator.verified === 0) {
+      if (
+        new PublicKey(creator.address).toBase58() == creatorAddress &&
+        creator.verified === 0
+      ) {
         verifiedCreator = false;
       }
     });
-    if(verifiedCandy && !verifiedCreator){
-      verifiedList.push(meta)
+    if (verifiedCandy && !verifiedCreator) {
+      verifiedList.push(meta);
     }
   });
-  return verifiedList
+  return verifiedList;
 }
 
-async function sendSignMetadata(
-  connection,
-  wallet,
-  metadataList,
-  batchsize
-) {
+async function sendSignMetadata(connection, wallet, metadataList, batchsize) {
   let total = 0;
-  while(metadataList.length > 0){
-    console.log("Signing metadata")
+  while (metadataList.length > 0) {
+    console.log('Signing metadata');
     let sliceAmount = batchsize;
     if (metadataList.length < batchsize) {
       sliceAmount = metadataList.length;
     }
-    var removed = metadataList.splice(0,sliceAmount);
+    const removed = metadataList.splice(0, sliceAmount);
     total += sliceAmount;
-    await delay(500)
-    await signMetadataBatch(removed, connection, wallet)
-    console.log(`Processed ${total} nfts`)
+    await delay(500);
+    await signMetadataBatch(removed, connection, wallet);
+    console.log(`Processed ${total} nfts`);
   }
-  console.log("Finished signing metadata..")
+  console.log('Finished signing metadata..');
 }
 
-async function signMetadataBatch(metadataList, connection, keypair){
-  
-  const signers: Keypair[] = [];
+async function signMetadataBatch(metadataList, connection, keypair) {
   const instructions: TransactionInstruction[] = [];
   for (let i = 0; i < metadataList.length; i++) {
     const meta = metadataList[i];
-    await signMetadataSingle(meta[1], keypair.publicKey.toBase58(), instructions)
+    await signMetadataSingle(
+      meta[1],
+      keypair.publicKey.toBase58(),
+      instructions,
+    );
   }
-  await sendTransactionWithRetryWithKeypair(connection, keypair, instructions, [], 'single')
+  await sendTransactionWithRetryWithKeypair(
+    connection,
+    keypair,
+    instructions,
+    [],
+    'single',
+  );
 }
 
-async function signMetadataSingle(
-  metadata,
-  creator,
-  instructions,
-) {
+async function signMetadataSingle(metadata, creator, instructions) {
   const data = Buffer.from([7]);
   const keys = [
     {
@@ -199,15 +235,13 @@ async function signMetadataSingle(
       isWritable: false,
     },
   ];
-  instructions.push(
-    ({
-      keys,
-      programId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
-      data,
-    }),
-  );
+  instructions.push({
+    keys,
+    programId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
+    data,
+  });
 }
 
 function delay(ms: number) {
-  return new Promise( resolve => setTimeout(resolve, ms) );
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
