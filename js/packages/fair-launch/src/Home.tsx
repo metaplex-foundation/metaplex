@@ -923,46 +923,45 @@ const Home = (props: HomeProps) => {
                         {fairLaunch.state.data.antiRugSetting.reserveBp / 100}%
                         of the cost of your token.
                       </p>
-                      <MintButton
-                        onClick={onRugRefund}
-                        variant="contained"
-                        disabled={
-                          !!!fairLaunch.ticket.data ||
-                          !fairLaunch.ticket.data.state.punched ||
-                          Date.now() / 1000 <
-                            fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
-                        }
-                      >
-                        {isMinting ? (
-                          <CircularProgress />
-                        ) : Date.now() / 1000 <
-                          fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber() ? (
-                          <span>
-                            Refund in...
-                            <Countdown
-                              date={toDate(
-                                fairLaunch.state.data.antiRugSetting
-                                  .selfDestructDate,
-                              )}
-                            />
-                          </span>
-                        ) : (
-                          'Refund'
+                      {fairLaunch?.ticket?.data &&
+                        !fairLaunch?.ticket?.data.state.withdrawn && (
+                          <MintButton
+                            onClick={onRugRefund}
+                            variant="contained"
+                            disabled={
+                              !!!fairLaunch.ticket.data ||
+                              !fairLaunch.ticket.data.state.punched ||
+                              Date.now() / 1000 <
+                                fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
+                            }
+                          >
+                            {isMinting ? (
+                              <CircularProgress />
+                            ) : Date.now() / 1000 <
+                              fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber() ? (
+                              <span>
+                                Refund in...
+                                <Countdown
+                                  date={toDate(
+                                    fairLaunch.state.data.antiRugSetting
+                                      .selfDestructDate,
+                                  )}
+                                />
+                              </span>
+                            ) : (
+                              'Refund'
+                            )}
+                            {}
+                          </MintButton>
                         )}
-                        {}
-                      </MintButton>
                       <div style={{ textAlign: 'center', marginTop: '-5px' }}>
-                        {!!!fairLaunch.ticket.data && (
-                          <small>
-                            You currently have no Fair Launch ticket.
-                          </small>
-                        )}
-                        {!fairLaunch?.ticket?.data?.state.punched && (
-                          <small>
-                            You currently have a ticket but it has not been
-                            punched yet, so cannot be refunded.
-                          </small>
-                        )}
+                        {fairLaunch?.ticket?.data &&
+                          !fairLaunch?.ticket?.data?.state.punched && (
+                            <small>
+                              You currently have a ticket but it has not been
+                              punched yet, so cannot be refunded.
+                            </small>
+                          )}
                       </div>
                     </div>
                   )}
