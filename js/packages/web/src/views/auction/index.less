@@ -63,6 +63,16 @@ h6 {
     }
   }
 }
+.auction-mobile-container{
+  padding: 15px;
+  .auction-mobile-section{
+    .art-title{
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+    margin-top: 25px;
+  }
+}
 .info-view-container {
    display: flex;
   justify-content: flex-end;
@@ -83,6 +93,16 @@ h6.info-title {
   margin-bottom: 4px;
 }
 
+.bids-lists{
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+  @media (max-width: @screen-sm-min) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 .about-nft-collection {
   color: white;
   font-size: 14px;
@@ -95,6 +115,15 @@ h6.info-title {
 .a-description {
   font-size: 18px;
   line-height: 24px;
+}
+
+.a-attributes{
+  .ant-card{
+    background-color: transparent;
+    .ant-card-head{
+      color: white;
+    }
+  }
 }
 
 .tag {
@@ -171,6 +200,25 @@ h6.info-title {
     padding: 0;
     min-height: 0;
     margin-left: 6px;
+  }
+}
+
+.mobile-bid-history{
+  display: flex;
+  align-items: center;
+  .ant-statistic-content-value,.ant-statistic-content{
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 16px;
+  }
+  .bid-info-container{
+    .bidder-info-container{
+      display: flex;
+    }
+    flex: auto;
+    .usd{
+      margin-left: 15px;
+    }
   }
 }
 

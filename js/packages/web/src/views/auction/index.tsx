@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
+import { Button, Card, Carousel, Col, List, Row, Skeleton } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -17,33 +17,32 @@ import { ArtContent } from '../../components/ArtContent';
 import { format } from 'timeago.js';
 
 import {
+  AuctionState,
   formatTokenAmount,
   Identicon,
   MetaplexModal,
   shortenAddress,
+  StringPublicKey,
+  toPublicKey,
   useConnection,
   useConnectionConfig,
   useMint,
-  AuctionState,
-  StringPublicKey,
-  toPublicKey,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
-import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { MetaAvatar } from '../../components/MetaAvatar';
+import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import { AmountLabel } from '../../components/AmountLabel';
 
 export const AuctionItem = ({
-  item,
-  index,
-  size,
-  active,
-}: {
+                              item,
+                              index,
+                              size,
+                              active,
+                            }: {
   item: AuctionViewItem;
   index: number;
   size: number;
@@ -55,9 +54,9 @@ export const AuctionItem = ({
       index === 0
         ? ''
         : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-            1 - 0.2 * index,
-            0,
-          )})`,
+          1 - 0.2 * index,
+          0,
+        )})`,
     transformOrigin: 'right bottom',
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1 * index,
@@ -78,6 +77,7 @@ export const AuctionItem = ({
 };
 
 export const AuctionView = () => {
+  const { width } = useWindowDimensions();
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
@@ -125,31 +125,154 @@ export const AuctionView = () => {
     );
   });
 
-  return (
-    <Row justify="center" ref={ref} gutter={[48, 0]}>
-      <Col span={24} md={10} className={'img-cont-500'}>
-        <div className="auction-view" style={{ minHeight: 300 }}>
-          <Carousel
-            autoplay={false}
-            afterChange={index => setCurrentIndex(index)}
+  if (width < 768) {
+    return (
+      <Row justify="center" gutter={[48, 0]} className="auction-mobile-container">
+        <Col span={24} className={'img-cont-500'}>
+          <div className="auction-view" style={{ minHeight: 300 }}>
+            <Carousel
+              autoplay={false}
+              afterChange={index => setCurrentIndex(index)}
+            >
+              {items}
+            </Carousel>
+          </div>
+        </Col>
+        <Col className="auction-mobile-section">
+          <h2 className="art-title">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h2>
+
+          <div className="info-container">
+            <div className={'info-component'}>
+              <h6 className={'info-title'}>Edition</h6>
+              <span>
+                  {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
+                </span>
+            </div>
+            <div className={'info-component'}>
+              <h6 className={'info-title'}>Winners</h6>
+              <span>
+                  {winnerCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    winnerCount
+                  )}
+                </span>
+            </div>
+            <div className={'info-component'}>
+              <h6 className={'info-title'}>NFTS</h6>
+              <span>
+                  {nftCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    nftCount
+                  )}
+                </span>
+            </div>
+          </div>
+        </Col>
+
+        <Col className="auction-mobile-section" span={24}>
+          {!auction && <Skeleton paragraph={{ rows: 6 }} />}
+          {auction && (
+            <AuctionCard auctionView={auction} hideDefaultAction={false} />
+          )}
+        </Col>
+        <Col className="auction-mobile-section" span={24}>
+          <h6 className={'info-title'}>Details</h6>
+          <div className="description">
+            <p className={'about-nft-collection a-description'}>
+              {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+              {description ||
+              (winnerCount !== undefined && (
+                <div style={{ fontStyle: 'italic' }}>
+                  No description provided.
+                </div>
+              ))}
+            </p>
+          </div>
+        </Col>
+        {attributes &&
+        <Col className="auction-mobile-section about-nft-collection a-attributes" span={24}>
+          <h6>Attributes</h6>
+          <List
+            grid={{ column: 4 }}
           >
-            {items}
-          </Carousel>
-        </div>
-        <h6 className={'about-nft-collection'}>
-          ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}
-        </h6>
-        <p className={'about-nft-collection a-description'}>
-          {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-          {description ||
+            {attributes.map((attribute, index) =>
+              <List.Item key={`${attribute.value}-${index}`}>
+                <Card title={attribute.trait_type}>{attribute.value}</Card>
+              </List.Item>
+            )}
+          </List>
+        </Col>
+        }
+        <Col className="auction-mobile-section" span={24}>
+          <div className={'info-view'}>
+            <h6 className={'info-title'}>Artists</h6>
+            <div style={{ display: 'flex' }}>
+              <MetaAvatarDetailed creators={creators} />
+            </div>
+          </div>
+        </Col>
+        <Col className="auction-mobile-section" span={24}>
+          <div className={'info-view'}>
+            <h6 className={'info-title'}>View on</h6>
+            <div style={{ display: 'flex' }}>
+              <Button
+                className="tag"
+                onClick={() => window.open(art.uri || '', '_blank')}
+              >
+                Arweave
+              </Button>
+              <Button
+                className="tag"
+                onClick={() =>
+                  window.open(
+                    `https://explorer.solana.com/account/${
+                      art?.mint || ''
+                    }${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`}`,
+                    '_blank',
+                  )
+                }
+              >
+                Solana
+              </Button>
+            </div>
+          </div>
+        </Col>
+        <Col className="auction-mobile-section" span={24}>
+          <AuctionBids auctionView={auction} />
+        </Col>
+      </Row>
+    )
+  } else {
+    return (
+      <Row justify="center" ref={ref} gutter={[48, 0]}>
+
+        <Col span={24} md={10} className={'img-cont-500'}>
+          <div className="auction-view" style={{ minHeight: 300 }}>
+            <Carousel
+              autoplay={false}
+              afterChange={index => setCurrentIndex(index)}
+            >
+              {items}
+            </Carousel>
+          </div>
+          <h6 className={'about-nft-collection'}>
+            ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}
+          </h6>
+          <p className={'about-nft-collection a-description'}>
+            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+            {description ||
             (winnerCount !== undefined && (
               <div style={{ fontStyle: 'italic' }}>
                 No description provided.
               </div>
             ))}
-        </p>
-        {attributes &&
-          <div className={'about-nft-collection a-description'}>
+          </p>
+          {attributes &&
+          <div className={'about-nft-collection a-attributes'}>
             <h6>Attributes</h6>
             <List
               grid={{ column: 4 }}
@@ -161,92 +284,95 @@ export const AuctionView = () => {
               )}
             </List>
           </div>
-        }
-        {/* {auctionData[id] && (
+          }
+          {/* {auctionData[id] && (
             <>
               <h6>About this Auction</h6>
               <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
             </>
           )} */}
-      </Col>
+        </Col>
 
-      <Col span={24} md={14}>
-        <h2 className="art-title">
-          {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-        </h2>
-        <Row gutter={[44, 0]}>
-          <Col span={12} md={16}>
-            <div className={'info-container'}>
-              <div className={'info-component'}>
-                <h6 className={'info-title'}>CREATED BY</h6>
-                <span>{<MetaAvatar creators={creators} />}</span>
-              </div>
-              <div className={'info-component'}>
-                <h6 className={'info-title'}>Edition</h6>
-                <span>
+        <Col span={24} md={14}>
+          <h2 className="art-title">
+            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
+          </h2>
+          <Row gutter={[44, 0]}>
+            <Col span={12} md={16}>
+              <div className={'info-container'}>
+                <div className={'info-component'}>
+                  <h6 className={'info-title'}>CREATED BY</h6>
+                  <span>{<MetaAvatar creators={creators} />}</span>
+                </div>
+                <div className={'info-component'}>
+                  <h6 className={'info-title'}>Edition</h6>
+                  <span>
                   {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
                 </span>
-              </div>
-              <div className={'info-component'}>
-                <h6 className={'info-title'}>Winners</h6>
-                <span>
+                </div>
+                <div className={'info-component'}>
+                  <h6 className={'info-title'}>Winners</h6>
+                  <span>
                   {winnerCount === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
                     winnerCount
                   )}
                 </span>
-              </div>
-              <div className={'info-component'}>
-                <h6 className={'info-title'}>NFTS</h6>
-                <span>
+                </div>
+                <div className={'info-component'}>
+                  <h6 className={'info-title'}>NFTS</h6>
+                  <span>
                   {nftCount === undefined ? (
                     <Skeleton paragraph={{ rows: 0 }} />
                   ) : (
                     nftCount
                   )}
                 </span>
-              </div>
-            </div>
-          </Col>
-          <Col span={12} md={8}>
-            <div className={'info-view-container'}>
-              <div className={'info-view'}>
-                <h6 className={'info-title'}>View on</h6>
-                <div style={{ display: 'flex' }}>
-                  <Button
-                    className="tag"
-                    onClick={() => window.open(art.uri || '', '_blank')}
-                  >
-                    Arweave
-                  </Button>
-                  <Button
-                    className="tag"
-                    onClick={() =>
-                      window.open(
-                        `https://explorer.solana.com/account/${
-                          art?.mint || ''
-                        }${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`}`,
-                        '_blank',
-                      )
-                    }
-                  >
-                    Solana
-                  </Button>
                 </div>
               </div>
-            </div>
-          </Col>
-        </Row>
+            </Col>
+            <Col span={12} md={8}>
+              <div className={'info-view-container'}>
+                <div className={'info-view'}>
+                  <h6 className={'info-title'}>View on</h6>
+                  <div style={{ display: 'flex' }}>
+                    <Button
+                      className="tag"
+                      onClick={() => window.open(art.uri || '', '_blank')}
+                    >
+                      Arweave
+                    </Button>
+                    <Button
+                      className="tag"
+                      onClick={() =>
+                        window.open(
+                          `https://explorer.solana.com/account/${
+                            art?.mint || ''
+                          }${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`}`,
+                          '_blank',
+                        )
+                      }
+                    >
+                      Solana
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Col>
+          </Row>
 
-        {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-        {auction && (
-          <AuctionCard auctionView={auction} hideDefaultAction={false} />
-        )}
-        <AuctionBids auctionView={auction} />
-      </Col>
-    </Row>
-  );
+          {!auction && <Skeleton paragraph={{ rows: 6 }} />}
+          {auction && (
+            <AuctionCard auctionView={auction} hideDefaultAction={false} />
+          )}
+          <AuctionBids auctionView={auction} />
+        </Col>
+      </Row>
+    );
+  }
+
+
 };
 
 const BidLine = (props: {
@@ -282,60 +408,113 @@ const BidLine = (props: {
     };
     getTwitterHandle(connection, bidder);
   }, [bidderTwitterHandle]);
-
-  return (
-    <Row className={'bid-history'}>
-      {isCancelled && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            width: '100%',
-            height: 1,
-            background: 'grey',
-            top: 'calc(50% - 1px)',
-            zIndex: 2,
-          }}
-        />
-      )}
-      <Col span={8}>
-        {!isCancelled && (
-          <div className={'flex '}>
-            {isme && (
-              <>
-                <CheckOutlined />
-                &nbsp;
-              </>
-            )}
-            <AmountLabel
-              style={{ marginBottom: 0, fontSize: '16px' }}
-              containerStyle={{
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-              displaySOL={true}
-              iconSize={24}
-              amount={formatTokenAmount(bid.info.lastBid, mint)}
-            />
+  const { width } = useWindowDimensions();
+  if (width < 768) {
+    return (
+      <Row className="mobile-bid-history">
+          <div className="bid-info-container">
+            <div className="bidder-info-container">
+              <Identicon
+                style={{
+                  width: 24,
+                  height: 24,
+                  marginRight: 10,
+                  marginTop: 2,
+                }}
+                address={bidder}
+              />
+              {bidderTwitterHandle ? (
+                <a
+                  target="_blank"
+                  title={shortenAddress(bidder)}
+                  href={`https://twitter.com/${bidderTwitterHandle}`}
+                >{`@${bidderTwitterHandle}`}</a>
+              ) : (
+                shortenAddress(bidder)
+              )}
+            </div>
+            <div>
+              {!isCancelled && (
+                <div className={'flex '}>
+                  {isme && (
+                    <>
+                      <CheckOutlined />
+                      &nbsp;
+                    </>
+                  )}
+                  <AmountLabel
+                    style={{ marginBottom: 0, fontSize: '16px' }}
+                    containerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    displaySOL={true}
+                    iconSize={24}
+                    amount={formatTokenAmount(bid.info.lastBid, mint)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </Col>
-      <Col span={8} style={{ opacity: 0.7 }}>
-        {/* uses milliseconds */}
-        {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
-      </Col>
-      <Col span={8}>
-        <div className={'flex-right'}>
-          <Identicon
+          <div className="bid-info-container">
+            {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
+          </div>
+      </Row>
+    )
+  } else {
+    return (
+      <Row className={'bid-history'}>
+        {isCancelled && (
+          <div
             style={{
-              width: 24,
-              height: 24,
-              marginRight: 10,
-              marginTop: 2,
+              position: 'absolute',
+              left: 0,
+              width: '100%',
+              height: 1,
+              background: 'grey',
+              top: 'calc(50% - 1px)',
+              zIndex: 2,
             }}
-            address={bidder}
-          />{' '}
-          <span style={{ opacity: 0.7 }}>
+          />
+        )}
+        <Col span={8}>
+          {!isCancelled && (
+            <div className={'flex '}>
+              {isme && (
+                <>
+                  <CheckOutlined />
+                  &nbsp;
+                </>
+              )}
+              <AmountLabel
+                style={{ marginBottom: 0, fontSize: '16px' }}
+                containerStyle={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+                displaySOL={true}
+                iconSize={24}
+                amount={formatTokenAmount(bid.info.lastBid, mint)}
+              />
+            </div>
+          )}
+        </Col>
+        <Col span={8} style={{ opacity: 0.7 }}>
+          {/* uses milliseconds */}
+          {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
+        </Col>
+        <Col span={8}>
+          <div className={'flex-right'}>
+            <Identicon
+              style={{
+                width: 24,
+                height: 24,
+                marginRight: 10,
+                marginTop: 2,
+              }}
+              address={bidder}
+            />{' '}
+            <span style={{ opacity: 0.7 }}>
             {bidderTwitterHandle ? (
               <a
                 target="_blank"
@@ -346,15 +525,18 @@ const BidLine = (props: {
               shortenAddress(bidder)
             )}
           </span>
-        </div>
-      </Col>
-    </Row>
-  );
+          </div>
+        </Col>
+      </Row>
+    );
+  }
+
+
 };
 
 export const AuctionBids = ({
-  auctionView,
-}: {
+                              auctionView,
+                            }: {
   auctionView?: Auction | null;
 }) => {
   const bids = useBidsForAuction(auctionView?.auction.pubkey || '');
@@ -403,7 +585,7 @@ export const AuctionBids = ({
 
   return (
     <Row>
-      <Col style={{ width: '100%', paddingLeft: '24px', paddingRight: '24px' }}>
+      <Col className="bids-lists">
         <h6 className={'info-title'}>Bid History</h6>
         {bidLines.slice(0, 10)}
         {bids.length > 10 && (

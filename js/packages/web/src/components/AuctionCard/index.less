@@ -27,6 +27,34 @@
     }
   }
   .bid-info {
+    .bid-info-container {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      @media (max-width: @screen-sm-min) {
+        flex-direction: column;
+      }
+      .show-place-bid{
+        flex-grow: 1;
+        margin-left: 30px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 30px;
+        @media (max-width: @screen-sm-min) {
+          margin-left: 0;
+          border-left: none;
+          padding-left: 0;
+        }
+      }
+      .actions-place-bid{
+        display: flex;
+        align-items: center;
+        @media (max-width: @screen-sm-min) {
+          button{
+            flex: 1;
+          }
+        }
+      }
+    }
     padding: 24px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.1);
