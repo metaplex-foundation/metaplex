@@ -228,6 +228,8 @@ const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
 
 const Home = (props: HomeProps) => {
   const [fairLaunchBalance, setFairLaunchBalance] = useState<number>();
+  const [yourSOLBalance, setYourSOLBalance] = useState<number | null>(null);
+
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
 
@@ -332,6 +334,11 @@ const Home = (props: HomeProps) => {
       }
 
       try {
+        const balance = await props.connection.getBalance(
+          anchorWallet.publicKey,
+        );
+        setYourSOLBalance(balance);
+
         const state = await getFairLaunchState(
           anchorWallet,
           props.fairLaunchId,
@@ -351,7 +358,7 @@ const Home = (props: HomeProps) => {
                   )
                 )[0],
               );
-            console.log('Heyyyo', fairLaunchBalance);
+
             if (fairLaunchBalance.value) {
               setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
             }
@@ -489,6 +496,16 @@ const Home = (props: HomeProps) => {
     candyMachine?.state.goLiveDate &&
     fairLaunch?.state.data.phaseTwoEnd &&
     candyMachine?.state.goLiveDate.lt(fairLaunch?.state.data.phaseTwoEnd);
+
+  const notEnoughSOL = !!(
+    yourSOLBalance != null &&
+    fairLaunch?.state.data.priceRangeStart &&
+    fairLaunch?.state.data.fee &&
+    yourSOLBalance <
+      fairLaunch?.state.data.priceRangeStart.toNumber() +
+        fairLaunch?.state.data.fee.toNumber() +
+        0.01
+  );
 
   return (
     <Container style={{ marginTop: 100 }}>
@@ -671,6 +688,11 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
+                {notEnoughSOL && (
+                  <Alert severity="error">
+                    You do not have enough SOL in your account to place bids.
+                  </Alert>
+                )}
               </>
             )}
 
@@ -703,24 +725,26 @@ const Home = (props: HomeProps) => {
             ) : (
               <div>
                 {[Phase.Phase1, Phase.Phase2].includes(phase) && (
-                  <MintButton
-                    onClick={onDeposit}
-                    variant="contained"
-                    disabled={
-                      isMinting &&
-                      !fairLaunch?.ticket.data &&
-                      phase === Phase.Phase2
-                    }
-                  >
-                    {isMinting ? (
-                      <CircularProgress />
-                    ) : !fairLaunch?.ticket.data ? (
-                      'Place bid'
-                    ) : (
-                      'Change bid'
-                    )}
-                    {}
-                  </MintButton>
+                  <>
+                    <MintButton
+                      onClick={onDeposit}
+                      variant="contained"
+                      disabled={
+                        isMinting ||
+                        (!fairLaunch?.ticket.data && phase === Phase.Phase2) ||
+                        notEnoughSOL
+                      }
+                    >
+                      {isMinting ? (
+                        <CircularProgress />
+                      ) : !fairLaunch?.ticket.data ? (
+                        'Place bid'
+                      ) : (
+                        'Change bid'
+                      )}
+                      {}
+                    </MintButton>
+                  </>
                 )}
 
                 {[Phase.Phase3].includes(phase) && (
@@ -816,25 +840,27 @@ const Home = (props: HomeProps) => {
               >
                 How this raffle works
               </Link>
-              {fairLaunch?.ticket.data && <Link
-                component="button"
-                variant="body2"
-                color="textSecondary"
-                align="right"
-                onClick={() => {
-                  if (
-                    !fairLaunch ||
-                    phase === Phase.Lottery ||
-                    isWinner(fairLaunch)
-                  ) {
-                    setRefundExplainerOpen(true);
-                  } else {
-                    onRefundTicket();
-                  }
-                }}
-              >
-                Withdraw funds
-              </Link>}
+              {fairLaunch?.ticket.data && (
+                <Link
+                  component="button"
+                  variant="body2"
+                  color="textSecondary"
+                  align="right"
+                  onClick={() => {
+                    if (
+                      !fairLaunch ||
+                      phase === Phase.Lottery ||
+                      isWinner(fairLaunch)
+                    ) {
+                      setRefundExplainerOpen(true);
+                    } else {
+                      onRefundTicket();
+                    }
+                  }}
+                >
+                  Withdraw funds
+                </Link>
+              )}
             </Grid>
             <Dialog
               open={refundExplainerOpen}
