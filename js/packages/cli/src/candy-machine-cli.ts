@@ -20,7 +20,7 @@ import {
   loadWalletKey,
 } from './helpers/accounts';
 import { Config } from './types';
-import { upload } from './commands/upload';
+import { upload, populate } from './commands/upload';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
@@ -43,9 +43,8 @@ programCommand('upload')
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
-  .option('-n, --number <number>', 'Number of images to upload')
   .action(async (files: string[], options, cmd) => {
-    const { number, keypair, env, cacheName } = cmd.opts();
+    const { keypair, env, cacheName } = cmd.opts();
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -54,33 +53,22 @@ programCommand('upload')
       return it.endsWith(EXTENSION_JSON);
     }).length;
 
-    const parsedNumber = parseInt(number);
-    const elemCount = parsedNumber ? parsedNumber : pngFileCount;
-
     if (pngFileCount !== jsonFileCount) {
       throw new Error(
         `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
       );
     }
 
-    if (elemCount < pngFileCount) {
-      throw new Error(
-        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
-      );
-    }
-
-    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`);
-
+    log.info(`Beginning the upload for ${pngFileCount} (png+json) pairs`);
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
     let warn = false;
-    for (;;) {
+    for (; ;) {
       const successful = await upload(
         files,
         cacheName,
         env,
         keypair,
-        elemCount,
       );
       if (successful) {
         warn = false;
@@ -96,8 +84,22 @@ programCommand('upload')
       `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
     );
     if (warn) {
-      log.info('not all images have been uplaoded, rerun this step.');
+      log.info('not all images have been uploaded, rerun this step.');
     }
+  });
+
+programCommand('populate')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName } = cmd.opts();
+    const successful = await populate(
+      cacheName,
+      env,
+      keypair,
+    );
+    if (successful)
+      log.info('Populated files successfuly')
+    else
+      log.info('Error populating the files')
   });
 
 programCommand('verify').action(async (directory, cmd) => {

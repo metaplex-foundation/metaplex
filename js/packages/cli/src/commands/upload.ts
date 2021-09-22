@@ -19,24 +19,13 @@ export async function upload(
   files: string[],
   cacheName: string,
   env: string,
-  keypair: string,
-  totalNFTs: number,
+  keypair: string
 ): Promise<boolean> {
   let uploadSuccessful = true;
+  const cacheContent = loadCache(cacheName, env) || {};
 
-  const savedContent = loadCache(cacheName, env);
-  const cacheContent = savedContent || {};
-
-  if (!cacheContent.program) {
-    cacheContent.program = {};
-  }
-
-  let existingInCache = [];
-  if (!cacheContent.items) {
-    cacheContent.items = {};
-  } else {
-    existingInCache = Object.keys(cacheContent.items);
-  }
+  if (!cacheContent.items) cacheContent.items = {};
+  const existingInCache = Object.keys(cacheContent.items);
 
   const seen = {};
   const newFiles = [];
@@ -60,10 +49,7 @@ export async function upload(
   const walletKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-  let config = cacheContent.program.config
-    ? new PublicKey(cacheContent.program.config)
-    : undefined;
-
+  let uploadCount = 0;
   for (let i = 0; i < SIZE; i++) {
     const image = images[i];
     const imageName = path.basename(image);
@@ -75,107 +61,127 @@ export async function upload(
     }
 
     const storageCost = 10;
-
     let link = cacheContent?.items?.[index]?.link;
-    if (!link || !cacheContent.program.uuid) {
-      const manifestPath = image.replace(EXTENSION_PNG, '.json');
-      const manifestContent = fs
-        .readFileSync(manifestPath)
-        .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
-      const manifest = JSON.parse(manifestContent);
+    // Skip if the link already exists
+    if (link) continue;
 
-      const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+    const manifestPath = image.replace(EXTENSION_PNG, '.json');
+    const manifestContent = fs
+      .readFileSync(manifestPath)
+      .toString()
+      .replace(imageName, 'image.png')
+      .replace(imageName, 'image.png');
+    const manifest = JSON.parse(manifestContent);
+    const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+    const instructions = [
+      anchor.web3.SystemProgram.transfer({
+        fromPubkey: walletKeyPair.publicKey,
+        toPubkey: ARWEAVE_PAYMENT_WALLET,
+        lamports: storageCost,
+      }),
+    ];
 
-      if (i === 0 && !cacheContent.program.uuid) {
-        // initialize config
-        log.info(`initializing config`);
-        try {
-          const res = await createConfig(anchorProgram, walletKeyPair, {
-            maxNumberOfLines: new BN(totalNFTs),
-            symbol: manifest.symbol,
-            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: true,
-            maxSupply: new BN(0),
-            retainAuthority: true,
-            creators: manifest.properties.creators.map(creator => {
-              return {
-                address: new PublicKey(creator.address),
-                verified: true,
-                share: creator.share,
-              };
-            }),
-          });
-          cacheContent.program.uuid = res.uuid;
-          cacheContent.program.config = res.config.toBase58();
-          config = res.config;
+    const tx = await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      instructions,
+      [],
+      'single',
+    );
+    log.debug('transaction for arweave payment:', tx);
 
-          log.info(
-            `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
-          );
+    // data.append('tags', JSON.stringify(tags));
+    // payment transaction
+    const data = new FormData();
+    data.append('transaction', tx['txid']);
+    data.append('env', env);
+    data.append('file[]', fs.createReadStream(image), {
+      filename: `image.png`,
+      contentType: 'image/png',
+    });
+    data.append('file[]', manifestBuffer, 'metadata.json');
+    try {
+      const result = await uploadToArweave(data, manifest, index);
 
-          saveCache(cacheName, env, cacheContent);
-        } catch (exx) {
-          log.error('Error deploying config to Solana network.', exx);
-          throw exx;
-        }
+      const metadataFile = result.messages?.find(
+        m => m.filename === 'manifest.json',
+      );
+      if (metadataFile?.transactionId) {
+        link = `https://arweave.net/${metadataFile.transactionId}`;
+        log.debug(`File uploaded: ${link}`);
+        uploadCount += 1;
       }
 
-      if (!link) {
-        const instructions = [
-          anchor.web3.SystemProgram.transfer({
-            fromPubkey: walletKeyPair.publicKey,
-            toPubkey: ARWEAVE_PAYMENT_WALLET,
-            lamports: storageCost,
-          }),
-        ];
+      cacheContent.items[index] = {
+        link,
+        name: manifest.name,
+        onChain: false,
+      };
+      saveCache(cacheName, env, cacheContent);
+    } catch (er) {
+      uploadSuccessful = false;
+      log.error(`Error uploading file ${index}`, er);
+    }
+  }
+  console.log(`Done. Successful = ${uploadSuccessful}. Uploaded ${uploadCount} files`);
+  return uploadSuccessful;
+}
 
-        const tx = await sendTransactionWithRetryWithKeypair(
-          anchorProgram.provider.connection,
-          walletKeyPair,
-          instructions,
-          [],
-          'single',
-        );
-        log.debug('transaction for arweave payment:', tx);
+export async function populate(
+  cacheName: string,
+  env: string,
+  keypair: string
+) {
+  let uploadSuccessful = true;
+  const cacheContent = loadCache(cacheName, env) || {};
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-        // data.append('tags', JSON.stringify(tags));
-        // payment transaction
-        const data = new FormData();
-        data.append('transaction', tx['txid']);
-        data.append('env', env);
-        data.append('file[]', fs.createReadStream(image), {
-          filename: `image.png`,
-          contentType: 'image/png',
-        });
-        data.append('file[]', manifestBuffer, 'metadata.json');
-        try {
-          const result = await uploadToArweave(data, manifest, index);
+  const keys = Object.keys(cacheContent.items);
+  if (!cacheContent.items || keys.length == 0)
+    return log.error('No items to populate');
 
-          const metadataFile = result.messages?.find(
-            m => m.filename === 'manifest.json',
-          );
-          if (metadataFile?.transactionId) {
-            link = `https://arweave.net/${metadataFile.transactionId}`;
-            log.debug(`File uploaded: ${link}`);
-          }
+  if (keys.some(key => !cacheContent.items[key].link))
+    return log.error('An item is missing a link. Run the "upload" command first')
 
-          cacheContent.items[index] = {
-            link,
-            name: manifest.name,
-            onChain: false,
+  if (!cacheContent.program) {
+    cacheContent.program = {};
+    // initialize config
+    log.info(`initializing config`);
+
+    // Fetch  the first item to retreive the config
+    const link = cacheContent.items[keys[0]].link;
+    const manifest = await (await fetch(link, { method: 'GET' })).json();
+
+    try {
+      const res = await createConfig(anchorProgram, walletKeyPair, {
+        maxNumberOfLines: new BN(keys.length),
+        symbol: manifest.symbol,
+        sellerFeeBasisPoints: manifest.seller_fee_basis_points,
+        isMutable: true,
+        maxSupply: new BN(0),
+        retainAuthority: true,
+        creators: manifest.properties.creators.map(creator => {
+          return {
+            address: new PublicKey(creator.address),
+            verified: true,
+            share: creator.share,
           };
-          saveCache(cacheName, env, cacheContent);
-        } catch (er) {
-          uploadSuccessful = false;
-          log.error(`Error uploading file ${index}`, er);
-        }
-      }
+        }),
+      });
+      cacheContent.program.uuid = res.uuid;
+      cacheContent.program.config = res.config.toBase58();
+      saveCache(cacheName, env, cacheContent);
+      log.info(
+        `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
+      );
+    } catch (exx) {
+      log.error('Error deploying config to Solana network.', exx);
+      throw exx;
     }
   }
 
-  const keys = Object.keys(cacheContent.items);
+  const config = new PublicKey(cacheContent.program.config);
   try {
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 1000).map(
