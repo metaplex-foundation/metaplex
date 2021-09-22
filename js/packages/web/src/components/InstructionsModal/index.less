@@ -1,11 +1,91 @@
+.instructions-modal{
+  width: 80% !important;
+}
+
+
 .modal-box {
   position: relative;
-  width: 80% !important;
   box-sizing: border-box;
   border-radius: 12px;
   background-color: #2A2A2A;
   cursor: auto;
   padding-bottom: 0px;
+
+  @media (max-width: @screen-sm-min) {
+    width: 100% !important;
+    top:0 !important;
+    max-width: 100% !important;
+    .ant-modal-content{
+      min-height: 100vh;
+    }
+    .mobile-menu-modal{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 80vh;
+      .actions{
+        display: flex;
+        justify-content: space-around;
+        .actions-buttons{
+          display: flex;
+          width: 100%;
+          button{
+            flex: auto;
+          }
+        }
+      }
+      .ant-dropdown-menu{
+        background-color: transparent !important;
+      }
+      .app-btn{
+        background-color: transparent !important;
+      }
+      .ant-menu{
+        width: 100%;
+        background-color: transparent !important;
+        border-right: 0 !important;
+        .ant-menu-item{
+          border-bottom: 1px solid #f0f0f0 !important;
+          padding: 0;
+          .app-btn{
+            font-size: 18px;
+            font-weight: 600;
+            padding: 0 0 24px;
+          }
+        }
+      }
+      .current-user-mobile-badge{
+        width: 100%;
+        .mobile-badge{
+          display: flex;
+        }
+        .balance-container{
+          width: 100%;
+          margin-top: 10px;
+          border-radius: 12px;
+          margin-bottom: 10px;
+          height: 50px;
+          display: flex;
+          font-weight: 700;
+          flex-direction: column;
+          .balance-title{
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 14px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+          }
+          .sol-img-wrapper{
+            border-radius: 50%;
+            background: black;
+            display: inline-block;
+            padding: 1px 4px 4px 4px;
+            line-height: 1;
+          }
+        }
+      }
+    }
+  }
 
   .ant-modal-content {
     background: #1f1f1f;
@@ -16,8 +96,10 @@
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     padding: 28px 24px 28px 24px;
-
+    background-color: transparent !important;
+    color: white !important;
     .ant-modal-title {
+      color: white;
       font-style: normal;
       font-weight: 600;
       font-size: 24px;
@@ -37,7 +119,10 @@
     background: rgba(255, 255, 255, 0.05) !important;
     border-radius: 12px;
     padding: 48px 16px 48px 48px;
-
+    @media (max-width: @screen-sm-min) {
+      padding: 30px;
+      min-height: 90vh !important;
+    }
     .ant-card {
       background: transparent;
       border: 0;

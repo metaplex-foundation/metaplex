@@ -71,6 +71,7 @@ interface ModalProps {
   buttonText: string;
   modalTitle: string;
   cardProps: any[];
+  onClick?: any;
 }
 
 export const InstructionsModal: React.FC<ModalProps> = ({
@@ -78,10 +79,12 @@ export const InstructionsModal: React.FC<ModalProps> = ({
   buttonText,
   modalTitle,
   cardProps,
+  onClick
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const showModal = () => {
+    onClick ? onClick() : null
     setIsModalVisible(true);
   };
 
@@ -104,7 +107,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         onOk={handleOk}
         onCancel={handleCancel}
         footer={null}
-        className={'modal-box'}
+        className={'modal-box instructions-modal'}
         closeIcon={<img src={"/modals/close.svg"}/>}
       >
         <ModalContent>

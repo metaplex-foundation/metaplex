@@ -307,13 +307,7 @@ export const AuctionCard = ({
         </div>
       </div>
       <div className={'bid-info'}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'stretch',
-            justifyContent: 'space-between',
-          }}
-        >
+        <div className="bid-info-container">
           <AuctionNumbers
             auctionView={auctionView}
             showAsRow={true}
@@ -397,14 +391,7 @@ export const AuctionCard = ({
               </Button>
             )}
           {showPlaceBid ? (
-            <div
-              style={{
-                flexGrow: 1,
-                marginLeft: '30px',
-                borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-                paddingLeft: '30px',
-              }}
-            >
+            <div className="show-place-bid">
               <AmountLabel
                 title="in your wallet"
                 displaySOL={true}
@@ -419,13 +406,8 @@ export const AuctionCard = ({
               />
             </div>
           ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <HowAuctionsWorkModal buttonClassName="how-auctions-work" />
+            <div className="actions-place-bid">
+              <HowAuctionsWorkModal buttonClassName="black-btn" />
               {!hideDefaultAction &&
                 !auctionView.auction.info.ended() &&
                 (wallet.connected && isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
