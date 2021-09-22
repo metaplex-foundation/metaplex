@@ -3,13 +3,13 @@
 
 use crate::{
     errors::AuctionError,
-    processor::{AuctionData, BidderMetadata, BidderPot},
+    processor::{AuctionData, AuctionDataExtended, BidderMetadata, BidderPot},
     utils::{
         assert_derivation, assert_initialized, assert_owned_by, assert_signer,
         assert_token_program_matches_package, create_or_allocate_account_raw, spl_token_transfer,
         TokenTransferParams,
     },
-    PREFIX,
+    EXTENDED, PREFIX,
 };
 
 use {
@@ -44,6 +44,7 @@ struct Accounts<'a, 'b: 'a> {
     mint: &'a AccountInfo<'b>,
     clock_sysvar: &'a AccountInfo<'b>,
     token_program: &'a AccountInfo<'b>,
+    auction_extended: Option<&'a AccountInfo<'b>>,
 }
 
 fn parse_accounts<'a, 'b: 'a>(
@@ -61,6 +62,7 @@ fn parse_accounts<'a, 'b: 'a>(
         mint: next_account_info(account_iter)?,
         clock_sysvar: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
+        auction_extended: next_account_info(account_iter).ok(),
     };
 
     assert_owned_by(accounts.auction, program_id)?;
@@ -70,6 +72,10 @@ fn parse_accounts<'a, 'b: 'a>(
     assert_owned_by(accounts.bidder_pot, program_id)?;
     assert_signer(accounts.authority)?;
     assert_token_program_matches_package(accounts.token_program)?;
+
+    if let Some(auction_extended) = accounts.auction_extended {
+        assert_owned_by(auction_extended, program_id)?;
+    }
 
     if *accounts.token_program.key != spl_token::id() {
         return Err(AuctionError::InvalidTokenProgram.into());
@@ -120,14 +126,41 @@ pub fn claim_bid(
 
     // User must have won the auction in order to claim their funds. Check early as the rest of the
     // checks will be for nothing otherwise.
-    if auction.is_winner(accounts.bidder.key).is_none() {
+    let bid_index = auction.is_winner(accounts.bidder.key);
+    if bid_index.is_none() {
         msg!("User {:?} is not winner", accounts.bidder.key);
         return Err(AuctionError::InvalidState.into());
     }
 
-    // Auction must have ended.
+    let instant_sale_price = accounts.auction_extended.and_then(|info| {
+        assert_derivation(
+            program_id,
+            info,
+            &[
+                PREFIX.as_bytes(),
+                program_id.as_ref(),
+                args.resource.as_ref(),
+                EXTENDED.as_bytes(),
+            ],
+        )
+        .ok()?;
+
+        AuctionDataExtended::from_account_info(info)
+            .ok()?
+            .instant_sale_price
+    });
+
+    // Auction either must have ended or bidder pay instant_sale_price
     if !auction.ended(clock.unix_timestamp)? {
-        return Err(AuctionError::InvalidState.into());
+        match instant_sale_price {
+            Some(instant_sale_price)
+                if auction.bid_state.amount(bid_index.unwrap()) < instant_sale_price =>
+            {
+                return Err(AuctionError::InvalidState.into())
+            }
+            None => return Err(AuctionError::InvalidState.into()),
+            _ => (),
+        }
     }
 
     // The mint provided in this claim must match the one the auction was initialized with.
