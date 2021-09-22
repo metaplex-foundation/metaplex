@@ -4,7 +4,7 @@ import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import { loadCandyProgram, loadWalletKey } from '../helpers/accounts';
 import { Program } from '@project-serum/anchor';
 
-const METADATA_SIGNATURE = Buffer.from([7]);//now thats some voodoo magic. WTF metaplex? XD
+const METADATA_SIGNATURE = Buffer.from([7]); //now thats some voodoo magic. WTF metaplex? XD
 
 export async function signMetadata(
   metadata: string,

@@ -14,6 +14,7 @@ import FormData from 'form-data';
 import { loadCache, saveCache } from '../helpers/cache';
 import fetch from 'node-fetch';
 import log from 'loglevel';
+import { chunks } from "../helpers/various";
 
 export async function upload(
   files: string[],
@@ -254,10 +255,4 @@ async function uploadToArweave(data: FormData, manifest, index) {
       },
     )
   ).json();
-}
-
-function chunks(array, size) {
-  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
-    (_, index) => array.slice(index * size, (index + 1) * size),
-  );
 }
