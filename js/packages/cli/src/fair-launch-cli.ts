@@ -31,9 +31,6 @@ if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
 }
 
-const FAIR_LAUNCH_TICKET_AMOUNT_LOC = 8 + 32 + 32;
-const FAIR_LAUNCH_TICKET_STATE_LOC = FAIR_LAUNCH_TICKET_AMOUNT_LOC + 8;
-const FAIR_LAUNCH_TICKET_SEQ_LOC = FAIR_LAUNCH_TICKET_STATE_LOC + 1 + 1;
 const FAIR_LAUNCH_LOTTERY_SIZE =
   8 + // discriminator
   32 + // fair launch
@@ -1708,52 +1705,48 @@ program
 
     const ticketsFlattened = ticketKeys.flat();
 
-    const states: { seq: anchor.BN; eligible: boolean }[][] = await Promise.all(
-      chunks(Array.from(Array(ticketsFlattened.length).keys()), 1000).map(
-        async allIndexesInSlice => {
-          let states = [];
-          for (let i = 0; i < allIndexesInSlice.length; i += 100) {
-            console.log(
-              'Pulling states for slice',
-              allIndexesInSlice[i],
-              allIndexesInSlice[i + 100],
-            );
-            const slice = allIndexesInSlice
-              .slice(i, i + 100)
-              .map(index => ticketsFlattened[index]);
-            const result = await getMultipleAccounts(
-              anchorProgram.provider.connection,
-              slice.map(s => s.toBase58()),
-              'recent',
-            );
-            states = states.concat(
-              result.array.map(a => ({
-                seq: new anchor.BN(
-                  a.data.slice(
-                    FAIR_LAUNCH_TICKET_SEQ_LOC,
-                    FAIR_LAUNCH_TICKET_SEQ_LOC + 8,
-                  ),
-                  undefined,
-                  'le',
-                ),
-                eligible:
-                  a.data[FAIR_LAUNCH_TICKET_STATE_LOC] == 1 &&
-                  new anchor.BN(
-                    a.data.slice(
-                      FAIR_LAUNCH_TICKET_AMOUNT_LOC,
-                      FAIR_LAUNCH_TICKET_AMOUNT_LOC + 8,
+    const states: { seq: number; number: anchor.BN; eligible: boolean }[][] =
+      await Promise.all(
+        chunks(Array.from(Array(ticketsFlattened.length).keys()), 1000).map(
+          async allIndexesInSlice => {
+            let states = [];
+            for (let i = 0; i < allIndexesInSlice.length; i += 100) {
+              console.log(
+                'Pulling states for slice',
+                allIndexesInSlice[i],
+                allIndexesInSlice[i + 100],
+              );
+              const slice = allIndexesInSlice
+                .slice(i, i + 100)
+                .map(index => ticketsFlattened[index]);
+              const result = await getMultipleAccounts(
+                anchorProgram.provider.connection,
+                slice.map(s => s.toBase58()),
+                'recent',
+              );
+              states = states.concat(
+                result.array.map(a => {
+                  const el = anchorProgram.coder.accounts.decode(
+                    'FairLaunchTicket',
+                    a.data,
+                  );
+                  return {
+                    seq: el.seq.toNumber(),
+                    number: el.amount.toNumber(),
+                    eligible: !!(
+                      el.state.unpunched &&
+                      el.amount.toNumber() >=
+                        //@ts-ignore
+                        fairLaunchObj.currentMedian.toNumber()
                     ),
-                    undefined,
-                    'le',
-                    //@ts-ignore
-                  ).toNumber() >= fairLaunchObj.currentMedian.toNumber(),
-              })),
-            );
-            return states;
-          }
-        },
-      ),
-    );
+                  };
+                }),
+              );
+              return states;
+            }
+          },
+        ),
+      );
 
     const statesFlat = states.flat();
 
@@ -1764,13 +1757,7 @@ program
       statesFlat.filter(s => s.eligible).length,
     );
 
-    console.log(
-      'Dunn',
-      //@ts-ignore;
-      fairLaunchObj.numberTicketsSold - fairLaunchObj.numberTicketsDropped,
-    );
-
-    let chosen: { seq: anchor.BN; eligible: boolean; chosen: boolean }[];
+    let chosen: { seq: number; eligible: boolean; chosen: boolean }[];
     if (numWinnersRemaining >= statesFlat.length) {
       console.log('More or equal nfts than winners, everybody wins.');
       chosen = statesFlat.map(s => ({ ...s, chosen: true }));
@@ -1786,7 +1773,7 @@ program
         }
       }
     }
-    const sorted = chosen.sort((a, b) => a.seq.toNumber() - b.seq.toNumber());
+    const sorted = chosen.sort((a, b) => a.seq - b.seq);
     console.log('Lottery results', sorted);
 
     await Promise.all(

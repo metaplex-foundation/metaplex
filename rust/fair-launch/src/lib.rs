@@ -481,6 +481,22 @@ pub mod fair_launch {
         if clock.unix_timestamp <= fair_launch.data.phase_one_end {
             // freeze counts after phase one ends...
             adjust_counts(fair_launch, amount, Some(fair_launch_ticket.amount))?;
+        } else {
+            if amount >= fair_launch.current_median
+                && fair_launch_ticket.amount < fair_launch.current_median
+            {
+                fair_launch.current_eligible_holders = fair_launch
+                    .current_eligible_holders
+                    .checked_add(1)
+                    .ok_or(ErrorCode::NumericalOverflowError)?;
+            } else if amount < fair_launch.current_median
+                && fair_launch_ticket.amount >= fair_launch.current_median
+            {
+                fair_launch.current_eligible_holders = fair_launch
+                    .current_eligible_holders
+                    .checked_sub(1)
+                    .ok_or(ErrorCode::NumericalOverflowError)?;
+            }
         }
 
         if let Some(treasury_mint) = fair_launch.treasury_mint {

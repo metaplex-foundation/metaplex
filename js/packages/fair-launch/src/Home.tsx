@@ -228,6 +228,8 @@ const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
 
 const Home = (props: HomeProps) => {
   const [fairLaunchBalance, setFairLaunchBalance] = useState<number>();
+  const [yourSOLBalance, setYourSOLBalance] = useState<number | null>(null);
+
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
 
@@ -332,6 +334,11 @@ const Home = (props: HomeProps) => {
       }
 
       try {
+        const balance = await props.connection.getBalance(
+          anchorWallet.publicKey,
+        );
+        setYourSOLBalance(balance);
+
         const state = await getFairLaunchState(
           anchorWallet,
           props.fairLaunchId,
@@ -351,7 +358,7 @@ const Home = (props: HomeProps) => {
                   )
                 )[0],
               );
-            console.log('Heyyyo', fairLaunchBalance);
+
             if (fairLaunchBalance.value) {
               setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
             }
@@ -489,6 +496,16 @@ const Home = (props: HomeProps) => {
     candyMachine?.state.goLiveDate &&
     fairLaunch?.state.data.phaseTwoEnd &&
     candyMachine?.state.goLiveDate.lt(fairLaunch?.state.data.phaseTwoEnd);
+
+  const notEnoughSOL = !!(
+    yourSOLBalance != null &&
+    fairLaunch?.state.data.priceRangeStart &&
+    fairLaunch?.state.data.fee &&
+    yourSOLBalance + (fairLaunch?.ticket?.data?.amount.toNumber() || 0) <
+      contributed * LAMPORTS_PER_SOL +
+        fairLaunch?.state.data.fee.toNumber() +
+        0.01
+  );
 
   return (
     <Container style={{ marginTop: 100 }}>
@@ -671,6 +688,12 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
+                {notEnoughSOL && (
+                  <Alert severity="error">
+                    You do not have enough SOL in your account to place this
+                    bid.
+                  </Alert>
+                )}
               </>
             )}
 
@@ -703,24 +726,26 @@ const Home = (props: HomeProps) => {
             ) : (
               <div>
                 {[Phase.Phase1, Phase.Phase2].includes(phase) && (
-                  <MintButton
-                    onClick={onDeposit}
-                    variant="contained"
-                    disabled={
-                      isMinting &&
-                      !fairLaunch?.ticket.data &&
-                      phase === Phase.Phase2
-                    }
-                  >
-                    {isMinting ? (
-                      <CircularProgress />
-                    ) : !fairLaunch?.ticket.data ? (
-                      'Place bid'
-                    ) : (
-                      'Change bid'
-                    )}
-                    {}
-                  </MintButton>
+                  <>
+                    <MintButton
+                      onClick={onDeposit}
+                      variant="contained"
+                      disabled={
+                        isMinting ||
+                        (!fairLaunch?.ticket.data && phase === Phase.Phase2) ||
+                        notEnoughSOL
+                      }
+                    >
+                      {isMinting ? (
+                        <CircularProgress />
+                      ) : !fairLaunch?.ticket.data ? (
+                        'Place bid'
+                      ) : (
+                        'Change bid'
+                      )}
+                      {}
+                    </MintButton>
+                  </>
                 )}
 
                 {[Phase.Phase3].includes(phase) && (
@@ -816,25 +841,27 @@ const Home = (props: HomeProps) => {
               >
                 How this raffle works
               </Link>
-              {fairLaunch?.ticket.data && <Link
-                component="button"
-                variant="body2"
-                color="textSecondary"
-                align="right"
-                onClick={() => {
-                  if (
-                    !fairLaunch ||
-                    phase === Phase.Lottery ||
-                    isWinner(fairLaunch)
-                  ) {
-                    setRefundExplainerOpen(true);
-                  } else {
-                    onRefundTicket();
-                  }
-                }}
-              >
-                Withdraw funds
-              </Link>}
+              {fairLaunch?.ticket.data && (
+                <Link
+                  component="button"
+                  variant="body2"
+                  color="textSecondary"
+                  align="right"
+                  onClick={() => {
+                    if (
+                      !fairLaunch ||
+                      phase === Phase.Lottery ||
+                      isWinner(fairLaunch)
+                    ) {
+                      setRefundExplainerOpen(true);
+                    } else {
+                      onRefundTicket();
+                    }
+                  }}
+                >
+                  Withdraw funds
+                </Link>
+              )}
             </Grid>
             <Dialog
               open={refundExplainerOpen}
@@ -865,31 +892,36 @@ const Home = (props: HomeProps) => {
                 {fairLaunch?.state.data.antiRugSetting &&
                   fairLaunch.state.data.antiRugSetting.selfDestructDate && (
                     <div>
+                      <h3>Anti-Rug Policy</h3>
                       <p>
-                        This Fair Launch will retain ◎{' '}
-                        {(fairLaunch?.treasury *
-                          fairLaunch.state.data.antiRugSetting.reserveBp) /
-                          (LAMPORTS_PER_SOL * 10000)}{' '}
-                        ({fairLaunch.state.data.antiRugSetting.reserveBp / 100}
-                        %) of the treasury in a locked state until the Fair
-                        Launch Authority is able to buy back enough tokens or
-                        sell enough NFTs to Fair Launch token holders such that{' '}
-                        {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
-                        tokens are remaining.
+                        This raffle is governed by a smart contract to prevent
+                        the artist from running away with your money.
                       </p>
+                      <p>How it works:</p>
+                      This project will retain{' '}
+                      {fairLaunch.state.data.antiRugSetting.reserveBp / 100}% (◎{' '}
+                      {(fairLaunch?.treasury *
+                        fairLaunch.state.data.antiRugSetting.reserveBp) /
+                        (LAMPORTS_PER_SOL * 10000)}
+                      ) of the pledged amount in a locked state until all but{' '}
+                      {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
+                      NFTs (out of up to{' '}
+                      {fairLaunch.state.data.numberOfTokens.toNumber()}) have
+                      been minted.
                       <p>
-                        {' '}
-                        If the Fair Launch authority is not able to convince
-                        enough people through a Candy Machine or other means to
-                        return tokens by the refund date of{' '}
+                        If more than{' '}
+                        {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
+                        NFTs remain as of{' '}
                         {toDate(
                           fairLaunch.state.data.antiRugSetting.selfDestructDate,
-                        )?.toLocaleString()}{' '}
-                        you will have the option of refunding{' '}
+                        )?.toLocaleDateString()}{' '}
+                        at{' '}
+                        {toDate(
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate,
+                        )?.toLocaleTimeString()}
+                        , you will have the option to get a refund of{' '}
                         {fairLaunch.state.data.antiRugSetting.reserveBp / 100}%
-                        of the cost of your token against this locked treasury
-                        up until the Fair Launch Authority meets their
-                        obligations.
+                        of the cost of your token.
                       </p>
                       <MintButton
                         onClick={onRugRefund}
