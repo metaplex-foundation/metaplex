@@ -844,7 +844,7 @@ program
   .option('-s, --symbol <string>', 'symbol')
   .option('-u, --uri <string>', 'uri')
   .option(
-    '-sfbp, --seller_fee_basis_points <string>',
+    '-sfbp, --seller-fee-basis-points <string>',
     'seller fee basis points',
   )
   .option(
@@ -864,7 +864,7 @@ program
       creators,
       isNotMutable,
     } = cmd.opts();
-    const sellerFeeBasisPointsNumber = parseFloat(sellerFeeBasisPoints);
+    const sellerFeeBasisPointsNumber = parseInt(sellerFeeBasisPoints);
 
     const creatorsListPre = creators ? creators.split(',') : [];
     const creatorsList = [];
