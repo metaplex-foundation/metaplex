@@ -77,6 +77,9 @@ You can now either use `metaplex` OR the `ts-node cli` to execute the following 
 ```
 metaplex upload ~/nft-test/mini_drop --keypair ~/.config/solana/id.json 
 ts-node cli upload ~/nft-test/mini_drop --keypair ~/.config/solana/id.json
+# Populate the uploaded files in a new candy machine config
+metaplex populate --keypair ~/.config/solana/id.json 
+ts-node cli populate --keypair ~/.config/solana/id.json
 ```
 
 2. Verify everything is uploaded. Rerun the first command until it is.
