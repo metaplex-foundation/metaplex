@@ -7,14 +7,24 @@ import BN from 'bn.js';
 import { fromUTF8Array, parsePrice } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
-import { CACHE_PATH, CONFIG_ARRAY_START, CONFIG_LINE_SIZE, EXTENSION_JSON, EXTENSION_PNG, } from './helpers/constants';
-import { getCandyMachineAddress, loadAnchorProgram, loadWalletKey, } from './helpers/accounts';
+import {
+  CACHE_PATH,
+  CONFIG_ARRAY_START,
+  CONFIG_LINE_SIZE,
+  EXTENSION_JSON,
+  EXTENSION_PNG,
+} from './helpers/constants';
+import {
+  getCandyMachineAddress,
+  loadCandyProgram,
+  loadWalletKey,
+} from './helpers/accounts';
 import { Config } from './types';
 import { upload } from './commands/upload';
 import { loadCache, saveCache } from './helpers/cache';
-import { mint } from "./commands/mint";
-import { signMetadata } from "./commands/sign";
-import { signAllMetadataFromCandyMachine } from "./commands/signAll";
+import { mint } from './commands/mint';
+import { signMetadata } from './commands/sign';
+import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 
 program.version('0.0.2');
@@ -34,23 +44,44 @@ programCommand('upload')
     },
   )
   .option('-n, --number <number>', 'Number of images to upload')
-  .option('-s, --storage <string>', 'Database to use for storage (arweave, ipfs)', 'arweave')
-  .option('--ipfs-infura-project-id', 'Infura IPFS project id (required if using IPFS)')
-  .option('--ipfs-infura-secret', 'Infura IPFS scret key (required if using IPFS)')
+  .option(
+    '-s, --storage <string>',
+    'Database to use for storage (arweave, ipfs)',
+    'arweave',
+  )
+  .option(
+    '--ipfs-infura-project-id',
+    'Infura IPFS project id (required if using IPFS)',
+  )
+  .option(
+    '--ipfs-infura-secret',
+    'Infura IPFS scret key (required if using IPFS)',
+  )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .action(async (files: string[], options, cmd) => {
-    const {number, keypair, env, cacheName, storage, ipfsInfuraProjectId, ipfsInfuraSecret, retainAuthority} = cmd.opts();
+    const {
+      number,
+      keypair,
+      env,
+      cacheName,
+      storage,
+      ipfsInfuraProjectId,
+      ipfsInfuraSecret,
+      retainAuthority,
+    } = cmd.opts();
 
-    if ((storage === 'ipfs') && ((!ipfsInfuraProjectId) || (!ipfsInfuraSecret))) {
-      throw new Error('IPFS selected as storage option but Infura project id or secret key were not provided.')
+    if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
+      throw new Error(
+        'IPFS selected as storage option but Infura project id or secret key were not provided.',
+      );
     }
-    if (!((storage === 'arweave') || (storage === 'ipfs'))) {
-      throw new Error("Storage option must either be 'arweave' or 'ipfs'.")
+    if (!(storage === 'arweave' || storage === 'ipfs')) {
+      throw new Error("Storage option must either be 'arweave' or 'ipfs'.");
     }
     const ipfsCredentials = {
       projectId: ipfsInfuraProjectId,
-      secretKey: ipfsInfuraSecret
-    }
+      secretKey: ipfsInfuraSecret,
+    };
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -63,102 +94,121 @@ programCommand('upload')
     const elemCount = parsedNumber ? parsedNumber : pngFileCount;
 
     if (pngFileCount !== jsonFileCount) {
-      throw new Error(`number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`);
+      throw new Error(
+        `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      );
     }
 
     if (elemCount < pngFileCount) {
-      throw new Error(`max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`);
+      throw new Error(
+        `max number (${elemCount})cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      );
     }
 
-    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`)
+    log.info(`Beginning the upload for ${elemCount} (png+json) pairs`);
 
     const startMs = Date.now();
-    log.info("started at: " + startMs.toString())
+    log.info('started at: ' + startMs.toString());
     let warn = false;
-    for (; ;) {
-      const successful = await upload(files, cacheName, env, keypair, elemCount, storage, retainAuthority, ipfsCredentials);
+    for (;;) {
+      const successful = await upload(
+        files,
+        cacheName,
+        env,
+        keypair,
+        elemCount,
+        storage,
+        retainAuthority,
+        ipfsCredentials,
+      );
+
       if (successful) {
         warn = false;
         break;
       } else {
         warn = true;
-        log.warn("upload was not successful, rerunning");
+        log.warn('upload was not successful, rerunning');
       }
     }
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
-    log.info(`ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`)
-    if (warn) { log.info("not all images have been uplaoded, rerun this step.") }
-  });
-
-programCommand('verify')
-  .action(async (directory, cmd) => {
-    const { env, keypair, cacheName } = cmd.opts();
-
-    const cacheContent = loadCache(cacheName, env);
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-
-    const configAddress = new PublicKey(cacheContent.program.config);
-    const config = await anchorProgram.provider.connection.getAccountInfo(
-      configAddress,
-    );
-    let allGood = true;
-
-    const keys = Object.keys(cacheContent.items);
-    for (let i = 0; i < keys.length; i++) {
-      log.debug('Looking at key ', i);
-      const key = keys[i];
-      const thisSlice = config.data.slice(
-        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
-        CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * (i + 1),
-      );
-      const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
-      const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-      const cacheItem = cacheContent.items[key];
-      if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-        //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-        // log.info(
-        //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
-        //   `and (${cacheItem.link}). marking to rerun for image`,
-        //   key,
-        // );
-        cacheItem.onChain = false;
-        allGood = false;
-      } else {
-        log.debug('Name', name, 'with', uri, 'checked out');
-      }
-    }
-
-    if (!allGood) {
-      saveCache(cacheName, env, cacheContent);
-
-      throw new Error(
-        `not all NFTs checked out. check out logs above for details`,
-      );
-    }
-
-    const configData = (await anchorProgram.account.config.fetch(
-      configAddress,
-    )) as Config;
-
-    const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
-
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
-      })`,
+      `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
     );
-    if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
-      throw new Error(
-        `predefined number of NFTs (${configData.data.maxNumberOfLines
-        }) is smaller than the uploaded one (${lineCount.toNumber()})`,
-      );
-    } else {
-      log.info('ready to deploy!');
+    if (warn) {
+      log.info('not all images have been uplaoded, rerun this step.');
     }
-
-    saveCache(cacheName, env, cacheContent);
   });
+
+programCommand('verify').action(async (directory, cmd) => {
+  const { env, keypair, cacheName } = cmd.opts();
+
+  const cacheContent = loadCache(cacheName, env);
+  const walletKeyPair = loadWalletKey(keypair);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+  const configAddress = new PublicKey(cacheContent.program.config);
+  const config = await anchorProgram.provider.connection.getAccountInfo(
+    configAddress,
+  );
+  let allGood = true;
+
+  const keys = Object.keys(cacheContent.items);
+  for (let i = 0; i < keys.length; i++) {
+    log.debug('Looking at key ', i);
+    const key = keys[i];
+    const thisSlice = config.data.slice(
+      CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
+      CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * (i + 1),
+    );
+    const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+    const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+    const cacheItem = cacheContent.items[key];
+    if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+      //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
+      // log.info(
+      //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
+      //   `and (${cacheItem.link}). marking to rerun for image`,
+      //   key,
+      // );
+      cacheItem.onChain = false;
+      allGood = false;
+    } else {
+      log.debug('Name', name, 'with', uri, 'checked out');
+    }
+  }
+
+  if (!allGood) {
+    saveCache(cacheName, env, cacheContent);
+
+    throw new Error(
+      `not all NFTs checked out. check out logs above for details`,
+    );
+  }
+
+  const configData = (await anchorProgram.account.config.fetch(
+    configAddress,
+  )) as Config;
+
+  const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+
+  log.info(
+    `uploaded (${lineCount.toNumber()}) out of (${
+      configData.data.maxNumberOfLines
+    })`,
+  );
+  if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
+    throw new Error(
+      `predefined number of NFTs (${
+        configData.data.maxNumberOfLines
+      }) is smaller than the uploaded one (${lineCount.toNumber()})`,
+    );
+  } else {
+    log.info('ready to deploy!');
+  }
+
+  saveCache(cacheName, env, cacheContent);
+});
 
 programCommand('verify_price')
   .option('-p, --price <string>')
@@ -182,7 +232,7 @@ programCommand('verify_price')
     }
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
@@ -206,35 +256,66 @@ programCommand('verify_price')
   });
 
 programCommand('create_candy_machine')
-  .option('-p, --price <string>', 'Price denominated in SOL or spl-token override', '1')
-  .option('-t, --spl-token <string>', 'SPL token used to price NFT mint. To use SOL leave this empty.')
-  .option('-t, --spl-token-account <string>', 'SPL token account that receives mint payments. Only required if spl-token is specified.')
+  .option(
+    '-p, --price <string>',
+    'Price denominated in SOL or spl-token override',
+    '1',
+  )
+  .option(
+    '-t, --spl-token <string>',
+    'SPL token used to price NFT mint. To use SOL leave this empty.',
+  )
+  .option(
+    '-a, --spl-token-account <string>',
+    'SPL token account that receives mint payments. Only required if spl-token is specified.',
+  )
+  .option(
+    '-s, --sol-treasury-account <string>',
+    'SOL account that receives mint payments.',
+  )
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, splToken, splTokenAccount } = cmd.opts();
+    const {
+      keypair,
+      env,
+      price,
+      cacheName,
+      splToken,
+      splTokenAccount,
+      solTreasuryAccount,
+    } = cmd.opts();
 
     let parsedPrice = parsePrice(price);
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     let wallet = walletKeyPair.publicKey;
     const remainingAccounts = [];
     if (splToken || splTokenAccount) {
+      if (solTreasuryAccount) {
+        throw new Error(
+          'If spl-token-account or spl-token is set then sol-treasury-account cannot be set',
+        );
+      }
       if (!splToken) {
-        throw new Error("If spl-token-account is set, spl-token must also be set")
+        throw new Error(
+          'If spl-token-account is set, spl-token must also be set',
+        );
       }
       const splTokenKey = new PublicKey(splToken);
       const splTokenAccountKey = new PublicKey(splTokenAccount);
       if (!splTokenAccount) {
-        throw new Error("If spl-token is set, spl-token-account must also be set")
+        throw new Error(
+          'If spl-token is set, spl-token-account must also be set',
+        );
       }
 
       const token = new Token(
         anchorProgram.provider.connection,
         splTokenKey,
         TOKEN_PROGRAM_ID,
-        walletKeyPair
+        walletKeyPair,
       );
 
       const mintInfo = await token.getMintInfo();
@@ -246,12 +327,23 @@ programCommand('create_candy_machine')
         throw new Error(`The specified spl-token-account is not initialized`);
       }
       if (!tokenAccount.mint.equals(splTokenKey)) {
-        throw new Error(`The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`);
+        throw new Error(
+          `The spl-token-account's mint (${tokenAccount.mint.toString()}) does not match specified spl-token ${splTokenKey.toString()}`,
+        );
       }
 
       wallet = splTokenAccountKey;
       parsedPrice = parsePrice(price, 10 ** mintInfo.decimals);
-      remainingAccounts.push({ pubkey: splTokenKey, isWritable: false, isSigner: false });
+      remainingAccounts.push({
+        pubkey: splTokenKey,
+        isWritable: false,
+        isSigner: false,
+      });
+    }
+
+    if (solTreasuryAccount) {
+      const solAccountKey = new PublicKey(solTreasuryAccount);
+      wallet = solAccountKey;
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -282,7 +374,9 @@ programCommand('create_candy_machine')
       },
     );
     saveCache(cacheName, env, cacheContent);
-    log.info(`create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`);
+    log.info(
+      `create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`,
+    );
   });
 
 programCommand('update_candy_machine')
@@ -296,7 +390,7 @@ programCommand('update_candy_machine')
     const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
     const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
@@ -313,23 +407,24 @@ programCommand('update_candy_machine')
       },
     );
 
-    if (date) log.info(` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`)
-    if (lamports) log.info(` - updated price: ${lamports} lamports (${price} SOL)`)
+    if (date)
+      log.info(
+        ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
+      );
+    if (lamports)
+      log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
     log.info('updated_candy_machine Done', tx);
   });
 
-programCommand('mint_one_token')
-  .option('-t, --spl-token-account <string>', 'SPL token account to payfrom')
-  .action(async (directory, cmd) => {
-    const {keypair, env, cacheName, splTokenAccount} = cmd.opts();
+programCommand('mint_one_token').action(async (directory, cmd) => {
+  const { keypair, env, cacheName } = cmd.opts();
 
-    const cacheContent = loadCache(cacheName, env);
-    const configAddress = new PublicKey(cacheContent.program.config);
-    const splTokenAccountKey = splTokenAccount ? new PublicKey(splTokenAccount) :  undefined;
-    const tx = await mint(keypair, env, configAddress, splTokenAccountKey);
+  const cacheContent = loadCache(cacheName, env);
+  const configAddress = new PublicKey(cacheContent.program.config);
+  const tx = await mint(keypair, env, configAddress);
 
-    log.info('Done', tx);
-  });
+  log.info('Done', tx);
+});
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -337,11 +432,7 @@ programCommand('sign')
   .action(async (directory, cmd) => {
     const { keypair, env, metadata } = cmd.opts();
 
-    await signMetadata(
-      metadata,
-      keypair,
-      env
-    );
+    await signMetadata(metadata, keypair, env);
   });
 
 function programCommand(name: string) {
@@ -364,44 +455,48 @@ function programCommand(name: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function setLogLevel(value, prev) {
   if (value === undefined || value === null) {
-    return
+    return;
   }
-  log.info("setting the log value to: " + value);
+  log.info('setting the log value to: ' + value);
   log.setLevel(value);
 }
 
-programCommand("sign_candy_machine_metadata")
+programCommand('sign_candy_machine_metadata')
   .option('-cndy, --candy-address <string>', 'Candy machine address', '')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .action(async (directory, cmd) => {
     const { keypair, env, cacheName, batchSize } = cmd.opts();
     let { candyAddress } = cmd.opts();
     if (!keypair || keypair == '') {
-      log.info("Keypair required!");
+      log.info('Keypair required!');
       return;
     }
     if (!candyAddress || candyAddress == '') {
-      log.info("Candy machine address required! Using from saved list.")
+      log.info('Candy machine address required! Using from saved list.');
       const cacheContent = loadCache(cacheName, env);
       const config = new PublicKey(cacheContent.program.config);
-      const [candyMachine, ] = await getCandyMachineAddress(
-        config,
-        cacheContent.program.uuid,  
-      );
+      const candyMachine = (
+        await getCandyMachineAddress(config, cacheContent.program.uuid)
+      )[0];
       candyAddress = candyMachine.toBase58();
     }
-    const batchSizeParsed = parseInt(batchSize)
+    const batchSizeParsed = parseInt(batchSize);
     if (!parseInt(batchSize)) {
-      log.info("Batch size needs to be an integer!")
+      log.info('Batch size needs to be an integer!');
       return;
     }
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
-    log.info("Creator pubkey: ", walletKeyPair.publicKey.toBase58())
-    log.info("Environment: ", env)
-    log.info("Candy machine address: ", candyAddress)
-    log.info("Batch Size: ", batchSizeParsed)
-    await signAllMetadataFromCandyMachine(anchorProgram.provider.connection, walletKeyPair, candyAddress, batchSizeParsed)
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    log.info('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.info('Environment: ', env);
+    log.info('Candy machine address: ', candyAddress);
+    log.info('Batch Size: ', batchSizeParsed);
+    await signAllMetadataFromCandyMachine(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      candyAddress,
+      batchSizeParsed,
+    );
   });
 
 program.parse(process.argv);

@@ -1,9 +1,10 @@
+
 use {
     crate::{
         error::MetaplexError,
         state::{
             get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
+            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX
         },
     },
     arrayref::array_ref,
@@ -23,7 +24,7 @@ use {
     },
     spl_auction::{
         instruction::end_auction_instruction,
-        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionState},
+        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionDataExtended, AuctionState, BidderMetadata},
     },
     spl_token::instruction::{set_authority, AuthorityType},
     spl_token_metadata::{
@@ -175,6 +176,37 @@ pub fn assert_authority_correct(
 
     Ok(())
 }
+
+pub fn assert_auction_is_ended_or_valid_instant_sale(
+    auction_info: &AccountInfo,
+    auction_extended_info: Option<&AccountInfo>,
+    bidder_metadata_info: &AccountInfo,
+    win_index: Option<usize>,
+) -> ProgramResult {
+    if AuctionData::get_state(auction_info)? == AuctionState::Ended {
+        return Ok(());
+    }
+
+    let instant_sale_price = auction_extended_info
+        .and_then(|info| AuctionDataExtended::get_instant_sale_price(&info.data.borrow()));
+
+    match instant_sale_price {
+        Some(instant_sale_price) => {
+            let winner_bid_price = win_index
+                .and_then(|i| AuctionData::get_winner_bid_amount_at(auction_info, i))
+                // Possible case in an open auction
+                .unwrap_or(BidderMetadata::from_account_info(bidder_metadata_info)?.last_bid);
+
+            if winner_bid_price < instant_sale_price {
+                return Err(MetaplexError::AuctionHasNotEnded.into());
+            }
+        }
+        None => return Err(MetaplexError::AuctionHasNotEnded.into()),
+    }
+
+    Ok(())
+}
+
 /// Create account almost from scratch, lifted from
 /// https://github.com/solana-labs/solana-program-library/blob/7d4873c61721aca25464d42cc5ef651a7923ca79/associated-token-account/program/src/processor.rs#L51-L98
 #[inline(always)]
@@ -364,6 +396,7 @@ pub struct CommonRedeemCheckArgs<'a> {
     pub safety_deposit_info: &'a AccountInfo<'a>,
     pub vault_info: &'a AccountInfo<'a>,
     pub auction_info: &'a AccountInfo<'a>,
+    pub auction_extended_info: Option<&'a AccountInfo<'a>>,
     pub bidder_metadata_info: &'a AccountInfo<'a>,
     pub bidder_info: &'a AccountInfo<'a>,
     pub token_program_info: &'a AccountInfo<'a>,
@@ -486,6 +519,7 @@ pub fn common_redeem_checks(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,
@@ -627,9 +661,12 @@ pub fn common_redeem_checks(
         return Err(MetaplexError::AuctionManagerTokenMetadataProgramMismatch.into());
     }
 
-    if AuctionData::get_state(auction_info)? != AuctionState::Ended {
-        return Err(MetaplexError::AuctionHasNotEnded.into());
-    }
+    assert_auction_is_ended_or_valid_instant_sale(
+        auction_info,
+        auction_extended_info,
+        bidder_metadata_info,
+        win_index,
+    )?;
 
     // No-op if already set.
     auction_manager.set_status(AuctionManagerStatus::Disbursing);
