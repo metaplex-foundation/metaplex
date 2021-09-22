@@ -22,7 +22,7 @@ export const schema = makeSchema({
   sourceTypes: {
     modules: [
       {
-        module: path.join(DIRNAME, "types/sourceTypes.ts"),
+        module: path.join(DIRNAME, "types", "sourceTypes.ts"),
         alias: "common",
       },
     ],
@@ -33,7 +33,7 @@ export const schema = makeSchema({
     },
   },
   contextType: {
-    module: path.join(DIRNAME, "types/context.ts"),
+    module: path.join(DIRNAME, "types", "context.ts"),
     export: "Context",
   },
   features: {

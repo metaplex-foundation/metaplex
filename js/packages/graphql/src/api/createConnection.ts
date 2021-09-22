@@ -1,7 +1,7 @@
 import { Commitment, Connection, ConnectionConfig } from "@solana/web3.js";
 import fetch from "cross-fetch";
 import { parseChunked } from "@discoveryjs/json-ext";
-
+import logger from "../logger";
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -40,7 +40,7 @@ export function createConnection(
         if (too_many_requests_retries === 0) {
           break;
         }
-        console.log(
+        logger.error(
           `Server responded with ${res.status} ${res.statusText}.  Retrying after ${waitTime}ms delay...`
         );
         await sleep(waitTime);

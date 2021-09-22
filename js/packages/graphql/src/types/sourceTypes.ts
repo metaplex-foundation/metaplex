@@ -4,7 +4,7 @@ import type {
   WhitelistedCreator,
   Metadata as Meta,
   AuctionData,
-} from "../common";
+} from "../common/index";
 
 export type FieldPubkey = { pubkey: string };
 export type Fields<T> = T & FieldPubkey;

@@ -7,6 +7,7 @@ import { programIds } from "../utils/programIds";
 import { deserializeUnchecked, serialize } from "borsh";
 import BN from "bn.js";
 import { findProgramAddress, StringPublicKey, toPublicKey } from "../utils";
+
 export const METADATA_PREFIX = "metadata";
 export const EDITION = "edition";
 export const RESERVATION = "reservation";
@@ -554,7 +555,7 @@ export async function createMetadata(
       toPublicKey(metadataProgramId)
     )
   )[0];
-  console.log("Data", data);
+
   const value = new CreateMetadataArgs({ data, isMutable: true });
   const txnData = Buffer.from(serialize(METADATA_SCHEMA, value));
 
