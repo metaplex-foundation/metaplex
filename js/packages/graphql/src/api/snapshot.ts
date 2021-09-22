@@ -5,13 +5,13 @@ import { tmpdir } from "os";
 import mkdirp from "mkdirp";
 import { Connection } from "@solana/web3.js";
 import { MetaplexApiDataSource } from ".";
-
+import logger from "../logger";
 const writeFileAsync = util.promisify(fs.writeFile);
 const readFileAsync = util.promisify(fs.readFile);
 
 export async function snapshot(api: MetaplexApiDataSource, dir = tmpdir()) {
   let checkDir = false;
-  console.log(`📖 Start read/write from/to snapshot`);
+  logger.info(`📖 Start read/write from/to snapshot`);
   api.ENTRIES.map((entry) => {
     setupFetch(
       entry.provider.connection,
@@ -27,10 +27,10 @@ export async function snapshot(api: MetaplexApiDataSource, dir = tmpdir()) {
           try {
             const d = await readFileAsync(filepath);
             const json = JSON.parse(d.toString());
-            console.log(`📖 Read from cache ${filepath}`);
+            logger.info(`📖 Read from cache ${filepath}`);
             return json;
           } catch (_) {
-            console.log("📖 Read from network", name, args);
+            logger.info("📖 Read from network", name, args);
           }
         }
       },
@@ -40,7 +40,7 @@ export async function snapshot(api: MetaplexApiDataSource, dir = tmpdir()) {
           const filepath = path.join(dir, filename);
           const data = JSON.stringify(resp);
           await writeFileAsync(filepath, data);
-          console.log(`✍  Write: ${filepath}`);
+          logger.info(`✍  Write: ${filepath}`);
         }
       }
     );
@@ -63,7 +63,7 @@ export const setupFetch = (
       }
       return data;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       throw err;
     }
   };

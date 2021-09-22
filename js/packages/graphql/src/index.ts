@@ -8,6 +8,7 @@ import { schema, context } from "./graphqlConfig";
 import { startApi, warmUp } from "./startApi";
 import { Context } from "./types/context";
 import { config } from "dotenv";
+import logger from "./logger";
 
 async function startApolloServer() {
   const app = express();
@@ -60,8 +61,8 @@ async function startApolloServer() {
   const URL_GRAPHQL = `http://localhost:${PORT}${server.graphqlPath}`;
   const URL_GRAPHQL_WS = `ws://localhost:${PORT}${server.graphqlPath}`;
 
-  console.log(`🚀 Server ready at ${URL_GRAPHQL}`);
-  console.log(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
+  logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
+  logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
 
   warmUp(api);
 }

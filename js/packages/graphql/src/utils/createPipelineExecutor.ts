@@ -1,4 +1,5 @@
 import after from "lodash/after";
+import logger from "../logger";
 
 export async function createPipelineExecutor<T>(
   data: IterableIterator<T>,
@@ -27,7 +28,7 @@ export async function createPipelineExecutor<T>(
     executor(iter.value, numIndex);
     complete++;
     if (name && complete % completeGroup === 0) {
-      console.log(`${name}: ${complete} tasks were processed`);
+      logger.info(`${name}: ${complete} tasks were processed`);
     }
   }
 

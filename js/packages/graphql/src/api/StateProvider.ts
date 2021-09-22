@@ -22,6 +22,7 @@ import queue from "queue";
 import { PubSub, withFilter } from "graphql-subscriptions";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
 import { createConnection } from "./createConnection";
+import logger from "../logger";
 
 export declare type FilterFn<T = any> = (
   rootValue?: T,
@@ -54,7 +55,7 @@ const bindToStateAndPubsub =
   (account: PublicKeyStringAndAccount<Buffer>) => {
     process(account, (prop, key, value) => {
       state[prop].set(key, value);
-      console.log(`⚡ event - ${prop}:${key}`);
+      logger.info(`⚡ event - ${prop}:${key}`);
       pubsub.publish(prop, { prop, key });
     });
   };
@@ -153,20 +154,20 @@ export class StateProvider {
     await this.flowControl.promise;
     try {
       await this.loadAndProcessData();
-      console.log(`🏝️  ${this.name} meta loaded`);
+      logger.info(`🏝️  ${this.name} meta loaded`);
       // process emitted messages
       this.changesQueue.autostart = true;
       this.changesQueue.start();
       this.flowControl.finish();
     } catch (e) {
       // XXX: try to reconnect
-      console.error(e);
+      logger.error(e);
       throw e;
     }
   }
 
   private async loadAndProcessData() {
-    console.log(`⏱  ${this.name} - start loading data`);
+    logger.info(`⏱  ${this.name} - start loading data`);
 
     const loading = this.programs.map((program) => {
       this.subscribeOnChange(program);
@@ -174,7 +175,7 @@ export class StateProvider {
     });
 
     const loadedAccounts = await Promise.all(loading);
-    console.log(`⏱  ${this.name} - data loaded and start processing data`);
+    logger.info(`⏱  ${this.name} - data loaded and start processing data`);
 
     const decoding = loadedAccounts.map(async (accounts, index) => {
       const program = this.programs[index];
@@ -184,7 +185,7 @@ export class StateProvider {
       });
     });
     await Promise.all(decoding);
-    console.log(`⏱  ${this.name} - start processing metadata`);
+    logger.info(`⏱  ${this.name} - start processing metadata`);
 
     // processing metadata
     await createPipelineExecutor(
@@ -201,18 +202,18 @@ export class StateProvider {
 
   private async loadProgramAccounts(program: IProgramConfig) {
     try {
-      console.log(
+      logger.info(
         `🤞 ${this.name} - loading program accounts ${program.pubkey}`
       );
       const accounts = await getProgramAccounts(
         this.connection,
         program.pubkey
       );
-      console.log(`🍀 ${this.name} - loaded ${program.pubkey}`);
+      logger.info(`🍀 ${this.name} - loaded ${program.pubkey}`);
 
       return accounts;
     } catch (e) {
-      console.error(`🐛 ${this.name} - failed loaded ${program.pubkey}`);
+      logger.error(`🐛 ${this.name} - failed loaded ${program.pubkey}`);
       throw e;
     }
   }
