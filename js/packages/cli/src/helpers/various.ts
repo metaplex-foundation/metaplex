@@ -47,6 +47,12 @@ export function fromUTF8Array(data: number[]) {
   return str;
 }
 
+export function chunks(array, size) {
+  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
+    (_, index) => array.slice(index * size, (index + 1) * size),
+  );
+}
+
 export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
   return Math.ceil(parseFloat(price) * mantissa);
 }

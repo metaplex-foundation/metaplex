@@ -18,11 +18,11 @@ import {
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
-} from '../../models/metaplex';
+} from '../../models';
 import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, programIds } from '../../utils';
-import { ParsedAccount } from '../accounts/types';
-import { cache } from '../accounts/cache';
+import { ParsedAccount } from '../accounts';
+import { cache } from '../accounts';
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
