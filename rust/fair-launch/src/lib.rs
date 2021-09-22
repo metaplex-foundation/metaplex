@@ -19,6 +19,7 @@ use {
     },
     anchor_spl::token::Mint,
     spl_token::{instruction::initialize_account2, state::Account},
+    spl_token_metadata::instruction::{create_metadata_accounts, update_metadata_accounts},
 };
 
 pub const PREFIX: &str = "fair_launch";
@@ -959,6 +960,108 @@ pub mod fair_launch {
 
         Ok(())
     }
+
+    pub fn set_token_metadata<'info>(
+        ctx: Context<'_, '_, '_, 'info, SetTokenMetadata<'info>>,
+        data: TokenMetadata,
+    ) -> ProgramResult {
+        let fair_launch = &ctx.accounts.fair_launch;
+        let token_mint = fair_launch.token_mint;
+
+        let authority_seeds = [PREFIX.as_bytes(), token_mint.as_ref(), &[fair_launch.bump]];
+
+        let mut creators: Vec<spl_token_metadata::state::Creator> =
+            vec![spl_token_metadata::state::Creator {
+                address: fair_launch.key(),
+                verified: true,
+                share: 0,
+            }];
+
+        if let Some(cre) = &data.creators {
+            for c in cre {
+                creators.push(spl_token_metadata::state::Creator {
+                    address: c.address,
+                    verified: c.verified,
+                    share: c.share,
+                });
+            }
+        }
+
+        let update_infos = vec![
+            ctx.accounts.token_metadata_program.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.metadata.clone(),
+            fair_launch.to_account_info().clone(),
+        ];
+
+        if ctx.accounts.metadata.data_is_empty() {
+            msg!("Creating metadata");
+            let metadata_infos = vec![
+                ctx.accounts.metadata.clone(),
+                ctx.accounts.token_mint.clone(),
+                ctx.accounts.payer.clone(),
+                ctx.accounts.token_metadata_program.clone(),
+                ctx.accounts.token_program.clone(),
+                ctx.accounts.system_program.clone(),
+                ctx.accounts.rent.to_account_info().clone(),
+                fair_launch.to_account_info().clone(),
+            ];
+
+            invoke_signed(
+                &create_metadata_accounts(
+                    *ctx.accounts.token_metadata_program.key,
+                    *ctx.accounts.metadata.key,
+                    *ctx.accounts.token_mint.key,
+                    fair_launch.key(),
+                    *ctx.accounts.payer.key,
+                    ctx.accounts.fair_launch.key(),
+                    data.name,
+                    data.symbol.clone(),
+                    data.uri,
+                    Some(creators),
+                    data.seller_fee_basis_points,
+                    false,
+                    data.is_mutable,
+                ),
+                metadata_infos.as_slice(),
+                &[&authority_seeds],
+            )?;
+            invoke_signed(
+                &update_metadata_accounts(
+                    *ctx.accounts.token_metadata_program.key,
+                    *ctx.accounts.metadata.key,
+                    fair_launch.key(),
+                    None,
+                    None,
+                    Some(true),
+                ),
+                update_infos.as_slice(),
+                &[&authority_seeds],
+            )?;
+        } else {
+            msg!("Updating metadata");
+            invoke_signed(
+                &update_metadata_accounts(
+                    *ctx.accounts.token_metadata_program.key,
+                    *ctx.accounts.metadata.key,
+                    fair_launch.key(),
+                    None,
+                    Some(spl_token_metadata::state::Data {
+                        name: data.name,
+                        symbol: data.symbol,
+                        uri: data.uri,
+                        creators: Some(creators),
+                        seller_fee_basis_points: data.seller_fee_basis_points,
+                    }),
+                    None,
+                ),
+                update_infos.as_slice(),
+                &[&authority_seeds],
+            )?;
+        }
+
+        Ok(())
+    }
 }
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
@@ -1167,6 +1270,30 @@ pub struct ReceiveRefund<'info> {
     // [Writable/optional] buyer payment token account (must be ata)
 }
 
+#[derive(Accounts)]
+pub struct SetTokenMetadata<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority, has_one=token_mint)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(mut, signer)]
+    authority: AccountInfo<'info>,
+    #[account(mut, signer)]
+    payer: AccountInfo<'info>,
+    // With the following accounts we aren't using anchor macros because they are CPI'd
+    // through to token-metadata which will do all the validations we need on them.
+    #[account(mut)]
+    metadata: AccountInfo<'info>,
+    #[account(mut)]
+    token_mint: AccountInfo<'info>,
+    #[account(address = spl_token_metadata::id())]
+    token_metadata_program: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+    #[account(address = system_program::ID)]
+    system_program: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
+    clock: Sysvar<'info, Clock>,
+}
+
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
 32 + // fair launch
 1 + // bump
@@ -1221,6 +1348,31 @@ pub const FAIR_LAUNCH_TICKET_SEQ_SIZE: usize = 8 + //discriminator
 8 + //seq
 1 + // bump
 50; // padding;
+
+// Note both TokenMetadata/Creator copied over from token metadata due to anchor needing them
+// in file to put into IDL
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct Creator {
+    pub address: Pubkey,
+    pub verified: bool,
+    // In percentages, NOT basis points ;) Watch out!
+    pub share: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct TokenMetadata {
+    /// The name of the asset
+    pub name: String,
+    /// The symbol for the asset
+    pub symbol: String,
+    /// URI pointing to JSON representing the asset
+    pub uri: String,
+    /// Royalty basis points that goes to creators in secondary sales (0-10000)
+    pub seller_fee_basis_points: u16,
+    /// Array of creators, optional
+    pub creators: Option<Vec<Creator>>,
+    pub is_mutable: bool,
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct AntiRugSetting {
@@ -1277,6 +1429,7 @@ pub struct FairLaunch {
     pub current_eligible_holders: u64,
     pub current_median: u64,
     pub counts_at_each_tick: Vec<u64>,
+    // Todo add participation fields in the future for participation NFTs
 }
 
 #[account]

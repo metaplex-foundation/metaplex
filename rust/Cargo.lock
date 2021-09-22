@@ -1039,6 +1039,7 @@ dependencies = [
  "arrayref",
  "spl-associated-token-account",
  "spl-token",
+ "spl-token-metadata",
 ]
 
 [[package]]
