@@ -1,4 +1,4 @@
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
