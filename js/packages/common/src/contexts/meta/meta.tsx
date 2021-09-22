@@ -4,8 +4,6 @@ import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
-  loadAccounts,
-  USE_SPEED_RUN,
 } from './loadAccounts';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
@@ -61,11 +59,10 @@ export function MetaProvider({ children = null as any }) {
 
       console.log('-----> Query started');
 
-      const nextState = !USE_SPEED_RUN
-        ? await loadAccounts(connection, all)
-        : await limitedLoadAccounts(ownerAddress as string, connection);
+      const nextState = await limitedLoadAccounts(ownerAddress as string, storeAddress, connection)
 
       console.log('------->Query finished');
+
 
       setState(nextState);
 

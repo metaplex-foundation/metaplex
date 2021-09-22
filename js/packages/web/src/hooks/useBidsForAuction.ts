@@ -6,7 +6,6 @@ import {
   ParsedAccount,
   StringPublicKey,
   useMeta,
-  USE_SPEED_RUN,
 } from '@oyster/common';
 
 export const useHighestBidForAuction = (
@@ -61,27 +60,10 @@ const getBids = (
   // I have no idea why, but cache doesnt work with speed run and i couldnt figure it out for the life of me,
   // because that file is so confusing I have no idea how it works.
   // so we use the tempCache for pulling bids. B come save me.- J
-  let bids;
-  if (USE_SPEED_RUN) {
-    bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
-      b => b.info.auctionPubkey === id,
-    );
-  } else {
-    bids = cache
-      .byParser(BidderMetadataParser)
-      .filter(key => {
-        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
+  const bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
+    b => b.info.auctionPubkey === id,
+  );
 
-        if (!bidder) {
-          return false;
-        }
-        return id === bidder.info.auctionPubkey;
-      })
-      .map(key => {
-        const bidder = cache.get(key) as ParsedAccount<BidderMetadata>;
-        return bidder;
-      });
-  }
   return bids
     .sort((a, b) => {
       const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber();
