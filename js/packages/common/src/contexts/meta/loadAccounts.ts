@@ -135,8 +135,8 @@ export const limitedLoadAccounts = async (
       }
     };
 
-  const getMetadataByCreatorAddress = async (ownerAddrsss: StringPublicKey) => {
-    const creatorSearches: Promise<void>[] = [];
+  const getMetadataByCreatorAddress = async (ownerAddrsss: StringPublicKey): Promise<void> => {
+    const creatorSearches: Promise<any>[] = [];
 
     for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
       creatorSearches.push(
@@ -162,9 +162,13 @@ export const limitedLoadAccounts = async (
               },
             },
           ],
-        }).then(forEach(processMetaData)),
+        })
       );
     }
+
+    const responses = (await Promise.all(creatorSearches)).flat()
+
+    forEach(processMetaData)(responses)
   };
 
   const getStoreAuctionManagers = async (ownerAddress: StringPublicKey) => {
@@ -184,40 +188,28 @@ export const limitedLoadAccounts = async (
     forEach(processMetaplexAccounts)(response);
   };
 
-  // TODO: No longer used but leaving to ensure replacement of getMetadataByCreatorAddress is correct
-  const pullMetadata = async (metadata: string) => {
-    const mdKey = new PublicKey(metadata);
-    const md = await connection.getAccountInfo(mdKey);
-    const mdObject = decodeMetadata(
-      Buffer.from(md?.data || new Uint8Array([])),
+  const getEdditionsFromMetadata = async (mintIds: string[]) => {
+    const editionKeys = await Promise.all(
+      mintIds.map((getEdition)),
     );
-    const editionKey = await getEdition(mdObject.mint);
-    const editionData = await connection.getAccountInfo(
-      new PublicKey(editionKey),
+
+    const edtionData = await getMultipleAccounts(
+      connection,
+      editionKeys,
+      'single',
     );
-    if (md) {
-      //@ts-ignore
-      md.owner = md.owner.toBase58();
-      processMetaData(
-        {
-          pubkey: metadata,
-          account: md,
-        },
-        updateTemp,
-        false,
-      );
-      if (editionData) {
-        //@ts-ignore
-        editionData.owner = editionData.owner.toBase58();
+
+    if (edtionData) {
+      edtionData.keys.map((pubkey, i) => {
         processMetaData(
           {
-            pubkey: editionKey,
-            account: editionData,
+            pubkey,
+            account: edtionData.array[i],
           },
           updateTemp,
           false,
         );
-      }
+      });
     }
   };
 
@@ -299,18 +291,23 @@ export const limitedLoadAccounts = async (
   };
 
   await Promise.all([
-    getStoreAuctionManagers(ownerAddrsss),
-    getStore(storeAddress),
+      getStoreAuctionManagers(ownerAddrsss),
+      getStore(storeAddress),
+      getMetadataByCreatorAddress(ownerAddrsss)
   ]);
 
   const parsedAuctionManagers = Object.values(
     tempCache.auctionManagersByAuction,
   );
 
+  const mintIds = Object.keys(
+    tempCache.metadataByMint
+  )
+
   const promises = [
-    getMetadataByCreatorAddress(ownerAddrsss),
     getAuctionsFromAuctionManagers(parsedAuctionManagers),
     getVaultsForAuctionManagers(parsedAuctionManagers),
+    getEdditionsFromMetadata(mintIds),
     // // bidder metadata pull
     // ...parsedAuctionManagers.map(a =>
     //   getProgramAccounts(connection, AUCTION_ID, {
@@ -578,6 +575,7 @@ export const makeSetter =
     } else if (prop !== 'metadata') {
       state[prop][key] = value;
     }
+
     return state;
   };
 

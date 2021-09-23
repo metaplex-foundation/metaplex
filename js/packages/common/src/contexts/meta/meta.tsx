@@ -63,7 +63,6 @@ export function MetaProvider({ children = null as any }) {
 
       console.log('------->Query finished');
 
-
       setState(nextState);
 
       setIsLoading(false);
