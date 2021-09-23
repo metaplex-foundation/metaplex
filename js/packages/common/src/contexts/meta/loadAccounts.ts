@@ -36,6 +36,7 @@ import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
+import { createPipelineExecutor } from './createPipelineExecutor';
 
 export const USE_SPEED_RUN = false;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
@@ -439,10 +440,14 @@ export const processingAccounts =
   (updater: ReturnType<typeof makeSetter>, all = false) =>
   (fn: ProcessAccountsFunc) =>
   async (accounts: AccountAndPubkey[]) => {
-    // TODO: point to batch & wait
-    for (const account of accounts) {
-      await fn(account, updater, all);
-    }
+    createPipelineExecutor(
+      accounts.values(),
+      account => fn(account, updater, all),
+      {
+        sequence: 20,
+        delay: 1,
+      },
+    );
   };
 
 const postProcessMetadata = async (tempCache: MetaState, all = false) => {
