@@ -6,7 +6,7 @@ import {
   Vault,
   VaultKey,
 } from '../../actions';
-import { VAULT_ID } from '../../utils';
+import { VAULT_ID, pubkeyToString } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 import { ProcessAccountsFunc } from './types';
 
@@ -47,7 +47,7 @@ export const processVaultData: ProcessAccountsFunc = (
 };
 
 const isVaultAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === VAULT_ID;
+  pubkeyToString(account.owner) === VAULT_ID;
 
 const isSafetyDepositBoxV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === VaultKey.SafetyDepositBoxV1;

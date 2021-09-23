@@ -20,7 +20,7 @@ import {
   SafetyDepositConfig,
 } from '../../models';
 import { ProcessAccountsFunc } from './types';
-import { METAPLEX_ID, programIds } from '../../utils';
+import { METAPLEX_ID, programIds, pubkeyToString } from '../../utils';
 import { ParsedAccount } from '../accounts';
 import { cache } from '../accounts';
 
@@ -168,7 +168,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 };
 
 const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === METAPLEX_ID;
+  pubkeyToString(account.owner) === METAPLEX_ID;
 
 const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;
