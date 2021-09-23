@@ -6,7 +6,11 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '../../utils/ids';
-import { MAX_WHITELISTED_CREATOR_SIZE, AuctionManagerV2, AuctionManagerV1 } from '../../models';
+import {
+  MAX_WHITELISTED_CREATOR_SIZE,
+  AuctionManagerV2,
+  AuctionManagerV1,
+} from '../../models';
 import {
   getEdition,
   Metadata,
@@ -91,7 +95,7 @@ async function getProgramAccounts(
   );
 
   if (unsafeRes.error) {
-    throw new Error(unsafeRes.error.message)
+    throw new Error(unsafeRes.error.message);
   }
 
   const data = (
@@ -116,8 +120,11 @@ async function getProgramAccounts(
   return data;
 }
 
-
-export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAddress: string, connection: Connection) => {
+export const limitedLoadAccounts = async (
+  ownerAddrsss: StringPublicKey,
+  storeAddress: string,
+  connection: Connection,
+) => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
@@ -155,26 +162,27 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
               },
             },
           ],
-        }).then(forEach(processMetaData))
+        }).then(forEach(processMetaData)),
       );
     }
-  }
+  };
 
   const getStoreAuctionManagers = async (ownerAddress: StringPublicKey) => {
     const response = await getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
         {
           memcmp: {
-            offset: 1 + // key
+            offset:
+              1 + // key
               32, // store
-            bytes: ownerAddress
-          }
-        }
-      ]
-    })
+            bytes: ownerAddress,
+          },
+        },
+      ],
+    });
 
-    forEach(processMetaplexAccounts)(response)
-  }
+    forEach(processMetaplexAccounts)(response);
+  };
 
   // TODO: No longer used but leaving to ensure replacement of getMetadataByCreatorAddress is correct
   const pullMetadata = async (metadata: string) => {
@@ -213,12 +221,19 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
     }
   };
 
-  const getAuctionsFromAuctionManagers = async (parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]) => {
-    const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction)
+  const getAuctionsFromAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction);
 
     const auctionExtendedKeys = await Promise.all(
-      parsedAccounts.map((account) => getAuctionExtended({ auctionProgramId: AUCTION_ID, resource: account.info.vault }))
-    )
+      parsedAccounts.map(account =>
+        getAuctionExtended({
+          auctionProgramId: AUCTION_ID,
+          resource: account.info.vault,
+        }),
+      ),
+    );
 
     const auctionData = await getMultipleAccounts(
       connection,
@@ -240,28 +255,10 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
     }
   };
 
-  // TODO: Not used. I am concerned about setting the owner. That is not done in the replacement method that fetches all auction managers based on authority.
-  const pullAuctionManager = async (auctionManager: string) => {
-    const auctionManagerKey = new PublicKey(auctionManager);
-    const auctionManagerData = await connection.getAccountInfo(
-      auctionManagerKey,
-    );
-    if (auctionManagerData) {
-      //@ts-ignore
-      auctionManagerData.owner = auctionManagerData.owner.toBase58();
-      processMetaplexAccounts(
-        {
-          pubkey: auctionManager,
-          account: auctionManagerData,
-        },
-        updateTemp,
-        false,
-      );
-    }
-  };
-
-  const getVaultsForAuctionManagers = async (parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]) => {
-    const vaultKeys = parsedAccounts.map(({ info: { vault } }) => vault)
+  const getVaultsForAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const vaultKeys = parsedAccounts.map(({ info: { vault } }) => vault);
 
     const vaultData = await getMultipleAccounts(
       connection,
@@ -284,117 +281,121 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
   };
 
   const getStore = async (storeAddress: string) => {
-    const storePubkey = new PublicKey(storeAddress)
-    const storeData = await connection.getAccountInfo(storePubkey)
+    const storePubkey = new PublicKey(storeAddress);
+    const storeData = await connection.getAccountInfo(storePubkey);
 
     if (storeData) {
       //@ts-ignore
-      storeData.owner = storeData.owner.toBase58()
+      storeData.owner = storeData.owner.toBase58();
       processMetaplexAccounts(
         {
           pubkey: storeAddress,
-          account: storeData
+          account: storeData,
         },
         updateTemp,
-        false
-      )
+        false,
+      );
     }
-  }
+  };
 
-  await getStoreAuctionManagers(ownerAddrsss)
-  await getStore(storeAddress)
-  
-  const parsedAuctionManagers = Object.values(tempCache.auctionManagersByAuction)
+  await Promise.all([
+    getStoreAuctionManagers(ownerAddrsss),
+    getStore(storeAddress),
+  ]);
+
+  const parsedAuctionManagers = Object.values(
+    tempCache.auctionManagersByAuction,
+  );
 
   const promises = [
     getMetadataByCreatorAddress(ownerAddrsss),
     getAuctionsFromAuctionManagers(parsedAuctionManagers),
     getVaultsForAuctionManagers(parsedAuctionManagers),
-    // bidder metadata pull
-    ...parsedAuctionManagers.map(a =>
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 32,
-              bytes: a.info.auction,
-            },
-          },
-        ],
-      }).then(forEach(processAuctions)),
-    ),
-    // bidder pot pull
-    ...parsedAuctionManagers.map(a =>
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 64,
-              bytes: a.info.auction,
-            },
-          },
-        ],
-      }).then(forEach(processAuctions)),
-    ),
-    // safety deposit pull
-    ...parsedAuctionManagers.map(a =>
-      getProgramAccounts(connection, VAULT_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 1,
-              bytes: a.info.vault,
-            },
-          },
-        ],
-      }).then(forEach(processVaultData)),
-    ),
-    // bid redemptions
-    ...parsedAuctionManagers.map(a =>
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 9,
-              bytes: a.pubkey,
-            },
-          },
-        ],
-      }).then(forEach(processMetaplexAccounts)),
-    ),
-    // safety deposit configs
-    ...parsedAuctionManagers.map(a =>
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 1,
-              bytes: a.pubkey,
+    // // bidder metadata pull
+    // ...parsedAuctionManagers.map(a =>
+    //   getProgramAccounts(connection, AUCTION_ID, {
+    //     filters: [
+    //       {
+    //         memcmp: {
+    //           offset: 32,
+    //           bytes: a.info.auction,
+    //         },
+    //       },
+    //     ],
+    //   }).then(forEach(processAuctions)),
+    // ),
+    // // bidder pot pull
+    // ...parsedAuctionManagers.map(a =>
+    //   getProgramAccounts(connection, AUCTION_ID, {
+    //     filters: [
+    //       {
+    //         memcmp: {
+    //           offset: 64,
+    //           bytes: a.info.auction,
+    //         },
+    //       },
+    //     ],
+    //   }).then(forEach(processAuctions)),
+    // ),
+    // // safety deposit pull
+    // ...parsedAuctionManagers.map(a =>
+    //   getProgramAccounts(connection, VAULT_ID, {
+    //     filters: [
+    //       {
+    //         memcmp: {
+    //           offset: 1,
+    //           bytes: a.info.vault,
+    //         },
+    //       },
+    //     ],
+    //   }).then(forEach(processVaultData)),
+    // ),
+    // // bid redemptions
+    // ...parsedAuctionManagers.map(a =>
+    //   getProgramAccounts(connection, METAPLEX_ID, {
+    //     filters: [
+    //       {
+    //         memcmp: {
+    //           offset: 9,
+    //           bytes: a.pubkey,
+    //         },
+    //       },
+    //     ],
+    //   }).then(forEach(processMetaplexAccounts)),
+    // ),
+    // // safety deposit configs
+    // ...parsedAuctionManagers.map(a =>
+    //   getProgramAccounts(connection, METAPLEX_ID, {
+    //     filters: [
+    //       {
+    //         memcmp: {
+    //           offset: 1,
+    //           bytes: a.pubkey,
 
-            },
-          },
-        ],
-      }).then(forEach(processMetaplexAccounts)),
-    ),
-    // prize tracking tickets
-    ...Object.keys(AUCTION_TO_METADATA)
-      .map(key =>
-        AUCTION_TO_METADATA[key]
-          .map(md =>
-            getProgramAccounts(connection, METAPLEX_ID, {
-              filters: [
-                {
-                  memcmp: {
-                    offset: 1,
-                    bytes: md,
-                  },
-                },
-              ],
-            }).then(forEach(processMetaplexAccounts)),
-          )
-          .flat(),
-      )
-      .flat(),
+    //         },
+    //       },
+    //     ],
+    //   }).then(forEach(processMetaplexAccounts)),
+    // ),
+    // // prize tracking tickets
+    // ...Object.keys(AUCTION_TO_METADATA)
+    //   .map(key =>
+    //     AUCTION_TO_METADATA[key]
+    //       .map(md =>
+    //         getProgramAccounts(connection, METAPLEX_ID, {
+    //           filters: [
+    //             {
+    //               memcmp: {
+    //                 offset: 1,
+    //                 bytes: md,
+    //               },
+    //             },
+    //           ],
+    //         }).then(forEach(processMetaplexAccounts)),
+    //       )
+    //       .flat(),
+    //   )
+    //   .flat(),
     // whitelisted creators
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -571,14 +572,14 @@ const getAdditionalPromises = (
 
 export const makeSetter =
   (state: MetaState) =>
-    (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
-      if (prop === 'store') {
-        state[prop] = value;
-      } else if (prop !== 'metadata') {
-        state[prop][key] = value;
-      }
-      return state;
-    };
+  (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
+    if (prop === 'store') {
+      state[prop] = value;
+    } else if (prop !== 'metadata') {
+      state[prop][key] = value;
+    }
+    return state;
+  };
 
 const postProcessMetadata = async (tempCache: MetaState, all: boolean) => {
   const values = Object.values(tempCache.metadataByMint);
