@@ -182,13 +182,13 @@ export function useSettlementAuctions({
   const { accountByMint } = useUserAccounts();
   const walletPubkey = wallet?.publicKey?.toBase58();
   const { bidderPotsByAuctionAndBidder } = useMeta();
-  const auctionsNeedingSettling = useAuctions(AuctionViewState.Ended);
+  const { auctions } = useAuctions();
 
   const [validDiscoveredEndedAuctions, setValidDiscoveredEndedAuctions] =
     useState<Record<string, number>>({});
   useMemo(() => {
     const f = async () => {
-      const nextBatch = auctionsNeedingSettling
+      const nextBatch = auctions
         .filter(
           a =>
             walletPubkey &&
@@ -227,10 +227,10 @@ export function useSettlementAuctions({
       }
     };
     f();
-  }, [auctionsNeedingSettling.length, walletPubkey]);
+  }, [auctions.length, walletPubkey]);
 
   Object.keys(validDiscoveredEndedAuctions).forEach(auctionViewKey => {
-    const auctionView = auctionsNeedingSettling.find(
+    const auctionView = auctions.find(
       a => a.auctionManager.pubkey === auctionViewKey,
     );
     if (!auctionView) return;
@@ -296,11 +296,8 @@ export function Notifications() {
     vaults,
     safetyDepositBoxesByVaultAndIndex,
   } = useMeta();
-  const possiblyBrokenAuctionManagerSetups = useAuctions(
-    AuctionViewState.Defective,
-  );
+  const { auctions } = useAuctions();
 
-  const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
   const { accountByMint } = useUserAccounts();
@@ -351,7 +348,7 @@ export function Notifications() {
     });
   });
 
-  possiblyBrokenAuctionManagerSetups
+  auctions
     .filter(v => v.auctionManager.authority === walletPubkey)
     .forEach(v => {
       notifications.push({
@@ -420,7 +417,7 @@ export function Notifications() {
     });
   });
 
-  upcomingAuctions
+  auctions
     .filter(v => v.auctionManager.authority === walletPubkey)
     .forEach(v => {
       notifications.push({

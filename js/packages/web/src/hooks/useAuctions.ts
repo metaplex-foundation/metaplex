@@ -10,9 +10,12 @@ import {
   MasterEditionV1,
   MasterEditionV2,
   StringPublicKey,
+  useConnection,
+  loadAuction
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
+import { merge } from 'lodash'
 import { useEffect, useState } from 'react';
 import { useMeta } from '../contexts';
 import {
@@ -106,8 +109,10 @@ export function useCachedRedemptionKeysByWallet() {
 }
 
 export const useAuctions = (state?: AuctionViewState) => {
+  const connection = useConnection()
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
+  const [loading, setLoading] = useState(true)
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const {
@@ -124,7 +129,28 @@ export const useAuctions = (state?: AuctionViewState) => {
     metadataByMasterEdition,
     safetyDepositConfigsByAuctionManagerAndIndex,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
+    updateMetaState
   } = useMeta();
+
+
+  const auctionManagers = Object.values(auctionManagersByAuction)
+  const [tempAuctionManagers, setTempAuctionManagers] = useState(auctionManagers)
+
+  const loadMoreAuctions = async () => {
+    setLoading(true)
+    debugger;
+    const ams = [...tempAuctionManagers]
+
+    const auctionsToLoad = ams.splice(0, 2)
+
+    const responses = await Promise.all(auctionsToLoad.map(auctionManager => loadAuction(connection, auctionManager)))
+    
+    const newState = responses.reduce((memo, state) => (merge({}, memo, state)))
+
+    updateMetaState(newState) 
+    setTempAuctionManagers(ams)
+    setLoading(false)
+  }
 
   useEffect(() => {
     const map = Object.keys(auctions).reduce((agg, a) => {
@@ -148,12 +174,9 @@ export const useAuctions = (state?: AuctionViewState) => {
         state,
       );
 
-      console.log('auction views:', auction, nextAuctionView)
       agg[a] = nextAuctionView;
       return agg;
     }, {} as Record<string, AuctionView | undefined>);
-
-    console.log('auctionViews', map)
 
     setAuctionViews(
       (Object.values(map).filter(v => v) as AuctionView[]).sort((a, b) => {
@@ -184,7 +207,12 @@ export const useAuctions = (state?: AuctionViewState) => {
     setAuctionViews,
   ]);
 
-  return auctionViews;
+  return { 
+    loading,
+    auctions: auctionViews, 
+    loadMore: loadMoreAuctions, 
+    hasNextPage: tempAuctionManagers.length > 0 
+  };
 };
 
 function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
@@ -365,7 +393,7 @@ export function processAccountsIntoAuctionView(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
-
+    
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;

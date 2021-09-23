@@ -77,6 +77,7 @@ export interface MetaState {
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
+  updateMetaState?: (nextState: MetaState) => void, 
 }
 
 export type AccountAndPubkey = {
