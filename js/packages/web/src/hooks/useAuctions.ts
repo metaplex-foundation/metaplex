@@ -147,6 +147,8 @@ export const useAuctions = (state?: AuctionViewState) => {
         cachedRedemptionKeys,
         state,
       );
+
+      console.log('auction views:', auction, nextAuctionView)
       agg[a] = nextAuctionView;
       return agg;
     }, {} as Record<string, AuctionView | undefined>);
@@ -442,8 +444,9 @@ export function processAccountsIntoAuctionView(
       if (
         (!view.thumbnail || !view.thumbnail.metadata) &&
         desiredState != AuctionViewState.Defective
-      )
-        return undefined;
+      ) {
+        return undefined
+      }
 
       return view as AuctionView;
     }

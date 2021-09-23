@@ -334,19 +334,19 @@ export const limitedLoadAccounts = async (
     //     ],
     //   }).then(forEach(processAuctions)),
     // ),
-    // // safety deposit pull
-    // ...parsedAuctionManagers.map(a =>
-    //   getProgramAccounts(connection, VAULT_ID, {
-    //     filters: [
-    //       {
-    //         memcmp: {
-    //           offset: 1,
-    //           bytes: a.info.vault,
-    //         },
-    //       },
-    //     ],
-    //   }).then(forEach(processVaultData)),
-    // ),
+    // safety deposit pull
+    ...parsedAuctionManagers.map(a =>
+      getProgramAccounts(connection, VAULT_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 1,
+              bytes: a.info.vault,
+            },
+          },
+        ],
+      }).then(forEach(processVaultData)),
+    ),
     // // bid redemptions
     // ...parsedAuctionManagers.map(a =>
     //   getProgramAccounts(connection, METAPLEX_ID, {
@@ -361,19 +361,19 @@ export const limitedLoadAccounts = async (
     //   }).then(forEach(processMetaplexAccounts)),
     // ),
     // // safety deposit configs
-    // ...parsedAuctionManagers.map(a =>
-    //   getProgramAccounts(connection, METAPLEX_ID, {
-    //     filters: [
-    //       {
-    //         memcmp: {
-    //           offset: 1,
-    //           bytes: a.pubkey,
+    ...parsedAuctionManagers.map(a =>
+      getProgramAccounts(connection, METAPLEX_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 1,
+              bytes: a.pubkey,
 
-    //         },
-    //       },
-    //     ],
-    //   }).then(forEach(processMetaplexAccounts)),
-    // ),
+            },
+          },
+        ],
+      }).then(forEach(processMetaplexAccounts)),
+    ),
     // // prize tracking tickets
     // ...Object.keys(AUCTION_TO_METADATA)
     //   .map(key =>
