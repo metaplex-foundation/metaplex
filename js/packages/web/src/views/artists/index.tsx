@@ -18,7 +18,6 @@ export const ArtistsView = () => {
   };
 
   const items = Object.values(whitelistedCreatorsByCreator);
-  console.log(whitelistedCreatorsByCreator)
   const artistGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
