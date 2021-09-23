@@ -99,7 +99,7 @@ async function getProgramAccounts(
 }
 
 export const limitedLoadAccounts = async (
-  ownerAddrsss: StringPublicKey,
+  ownerAddress: StringPublicKey,
   storeAddress: string,
   connection: Connection,
 ) => {
@@ -113,8 +113,10 @@ export const limitedLoadAccounts = async (
       }
     };
 
-  const getMetadataByCreatorAddress = async (ownerAddrsss: StringPublicKey): Promise<void> => {
-    const creatorSearches: Promise<any>[] = [];
+  const getMetadataByCreatorAddress = async (
+    ownerAddress: StringPublicKey,
+  ): Promise<void> => {
+    const creatorSearches: Promise<AccountAndPubkey[]>[] = [];
 
     for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
       creatorSearches.push(
@@ -136,17 +138,17 @@ export const limitedLoadAccounts = async (
                   1 + // whether or not there is a creators vec
                   4 + // creators vec length
                   i * MAX_CREATOR_LEN,
-                bytes: ownerAddrsss,
+                bytes: ownerAddress,
               },
             },
           ],
-        })
+        }),
       );
     }
 
-    const responses = (await Promise.all(creatorSearches)).flat()
+    const responses = (await Promise.all(creatorSearches)).flat();
 
-    forEach(processMetaData)(responses)
+    await forEach(processMetaData)(responses);
   };
 
   const getStoreAuctionManagers = async (ownerAddress: StringPublicKey) => {
@@ -163,31 +165,31 @@ export const limitedLoadAccounts = async (
       ],
     });
 
-    forEach(processMetaplexAccounts)(response);
+    await forEach(processMetaplexAccounts)(response);
   };
 
-  const getEdditionsFromMetadata = async (mintIds: string[]) => {
-    const editionKeys = await Promise.all(
-      mintIds.map((getEdition)),
-    );
+  const getEditionsFromMetadata = async (mintIds: string[]) => {
+    const editionKeys = await Promise.all(mintIds.map(getEdition));
 
-    const edtionData = await getMultipleAccounts(
+    const editionData = await getMultipleAccounts(
       connection,
       editionKeys,
       'single',
     );
 
-    if (edtionData) {
-      edtionData.keys.map((pubkey, i) => {
-        processMetaData(
-          {
-            pubkey,
-            account: edtionData.array[i],
-          },
-          updateTemp,
-          false,
-        );
-      });
+    if (editionData) {
+      await Promise.all(
+        editionData.keys.map((pubkey, i) => {
+          processMetaData(
+            {
+              pubkey,
+              account: editionData.array[i],
+            },
+            updateTemp,
+            false,
+          );
+        }),
+      );
     }
   };
 
@@ -212,16 +214,18 @@ export const limitedLoadAccounts = async (
     );
 
     if (auctionData) {
-      auctionData.keys.map((pubkey, i) => {
-        processAuctions(
-          {
-            pubkey,
-            account: auctionData.array[i],
-          },
-          updateTemp,
-          false,
-        );
-      });
+      await Promise.all(
+        auctionData.keys.map((pubkey, i) => {
+          processAuctions(
+            {
+              pubkey,
+              account: auctionData.array[i],
+            },
+            updateTemp,
+            false,
+          );
+        }),
+      );
     }
   };
 
@@ -237,16 +241,18 @@ export const limitedLoadAccounts = async (
     );
 
     if (vaultData) {
-      vaultData.keys.map((pubkey, i) => {
-        processVaultData(
-          {
-            pubkey,
-            account: vaultData.array[i],
-          },
-          updateTemp,
-          false,
-        );
-      });
+      await Promise.all(
+        vaultData.keys.map((pubkey, i) => {
+          processVaultData(
+            {
+              pubkey,
+              account: vaultData.array[i],
+            },
+            updateTemp,
+            false,
+          );
+        }),
+      );
     }
   };
 
@@ -269,23 +275,21 @@ export const limitedLoadAccounts = async (
   };
 
   await Promise.all([
-    getStoreAuctionManagers(ownerAddrsss),
+    getStoreAuctionManagers(ownerAddress),
     getStore(storeAddress),
-    getMetadataByCreatorAddress(ownerAddrsss)
+    getMetadataByCreatorAddress(ownerAddress),
   ]);
 
   const parsedAuctionManagers = Object.values(
     tempCache.auctionManagersByAuction,
   );
 
-  const mintIds = Object.keys(
-    tempCache.metadataByMint
-  )
+  const mintIds = Object.keys(tempCache.metadataByMint);
 
   const promises = [
     getAuctionsFromAuctionManagers(parsedAuctionManagers),
     getVaultsForAuctionManagers(parsedAuctionManagers),
-    getEdditionsFromMetadata(mintIds),
+    getEditionsFromMetadata(mintIds),
     // // prize tracking tickets
     // ...Object.keys(AUCTION_TO_METADATA)
     //   .map(key =>
@@ -322,7 +326,10 @@ export const limitedLoadAccounts = async (
   return tempCache;
 };
 
-export const loadAuction = async (connection: Connection, auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>): Promise<MetaState> => {
+export const loadAuction = async (
+  connection: Connection,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
+): Promise<MetaState> => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
@@ -389,10 +396,10 @@ export const loadAuction = async (connection: Connection, auctionManager: Parsed
         },
       ],
     }).then(forEach(processMetaplexAccounts)),
-  ])
+  ]);
 
-  return tempCache
-}
+  return tempCache;
+};
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = getEmptyMetaState();
@@ -553,15 +560,15 @@ const getAdditionalPromises = (
 
 export const makeSetter =
   (state: MetaState) =>
-    (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
-      if (prop === 'store') {
-        state[prop] = value;
-      } else if (prop !== 'metadata') {
-        state[prop][key] = value;
-      }
+  (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
+    if (prop === 'store') {
+      state[prop] = value;
+    } else if (prop !== 'metadata') {
+      state[prop][key] = value;
+    }
 
-      return state;
-    };
+    return state;
+  };
 
 const postProcessMetadata = async (tempCache: MetaState, all: boolean) => {
   const values = Object.values(tempCache.metadataByMint);
