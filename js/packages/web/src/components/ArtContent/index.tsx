@@ -1,13 +1,12 @@
 import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
-import { MetadataCategory, MetadataFile } from '@oyster/common';
+import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
-import { pubkeyToString } from '../../utils/pubkeyToString';
 
 const MeshArtContent = ({
   uri,
@@ -113,7 +112,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -158,6 +157,45 @@ const VideoArtContent = ({
 
   return content;
 };
+
+const HTMLContent = ({
+  uri,
+  animationUrl,
+  className,
+  style,
+  files,
+}: {
+  uri?: string;
+  animationUrl?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  files?: (MetadataFile | string)[];
+}) => {
+  const htmlURL =
+    files && files.length > 0 && typeof files[0] === 'string'
+      ? files[0]
+      : animationUrl;
+  const { isLoading } = useCachedImage(htmlURL || '', true);
+
+  if (isLoading) {
+    return (
+      <CachedImageContent
+        uri={uri}
+        className={className}
+        preview={false}
+        style={{ width: 300, ...style }}
+      />
+    );
+  }
+  return (
+    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+      sandbox="allow-scripts"
+      frameBorder="0"
+      src={htmlURL}
+      className={className}
+      style={style}></iframe>);
+};
+
 
 export const ArtContent = ({
   category,
@@ -232,6 +270,14 @@ export const ArtContent = ({
         uri={uri}
         animationURL={animationURL}
         active={active}
+      />
+    ) : (category === 'html' || animationUrlExt === 'html') ? (
+      <HTMLContent
+        uri={uri}
+        animationUrl={animationURL}
+        className={className}
+        style={style}
+        files={files}
       />
     ) : (
       <CachedImageContent

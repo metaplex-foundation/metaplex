@@ -3,9 +3,9 @@ import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
+import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
   AuctionView as Auction,
-  AuctionViewItem,
   useArt,
   useAuction,
   useBidsForAuction,
@@ -243,7 +243,7 @@ export const AuctionView = () => {
         {auction && (
           <AuctionCard auctionView={auction} hideDefaultAction={false} />
         )}
-        <AuctionBids auctionView={auction} />
+        {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
       </Col>
     </Row>
   );

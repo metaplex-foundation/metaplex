@@ -1,11 +1,8 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  actions,
   sendTransactionWithRetry,
   placeBid,
-  models,
   cache,
-  TokenAccount,
   ensureWrappedAccount,
   toLamports,
   ParsedAccount,
@@ -13,14 +10,15 @@ import {
   WalletSigner,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { approve } from '@oyster/common/dist/lib/models/account';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+import { TokenAccount } from '@oyster/common/dist/lib/models/account';
+
 import { AccountLayout, MintInfo } from '@solana/spl-token';
 import { AuctionView } from '../hooks';
 import BN from 'bn.js';
 import { setupCancelBid } from './cancelBid';
 import { QUOTE_MINT } from '../constants';
-
-const { createTokenAccount } = actions;
-const { approve } = models;
 
 export async function sendPlaceBid(
   connection: Connection,
@@ -29,7 +27,7 @@ export async function sendPlaceBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
-  amount: number,
+  amount: number | BN,
 ) {
   const signers: Keypair[][] = [];
   const instructions: TransactionInstruction[][] = [];
@@ -64,7 +62,8 @@ export async function setupPlaceBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
-  amount: number,
+  // If BN, then assume instant sale and decimals already adjusted.
+  amount: number | BN,
   overallInstructions: TransactionInstruction[][],
   overallSigners: Keypair[][],
 ): Promise<BN> {
@@ -84,7 +83,12 @@ export async function setupPlaceBid(
   const mint = cache.get(
     tokenAccount ? tokenAccount.info.mint : QUOTE_MINT,
   ) as ParsedAccount<MintInfo>;
-  const lamports = toLamports(amount, mint.info) + accountRentExempt;
+
+  const lamports =
+    accountRentExempt +
+    (typeof amount === 'number'
+      ? toLamports(amount, mint.info)
+      : amount.toNumber());
 
   let bidderPotTokenAccount: string;
   if (!auctionView.myBidderPot) {

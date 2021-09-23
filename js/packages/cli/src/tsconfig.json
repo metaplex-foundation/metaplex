@@ -14,7 +14,7 @@
     "noLib": false,
     "preserveConstEnums": true,
     "suppressImplicitAnyIndexErrors": true,
-    "lib": ["dom", "es6"]
+    "lib": ["dom", "es2019"]
   },
   "exclude": ["node_modules", "typings/browser", "typings/browser.d.ts"],
   "atom": {

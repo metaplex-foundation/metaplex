@@ -61,7 +61,7 @@ export const AuctionNumbers = (props: {
             <AmountLabel
               displaySOL={props.displaySOL}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-              title="Starting bid"
+              title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
               amount={fromLamports(
                 participationOnly ? participationFixedPrice : priceFloor,
                 mintInfo,
@@ -81,7 +81,7 @@ export const AuctionNumbers = (props: {
           )}
         </>
       )}
-      {!props.hideCountdown ? (
+      {!ended && !props.hideCountdown ? (
         <AuctionCountdown auctionView={auctionView} labels={true} />
       ) : null}
     </div>
