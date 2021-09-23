@@ -151,6 +151,8 @@ export const useAuctions = (state?: AuctionViewState) => {
       return agg;
     }, {} as Record<string, AuctionView | undefined>);
 
+    console.log('auctionViews', map)
+
     setAuctionViews(
       (Object.values(map).filter(v => v) as AuctionView[]).sort((a, b) => {
         return (
@@ -278,6 +280,7 @@ export function processAccountsIntoAuctionView(
     )
       return undefined;
 
+
     const vault = vaults[auctionManagerInstance.info.vault];
     const auctionManagerKey = auctionManagerInstance.pubkey;
 
@@ -354,11 +357,13 @@ export function processAccountsIntoAuctionView(
       return existingAuctionView;
     }
 
+
     const vaultKey = auctionManager.vault;
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
+
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;
@@ -387,7 +392,7 @@ export function processAccountsIntoAuctionView(
               masterEditions[participationMetadata.info.masterEdition]);
         }
       }
-
+      
       const view: Partial<AuctionView> = {
         auction,
         auctionManager,
@@ -433,6 +438,7 @@ export function processAccountsIntoAuctionView(
             view.participationItem)) &&
         view.vault
       );
+
       if (
         (!view.thumbnail || !view.thumbnail.metadata) &&
         desiredState != AuctionViewState.Defective

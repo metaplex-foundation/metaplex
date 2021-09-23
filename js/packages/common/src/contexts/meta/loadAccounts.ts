@@ -213,15 +213,16 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
     }
   };
 
-  const pullAuctionFromManager = async (parsedAccount: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => {
-    const auctionExtendedKey = await getAuctionExtended({
-      auctionProgramId: AUCTION_ID,
-      resource: parsedAccount.info.vault,
-    });
+  const getAuctionsFromAuctionManagers = async (parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]) => {
+    const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction)
+
+    const auctionExtendedKeys = await Promise.all(
+      parsedAccounts.map((account) => getAuctionExtended({ auctionProgramId: AUCTION_ID, resource: account.info.vault }))
+    )
 
     const auctionData = await getMultipleAccounts(
       connection,
-      [parsedAccount.info.auction, auctionExtendedKey],
+      [...auctionIds, ...auctionExtendedKeys],
       'single',
     );
 
@@ -259,20 +260,26 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
     }
   };
 
-  const pullVaultFromManager = async (parsedAccount: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => {
-    const vaultKey = new PublicKey(parsedAccount.info.vault);
-    const vaultData = await connection.getAccountInfo(vaultKey);
+  const getVaultsForAuctionManagers = async (parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]) => {
+    const vaultKeys = parsedAccounts.map(({ info: { vault } }) => vault)
+
+    const vaultData = await getMultipleAccounts(
+      connection,
+      vaultKeys,
+      'single',
+    );
+
     if (vaultData) {
-      //@ts-ignore
-      vaultData.owner = vaultData.owner.toBase58();
-      processVaultData(
-        {
-          pubkey: parsedAccount.info.vault,
-          account: vaultData,
-        },
-        updateTemp,
-        false,
-      );
+      vaultData.keys.map((pubkey, i) => {
+        processVaultData(
+          {
+            pubkey,
+            account: vaultData.array[i],
+          },
+          updateTemp,
+          false,
+        );
+      });
     }
   };
 
@@ -296,14 +303,13 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
 
   await getStoreAuctionManagers(ownerAddrsss)
   await getStore(storeAddress)
-
   
   const parsedAuctionManagers = Object.values(tempCache.auctionManagersByAuction)
 
   const promises = [
     getMetadataByCreatorAddress(ownerAddrsss),
-    ...parsedAuctionManagers.map(pullAuctionFromManager),
-    ...parsedAuctionManagers.map(pullVaultFromManager),
+    getAuctionsFromAuctionManagers(parsedAuctionManagers),
+    getVaultsForAuctionManagers(parsedAuctionManagers),
     // bidder metadata pull
     ...parsedAuctionManagers.map(a =>
       getProgramAccounts(connection, AUCTION_ID, {
@@ -364,6 +370,7 @@ export const limitedLoadAccounts = async (ownerAddrsss: StringPublicKey, storeAd
             memcmp: {
               offset: 1,
               bytes: a.pubkey,
+
             },
           },
         ],
