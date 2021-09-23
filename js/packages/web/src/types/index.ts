@@ -17,7 +17,7 @@ export interface Artist {
   itemsSold?: number;
   about?: string;
   verified?: boolean;
-
+  background?: string;
   share?: number;
 }
 
