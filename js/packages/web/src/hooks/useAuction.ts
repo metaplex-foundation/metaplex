@@ -1,4 +1,4 @@
-import { StringPublicKey } from '@oyster/common';
+import { StringPublicKey, loadAuction, useConnection } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 import {
@@ -11,6 +11,7 @@ import { useMeta } from '../contexts';
 export const useAuction = (id: StringPublicKey) => {
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+  const connection = useConnection()
 
   const [existingAuctionView, setAuctionView] =
     useState<AuctionView | undefined>(undefined);
@@ -28,9 +29,15 @@ export const useAuction = (id: StringPublicKey) => {
     masterEditionsByOneTimeAuthMint,
     masterEditionsByPrintingMint,
     metadataByMasterEdition,
-
+    updateMetaState,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
   } = useMeta();
+
+  useEffect(() => {
+    if (auctionManagersByAuction[id]) {
+      loadAuction(connection, auctionManagersByAuction[id], true).then(updateMetaState)
+    }
+  }, [auctionManagersByAuction[id]?.pubkey])
 
   useEffect(() => {
     const auction = auctions[id];

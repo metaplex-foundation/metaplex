@@ -48,7 +48,7 @@ export const AuctionListView = () => {
           dataSource={auctions}
           renderItem={item => (
             <List.Item key={item.auction.pubkey}>
-              <Link to={`/auctions/${item.auction.pubkey}`}>
+              <Link to={`/auction/${item.auction.pubkey}`}>
                 <AuctionRenderCard auctionView={item} />
               </Link>
             </List.Item>
