@@ -218,7 +218,7 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  const [modalHistory, setModalHistory] = useState<any>();
+
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
 
