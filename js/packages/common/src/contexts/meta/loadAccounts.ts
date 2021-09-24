@@ -19,6 +19,7 @@ import {
   decodeMetadata,
   getAuctionExtended,
 } from '../../actions';
+import { WhitelistedCreator } from '../../models/metaplex';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
   AccountAndPubkey,
@@ -34,6 +35,8 @@ import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
+import { getProgramAccounts } from './web3';
+import { createPipelineExecutor } from './createPipelineExecutor';
 
 export const USE_SPEED_RUN = false;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
@@ -51,60 +54,6 @@ const WHITELISTED_AUCTION_MANAGER = [
   '3HD2C8oCL8dpqbXo8hq3CMw6tRSZDZJGajLxnrZ3ZkYx',
 ];
 const WHITELISTED_VAULT = ['3wHCBd3fYRPWjd5GqzrXanLJUKRyU3nECKbTPKfVwcFX'];
-
-async function getProgramAccounts(
-  connection: Connection,
-  programId: StringPublicKey,
-  configOrCommitment?: any,
-): Promise<Array<AccountAndPubkey>> {
-  const extra: any = {};
-  let commitment;
-  //let encoding;
-
-  if (configOrCommitment) {
-    if (typeof configOrCommitment === 'string') {
-      commitment = configOrCommitment;
-    } else {
-      commitment = configOrCommitment.commitment;
-      //encoding = configOrCommitment.encoding;
-
-      if (configOrCommitment.dataSlice) {
-        extra.dataSlice = configOrCommitment.dataSlice;
-      }
-
-      if (configOrCommitment.filters) {
-        extra.filters = configOrCommitment.filters;
-      }
-    }
-  }
-
-  const args = connection._buildArgs([programId], commitment, 'base64', extra);
-  const unsafeRes = await (connection as any)._rpcRequest(
-    'getProgramAccounts',
-    args,
-  );
-
-  const data = (
-    unsafeRes.result as Array<{
-      account: AccountInfo<[string, string]>;
-      pubkey: string;
-    }>
-  ).map(item => {
-    return {
-      account: {
-        // TODO: possible delay parsing could be added here
-        data: Buffer.from(item.account.data[0], 'base64'),
-        executable: item.account.executable,
-        lamports: item.account.lamports,
-        // TODO: maybe we can do it in lazy way? or just use string
-        owner: item.account.owner,
-      } as AccountInfo<Buffer>,
-      pubkey: item.pubkey,
-    };
-  });
-
-  return data;
-}
 
 export const limitedLoadAccounts = async (connection: Connection) => {
   const tempCache: MetaState = getEmptyMetaState();
@@ -321,40 +270,39 @@ export const limitedLoadAccounts = async (connection: Connection) => {
   return tempCache;
 };
 
-export const loadAccounts = async (connection: Connection, all: boolean) => {
+export const loadAccounts = async (connection: Connection, all = false) => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
-
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateTemp, all);
-      }
-    };
+  const forEachAccount = processingAccounts(updateTemp, all);
 
   const pullMetadata = async (creators: AccountAndPubkey[]) => {
-    await forEach(processMetaplexAccounts)(creators);
+    await forEachAccount(processMetaplexAccounts)(creators);
   };
 
   const basePromises = [
-    getProgramAccounts(connection, VAULT_ID).then(forEach(processVaultData)),
-    getProgramAccounts(connection, AUCTION_ID).then(forEach(processAuctions)),
-    getProgramAccounts(connection, METAPLEX_ID).then(
-      forEach(processMetaplexAccounts),
+    getProgramAccounts(connection, VAULT_ID).then(
+      forEachAccount(processVaultData),
     ),
+    getProgramAccounts(connection, AUCTION_ID).then(
+      forEachAccount(processAuctions),
+    ),
+    getProgramAccounts(connection, METAPLEX_ID).then(
+      forEachAccount(processMetaplexAccounts),
+    ), // ???
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
         {
           dataSize: MAX_WHITELISTED_CREATOR_SIZE,
         },
       ],
-    }).then(pullMetadata),
+    }).then(pullMetadata), // ???
   ];
+
   await Promise.all(basePromises);
   const additionalPromises: Promise<void>[] = getAdditionalPromises(
     connection,
-    tempCache,
-    forEach,
+    Object.values(tempCache.whitelistedCreatorsByCreator),
+    forEachAccount,
   );
 
   await Promise.all(additionalPromises);
@@ -374,6 +322,7 @@ const pullEditions = async (
   all: boolean,
 ) => {
   console.log('Pulling editions for optimized metadata');
+
   let setOf100MetadataEditionKeys: string[] = [];
   const editionPromises: Promise<{
     keys: string[];
@@ -435,43 +384,41 @@ const pullEditions = async (
     Object.keys(tempCache.masterEditions).length,
   );
 };
+
 const getAdditionalPromises = (
   connection: Connection,
-  tempCache: MetaState,
-  forEach: any,
+  whitelistedCreators: ParsedAccount<WhitelistedCreator>[],
+  forEach: ReturnType<typeof processingAccounts>,
 ): Promise<void>[] => {
   console.log('pulling optimized nfts');
-  const whitelistedCreators = Object.values(
-    tempCache.whitelistedCreatorsByCreator,
-  );
+
   const additionalPromises: Promise<void>[] = [];
-  for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-    for (let j = 0; j < whitelistedCreators.length; j++) {
-      additionalPromises.push(
-        getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-          filters: [
-            {
-              memcmp: {
-                offset:
-                  1 + // key
-                  32 + // update auth
-                  32 + // mint
-                  4 + // name string length
-                  MAX_NAME_LENGTH + // name
-                  4 + // uri string length
-                  MAX_URI_LENGTH + // uri
-                  4 + // symbol string length
-                  MAX_SYMBOL_LENGTH + // symbol
-                  2 + // seller fee basis points
-                  1 + // whether or not there is a creators vec
-                  4 + // creators vec length
-                  i * MAX_CREATOR_LEN,
-                bytes: whitelistedCreators[j].info.address,
-              },
+  for (const creator of whitelistedCreators) {
+    for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+      const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset:
+                1 + // key
+                32 + // update auth
+                32 + // mint
+                4 + // name string length
+                MAX_NAME_LENGTH + // name
+                4 + // uri string length
+                MAX_URI_LENGTH + // uri
+                4 + // symbol string length
+                MAX_SYMBOL_LENGTH + // symbol
+                2 + // seller fee basis points
+                1 + // whether or not there is a creators vec
+                4 + // creators vec length
+                i * MAX_CREATOR_LEN,
+              bytes: creator.info.address,
             },
-          ],
-        }).then(forEach(processMetaData)),
-      );
+          },
+        ],
+      }).then(forEach(processMetaData));
+      additionalPromises.push(promise);
     }
   }
 
@@ -489,7 +436,21 @@ export const makeSetter =
     return state;
   };
 
-const postProcessMetadata = async (tempCache: MetaState, all: boolean) => {
+export const processingAccounts =
+  (updater: ReturnType<typeof makeSetter>, all = false) =>
+  (fn: ProcessAccountsFunc) =>
+  async (accounts: AccountAndPubkey[]) => {
+    await createPipelineExecutor(
+      accounts.values(),
+      account => fn(account, updater, all),
+      {
+        sequence: 20,
+        delay: 1,
+      },
+    );
+  };
+
+const postProcessMetadata = async (tempCache: MetaState, all = false) => {
   const values = Object.values(tempCache.metadataByMint);
 
   for (const metadata of values) {
