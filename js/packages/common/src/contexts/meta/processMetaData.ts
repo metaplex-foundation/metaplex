@@ -12,7 +12,7 @@ import {
   MetadataKey,
 } from '../../actions';
 import { ParsedAccount } from '../accounts/types';
-import { METADATA_PROGRAM_ID } from '../../utils';
+import { METADATA_PROGRAM_ID, pubkeyToString } from '../../utils';
 
 export const processMetaData: ProcessAccountsFunc = (
   { account, pubkey },
@@ -83,9 +83,8 @@ export const processMetaData: ProcessAccountsFunc = (
   }
 };
 
-const isMetadataAccount = (account: AccountInfo<Buffer>) => {
-  return (account.owner as unknown as any) === METADATA_PROGRAM_ID;
-};
+const isMetadataAccount = (account: AccountInfo<Buffer>) =>
+  pubkeyToString(account.owner) === METADATA_PROGRAM_ID;
 
 const isMetadataV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetadataKey.MetadataV1;
