@@ -450,7 +450,7 @@ export function Notifications() {
     });
 
   const content = notifications.length ? (
-    <div style={{ width: '300px' }}>
+    <div style={{ width: '300px', color: 'white' }} className={"notifications-container"}>
       <List
         itemLayout="vertical"
         size="small"

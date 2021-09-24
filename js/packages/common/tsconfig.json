@@ -18,6 +18,7 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["types", "../../types", "../../node_modules/@types"]
   },
+  "files": ["src/config/userNames.json"],
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts", "**/node_modules"]
 }
