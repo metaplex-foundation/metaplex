@@ -137,6 +137,7 @@ export const useAuctions = () => {
   const [tempAuctionManagers, setTempAuctionManagers] = useState<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]>([])
 
   useDeepCompareEffect(() => {
+    // TODO: sort asc by ending date before setting tempAuctionManagers
     setTempAuctionManagers(Object.values(auctionManagersByAuction))
   }, [auctionManagersByAuction])
 

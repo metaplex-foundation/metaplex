@@ -113,42 +113,33 @@ export const limitedLoadAccounts = async (
       }
     };
 
-  const getMetadataByCreatorAddress = async (
+  const getMetaDataByStoreOwner = async (
     ownerAddress: StringPublicKey,
   ): Promise<void> => {
-    const creatorSearches: Promise<AccountAndPubkey[]>[] = [];
+    const response = await getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32 + // update auth
+              32 + // mint
+              4 + // name string length
+              MAX_NAME_LENGTH + // name
+              4 + // uri string length
+              MAX_URI_LENGTH + // uri
+              4 + // symbol string length
+              MAX_SYMBOL_LENGTH + // symbol
+              2 + // seller fee basis points
+              1 + // whether or not there is a creators vec
+              4, // creators vec length
+            bytes: ownerAddress,
+          },
+        },
+      ],
+    })
 
-    for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-      creatorSearches.push(
-        getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-          filters: [
-            {
-              memcmp: {
-                offset:
-                  1 + // key
-                  32 + // update auth
-                  32 + // mint
-                  4 + // name string length
-                  MAX_NAME_LENGTH + // name
-                  4 + // uri string length
-                  MAX_URI_LENGTH + // uri
-                  4 + // symbol string length
-                  MAX_SYMBOL_LENGTH + // symbol
-                  2 + // seller fee basis points
-                  1 + // whether or not there is a creators vec
-                  4 + // creators vec length
-                  i * MAX_CREATOR_LEN,
-                bytes: ownerAddress,
-              },
-            },
-          ],
-        }),
-      );
-    }
-
-    const responses = (await Promise.all(creatorSearches)).flat();
-
-    await forEach(processMetaData)(responses);
+    await forEach(processMetaData)(response);
   };
 
   const getStoreAuctionManagers = async (ownerAddress: StringPublicKey) => {
@@ -277,7 +268,7 @@ export const limitedLoadAccounts = async (
   await Promise.all([
     getStoreAuctionManagers(ownerAddress),
     getStore(storeAddress),
-    getMetadataByCreatorAddress(ownerAddress),
+    getMetaDataByStoreOwner(ownerAddress),
   ]);
 
   const parsedAuctionManagers = Object.values(
