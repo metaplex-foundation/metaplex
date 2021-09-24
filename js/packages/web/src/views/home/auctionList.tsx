@@ -41,30 +41,25 @@ export const AuctionListView = () => {
 
   return (
     <>
-      <Layout>
-        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <Col style={{ width: '100%', marginTop: 10 }}>
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="my-masonry-grid"
-              columnClassName="my-masonry-grid_column"
-            >
-              {!isLoading
-                ? auctions.map((m, idx) => {
-
-                  const id = m.auction.pubkey;
-                  return (
-                    <Link to={`/auction/${id}`} key={idx}>
-                      <AuctionRenderCard key={id} auctionView={m} />
-                    </Link>
-                  );
-                })
-                : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-            </Masonry>
-            <div ref={sentryRef} />
-          </Col>
-        </Content>
-      </Layout>
+      <Row>
+        <List
+          grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 4 }}
+          loading={isLoading}
+          dataSource={auctions}
+          renderItem={item => (
+            <List.Item key={item.auction.pubkey}>
+              <Link to={`/auction/${item.auction.pubkey}`}>
+                <AuctionRenderCard auctionView={item} />
+              </Link>
+            </List.Item>
+          )}
+        />
+        {(loading || hasNextPage) && (
+          <div ref={sentryRef}>
+            <Spin />
+          </div>
+        )}
+      </Row>
     </>
   );
 };

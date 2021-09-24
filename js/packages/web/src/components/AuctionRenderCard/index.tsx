@@ -41,7 +41,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       : 0;
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
 
-  const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
+  const winningBid = auctionView.auction.info.lastBid
   const ended =
     state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
 
@@ -55,12 +55,14 @@ export const AuctionRenderCard = (props: AuctionCard) => {
     );
   }
 
-  if (!isUpcoming && bids.length > 0) {
+  const bidStateBids = auctionView.auction.info.bidState.bids
+
+  if (!isUpcoming && bidStateBids.length > 0) {
     label = ended ? 'Winning bid' : 'Current bid';
-    currentBid =
-      winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber())
-        ? formatTokenAmount(winningBid.info.lastBid)
-        : 'No Bid';
+    const lastBid = bidStateBids[bidStateBids.length - 1]
+    if (lastBid && winningBid && Number.isFinite(lastBid.amount.toNumber())){
+      currentBid = fromLamports(lastBid.amount.toNumber())
+    }
   }
 
   const auction = auctionView.auction.info;
