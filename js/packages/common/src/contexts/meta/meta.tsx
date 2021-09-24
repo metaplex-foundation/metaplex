@@ -10,8 +10,7 @@ import {
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { useQuerySearch } from '../../hooks';
-import { AuctionData, BidderMetadata, BidderPot } from "../../actions";
+import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -23,8 +22,6 @@ const MetaContext = React.createContext<MetaContextState>({
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
   const { isReady, storeAddress } = useStore();
-  const searchParams = useQuerySearch();
-  const all = searchParams.get('all') == 'true';
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
@@ -33,17 +30,15 @@ export function MetaProvider({ children = null as any }) {
   const updateMints = useCallback(
     async metadataByMint => {
       try {
-        if (!all) {
-          const { metadata, mintToMetadata } = await queryExtendedMetadata(
-            connection,
-            metadataByMint,
-          );
-          setState(current => ({
-            ...current,
-            metadata,
-            metadataByMint: mintToMetadata,
-          }));
-        }
+        const { metadata, mintToMetadata } = await queryExtendedMetadata(
+          connection,
+          metadataByMint,
+        );
+        setState(current => ({
+          ...current,
+          metadata,
+          metadataByMint: mintToMetadata,
+        }));
       } catch (er) {
         console.error(er);
       }
@@ -63,11 +58,11 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('-----> Query started');
 
-      const nextState = !USE_SPEED_RUN
-        ? await loadAccounts(connection, all)
-        : await limitedLoadAccounts(connection);
+    const nextState = !USE_SPEED_RUN
+      ? await loadAccounts(connection)
+      : await limitedLoadAccounts(connection);
 
-      console.log('------->Query finished');
+    console.log('------->Query finished');
 
     setState(nextState);
 
@@ -95,7 +90,7 @@ export function MetaProvider({ children = null as any }) {
       return;
     }
 
-    return subscribeAccountsChange(connection, all, () => state, setState);
+    return subscribeAccountsChange(connection, () => state, setState);
   }, [connection, setState, isLoading]);
 
   // TODO: fetch names dynamically

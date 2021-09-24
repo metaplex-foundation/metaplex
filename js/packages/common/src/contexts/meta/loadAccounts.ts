@@ -62,7 +62,7 @@ export const limitedLoadAccounts = async (connection: Connection) => {
   const forEach =
     (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
       for (const account of accounts) {
-        await fn(account, updateTemp, false);
+        await fn(account, updateTemp);
       }
     };
 
@@ -85,7 +85,6 @@ export const limitedLoadAccounts = async (connection: Connection) => {
           account: md,
         },
         updateTemp,
-        false,
       );
       if (editionData) {
         //@ts-ignore
@@ -96,7 +95,6 @@ export const limitedLoadAccounts = async (connection: Connection) => {
             account: editionData,
           },
           updateTemp,
-          false,
         );
       }
     }
@@ -122,7 +120,6 @@ export const limitedLoadAccounts = async (connection: Connection) => {
             account: auctionData.array[i],
           },
           updateTemp,
-          false,
         );
       });
     }
@@ -142,7 +139,6 @@ export const limitedLoadAccounts = async (connection: Connection) => {
           account: auctionManagerData,
         },
         updateTemp,
-        false,
       );
     }
   };
@@ -159,7 +155,6 @@ export const limitedLoadAccounts = async (connection: Connection) => {
           account: vaultData,
         },
         updateTemp,
-        false,
       );
     }
   };
@@ -265,15 +260,15 @@ export const limitedLoadAccounts = async (connection: Connection) => {
 
   await Promise.all(promises);
 
-  await postProcessMetadata(tempCache, true);
+  await postProcessMetadata(tempCache);
 
   return tempCache;
 };
 
-export const loadAccounts = async (connection: Connection, all = false) => {
+export const loadAccounts = async (connection: Connection) => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
-  const forEachAccount = processingAccounts(updateTemp, all);
+  const forEachAccount = processingAccounts(updateTemp);
 
   const pullMetadata = async (creators: AccountAndPubkey[]) => {
     await forEachAccount(processMetaplexAccounts)(creators);
@@ -307,10 +302,10 @@ export const loadAccounts = async (connection: Connection, all = false) => {
 
   await Promise.all(additionalPromises);
 
-  await postProcessMetadata(tempCache, all);
+  await postProcessMetadata(tempCache);
   console.log('Metadata size', tempCache.metadata.length);
 
-  await pullEditions(connection, updateTemp, tempCache, all);
+  await pullEditions(connection, updateTemp, tempCache);
 
   return tempCache;
 };
@@ -319,7 +314,6 @@ const pullEditions = async (
   connection: Connection,
   updateTemp: UpdateStateValueFunc,
   tempCache: MetaState,
-  all: boolean,
 ) => {
   console.log('Pulling editions for optimized metadata');
 
@@ -374,7 +368,6 @@ const pullEditions = async (
           account: returnedAccounts.array[j],
         },
         updateTemp,
-        all,
       );
     }
   }
@@ -437,12 +430,12 @@ export const makeSetter =
   };
 
 export const processingAccounts =
-  (updater: ReturnType<typeof makeSetter>, all = false) =>
+  (updater: ReturnType<typeof makeSetter>) =>
   (fn: ProcessAccountsFunc) =>
   async (accounts: AccountAndPubkey[]) => {
     await createPipelineExecutor(
       accounts.values(),
-      account => fn(account, updater, all),
+      account => fn(account, updater),
       {
         sequence: 20,
         delay: 1,
@@ -450,22 +443,20 @@ export const processingAccounts =
     );
   };
 
-const postProcessMetadata = async (tempCache: MetaState, all = false) => {
+const postProcessMetadata = async (tempCache: MetaState) => {
   const values = Object.values(tempCache.metadataByMint);
 
   for (const metadata of values) {
-    await metadataByMintUpdater(metadata, tempCache, all);
+    await metadataByMintUpdater(metadata, tempCache);
   }
 };
 
 export const metadataByMintUpdater = async (
   metadata: ParsedAccount<Metadata>,
   state: MetaState,
-  all: boolean,
 ) => {
   const key = metadata.info.mint;
   if (
-    all ||
     isMetadataPartOfStore(
       metadata,
       state.store,

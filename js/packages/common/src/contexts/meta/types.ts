@@ -99,7 +99,6 @@ export type UpdateStateValueFunc = (
 export type ProcessAccountsFunc = (
   account: PublicKeyStringAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
-  useAll: boolean,
 ) => void;
 
 export type CheckAccountFunc = (account: AccountInfo<Buffer>) => boolean;

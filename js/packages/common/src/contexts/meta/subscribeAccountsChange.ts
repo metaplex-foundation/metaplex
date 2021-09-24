@@ -16,7 +16,6 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
-  all: boolean,
   getState: () => MetaState,
   setState: (v: MetaState) => void,
 ) => {
@@ -31,40 +30,36 @@ export const subscribeAccountsChange = (
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(VAULT_ID),
-      onChangeAccount(processVaultData, updateStateValue, all),
+      onChangeAccount(processVaultData, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(AUCTION_ID),
-      onChangeAccount(processAuctions, updateStateValue, all),
+      onChangeAccount(processAuctions, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(METAPLEX_ID),
-      onChangeAccount(processMetaplexAccounts, updateStateValue, all),
+      onChangeAccount(processMetaplexAccounts, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
-      onChangeAccount(
-        processMetaData,
-        async (prop, key, value) => {
-          if (prop === 'metadataByMint') {
-            const state = getState();
-            const nextState = await metadataByMintUpdater(value, state, all);
-            setState(nextState);
-          } else {
-            updateStateValue(prop, key, value);
-          }
-        },
-        all,
-      ),
+      onChangeAccount(processMetaData, async (prop, key, value) => {
+        if (prop === 'metadataByMint') {
+          const state = getState();
+          const nextState = await metadataByMintUpdater(value, state);
+          setState(nextState);
+        } else {
+          updateStateValue(prop, key, value);
+        }
+      }),
     ),
   );
 
