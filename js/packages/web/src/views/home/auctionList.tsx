@@ -42,20 +42,18 @@ export const AuctionListView = () => {
   return (
     <>
       <Row>
-        {!isLoading ?
-          <List
-            grid={{ gutter: 16, column: 4 }}
-            dataSource={auctions}
-            renderItem={item => (
-              <List.Item key={item.auction.pubkey}>
-                <Link to={`/auctions/${item.auction.pubkey}`}>
-                  <AuctionRenderCard auctionView={item} />
-                </Link>
-              </List.Item>
-            )}
-          />
-          : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-        {(loading || hasNextPage) && (
+        <List
+          grid={{ gutter: 16, column: 4 }}
+          dataSource={auctions}
+          renderItem={item => (
+            <List.Item key={item.auction.pubkey}>
+              <Link to={`/auctions/${item.auction.pubkey}`}>
+                <AuctionRenderCard auctionView={item} />
+              </Link>
+            </List.Item>
+          )}
+        />
+        {(isLoading || loading || hasNextPage) && (
           <div ref={sentryRef}>
             <Spin />
           </div>
