@@ -11,17 +11,16 @@ import {
   MasterEditionV2,
   StringPublicKey,
   useConnection,
-  loadAuction
+  loadAuction,
 } from '@oyster/common';
-import useDeepCompareEffect from 'use-deep-compare-effect'
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
-import { merge } from 'lodash'
+import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeta } from '../contexts';
 import {
   AuctionManager,
-  AuctionManagerStatus,
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
@@ -110,11 +109,17 @@ export function useCachedRedemptionKeysByWallet() {
 }
 
 export const useAuctions = () => {
-  const connection = useConnection()
+  const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+  const [auctionsToShow, setAuctionsToShow] = useState<
+    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
+  >([]);
+  const [auctionManagersToQuery, setAuctionManagersToQuery] = useState<
+    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
+  >([]);
 
   const {
     auctions,
@@ -130,43 +135,67 @@ export const useAuctions = () => {
     metadataByMasterEdition,
     safetyDepositConfigsByAuctionManagerAndIndex,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    updateMetaState
+    updateMetaState,
   } = useMeta();
 
-
-  const [tempAuctionManagers, setTempAuctionManagers] = useState<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]>([])
-
   useDeepCompareEffect(() => {
-    // TODO: sort asc by ending date before setting tempAuctionManagers
-    setTempAuctionManagers(Object.values(auctionManagersByAuction))
-  }, [auctionManagersByAuction])
+    const initializedAuctions = Object.values(auctions).filter(a => a.info.state > 0)
+    const mostRecentEndDate = (a, b) => {
+      if (a.info.endAuctionAt && b.info.endAuctionAt) {
+        return (
+          a.info.endAuctionAt.toNumber() - b.info.endAuctionAt?.toNumber()
+        );
+      } else {
+        return -1;
+      }
+    }
+    const startedAuctions = initializedAuctions
+                              .filter(a => a.info.state === 1)
+                              .sort(mostRecentEndDate);
+    const endedAuctions = initializedAuctions
+                            .filter(a => a.info.state === 2)
+                            .sort(mostRecentEndDate);
+    const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
+
+    const auctionManagers = auctionDisplayOrder.map(
+      auction => auctionManagersByAuction[auction.pubkey],
+    );
+
+    setAuctionManagersToQuery(auctionManagers);
+  }, [auctions, auctionManagersByAuction]);
 
   const loadMoreAuctions = () => {
-    const ams = [...tempAuctionManagers]
+    const needLoading = [...auctionManagersToQuery];
+    const loaded = [...auctionsToShow];
 
-    if (ams.length === 0) {
-      return
+    if (needLoading.length === 0) {
+      return;
     }
-    
-    setLoading(true)
-    const auctionsToLoad = ams.splice(0, 8)
+
+    setLoading(true);
+    const auctionsToLoad = needLoading.splice(0, 8);
 
     Promise.all(
-      auctionsToLoad.map(auctionManager => loadAuction(connection, auctionManager))
+      auctionsToLoad.map(auctionManager =>
+        loadAuction(connection, auctionManager),
+      ),
     ).then(responses => {
-      const newState = responses.reduce((memo, state) => (merge({}, memo, state)))
-      
+      const newState = responses.reduce((memo, state) =>
+        merge({}, memo, state),
+      );
+
       if (updateMetaState) {
-        updateMetaState(newState)
+        updateMetaState(newState);
       }
 
-      setTempAuctionManagers(ams)
-      setLoading(false)
-    })
-  }
+      setAuctionManagersToQuery(needLoading);
+      setAuctionsToShow([...loaded, ...auctionsToLoad]);
+      setLoading(false);
+    });
+  };
 
   useEffect(() => {
-    const views = Object.values(auctionManagersByAuction).map((a) => {
+    const views = auctionsToShow.reduce((memo: AuctionView[], a) => {
       const auction = auctions[a.info.auction];
       const nextAuctionView = processAccountsIntoAuctionView(
         publicKey?.toBase58(),
@@ -186,10 +215,14 @@ export const useAuctions = () => {
         cachedRedemptionKeys,
       );
 
-      return nextAuctionView;
-    });
+      if (nextAuctionView) {
+        return [...memo, nextAuctionView];
+      }
 
-    setAuctionViews(views.filter(v => v) as AuctionView[]);
+      return memo;
+    }, []);
+
+    setAuctionViews(views);
   }, [
     auctions,
     auctionManagersByAuction,
@@ -213,7 +246,7 @@ export const useAuctions = () => {
     loading,
     auctions: auctionViews,
     loadMore: loadMoreAuctions,
-    hasNextPage: tempAuctionManagers.length > 0
+    hasNextPage: auctionManagersToQuery.length > 0,
   };
 };
 
@@ -315,8 +348,8 @@ export function processAccountsIntoAuctionView(
     const bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
       cachedRedemptionKeysByWallet[auction.pubkey]?.info
         ? (cachedRedemptionKeysByWallet[
-          auction.pubkey
-        ] as ParsedAccount<BidRedemptionTicket>)
+            auction.pubkey
+          ] as ParsedAccount<BidRedemptionTicket>)
         : undefined;
 
     const bidderMetadata =
@@ -364,7 +397,6 @@ export function processAccountsIntoAuctionView(
       return existingAuctionView;
     }
 
-
     const vaultKey = auctionManager.vault;
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
@@ -389,8 +421,8 @@ export function processAccountsIntoAuctionView(
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
           metadataByMasterEdition[
-          masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-            ?.pubkey
+            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
+              ?.pubkey
           ] || metadataByMint[participationBox.info.tokenMint];
         if (participationMetadata) {
           participationMaster =
@@ -416,12 +448,12 @@ export function processAccountsIntoAuctionView(
         participationItem:
           participationMetadata && participationBox
             ? {
-              metadata: participationMetadata,
-              safetyDeposit: participationBox,
-              masterEdition: participationMaster,
-              amount: new BN(1),
-              winningConfigType: WinningConfigType.Participation,
-            }
+                metadata: participationMetadata,
+                safetyDeposit: participationBox,
+                masterEdition: participationMaster,
+                amount: new BN(1),
+                winningConfigType: WinningConfigType.Participation,
+              }
             : undefined,
         myBidderMetadata: bidderMetadata,
         myBidderPot: bidderPot,
@@ -434,11 +466,11 @@ export function processAccountsIntoAuctionView(
       view.totallyComplete = !!(
         view.thumbnail &&
         boxesExpected ===
-        (view.items || []).length +
-        (auctionManager.participationConfig === null ||
-          auctionManager.participationConfig === undefined
-          ? 0
-          : 1) &&
+          (view.items || []).length +
+            (auctionManager.participationConfig === null ||
+            auctionManager.participationConfig === undefined
+              ? 0
+              : 1) &&
         (auctionManager.participationConfig === null ||
           auctionManager.participationConfig === undefined ||
           (auctionManager.participationConfig !== null &&
@@ -447,7 +479,7 @@ export function processAccountsIntoAuctionView(
       );
 
       if (!view.thumbnail || !view.thumbnail.metadata) {
-        return undefined
+        return undefined;
       }
 
       return view as AuctionView;

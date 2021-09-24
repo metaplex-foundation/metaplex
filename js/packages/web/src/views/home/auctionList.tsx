@@ -25,12 +25,6 @@ export enum LiveAuctionViewState {
 export const AuctionListView = () => {
   const { auctions, loading, hasNextPage, loadMore } = useAuctions();
   const { isLoading } = useMeta();
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   const [sentryRef] = useInfiniteScroll({
     loading,
