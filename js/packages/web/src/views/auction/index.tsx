@@ -376,11 +376,11 @@ export const AuctionBids = ({
   const bidLines = useMemo(() => {
     let activeBidIndex = 0;
     return bids.map((bid, index) => {
-      let isCancelled =
+      const isCancelled =
         (index < winnersCount && !!bid.info.cancelled) ||
         (auctionState !== AuctionState.Ended && !!bid.info.cancelled);
 
-      let line = (
+      const line = (
         <BidLine
           bid={bid}
           index={activeBidIndex}
