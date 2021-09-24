@@ -57,20 +57,6 @@ export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
   return Math.ceil(parseFloat(price) * mantissa);
 }
 
-export async function upload(data: FormData, manifest, index) {
-  console.log(`trying to upload ${index}.png: ${manifest.name}`);
-  return await (
-    await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
-      {
-        method: 'POST',
-        // @ts-ignore
-        body: data,
-      },
-    )
-  ).json();
-}
-
 export const getMultipleAccounts = async (
   connection: any,
   keys: string[],
