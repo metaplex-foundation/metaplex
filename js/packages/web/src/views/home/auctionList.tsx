@@ -1,5 +1,5 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs } from 'antd';
+import { Col, Layout, Row, Tabs, Spin, List } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';

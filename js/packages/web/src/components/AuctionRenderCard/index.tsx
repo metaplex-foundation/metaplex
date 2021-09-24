@@ -82,7 +82,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const card = (
     <Card
       hoverable={true}
-      className={`art-card`}
+      className="art-card"
       cover={
         <>
           <ArtContent
@@ -95,7 +95,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       }
     >
       <Meta
-        title={`${name}`}
+        title={name}
         description={
           <>
             <h4 style={{ marginBottom: 0 }}>{label}</h4>
