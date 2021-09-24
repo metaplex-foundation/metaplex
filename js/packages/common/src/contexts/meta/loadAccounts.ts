@@ -440,7 +440,7 @@ export const processingAccounts =
   (updater: ReturnType<typeof makeSetter>, all = false) =>
   (fn: ProcessAccountsFunc) =>
   async (accounts: AccountAndPubkey[]) => {
-    createPipelineExecutor(
+    await createPipelineExecutor(
       accounts.values(),
       account => fn(account, updater, all),
       {
