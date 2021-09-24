@@ -112,7 +112,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       if (STORE_ID && pubkey === STORE_ID.toBase58()) {
         setter('store', pubkey, parsedAccount);
       }
-      setter('stores', pubkey, parsedAccount);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {
@@ -151,14 +150,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
             parsedAccount,
           );
         }
-      }
-
-      if (useAll) {
-        setter(
-          'creators',
-          parsedAccount.info.address + '-' + pubkey,
-          parsedAccount,
-        );
       }
     }
   } catch {
