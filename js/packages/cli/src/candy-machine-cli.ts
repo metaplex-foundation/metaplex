@@ -27,7 +27,7 @@ import { signMetadata } from './commands/sign';
 import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 
-program.version('0.0.1');
+program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
   fs.mkdirSync(CACHE_PATH);
@@ -43,8 +43,43 @@ programCommand('upload')
       return fs.readdirSync(`${val}`).map(file => path.join(val, file));
     },
   )
+  .option(
+    '-s, --storage <string>',
+    'Database to use for storage (arweave, ipfs)',
+    'arweave',
+  )
+  .option(
+    '--ipfs-infura-project-id',
+    'Infura IPFS project id (required if using IPFS)',
+  )
+  .option(
+    '--ipfs-infura-secret',
+    'Infura IPFS scret key (required if using IPFS)',
+  )
+  .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .action(async (files: string[], options, cmd) => {
-    const { keypair, env, cacheName } = cmd.opts();
+    const {
+      keypair,
+      env,
+      cacheName,
+      storage,
+      ipfsInfuraProjectId,
+      ipfsInfuraSecret,
+      retainAuthority,
+    } = cmd.opts();
+
+    if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
+      throw new Error(
+        'IPFS selected as storage option but Infura project id or secret key were not provided.',
+      );
+    }
+    if (!(storage === 'arweave' || storage === 'ipfs')) {
+      throw new Error("Storage option must either be 'arweave' or 'ipfs'.");
+    }
+    const ipfsCredentials = {
+      projectId: ipfsInfuraProjectId,
+      secretKey: ipfsInfuraSecret,
+    };
 
     const pngFileCount = files.filter(it => {
       return it.endsWith(EXTENSION_PNG);
@@ -69,7 +104,11 @@ programCommand('upload')
         cacheName,
         env,
         keypair,
+        storage,
+        retainAuthority,
+        ipfsCredentials,
       );
+
       if (successful) {
         warn = false;
         break;

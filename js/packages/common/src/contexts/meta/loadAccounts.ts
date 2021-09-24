@@ -18,7 +18,6 @@ import {
   METADATA_PREFIX,
   decodeMetadata,
   getAuctionExtended,
-  decodeAuction,
 } from '../../actions';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {

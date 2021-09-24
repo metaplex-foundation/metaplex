@@ -1,6 +1,6 @@
 {
   "name": "@metaplex/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./build/cli.js",
   "license": "MIT",
   "bin": {
@@ -28,6 +28,7 @@
     "borsh": "^0.4.0",
     "commander": "^8.1.0",
     "form-data": "^4.0.0",
+    "ipfs-http-client": "^52.0.3",
     "loglevel": "^1.7.1",
     "node-fetch": "^2.6.1"
   },
