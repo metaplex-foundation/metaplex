@@ -6,7 +6,7 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '../../utils';
-import { makeSetter, metadataByMintUpdater } from './loadAccounts';
+import { makeSetter, initMetadata } from './loadAccounts';
 import { onChangeAccount } from './onChangeAccount';
 import { processAuctions } from './processAuctions';
 import { processMetaData } from './processMetaData';
@@ -52,12 +52,25 @@ export const subscribeAccountsChange = (
     connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
       onChangeAccount(processMetaData, async (prop, key, value) => {
+        const state = { ...getState() };
+        const setter = makeSetter(state);
+        let hasChanges = false;
+        const updater: UpdateStateValueFunc = (...args) => {
+          hasChanges = true;
+          setter(...args);
+        };
+
         if (prop === 'metadataByMint') {
-          const state = getState();
-          const nextState = await metadataByMintUpdater(value, state);
-          setState(nextState);
+          await initMetadata(
+            value,
+            state.whitelistedCreatorsByCreator,
+            updater,
+          );
         } else {
-          updateStateValue(prop, key, value);
+          updater(prop, key, value);
+        }
+        if (hasChanges) {
+          setState(state);
         }
       }),
     ),
