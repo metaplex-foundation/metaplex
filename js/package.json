@@ -29,6 +29,9 @@
       "eslint --cache --fix --max-warnings=0"
     ]
   },
+  "resolutions": {
+    "@types/react": "^17.0.16"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
