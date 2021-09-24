@@ -8,13 +8,13 @@ import {
 import { programIds } from '../utils/programIds';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
-import { AccountParser } from '../contexts';
+import { AccountParser } from '../contexts/accounts/types';
 import moment from 'moment';
 import { findProgramAddress, StringPublicKey, toPublicKey } from '../utils';
 export const AUCTION_PREFIX = 'auction';
 export const METADATA = 'metadata';
 export const EXTENDED = 'extended';
-export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 200;
+export const MAX_AUCTION_DATA_EXTENDED_SIZE = 8 + 9 + 2 + 9 + 33 + 158;
 
 export enum AuctionState {
   Created = 0,
@@ -184,15 +184,21 @@ export class AuctionDataExtended {
   totalUncancelledBids: BN;
   tickSize: BN | null;
   gapTickSizePercentage: number | null;
+  instantSalePrice: BN | null;
+  name: number[] | null;
 
   constructor(args: {
     totalUncancelledBids: BN;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    instantSalePrice: BN | null;
+    name: number[] | null;
   }) {
     this.totalUncancelledBids = args.totalUncancelledBids;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.instantSalePrice = args.instantSalePrice;
+    this.name = args.name;
   }
 }
 
@@ -224,6 +230,8 @@ export class AuctionData {
   bidState: BidState;
   /// Used for precalculation on the front end, not a backend key
   bidRedemptionKey?: StringPublicKey;
+
+  auctionDataExtended?: StringPublicKey;
 
   public timeToEnd(): CountdownState {
     const now = moment().unix();
@@ -370,10 +378,14 @@ export interface IPartialCreateAuctionArgs {
   tickSize: BN | null;
 
   gapTickSizePercentage: number | null;
+
+  instantSalePrice: BN | null;
+
+  name: number[] | null;
 }
 
 export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
-  instruction: number = 1;
+  instruction: number = 7;
   /// How many winners are allowed for this auction. See AuctionData.
   winners: WinnerLimit;
   /// End time is the cut-off point that the auction is forced to end by. See AuctionData.
@@ -393,6 +405,10 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
 
   gapTickSizePercentage: number | null;
 
+  instantSalePrice: BN | null;
+
+  name: number[] | null;
+
   constructor(args: {
     winners: WinnerLimit;
     endAuctionAt: BN | null;
@@ -403,6 +419,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
+    name: number[] | null;
+    instantSalePrice: BN | null;
   }) {
     this.winners = args.winners;
     this.endAuctionAt = args.endAuctionAt;
@@ -413,6 +431,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     this.priceFloor = args.priceFloor;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.name = args.name;
+    this.instantSalePrice = args.instantSalePrice;
   }
 }
 
@@ -465,6 +485,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
       ],
     },
   ],
@@ -542,6 +564,8 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['totalUncancelledBids', 'u64'],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
       ],
     },
   ],
@@ -672,7 +696,7 @@ export async function createAuction(
   );
 }
 
-export async function startAuction(
+export async function startAuctionWithResource(
   resource: StringPublicKey,
   creator: StringPublicKey,
   instructions: TransactionInstruction[],

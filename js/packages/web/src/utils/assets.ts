@@ -1,3 +1,4 @@
+import { useLocalStorage } from '@oyster/common';
 import { TokenInfo } from '@solana/spl-token-registry';
 
 export const LAMPORT_MULTIPLIER = 10 ** 9;
@@ -8,6 +9,7 @@ export const filterModalSolTokens = (tokens: TokenInfo[]) => {
 };
 
 export async function getAssetCostToStore(files: File[]) {
+  const localStorage = useLocalStorage();
   const totalBytes = files.reduce((sum, f) => (sum += f.size), 0);
   console.log('Total bytes', totalBytes);
   const txnFeeInWinstons = parseInt(
