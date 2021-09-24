@@ -1,5 +1,5 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs } from 'antd';
+import { Col, Layout, Row, Tabs, Spin, List } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';
@@ -41,30 +41,26 @@ export const AuctionListView = () => {
 
   return (
     <>
-      <Layout>
-        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <Col style={{ width: '100%', marginTop: 10 }}>
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="my-masonry-grid"
-              columnClassName="my-masonry-grid_column"
-            >
-              {!isLoading
-                ? auctions.map((m, idx) => {
-
-                  const id = m.auction.pubkey;
-                  return (
-                    <Link to={`/auction/${id}`} key={idx}>
-                      <AuctionRenderCard key={id} auctionView={m} />
-                    </Link>
-                  );
-                })
-                : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-            </Masonry>
-            <div ref={sentryRef} />
-          </Col>
-        </Content>
-      </Layout>
+      <Row>
+        {!isLoading ?
+          <List
+            grid={{ gutter: 16, column: 4 }}
+            dataSource={auctions}
+            renderItem={item => (
+              <List.Item key={item.auction.pubkey}>
+                <Link to={`/auctions/${item.auction.pubkey}`}>
+                  <AuctionRenderCard auctionView={item} />
+                </Link>
+              </List.Item>
+            )}
+          />
+          : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        {(loading || hasNextPage) && (
+          <div ref={sentryRef}>
+            <Spin />
+          </div>
+        )}
+      </Row>
     </>
   );
 };

@@ -13,6 +13,7 @@ import {
   useConnection,
   loadAuction
 } from '@oyster/common';
+import useDeepCompareEffect from 'use-deep-compare-effect'
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
 import { merge } from 'lodash'
@@ -112,7 +113,7 @@ export const useAuctions = (state?: AuctionViewState) => {
   const connection = useConnection()
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
   const {
@@ -133,23 +134,34 @@ export const useAuctions = (state?: AuctionViewState) => {
   } = useMeta();
 
 
-  const auctionManagers = Object.values(auctionManagersByAuction)
-  const [tempAuctionManagers, setTempAuctionManagers] = useState(auctionManagers)
+  const [tempAuctionManagers, setTempAuctionManagers] = useState<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]>([])
 
-  const loadMoreAuctions = async () => {
-    setLoading(true)
-    debugger;
+  useDeepCompareEffect(() => {
+    setTempAuctionManagers(Object.values(auctionManagersByAuction))
+  }, [auctionManagersByAuction])
+
+  const loadMoreAuctions = () => {
     const ams = [...tempAuctionManagers]
 
+    if (ams.length === 0) {
+      return
+    }
+    
+    setLoading(true)
     const auctionsToLoad = ams.splice(0, 2)
 
-    const responses = await Promise.all(auctionsToLoad.map(auctionManager => loadAuction(connection, auctionManager)))
-    
-    const newState = responses.reduce((memo, state) => (merge({}, memo, state)))
+    Promise.all(
+      auctionsToLoad.map(auctionManager => loadAuction(connection, auctionManager))
+    ).then(responses => {
+      const newState = responses.reduce((memo, state) => (merge({}, memo, state)))
+      
+      if (updateMetaState) {
+        updateMetaState(newState)
+      }
 
-    updateMetaState(newState) 
-    setTempAuctionManagers(ams)
-    setLoading(false)
+      setTempAuctionManagers(ams)
+      setLoading(false)
+    })
   }
 
   useEffect(() => {
@@ -207,11 +219,11 @@ export const useAuctions = (state?: AuctionViewState) => {
     setAuctionViews,
   ]);
 
-  return { 
+  return {
     loading,
-    auctions: auctionViews, 
-    loadMore: loadMoreAuctions, 
-    hasNextPage: tempAuctionManagers.length > 0 
+    auctions: auctionViews,
+    loadMore: loadMoreAuctions,
+    hasNextPage: true
   };
 };
 
@@ -299,14 +311,14 @@ export function processAccountsIntoAuctionView(
     if (
       desiredState === AuctionViewState.Defective &&
       auctionManagerInstance.info.state.status !==
-        AuctionManagerStatus.Initialized
+      AuctionManagerStatus.Initialized
     )
       return undefined;
     // Generally the only way an initialized auction manager can get through is if you are asking for defective ones.
     else if (
       desiredState !== AuctionViewState.Defective &&
       auctionManagerInstance.info.state.status ===
-        AuctionManagerStatus.Initialized
+      AuctionManagerStatus.Initialized
     )
       return undefined;
 
@@ -338,8 +350,8 @@ export function processAccountsIntoAuctionView(
     const bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
       cachedRedemptionKeysByWallet[auction.pubkey]?.info
         ? (cachedRedemptionKeysByWallet[
-            auction.pubkey
-          ] as ParsedAccount<BidRedemptionTicket>)
+          auction.pubkey
+        ] as ParsedAccount<BidRedemptionTicket>)
         : undefined;
 
     const bidderMetadata =
@@ -393,7 +405,7 @@ export function processAccountsIntoAuctionView(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
-    
+
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;
@@ -412,8 +424,8 @@ export function processAccountsIntoAuctionView(
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
           metadataByMasterEdition[
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-              ?.pubkey
+          masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
+            ?.pubkey
           ] || metadataByMint[participationBox.info.tokenMint];
         if (participationMetadata) {
           participationMaster =
@@ -422,7 +434,7 @@ export function processAccountsIntoAuctionView(
               masterEditions[participationMetadata.info.masterEdition]);
         }
       }
-      
+
       const view: Partial<AuctionView> = {
         auction,
         auctionManager,
@@ -439,12 +451,12 @@ export function processAccountsIntoAuctionView(
         participationItem:
           participationMetadata && participationBox
             ? {
-                metadata: participationMetadata,
-                safetyDeposit: participationBox,
-                masterEdition: participationMaster,
-                amount: new BN(1),
-                winningConfigType: WinningConfigType.Participation,
-              }
+              metadata: participationMetadata,
+              safetyDeposit: participationBox,
+              masterEdition: participationMaster,
+              amount: new BN(1),
+              winningConfigType: WinningConfigType.Participation,
+            }
             : undefined,
         myBidderMetadata: bidderMetadata,
         myBidderPot: bidderPot,
@@ -457,11 +469,11 @@ export function processAccountsIntoAuctionView(
       view.totallyComplete = !!(
         view.thumbnail &&
         boxesExpected ===
-          (view.items || []).length +
-            (auctionManager.participationConfig === null ||
-            auctionManager.participationConfig === undefined
-              ? 0
-              : 1) &&
+        (view.items || []).length +
+        (auctionManager.participationConfig === null ||
+          auctionManager.participationConfig === undefined
+          ? 0
+          : 1) &&
         (auctionManager.participationConfig === null ||
           auctionManager.participationConfig === undefined ||
           (auctionManager.participationConfig !== null &&

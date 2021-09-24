@@ -10,6 +10,7 @@ import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { useQuerySearch } from '../../hooks';
+import { stat } from 'fs';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -27,7 +28,7 @@ export function MetaProvider({ children = null as any }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const updateMetaState = (newState: MetaState) => {
-    const nextState = merge({}, state, newState)
+    const nextState = merge({}, state, newState, { store: state.store })
     setState(nextState)
   }
 

@@ -37,7 +37,7 @@ enum AuctionType {
 const LOOKUP: Record<string, string> = {};
 
 const rerun = async ({
-  auctionViews,
+  auctions,
   auctionManagersByAuction,
   usersEngaged,
   auctionDataExtended,
@@ -53,7 +53,7 @@ const rerun = async ({
   setUsersBid,
   setUsersEngaged,
 }: {
-  auctionViews: AuctionView[];
+  auctions: AuctionView[];
   auctionManagersByAuction: Record<
     string,
     ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
@@ -87,8 +87,8 @@ const rerun = async ({
   let newSortedSales: number[] = [];
   const PROGRAM_IDS = programIds();
 
-  for (let i = 0; i < auctionViews.length; i++) {
-    const auction = auctionViews[i];
+  for (let i = 0; i < auctions.length; i++) {
+    const auction = auctions[i];
     // Not entirely correct because we're not covering open edition auction bids
     // and their amounts which are super hard to track, but I think they
     // are probably a minority anyway.
@@ -320,7 +320,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const totalNFTs = metadata.length;
   const totalMarketplaces = Object.values(stores).length;
 
-  const auctionViews = useAuctions();
+  const { auctions } = useAuctions();
 
   return (
     <Content>
@@ -331,7 +331,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
           className="action-btn"
           onClick={() =>
             rerun({
-              auctionViews,
+              auctions,
               auctionManagersByAuction,
               usersEngaged,
               auctionDataExtended,
