@@ -26,6 +26,7 @@ pub const PREFIX: &str = "fair_launch";
 pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str = "lottery";
+pub const PARTICIPATION: &str = "participation";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
@@ -1310,6 +1311,35 @@ pub struct SetTokenMetadata<'info> {
     clock: Sysvar<'info, Clock>,
 }
 
+#[derive(Accounts)]
+#[instruction(participation_mint_bump: u8)]
+pub struct SetParticipationNFT<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(mut, signer)]
+    authority: AccountInfo<'info>,
+    #[account(mut, signer)]
+    payer: AccountInfo<'info>,
+    #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=participation_mint_bump)]
+    participation_mint: CpiAccount<'info, Mint>,
+    #[account(mut)]
+    participation_token_account: AccountInfo<'info>,
+    // With the following accounts we aren't using anchor macros because they are CPI'd
+    // through to token-metadata which will do all the validations we need on them.
+    #[account(mut)]
+    metadata: AccountInfo<'info>,
+    #[account(mut)]
+    master_edition: AccountInfo<'info>,
+    #[account(address = spl_token_metadata::id())]
+    token_metadata_program: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+    #[account(address = system_program::ID)]
+    system_program: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
+    clock: Sysvar<'info, Clock>,
+}
+
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
 32 + // fair launch
 1 + // bump
@@ -1347,7 +1377,10 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // current_eligible_holders
 8 + // current median,
 4 + // u32 representing number of amounts in vec so far
-100; // padding
+1 + // participation modulo (added later)
+1 + // participation_mint_bump (added later)
+33 + // participation_mint (added later)
+65; // padding
 
 pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
 32 + // fair launch reverse lookup
@@ -1445,7 +1478,9 @@ pub struct FairLaunch {
     pub current_eligible_holders: u64,
     pub current_median: u64,
     pub counts_at_each_tick: Vec<u64>,
-    // Todo add participation fields in the future for participation NFTs
+    pub participation_modulo: u8,
+    pub participation_mint_bump: u8,
+    pub participation_mint: Option<Pubkey>,
 }
 
 #[account]
