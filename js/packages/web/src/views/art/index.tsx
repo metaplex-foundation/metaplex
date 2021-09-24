@@ -86,6 +86,7 @@ export const ArtView = () => {
               pubkey={id}
               active={true}
               allowMeshRender={true}
+              artView={true}
             />
           </Col>
           {/* <Divider /> */}
@@ -210,8 +211,6 @@ export const ArtView = () => {
             <br />
             {/*
               TODO: add info about artist
-
-
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
