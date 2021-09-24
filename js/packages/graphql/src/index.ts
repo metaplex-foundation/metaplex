@@ -21,6 +21,7 @@ async function startApolloServer() {
     schema,
     context,
     dataSources: () => ({ api }),
+    introspection: true,
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {
@@ -64,7 +65,6 @@ async function startApolloServer() {
 
   logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
   logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
-
   warmUp(api);
 }
 

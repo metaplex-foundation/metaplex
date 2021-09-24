@@ -7,6 +7,10 @@ export const startApi = () => {
     ? ENDPOINTS.filter(({ name }) => name === process.env.NETWORK)
     : ENDPOINTS;
 
+  logger.info(
+    `Api works with networks: ${endpoints.map((p) => p.name).join(", ")}`
+  );
+
   const api = new MetaplexApiDataSource(endpoints);
 
   if (process.env.SNAPSHOT) {

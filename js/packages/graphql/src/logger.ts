@@ -15,9 +15,14 @@ if (process.env.NODE_ENV !== "production") {
 }
 if (process.env.NODE_ENV === "production") {
   logger.add(
-    new winston.transports.File({ filename: "error.log", level: "error" })
+    new winston.transports.Console({
+      format: winston.format.align(),
+    })
   );
-  logger.add(new winston.transports.File({ filename: "combined.log" }));
+  logger.add(
+    new winston.transports.File({ filename: "logs/error.log", level: "error" })
+  );
+  logger.add(new winston.transports.File({ filename: "logs/combined.log" }));
 }
 
 export default logger;
