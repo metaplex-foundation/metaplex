@@ -43,7 +43,8 @@ export const AuctionListView = () => {
     <>
       <Row>
         <List
-          grid={{ gutter: 16, column: 4 }}
+          grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 4 }}
+          loading={isLoading}
           dataSource={auctions}
           renderItem={item => (
             <List.Item key={item.auction.pubkey}>
@@ -53,7 +54,7 @@ export const AuctionListView = () => {
             </List.Item>
           )}
         />
-        {(isLoading || loading || hasNextPage) && (
+        {(loading || hasNextPage) && (
           <div ref={sentryRef}>
             <Spin />
           </div>

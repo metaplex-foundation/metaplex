@@ -329,6 +329,7 @@ export const limitedLoadAccounts = async (
 export const loadAuction = async (
   connection: Connection,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
+  complete: boolean = false,
 ): Promise<MetaState> => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
@@ -340,30 +341,20 @@ export const loadAuction = async (
       }
     };
 
-  await Promise.all([
-    // bidder metadata
-    getProgramAccounts(connection, AUCTION_ID, {
+
+  const rpcQueries = [
+    // safety deposit box config
+    getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
         {
           memcmp: {
-            offset: 32,
-            bytes: auctionManager.info.auction,
+            offset: 1,
+            bytes: auctionManager.pubkey,
           },
         },
       ],
-    }).then(forEach(processAuctions)),
-    // bidder pot
-    getProgramAccounts(connection, AUCTION_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 64,
-            bytes: auctionManager.info.auction,
-          },
-        },
-      ],
-    }).then(forEach(processAuctions)),
-    // [DONE] safety deposit
+    }).then(forEach(processMetaplexAccounts)),
+    // safety deposit
     getProgramAccounts(connection, VAULT_ID, {
       filters: [
         {
@@ -374,29 +365,47 @@ export const loadAuction = async (
         },
       ],
     }).then(forEach(processVaultData)),
-    // bidder redemptions
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 9,
-            bytes: auctionManager.pubkey,
+  ]
+
+  if (complete) {
+    rpcQueries.push(
+      // bidder redemptions
+      getProgramAccounts(connection, METAPLEX_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 9,
+              bytes: auctionManager.pubkey,
+            },
           },
-        },
-      ],
-    }).then(forEach(processMetaplexAccounts)),
-    // [DONE] safety deposit box config
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 1,
-            bytes: auctionManager.pubkey,
+        ],
+      }).then(forEach(processMetaplexAccounts)),
+      // bidder metadata
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 32,
+              bytes: auctionManager.info.auction,
+            },
           },
-        },
-      ],
-    }).then(forEach(processMetaplexAccounts)),
-  ]);
+        ],
+      }).then(forEach(processAuctions)),
+      // bidder pot
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 64,
+              bytes: auctionManager.info.auction,
+            },
+          },
+        ],
+      }).then(forEach(processAuctions)),
+    )
+  }
+
+  await Promise.all(rpcQueries);
 
   return tempCache;
 };
@@ -560,15 +569,15 @@ const getAdditionalPromises = (
 
 export const makeSetter =
   (state: MetaState) =>
-  (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
-    if (prop === 'store') {
-      state[prop] = value;
-    } else if (prop !== 'metadata') {
-      state[prop][key] = value;
-    }
+    (prop: keyof MetaState, key: string, value: ParsedAccount<any>) => {
+      if (prop === 'store') {
+        state[prop] = value;
+      } else if (prop !== 'metadata') {
+        state[prop][key] = value;
+      }
 
-    return state;
-  };
+      return state;
+    };
 
 const postProcessMetadata = async (tempCache: MetaState, all: boolean) => {
   const values = Object.values(tempCache.metadataByMint);
