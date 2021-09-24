@@ -55,20 +55,20 @@ export const AuctionNumbers = (props: {
 
   return (
     <div style={{ maxWidth: 350 }}>
-      {!ended && (
+      {(!ended || auctionView.isInstantSale) && (
         <>
-          {(isUpcoming || bids.length === 0) && (
+          {(isUpcoming || bids.length === 0 || auctionView.isInstantSale) && (
             <AmountLabel
               displaySOL={props.displaySOL}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-              title="Starting bid"
+              title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
               amount={fromLamports(
                 participationOnly ? participationFixedPrice : priceFloor,
                 mintInfo,
               )}
             />
           )}
-          {isStarted && bids.length > 0 && (
+          {!auctionView.isInstantSale && isStarted && bids.length > 0 && (
             <AmountLabel
               displaySOL={props.displaySOL}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
@@ -81,7 +81,7 @@ export const AuctionNumbers = (props: {
           )}
         </>
       )}
-      {!props.hideCountdown ? (
+      {!ended && !props.hideCountdown ? (
         <AuctionCountdown auctionView={auctionView} labels={true} />
       ) : null}
     </div>

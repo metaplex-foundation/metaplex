@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Button, InputNumber, Spin } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, Route, MemoryRouter, Redirect } from 'react-router-dom';
 
 import {
   useConnection,
@@ -22,6 +22,7 @@ import {
   Identicon,
   fromLamports,
   useWalletModal,
+  VaultState,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -31,7 +32,8 @@ import {
 } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-import { AuctionCountdown, AuctionNumbers } from './../AuctionNumbers';
+// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
+import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import {
   sendRedeemBid,
   eligibleForParticipationPrizeGivenWinningIndex,
@@ -51,7 +53,9 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+  AuctionManagerV1
+} from '@oyster/common';
+import {WinningConfigType} from "@oyster/common/dist/lib/models/metaplex/index";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -191,6 +195,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
+  const { update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -213,7 +218,7 @@ export const AuctionCard = ({
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
   const [showPlaceBid, setShowPlaceBid] = useState<boolean>(false);
   const [lastBid, setLastBid] = useState<{ amount: BN } | undefined>(undefined);
-  // const [modalHistory, setModalHistory] = useState<any>();
+  const [modalHistory, setModalHistory] = useState<any>();
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
 
@@ -298,13 +303,96 @@ export const AuctionCard = ({
     }
   }, [wallet.connected]);
 
+  const instantSale = async () => {
+    setLoading(true);
+    const instantSalePrice =
+      auctionView.auctionDataExtended?.info.instantSalePrice;
+    const winningConfigType =
+      auctionView.items[0][0].winningConfigType;
+    const isAuctionItemMaster =
+      winningConfigType === WinningConfigType.FullRightsTransfer ||
+      winningConfigType === WinningConfigType.TokenOnlyTransfer;
+    const allowBidToPublic =
+      myPayingAccount &&
+      !auctionView.myBidderPot &&
+      isAuctionManagerAuthorityNotWalletOwner;
+    const allowBidToAuctionOwner =
+      myPayingAccount &&
+      !isAuctionManagerAuthorityNotWalletOwner &&
+      isAuctionItemMaster;
+
+    // Placing a "bid" of the full amount results in a purchase to redeem.
+    if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+      try {
+        console.log('sendPlaceBid')
+        const bid = await sendPlaceBid(
+          connection,
+          wallet,
+          myPayingAccount.pubkey,
+          auctionView,
+          accountByMint,
+          instantSalePrice,
+        );
+        setLastBid(bid);
+      } catch (e) {
+        console.error('sendPlaceBid', e);
+        setLoading(false);
+        return;
+      }
+    }
+
+    const newAuctionState = await update(
+      auctionView.auction.pubkey,
+      wallet.publicKey,
+    );
+    auctionView.auction = newAuctionState[0];
+    auctionView.myBidderPot = newAuctionState[1];
+    auctionView.myBidderMetadata = newAuctionState[2];
+    // Claim the purchase
+    try {
+      await sendRedeemBid(
+        connection,
+        wallet,
+        myPayingAccount.pubkey,
+        auctionView,
+        accountByMint,
+        prizeTrackingTickets,
+        bidRedemptions,
+        bids,
+      ).then(async () => {
+        await update();
+        setShowRedeemedBidModal(true);
+      });
+    } catch (e) {
+      console.error(e);
+      setShowRedemptionIssue(true);
+    }
+
+    setLoading(false);
+  };
+
+  //if instant sale auction bid and claimed hide buttons
+  if (
+    (auctionView.isInstantSale &&
+      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+      isAuctionManagerAuthorityNotWalletOwner &&
+      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
+    auctionView.vault.info.state === VaultState.Deactivated
+  ) {
+    return <></>;
+  }
+
   return (
     <div className="auction-container" style={style}>
       <div className={'time-info'}>
-        <span>Auction ends in</span>
+        {!auctionView.isInstantSale && (
+          <>
+            <span>Auction ends in</span>
         <div>
           <AuctionCountdown auctionView={auctionView} labels={false} />
-        </div>
+            </div>
+          </>
+        )}
       </div>
       <div className={'bid-info'}>
         <div className="bid-info-container">
@@ -441,7 +529,7 @@ export const AuctionCard = ({
             </div>
           )}
         </div>
-        {showPlaceBid &&
+        {showPlaceBid && !auctionView.isInstantSale &&
           !hideDefaultAction &&
           wallet.connected &&
           !auctionView.auction.info.ended() && (
@@ -543,6 +631,66 @@ export const AuctionCard = ({
               </div>
             </div>
           )}
+
+        {!hideDefaultAction &&
+          wallet.connected &&
+          !auctionView.auction.info.ended() &&
+          (isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await startAuctionManually(connection, wallet, auctionView);
+                } catch (e) {
+                  console.error(e);
+                }
+                setLoading(false);
+              }}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? <Spin /> : 'Start auction'}
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              className="ant-btn secondary-btn"
+              disabled={loading}
+              onClick={instantSale}
+              style={{ marginTop: 20 , width:'100%'}}
+            >
+              {loading ? (
+                <Spin />
+              ) : auctionView.isInstantSale ? (
+                !isAuctionManagerAuthorityNotWalletOwner ? (
+                  'CLAIM ITEM'
+                ) : auctionView.myBidderPot ? (
+                  'Claim Purchase'
+                ) : (
+                  'Buy Now'
+                )
+              ) : (
+                'Place bid'
+              )}
+            </Button>
+          ))}
+
+        {!hideDefaultAction && !wallet.connected && (
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            onClick={connect}
+            style={{ marginTop: 20 }}
+          >
+            Connect wallet to{' '}
+            {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+          </Button>
+        )}
         {action}
         {showRedemptionIssue && (
           <span style={{ color: 'red' }}>
@@ -610,8 +758,9 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your bid has been redeemed please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
+          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
+          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
+          .
         </p>
         <Button
           onClick={() => setShowRedeemedBidModal(false)}
@@ -620,247 +769,6 @@ export const AuctionCard = ({
           Got it
         </Button>
       </MetaplexOverlay>
-
-      {/* <MetaplexModal
-        visible={showBidModal}
-        onCancel={() => setShowBidModal(false)}
-        bodyStyle={{
-          alignItems: 'start',
-        }}
-        afterClose={() => modalHistory.replace('/placebid')}
-      >
-        <MemoryRouter>
-          <Redirect to="/placebid" />
-
-          <Route
-            exact
-            path="/placebid"
-            render={({ history }) => {
-              setModalHistory(history);
-              const placeBid = async () => {
-                setLoading(true);
-                if (myPayingAccount && value) {
-                  const bid = await sendPlaceBid(
-                    connection,
-                    wallet,
-                    myPayingAccount.pubkey,
-                    auctionView,
-                    accountByMint,
-                    value,
-                  );
-                  setLastBid(bid);
-                  setShowBidModal(false);
-                  setShowBidPlaced(true);
-                  setLoading(false);
-                }
-              };
-
-              return (
-                <>
-                  <h2 className="modal-title">Place a bid</h2>
-                  {!!gapTime && (
-                    <div
-                      className="info-content"
-                      style={{
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      Bids placed in the last {gapTime} minutes will extend
-                      bidding for another {gapTime} minutes beyond the point in
-                      time that bid was made.{' '}
-                      {gapTick && (
-                        <span>
-                          Additionally, once the official auction end time has
-                          passed, only bids {gapTick}% larger than an existing
-                          bid will be accepted.
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <br />
-                  <AuctionNumbers auctionView={auctionView} />
-
-                  <br />
-                  {tickSizeInvalid && tickSize && (
-                    <span style={{ color: 'red' }}>
-                      Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
-                    </span>
-                  )}
-                  {gapBidInvalid && (
-                    <span style={{ color: 'red' }}>
-                      Your bid needs to be at least {gapTick}% larger than an
-                      existing bid during gap periods to be eligible.
-                    </span>
-                  )}
-
-                  <div
-                    style={{
-                      width: '100%',
-                      background: '#242424',
-                      borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5)',
-                    }}
-                  >
-                    <InputNumber
-                      autoFocus
-                      className="input"
-                      value={value}
-                      style={{
-                        width: '100%',
-                        background: '#393939',
-                        borderRadius: 16,
-                      }}
-                      onChange={setValue}
-                      precision={4}
-                      formatter={value =>
-                        value
-                          ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : ''
-                      }
-                      placeholder="Amount in SOL"
-                    />
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        margin: '5px 20px',
-                        fontWeight: 700,
-                      }}
-                    >
-                      ◎ {formatAmount(balance.balance, 2)}{' '}
-                      <span style={{ color: '#717171' }}>available</span>
-                    </div>
-                    <Link
-                      to="/addfunds"
-                      style={{
-                        float: 'right',
-                        margin: '5px 20px',
-                        color: '#5870EE',
-                      }}
-                    >
-                      Add funds
-                    </Link>
-                  </div>
-
-                  <br />
-                  <Button
-                    type="primary"
-                    size="large"
-                    className="action-btn"
-                    onClick={placeBid}
-                    disabled={
-                      tickSizeInvalid ||
-                      gapBidInvalid ||
-                      !myPayingAccount ||
-                      value === undefined ||
-                      value * LAMPORTS_PER_SOL < priceFloor ||
-                      loading ||
-                      !accountByMint.get(QUOTE_MINT.toBase58())
-                    }
-                  >
-                    {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
-                      <Spin />
-                    ) : (
-                      'Place bid'
-                    )}
-                  </Button>
-                </>
-              );
-            }}
-          />
-
-          <Route exact path="/addfunds">
-            <div style={{ maxWidth: '100%' }}>
-              <h2>Add funds</h2>
-              <p style={{ color: 'white' }}>
-                We partner with <b>FTX</b> to make it simple to start purchasing
-                digital collectibles.
-              </p>
-              <div
-                style={{
-                  width: '100%',
-                  background: '#242424',
-                  borderRadius: 12,
-                  marginBottom: 10,
-                  height: 50,
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 10px',
-                  justifyContent: 'space-between',
-                  fontWeight: 700,
-                }}
-              >
-                <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Balance
-                </span>
-                <span>
-                  {formatAmount(balance.balance, 2)}&nbsp;&nbsp;
-                  <span
-                    style={{
-                      borderRadius: '50%',
-                      background: 'black',
-                      display: 'inline-block',
-                      padding: '1px 4px 4px 4px',
-                      lineHeight: 1,
-                    }}
-                  >
-                    <img src="/sol.svg" width="10" />
-                  </span>{' '}
-                  SOL
-                </span>
-              </div>
-              <p>
-                If you have not used FTX Pay before, it may take a few moments
-                to get set up.
-              </p>
-              <Button
-                onClick={() => modalHistory.push('/placebid')}
-                style={{
-                  background: '#454545',
-                  borderRadius: 14,
-                  width: '30%',
-                  padding: 10,
-                  height: 'auto',
-                }}
-              >
-                Back
-              </Button>
-              <Button
-                onClick={() => {
-                  window.open(
-                    `https://ftx.com/pay/request?coin=SOL&address=${wallet.publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false`,
-                    '_blank',
-                    'resizable,width=680,height=860',
-                  );
-                }}
-                style={{
-                  background: 'black',
-                  borderRadius: 14,
-                  width: '68%',
-                  marginLeft: '2%',
-                  padding: 10,
-                  height: 'auto',
-                  borderColor: 'black',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    placeContent: 'center',
-                    justifyContent: 'center',
-                    alignContent: 'center',
-                    alignItems: 'center',
-                    fontSize: 16,
-                  }}
-                >
-                  <span style={{ marginRight: 5 }}>Sign with</span>
-                  <img src="/ftxpay.png" width="80" />
-                </div>
-              </Button>
-            </div>
-          </Route>
-        </MemoryRouter>
-      </MetaplexModal> */}
 
       <MetaplexModal
         visible={showWarningModal}
