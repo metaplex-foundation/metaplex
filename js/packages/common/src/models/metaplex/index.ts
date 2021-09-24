@@ -521,6 +521,7 @@ export class WhitelistedCreator {
   name?: string;
   image?: string;
   description?: string;
+  background?: string;
 
   constructor(args: { address: string; activated: boolean }) {
     this.address = args.address;

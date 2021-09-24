@@ -25,12 +25,24 @@ export const Banner = (props: {
     return () => {
       const mainBg = document.getElementById('main-bg');
       const gradient = document.getElementById('bg-gradient');
-      if (mainBg && props.useBannerBg) mainBg.style.backgroundImage = '';
+      if (mainBg && props.useBannerBg) {
+        mainBg.style.backgroundImage = '';
+        mainBg.style.display = 'none';
+      }
       if (gradient) gradient.style.display = 'none';
     };
   }, [props.src, props.useBannerBg]);
 
   return (
+    <>
+    <div id="mobile-banner">
+      <img className="banner-img" src={props.src}/>
+      <div className="banner-content">
+        <div id={'main-heading'}>{props.headingText}</div>
+        <div id={'sub-heading'}>{props.subHeadingText}</div>
+        {props.actionComponent}
+      </div>
+    </div>
     <div id={'current-banner'} style={{ backgroundImage: `url(${props.src})` }}>
       <span id={'gradient-banner'}></span>
       <div id="banner-inner">
@@ -40,7 +52,9 @@ export const Banner = (props: {
           {props.actionComponent}
         </div>
         {props.children}
+        <div className="powered-by"><span>POWERED BY <b>METAPLEX</b></span></div>
       </div>
     </div>
+    </>
   );
 };

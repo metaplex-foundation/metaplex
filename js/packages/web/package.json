@@ -42,8 +42,7 @@
     "react-router-dom": "^5.2.0",
     "react-virtualized": "^9.22.3",
     "three": "^0.128.0",
-    "timeago.js": "^4.0.2",
-    "use-wallet": "^0.8.1"
+    "timeago.js": "^4.0.2"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",

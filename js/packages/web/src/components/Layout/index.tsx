@@ -1,14 +1,12 @@
 import React from 'react';
 import { Layout } from 'antd';
 
-import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
-// import useWindowDimensions from '../../utils/layout';
+import { Footer } from "../Footer";
 
 const { Header, Content } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
-  // const { width } = useWindowDimensions();
 
   return (
     <>
@@ -30,6 +28,7 @@ export const AppLayout = React.memo((props: any) => {
             {props.children}
           </Content>
         </Layout>
+        {/*<Footer />*/}
       </Layout>
     </>
   );

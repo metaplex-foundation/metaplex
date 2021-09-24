@@ -93,7 +93,8 @@ export const WalletModal: FC = () => {
             fontWeight: 600,
             fontSize: "16px",
             lineHeight: "16px",
-            letterSpacing: "-0.01em"
+            letterSpacing: "-0.01em",
+            color: "rgba(255, 255, 255, 255)",
           }}>Other Wallets</span>} key="1">
             {wallets.map((wallet, idx) => {
               if (wallet.name === "Phantom") return null

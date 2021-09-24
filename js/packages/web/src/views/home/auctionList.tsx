@@ -1,19 +1,16 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs, Button } from 'antd';
+import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { HowToBuyModal } from '../../components/HowToBuyModal';
 
 import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
 
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
 import { useMeta } from '../../contexts';
-import { programIds, useConnection} from '@oyster/common';
-import { saveAdmin } from '../../actions/saveAdmin';
-import { WhitelistedCreator } from '../../models/metaplex';
 import { Banner } from '../../components/Banner';
 
 const { TabPane } = Tabs;
@@ -25,7 +22,8 @@ export enum LiveAuctionViewState {
   Participated = '1',
   Ended = '2',
   Resale = '3',
-};
+}
+
 export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [

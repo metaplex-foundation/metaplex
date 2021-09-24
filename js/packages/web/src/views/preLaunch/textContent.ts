@@ -9,4 +9,7 @@ export const textContent = {
   ////
   sentNFT: `Your NFT is on the way.`,
   sentNFTDescription: `Keep an eye on your Phantom wallet.`,
+
+  comingSoonTitle: `${LABELS.STORE_NAME} NFTs are on the way.`,
+  comingSoonTitleDescription: `Sign up for the latest updates on our NFT drop.`,
 };

@@ -29,7 +29,10 @@ export const ConnectButton = (props: ConnectButtonProps) => {
       <Button
         className={className || 'connector'}
         {...rest}
-        onClick={handleClick}
+        onClick={(e) => {
+          props.onClick ? props.onClick(e) : null
+          handleClick()
+        }}
         disabled={connected && disabled}
       >
         {connected ? children : 'Connect Wallet'}

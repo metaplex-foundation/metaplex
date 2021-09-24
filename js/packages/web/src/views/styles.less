@@ -1,9 +1,14 @@
+@import "~antd/lib/style/themes/default.less";
+
 * {
   font-family: 'GraphikWeb';
 }
 
 .ant-layout-content {
   overflow: auto !important;
+  @media (max-width: @screen-sm-min){
+    padding: 0 !important;
+  }
 }
 .section {
   padding: 1px;

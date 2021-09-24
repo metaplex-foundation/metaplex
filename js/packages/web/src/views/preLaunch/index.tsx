@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
-import {Button, Input, Layout, Modal, Form} from "antd";
+import { Button, Input, Layout, Modal, Form, Spin } from "antd";
 import { ModalProps } from 'antd/lib/modal';
 import { LogoLink } from "../../components/AppBar";
 import { textContent } from "./textContent";
 import useMagicLink from "../../hooks/magicLink/useMagicLink";
-import {shortenAddress} from "@oyster/common";
+import { shortenAddress } from "@oyster/common";
+import { getUser, getWalletAddress, saveUser } from "./userInfo";
 
 const { Content } = Layout;
 
@@ -64,26 +65,42 @@ export const PreLaunchView = () => {
   const [submitted, setSubmitted] = useState(false)
   const [gotVisible, setGotVisible] = useState(false)
   const [sentVisible, setSentVisible] = useState(false)
+  const [loadingUser, setLoadingUser] = useState(false)
   const auth = useMagicLink()
+
+  const handleSaveWallet = async (verifiedEmail, wallet) => {
+    await saveUser(verifiedEmail, wallet, () => {
+      setSentVisible(true)
+      setSubmitted(true)
+      auth.logout()
+    })
+  }
+
   const verifyUser = async () => {
     if (auth.loggedIn) {
-      const user = await auth.magic.user.getMetadata();
-      setGotVisible(false)
-      setEmail(user.email)
+      setLoadingUser(true)
+      const verifiedEmail = (await auth.magic.user.getMetadata()).email;
+      setEmail(verifiedEmail)
+      const user = await getUser(verifiedEmail)
       setVerified(true)
+      if (user) {
+        const wallet = await getWalletAddress(user)
+        setWalletAddress(wallet)
+        setSentVisible(true)
+        setSubmitted(true)
+        auth.logout()
+      }
+      setLoadingUser(false)
     }
   }
-  const saveTypeForm = async () => {
-    setSubmitted(true)
-  }
+
   useEffect(() => {
     verifyUser()
   }, [auth.loggedIn])
   return (
     <Layout id={'pre-launch-layout'}>
       <div className={"main-asset-banner"}>
-        {/*Gradient does not match*/}
-        {/*<div className={"right-gradient"}></div>*/}
+        <div className={"right-gradient"}></div>
       </div>
       <PreLaunchModal
         titleText={textContent.gotEmail}
@@ -102,7 +119,7 @@ export const PreLaunchView = () => {
           setSentVisible(false)
           setSubmitted(true)
         }}
-        extraButton={<DiscordButton />}
+        extraButton={<DiscordButton/>}
       />
       <Layout id={'width-layout'}>
         {!verified ? (
@@ -120,31 +137,35 @@ export const PreLaunchView = () => {
                 {textContent.titleDescription}
               </div>
               <div className={"pre-input"}>
-                <Form
-                  className={'footer-sign-up'}
-                  onFinish={(values) => {
-                    auth.login(values.email)
-                    setGotVisible(true)
-                  }}
-                >
-                  <Form.Item
-                    name='email'
-                    rules={[
-                      {
-                        type: 'email', message: 'Input is not a valid email!'
-                      },
-                      { required: true, message: 'Please input your email!' }
-                    ]}
-                    style={{ display: 'flex !important' }}
+                {auth.loading || loadingUser ? (
+                  <Spin />
+                ) : (
+                  <Form
+                    className={'footer-sign-up'}
+                    onFinish={(values) => {
+                      auth.login(values.email)
+                      setGotVisible(true)
+                    }}
                   >
-                    <Input
-                      className={'footer-input'}
-                      placeholder="Email Address"
-                      name="email"
-                    />
-                  </Form.Item>
-                  <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
-                </Form>
+                    <Form.Item
+                      name='email'
+                      rules={[
+                        {
+                          type: 'email', message: 'Input is not a valid email!'
+                        },
+                        { required: true, message: 'Please input your email!' }
+                      ]}
+                      style={{ display: 'flex !important' }}
+                    >
+                      <Input
+                        className={'footer-input'}
+                        placeholder="Email Address"
+                        name="email"
+                      />
+                    </Form.Item>
+                    <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
+                  </Form>
+                )}
               </div>
             </div>
             <div className={"lower-content"}>
@@ -170,7 +191,7 @@ export const PreLaunchView = () => {
             className={"pre-main-content second"}
           >
             <div className={"logo"}>
-              <LogoLink />
+              <LogoLink/>
             </div>
             <div className={"verify-message"}>
               <span>Thanks for verifying</span>
@@ -179,11 +200,17 @@ export const PreLaunchView = () => {
             <div className={"verify-message mb32"}>
               <span>Paste your Solana wallet address here.</span>
             </div>
-            <div className={"pre-input wallet"}>
-              <Input value={walletAddress} placeholder={"Wallet address"}
-                     onChange={(val) => setWalletAddress(val.target.value)} />
-              <Button className={"secondary-btn sign-up"} onClick={() => setSentVisible(true)}>Submit</Button>
-            </div>
+            {loadingUser ? (
+              <Spin />
+            ):(
+              <div className={"pre-input wallet"}>
+                <Input value={walletAddress} placeholder={"Wallet address"}
+                       onChange={(val) => setWalletAddress(val.target.value)}/>
+                <Button className={"secondary-btn sign-up"} onClick={async () => {
+                  await handleSaveWallet(email, walletAddress)
+                }}>Submit</Button>
+              </div>
+            )}
             <div className={"verify-message mb40"}>
               <span>How to create a wallet:</span>
             </div>
@@ -220,18 +247,75 @@ export const PreLaunchView = () => {
             className={"pre-main-content third"}
           >
             <div className={"logo"}>
-              <LogoLink />
+              <LogoLink/>
             </div>
 
             <div className={"verify-message"}>
               <span className={'display-block mb32'}>Your NFT is on the way.</span>
-              <span className={"high-light"} style={{marginLeft: 0}}>{email}</span>
+              <span className={"high-light"} style={{ marginLeft: 0 }}>{email}</span>
               <span className={"high-light"}>{shortenAddress(walletAddress)}</span>
             </div>
-            <DiscordButton />
+            <DiscordButton/>
           </Content>
         )}
       </Layout>
     </Layout>
   );
 };
+
+export const ComingSoonView = () => {
+  return (
+    <Layout id={'pre-launch-layout'}>
+      <div className={"main-asset-banner"}>
+        {/*Gradient does not match*/}
+        {/*<div className={"right-gradient"}></div>*/}
+      </div>
+      <Layout id={'width-layout'}>
+        <Content
+          className={"pre-main-content"}
+        >
+          <div className={"logo"}>
+            <LogoLink/>
+          </div>
+          <div className={"full-height-content"}>
+            <div className={"pre-title"}>
+              {textContent.comingSoonTitle}
+            </div>
+            <div className={"pre-context"}>
+              {textContent.comingSoonTitleDescription}
+            </div>
+            <div className={"pre-input"}>
+              <Form
+                className={'footer-sign-up'}
+                onFinish={(values) => {
+                  console.log(values)
+                }}
+              >
+                <Form.Item
+                  name='email'
+                  rules={[
+                    {
+                      type: 'email', message: 'Input is not a valid email!'
+                    },
+                    { required: true, message: 'Please input your email!' }
+                  ]}
+                  style={{ display: 'flex !important' }}
+                >
+                  <Input
+                    className={'footer-input'}
+                    placeholder="Email Address"
+                    name="email"
+                  />
+                </Form.Item>
+                <Button className={"secondary-btn sign-up"} htmlType="submit">Sign Up</Button>
+              </Form>
+            </div>
+          </div>
+          <div className={"lower-content"}>
+            <DiscordButton/>
+          </div>
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
