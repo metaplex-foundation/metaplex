@@ -74,5 +74,8 @@
     "queue": "^6.0.2",
     "subscriptions-transport-ws": "^0.9.19",
     "winston": "^3.3.3"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
