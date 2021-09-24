@@ -1,4 +1,4 @@
-import { EXTENSION_PNG, ARWEAVE_PAYMENT_WALLET } from '../helpers/constants';
+import { EXTENSION_PNG } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -8,12 +8,10 @@ import {
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import BN from 'bn.js';
-import * as anchor from '@project-serum/anchor';
-import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
-import FormData from 'form-data';
 import { loadCache, saveCache } from '../helpers/cache';
-import fetch from 'node-fetch';
 import log from 'loglevel';
+import { arweaveUpload } from '../helpers/upload/arweave';
+import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 
 export async function upload(
   files: string[],
@@ -21,6 +19,9 @@ export async function upload(
   env: string,
   keypair: string,
   totalNFTs: number,
+  storage: string,
+  retainAuthority: boolean,
+  ipfsCredentials: ipfsCreds,
 ): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -74,8 +75,6 @@ export async function upload(
       log.info(`Processing file: ${i}`);
     }
 
-    const storageCost = 10;
-
     let link = cacheContent?.items?.[index]?.link;
     if (!link || !cacheContent.program.uuid) {
       const manifestPath = image.replace(EXTENSION_PNG, '.json');
@@ -98,7 +97,7 @@ export async function upload(
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
             isMutable: true,
             maxSupply: new BN(0),
-            retainAuthority: true,
+            retainAuthority: retainAuthority,
             creators: manifest.properties.creators.map(creator => {
               return {
                 address: new PublicKey(creator.address),
@@ -123,50 +122,30 @@ export async function upload(
       }
 
       if (!link) {
-        const instructions = [
-          anchor.web3.SystemProgram.transfer({
-            fromPubkey: walletKeyPair.publicKey,
-            toPubkey: ARWEAVE_PAYMENT_WALLET,
-            lamports: storageCost,
-          }),
-        ];
-
-        const tx = await sendTransactionWithRetryWithKeypair(
-          anchorProgram.provider.connection,
-          walletKeyPair,
-          instructions,
-          [],
-          'single',
-        );
-        log.debug('transaction for arweave payment:', tx);
-
-        // data.append('tags', JSON.stringify(tags));
-        // payment transaction
-        const data = new FormData();
-        data.append('transaction', tx['txid']);
-        data.append('env', env);
-        data.append('file[]', fs.createReadStream(image), {
-          filename: `image.png`,
-          contentType: 'image/png',
-        });
-        data.append('file[]', manifestBuffer, 'metadata.json');
         try {
-          const result = await uploadToArweave(data, manifest, index);
-
-          const metadataFile = result.messages?.find(
-            m => m.filename === 'manifest.json',
-          );
-          if (metadataFile?.transactionId) {
-            link = `https://arweave.net/${metadataFile.transactionId}`;
-            log.debug(`File uploaded: ${link}`);
+          if (storage === 'arweave') {
+            link = await arweaveUpload(
+              walletKeyPair,
+              anchorProgram,
+              env,
+              image,
+              manifestBuffer,
+              manifest,
+              index,
+            );
+          } else if (storage === 'ipfs') {
+            link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
           }
 
-          cacheContent.items[index] = {
-            link,
-            name: manifest.name,
-            onChain: false,
-          };
-          saveCache(cacheName, env, cacheContent);
+          if (link) {
+            console.log('setting cache for ', index);
+            cacheContent.items[index] = {
+              link,
+              name: manifest.name,
+              onChain: false,
+            };
+            saveCache(cacheName, env, cacheContent);
+          }
         } catch (er) {
           uploadSuccessful = false;
           log.error(`Error uploading file ${index}`, er);
@@ -239,20 +218,6 @@ export async function upload(
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
-}
-
-async function uploadToArweave(data: FormData, manifest, index) {
-  log.debug(`trying to upload ${index}.png: ${manifest.name}`);
-  return await (
-    await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
-      {
-        method: 'POST',
-        // @ts-ignore
-        body: data,
-      },
-    )
-  ).json();
 }
 
 function chunks(array, size) {
