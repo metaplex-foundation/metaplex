@@ -149,6 +149,18 @@ pub mod fair_launch {
         assert_data_valid(&data)?;
         fair_launch.data = data;
 
+        // now we do the counts.
+        let mut counts_at_each_tick: Vec<u64> = vec![];
+        let mut start = fair_launch.data.price_range_start;
+        while start <= fair_launch.data.price_range_end {
+            counts_at_each_tick.push(0);
+            start = start
+                .checked_add(fair_launch.data.tick_size)
+                .ok_or(ErrorCode::NumericalOverflowError)?;
+        }
+
+        fair_launch.counts_at_each_tick = counts_at_each_tick;
+
         Ok(())
     }
 
