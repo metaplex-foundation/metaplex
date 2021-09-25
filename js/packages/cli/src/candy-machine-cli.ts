@@ -314,6 +314,82 @@ programCommand('verify_price')
     log.info(`Good to go!`);
   });
 
+programCommand('show')
+  .option('--cache-path <string>')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, cachePath } = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env, cachePath);
+
+    if (!cacheContent) {
+      return log.error(
+        `No cache found, can't continue. Make sure you are in the correct directory where the assets are located or use the --cache-path option.`,
+      );
+    }
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+    const [candyMachine] = await getCandyMachineAddress(
+      new PublicKey(cacheContent.program.config),
+      cacheContent.program.uuid,
+    );
+
+    try {
+      const machine = await anchorProgram.account.candyMachine.fetch(
+        candyMachine,
+      );
+      log.info('...Candy Machine...');
+      //@ts-ignore
+      log.info('authority: ', machine.authority.toBase58());
+      //@ts-ignore
+      log.info('wallet: ', machine.wallet.toBase58());
+      //@ts-ignore
+      log.info('tokenMint: ', machine.tokenMint.toBase58());
+      //@ts-ignore
+      log.info('config: ', machine.config.toBase58());
+      //@ts-ignore
+      log.info('uuid: ', machine.data.uuid);
+      //@ts-ignore
+      log.info('price: ', machine.data.price.toNumber());
+      //@ts-ignore
+      log.info('itemsAvailable: ', machine.data.itemsAvailable.toNumber());
+      log.info(
+        'goLiveDate: ',
+        //@ts-ignore
+        machine.data.goLiveDate
+          ? //@ts-ignore
+            new Date(machine.data.goLiveDate * 1000)
+          : 'N/A',
+      );
+    } catch (e) {
+      console.log('No machine found');
+    }
+
+    const config = await anchorProgram.account.config.fetch(
+      cacheContent.program.config,
+    );
+    log.info('...Config...');
+    //@ts-ignore
+    log.info('authority: ', config.authority);
+    //@ts-ignore
+    log.info('symbol: ', config.data.symbol);
+    //@ts-ignore
+    log.info('sellerFeeBasisPoints: ', config.data.sellerFeeBasisPoints);
+    //@ts-ignore
+    log.info('creators: ');
+    //@ts-ignore
+    config.data.creators.map(c =>
+      log.info(c.address.toBase58(), 'at', c.share, '%'),
+    ),
+      //@ts-ignore
+      log.info('maxSupply: ', config.data.maxSupply.toNumber());
+    //@ts-ignore
+    log.info('retainAuthority: ', config.data.retainAuthority);
+    //@ts-ignore
+    log.info('maxNumberOfLines: ', config.data.maxNumberOfLines);
+  });
+
 programCommand('create_candy_machine')
   .option(
     '-p, --price <string>',
