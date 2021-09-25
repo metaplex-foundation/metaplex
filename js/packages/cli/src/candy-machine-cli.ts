@@ -3,6 +3,7 @@ import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
+import fetch from 'node-fetch';
 
 import { fromUTF8Array, parsePrice } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -174,7 +175,65 @@ programCommand('verify').action(async (directory, cmd) => {
       cacheItem.onChain = false;
       allGood = false;
     } else {
-      log.debug('Name', name, 'with', uri, 'checked out');
+      const json = await fetch(cacheItem.link);
+      if (json.status == 200 || json.status == 204 || json.status == 202) {
+        const body = await json.text();
+        const parsed = JSON.parse(body);
+        if (parsed.image) {
+          const check = await fetch(parsed.image);
+          if (
+            check.status == 200 ||
+            check.status == 204 ||
+            check.status == 202
+          ) {
+            const text = await check.text();
+            if (!text.match(/Not found/i)) {
+              if (text.length == 0) {
+                log.debug(
+                  'Name',
+                  name,
+                  'with',
+                  uri,
+                  'has zero length, failing',
+                );
+                cacheItem.onChain = false;
+                allGood = false;
+              } else {
+                log.debug('Name', name, 'with', uri, 'checked out');
+              }
+            } else {
+              log.debug(
+                'Name',
+                name,
+                'with',
+                uri,
+                'never got uploaded to arweave, failing',
+              );
+              cacheItem.onChain = false;
+              allGood = false;
+            }
+          } else {
+            log.debug(
+              'Name',
+              name,
+              'with',
+              uri,
+              'returned non-200 from uploader',
+              check.status,
+            );
+            cacheItem.onChain = false;
+            allGood = false;
+          }
+        } else {
+          log.debug('Name', name, 'with', uri, 'lacked image in json, failing');
+          cacheItem.onChain = false;
+          allGood = false;
+        }
+      } else {
+        log.debug('Name', name, 'with', uri, 'returned no json from link');
+        cacheItem.onChain = false;
+        allGood = false;
+      }
     }
   }
 
