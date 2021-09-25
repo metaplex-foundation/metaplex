@@ -242,7 +242,7 @@ async function awaitTransactionSignatureConfirmation(
             } else if (!status.confirmations) {
               log.error('REST no confirmations for', txid, status);
             } else {
-              log.info('REST confirmation for', txid, status);
+              log.debug('REST confirmation for', txid, status);
               done = true;
               resolve(status);
             }
