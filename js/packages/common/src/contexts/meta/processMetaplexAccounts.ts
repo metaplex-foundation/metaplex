@@ -18,11 +18,11 @@ import {
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
-} from '../../models/metaplex';
+} from '../../models';
 import { ProcessAccountsFunc } from './types';
-import { METAPLEX_ID, programIds } from '../../utils';
-import { ParsedAccount } from '../accounts/types';
-import { cache } from '../accounts/cache';
+import { METAPLEX_ID, programIds, pubkeyToString } from '../../utils';
+import { ParsedAccount } from '../accounts';
+import { cache } from '../accounts';
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
@@ -112,7 +112,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       if (STORE_ID && pubkey === STORE_ID.toBase58()) {
         setter('store', pubkey, parsedAccount);
       }
-      setter('stores', pubkey, parsedAccount);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {
@@ -152,14 +151,6 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
           );
         }
       }
-
-      if (useAll) {
-        setter(
-          'creators',
-          parsedAccount.info.address + '-' + pubkey,
-          parsedAccount,
-        );
-      }
     }
   } catch {
     // ignore errors
@@ -168,7 +159,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 };
 
 const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  (account.owner as unknown as any) === METAPLEX_ID;
+  pubkeyToString(account.owner) === METAPLEX_ID;
 
 const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;

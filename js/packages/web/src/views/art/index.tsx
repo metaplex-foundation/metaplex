@@ -86,6 +86,7 @@ export const ArtView = () => {
               pubkey={id}
               active={true}
               allowMeshRender={true}
+              artView={true}
             />
           </Col>
           {/* <Divider /> */}
@@ -210,8 +211,6 @@ export const ArtView = () => {
             <br />
             {/*
               TODO: add info about artist
-
-
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
@@ -223,7 +222,7 @@ export const ArtView = () => {
                 <div className="info-header">Attributes</div>
                 <List size="large" grid={{ column: 4 }}>
                   {attributes.map(attribute => (
-                    <List.Item>
+                    <List.Item key={attribute.trait_type}>
                       <Card title={attribute.trait_type}>
                         {attribute.value}
                       </Card>

@@ -13,7 +13,7 @@ import {
 } from '@solana/web3.js';
 import { getUnixTs, sleep } from './various';
 import { DEFAULT_TIMEOUT } from './constants';
-import log from "loglevel";
+import log from 'loglevel';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -47,10 +47,10 @@ export const sendTransactionWithRetryWithKeypair = async (
   }
 
   if (signers.length > 0) {
-    transaction.partialSign(...signers);
+    transaction.sign(...[wallet, ...signers]);
+  } else {
+    transaction.sign(wallet);
   }
-
-  transaction.sign(wallet);
 
   if (beforeSend) {
     beforeSend();
@@ -242,7 +242,7 @@ async function awaitTransactionSignatureConfirmation(
             } else if (!status.confirmations) {
               log.error('REST no confirmations for', txid, status);
             } else {
-              log.info('REST confirmation for', txid, status);
+              log.debug('REST confirmation for', txid, status);
               done = true;
               resolve(status);
             }

@@ -9,6 +9,7 @@ use {
     deprecated_validate_safety_deposit_box_v1::process_deprecated_validate_safety_deposit_box_v1,
     empty_payment_account::process_empty_payment_account,
     init_auction_manager_v2::process_init_auction_manager_v2,
+    end_auction::process_end_auction,
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     redeem_participation_bid::process_redeem_participation_bid,
@@ -30,6 +31,7 @@ pub mod deprecated_validate_participation;
 pub mod deprecated_validate_safety_deposit_box_v1;
 pub mod empty_payment_account;
 pub mod init_auction_manager_v2;
+pub mod end_auction;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
 pub mod redeem_participation_bid;
@@ -142,6 +144,10 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::RedeemParticipationBidV3(args) => {
             msg!("Instruction: Redeem Participation Bid V3");
             process_redeem_participation_bid(program_id, accounts, false, args.win_index)
+        }
+        MetaplexInstruction::EndAuction(args) => {
+            msg!("Instruction: End auction");
+            process_end_auction(program_id, accounts, args)
         }
     }
 }
