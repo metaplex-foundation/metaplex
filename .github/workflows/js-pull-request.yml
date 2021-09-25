@@ -5,7 +5,8 @@ on:
     paths:
       - js/*
   push:
-    branches: [master]
+    branches:
+      - master
     paths:
       - js/*
 

@@ -35,6 +35,12 @@
       "@babel/preset-typescript"
     ]
   },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/node_modules/"
+    ]
+  },
   "dependencies": {
     "@project-serum/anchor": "^0.14.0",
     "@solana/spl-token": "^0.1.8",

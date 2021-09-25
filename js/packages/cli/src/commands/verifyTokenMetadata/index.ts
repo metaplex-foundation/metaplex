@@ -1,5 +1,4 @@
 import path from 'path';
-import fs from 'fs';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
 
@@ -86,9 +85,7 @@ export const verifyCreatorCollation = (
 };
 
 export const verifyImageURL = (image, files, manifestFile) => {
-  // We can't trust the loop index since we don't know that they'll return in-order. Use the filename to be sure!
-  const index = parseInt(path.basename(manifestFile, '.json'), 10);
-  const expectedImagePath = `${index}${EXTENSION_PNG}`;
+  const expectedImagePath = `image${EXTENSION_PNG}`;
   if (image !== expectedImagePath) {
     // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
     // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
