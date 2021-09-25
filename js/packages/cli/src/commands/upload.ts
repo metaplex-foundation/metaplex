@@ -139,7 +139,7 @@ export async function upload(
           }
 
           if (link) {
-            console.log('setting cache for ', index);
+            log.debug('setting cache for ', index);
             cacheContent.items[index] = {
               link,
               name: manifest.name,
