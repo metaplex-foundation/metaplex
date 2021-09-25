@@ -1,14 +1,14 @@
-name: Pull Request (JS)
+name: Pull Request (CLI)
 
 on:
   pull_request:
     paths:
-      - js/*
+      - js/packages/cli/*
   push:
     branches:
       - master
     paths:
-      - js/*
+      - js/packages/cli/*
 
 jobs:
   unit_tests:
@@ -27,8 +27,8 @@ jobs:
 
       - name: Install modules
         run: yarn install
-        working-directory: js
+        working-directory: js/packages/cli
 
       - name: Run Tests
         run: yarn test
-        working-directory: js
+        working-directory: js/packages/cli
