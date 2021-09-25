@@ -1162,9 +1162,11 @@ pub mod fair_launch {
         invoke_signed(
             &mint_to(
                 &ctx.accounts.token_program.key,
-                participation_token_info.key,
                 participation_mint_info.key,
+                participation_token_info.key,
                 &fair_launch.key(),
+                &[],
+                1,
             )
             .unwrap(),
             &[
