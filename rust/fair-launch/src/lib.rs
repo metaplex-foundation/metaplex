@@ -18,7 +18,10 @@ use {
         AnchorDeserialize, AnchorSerialize,
     },
     anchor_spl::token::Mint,
-    spl_token::{instruction::initialize_account2, state::Account},
+    spl_token::{
+        instruction::{initialize_account2, mint_to},
+        state::Account,
+    },
     spl_token_metadata::instruction::{create_metadata_accounts, update_metadata_accounts},
 };
 
@@ -1128,6 +1131,24 @@ pub mod fair_launch {
 
         invoke_signed(
             &initialize_account2(
+                &ctx.accounts.token_program.key,
+                participation_token_info.key,
+                participation_mint_info.key,
+                &fair_launch.key(),
+            )
+            .unwrap(),
+            &[
+                ctx.accounts.token_program.clone(),
+                participation_token_info.clone(),
+                fair_launch.to_account_info(),
+                participation_mint_info.clone(),
+                ctx.accounts.rent.to_account_info(),
+            ],
+            &[signer_seeds],
+        )?;
+
+        invoke_signed(
+            &mint_to(
                 &ctx.accounts.token_program.key,
                 participation_token_info.key,
                 participation_mint_info.key,
