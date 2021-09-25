@@ -37,7 +37,10 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
-import { WinningConfigType, AmountRange } from '../../models/metaplex';
+import {
+  WinningConfigType,
+  AmountRange,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import moment from 'moment';
 import {
   createAuctionManager,
@@ -57,6 +60,7 @@ const { Step } = Steps;
 const { ZERO } = constants;
 
 export enum AuctionCategory {
+  InstantSale,
   Limited,
   Single,
   Open,
@@ -98,7 +102,6 @@ export interface AuctionState {
 
   //////////////////
   category: AuctionCategory;
-  saleType?: 'auction' | 'sale';
 
   price?: number;
   priceFloor?: number;
@@ -118,6 +121,8 @@ export interface AuctionState {
   tiers?: Array<Tier>;
 
   winnersCount: number;
+
+  instantSalePrice?: number;
 }
 
 export const AuctionCreateView = () => {
@@ -144,7 +149,6 @@ export const AuctionCreateView = () => {
     reservationPrice: 0,
     items: [],
     category: AuctionCategory.Open,
-    saleType: 'auction',
     auctionDurationType: 'minutes',
     gapTimeType: 'minutes',
     winnersCount: 1,
@@ -169,7 +173,28 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    if (attributes.category === AuctionCategory.Open) {
+    if (attributes.category === AuctionCategory.InstantSale) {
+      if (attributes.items.length > 0) {
+        const item = attributes.items[0];
+        if (!attributes.editions) {
+          item.winningConfigType =
+            item.metadata.info.updateAuthority ===
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              ? WinningConfigType.FullRightsTransfer
+              : WinningConfigType.TokenOnlyTransfer;
+        }
+        item.amountRanges = [
+          new AmountRange({
+            amount: new BN(1),
+            length: new BN(attributes.editions || 1),
+          }),
+        ];
+      }
+      winnerLimit = new WinnerLimit({
+        type: WinnerLimitType.Capped,
+        usize: new BN(attributes.editions || 1),
+      });
+    } else if (attributes.category === AuctionCategory.Open) {
       if (
         attributes.items.length > 0 &&
         attributes.items[0].participationConfig
@@ -379,24 +404,32 @@ export const AuctionCreateView = () => {
       console.log('Tiered settings', tieredAttributes.items);
     }
 
+    const isInstantSale =
+      attributes.instantSalePrice &&
+      attributes.priceFloor === attributes.instantSalePrice;
+
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
-      endAuctionAt: new BN(
-        (attributes.auctionDuration || 0) *
-          (attributes.auctionDurationType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.auctionDurationType == 'hours'
-            ? 60 * 60 // 1 hour in seconds
-            : 60), // 1 minute in seconds
-      ), // endAuctionAt is actually auction duration, poorly named, in seconds
-      auctionGap: new BN(
-        (attributes.gapTime || 0) *
-          (attributes.gapTimeType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.gapTimeType == 'hours'
-            ? 60 * 60 // 1 hour in seconds
-            : 60), // 1 minute in seconds
-      ),
+      endAuctionAt: isInstantSale
+        ? null
+        : new BN(
+            (attributes.auctionDuration || 0) *
+              (attributes.auctionDurationType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.auctionDurationType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ), // endAuctionAt is actually auction duration, poorly named, in seconds
+      auctionGap: isInstantSale
+        ? null
+        : new BN(
+            (attributes.gapTime || 0) *
+              (attributes.gapTimeType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.gapTimeType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -408,6 +441,10 @@ export const AuctionCreateView = () => {
       tickSize: attributes.priceTick
         ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
         : null,
+      instantSalePrice: attributes.instantSalePrice
+        ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_SOL)
+        : null,
+      name: null,
     };
 
     const _auctionObj = await createAuctionManager(
@@ -440,6 +477,14 @@ export const AuctionCreateView = () => {
     />
   );
 
+  const instantSaleStep = (
+    <InstantSaleStep
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={() => gotoNextStep()}
+    />
+  );
+
   const copiesStep = (
     <CopiesStep
       attributes={attributes}
@@ -456,16 +501,8 @@ export const AuctionCreateView = () => {
     />
   );
 
-  const typeStep = (
-    <SaleTypeStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  );
-
-  const priceStep = (
-    <PriceStep
+  const priceAuction = (
+    <PriceAuction
       attributes={attributes}
       setAttributes={setAttributes}
       confirm={() => gotoNextStep()}
@@ -481,7 +518,7 @@ export const AuctionCreateView = () => {
   );
 
   const endingStep = (
-    <EndingPhaseStep
+    <EndingPhaseAuction
       attributes={attributes}
       setAttributes={setAttributes}
       confirm={() => gotoNextStep()}
@@ -524,11 +561,17 @@ export const AuctionCreateView = () => {
   const congratsStep = <Congrats auction={auctionObj} />;
 
   const stepsByCategory = {
+    [AuctionCategory.InstantSale]: [
+      ['Category', categoryStep],
+      ['Instant Sale', instantSaleStep],
+      ['Review', reviewStep],
+      ['Publish', waitStep],
+      [undefined, congratsStep],
+    ],
     [AuctionCategory.Limited]: [
       ['Category', categoryStep],
       ['Copies', copiesStep],
-      ['Sale Type', typeStep],
-      ['Price', priceStep],
+      ['Price', priceAuction],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
@@ -539,7 +582,7 @@ export const AuctionCreateView = () => {
     [AuctionCategory.Single]: [
       ['Category', categoryStep],
       ['Copies', copiesStep],
-      ['Price', priceStep],
+      ['Price', priceAuction],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
@@ -550,7 +593,7 @@ export const AuctionCreateView = () => {
     [AuctionCategory.Open]: [
       ['Category', categoryStep],
       ['Copies', copiesStep],
-      ['Price', priceStep],
+      ['Price', priceAuction],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Review', reviewStep],
@@ -561,7 +604,7 @@ export const AuctionCreateView = () => {
       ['Category', categoryStep],
       ['Winners', winnersStep],
       ['Tiers', tierTableStep],
-      ['Price', priceStep],
+      ['Price', priceAuction],
       ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
@@ -626,6 +669,20 @@ const CategoryStep = (props: {
             <Button
               className="type-btn"
               size="large"
+              onClick={() => props.confirm(AuctionCategory.InstantSale)}
+            >
+              <div>
+                <div>Instant Sale</div>
+                <div className="type-btn-description">
+                  At a fixed price, sell a single Master NFT or copies of it
+                </div>
+              </div>
+            </Button>
+          </Row>
+          <Row>
+            <Button
+              className="type-btn"
+              size="large"
               onClick={() => props.confirm(AuctionCategory.Limited)}
             >
               <div>
@@ -681,6 +738,111 @@ const CategoryStep = (props: {
             </Button>
           </Row>
         </Col>
+      </Row>
+    </>
+  );
+};
+
+const InstantSaleStep = (props: {
+  attributes: AuctionState;
+  setAttributes: (attr: AuctionState) => void;
+  confirm: () => void;
+}) => {
+  const [copiesChecked, setCopiesChecked] = useState(false);
+  const copiesEnabled = React.useMemo(
+    () => !!props.attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
+    [props.attributes?.items?.[0]],
+  );
+
+  let artistFilter = (i: SafetyDepositDraft) =>
+    !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
+
+  return (
+    <>
+      <Row className="call-to-action" style={{ marginBottom: 0 }}>
+        <h2>Select which item to sell:</h2>
+      </Row>
+
+      <Row className="content-action">
+        <Col xl={24}>
+          <ArtSelector
+            filter={artistFilter}
+            selected={props.attributes.items}
+            setSelected={items => {
+              props.setAttributes({ ...props.attributes, items });
+            }}
+            allowMultiple={false}
+          >
+            Select NFT
+          </ArtSelector>
+
+          <label className="action-field">
+            <Checkbox
+              defaultChecked={false}
+              checked={copiesChecked}
+              disabled={!copiesEnabled}
+              onChange={e => setCopiesChecked(e.target.checked)}
+            >
+              <span className="field-title">
+                Create copies of a Master Edition NFT?
+              </span>
+            </Checkbox>
+            {copiesChecked && copiesEnabled && (
+              <>
+                <span className="field-info">
+                  Each copy will be given unique edition number e.g. 1 of 30
+                </span>
+                <Input
+                  autoFocus
+                  className="input"
+                  placeholder="Enter number of copies sold"
+                  allowClear
+                  onChange={info =>
+                    props.setAttributes({
+                      ...props.attributes,
+                      editions: parseInt(info.target.value),
+                    })
+                  }
+                />
+              </>
+            )}
+          </label>
+
+          <label className="action-field">
+            <span className="field-title">Price</span>
+            <span className="field-info">
+              This is the instant sale price for your item.
+            </span>
+            <Input
+              type="number"
+              min={0}
+              autoFocus
+              className="input"
+              placeholder="Price"
+              prefix="◎"
+              suffix="SOL"
+              onChange={info =>
+                props.setAttributes({
+                  ...props.attributes,
+                  priceFloor: parseFloat(info.target.value),
+                  instantSalePrice: parseFloat(info.target.value),
+                })
+              }
+            />
+          </label>
+        </Col>
+      </Row>
+      <Row>
+        <Button
+          type="primary"
+          size="large"
+          onClick={() => {
+            props.confirm();
+          }}
+          className="action-btn"
+        >
+          Continue
+        </Button>
       </Row>
     </>
   );
@@ -803,120 +965,6 @@ const NumberOfWinnersStep = (props: {
             />
           </label>
         </Col>
-      </Row>
-      <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
-          Continue
-        </Button>
-      </Row>
-    </>
-  );
-};
-
-const SaleTypeStep = (props: {
-  attributes: AuctionState;
-  setAttributes: (attr: AuctionState) => void;
-  confirm: () => void;
-}) => {
-  return (
-    <>
-      <Row className="call-to-action">
-        <h2>Sale Type</h2>
-        <p>Sell a limited copy or copies of a single Master NFT.</p>
-      </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
-          <label className="action-field">
-            <span className="field-title">
-              How do you want to sell your NFT(s)?
-            </span>
-            <Radio.Group
-              defaultValue={props.attributes.saleType}
-              onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
-                  saleType: info.target.value,
-                })
-              }
-            >
-              <Radio className="radio-field" value="auction">
-                Auction
-              </Radio>
-              <div className="radio-subtitle">
-                Allow bidding on your NFT(s).
-              </div>
-            </Radio.Group>
-          </label>
-        </Col>
-      </Row>
-      <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
-          Continue
-        </Button>
-      </Row>
-    </>
-  );
-};
-
-const PriceStep = (props: {
-  attributes: AuctionState;
-  setAttributes: (attr: AuctionState) => void;
-  confirm: () => void;
-}) => {
-  return (
-    <>
-      {props.attributes.saleType === 'auction' ? (
-        <PriceAuction {...props} />
-      ) : (
-        <PriceSale {...props} />
-      )}
-    </>
-  );
-};
-
-const PriceSale = (props: {
-  attributes: AuctionState;
-  setAttributes: (attr: AuctionState) => void;
-  confirm: () => void;
-}) => {
-  return (
-    <>
-      <Row className="call-to-action">
-        <h2>Price</h2>
-        <p>Set the price for your auction.</p>
-      </Row>
-      <Row className="content-action">
-        <label className="action-field">
-          <span className="field-title">Sale price</span>
-          <span className="field-info">
-            This is the starting bid price for your auction.
-          </span>
-          <Input
-            type="number"
-            min={0}
-            autoFocus
-            className="input"
-            placeholder="Price"
-            prefix="◎"
-            suffix="SOL"
-            onChange={info =>
-              props.setAttributes({
-                ...props.attributes,
-                price: parseFloat(info.target.value) || undefined,
-              })
-            }
-          />
-        </label>
       </Row>
       <Row>
         <Button
@@ -1081,13 +1129,13 @@ const InitialPhaseStep = (props: {
     <>
       <Row className="call-to-action">
         <h2>Initial Phase</h2>
-        <p>Set the terms for your {props.attributes.saleType}.</p>
+        <p>Set the terms for your auction.</p>
       </Row>
       <Row className="content-action">
         <Col className="section" xl={24}>
           <label className="action-field">
             <span className="field-title">
-              When do you want the {props.attributes.saleType} to begin?
+              When do you want the auction to begin?
             </span>
             <Radio.Group
               defaultValue="now"
@@ -1112,9 +1160,7 @@ const InitialPhaseStep = (props: {
           {!startNow && (
             <>
               <label className="action-field">
-                <span className="field-title">
-                  {capitalize(props.attributes.saleType)} Start Date
-                </span>
+                <span className="field-title">Auction Start Date</span>
                 {saleMoment && (
                   <DateTimePicker
                     momentObj={saleMoment}
@@ -1189,22 +1235,6 @@ const InitialPhaseStep = (props: {
           Continue
         </Button>
       </Row>
-    </>
-  );
-};
-
-const EndingPhaseStep = (props: {
-  attributes: AuctionState;
-  setAttributes: (attr: AuctionState) => void;
-  confirm: () => void;
-}) => {
-  return (
-    <>
-      {props.attributes.saleType === 'auction' ? (
-        <EndingPhaseAuction {...props} />
-      ) : (
-        <EndingPhaseSale {...props} />
-      )}
     </>
   );
 };
@@ -1311,94 +1341,6 @@ const EndingPhaseAuction = (props: {
               }
             />
           </label>
-        </Col>
-      </Row>
-      <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
-          Continue
-        </Button>
-      </Row>
-    </>
-  );
-};
-
-const EndingPhaseSale = (props: {
-  attributes: AuctionState;
-  setAttributes: (attr: AuctionState) => void;
-  confirm: () => void;
-}) => {
-  const startMoment = props.attributes.startSaleTS
-    ? moment.unix(props.attributes.startSaleTS)
-    : moment();
-  const [untilSold, setUntilSold] = useState<boolean>(true);
-  const [endMoment, setEndMoment] = useState<moment.Moment | undefined>(
-    props.attributes.endTS ? moment.unix(props.attributes.endTS) : undefined,
-  );
-
-  useEffect(() => {
-    props.setAttributes({
-      ...props.attributes,
-      endTS: endMoment && endMoment.unix(),
-    });
-  }, [endMoment]);
-
-  useEffect(() => {
-    if (untilSold) setEndMoment(undefined);
-    else setEndMoment(startMoment);
-  }, [untilSold]);
-
-  return (
-    <>
-      <Row className="call-to-action">
-        <h2>Ending Phase</h2>
-        <p>Set the terms for your sale.</p>
-      </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
-          <label className="action-field">
-            <span className="field-title">
-              When do you want the sale to end?
-            </span>
-            <Radio.Group
-              defaultValue="now"
-              onChange={info => setUntilSold(info.target.value === 'now')}
-            >
-              <Radio className="radio-field" value="now">
-                Until sold
-              </Radio>
-              <div className="radio-subtitle">
-                The sale will end once the supply goes to zero.
-              </div>
-              <Radio className="radio-field" value="later">
-                At a specified date
-              </Radio>
-              <div className="radio-subtitle">
-                The sale will end at this date, regardless if there is remaining
-                supply.
-              </div>
-            </Radio.Group>
-          </label>
-
-          {!untilSold && (
-            <label className="action-field">
-              <span className="field-title">End Date</span>
-              {endMoment && (
-                <DateTimePicker
-                  momentObj={endMoment}
-                  setMomentObj={setEndMoment}
-                  datePickerProps={{
-                    disabledDate: (current: moment.Moment) =>
-                      current && current < startMoment,
-                  }}
-                />
-              )}
-            </label>
-          )}
         </Col>
       </Row>
       <Row>
@@ -1867,7 +1809,9 @@ const ReviewStep = (props: {
           }}
           className="action-btn"
         >
-          Publish Auction
+          {props.attributes.category === AuctionCategory.InstantSale
+            ? 'List for Sale'
+            : 'Publish Auction'}
         </Button>
       </Row>
     </>

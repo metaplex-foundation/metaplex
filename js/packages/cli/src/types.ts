@@ -1,16 +1,12 @@
-import { BN } from "@project-serum/anchor";
-import { PublicKey, AccountInfo } from "@solana/web3.js";
+import { BN } from '@project-serum/anchor';
+import { PublicKey, AccountInfo } from '@solana/web3.js';
 
 export class Creator {
   address: PublicKey;
   verified: boolean;
   share: number;
 
-  constructor(args: {
-    address: PublicKey;
-    verified: boolean;
-    share: number;
-  }) {
+  constructor(args: { address: PublicKey; verified: boolean; share: number }) {
     this.address = args.address;
     this.verified = args.verified;
     this.share = args.share;
@@ -67,7 +63,7 @@ export enum MetadataKey {
   EditionV1 = 1,
   MasterEditionV1 = 2,
   MasterEditionV2 = 6,
-  EditionMarker = 7
+  EditionMarker = 7,
 }
 
 export class MasterEditionV1 {
@@ -89,49 +85,38 @@ export class MasterEditionV1 {
     this.printingMint = args.printingMint;
     this.oneTimePrintingAuthorizationMint =
       args.oneTimePrintingAuthorizationMint;
-  };
+  }
 }
 
 export class MasterEditionV2 {
   key: MetadataKey;
   supply: BN;
   maxSupply?: BN;
-  constructor(args: {
-    key: MetadataKey;
-    supply: BN;
-    maxSupply?: BN;
-  }) {
+  constructor(args: { key: MetadataKey; supply: BN; maxSupply?: BN }) {
     this.key = MetadataKey.MasterEditionV2;
     this.supply = args.supply;
     this.maxSupply = args.maxSupply;
-  };
+  }
 }
 
 export class EditionMarker {
   key: MetadataKey;
   ledger: number[];
-  constructor(args: {
-    key: MetadataKey;
-    ledger: number[];
-  }) {
+  constructor(args: { key: MetadataKey; ledger: number[] }) {
     this.key = MetadataKey.EditionMarker;
     this.ledger = args.ledger;
-  };
+  }
 }
 
 export class Edition {
   key: MetadataKey;
   parent: PublicKey;
   edition: BN;
-  constructor(args: {
-    key: MetadataKey;
-    parent: PublicKey;
-    edition: BN;
-  }) {
+  constructor(args: { key: MetadataKey; parent: PublicKey; edition: BN }) {
     this.key = MetadataKey.EditionV1;
     this.parent = args.parent;
     this.edition = args.edition;
-  };
+  }
 }
 
 export class Data {
@@ -152,7 +137,7 @@ export class Data {
     this.uri = args.uri;
     this.sellerFeeBasisPoints = args.sellerFeeBasisPoints;
     this.creators = args.creators;
-  };
+  }
 }
 
 export class Metadata {
@@ -178,7 +163,7 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
-  };
+  }
 }
 
 export const METADATA_SCHEMA = new Map<any, any>([
