@@ -27,6 +27,7 @@ pub const TREASURY: &str = "treasury";
 pub const MINT: &str = "mint";
 pub const LOTTERY: &str = "lottery";
 pub const PARTICIPATION: &str = "participation";
+pub const ACCOUNT: &str = "account";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
@@ -75,6 +76,10 @@ pub mod fair_launch {
             assert_owned_by(&treasury_mint_info, &spl_token::id())?;
 
             fair_launch.treasury_mint = Some(*treasury_mint_info.key);
+
+            if treasury_info.data_len() > 0 {
+                return Err(ErrorCode::TreasuryAlreadyExists.into());
+            }
 
             // make the treasury token account
 
@@ -1079,6 +1084,66 @@ pub mod fair_launch {
 
         Ok(())
     }
+
+    pub fn set_participation_nft<'info>(
+        ctx: Context<'_, '_, '_, 'info, SetParticipationNFT<'info>>,
+        participation_mint_bump: u8,
+        data: TokenMetadata,
+    ) -> ProgramResult {
+        let fair_launch = &ctx.accounts.fair_launch;
+        let participation_mint = &ctx.accounts.participation_mint;
+        let participation_token_info = &ctx.accounts.participation_token_account;
+        let authority_seeds = [PREFIX.as_bytes(), token_mint.as_ref(), &[fair_launch.bump]];
+        let participation_mint_info = participation_mint.to_account_info();
+        // make the token account
+
+        assert_owned_by(&participation_mint_info, &spl_token::id())?;
+
+        assert_derivation(
+            &ctx.program_id,
+            participation_token_info,
+            &[
+                PREFIX.as_bytes(),
+                authority.key.as_ref(),
+                MINT.as_bytes(),
+                fair_launch.data.uuid.as_bytes(),
+                PARTICIPATION.as_bytes(),
+                ACCOUNT.as_bytes(),
+            ],
+        )?;
+
+        if participation_token_info.data_len() > 0 {
+            return Err(ErrorCode::ParticipationTokenAccountAlreadyExists.into());
+        }
+
+        create_or_allocate_account_raw(
+            *ctx.accounts.token_program.key,
+            participation_token_info,
+            &ctx.accounts.rent.to_account_info(),
+            &ctx.accounts.system_program,
+            &ctx.accounts.payer,
+            Account::LEN,
+            signer_seeds,
+        )?;
+
+        invoke_signed(
+            &initialize_account2(
+                &ctx.accounts.token_program.key,
+                participation_token_info.key,
+                participation_mint_info.key,
+                &fair_launch.key(),
+            )
+            .unwrap(),
+            &[
+                ctx.accounts.token_program.clone(),
+                participation_token_info.clone(),
+                fair_launch.to_account_info(),
+                participation_mint_info.clone(),
+                ctx.accounts.rent.to_account_info(),
+            ],
+            &[signer_seeds],
+        )?;
+    }
 }
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
@@ -1627,4 +1692,6 @@ pub enum ErrorCode {
     LotteryDurationHasntEndedYet,
     #[msg("Fair launch ticket and fair launch key mismatch")]
     FairLaunchMismatch,
+    #[msg("Participation Token Account already exists")]
+    ParticipationTokenAccountAlreadyExists,
 }
