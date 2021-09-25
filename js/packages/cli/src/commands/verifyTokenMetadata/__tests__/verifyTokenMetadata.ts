@@ -34,12 +34,14 @@ describe('`metaplex verify_token_metadata`', () => {
   const invalidSchemas = getFiles(
     path.join(__dirname, '../__fixtures__/invalidSchema'),
   );
-  it.each(invalidSchemas)('invalidates %s', invalidSchema => {
-    expect(() =>
-      verifyTokenMetadata({
-        files: [invalidSchema, invalidSchema.replace('.json', '.png')],
-      }),
-    ).toThrowErrorMatchingSnapshot();
+  invalidSchemas.forEach(invalidSchema => {
+    it(`invalidates ${path.relative(__dirname, invalidSchema)}`, () => {
+      expect(() =>
+        verifyTokenMetadata({
+          files: [invalidSchema, invalidSchema.replace('.json', '.png')],
+        }),
+      ).toThrowErrorMatchingSnapshot();
+    });
   });
 
   it('throws on invalid share allocation', () => {
