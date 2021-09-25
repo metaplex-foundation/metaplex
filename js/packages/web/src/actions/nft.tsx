@@ -197,19 +197,26 @@ export const mintNFT = async (
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
+  const uploadArweaveResponse =  await fetch(
+    // TODO: add CNAME
+    env.startsWith('mainnet-beta')
+      ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
+      : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
+    {
+      method: 'POST',
+      body: data,
+    },
+  )
 
-  const result: IArweaveResult = await (
-    await fetch(
-      // TODO: add CNAME
-      env.startsWith('mainnet-beta')
-        ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
-        : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
-      {
-        method: 'POST',
-        body: data,
-      },
-    )
-  ).json();
+  if (!uploadArweaveResponse.ok) {
+    return Promise.reject(new Error("Unable to upload the artwork to Arweave. Please wait and then try again."))
+  }
+
+  const result: IArweaveResult = await uploadArweaveResponse.json();
+
+  if (result.error) {
+    return Promise.reject(new Error(result.error))
+  }
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,

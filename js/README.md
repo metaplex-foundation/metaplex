@@ -1,6 +1,6 @@
 ## Setup
 
-Be sure to be running Node v12.16.2 and yarn version 1.22.10.
+Be sure to be running Node v14.17.6 and yarn version 1.22.10.
 
 `yarn bootstrap`
 
