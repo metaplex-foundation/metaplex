@@ -14,7 +14,7 @@ import {
 import { ParsedAccount } from '../accounts/types';
 import { METADATA_PROGRAM_ID, pubkeyToString } from '../../utils';
 
-export const processMetaData: ProcessAccountsFunc = (
+export const processMetaData: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
 ) => {
@@ -32,7 +32,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: metadata,
         };
-        setter('metadataByMint', metadata.mint, parsedAccount);
+        await setter('metadataByMint', metadata.mint, parsedAccount);
       }
     }
 

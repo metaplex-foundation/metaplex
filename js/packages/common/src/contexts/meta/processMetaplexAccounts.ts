@@ -27,7 +27,6 @@ import { cache } from '../accounts';
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
-  useAll,
 ) => {
   if (!isMetaplexAccount(account)) return;
 
@@ -40,7 +39,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     ) {
       const storeKey = new PublicKey(account.data.slice(1, 33));
 
-      if ((STORE_ID && storeKey.equals(STORE_ID)) || useAll) {
+      if (STORE_ID && storeKey.equals(STORE_ID)) {
         const auctionManager = decodeAuctionManager(account.data);
 
         const parsedAccount: ParsedAccount<
