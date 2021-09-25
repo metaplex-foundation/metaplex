@@ -38,6 +38,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.app {
+  &-auctions-list {
+    &--loading {
+      text-align: center;
+      padding: 30px 0 0 0;
+    }
+  }
+  &--loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 .no-events {
   pointer-events: none;
 }

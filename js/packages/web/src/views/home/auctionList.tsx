@@ -9,6 +9,7 @@ import { CardLoader } from '../../components/MyLoader';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { useMeta } from '../../contexts';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
+import { LoadingOutlined } from '@ant-design/icons';
 import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
@@ -23,8 +24,7 @@ export enum LiveAuctionViewState {
 }
 
 export const AuctionListView = () => {
-  const { auctions, loading, hasNextPage, loadMore } = useAuctions();
-  const { isLoading } = useMeta();
+  const { auctions, loading, initLoading, hasNextPage, loadMore } = useAuctions();
 
   const [sentryRef] = useInfiniteScroll({
     loading,
@@ -34,26 +34,29 @@ export const AuctionListView = () => {
   });
 
   return (
-    <>
-      <Row>
-        <List
-          grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 4 }}
-          loading={isLoading}
-          dataSource={auctions}
-          renderItem={item => (
-            <List.Item key={item.auction.pubkey}>
-              <Link to={`/auction/${item.auction.pubkey}`}>
-                <AuctionRenderCard auctionView={item} />
-              </Link>
-            </List.Item>
-          )}
-        />
-        {(loading || hasNextPage) && (
-          <div ref={sentryRef}>
-            <Spin />
-          </div>
+    initLoading ? (
+      <div className="app-auctions-list--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    ) : (
+      <List
+        grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 4 }}
+        dataSource={auctions}
+        loadMore={
+          hasNextPage && (
+            <div className="app-auctions-list--loading" ref={sentryRef}>
+              <Spin indicator={<LoadingOutlined />} />
+            </div>
+          )
+        }
+        renderItem={item => (
+          <List.Item key={item.auction.pubkey}>
+            <Link to={`/auction/${item.auction.pubkey}`}>
+              <AuctionRenderCard auctionView={item} />
+            </Link>
+          </List.Item>
         )}
-      </Row>
-    </>
+      />
+    )
   );
 };

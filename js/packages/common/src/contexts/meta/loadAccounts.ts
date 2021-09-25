@@ -20,9 +20,7 @@ import {
   MAX_SYMBOL_LENGTH,
   MAX_URI_LENGTH,
   METADATA_PREFIX,
-  decodeMetadata,
   getAuctionExtended,
-  decodeAuction,
 } from '../../actions';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -39,6 +37,9 @@ import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
+
+type StateUpdaterFunc = (state: keyof MetaState, key: string, value: ParsedAccount<any>) => MetaState
+
 
 async function getProgramAccounts(
   connection: Connection,
@@ -106,12 +107,7 @@ export const limitedLoadAccounts = async (
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateTemp, false);
-      }
-    };
+  const forEach = forEachUsingUpdater(updateTemp);
 
   const getMetaDataByStoreOwner = async (
     ownerAddress: StringPublicKey,
@@ -317,6 +313,13 @@ export const limitedLoadAccounts = async (
   return tempCache;
 };
 
+const forEachUsingUpdater =
+  (updateTemp: StateUpdaterFunc) => (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
+    for (const account of accounts) {
+      await fn(account, updateTemp, false);
+    }
+  };
+
 export const loadAuction = async (
   connection: Connection,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
@@ -325,13 +328,7 @@ export const loadAuction = async (
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
 
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateTemp, false);
-      }
-    };
-
+  const forEach = forEachUsingUpdater(updateTemp)
 
   const rpcQueries = [
     // safety deposit box config
@@ -400,6 +397,10 @@ export const loadAuction = async (
 
   return tempCache;
 };
+
+export const loadBidPotForAuctionManager = (connection: Connection, auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => {
+
+}
 
 export const loadAccounts = async (connection: Connection, all: boolean) => {
   const tempCache: MetaState = getEmptyMetaState();

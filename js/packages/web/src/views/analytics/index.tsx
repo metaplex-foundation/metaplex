@@ -1,6 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
-import { useMeta } from '../../contexts';
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -17,6 +16,7 @@ import {
   programIds,
   useMint,
 } from '@oyster/common';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
@@ -122,6 +122,7 @@ const rerun = async ({
     newUsersPublished[auction.auctionManager.authority] = true;
     existingUsersEngaged[auction.auctionManager.authority] = true;
 
+    // TODO: figure out how to do this
     let type: AuctionType | undefined = undefined;
     if (auction.items.find(set => set.length > 1)) {
       type = AuctionType.Tiered;
@@ -139,6 +140,7 @@ const rerun = async ({
   }
 
   const newUsersBid: Record<string, boolean> = {};
+  // TODO: Load bidder pots on this
   Object.values(bidderPotsByAuctionAndBidder).forEach(acct => {
     if (auctionManagersByAuction[acct.info.auctionAct]) {
       newUsersBid[acct.info.bidderAct] = true;
@@ -315,13 +317,18 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
     auctionManagersByAuction,
     bidderPotsByAuctionAndBidder,
     auctionDataExtended,
-  } = useMeta();
+    isLoading,
+  } = useAnalytics();
 
   const totalNFTs = metadata.length;
   const totalMarketplaces = Object.values(stores).length;
 
   const { auctions } = useAuctions();
 
+  if (isLoading) {
+    return <Spin size="large" />
+  }
+  
   return (
     <Content>
       <Col style={{ marginTop: 10 }}>

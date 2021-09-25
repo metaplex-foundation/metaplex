@@ -5,12 +5,13 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
 } from './loadAccounts';
+import { Spin } from 'antd';
 import { merge } from 'lodash'
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { useQuerySearch } from '../../hooks';
-import { stat } from 'fs';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -123,7 +124,11 @@ export function MetaProvider({ children = null as any }) {
         updateMetaState
       }}
     >
-      {children}
+      {isLoading ? (
+        <div className="app--loading">
+          <Spin size="large" indicator={<LoadingOutlined />} />
+        </div>
+      ) : children}
     </MetaContext.Provider>
   );
 }
