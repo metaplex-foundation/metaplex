@@ -337,6 +337,10 @@ pub mod fair_launch {
                 }
             }
 
+            if buyer_token_account.owner != *buyer.key {
+                return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
+            }
+
             assert_owned_by(treasury_mint_info, &token_program.key)?;
             assert_owned_by(buyer_token_account_info, &token_program.key)?;
 
@@ -554,6 +558,10 @@ pub mod fair_launch {
                 }
             }
 
+            if buyer_token_account.owner != *buyer.key {
+                return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
+            }
+
             let signer_seeds = [
                 PREFIX.as_bytes(),
                 fair_launch.token_mint.as_ref(),
@@ -695,6 +703,10 @@ pub mod fair_launch {
             return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
         }
 
+        if buyer_token.owner != fair_launch_ticket.buyer {
+            return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
+        }
+
         fair_launch.number_tickets_punched = fair_launch
             .number_tickets_punched
             .checked_add(1)
@@ -787,6 +799,10 @@ pub mod fair_launch {
 
             if authority_token_account.delegate.is_some() {
                 return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            }
+
+            if authority_token_account.owner != fair_launch.authority {
+                return Err(ErrorCode::AccountOwnerShouldBeAuthority.into());
             }
 
             if fair_launch.treasury_snapshot.is_none() {
@@ -916,6 +932,10 @@ pub mod fair_launch {
 
             if buyer_payment_account.delegate.is_some() {
                 return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+            }
+
+            if buyer_payment_account.owner != *buyer.key {
+                return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
             }
 
             if fair_launch.treasury_snapshot.is_none() {
@@ -1604,4 +1624,8 @@ pub enum ErrorCode {
     LotteryDurationHasntEndedYet,
     #[msg("Fair launch ticket and fair launch key mismatch")]
     FairLaunchMismatch,
+    #[msg("Account owner should be buyer")]
+    AccountOwnerShouldBeBuyer,
+    #[msg("Account owner should be fair launch authority")]
+    AccountOwnerShouldBeAuthority,
 }
