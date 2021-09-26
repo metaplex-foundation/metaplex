@@ -22,7 +22,10 @@ use {
         instruction::{initialize_account2, mint_to},
         state::Account,
     },
-    spl_token_metadata::instruction::{create_metadata_accounts, update_metadata_accounts},
+    spl_token_metadata::instruction::{
+        create_master_edition, create_metadata_accounts,
+        mint_new_edition_from_master_edition_via_token, update_metadata_accounts,
+    },
 };
 
 pub const PREFIX: &str = "fair_launch";
@@ -1103,15 +1106,53 @@ pub mod fair_launch {
     pub fn set_participation_nft<'info>(
         ctx: Context<'_, '_, '_, 'info, SetParticipationNFT<'info>>,
         participation_mint_bump: u8,
+        participation_token_bump: u8,
+        participation_modulo: u8,
         data: TokenMetadata,
     ) -> ProgramResult {
-        let fair_launch = &ctx.accounts.fair_launch;
+        let fair_launch = &mut ctx.accounts.fair_launch;
         let participation_mint = &ctx.accounts.participation_mint;
         let participation_token_info = &ctx.accounts.participation_token_account;
-        let authority_seeds = [PREFIX.as_bytes(), token_mint.as_ref(), &[fair_launch.bump]];
         let participation_mint_info = participation_mint.to_account_info();
+
+        let token_program = &ctx.accounts.token_program;
+
+        if token_program.key != &spl_token::id() {
+            return Err(ErrorCode::InvalidTokenProgram.into());
+        }
+
+        fair_launch.participation_mint_bump = participation_mint_bump;
+        fair_launch.participation_mint = Some(participation_mint.key());
+        fair_launch.participation_modulo = participation_modulo;
+
+        if participation_modulo == 0 {
+            return Err(ErrorCode::InvalidParticipationModulo.into());
+        }
+
         // make the token account
 
+        let authority_seeds = [
+            PREFIX.as_bytes(),
+            fair_launch.token_mint.as_ref(),
+            &[fair_launch.bump],
+        ];
+
+        let mut creators: Vec<spl_token_metadata::state::Creator> =
+            vec![spl_token_metadata::state::Creator {
+                address: fair_launch.key(),
+                verified: true,
+                share: 0,
+            }];
+
+        if let Some(cre) = &data.creators {
+            for c in cre {
+                creators.push(spl_token_metadata::state::Creator {
+                    address: c.address,
+                    verified: c.verified,
+                    share: c.share,
+                });
+            }
+        }
         assert_owned_by(&participation_mint_info, &spl_token::id())?;
 
         assert_derivation(
@@ -1119,7 +1160,7 @@ pub mod fair_launch {
             participation_token_info,
             &[
                 PREFIX.as_bytes(),
-                authority.key.as_ref(),
+                fair_launch.authority.as_ref(),
                 MINT.as_bytes(),
                 fair_launch.data.uuid.as_bytes(),
                 PARTICIPATION.as_bytes(),
@@ -1127,9 +1168,21 @@ pub mod fair_launch {
             ],
         )?;
 
+        let signer_seeds = &[
+            PREFIX.as_bytes(),
+            fair_launch.authority.as_ref(),
+            MINT.as_bytes(),
+            fair_launch.data.uuid.as_bytes(),
+            PARTICIPATION.as_bytes(),
+            ACCOUNT.as_bytes(),
+            &[participation_token_bump],
+        ];
+
         if participation_token_info.data_len() > 0 {
             return Err(ErrorCode::ParticipationTokenAccountAlreadyExists.into());
-        }
+        };
+
+        msg!("Allocating token account");
 
         create_or_allocate_account_raw(
             *ctx.accounts.token_program.key,
@@ -1158,6 +1211,7 @@ pub mod fair_launch {
             ],
             &[signer_seeds],
         )?;
+        msg!("Minting token");
 
         invoke_signed(
             &mint_to(
@@ -1176,8 +1230,254 @@ pub mod fair_launch {
                 participation_mint_info.clone(),
                 ctx.accounts.rent.to_account_info(),
             ],
-            &[signer_seeds],
+            &[&authority_seeds],
         )?;
+
+        msg!("Creating metadata");
+        let metadata_infos = vec![
+            ctx.accounts.metadata.clone(),
+            participation_mint_info.clone(),
+            ctx.accounts.payer.clone(),
+            ctx.accounts.token_metadata_program.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.system_program.clone(),
+            ctx.accounts.rent.to_account_info().clone(),
+            fair_launch.to_account_info(),
+        ];
+
+        let master_edition_infos = vec![
+            ctx.accounts.master_edition.clone(),
+            participation_mint_info.clone(),
+            fair_launch.to_account_info(),
+            ctx.accounts.payer.clone(),
+            ctx.accounts.metadata.clone(),
+            ctx.accounts.token_metadata_program.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.system_program.clone(),
+            ctx.accounts.rent.to_account_info().clone(),
+        ];
+
+        invoke_signed(
+            &create_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                *participation_token_info.key,
+                fair_launch.key(),
+                *ctx.accounts.payer.key,
+                fair_launch.key(),
+                data.name,
+                data.symbol.clone(),
+                data.uri,
+                Some(creators),
+                data.seller_fee_basis_points,
+                false,
+                data.is_mutable,
+            ),
+            metadata_infos.as_slice(),
+            &[&authority_seeds],
+        )?;
+
+        msg!("Creating master edition");
+        invoke_signed(
+            &create_master_edition(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.master_edition.key,
+                *participation_mint_info.key,
+                fair_launch.key(),
+                fair_launch.key(),
+                *ctx.accounts.metadata.key,
+                *ctx.accounts.payer.key,
+                None,
+            ),
+            master_edition_infos.as_slice(),
+            &[&authority_seeds],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn update_participation_nft<'info>(
+        ctx: Context<'_, '_, '_, 'info, UpdateParticipationNFT<'info>>,
+        participation_modulo: u8,
+        data: TokenMetadata,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        fair_launch.participation_modulo = participation_modulo;
+
+        let token_program = &ctx.accounts.token_program;
+
+        if token_program.key != &spl_token::id() {
+            return Err(ErrorCode::InvalidTokenProgram.into());
+        }
+
+        if participation_modulo == 0 {
+            return Err(ErrorCode::InvalidParticipationModulo.into());
+        }
+
+        let authority_seeds = [
+            PREFIX.as_bytes(),
+            fair_launch.token_mint.as_ref(),
+            &[fair_launch.bump],
+        ];
+
+        let mut creators: Vec<spl_token_metadata::state::Creator> =
+            vec![spl_token_metadata::state::Creator {
+                address: fair_launch.key(),
+                verified: true,
+                share: 0,
+            }];
+
+        if let Some(cre) = &data.creators {
+            for c in cre {
+                creators.push(spl_token_metadata::state::Creator {
+                    address: c.address,
+                    verified: c.verified,
+                    share: c.share,
+                });
+            }
+        }
+
+        let update_infos = vec![
+            ctx.accounts.token_metadata_program.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.metadata.clone(),
+            fair_launch.to_account_info().clone(),
+        ];
+
+        msg!("Updating metadata");
+        invoke_signed(
+            &update_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                fair_launch.key(),
+                None,
+                Some(spl_token_metadata::state::Data {
+                    name: data.name,
+                    symbol: data.symbol,
+                    uri: data.uri,
+                    creators: Some(creators),
+                    seller_fee_basis_points: data.seller_fee_basis_points,
+                }),
+                None,
+            ),
+            update_infos.as_slice(),
+            &[&authority_seeds],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn mint_participation_nft<'info>(
+        ctx: Context<'_, '_, '_, 'info, MintParticipationNFT<'info>>,
+    ) -> ProgramResult {
+        let fair_launch = &ctx.accounts.fair_launch;
+        let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
+        let buyer = &ctx.accounts.buyer;
+        let buyer_token_account_info = &ctx.accounts.buyer_token_account;
+
+        let token_program = &ctx.accounts.token_program;
+
+        if token_program.key != &spl_token::id() {
+            return Err(ErrorCode::InvalidTokenProgram.into());
+        }
+
+        if fair_launch.participation_modulo == 0 {
+            return Err(ErrorCode::InvalidParticipationModulo.into());
+        }
+
+        if fair_launch_ticket.gotten_participation {
+            return Err(ErrorCode::AlreadyMintedParticipation.into());
+        }
+
+        if let Some(val) = fair_launch_ticket
+            .seq
+            .checked_rem(fair_launch.participation_modulo as u64)
+        {
+            if val != 0 {
+                return Err(ErrorCode::NotEligibleForParticipation.into());
+            }
+        } else {
+            return Err(ErrorCode::NotEligibleForParticipation.into());
+        }
+
+        fair_launch_ticket.gotten_participation = true;
+
+        let authority_seeds = [
+            PREFIX.as_bytes(),
+            fair_launch.token_mint.as_ref(),
+            &[fair_launch.bump],
+        ];
+
+        let buyer_token_account: Account = assert_initialized(&buyer_token_account_info)?;
+
+        if buyer_token_account.mint != *ctx.accounts.new_mint.key {
+            return Err(ErrorCode::ParticipationMintMismatch.into());
+        }
+
+        if let COption::Some(val) = buyer_token_account.delegate {
+            return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+        }
+
+        assert_owned_by(buyer_token_account_info, &token_program.key)?;
+
+        // assert is an ATA
+        assert_derivation(
+            &spl_associated_token_account::id(),
+            buyer_token_account_info,
+            &[
+                buyer.key.as_ref(),
+                token_program.key.as_ref(),
+                &ctx.accounts.new_mint.key.as_ref(),
+            ],
+        )?;
+
+        let edition_infos = vec![
+            ctx.accounts.metadata.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.mint_authority.clone(),
+            ctx.accounts.payer.clone(),
+            ctx.accounts.token_metadata_program.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.system_program.clone(),
+            ctx.accounts.rent.to_account_info().clone(),
+            candy_machine.to_account_info().clone(),
+        ];
+
+        invoke_signed(
+            &mint_new_edition_from_master_edition_via_token(
+                *ctx.accounts.token_program.key,
+                *ctx.accounts.new_metadata.key,
+                *ctx.accounts.new_edition.key,
+                *ctx.accounts.master_edition.key,
+                *ctx.accounts.new_mint.key,
+                *ctx.accounts.payer.key,
+                *ctx.accounts.payer.key,
+                *buyer.key,
+                *buyer_token_account_info.key,
+                fair_launch.key(),
+            ),
+            edition_infos.as_slice(),
+            &[&authority_seeds],
+        )?;
+
+        invoke_signed(
+            &update_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                candy_machine.key(),
+                new_update_authority,
+                None,
+                Some(true),
+            ),
+            &[
+                ctx.accounts.token_metadata_program.clone(),
+                ctx.accounts.metadata.clone(),
+                candy_machine.to_account_info().clone(),
+            ],
+            &[&authority_seeds],
+        )?;
+
+        Ok(())
     }
 }
 #[derive(Accounts)]
@@ -1416,7 +1716,7 @@ pub struct SetTokenMetadata<'info> {
 pub struct SetParticipationNFT<'info> {
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
-    #[account(mut, signer)]
+    #[account(signer)]
     authority: AccountInfo<'info>,
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -1438,6 +1738,60 @@ pub struct SetParticipationNFT<'info> {
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateParticipationNFT<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(signer)]
+    authority: AccountInfo<'info>,
+    // With the following accounts we aren't using anchor macros because they are CPI'd
+    // through to token-metadata which will do all the validations we need on them.
+    #[account(mut)]
+    metadata: AccountInfo<'info>,
+    #[account(address = spl_token_metadata::id())]
+    token_metadata_program: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct MintParticipationNFT<'info> {
+    #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), fair_launch_ticket.buyer.as_ref()], bump=fair_launch_ticket.bump, has_one=fair_launch, has_one=buyer)]
+    fair_launch_ticket: ProgramAccount<'info, FairLaunchTicket>,
+    #[account(mut, signer)]
+    payer: AccountInfo<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes()], bump=fair_launch.participation_mint_bump)]
+    participation_mint: CpiAccount<'info, Mint>,
+    #[account(mut)]
+    buyer: AccountInfo<'info>,
+    buyer_token_account: AccountInfo<'info>,
+    // With the following accounts we aren't using anchor macros because they are CPI'd
+    // through to token-metadata which will do all the validations we need on them.
+    // This will fail if there is more than one token in existence and we force you to provide
+    // an ata that must belong to buyer and we check that it has the token from this new_mint.
+    #[account(mut)]
+    new_metadata: AccountInfo<'info>,
+    #[account(mut)]
+    new_edition: AccountInfo<'info>,
+    #[account(mut)]
+    new_mint: AccountInfo<'info>,
+    #[account(signer)]
+    new_mint_authority: AccountInfo<'info>,
+    #[account(mut)]
+    metadata: AccountInfo<'info>,
+    #[account(mut)]
+    master_edition: AccountInfo<'info>,
+    #[account(address = spl_token_metadata::id())]
+    token_metadata_program: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+    #[account(address = system_program::ID)]
+    system_program: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
 }
 
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
@@ -1489,7 +1843,8 @@ pub const FAIR_LAUNCH_TICKET_SIZE: usize = 8 + // discriminator
 1 + // state
 1 + // bump
 8 + // seq
-50; //padding
+1 + // gotten participation
+49; //padding
 
 pub const FAIR_LAUNCH_TICKET_SEQ_SIZE: usize = 8 + //discriminator
 32 + // fair launch ticket reverse lookup
@@ -1607,6 +1962,7 @@ pub struct FairLaunchTicket {
     pub state: FairLaunchTicketState,
     pub bump: u8,
     pub seq: u64,
+    pub gotten_participation: bool,
 }
 
 #[account]
@@ -1729,4 +2085,12 @@ pub enum ErrorCode {
     FairLaunchMismatch,
     #[msg("Participation Token Account already exists")]
     ParticipationTokenAccountAlreadyExists,
+    #[msg("Invalid participation modulo")]
+    InvalidParticipationModulo,
+    #[msg("Already got participation")]
+    AlreadyMintedParticipation,
+    #[msg("Not eligible for participation")]
+    NotEligibleForParticipation,
+    #[msg("The mint on this account does not match the participation nft mint")]
+    ParticipationMintMismatch,
 }
