@@ -106,7 +106,7 @@ export async function upload(
       log.error(`Error uploading file ${index}`, er);
     }
   }
-  console.log(`Done. Successful = ${uploadSuccessful}. Uploaded ${uploadCount} files`);
+  log.info(`Done. Successful = ${uploadSuccessful}. Uploaded ${uploadCount} files`);
   return uploadSuccessful;
 }
 
