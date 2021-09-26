@@ -949,9 +949,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await adjustTicket({
       amountNumber,
@@ -1298,9 +1297,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1327,19 +1325,31 @@ program
         adjustMantissa: false,
       });
     }
-    const buyerTokenAccount = await punchTicket({
-      puncher: walletKeyPair.publicKey,
-      payer: walletKeyPair,
-      anchorProgram,
-      fairLaunchTicket,
-      fairLaunch,
-      fairLaunchLotteryBitmap,
-      fairLaunchObj,
-    });
 
-    console.log(
-      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
-    );
+    let tries = 0;
+    try {
+      const buyerTokenAccount = await punchTicket({
+        puncher: walletKeyPair.publicKey,
+        payer: walletKeyPair,
+        anchorProgram,
+        fairLaunchTicket,
+        fairLaunch,
+        fairLaunchLotteryBitmap,
+        fairLaunchObj,
+      });
+
+      console.log(
+        `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+      );
+    } catch (e) {
+      if (tries > 3) {
+        throw e;
+      } else {
+        tries++;
+      }
+      console.log('Ticket failed to punch, trying one more time');
+      await sleep(1000);
+    }
   });
 
 program
@@ -1424,9 +1434,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
