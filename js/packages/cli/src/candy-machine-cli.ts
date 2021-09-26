@@ -31,6 +31,7 @@ import { signMetadata } from './commands/sign';
 import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
+import { createGenerativeArt } from './commands/createArt';
 
 program.version('0.0.2');
 
@@ -668,9 +669,10 @@ programCommand('create_generative_art')
       configLocation,
     );
 
-    log.info(randomSets);
+    log.info('JSON files have been created within the assets directory');
 
     // 2. piecemeal generate the images
+    await createGenerativeArt(configLocation, randomSets);
   });
 
 function programCommand(name: string) {

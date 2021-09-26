@@ -17,6 +17,8 @@ export async function generateConfigurations(
     collection: {},
     breakdown: {},
     order: traits,
+    width: 1000,
+    height: 1000,
   };
 
   try {

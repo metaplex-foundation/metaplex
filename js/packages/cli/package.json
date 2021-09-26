@@ -56,7 +56,7 @@
     "weighted": "^0.3.0",
     "canvas": "^2.8.0",
     "image-data-uri": "^2.0.1",
-    "imagemin": "^8.0.1",
+    "imagemin": "^7.0.1",
     "imagemin-pngquant": "^9.0.2",
     "lodash": "^4.17.21",
     "merge-images": "^2.0.0"

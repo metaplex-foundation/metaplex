@@ -1,11 +1,12 @@
 import fs from 'fs';
 import log from 'loglevel';
 import _ from 'lodash';
-import { generateRandomSet, getMetadata } from './various';
+import { generateRandomSet, getMetadata, readJsonFile } from './various';
 
-const { readFile, writeFile, mkdir } = fs.promises;
+const { writeFile, mkdir } = fs.promises;
 
-const ASSETS_DIRECTORY = './assets';
+export const ASSETS_DIRECTORY = './assets';
+export const TRAITS_DIRECTORY = './traits';
 
 export async function createMetadataFiles(
   numberOfImages: string,
@@ -22,15 +23,6 @@ export async function createMetadataFiles(
     }
   }
 
-  let traitsConfiguration;
-  try {
-    const file = await readFile(configLocation, 'utf-8');
-    traitsConfiguration = JSON.parse(file);
-  } catch (err) {
-    log.error('The file could not be read', err);
-    throw err;
-  }
-
   const {
     breakdown,
     name,
@@ -39,7 +31,7 @@ export async function createMetadataFiles(
     description,
     seller_fee_basis_points,
     collection,
-  } = traitsConfiguration;
+  } = await readJsonFile(configLocation);
 
   while (numberOfFilesCreated < parseInt(numberOfImages, 10)) {
     const randomizedSet = generateRandomSet(breakdown);
@@ -67,7 +59,6 @@ export async function createMetadataFiles(
         log.error(`${numberOfFilesCreated} failed to get created`, err);
       }
 
-      log.info(metadata);
       numberOfFilesCreated += 1;
     }
   }

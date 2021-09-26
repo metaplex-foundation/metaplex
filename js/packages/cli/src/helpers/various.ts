@@ -1,6 +1,14 @@
 import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
+
+const { readFile } = fs.promises;
+
+export async function readJsonFile(fileName: string) {
+  const file = await readFile(fileName, 'utf-8');
+  return JSON.parse(file);
+}
 
 export const generateRandomSet = breakdown => {
   const tmp = {};
