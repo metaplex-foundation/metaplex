@@ -51,6 +51,11 @@ export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
   return Math.ceil(parseFloat(price) * mantissa);
 }
 
+export function parsePercentage(percent: number) {
+  if (percent <= 100) {
+    return percent;
+  } else throw new Error('Percent reward to creators cannot exceed 100');
+}
 export function parseDate(date) {
   if (date === 'now') {
     return Date.now() / 1000;
