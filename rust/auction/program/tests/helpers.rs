@@ -9,10 +9,19 @@ use solana_sdk::{
 use spl_auction::{
     instruction,
     processor::{
-        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, EndAuctionArgs, PlaceBidArgs, PriceFloor,
-        StartAuctionArgs, WinnerLimit,
+        CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, CreateAuctionArgsV2, EndAuctionArgs,
+        PlaceBidArgs, PriceFloor, StartAuctionArgs, WinnerLimit,
     },
 };
+
+fn string_to_array(value: &str) -> Result<[u8; 32], TransportError> {
+    if value.len() > 32 {
+        return Err(TransportError::Custom("String too long".to_string()));
+    }
+    let mut result: [u8; 32] = Default::default();
+    &result[0..value.len()].copy_from_slice(value.as_bytes());
+    Ok(result)
+}
 
 pub async fn get_account(banks_client: &mut BanksClient, pubkey: &Pubkey) -> Account {
     banks_client
@@ -132,6 +141,7 @@ pub async fn get_token_supply(banks_client: &mut BanksClient, mint: &Pubkey) -> 
     account_info.supply
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn create_auction(
     banks_client: &mut BanksClient,
     program_id: &Pubkey,
@@ -140,27 +150,58 @@ pub async fn create_auction(
     resource: &Pubkey,
     mint_keypair: &Pubkey,
     max_winners: usize,
+    name: &str,
+    instant_sale_price: Option<u64>,
+    price_floor: PriceFloor,
+    gap_tick_size_percentage: Option<u8>,
+    tick_size: Option<u64>,
 ) -> Result<(), TransportError> {
-    let transaction = Transaction::new_signed_with_payer(
-        &[instruction::create_auction_instruction(
-            *program_id,
-            payer.pubkey(),
-            CreateAuctionArgs {
-                authority: payer.pubkey(),
-                end_auction_at: None,
-                end_auction_gap: None,
-                resource: *resource,
-                token_mint: *mint_keypair,
-                winners: WinnerLimit::Capped(max_winners),
-                price_floor: PriceFloor::None([0u8; 32]),
-                gap_tick_size_percentage: Some(0),
-                tick_size: Some(0),
-            },
-        )],
-        Some(&payer.pubkey()),
-        &[payer],
-        *recent_blockhash,
-    );
+    let transaction: Transaction;
+    if instant_sale_price.is_some() {
+        transaction = Transaction::new_signed_with_payer(
+            &[instruction::create_auction_instruction_v2(
+                *program_id,
+                payer.pubkey(),
+                CreateAuctionArgsV2 {
+                    authority: payer.pubkey(),
+                    end_auction_at: None,
+                    end_auction_gap: None,
+                    resource: *resource,
+                    token_mint: *mint_keypair,
+                    winners: WinnerLimit::Capped(max_winners),
+                    price_floor,
+                    gap_tick_size_percentage,
+                    tick_size,
+                    name: string_to_array(name)?,
+                    instant_sale_price,
+                },
+            )],
+            Some(&payer.pubkey()),
+            &[payer],
+            *recent_blockhash,
+        );
+    } else {
+        transaction = Transaction::new_signed_with_payer(
+            &[instruction::create_auction_instruction(
+                *program_id,
+                payer.pubkey(),
+                CreateAuctionArgs {
+                    authority: payer.pubkey(),
+                    end_auction_at: None,
+                    end_auction_gap: None,
+                    resource: *resource,
+                    token_mint: *mint_keypair,
+                    winners: WinnerLimit::Capped(max_winners),
+                    price_floor,
+                    gap_tick_size_percentage,
+                    tick_size,
+                },
+            )],
+            Some(&payer.pubkey()),
+            &[payer],
+            *recent_blockhash,
+        );
+    }
     banks_client.process_transaction(transaction).await?;
     Ok(())
 }
@@ -319,8 +360,8 @@ pub async fn claim_bid(
     let transaction = Transaction::new_signed_with_payer(
         &[instruction::claim_bid_instruction(
             *program_id,
-            authority.pubkey(),
             *seller,
+            authority.pubkey(),
             bidder.pubkey(),
             bidder_spl_account.pubkey(),
             *mint,

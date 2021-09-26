@@ -123,7 +123,6 @@ export async function sendRedeemBid(
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
     );
-  console.log('Winner index', winnerIndex);
 
   if (winnerIndex !== null) {
     // items is a prebuilt array of arrays where each entry represents one

@@ -42,17 +42,32 @@ interface IArweaveResult {
   }>;
 }
 
-const uploadToArweave = async (data: FormData): Promise<IArweaveResult> =>
-  (
-    await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
-      {
-        method: 'POST',
-        // @ts-ignore
-        body: data,
-      },
-    )
-  ).json();
+const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
+  const resp = await fetch(
+    'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+    {
+      method: 'POST',
+      // @ts-ignore
+      body: data,
+    },
+  );
+
+  if (!resp.ok) {
+    return Promise.reject(
+      new Error(
+        'Unable to upload the artwork to Arweave. Please wait and then try again.',
+      ),
+    );
+  }
+
+  const result: IArweaveResult = await resp.json();
+
+  if (result.error) {
+    return Promise.reject(new Error(result.error));
+  }
+
+  return result;
+};
 
 export const mintNFT = async (
   connection: Connection,

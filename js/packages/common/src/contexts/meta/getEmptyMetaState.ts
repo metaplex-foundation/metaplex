@@ -22,6 +22,4 @@ export const getEmptyMetaState = (): MetaState => ({
   prizeTrackingTickets: {},
   safetyDepositConfigsByAuctionManagerAndIndex: {},
   bidRedemptionV2sByAuctionManagerAndWinningIndex: {},
-  stores: {},
-  creators: {},
 });
