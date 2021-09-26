@@ -1,4 +1,5 @@
 import { HashRouter, Route, Switch } from 'react-router-dom';
+import { Storefront } from '@oyster/common';
 import { Providers } from './providers';
 import {
   AnalyticsView,
@@ -15,14 +16,14 @@ import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
 
 interface RoutesProps {
-  storeId: string;
+  storefront: Storefront;
 }
 
-export function Routes({ storeId }: RoutesProps) {
+export function Routes({ storefront }: RoutesProps) {
   return (
     <>
       <HashRouter basename={'/'}>
-        <Providers storeId={storeId}>
+        <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
             <Route

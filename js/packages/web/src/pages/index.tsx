@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic';
 import { NextPageContext } from 'next';
 import Head from 'next/head';
-import { Storefront } from './../models/storefront';
+import { Storefront } from '@oyster/common';
 import { getStorefront } from './../actions/getStorefront';
 
 const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
@@ -98,7 +98,7 @@ function App({ storefront }: AppProps) {
         <meta property="og:description" content={storefront.meta.description} />
         <title>{storefront.meta.title}</title>
       </Head>
-      {isMounted && <CreateReactAppEntryPoint storeId={storefront.pubkey} />}
+      {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
     </>
   );
 }

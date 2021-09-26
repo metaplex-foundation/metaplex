@@ -7,10 +7,13 @@ import {
   loadAccounts,
   USE_SPEED_RUN,
 } from './loadAccounts';
+import { Spin, Space } from 'antd';
+import { merge } from 'lodash'
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -21,7 +24,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null as any }) {
   const connection = useConnection();
-  const { isReady, storeAddress } = useStore();
+  const { isReady, storeAddress, ownerAddress, storefront } = useStore();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
@@ -130,7 +133,14 @@ export function MetaProvider({ children = null as any }) {
         isLoading,
       }}
     >
-      {children}
+      {isLoading ? (
+        <div className="app--loading">
+          <Space direction="vertical" size="middle">
+            <img src={storefront.theme.logo} className="app--loading-logo" />
+            <Spin indicator={<LoadingOutlined />} />
+          </Space>
+        </div>
+      ) : children}
     </MetaContext.Provider>
   );
 }
