@@ -673,6 +673,8 @@ programCommand('create_generative_art')
 
     // 2. piecemeal generate the images
     await createGenerativeArt(configLocation, randomSets);
+
+    log.info('Images have been created successfully!');
   });
 
 function programCommand(name: string) {
