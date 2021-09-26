@@ -8,7 +8,7 @@
   "keywords": [],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=6.0.0"
+    "node": "~14.17"
   },
   "scripts": {
     "bootstrap": "lerna link && lerna bootstrap",
@@ -28,6 +28,9 @@
       "prettier --write",
       "eslint --cache --fix --max-warnings=0"
     ]
+  },
+  "resolutions": {
+    "@types/react": "^17.0.16"
   },
   "husky": {
     "hooks": {

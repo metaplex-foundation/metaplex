@@ -1,6 +1,6 @@
 {
   "name": "@metaplex/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./build/cli.js",
   "license": "MIT",
   "bin": {
@@ -11,6 +11,7 @@
     "watch": "tsc -w -p ./src",
     "package:linux": "pkg . --no-bytecode --targets node14-linux-x64 --output bin/linux/metaplex",
     "package:linuxb": "pkg . --targets node14-linux-x64 --output bin/linux/metaplex",
+    "package:win": "pkg . --targets node14-win-x64 --output bin/win/metaplex",
     "package:macos": "pkg . --targets node14-macos-x64 --output bin/macos/metaplex",
     "format": "prettier --loglevel warn --write \"**/*.{ts,js,json,yaml}\"",
     "format:check": "prettier --loglevel warn --check \"**/*.{ts,js,json,yaml}\"",
@@ -28,6 +29,7 @@
     "borsh": "^0.4.0",
     "commander": "^8.1.0",
     "form-data": "^4.0.0",
+    "ipfs-http-client": "^52.0.3",
     "loglevel": "^1.7.1",
     "node-fetch": "^2.6.1"
   },

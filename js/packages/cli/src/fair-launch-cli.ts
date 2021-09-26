@@ -702,6 +702,7 @@ async function adjustTicket({
   fairLaunchLotteryBitmap,
   anchorProgram,
   payer,
+  adjustMantissa,
 }: {
   amountNumber: number;
   fairLaunchObj: any;
@@ -711,6 +712,7 @@ async function adjustTicket({
   fairLaunchTicket: anchor.web3.PublicKey;
   fairLaunchLotteryBitmap: anchor.web3.PublicKey;
   anchorProgram: anchor.Program;
+  adjustMantissa: boolean;
 }) {
   const remainingAccounts = [];
   const instructions = [];
@@ -727,7 +729,8 @@ async function adjustTicket({
     : undefined;
   //@ts-ignore
   if (!fairLaunchObj.treasuryMint) {
-    amountNumber = Math.ceil(amountNumber * LAMPORTS_PER_SOL);
+    if (adjustMantissa)
+      amountNumber = Math.ceil(amountNumber * LAMPORTS_PER_SOL);
   } else {
     const transferAuthority = anchor.web3.Keypair.generate();
     signers.push(transferAuthority);
@@ -739,7 +742,8 @@ async function adjustTicket({
     );
 
     const mintInfo = await token.getMintInfo();
-    amountNumber = Math.ceil(amountNumber * 10 ** mintInfo.decimals);
+    if (adjustMantissa)
+      amountNumber = Math.ceil(amountNumber * 10 ** mintInfo.decimals);
     if (amountNumber > 0) {
       instructions.push(
         Token.createApproveInstruction(
@@ -958,6 +962,7 @@ program
       fairLaunchLotteryBitmap,
       anchorProgram,
       payer: walletKeyPair,
+      adjustMantissa: true,
     });
   });
 
@@ -1104,6 +1109,7 @@ program
                   fairLaunchLotteryBitmap,
                   anchorProgram,
                   payer: walletKeyPair,
+                  adjustMantissa: true,
                 });
               } else {
                 const myByte =
@@ -1132,7 +1138,7 @@ program
                     );
                     await adjustTicket({
                       //@ts-ignore
-                      amountNumber: fairLaunchObj.currentMedian.toNumber,
+                      amountNumber: fairLaunchObj.currentMedian.toNumber(),
                       fairLaunchObj,
                       adjuster: ticket.model.buyer,
                       fairLaunch,
@@ -1140,21 +1146,33 @@ program
                       fairLaunchLotteryBitmap,
                       anchorProgram,
                       payer: walletKeyPair,
+                      adjustMantissa: false,
                     });
                   }
-                  const buyerTokenAccount = await punchTicket({
-                    payer: walletKeyPair,
-                    puncher: ticket.model.buyer,
-                    anchorProgram,
-                    fairLaunchTicket: ticket.key,
-                    fairLaunch,
-                    fairLaunchLotteryBitmap,
-                    fairLaunchObj,
-                  });
+                  let tries = 0;
+                  try {
+                    const buyerTokenAccount = await punchTicket({
+                      payer: walletKeyPair,
+                      puncher: ticket.model.buyer,
+                      anchorProgram,
+                      fairLaunchTicket: ticket.key,
+                      fairLaunch,
+                      fairLaunchLotteryBitmap,
+                      fairLaunchObj,
+                    });
 
-                  console.log(
-                    `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
-                  );
+                    console.log(
+                      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+                    );
+                  } catch (e) {
+                    if (tries > 3) {
+                      throw e;
+                    } else {
+                      tries++;
+                    }
+                    console.log('Ticket failed to punch, trying one more time');
+                    await sleep(1000);
+                  }
                 } else {
                   console.log(
                     'Buyer ',
@@ -1171,6 +1189,7 @@ program
                     fairLaunchLotteryBitmap,
                     anchorProgram,
                     payer: walletKeyPair,
+                    adjustMantissa: true,
                   });
                   console.log('Refunded.');
                 }
@@ -1296,7 +1315,7 @@ program
       console.log('Refunding first', diff, 'to buyer before punching');
       await adjustTicket({
         //@ts-ignore
-        amountNumber: fairLaunchObj.currentMedian.toNumber,
+        amountNumber: fairLaunchObj.currentMedian.toNumber(),
         fairLaunchObj,
         //@ts-ignore
         adjuster: ticket.buyer,
@@ -1305,6 +1324,7 @@ program
         fairLaunchLotteryBitmap,
         anchorProgram,
         payer: walletKeyPair,
+        adjustMantissa: false,
       });
     }
     const buyerTokenAccount = await punchTicket({
@@ -2147,8 +2167,9 @@ program
     '--keypair not provided',
   )
   .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-b, --fair-launch-ticket-buyer <string>', 'fair launch ticket buyer')
   .action(async (options, cmd) => {
-    const { env, fairLaunch, keypair } = cmd.opts();
+    const { env, fairLaunch, keypair, fairLaunchTicketBuyer } = cmd.opts();
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
@@ -2161,7 +2182,9 @@ program
       await getFairLaunchTicket(
         //@ts-ignore
         fairLaunchObj.tokenMint,
-        walletKeyPair.publicKey,
+        fairLaunchTicketBuyer
+          ? new anchor.web3.PublicKey(fairLaunchTicketBuyer)
+          : walletKeyPair.publicKey,
       )
     )[0];
 
