@@ -1142,6 +1142,7 @@ pub mod fair_launch {
         }
 
         fair_launch.participation_mint_bump = participation_mint_bump;
+        fair_launch.participation_token_bump = participation_token_bump;
         fair_launch.participation_mint = Some(participation_mint.key());
         fair_launch.participation_modulo = participation_modulo;
 
@@ -1393,7 +1394,7 @@ pub mod fair_launch {
         let fair_launch = &ctx.accounts.fair_launch;
         let fair_launch_ticket = &mut ctx.accounts.fair_launch_ticket;
         let buyer = &ctx.accounts.buyer;
-        let buyer_token_account_info = &ctx.accounts.buyer_token_account;
+        let buyer_nft_token_account_info = &ctx.accounts.buyer_nft_token_account;
 
         let token_program = &ctx.accounts.token_program;
 
@@ -1428,22 +1429,26 @@ pub mod fair_launch {
             &[fair_launch.bump],
         ];
 
-        let buyer_token_account: Account = assert_initialized(&buyer_token_account_info)?;
+        let buyer_nft_token_account: Account = assert_initialized(&buyer_nft_token_account_info)?;
 
-        if buyer_token_account.mint != *ctx.accounts.new_mint.key {
+        if buyer_nft_token_account.mint != *ctx.accounts.new_mint.key {
             return Err(ErrorCode::ParticipationMintMismatch.into());
         }
 
-        if let COption::Some(val) = buyer_token_account.delegate {
+        if let COption::Some(val) = buyer_nft_token_account.delegate {
             return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
         }
 
-        assert_owned_by(buyer_token_account_info, &token_program.key)?;
+        if buyer_nft_token_account.owner != *buyer.key {
+            return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
+        }
+
+        assert_owned_by(buyer_nft_token_account_info, &token_program.key)?;
 
         // assert is an ATA
         assert_derivation(
             &spl_associated_token_account::id(),
-            buyer_token_account_info,
+            buyer_nft_token_account_info,
             &[
                 buyer.key.as_ref(),
                 token_program.key.as_ref(),
@@ -1472,9 +1477,11 @@ pub mod fair_launch {
                 *ctx.accounts.new_mint.key,
                 *ctx.accounts.payer.key,
                 *ctx.accounts.payer.key,
-                *buyer.key,
-                *buyer_token_account_info.key,
                 fair_launch.key(),
+                *ctx.accounts.participation_token_account.key,
+                fair_launch.key(),
+                *ctx.accounts.metadata.key,
+                *ctx.accounts.participation_mint.key(),
             ),
             edition_infos.as_slice(),
             &[&authority_seeds],
@@ -1732,7 +1739,7 @@ pub struct SetTokenMetadata<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(participation_mint_bump: u8)]
+#[instruction(participation_mint_bump: u8, participation_token_bump: u8)]
 pub struct SetParticipationNFT<'info> {
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
@@ -1742,7 +1749,7 @@ pub struct SetParticipationNFT<'info> {
     payer: AccountInfo<'info>,
     #[account(init, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes()], mint::authority=fair_launch, mint::decimals=0, payer=payer, bump=participation_mint_bump)]
     participation_mint: CpiAccount<'info, Mint>,
-    #[account(mut)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes(), ACCOUNT.as_bytes()], bump=participation_token_bump)]
     participation_token_account: AccountInfo<'info>,
     // With the following accounts we aren't using anchor macros because they are CPI'd
     // through to token-metadata which will do all the validations we need on them.
@@ -1786,9 +1793,10 @@ pub struct MintParticipationNFT<'info> {
     payer: AccountInfo<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes()], bump=fair_launch.participation_mint_bump)]
     participation_mint: CpiAccount<'info, Mint>,
-    #[account(mut)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes(), PARTICIPATION.as_bytes(), ACCOUNT.as_bytes()], bump=fair_launch.participation_token_bump)]
+    participation_token_account: AccountInfo<'info>,
     buyer: AccountInfo<'info>,
-    buyer_token_account: AccountInfo<'info>,
+    buyer_nft_token_account: AccountInfo<'info>,
     // With the following accounts we aren't using anchor macros because they are CPI'd
     // through to token-metadata which will do all the validations we need on them.
     // This will fail if there is more than one token in existence and we force you to provide
@@ -1853,6 +1861,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 4 + // u32 representing number of amounts in vec so far
 1 + // participation modulo (added later)
 1 + // participation_mint_bump (added later)
+1 + // participation_token_bump (added later)
 33 + // participation_mint (added later)
 65; // padding
 
@@ -1955,6 +1964,7 @@ pub struct FairLaunch {
     pub counts_at_each_tick: Vec<u64>,
     pub participation_modulo: u8,
     pub participation_mint_bump: u8,
+    pub participation_token_bump: u8,
     pub participation_mint: Option<Pubkey>,
 }
 
