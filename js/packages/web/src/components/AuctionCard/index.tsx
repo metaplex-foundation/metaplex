@@ -355,7 +355,16 @@ export const AuctionCard = ({
               onClick={async () => {
                 setLoading(true);
                 try {
-                  await startAuctionManually(connection, wallet, auctionView);
+                  await startAuctionManually(
+                    connection,
+                    wallet,
+                    {
+                      vault: auctionView.vault,
+                      auctionManager: auctionView.auctionManager.instance,
+                      auction: auctionView.auction,
+                      state: auctionView.state,
+                    }
+                  );
                 } catch (e) {
                   console.error(e);
                 }

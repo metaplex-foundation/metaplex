@@ -12,11 +12,15 @@ import {
   findProgramAddress,
   toPublicKey,
   WalletSigner,
+  loadAuction,
+  AuctionManagerV1,
+  AuctionManagerV2,
 } from '@oyster/common';
 
 import BN from 'bn.js';
 import { closeVault } from './closeVault';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { AuctionViewLimited } from '../hooks';
 
 const BATCH_SIZE = 1;
 
@@ -24,13 +28,13 @@ const BATCH_SIZE = 1;
 export async function unwindVault(
   connection: Connection,
   wallet: WalletSigner,
-  vault: ParsedAccount<Vault>,
-  safetyDepositBoxesByVaultAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >,
+  auction: AuctionViewLimited,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
+
+  const vault = auction.vault
+
+  const { safetyDepositBoxesByVaultAndIndex } = await loadAuction(connection, auction.auctionManager)
 
   let batchCounter = 0;
   const PROGRAM_IDS = programIds();
@@ -78,6 +82,8 @@ export async function unwindVault(
       i++;
     }
   }
+
+  debugger;
   console.log('Found boxes', boxes);
   for (let i = 0; i < boxes.length; i++) {
     const nft = boxes[i];

@@ -110,16 +110,6 @@ export function useCachedRedemptionKeysByWallet() {
   return cachedRedemptionKeys;
 }
 
-const mostRecentEndDate = (a, b) => {
-  if (a.info.endAuctionAt && b.info.endAuctionAt) {
-    return (
-      a.info.endAuctionAt.toNumber() - b.info.endAuctionAt?.toNumber()
-    );
-  } else {
-    return -1;
-  }
-}
-
 const fetchAuctionsState = async (connection: Connection, auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]): Promise<MetaState> => {
   const tempCache = getEmptyMetaState();
 
@@ -182,10 +172,26 @@ export const useAuctions = () => {
 
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
-        .sort(mostRecentEndDate);
+        .sort((a, b) => {
+          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+            return (
+              a.info.endAuctionAt.toNumber() - b.info.endAuctionAt?.toNumber()
+            );
+          } else {
+            return -1;
+          }
+        });
       const endedAuctions = initializedAuctions
         .filter(a => a.info.state === 2)
-        .sort(mostRecentEndDate);
+        .sort((a, b) => {
+          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+            return (
+              b.info.endAuctionAt.toNumber() - a.info.endAuctionAt?.toNumber()
+            );
+          } else {
+            return -1;
+          }
+        });
       const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
 
       const auctionManagers = auctionDisplayOrder.map(
@@ -291,7 +297,7 @@ export function assembleAuctionView(
   } else if (auction.info.state === AuctionState.Created) {
     state = AuctionViewState.Upcoming;
   } else {
-    state = AuctionViewState.BuyNow;
+    state = AuctionViewState.Defective;
   }
 
   const vault = vaults[parsedAuctionManager.info.vault];

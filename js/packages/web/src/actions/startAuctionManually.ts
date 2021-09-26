@@ -1,12 +1,12 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import { startAuction } from '@oyster/common/dist/lib/models/metaplex/index';
 import { notify, sendTransactionWithRetry, WalletSigner } from '@oyster/common';
-import { AuctionView } from '../hooks';
+import { AuctionViewLimited } from '../hooks';
 
 export async function startAuctionManually(
   connection: Connection,
   wallet: WalletSigner,
-  auctionView: AuctionView,
+  auctionView: AuctionViewLimited,
 ) {
   try {
     const signers: Keypair[] = [];
@@ -14,7 +14,7 @@ export async function startAuctionManually(
 
     await startAuction(
       auctionView.vault.pubkey,
-      auctionView.auctionManager.authority,
+      auctionView.auctionManager.info.authority,
       instructions,
     );
 
