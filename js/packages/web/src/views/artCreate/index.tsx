@@ -51,13 +51,14 @@ export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
   const wallet = useWallet();
+  const [alertMessage, setAlertMessage] = useState<string>()
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [progress, setProgress] = useState<number>(0);
+  const [isMinting, setMinting] = useState<boolean>(false);
   const [nft, setNft] =
     useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
@@ -108,21 +109,24 @@ export const ArtCreateView = () => {
       },
     };
     setStepsVisible(false);
-    const inte = setInterval(
-      () => setProgress(prog => Math.min(prog + 1, 99)),
-      600,
-    );
-    // Update progress inside mintNFT
-    const _nft = await mintNFT(
-      connection,
-      wallet,
-      env,
-      files,
-      metadata,
-      attributes.properties?.maxSupply,
-    );
-    if (_nft) setNft(_nft);
-    clearInterval(inte);
+    setMinting(true)
+
+    try {
+      const _nft = await mintNFT(
+        connection,
+        wallet,
+        env,
+        files,
+        metadata,
+        attributes.properties?.maxSupply,
+      );
+
+      if (_nft) setNft(_nft);
+    } catch(e: any) {
+      setAlertMessage(e.message)
+    } finally {
+      setMinting(false);
+    }
   };
 
   return (
@@ -200,7 +204,7 @@ export const ArtCreateView = () => {
           {step === 5 && (
             <WaitingStep
               mint={mint}
-              progress={progress}
+              minting={isMinting}
               confirm={() => gotoStep(6)}
             />
           )}
@@ -212,7 +216,7 @@ export const ArtCreateView = () => {
         </Col>
       </Row>
       <MetaplexOverlay visible={step === 6}>
-        <Congrats nft={nft} />
+        <Congrats nft={nft} alert={alertMessage} />
       </MetaplexOverlay>
     </>
   );
@@ -1111,7 +1115,7 @@ const LaunchStep = (props: {
 
 const WaitingStep = (props: {
   mint: Function;
-  progress: number;
+  minting: boolean;
   confirm: Function;
 }) => {
   useEffect(() => {
@@ -1131,7 +1135,7 @@ const WaitingStep = (props: {
         alignItems: 'center',
       }}
     >
-      <Progress type="circle" percent={props.progress} />
+      <Spin size="large" />
       <div className="waiting-title">
         Your creation is being uploaded to the decentralized web...
       </div>
@@ -1143,7 +1147,8 @@ const WaitingStep = (props: {
 const Congrats = (props: {
   nft?: {
     metadataAccount: StringPublicKey;
-  };
+  },
+  alert?: string;
 }) => {
   const history = useHistory();
 
@@ -1160,6 +1165,16 @@ const Congrats = (props: {
     const queryParams = new URLSearchParams(params).toString();
     return `https://twitter.com/intent/tweet?${queryParams}`;
   };
+
+  if (props.alert) {
+    return (
+      <>
+        <div className="waiting-title">Sorry, there was an error!</div>
+        <p>{props.alert}</p>
+        <Button onClick={_ => history.push("/art/create")}>Back to Create NFT</Button>
+      </>
+    )
+  }
 
   return (
     <>

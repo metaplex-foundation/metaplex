@@ -12,6 +12,7 @@ import { loadCache, saveCache } from '../helpers/cache';
 import log from 'loglevel';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { chunks } from '../helpers/various';
 
 export async function upload(
   files: string[],
@@ -95,6 +96,7 @@ export async function upload(
           name: manifest.name,
           onChain: false,
         };
+        cacheContent.authority = walletKeyPair.publicKey.toBase58();
         saveCache(cacheName, env, cacheContent);
         log.debug(`File ${index} uploaded: ${link}`);
         uploadCount += 1;
@@ -207,8 +209,7 @@ export async function populate(
                 saveCache(cacheName, env, cacheContent);
               } catch (e) {
                 log.error(
-                  `saving config line ${ind}-${
-                    keys[indexes[indexes.length - 1]]
+                  `saving config line ${ind}-${keys[indexes[indexes.length - 1]]
                   } failed`,
                   e,
                 );
@@ -226,10 +227,4 @@ export async function populate(
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
-}
-
-function chunks(array, size) {
-  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
-    (_, index) => array.slice(index * size, (index + 1) * size),
-  );
 }
