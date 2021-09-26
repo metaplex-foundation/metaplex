@@ -24,6 +24,7 @@ import {
 import { Config } from './types';
 import { upload } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
+import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
@@ -622,6 +623,20 @@ programCommand('sign_all')
       batchSizeParsed,
       daemon,
     );
+  });
+
+programCommand('generate_configurations')
+  .argument('<directory>', 'Directory containing traits named from 0-n', val =>
+    fs.readdirSync(`${val}`),
+  )
+  .action(async (files: string[], options, cmd) => {
+    // const { keypair, env, cacheName, batchSize, daemon } = cmd.opts();
+    log.info('files', files);
+    log.info('options', options);
+    log.info('cmd', cmd.opts());
+
+    const createdConfigs = await generateConfigurations(files);
+    log.info('created', createdConfigs);
   });
 
 function programCommand(name: string) {

@@ -1,4 +1,5 @@
 import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
@@ -95,6 +96,26 @@ export function chunks(array, size) {
   return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
     (_, index) => array.slice(index * size, (index + 1) * size),
   );
+}
+
+export function generateRandoms(
+  numberOfAttrs: number = 1,
+  total: number = 100,
+) {
+  const numbers = [];
+  const loose_percentage = total / numberOfAttrs;
+
+  for (let i = 0; i < numberOfAttrs; i++) {
+    const random = Math.floor(Math.random() * loose_percentage) + 1;
+    numbers.push(random);
+  }
+
+  const sum = numbers.reduce((prev, cur) => {
+    return prev + cur;
+  }, 0);
+
+  numbers.push(total - sum);
+  return numbers;
 }
 
 const getMultipleAccountsCore = async (
