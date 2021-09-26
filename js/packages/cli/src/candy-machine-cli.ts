@@ -30,6 +30,7 @@ import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
 import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
+import { createMetadataFiles } from './helpers/metadata';
 
 program.version('0.0.2');
 
@@ -645,9 +646,32 @@ programCommand('generate_art_configurations')
     }
   });
 
-programCommand('create_generative_art').action(() => {
-  log.info('hello world');
-});
+programCommand('create_generative_art')
+  .option(
+    '-n, --number-of-images <string>',
+    'Number of images to be generated',
+    '100',
+  )
+  .option(
+    '-c, --config-location <string>',
+    'Location of the traits configuration file',
+    './traits-configuration.json',
+  )
+  .action(async (directory, cmd) => {
+    const { numberOfImages, configLocation } = cmd.opts();
+
+    log.info('Loaded configuration file');
+
+    // 1. generate the metadata json files
+    const randomSets = await createMetadataFiles(
+      numberOfImages,
+      configLocation,
+    );
+
+    log.info(randomSets);
+
+    // 2. piecemeal generate the images
+  });
 
 function programCommand(name: string) {
   return program

@@ -10,6 +10,11 @@ export async function generateConfigurations(
 ): Promise<boolean> {
   let generateSuccessful: boolean = true;
   const configs = {
+    name: '',
+    symbol: '',
+    description: '',
+    creators: [],
+    collection: {},
     breakdown: {},
     order: traits,
   };

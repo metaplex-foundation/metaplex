@@ -1,4 +1,16 @@
 import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import weighted from 'weighted';
+import path from 'path';
+
+export const generateRandomSet = breakdown => {
+  const tmp = {};
+  Object.keys(breakdown).forEach(attr => {
+    const randomSelection = weighted.select(breakdown[attr]);
+    tmp[attr] = randomSelection;
+  });
+
+  return tmp;
+};
 
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
@@ -117,6 +129,44 @@ export function generateRandoms(
   numbers.push(total - sum);
   return numbers;
 }
+
+export const getMetadata = (
+  name: string = '',
+  symbol: string = '',
+  index: number = 0,
+  creators,
+  description: string = '',
+  seller_fee_basis_points: number = 500,
+  attrs,
+  collection,
+) => {
+  const attributes = [];
+  for (const prop in attrs) {
+    attributes.push({
+      trait_type: prop,
+      value: path.parse(attrs[prop]).name,
+    });
+  }
+  return {
+    name: `${name}${index + 1}`,
+    symbol,
+    image: `${index}.png`,
+    properties: {
+      files: [
+        {
+          uri: `${index}.png`,
+          type: 'image/png',
+        },
+      ],
+      category: 'image',
+      creators,
+    },
+    description,
+    seller_fee_basis_points,
+    attributes,
+    collection,
+  };
+};
 
 const getMultipleAccountsCore = async (
   connection: any,
