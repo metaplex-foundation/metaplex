@@ -19,7 +19,7 @@ import { useMeta, useSolPrice } from '../../contexts';
 import { Link } from 'react-router-dom';
 import { SolCircle } from '../Custom';
 
-'@solana/wallet-adapter-base';
+('@solana/wallet-adapter-base');
 
 const btnStyle: React.CSSProperties = {
   border: 'none',
@@ -83,7 +83,6 @@ const AddFundsModal = (props: {
       }}
     >
       <div style={{ maxWidth: '100%' }}>
-
         <p style={{ color: 'white' }}>
           We partner with <b>FTX</b> to make it simple to start purchasing
           digital collectibles.
@@ -104,7 +103,7 @@ const AddFundsModal = (props: {
         >
           <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Balance</span>
           <span>
-              {formatNumber.format(props.balance)}&nbsp;&nbsp;
+            {formatNumber.format(props.balance)}&nbsp;&nbsp;
             <span
               style={{
                 borderRadius: '50%',
@@ -114,14 +113,14 @@ const AddFundsModal = (props: {
                 lineHeight: 1,
               }}
             >
-                <img src="/sol.svg" width="10" />
-              </span>{' '}
+              <img src="/sol.svg" width="10" />
+            </span>{' '}
             SOL
-            </span>
+          </span>
         </div>
         <p>
-          If you have not used FTX Pay before, it may take a few moments to
-          get set up.
+          If you have not used FTX Pay before, it may take a few moments to get
+          set up.
         </p>
         <Button
           onClick={() => props.setShowAddFundsModal(false)}
@@ -169,8 +168,8 @@ const AddFundsModal = (props: {
         </Button>
       </div>
     </MetaplexModal>
-  )
-}
+  );
+};
 
 export const CurrentUserBadge = (props: {
   showBalance?: boolean;
@@ -189,7 +188,6 @@ export const CurrentUserBadge = (props: {
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
-
   const iconStyle: React.CSSProperties = {
     display: 'flex',
     width: props.iconSize,
@@ -202,9 +200,7 @@ export const CurrentUserBadge = (props: {
     name = unknownWallet.name;
   }
 
-  let image = (
-    <Identicon address={publicKey?.toBase58()} style={iconStyle} />
-  );
+  let image = <Identicon address={publicKey?.toBase58()} style={iconStyle} />;
 
   if (unknownWallet.image) {
     image = <img src={unknownWallet.image} style={iconStyle} />;
@@ -304,10 +300,12 @@ export const CurrentUserBadge = (props: {
           )}
         </Button>
       </Popover>
-      <AddFundsModal setShowAddFundsModal={setShowAddFundsModal}
-                     showAddFundsModal={showAddFundsModal}
-                     publicKey={publicKey}
-                     balance={balance}/>
+      <AddFundsModal
+        setShowAddFundsModal={setShowAddFundsModal}
+        showAddFundsModal={showAddFundsModal}
+        publicKey={publicKey}
+        balance={balance}
+      />
     </div>
   );
 };
@@ -376,7 +374,7 @@ export const CurrentUserBadgeMobile = (props: {
   showBalance?: boolean;
   showAddress?: boolean;
   iconSize?: number;
-  closeModal?: any,
+  closeModal?: any;
 }) => {
   const { wallet, publicKey, disconnect } = useWallet();
   const { account } = useNativeAccount();
@@ -390,7 +388,6 @@ export const CurrentUserBadgeMobile = (props: {
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
-
   const iconStyle: React.CSSProperties = {
     display: 'flex',
     width: props.iconSize,
@@ -403,9 +400,7 @@ export const CurrentUserBadgeMobile = (props: {
     name = unknownWallet.name;
   }
 
-  let image = (
-    <Identicon address={publicKey?.toBase58()} style={iconStyle} />
-  );
+  let image = <Identicon address={publicKey?.toBase58()} style={iconStyle} />;
 
   if (unknownWallet.image) {
     image = <img src={unknownWallet.image} style={iconStyle} />;
@@ -422,21 +417,21 @@ export const CurrentUserBadgeMobile = (props: {
               fontWeight: 600,
             }}
           >
-              {name}
-            </span>
+            {name}
+          </span>
         )}
       </div>
       <div className="balance-container">
         <span className="balance-title">Balance</span>
         <span>
           <span className="sol-img-wrapper">
-                <img src="/sol.svg" width="10" />
-              </span> {' '}
-          {formatNumber.format(balance)}&nbsp;&nbsp;{' '}SOL{' '}
+            <img src="/sol.svg" width="10" />
+          </span>{' '}
+          {formatNumber.format(balance)}&nbsp;&nbsp; SOL{' '}
           <span
             style={{
               marginLeft: 5,
-              fontWeight: "normal",
+              fontWeight: 'normal',
               color: 'rgba(255, 255, 255, 0.5)',
             }}
           >
@@ -444,30 +439,27 @@ export const CurrentUserBadgeMobile = (props: {
           </span>
         </span>
       </div>
-      <div
-        className="actions-buttons"
-      >
+      <div className="actions-buttons">
         <Button
           className="secondary-btn"
           onClick={() => {
-            props.closeModal ? props.closeModal() : null
-            setShowAddFundsModal(true)
+            props.closeModal ? props.closeModal() : null;
+            setShowAddFundsModal(true);
           }}
         >
           Add Funds
         </Button>
         &nbsp;&nbsp;
-        <Button
-          className="black-btn"
-          onClick={disconnect}
-        >
+        <Button className="black-btn" onClick={disconnect}>
           Disconnect
         </Button>
       </div>
-      <AddFundsModal setShowAddFundsModal={setShowAddFundsModal}
-                     showAddFundsModal={showAddFundsModal}
-                     publicKey={publicKey}
-                     balance={balance}/>
+      <AddFundsModal
+        setShowAddFundsModal={setShowAddFundsModal}
+        showAddFundsModal={showAddFundsModal}
+        publicKey={publicKey}
+        balance={balance}
+      />
     </div>
-  )
-}
+  );
+};

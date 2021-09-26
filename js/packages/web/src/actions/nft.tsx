@@ -197,7 +197,7 @@ export const mintNFT = async (
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
-  const uploadArweaveResponse =  await fetch(
+  const uploadArweaveResponse = await fetch(
     // TODO: add CNAME
     env.startsWith('mainnet-beta')
       ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
@@ -206,16 +206,20 @@ export const mintNFT = async (
       method: 'POST',
       body: data,
     },
-  )
+  );
 
   if (!uploadArweaveResponse.ok) {
-    return Promise.reject(new Error("Unable to upload the artwork to Arweave. Please wait and then try again."))
+    return Promise.reject(
+      new Error(
+        'Unable to upload the artwork to Arweave. Please wait and then try again.',
+      ),
+    );
   }
 
   const result: IArweaveResult = await uploadArweaveResponse.json();
 
   if (result.error) {
-    return Promise.reject(new Error(result.error))
+    return Promise.reject(new Error(result.error));
   }
 
   const metadataFile = result.messages?.find(

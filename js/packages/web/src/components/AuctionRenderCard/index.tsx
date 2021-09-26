@@ -46,8 +46,11 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
 
   const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
-  const ended = !auctionView.isInstantSale &&
-    state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
+  const ended =
+    !auctionView.isInstantSale &&
+    state?.hours === 0 &&
+    state?.minutes === 0 &&
+    state?.seconds === 0;
 
   let currentBid: number | string = 0;
   let label = '';
@@ -103,10 +106,12 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           />
         </div>
         <div className={'art-name'}>{name}</div>
-        {!ended && <div className={'art-auction-info'}>
-          <span className={'info-message'}>ENDING IN</span>
-          <AuctionCountdown auctionView={auctionView} labels={false} />
-        </div>}
+        {!ended && (
+          <div className={'art-auction-info'}>
+            <span className={'info-message'}>ENDING IN</span>
+            <AuctionCountdown auctionView={auctionView} labels={false} />
+          </div>
+        )}
       </div>
       <div className="card-bid-info">
         <span className={'text-uppercase info-message'}>{label}</span>

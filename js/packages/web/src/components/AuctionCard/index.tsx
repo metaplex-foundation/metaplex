@@ -53,9 +53,9 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-  AuctionManagerV1
+  AuctionManagerV1,
 } from '@oyster/common';
-import {WinningConfigType} from "@oyster/common/dist/lib/models/metaplex/index";
+import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -268,8 +268,7 @@ export const AuctionCard = ({
   const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
   const isStarted = auctionView.state === AuctionViewState.Live;
   const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice ||
-    0;
+    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
   const participationOnly =
     auctionView.auctionManager.numWinners.toNumber() === 0;
 
@@ -307,8 +306,7 @@ export const AuctionCard = ({
     setLoading(true);
     const instantSalePrice =
       auctionView.auctionDataExtended?.info.instantSalePrice;
-    const winningConfigType =
-      auctionView.items[0][0].winningConfigType;
+    const winningConfigType = auctionView.items[0][0].winningConfigType;
     const isAuctionItemMaster =
       winningConfigType === WinningConfigType.FullRightsTransfer ||
       winningConfigType === WinningConfigType.TokenOnlyTransfer;
@@ -324,7 +322,7 @@ export const AuctionCard = ({
     // Placing a "bid" of the full amount results in a purchase to redeem.
     if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
       try {
-        console.log('sendPlaceBid')
+        console.log('sendPlaceBid');
         const bid = await sendPlaceBid(
           connection,
           wallet,
@@ -388,8 +386,8 @@ export const AuctionCard = ({
         {!auctionView.isInstantSale && (
           <>
             <span>Auction ends in</span>
-        <div>
-          <AuctionCountdown auctionView={auctionView} labels={false} />
+            <div>
+              <AuctionCountdown auctionView={auctionView} labels={false} />
             </div>
           </>
         )}
@@ -419,7 +417,8 @@ export const AuctionCard = ({
                   setLoading(true);
                   setShowRedemptionIssue(false);
                   if (
-                    wallet?.publicKey?.toBase58() === auctionView.auctionManager.authority
+                    wallet?.publicKey?.toBase58() ===
+                    auctionView.auctionManager.authority
                   ) {
                     const totalCost =
                       await calculateTotalCostOfRedeemingOtherPeoplesBids(
@@ -471,7 +470,8 @@ export const AuctionCard = ({
                 ) : (
                   `${
                     wallet?.publicKey &&
-                    auctionView.auctionManager.authority === wallet.publicKey.toBase58()
+                    auctionView.auctionManager.authority ===
+                      wallet.publicKey.toBase58()
                       ? 'Reclaim Items'
                       : 'Refund bid'
                   }`
@@ -498,14 +498,20 @@ export const AuctionCard = ({
               <HowAuctionsWorkModal buttonClassName="black-btn" />
               {!hideDefaultAction &&
                 !auctionView.auction.info.ended() &&
-                (wallet.connected && isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+                (wallet.connected &&
+                isAuctionNotStarted &&
+                !isAuctionManagerAuthorityNotWalletOwner ? (
                   <Button
                     className="secondary-btn"
                     disabled={loading}
                     onClick={async () => {
                       setLoading(true);
                       try {
-                        await startAuctionManually(connection, wallet, auctionView);
+                        await startAuctionManually(
+                          connection,
+                          wallet,
+                          auctionView,
+                        );
                       } catch (e) {
                         console.error(e);
                       }
@@ -529,7 +535,8 @@ export const AuctionCard = ({
             </div>
           )}
         </div>
-        {showPlaceBid && !auctionView.isInstantSale &&
+        {showPlaceBid &&
+          !auctionView.isInstantSale &&
           !hideDefaultAction &&
           wallet.connected &&
           !auctionView.auction.info.ended() && (
@@ -661,7 +668,7 @@ export const AuctionCard = ({
               className="ant-btn secondary-btn"
               disabled={loading}
               onClick={instantSale}
-              style={{ marginTop: 20 , width:'100%'}}
+              style={{ marginTop: 20, width: '100%' }}
             >
               {loading ? (
                 <Spin />
@@ -779,10 +786,11 @@ export const AuctionCard = ({
       >
         <h3 style={{ color: 'white' }}>
           Warning: There may be some items in this auction that still are
-          required by the auction for printing bidders&apos; limited or open edition
-          NFTs. If you wish to withdraw them, you are agreeing to foot the cost
-          of up to an estimated ◎<b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b>{' '}
-          plus transaction fees to redeem their bids for them right now.
+          required by the auction for printing bidders&apos; limited or open
+          edition NFTs. If you wish to withdraw them, you are agreeing to foot
+          the cost of up to an estimated ◎
+          <b>{(printingCost || 0) / LAMPORTS_PER_SOL}</b> plus transaction fees
+          to redeem their bids for them right now.
         </h3>
       </MetaplexModal>
     </div>

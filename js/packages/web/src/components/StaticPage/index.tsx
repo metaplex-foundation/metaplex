@@ -18,8 +18,8 @@ interface Author {
   name: string;
   avatar?: string;
   details?: string;
-  stats?: string[]
-  connectWith?: Connect[]
+  stats?: string[];
+  connectWith?: Connect[];
 }
 
 interface HeadContent {
@@ -114,13 +114,13 @@ export const StaticPage = (props: {
     >
       {!isLoading
         ? liveAuctions.map((m, idx) => {
-          const id = m.auction.pubkey;
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
+            const id = m.auction.pubkey;
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
     </Masonry>
   );
@@ -143,10 +143,10 @@ export const StaticPage = (props: {
       const container = cumulativeOffset(lower);
       endGradient.style.top = `${container.top}px`;
     }
-  }
+  };
 
   useEffect(() => {
-    addGradients()
+    addGradients();
     return () => {
       const headerGradient = document.getElementById('static-header-gradient');
       const endGradient = document.getElementById('static-end-gradient');
@@ -156,7 +156,7 @@ export const StaticPage = (props: {
   }, [dimensions]);
 
   useEffect(() => {
-    setTimeout(() => addGradients(), 500)
+    setTimeout(() => addGradients(), 500);
   }, []);
 
   const headerSection = (
@@ -208,14 +208,22 @@ export const StaticPage = (props: {
       </div>
       <div className="author-stats">
         <p className="author-subtitle">Stats</p>
-        {props.leftContent?.author.stats?.map((e, i) => <p key={i}>{e}</p>)}
+        {props.leftContent?.author.stats?.map((e, i) => (
+          <p key={i}>{e}</p>
+        ))}
       </div>
       <div className="author-connect">
         <p className="author-subtitle">Connect with the artist</p>
-        {props.leftContent?.author.connectWith?.map((e, i) => <p><a key={i} href={e.url}>{e.label}</a></p>)}
+        {props.leftContent?.author.connectWith?.map((e, i) => (
+          <p>
+            <a key={i} href={e.url}>
+              {e.label}
+            </a>
+          </p>
+        ))}
       </div>
     </section>
-  )
+  );
   const middleSection = (
     <section id="middle-container">
       {props.midContent.sections.map((section, i) => (
@@ -247,11 +255,7 @@ export const StaticPage = (props: {
       ))}
     </section>
   );
-  const rightSection = (
-    <section id="right-container">
-
-    </section>
-  );
+  const rightSection = <section id="right-container"></section>;
   const finalSection = (
     <section id="bottom-container">
       <p className="bottom-title">Shop the Collection</p>
@@ -266,13 +270,12 @@ export const StaticPage = (props: {
         <Col xs={24} md={4}>
           {leftSection}
         </Col>
-        <Col  xs={24} md={16}>
+        <Col xs={24} md={16}>
           {middleSection}
         </Col>
-        <Col  xs={24} md={4}>
+        <Col xs={24} md={4}>
           {rightSection}
         </Col>
-
       </Row>
       {props.bottomContent && finalSection}
     </Fragment>

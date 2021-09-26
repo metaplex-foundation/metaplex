@@ -1,8 +1,8 @@
-import React from 'react'
-import {HashRouter, Route, Switch} from "react-router-dom";
-import {Providers} from "./providers";
+import React from 'react';
+import { HashRouter, Route, Switch } from 'react-router-dom';
+import { Providers } from './providers';
 
-import { PreLaunchView } from './'
+import { PreLaunchView } from './';
 
 export function Routes() {
   return (

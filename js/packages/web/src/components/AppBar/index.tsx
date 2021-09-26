@@ -6,8 +6,12 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { HowToBuyModal } from '../HowToBuyModal';
-import { Cog, CurrentUserBadge, CurrentUserBadgeMobile } from '../CurrentUserBadge';
-import { ConnectButton } from "@oyster/common";
+import {
+  Cog,
+  CurrentUserBadge,
+  CurrentUserBadgeMobile,
+} from '../CurrentUserBadge';
+import { ConnectButton } from '@oyster/common';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
@@ -50,7 +54,12 @@ const MetaplexMenu = () => {
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
-          closeIcon={<img onClick={() => setIsModalVisible(false)} src={"/modals/close.svg"} />}
+          closeIcon={
+            <img
+              onClick={() => setIsModalVisible(false)}
+              src={'/modals/close.svg'}
+            />
+          }
         >
           <div className="site-card-wrapper mobile-menu-modal">
             <Menu>
@@ -61,20 +70,34 @@ const MetaplexMenu = () => {
             <div className="actions">
               {!connected ? (
                 <div className="actions-buttons">
-                  <ConnectButton onClick={() => setIsModalVisible(false)} className="secondary-btn" />
-                  <HowToBuyModal onClick={() => setIsModalVisible(false)}  buttonClassName="black-btn" />
+                  <ConnectButton
+                    onClick={() => setIsModalVisible(false)}
+                    className="secondary-btn"
+                  />
+                  <HowToBuyModal
+                    onClick={() => setIsModalVisible(false)}
+                    buttonClassName="black-btn"
+                  />
                 </div>
               ) : (
                 <>
-                  <CurrentUserBadgeMobile showBalance={false} showAddress={true} iconSize={24} closeModal={() => {
-                    setIsModalVisible(false)
-                  }}/>
+                  <CurrentUserBadgeMobile
+                    showBalance={false}
+                    showAddress={true}
+                    iconSize={24}
+                    closeModal={() => {
+                      setIsModalVisible(false);
+                    }}
+                  />
                 </>
               )}
             </div>
           </div>
         </Modal>
-        <MenuOutlined onClick={() => setIsModalVisible(true)} style={{ fontSize: '1.4rem' }} />
+        <MenuOutlined
+          onClick={() => setIsModalVisible(true)}
+          style={{ fontSize: '1.4rem' }}
+        />
       </>
     );
 
@@ -104,11 +127,19 @@ export const AppBar = () => {
           <MetaplexMenu />
         </div>
         <div className="app-right">
-          {!connected && <HowToBuyModal buttonClassName="modal-button-default" />}
-          {!connected && <ConnectButton style={{ height: 48 }} allowWalletChange />}
+          {!connected && (
+            <HowToBuyModal buttonClassName="modal-button-default" />
+          )}
+          {!connected && (
+            <ConnectButton style={{ height: 48 }} allowWalletChange />
+          )}
           {connected && (
             <>
-              <CurrentUserBadge showBalance={false} showAddress={true} iconSize={24} />
+              <CurrentUserBadge
+                showBalance={false}
+                showAddress={true}
+                iconSize={24}
+              />
               <Notifications />
               <Cog />
             </>

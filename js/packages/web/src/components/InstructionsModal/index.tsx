@@ -79,12 +79,12 @@ export const InstructionsModal: React.FC<ModalProps> = ({
   buttonText,
   modalTitle,
   cardProps,
-  onClick
+  onClick,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const showModal = () => {
-    onClick ? onClick() : null
+    onClick ? onClick() : null;
     setIsModalVisible(true);
   };
 
@@ -108,7 +108,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         onCancel={handleCancel}
         footer={null}
         className={'modal-box instructions-modal'}
-        closeIcon={<img src={"/modals/close.svg"}/>}
+        closeIcon={<img src={'/modals/close.svg'} />}
       >
         <ModalContent>
           <ContentCard

@@ -28,7 +28,7 @@ export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [
     ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow)
+    ...useAuctions(AuctionViewState.BuyNow),
   ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
@@ -147,8 +147,10 @@ export const AuctionListView = () => {
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
           <Col style={{ width: '100%', marginTop: 32 }}>
             <Row>
-              <Tabs activeKey={activeKey}
-                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}>
+              <Tabs
+                activeKey={activeKey}
+                onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
+              >
                 <TabPane
                   tab={
                     <>
