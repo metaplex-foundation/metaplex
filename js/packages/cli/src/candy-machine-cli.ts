@@ -190,7 +190,7 @@ programCommand('verify').action(async (directory, cmd) => {
             const text = await check.text();
             if (!text.match(/Not found/i)) {
               if (text.length == 0) {
-                log.debug(
+                log.info(
                   'Name',
                   name,
                   'with',
@@ -200,10 +200,10 @@ programCommand('verify').action(async (directory, cmd) => {
                 cacheItem.onChain = false;
                 allGood = false;
               } else {
-                log.debug('Name', name, 'with', uri, 'checked out');
+                log.info('Name', name, 'with', uri, 'checked out');
               }
             } else {
-              log.debug(
+              log.info(
                 'Name',
                 name,
                 'with',
@@ -214,7 +214,7 @@ programCommand('verify').action(async (directory, cmd) => {
               allGood = false;
             }
           } else {
-            log.debug(
+            log.info(
               'Name',
               name,
               'with',
@@ -226,12 +226,12 @@ programCommand('verify').action(async (directory, cmd) => {
             allGood = false;
           }
         } else {
-          log.debug('Name', name, 'with', uri, 'lacked image in json, failing');
+          log.info('Name', name, 'with', uri, 'lacked image in json, failing');
           cacheItem.onChain = false;
           allGood = false;
         }
       } else {
-        log.debug('Name', name, 'with', uri, 'returned no json from link');
+        log.info('Name', name, 'with', uri, 'returned no json from link');
         cacheItem.onChain = false;
         allGood = false;
       }
