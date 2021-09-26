@@ -86,6 +86,14 @@ export async function upload(
         .replace(imageName, 'image.png');
       const manifest = JSON.parse(manifestContent);
 
+      try {
+        checkManifestContent(manifest);
+      } catch (er) {
+        uploadSuccessful = false;
+        log.error(`Error uploading file ${index}`, er);
+        return uploadSuccessful;
+      }
+
       const manifestBuffer = Buffer.from(JSON.stringify(manifest));
 
       if (i === 0 && !cacheContent.program.uuid) {
@@ -259,4 +267,50 @@ function chunks(array, size) {
   return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
     (_, index) => array.slice(index * size, (index + 1) * size),
   );
+}
+
+function checkManifestContent(manifest) {
+  if (!Object.prototype.hasOwnProperty.call(manifest, 'name')) {
+    throw new Error('Improperly formatted or missing name in .json manifest.');
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(manifest, 'symbol')) {
+    throw new Error(
+      'Improperly formatted or missing symbol in .json manifest.',
+    );
+  }
+
+  if (
+    !Object.prototype.hasOwnProperty.call(manifest, 'seller_fee_basis_points')
+  ) {
+    throw new Error(
+      'Improperly formatted or missing seller_fee_basis_points in .json manifest.',
+    );
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(manifest, 'properties')) {
+    throw new Error(
+      'Improperly formatted or missing properties in .json manifest.',
+    );
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(manifest.properties, 'creators')) {
+    throw new Error(
+      'Improperly formatted or missing creators array in .json manifest.',
+    );
+  }
+
+  if (manifest.properties.creators.length < 1) {
+    throw new Error("Creator's array cannot be empty.");
+  }
+
+  if (
+    !Object.prototype.hasOwnProperty.call(manifest, 'image') ||
+    !Object.prototype.hasOwnProperty.call(manifest.properties, 'files') ||
+    manifest.properties.files.length < 1
+  ) {
+    throw new Error(
+      'Improperly formatted or missing image data in .json manifest.',
+    );
+  }
 }
