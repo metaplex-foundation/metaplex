@@ -194,7 +194,7 @@ export const StaticPage = (props: {
       </Row>
     </section>
   );
-  const leftSection = (
+  const leftSection = props.leftContent && (
     <section id="left-container" className="author-container">
       <img
         src={props.leftContent?.author.avatar}
