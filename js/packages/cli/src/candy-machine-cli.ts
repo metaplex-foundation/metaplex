@@ -140,7 +140,7 @@ programCommand('upload')
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
     if (warn) {
-      log.info('not all images have been uplaoded, rerun this step.');
+      log.info('not all images have been uploaded, rerun this step.');
     }
   });
 
@@ -625,19 +625,29 @@ programCommand('sign_all')
     );
   });
 
-programCommand('generate_configurations')
+programCommand('generate_art_configurations')
   .argument('<directory>', 'Directory containing traits named from 0-n', val =>
     fs.readdirSync(`${val}`),
   )
-  .action(async (files: string[], options, cmd) => {
-    // const { keypair, env, cacheName, batchSize, daemon } = cmd.opts();
-    log.info('files', files);
-    log.info('options', options);
-    log.info('cmd', cmd.opts());
-
-    const createdConfigs = await generateConfigurations(files);
-    log.info('created', createdConfigs);
+  .action(async (files: string[]) => {
+    log.info('creating traits configuration file');
+    const startMs = Date.now();
+    const successful = await generateConfigurations(files);
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    if (successful) {
+      log.info('traits-configuration.json has been created!');
+      log.info(
+        `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
+      );
+    } else {
+      log.info('The art configuration file was not created');
+    }
   });
+
+programCommand('create_generative_art').action(() => {
+  log.info('hello world');
+});
 
 function programCommand(name: string) {
   return program
