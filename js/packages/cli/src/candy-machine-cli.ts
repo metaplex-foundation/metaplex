@@ -1,10 +1,12 @@
+#!/usr/bin/env ts-node
 import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
+import fetch from 'node-fetch';
 
-import { fromUTF8Array, parsePrice } from './helpers/various';
+import { fromUTF8Array, parseDate, parsePrice } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import {
@@ -133,7 +135,7 @@ programCommand('upload')
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
-      `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
+      `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
     if (warn) {
       log.info('not all images have been uplaoded, rerun this step.');
@@ -174,7 +176,65 @@ programCommand('verify').action(async (directory, cmd) => {
       cacheItem.onChain = false;
       allGood = false;
     } else {
-      log.debug('Name', name, 'with', uri, 'checked out');
+      const json = await fetch(cacheItem.link);
+      if (json.status == 200 || json.status == 204 || json.status == 202) {
+        const body = await json.text();
+        const parsed = JSON.parse(body);
+        if (parsed.image) {
+          const check = await fetch(parsed.image);
+          if (
+            check.status == 200 ||
+            check.status == 204 ||
+            check.status == 202
+          ) {
+            const text = await check.text();
+            if (!text.match(/Not found/i)) {
+              if (text.length == 0) {
+                log.debug(
+                  'Name',
+                  name,
+                  'with',
+                  uri,
+                  'has zero length, failing',
+                );
+                cacheItem.onChain = false;
+                allGood = false;
+              } else {
+                log.debug('Name', name, 'with', uri, 'checked out');
+              }
+            } else {
+              log.debug(
+                'Name',
+                name,
+                'with',
+                uri,
+                'never got uploaded to arweave, failing',
+              );
+              cacheItem.onChain = false;
+              allGood = false;
+            }
+          } else {
+            log.debug(
+              'Name',
+              name,
+              'with',
+              uri,
+              'returned non-200 from uploader',
+              check.status,
+            );
+            cacheItem.onChain = false;
+            allGood = false;
+          }
+        } else {
+          log.debug('Name', name, 'with', uri, 'lacked image in json, failing');
+          cacheItem.onChain = false;
+          allGood = false;
+        }
+      } else {
+        log.debug('Name', name, 'with', uri, 'returned no json from link');
+        cacheItem.onChain = false;
+        allGood = false;
+      }
     }
   }
 
@@ -234,13 +294,10 @@ programCommand('verify_price')
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-    const [candyMachine] = await getCandyMachineAddress(
-      new PublicKey(cacheContent.program.config),
-      cacheContent.program.uuid,
-    );
+    const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
 
     const machine = await anchorProgram.account.candyMachine.fetch(
-      candyMachine,
+      candyAddress,
     );
 
     //@ts-ignore
@@ -253,6 +310,82 @@ programCommand('verify_price')
     }
 
     log.info(`Good to go!`);
+  });
+
+programCommand('show')
+  .option('--cache-path <string>')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, cachePath } = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env, cachePath);
+
+    if (!cacheContent) {
+      return log.error(
+        `No cache found, can't continue. Make sure you are in the correct directory where the assets are located or use the --cache-path option.`,
+      );
+    }
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+    const [candyMachine] = await getCandyMachineAddress(
+      new PublicKey(cacheContent.program.config),
+      cacheContent.program.uuid,
+    );
+
+    try {
+      const machine = await anchorProgram.account.candyMachine.fetch(
+        candyMachine,
+      );
+      log.info('...Candy Machine...');
+      //@ts-ignore
+      log.info('authority: ', machine.authority.toBase58());
+      //@ts-ignore
+      log.info('wallet: ', machine.wallet.toBase58());
+      //@ts-ignore
+      log.info('tokenMint: ', machine.tokenMint.toBase58());
+      //@ts-ignore
+      log.info('config: ', machine.config.toBase58());
+      //@ts-ignore
+      log.info('uuid: ', machine.data.uuid);
+      //@ts-ignore
+      log.info('price: ', machine.data.price.toNumber());
+      //@ts-ignore
+      log.info('itemsAvailable: ', machine.data.itemsAvailable.toNumber());
+      log.info(
+        'goLiveDate: ',
+        //@ts-ignore
+        machine.data.goLiveDate
+          ? //@ts-ignore
+            new Date(machine.data.goLiveDate * 1000)
+          : 'N/A',
+      );
+    } catch (e) {
+      console.log('No machine found');
+    }
+
+    const config = await anchorProgram.account.config.fetch(
+      cacheContent.program.config,
+    );
+    log.info('...Config...');
+    //@ts-ignore
+    log.info('authority: ', config.authority);
+    //@ts-ignore
+    log.info('symbol: ', config.data.symbol);
+    //@ts-ignore
+    log.info('sellerFeeBasisPoints: ', config.data.sellerFeeBasisPoints);
+    //@ts-ignore
+    log.info('creators: ');
+    //@ts-ignore
+    config.data.creators.map(c =>
+      log.info(c.address.toBase58(), 'at', c.share, '%'),
+    ),
+      //@ts-ignore
+      log.info('maxSupply: ', config.data.maxSupply.toNumber());
+    //@ts-ignore
+    log.info('retainAuthority: ', config.data.retainAuthority);
+    //@ts-ignore
+    log.info('maxNumberOfLines: ', config.data.maxNumberOfLines);
   });
 
 programCommand('create_candy_machine')
@@ -342,8 +475,7 @@ programCommand('create_candy_machine')
     }
 
     if (solTreasuryAccount) {
-      const solAccountKey = new PublicKey(solTreasuryAccount);
-      wallet = solAccountKey;
+      wallet = new PublicKey(solTreasuryAccount);
     }
 
     const config = new PublicKey(cacheContent.program.config);
@@ -373,6 +505,7 @@ programCommand('create_candy_machine')
         remainingAccounts,
       },
     );
+    cacheContent.candyMachineAddress = candyMachine.toBase58();
     saveCache(cacheName, env, cacheContent);
     log.info(
       `create_candy_machine finished. candy machine pubkey: ${candyMachine.toBase58()}`,
@@ -380,22 +513,22 @@ programCommand('create_candy_machine')
   });
 
 programCommand('update_candy_machine')
-  .option('-d, --date <string>', 'timestamp - eg "04 Dec 1995 00:12:00 GMT"')
+  .option(
+    '-d, --date <string>',
+    'timestamp - eg "04 Dec 1995 00:12:00 GMT" or "now"',
+  )
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
     const { keypair, env, date, price, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
-    const secondsSinceEpoch = date ? Date.parse(date) / 1000 : null;
+    const secondsSinceEpoch = date ? parseDate(date) : null;
     const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
-    const [candyMachine] = await getCandyMachineAddress(
-      new PublicKey(cacheContent.program.config),
-      cacheContent.program.uuid,
-    );
+    const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
     const tx = await anchorProgram.rpc.updateCandyMachine(
       lamports ? new anchor.BN(lamports) : null,
       secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
@@ -407,13 +540,15 @@ programCommand('update_candy_machine')
       },
     );
 
+    cacheContent.startDate = secondsSinceEpoch;
+    saveCache(cacheName, env, cacheContent);
     if (date)
       log.info(
         ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
       );
     if (lamports)
       log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
-    log.info('updated_candy_machine Done', tx);
+    log.info('updated_candy_machine finished', tx);
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {
@@ -423,7 +558,7 @@ programCommand('mint_one_token').action(async (directory, cmd) => {
   const configAddress = new PublicKey(cacheContent.program.config);
   const tx = await mint(keypair, env, configAddress);
 
-  log.info('Done', tx);
+  log.info('mint_one_token finished', tx);
 });
 
 programCommand('sign')
@@ -433,6 +568,34 @@ programCommand('sign')
     const { keypair, env, metadata } = cmd.opts();
 
     await signMetadata(metadata, keypair, env);
+  });
+
+programCommand('sign_all')
+  .option('-b, --batch-size <string>', 'Batch size', '10')
+  .option('-d, --daemon', 'Run signing continuously', false)
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, batchSize, daemon } = cmd.opts();
+    const cacheContent = loadCache(cacheName, env);
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const candyAddress = cacheContent.candyMachineAddress;
+
+    const batchSizeParsed = parseInt(batchSize);
+    if (!parseInt(batchSize)) {
+      throw new Error('Batch size needs to be an integer!');
+    }
+
+    log.debug('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
+    log.debug('Environment: ', env);
+    log.debug('Candy machine address: ', candyAddress);
+    log.debug('Batch Size: ', batchSizeParsed);
+    await signAllMetadataFromCandyMachine(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      candyAddress,
+      batchSizeParsed,
+      daemon,
+    );
   });
 
 function programCommand(name: string) {
@@ -460,43 +623,5 @@ function setLogLevel(value, prev) {
   log.info('setting the log value to: ' + value);
   log.setLevel(value);
 }
-
-programCommand('sign_candy_machine_metadata')
-  .option('-cndy, --candy-address <string>', 'Candy machine address', '')
-  .option('-b, --batch-size <string>', 'Batch size', '10')
-  .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, batchSize } = cmd.opts();
-    let { candyAddress } = cmd.opts();
-    if (!keypair || keypair == '') {
-      log.info('Keypair required!');
-      return;
-    }
-    if (!candyAddress || candyAddress == '') {
-      log.info('Candy machine address required! Using from saved list.');
-      const cacheContent = loadCache(cacheName, env);
-      const config = new PublicKey(cacheContent.program.config);
-      const candyMachine = (
-        await getCandyMachineAddress(config, cacheContent.program.uuid)
-      )[0];
-      candyAddress = candyMachine.toBase58();
-    }
-    const batchSizeParsed = parseInt(batchSize);
-    if (!parseInt(batchSize)) {
-      log.info('Batch size needs to be an integer!');
-      return;
-    }
-    const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
-    log.info('Creator pubkey: ', walletKeyPair.publicKey.toBase58());
-    log.info('Environment: ', env);
-    log.info('Candy machine address: ', candyAddress);
-    log.info('Batch Size: ', batchSizeParsed);
-    await signAllMetadataFromCandyMachine(
-      anchorProgram.provider.connection,
-      walletKeyPair,
-      candyAddress,
-      batchSizeParsed,
-    );
-  });
 
 program.parse(process.argv);

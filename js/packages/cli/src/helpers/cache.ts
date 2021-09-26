@@ -27,6 +27,8 @@ export function saveCache(
   cacheContent,
   cPath: string = CACHE_PATH,
 ) {
+  cacheContent.env = env;
+  cacheContent.cacheName = cacheName;
   fs.writeFileSync(
     cachePath(env, cacheName, cPath),
     JSON.stringify(cacheContent),
