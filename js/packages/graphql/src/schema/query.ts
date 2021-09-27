@@ -8,23 +8,19 @@ export const Query = queryType({
   definition(t) {
     t.field("storesCount", {
       type: "Int",
-      resolve: (_, args, { api }) =>
-        api.state.then(({ stores }) => Object.keys(stores).length),
+      resolve: (_, args, { api }) => api.storesCount(),
     });
     t.field("creatorsCount", {
       type: "Int",
-      resolve: (_, args, { api }) =>
-        api.state.then(({ creators }) => creators.size),
+      resolve: (_, args, { api }) => api.creatorsCount(),
     });
     t.field("artworksCount", {
       type: "Int",
-      resolve: (_, args, { api }) =>
-        api.state.then(({ metadata }) => metadata.length),
+      resolve: (_, args, { api }) => api.artworksCount(),
     });
     t.field("auctionsCount", {
       type: "Int",
-      resolve: (_, args, { api }) =>
-        api.state.then(({ auctions }) => auctions.size),
+      resolve: (_, args, { api }) => api.auctionsCount(),
     });
     t.field("store", {
       type: Store,

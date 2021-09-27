@@ -1,6 +1,5 @@
 import dedent from "dedent";
 import { enumType, objectType } from "nexus";
-import { getAuctionHighestBid, getAuctionThumbnail } from "../auction/mappers";
 import { wrapPubkey } from "../utils/mapInfo";
 import { Artwork } from "./artwork";
 import { AuctionManager } from "./metaplex";
@@ -112,15 +111,12 @@ export const Auction = objectType({
     });
     t.field("trumbnail", {
       type: Artwork,
-      resolve: (item, args, { api }) =>
-        api.state.then((state) => getAuctionThumbnail(item, state)),
+      resolve: (item, args, { api }) => api.getAuctionThumbnail(item),
     });
     t.field("highestBid", {
       type: BidderMetadata,
       resolve: (item, args, { api }) =>
-        api.state.then((state) =>
-          wrapPubkey(getAuctionHighestBid(item, state))
-        ),
+        api.getAuctionHighestBid(item).then((item) => wrapPubkey(item)),
     });
     t.bn("numWinners", {
       resolve: (item) => item.bidState.max,

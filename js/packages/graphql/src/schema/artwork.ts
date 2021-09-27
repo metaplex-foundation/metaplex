@@ -1,10 +1,4 @@
 import { objectType } from "nexus";
-import {
-  artEditionNumber,
-  artMaxSupply,
-  artSupply,
-  artType,
-} from "../artwork/mappers";
 
 export const Artwork = objectType({
   name: "Artwork",
@@ -21,20 +15,16 @@ export const Artwork = objectType({
       resolve: (item) => item.data.sellerFeeBasisPoints || 0,
     });
     t.nonNull.int("type", {
-      resolve: (item, args, { api }) =>
-        api.state.then((state) => artType(item, state)),
+      resolve: (item, args, { api }) => api.artType(item),
     });
     t.bn("supply", {
-      resolve: (item, args, { api }) =>
-        api.state.then((state) => artSupply(item, state)),
+      resolve: (item, args, { api }) => api.artSupply(item),
     });
     t.bn("maxSupply", {
-      resolve: (item, args, { api }) =>
-        api.state.then((state) => artMaxSupply(item, state)),
+      resolve: (item, args, { api }) => api.artMaxSupply(item),
     });
     t.bn("edition", {
-      resolve: (item, args, { api }) =>
-        api.state.then((state) => artEditionNumber(item, state)),
+      resolve: (item, args, { api }) => api.artEditionNumber(item),
     });
   },
 });

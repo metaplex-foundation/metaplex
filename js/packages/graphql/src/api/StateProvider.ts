@@ -1,6 +1,5 @@
 import { Connection } from "@solana/web3.js";
 import {
-  MetaState,
   ProcessAccountsFunc,
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -16,13 +15,14 @@ import {
   ParsedAccount,
   getProgramAccounts,
   Metadata,
-  getEmptyState,
 } from "../common";
+
 import queue from "queue";
 import { PubSub, withFilter } from "graphql-subscriptions";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
 import { createConnection } from "./createConnection";
 import logger from "../logger";
+import { IMetaplexApiWrite, TPropNames } from "./IMetaplexApi";
 
 export declare type FilterFn<T = any> = (
   rootValue?: T,
@@ -38,69 +38,86 @@ interface IProgramConfig {
 }
 
 export interface IEvent {
-  prop: keyof MetaState;
+  prop: TPropNames;
   key: string;
 }
 
 const bindToState =
-  (process: ProcessAccountsFunc, state: MetaState) =>
+  (process: ProcessAccountsFunc, api: IMetaplexApiWrite) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
     process(account, (prop, key, value) => {
-      state[prop].set(key, value);
+      api.persist(prop, key, value);
     });
   };
 
 const bindToStateAndPubsub =
-  (process: ProcessAccountsFunc, state: MetaState, pubsub: PubSub) =>
+  (process: ProcessAccountsFunc, api: IMetaplexApiWrite, pubsub: PubSub) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
     process(account, (prop, key, value) => {
-      state[prop].set(key, value);
+      api.persist(prop, key, value);
       logger.info(`⚡ event - ${prop}:${key}`);
       pubsub.publish(prop, { prop, key });
     });
   };
 
 export class StateProvider {
-  private state: MetaState = getEmptyState();
   readonly connection: Connection;
   private defer: Promise<void> | undefined;
   private readonly changesQueue = queue({ autostart: false, concurrency: 1 });
   private readonly pubsub = new PubSub();
+  private readonly $api: IMetaplexApiWrite;
+  private metadataByMint: Map<string, ParsedAccount<Metadata>> = new Map();
+  private readonly api: IMetaplexApiWrite = {
+    persist: (prop: TPropNames, key: string, value: ParsedAccount<any>) => {
+      if (prop === "metadataByMint") {
+        this.metadataByMint.set(key, value);
+      }
+      return this.$api.persist(prop, key, value);
+    },
+    persistBatch: (batch: [TPropNames, string, ParsedAccount<any>][]) => {
+      batch.forEach(([prop, key, value]) => {
+        if (prop === "metadataByMint") {
+          this.metadataByMint.set(key, value);
+        }
+      });
+      return this.$api.persistBatch(batch);
+    },
+  };
 
   readonly programs: IProgramConfig[] = [
     {
       pubkey: VAULT_ID,
-      process: bindToState(processVaultData, this.state),
+      process: bindToState(processVaultData, this.api),
       processAndPublish: bindToStateAndPubsub(
         processVaultData,
-        this.state,
+        this.api,
         this.pubsub
       ),
     },
     {
       pubkey: AUCTION_ID,
-      process: bindToState(processAuctions, this.state),
+      process: bindToState(processAuctions, this.api),
       processAndPublish: bindToStateAndPubsub(
         processAuctions,
-        this.state,
+        this.api,
         this.pubsub
       ),
     },
     {
       pubkey: METAPLEX_ID,
-      process: bindToState(processMetaplexAccounts, this.state),
+      process: bindToState(processMetaplexAccounts, this.api),
       processAndPublish: bindToStateAndPubsub(
         processMetaplexAccounts,
-        this.state,
+        this.api,
         this.pubsub
       ),
     },
     {
       pubkey: METADATA_PROGRAM_ID,
-      process: bindToState(processMetaData, this.state),
+      process: bindToState(processMetaData, this.api),
       processAndPublish: bindToStateAndPubsub(
         processMetaData,
-        this.state,
+        this.api,
         this.pubsub
       ),
     },
@@ -108,27 +125,29 @@ export class StateProvider {
 
   static async metadataByMintUpdater(
     metadata: ParsedAccount<Metadata>,
-    state: MetaState
+    api: IMetaplexApiWrite
   ) {
     const key = metadata.info.mint;
     await metadata.info.init();
     const masterEditionKey = metadata.info?.masterEdition;
     if (masterEditionKey) {
-      state.metadataByMasterEdition.set(masterEditionKey, metadata);
+      api.persist("metadataByMasterEdition", masterEditionKey, metadata);
     }
-    state.metadataByMint.set(key, metadata);
-    state.metadata.push(metadata);
+    api.persist("metadataByMint", key, metadata);
+    api.persist("metadata", "", metadata);
   }
 
   constructor(
     public readonly name: string,
     endpoint: string,
+    initApi: (provider: StateProvider) => IMetaplexApiWrite,
     private flowControl = { promise: Promise.resolve(), finish: () => {} }
   ) {
+    this.$api = initApi(this);
     this.connection = createConnection(endpoint, "recent");
   }
 
-  subscribeIterator(prop: keyof MetaState, key?: string | FilterFn<IEvent>) {
+  subscribeIterator(prop: TPropNames, key?: string | FilterFn<IEvent>) {
     const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
     if (key !== undefined) {
       if (typeof key === "string") {
@@ -147,7 +166,6 @@ export class StateProvider {
       this.defer = this.createDefer();
     }
     await this.defer;
-    return this.state;
   }
 
   private async createDefer() {
@@ -189,9 +207,9 @@ export class StateProvider {
 
     // processing metadata
     await createPipelineExecutor(
-      this.state.metadataByMint.values(),
+      this.metadataByMint.values(),
       async (metadata) => {
-        await StateProvider.metadataByMintUpdater(metadata, this.state);
+        await StateProvider.metadataByMintUpdater(metadata, this.api);
       },
       {
         jobsCount: 3,

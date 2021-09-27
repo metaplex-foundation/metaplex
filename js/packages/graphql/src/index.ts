@@ -5,7 +5,7 @@ import { createServer } from "http";
 import { SubscriptionServer } from "subscriptions-transport-ws";
 import { execute, subscribe } from "graphql";
 import { schema, context } from "./graphqlConfig";
-import { startApi, warmUp } from "./startApi";
+import { createInMemoryApi, warmUpInMemoryApi } from "./memoryApi";
 import { Context } from "./types/context";
 import { config } from "dotenv";
 import logger from "./logger";
@@ -15,7 +15,10 @@ async function startApolloServer() {
   const app = express();
   const httpServer = createServer(app);
 
-  const api = startApi();
+  const api = createInMemoryApi({
+    networkName: process.env.NETWORK,
+    snapshotPath: process.env.SNAPSHOT,
+  });
 
   const server = new ApolloServer({
     schema,
@@ -65,7 +68,9 @@ async function startApolloServer() {
 
   logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
   logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
-  warmUp(api);
+  if (!process.env.WARM_UP_DISABLE) {
+    warmUpInMemoryApi(api);
+  }
 }
 
 function main() {
