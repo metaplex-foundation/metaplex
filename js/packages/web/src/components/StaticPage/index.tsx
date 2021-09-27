@@ -31,8 +31,8 @@ interface HeadContent {
 
 interface ImageCaption {
   text: string;
-  linkText: string;
-  linkUrl: string;
+  linkText?: string;
+  linkUrl?: string;
 }
 
 interface ArticleSection {
