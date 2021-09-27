@@ -12,6 +12,7 @@ import { loadCache, saveCache } from '../helpers/cache';
 import log from 'loglevel';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { chunks } from '../helpers/various';
 
 export async function upload(
   files: string[],
@@ -138,12 +139,13 @@ export async function upload(
           }
 
           if (link) {
-            console.log('setting cache for ', index);
+            log.debug('setting cache for ', index);
             cacheContent.items[index] = {
               link,
               name: manifest.name,
               onChain: false,
             };
+            cacheContent.authority = walletKeyPair.publicKey.toBase58();
             saveCache(cacheName, env, cacheContent);
           }
         } catch (er) {
@@ -218,10 +220,4 @@ export async function upload(
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
-}
-
-function chunks(array, size) {
-  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
-    (_, index) => array.slice(index * size, (index + 1) * size),
-  );
 }

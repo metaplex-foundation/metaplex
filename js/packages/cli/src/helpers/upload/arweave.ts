@@ -1,13 +1,13 @@
-import * as anchor from "@project-serum/anchor";
-import FormData from "form-data";
-import fs from "fs";
-import log from "loglevel";
+import * as anchor from '@project-serum/anchor';
+import FormData from 'form-data';
+import fs from 'fs';
+import log from 'loglevel';
 import fetch from 'node-fetch';
-import { ARWEAVE_PAYMENT_WALLET } from "../constants";
-import { sendTransactionWithRetryWithKeypair } from "../transactions";
+import { ARWEAVE_PAYMENT_WALLET } from '../constants';
+import { sendTransactionWithRetryWithKeypair } from '../transactions';
 
 async function upload(data: FormData, manifest, index) {
-  log.debug(`trying to upload ${index}.png: ${manifest.name}`)
+  log.debug(`trying to upload ${index}.png: ${manifest.name}`);
   return await (
     await fetch(
       'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
@@ -20,7 +20,15 @@ async function upload(data: FormData, manifest, index) {
   ).json();
 }
 
-export async function arweaveUpload(walletKeyPair, anchorProgram, env, image, manifestBuffer, manifest, index) {
+export async function arweaveUpload(
+  walletKeyPair,
+  anchorProgram,
+  env,
+  image,
+  manifestBuffer,
+  manifest,
+  index,
+) {
   const storageCost = 10;
 
   const instructions = [
@@ -43,7 +51,10 @@ export async function arweaveUpload(walletKeyPair, anchorProgram, env, image, ma
   const data = new FormData();
   data.append('transaction', tx['txid']);
   data.append('env', env);
-  data.append('file[]', fs.createReadStream(image), {filename: `image.png`, contentType: 'image/png'});
+  data.append('file[]', fs.createReadStream(image), {
+    filename: `image.png`,
+    contentType: 'image/png',
+  });
   data.append('file[]', manifestBuffer, 'metadata.json');
 
   const result = await upload(data, manifest, index);
@@ -57,6 +68,6 @@ export async function arweaveUpload(walletKeyPair, anchorProgram, env, image, ma
     return link;
   } else {
     // @todo improve
-    throw new Error(`No transaction ID for upload: ${index}`)
+    throw new Error(`No transaction ID for upload: ${index}`);
   }
 }
