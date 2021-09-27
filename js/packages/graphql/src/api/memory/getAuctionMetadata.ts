@@ -1,15 +1,14 @@
 import {
-  ParsedAccount,
-  SafetyDepositBox,
-  getAuctionBids,
   MetaplexKey,
   MetaState,
-} from "../common";
+  ParsedAccount,
+  SafetyDepositBox,
+} from "../../common";
+import { Auction } from "types/sourceTypes";
 
-import { wrapPubkey } from "../utils/mapInfo";
-import { Auction } from "../types/sourceTypes";
+// auction
 
-export const getAuctionMetadata = (auction: Auction, state: MetaState) => {
+export function getAuctionMetadata(auction: Auction, state: MetaState) {
   const vaultId = auction.manager.vault;
   const boxes: ParsedAccount<SafetyDepositBox>[] = [];
   for (const box of state.safetyDepositBoxesByVaultAndIndex.values()) {
@@ -32,17 +31,4 @@ export const getAuctionMetadata = (auction: Auction, state: MetaState) => {
       return metadata;
     })
     .filter(Boolean);
-};
-
-export const getAuctionThumbnail = (auction: Auction, state: MetaState) => {
-  const metadata = getAuctionMetadata(auction, state)[0];
-  return metadata ? wrapPubkey(metadata) : null;
-};
-
-export const getAuctionHighestBid = (auction: Auction, state: MetaState) => {
-  const bids = getAuctionBids(
-    Array.from(state.bidderMetadataByAuctionAndBidder.values()),
-    auction.pubkey
-  );
-  return bids?.[0];
-};
+}

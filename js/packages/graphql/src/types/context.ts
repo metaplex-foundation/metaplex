@@ -1,6 +1,6 @@
-import { MetaplexApi } from "../api";
+import type { IMetaplexApi } from "../api/IMetaplexApi";
 
 export interface Context {
   network?: string;
-  api: MetaplexApi;
+  api: IMetaplexApi;
 }
