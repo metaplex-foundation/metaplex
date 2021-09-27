@@ -46,6 +46,7 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { LoadingOutlined } from '@ant-design/icons';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -346,7 +347,7 @@ export const AuctionCard = ({
               {loading ||
               auctionView.items.find(i => i.find(it => !it.metadata)) ||
               !myPayingAccount ? (
-                <Spin />
+                <Spin indicator={<LoadingOutlined />} />
               ) : eligibleForAnything ? (
                 `Redeem bid`
               ) : (
@@ -381,7 +382,11 @@ export const AuctionCard = ({
               }}
               style={{ marginTop: 20 }}
             >
-              {loading ? <Spin /> : 'Start auction'}
+              {loading ? (
+                <Spin indicator={<LoadingOutlined />} />
+              ) : (
+                'Start auction'
+              )}
             </Button>
           ) : (
             <Button
@@ -393,7 +398,7 @@ export const AuctionCard = ({
               style={{ marginTop: 20 }}
             >
               {loading ? (
-                <Spin />
+                <Spin indicator={<LoadingOutlined />} />
               ) : auctionView.isInstantSale ? (
                 !isAuctionManagerAuthorityNotWalletOwner ? (
                   'Claim item'
@@ -528,7 +533,10 @@ export const AuctionCard = ({
                   isAuctionItemMaster;
 
                 // Placing a "bid" of the full amount results in a purchase to redeem.
-                if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+                if (
+                  instantSalePrice &&
+                  (allowBidToPublic || allowBidToAuctionOwner)
+                ) {
                   try {
                     const bid = await sendPlaceBid(
                       connection,
@@ -699,7 +707,7 @@ export const AuctionCard = ({
                     }
                   >
                     {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
-                      <Spin />
+                      <Spin indicator={<LoadingOutlined />} />
                     ) : auctionView.isInstantSale ? (
                       auctionView.myBidderPot ||
                       !isAuctionManagerAuthorityNotWalletOwner ? (

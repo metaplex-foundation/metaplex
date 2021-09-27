@@ -42,6 +42,7 @@ import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -1086,7 +1087,7 @@ const LaunchStep = (props: {
           {cost ? (
             <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
           ) : (
-            <Spin />
+            <Spin indicator={<LoadingOutlined />} />
           )}
         </Col>
       </Row>
@@ -1134,7 +1135,7 @@ const WaitingStep = (props: {
         alignItems: 'center',
       }}
     >
-      <Spin size="large" />
+      <Spin size="large" indicator={<LoadingOutlined />} />
       <div className="waiting-title">
         Your creation is being uploaded to the decentralized web...
       </div>
