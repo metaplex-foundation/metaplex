@@ -276,6 +276,11 @@ export const loadAccounts = async (connection: Connection) => {
     getProgramAccounts(connection, VAULT_ID).then(
       forEachAccount(processVaultData),
     );
+  const loadAuctions = () =>
+    pullAuctions({
+      connection,
+      auctionManagersByAuction: state.auctionManagersByAuction,
+    }).then(forEachAccount(processAuctions));
   const loadMetaplex = () =>
     getProgramAccounts(connection, METAPLEX_ID).then(
       forEachAccount(processMetaplexAccounts),
@@ -295,15 +300,10 @@ export const loadAccounts = async (connection: Connection) => {
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
     loadVaults(),
-    loadMetaplex(),
+    loadMetaplex().then(loadAuctions),
   ];
 
   await Promise.all(loading);
-
-  await pullAuctions({
-    connection,
-    auctionManagersByAuction: state.auctionManagersByAuction,
-  }).then(forEachAccount(processAuctions));
 
   console.log('Metadata size', state.metadata.length);
 
