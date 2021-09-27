@@ -6,7 +6,6 @@ export const onChangeAccount =
   (
     process: ProcessAccountsFunc,
     setter: UpdateStateValueFunc,
-    all: boolean,
   ): ProgramAccountChangeCallback =>
   async info => {
     const pubkey = pubkeyToString(info.accountId);
@@ -16,6 +15,5 @@ export const onChangeAccount =
         account: info.accountInfo,
       },
       setter,
-      all,
     );
   };

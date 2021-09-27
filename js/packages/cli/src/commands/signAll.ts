@@ -1,19 +1,26 @@
 import {
+  AccountInfo,
+  Connection,
+  Keypair,
   PublicKey,
   TransactionInstruction,
-  Connection,
-  AccountInfo,
 } from '@solana/web3.js';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import * as borsh from 'borsh';
 import {
-  MAX_NAME_LENGTH,
-  MAX_URI_LENGTH,
-  MAX_SYMBOL_LENGTH,
   MAX_CREATOR_LEN,
+  MAX_NAME_LENGTH,
+  MAX_SYMBOL_LENGTH,
+  MAX_URI_LENGTH,
   TOKEN_METADATA_PROGRAM_ID,
 } from '../helpers/constants';
 import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
+import { signMetadataInstruction } from './sign';
+import log from 'loglevel';
+import { sleep } from '../helpers/various';
+
+const SIGNING_INTERVAL = 60 * 1000; //60s
+let lastCount = 0;
 /*
  Get accounts by candy machine creator address
  Get only verified ones
@@ -22,13 +29,107 @@ import { AccountAndPubkey, Metadata, METADATA_SCHEMA } from '../types';
 
  PS: Don't sign candy machine addresses that you do not know about. Signing verifies your participation.
 */
-async function decodeMetadata(buffer) {
-  const metadata = borsh.deserializeUnchecked(
-    METADATA_SCHEMA,
-    Metadata,
-    buffer,
+export async function signAllMetadataFromCandyMachine(
+  connection: Connection,
+  wallet: Keypair,
+  candyMachineAddress: string,
+  batchSize: number,
+  daemon: boolean,
+) {
+  if (daemon) {
+    // noinspection InfiniteLoopJS
+    for (;;) {
+      await findAndSignMetadata(
+        candyMachineAddress,
+        connection,
+        wallet,
+        batchSize,
+      );
+      await sleep(SIGNING_INTERVAL);
+    }
+  } else {
+    await findAndSignMetadata(
+      candyMachineAddress,
+      connection,
+      wallet,
+      batchSize,
+    );
+  }
+}
+
+async function findAndSignMetadata(
+  candyMachineAddress: string,
+  connection: Connection,
+  wallet: Keypair,
+  batchSize: number,
+) {
+  const metadataByCandyMachine = await getAccountsByCreatorAddress(
+    candyMachineAddress,
+    connection,
   );
-  return metadata;
+  if (lastCount === metadataByCandyMachine.length) {
+    log.debug(`Didn't find any new NFTs to sign - ${new Date()}`);
+    return;
+  }
+  lastCount = metadataByCandyMachine.length;
+  log.info(
+    `Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`,
+  );
+  const candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(
+    metadataByCandyMachine,
+    candyMachineAddress,
+    wallet.publicKey.toBase58(),
+  );
+  log.info(
+    `Found ${
+      candyVerifiedListToSign.length
+    } nft's to sign by  ${wallet.publicKey.toBase58()}`,
+  );
+  await sendSignMetadata(
+    connection,
+    wallet,
+    candyVerifiedListToSign,
+    batchSize,
+  );
+}
+
+async function getAccountsByCreatorAddress(creatorAddress, connection) {
+  const metadataAccounts = await getProgramAccounts(
+    connection,
+    TOKEN_METADATA_PROGRAM_ID.toBase58(),
+    {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32 + // update auth
+              32 + // mint
+              4 + // name string length
+              MAX_NAME_LENGTH + // name
+              4 + // uri string length
+              MAX_URI_LENGTH + // uri*
+              4 + // symbol string length
+              MAX_SYMBOL_LENGTH + // symbol
+              2 + // seller fee basis points
+              1 + // whether or not there is a creators vec
+              4 + // creators vec length
+              0 * MAX_CREATOR_LEN,
+            bytes: creatorAddress,
+          },
+        },
+      ],
+    },
+  );
+  const decodedAccounts = [];
+  for (let i = 0; i < metadataAccounts.length; i++) {
+    const e = metadataAccounts[i];
+    const decoded = await decodeMetadata(e.account.data);
+    const accountPubkey = e.pubkey;
+    const store = [decoded, accountPubkey];
+    decodedAccounts.push(store);
+  }
+  return decodedAccounts;
 }
 
 async function getProgramAccounts(
@@ -85,74 +186,8 @@ async function getProgramAccounts(
   return data;
 }
 
-export async function signAllMetadataFromCandyMachine(
-  connection,
-  wallet,
-  candyMachineAddress,
-  batchSize,
-) {
-  const metadataByCandyMachine = await getAccountsByCreatorAddress(
-    candyMachineAddress,
-    connection,
-  );
-  console.log(
-    `Found ${metadataByCandyMachine.length} nft's minted by candy machine ${candyMachineAddress}`,
-  );
-  const candyVerifiedListToSign = await getCandyMachineVerifiedMetadata(
-    metadataByCandyMachine,
-    candyMachineAddress,
-    wallet.publicKey.toBase58(),
-  );
-  console.log(
-    `Found ${
-      candyVerifiedListToSign.length
-    } nft's to sign by  ${wallet.publicKey.toBase58()}`,
-  );
-  await sendSignMetadata(
-    connection,
-    wallet,
-    candyVerifiedListToSign,
-    batchSize,
-  );
-}
-
-async function getAccountsByCreatorAddress(creatorAddress, connection) {
-  const metadataAccounts = await getProgramAccounts(
-    connection,
-    TOKEN_METADATA_PROGRAM_ID.toBase58(),
-    {
-      filters: [
-        {
-          memcmp: {
-            offset:
-              1 + // key
-              32 + // update auth
-              32 + // mint
-              4 + // name string length
-              MAX_NAME_LENGTH + // name
-              4 + // uri string length
-              MAX_URI_LENGTH + // uri*
-              4 + // symbol string length
-              MAX_SYMBOL_LENGTH + // symbol
-              2 + // seller fee basis points
-              1 + // whether or not there is a creators vec
-              4 + // creators vec length
-              0 * MAX_CREATOR_LEN,
-            bytes: creatorAddress,
-          },
-        },
-      ],
-    },
-  );
-  const decodedAccounts = [];
-  for (let i = 0; i < metadataAccounts.length; i++) {
-    const e = metadataAccounts[i];
-    const decoded = await decodeMetadata(e.account.data);
-    const accountPubkey = e.pubkey;
-    const store = [decoded, accountPubkey];
-    decodedAccounts.push(store);
-  }
-  return decodedAccounts;
+async function decodeMetadata(buffer) {
+  return borsh.deserializeUnchecked(METADATA_SCHEMA, Metadata, buffer);
 }
 
 async function getCandyMachineVerifiedMetadata(
@@ -188,7 +223,7 @@ async function getCandyMachineVerifiedMetadata(
 async function sendSignMetadata(connection, wallet, metadataList, batchsize) {
   let total = 0;
   while (metadataList.length > 0) {
-    console.log('Signing metadata');
+    log.debug('Signing metadata ');
     let sliceAmount = batchsize;
     if (metadataList.length < batchsize) {
       sliceAmount = metadataList.length;
@@ -197,21 +232,15 @@ async function sendSignMetadata(connection, wallet, metadataList, batchsize) {
     total += sliceAmount;
     await delay(500);
     await signMetadataBatch(removed, connection, wallet);
-    console.log(`Processed ${total} nfts`);
+    log.debug(`Processed ${total} nfts`);
   }
-  console.log('Finished signing metadata..');
+  log.info(`Finished signing metadata for ${total} NFTs`);
 }
 
 async function signMetadataBatch(metadataList, connection, keypair) {
-  const instructions: TransactionInstruction[] = [];
-  for (let i = 0; i < metadataList.length; i++) {
-    const meta = metadataList[i];
-    await signMetadataSingle(
-      meta[1],
-      keypair.publicKey.toBase58(),
-      instructions,
-    );
-  }
+  const instructions: TransactionInstruction[] = metadataList.map(meta => {
+    return signMetadataInstruction(new PublicKey(meta[1]), keypair.publicKey);
+  });
   await sendTransactionWithRetryWithKeypair(
     connection,
     keypair,
@@ -219,27 +248,6 @@ async function signMetadataBatch(metadataList, connection, keypair) {
     [],
     'single',
   );
-}
-
-async function signMetadataSingle(metadata, creator, instructions) {
-  const data = Buffer.from([7]);
-  const keys = [
-    {
-      pubkey: new PublicKey(metadata),
-      isSigner: false,
-      isWritable: true,
-    },
-    {
-      pubkey: new PublicKey(creator),
-      isSigner: true,
-      isWritable: false,
-    },
-  ];
-  instructions.push({
-    keys,
-    programId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
-    data,
-  });
 }
 
 function delay(ms: number) {
