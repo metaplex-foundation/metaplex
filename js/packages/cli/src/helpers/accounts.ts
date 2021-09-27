@@ -5,13 +5,14 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
+  FAIR_LAUNCH_PROGRAM_ID,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from "bn.js";
-import { createConfigAccount } from "./instructions";
-import { web3 } from "@project-serum/anchor";
-import log from "loglevel";
+import BN from 'bn.js';
+import { createConfigAccount } from './instructions';
+import { web3 } from '@project-serum/anchor';
+import log from 'loglevel';
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
@@ -99,6 +100,78 @@ export const getConfig = async (
   );
 };
 
+export const getTokenMint = async (
+  authority: anchor.web3.PublicKey,
+  uuid: string,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('fair_launch'),
+      authority.toBuffer(),
+      Buffer.from('mint'),
+      Buffer.from(uuid),
+    ],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getFairLaunch = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer()],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getFairLaunchTicket = async (
+  tokenMint: anchor.web3.PublicKey,
+  buyer: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), buyer.toBuffer()],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getFairLaunchLotteryBitmap = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), Buffer.from('lottery')],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getFairLaunchTicketSeqLookup = async (
+  tokenMint: anchor.web3.PublicKey,
+  seq: anchor.BN,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), seq.toBuffer('le', 8)],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getAtaForMint = async (
+  mint: anchor.web3.PublicKey,
+  buyer: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [buyer.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  );
+};
+
+export const getTreasury = async (
+  tokenMint: anchor.web3.PublicKey,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from('fair_launch'), tokenMint.toBuffer(), Buffer.from('treasury')],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
 export const getMetadata = async (
   mint: anchor.web3.PublicKey,
 ): Promise<anchor.web3.PublicKey> => {
@@ -131,14 +204,17 @@ export const getMasterEdition = async (
 };
 
 export function loadWalletKey(keypair): Keypair {
+  if (!keypair || keypair == '') {
+    throw new Error('Keypair is required!');
+  }
   const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
   );
-  log.info(`wallet public key: ${loaded.publicKey}`)
+  log.info(`wallet public key: ${loaded.publicKey}`);
   return loaded;
 }
 
-export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
+export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
   // @ts-ignore
   const solConnection = new web3.Connection(web3.clusterApiUrl(env));
   const walletWrapper = new anchor.Wallet(walletKeyPair);
@@ -148,6 +224,21 @@ export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
-  log.debug("program id from anchor", program.programId.toBase58());
+  log.debug('program id from anchor', program.programId.toBase58());
   return program;
+}
+
+export async function loadFairLaunchProgram(
+  walletKeyPair: Keypair,
+  env: string,
+) {
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(web3.clusterApiUrl(env));
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(FAIR_LAUNCH_PROGRAM_ID, provider);
+
+  return new anchor.Program(idl, FAIR_LAUNCH_PROGRAM_ID, provider);
 }

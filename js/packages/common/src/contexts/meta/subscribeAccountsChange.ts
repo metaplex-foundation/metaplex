@@ -6,7 +6,7 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '../../utils';
-import { makeSetter, metadataByMintUpdater } from './loadAccounts';
+import { makeSetter, initMetadata } from './loadAccounts';
 import { onChangeAccount } from './onChangeAccount';
 import { processAuctions } from './processAuctions';
 import { processMetaData } from './processMetaData';
@@ -16,7 +16,6 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
-  all: boolean,
   getState: () => MetaState,
   setState: (v: MetaState) => void,
 ) => {
@@ -31,40 +30,49 @@ export const subscribeAccountsChange = (
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(VAULT_ID),
-      onChangeAccount(processVaultData, updateStateValue, all),
+      onChangeAccount(processVaultData, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(AUCTION_ID),
-      onChangeAccount(processAuctions, updateStateValue, all),
+      onChangeAccount(processAuctions, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(METAPLEX_ID),
-      onChangeAccount(processMetaplexAccounts, updateStateValue, all),
+      onChangeAccount(processMetaplexAccounts, updateStateValue),
     ),
   );
 
   subscriptions.push(
     connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
-      onChangeAccount(
-        processMetaData,
-        async (prop, key, value) => {
-          if (prop === 'metadataByMint') {
-            const state = getState();
-            const nextState = await metadataByMintUpdater(value, state, all);
-            setState(nextState);
-          } else {
-            updateStateValue(prop, key, value);
-          }
-        },
-        all,
-      ),
+      onChangeAccount(processMetaData, async (prop, key, value) => {
+        const state = { ...getState() };
+        const setter = makeSetter(state);
+        let hasChanges = false;
+        const updater: UpdateStateValueFunc = (...args) => {
+          hasChanges = true;
+          setter(...args);
+        };
+
+        if (prop === 'metadataByMint') {
+          await initMetadata(
+            value,
+            state.whitelistedCreatorsByCreator,
+            updater,
+          );
+        } else {
+          updater(prop, key, value);
+        }
+        if (hasChanges) {
+          setState(state);
+        }
+      }),
     ),
   );
 

@@ -37,6 +37,7 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { LoadingOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -67,7 +68,7 @@ export const AdminView = () => {
           to admin store.
         </p>
       ) : !storeAddress || isLoading ? (
-        <Spin />
+        <Spin indicator={<LoadingOutlined />} />
       ) : store && wallet ? (
         <>
           <InnerAdminView

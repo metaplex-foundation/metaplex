@@ -14,7 +14,7 @@ This is the bedrock contract of the entire ecosystem. All that you need to inter
 
 Furthermore, if your mint has one token in its supply, you can give it an additional decoration PDA, of type MasterEdition. This PDA denotes the mint as a special type of object that can mint other mints - which we call Editions (as opposed to MasterEditions because they can't print other mints themselves). This makes this mint like the "master records" that record studios used to use to make new copies of records back in the day. The MasterEdition PDA will take away minting and freezing authority from you in the process and will contain information about total supply, maximum possible supply, etc.
 
-The existence of Metadata and its sister PDA MasterEdition makes a very powerful combination for a mint that enables the entire rest of the Metaplex contract stack. Now you can create: 
+The existence of Metadata and its sister PDA MasterEdition makes a very powerful combination for a mint that enables the entire rest of the Metaplex contract stack. Now you can create:
 
 - Normal mints that just have names (Metadata but no MasterEdition)
 - One of a kind NFTs (Metadata + MasterEdition with `max_supply` of 0)
@@ -35,7 +35,7 @@ When there are outstanding shares, you cannot, as the vault owner, **Combine** t
 
 ### Auction
 
-The Auction Contract represents an auction primitive, and it knows nothing about NFTs, or Metadata, or anything else in the Metaplex ecosystem. All it cares about is that it has a resource address, it has auction mechanics, and it is using those auction mechanics to auction off that resource. It currently supports English Auctions and Open Edition Auctions (no winners but bids are tracked.) Its only purpose is to track who won what place in an auction and to collect money for those wins. When you place bids, or cancel them, you are interacting with this contract. However, when you redeem bids, you are not interacting with this contract, but Metaplex, because while it can provide proof that you did indeed win 4th place, it has no opinion on how the resource being auctioned off is divvied up between 1st, 2nd, 3rd, and 4th place winners, for example. 
+The Auction Contract represents an auction primitive, and it knows nothing about NFTs, or Metadata, or anything else in the Metaplex ecosystem. All it cares about is that it has a resource address, it has auction mechanics, and it is using those auction mechanics to auction off that resource. It currently supports English Auctions and Open Edition Auctions (no winners but bids are tracked.) Its only purpose is to track who won what place in an auction and to collect money for those wins. When you place bids, or cancel them, you are interacting with this contract. However, when you redeem bids, you are not interacting with this contract, but Metaplex, because while it can provide proof that you did indeed win 4th place, it has no opinion on how the resource being auctioned off is divvied up between 1st, 2nd, 3rd, and 4th place winners, for example.
 
 This contract will be expanded in the future to include other auction types, and better guarantees between that the auctioneer claiming the bid actually has provided the prize by having the winner sign a PDA saying that they received the prize. Right now this primitive contract should *not* be used in isolation, but in companionship with another contract (like Metaplex in our case) that makes such guarantees that prizes are delivered if prizes are won.
 
@@ -48,7 +48,7 @@ This is the granddaddy contract of them all. The primary product of the Metaplex
 - Full Rights Transfers (Giving away token + metadata ownership)
 - Single Token Transfers (Giving away a token but not metadata ownership)
 
-It orchestrates disbursements of those contents to winners of an auction. An AuctionManager requires both a Vault and an Auction to run, and it requires that the Auction's resource key be set to the Vault. 
+It orchestrates disbursements of those contents to winners of an auction. An AuctionManager requires both a Vault and an Auction to run, and it requires that the Auction's resource key be set to the Vault.
 
 Due to each type of NFT transfer above requiring slightly different nuanced handling and checking, Metaplex handles knowing about those things, and making the different CPI calls to the Token Metadata contract to make those things happen as required during the redemption phase. It also has full authority over all the objects like Vault and Auction, and handles all royalties payments by collecting funds from the auction into its own central escrow account and then disbursing to artists.
 
@@ -98,11 +98,11 @@ Get ready and grab some aspirin. Here we go!
 
 ### Overview
 
-The Token Metadata contract can be used for storing generic metadata about any given mint, whether NFT or not. Metadata allows storage of name, symbol, and URI to an external resource. Additionally, the Metadata allows for the tracking of creators, primary sales, and seller fees. Once the mint has been created, the mint authority can use the SPL Metadata program to create metadata as described in this document. 
+The Token Metadata contract can be used for storing generic metadata about any given mint, whether NFT or not. Metadata allows storage of name, symbol, and URI to an external resource. Additionally, the Metadata allows for the tracking of creators, primary sales, and seller fees. Once the mint has been created, the mint authority can use the SPL Metadata program to create metadata as described in this document.
 
 Minting an NFT requires creating a new SPL Mint with the supply of one and decimals zero as described [https://spl.solana.com/token#example-create-a-non-fungible-token](https://spl.solana.com/token#example-create-a-non-fungible-token)
 
-Below is the Rust representation of the structs that are stored on-chain. 
+Below is the Rust representation of the structs that are stored on-chain.
 
 ```rust
 
@@ -200,7 +200,7 @@ Master Edition accounts are PDA addresses of `['metaplex', metaplex_program_id, 
 
 An edition represents a copy of an NFT, and is created from a Master Edition. Each print has an edition number associated with it.  Normally, prints can be created during Open Edition or Limited Edition auction, but they could also be created by the creator manually.
 
-Editions are created by presenting the Master Edition token, along with a new mint that lacks a Metadata account and a token account containing one token from that mint to the `mint_new_edition_from_master_edition_via_token` endpoint. This endpoint will create both an immutable Metadata based on the parent Metadata and a special Edition struct based on the parent Master Edition struct. 
+Editions are created by presenting the Master Edition token, along with a new mint that lacks a Metadata account and a token account containing one token from that mint to the `mint_new_edition_from_master_edition_via_token` endpoint. This endpoint will create both an immutable Metadata based on the parent Metadata and a special Edition struct based on the parent Master Edition struct.
 
 The Edition has the same PDA as a Master Edition to force collision and prevent a user from having a mint with both, `['metaplex', metaplex_program_id, mint_id, 'edition']`.
 
@@ -208,7 +208,7 @@ The Edition has the same PDA as a Master Edition to force collision and prevent 
 
 ### Decoration as PDA Extensions
 
-The whole idea of the Token Metadata program is to be a decorator to a Token Mint. Each struct acts as further decoration. The Metadata struct gives a mint a name and a symbol and points to some external URI that can be anything. The Master Edition gives it printing capabilities. The Edition labels it as a child of something. 
+The whole idea of the Token Metadata program is to be a decorator to a Token Mint. Each struct acts as further decoration. The Metadata struct gives a mint a name and a symbol and points to some external URI that can be anything. The Master Edition gives it printing capabilities. The Edition labels it as a child of something.
 
 This is important to internalize, because it means you as a Rust developer can take it a step further. There is nothing stopping you from building a new contract on top of ours that makes it's own PDAs and and extending this still further. Why not build a CookingRecipes PDA, that has seed `['your-app', your_program_id, mint_id, 'recipes']`? You can require that a Metadata PDA from our contract exists to make a PDA in your program, and then you can further decorate mints on top of our decorations. The idea is to compose mints with further information than they ever had before, and then build clients that can consume that information in new and interesting ways.
 
@@ -245,7 +245,7 @@ The URI resource is compatible with [ERC-1155 JSON Schema](https://github.com/et
         },
 				"seller_fee_basis_points": {
 						"type": "number",
-						
+
 				},
         "properties": {
             "type": "object",
@@ -376,7 +376,7 @@ Safety Deposit Boxes always have PDA addresses of type `['vault', vault_key, min
 
 ### External Price Account
 
-The External Price Account is meant to be used as an external oracle. It is provided to a Vault on initialization and doesn't need to be owned or controlled by the vault authority (though it can be.) It can provide data on the `price_per_share` of fractional shares, whether or not the vault authority is currently allowed to **Combine** the vault and reclaim the contents, and what the `price_mint` of the vault is. 
+The External Price Account is meant to be used as an external oracle. It is provided to a Vault on initialization and doesn't need to be owned or controlled by the vault authority (though it can be.) It can provide data on the `price_per_share` of fractional shares, whether or not the vault authority is currently allowed to **Combine** the vault and reclaim the contents, and what the `price_mint` of the vault is.
 
 ExternalPriceAccounts do not have PDA addresses.
 
@@ -456,6 +456,8 @@ pub struct AuctionDataExtended {
     pub tick_size: Option<u64>,
     /// gap_tick_size_percentage - two decimal points
     pub gap_tick_size_percentage: Option<u8>,
+    /// auction name
+    pub name: Option<[u8; 32]>,
 }
 
 /// Define valid auction state transitions.
@@ -543,11 +545,11 @@ AuctionData accounts always have PDA addresses of `['auction', auction_program_i
 
 ### Bid State
 
-Bid State is technically not a top level struct, but an embedded one within AuctionData. I thought it was good to give it a section anyway because it's a complex little beast. It's actually an enum that holds a bid vector and a maximum size denoting how many of those bids are actually "valid winners" vs just placeholders. 
+Bid State is technically not a top level struct, but an embedded one within AuctionData. I thought it was good to give it a section anyway because it's a complex little beast. It's actually an enum that holds a bid vector and a maximum size denoting how many of those bids are actually "valid winners" vs just placeholders.
 
 It's reversed, which is to say that the number one winner is always at the end of the vec. It's also always bigger generally than the number of winners so that if a bid is cancelled, we have some people who got bumped out of top spots that can be moved back into them without having to cancel and replace their bids. When a bid is placed, it is inserted in the proper position based on it's amount and then the lowest bidder is bumped off the 0th position of the vec if the vec is at max size, so the vec remains sorted at all times.
 
-In the case of open edition, the max is always zero, ie there are never any winners, and we are just accepting bids and creating BidderMetadata tickets and BidderPots to accept payment for (probably) fixed price Participation NFTs. 
+In the case of open edition, the max is always zero, ie there are never any winners, and we are just accepting bids and creating BidderMetadata tickets and BidderPots to accept payment for (probably) fixed price Participation NFTs.
 
 We would prefer that OpenEdition enum have no bid vector and no max, but unfortunately borsh-js does not support enums with different internal data structures, so all data structures in an enum must be identical (even if unused.) Keep that in mind when designing your own end to end borsh implementations!
 
@@ -567,7 +569,7 @@ BidderPot always has a PDA of `['auction', auction_program_id, auction_id, bidde
 
 If you've read this far, you now get to witness my personal shame. So as it turns out, if you build a complex enough program with enough structs flying around, there is some kind of weird interaction in the Metaplex contract that causes it to blow out with an access violation if you add more than a certain number of keys to one particular struct (AuctionData), and *only* during the redemption endpoint calls. We were unable to discern why this was across 3 days of debugging. We had a theory it was due to some issue with borsh but it is not 100% certain, as we're not experts with that library's internals.
 
-Instead, our work-around was to introduce AuctionDataExtended to add new fields that we needed to AuctionData without breaking this hidden bug that seems to exist. What is odd about the whole thing is adding fields to *other* structs doesn't cause any issues. In the future I'd love to have someone who knows way more than me about these subjects weigh in and tell me what I did wrong here to resolve this split-brain problem! We also don't have reverse lookup capability (Resource key on AuctionData) because of this bug - adding it would cause the blow out I mentioned. 
+Instead, our work-around was to introduce AuctionDataExtended to add new fields that we needed to AuctionData without breaking this hidden bug that seems to exist. What is odd about the whole thing is adding fields to *other* structs doesn't cause any issues. In the future I'd love to have someone who knows way more than me about these subjects weigh in and tell me what I did wrong here to resolve this split-brain problem! We also don't have reverse lookup capability (Resource key on AuctionData) because of this bug - adding it would cause the blow out I mentioned.
 
 Another note here is `gap_tick_size_percentage` as of the time of this writing has not been implemented yet, it is just a dummy field.
 
@@ -860,7 +862,7 @@ The instruction set for metaplex can be found here: [https://github.com/metaplex
 
 ### AuctionManager
 
-This is the top level struct of the entire contract and serves as a container for "all the things." When you make auctions on Metaplex, you are actually really making these ultimately. An AuctionManager has a single authority (you, the auctioneer), a store, which is the storefront struct, an Auction from the auction contract, and a Vault from the vault contract. It also has a token account called `accept_payment` that serves as a central clearing escrow for all tokens that it will collect in the future from the winning bidders and all payments for fixed price participation nfts from all non-winners in the auction. 
+This is the top level struct of the entire contract and serves as a container for "all the things." When you make auctions on Metaplex, you are actually really making these ultimately. An AuctionManager has a single authority (you, the auctioneer), a store, which is the storefront struct, an Auction from the auction contract, and a Vault from the vault contract. It also has a token account called `accept_payment` that serves as a central clearing escrow for all tokens that it will collect in the future from the winning bidders and all payments for fixed price participation nfts from all non-winners in the auction.
 
 It contains embedded within it a separate `state` and `settings` struct. It is seeded with the `settings` on initialization by the caller, while the `state` is derived from `settings` on initialization. AuctionManager goes through several states:
 
@@ -872,7 +874,7 @@ It contains embedded within it a separate `state` and `settings` struct. It is s
 
 **Disbursing**: The underlying Auction is over and now the AuctionManager is in the business of disbursing royalties to the auctioneer and creators, prizes and participation NFTs to the winners, and possibly participation NFTs to the non-winners.
 
-**Finished:** All funds and prizes disbursed. 
+**Finished:** All funds and prizes disbursed.
 
 This state is not currently in use as switching to it requires an iteration over prizes to review all items for claimed-ness and this costs CPU that is too precious during the redemption call OR adding new endpoint that is not guaranteed to be called. We will revisit it later to bring it back during a refactoring, for now it is considered a NOOP state.
 
@@ -882,7 +884,7 @@ AuctionManagers always have PDAs of seed `['metaplex', metaplex_program_id, auct
 
 AuctionManagerSettings is an embedded struct inside AuctionManager but is deserving of it's own section. This struct is actually provided by the user in the `init_auction_manager` call to parameterize the AuctionManager with who is winning what and whether or not there is a participation NFT. It is fairly straightforward - for each entry in the WinningConfig vec, it stands for a given winning place in the Auction. The 0th entry is the WinningConfig for the 1st place winner. A WinningConfig has many WinningConfigItems. For each WinningConfigItem in the 0th WinningConfig, it is a mapping to a Vault SafetyDepositBox that the 1st place winner gets items from. You can therefore configure quite arbitrary Auctions this way.
 
-This setup is actually quite redundant and will likely change in the future to a setup where a WinningConfigItem is the top level structure and it simply declares which winners will receive it, because if you wish for multiple winners to receive prints from the same Master Edition, the WinningConfigItem must right now be duplicated across each WinningConfig. 
+This setup is actually quite redundant and will likely change in the future to a setup where a WinningConfigItem is the top level structure and it simply declares which winners will receive it, because if you wish for multiple winners to receive prints from the same Master Edition, the WinningConfigItem must right now be duplicated across each WinningConfig.
 
 The Participation Config is optional, but has enums describing how it will behave for winners and for non-winners, whether or not it has a price associated with it, and what safety deposit box contains its printing tokens.
 
@@ -902,7 +904,7 @@ BidRedemptionTickets always have PDAs of `['metaplex', auction_id, bidder_metada
 
 ### PayoutTicket
 
-For each creator, for each metadata(WinningConfigItem), for each winning place(WinningConfig) in an Auction, a PayoutTicket is created to record the sliver of income generated for that creator. There is also one made for the Auctioneer for every such case. And yes, it really is that specific. This means that a given creator may have quite a few PayoutTickets for a single AuctionManager, but each one represents a slightly different royalty payout. 
+For each creator, for each metadata(WinningConfigItem), for each winning place(WinningConfig) in an Auction, a PayoutTicket is created to record the sliver of income generated for that creator. There is also one made for the Auctioneer for every such case. And yes, it really is that specific. This means that a given creator may have quite a few PayoutTickets for a single AuctionManager, but each one represents a slightly different royalty payout.
 
 For instance, 1st place may have three items with 3 unique metadata won while 2nd place may have 4 metadata from 4 items, every item with a single unique creator. The split of funds in the 1st place is going to be 3 ways, while in 2nd place would be 4 ways. Even if 1st and 2nd place bids are the same, we want two records to reflect the royalties paid from 1st and 2nd place, because they would be different numbers in this case, and we want to preserve history.
 
@@ -958,9 +960,9 @@ Note that owning the token itself is the *only* requirement for using the `updat
 
 Metadata come locked and stocked with arrays of creators, each with their own `share` and all guaranteed to sum to 100. The Metadata itself has a `seller_fee_basis_points` field that represents the share creators get out of the proceeds in any secondary sale and a `primary_sale_happened` boolean that distinguishes to the world whether or not this particular Metadata has experienced it's first sale or not. With all of this, Metaplex is able to do complete Royalty calculations after an Auction is over. It was mentioned above that on initialization, the Metaplex contract snapshots for each Metadata being sold the `primary_sale_happened` just in case the boolean is flipped during the auction so that royalties are calculated as-of initiation - this is important to note.
 
-At the end of the auction, anybody (permissionless) can cycle through each winning bid in the contract and ask the Metaplex contract to use its authority to call the Auction contract and pump the winning bid monies into the `accept_payment` escrow account via `claim_bid`. Once all winning bids have been settled into here, royalties are eligible to be paid out. We'll cover payouts of fixed price Participation NFTs separately. 
+At the end of the auction, anybody (permissionless) can cycle through each winning bid in the contract and ask the Metaplex contract to use its authority to call the Auction contract and pump the winning bid monies into the `accept_payment` escrow account via `claim_bid`. Once all winning bids have been settled into here, royalties are eligible to be paid out. We'll cover payouts of fixed price Participation NFTs separately.
 
-Now, anybody (permissionless) can cycle through each creator PLUS the auctioneer on each item in each winning bid and call `empty_payment_account` with an Associated Token Account that is owned by that creator or auctioneer and that action will calculate, using the creator's share or auctioneer's share of that item's metadata, and the fractional percentage of that item of the overall winning basket, to payout the creator or auctioneer from the escrow. 
+Now, anybody (permissionless) can cycle through each creator PLUS the auctioneer on each item in each winning bid and call `empty_payment_account` with an Associated Token Account that is owned by that creator or auctioneer and that action will calculate, using the creator's share or auctioneer's share of that item's metadata, and the fractional percentage of that item of the overall winning basket, to payout the creator or auctioneer from the escrow.
 
 Our front end implementation immediately calls the `update_primary_sale_happened` endpoint on token metadata for any token once redeemed for users so that if they re-sell, the `primary_sale_happened` boolean is taken into account in the `empty_payment_account` logic and only the basis points given in `seller_fee_basis_points` goes to the creators instead of the whole pie. The remaining part of the pie goes to the auctioneer doing the reselling.
 
@@ -972,9 +974,9 @@ Note because our front end implementation chooses to use SOL instead of a generi
 
 ### Validation
 
-Just because you provide a vault to an AuctionManager and an AuctionManagerSettings declaring this vault is filled with wonderful prizes *does not* believe that Metaplex will believe you. For every safety deposit box indexed in a WinningConfigItem, there must be a call to `validate_safety_deposit_box` after initiation where the safety deposit box is provided for inspection to the Metaplex contract so that it can verify that there are enough tokens, and of the right type, to pay off all winners in the auction. 
+Just because you provide a vault to an AuctionManager and an AuctionManagerSettings declaring this vault is filled with wonderful prizes *does not* believe that Metaplex will believe you. For every safety deposit box indexed in a WinningConfigItem, there must be a call to `validate_safety_deposit_box` after initiation where the safety deposit box is provided for inspection to the Metaplex contract so that it can verify that there are enough tokens, and of the right type, to pay off all winners in the auction.
 
-Given how irritating this process is, we may in the future merge token-vault with metaplex, or simply copy over the parts of it that are relevant, leaving token-vault out for those interested in experimenting with fractionalization. 
+Given how irritating this process is, we may in the future merge token-vault with metaplex, or simply copy over the parts of it that are relevant, leaving token-vault out for those interested in experimenting with fractionalization.
 
 ### Unwon Items
 
