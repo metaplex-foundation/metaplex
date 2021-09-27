@@ -57,6 +57,8 @@ export enum MetaplexKey {
   AuctionManagerV2 = 10,
   BidRedemptionTicketV2 = 11,
   AuctionWinnerTokenTypeTrackerV1 = 12,
+  StoreIndexerV1 = 13,
+  AuctionCacheV1 = 14,
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
@@ -413,6 +415,20 @@ export class RedeemParticipationBidV3Args {
   constructor(args: { winIndex: BN | null }) {
     this.winIndex = args.winIndex;
   }
+}
+
+export class SetStoreIndexArgs {
+  instruction = 21;
+  page: BN;
+  offset: BN;
+  constructor(args: { page: BN; offset: BN }) {
+    this.page = args.page;
+    this.offset = args.offset;
+  }
+}
+
+export class SetAuctionCacheArgs {
+  instruction = 22;
 }
 
 export enum WinningConstraint {

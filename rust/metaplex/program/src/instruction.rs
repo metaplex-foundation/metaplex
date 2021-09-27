@@ -651,6 +651,7 @@ pub enum MetaplexInstruction {
     ///   5. `[]` Rent sysvar
     ///   6. `[]` Clock sysvar
     ///   7. `[optional]` Auction cache above current (pda of ['metaplex', program id, store key, auction key, 'cache'])
+    ///                   Note: Can pass the below in this slot if there is no above
     ///   8. `[optional]` Auction cache below current (pda of ['metaplex', program id, store key, auction key, 'cache'])
     SetStoreIndex(SetStoreIndexArgs),
     /// Creates/Updates a store index page
