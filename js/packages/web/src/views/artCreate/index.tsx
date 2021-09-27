@@ -435,6 +435,7 @@ const UploadStep = (props: {
         </Row>
       )}
       <Form.Item
+        className={'url-form-action'}
         style={{
           width: '100%',
           flexDirection: 'column',
