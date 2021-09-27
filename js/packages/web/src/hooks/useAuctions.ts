@@ -15,7 +15,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMeta } from '../contexts';
 import {
   AuctionManager,
@@ -64,19 +64,8 @@ type CachedRedemptionKeys = Record<
   ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
 >;
 
-export function useStoreAuctionsList() {
-  const { auctions, auctionManagersByAuction } = useMeta();
-  const result = useMemo(() => {
-    return Object.values(auctionManagersByAuction).map(
-      manager => auctions[manager.info.auction],
-    );
-  }, [auctions, auctionManagersByAuction]);
-  return result;
-}
-
 export function useCachedRedemptionKeysByWallet() {
-  const { bidRedemptions } = useMeta();
-  const auctions = useStoreAuctionsList();
+  const { auctions, bidRedemptions } = useMeta();
   const { publicKey } = useWallet();
 
   const [cachedRedemptionKeys, setCachedRedemptionKeys] =
@@ -87,7 +76,7 @@ export function useCachedRedemptionKeysByWallet() {
     (async () => {
       const temp: CachedRedemptionKeys = {};
       await createPipelineExecutor(
-        auctions.values(),
+        Object.values(auctions).values(),
         async auction => {
           if (!cachedRedemptionKeys[auction.pubkey]) {
             await getBidderKeys(auction.pubkey, publicKey.toBase58()).then(
@@ -117,7 +106,7 @@ export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
-  const auctions = useStoreAuctionsList();
+  const { auctions } = useMeta();
 
   const {
     auctionManagersByAuction,
@@ -140,7 +129,7 @@ export const useAuctions = (state?: AuctionViewState) => {
       const auctionViews: AuctionView[] = [];
 
       await createPipelineExecutor(
-        auctions.values(),
+        Object.values(auctions).values(),
         auction => {
           const auctionView = processAccountsIntoAuctionView(
             publicKey?.toBase58(),
