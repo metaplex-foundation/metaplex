@@ -5,8 +5,8 @@ use {
         error::MetaplexError,
         instruction::SetStoreIndexArgs,
         state::{
-            AuctionCache, Key, Store, StoreIndexer, CACHE, INDEX, MAX_METADATA_PER_CACHE,
-            MAX_STORE_INDEXER_SIZE, PREFIX,
+            AuctionCache, Key, Store, StoreIndexer, CACHE, INDEX, MAX_INDEXED_ELEMENTS,
+            MAX_METADATA_PER_CACHE, MAX_STORE_INDEXER_SIZE, PREFIX,
         },
         utils::{
             assert_derivation, assert_owned_by, assert_signer, create_or_allocate_account_raw,
@@ -170,8 +170,21 @@ pub fn process_set_store_index<'a>(
 
     if offset_u > 0 {
         let below_key = &indexer.auction_caches[offset_u - 1];
-        if let Some(bel) = below_cache {
-            if let Some(below_cache_info_unwrapped) = below_cache_info {
+        // special case where you're at top of stack, there is no above
+        let cache_used_for_below = if offset_u == indexer.auction_caches.len() - 1 {
+            above_cache
+        } else {
+            below_cache
+        };
+
+        let cache_info_used_for_below = if offset_u == indexer.auction_caches.len() - 1 {
+            above_cache_info
+        } else {
+            below_cache_info
+        };
+
+        if let Some(bel) = cache_used_for_below {
+            if let Some(below_cache_info_unwrapped) = cache_info_used_for_below {
                 if below_cache_info_unwrapped.key != below_key {
                     return Err(MetaplexError::CacheMismatch.into());
                 } else if bel.timestamp < auction_cache.timestamp {
@@ -186,7 +199,7 @@ pub fn process_set_store_index<'a>(
         }
     }
 
-    let new_vec = vec![];
+    let mut new_vec = vec![];
 
     for n in 0..offset_u {
         new_vec.push(indexer.auction_caches[n])
@@ -195,6 +208,9 @@ pub fn process_set_store_index<'a>(
     new_vec.push(*auction_cache_info.key);
 
     for n in offset_u..indexer.auction_caches.len() {
+        if new_vec.len() == MAX_INDEXED_ELEMENTS {
+            break;
+        }
         new_vec.push(indexer.auction_caches[n])
     }
 

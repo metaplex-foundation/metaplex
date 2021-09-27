@@ -133,8 +133,8 @@ pub fn process_set_auction_cache<'a>(
     if cache.metadata.len() == MAX_METADATA_PER_CACHE {
         return Err(MetaplexError::MaxMetadataCacheSizeReached.into());
     }
-    for key in cache.metadata {
-        if key == metadata {
+    for key in &cache.metadata {
+        if key == &metadata {
             return Err(MetaplexError::DuplicateKeyDetected.into());
         }
     }
