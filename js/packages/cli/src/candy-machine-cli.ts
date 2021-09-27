@@ -23,6 +23,7 @@ import {
 } from './helpers/accounts';
 import { Config } from './types';
 import { upload, populate } from './commands/upload';
+import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
@@ -143,6 +144,31 @@ programCommand('populate')
       log.info('Error populating the files')
   });
 
+programCommand('verify_token_metadata')
+  .argument(
+    '<directory>',
+    'Directory containing images and metadata files named from 0-n',
+    val => {
+      return fs
+        .readdirSync(`${val}`)
+        .map(file => path.join(process.cwd(), val, file));
+    },
+  )
+  .option('-n, --number <number>', 'Number of images to upload')
+  .action((files: string[], options, cmd) => {
+    const { number } = cmd.opts();
+
+    const startMs = Date.now();
+    log.info('started at: ' + startMs.toString());
+    verifyTokenMetadata({ files, uploadElementsCount: number });
+
+    const endMs = Date.now();
+    const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
+    log.info(
+      `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
+    );
+  });
+
 programCommand('verify').action(async (directory, cmd) => {
   const { env, keypair, cacheName } = cmd.opts();
 
@@ -254,14 +280,12 @@ programCommand('verify').action(async (directory, cmd) => {
   const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
 
   log.info(
-    `uploaded (${lineCount.toNumber()}) out of (${
-      configData.data.maxNumberOfLines
+    `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
     })`,
   );
   if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
     throw new Error(
-      `predefined number of NFTs (${
-        configData.data.maxNumberOfLines
+      `predefined number of NFTs (${configData.data.maxNumberOfLines
       }) is smaller than the uploaded one (${lineCount.toNumber()})`,
     );
   } else {
@@ -358,7 +382,7 @@ programCommand('show')
         //@ts-ignore
         machine.data.goLiveDate
           ? //@ts-ignore
-            new Date(machine.data.goLiveDate * 1000)
+          new Date(machine.data.goLiveDate * 1000)
           : 'N/A',
       );
     } catch (e) {
