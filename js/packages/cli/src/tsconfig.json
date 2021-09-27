@@ -14,6 +14,7 @@
     "noLib": false,
     "preserveConstEnums": true,
     "suppressImplicitAnyIndexErrors": true,
+    "resolveJsonModule": true,
     "lib": ["dom", "es2019"]
   },
   "exclude": ["node_modules", "typings/browser", "typings/browser.d.ts"],
