@@ -1458,14 +1458,19 @@ pub mod fair_launch {
 
         let edition_infos = vec![
             ctx.accounts.metadata.clone(),
-            ctx.accounts.mint.clone(),
-            ctx.accounts.mint_authority.clone(),
+            ctx.accounts.new_metadata.clone(),
+            ctx.accounts.new_edition.clone(),
+            ctx.accounts.master_edition.clone(),
+            ctx.accounts.new_mint.clone(),
+            ctx.accounts.participation_token_account.clone(),
+            ctx.accounts.participation_mint.to_account_info(),
             ctx.accounts.payer.clone(),
             ctx.accounts.token_metadata_program.clone(),
             ctx.accounts.token_program.clone(),
             ctx.accounts.system_program.clone(),
-            ctx.accounts.rent.to_account_info().clone(),
-            candy_machine.to_account_info().clone(),
+            ctx.accounts.edition_mark_pda.clone(),
+            ctx.accounts.rent.to_account_info(),
+            fair_launch.to_account_info(),
         ];
 
         invoke_signed(
@@ -1481,7 +1486,8 @@ pub mod fair_launch {
                 *ctx.accounts.participation_token_account.key,
                 fair_launch.key(),
                 *ctx.accounts.metadata.key,
-                *ctx.accounts.participation_mint.key(),
+                ctx.accounts.participation_mint.key(),
+                fair_launch_ticket.seq,
             ),
             edition_infos.as_slice(),
             &[&authority_seeds],
@@ -1490,16 +1496,16 @@ pub mod fair_launch {
         invoke_signed(
             &update_metadata_accounts(
                 *ctx.accounts.token_metadata_program.key,
-                *ctx.accounts.metadata.key,
-                candy_machine.key(),
-                new_update_authority,
+                *ctx.accounts.new_metadata.key,
+                fair_launch.key(),
+                None,
                 None,
                 Some(true),
             ),
             &[
                 ctx.accounts.token_metadata_program.clone(),
-                ctx.accounts.metadata.clone(),
-                candy_machine.to_account_info().clone(),
+                ctx.accounts.new_metadata.clone(),
+                fair_launch.to_account_info(),
             ],
             &[&authority_seeds],
         )?;
@@ -1813,6 +1819,8 @@ pub struct MintParticipationNFT<'info> {
     metadata: AccountInfo<'info>,
     #[account(mut)]
     master_edition: AccountInfo<'info>,
+    #[account(mut)]
+    edition_mark_pda: AccountInfo<'info>,
     #[account(address = spl_token_metadata::id())]
     token_metadata_program: AccountInfo<'info>,
     #[account(address = spl_token::id())]
