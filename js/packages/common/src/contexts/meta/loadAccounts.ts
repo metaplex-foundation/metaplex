@@ -312,6 +312,8 @@ export const loadAccounts = async (connection: Connection) => {
     auctionManagersByAuction: state.auctionManagersByAuction,
   }).then(forEachAccount(processAuctions));
 
+  console.log('Metadata size', state.metadata.length);
+
   return state;
 };
 
