@@ -1,5 +1,6 @@
 import { Connection } from '@solana/web3.js';
-
+import { getProgramAccounts } from './web3';
+import { AUCTION_ID } from '../../utils/ids';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { AuctionManagerV1, AuctionManagerV2 } from '../../models';
 import { ParsedAccount } from '../accounts/types';
@@ -19,7 +20,7 @@ export const pullAuctions = async ({
   connection,
   auctionManagersByAuction,
 }: IPullAuctionsParams) => {
-  const IDS_PER_CHUNK = 100;
+  const IDS_PER_CHUNK = 20;
   const auctionIdsChunks = [
     ...chunks(
       getAuctionsIdsByAuctionManager(auctionManagersByAuction),
@@ -49,20 +50,52 @@ const getAuctionsIdsByAuctionManager = (
     return ids;
   }, [] as string[]);
 
-const pullAuctionsByAuctionManager = ({
+const pullAuctionsByAuctionManager = async ({
   connection,
   ids,
 }: {
   connection: Connection;
   ids: string[];
 }): Promise<AccountAndPubkey[]> => {
-  return getMultipleAccounts(connection, ids, 'single').then(
+  const auctions = await getMultipleAccounts(connection, ids, 'single').then(
     ({ keys, array }) =>
       keys.map((pubkey, i) => ({
         pubkey,
         account: array[i],
       })),
   );
+
+  const bidderMetadata = await Promise.all(
+    auctions.map(auction =>
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 32,
+              bytes: auction.pubkey,
+            },
+          },
+        ],
+      }),
+    ),
+  );
+
+  const bidderPots = await Promise.all(
+    auctions.map(auction =>
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 32,
+              bytes: auction.pubkey,
+            },
+          },
+        ],
+      }),
+    ),
+  );
+
+  return [...auctions, ...bidderMetadata.flat(), ...bidderPots.flat()];
 };
 
 function* chunks(array: string[], chunkSize: number) {
