@@ -38,6 +38,7 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
+import { pullAuctions } from './pullAuctions';
 
 export const USE_SPEED_RUN = false;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
@@ -275,10 +276,6 @@ export const loadAccounts = async (connection: Connection) => {
     getProgramAccounts(connection, VAULT_ID).then(
       forEachAccount(processVaultData),
     );
-  const loadAuctions = () =>
-    getProgramAccounts(connection, AUCTION_ID).then(
-      forEachAccount(processAuctions),
-    );
   const loadMetaplex = () =>
     getProgramAccounts(connection, METAPLEX_ID).then(
       forEachAccount(processMetaplexAccounts),
@@ -298,13 +295,15 @@ export const loadAccounts = async (connection: Connection) => {
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
     loadVaults(),
-    loadAuctions(),
     loadMetaplex(),
   ];
 
   await Promise.all(loading);
 
-  console.log('Metadata size', state.metadata.length);
+  await pullAuctions({
+    connection,
+    auctionManagersByAuction: state.auctionManagersByAuction,
+  }).then(forEachAccount(processAuctions));
 
   return state;
 };
