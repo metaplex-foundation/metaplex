@@ -23,7 +23,10 @@ export enum LiveAuctionViewState {
 
 export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
-  const auctionsEnded = useAuctions(AuctionViewState.Ended);
+  const auctionsEnded = [
+    ...useAuctions(AuctionViewState.Ended),
+    ...useAuctions(AuctionViewState.BuyNow)
+  ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();

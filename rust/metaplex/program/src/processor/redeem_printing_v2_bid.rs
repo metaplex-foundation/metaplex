@@ -200,6 +200,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let edition_marker_info = next_account_info(account_info_iter)?;
     let mint_authority_info = next_account_info(account_info_iter)?;
     let metadata_account_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     let new_edition_account_amount = get_amount_from_token_account(new_edition_token_account_info)?;
 
@@ -230,6 +231,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,

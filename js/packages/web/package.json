@@ -45,7 +45,7 @@
     "build": "next build && tsc --project tsconfig.server.json",
     "export": "next export -o ../../build/web",
     "start:prod": "cross-env NODE_ENV=production node dist/server.js",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "deploy:s3": "yarn export && aws s3 sync ../../build/web",
     "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
     "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
