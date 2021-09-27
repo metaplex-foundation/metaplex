@@ -577,14 +577,34 @@ programCommand('update_candy_machine')
     log.info('updated_candy_machine finished', tx);
   });
 
-programCommand('mint_one_token').action(async (directory, cmd) => {
-  const { keypair, env, cacheName } = cmd.opts();
+programCommand('premint_token')
+  .option(
+    '-n --number <number>',
+    'Premint NFTs based on the number entered starting from 0.json or the last minted JSON  if the command has already ran.',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, number } = cmd.opts();
 
-  const cacheContent = loadCache(cacheName, env);
-  const configAddress = new PublicKey(cacheContent.program.config);
-  const tx = await mint(keypair, env, configAddress);
+    const cacheContent = loadCache(cacheName, env);
+    const configAddress = new PublicKey(cacheContent.program.config);
+    if (number >= 1) {
+      for (let num = 0; num < number; num++) {
+        const tx = await mint(keypair, env, configAddress);
 
-  log.info('mint_one_token finished', tx);
+        log.info('Done', tx);
+        log.info(num);
+      }
+    } else if (number <= 0) {
+      log.info('Number must be greater that 0');
+      return;
+    }
+
+    if (!number) {
+      const tx = await mint(keypair, env, configAddress);
+
+      log.info('Done', tx);
+      return;
+    }
 });
 
 programCommand('sign')
