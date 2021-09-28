@@ -1,4 +1,25 @@
 import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
+import fs from 'fs';
+import weighted from 'weighted';
+import path from 'path';
+
+const { readFile } = fs.promises;
+
+export async function readJsonFile(fileName: string) {
+  const file = await readFile(fileName, 'utf-8');
+  return JSON.parse(file);
+}
+
+export const generateRandomSet = breakdown => {
+  const tmp = {};
+  Object.keys(breakdown).forEach(attr => {
+    const randomSelection = weighted.select(breakdown[attr]);
+    tmp[attr] = randomSelection;
+  });
+
+  return tmp;
+};
+
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
@@ -96,6 +117,64 @@ export function chunks(array, size) {
     (_, index) => array.slice(index * size, (index + 1) * size),
   );
 }
+
+export function generateRandoms(
+  numberOfAttrs: number = 1,
+  total: number = 100,
+) {
+  const numbers = [];
+  const loose_percentage = total / numberOfAttrs;
+
+  for (let i = 0; i < numberOfAttrs; i++) {
+    const random = Math.floor(Math.random() * loose_percentage) + 1;
+    numbers.push(random);
+  }
+
+  const sum = numbers.reduce((prev, cur) => {
+    return prev + cur;
+  }, 0);
+
+  numbers.push(total - sum);
+  return numbers;
+}
+
+export const getMetadata = (
+  name: string = '',
+  symbol: string = '',
+  index: number = 0,
+  creators,
+  description: string = '',
+  seller_fee_basis_points: number = 500,
+  attrs,
+  collection,
+) => {
+  const attributes = [];
+  for (const prop in attrs) {
+    attributes.push({
+      trait_type: prop,
+      value: path.parse(attrs[prop]).name,
+    });
+  }
+  return {
+    name: `${name}${index + 1}`,
+    symbol,
+    image: `${index}.png`,
+    properties: {
+      files: [
+        {
+          uri: `${index}.png`,
+          type: 'image/png',
+        },
+      ],
+      category: 'image',
+      creators,
+    },
+    description,
+    seller_fee_basis_points,
+    attributes,
+    collection,
+  };
+};
 
 const getMultipleAccountsCore = async (
   connection: any,
