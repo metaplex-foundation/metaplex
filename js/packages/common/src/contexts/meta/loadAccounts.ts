@@ -281,7 +281,7 @@ export const loadAccounts = async (connection: Connection) => {
     pullAuctions({
       connection,
       auctionManagersByAuction: state.auctionManagersByAuction,
-    }).then(forEachAccount(processAuctions));
+    }).then(accounts => accounts.forEach(forEachAccount(processAuctions)));
   const loadMetaplex = () =>
     getProgramAccounts(connection, METAPLEX_ID).then(
       forEachAccount(processMetaplexAccounts),

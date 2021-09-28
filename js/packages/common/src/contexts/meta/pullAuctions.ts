@@ -30,13 +30,11 @@ export const pullAuctions = async ({
     ),
   ];
 
-  const auctionsChunks = await Promise.all(
-    auctionIdsChunks.map(ids =>
-      pullAuctionsByAuctionManager({ ids, connection }),
-    ),
+  const auctionsChunks = auctionIdsChunks.map(ids =>
+    pullAuctionsByAuctionManager({ ids, connection }),
   );
 
-  const bidderMetadata = await getProgramAccounts(connection, AUCTION_ID, {
+  const bidderMetadata = getProgramAccounts(connection, AUCTION_ID, {
     filters: [
       // Filter for BidderMetadata by data size
       {
@@ -45,7 +43,7 @@ export const pullAuctions = async ({
     ],
   });
 
-  const bidderPots = await getProgramAccounts(connection, AUCTION_ID, {
+  const bidderPots = getProgramAccounts(connection, AUCTION_ID, {
     filters: [
       // Filter for BidderPot by data size
       {
@@ -54,7 +52,7 @@ export const pullAuctions = async ({
     ],
   });
 
-  return [...auctionsChunks.flat(), ...bidderMetadata, ...bidderPots];
+  return Promise.all([...auctionsChunks, bidderMetadata, bidderPots]);
 };
 
 const getAuctionsIdsByAuctionManager = (
