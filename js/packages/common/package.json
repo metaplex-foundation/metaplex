@@ -24,7 +24,7 @@
     "watch-css": "less-watch-compiler src/ dist/lib/",
     "watch-css-src": "less-watch-compiler src/ src/",
     "watch": "tsc --watch",
-    "test": "jest test",
+    "test": "jest test --passWithNoTests",
     "clean": "rm -rf dist",
     "prepare": "run-s clean build",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
