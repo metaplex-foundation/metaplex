@@ -6,7 +6,7 @@ use {
         instruction::SetStoreIndexArgs,
         state::{
             AuctionCache, Key, Store, StoreIndexer, CACHE, INDEX, MAX_INDEXED_ELEMENTS,
-            MAX_METADATA_PER_CACHE, MAX_STORE_INDEXER_SIZE, PREFIX,
+            MAX_STORE_INDEXER_SIZE, PREFIX,
         },
         utils::{
             assert_derivation, assert_owned_by, assert_signer, create_or_allocate_account_raw,
@@ -19,8 +19,6 @@ use {
         pubkey::Pubkey,
         sysvar::{clock::Clock, Sysvar},
     },
-    spl_auction::processor::AuctionData,
-    spl_token_vault::state::SafetyDepositBox,
 };
 pub fn process_set_store_index<'a>(
     program_id: &'a Pubkey,

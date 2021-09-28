@@ -18,6 +18,10 @@ import {
   BidRedemptionTicketV2,
   decodeSafetyDepositConfig,
   SafetyDepositConfig,
+  decodeAuctionCache,
+  AuctionCache,
+  decodeStoreIndexer,
+  StoreIndexer,
 } from '../../models';
 import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, programIds, pubkeyToString } from '../../utils';
@@ -89,6 +93,26 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         info: ticket,
       };
       setter('payoutTickets', pubkey, parsedAccount);
+    }
+
+    if (isAuctionCacheV1Account(account)) {
+      const cache = decodeAuctionCache(account.data);
+      const parsedAccount: ParsedAccount<AuctionCache> = {
+        pubkey,
+        account,
+        info: cache,
+      };
+      setter('auctionCaches', pubkey, parsedAccount);
+    }
+
+    if (isStoreIndexerV1Account(account)) {
+      const indexer = decodeStoreIndexer(account.data);
+      const parsedAccount: ParsedAccount<StoreIndexer> = {
+        pubkey,
+        account,
+        info: indexer,
+      };
+      setter('storeIndexer', pubkey, parsedAccount);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
@@ -186,3 +210,7 @@ const isSafetyDepositConfigV1Account = (account: AccountInfo<Buffer>) =>
 
 const isWhitelistedCreatorV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.WhitelistedCreatorV1;
+const isAuctionCacheV1Account = (account: AccountInfo<Buffer>) =>
+  account.data[0] === MetaplexKey.AuctionCacheV1;
+const isStoreIndexerV1Account = (account: AccountInfo<Buffer>) =>
+  account.data[0] === MetaplexKey.StoreIndexerV1;

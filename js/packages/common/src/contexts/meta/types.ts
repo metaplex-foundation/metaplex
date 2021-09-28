@@ -12,6 +12,7 @@ import {
   Vault,
 } from '../../actions';
 import {
+  AuctionCache,
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
@@ -20,6 +21,7 @@ import {
   PrizeTrackingTicket,
   SafetyDepositConfig,
   Store,
+  StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
 import { PublicKeyStringAndAccount } from '../../utils';
@@ -71,6 +73,8 @@ export interface MetaState {
     ParsedAccount<WhitelistedCreator>
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
+  auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
+  storeIndexer: ParsedAccount<StoreIndexer>[];
 }
 
 export interface MetaContextState extends MetaState {
