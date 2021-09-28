@@ -4,7 +4,7 @@ export const data = {
     subtitle: 'About Us',
     bannerImage: '/main-banner.png',
   },
-  leftContent: null,
+  leftContent: undefined,
   midContent: {
     sections: [
       {
