@@ -312,8 +312,6 @@ export const loadAccounts = async (connection: Connection) => {
       a.pubkey === b.pubkey,
   );
 
-  console.log('Metadata size', state.metadata.length);
-
   return state;
 };
 
