@@ -12,7 +12,6 @@ export async function createPipelineExecutor<T>(
   } = {},
 ) {
   function execute<T>(iter: IteratorResult<T, any>) {
-    // TODO: wait for async executor
     executor(iter.value);
   }
 
