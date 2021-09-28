@@ -18,5 +18,5 @@ export const data = {
       },
     ],
   },
-  bottomContent: false,
+  bottomContent: true,
 };
