@@ -19,6 +19,7 @@ import {
   decodeMetadata,
   getAuctionExtended,
 } from '../../actions';
+import { uniqWith } from 'lodash';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -304,7 +305,11 @@ export const loadAccounts = async (connection: Connection) => {
 
   await Promise.all(loading);
 
-  console.log('Metadata size', state.metadata.length);
+  state.metadata = uniqWith(
+    state.metadata,
+    (a: ParsedAccount<Metadata>, b: ParsedAccount<Metadata>) =>
+      a.pubkey === b.pubkey,
+  );
 
   return state;
 };
