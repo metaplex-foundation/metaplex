@@ -19,6 +19,6 @@
     "jsx": "preserve",
     "typeRoots": ["../../types"]
   },
-  "include": ["src"],
+  "include": ["types/lib.es5.d.ts", "src"],
   "exclude": ["node_modules"]
 }

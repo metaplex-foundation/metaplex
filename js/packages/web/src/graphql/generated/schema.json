@@ -1,0 +1,1890 @@
+{
+  "__schema": {
+    "queryType": {
+      "name": "Query"
+    },
+    "mutationType": null,
+    "subscriptionType": null,
+    "types": [
+      {
+        "kind": "OBJECT",
+        "name": "AmountRange",
+        "fields": [
+          {
+            "name": "amount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "length",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Artwork",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "uri",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "title",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "mint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "creators",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "ArtworkCreator",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "sellerFeeBasisPoints",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "supply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "maxSupply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "edition",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "String"
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Int"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtworkCreator",
+        "fields": [
+          {
+            "name": "address",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "verified",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "share",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Boolean"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Auction",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "authority",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "tokenMint",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "lastBid",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "endedAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "endAuctionAt",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auctionGap",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "priceFloor",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "PriceFloor",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "bidState",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "BidState",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "bidRedemptionKey",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "manager",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "AuctionManager",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "viewState",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "thumbnail",
+            "type": {
+              "kind": "OBJECT",
+              "name": "Artwork",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "highestBid",
+            "type": {
+              "kind": "OBJECT",
+              "name": "BidderMetadata",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "bids",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "BidderMetadata",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "numWinners",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionDataExtended",
+        "fields": [
+          {
+            "name": "totalUncancelledBids",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "tickSize",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "gapTickSizePercentage",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionManager",
+        "fields": [
+          {
+            "name": "store",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "authority",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "auction",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "vault",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "acceptPayment",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "safetyDepositBoxesExpected",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "safetyDepositBoxes",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "SafetyDepositBox",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "participationConfig",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ParticipationConfigV2",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionManagerStateV1",
+        "fields": [
+          {
+            "name": "status",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "winningConfigItemsValidated",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionManagerStateV2",
+        "fields": [
+          {
+            "name": "status",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "safetyConfigItemsValidated",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "bidsPushedToAcceptPayment",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "hasParticipation",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionManagerV1",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "store",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "authority",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auction",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "vault",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "acceptPayment",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "OBJECT",
+              "name": "AuctionManagerStateV1",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "AuctionManagerV2",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "store",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "authority",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auction",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "vault",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "acceptPayment",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "OBJECT",
+              "name": "AuctionManagerStateV2",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "BN"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Bid",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "amount",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "BidRedemptionTicket",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "BidState",
+        "fields": [
+          {
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "bids",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "LIST",
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Bid",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "max",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "BidderMetadata",
+        "fields": [
+          {
+            "name": "bidderPubkey",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "auctionPubkey",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "lastBid",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "lastBidTimestamp",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "BN",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "cancelled",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "BidderPot",
+        "fields": [
+          {
+            "name": "bidderPot",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "bidderAct",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auctionAct",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "emptied",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Buffer"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Creator",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "address",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "activated",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Edition",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "parent",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "edition",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "UNION",
+        "name": "MasterEdition",
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "MasterEditionV1"
+          },
+          {
+            "kind": "OBJECT",
+            "name": "MasterEditionV2"
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "MasterEditionV1",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "supply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "maxSupply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "printingMint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "oneTimePrintingAuthorizationMint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "MasterEditionV2",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "supply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "maxSupply",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ParticipationConfigV2",
+        "fields": [
+          {
+            "name": "winnerConstraint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "nonWinningConstraint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "safetyDepositBoxIndex",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "fixedPrice",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ParticipationStateV2",
+        "fields": [
+          {
+            "name": "collectedToAcceptPayment",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PayoutTicket",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "recipient",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "amountPaid",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PriceFloor",
+        "fields": [
+          {
+            "name": "type",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "minPrice",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "hash",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Uint8Array",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PrizeTrackingTicket",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "metadata",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "supplySnapshot",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "expectedRedemptions",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "redemptions",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "PublicKey"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Query",
+        "fields": [
+          {
+            "name": "storesCount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "creatorsCount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "artworksCount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auctionsCount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "stores",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Store",
+                  "ofType": null
+                }
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "store",
+            "type": {
+              "kind": "OBJECT",
+              "name": "Store",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "storeId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "creators",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Creator",
+                  "ofType": null
+                }
+              }
+            },
+            "args": [
+              {
+                "name": "storeId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "creator",
+            "type": {
+              "kind": "OBJECT",
+              "name": "Creator",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "storeId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              },
+              {
+                "name": "creatorId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "artworks",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Artwork",
+                  "ofType": null
+                }
+              }
+            },
+            "args": [
+              {
+                "name": "filter",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "artwork",
+            "type": {
+              "kind": "OBJECT",
+              "name": "Artwork",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "artId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "auctions",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "NON_NULL",
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "Auction",
+                  "ofType": null
+                }
+              }
+            },
+            "args": [
+              {
+                "name": "filter",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "Any"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "auction",
+            "type": {
+              "kind": "OBJECT",
+              "name": "Auction",
+              "ofType": null
+            },
+            "args": [
+              {
+                "name": "auctionId",
+                "type": {
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "SafetyDepositBox",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Any"
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "vault",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "tokenMint",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "store",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "PublicKey",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "order",
+            "type": {
+              "kind": "NON_NULL",
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "SafetyDepositConfig",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auctionManager",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "order",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "winningConfigType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "amountType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "lengthType",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "amountRanges",
+            "type": {
+              "kind": "LIST",
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "AmountRange",
+                "ofType": null
+              }
+            },
+            "args": []
+          },
+          {
+            "name": "participationConfig",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ParticipationConfigV2",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "participationState",
+            "type": {
+              "kind": "OBJECT",
+              "name": "ParticipationStateV2",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Store",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "public",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "auctionProgram",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "tokenVaultProgram",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "tokenMetadataProgram",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "tokenProgram",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Uint8Array"
+      },
+      {
+        "kind": "OBJECT",
+        "name": "Vault",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          },
+          {
+            "name": "tokenProgram",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "fractionMint",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "authority",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "fractionTreasury",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "redeemTreasury",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "allowFurtherShareCreation",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Boolean",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "pricingLookupAddress",
+            "type": {
+              "kind": "SCALAR",
+              "name": "PublicKey",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "tokenTypeCount",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "lockedPricePerShare",
+            "type": {
+              "kind": "SCALAR",
+              "name": "BN",
+              "ofType": null
+            },
+            "args": []
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "SCALAR",
+              "name": "Any"
+            },
+            "args": []
+          }
+        ],
+        "interfaces": []
+      },
+      {
+        "kind": "SCALAR",
+        "name": "Any"
+      }
+    ],
+    "directives": []
+  }
+}

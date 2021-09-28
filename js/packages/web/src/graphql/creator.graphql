@@ -1,0 +1,23 @@
+fragment CreatorFragment on Creator {
+  address
+  activated
+}
+#import "./artwork.graphql"
+
+query getCreators($storeId: String!) {
+  creators(storeId: $storeId) {
+    ...CreatorFragment
+  }
+}
+
+query getCreatorWithArtworks($storeId: String!, $creatorId: String!) {
+  creator(storeId: $storeId, creatorId: $creatorId) {
+    ...CreatorFragment
+  }
+  artworks(
+    filter: { storeId: $storeId, creatorId: $creatorId, onlyVerified: true }
+  ) {
+    ...ArtworkFragment
+  }
+}
+

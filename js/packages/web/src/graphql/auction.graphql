@@ -1,0 +1,84 @@
+fragment BidFragment on BidderMetadata {
+  bidderPubkey
+  auctionPubkey
+  lastBid
+  lastBidTimestamp
+  cancelled
+}
+
+fragment AuctionFragment on Auction {
+  pubkey
+  thumbnail {
+    uri
+    title
+  }
+  highestBid {
+    ...BidFragment
+  }
+  priceFloor {
+    hash
+    minPrice
+    type
+  }
+  manager {
+    participationConfig {
+      winnerConstraint
+      nonWinningConstraint
+      safetyDepositBoxIndex
+      fixedPrice
+    }
+  }
+  numWinners
+  state
+  viewState
+  auctionGap
+  endAuctionAt
+  endedAt
+  lastBid
+  tokenMint
+}
+
+fragment AuctionExtraFragment on Auction {
+  bidState {
+    type
+    bids {
+      amount
+      key
+    }
+    max
+  }
+  bids {
+    ...BidFragment
+  }
+  manager {
+    authority
+    safetyDepositBoxesExpected
+    safetyDepositBoxes {
+      key
+      vault
+      tokenMint
+      store
+      order
+    }
+    vault
+  }
+}
+
+query getAuctions(
+  $storeId: String!
+  $participantId: String
+  $state: AuctionInputState
+) {
+  auctions(
+    filter: { storeId: $storeId, participantId: $participantId, state: $state }
+  ) {
+    ...AuctionFragment
+  }
+}
+
+query getAuctionById($storeId: String!, $auctionId: String!) {
+  auction(auctionId: $auctionId) {
+    ...AuctionFragment
+    ...AuctionExtraFragment
+  }
+}
