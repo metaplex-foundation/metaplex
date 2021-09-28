@@ -11,10 +11,11 @@ import {
   MasterEditionV2,
   StringPublicKey,
   AuctionDataExtended,
+  createPipelineExecutor,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMeta } from '../contexts';
 import {
   AuctionManager,
@@ -58,51 +59,54 @@ export interface AuctionView {
   isInstantSale: boolean;
 }
 
+type CachedRedemptionKeys = Record<
+  string,
+  ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
+>;
+
+export function useStoreAuctionsList() {
+  const { auctions, auctionManagersByAuction } = useMeta();
+  const result = useMemo(() => {
+    return Object.values(auctionManagersByAuction).map(
+      manager => auctions[manager.info.auction],
+    );
+  }, [auctions, auctionManagersByAuction]);
+  return result;
+}
+
 export function useCachedRedemptionKeysByWallet() {
-  const { auctions, bidRedemptions } = useMeta();
+  const { bidRedemptions } = useMeta();
+  const auctions = useStoreAuctionsList();
   const { publicKey } = useWallet();
 
-  const [cachedRedemptionKeys, setCachedRedemptionKeys] = useState<
-    Record<
-      string,
-      | ParsedAccount<BidRedemptionTicket>
-      | { pubkey: StringPublicKey; info: null }
-    >
-  >({});
+  const [cachedRedemptionKeys, setCachedRedemptionKeys] =
+    useState<CachedRedemptionKeys>({});
 
   useEffect(() => {
+    if (!publicKey) return;
     (async () => {
-      if (publicKey) {
-        const temp: Record<
-          string,
-          | ParsedAccount<BidRedemptionTicket>
-          | { pubkey: StringPublicKey; info: null }
-        > = {};
-        const keys = Object.keys(auctions);
-        const tasks: Promise<void>[] = [];
-        for (let i = 0; i < keys.length; i++) {
-          const a = keys[i];
-          if (!cachedRedemptionKeys[a])
-            tasks.push(
-              getBidderKeys(auctions[a].pubkey, publicKey.toBase58()).then(
-                key => {
-                  temp[a] = bidRedemptions[key.bidRedemption]
-                    ? bidRedemptions[key.bidRedemption]
-                    : { pubkey: key.bidRedemption, info: null };
-                },
-              ),
+      const temp: CachedRedemptionKeys = {};
+      await createPipelineExecutor(
+        auctions.values(),
+        async auction => {
+          if (!cachedRedemptionKeys[auction.pubkey]) {
+            await getBidderKeys(auction.pubkey, publicKey.toBase58()).then(
+              key => {
+                temp[auction.pubkey] = bidRedemptions[key.bidRedemption]
+                  ? bidRedemptions[key.bidRedemption]
+                  : { pubkey: key.bidRedemption, info: null };
+              },
             );
-          else if (!cachedRedemptionKeys[a].info) {
-            temp[a] =
-              bidRedemptions[cachedRedemptionKeys[a].pubkey] ||
-              cachedRedemptionKeys[a];
+          } else if (!cachedRedemptionKeys[auction.pubkey].info) {
+            temp[auction.pubkey] =
+              bidRedemptions[cachedRedemptionKeys[auction.pubkey].pubkey] ||
+              cachedRedemptionKeys[auction.pubkey];
           }
-        }
+        },
+        { delay: 1, sequence: 2 },
+      );
 
-        await Promise.all(tasks);
-
-        setCachedRedemptionKeys(temp);
-      }
+      setCachedRedemptionKeys(temp);
     })();
   }, [auctions, bidRedemptions, publicKey]);
 
@@ -113,9 +117,9 @@ export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+  const auctions = useStoreAuctionsList();
 
   const {
-    auctions,
     auctionManagersByAuction,
     safetyDepositBoxesByVaultAndIndex,
     metadataByMint,
@@ -132,40 +136,39 @@ export const useAuctions = (state?: AuctionViewState) => {
   } = useMeta();
 
   useEffect(() => {
-    const map = Object.keys(auctions).reduce((agg, a) => {
-      const auction = auctions[a];
-      const nextAuctionView = processAccountsIntoAuctionView(
-        publicKey?.toBase58(),
-        auction,
-        auctionDataExtended,
-        auctionManagersByAuction,
-        safetyDepositBoxesByVaultAndIndex,
-        metadataByMint,
-        bidderMetadataByAuctionAndBidder,
-        bidderPotsByAuctionAndBidder,
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
-        masterEditions,
-        vaults,
-        safetyDepositConfigsByAuctionManagerAndIndex,
-        masterEditionsByPrintingMint,
-        masterEditionsByOneTimeAuthMint,
-        metadataByMasterEdition,
-        cachedRedemptionKeys,
-        state,
-      );
-      agg[a] = nextAuctionView;
-      return agg;
-    }, {} as Record<string, AuctionView | undefined>);
+    (async () => {
+      const auctionViews: AuctionView[] = [];
 
-    setAuctionViews(
-      (Object.values(map).filter(v => v) as AuctionView[]).sort((a, b) => {
-        return (
-          b?.auction.info.endedAt
-            ?.sub(a?.auction.info.endedAt || new BN(0))
-            .toNumber() || 0
-        );
-      }),
-    );
+      await createPipelineExecutor(
+        auctions.values(),
+        auction => {
+          const auctionView = processAccountsIntoAuctionView(
+            publicKey?.toBase58(),
+            auction,
+            auctionDataExtended,
+            auctionManagersByAuction,
+            safetyDepositBoxesByVaultAndIndex,
+            metadataByMint,
+            bidderMetadataByAuctionAndBidder,
+            bidderPotsByAuctionAndBidder,
+            bidRedemptionV2sByAuctionManagerAndWinningIndex,
+            masterEditions,
+            vaults,
+            safetyDepositConfigsByAuctionManagerAndIndex,
+            masterEditionsByPrintingMint,
+            masterEditionsByOneTimeAuthMint,
+            metadataByMasterEdition,
+            cachedRedemptionKeys,
+            state,
+          );
+          if (auctionView) {
+            auctionViews.push(auctionView);
+          }
+        },
+        { delay: 1, sequence: 2 },
+      );
+      setAuctionViews(auctionViews.sort(sortByEnded));
+    })();
   }, [
     state,
     auctions,
@@ -189,6 +192,13 @@ export const useAuctions = (state?: AuctionViewState) => {
 
   return auctionViews;
 };
+
+function sortByEnded(a: AuctionView, b: AuctionView) {
+  return (
+    (b.auction.info.endedAt?.toNumber() || 0) -
+    (a.auction.info.endedAt?.toNumber() || 0)
+  );
+}
 
 function isInstantSale(
   auctionDataExt: ParsedAccount<AuctionDataExtended> | null,
