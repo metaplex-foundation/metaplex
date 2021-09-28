@@ -495,7 +495,7 @@ export function Notifications() {
       content={content}
       trigger="click"
     >
-      <h1 />
+      <h1 className="title"/>
     </Popover>
   );
 
