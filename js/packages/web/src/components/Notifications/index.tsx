@@ -27,7 +27,7 @@ import { settle } from '../../actions/settle';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
-import { AuctionViewState, useAuctions } from '../../hooks';
+import { AuctionViewState, useAuctions, useNotifications } from '../../hooks';
 
 interface NotificationCard {
   id: string;
@@ -191,10 +191,12 @@ export function useSettlementAuctions({
       const nextBatch = auctionsNeedingSettling
         .filter(
           a => {
+            // QUESTION: Finding metadata associated to an action is an expensive operation. Is there any other way to check end of instant sale? - @kespinola
             const isEndedInstantSale = a.isInstantSale && a.items.length === a.auction.info.bidState.bids.length;
 
            return walletPubkey &&
             a.auctionManager.authority === walletPubkey &&
+
              (a.auction.info.ended() || isEndedInstantSale)
           }
         )
@@ -304,37 +306,23 @@ export function Notifications() {
     vaults,
     safetyDepositBoxesByVaultAndIndex,
   } = useMeta();
-  const possiblyBrokenAuctionManagerSetups = useAuctions(
-    AuctionViewState.Defective,
-  );
 
-  const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
-
   const notifications: NotificationCard[] = [];
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
+
+  const { upcomingAuctions, vaultsNeedUnwinding, possiblyBrokenAuctions } = useNotifications(walletPubkey)
 
   useCollapseWrappedSol({ connection, wallet, notifications });
 
   useSettlementAuctions({ connection, wallet, notifications });
 
-  const vaultsNeedUnwinding = useMemo(
-    () =>
-      Object.values(vaults).filter(
-        v =>
-          v.info.authority === walletPubkey &&
-          v.info.state !== VaultState.Deactivated &&
-          v.info.tokenTypeCount > 0,
-      ),
-    [vaults, walletPubkey],
-  );
 
-  vaultsNeedUnwinding.forEach(v => {
+  vaultsNeedUnwinding.forEach(av => {
     notifications.push({
-      id: v.pubkey,
+      id: av.vault.pubkey,
       title: 'You have items locked in a defective auction!',
       description: (
         <span>
@@ -347,8 +335,7 @@ export function Notifications() {
           await unwindVault(
             connection,
             wallet,
-            v,
-            safetyDepositBoxesByVaultAndIndex,
+            av.vault,
           );
         } catch (e) {
           console.error(e);
@@ -359,11 +346,10 @@ export function Notifications() {
     });
   });
 
-  possiblyBrokenAuctionManagerSetups
-    .filter(v => v.auctionManager.authority === walletPubkey)
-    .forEach(v => {
+  possiblyBrokenAuctions
+    .forEach(av => {
       notifications.push({
-        id: v.auctionManager.pubkey,
+        id: av.auctionManager.pubkey,
         title: 'You have items locked in a defective auction!',
         description: (
           <span>
@@ -376,8 +362,7 @@ export function Notifications() {
             await decommAuctionManagerAndReturnPrizes(
               connection,
               wallet,
-              v,
-              safetyDepositBoxesByVaultAndIndex,
+              av,
             );
           } catch (e) {
             console.error(e);
@@ -429,7 +414,6 @@ export function Notifications() {
   });
 
   upcomingAuctions
-    .filter(v => v.auctionManager.authority === walletPubkey)
     .forEach(v => {
       notifications.push({
         id: v.auctionManager.pubkey,
@@ -437,7 +421,7 @@ export function Notifications() {
         description: <span>You can activate it now if you wish.</span>,
         action: async () => {
           try {
-            await startAuctionManually(connection, wallet, v);
+            await startAuctionManually(connection, wallet, v.auctionManager);
           } catch (e) {
             console.error(e);
             return false;

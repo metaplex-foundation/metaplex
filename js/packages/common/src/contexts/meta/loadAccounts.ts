@@ -322,6 +322,30 @@ export const loadAccounts = async (connection: Connection) => {
   return state;
 };
 
+export const querySafetyDepositBoxByVault = async (
+  connection: Connection,
+  vaultPublicKey: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const response = await getProgramAccounts(connection, VAULT_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset: 1,
+          bytes: vaultPublicKey,
+        },
+      },
+    ],
+  });
+
+  await forEachAccount(processVaultData)(response);
+
+  return state;
+};
+
 const pullEditions = async (
   connection: Connection,
   updater: UpdateStateValueFunc,

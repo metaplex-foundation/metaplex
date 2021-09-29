@@ -39,6 +39,12 @@ export enum AuctionViewState {
   Defective = '-1',
 }
 
+export interface AuctionViewCompact {
+  auction: ParsedAccount<AuctionData>;
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>;
+  vault: ParsedAccount<Vault>;
+}
+
 // Flattened surface item for easy display
 export interface AuctionView {
   // items 1:1 with winning configs FOR NOW
@@ -63,6 +69,22 @@ type CachedRedemptionKeys = Record<
   string,
   ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
 >;
+
+export function useCompactAuctions(): AuctionViewCompact[] {
+  const { auctionManagersByAuction, auctions, vaults } = useMeta();
+
+  const result = useMemo(() => {
+    return Object.values(auctionManagersByAuction).map(
+      (am: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>) => ({
+        auctionManager: am,
+        auction: auctions[am.info.auction],
+        vault: vaults[am.info.vault],
+      }),
+    );
+  }, [auctions, auctionManagersByAuction, vaults]);
+
+  return result;
+}
 
 export function useStoreAuctionsList() {
   const { auctions, auctionManagersByAuction } = useMeta();
