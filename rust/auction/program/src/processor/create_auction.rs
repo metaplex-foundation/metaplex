@@ -38,6 +38,8 @@ pub struct CreateAuctionArgs {
     pub authority: Pubkey,
     /// The resource being auctioned. See AuctionData.
     pub resource: Pubkey,
+    /// Bidders must have a gateway token issued by this gatekeeper network
+    pub gatekeeper_network: Pubkey,
     /// Set a price floor.
     pub price_floor: PriceFloor,
     /// Add a tick size increment
@@ -174,6 +176,7 @@ pub fn create_auction(
         price_floor: args.price_floor,
         state: AuctionState::create(),
         token_mint: args.token_mint,
+        gatekeeper_network: args.gatekeeper_network,
     }
     .serialize(&mut *accounts.auction.data.borrow_mut())?;
 

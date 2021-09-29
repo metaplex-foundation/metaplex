@@ -21,7 +21,8 @@
     "deploy": "run-s deploy:docs build deploy:apps && gh-pages -d docs",
     "deploy:docs": "lerna run docs",
     "deploy:apps": "lerna run deploy:app",
-    "test": "lerna run test --concurrency 1 --stream"
+    "test": "lerna run test --concurrency 1 --stream",
+    "start-validator": "solana-test-validator --bpf-program DZxpsi43zwqhuJMF7hmjkFRfDqQiomcVxxbZMBVv1fJE ../rust/target/deploy/spl_metaplex.so  --bpf-program FNf4UwkDtEAWHq6VKb8b9pzKoQ216stiCAgkwhvqxdWQ ../rust/target/deploy/spl_auction.so --bpf-program GeQcdU63wetoiz4iE925wzFScjd3Xgqy7k6uQhXYZesa ../rust/target/deploy/spl_token_vault.so --bpf-program G8oVfhfSMALe4M1b5oDnpkjvjSakjp5LL8rvKsH4nREa ../rust/target/deploy/spl_token_metadata.so --bpf-program gatem74V238djXdzWnJf94Wo1DcnuGkfijbf3AuBhfs ../program/test/fixtures/solana_gateway_program.so --reset"
   },
   "lint-staged": {
     "packages/*/{src,test}/**/*.ts": [

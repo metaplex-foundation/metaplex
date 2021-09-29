@@ -39,6 +39,8 @@ pub struct CreateAuctionArgsV2 {
     pub authority: Pubkey,
     /// The resource being auctioned. See AuctionData.
     pub resource: Pubkey,
+    /// Bidders must have a gateway token issued by this gatekeeper network
+    pub gatekeeper_network: Pubkey,
     /// Set a price floor.
     pub price_floor: PriceFloor,
     /// Add a tick size increment
@@ -89,6 +91,7 @@ pub fn create_auction_v2(
             token_mint: args.token_mint,
             authority: args.authority,
             resource: args.resource,
+            gatekeeper_network: args.gatekeeper_network,
             price_floor: args.price_floor,
             tick_size: args.tick_size,
             gap_tick_size_percentage: args.gap_tick_size_percentage,

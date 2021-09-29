@@ -14,6 +14,7 @@ use {
         sysvar::{rent::Rent, Sysvar},
     },
     std::convert::TryInto,
+    solana_gateway::Gateway,
 };
 
 pub fn assert_initialized<T: Pack + IsInitialized>(

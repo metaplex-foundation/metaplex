@@ -43,6 +43,7 @@ use {
         system_instruction::create_account,
         sysvar::{clock::Clock, Sysvar},
     },
+    solana_gateway::Gateway,
     spl_token::state::Account,
     std::mem,
 };
@@ -64,6 +65,7 @@ struct Accounts<'a, 'b: 'a> {
     bidder_pot: &'a AccountInfo<'b>,
     bidder_pot_token: &'a AccountInfo<'b>,
     bidder: &'a AccountInfo<'b>,
+    bidder_gateway_token: &'a AccountInfo<'b>,
     bidder_token: &'a AccountInfo<'b>,
     clock_sysvar: &'a AccountInfo<'b>,
     mint: &'a AccountInfo<'b>,
@@ -81,6 +83,7 @@ fn parse_accounts<'a, 'b: 'a>(
     let account_iter = &mut accounts.iter();
     let accounts = Accounts {
         bidder: next_account_info(account_iter)?,
+        bidder_gateway_token: next_account_info(account_iter)?,
         bidder_token: next_account_info(account_iter)?,
         bidder_pot: next_account_info(account_iter)?,
         bidder_pot_token: next_account_info(account_iter)?,
@@ -132,6 +135,10 @@ pub fn place_bid<'r, 'b: 'r>(
 
     // Load the auction and verify this bid is valid.
     let mut auction = AuctionData::from_account_info(accounts.auction)?;
+
+    // Verify the bidder's gateway token
+    let gateway_verification_result = Gateway::verify_gateway_token_account_info(accounts.bidder_gateway_token, accounts.bidder.key, &auction.gatekeeper_network)?;
+    msg!("Gateway Token validated {:?}", gateway_verification_result);
 
     // Load the clock, used for various auction timing.
     let clock = Clock::from_account_info(accounts.clock_sysvar)?;

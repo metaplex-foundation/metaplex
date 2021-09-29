@@ -70,18 +70,19 @@ pub enum AuctionInstruction {
 
     /// Place a bid on a running auction.
     ///   0. `[signer]` The bidders primary account, for PDA calculation/transit auth.
-    ///   1. `[writable]` The bidders token account they'll pay with
-    ///   2. `[writable]` The pot, containing a reference to the stored SPL token account.
-    ///   3. `[writable]` The pot SPL account, where the tokens will be deposited.
-    ///   4. `[writable]` The metadata account, storing information about the bidders actions.
-    ///   5. `[writable]` Auction account, containing data about the auction and item being bid on.
-    ///   6. `[writable]` Token mint, for transfer instructions and verification.
-    ///   7. `[signer]` Transfer authority, for moving tokens into the bid pot.
-    ///   8. `[signer]` Payer
-    ///   9. `[]` Clock sysvar
-    ///   10. `[]` Rent sysvar
-    ///   11. `[]` System program
-    ///   12. `[]` SPL Token Program
+    ///   1. `[]` Gateway token, for authorizing the bidder's primary account.
+    ///   2. `[writable]` The bidders token account they'll pay with
+    ///   3. `[writable]` The pot, containing a reference to the stored SPL token account.
+    ///   4. `[writable]` The pot SPL account, where the tokens will be deposited.
+    ///   5. `[writable]` The metadata account, storing information about the bidders actions.
+    ///   6. `[writable]` Auction account, containing data about the auction and item being bid on.
+    ///   7. `[writable]` Token mint, for transfer instructions and verification.
+    ///   8. `[signer]` Transfer authority, for moving tokens into the bid pot.
+    ///   9. `[signer]` Payer
+    ///   10. `[]` Clock sysvar
+    ///   11. `[]` Rent sysvar
+    ///   12. `[]` System program
+    ///   13. `[]` SPL Token Program
     PlaceBid(PlaceBidArgs),
 
     /// Create a new auction account bound to a resource, initially in a pending state.
@@ -403,7 +404,7 @@ pub fn claim_bid_instruction(
         AccountMeta::new_readonly(bidder_pubkey, false),
         AccountMeta::new_readonly(token_mint_pubkey, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
-        AccountMeta::new_readonly(spl_token::id(), false),        
+        AccountMeta::new_readonly(spl_token::id(), false),
     ];
 
     if let Some(auction_extended) = auction_extended_pubkey {
