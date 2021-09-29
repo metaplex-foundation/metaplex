@@ -374,6 +374,7 @@ programCommand('show')
       //@ts-ignore
       log.info(
         'tokenMint: ',
+        //@ts-ignore
         machine.tokenMint ? machine.tokenMint.toBase58() : null,
       );
       //@ts-ignore
