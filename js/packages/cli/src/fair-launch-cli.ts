@@ -1842,8 +1842,9 @@ program
                   ),
               ),
             );
-            return ticketKeys;
           }
+
+          return ticketKeys;
         },
       ),
     );
@@ -1887,8 +1888,9 @@ program
                   };
                 }),
               );
-              return states;
             }
+
+            return states;
           },
         ),
       );
