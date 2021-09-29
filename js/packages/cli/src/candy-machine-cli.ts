@@ -372,7 +372,11 @@ programCommand('show')
       //@ts-ignore
       log.info('wallet: ', machine.wallet.toBase58());
       //@ts-ignore
-      log.info('tokenMint: ', machine.tokenMint.toBase58());
+      log.info(
+        'tokenMint: ',
+        //@ts-ignore
+        machine.tokenMint ? machine.tokenMint.toBase58() : null,
+      );
       //@ts-ignore
       log.info('config: ', machine.config.toBase58());
       //@ts-ignore
@@ -398,7 +402,7 @@ programCommand('show')
     );
     log.info('...Config...');
     //@ts-ignore
-    log.info('authority: ', config.authority);
+    log.info('authority: ', config.authority.toBase58());
     //@ts-ignore
     log.info('symbol: ', config.data.symbol);
     //@ts-ignore
