@@ -86,7 +86,7 @@ pub fn process_set_store_index<'a>(
         below_cache = Some(unwrapped);
     }
 
-    if let Some(above) = above_cache_info {
+    if let Some(above) = &above_cache_info {
         let unwrapped = AuctionCache::from_account_info(above)?;
 
         assert_derivation(
@@ -150,7 +150,7 @@ pub fn process_set_store_index<'a>(
 
     if offset_u < indexer.auction_caches.len() {
         let above_key = &indexer.auction_caches[offset_u + 1];
-        if let Some(abo) = above_cache {
+        if let Some(abo) = &above_cache {
             if let Some(above_cache_info_unwrapped) = above_cache_info {
                 if above_cache_info_unwrapped.key != above_key {
                     return Err(MetaplexError::CacheMismatch.into());
@@ -170,9 +170,9 @@ pub fn process_set_store_index<'a>(
         let below_key = &indexer.auction_caches[offset_u - 1];
         // special case where you're at top of stack, there is no above
         let cache_used_for_below = if offset_u == indexer.auction_caches.len() - 1 {
-            above_cache
+            &above_cache
         } else {
-            below_cache
+            &below_cache
         };
 
         let cache_info_used_for_below = if offset_u == indexer.auction_caches.len() - 1 {
