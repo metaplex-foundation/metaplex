@@ -10,12 +10,12 @@ import {
   getPhantomWallet,
   getSolflareWallet,
   getSolletWallet,
-} from '@solana/wallet-adapter-wallets';
+} from '@identity.com/wallet-adapter-wallets';
 
 import {
   ConnectionProvider,
   WalletProvider,
-} from '@solana/wallet-adapter-react';
+} from '@identity.com/wallet-adapter-react';
 
 import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 import { ThemeProvider, createTheme } from '@material-ui/core';

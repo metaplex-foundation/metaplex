@@ -6,10 +6,11 @@ import {
   SequenceType,
   StringPublicKey,
   TokenAccount,
+  WalletSigner,
 } from '@oyster/common';
 import { setupMintEditionIntoWalletInstructions } from './setupMintEditionIntoWalletInstructions';
 import { Art } from '../types';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import { WalletContextState } from '@identity.com/wallet-adapter-react';
 
 // TODO: Refactor. Extract batching logic,
 //  as the similar one is used in settle.ts and convertMasterEditions.ts
@@ -87,7 +88,7 @@ export async function mintEditionsToWallet(
       // Pump em through!
       await sendTransactions(
         connection,
-        wallet,
+        wallet as WalletSigner,
         instructionBatch,
         signerBatch,
         SequenceType.StopOnFailure,
@@ -96,7 +97,7 @@ export async function mintEditionsToWallet(
     else
       await sendTransactionWithRetry(
         connection,
-        wallet,
+        wallet as WalletSigner,
         instructionBatch[0],
         signerBatch[0],
         'single',

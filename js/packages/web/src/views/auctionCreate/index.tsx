@@ -30,10 +30,10 @@ import {
   PriceFloorType,
   IPartialCreateAuctionArgs,
   MetadataKey,
-  StringPublicKey,
+  StringPublicKey, WalletSigner,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
 import { capitalize } from 'lodash';
@@ -451,7 +451,7 @@ export const AuctionCreateView = () => {
 
     const _auctionObj = await createAuctionManager(
       connection,
-      wallet,
+      wallet as WalletSigner,
       whitelistedCreatorsByCreator,
       auctionSettings,
       attributes.category === AuctionCategory.Open

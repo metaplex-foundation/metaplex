@@ -28,7 +28,7 @@ import {
   useWalletModal,
   WalletSigner,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { saveAdmin } from '../../actions/saveAdmin';
 import {
@@ -74,7 +74,7 @@ export const AdminView = () => {
             store={store}
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
             connection={connection}
-            wallet={wallet}
+            wallet={wallet as WalletSigner}
             connected={wallet.connected}
           />
           {!isConfigured && (

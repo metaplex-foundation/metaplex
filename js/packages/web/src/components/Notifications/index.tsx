@@ -14,7 +14,7 @@ import {
   VaultState,
   WalletSigner,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -320,9 +320,9 @@ export function Notifications() {
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
 
-  useCollapseWrappedSol({ connection, wallet, notifications });
+  useCollapseWrappedSol({ connection, wallet: wallet as WalletSigner, notifications });
 
-  useSettlementAuctions({ connection, wallet, notifications });
+  useSettlementAuctions({ connection, wallet: wallet as WalletSigner, notifications });
 
   const vaultsNeedUnwinding = useMemo(
     () =>
@@ -349,7 +349,7 @@ export function Notifications() {
         try {
           await unwindVault(
             connection,
-            wallet,
+            wallet as WalletSigner,
             v,
             safetyDepositBoxesByVaultAndIndex,
           );
@@ -378,7 +378,7 @@ export function Notifications() {
           try {
             await decommAuctionManagerAndReturnPrizes(
               connection,
-              wallet,
+              wallet as WalletSigner,
               v,
               safetyDepositBoxesByVaultAndIndex,
             );
@@ -421,7 +421,7 @@ export function Notifications() {
       ),
       action: async () => {
         try {
-          await sendSignMetadata(connection, wallet, m.pubkey);
+          await sendSignMetadata(connection, wallet as WalletSigner, m.pubkey);
         } catch (e) {
           console.error(e);
           return false;
@@ -440,7 +440,7 @@ export function Notifications() {
         description: <span>You can activate it now if you wish.</span>,
         action: async () => {
           try {
-            await startAuctionManually(connection, wallet, v);
+            await startAuctionManually(connection, wallet as WalletSigner, v);
           } catch (e) {
             console.error(e);
             return false;

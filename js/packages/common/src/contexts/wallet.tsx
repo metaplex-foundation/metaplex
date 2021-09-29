@@ -1,8 +1,8 @@
-import { WalletAdapter, WalletError } from '@solana/wallet-adapter-base';
+import {SignerWalletAdapter, WalletError} from '@solana/wallet-adapter-base';
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
-} from '@solana/wallet-adapter-react';
+} from '@identity.com/wallet-adapter-react';
 import {
   getLedgerWallet,
   getMathWallet,
@@ -11,8 +11,9 @@ import {
   getSolletWallet,
   getSolongWallet,
   getTorusWallet,
+  getCryptidWallet,
   WalletName,
-} from '@solana/wallet-adapter-wallets';
+} from '@identity.com/wallet-adapter-wallets';
 import { Button } from 'antd';
 import React, {
   createContext,
@@ -117,16 +118,16 @@ export const WalletModal: FC = () => {
               fontWeight: 'unset',
             }}
             onClick={() => {
-              select(WalletName.Phantom);
+              select(WalletName.Cryptid);
               close();
             }}
           >
             <span>
               <img
-                src="https://www.phantom.app/img/logo.png"
+                src="https://cryptid.identity.com/logo.png"
                 style={{ width: '1.2rem' }}
               />
-              &nbsp;Sign in with Phantom
+              &nbsp;Sign in with Cryptid
             </span>
             <span>&gt;</span>
           </Button>
@@ -193,6 +194,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
     () => [
+      getCryptidWallet(),
       getPhantomWallet(),
       getSolflareWallet(),
       getTorusWallet({
@@ -226,6 +228,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 export type WalletSigner = Pick<
-  WalletAdapter,
+  SignerWalletAdapter,
   'publicKey' | 'signTransaction' | 'signAllTransactions'
 >;

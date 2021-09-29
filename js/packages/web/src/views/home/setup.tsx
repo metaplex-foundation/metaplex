@@ -1,10 +1,10 @@
 import {
   useConnection,
   useStore,
-  useWalletModal,
+  useWalletModal, WalletSigner,
   WhitelistedCreator,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { Button } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -45,7 +45,7 @@ export const SetupView = () => {
 
     setIsInitalizingStore(true);
 
-    await saveAdmin(connection, wallet, false, [
+    await saveAdmin(connection, wallet as WalletSigner, false, [
       new WhitelistedCreator({
         address: wallet.publicKey.toBase58(),
         activated: true,

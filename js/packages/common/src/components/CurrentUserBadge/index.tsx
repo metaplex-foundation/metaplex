@@ -1,6 +1,6 @@
 import React from 'react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { useNativeAccount } from '../../contexts/accounts';
 import { formatNumber } from '../../utils';
 import { Popover } from 'antd';

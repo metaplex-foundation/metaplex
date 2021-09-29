@@ -17,7 +17,7 @@ import { mintEditionsToWallet } from '../../actions/mintEditionsIntoWallet';
 import { ArtType } from '../../types';
 import { Confetti } from '../Confetti';
 import { Link } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 
 interface ArtMintingProps {
   id: string;

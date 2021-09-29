@@ -31,9 +31,9 @@ import {
   MetaplexModal,
   MetaplexOverlay,
   MetadataFile,
-  StringPublicKey,
+  StringPublicKey, WalletSigner,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@identity.com/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
 import { Connection } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
@@ -114,7 +114,7 @@ export const ArtCreateView = () => {
     try {
       const _nft = await mintNFT(
         connection,
-        wallet,
+        wallet as WalletSigner,
         env,
         files,
         metadata,

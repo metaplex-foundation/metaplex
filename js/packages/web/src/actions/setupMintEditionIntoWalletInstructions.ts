@@ -8,7 +8,7 @@ import {
 } from '@oyster/common';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { Art } from '../types';
-import { WalletContextState } from '@solana/wallet-adapter-react';
+import { WalletContextState } from '@identity.com/wallet-adapter-react';
 
 export async function setupMintEditionIntoWalletInstructions(
   art: Art,
