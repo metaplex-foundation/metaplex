@@ -163,6 +163,39 @@ export const getAtaForMint = async (
   );
 };
 
+export const getParticipationMint = async (
+  authority: anchor.web3.PublicKey,
+  uuid: string,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('fair_launch'),
+      authority.toBuffer(),
+      Buffer.from('mint'),
+      Buffer.from(uuid),
+      Buffer.from('participation'),
+    ],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
+export const getParticipationToken = async (
+  authority: anchor.web3.PublicKey,
+  uuid: string,
+): Promise<[anchor.web3.PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('fair_launch'),
+      authority.toBuffer(),
+      Buffer.from('mint'),
+      Buffer.from(uuid),
+      Buffer.from('participation'),
+      Buffer.from('account'),
+    ],
+    FAIR_LAUNCH_PROGRAM_ID,
+  );
+};
+
 export const getTreasury = async (
   tokenMint: anchor.web3.PublicKey,
 ): Promise<[anchor.web3.PublicKey, number]> => {
@@ -205,7 +238,7 @@ export const getMasterEdition = async (
 
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
-    throw new Error("Keypair is required!");
+    throw new Error('Keypair is required!');
   }
   const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
