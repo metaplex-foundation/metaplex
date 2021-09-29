@@ -56,11 +56,11 @@ programCommand('upload')
     'arweave',
   )
   .option(
-    '--ipfs-infura-project-id',
+    '--ipfs-infura-project-id <string>',
     'Infura IPFS project id (required if using IPFS)',
   )
   .option(
-    '--ipfs-infura-secret',
+    '--ipfs-infura-secret <string>',
     'Infura IPFS scret key (required if using IPFS)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
