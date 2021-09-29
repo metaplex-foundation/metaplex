@@ -949,8 +949,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await adjustTicket({
       amountNumber,
@@ -1027,11 +1028,24 @@ program
             const slice = allIndexesInSlice
               .slice(i, i + 100)
               .map(index => seqKeys[index]);
-            const result = await getMultipleAccounts(
-              anchorProgram.provider.connection,
-              slice.map(s => s.toBase58()),
-              'recent',
-            );
+            let result;
+            let tries = 0;
+            let done = false;
+            while (tries < 3 && !done) {
+              try {
+                result = await getMultipleAccounts(
+                  anchorProgram.provider.connection,
+                  slice.map(s => s.toBase58()),
+                  'recent',
+                );
+                done = true;
+              } catch (e) {
+                console.log(e);
+                console.log('Failed, retrying after 10s sleep');
+                await sleep(10000);
+                tries += 1;
+              }
+            }
             ticketKeys = ticketKeys.concat(
               result.array.map(
                 a =>
@@ -1040,8 +1054,8 @@ program
                   ),
               ),
             );
-            return ticketKeys;
           }
+          return ticketKeys;
         },
       ),
     );
@@ -1062,11 +1076,25 @@ program
               const slice = allIndexesInSlice
                 .slice(i, i + 100)
                 .map(index => ticketsFlattened[index]);
-              const result = await getMultipleAccounts(
-                anchorProgram.provider.connection,
-                slice.map(s => s.toBase58()),
-                'recent',
-              );
+
+              let result;
+              let tries = 0;
+              let done = false;
+              while (tries < 3 && !done) {
+                try {
+                  result = await getMultipleAccounts(
+                    anchorProgram.provider.connection,
+                    slice.map(s => s.toBase58()),
+                    'recent',
+                  );
+                  done = true;
+                } catch (e) {
+                  console.log(e);
+                  console.log('Failed, retrying after 10s sleep');
+                  await sleep(10000);
+                  tries += 1;
+                }
+              }
               states = states.concat(
                 result.array.map((a, i) => ({
                   key: new anchor.web3.PublicKey(result.keys[i]),
@@ -1076,8 +1104,8 @@ program
                   ),
                 })),
               );
-              return states;
             }
+            return states;
           },
         ),
       );
@@ -1135,18 +1163,25 @@ program
                       diff,
                       'to buyer before punching',
                     );
-                    await adjustTicket({
-                      //@ts-ignore
-                      amountNumber: fairLaunchObj.currentMedian.toNumber(),
-                      fairLaunchObj,
-                      adjuster: ticket.model.buyer,
-                      fairLaunch,
-                      fairLaunchTicket: ticket.key,
-                      fairLaunchLotteryBitmap,
-                      anchorProgram,
-                      payer: walletKeyPair,
-                      adjustMantissa: false,
-                    });
+                    try {
+                      await adjustTicket({
+                        //@ts-ignore
+                        amountNumber: fairLaunchObj.currentMedian.toNumber(),
+                        fairLaunchObj,
+                        adjuster: ticket.model.buyer,
+                        fairLaunch,
+                        fairLaunchTicket: ticket.key,
+                        fairLaunchLotteryBitmap,
+                        anchorProgram,
+                        payer: walletKeyPair,
+                        adjustMantissa: false,
+                      });
+                    } catch (e) {
+                      console.log(
+                        'Adjusting ticket failed',
+                        ticket.key.toBase58(),
+                      );
+                    }
                   }
                   let tries = 0;
                   try {
@@ -1297,8 +1332,9 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1434,8 +1470,9 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = //@ts-ignore
-    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
+    const fairLaunchLotteryBitmap = ( //@ts-ignore
+      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
+    )[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
