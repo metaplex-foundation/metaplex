@@ -185,7 +185,7 @@ export class CreateMetadataArgs {
   }
 }
 
-class UpdateMetadataArgs {
+export class UpdateMetadataArgs {
   instruction: number = 1;
   data: Data | null;
   // Not used by this app, just required for instruction
