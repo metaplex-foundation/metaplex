@@ -220,6 +220,7 @@ program
     );
 
     console.log(`create fair launch Done: ${fairLaunch.toBase58()}`);
+    console.log(`create token mint Done: ${tokenMint.toBase58()}`);
   });
 
 program

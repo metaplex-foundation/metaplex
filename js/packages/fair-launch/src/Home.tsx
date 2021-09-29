@@ -164,24 +164,34 @@ function getPhase(
 ): Phase {
   const curr = new Date().getTime();
 
+  if (!fairLaunch) {
+    return Phase.Unknown;
+  }
+
   const phaseOne = toDate(fairLaunch?.state.data.phaseOneStart)?.getTime();
   const phaseOneEnd = toDate(fairLaunch?.state.data.phaseOneEnd)?.getTime();
   const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
   const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
 
-  if (phaseOne && curr < phaseOne) {
+  console.log("Fair Launch: " + fairLaunch);
+  console.log("Fair Launch State: " + fairLaunch?.state);
+  console.log("Fair Launch phaseThreeStarted: " + fairLaunch?.state.phaseThreeStarted);
+  console.log ("Candy Machine Go Live: " + candyMachineGoLive);
+
+  if (phaseOne && (curr < phaseOne)) {
     return Phase.Phase0;
-  } else if (phaseOneEnd && curr <= phaseOneEnd) {
+  } else if (phaseOneEnd && (curr <= phaseOneEnd)) {
     return Phase.Phase1;
-  } else if (phaseTwoEnd && curr <= phaseTwoEnd) {
+  } else if (phaseTwoEnd && (curr <= phaseTwoEnd)) {
     return Phase.Phase2;
-  } else if (!fairLaunch?.state.phaseThreeStarted) {
+  } else if (!fairLaunch.state.phaseThreeStarted) {
     return Phase.Lottery;
   } else if (
-    fairLaunch?.state.phaseThreeStarted &&
+    fairLaunch.state.phaseThreeStarted &&
     candyMachineGoLive &&
     curr > candyMachineGoLive
   ) {
+    console.log("Phase 4");
     return Phase.Phase4;
   } else if (fairLaunch?.state.phaseThreeStarted) {
     return Phase.Phase3;
@@ -232,6 +242,10 @@ const Home = (props: HomeProps) => {
 
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [isPunchingTicket, setIsPunchingTicket] = useState(false);
+  const [isRefundingTicket, setIsRefundingTicket] = useState(false);
+  const [isRugRefundingTicket, setIsRugRefundingTicket] = useState(false);
 
   const wallet = useWallet();
 
@@ -425,7 +439,9 @@ const Home = (props: HomeProps) => {
   ].filter(_ => _ !== undefined && _.value !== 0) as any;
 
   const onDeposit = async () => {
+    setIsDepositing(true);
     if (!anchorWallet) {
+      setIsDepositing(false);
       return;
     }
 
@@ -450,9 +466,12 @@ const Home = (props: HomeProps) => {
         severity: 'error',
       });
     }
+    setIsDepositing(false);
   };
   const onRugRefund = async () => {
+    setIsRugRefundingTicket(true);
     if (!anchorWallet) {
+      setIsRugRefundingTicket(false);
       return;
     }
 
@@ -476,9 +495,12 @@ const Home = (props: HomeProps) => {
         severity: 'error',
       });
     }
+    setIsRugRefundingTicket(false);
   };
   const onRefundTicket = async () => {
+    setIsRefundingTicket(true);
     if (!anchorWallet) {
+      setIsRefundingTicket(false);
       return;
     }
 
@@ -502,10 +524,13 @@ const Home = (props: HomeProps) => {
         severity: 'error',
       });
     }
+    setIsRefundingTicket(false);
   };
 
   const onPunchTicket = async () => {
+    setIsPunchingTicket(true);
     if (!anchorWallet || !fairLaunch || !fairLaunch.ticket) {
+      setIsPunchingTicket(false);
       return;
     }
 
@@ -528,9 +553,13 @@ const Home = (props: HomeProps) => {
         severity: 'error',
       });
     }
+    setIsPunchingTicket(false);
   };
 
   const phase = getPhase(fairLaunch, candyMachine);
+  console.log("Phase: " + phase);
+  console.log(candyMachine);
+  console.log(fairLaunch);
 
   const candyMachinePredatesFairLaunch =
     candyMachine?.state.goLiveDate &&
