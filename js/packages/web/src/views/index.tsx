@@ -341,8 +341,8 @@ export const HomeView = () => {
       <Button type="primary" className="button remaining" style={{ fontFamily: 'early_gameboy', fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
         {!wallet.connected ? 'Connect' : 'ADOPT'} 
       </Button>{' '}
-      <h1 className="desc">Remaining: {remaining}/ 9999</h1>
-      <div className="desc" style={{fontSize:'12px'}}>Mint price:  1.5  SOL</div>
+      <h1 className="desc">Remaining: {remaining} / 9999</h1>
+      <div className="desc" style={{fontSize:'12px'}}>Mint price:  0.75  SOL</div>
       <img style={{marginTop:'1.5rem'}} src="/img/babygif.gif"></img>
       <RenderFooter></RenderFooter>
     </Layout>
