@@ -30,6 +30,7 @@ export const schema = makeSchema({
       Artwork: "common.Artwork",
       Creator: "common.Creator",
       Auction: "common.Auction",
+      AuctionManager: "common.AuctionManager",
     },
   },
   contextType: {

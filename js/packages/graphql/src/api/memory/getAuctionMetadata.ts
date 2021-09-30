@@ -3,10 +3,13 @@ import {
   MetaState,
   ParsedAccount,
   SafetyDepositBox,
+  buildListWhileNonZero,
+  WinningConstraint,
+  NonWinningConstraint,
+  AuctionManagerV1,
 } from "../../common";
-import { Auction } from "types/sourceTypes";
-
-// auction
+import { Auction, AuctionManager } from "../../types/sourceTypes";
+import { listWrapPubkey } from "../../utils/mapInfo";
 
 export function getAuctionMetadata(auction: Auction, state: MetaState) {
   const vaultId = auction.manager.vault;
@@ -32,3 +35,39 @@ export function getAuctionMetadata(auction: Auction, state: MetaState) {
     })
     .filter(Boolean);
 }
+
+export const getSafetyDepositConfig = (
+  manager: AuctionManager,
+  state: MetaState
+) => {
+  const { safetyDepositConfigsByAuctionManagerAndIndex } = state;
+  const configs = buildListWhileNonZero(
+    safetyDepositConfigsByAuctionManagerAndIndex,
+    manager.pubkey
+  );
+  return listWrapPubkey(configs);
+};
+
+export const getParticipationConfig = (
+  manager: AuctionManager,
+  state: MetaState
+) => {
+  if (manager.key === MetaplexKey.AuctionManagerV2) {
+    const safetyDepositConfigs = getSafetyDepositConfig(manager, state);
+    return (
+      safetyDepositConfigs
+        .filter((s) => s.participationConfig)
+        .map((s) => ({
+          winnerConstraint:
+            s.participationConfig?.winnerConstraint ||
+            WinningConstraint.NoParticipationPrize,
+          nonWinningConstraint:
+            s.participationConfig?.nonWinningConstraint ||
+            NonWinningConstraint.GivenForFixedPrice,
+          fixedPrice: s.participationConfig?.fixedPrice || null,
+          safetyDepositBoxIndex: s.order.toNumber(),
+        }))[0] || null
+    );
+  }
+  return (manager as AuctionManagerV1).settings.participationConfig || null;
+};

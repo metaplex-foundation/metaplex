@@ -22,6 +22,10 @@ export const Query = queryType({
       type: "Int",
       resolve: (_, args, { api }) => api.auctionsCount(),
     });
+    t.field("stores", {
+      type: list(nonNull(Store)),
+      resolve: (_, args, { api }) => api.getStores(),
+    });
     t.field("store", {
       type: Store,
       args: {
@@ -30,7 +34,7 @@ export const Query = queryType({
       resolve: (_, { storeId }, { api }) => api.getStore(storeId),
     });
     t.field("creators", {
-      type: list(Creator),
+      type: list(nonNull(Creator)),
       args: {
         storeId: nonNull(stringArg()),
       },
@@ -43,23 +47,23 @@ export const Query = queryType({
         api.getCreator(storeId, creatorId),
     });
     t.field("artworks", {
-      type: list(Artwork),
+      type: list(nonNull(Artwork)),
       args: { filter: nonNull(ArtworksInput.asArg()) },
       resolve: async (_, { filter }, { api }) => api.getArtworks(filter),
     });
     t.field("artwork", {
       type: Artwork,
-      args: { artId: nonNull(stringArg()) },
+      args: { storeId: stringArg(), artId: nonNull(stringArg()) },
       resolve: async (_, { artId }, { api }) => api.getArtwork(artId),
     });
     t.field("auctions", {
-      type: list(Auction),
+      type: list(nonNull(Auction)),
       args: { filter: nonNull(AuctionsInput.asArg()) },
       resolve: async (_, { filter }, { api }) => api.getAuctions(filter),
     });
     t.field("auction", {
       type: Auction,
-      args: { auctionId: nonNull(stringArg()) },
+      args: { storeId: stringArg(), auctionId: nonNull(stringArg()) },
       resolve: async (_, { auctionId }, { api }) => api.getAuction(auctionId),
     });
   },

@@ -5,12 +5,20 @@ import type {
   Metadata,
   MetaState,
   ParsedAccount,
+  ParticipationConfigV1,
+  SafetyDepositBox,
   Store,
+  Vault,
   WhitelistedCreator,
 } from "common";
 import type { NexusGenInputs } from "generated/typings";
 import type { ResolverFn } from "graphql-subscriptions";
-import type { Artwork, Auction, Fields } from "types/sourceTypes";
+import type {
+  Artwork,
+  Auction,
+  AuctionManager,
+  Fields,
+} from "types/sourceTypes";
 
 export type TPropNames = keyof MetaState;
 
@@ -63,8 +71,17 @@ export interface IMetaplexApi extends IMetaplexApiWrite {
   auctionsCount(): Promise<number>;
   getAuctionHighestBid(
     auction: Auction
-  ): Promise<ParsedAccount<BidderMetadata>>;
+  ): Promise<Fields<BidderMetadata> | null>;
   getAuctionThumbnail(auction: Auction): Promise<Fields<Metadata> | null>;
+  getAuctionBids(auction: Auction): Promise<Fields<BidderMetadata>[]>;
+  getManagerVault(manager: AuctionManager): Promise<Fields<Vault> | null>;
+  getSafetyDepositBoxesExpected(manager: AuctionManager): Promise<BN | null>;
+  getSafetyDepositBoxes(
+    manager: AuctionManager
+  ): Promise<Fields<SafetyDepositBox>[]>;
+  getParticipationConfig(
+    manager: AuctionManager
+  ): Promise<ParticipationConfigV1 | null>;
 
   artType(item: Artwork): Promise<0 | 1 | 2>;
   artSupply(item: Artwork): Promise<BN | undefined>;

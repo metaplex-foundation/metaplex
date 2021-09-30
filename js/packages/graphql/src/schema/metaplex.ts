@@ -1,5 +1,4 @@
-import { enumType, objectType, unionType } from "nexus";
-import { MetaplexKey } from "../common";
+import { enumType, objectType } from "nexus";
 
 export const AuctionManagerV1 = objectType({
   name: "AuctionManagerV1",
@@ -26,19 +25,6 @@ export const AuctionManagerV2 = objectType({
     t.pubkey("vault");
     t.pubkey("acceptPayment");
     t.field("state", { type: AuctionManagerStateV2 });
-  },
-});
-
-export const AuctionManager = unionType({
-  name: "AuctionManager",
-  resolveType(obj) {
-    if (obj.key === MetaplexKey.AuctionManagerV2) {
-      return "AuctionManagerV2";
-    }
-    return "AuctionManagerV1";
-  },
-  definition(t) {
-    t.members(AuctionManagerV1, AuctionManagerV2);
   },
 });
 
@@ -93,7 +79,7 @@ export const SafetyDepositConfig = objectType({
     t.field("amountType", { type: TupleNumericType });
     t.field("lengthType", { type: TupleNumericType });
     t.list.field("amountRanges", { type: AmountRange });
-    t.nullable.field("participationConfig", { type: ParticipationConfigV2 });
+    t.nullable.field("participationConfig", { type: ParticipationConfig });
     t.nullable.field("participationState", { type: ParticipationStateV2 });
   },
 });
@@ -102,10 +88,10 @@ export const SafetyDepositConfig = objectType({
 export const Creator = objectType({
   name: "Creator",
   definition(t) {
-    t.pubkey("pubkey");
-    t.int("key");
-    t.pubkey("address");
-    t.boolean("activated");
+    t.nonNull.pubkey("pubkey");
+    t.nonNull.int("key");
+    t.nonNull.pubkey("address");
+    t.nonNull.boolean("activated");
   },
 });
 
@@ -155,11 +141,12 @@ export const NonWinningConstraint = enumType({
   },
 });
 
-export const ParticipationConfigV2 = objectType({
-  name: "ParticipationConfigV2",
+export const ParticipationConfig = objectType({
+  name: "ParticipationConfig",
   definition(t) {
     t.field("winnerConstraint", { type: WinningConstraint });
     t.field("nonWinningConstraint", { type: NonWinningConstraint });
+    t.int("safetyDepositBoxIndex");
     t.nullable.bn("fixedPrice");
   },
 });

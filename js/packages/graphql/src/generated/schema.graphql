@@ -42,7 +42,7 @@ type Auction {
   """
   Pubkey of the authority with permission to modify this auction.
   """
-  authority: PublicKey
+  authority: PublicKey!
 
   """
   Used for precalculation on the front end, not a backend key
@@ -52,7 +52,8 @@ type Auction {
   """
   Auction Bids, each user may have one bid open at a time.
   """
-  bidState: BidState
+  bidState: BidState!
+  bids: [BidderMetadata!]!
 
   """
   End time is the cut-off point that the auction is forced to end by.
@@ -69,25 +70,26 @@ type Auction {
   The time the last bid was placed, used to keep track of auction timing.
   """
   lastBid: BN
-  manager: AuctionManager
-  numWinners: BN
+  manager: AuctionManager!
+  numWinners: BN!
 
   """
   Minimum price for any bid to meet.
   """
-  priceFloor: PriceFloor
+  priceFloor: PriceFloor!
   pubkey: PublicKey!
 
   """
   The state the auction is in, whether it has started or ended.
   """
-  state: AuctionState
+  state: AuctionState!
+  thumbnail: Artwork
 
   """
   Token mint for the SPL token being used to bid
   """
-  tokenMint: PublicKey
-  trumbnail: Artwork
+  tokenMint: PublicKey!
+  viewState: AuctionViewState!
 }
 
 type AuctionDataExtended {
@@ -103,7 +105,16 @@ enum AuctionInputState {
   resale
 }
 
-union AuctionManager = AuctionManagerV1 | AuctionManagerV2
+type AuctionManager {
+  acceptPayment: PublicKey!
+  auction: PublicKey!
+  authority: PublicKey!
+  participationConfig: ParticipationConfig
+  safetyDepositBoxes: [SafetyDepositBox!]!
+  safetyDepositBoxesExpected: BN!
+  store: PublicKey!
+  vault: PublicKey!
+}
 
 type AuctionManagerStateV1 {
   status: Int
@@ -143,6 +154,14 @@ enum AuctionState {
   Started
 }
 
+enum AuctionViewState {
+  BuyNow
+  Defective
+  Ended
+  Live
+  Upcoming
+}
+
 input AuctionsInput {
   participantId: String
   state: AuctionInputState
@@ -155,8 +174,8 @@ GraphQL representation of BigNumber
 scalar BN
 
 type Bid {
-  amount: BN
-  key: PublicKey
+  amount: BN!
+  key: PublicKey!
 }
 
 type BidRedemptionTicket {
@@ -164,9 +183,9 @@ type BidRedemptionTicket {
 }
 
 type BidState {
-  bids: [Bid]
-  max: BN
-  type: BidStateType
+  bids: [Bid]!
+  max: BN!
+  type: BidStateType!
 }
 
 enum BidStateType {
@@ -178,28 +197,28 @@ type BidderMetadata {
   """
   Relationship with the auction this bid was placed on.
   """
-  auctionPubkey: PublicKey
+  auctionPubkey: PublicKey!
 
   """
   Relationship with the bidder who's metadata this covers.
   """
-  bidderPubkey: PublicKey
+  bidderPubkey: PublicKey!
 
   """
   Whether the last bid the user made was cancelled. This should also be enough to know if the
   user is a winner, as if cancelled it implies previous bids were also cancelled.
   """
-  cancelled: Boolean
+  cancelled: Boolean!
 
   """
   Amount that the user bid
   """
-  lastBid: BN
+  lastBid: BN!
 
   """
   Tracks the last time this user bid.
   """
-  lastBidTimestamp: BN
+  lastBidTimestamp: BN!
 }
 
 type BidderPot {
@@ -216,10 +235,10 @@ type BidderPot {
 scalar Buffer
 
 type Creator {
-  activated: Boolean
-  address: PublicKey
-  key: Int
-  pubkey: PublicKey
+  activated: Boolean!
+  address: PublicKey!
+  key: Int!
+  pubkey: PublicKey!
 }
 
 type Edition {
@@ -266,9 +285,10 @@ enum NonWinningConstraint {
   NoParticipationPrize
 }
 
-type ParticipationConfigV2 {
+type ParticipationConfig {
   fixedPrice: BN
   nonWinningConstraint: NonWinningConstraint
+  safetyDepositBoxIndex: Int
   winnerConstraint: WinningConstraint
 }
 
@@ -287,9 +307,9 @@ type PriceFloor {
   It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
   thing is a hash and not actually a public key, and none is all zeroes
   """
-  hash: Uint8Array
+  hash: Uint8Array!
   minPrice: BN
-  type: PriceFloorType
+  type: PriceFloorType!
 }
 
 enum PriceFloorType {
@@ -309,16 +329,17 @@ type PrizeTrackingTicket {
 scalar PublicKey
 
 type Query {
-  artwork(artId: String!): Artwork
-  artworks(filter: ArtworksInput!): [Artwork]
+  artwork(artId: String!, storeId: String): Artwork
+  artworks(filter: ArtworksInput!): [Artwork!]
   artworksCount: Int
-  auction(auctionId: String!): Auction
-  auctions(filter: AuctionsInput!): [Auction]
+  auction(auctionId: String!, storeId: String): Auction
+  auctions(filter: AuctionsInput!): [Auction!]
   auctionsCount: Int
   creator(creatorId: String!, storeId: String!): Creator
-  creators(storeId: String!): [Creator]
+  creators(storeId: String!): [Creator!]
   creatorsCount: Int
   store(storeId: String!): Store
+  stores: [Store!]
   storesCount: Int
 }
 
@@ -326,19 +347,19 @@ type SafetyDepositBox {
   """
   Each token type in a vault has it's own box that contains it's mint and a look-back
   """
-  key: VaultKey
-  order: Int @deprecated(reason: "The order in the array of registries")
+  key: VaultKey!
+  order: Int! @deprecated(reason: "The order in the array of registries")
 
   """
   Account that stores the tokens under management
   """
-  store: PublicKey
+  store: PublicKey!
 
   """
   This particular token's mint
   """
-  tokenMint: PublicKey
-  vault: PublicKey @deprecated(reason: "VaultKey pointing to the parent vault")
+  tokenMint: PublicKey!
+  vault: PublicKey! @deprecated(reason: "VaultKey pointing to the parent vault")
 }
 
 type SafetyDepositConfig {
@@ -348,7 +369,7 @@ type SafetyDepositConfig {
   key: Int
   lengthType: TupleNumericType
   order: BN
-  participationConfig: ParticipationConfigV2
+  participationConfig: ParticipationConfig
   participationState: ParticipationStateV2
   winningConfigType: WinningConfigType
 }
