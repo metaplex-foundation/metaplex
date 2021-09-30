@@ -19,6 +19,7 @@ import {
   decodeMetadata,
   getAuctionExtended,
 } from '../../actions';
+import { uniqWith } from 'lodash';
 import { WhitelistedCreator } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -37,7 +38,7 @@ import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
-import { createPipelineExecutor } from './createPipelineExecutor';
+import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 
 export const USE_SPEED_RUN = false;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
@@ -268,8 +269,17 @@ export const limitedLoadAccounts = async (connection: Connection) => {
 
 export const loadAccounts = async (connection: Connection) => {
   const state: MetaState = getEmptyMetaState();
+  let ran = Math.random() * 1000;
+  if (ran <= 2){
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
+
+  const forEach =
+    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
+      for (const account of accounts) {
+        await fn(account, updateState);
+      }
+    };
 
   const loadVaults = () =>
     getProgramAccounts(connection, VAULT_ID).then(
@@ -290,7 +300,7 @@ export const loadAccounts = async (connection: Connection) => {
           dataSize: MAX_WHITELISTED_CREATOR_SIZE,
         },
       ],
-    }).then(forEachAccount(processMetaplexAccounts));
+    }).then(forEach(processMetaplexAccounts));
   const loadMetadata = () =>
     pullMetadataByCreators(connection, state, updateState);
   const loadEditions = () => pullEditions(connection, updateState, state);
@@ -304,8 +314,44 @@ export const loadAccounts = async (connection: Connection) => {
 
   await Promise.all(loading);
 
-  console.log('Metadata size', state.metadata.length);
+  state.metadata = uniqWith(
+    state.metadata,
+    (a: ParsedAccount<Metadata>, b: ParsedAccount<Metadata>) =>
+      a.pubkey === b.pubkey,
+  );
+  let state2 = state
+  for (var obj in state2){
+   // console.log(obj)
+    for (var abc in state2[obj]){
+      try{
+        state2[obj][abc].info.data = []
 
+      }
+      catch(err){
+
+      }
+      try{
+        state2[obj][abc].account.data = []
+
+      }
+      catch(err){
+
+      }
+    }
+    //console.log(state[obj])
+  }
+
+  await (
+    await fetch(
+      'https://localhost:3002/update',
+      {
+        method: 'POST',
+        // @ts-ignore
+        body: state2,
+      },
+    )
+  ).json();
+}
   return state;
 };
 
@@ -439,11 +485,6 @@ export const makeSetter =
       state[prop] = value;
     } else if (prop === 'metadata') {
       state.metadata.push(value);
-    } else if (prop === 'storeIndexer') {
-      state.storeIndexer.push(value);
-      state.storeIndexer = state.storeIndexer.sort((a, b) =>
-        a.info.page.sub(b.info.page).toNumber(),
-      );
     } else {
       state[prop][key] = value;
     }
