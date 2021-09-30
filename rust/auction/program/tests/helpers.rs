@@ -172,7 +172,7 @@ pub async fn create_auction(
                     price_floor,
                     gap_tick_size_percentage,
                     tick_size,
-                    name: string_to_array(name)?,
+                    name: string_to_array(name).ok(),
                     instant_sale_price,
                 },
             )],
@@ -365,6 +365,7 @@ pub async fn claim_bid(
             bidder.pubkey(),
             bidder_spl_account.pubkey(),
             *mint,
+            None,
             ClaimBidArgs {
                 resource: *resource,
             },

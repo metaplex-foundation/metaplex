@@ -29,7 +29,7 @@ pub const LOTTERY: &str = "lottery";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
-pub mod fair_launch {
+pub mod fair_launchd {
     use super::*;
     pub fn initialize_fair_launch<'info>(
         ctx: Context<'_, '_, '_, 'info, InitializeFairLaunch<'info>>,
@@ -1354,7 +1354,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 1 + // bump
 1 + // treasury_bump
 1 + // token_mint_bump
-4 + 6 + // uuid 
+4 + 6 + // uuid
 8 + //range start
 8 + // range end
 8 + // phase one start
@@ -1371,7 +1371,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tickets unseq'ed
 8 + // number of tickets sold
 8 + // number of tickets dropped
-8 + // number of tickets punched 
+8 + // number of tickets punched
 8 + // number of tokens burned for refunds
 8 + // number of tokens preminted
 1 + // phase three started
