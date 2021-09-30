@@ -255,9 +255,11 @@ export const AuctionCard = ({
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  //if instant sale auction bid and claimed hide buttons
+  // if instant sale auction bid and claimed hide buttons
+  const outstandingBid = auctionView.myBidderPot && !auctionView.myBidRedemption
   if (
-    (auctionView.isInstantSale &&
+    (!outstandingBid &&
+      auctionView.isInstantSale &&
       Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
       isAuctionManagerAuthorityNotWalletOwner &&
       auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
