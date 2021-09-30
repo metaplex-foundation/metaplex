@@ -12,6 +12,7 @@ export type Fields<T> = T & FieldPubkey;
 export type Artwork = Fields<Meta>;
 export type Creator = Fields<WhitelistedCreator>;
 
+export type AuctionManager = Fields<AuctionManagerV1 | AuctionManagerV2>;
 export type Auction = Fields<AuctionData> & {
-  manager: (AuctionManagerV1 | AuctionManagerV2) & FieldPubkey;
+  manager: AuctionManager;
 };

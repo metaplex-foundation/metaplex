@@ -24,17 +24,23 @@ export const VaultState = enumType({
 export const SafetyDepositBox = objectType({
   name: "SafetyDepositBox",
   definition(t) {
-    t.field("key", {
+    t.nonNull.field("key", {
       type: VaultKey,
       description:
         "Each token type in a vault has it's own box that contains it's mint and a look-back",
     });
-    t.pubkey("vault", { deprecation: "VaultKey pointing to the parent vault" });
-    t.pubkey("tokenMint", { description: "This particular token's mint" });
-    t.pubkey("store", {
+    t.nonNull.pubkey("vault", {
+      deprecation: "VaultKey pointing to the parent vault",
+    });
+    t.nonNull.pubkey("tokenMint", {
+      description: "This particular token's mint",
+    });
+    t.nonNull.pubkey("store", {
       description: "Account that stores the tokens under management",
     });
-    t.int("order", { deprecation: "The order in the array of registries" });
+    t.nonNull.int("order", {
+      deprecation: "The order in the array of registries",
+    });
   },
 });
 

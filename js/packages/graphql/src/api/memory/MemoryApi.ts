@@ -4,18 +4,23 @@ import {
   MetaState,
   ParsedAccount,
   getEmptyState,
+  getSafetyDepositBoxes,
+  getSafetyDepositBoxesExpected,
 } from "../../common";
 import { NexusGenInputs } from "../../generated/typings";
 import { loadUserTokenAccounts } from "../../utils/loadUserTokenAccounts";
 import { listWrapPubkey, wrapPubkey } from "../../utils/mapInfo";
 import { FilterFn, IEvent, StateProvider } from "../StateProvider";
-import { Artwork, Auction } from "types/sourceTypes";
+import { Artwork, Auction, AuctionManager } from "../../types/sourceTypes";
 import { IMetaplexApi, TPropNames } from "../IMetaplexApi";
 import { filterByParticipant } from "./filterByParticipant";
 import { filterByState } from "./filterByState";
 import { getAuctionsByStoreId } from "./getAuctionsByStoreId";
 import { getAuctionById } from "./getAuctionById";
-import { getAuctionMetadata } from "./getAuctionMetadata";
+import {
+  getAuctionMetadata,
+  getParticipationConfig,
+} from "./getAuctionMetadata";
 import { filterByStoreAndCreator } from "./filterByStoreAndCreator";
 import { filterByOwner } from "./filterByOwner";
 
@@ -108,7 +113,7 @@ export class MemoryApi implements IMetaplexApi {
   }
 
   public storesCount() {
-    return this.state.then(({ stores }) => Object.keys(stores).length);
+    return this.state.then(({ stores }) => stores.size);
   }
 
   public creatorsCount() {
@@ -265,6 +270,41 @@ export class MemoryApi implements IMetaplexApi {
       Array.from(state.bidderMetadataByAuctionAndBidder.values()),
       auction.pubkey
     );
-    return bids?.[0];
+    const highestBid = bids?.[0];
+    return highestBid ? wrapPubkey(highestBid) : null;
+  }
+
+  public async getAuctionBids(auction: Auction) {
+    const state = await this.state;
+    const bids = getAuctionBids(
+      Array.from(state.bidderMetadataByAuctionAndBidder.values()),
+      auction.pubkey
+    );
+    return listWrapPubkey(bids);
+  }
+
+  public async getManagerVault(manager: AuctionManager) {
+    const state = await this.state;
+    const vault = state.vaults.get(manager.vault);
+    return vault ? wrapPubkey(vault) : null;
+  }
+
+  public async getSafetyDepositBoxesExpected(manager: AuctionManager) {
+    const vault = await this.getManagerVault(manager);
+    return vault ? getSafetyDepositBoxesExpected(manager, vault) : null;
+  }
+
+  public async getSafetyDepositBoxes(manager: AuctionManager) {
+    const state = await this.state;
+    const boxes = getSafetyDepositBoxes(
+      manager.vault,
+      state.safetyDepositBoxesByVaultAndIndex
+    );
+    return listWrapPubkey(boxes);
+  }
+
+  public async getParticipationConfig(manager: AuctionManager) {
+    const state = await this.state;
+    return getParticipationConfig(manager, state);
   }
 }
