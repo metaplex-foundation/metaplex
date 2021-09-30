@@ -15,12 +15,21 @@ fragment AuctionFragment on Auction {
   highestBid {
     ...BidFragment
   }
+  bidState {
+    type
+    bids {
+      amount
+      key
+    }
+    max
+  }
   priceFloor {
     hash
     minPrice
     type
   }
   manager {
+    authority
     participationConfig {
       winnerConstraint
       nonWinningConstraint

@@ -34,7 +34,7 @@ query getArtworks(
 }
 
 query getArtworksById($storeId: String!, $artId: String!) {
-  artwork(artId: $artId) {
+  artwork(storeId: $storeId, artId: $artId) {
     ...ArtworkFragment
   }
 }
