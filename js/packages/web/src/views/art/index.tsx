@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , Component} from 'react';
 import {
   Row,
   Col,
@@ -21,9 +21,10 @@ import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ViewOn } from '../../components/ViewOn';
 import { ArtType } from '../../types';
 import { ArtMinting } from '../../components/ArtMinting';
+import Arweave from "arweave";
+
 
 const { Content } = Layout;
-
 
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,6 +74,78 @@ export const ArtView = () => {
       <br />
     </>
   );
+
+  const arweave = Arweave.init({
+    host: "arweave.net",
+  });
+
+  //Submit ItemLore entry on arweave
+  async function submitLore(itemLore) {
+    const permissions = ["ACCESS_ADDRESS", "SIGN_TRANSACTION", "SIGNATURE"];
+    await window.arweaveWallet.connect(permissions, {
+      name: "ItemLore",
+      logo: "https://magicitems.org/img/ghosty.gif",
+    });
+  
+    let key = await arweave.wallets.generate();
+  
+    // Plain text
+    let transactionA = await arweave.createTransaction(
+      {
+        data: Buffer.from(itemLore, "utf8"),
+      },
+      key
+    );
+  
+    transactionA.addTag("Content-Type", "text/html");
+    transactionA.addTag("App-Name", "ItemLore");
+    transactionA.addTag("Item", "LightHammer");
+    transactionA.addTag("Print-Number", "6/20");
+  
+    await arweave.transactions.sign(transactionA);
+  
+    let uploader = await arweave.transactions.getUploader(transactionA);
+  
+    while (!uploader.isComplete) {
+      await uploader.uploadChunk();
+      console.log(
+        `${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`
+      );
+    }
+  }
+
+  class Submit extends Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        value: "(Write your story here)",
+      };
+  
+      this.handleChange = this.handleChange.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
+    }
+  
+    handleChange(event) {
+      this.setState({ value: event.target.value });
+    }
+  
+    handleSubmit(event) {
+      alert("Your story reads: " + this.state.value);
+      event.preventDefault();
+      let itemLore = this.state.value;
+      console.log("state value test:" + itemLore);
+      submitLore(itemLore);
+    }
+    render() {
+      return (
+        <form onSubmit={this.handleSubmit}>
+            <textarea value={this.state.value} onChange={this.handleChange} />
+          <input type="submit" value="Submit ItemLore" />
+        </form>
+      );
+    }
+  }
+
 
   return (
     <Content>
@@ -202,7 +275,7 @@ export const ArtView = () => {
               onMint={async () => await setRemountArtMinting(prev => prev + 1)}
             />
           </Col>
-          <Col span="12">
+          <Col span="24">
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
@@ -216,7 +289,7 @@ export const ArtView = () => {
             <div className="info-header">About the Creator</div>
             <div className="info-content">{art.about}</div> */}
           </Col>
-          <Col span="12">
+          <Col span="24">
             {attributes && (
               <>
                 <Divider />
@@ -233,6 +306,17 @@ export const ArtView = () => {
                 </List>
               </>
             )}
+          </Col>
+          <Col span="24">
+            <Divider />
+            {art.creators?.find(c => !c.verified) && unverified}
+            <br />
+            <div className="info-header">[• Item Lore •]</div>
+            <h1>Submit ItemLore for this Item:</h1>
+            <Submit>
+
+            </Submit>
+            <br />
           </Col>
         </Row>
       </Col>
