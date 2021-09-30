@@ -205,7 +205,7 @@ export const getMasterEdition = async (
 
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
-    throw new Error("Keypair is required!");
+    throw new Error('Keypair is required!');
   }
   const loaded = Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(fs.readFileSync(keypair).toString())),
