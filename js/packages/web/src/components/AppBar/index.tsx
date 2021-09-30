@@ -62,7 +62,7 @@ const MetaplexMenu = () => {
           }
         >
           <div className="site-card-wrapper mobile-menu-modal">
-            <Menu>
+            <Menu onClick={ () => setIsModalVisible(false)}>
               {getDefaultLinkActions(connected).map((item, idx) => (
                 <Menu.Item key={idx}>{item}</Menu.Item>
               ))}

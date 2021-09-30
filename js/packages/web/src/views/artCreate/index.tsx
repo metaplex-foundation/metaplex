@@ -379,7 +379,7 @@ const UploadStep = (props: {
         <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
           accept=".png,.jpg,.gif,.mp4,.svg"
-          style={{ padding: 20 }}
+          style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
           multiple={false}
           customRequest={info => {
             // dont upload files here, handled outside of the control
@@ -396,7 +396,7 @@ const UploadStep = (props: {
               Upload your cover image (PNG, JPG, GIF, SVG)
             </h3>
           </div>
-          <p className="ant-upload-text">Drag and drop, or click to browse</p>
+          <p className="ant-upload-text" style={{color: "#6d6d6d"}}>Drag and drop, or click to browse</p>
         </Dragger>
       </Row>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
@@ -430,7 +430,7 @@ const UploadStep = (props: {
             <div className="ant-upload-drag-icon">
               <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
             </div>
-            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            <p className="ant-upload-text" style={{color: "#6d6d6d"}}>Drag and drop, or click to browse</p>
           </Dragger>
         </Row>
       )}
