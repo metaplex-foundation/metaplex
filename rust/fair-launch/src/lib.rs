@@ -29,7 +29,7 @@ pub const LOTTERY: &str = "lottery";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
-pub mod fair_launch {
+pub mod fair_launchd {
     use super::*;
     pub fn initialize_fair_launch<'info>(
         ctx: Context<'_, '_, '_, 'info, InitializeFairLaunch<'info>>,
@@ -201,26 +201,26 @@ pub mod fair_launch {
         let mut curr_pos = FAIR_LAUNCH_LOTTERY_SIZE + (index as usize);
         for byte in bytes {
             let curr_byte = lottery_data[curr_pos];
-            msg!("Curr byte is {}, new byte is {}", curr_byte, byte);
+            //msg!("Curr byte is {}, new byte is {}", curr_byte, byte);
             for bit_position in 0..8 {
-                msg!("Looking for position {}", bit_position);
+                //msg!("Looking for position {}", bit_position);
                 let mask = u8::pow(2, bit_position as u32);
                 let curr_byte_masked = curr_byte & mask;
                 let byte_masked = byte & mask;
-                msg!(
+                /*msg!(
                     "Mask is {} and this led to curr byte masked {} and new byte masked {}",
                     mask,
                     curr_byte_masked,
                     byte_masked
-                );
+                );*/
                 if curr_byte_masked > byte_masked {
-                    msg!("Subtracting 1");
+                    //msg!("Subtracting 1");
                     number_of_ones_changed -= 1; // we went from a 1 to a 0
                 } else if curr_byte_masked < byte_masked {
-                    msg!("Adding 1");
+                    //msg!("Adding 1");
                     number_of_ones_changed += 1 // We went from a 0 to 1
                 } else {
-                    msg!("No change here"); // 1 and 1 or 0 and 0
+                    //msg!("No change here"); // 1 and 1 or 0 and 0
                 }
             }
             lottery_data[curr_pos] = byte;
@@ -243,7 +243,7 @@ pub mod fair_launch {
                 .checked_add(number_of_ones_changed as u64)
                 .ok_or(ErrorCode::NumericalOverflowError)?;
         }
-        msg!("new number of ones is {}", new_number_of_ones);
+        //msg!("new number of ones is {}", new_number_of_ones);
         fair_launch_lottery_bitmap.bitmap_ones = new_number_of_ones;
 
         Ok(())
@@ -1354,7 +1354,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 1 + // bump
 1 + // treasury_bump
 1 + // token_mint_bump
-4 + 6 + // uuid 
+4 + 6 + // uuid
 8 + //range start
 8 + // range end
 8 + // phase one start
@@ -1371,7 +1371,7 @@ pub const FAIR_LAUNCH_SPACE_VEC_START: usize = 8 + // discriminator
 8 + // number of tickets unseq'ed
 8 + // number of tickets sold
 8 + // number of tickets dropped
-8 + // number of tickets punched 
+8 + // number of tickets punched
 8 + // number of tokens burned for refunds
 8 + // number of tokens preminted
 1 + // phase three started

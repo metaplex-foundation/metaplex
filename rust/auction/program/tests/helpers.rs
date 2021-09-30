@@ -368,6 +368,7 @@ pub async fn claim_bid(
             bidder.pubkey(),
             bidder_spl_account.pubkey(),
             *mint,
+            None,
             ClaimBidArgs {
                 resource: *resource,
             },
