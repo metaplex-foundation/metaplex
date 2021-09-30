@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { FC } from 'react';
 import { Card } from 'antd';
-
-import { Artist } from '../../types';
 
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
+import { Artist } from '../../graphql';
 
-export const ArtistCard = ({ artist }: { artist: Artist }) => {
+export const ArtistCard: FC<{ artist: Artist }> = ({ artist }) => {
   return (
     <Card
       hoverable={true}
@@ -14,7 +13,7 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
       cover={<div style={{ height: 100 }} />}
     >
       <div>
-        <MetaAvatar creators={[artist]} size={100} />
+        <MetaAvatar creators={[artist as any]} size={100} />
         <div className="artist-card-name">
           {artist.name || shortenAddress(artist.address || '')}
         </div>

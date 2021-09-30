@@ -3,12 +3,13 @@ import React from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
-import { useMeta } from '../../contexts';
+import { useQueryCreators } from '../../graphql';
 
 const { Content } = Layout;
 
 export const ArtistsView = () => {
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const [data] = useQueryCreators();
+
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -16,30 +17,17 @@ export const ArtistsView = () => {
     500: 1,
   };
 
-  const items = Object.values(whitelistedCreatorsByCreator);
-
   const artistGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {items.map((m, idx) => {
-        const id = m.info.address;
-        return (
-          <Link to={`/artists/${id}`} key={idx}>
-            <ArtistCard
-              key={id}
-              artist={{
-                address: m.info.address,
-                name: m.info.name || '',
-                image: m.info.image || '',
-                link: m.info.twitter || '',
-              }}
-            />
-          </Link>
-        );
-      })}
+      {data?.creators?.map(creator => (
+        <Link to={`/artists/${creator.address}`} key={creator.address}>
+          <ArtistCard artist={creator} />
+        </Link>
+      ))}
     </Masonry>
   );
 
