@@ -4,22 +4,22 @@ import {
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+
 import {
   utils,
-  actions,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import BN from 'bn.js';
-import { QUOTE_MINT } from '../constants';
-
-const {
+import {
   updateExternalPriceAccount,
   ExternalPriceAccount,
   MAX_EXTERNAL_ACCOUNT_SIZE,
-} = actions;
+} from '@oyster/common/dist/lib/actions/vault';
+
+import BN from 'bn.js';
+import { QUOTE_MINT } from '../constants';
 
 // This command creates the external pricing oracle
 export async function createExternalPriceAccount(

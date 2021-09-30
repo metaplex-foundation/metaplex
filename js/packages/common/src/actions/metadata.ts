@@ -1,4 +1,5 @@
 import {
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -51,6 +52,7 @@ export enum MetadataCategory {
   Video = 'video',
   Image = 'image',
   VR = 'vr',
+  HTML = 'html',
 }
 
 export type MetadataFile = {
@@ -248,13 +250,27 @@ export class Metadata {
     this.data = args.data;
     this.primarySaleHappened = args.primarySaleHappened;
     this.isMutable = args.isMutable;
-    this.editionNonce = args.editionNonce;
+    this.editionNonce = args.editionNonce ?? null;
   }
 
   public async init() {
-    const edition = await getEdition(this.mint);
-    this.edition = edition;
-    this.masterEdition = edition;
+    const metadata = toPublicKey(programIds().metadata);
+    if (this.editionNonce !== null) {
+      this.edition = (
+        await PublicKey.createProgramAddress(
+          [
+            Buffer.from(METADATA_PREFIX),
+            metadata.toBuffer(),
+            toPublicKey(this.mint).toBuffer(),
+            new Uint8Array([this.editionNonce || 0]),
+          ],
+          metadata,
+        )
+      ).toBase58();
+    } else {
+      this.edition = await getEdition(this.mint);
+    }
+    this.masterEdition = this.edition;
   }
 }
 

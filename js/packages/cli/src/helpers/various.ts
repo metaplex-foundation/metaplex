@@ -1,9 +1,24 @@
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { CACHE_PATH } from './constants';
-import path from 'path';
+import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
 import fs from 'fs';
-import FormData from 'form-data';
-import fetch from 'node-fetch';
+import weighted from 'weighted';
+import path from 'path';
+
+const { readFile } = fs.promises;
+
+export async function readJsonFile(fileName: string) {
+  const file = await readFile(fileName, 'utf-8');
+  return JSON.parse(file);
+}
+
+export const generateRandomSet = breakdown => {
+  const tmp = {};
+  Object.keys(breakdown).forEach(attr => {
+    const randomSelection = weighted.select(breakdown[attr]);
+    tmp[attr] = randomSelection;
+  });
+
+  return tmp;
+};
 
 export const getUnixTs = () => {
   return new Date().getTime() / 1000;
@@ -53,41 +68,133 @@ export function fromUTF8Array(data: number[]) {
   return str;
 }
 
+export function parsePrice(price: string, mantissa: number = LAMPORTS_PER_SOL) {
+  return Math.ceil(parseFloat(price) * mantissa);
+}
+
+export function parseDate(date) {
+  if (date === 'now') {
+    return Date.now() / 1000;
+  }
+  return Date.parse(date) / 1000;
+}
+
+export const getMultipleAccounts = async (
+  connection: any,
+  keys: string[],
+  commitment: string,
+) => {
+  const result = await Promise.all(
+    chunks(keys, 99).map(chunk =>
+      getMultipleAccountsCore(connection, chunk, commitment),
+    ),
+  );
+
+  const array = result
+    .map(
+      a =>
+        //@ts-ignore
+        a.array.map(acc => {
+          if (!acc) {
+            return undefined;
+          }
+
+          const { data, ...rest } = acc;
+          const obj = {
+            ...rest,
+            data: Buffer.from(data[0], 'base64'),
+          } as AccountInfo<Buffer>;
+          return obj;
+        }) as AccountInfo<Buffer>[],
+    )
+    //@ts-ignore
+    .flat();
+  return { keys, array };
+};
+
 export function chunks(array, size) {
   return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
     (_, index) => array.slice(index * size, (index + 1) * size),
   );
 }
 
-export function cachePath(env: string, cacheName: string) {
-  return path.join(CACHE_PATH, `${env}-${cacheName}`);
+export function generateRandoms(
+  numberOfAttrs: number = 1,
+  total: number = 100,
+) {
+  const numbers = [];
+  const loose_percentage = total / numberOfAttrs;
+
+  for (let i = 0; i < numberOfAttrs; i++) {
+    const random = Math.floor(Math.random() * loose_percentage) + 1;
+    numbers.push(random);
+  }
+
+  const sum = numbers.reduce((prev, cur) => {
+    return prev + cur;
+  }, 0);
+
+  numbers.push(total - sum);
+  return numbers;
 }
 
-export function loadCache(cacheName: string, env: string) {
-  const path = cachePath(env, cacheName);
-  return fs.existsSync(path)
-    ? JSON.parse(fs.readFileSync(path).toString())
-    : undefined;
-}
+export const getMetadata = (
+  name: string = '',
+  symbol: string = '',
+  index: number = 0,
+  creators,
+  description: string = '',
+  seller_fee_basis_points: number = 500,
+  attrs,
+  collection,
+) => {
+  const attributes = [];
+  for (const prop in attrs) {
+    attributes.push({
+      trait_type: prop,
+      value: path.parse(attrs[prop]).name,
+    });
+  }
+  return {
+    name: `${name}${index + 1}`,
+    symbol,
+    image: `${index}.png`,
+    properties: {
+      files: [
+        {
+          uri: `${index}.png`,
+          type: 'image/png',
+        },
+      ],
+      category: 'image',
+      creators,
+    },
+    description,
+    seller_fee_basis_points,
+    attributes,
+    collection,
+  };
+};
 
-export function saveCache(cacheName: string, env: string, cacheContent) {
-  fs.writeFileSync(cachePath(env, cacheName), JSON.stringify(cacheContent));
-}
+const getMultipleAccountsCore = async (
+  connection: any,
+  keys: string[],
+  commitment: string,
+) => {
+  const args = connection._buildArgs([keys], commitment, 'base64');
 
-export function parsePrice(price): number {
-  return Math.ceil(parseFloat(price) * LAMPORTS_PER_SOL);
-}
+  const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
+  if (unsafeRes.error) {
+    throw new Error(
+      'failed to get info about account ' + unsafeRes.error.message,
+    );
+  }
 
-export async function upload(data: FormData, manifest, index) {
-  console.log(`trying to upload ${index}.png: ${manifest.name}`);
-  return await (
-    await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
-      {
-        method: 'POST',
-        // @ts-ignore
-        body: data,
-      },
-    )
-  ).json();
-}
+  if (unsafeRes.result.value) {
+    const array = unsafeRes.result.value as AccountInfo<string[]>[];
+    return { keys, array };
+  }
+
+  // TODO: fix
+  throw new Error();
+};

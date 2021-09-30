@@ -1,7 +1,11 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
-import { AuctionManagerV2, WinningConfigType } from '../../models/metaplex';
+import {
+  AuctionManagerV1,
+  AuctionManagerV2,
+  WinningConfigType,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
   AuctionDataExtended,
@@ -16,7 +20,6 @@ import {
 import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
-import { AuctionManagerV1 } from '../../models/metaplex/deprecatedStates';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
@@ -308,14 +311,14 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [sortedSales, setSortedSales] = useState<number[]>([]);
   const {
     metadata,
-    stores,
+    // stores,
     auctionManagersByAuction,
     bidderPotsByAuctionAndBidder,
     auctionDataExtended,
   } = useMeta();
 
   const totalNFTs = metadata.length;
-  const totalMarketplaces = Object.values(stores).length;
+  // const totalMarketplaces = Object.values(stores).length;
 
   const auctionViews = useAuctions();
 
@@ -350,7 +353,8 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
         </Button>
         <h1>Overview</h1>
         <h3>
-          Total NFTs: {totalNFTs} Total Marketplaces: {totalMarketplaces}
+          Total NFTs: {totalNFTs}
+          {/* Total Marketplaces: {totalMarketplaces} */}
         </h3>
         <h1>User Breakdown</h1>
         <h3>Any Engagement: {Object.values(usersEngaged).length}</h3>
