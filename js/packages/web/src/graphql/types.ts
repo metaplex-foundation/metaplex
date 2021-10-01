@@ -6,7 +6,12 @@ import {
 } from '.';
 import { QueryResultField } from './hooks/createQuery';
 
-export { AuctionInputState } from './generated/graphql';
+export {
+  AuctionInputState,
+  AuctionState,
+  AuctionViewState,
+  PriceFloorType,
+} from './generated/graphql';
 
 export type Artist = NonNullable<
   QueryResultField<typeof useQueryCreators, 'creators'>[0]

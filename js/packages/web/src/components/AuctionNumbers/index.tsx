@@ -1,8 +1,7 @@
 import React from 'react';
 import { Col, Row } from 'antd';
 import { formatCountdownTime } from '@oyster/common';
-import { AuctionViewState } from '../../graphql';
-import { Auction } from '../../hooks';
+import { AuctionViewState, Auction } from '../../graphql';
 import { AmountLabel } from '../AmountLabel';
 import { useAuctionCurrentAmount, useAuctionEnded } from '../AuctionRenderCard';
 import { Countdown } from './Countdown';
@@ -20,7 +19,7 @@ export const AuctionNumbers = ({ auction }: { auction: Auction }) => {
   return (
     <div style={{ minWidth: 350 }}>
       <Row>
-        {(!ended || auctionView.isInstantSale) && (
+        {!ended && (
           <Col span={12}>
             <AmountLabel
               style={{ marginBottom: 10 }}

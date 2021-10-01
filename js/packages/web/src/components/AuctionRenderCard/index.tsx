@@ -3,14 +3,13 @@ import { Card, CardProps } from 'antd';
 import {
   formatTokenAmount,
   fromLamports,
-  isAuctionEnded,
   timeToAuctionEnd,
 } from '@oyster/common';
 import { ArtContent } from '../ArtContent/next';
-import { Auction } from '../../hooks';
+import {} from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { BN } from 'bn.js';
-import { AuctionState, AuctionViewState, PriceFloorType } from '../../graphql';
+import { Auction, AuctionViewState, PriceFloorType } from '../../graphql';
 
 export interface AuctionCard extends CardProps {
   auction: Auction;

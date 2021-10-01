@@ -79,6 +79,46 @@ export class BidState {
   }
 }
 
+export function getWinnerAt(
+  state: Pick<BidState, 'bids'>,
+  winnerIndex: number,
+): StringPublicKey | null {
+  const convertedIndex = state.bids.length - winnerIndex - 1;
+
+  if (convertedIndex >= 0 && convertedIndex < state.bids.length) {
+    return state.bids[convertedIndex].key;
+  } else {
+    return null;
+  }
+}
+
+export function getAmountAt(
+  state: Pick<BidState, 'bids'>,
+  winnerIndex: number,
+): BN | null {
+  const convertedIndex = state.bids.length - winnerIndex - 1;
+
+  if (convertedIndex >= 0 && convertedIndex < state.bids.length) {
+    return state.bids[convertedIndex].amount;
+  } else {
+    return null;
+  }
+}
+
+export function getWinnerIndex(
+  state: Pick<BidState, 'bids' | 'max'>,
+  bidder: StringPublicKey,
+): number | null {
+  if (!state.bids) return null;
+
+  const index = state.bids.findIndex(b => b.key === bidder);
+  // auction stores data in reverse order
+  if (index !== -1) {
+    const zeroBased = state.bids.length - index - 1;
+    return zeroBased < state.max.toNumber() ? zeroBased : null;
+  } else return null;
+}
+
 export const AuctionParser: AccountParser = (
   pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,

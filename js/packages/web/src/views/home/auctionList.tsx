@@ -2,8 +2,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
-import { AuctionInputState } from '../../graphql';
-import { useQueryAuctions } from '../../hooks';
+import { AuctionInputState, useQueryAuctions } from '../../graphql';
 import { AuctionsGrid } from './AuctionsGrid';
 
 export enum LiveAuctionViewState {

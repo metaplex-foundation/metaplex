@@ -253,6 +253,24 @@ export class AuctionManager {
   }
 }
 
+export function getAmountForWinner(
+  manager: AuctionManagerV2 | AuctionManagerV1,
+  winnerIndex: number,
+  safetyDepositBoxIndex: number,
+): BN {
+  if (manager.key == MetaplexKey.AuctionManagerV1) {
+    const amount =
+      (manager as AuctionManagerV1).settings.winningConfigs[
+        winnerIndex
+      ].items.find(i => i.safetyDepositBoxIndex == safetyDepositBoxIndex)
+        ?.amount || 0;
+    return new BN(amount);
+  } else {
+    const safetyDepositConfig =
+      this.safetyDepositConfigs[safetyDepositBoxIndex];
+    return safetyDepositConfig.info.getAmountForWinner(new BN(winnerIndex));
+  }
+}
 export class AuctionManagerV2 {
   key: MetaplexKey;
   store: StringPublicKey;

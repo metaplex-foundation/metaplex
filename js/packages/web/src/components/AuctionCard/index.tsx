@@ -26,7 +26,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 // import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
-import { AuctionNumbers } from './../AuctionNumbers';
 import {
   sendRedeemBid,
   eligibleForParticipationPrizeGivenWinningIndex,
@@ -268,12 +267,6 @@ export const AuctionCard = ({
   return (
     <div className="auction-container" style={style}>
       <Col>
-        {!auctionView.isInstantSale && (
-          <>
-            <AuctionNumbers auctionView={auctionView} />
-            <br />
-          </>
-        )}
         {showRedemptionIssue && (
           <span>
             There was an issue redeeming or refunding your bid. Please try
@@ -532,7 +525,10 @@ export const AuctionCard = ({
                   isAuctionItemMaster;
 
                 // Placing a "bid" of the full amount results in a purchase to redeem.
-                if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+                if (
+                  instantSalePrice &&
+                  (allowBidToPublic || allowBidToAuctionOwner)
+                ) {
                   try {
                     const bid = await sendPlaceBid(
                       connection,
@@ -609,7 +605,6 @@ export const AuctionCard = ({
                       )}
                     </div>
                   )}
-                  <AuctionNumbers auctionView={auctionView} />
                   <br />
                   {tickSizeInvalid && tickSize && (
                     <span style={{ color: 'red' }}>

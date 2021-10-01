@@ -1,7 +1,7 @@
 import React from 'react';
 import { Col, Row, Button, Skeleton } from 'antd';
 
-import { Auction } from '../../hooks';
+import { Auction } from '../../graphql';
 import { ArtContent } from '../ArtContent/next';
 import { Link } from 'react-router-dom';
 import { AuctionNumbers } from '../AuctionNumbers';
