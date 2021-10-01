@@ -26,7 +26,7 @@ const btnStyle: React.CSSProperties = {
   height: 40,
 };
 
-const UserActions = () => {
+const UserActions = (props: { mobile?: boolean, onClick?: any }) => {
   const { wallet, publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
@@ -40,7 +40,26 @@ const UserActions = () => {
 
   return (
     <>
-      {store && (
+      {store && (props.mobile ? (
+        <div className="actions-buttons actions-user">
+          {canCreate && (
+              <Link to={`/art/create`}>
+                <Button onClick={() => {
+                  props.onClick ? props.onClick() : null;
+                }} className="black-btn">
+                  Create
+                </Button>
+              </Link>
+          )}
+          <Link to={`/auction/create/0`}>
+            <Button onClick={() => {
+              props.onClick ? props.onClick() : null;
+            }} className="black-btn">
+              Sell
+            </Button>
+          </Link>
+        </div>
+      ) : (
         <div
           style={{
             display: 'flex',
@@ -62,7 +81,7 @@ const UserActions = () => {
             </Button>
           </Link>
         </div>
-      )}
+      ))}
     </>
   );
 };
@@ -453,6 +472,12 @@ export const CurrentUserBadgeMobile = (props: {
         <Button className="black-btn" onClick={disconnect}>
           Disconnect
         </Button>
+
+      </div>
+      <div className="actions-buttons">
+        <UserActions mobile onClick={() => {
+          props.closeModal ? props.closeModal() : null;
+        }}/>
       </div>
       <AddFundsModal
         setShowAddFundsModal={setShowAddFundsModal}
