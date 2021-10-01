@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic';
 import { NextPageContext } from 'next';
 import Head from 'next/head';
 import { Storefront } from '@oyster/common';
 import { getStorefront } from './../actions/getStorefront';
+import Bugsnag from '@bugsnag/js'
+import BugsnagPluginReact from '@bugsnag/plugin-react'
 
 const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
   ssr: false,
@@ -12,6 +14,14 @@ const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
 interface AppProps {
   storefront: Storefront;
 }
+
+Bugsnag.start({
+  apiKey: 'bd22af1f4e1213b5badb590a48128bf1',
+  plugins: [new BugsnagPluginReact()]
+})
+
+//@ts-ignore
+const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary(React)
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
@@ -85,20 +95,22 @@ function App({ storefront }: AppProps) {
 
   return (
     <>
-      <Head>
-        {storefront.meta.favicon && (
-          <>
-            <link rel="icon" type="image/png" href={storefront.meta.favicon} />
-          </>
-        )}
-        <meta name="description" content={storefront.meta.description} />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content={storefront.theme.logo} />
-        <meta property="og:title" content={storefront.meta.title} />
-        <meta property="og:description" content={storefront.meta.description} />
-        <title>{storefront.meta.title}</title>
-      </Head>
-      {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
+      <ErrorBoundary>
+        <Head>
+          {storefront.meta.favicon && (
+            <>
+              <link rel="icon" type="image/png" href={storefront.meta.favicon} />
+            </>
+          )}
+          <meta name="description" content={storefront.meta.description} />
+          <meta property="og:type" content="website" />
+          <meta property="og:image" content={storefront.theme.logo} />
+          <meta property="og:title" content={storefront.meta.title} />
+          <meta property="og:description" content={storefront.meta.description} />
+          <title>{storefront.meta.title}</title>
+        </Head>
+        {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
+      </ErrorBoundary>
     </>
   );
 }
