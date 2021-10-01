@@ -1282,7 +1282,7 @@ pub mod fair_launch {
             &create_metadata_accounts(
                 *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.metadata.key,
-                *participation_token_info.key,
+                *participation_mint_info.key,
                 fair_launch.key(),
                 *ctx.accounts.payer.key,
                 fair_launch.key(),
@@ -1435,7 +1435,7 @@ pub mod fair_launch {
             return Err(ErrorCode::ParticipationMintMismatch.into());
         }
 
-        if let COption::Some(val) = buyer_nft_token_account.delegate {
+        if buyer_nft_token_account.delegate.is_some() {
             return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
         }
 
@@ -1475,7 +1475,7 @@ pub mod fair_launch {
 
         invoke_signed(
             &mint_new_edition_from_master_edition_via_token(
-                *ctx.accounts.token_program.key,
+                *ctx.accounts.token_metadata_program.key,
                 *ctx.accounts.new_metadata.key,
                 *ctx.accounts.new_edition.key,
                 *ctx.accounts.master_edition.key,

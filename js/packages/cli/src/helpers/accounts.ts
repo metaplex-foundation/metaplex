@@ -236,6 +236,25 @@ export const getMasterEdition = async (
   )[0];
 };
 
+export const getEditionMarkPda = async (
+  mint: anchor.web3.PublicKey,
+  edition: number,
+): Promise<anchor.web3.PublicKey> => {
+  const editionNumber = Math.floor(edition / 248);
+  return (
+    await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from('edition'),
+        Buffer.from(editionNumber.toString()),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
