@@ -35,7 +35,7 @@
     "@solana/spl-token-registry": "0.2.202",
     "@solana/wallet-adapter-base": "^0.6.0",
     "@identity.com/wallet-adapter-react": "^0.12.4",
-    "@identity.com/wallet-adapter-wallets": "^0.10.1",
+    "@identity.com/wallet-adapter-wallets": "^0.10.2",
     "@solana/web3.js": "^1.21.0",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",

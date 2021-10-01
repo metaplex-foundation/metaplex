@@ -17,7 +17,7 @@ import {
   WalletProvider,
 } from '@identity.com/wallet-adapter-react';
 
-import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
+import { WalletDialogProvider } from '@identity.com/wallet-adapter-material-ui';
 import { ThemeProvider, createTheme } from '@material-ui/core';
 import { ConfettiProvider } from './confetti';
 

@@ -124,7 +124,7 @@ export const WalletModal: FC = () => {
           >
             <span>
               <img
-                src="https://cryptid.identity.com/logo.png"
+                src="https://cryptid.identity.com/favicon.ico"
                 style={{ width: '1.2rem' }}
               />
               &nbsp;Sign in with Cryptid
