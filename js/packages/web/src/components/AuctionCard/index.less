@@ -83,7 +83,39 @@
 }
 
 .ant-modal-body {
+  border-radius: 12px 12px 0 0;
   background: #212121;
+}
+
+.ant-modal-content {
+  background-color: #212121;
+}
+
+.ant-modal-footer {
+  border-radius: 0 0 12px 12px;
+  background: #212121;
+  border: none;
+
+  .ant-btn:not(.ant-btn-primary){
+    border: none;
+    color: white;
+    border-radius: 8px;
+
+    &:hover {
+      border: 1px solid white;
+    }
+  }
+
+  .ant-btn-primary {
+     background: linear-gradient(180deg, #768bf9 0%, #5870ee 100%);
+     border-radius: 8px;
+
+      &:hover, &:focus {
+      background: transparent;
+      border-color: #FFFFFF;
+      color: #FFFFFF;
+    }
+  }
 }
 
 .ant-card-body {
