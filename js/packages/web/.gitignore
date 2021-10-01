@@ -1,3 +1,5 @@
 target
 .next
 .env.local
+
+.env
