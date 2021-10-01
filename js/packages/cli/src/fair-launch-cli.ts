@@ -949,9 +949,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await adjustTicket({
       amountNumber,
@@ -1125,6 +1124,7 @@ program
               ) {
                 console.log(
                   'Refunding ticket for buyer',
+                  allIndexesInSlice[i],
                   ticket.model.buyer.toBase58(),
                 );
                 await adjustTicket({
@@ -1151,6 +1151,7 @@ program
                 if (isWinner > 0) {
                   console.log(
                     'Punching ticket for buyer',
+                    allIndexesInSlice[i],
                     ticket.model.buyer.toBase58(),
                   );
                   const diff =
@@ -1161,7 +1162,9 @@ program
                     console.log(
                       'Refunding first',
                       diff,
-                      'to buyer before punching',
+                      'to buyer',
+                      allIndexesInSlice[i],
+                      'before punching',
                     );
                     try {
                       await adjustTicket({
@@ -1196,7 +1199,8 @@ program
                     });
 
                     console.log(
-                      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+                      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()} for buyer `,
+                      allIndexesInSlice[i],
                     );
                   } catch (e) {
                     if (tries > 3) {
@@ -1210,6 +1214,7 @@ program
                 } else {
                   console.log(
                     'Buyer ',
+                    allIndexesInSlice[i],
                     ticket.model.buyer.toBase58(),
                     'was eligible but lost lottery, refunding',
                   );
@@ -1231,12 +1236,14 @@ program
             } else if (ticket.model.state.withdrawn) {
               console.log(
                 'Buyer',
+                allIndexesInSlice[i],
                 ticket.model.buyer.toBase58(),
                 'withdrawn already',
               );
             } else if (ticket.model.state.punched) {
               console.log(
                 'Buyer',
+                allIndexesInSlice[i],
                 ticket.model.buyer.toBase58(),
                 'punched already',
               );
@@ -1332,9 +1339,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1470,9 +1476,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
