@@ -19,7 +19,7 @@ use {
 
 const PREFIX: &str = "candy_machine";
 #[program]
-pub mod nft_candy_machined {
+pub mod nft_candy_machine {
     use anchor_lang::solana_program::{
         program::{invoke, invoke_signed},
         system_instruction,

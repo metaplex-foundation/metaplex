@@ -29,7 +29,7 @@ pub const LOTTERY: &str = "lottery";
 pub const MAX_GRANULARITY: u64 = 100;
 
 #[program]
-pub mod fair_launchd {
+pub mod fair_launch {
     use super::*;
     pub fn initialize_fair_launch<'info>(
         ctx: Context<'_, '_, '_, 'info, InitializeFairLaunch<'info>>,
