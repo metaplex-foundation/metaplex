@@ -565,9 +565,7 @@ export const AuctionCard = ({
                 your bid
               </div>
               <div
-                style={{
-                  display: 'flex',
-                }}
+                className={'bid-container'}
               >
                 <div
                   style={{
@@ -592,7 +590,7 @@ export const AuctionCard = ({
                     placeholder={`Bid ${minBid} SOL or more`}
                   />
                 </div>
-
+                <div className={'bid-buttons'}>
                 <Button
                   className="metaplex-button-default"
                   style={{
@@ -635,6 +633,7 @@ export const AuctionCard = ({
                     'Bid now'
                   )}
                 </Button>
+                </div>
               </div>
             </div>
           )}
