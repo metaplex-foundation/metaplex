@@ -3,6 +3,7 @@ import {
   Storefront,
   ArweaveQueryResponse,
 } from '@oyster/common';
+import { maybeCDN } from '../utils/cdn';
 
 const ARWEAVE_URL = process.env.NEXT_PUBLIC_ARWEAVE_URL;
 
@@ -56,12 +57,13 @@ export const getStorefront = async (
       subdomain,
       pubkey: values['solana:pubkey'],
       theme: {
-        logo: values['holaplex:theme:logo:url'],
-        stylesheet: `${ARWEAVE_URL}/${transaction.id}`,
+        logo: maybeCDN(values['holaplex:theme:logo:url']),
+        stylesheet: maybeCDN(`${ARWEAVE_URL}/${transaction.id}`),
       },
       meta: {
-        favicon:
+        favicon: maybeCDN(
           values['holaplex:metadata:favicon:url'] || '/favicon-16x16.png',
+        ),
         title:
           values['holaplex:metadata:page:title'] ||
           `Holaplex - ${subdomain} | NFT Marketplace`,
