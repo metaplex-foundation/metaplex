@@ -165,3 +165,19 @@
     margin: 10px 0;
   }
 }
+
+.bid-container{
+  display: flex;
+  @media(max-width: 768px){
+    flex-direction: column;
+  }
+
+  .bid-buttons{
+    display: flex;
+    @media(max-width: 768px){
+      flex-direction: row;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+  }
+}
