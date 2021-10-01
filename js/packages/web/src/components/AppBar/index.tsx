@@ -88,7 +88,9 @@ const MetaplexMenu = () => {
                     closeModal={() => {
                       setIsModalVisible(false);
                     }}
-                  />
+                    />
+                  <Notifications />
+                  <Cog />
                 </>
               )}
             </div>
