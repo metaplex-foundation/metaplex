@@ -16,7 +16,7 @@ import { ParsedAccount } from '../accounts';
 import { cache } from '../accounts';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 
-export const processAuctions: ProcessAccountsFunc = (
+export const processAuctions: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
 ) => {

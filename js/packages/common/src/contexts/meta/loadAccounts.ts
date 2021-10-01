@@ -1029,3 +1029,57 @@ export const initMetadata = async (
     }
   }
 };
+
+export const loadMultipleAccounts = async (
+  conn: Connection,
+  keys: StringPublicKey[],
+  commitment: string,
+): Promise<MetaState> => {
+  const tempCache: MetaState = getEmptyMetaState();
+  const updateTemp = makeSetter(tempCache);
+  const { array } = await getMultipleAccounts(conn, keys, commitment);
+
+  await Promise.all(
+    array.map(async (account, i) => {
+      const pubkey = keys[i];
+
+      // account has an incorrect type ascription
+      if (!account) {
+        console.warn(`Didn't see account for pubkey ${pubkey}`);
+
+        return;
+      }
+
+      const PROGRAM_IDS = programIds();
+      const pair = { pubkey, account };
+
+      // account.owner ALSO has an incorrect type ascription
+      const owner =
+        account.owner instanceof PublicKey
+          ? account.owner.toBase58()
+          : (account.owner as string);
+
+      switch (owner) {
+        case PROGRAM_IDS.metadata:
+          await processMetaData(pair, updateTemp);
+          break;
+        case PROGRAM_IDS.vault:
+          await processVaultData(pair, updateTemp);
+          break;
+        case PROGRAM_IDS.auction:
+          await processAuctions(pair, updateTemp);
+          break;
+        case PROGRAM_IDS.metaplex:
+          await processMetaplexAccounts(pair, updateTemp);
+          break;
+        default:
+          // console.warn(
+          //   `Not sure what to do with account ${pubkey} owned by ${account.owner}`,
+          // );
+          break;
+      }
+    }),
+  );
+
+  return tempCache;
+};

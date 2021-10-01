@@ -22,6 +22,7 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
+  loadMultipleAccounts,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -189,7 +190,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { update } = useMeta();
+  const { patchState, update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -365,18 +366,17 @@ export const AuctionCard = ({
               style={{ marginTop: 20 }}
             >
               {loading ||
-              auctionView.items.find(i => i.find(it => !it.metadata)) ||
-              !myPayingAccount ? (
+                auctionView.items.find(i => i.find(it => !it.metadata)) ||
+                !myPayingAccount ? (
                 <Spin />
               ) : eligibleForAnything ? (
                 `Redeem bid`
               ) : (
-                `${
-                  wallet?.publicKey &&
+                `${wallet?.publicKey &&
                   auctionView.auctionManager.authority ===
-                    wallet.publicKey.toBase58()
-                    ? 'Reclaim Items'
-                    : 'Refund bid'
+                  wallet.publicKey.toBase58()
+                  ? 'Reclaim Items'
+                  : 'Refund bid'
                 }`
               )}
             </Button>
@@ -583,78 +583,125 @@ export const AuctionCard = ({
               const instantSale = async () => {
                 setLoading(true);
 
-                const instantSalePrice =
-                  auctionView.auctionDataExtended?.info.instantSalePrice;
-                const winningConfigType =
-                  auctionView.participationItem?.winningConfigType ||
-                  auctionView.items[0][0].winningConfigType;
-                const isAuctionItemMaster = [
-                  WinningConfigType.FullRightsTransfer,
-                  WinningConfigType.TokenOnlyTransfer,
-                ].includes(winningConfigType);
-                const allowBidToPublic =
-                  myPayingAccount &&
-                  !auctionView.myBidderPot &&
-                  isAuctionManagerAuthorityNotWalletOwner;
-                const allowBidToAuctionOwner =
-                  myPayingAccount &&
-                  !isAuctionManagerAuthorityNotWalletOwner &&
-                  isAuctionItemMaster;
+                try {
+                  const instantSalePrice =
+                    auctionView.auctionDataExtended?.info.instantSalePrice;
+                  const winningConfigType =
+                    auctionView.items[0][0].winningConfigType;
+                  const isAuctionItemMaster =
+                    winningConfigType ===
+                    WinningConfigType.FullRightsTransfer ||
+                    winningConfigType === WinningConfigType.TokenOnlyTransfer;
+                  const allowBidToPublic =
+                    myPayingAccount &&
+                    !auctionView.myBidderPot &&
+                    isAuctionManagerAuthorityNotWalletOwner;
+                  const allowBidToAuctionOwner =
+                    myPayingAccount &&
+                    !isAuctionManagerAuthorityNotWalletOwner &&
+                    isAuctionItemMaster;
 
-                // Placing a "bid" of the full amount results in a purchase to redeem.
-                if (
-                  instantSalePrice &&
-                  (allowBidToPublic || allowBidToAuctionOwner)
-                ) {
+                  // Placing a "bid" of the full amount results in a purchase to redeem.
+                  if (
+                    instantSalePrice &&
+                    (allowBidToPublic || allowBidToAuctionOwner)
+                  ) {
+                    let bidTxid: string | undefined;
+
+                    try {
+                      const { amount, txid } = await sendPlaceBid(
+                        connection,
+                        wallet,
+                        myPayingAccount.pubkey,
+                        auctionView,
+                        accountByMint,
+                        instantSalePrice,
+                        'confirmed',
+                      );
+                      setLastBid({ amount });
+                      bidTxid = txid;
+                    } catch (e) {
+                      console.error('sendPlaceBid', e);
+                      return;
+                    }
+
+                    try {
+                      // Attempt to load the transaction, retrying up to 5 times
+                      retry: do {
+                        for (let i = 0; i < 5; ++i) {
+                          const tx = await connection.getTransaction(bidTxid, {
+                            commitment: 'confirmed',
+                          });
+
+                          const keys = tx?.transaction.message.accountKeys;
+
+                          if (!keys) {
+                            await new Promise(o => setTimeout(o, 2000));
+                            continue;
+                          }
+
+                          const patch = await loadMultipleAccounts(
+                            connection,
+                            keys.map(k => k.toBase58()),
+                            'confirmed',
+                          );
+
+                          patchState(patch);
+                          setShowBidModal(true);
+                          setLoading(true);
+
+                          {
+                            const auctionKey = auctionView.auction.pubkey;
+                            const auctionBidderKey = `${auctionKey}-${wallet.publicKey}`;
+
+                            auctionView.auction = patch.auctions[auctionKey];
+                            auctionView.myBidderPot =
+                              patch.bidderPotsByAuctionAndBidder[
+                              auctionBidderKey
+                              ];
+                            auctionView.myBidderMetadata =
+                              patch.bidderMetadataByAuctionAndBidder[
+                              auctionBidderKey
+                              ];
+                          }
+
+                          // Stop retrying on success
+                          break retry;
+                        }
+
+                        // Throw an error if we retry too many times
+                        throw new Error("Couldn't get PlaceBid transaction");
+                      } while (false);
+                    } catch (e) {
+                      console.error('update (post-sendPlaceBid)', e);
+                      return;
+                    }
+                  }
+
+                  // Claim the purchase
                   try {
-                    const bid = await sendPlaceBid(
+                    await sendRedeemBid(
                       connection,
                       wallet,
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
-                      instantSalePrice,
+                      prizeTrackingTickets,
+                      bidRedemptions,
+                      bids,
                     );
-                    setLastBid(bid);
                   } catch (e) {
-                    console.error('sendPlaceBid', e);
-                    setShowBidModal(false);
-                    setLoading(false);
+                    console.error('sendRedeemBid', e);
+                    setShowRedemptionIssue(true);
                     return;
                   }
-                }
 
-                const newAuctionState = await update(
-                  auctionView.auction.pubkey,
-                  wallet.publicKey,
-                );
-                auctionView.auction = newAuctionState[0];
-                auctionView.myBidderPot = newAuctionState[1];
-                auctionView.myBidderMetadata = newAuctionState[2];
-                // Claim the purchase
-                try {
-                  await sendRedeemBid(
-                    connection,
-                    wallet,
-                    myPayingAccount.pubkey,
-                    auctionView,
-                    accountByMint,
-                    prizeTrackingTickets,
-                    bidRedemptions,
-                    bids,
-                  ).then(async () => {
-                    await update();
-                    setShowBidModal(false);
-                    setShowRedeemedBidModal(true);
-                  });
-                } catch (e) {
-                  console.error(e);
-                  setShowRedemptionIssue(true);
+                  setShowRedeemedBidModal(true);
+                } finally {
+                  setShowBidModal(false);
+                  setLoading(false);
                 }
-
-                setLoading(false);
               };
-
 
               const actionBtnFn = () => {
                 if (!isInstantSale) {

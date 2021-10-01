@@ -8,6 +8,7 @@ import {
   pullYourMetadata,
   USE_SPEED_RUN,
 } from './loadAccounts';
+import { merge } from 'lodash';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
@@ -25,6 +26,9 @@ const MetaContext = React.createContext<MetaContextState>({
   isLoading: false,
   // @ts-ignore
   update: () => [AuctionData, BidderMetadata, BidderPot],
+  patchState: () => {
+    throw new Error('unreachable');
+  },
 });
 
 export function MetaProvider({ children = null as any }) {
@@ -241,6 +245,14 @@ export function MetaProvider({ children = null as any }) {
     }
   }
 
+  const patchState: MetaContextState['patchState'] = temp => {
+    const newState = merge({}, state, temp);
+    newState.store = temp.store ?? state.store;
+    setState(newState);
+
+    return newState;
+  };
+
   useEffect(() => {
     //@ts-ignore
     if (window.loadingData) {
@@ -314,6 +326,7 @@ export function MetaProvider({ children = null as any }) {
         pullAuctionPage,
         pullAllMetadata,
         pullBillingPage,
+        patchState,
         isLoading,
       }}
     >

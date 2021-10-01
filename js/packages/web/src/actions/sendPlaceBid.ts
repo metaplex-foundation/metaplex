@@ -1,4 +1,9 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {
+  Keypair,
+  Connection,
+  TransactionInstruction,
+  Commitment,
+} from '@solana/web3.js';
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -28,6 +33,7 @@ export async function sendPlaceBid(
   accountsByMint: Map<string, TokenAccount>,
   // value entered by the user adjust to decimals of the mint
   amount: number | BN,
+  commitment: Commitment = 'single',
 ) {
   const signers: Keypair[][] = [];
   const instructions: TransactionInstruction[][] = [];
@@ -42,16 +48,17 @@ export async function sendPlaceBid(
     signers,
   );
 
-  await sendTransactionWithRetry(
+  const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions[0],
     signers[0],
-    'single',
+    commitment,
   );
 
   return {
     amount: bid,
+    txid,
   };
 }
 
