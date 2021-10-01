@@ -15,7 +15,6 @@ import {
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
-import { maybeCDN } from '../utils/cdn';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -186,7 +185,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   useEffect(() => {
     if (inView && id && !data) {
       if (account && account.info.data.uri) {
-        const uri = maybeCDN(account.info.data.uri);
+        const uri = account.info.data.uri;
 
         const processJson = (extended: any) => {
           if (!extended || extended?.properties?.files?.length === 0) {
@@ -197,7 +196,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
             const file = extended.image.startsWith('http')
               ? extended.image
               : `${account.info.data.uri}/${extended.image}`;
-            extended.image = maybeCDN(file);
+            extended.image = file;
           }
 
           return extended;
