@@ -8,7 +8,7 @@ import {
 import React, { FC } from 'react';
 import { ConfettiProvider } from './components/Confetti';
 import { AppLayout } from './components/Layout';
-import { LoaderProvider } from './components/Loader';
+// import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
 import { GraphqlProvider } from './graphql';
 
@@ -24,11 +24,11 @@ export const Providers: FC = ({ children }) => {
             >
               <GraphqlProvider url={process.env.NEXT_PUBLIC_GRAPHQL_URL}>
                 <MetaProvider>
-                  <LoaderProvider>
-                    <ConfettiProvider>
-                      <AppLayout>{children}</AppLayout>
-                    </ConfettiProvider>
-                  </LoaderProvider>
+                  {/* <LoaderProvider> */}
+                  <ConfettiProvider>
+                    <AppLayout>{children}</AppLayout>
+                  </ConfettiProvider>
+                  {/* </LoaderProvider> */}
                 </MetaProvider>
               </GraphqlProvider>
             </StoreProvider>
