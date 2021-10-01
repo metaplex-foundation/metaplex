@@ -37,7 +37,7 @@ pub fn process_set_auction_cache<'a>(
     let clock_info = next_account_info(account_info_iter)?;
     let clock = Clock::from_account_info(clock_info)?;
     let store = Store::from_account_info(store_info)?;
-    let auction = AuctionData::from_account_info(auction_info)?;
+    let _auction = AuctionData::from_account_info(auction_info)?;
     let auction_manager = AuctionManagerV2::from_account_info(auction_manager_info)?;
     let deposit_box = SafetyDepositBox::from_account_info(safety_deposit_box_info)?;
 
@@ -119,6 +119,7 @@ pub fn process_set_auction_cache<'a>(
         )?;
         cache = AuctionCache::from_account_info(auction_cache_info)?;
         cache.timestamp = clock.unix_timestamp;
+        cache.store = *store_info.key;
     } else {
         cache = AuctionCache::from_account_info(auction_cache_info)?;
     }
@@ -138,6 +139,8 @@ pub fn process_set_auction_cache<'a>(
             return Err(MetaplexError::DuplicateKeyDetected.into());
         }
     }
+
+    cache.metadata.push(metadata);
     cache.serialize(&mut *auction_cache_info.data.borrow_mut())?;
 
     Ok(())

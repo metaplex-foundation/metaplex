@@ -128,8 +128,7 @@ export interface AuctionState {
 export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
-  const { whitelistedCreatorsByCreator, auctionCaches, storeIndexer } =
-    useMeta();
+  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const mint = useMint(QUOTE_MINT);
@@ -461,7 +460,6 @@ export const AuctionCreateView = () => {
         ? attributes.items[0]
         : attributes.participationNFT,
       QUOTE_MINT.toBase58(),
-      auctionCaches,
       storeIndexer,
     );
     setAuctionObj(_auctionObj);

@@ -112,7 +112,9 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         account,
         info: indexer,
       };
-      setter('storeIndexer', pubkey, parsedAccount);
+      if (parsedAccount.info.store == STORE_ID?.toBase58()) {
+        setter('storeIndexer', pubkey, parsedAccount);
+      }
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {

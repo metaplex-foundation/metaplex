@@ -1,3 +1,5 @@
+use solana_program::msg;
+
 use {
     crate::{
         deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
@@ -20,7 +22,7 @@ pub const INDEX: &str = "index";
 pub const CACHE: &str = "cache";
 pub const BASE_TRACKER_SIZE: usize = 1 + 1 + 1 + 4;
 
-pub const MAX_INDEXED_ELEMENTS: usize = 100;
+pub const MAX_INDEXED_ELEMENTS: usize = 3;
 pub const MAX_STORE_INDEXER_SIZE: usize = 1 + //key
 32 + //store
 8 + //page

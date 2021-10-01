@@ -113,7 +113,6 @@ export async function createAuctionManager(
   safetyDepositDrafts: SafetyDepositDraft[],
   participationSafetyDepositDraft: SafetyDepositDraft | undefined,
   paymentMint: StringPublicKey,
-  auctionCaches: Record<string, ParsedAccount<AuctionCache>>,
   storeIndexer: ParsedAccount<StoreIndexer>[],
 ): Promise<{
   vault: StringPublicKey;
@@ -280,13 +279,11 @@ export async function createAuctionManager(
       signers: populateSigners,
     },
     cacheAuctionIndexer: await cacheAuctionIndexer(
-      connection,
       wallet,
       vault,
       auction,
       auctionManager,
       safetyDepositConfigs.map(s => s.draft.metadata.info.mint),
-      auctionCaches,
       storeIndexer,
     ),
   };

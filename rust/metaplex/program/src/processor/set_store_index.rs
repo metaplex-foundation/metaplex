@@ -17,7 +17,6 @@ use {
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         pubkey::Pubkey,
-        sysvar::{clock::Clock, Sysvar},
     },
 };
 pub fn process_set_store_index<'a>(
@@ -27,7 +26,6 @@ pub fn process_set_store_index<'a>(
 ) -> ProgramResult {
     let SetStoreIndexArgs { offset, page } = args;
 
-    let page_u = page as usize;
     let offset_u = offset as usize;
 
     let account_info_iter = &mut accounts.iter();
@@ -38,12 +36,11 @@ pub fn process_set_store_index<'a>(
     let store_info = next_account_info(account_info_iter)?;
     let system_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
-    let clock_info = next_account_info(account_info_iter)?;
     let above_cache_info = next_account_info(account_info_iter).ok();
     let below_cache_info = next_account_info(account_info_iter).ok();
-    let clock = Clock::from_account_info(clock_info)?;
-    let store = Store::from_account_info(store_info)?;
+    let _store = Store::from_account_info(store_info)?;
     let auction_cache = AuctionCache::from_account_info(auction_cache_info)?;
+
     let mut below_cache: Option<AuctionCache> = None;
     let mut above_cache: Option<AuctionCache> = None;
 
@@ -143,13 +140,15 @@ pub fn process_set_store_index<'a>(
 
     let mut indexer = StoreIndexer::from_account_info(store_index_info)?;
     indexer.key = Key::StoreIndexerV1;
+    indexer.store = *store_info.key;
+    indexer.page = page;
 
     if offset_u > indexer.auction_caches.len() {
         return Err(MetaplexError::InvalidCacheOffset.into());
     }
 
-    if offset_u < indexer.auction_caches.len() {
-        let above_key = &indexer.auction_caches[offset_u + 1];
+    if indexer.auction_caches.len() > 0 && offset_u < indexer.auction_caches.len() - 1 {
+        let above_key = &indexer.auction_caches[offset_u];
         if let Some(abo) = &above_cache {
             if let Some(above_cache_info_unwrapped) = above_cache_info {
                 if above_cache_info_unwrapped.key != above_key {
@@ -212,7 +211,7 @@ pub fn process_set_store_index<'a>(
         new_vec.push(indexer.auction_caches[n])
     }
 
+    indexer.auction_caches = new_vec;
     indexer.serialize(&mut *store_index_info.data.borrow_mut())?;
-
     Ok(())
 }

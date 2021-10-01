@@ -649,7 +649,6 @@ pub enum MetaplexInstruction {
     ///   3. `[]` Store key
     ///   4. `[]` System
     ///   5. `[]` Rent sysvar
-    ///   6. `[]` Clock sysvar
     ///   7. `[optional]` Auction cache above current (pda of ['metaplex', program id, store key, auction key, 'cache'])
     ///                   Note: Can pass the below in this slot if there is no above
     ///   8. `[optional]` Auction cache below current (pda of ['metaplex', program id, store key, auction key, 'cache'])

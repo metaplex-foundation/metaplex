@@ -42,7 +42,7 @@ export const METAPLEX_PREFIX = 'metaplex';
 export const INDEX = 'index';
 export const CACHE = 'cache';
 export const TOTALS = 'totals';
-export const MAX_INDEXED_ELEMENTS = 100;
+export const MAX_INDEXED_ELEMENTS = 3;
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
 export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export const MAX_WHITELISTED_CREATOR_SIZE = 2 + 32 + 10;
@@ -1096,6 +1096,24 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
+    SetAuctionCacheArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    SetStoreIndexArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['page', 'u64'],
+        ['offset', 'u64'],
+      ],
+    },
+  ],
+  [
     EmptyPaymentAccountArgs,
     {
       kind: 'struct',
@@ -1336,7 +1354,7 @@ export async function getStoreIndexer(page: number) {
         Buffer.from(METAPLEX_PREFIX),
         toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(store).toBuffer(),
-        toPublicKey(INDEX).toBuffer(),
+        Buffer.from(INDEX),
         Buffer.from(page.toString()),
       ],
       toPublicKey(PROGRAM_IDS.metaplex),
@@ -1350,7 +1368,7 @@ export async function getAuctionCache(auction: StringPublicKey) {
   if (!store) {
     throw new Error('Store not initialized');
   }
-
+  console.log('Auction', auction);
   return (
     await findProgramAddress(
       [
@@ -1358,7 +1376,7 @@ export async function getAuctionCache(auction: StringPublicKey) {
         toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(store).toBuffer(),
         toPublicKey(auction).toBuffer(),
-        toPublicKey(CACHE).toBuffer(),
+        Buffer.from(CACHE),
       ],
       toPublicKey(PROGRAM_IDS.metaplex),
     )

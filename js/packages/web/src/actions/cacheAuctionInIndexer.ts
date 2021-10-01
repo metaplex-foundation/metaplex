@@ -29,13 +29,11 @@ import BN from 'bn.js';
 
 // This command caches an auction at position 0, page 0, and moves everything up
 export async function cacheAuctionIndexer(
-  connection: Connection,
   wallet: WalletSigner,
   vault: StringPublicKey,
   auction: StringPublicKey,
   auctionManager: StringPublicKey,
   tokenMints: StringPublicKey[],
-  auctionCaches: Record<string, ParsedAccount<AuctionCache>>,
   storeIndexer: ParsedAccount<StoreIndexer>[],
 ): Promise<{
   instructions: TransactionInstruction[][];
@@ -51,7 +49,6 @@ export async function cacheAuctionIndexer(
     instructions: createAuctionCacheInstructions,
     signers: createAuctionCacheSigners,
   } = await createAuctionCache(
-    connection,
     wallet,
     vault,
     auction,
@@ -123,14 +120,14 @@ async function propagateIndex(
 
     const storeIndexKey = currPage
       ? currPage.pubkey
-      : await getStoreIndexer(lastPage.info.page.toNumber());
+      : await getStoreIndexer(lastPage.info.page.toNumber() + 1);
     const above = currPage ? currPage.info.auctionCaches[0] : undefined;
 
     await setStoreIndex(
       storeIndexKey,
       cacheLeavingThePage,
       payer,
-      new BN(0),
+      lastPage.info.page.add(new BN(1)),
       new BN(0),
       indexInstructions,
       undefined,
@@ -162,7 +159,6 @@ async function propagateIndex(
 const TRANSACTION_SIZE = 10;
 
 async function createAuctionCache(
-  connection: Connection,
   wallet: WalletSigner,
   vault: StringPublicKey,
   auction: StringPublicKey,

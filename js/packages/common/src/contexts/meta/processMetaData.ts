@@ -18,7 +18,6 @@ export const processMetaData: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
 ) => {
-  console.log('Account', pubkey);
   if (!isMetadataAccount(account)) return;
   try {
     if (isMetadataV1Account(account)) {

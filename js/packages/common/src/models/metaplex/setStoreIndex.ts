@@ -60,11 +60,6 @@ export async function setStoreIndex(
       isSigner: false,
       isWritable: false,
     },
-    {
-      pubkey: SYSVAR_CLOCK_PUBKEY,
-      isSigner: false,
-      isWritable: false,
-    },
   ];
 
   if (aboveCache) {
