@@ -1,87 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Card, CardProps } from 'antd';
 import {
   formatTokenAmount,
-  CountdownState,
-  PriceFloorType,
   fromLamports,
-  useMint,
+  isAuctionEnded,
+  timeToAuctionEnd,
 } from '@oyster/common';
-import { ArtContent } from '../ArtContent';
-import {
-  AuctionView,
-  AuctionViewState,
-  useArt,
-  useBidsForAuction,
-} from '../../hooks';
+import { ArtContent } from '../ArtContent/next';
+import { Auction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
-import { useHighestBidForAuction } from '../../hooks';
 import { BN } from 'bn.js';
+import { AuctionState, AuctionViewState, PriceFloorType } from '../../graphql';
 
-const { Meta } = Card;
 export interface AuctionCard extends CardProps {
-  auctionView: AuctionView;
+  auction: Auction;
 }
 
-export const AuctionRenderCard = (props: AuctionCard) => {
-  const { auctionView } = props;
-  const id = auctionView.thumbnail.metadata.pubkey;
-  const art = useArt(id);
-  const name = art?.title || ' ';
-  const [state, setState] = useState<CountdownState>();
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
-  const mintInfo = useMint(auctionView.auction.info.tokenMint);
+export const AuctionRenderCard: FC<AuctionCard> = ({ auction }) => {
+  const art = auction.thumbnail;
+  const label = useAuctionLabel(auction);
+  const currentBid = useAuctionCurrentAmount(auction);
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
-  const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
-  const priceFloor =
-    auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
-      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
-      : 0;
-  const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-
-  const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
-  const ended = !auctionView.isInstantSale &&
-    state?.hours === 0 && state?.minutes === 0 && state?.seconds === 0;
-
-  let currentBid: number | string = 0;
-  let label = '';
-  if (isUpcoming || bids) {
-    label = ended
-      ? 'Ended'
-      : auctionView.isInstantSale
-      ? 'Price'
-      : 'Starting bid';
-    currentBid = fromLamports(
-      participationOnly ? participationFixedPrice : priceFloor,
-      mintInfo,
-    );
-  }
-
-  if (!isUpcoming && bids.length > 0) {
-    label = ended ? 'Winning bid' : 'Current bid';
-    currentBid =
-      winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber())
-        ? formatTokenAmount(winningBid.info.lastBid)
-        : 'No Bid';
-  }
-
-  const auction = auctionView.auction.info;
-  useEffect(() => {
-    const calc = () => {
-      setState(auction.timeToEnd());
-    };
-
-    const interval = setInterval(() => {
-      calc();
-    }, 1000);
-
-    calc();
-    return () => clearInterval(interval);
-  }, [auction, setState]);
-
-  const card = (
+  return (
     <Card
       hoverable={true}
       className={`art-card`}
@@ -90,14 +30,14 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           <ArtContent
             className="auction-image no-events"
             preview={false}
-            pubkey={id}
             allowMeshRender={false}
+            uri={art?.uri}
           />
         </>
       }
     >
-      <Meta
-        title={`${name}`}
+      <Card.Meta
+        title={`${art?.title || ' '}`}
         description={
           <>
             <h4 style={{ marginBottom: 0 }}>{label}</h4>
@@ -106,29 +46,75 @@ export const AuctionRenderCard = (props: AuctionCard) => {
                 style={{ marginBottom: 10 }}
                 containerStyle={{ flexDirection: 'row' }}
                 title={label}
-                amount={currentBid}
+                amount={currentBid || 'No Bid'}
               />
             </div>
-            {/* {endAuctionAt && hasTimer && (
-              <div className="cd-container">
-                {hours === 0 && minutes === 0 && seconds === 0 ? (
-                  <div className="cd-title">Finished</div>
-                ) : (
-                  <>
-                    <div className="cd-title">Ending in</div>
-                    <div className="cd-time">
-                      {hours}h {minutes}m {seconds}s
-                      pants
-                    </div>
-                  </>
-                )}
-              </div>
-            )} */}
           </>
         }
       />
     </Card>
   );
+};
 
-  return card;
+export const useAuctionCurrentAmount = (auction: Auction) => {
+  // TODO: check mintInfo
+  // skipped if all === true else load separatelly
+  const mintInfo = undefined; // useMint(auction.tokenMint);
+
+  const participationOnly = auction.numWinners.eq(new BN(0));
+  const participationFixedPrice =
+    auction.manager.participationConfig?.fixedPrice?.toNumber() || 0;
+  const priceFloor =
+    auction.priceFloor?.type === PriceFloorType.Minimum
+      ? auction.priceFloor.minPrice?.toNumber() || 0
+      : 0;
+
+  const isUpcoming = auction.viewState === AuctionViewState.Upcoming;
+  const winningBid = auction.highestBid;
+
+  if (isUpcoming || !winningBid) {
+    return fromLamports(
+      participationOnly ? participationFixedPrice : priceFloor,
+      mintInfo,
+    );
+  }
+  return winningBid && Number.isFinite(winningBid.lastBid?.toNumber())
+    ? formatTokenAmount(winningBid.lastBid, mintInfo)
+    : null;
+};
+
+export const useAuctionLabel = (auction: Auction) => {
+  const { ended } = useAuctionEnded(auction);
+
+  const isUpcoming = auction.viewState === AuctionViewState.Upcoming;
+  const winningBid = auction.highestBid;
+
+  if (isUpcoming || !winningBid) {
+    return ended ? 'Ended' : 'Starting bid';
+  }
+
+  return ended ? 'Winning bid' : 'Current bid';
+};
+
+export const useAuctionEnded = (auction: Auction) => {
+  const [state, setState] = useState<{
+    timeToEnd: number | null;
+    ended: boolean;
+  }>({ timeToEnd: null, ended: false });
+
+  useEffect(() => {
+    const calc = () => {
+      const timeToEnd = timeToAuctionEnd(auction);
+      const ended = timeToEnd !== null && timeToEnd <= 0;
+
+      setState({ timeToEnd, ended });
+    };
+
+    const interval = setInterval(calc, 1000);
+
+    calc();
+    return () => clearInterval(interval);
+  }, [auction, setState]);
+
+  return state;
 };

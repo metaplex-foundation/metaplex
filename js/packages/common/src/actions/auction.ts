@@ -301,6 +301,46 @@ export class AuctionData {
   }
 }
 
+export const timeToAuctionEnd = (
+  auction: Partial<Pick<AuctionData, 'endedAt' | 'auctionGap' | 'lastBid'>>,
+): number | null => {
+  const now = moment().unix();
+  let endAt = auction.endedAt?.toNumber() || 0;
+
+  if (auction.auctionGap && auction.lastBid) {
+    endAt = Math.max(
+      endAt,
+      auction.auctionGap.toNumber() + auction.lastBid.toNumber(),
+    );
+  }
+
+  return endAt ? endAt - now : null;
+};
+
+export const isAuctionEnded = (
+  auction: Partial<Pick<AuctionData, 'endedAt' | 'auctionGap' | 'lastBid'>>,
+) => {
+  const timeToEnd = timeToAuctionEnd(auction);
+
+  if (timeToEnd === null) return false;
+  return timeToEnd <= 0;
+};
+
+export const formatCountdownTime = (time: number): CountdownState => {
+  const days = Math.floor(time / 86400);
+  time -= days * 86400;
+
+  const hours = Math.floor(time / 3600) % 24;
+  time -= hours * 3600;
+
+  const minutes = Math.floor(time / 60) % 60;
+  time -= minutes * 60;
+
+  const seconds = Math.floor(time % 60);
+
+  return { days, hours, minutes, seconds };
+};
+
 export const BIDDER_METADATA_LEN = 32 + 32 + 8 + 8 + 1;
 export class BidderMetadata {
   // Relationship with the bidder who's metadata this covers.

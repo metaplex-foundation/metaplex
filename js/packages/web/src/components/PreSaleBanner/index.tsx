@@ -1,20 +1,18 @@
 import React from 'react';
 import { Col, Row, Button, Skeleton } from 'antd';
 
-import { AuctionView, useArt } from '../../hooks';
-import { ArtContent } from '../ArtContent';
-import { AuctionCard } from '../AuctionCard';
+import { Auction } from '../../hooks';
+import { ArtContent } from '../ArtContent/next';
 import { Link } from 'react-router-dom';
-import { useMeta } from '../../contexts';
+import { AuctionNumbers } from '../AuctionNumbers';
 
 interface IPreSaleBanner {
-  auction?: AuctionView;
+  auction?: Auction;
+  isLoading?: boolean;
 }
 
-export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
-  const { isLoading } = useMeta();
-  const id = auction?.thumbnail.metadata.pubkey;
-  const art = useArt();
+export const PreSaleBanner = ({ auction, isLoading }: IPreSaleBanner) => {
+  const art = auction?.thumbnail;
 
   if (isLoading) {
     return <Skeleton />;
@@ -24,38 +22,33 @@ export const PreSaleBanner = ({ auction }: IPreSaleBanner) => {
     <Row className="presale">
       <Col md={12} className="explore">
         <ArtContent
-          pubkey={id}
+          uri={art?.uri}
           className="artwork-image"
           allowMeshRender={true}
         />
       </Col>
       <Col md={12} className="presale-info">
-        <h2 className="art-title">{art.title}</h2>
+        <h2 className="art-title" style={{ margin: 0 }}>
+          {art?.title}
+        </h2>
         {auction && (
-          <AuctionCard
-            auctionView={auction}
+          <Col
             style={{
-              background: 'transparent',
               width: '100%',
-              padding: 0,
-              margin: 0,
             }}
-            hideDefaultAction={true}
-            action={
-              <>
-                <Link to={`/auction/${auction.auction.pubkey}`}>
-                  <Button
-                    type="primary"
-                    size="large"
-                    className="action-btn"
-                    style={{ maxWidth: 290 }}
-                  >
-                    Go to auction
-                  </Button>
-                </Link>
-              </>
-            }
-          />
+          >
+            <AuctionNumbers auction={auction} />
+            <Link to={`/auction/${auction.pubkey}`}>
+              <Button
+                type="primary"
+                size="large"
+                className="action-btn"
+                style={{ maxWidth: 290, marginBottom: 0, marginTop: '1em' }}
+              >
+                Go to auction
+              </Button>
+            </Link>
+          </Col>
         )}
       </Col>
     </Row>

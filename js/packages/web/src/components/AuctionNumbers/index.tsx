@@ -1,163 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col } from 'antd';
-
-import {
-  formatTokenAmount,
-  useMint,
-  fromLamports,
-  CountdownState,
-  PriceFloorType,
-} from '@oyster/common';
-import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
+import React from 'react';
+import { Col, Row } from 'antd';
+import { formatCountdownTime } from '@oyster/common';
+import { AuctionViewState } from '../../graphql';
+import { Auction } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
+import { useAuctionCurrentAmount, useAuctionEnded } from '../AuctionRenderCard';
+import { Countdown } from './Countdown';
 
-export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
-  const { auctionView } = props;
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
-  const mintInfo = useMint(auctionView.auction.info.tokenMint);
+export const AuctionNumbers = ({ auction }: { auction: Auction }) => {
+  const amount = useAuctionCurrentAmount(auction);
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
-  const participationOnly =
-    auctionView.auctionManager.numWinners.toNumber() === 0;
-  const priceFloor =
-    auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
-      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
-      : 0;
-  const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-  const isStarted = auctionView.state === AuctionViewState.Live;
+  const isUpcoming = auction.viewState === AuctionViewState.Upcoming;
 
-  const [state, setState] = useState<CountdownState>();
+  const { ended, timeToEnd } = useAuctionEnded(auction);
 
-  const auction = auctionView.auction.info;
-  useEffect(() => {
-    const calc = () => {
-      const newState = auction.timeToEnd();
-
-      setState(newState);
-    };
-
-    const interval = setInterval(() => {
-      calc();
-    }, 1000);
-
-    calc();
-    return () => clearInterval(interval);
-  }, [auction]);
-
-  const ended = isEnded(state);
+  const label =
+    isUpcoming || !auction.highestBid ? 'Starting bid' : 'Highest bid';
 
   return (
     <div style={{ minWidth: 350 }}>
       <Row>
         {(!ended || auctionView.isInstantSale) && (
           <Col span={12}>
-            {(isUpcoming || bids.length === 0) && (
-              <AmountLabel
-                style={{ marginBottom: 10 }}
-                containerStyle={{ flexDirection: 'column' }}
-                title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
-                amount={fromLamports(
-                  participationOnly ? participationFixedPrice : priceFloor,
-                  mintInfo,
-                )}
-              />
-            )}
-            {isStarted && bids.length > 0 && (
-              <AmountLabel
-                style={{ marginBottom: 10 }}
-                containerStyle={{ flexDirection: 'column' }}
-                title="Highest bid"
-                amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
-              />
-            )}
+            <AmountLabel
+              style={{ marginBottom: 10 }}
+              containerStyle={{ flexDirection: 'column' }}
+              title={label}
+              amount={amount || 0}
+            />
           </Col>
         )}
 
-        {!ended && <Col span={ended ? 24 : 12}>
-          <Countdown state={state}/>
-        </Col>}
+        <Col span={ended ? 24 : 12}>
+          <Countdown state={formatCountdownTime(timeToEnd || 0)} />
+        </Col>
       </Row>
     </div>
-  );
-};
-
-const isEnded = (state?: CountdownState) =>
-  state?.days === 0 &&
-  state?.hours === 0 &&
-  state?.minutes === 0 &&
-  state?.seconds === 0;
-
-const Countdown = ({ state }: { state?: CountdownState }) => {
-  return (
-    <>
-      <div style={{ width: '100%' }}>
-        <>
-          <div
-            className="info-header"
-            style={{
-              margin: '12px 0',
-              fontSize: 18,
-            }}
-          >
-            Time left
-          </div>
-          {state &&
-            (isEnded(state) ? (
-              <Row style={{ width: '100%' }}>
-                <div className="cd-number">This auction has ended</div>
-              </Row>
-            ) : (
-              <Row style={{ width: '100%', flexWrap: 'nowrap' }}>
-                {state && state.days > 0 && (
-                  <Col>
-                    <div className="cd-number">
-                      {state.days < 10 && (
-                        <span style={{ opacity: 0.2 }}>0</span>
-                      )}
-                      {state.days}
-                      <span style={{ opacity: 0.2 }}>:</span>
-                    </div>
-                    <div className="cd-label">days</div>
-                  </Col>
-                )}
-                <Col>
-                  <div className="cd-number">
-                    {state.hours < 10 && (
-                      <span style={{ opacity: 0.2 }}>0</span>
-                    )}
-                    {state.hours}
-                    <span style={{ opacity: 0.2 }}>:</span>
-                  </div>
-                  <div className="cd-label">hour</div>
-                </Col>
-                <Col>
-                  <div className="cd-number">
-                    {state.minutes < 10 && (
-                      <span style={{ opacity: 0.2 }}>0</span>
-                    )}
-                    {state.minutes}
-                    {state.days === 0 && (
-                      <span style={{ opacity: 0.2 }}>:</span>
-                    )}
-                  </div>
-                  <div className="cd-label">mins</div>
-                </Col>
-                {!state.days && (
-                  <Col>
-                    <div className="cd-number">
-                      {state.seconds < 10 && (
-                        <span style={{ opacity: 0.2 }}>0</span>
-                      )}
-                      {state.seconds}
-                    </div>
-                    <div className="cd-label">secs</div>
-                  </Col>
-                )}
-              </Row>
-            ))}
-        </>
-      </div>
-    </>
   );
 };
