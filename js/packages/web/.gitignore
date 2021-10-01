@@ -2,4 +2,4 @@ target
 .next
 .env.local
 
-.env
+**/.env
