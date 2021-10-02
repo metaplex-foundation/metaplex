@@ -20,6 +20,9 @@ const MetaContext = React.createContext<MetaContextState>({
   isLoading: false,
   // @ts-ignore
   update: () => [AuctionData, BidderMetadata, BidderPot],
+  patchState: () => {
+    throw new Error('unreachable');
+  },
 });
 
 export function MetaProvider({ children = null as any }) {
@@ -84,6 +87,14 @@ export function MetaProvider({ children = null as any }) {
     }
   }
 
+  const patchState: MetaContextState['patchState'] = temp => {
+    const newState = merge({}, state, temp);
+    newState.store = temp.store ?? state.store;
+    setState(newState);
+
+    return newState;
+  };
+
   useEffect(() => {
     update();
   }, [connection, setState, updateMints, storeAddress, isReady]);
@@ -130,6 +141,7 @@ export function MetaProvider({ children = null as any }) {
         ...state,
         // @ts-ignore
         update,
+        patchState,
         isLoading,
       }}
     >
