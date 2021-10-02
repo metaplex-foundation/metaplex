@@ -1414,6 +1414,7 @@ pub mod fair_launch {
             .seq
             .checked_rem(fair_launch.participation_modulo as u64)
         {
+            msg!("Val is {}", val);
             if val != 0 {
                 return Err(ErrorCode::NotEligibleForParticipation.into());
             }
