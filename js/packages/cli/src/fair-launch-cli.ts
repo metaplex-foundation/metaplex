@@ -21,6 +21,10 @@ import {
   getFairLaunchTicketSeqLookup,
   getFairLaunchLotteryBitmap,
   getMetadata,
+  getParticipationMint,
+  getParticipationToken,
+  getMasterEdition,
+  getEditionMarkPda,
 } from './helpers/accounts';
 import { chunks, getMultipleAccounts, sleep } from './helpers/various';
 import { createAssociatedTokenAccountInstruction } from './helpers/instructions';
@@ -830,6 +834,214 @@ async function adjustTicket({
 }
 
 program
+  .command('update_participation_nft')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-n, --name <string>', 'name')
+  .option('-s, --symbol <string>', 'symbol')
+  .option('-u, --uri <string>', 'uri')
+  .option(
+    '-sfbp, --seller-fee-basis-points <string>',
+    'seller fee basis points',
+  )
+  .option(
+    '-m, --participation-modulo <string>',
+    '1 if everybody gets it, 4 if only 1 in 4 get it, etc',
+  )
+  .option(
+    '-c, --creators <string>',
+    'comma separated creator wallets like wallet1,73,true,wallet2,27,false where its wallet, then share, then verified true/false',
+  )
+  .option('-nm, --is_not_mutable', 'is not mutable')
+  .action(async (_, cmd) => {
+    const {
+      env,
+      keypair,
+      fairLaunch,
+      name,
+      symbol,
+      uri,
+      sellerFeeBasisPoints,
+      creators,
+      isNotMutable,
+      participationModulo,
+    } = cmd.opts();
+    const sellerFeeBasisPointsNumber = parseInt(sellerFeeBasisPoints);
+    const participationModuloNumber = parseInt(participationModulo);
+
+    const creatorsListPre = creators ? creators.split(',') : [];
+    const creatorsList = [];
+    for (let i = 0; i < creatorsListPre.length; i += 3) {
+      creatorsList.push({
+        address: new anchor.web3.PublicKey(creatorsListPre[i]),
+        share: parseInt(creatorsListPre[i + 1]),
+        verified: creatorsListPre[i + 2] == 'true' ? true : false,
+      });
+    }
+    const isMutableBool = isNotMutable ? false : true;
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const participationMint = (
+      await getParticipationMint(
+        //@ts-ignore
+        fairLaunchObj.authority,
+        //@ts-ignore
+        fairLaunchObj.data.uuid,
+      )
+    )[0];
+
+    await anchorProgram.rpc.updateParticipationNft(
+      participationModuloNumber,
+      {
+        name,
+        symbol,
+        uri,
+        sellerFeeBasisPoints: sellerFeeBasisPointsNumber,
+        creators: creatorsList,
+        isMutable: isMutableBool,
+      },
+      {
+        accounts: {
+          fairLaunch: fairLaunchKey,
+          authority: walletKeyPair.publicKey,
+          //@ts-ignore
+          metadata: await getMetadata(participationMint),
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+      },
+    );
+
+    console.log('Update participation metadata.');
+  });
+
+program
+  .command('set_participation_nft')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-n, --name <string>', 'name')
+  .option('-s, --symbol <string>', 'symbol')
+  .option('-u, --uri <string>', 'uri')
+  .option(
+    '-sfbp, --seller-fee-basis-points <string>',
+    'seller fee basis points',
+  )
+  .option(
+    '-m, --participation-modulo <string>',
+    '1 if everybody gets it, 4 if only 1 in 4 get it, etc',
+  )
+  .option(
+    '-c, --creators <string>',
+    'comma separated creator wallets like wallet1,73,true,wallet2,27,false where its wallet, then share, then verified true/false',
+  )
+  .option('-nm, --is_not_mutable', 'is not mutable')
+  .action(async (_, cmd) => {
+    const {
+      env,
+      keypair,
+      fairLaunch,
+      name,
+      symbol,
+      uri,
+      sellerFeeBasisPoints,
+      creators,
+      isNotMutable,
+      participationModulo,
+    } = cmd.opts();
+    const sellerFeeBasisPointsNumber = parseInt(sellerFeeBasisPoints);
+    const participationModuloNumber = parseInt(participationModulo);
+
+    const creatorsListPre = creators ? creators.split(',') : [];
+    const creatorsList = [];
+    for (let i = 0; i < creatorsListPre.length; i += 3) {
+      creatorsList.push({
+        address: new anchor.web3.PublicKey(creatorsListPre[i]),
+        share: parseInt(creatorsListPre[i + 1]),
+        verified: creatorsListPre[i + 2] == 'true' ? true : false,
+      });
+    }
+    const isMutableBool = isNotMutable ? false : true;
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+
+    const [participationMint, mintBump] = await getParticipationMint(
+      //@ts-ignore
+      fairLaunchObj.authority,
+      //@ts-ignore
+      fairLaunchObj.data.uuid,
+    );
+    const [participationTokenAccount, tokenBump] = await getParticipationToken(
+      //@ts-ignore
+      fairLaunchObj.authority,
+      //@ts-ignore
+      fairLaunchObj.data.uuid,
+    );
+
+    await anchorProgram.rpc.setParticipationNft(
+      mintBump,
+      tokenBump,
+      participationModuloNumber,
+      {
+        name,
+        symbol,
+        uri,
+        sellerFeeBasisPoints: sellerFeeBasisPointsNumber,
+        creators: creatorsList,
+        isMutable: isMutableBool,
+      },
+      {
+        accounts: {
+          fairLaunch: fairLaunchKey,
+          authority: walletKeyPair.publicKey,
+          payer: walletKeyPair.publicKey,
+          participationMint,
+          participationTokenAccount,
+          //@ts-ignore
+          metadata: await getMetadata(participationMint),
+          //@ts-ignore
+          masterEdition: await getMasterEdition(participationMint),
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+        },
+      },
+    );
+
+    console.log('Set participation metadata.');
+  });
+
+program
   .command('set_token_metadata')
   .option(
     '-e, --env <string>',
@@ -1116,6 +1328,46 @@ program
         async allIndexesInSlice => {
           for (let i = 0; i < allIndexesInSlice.length; i++) {
             const ticket = ticketDataFlat[allIndexesInSlice[i]];
+            if (!ticket.model.gottenParticipation) {
+              let tries = 0;
+              let done = false;
+              while (tries < 3 && !done) {
+                try {
+                  const nft = await getParticipationNft({
+                    payer: walletKeyPair,
+                    buyer: ticket.model.buyer,
+                    anchorProgram,
+                    fairLaunchTicket: ticket.key,
+                    fairLaunch,
+                    fairLaunchObj,
+                    fairLaunchTicketObj: ticket.model,
+                  });
+                  done = true;
+                  if (nft) {
+                    console.log(
+                      `Got participation nft and placed token in new account ${nft.toBase58()}.`,
+                    );
+                  }
+                } catch (e) {
+                  if (tries > 3) {
+                    throw e;
+                  } else {
+                    tries++;
+                  }
+                  console.log(e);
+                  console.log(
+                    'Ticket failed to get participation nft, trying one more time',
+                  );
+                  await sleep(1000);
+                }
+              }
+            } else {
+              console.log(
+                'Ticket',
+                ticket.model.buyer.toBase58(),
+                'already received participation',
+              );
+            }
             if (ticket.model.state.unpunched) {
               if (
                 ticket.model.amount.toNumber() <
@@ -1187,29 +1439,35 @@ program
                     }
                   }
                   let tries = 0;
-                  try {
-                    const buyerTokenAccount = await punchTicket({
-                      payer: walletKeyPair,
-                      puncher: ticket.model.buyer,
-                      anchorProgram,
-                      fairLaunchTicket: ticket.key,
-                      fairLaunch,
-                      fairLaunchLotteryBitmap,
-                      fairLaunchObj,
-                    });
-
-                    console.log(
-                      `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()} for buyer `,
-                      allIndexesInSlice[i],
-                    );
-                  } catch (e) {
-                    if (tries > 3) {
-                      throw e;
-                    } else {
-                      tries++;
+                  let done = false;
+                  while (tries < 3 && !done) {
+                    try {
+                      const buyerTokenAccount = await punchTicket({
+                        payer: walletKeyPair,
+                        puncher: ticket.model.buyer,
+                        anchorProgram,
+                        fairLaunchTicket: ticket.key,
+                        fairLaunch,
+                        fairLaunchLotteryBitmap,
+                        fairLaunchObj,
+                        fairLaunchTicketObj: ticket.model,
+                      });
+                      done = true;
+                      console.log(
+                        `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+                      );
+                    } catch (e) {
+                      if (tries > 3) {
+                        throw e;
+                      } else {
+                        tries++;
+                      }
+                      console.log(e);
+                      console.log(
+                        'Ticket failed to punch, trying one more time',
+                      );
+                      await sleep(1000);
                     }
-                    console.log('Ticket failed to punch, trying one more time');
-                    await sleep(1000);
                   }
                 } else {
                   console.log(
@@ -1254,6 +1512,104 @@ program
     );
   });
 
+async function getParticipationNft({
+  buyer,
+  payer,
+  anchorProgram,
+  fairLaunchTicket,
+  fairLaunch,
+  fairLaunchObj,
+  fairLaunchTicketObj,
+}: {
+  buyer: anchor.web3.PublicKey;
+  anchorProgram: anchor.Program;
+  payer: anchor.web3.Keypair;
+  fairLaunchTicket: anchor.web3.PublicKey;
+  fairLaunch: anchor.web3.PublicKey;
+  fairLaunchObj: any;
+  fairLaunchTicketObj: any;
+}): Promise<anchor.web3.PublicKey | null> {
+  if (
+    fairLaunchObj.participationMint &&
+    fairLaunchTicketObj.seq.toNumber() % fairLaunchObj.participationModulo == 0
+  ) {
+    console.log(buyer.toBase58(), 'gets participation token.');
+    const mint = anchor.web3.Keypair.generate();
+    let signers = [mint];
+    const tokenAccount = (
+      await getParticipationToken(
+        fairLaunchObj.authority,
+        fairLaunchObj.data.uuid,
+      )
+    )[0];
+    const buyerTokenNft = (await getAtaForMint(mint.publicKey, buyer))[0];
+    let instructions = [
+      anchor.web3.SystemProgram.createAccount({
+        fromPubkey: payer.publicKey,
+        newAccountPubkey: mint.publicKey,
+        space: MintLayout.span,
+        lamports:
+          await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
+            MintLayout.span,
+          ),
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitMintInstruction(
+        TOKEN_PROGRAM_ID,
+        mint.publicKey,
+        0,
+        payer.publicKey,
+        payer.publicKey,
+      ),
+      createAssociatedTokenAccountInstruction(
+        buyerTokenNft,
+        payer.publicKey,
+        buyer,
+        mint.publicKey,
+      ),
+      Token.createMintToInstruction(
+        TOKEN_PROGRAM_ID,
+        mint.publicKey,
+        buyerTokenNft,
+        payer.publicKey,
+        [],
+        1,
+      ),
+    ];
+    await anchorProgram.rpc.mintParticipationNft({
+      accounts: {
+        fairLaunch,
+        fairLaunchTicket,
+        payer: payer.publicKey,
+        participationMint: fairLaunchObj.participationMint,
+        participationTokenAccount: tokenAccount,
+        buyer,
+        buyerNftTokenAccount: buyerTokenNft,
+        newMetadata: await getMetadata(mint.publicKey),
+        newEdition: await getMasterEdition(mint.publicKey),
+        newMint: mint.publicKey,
+        newMintAuthority: payer.publicKey,
+        metadata: await getMetadata(fairLaunchObj.participationMint),
+        masterEdition: await getMasterEdition(fairLaunchObj.participationMint),
+        editionMarkPda: await getEditionMarkPda(
+          fairLaunchObj.participationMint,
+          fairLaunchTicketObj.seq.toNumber(),
+        ),
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      },
+      instructions,
+      signers,
+    });
+    return buyerTokenNft;
+  } else {
+    console.log(buyer.toBase58(), 'doesnt get participation token.');
+    return null;
+  }
+}
+
 async function punchTicket({
   puncher,
   payer,
@@ -1262,6 +1618,7 @@ async function punchTicket({
   fairLaunch,
   fairLaunchLotteryBitmap,
   fairLaunchObj,
+  fairLaunchTicketObj,
 }: {
   puncher: anchor.web3.PublicKey;
   anchorProgram: anchor.Program;
@@ -1270,6 +1627,7 @@ async function punchTicket({
   fairLaunch: anchor.web3.PublicKey;
   fairLaunchLotteryBitmap: anchor.web3.PublicKey;
   fairLaunchObj: any;
+  fairLaunchTicketObj: any;
 }): Promise<anchor.web3.PublicKey> {
   const buyerTokenAccount = (
     await getAtaForMint(
@@ -1369,28 +1727,68 @@ program
     }
 
     let tries = 0;
-    try {
-      const buyerTokenAccount = await punchTicket({
-        puncher: walletKeyPair.publicKey,
-        payer: walletKeyPair,
-        anchorProgram,
-        fairLaunchTicket,
-        fairLaunch,
-        fairLaunchLotteryBitmap,
-        fairLaunchObj,
-      });
+    let done = false;
+    //@ts-ignore
+    if (!ticket.gottenParticipation) {
+      while (tries < 3 && !done) {
+        try {
+          const nft = await getParticipationNft({
+            buyer: walletKeyPair.publicKey,
+            payer: walletKeyPair,
+            anchorProgram,
+            fairLaunchTicket,
+            fairLaunch,
+            fairLaunchObj,
+            fairLaunchTicketObj: ticket,
+          });
+          done = true;
 
-      console.log(
-        `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
-      );
-    } catch (e) {
-      if (tries > 3) {
-        throw e;
-      } else {
-        tries++;
+          if (nft) {
+            console.log(
+              `Punched participation NFT and placed token in new account ${nft.toBase58()}.`,
+            );
+          }
+        } catch (e) {
+          if (tries > 3) {
+            throw e;
+          } else {
+            tries++;
+          }
+          console.log('Ticket failed to punch, trying one more time');
+          await sleep(1000);
+        }
       }
-      console.log('Ticket failed to punch, trying one more time');
-      await sleep(1000);
+    } else {
+      console.log('Already got participation');
+    }
+
+    tries = 0;
+    done = false;
+    while (tries < 3 && !done) {
+      try {
+        const buyerTokenAccount = await punchTicket({
+          puncher: walletKeyPair.publicKey,
+          payer: walletKeyPair,
+          anchorProgram,
+          fairLaunchTicket,
+          fairLaunch,
+          fairLaunchLotteryBitmap,
+          fairLaunchObj,
+          fairLaunchTicketObj: ticket,
+        });
+        done = true;
+        console.log(
+          `Punched ticket and placed token in new account ${buyerTokenAccount.toBase58()}.`,
+        );
+      } catch (e) {
+        if (tries > 3) {
+          throw e;
+        } else {
+          tries++;
+        }
+        console.log('Ticket failed to punch, trying one more time');
+        await sleep(1000);
+      }
     }
   });
 
@@ -2040,6 +2438,12 @@ program
     //@ts-ignore
     console.log('Treasury Mint', fairLaunchObj.treasuryMint?.toBase58());
     //@ts-ignore
+    console.log(
+      'Participation Mint',
+      //@ts-ignore
+      fairLaunchObj.participationMint?.toBase58(),
+    );
+    //@ts-ignore
     console.log('Authority', fairLaunchObj.authority.toBase58());
     //@ts-ignore
     console.log('Bump', fairLaunchObj.bump);
@@ -2047,6 +2451,8 @@ program
     console.log('Treasury Bump', fairLaunchObj.treasuryBump);
     //@ts-ignore
     console.log('Token Mint Bump', fairLaunchObj.tokenMintBump);
+    //@ts-ignore
+    console.log('Participation Modulo', fairLaunchObj.participationModulo);
     //@ts-ignore
     if (fairLaunchObj.data.antiRugSetting) {
       console.log('Anti-Rug Settings:');
