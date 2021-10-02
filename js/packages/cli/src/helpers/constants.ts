@@ -20,7 +20,7 @@ export const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 );
 export const FAIR_LAUNCH_PROGRAM_ID = new PublicKey(
-  '7HmfyvWK7LDohUL9TDAuGv9VFZHUce1SgYMkwti1xWwF',
+  'faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j',
 );
 export const CONFIG_ARRAY_START =
   32 + // authority
