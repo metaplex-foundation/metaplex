@@ -264,6 +264,7 @@ pub async fn place_bid(
     payer: &Keypair,
     bidder: &Keypair,
     bidder_spl_account: &Keypair,
+    bidder_gateway_token: &Pubkey,
     transfer_authority: &Keypair,
     resource: &Pubkey,
     mint: &Pubkey,
@@ -273,6 +274,7 @@ pub async fn place_bid(
         &[instruction::place_bid_instruction(
             *program_id,
             bidder.pubkey(),             // Wallet used to identify bidder
+            *bidder_gateway_token,
             bidder.pubkey(), // SPL token account (source) using same account here for ease of testing
             bidder_spl_account.pubkey(), // SPL Token Account (Destination)
             *mint,           // Token Mint

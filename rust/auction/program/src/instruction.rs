@@ -216,6 +216,7 @@ pub fn start_auction_instruction(
 pub fn place_bid_instruction(
     program_id: Pubkey,
     bidder_pubkey: Pubkey,
+    bidder_gateway_token: Pubkey,
     bidder_token_pubkey: Pubkey,
     bidder_pot_token_pubkey: Pubkey,
     token_mint_pubkey: Pubkey,
@@ -262,6 +263,7 @@ pub fn place_bid_instruction(
         program_id,
         accounts: vec![
             AccountMeta::new(bidder_pubkey, true),
+            AccountMeta::new(bidder_gateway_token, false),
             AccountMeta::new(bidder_token_pubkey, false),
             AccountMeta::new(bidder_pot_pubkey, false),
             AccountMeta::new(bidder_pot_token_pubkey, false),

@@ -1,6 +1,10 @@
 #![allow(warnings)]
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use crate::gateway::GatewayContext;
+use solana_gateway_program::{
+    id as gateway_program_id
+};
 use solana_program::{borsh::try_from_slice_unchecked, instruction::InstructionError};
 use solana_program_test::*;
 use solana_sdk::program_pack::Pack;
@@ -24,8 +28,12 @@ use spl_auction::{
     PREFIX,
 };
 use std::mem;
+use std::borrow::{Borrow, BorrowMut};
 
 mod helpers;
+mod gateway;
+
+
 
 /// Initialize an auction with a random resource, and generate bidders with tokens that can be used
 /// for testing.
@@ -39,7 +47,7 @@ async fn setup_auction(
 ) -> (
     Pubkey,
     BanksClient,
-    Vec<(Keypair, Keypair, Pubkey)>,
+    Vec<(Keypair, Keypair, Pubkey, Pubkey)>,
     Keypair,
     Pubkey,
     Pubkey,
@@ -51,9 +59,19 @@ async fn setup_auction(
     let program_id = Pubkey::new_unique();
     let mut program_test =
         ProgramTest::new("spl_auction", program_id, processor!(process_instruction));
+    program_test.add_program("solana_gateway_program", gateway_program_id(), None);
 
     // Start executing test.
-    let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
+    let mut context = program_test.start().await;
+    let (mut banks_client, payer, recent_blockhash) = context;
+
+    // Set up a gatekeeper network and gatekeeper capable of issuing gateway tokens
+    let mut client_clone = banks_client.clone();
+    let mut gateway_context = GatewayContext::new(
+        &mut client_clone,
+        payer.borrow(),
+        &recent_blockhash
+    ).await;
 
     // Create a Token mint to mint some test tokens with.
     let (mint_keypair, mint_manager) =
@@ -73,6 +91,7 @@ async fn setup_auction(
         &payer,
         &recent_blockhash,
         &resource,
+        &gateway_context.gatekeeper_network.pubkey(),
         &mint_keypair.pubkey(),
         max_winners,
         "Some name",
@@ -140,7 +159,10 @@ async fn setup_auction(
         .await
         .unwrap();
 
-        bidders.push((bidder, auction_spl_pot, bid_pot_pubkey));
+        // Create gateway token for the bidder
+        let bidder_gateway_token = gateway_context.issue_gateway_token(bidder.pubkey()).await;
+
+        bidders.push((bidder, auction_spl_pot, bid_pot_pubkey, bidder_gateway_token));
     }
 
     // Verify Auction was created as expected.
@@ -332,6 +354,7 @@ async fn test_correct_runs() {
                         &payer,
                         &bidders[bidder].0,
                         &bidders[bidder].1,
+                        &bidders[bidder].3,
                         &transfer_authority,
                         &resource,
                         &mint,
@@ -507,7 +530,7 @@ async fn handle_failing_action(
     banks_client: &mut BanksClient,
     recent_blockhash: &Hash,
     program_id: &Pubkey,
-    bidders: &Vec<(Keypair, Keypair, Pubkey)>,
+    bidders: &Vec<(Keypair, Keypair, Pubkey, Pubkey)>,
     mint: &Pubkey,
     payer: &Keypair,
     resource: &Pubkey,
@@ -540,6 +563,7 @@ async fn handle_failing_action(
                 &payer,
                 &bidders[bidder].0,
                 &bidders[bidder].1,
+                &bidders[bidder].3,
                 &transfer_authority,
                 &resource,
                 &mint,
@@ -761,6 +785,7 @@ async fn test_place_instant_sale_bid() {
         &payer,
         &bidders[0].0,
         &bidders[0].1,
+        &bidders[0].3,
         &transfer_authority,
         &resource,
         &mint,
@@ -857,6 +882,7 @@ async fn test_all_bids_are_taken_by_instant_sale_price() {
                     &payer,
                     &bidders[bidder].0,
                     &bidders[bidder].1,
+                    &bidders[bidder].3,
                     &transfer_authority,
                     &resource,
                     &mint,
@@ -957,6 +983,7 @@ async fn test_claim_bid_with_instant_sale_price() {
         &payer,
         &bidders[0].0,
         &bidders[0].1,
+        &bidders[0].3,
         &transfer_authority,
         &resource,
         &mint,
@@ -1076,6 +1103,7 @@ async fn test_cancel_bid_with_instant_sale_price() {
                     &payer,
                     &bidders[bidder].0,
                     &bidders[bidder].1,
+                    &bidders[bidder].3,
                     &transfer_authority,
                     &resource,
                     &mint,
