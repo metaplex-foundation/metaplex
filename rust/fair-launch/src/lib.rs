@@ -17,7 +17,7 @@ use {
         },
         AnchorDeserialize, AnchorSerialize,
     },
-    anchor_spl::token::Mint,
+    anchor_spl::token::{Mint, TokenAccount},
     spl_token::{
         instruction::{initialize_account2, mint_to},
         state::Account,
@@ -179,10 +179,15 @@ pub mod fair_launch {
     pub fn start_phase_three(ctx: Context<StartPhaseThree>) -> ProgramResult {
         let fair_launch = &mut ctx.accounts.fair_launch;
         let fair_launch_lottery_bitmap = &ctx.accounts.fair_launch_lottery_bitmap;
+        let token_mint = &ctx.accounts.token_mint;
 
         if fair_launch_lottery_bitmap.bitmap_ones
             != std::cmp::min(
-                fair_launch.data.number_of_tokens,
+                fair_launch
+                    .data
+                    .number_of_tokens
+                    .checked_sub(token_mint.supply)
+                    .ok_or(ErrorCode::NumericalOverflowError)?,
                 fair_launch.current_eligible_holders,
             )
         {
@@ -1513,6 +1518,82 @@ pub mod fair_launch {
 
         Ok(())
     }
+
+    pub fn mint_tokens<'info>(
+        ctx: Context<'_, '_, '_, 'info, MintTokens<'info>>,
+        amount: u64,
+    ) -> ProgramResult {
+        let fair_launch = &mut ctx.accounts.fair_launch;
+        let token_account = &mut ctx.accounts.token_account;
+        let token_mint = &mut ctx.accounts.token_mint;
+        let authority = &mut ctx.accounts.authority;
+        let token_program = &ctx.accounts.token_program;
+
+        if token_program.key != &spl_token::id() {
+            return Err(ErrorCode::InvalidTokenProgram.into());
+        }
+        if token_account.mint != fair_launch.token_mint {
+            return Err(ErrorCode::TokenMintMismatch.into());
+        }
+        if fair_launch.number_tickets_sold
+            > fair_launch.number_tickets_dropped + fair_launch.number_tickets_punched
+        {
+            return Err(ErrorCode::CannotMintTokensUntilAllCashedOut.into());
+        }
+
+        let token_account_info = &token_account.to_account_info();
+
+        assert_owned_by(token_account_info, &token_program.key)?;
+
+        // assert is an ATA
+        assert_derivation(
+            &spl_associated_token_account::id(),
+            token_account_info,
+            &[
+                authority.key.as_ref(),
+                token_program.key.as_ref(),
+                &token_mint.key().as_ref(),
+            ],
+        )?;
+
+        if token_account.delegate.is_some() {
+            return Err(ErrorCode::AccountShouldHaveNoDelegates.into());
+        }
+
+        if token_account.owner != *authority.key {
+            return Err(ErrorCode::AccountOwnerShouldBeBuyer.into());
+        }
+
+        let total_new = token_mint
+            .supply
+            .checked_add(amount)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
+        if total_new > fair_launch.data.number_of_tokens {
+            return Err(ErrorCode::CannotMintMoreTokensThanTotal.into());
+        }
+
+        let signer_seeds = [
+            PREFIX.as_bytes(),
+            fair_launch.token_mint.as_ref(),
+            &[fair_launch.bump],
+        ];
+
+        spl_token_mint_to(
+            token_mint.to_account_info(),
+            token_account_info.clone(),
+            amount,
+            fair_launch.to_account_info(),
+            &signer_seeds,
+            ctx.accounts.token_program.clone(),
+        )?;
+
+        if !fair_launch.phase_three_started {
+            fair_launch.number_tokens_preminted = total_new
+        }
+
+        Ok(())
+    }
 }
 #[derive(Accounts)]
 #[instruction(bump: u8, treasury_bump: u8, token_mint_bump: u8, data: FairLaunchData)]
@@ -1549,12 +1630,14 @@ pub struct UpdateFairLaunch<'info> {
 /// Limited Update that only sets phase 3 dates once bitmap is in place and fully setup.
 #[derive(Accounts)]
 pub struct StartPhaseThree<'info> {
-    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority, has_one=token_mint)]
     fair_launch: ProgramAccount<'info, FairLaunch>,
     #[account(seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref(), LOTTERY.as_bytes()], constraint=fair_launch_lottery_bitmap.to_account_info().data_len() > 0, bump=fair_launch_lottery_bitmap.bump, has_one=fair_launch)]
     fair_launch_lottery_bitmap: ProgramAccount<'info, FairLaunchLotteryBitmap>,
     #[account(signer)]
     authority: AccountInfo<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
+    token_mint: CpiAccount<'info, Mint>,
 }
 
 /// Restarts phase two with as much time as the lottery duration had if duration is passed
@@ -1829,6 +1912,20 @@ pub struct MintParticipationNFT<'info> {
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct MintTokens<'info> {
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.token_mint.as_ref()], bump=fair_launch.bump, has_one=authority, has_one=token_mint)]
+    fair_launch: ProgramAccount<'info, FairLaunch>,
+    #[account(signer)]
+    authority: AccountInfo<'info>,
+    #[account(mut)]
+    token_account: CpiAccount<'info, TokenAccount>,
+    #[account(address = spl_token::id())]
+    token_program: AccountInfo<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), fair_launch.authority.as_ref(), MINT.as_bytes(), fair_launch.data.uuid.as_bytes()], bump=fair_launch.token_mint_bump)]
+    token_mint: CpiAccount<'info, Mint>,
 }
 
 pub const FAIR_LAUNCH_LOTTERY_SIZE: usize = 8 + // discriminator
@@ -2136,4 +2233,12 @@ pub enum ErrorCode {
     AccountOwnerShouldBeBuyer,
     #[msg("Account owner should be fair launch authority")]
     AccountOwnerShouldBeAuthority,
+    #[msg("Token mint mismatch")]
+    TokenMintMismatch,
+    #[msg("Cannot mint more tokens than are allowed by the fair launch")]
+    CannotMintMoreTokensThanTotal,
+    #[msg("Due to concerns that you might mint, burn, then mint again and mess up the counter, you can only mint once before the FLP")]
+    CanOnlyPremintOnce,
+    #[msg("Once phase three has begun, no more FLP tokens can be minted until all ticket holders have been given tokens")]
+    CannotMintTokensUntilAllCashedOut,
 }
