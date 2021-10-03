@@ -1882,11 +1882,72 @@ program
         fairLaunch,
         fairLaunchLotteryBitmap,
         authority: walletKeyPair.publicKey,
-        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+        //@ts-ignore
+        tokenMint: fairLaunchObj.tokenMint,
       },
     });
 
     console.log(`Dang son, phase three.`);
+  });
+
+program
+  .command('mint_flp_tokens')
+  .option(
+    '-e, --env <string>',
+    'Solana cluster env name',
+    'devnet', //mainnet-beta, testnet, devnet
+  )
+  .option(
+    '-k, --keypair <path>',
+    `Solana wallet location`,
+    '--keypair not provided',
+  )
+  .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-a, --amount <string>', 'amount')
+  .action(async (_, cmd) => {
+    const { env, keypair, fairLaunch, amount } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const amountNumber = parseInt(amount);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+
+    const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
+    const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
+      fairLaunchKey,
+    );
+    const tokenAccount = //@ts-ignore
+    (await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey))[0];
+
+    const exists = await anchorProgram.provider.connection.getAccountInfo(
+      tokenAccount,
+    );
+
+    const instructions = [];
+    if (!exists) {
+      instructions.push(
+        createAssociatedTokenAccountInstruction(
+          tokenAccount,
+          walletKeyPair.publicKey,
+          walletKeyPair.publicKey,
+          //@ts-ignore
+          fairLaunchObj.tokenMint,
+        ),
+      );
+    }
+
+    await anchorProgram.rpc.mintTokens(new anchor.BN(amountNumber), {
+      accounts: {
+        fairLaunch: fairLaunchKey,
+        authority: walletKeyPair.publicKey,
+        //@ts-ignore
+        tokenMint: fairLaunchObj.tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        tokenAccount,
+      },
+      instructions: instructions.length ? instructions : undefined,
+    });
+
+    console.log(`Added ${amountNumber} tokens to ${tokenAccount.toBase58()}`);
   });
 
 program
@@ -2227,10 +2288,19 @@ program
       );
 
     const statesFlat = states.flat();
+    const token = new Token(
+      anchorProgram.provider.connection,
+      //@ts-ignore
+      new anchor.web3.PublicKey(fairLaunchObj.tokenMint),
+      TOKEN_PROGRAM_ID,
+      walletKeyPair,
+    );
+
+    const mintInfo = await token.getMintInfo();
 
     let numWinnersRemaining = Math.min(
       //@ts-ignore;
-      fairLaunchObj.data.numberOfTokens,
+      fairLaunchObj.data.numberOfTokens.sub(mintInfo.supply),
       //@ts-ignore;
       statesFlat.filter(s => s.eligible).length,
     );
