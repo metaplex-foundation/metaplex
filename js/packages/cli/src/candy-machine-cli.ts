@@ -367,6 +367,7 @@ programCommand('show')
         candyMachine,
       );
       log.info('...Candy Machine...');
+      log.info('Key:', candyMachine.toBase58());
       //@ts-ignore
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
