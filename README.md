@@ -4,6 +4,8 @@
   </a>
 </p>
 
+# Metaple
+
 Metaplex is a protocol built on top of Solana that allows:
 
 - **Creating/Minting** non-fungible tokens;
