@@ -14,7 +14,7 @@ import {
   toPublicKey,
 } from '@oyster/common';
 import { AccountLayout } from '@solana/spl-token';
-import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
+import {TransactionInstruction, Keypair, Connection, PublicKey} from '@solana/web3.js';
 import { AuctionView } from '../hooks';
 import {
   BidRedemptionTicket,
@@ -27,6 +27,7 @@ import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 export async function sendCancelBid(
   connection: Connection,
   wallet: WalletSigner,
+  gatewayToken: PublicKey,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -46,6 +47,7 @@ export async function sendCancelBid(
     await setupPlaceBid(
       connection,
       wallet,
+      gatewayToken,
       payingAccount,
       auctionView,
       accountsByMint,

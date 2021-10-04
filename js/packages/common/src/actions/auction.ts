@@ -230,6 +230,8 @@ export class AuctionData {
   bidState: BidState;
   /// Used for precalculation on the front end, not a backend key
   bidRedemptionKey?: StringPublicKey;
+  /// The gatekeeper network that grants permission to bid on this auction
+  gatekeeperNetwork: StringPublicKey;
 
   auctionDataExtended?: StringPublicKey;
 
@@ -287,6 +289,7 @@ export class AuctionData {
     priceFloor: PriceFloor;
     state: AuctionState;
     bidState: BidState;
+    gatekeeperNetwork: StringPublicKey;
     totalUncancelledBids: BN;
   }) {
     this.authority = args.authority;
@@ -298,6 +301,7 @@ export class AuctionData {
     this.priceFloor = args.priceFloor;
     this.state = args.state;
     this.bidState = args.bidState;
+    this.gatekeeperNetwork = args.gatekeeperNetwork;
   }
 }
 
@@ -372,6 +376,8 @@ export interface IPartialCreateAuctionArgs {
   auctionGap: BN | null;
   /// Token mint for the SPL token used for bidding.
   tokenMint: StringPublicKey;
+  /// The gatekeeper network that grants permission to bid on this auction
+  gatekeeperNetwork: StringPublicKey;
 
   priceFloor: PriceFloor;
 
@@ -398,6 +404,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
   authority: StringPublicKey;
   /// The resource being auctioned. See AuctionData.
   resource: StringPublicKey;
+  /// The gatekeeper network that grants permission to bid on this auction
+  gatekeeperNetwork: StringPublicKey;
 
   priceFloor: PriceFloor;
 
@@ -416,6 +424,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     tokenMint: StringPublicKey;
     authority: StringPublicKey;
     resource: StringPublicKey;
+    gatekeeperNetwork: StringPublicKey;
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
@@ -428,6 +437,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     this.tokenMint = args.tokenMint;
     this.authority = args.authority;
     this.resource = args.resource;
+    this.gatekeeperNetwork = args.gatekeeperNetwork;
     this.priceFloor = args.priceFloor;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
@@ -787,6 +797,7 @@ export async function setAuctionAuthority(
 
 export async function placeBid(
   bidderPubkey: StringPublicKey,
+  bidderGatewayTokenPubkey: StringPublicKey,
   bidderTokenPubkey: StringPublicKey,
   bidderPotTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
@@ -842,6 +853,11 @@ export async function placeBid(
     {
       pubkey: toPublicKey(bidderPubkey),
       isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(bidderGatewayTokenPubkey),
+      isSigner: false,
       isWritable: false,
     },
     {

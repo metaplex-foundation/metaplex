@@ -10,6 +10,7 @@ import { ConfettiProvider } from './components/Confetti';
 import { AppLayout } from './components/Layout';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
+import {GatewayProvider} from "./contexts/gateway";
 
 export const Providers: FC = ({ children }) => {
   return (
@@ -17,18 +18,20 @@ export const Providers: FC = ({ children }) => {
       <WalletProvider>
         <AccountsProvider>
           <CoingeckoProvider>
-            <StoreProvider
-              ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
-              storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
-            >
-              <MetaProvider>
-                <LoaderProvider>
-                  <ConfettiProvider>
-                    <AppLayout>{children}</AppLayout>
-                  </ConfettiProvider>
-                </LoaderProvider>
-              </MetaProvider>
-            </StoreProvider>
+            <GatewayProvider>
+              <StoreProvider
+                ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
+                storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
+              >
+                <MetaProvider>
+                  <LoaderProvider>
+                    <ConfettiProvider>
+                      <AppLayout>{children}</AppLayout>
+                    </ConfettiProvider>
+                  </LoaderProvider>
+                </MetaProvider>
+              </StoreProvider>
+            </GatewayProvider>
           </CoingeckoProvider>
         </AccountsProvider>
       </WalletProvider>

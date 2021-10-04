@@ -13,6 +13,7 @@ import {
   createAuction,
 } from '@oyster/common/dist/lib/actions/auction';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { gatekeeperNetwork } from '../contexts/gateway';
 
 // This command makes an auction
 export async function makeAuction(
@@ -43,6 +44,7 @@ export async function makeAuction(
 
   const fullSettings = new CreateAuctionArgs({
     ...auctionSettings,
+    gatekeeperNetwork: gatekeeperNetwork.toBase58(),
     authority: wallet.publicKey.toBase58(),
     resource: vault,
   });

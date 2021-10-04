@@ -36,7 +36,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {Connection, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import { useMeta } from '../../contexts';
 import moment from 'moment';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -46,6 +46,7 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import {useGateway} from "@civic/solana-gateway-react";
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -212,6 +213,7 @@ export const AuctionCard = ({
   const [printingCost, setPrintingCost] = useState<number>();
 
   const { accountByMint } = useUserAccounts();
+  const { gatewayToken } = useGateway();
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
@@ -288,6 +290,7 @@ export const AuctionCard = ({
               size="large"
               className="action-btn"
               disabled={
+                !gatewayToken ||
                 !myPayingAccount ||
                 (!auctionView.myBidderMetadata &&
                   isAuctionManagerAuthorityNotWalletOwner) ||
@@ -316,6 +319,7 @@ export const AuctionCard = ({
                     await sendRedeemBid(
                       connection,
                       wallet,
+                      gatewayToken!.publicKey,
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
@@ -501,6 +505,7 @@ export const AuctionCard = ({
                   const bid = await sendPlaceBid(
                     connection,
                     wallet,
+                    gatewayToken!.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
@@ -537,6 +542,7 @@ export const AuctionCard = ({
                     const bid = await sendPlaceBid(
                       connection,
                       wallet,
+                      gatewayToken!.publicKey,
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
@@ -563,6 +569,7 @@ export const AuctionCard = ({
                   await sendRedeemBid(
                     connection,
                     wallet,
+                    gatewayToken!.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,

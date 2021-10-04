@@ -11,6 +11,20 @@
     deep-eql "^0.1.3"
     keypather "^1.10.2"
 
+"@actions/core@^1.2.6":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@actions/core/-/core-1.6.0.tgz#0568e47039bfb6a9170393a73f3b7eb3b22462cb"
+  integrity sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw==
+  dependencies:
+    "@actions/http-client" "^1.0.11"
+
+"@actions/http-client@^1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@actions/http-client/-/http-client-1.0.11.tgz#c58b12e9aa8b159ee39e7dd6cbd0e91d905633c0"
+  integrity sha512-VRYHGQV1rqnROJqdMvGUbY/Kn8vriQe/F9HR2AlYHzmKuM/p3kjNuXhmdBfcVgsvRWTz5C5XW5xvndZrVBuAYg==
+  dependencies:
+    tunnel "0.0.6"
+
 "@ant-design/colors@^6.0.0":
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/@ant-design/colors/-/colors-6.0.0.tgz#9b9366257cffcc47db42b9d0203bb592c13c0298"
@@ -1562,6 +1576,18 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
+"@civic/solana-gateway-react@^0.3.15":
+  version "0.3.15"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.3.15.tgz#651a0f31b22095ab0dc704d8123cb0a77e02a134"
+  integrity sha512-i1HDjB3UV8ENVCxweUKBJrD4TaeeF9bz6RTCjgQcCn81E5TeSWt/Ijlwg+/DkyTbL9CEWE++DVrmIrc1wuZtuw==
+  dependencies:
+    "@identity.com/prove-solana-wallet" "^0.2.3"
+    "@identity.com/solana-gateway-ts" "^0.3.3"
+    "@solana/web3.js" "^1.20.0"
+    fetch-retry-ts "^1.1.24"
+    iframe-resizer-react "^1.1.0"
+    ramda "^0.27.1"
+
 "@cloudflare/stream-react@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@cloudflare/stream-react/-/stream-react-1.1.0.tgz#61c7afaf0ee2f8c0343e3d6fa611db8a487890f8"
@@ -1911,6 +1937,23 @@
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
+
+"@identity.com/prove-solana-wallet@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@identity.com/prove-solana-wallet/-/prove-solana-wallet-0.2.3.tgz#6a303e174da8b03a585d3e47a0c32d7735076c59"
+  integrity sha512-WSzx4iGHz7/5EVnAmPPrL0t/k69grow5h0JtdOfCOPpVlzHaAEMMUABn3qHNJ5irwVbN4kYHXDEqETMewTh3ZQ==
+  dependencies:
+    "@solana/web3.js" "^1.22.0"
+    bs58 "^4.0.1"
+
+"@identity.com/solana-gateway-ts@^0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@identity.com/solana-gateway-ts/-/solana-gateway-ts-0.3.3.tgz#bb9ab03c57d39cd10f4a1f0a214e9b230f21cb91"
+  integrity sha512-lpFQZ8WDbPecorA0iNrsGVwPkkp1F4j56r51qKHEfARNKpeeRcNnutBfDxVVIWpV6oKL9yRPsbpwpa41tQ8YcQ==
+  dependencies:
+    "@solana/web3.js" "^1.22.0"
+    bn.js "^5.2.0"
+    borsh "^0.4.0"
 
 "@ipld/dag-cbor@^6.0.5":
   version "6.0.10"
@@ -3890,6 +3933,26 @@
     jayson "^3.4.4"
     js-sha3 "^0.8.0"
     node-fetch "^2.6.1"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
+
+"@solana/web3.js@^1.20.0":
+  version "1.29.2"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.29.2.tgz#05c162f477c226ee3211f8ee8c1c6d4203e08f54"
+  integrity sha512-gtoHzimv7upsKF2DIO4/vNfIMKN+cxSImBHvsdiMyp9IPqb8sctsHVU/+80xXl0JKXVKeairDv5RvVnesJYrtw==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    cross-fetch "^3.1.4"
+    crypto-hash "^1.2.2"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
     rpc-websockets "^7.4.2"
     secp256k1 "^4.0.2"
     superstruct "^0.14.2"
@@ -9123,6 +9186,13 @@ eslint-config-react-app@^6.0.0:
   dependencies:
     confusing-browser-globals "^1.0.10"
 
+eslint-formatter-gha@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-formatter-gha/-/eslint-formatter-gha-1.2.0.tgz#ce52de9f9b17c65dc138482c0990fd2a158548be"
+  integrity sha512-teAorPqDzHzzYNCQCptdoYsnc+CZFXYcdB4v3dTi4Yqe8V64aShsbvtvPtYuJnKBoN6AwPzZ9P4D7R0hdQ5bcA==
+  dependencies:
+    "@actions/core" "^1.2.6"
+
 eslint-import-resolver-node@^0.3.6:
   version "0.3.6"
   resolved "https://registry.yarnpkg.com/eslint-import-resolver-node/-/eslint-import-resolver-node-0.3.6.tgz#4048b958395da89668252001dbd9eca6b83bacbd"
@@ -9756,6 +9826,13 @@ fd-slicer@~1.1.0:
   integrity sha1-JcfInLH5B3+IkbvmHY85Dq4lbx4=
   dependencies:
     pend "~1.2.0"
+
+fetch-retry-ts@^1.1.24:
+  version "1.1.24"
+  resolved "https://registry.yarnpkg.com/fetch-retry-ts/-/fetch-retry-ts-1.1.24.tgz#93c197657858a12183b398eb3f30a601bbbbf78e"
+  integrity sha512-ItH/7VjAWTYfEJc/GT0kot92DxKZX1fg/cjivMacyj24jYvZJaYpvHvidotUMor/ZYMkgi/GPtRAIe6vuUuU/Q==
+  dependencies:
+    eslint-formatter-gha "^1.2.0"
 
 figgy-pudding@^3.4.1, figgy-pudding@^3.5.1:
   version "3.5.2"
@@ -11159,6 +11236,19 @@ iferr@^0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/iferr/-/iferr-0.1.5.tgz#c60eed69e6d8fdb6b3104a1fcbca1c192dc5b501"
   integrity sha1-xg7taebY/bazEEofy8ocGS3FtQE=
+
+iframe-resizer-react@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/iframe-resizer-react/-/iframe-resizer-react-1.1.0.tgz#5009e019b7a5c7f1c009bff5bcdf0dbf33557465"
+  integrity sha512-FrytSq91AIJaDgE+6uK/Vdd6IR8CrwLoZ6eGmL2qQMPTzF0xlSV2jaSzRRUh5V2fttD7vzl21jvBl97bV40eBw==
+  dependencies:
+    iframe-resizer "^4.3.0"
+    warning "^4.0.3"
+
+iframe-resizer@^4.3.0:
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/iframe-resizer/-/iframe-resizer-4.3.2.tgz#42dd88345d18b9e377b6044dddb98c664ab0ce6b"
+  integrity sha512-gOWo2hmdPjMQsQ+zTKbses08mDfDEMh4NneGQNP4qwePYujY1lguqP6gnbeJkf154gojWlBhIltlgnMfYjGHWA==
 
 ignore-walk@^3.0.1:
   version "3.0.4"
@@ -17327,6 +17417,11 @@ raf@^3.4.1:
   dependencies:
     performance-now "^2.1.0"
 
+ramda@^0.27.1:
+  version "0.27.1"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.27.1.tgz#66fc2df3ef873874ffc2da6aa8984658abacf5c9"
+  integrity sha512-PgIdVpn5y5Yns8vqb8FzBUEYn98V3xcPgawAkkgj0YJ0qDsnHCiNmZYfOGMgOvoB0eWFLpYbhxUR3mxfDIMvpw==
+
 randombytes@^2.0.0, randombytes@^2.0.1, randombytes@^2.0.5, randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.1.0.tgz#df6f84372f0270dc65cdf6291349ab7a473d4f2a"
@@ -20495,6 +20590,11 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
+tunnel@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/tunnel/-/tunnel-0.0.6.tgz#72f1314b34a5b192db012324df2cc587ca47f92c"
+  integrity sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==
+
 tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
@@ -21050,7 +21150,7 @@ walker@^1.0.7, walker@~1.0.5:
   dependencies:
     makeerror "1.0.x"
 
-warning@^4.0.1:
+warning@^4.0.1, warning@^4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/warning/-/warning-4.0.3.tgz#16e9e077eb8a86d6af7d64aa1e05fd85b4678ca3"
   integrity sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w==

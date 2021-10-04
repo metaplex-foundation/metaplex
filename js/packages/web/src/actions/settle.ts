@@ -1,4 +1,4 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {Keypair, Connection, TransactionInstruction, PublicKey} from '@solana/web3.js';
 import {
   ParsedAccount,
   SequenceType,
@@ -28,6 +28,7 @@ const CLAIM_TRANSACTION_SIZE = 6;
 export async function settle(
   connection: Connection,
   wallet: WalletSigner,
+  gatewayToken: PublicKey,
   auctionView: AuctionView,
   bidsToClaim: ParsedAccount<BidderPot>[],
   payingAccount: string | undefined,
@@ -43,6 +44,7 @@ export async function settle(
     await setupPlaceBid(
       connection,
       wallet,
+      gatewayToken,
       payingAccount,
       auctionView,
       accountsByMint,

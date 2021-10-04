@@ -28,6 +28,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
+import {useGateway} from "@civic/solana-gateway-react";
 
 interface NotificationCard {
   id: string;
@@ -183,6 +184,7 @@ export function useSettlementAuctions({
   const walletPubkey = wallet?.publicKey?.toBase58();
   const { bidderPotsByAuctionAndBidder } = useMeta();
   const auctionsNeedingSettling = [...useAuctions(AuctionViewState.Ended), ...useAuctions(AuctionViewState.BuyNow)];
+  const { gatewayToken } = useGateway();
 
   const [validDiscoveredEndedAuctions, setValidDiscoveredEndedAuctions] =
     useState<Record<string, number>>({});
@@ -276,6 +278,7 @@ export function useSettlementAuctions({
             await settle(
               connection,
               wallet,
+              gatewayToken!.publicKey,
               auctionView,
               // Just claim all bidder pots
               bidsToClaim,

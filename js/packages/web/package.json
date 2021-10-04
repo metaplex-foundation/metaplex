@@ -4,6 +4,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.4.0",
     "@babel/preset-typescript": "^7.12.13",
+    "@civic/solana-gateway-react": "^0.3.15",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@oyster/common": "0.0.2",

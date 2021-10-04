@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Layout, Spin, Button, Table } from 'antd';
+import {useGateway} from "@civic/solana-gateway-react";
 import {
   useArt,
   useAuction,
@@ -391,6 +392,7 @@ export const InnerBillingView = ({
 
   const myPayingAccount = balance.accounts[0];
 
+  const { gatewayToken } = useGateway();
   const { accountByMint } = useUserAccounts();
 
   const {
@@ -486,10 +488,12 @@ export const InnerBillingView = ({
               type="primary"
               size="large"
               className="action-btn"
+              disabled={!gatewayToken}
               onClick={async () => {
                 await settle(
                   connection,
                   wallet,
+                  gatewayToken!.publicKey,
                   auctionView,
                   bidsToClaim.map(b => b.pot),
                   myPayingAccount.pubkey,

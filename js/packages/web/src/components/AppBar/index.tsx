@@ -7,6 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import {IdentityButton} from "@civic/solana-gateway-react";
 
 const UserActions = () => {
   const { publicKey } = useWallet();
@@ -120,6 +121,7 @@ export const AppBar = () => {
       </div>
       {connected ? (
         <div className="app-right app-bar-box">
+          <IdentityButton/>
           <UserActions />
           <CurrentUserBadge
             showBalance={false}

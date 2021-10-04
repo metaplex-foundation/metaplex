@@ -1,4 +1,4 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {Keypair, Connection, TransactionInstruction, PublicKey} from '@solana/web3.js';
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -23,6 +23,7 @@ import { QUOTE_MINT } from '../constants';
 export async function sendPlaceBid(
   connection: Connection,
   wallet: WalletSigner,
+  gatewayToken: PublicKey,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -34,6 +35,7 @@ export async function sendPlaceBid(
   const bid = await setupPlaceBid(
     connection,
     wallet,
+    gatewayToken,
     bidderTokenAccount,
     auctionView,
     accountsByMint,
@@ -58,6 +60,7 @@ export async function sendPlaceBid(
 export async function setupPlaceBid(
   connection: Connection,
   wallet: WalletSigner,
+  gatewayToken: PublicKey,
   bidderTokenAccount: string | undefined,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
@@ -140,6 +143,7 @@ export async function setupPlaceBid(
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
     wallet.publicKey.toBase58(),
+    gatewayToken.toBase58(),
     payingSolAccount,
     bidderPotTokenAccount,
     auctionView.auction.info.tokenMint,
