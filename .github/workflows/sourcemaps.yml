@@ -1,5 +1,10 @@
 name: Source Maps 4 Bugsnag
 
+on:
+  push:
+    branches:
+      - master
+
 jobs:
   upload_source_map:
     runs-on: ubuntu-latest
