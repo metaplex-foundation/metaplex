@@ -1379,17 +1379,36 @@ program
                   allIndexesInSlice[i],
                   ticket.model.buyer.toBase58(),
                 );
-                await adjustTicket({
-                  amountNumber: 0,
-                  fairLaunchObj,
-                  adjuster: ticket.model.buyer,
-                  fairLaunch,
-                  fairLaunchTicket: ticket.key,
-                  fairLaunchLotteryBitmap,
-                  anchorProgram,
-                  payer: walletKeyPair,
-                  adjustMantissa: true,
-                });
+                let tries = 0;
+                let done = false;
+                while (tries < 3 && !done) {
+                  try {
+                    await adjustTicket({
+                      amountNumber: 0,
+                      fairLaunchObj,
+                      adjuster: ticket.model.buyer,
+                      fairLaunch,
+                      fairLaunchTicket: ticket.key,
+                      fairLaunchLotteryBitmap,
+                      anchorProgram,
+                      payer: walletKeyPair,
+                      adjustMantissa: true,
+                    });
+                    done = true;
+                  } catch (e) {
+                    if (tries > 3) {
+                      throw e;
+                    } else {
+                      tries++;
+                    }
+                    console.log(e);
+                    console.log(
+                      'Adjusting ticket failed',
+                      ticket.key.toBase58(),
+                    );
+                    await sleep(1000);
+                  }
+                }
               } else {
                 const myByte =
                   fairLaunchLotteryBitmapObj.data[
@@ -1418,24 +1437,40 @@ program
                       allIndexesInSlice[i],
                       'before punching',
                     );
-                    try {
-                      await adjustTicket({
-                        //@ts-ignore
-                        amountNumber: fairLaunchObj.currentMedian.toNumber(),
-                        fairLaunchObj,
-                        adjuster: ticket.model.buyer,
-                        fairLaunch,
-                        fairLaunchTicket: ticket.key,
-                        fairLaunchLotteryBitmap,
-                        anchorProgram,
-                        payer: walletKeyPair,
-                        adjustMantissa: false,
-                      });
-                    } catch (e) {
-                      console.log(
-                        'Adjusting ticket failed',
-                        ticket.key.toBase58(),
-                      );
+                    let tries = 0;
+                    let done = false;
+                    while (tries < 3 && !done) {
+                      try {
+                        await adjustTicket({
+                          //@ts-ignore
+                          amountNumber: fairLaunchObj.currentMedian.toNumber(),
+                          fairLaunchObj,
+                          adjuster: ticket.model.buyer,
+                          fairLaunch,
+                          fairLaunchTicket: ticket.key,
+                          fairLaunchLotteryBitmap,
+                          anchorProgram,
+                          payer: walletKeyPair,
+                          adjustMantissa: false,
+                        });
+                        done = true;
+                        console.log(
+                          'Adjusting ticket succeeded',
+                          ticket.key.toBase58(),
+                        );
+                      } catch (e) {
+                        if (tries > 3) {
+                          throw e;
+                        } else {
+                          tries++;
+                        }
+                        console.log(e);
+                        console.log(
+                          'Adjusting ticket failed',
+                          ticket.key.toBase58(),
+                        );
+                        await sleep(1000);
+                      }
                     }
                   }
                   let tries = 0;
@@ -1476,18 +1511,41 @@ program
                     ticket.model.buyer.toBase58(),
                     'was eligible but lost lottery, refunding',
                   );
-                  await adjustTicket({
-                    //@ts-ignore
-                    amountNumber: 0,
-                    fairLaunchObj,
-                    adjuster: ticket.model.buyer,
-                    fairLaunch,
-                    fairLaunchTicket: ticket.key,
-                    fairLaunchLotteryBitmap,
-                    anchorProgram,
-                    payer: walletKeyPair,
-                    adjustMantissa: true,
-                  });
+                  let tries = 0;
+                  let done = false;
+                  while (tries < 3 && !done) {
+                    try {
+                      await adjustTicket({
+                        //@ts-ignore
+                        amountNumber: 0,
+                        fairLaunchObj,
+                        adjuster: ticket.model.buyer,
+                        fairLaunch,
+                        fairLaunchTicket: ticket.key,
+                        fairLaunchLotteryBitmap,
+                        anchorProgram,
+                        payer: walletKeyPair,
+                        adjustMantissa: true,
+                      });
+                      done = true;
+                      console.log(
+                        'Refunding  ticket succeeded',
+                        ticket.key.toBase58(),
+                      );
+                    } catch (e) {
+                      if (tries > 3) {
+                        throw e;
+                      } else {
+                        tries++;
+                      }
+                      console.log(e);
+                      console.log(
+                        'Adjusting ticket failed',
+                        ticket.key.toBase58(),
+                      );
+                      await sleep(1000);
+                    }
+                  }
                   console.log('Refunded.');
                 }
               }
