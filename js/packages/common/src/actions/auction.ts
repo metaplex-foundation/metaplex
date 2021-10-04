@@ -492,6 +492,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['tokenMint', 'pubkeyAsString'],
         ['authority', 'pubkeyAsString'],
         ['resource', 'pubkeyAsString'],
+        ['gatekeeperNetwork', 'pubkeyAsString'],
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
