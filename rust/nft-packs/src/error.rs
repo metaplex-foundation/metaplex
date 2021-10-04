@@ -12,12 +12,20 @@ use thiserror::Error;
 /// Errors that may be returned by the Metaplex NFT packs program.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
 pub enum NFTPacksError {
-    /// Total packs amount should be more then 0
-    #[error("Total packs amount should be more then 0")]
-    WrongTotalPacksAmount,
+    /// Allowed amount to redeem should be more then 0
+    #[error("Allowed amount to redeem should be more then 0")]
+    WrongAllowedAmountToRedeem,
 
-    /// Proved vouchers mismatch pack vourchers
-    #[error("Proved vouchers mismatch pack vourchers")]
+    /// Wrong redeem date
+    #[error("Wrong redeem date")]
+    WrongRedeemDate,
+
+    /// Card probability is missing
+    #[error("Card probability is missing")]
+    CardProbabilityMissing,
+
+    /// Proved vouchers mismatch pack vouchers
+    #[error("Proved vouchers mismatch pack vouchers")]
     ProvedVouchersMismatchPackVouchers,
 
     /// Pack is already open
@@ -103,6 +111,14 @@ pub enum NFTPacksError {
     /// Random oracle updated long time ago
     #[error("Random oracle updated long time ago")]
     RandomOracleOutOfDate,
+
+    /// Card ran out of editions
+    #[error("Card ran out of editions")]
+    CardDoesntHaveEditions,
+
+    /// User redeemed all allowed cards
+    #[error("User redeemed all allowed cards")]
+    UserRedeemedAllCards,
 }
 
 impl From<NFTPacksError> for ProgramError {

@@ -10,21 +10,6 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-/// Probability type
-#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
-pub enum DistributionType {
-    /// Fixed number. Takes value without precision
-    FixedNumber(u64),
-    /// Probability based. Takes value with precision 10^9
-    ProbabilityBased(u64),
-}
-
-impl Default for DistributionType {
-    fn default() -> Self {
-        Self::FixedNumber(1)
-    }
-}
-
 /// Pack card
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, Default)]
@@ -39,12 +24,10 @@ pub struct PackCard {
     pub metadata: Pubkey,
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
-    /// Fixed number / probability-based
-    pub distribution_type: DistributionType,
-    /// How many cards already minted
-    pub current_supply: u32,
+    /// How many instances(editions) of this card exists in this pack
+    pub max_supply: u32,
+    /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
+    pub probability: Option<u16>,
 }
 
 impl PackCard {
@@ -59,8 +42,6 @@ impl PackCard {
         self.metadata = params.metadata;
         self.token_account = params.token_account;
         self.max_supply = params.max_supply;
-        self.distribution_type = params.distribution_type;
-        self.current_supply = 0;
     }
 }
 
@@ -74,10 +55,8 @@ pub struct InitPackCardParams {
     pub metadata: Pubkey,
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
-    /// Fixed number / probability-based
-    pub distribution_type: DistributionType,
+    /// How many instances of this card will exists in a packs
+    pub max_supply: u32,
 }
 
 impl Sealed for PackCard {}
@@ -124,8 +103,8 @@ impl MasterEditionHolder for PackCard {
         self.token_account
     }
 
-    fn increment_supply(&mut self) -> Result<(), ProgramError> {
-        self.current_supply = self.current_supply.error_increment()?;
+    fn decrement_supply(&mut self) -> Result<(), ProgramError> {
+        self.max_supply = self.max_supply.error_decrement()?;
 
         Ok(())
     }

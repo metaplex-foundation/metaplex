@@ -23,10 +23,10 @@ pub struct ProvingProcess {
     pub proved_vouchers: u32,
     /// Counter of proved editions of each voucher master
     pub proved_voucher_editions: u32,
-    /// Counter of claimed cards
-    pub claimed_cards: u32,
-    /// Counter of claimed editions of each pack card
-    pub claimed_card_editions: u32,
+    /// Index of next card to redeem
+    pub next_card_to_redeem: u32,
+    /// How many cards user already redeemed
+    pub cards_redeemed: u32,
 }
 
 impl ProvingProcess {
@@ -43,8 +43,8 @@ impl ProvingProcess {
         self.pack_set = params.pack_set;
         self.proved_vouchers = 0;
         self.proved_voucher_editions = 0;
-        self.claimed_cards = 0;
-        self.claimed_card_editions = 0;
+        self.next_card_to_redeem = 0;
+        self.cards_redeemed = 0;
     }
 }
 

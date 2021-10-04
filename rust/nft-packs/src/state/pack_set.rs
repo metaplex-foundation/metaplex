@@ -18,11 +18,28 @@ pub enum PackSetState {
     Activated,
     /// Deactivated
     Deactivated,
+    /// Ended
+    Ended,
 }
 
 impl Default for PackSetState {
     fn default() -> Self {
         Self::NotActivated
+    }
+}
+
+/// Distribution type
+#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+pub enum PackDistributionType {
+    /// Max supply
+    MaxSupply,
+    /// Fixed
+    Fixed,
+}
+
+impl Default for PackDistributionType {
+    fn default() -> Self {
+        Self::MaxSupply
     }
 }
 
@@ -38,16 +55,24 @@ pub struct PackSet {
     pub authority: Pubkey,
     /// Authority to mint voucher editions
     pub minting_authority: Pubkey,
-    /// How many packs are available for redeeming
-    pub total_packs: u32,
     /// Card masters counter
     pub pack_cards: u32,
     /// Pack voucher counter
     pub pack_vouchers: u32,
+    /// Total amount of editions pack can mint
+    pub total_editions: u64,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
     /// Pack state
     pub pack_state: PackSetState,
+    /// Distribution type
+    pub distribution_type: PackDistributionType,
+    /// Count of cards user can try to redeem
+    pub allowed_amount_to_redeem: u32,
+    /// Date when users can start to redeem cards
+    pub redeem_start_date: u64,
+    /// Date when pack set becomes inactive
+    pub redeem_end_date: Option<u64>,
 }
 
 impl PackSet {
@@ -57,11 +82,15 @@ impl PackSet {
         self.name = params.name;
         self.authority = params.authority;
         self.minting_authority = params.minting_authority;
-        self.total_packs = params.total_packs;
+        self.total_editions = 0;
         self.pack_cards = 0;
         self.pack_vouchers = 0;
         self.mutable = params.mutable;
         self.pack_state = PackSetState::NotActivated;
+        self.distribution_type = params.distribution_type;
+        self.allowed_amount_to_redeem = params.allowed_amount_to_redeem;
+        self.redeem_start_date = params.redeem_start_date;
+        self.redeem_end_date = params.redeem_end_date;
     }
 
     /// Increase pack cards counter
@@ -83,10 +112,16 @@ pub struct InitPackSetParams {
     pub authority: Pubkey,
     /// Authority to mint voucher editions
     pub minting_authority: Pubkey,
-    /// How many packs are available for redeeming
-    pub total_packs: u32,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
+    /// Distribution type
+    pub distribution_type: PackDistributionType,
+    /// Allowed amount to redeem
+    pub allowed_amount_to_redeem: u32,
+    /// Redeem start date
+    pub redeem_start_date: u64,
+    /// Redeem end date
+    pub redeem_end_date: Option<u64>,
 }
 
 impl Sealed for PackSet {}

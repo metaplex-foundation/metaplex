@@ -54,5 +54,5 @@ pub trait MasterEditionHolder {
     fn get_token_account(&self) -> Pubkey;
 
     /// Increment total supply
-    fn increment_supply(&mut self) -> Result<(), ProgramError>;
+    fn decrement_supply(&mut self) -> Result<(), ProgramError>;
 }

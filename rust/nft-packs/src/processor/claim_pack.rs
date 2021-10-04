@@ -4,9 +4,9 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{DistributionType, PackCard, PackSet, ProvingProcess, MAX_LAG_SLOTS, PREFIX},
+    state::{PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, MAX_LAG_SLOTS, PREFIX},
     utils::*,
-    PRECISION,
+    PROBABILITY_PRECISION,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -15,6 +15,8 @@ use solana_program::{
     program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
+    program_error::ProgramError,
+    clock::Clock,
 };
 use spl_token_metadata::state::{MasterEditionV2, Metadata};
 use std::collections::hash_map::DefaultHasher;
@@ -43,19 +45,17 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let token_program_account = next_account_info(account_info_iter)?;
     let system_program_account = next_account_info(account_info_iter)?;
     let clock_info = next_account_info(account_info_iter)?;
-    let clock = solana_program::clock::Clock::from_account_info(clock_info)?;
+    let clock = Clock::from_account_info(clock_info)?;
     let _rent = &Rent::from_account_info(rent_account)?;
 
     // Validate owners
-    assert_owned_by(pack_set_account, program_id)?;
-    assert_owned_by(pack_card_account, program_id)?;
     assert_owned_by(randomness_oracle_account, &randomness_oracle_program::id())?;
 
     assert_signer(&user_wallet_account)?;
 
-    let pack_set = PackSet::unpack(&pack_set_account.data.borrow())?;
+    let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow())?;
     let mut proving_process = ProvingProcess::unpack(&proving_process_account.data.borrow_mut())?;
-    let index = proving_process.claimed_cards.error_increment()?;
+    let index = proving_process.next_card_to_redeem;
 
     assert_account_key(pack_set_account, &proving_process.pack_set)?;
     assert_account_key(user_wallet_account, &proving_process.user_wallet)?;
@@ -65,7 +65,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
         find_pack_card_program_address(program_id, pack_set_account.key, index);
     assert_account_key(pack_card_account, &valid_pack_card)?;
 
-    let pack_card = PackCard::unpack(&pack_card_account.data.borrow())?;
+    let mut pack_card = PackCard::unpack(&pack_card_account.data.borrow())?;
     assert_account_key(pack_set_account, &pack_card.pack_set)?;
 
     // Check if user have enough proves
@@ -84,107 +84,126 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let (program_authority_key, bump_seed) = find_program_authority(program_id);
     assert_account_key(program_authority_account, &program_authority_key)?;
 
-    match pack_card.distribution_type {
-        DistributionType::FixedNumber(number_in_pack) => {
-            msg!("Fixed number distribution type");
-            // Check if user already open pack
-            if proving_process.claimed_card_editions as u64 == number_in_pack {
-                return Err(NFTPacksError::PackIsAlreadyOpen.into());
-            }
+    if pack_card.max_supply == 0 {
+        return Err(NFTPacksError::CardDoesntHaveEditions.into());
+    }
 
-            proving_process.claimed_card_editions =
-                proving_process.claimed_card_editions.error_increment()?;
+    if pack_set.pack_state != PackSetState::Activated {
+        return Err(NFTPacksError::PackSetNotActivated.into());
+    }
 
-            // Check if this pack is last for user
-            if proving_process.claimed_card_editions as u64 == number_in_pack {
-                proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
-                proving_process.claimed_card_editions = 0;
-            }
+    let current_timestamp = clock.unix_timestamp as u64;
 
-            msg!("Mint NFT for user");
+    if current_timestamp < pack_set.redeem_start_date {
+        return Err(NFTPacksError::WrongRedeemDate.into());
+    }
 
-            // Mint token
-            spl_token_metadata_mint_new_edition_from_master_edition_via_token(
-                new_metadata_account,
-                new_edition_account,
-                new_mint_account,
-                new_mint_authority_account,
-                user_wallet_account,
-                program_authority_account,
-                user_token_account,
-                metadata_account,
-                master_edition_account,
-                metadata_mint_account,
-                edition_marker_account,
-                token_program_account,
-                system_program_account,
-                rent_account,
-                master_edition.supply.error_increment()?,
-                &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
-            )?;
+    if let Some(redeem_end_date) = pack_set.redeem_end_date {
+        if current_timestamp > redeem_end_date {
+            return Err(NFTPacksError::WrongRedeemDate.into());
         }
-        DistributionType::ProbabilityBased(cards_average) => {
-            msg!("Probability based distribution type");
+    }
 
-            // Calculate probability number
-            let probability = cards_average as u128 * PRECISION
-                / (cards_average as u128 + PRECISION);
+    if proving_process.cards_redeemed == pack_set.allowed_amount_to_redeem {
+        return Err(NFTPacksError::UserRedeemedAllCards.into());
+    } else {
+        proving_process.cards_redeemed = proving_process.cards_redeemed.error_increment()?;
+    }
 
-            // From oracle
-            let (oracle_random_value, slot) =
-                randomness_oracle_program::read_value(randomness_oracle_account)?;
+    // set value to 0 so user can't redeem same card twice and can't redeem any card
+    proving_process.next_card_to_redeem = 0;
 
-            if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
-                return Err(NFTPacksError::RandomOracleOutOfDate.into());
-            }
+    let probability = get_card_probability(&pack_set, &pack_card)?;
 
-            // Hash random value from the oracle with current slot and receive new random u32
-            let mut hasher = DefaultHasher::new();
-            hasher.write(oracle_random_value.as_ref());
-            hasher.write_u64(clock.slot);
+    let random_value = get_random_oracle_value(randomness_oracle_account, &clock)?;
 
-            let mut random_value: [u8; 4] = [0u8; 4];
-            random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..4]);
-            let random_value = u32::from_le_bytes(random_value);
+    if random_value <= probability {
+        msg!("User get NFT");
 
-            let random_value = (random_value as u128) * PRECISION / (u32::MAX as u128);
+        pack_set.total_editions = pack_set.total_editions.error_decrement()?;
 
-            if random_value <= probability {
-                msg!("User get NFT");
+        pack_card.max_supply = pack_card.max_supply.error_decrement()?;
 
-                proving_process.claimed_card_editions =
-                    proving_process.claimed_card_editions.error_increment()?;
+        // Mint token
+        spl_token_metadata_mint_new_edition_from_master_edition_via_token(
+            new_metadata_account,
+            new_edition_account,
+            new_mint_account,
+            new_mint_authority_account,
+            user_wallet_account,
+            program_authority_account,
+            user_token_account,
+            metadata_account,
+            master_edition_account,
+            metadata_mint_account,
+            edition_marker_account,
+            token_program_account,
+            system_program_account,
+            rent_account,
+            master_edition.supply.error_increment()?,
+            &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
+        )?;
+    } else {
+        msg!("User does not get NFT");
+    }
 
-                // Mint token
-                spl_token_metadata_mint_new_edition_from_master_edition_via_token(
-                    new_metadata_account,
-                    new_edition_account,
-                    new_mint_account,
-                    new_mint_authority_account,
-                    user_wallet_account,
-                    program_authority_account,
-                    user_token_account,
-                    metadata_account,
-                    master_edition_account,
-                    metadata_mint_account,
-                    edition_marker_account,
-                    token_program_account,
-                    system_program_account,
-                    rent_account,
-                    master_edition.supply.error_increment()?,
-                    &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
-                )?;
-            } else {
-                msg!("User does not get NFT");
-
-                proving_process.claimed_cards = proving_process.claimed_cards.error_increment()?;
-                proving_process.claimed_card_editions = 0;
-            }
-        }
-    };
+    // reset proving process values if it was last redeemed card
+    if proving_process.cards_redeemed == pack_set.allowed_amount_to_redeem {
+        proving_process.proved_vouchers = 0;
+        proving_process.proved_voucher_editions = 0;
+        proving_process.cards_redeemed = 0;
+    }
 
     // Update state
     ProvingProcess::pack(proving_process, *proving_process_account.data.borrow_mut())?;
+    PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
+    PackCard::pack(pack_card, *pack_card_account.data.borrow_mut())?;
 
     Ok(())
+}
+
+fn get_card_probability(pack_set: &PackSet, pack_card: &PackCard) -> Result<u16, ProgramError> {
+    match pack_set.distribution_type {
+        PackDistributionType::Fixed => {
+            msg!("Fixed number distribution type");
+
+            let probability = pack_card
+                .probability
+                .ok_or(NFTPacksError::CardProbabilityMissing)?
+                .error_mul(u16::MAX)?
+                .error_div(PROBABILITY_PRECISION)?;
+            
+            Ok(probability)
+        }
+        PackDistributionType::MaxSupply => {
+            msg!("Max supply distribution type");
+
+            let probability = ((pack_card.max_supply as u64)
+                .error_div(pack_set.total_editions)?
+                .error_mul(PROBABILITY_PRECISION as u64)?)
+            .error_mul(u16::MAX as u64)?
+            .error_div(PROBABILITY_PRECISION as u64)? as u16;
+            
+            Ok(probability)
+        }
+    }
+}
+
+fn get_random_oracle_value(randomness_oracle_account: &AccountInfo, clock: &Clock) -> Result<u16, ProgramError> {
+    let (oracle_random_value, slot) =
+    randomness_oracle_program::read_value(randomness_oracle_account)?;
+
+    if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
+        return Err(NFTPacksError::RandomOracleOutOfDate.into());
+    }
+
+    // Hash random value from the oracle with current slot and receive new random u16
+    let mut hasher = DefaultHasher::new();
+    hasher.write(oracle_random_value.as_ref());
+    hasher.write_u64(clock.slot);
+
+    let mut random_value: [u8; 2] = [0u8; 2];
+    random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..2]);
+    
+    Ok(u16::from_le_bytes(random_value))
 }

@@ -3,7 +3,7 @@
 
 use crate::{
     find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
-    state::{ActionOnProve, DistributionType},
+    state::{ActionOnProve, PackDistributionType},
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -18,7 +18,7 @@ pub struct AddCardToPackArgs {
     /// How many instances of this card will exists in all packs
     pub max_supply: Option<u32>,
     /// Fixed number / probability-based
-    pub probability_type: DistributionType,
+    pub probability_type: PackDistributionType,
     /// Index
     pub index: u32,
 }
@@ -40,10 +40,16 @@ pub struct AddVoucherToPackArgs {
 pub struct InitPackSetArgs {
     /// Name
     pub name: [u8; 32],
-    /// How many packs are available for redeeming
-    pub total_packs: u32,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
+    /// Distribution type
+    pub distribution_type: PackDistributionType,
+    /// Allowed amount to redeem
+    pub allowed_amount_to_redeem: u32,
+    /// Redeem start date, if not filled set current timestamp
+    pub redeem_start_date: Option<u64>,
+    /// Redeem end date
+    pub redeem_end_date: Option<u64>,
 }
 
 /// Edit a PackSet arguments
@@ -92,11 +98,15 @@ pub enum NFTPacksInstruction {
     /// - signer                         authority
     /// - read                           minting_authority
     /// - read                           Rent account
+    /// - read                           Clock account
     ///
     /// Parameters:
     /// - name	[u8; 32]
-    /// - total_packs	u32
     /// - mutable	bool
+    /// - distribution_type    DistributionType
+    /// - allowed_amount_to_redeem    u32
+    /// - redeem_start_date    Option<u64>
+    /// - redeem_end_date    Option<u64>
     InitPack(InitPackSetArgs),
 
     /// AddCardToPack
@@ -194,7 +204,7 @@ pub enum NFTPacksInstruction {
     /// MasterEdition to user account or return empty response depends successfully or not user open pack with specific MasterEdition.
     ///
     /// Accounts:
-    /// - read              pack_set
+    /// - read, write              pack_set
     /// - read, write       proving_process (PDA, [pack, 'proving', user_wallet])
     /// - signer            user_wallet
     /// - read, write       pack_card (PDA, [pack, 'card', index])
@@ -383,6 +393,7 @@ pub fn init_pack(
         AccountMeta::new_readonly(*authority, true),
         AccountMeta::new_readonly(*minting_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::InitPack(args), accounts)
@@ -551,7 +562,7 @@ pub fn claim_pack(
     );
 
     let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
+        AccountMeta::new(*pack_set, false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new(*user_wallet, true),
         AccountMeta::new_readonly(program_authority, false),

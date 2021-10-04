@@ -19,6 +19,38 @@ pub trait SafeMath<T> {
     fn error_div(self, rhs: T) -> Result<T, ProgramError>;
 }
 
+impl SafeMath<u16> for u16 {
+    fn error_increment(self) -> Result<u16, ProgramError> {
+        self.checked_add(1)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_decrement(self) -> Result<u16, ProgramError> {
+        self.checked_sub(1)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+
+    fn error_add(self, rhs: u16) -> Result<u16, ProgramError> {
+        self.checked_add(rhs)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_sub(self, rhs: u16) -> Result<u16, ProgramError> {
+        self.checked_sub(rhs)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+
+    fn error_mul(self, rhs: u16) -> Result<u16, ProgramError> {
+        self.checked_mul(rhs)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_div(self, rhs: u16) -> Result<u16, ProgramError> {
+        self.checked_div(rhs)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+}
+
 impl SafeMath<u32> for u32 {
     fn error_increment(self) -> Result<u32, ProgramError> {
         self.checked_add(1)
