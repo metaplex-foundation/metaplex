@@ -257,7 +257,8 @@ export const AuctionCard = ({
     auctionView.auction.info.state === AuctionState.Created;
 
   // if instant sale auction bid and claimed hide buttons
-  // const outstandingBid = auctionView.myBidderPot && !auctionView.myBidRedemption;
+  const outstandingBid =
+    auctionView.myBidderPot && !auctionView.myBidRedemption;
 
   // if (
   //   (!outstandingBid &&
@@ -270,10 +271,14 @@ export const AuctionCard = ({
   //   return <></>;
   // }
 
-    //if instant sale auction bid and claimed hide buttons
-    if (auctionView.isInstantSale && auctionView.myBidderPot?.info.emptied) {
-      return <></>
-    }
+  //if instant sale auction bid and claimed hide buttons
+  if (
+    !outstandingBid &&
+    auctionView.isInstantSale &&
+    auctionView.myBidderPot?.info.emptied
+  ) {
+    return <></>;
+  }
 
   return (
     <div className="auction-container" style={style}>
