@@ -257,18 +257,23 @@ export const AuctionCard = ({
     auctionView.auction.info.state === AuctionState.Created;
 
   // if instant sale auction bid and claimed hide buttons
-  const outstandingBid =
-    auctionView.myBidderPot && !auctionView.myBidRedemption;
-  if (
-    (!outstandingBid &&
-      auctionView.isInstantSale &&
-      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-      isAuctionManagerAuthorityNotWalletOwner &&
-      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
-    auctionView.vault.info.state === VaultState.Deactivated
-  ) {
-    return <></>;
-  }
+  // const outstandingBid = auctionView.myBidderPot && !auctionView.myBidRedemption;
+
+  // if (
+  //   (!outstandingBid &&
+  //     auctionView.isInstantSale &&
+  //     Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+  //     isAuctionManagerAuthorityNotWalletOwner &&
+  //     auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
+  //   auctionView.vault.info.state === VaultState.Deactivated
+  // ) {
+  //   return <></>;
+  // }
+
+    //if instant sale auction bid and claimed hide buttons
+    if (auctionView.isInstantSale && auctionView.myBidderPot?.info.emptied) {
+      return <></>
+    }
 
   return (
     <div className="auction-container" style={style}>
