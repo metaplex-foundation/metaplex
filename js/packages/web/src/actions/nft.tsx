@@ -342,8 +342,8 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: 2300000 // 0.0023 SOL per file (paid to arweave)
-          // await getAssetCostToStore(files),
+        lamports: 2300000, // 0.0023 SOL per file (paid to arweave)
+        // await getAssetCostToStore(files),
       }),
     );
 

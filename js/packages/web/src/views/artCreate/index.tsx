@@ -131,7 +131,7 @@ export const ArtCreateView = () => {
 
   return (
     <>
-      <Row className={"creator-base-page"}  style={{ paddingTop: 50 }}>
+      <Row className={'creator-base-page'} style={{ paddingTop: 50 }}>
         {stepsVisible && (
           <Col span={24} md={4}>
             <Steps
@@ -397,7 +397,11 @@ const UploadStep = (props: {
             const sizeKB = file.size / 1024;
 
             if (sizeKB < 25) {
-              setCoverArtError(`The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`);
+              setCoverArtError(
+                `The file ${file.name} is too small. It is ${
+                  Math.round(10 * sizeKB) / 10
+                }KB but should be at least 25KB.`,
+              );
               return;
             }
 
@@ -411,15 +415,13 @@ const UploadStep = (props: {
             </h3>
           </div>
           {coverArtError ? (
-            <Text type="danger">{ coverArtError }</Text>
+            <Text type="danger">{coverArtError}</Text>
           ) : (
             <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
               Drag and drop, or click to browse
             </p>
           )}
-
         </Dragger>
-
       </Row>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
         <Row

@@ -564,9 +564,7 @@ export const AuctionCard = ({
               >
                 your bid
               </div>
-              <div
-                className={'bid-container'}
-              >
+              <div className={'bid-container'}>
                 <div
                   style={{
                     width: '100%',
@@ -591,48 +589,48 @@ export const AuctionCard = ({
                   />
                 </div>
                 <div className={'bid-buttons'}>
-                <Button
-                  className="metaplex-button-default"
-                  style={{
-                    background: 'transparent',
-                    color: 'white',
-                    width: 'unset',
-                    fontWeight: 600,
-                    letterSpacing: '-0.02em',
-                    border: 'none',
-                  }}
-                  disabled={loading}
-                  onClick={() => setShowPlaceBid(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="secondary-btn"
-                  disabled={invalidBid}
-                  onClick={async () => {
-                    setLoading(true);
-                    if (myPayingAccount && value) {
-                      const bid = await sendPlaceBid(
-                        connection,
-                        wallet,
-                        myPayingAccount.pubkey,
-                        auctionView,
-                        accountByMint,
-                        value,
-                      );
-                      setLastBid(bid);
-                      // setShowBidModal(false);
-                      setShowBidPlaced(true);
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
-                    <Spin />
-                  ) : (
-                    'Bid now'
-                  )}
-                </Button>
+                  <Button
+                    className="metaplex-button-default"
+                    style={{
+                      background: 'transparent',
+                      color: 'white',
+                      width: 'unset',
+                      fontWeight: 600,
+                      letterSpacing: '-0.02em',
+                      border: 'none',
+                    }}
+                    disabled={loading}
+                    onClick={() => setShowPlaceBid(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="secondary-btn"
+                    disabled={invalidBid}
+                    onClick={async () => {
+                      setLoading(true);
+                      if (myPayingAccount && value) {
+                        const bid = await sendPlaceBid(
+                          connection,
+                          wallet,
+                          myPayingAccount.pubkey,
+                          auctionView,
+                          accountByMint,
+                          value,
+                        );
+                        setLastBid(bid);
+                        // setShowBidModal(false);
+                        setShowBidPlaced(true);
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
+                      <Spin />
+                    ) : (
+                      'Bid now'
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
