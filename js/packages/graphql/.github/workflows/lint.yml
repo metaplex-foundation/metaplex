@@ -24,3 +24,6 @@ jobs:
 
       - name: Tsc check
         run: yarn tscCheck
+
+      - name: Jest tests
+        run: yarn test

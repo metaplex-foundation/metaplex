@@ -1,56 +1,81 @@
-import after from "lodash/after";
 import logger from "../logger";
 
 export async function createPipelineExecutor<T>(
   data: IterableIterator<T>,
-  executor: (d: T, index: number) => void,
+  executor: (d: T, index: number) => void | Promise<void>,
   {
     delay = 0,
     jobsCount = 1,
     name,
     sequence = 10,
     completeGroup = 10000,
+    log = logger,
   }: {
-    delay?: number;
+    delay?: number | (() => Promise<void>);
     jobsCount?: number;
     name?: string;
     sequence?: number;
     completeGroup?: number;
+    log?: typeof logger;
   }
 ) {
   let index = 0;
   let complete = 0;
 
   function execute<T>(iter: IteratorResult<T, any>) {
-    index++;
     const numIndex = index;
-    // TODO: wait for async executor
-    executor(iter.value, numIndex);
+
+    const ret = executor(iter.value, numIndex);
+    if (ret) {
+      return ret.then(() => {
+        complete++;
+        if (name && complete % completeGroup === 0) {
+          log.info(`${name}: ${complete} tasks were processed`);
+        }
+      });
+    }
     complete++;
     if (name && complete % completeGroup === 0) {
-      logger.info(`${name}: ${complete} tasks were processed`);
+      log.info(`${name}: ${complete} tasks were processed`);
     }
   }
 
   async function next() {
-    const iter = data.next();
-    if (iter.done) {
-      return;
-    }
-    if (sequence <= 1) {
-      execute(iter);
-    } else {
-      const exec = after(sequence, () => execute(iter));
-      for (let i = 0; i < sequence; i++) {
-        exec();
+    let iter = data.next();
+    while (!iter.done) {
+      index++;
+      if (sequence <= 1) {
+        const ret = execute(iter);
+        if (ret) {
+          await ret.catch(() => {});
+        }
+      } else {
+        const group = new Array<Promise<void>>(sequence);
+        let awaiter = false;
+        for (let i = 0; i < sequence; i++) {
+          if (i) {
+            iter = data.next();
+            if (iter.done) {
+              break;
+            }
+          }
+          const ret = execute(iter);
+          if (ret) {
+            awaiter = true;
+            group[i] = ret;
+          }
+        }
+        if (awaiter) {
+          await Promise.all(group).catch(() => {});
+        }
       }
+      if (delay instanceof Function) {
+        await delay();
+      } else if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+      iter = data.next();
     }
-    if (delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    } else {
-      await Promise.resolve();
-    }
-    await next();
   }
   const result = new Array<Promise<void>>(jobsCount);
   for (let i = 0; i < jobsCount; i++) {

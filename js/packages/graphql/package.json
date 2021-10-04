@@ -8,6 +8,7 @@
     "url": "https://github.com/metaplex/graphql"
   },
   "scripts": {
+    "test": "jest src",
     "clean": "rimraf dist/*",
     "lint:format": "prettier --write 'src/**/*.{js,ts,json}'",
     "lint:eslint": "eslint 'src/**/*.ts'",
@@ -25,6 +26,7 @@
     "@types/bs58": "^4.0.1",
     "@types/dedent": "^0.7.0",
     "@types/graphql": "^14.5.0",
+    "@types/jest": "^27.0.2",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^16.4.13",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
@@ -33,9 +35,11 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.25.2",
     "husky": "^4.3.0",
+    "jest": "^27.2.4",
     "lint-staged": "^11.1.2",
     "prettier": "^2.4.1",
     "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.5",
     "ts-node": "^10.1.0",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.4.3"
