@@ -1,0 +1,7 @@
+name: Source Maps 4 Bugsnag
+
+jobs:
+  upload_source_map:
+    runs-on: ubuntu-latest
+    name: Upload Source Maps to Bugsnag
+    run: npx bugsnag-source-maps upload-node --api-key bd22af1f4e1213b5badb590a48128bf1 --directory=./.next/static/chunks/
