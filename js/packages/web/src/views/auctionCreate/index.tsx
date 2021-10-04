@@ -54,6 +54,7 @@ import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
+import {gatekeeperNetwork} from "../../contexts/gateway";
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -445,6 +446,7 @@ export const AuctionCreateView = () => {
         ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_SOL)
         : null,
       name: null,
+      gatekeeperNetwork: gatekeeperNetwork.toBase58()
     };
 
     const _auctionObj = await createAuctionManager(

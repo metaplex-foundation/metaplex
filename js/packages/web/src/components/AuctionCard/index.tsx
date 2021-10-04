@@ -331,6 +331,7 @@ export const AuctionCard = ({
                     await sendCancelBid(
                       connection,
                       wallet,
+                      gatewayToken!.publicKey,
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,

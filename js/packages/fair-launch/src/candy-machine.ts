@@ -14,6 +14,7 @@ export const CANDY_MACHINE_PROGRAM = new anchor.web3.PublicKey(
 );
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
+  process.env.REACT_APP_METADATA_PROGRAM_ID ||
   'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
 );
 

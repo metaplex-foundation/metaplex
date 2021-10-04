@@ -10,7 +10,7 @@ export const ARWEAVE_PAYMENT_WALLET = new PublicKey(
 export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
   'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
 );
-export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey(process.env.REACT_APP_METADATA_PROGRAM_ID ||
   'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
 );
 export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
