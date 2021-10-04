@@ -32,6 +32,8 @@ $ yarn build
 $ yarn start
 ```
 
+Navigate to `http://localhost:3000/` to explore the deployed application.
+
 ## Rust Programs
 
 The Rust programs will soon be added to this repo with JavaScript

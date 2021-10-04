@@ -314,6 +314,7 @@ const UploadStep = (props: {
     props.files?.[0],
   );
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
+  const [coverArtError, setCoverArtError] = useState<string>();
 
   const [customURL, setCustomURL] = useState<string>('');
   const [customURLErr, setCustomURLErr] = useState<string>('');
@@ -388,7 +389,20 @@ const UploadStep = (props: {
           fileList={coverFile ? [coverFile as any] : []}
           onChange={async info => {
             const file = info.file.originFileObj;
-            if (file) setCoverFile(file);
+
+            if (!file) {
+              return;
+            }
+
+            const sizeKB = file.size / 1024;
+
+            if (sizeKB < 25) {
+              setCoverArtError(`The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`);
+              return;
+            }
+
+            setCoverFile(file);
+            setCoverArtError(undefined);
           }}
         >
           <div className="ant-upload-drag-icon">
@@ -396,10 +410,16 @@ const UploadStep = (props: {
               Upload your cover image (PNG, JPG, GIF, SVG)
             </h3>
           </div>
-          <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
-            Drag and drop, or click to browse
-          </p>
+          {coverArtError ? (
+            <Text type="danger">{ coverArtError }</Text>
+          ) : (
+            <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
+              Drag and drop, or click to browse
+            </p>
+          )}
+
         </Dragger>
+
       </Row>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
         <Row
@@ -508,7 +528,9 @@ const UploadStep = (props: {
                   ? customURL
                   : mainFile && mainFile.name,
             });
-            props.setFiles([coverFile, mainFile].filter(f => f) as File[]);
+            const files = [coverFile, mainFile].filter(f => f) as File[];
+
+            props.setFiles(files);
             props.confirm();
           }}
           style={{ marginTop: 24 }}
