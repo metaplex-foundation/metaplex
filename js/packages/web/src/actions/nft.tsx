@@ -28,7 +28,9 @@ import crypto from 'crypto';
 import { getAssetCostToStore } from '../utils/assets';
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
+
 const RESERVED_TXN_MANIFEST = 'manifest.json';
+const RESERVED_METADATA = 'metadata.json';
 
 interface IArweaveResult {
   error?: string;
@@ -39,6 +41,33 @@ interface IArweaveResult {
     error?: string;
   }>;
 }
+
+const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
+  const resp = await fetch(
+    'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+    {
+      method: 'POST',
+      // @ts-ignore
+      body: data,
+    },
+  );
+
+  if (!resp.ok) {
+    return Promise.reject(
+      new Error(
+        'Unable to upload the artwork to Arweave. Please wait and then try again.',
+      ),
+    );
+  }
+
+  const result: IArweaveResult = await resp.json();
+
+  if (result.error) {
+    return Promise.reject(new Error(result.error));
+  }
+
+  return result;
+};
 
 export const mintNFT = async (
   connection: Connection,
@@ -86,7 +115,7 @@ export const mintNFT = async (
 
   const realFiles: File[] = [
     ...files,
-    new File([JSON.stringify(metadataContent)], 'metadata.json'),
+    new File([JSON.stringify(metadataContent)], RESERVED_METADATA),
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
@@ -175,6 +204,7 @@ export const mintNFT = async (
     wallet,
     instructions,
     signers,
+    'single',
   );
   progressCallback(3)
 
@@ -193,6 +223,8 @@ export const mintNFT = async (
 
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
+  data.append('transaction', txid);
+  data.append('env', env);
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
@@ -202,30 +234,11 @@ export const mintNFT = async (
     {},
   );
   data.append('tags', JSON.stringify(tags));
-  data.append('transaction', txid);
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
-  const uploadArweaveResponse =  await fetch(
-    // TODO: add CNAME
-    env.startsWith('mainnet-beta')
-      ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
-      : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
-    {
-      method: 'POST',
-      body: data,
-    },
-  )
 
-  if (!uploadArweaveResponse.ok) {
-    return Promise.reject(new Error("Unable to upload the artwork to Arweave. Please wait and then try again."))
-  }
-
-  const result: IArweaveResult = await uploadArweaveResponse.json();
-
-  if (result.error) {
-    return Promise.reject(new Error(result.error))
-  }
+  const result: IArweaveResult = await uploadToArweave(data);
   progressCallback(6)
 
   const metadataFile = result.messages?.find(
@@ -344,7 +357,8 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: await getAssetCostToStore(files),
+        lamports: 2300000 // 0.0023 SOL per file (paid to arweave)
+          // await getAssetCostToStore(files),
       }),
     );
 
