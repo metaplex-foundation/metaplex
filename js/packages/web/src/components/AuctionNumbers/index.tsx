@@ -54,36 +54,36 @@ export const AuctionNumbers = (props: {
   const ended = isEnded(state);
 
   return (
-    <div style={{ maxWidth: 350 }}>
-      {!ended && (
-        <>
-          {(isUpcoming || bids.length === 0) && (
-            <AmountLabel
-              displaySOL={props.displaySOL}
-              style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-              title="Starting bid"
-              amount={fromLamports(
-                participationOnly ? participationFixedPrice : priceFloor,
-                mintInfo,
-              )}
-            />
-          )}
-          {isStarted && bids.length > 0 && (
-            <AmountLabel
-              displaySOL={props.displaySOL}
-              style={{ marginBottom: props.showAsRow ? 0 : 10 }}
-              containerStyle={{
-                flexDirection: props.showAsRow ? ' row' : 'column',
-              }}
-              title="Highest bid"
-              amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
-            />
-          )}
-        </>
-      )}
-      {!props.hideCountdown ? (
-        <AuctionCountdown auctionView={auctionView} labels={true} />
-      ) : null}
+    <div style={{ minWidth: 350 }}>
+      <Row>
+        {(!ended || auctionView.isInstantSale) && (
+          <Col span={12}>
+            {(isUpcoming || bids.length === 0) && (
+              <AmountLabel
+                style={{ marginBottom: 10 }}
+                containerStyle={{ flexDirection: 'column' }}
+                title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
+                amount={fromLamports(
+                  participationOnly ? participationFixedPrice : priceFloor,
+                  mintInfo,
+                )}
+              />
+            )}
+            {isStarted && bids.length > 0 && (
+              <AmountLabel
+                style={{ marginBottom: 10 }}
+                containerStyle={{ flexDirection: 'column' }}
+                title="Highest bid"
+                amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
+              />
+            )}
+          </Col>
+        )}
+
+        {!ended && <Col span={ended ? 24 : 12}>
+          <Countdown state={state}/>
+        </Col>}
+      </Row>
     </div>
   );
 };

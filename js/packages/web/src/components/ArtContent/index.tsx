@@ -1,13 +1,12 @@
 import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
-import { MetadataCategory, MetadataFile } from '@oyster/common';
+import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
-import { pubkeyToString } from '../../utils/pubkeyToString';
 
 const MeshArtContent = ({
   uri,
@@ -113,7 +112,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -159,6 +158,45 @@ const VideoArtContent = ({
   return content;
 };
 
+const HTMLContent = ({
+  uri,
+  animationUrl,
+  className,
+  preview,
+  style,
+  files,
+  artView,
+}: {
+  uri?: string;
+  animationUrl?: string;
+  className?: string;
+  preview?: boolean;
+  style?: React.CSSProperties;
+  files?: (MetadataFile | string)[];
+  artView?: boolean;
+}) => {
+  if (!artView){
+    return <CachedImageContent
+    uri={uri}
+    className={className}
+    preview={preview}
+    style={style}
+  />
+  }
+  const htmlURL =
+    files && files.length > 0 && typeof files[0] === 'string'
+      ? files[0]
+      : animationUrl;
+  return (
+    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+      sandbox="allow-scripts"
+      frameBorder="0"
+      src={htmlURL}
+      className={className}
+      style={style}></iframe>);
+};
+
+
 export const ArtContent = ({
   category,
   className,
@@ -167,10 +205,10 @@ export const ArtContent = ({
   active,
   allowMeshRender,
   pubkey,
-
   uri,
   animationURL,
   files,
+  artView,
 }: {
   category?: MetadataCategory;
   className?: string;
@@ -185,6 +223,7 @@ export const ArtContent = ({
   uri?: string;
   animationURL?: string;
   files?: (MetadataFile | string)[];
+  artView?: boolean;
 }) => {
   const id = pubkeyToString(pubkey);
 
@@ -232,6 +271,16 @@ export const ArtContent = ({
         uri={uri}
         animationURL={animationURL}
         active={active}
+      />
+    ) : (category === 'html' || animationUrlExt === 'html') ? (
+      <HTMLContent
+        uri={uri}
+        animationUrl={animationURL}
+        className={className}
+        preview={preview}
+        style={style}
+        files={files}
+        artView={artView}
       />
     ) : (
       <CachedImageContent

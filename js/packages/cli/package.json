@@ -1,33 +1,71 @@
 {
   "name": "@metaplex/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./build/cli.js",
   "license": "MIT",
   "bin": {
-    "metaplex": "./build/cli.js"
+    "metaplex": "./build/candy-machine-cli.js"
   },
   "scripts": {
     "build": "tsc -p ./src",
     "watch": "tsc -w -p ./src",
     "package:linux": "pkg . --no-bytecode --targets node14-linux-x64 --output bin/linux/metaplex",
-    "package:macos": "pkg . --no-bytecode --targets node14-macos-x64 --output bin/macos/metaplex",
+    "package:linuxb": "pkg . --targets node14-linux-x64 --output bin/linux/metaplex",
+    "package:win": "pkg . --targets node14-win-x64 --output bin/win/metaplex",
+    "package:macos": "pkg . --targets node14-macos-x64 --output bin/macos/metaplex",
     "format": "prettier --loglevel warn --write \"**/*.{ts,js,json,yaml}\"",
     "format:check": "prettier --loglevel warn --check \"**/*.{ts,js,json,yaml}\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "lint:check": "eslint \"src/**/*.ts\""
+    "lint:check": "eslint \"src/**/*.ts\"",
+    "test": "jest"
   },
   "pkg": {
-    "scripts": "./build/**/*.js"
+    "scripts": "./build/**/*.{js|json}"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ],
+      "@babel/preset-typescript"
+    ]
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/node_modules/"
+    ]
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.13.2",
+    "@project-serum/anchor": "^0.14.0",
+    "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",
     "bn.js": "^5.2.0",
+    "borsh": "^0.4.0",
     "commander": "^8.1.0",
     "form-data": "^4.0.0",
-    "node-fetch": "^2.6.1"
+    "ipfs-http-client": "^52.0.3",
+    "jsonschema": "^1.4.0",
+    "loglevel": "^1.7.1",
+    "node-fetch": "^2.6.1",
+    "weighted": "^0.3.0",
+    "canvas": "^2.8.0",
+    "image-data-uri": "^2.0.1",
+    "imagemin": "^7.0.1",
+    "imagemin-pngquant": "^9.0.2",
+    "lodash": "^4.17.21",
+    "merge-images": "^2.0.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/jest": "^27.0.1",
+    "jest": "^27.2.0",
     "pkg": "^5.3.1",
     "typescript": "^4.3.5"
   }

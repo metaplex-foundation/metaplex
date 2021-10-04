@@ -19,10 +19,8 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
-  Identicon,
-  fromLamports,
-  placeBid,
   useWalletModal,
+  VaultState,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -32,7 +30,8 @@ import {
 } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-import { AuctionCountdown, AuctionNumbers } from './../AuctionNumbers';
+// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
+import { AuctionNumbers } from './../AuctionNumbers';
 import {
   sendRedeemBid,
   eligibleForParticipationPrizeGivenWinningIndex,
@@ -52,8 +51,8 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-} from '../../models/metaplex';
-import {AuctionManagerV1} from "../../models/metaplex/deprecatedStates";
+  WinningConfigType,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -193,6 +192,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
+  const { update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -262,85 +262,62 @@ export const AuctionCard = ({
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-  const isStarted = auctionView.state === AuctionViewState.Live;
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice ||
-    0;
-  const participationOnly =
-    (auctionView.auctionManager.instance.info as AuctionManagerV1).settings?.winningConfigs?.length === 0;
-
-  const minBid =
-    tickSize &&
-    (isUpcoming || bids.length === 0
-      ? fromLamports(
-          participationOnly ? participationFixedPrice : priceFloor,
-          mintInfo,
-        )
-      : isStarted && bids.length > 0
-      ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
-      : 9999999) +
-      tickSize.toNumber() / LAMPORTS_PER_SOL;
-
-  const invalidBid =
-    tickSizeInvalid ||
-    gapBidInvalid ||
-    !myPayingAccount ||
-    value === undefined ||
-    value * LAMPORTS_PER_SOL < priceFloor ||
-    (minBid && value < minBid) ||
-    loading ||
-    !accountByMint.get(QUOTE_MINT.toBase58());
-
-  useEffect(() => {
-    if (wallet.connected) {
-      if (wallet.publicKey && !showPlaceBid) setShowPlaceBid(true);
-    } else {
-      if (showPlaceBid) setShowPlaceBid(false);
-    }
-  }, [wallet.connected]);
+  //if instant sale auction bid and claimed hide buttons
+  if (
+    (auctionView.isInstantSale &&
+      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+      isAuctionManagerAuthorityNotWalletOwner &&
+      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
+    auctionView.vault.info.state === VaultState.Deactivated
+  ) {
+    return <></>;
+  }
 
   return (
     <div className="auction-container" style={style}>
-      <div className={'time-info'}>
-        <span>Auction ends in</span>
-        <div>
-          <AuctionCountdown auctionView={auctionView} labels={false} />
-        </div>
-      </div>
-      <div className={'bid-info'}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'stretch',
-            justifyContent: 'space-between',
-          }}
-        >
-          <AuctionNumbers
-            auctionView={auctionView}
-            showAsRow={true}
-            hideCountdown={true}
-            displaySOL={true}
-          />
-          {showPlaceBid ? (
-            <div
-              style={{
-                flexGrow: 1,
-                marginLeft: '30px',
-                borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-                paddingLeft: '30px',
-              }}
-            >
-              <AmountLabel
-                title="in your wallet"
-                displaySOL={true}
-                style={{ marginBottom: 0 }}
-                amount={formatAmount(balance.balance, 2)}
-                customPrefix={
-                  <Identicon
-                    address={wallet?.publicKey?.toBase58()}
-                    style={{ width: 36 }}
-                  />
+      <Col>
+        {!auctionView.isInstantSale && (
+          <>
+            <AuctionNumbers auctionView={auctionView} />
+            <br />
+          </>
+        )}
+        {showRedemptionIssue && (
+          <span>
+            There was an issue redeeming or refunding your bid. Please try
+            again.
+          </span>
+        )}
+        {!hideDefaultAction &&
+          wallet.connected &&
+          auctionView.auction.info.ended() && (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={
+                !myPayingAccount ||
+                (!auctionView.myBidderMetadata &&
+                  isAuctionManagerAuthorityNotWalletOwner) ||
+                loading ||
+                !!auctionView.items.find(i => i.find(it => !it.metadata))
+              }
+              onClick={async () => {
+                setLoading(true);
+                setShowRedemptionIssue(false);
+                if (
+                  wallet?.publicKey?.toBase58() ===
+                  auctionView.auctionManager.authority
+                ) {
+                  const totalCost =
+                    await calculateTotalCostOfRedeemingOtherPeoplesBids(
+                      connection,
+                      auctionView,
+                      bids,
+                      bidRedemptions,
+                    );
+                  setPrintingCost(totalCost);
+                  setShowWarningModal(true);
                 }
               />
             </div>
@@ -474,100 +451,44 @@ export const AuctionCard = ({
                 paddingTop: '15px',
               }}
             >
-              <div
-                style={{
-                  margin: '0 0 12px 0',
-                  letterSpacing: '0.02em',
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  fontSize: '14px',
-                  lineHeight: '14px',
-                  textTransform: 'uppercase',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                }}
-              >
-                your bid
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    background: '#242424',
-                    borderRadius: 14,
-                    color: 'rgba(0, 0, 0, 0.5)',
-                  }}
-                >
-                  <InputNumber
-                    autoFocus
-                    className="input sol-input-bid"
-                    value={value}
-                    onChange={setValue}
-                    precision={4}
-                    style={{ fontSize: 16, lineHeight: '16px' }}
-                    formatter={value =>
-                      value
-                        ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : ''
-                    }
-                    placeholder={`Bid ${minBid} SOL or more`}
-                  />
-                </div>
+              {loading ? <Spin /> : 'Start auction'}
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              className="action-btn"
+              disabled={loading}
+              onClick={() => setShowBidModal(true)}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? (
+                <Spin />
+              ) : auctionView.isInstantSale ? (
+                !isAuctionManagerAuthorityNotWalletOwner ? (
+                  'Claim item'
+                ) : auctionView.myBidderPot ? (
+                  'Claim Purchase'
+                ) : (
+                  'Buy Now'
+                )
+              ) : (
+                'Place bid'
+              )}
+            </Button>
+          ))}
 
-                <Button
-                  className="metaplex-button-default"
-                  style={{
-                    background: 'transparent',
-                    color: 'white',
-                    width: 'unset',
-                    fontWeight: 600,
-                    letterSpacing: '-0.02em',
-                    border: 'none',
-                  }}
-                  disabled={loading}
-                  onClick={() => setShowPlaceBid(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="secondary-btn"
-                  disabled={invalidBid}
-                  onClick={async () => {
-                    setLoading(true);
-                    if (myPayingAccount && value) {
-                      const bid = await sendPlaceBid(
-                        connection,
-                        wallet,
-                        myPayingAccount.pubkey,
-                        auctionView,
-                        accountByMint,
-                        value,
-                      );
-                      setLastBid(bid);
-                      // setShowBidModal(false);
-                      setShowBidPlaced(true);
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
-                    <Spin />
-                  ) : (
-                    'Bid now'
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        {action}
-        {showRedemptionIssue && (
-          <span style={{ color: 'red' }}>
-            There was an issue redeeming or refunding your bid. Please try
-            again.
-          </span>
+        {!hideDefaultAction && !wallet.connected && (
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            onClick={connect}
+            style={{ marginTop: 20 }}
+          >
+            Connect wallet to{' '}
+            {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+          </Button>
         )}
         {tickSizeInvalid && tickSize && (
           <span style={{ color: 'red' }}>
@@ -629,8 +550,9 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your bid has been redeemed please view your NFTs in{' '}
-          <Link to="/artworks">My Items</Link>.
+          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
+          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
+          .
         </p>
         <Button
           onClick={() => setShowRedeemedBidModal(false)}
@@ -674,9 +596,82 @@ export const AuctionCard = ({
                 }
               };
 
+              const instantSale = async () => {
+                setLoading(true);
+                const instantSalePrice =
+                  auctionView.auctionDataExtended?.info.instantSalePrice;
+                const winningConfigType =
+                  auctionView.items[0][0].winningConfigType;
+                const isAuctionItemMaster =
+                  winningConfigType === WinningConfigType.FullRightsTransfer ||
+                  winningConfigType === WinningConfigType.TokenOnlyTransfer;
+                const allowBidToPublic =
+                  myPayingAccount &&
+                  !auctionView.myBidderPot &&
+                  isAuctionManagerAuthorityNotWalletOwner;
+                const allowBidToAuctionOwner =
+                  myPayingAccount &&
+                  !isAuctionManagerAuthorityNotWalletOwner &&
+                  isAuctionItemMaster;
+
+                // Placing a "bid" of the full amount results in a purchase to redeem.
+                if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+                  try {
+                    const bid = await sendPlaceBid(
+                      connection,
+                      wallet,
+                      myPayingAccount.pubkey,
+                      auctionView,
+                      accountByMint,
+                      instantSalePrice,
+                    );
+                    setLastBid(bid);
+                  } catch (e) {
+                    console.error('sendPlaceBid', e);
+                    setShowBidModal(false);
+                    setLoading(false);
+                    return;
+                  }
+                }
+
+                const newAuctionState = await update(
+                  auctionView.auction.pubkey,
+                  wallet.publicKey,
+                );
+                auctionView.auction = newAuctionState[0];
+                auctionView.myBidderPot = newAuctionState[1];
+                auctionView.myBidderMetadata = newAuctionState[2];
+                // Claim the purchase
+                try {
+                  await sendRedeemBid(
+                    connection,
+                    wallet,
+                    myPayingAccount.pubkey,
+                    auctionView,
+                    accountByMint,
+                    prizeTrackingTickets,
+                    bidRedemptions,
+                    bids,
+                  ).then(async () => {
+                    await update();
+                    setShowBidModal(false);
+                    setShowRedeemedBidModal(true);
+                  });
+                } catch (e) {
+                  console.error(e);
+                  setShowRedemptionIssue(true);
+                }
+
+                setLoading(false);
+              };
+
               return (
                 <>
-                  <h2 className="modal-title">Place a bid</h2>
+                  <h2 className="modal-title">
+                    {auctionView.isInstantSale
+                      ? 'Confirm Purchase'
+                      : 'Place a bid'}
+                  </h2>
                   {!!gapTime && (
                     <div
                       className="info-content"
@@ -697,9 +692,7 @@ export const AuctionCard = ({
                       )}
                     </div>
                   )}
-                  <br />
                   <AuctionNumbers auctionView={auctionView} />
-
                   <br />
                   {tickSizeInvalid && tickSize && (
                     <span style={{ color: 'red' }}>
@@ -721,44 +714,55 @@ export const AuctionCard = ({
                       color: 'rgba(0, 0, 0, 0.5)',
                     }}
                   >
-                    <InputNumber
-                      autoFocus
-                      className="input"
-                      value={value}
-                      style={{
-                        width: '100%',
-                        background: '#393939',
-                        borderRadius: 16,
-                      }}
-                      onChange={setValue}
-                      precision={4}
-                      formatter={value =>
-                        value
-                          ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : ''
-                      }
-                      placeholder="Amount in SOL"
-                    />
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        margin: '5px 20px',
-                        fontWeight: 700,
-                      }}
-                    >
-                      ◎ {formatAmount(balance.balance, 2)}{' '}
-                      <span style={{ color: '#717171' }}>available</span>
-                    </div>
-                    <Link
-                      to="/addfunds"
-                      style={{
-                        float: 'right',
-                        margin: '5px 20px',
-                        color: '#5870EE',
-                      }}
-                    >
-                      Add funds
-                    </Link>
+                    {!auctionView.isInstantSale && (
+                      <InputNumber
+                        autoFocus
+                        className="input"
+                        value={value}
+                        style={{
+                          width: '100%',
+                          background: '#393939',
+                          borderRadius: 16,
+                        }}
+                        onChange={setValue}
+                        precision={4}
+                        formatter={value =>
+                          value
+                            ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            : ''
+                        }
+                        placeholder="Amount in SOL"
+                      />
+                    )}
+                    {!(auctionView.isInstantSale && bids.length > 0) && (
+                      <>
+                        <div
+                          style={{
+                            color: '#FFFFFF',
+                            display: 'inline-block',
+                            margin: '5px 20px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ◎ {formatAmount(balance.balance, 2)}{' '}
+                          <span
+                            style={{ color: '#717171', paddingLeft: '5px' }}
+                          >
+                            available
+                          </span>
+                        </div>
+                        <Link
+                          to="/addfunds"
+                          style={{
+                            float: 'right',
+                            margin: '5px 20px',
+                            color: '#5870EE',
+                          }}
+                        >
+                          Add funds
+                        </Link>
+                      </>
+                    )}
                   </div>
 
                   <br />
@@ -766,21 +770,31 @@ export const AuctionCard = ({
                     type="primary"
                     size="large"
                     className="action-btn"
-                    onClick={placeBid}
+                    onClick={() =>
+                      auctionView.isInstantSale ? instantSale() : placeBid()
+                    }
                     disabled={
                       tickSizeInvalid ||
                       gapBidInvalid ||
                       !myPayingAccount ||
-                      value === undefined ||
-                      value * LAMPORTS_PER_SOL < priceFloor ||
+                      (!auctionView.isInstantSale &&
+                        (value === undefined ||
+                          value * LAMPORTS_PER_SOL < priceFloor)) ||
                       loading ||
                       !accountByMint.get(QUOTE_MINT.toBase58())
                     }
                   >
                     {loading || !accountByMint.get(QUOTE_MINT.toBase58()) ? (
                       <Spin />
+                    ) : auctionView.isInstantSale ? (
+                      auctionView.myBidderPot ||
+                      !isAuctionManagerAuthorityNotWalletOwner ? (
+                        'Claim'
+                      ) : (
+                        'Purchase'
+                      )
                     ) : (
-                      'Place bid'
+                      'Place Bid'
                     )}
                   </Button>
                 </>

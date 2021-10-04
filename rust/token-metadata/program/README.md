@@ -25,7 +25,7 @@ The on-chain Token Metadata program is written in Rust and available on crates.i
 [spl-token-metadata](https://crates.io/crates/spl-token-metadata) and
 [docs.rs](https://docs.rs/spl-token-metadata).
 
-The crate provides four instructions, `create_metadata_account()`, `update_metadata_account()`, `create_master_edition()`, `mint_new_edition_from_master_edition_via_token(),` to easily create instructions for the program.
+The crate provides four instructions, `create_metadata_accounts()`, `update_metadata_account()`, `create_master_edition()`, `mint_new_edition_from_master_edition_via_token(),` to easily create instructions for the program.
 
 ## Operational overview
 
@@ -41,13 +41,13 @@ the involvement or signature of the owner, this allows for the sale and distribu
 It would be useful before a dive into architecture to illustrate the flow for a master edition
 as a story because it makes it easier to understand.
 
-1. User creates a new Metadata for their mint with `create_metadata_account()` which makes new `Metadata`
+1. User creates a new Metadata for their mint with `create_metadata_accounts()` which makes new `Metadata`
 2. User wishes their mint to be a master edition and ensures that there
    is only required supply of one in the mint.
 3. User requests the program to designate `create_master_edition()` on their metadata,
    which creates new `MasterEdition` which for this example we will say has an unlimited supply. As
    part of the arguments to the function the user is required to make a new mint called the Printing mint over
-   which they have minting authority that they tell the contract about and that the contract stores ont he
+   which they have minting authority that they tell the contract about and that the contract stores on the
    `MasterEdition`.
 4. User mints a token from the Printing mint and gives it to their friend.
 5. Their friend creates a new mint with supply 1 and calls `mint_new_edition_from_master_edition_via_token()`,

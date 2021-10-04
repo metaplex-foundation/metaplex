@@ -8,7 +8,8 @@ use solana_program::{
 
 pub use crate::processor::{
     cancel_bid::CancelBidArgs, claim_bid::ClaimBidArgs, create_auction::CreateAuctionArgs,
-    end_auction::EndAuctionArgs, place_bid::PlaceBidArgs, start_auction::StartAuctionArgs,
+    create_auction_v2::CreateAuctionArgsV2, end_auction::EndAuctionArgs, place_bid::PlaceBidArgs,
+    start_auction::StartAuctionArgs,
 };
 
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq)]
@@ -30,8 +31,9 @@ pub enum AuctionInstruction {
     /// Create a new auction account bound to a resource, initially in a pending state.
     ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
     ///   1. `[writable]` Uninitialized auction account.
-    ///   2. `[]` Rent sysvar
-    ///   3. `[]` System account
+    ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
+    ///   3. `[]` Rent sysvar
+    ///   4. `[]` System account
     CreateAuction(CreateAuctionArgs),
 
     /// Move SPL tokens from winning bid to the destination account.
@@ -44,9 +46,14 @@ pub enum AuctionInstruction {
     ///   6. `[]` Token mint of the auction
     ///   7. `[]` Clock sysvar
     ///   8. `[]` Token program
+    ///   9. `[]` Auction extended (pda relative to auction of ['auction', program id, vault key, 'extended'])
     ClaimBid(ClaimBidArgs),
 
     /// Ends an auction, regardless of end timing conditions
+    ///
+    ///   0. `[writable, signer]` Auction authority
+    ///   1. `[writable]` Auction
+    ///   6. `[]` Clock sysvar
     EndAuction(EndAuctionArgs),
 
     /// Start an inactive auction.
@@ -56,6 +63,9 @@ pub enum AuctionInstruction {
     StartAuction(StartAuctionArgs),
 
     /// Update the authority for an auction account.
+    ///   0. `[writable]` auction (pda of ['auction', program id, resource id])
+    ///   1. `[signer]` authority
+    ///   2. `[]` newAuthority
     SetAuthority,
 
     /// Place a bid on a running auction.
@@ -73,6 +83,15 @@ pub enum AuctionInstruction {
     ///   11. `[]` System program
     ///   12. `[]` SPL Token Program
     PlaceBid(PlaceBidArgs),
+
+    /// Create a new auction account bound to a resource, initially in a pending state.
+    /// The only one difference with above instruction it's additional parameters in CreateAuctionArgsV2
+    ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
+    ///   1. `[writable]` Uninitialized auction account.
+    ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
+    ///   3. `[]` Rent sysvar
+    ///   4. `[]` System account
+    CreateAuctionV2(CreateAuctionArgsV2),
 }
 
 /// Creates an CreateAuction instruction.
@@ -106,6 +125,42 @@ pub fn create_auction_instruction(
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
         ],
         data: AuctionInstruction::CreateAuction(args)
+            .try_to_vec()
+            .unwrap(),
+    }
+}
+
+/// Creates an CreateAuctionV2 instruction.
+pub fn create_auction_instruction_v2(
+    program_id: Pubkey,
+    creator_pubkey: Pubkey,
+    args: CreateAuctionArgsV2,
+) -> Instruction {
+    let seeds = &[
+        PREFIX.as_bytes(),
+        &program_id.as_ref(),
+        args.resource.as_ref(),
+    ];
+    let (auction_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
+
+    let seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        args.resource.as_ref(),
+        EXTENDED.as_bytes(),
+    ];
+    let (auction_extended_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
+
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(creator_pubkey, true),
+            AccountMeta::new(auction_pubkey, false),
+            AccountMeta::new(auction_extended_pubkey, false),
+            AccountMeta::new_readonly(sysvar::rent::id(), false),
+            AccountMeta::new_readonly(solana_program::system_program::id(), false),
+        ],
+        data: AuctionInstruction::CreateAuctionV2(args)
             .try_to_vec()
             .unwrap(),
     }
@@ -319,6 +374,7 @@ pub fn claim_bid_instruction(
     bidder_pubkey: Pubkey,
     bidder_pot_token_pubkey: Pubkey,
     token_mint_pubkey: Pubkey,
+    auction_extended_pubkey: Option<Pubkey>,
     args: ClaimBidArgs,
 ) -> Instruction {
     // Derive Auction Key
@@ -338,19 +394,25 @@ pub fn claim_bid_instruction(
     ];
     let (bidder_pot_pubkey, _) = Pubkey::find_program_address(seeds, &program_id);
 
+    let mut accounts = vec![
+        AccountMeta::new(destination_pubkey, false),
+        AccountMeta::new(bidder_pot_token_pubkey, false),
+        AccountMeta::new(bidder_pot_pubkey, false),
+        AccountMeta::new_readonly(authority_pubkey, true),
+        AccountMeta::new_readonly(auction_pubkey, false),
+        AccountMeta::new_readonly(bidder_pubkey, false),
+        AccountMeta::new_readonly(token_mint_pubkey, false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+        AccountMeta::new_readonly(spl_token::id(), false),        
+    ];
+
+    if let Some(auction_extended) = auction_extended_pubkey {
+        accounts.push(AccountMeta::new_readonly(auction_extended, false));
+    }
+
     Instruction {
         program_id,
-        accounts: vec![
-            AccountMeta::new(destination_pubkey, false),
-            AccountMeta::new(bidder_pot_token_pubkey, false),
-            AccountMeta::new(bidder_pot_pubkey, false),
-            AccountMeta::new_readonly(authority_pubkey, true),
-            AccountMeta::new_readonly(auction_pubkey, false),
-            AccountMeta::new_readonly(bidder_pubkey, false),
-            AccountMeta::new_readonly(token_mint_pubkey, false),
-            AccountMeta::new_readonly(sysvar::clock::id(), false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ],
+        accounts,
         data: AuctionInstruction::ClaimBid(args).try_to_vec().unwrap(),
     }
 }
