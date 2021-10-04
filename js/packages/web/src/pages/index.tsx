@@ -15,10 +15,12 @@ interface AppProps {
   storefront: Storefront;
 }
 
-Bugsnag.start({
-  apiKey: 'bd22af1f4e1213b5badb590a48128bf1',
-  plugins: [new BugsnagPluginReact()]
-})
+if (process.env.BUGSNAG_API_KEY) {
+  Bugsnag.start({
+    apiKey: process.env.BUGSNAG_API_KEY || '',
+    plugins: [new BugsnagPluginReact()]
+  })
+}
 
 //@ts-ignore
 const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary(React)
