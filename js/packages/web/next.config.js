@@ -1,5 +1,6 @@
 const withPlugins = require('next-compose-plugins');
 const withLess = require('next-with-less');
+const withImages = require('next-images')
 
 const assetPrefix = process.env.ASSET_PREFIX || '';
 
@@ -19,6 +20,7 @@ const plugins = [
       },
     },
   ],
+  withImages
 ];
 
 module.exports = withPlugins(plugins, {
