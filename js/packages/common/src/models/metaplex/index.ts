@@ -577,7 +577,7 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
     if (this.data[1] == 0) {
       this.winnerIndex = null;
     } else {
-      this.winnerIndex = new BN(this.data.slice(1, 9), 'le');
+      this.winnerIndex = new BN(this.data.slice(2, 8), 'le');
       offset += 8;
     }
 
