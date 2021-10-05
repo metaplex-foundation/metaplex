@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, List, Divider, Space, Switch, Avatar, Typography, Form, Input } from 'antd';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 function PackItem({ pack }) {
   const [ editMode, setEditMode ] = useState(false);
@@ -91,6 +91,7 @@ function PackItem({ pack }) {
               onFinishFailed={onSubmitEditPackFailed}
               autoComplete="off"
               layout="vertical"
+              style={{ paddingLeft: 30 }}
             >
               <Form.Item
                 label="New Name"
@@ -110,6 +111,7 @@ function PackItem({ pack }) {
               </Form.Item>
 
               <Form.Item style={{ paddingBottom: 10 }}>
+                <Space>
                 <Button
                   type="primary"
                   htmlType="submit"
@@ -118,6 +120,14 @@ function PackItem({ pack }) {
                 >
                   Submit Edit pack
                 </Button>
+                <Button
+                  onClick={() => setEditMode(false)}
+                  size="small"
+                  style={{ height: 40 }}
+                >
+                  Cancel
+                </Button>
+                </Space>
               </Form.Item>
             </Form>
             <Divider />
