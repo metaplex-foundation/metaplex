@@ -9,7 +9,7 @@ elif [ ${STAGE} == "preprod" ]; then
   DISTRIBUTION=???
   BUCKET=metaplex-preprod.civic.finance
 elif [ ${STAGE} == "dev" ]; then
-  DISTRIBUTION=???
+  DISTRIBUTION=E1WZKR5UHMJRXT
   BUCKET=metaplex-dev.civic.finance
 fi
 cp -r ../../build/web ./build

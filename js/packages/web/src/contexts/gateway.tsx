@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {GatewayProvider as CivicGatewayProvider} from "@civic/solana-gateway-react";
 import {useConnectionConfig} from "@oyster/common";
 import {PublicKey, Transaction} from "@solana/web3.js";
-import {useWallet} from "@solana/wallet-adapter-react";
+import {useWallet} from "@identity.com/wallet-adapter-react";
 
 // TEMP get from auction
 export const gatekeeperNetwork = new PublicKey('gatbGF9DvLAw3kWyn1EmH5Nh1Sqp8sTukF7yaQpSc71');

@@ -118,16 +118,16 @@ export const WalletModal: FC = () => {
               fontWeight: 'unset',
             }}
             onClick={() => {
-              select(WalletName.Cryptid);
+              select(WalletName.Phantom);
               close();
             }}
           >
             <span>
               <img
-                src="https://cryptid.identity.com/favicon.ico"
+                src="https://www.phantom.app/img/logo.png"
                 style={{ width: '1.2rem' }}
               />
-              &nbsp;Sign in with Cryptid
+              &nbsp;Sign in with Phantom
             </span>
             <span>&gt;</span>
           </Button>
