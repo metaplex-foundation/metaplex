@@ -12,14 +12,13 @@ import {
   MetadataKey,
 } from '../../actions';
 import { ParsedAccount } from '../accounts/types';
-import { METADATA_PROGRAM_ID } from '../../utils';
+import { METADATA_PROGRAM_ID, pubkeyToString } from '../../utils';
 
-export const processMetaData: ProcessAccountsFunc = (
+export const processMetaData: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
 ) => {
   if (!isMetadataAccount(account)) return;
-
   try {
     if (isMetadataV1Account(account)) {
       const metadata = decodeMetadata(account.data);
@@ -33,7 +32,7 @@ export const processMetaData: ProcessAccountsFunc = (
           account,
           info: metadata,
         };
-        setter('metadataByMint', metadata.mint, parsedAccount);
+        await setter('metadataByMint', metadata.mint, parsedAccount);
       }
     }
 
@@ -84,9 +83,8 @@ export const processMetaData: ProcessAccountsFunc = (
   }
 };
 
-const isMetadataAccount = (account: AccountInfo<Buffer>) => {
-  return (account.owner as unknown as any) === METADATA_PROGRAM_ID;
-};
+const isMetadataAccount = (account: AccountInfo<Buffer>) =>
+  account && pubkeyToString(account.owner) === METADATA_PROGRAM_ID;
 
 const isMetadataV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetadataKey.MetadataV1;

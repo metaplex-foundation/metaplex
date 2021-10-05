@@ -14,7 +14,12 @@ import {
   SCHEMA,
   getSafetyDepositConfig,
 } from '.';
-import { getEdition, getEditionMarkPda, getMetadata } from '../../actions';
+import {
+  getEdition,
+  getEditionMarkPda,
+  getMetadata,
+  getAuctionExtended,
+} from '../../actions';
 import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function redeemPrintingV2Bid(
@@ -63,6 +68,10 @@ export async function redeemPrintingV2Bid(
 
   const value = new RedeemPrintingV2BidArgs({ editionOffset, winIndex });
   const data = Buffer.from(serialize(SCHEMA, value));
+  const extended = await getAuctionExtended({
+    auctionProgramId: PROGRAM_IDS.auction,
+    resource: vault,
+  });
   const keys = [
     {
       pubkey: toPublicKey(auctionManagerKey),
@@ -190,6 +199,11 @@ export async function redeemPrintingV2Bid(
     },
     {
       pubkey: toPublicKey(metadata),
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(extended),
       isSigner: false,
       isWritable: false,
     },
