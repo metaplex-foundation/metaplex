@@ -9,7 +9,6 @@ import {
   useArt,
   useAuction,
   useBidsForAuction,
-  useCreators,
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
@@ -82,7 +81,6 @@ export const AuctionView = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
-  const creators = useCreators(auction);
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
