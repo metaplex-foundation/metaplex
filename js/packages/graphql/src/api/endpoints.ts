@@ -13,4 +13,4 @@ export const ENDPOINTS = [
     name: "devnet",
     endpoint: clusterApiUrl("devnet"),
   },
-];
+] as const;

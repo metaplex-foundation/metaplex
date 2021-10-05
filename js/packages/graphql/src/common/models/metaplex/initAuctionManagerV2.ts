@@ -6,14 +6,12 @@ import {
 import BN from "bn.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getAuctionWinnerTokenTypeTracker,
-  InitAuctionManagerV2Args,
-  SCHEMA,
-  TupleNumericType,
-} from ".";
+import { InitAuctionManagerV2Args } from "./InitAuctionManagerV2Args";
+import { getAuctionWinnerTokenTypeTracker } from "./getAuctionWinnerTokenTypeTracker";
+import { getAuctionKeys } from "./getAuctionKeys";
+import { TupleNumericType } from "./TupleNumericType";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { SCHEMA } from "./schema";
 
 export async function initAuctionManagerV2(
   vault: StringPublicKey,

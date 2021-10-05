@@ -1,7 +1,9 @@
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { getAuctionKeys, ClaimBidArgs, SCHEMA } from ".";
+import { SCHEMA } from "./schema";
+import { ClaimBidArgs } from "./ClaimBidArgs";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { getBidderPotKey } from "../../actions";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
 

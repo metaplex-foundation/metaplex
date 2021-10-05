@@ -7,7 +7,7 @@ import { serialize } from "borsh";
 
 import { SCHEMA } from ".";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
-import { DeprecatedValidateParticipationArgs } from "./deprecatedStates";
+import { DeprecatedValidateParticipationArgs } from "./DeprecatedValidateParticipationArgs";
 
 export async function deprecatedValidateParticipation(
   auctionManager: StringPublicKey,

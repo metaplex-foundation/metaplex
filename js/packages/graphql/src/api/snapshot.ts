@@ -4,12 +4,14 @@ import path from "path";
 import { tmpdir } from "os";
 import mkdirp from "mkdirp";
 import { Connection } from "@solana/web3.js";
-import { MemoryApi } from "./memory";
 import logger from "../logger";
 const writeFileAsync = util.promisify(fs.writeFile);
 const readFileAsync = util.promisify(fs.readFile);
 
-export async function snapshot(entry: MemoryApi, dir = tmpdir()) {
+export async function snapshot(
+  entry: { connection: Connection; network: string },
+  dir = tmpdir()
+) {
   setupFetch(
     entry.connection,
     async (name: string, args: any[]) => {

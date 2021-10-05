@@ -12,6 +12,7 @@ import {
 } from "../../actions";
 import { ParsedAccount } from "../accounts/types";
 import { METADATA_PROGRAM_ID, AccountInfoOwnerString } from "../../utils";
+import logger from "../../../logger";
 
 export const processMetaData: ProcessAccountsFunc = (
   { account, pubkey },
@@ -73,7 +74,8 @@ export const processMetaData: ProcessAccountsFunc = (
         setter("masterEditions", pubkey, parsedAccount);
       }
     }
-  } catch {
+  } catch (err) {
+    logger.error(err);
     // ignore errors
     // add type as first byte for easier deserialization
   }

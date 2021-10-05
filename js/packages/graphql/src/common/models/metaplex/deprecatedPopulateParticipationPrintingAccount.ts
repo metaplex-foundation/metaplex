@@ -8,7 +8,7 @@ import {
   StringPublicKey,
   toPublicKey,
 } from "../../utils";
-import { DeprecatedPopulateParticipationPrintingAccountArgs } from "./deprecatedStates";
+import { DeprecatedPopulateParticipationPrintingAccountArgs } from "./DeprecatedPopulateParticipationPrintingAccountArgs";
 
 export async function deprecatedPopulateParticipationPrintingAccount(
   vault: StringPublicKey,

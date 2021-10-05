@@ -14,8 +14,10 @@
     "lint:eslint": "eslint 'src/**/*.ts'",
     "lint": "yarn lint:format && yarn lint:eslint --fix",
     "build": "yarn clean && tsc",
-    "start": "node dist/index.js",
-    "server": "ts-node-dev --transpile-only src/index.ts",
+    "start": "yarn start:memory",
+    "start:memory": "node --max-old-space-size=8192 dist/bin/inmemory-server.js",
+    "start:ingester": "node --max-old-space-size=8192 dist/bin/ingester.js",
+    "start:server": "node dist/bin/server.js",
     "dev": "yarn server",
     "tsc": "tsc",
     "tscCheck": "tsc --noEmit"
@@ -60,6 +62,7 @@
     "@discoveryjs/json-ext": "^0.5.5",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.21.0",
+    "@types/mongodb": "^4.0.7",
     "apollo-datasource": "^3.1.0",
     "apollo-server-core": "^3.3.0",
     "apollo-server-express": "^3.3.0",
@@ -74,9 +77,11 @@
     "lodash": "^4.17.21",
     "mkdirp": "^1.0.4",
     "moment": "^2.29.1",
+    "mongodb": "^4.1.2",
     "nexus": "^1.1.0",
     "queue": "^6.0.2",
     "subscriptions-transport-ws": "^0.9.19",
+    "typescript-json-serializer": "^3.4.4",
     "winston": "^3.3.3"
   },
   "engines": {

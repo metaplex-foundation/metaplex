@@ -3,23 +3,15 @@ import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
 import express from "express";
 import { createServer } from "http";
 import { SubscriptionServer } from "subscriptions-transport-ws";
+import { Context } from "../types/context";
+import logger from "../logger";
+import { MetaplexApiDataSource } from "../api";
 import { execute, subscribe } from "graphql";
 import { schema, context } from "./graphqlConfig";
-import { createInMemoryApi, warmUpInMemoryApi } from "./memoryApi";
-import { Context } from "./types/context";
-import { config } from "dotenv";
-import logger from "./logger";
-import { extendBorsh } from "./common";
 
-async function startApolloServer() {
+export async function startApolloServer(api: MetaplexApiDataSource<Context>) {
   const app = express();
   const httpServer = createServer(app);
-
-  const api = createInMemoryApi({
-    networkName: process.env.NETWORK,
-    snapshotPath: process.env.SNAPSHOT,
-  });
-
   const server = new ApolloServer({
     schema,
     context,
@@ -68,19 +60,4 @@ async function startApolloServer() {
 
   logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
   logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
-  if (!process.env.WARM_UP_DISABLE) {
-    warmUpInMemoryApi(api);
-  }
 }
-
-function main() {
-  extendBorsh(); // it's need for proper work of decoding
-  config();
-  logger.info(
-    `Env: NODE_ENV: ${process.env.NODE_ENV}, NETWORK: ${process.env.NETWORK}`
-  );
-  startApolloServer();
-}
-
-// start program
-main();

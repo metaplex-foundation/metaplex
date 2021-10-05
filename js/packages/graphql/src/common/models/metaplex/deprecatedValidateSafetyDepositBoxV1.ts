@@ -5,13 +5,13 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { getAuctionKeys, getOriginalAuthority, SCHEMA } from ".";
+import { getOriginalAuthority } from "./getOriginalAuthority";
+import { SCHEMA } from "./schema";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
 
-import {
-  getSafetyDepositBoxValidationTicket,
-  DeprecatedValidateSafetyDepositBoxV1Args,
-} from "./deprecatedStates";
+import { getSafetyDepositBoxValidationTicket } from "./getSafetyDepositBoxValidationTicket";
+import { DeprecatedValidateSafetyDepositBoxV1Args } from "./DeprecatedValidateSafetyDepositBoxV1Args";
 
 export async function deprecatedValidateSafetyDepositBoxV1(
   vault: StringPublicKey,

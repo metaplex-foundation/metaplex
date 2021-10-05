@@ -5,12 +5,11 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { getAuctionKeys, SCHEMA } from ".";
+import { SCHEMA } from "./schema";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
-import {
-  AuctionManagerSettingsV1,
-  DeprecatedInitAuctionManagerV1Args,
-} from "./deprecatedStates";
+import { DeprecatedInitAuctionManagerV1Args } from "./DeprecatedInitAuctionManagerV1Args";
+import { AuctionManagerSettingsV1 } from "./entities/AuctionManagerSettingsV1";
 
 export async function deprecatedInitAuctionManagerV1(
   vault: StringPublicKey,

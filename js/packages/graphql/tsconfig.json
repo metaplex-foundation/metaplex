@@ -4,7 +4,7 @@
 
     /* Basic Options */
     "target": "ES2019",
-    "module": "commonjs",
+    "module": "CommonJS",
     "sourceMap": true,
     // "outFile": "./",
     "outDir": "./dist",
@@ -15,10 +15,12 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "useUnknownInCatchVariables": true,
-
+    "declaration": true,
     /* Module Resolution Options */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },

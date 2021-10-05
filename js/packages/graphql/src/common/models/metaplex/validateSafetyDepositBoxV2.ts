@@ -5,15 +5,13 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getAuctionWinnerTokenTypeTracker,
-  getOriginalAuthority,
-  getSafetyDepositConfig,
-  SafetyDepositConfig,
-  SCHEMA,
-  ValidateSafetyDepositBoxV2Args,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getOriginalAuthority } from "./getOriginalAuthority";
+import { SCHEMA } from "./schema";
+import { ValidateSafetyDepositBoxV2Args } from "./ValidateSafetyDepositBoxV2Args";
+import { getAuctionWinnerTokenTypeTracker } from "./getAuctionWinnerTokenTypeTracker";
+import { getAuctionKeys } from "./getAuctionKeys";
+import { SafetyDepositConfig } from "./entities/SafetyDepositConfig";
 import { programIds, toPublicKey, StringPublicKey } from "../../utils";
 
 export async function validateSafetyDepositBoxV2(

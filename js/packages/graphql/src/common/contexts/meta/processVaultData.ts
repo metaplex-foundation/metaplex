@@ -1,3 +1,4 @@
+import logger from "../../../logger";
 import {
   decodeSafetyDeposit,
   decodeVault,
@@ -37,7 +38,8 @@ export const processVaultData: ProcessAccountsFunc = (
 
       setter("vaults", pubkey, parsedAccount);
     }
-  } catch {
+  } catch (err) {
+    logger.error(err);
     // ignore errors
     // add type as first byte for easier deserialization
   }

@@ -1,1 +1,1 @@
-web: node --max-old-space-size=8192 dist/index.js
+web: node --max-old-space-size=8192 dist/bin/inmemory-server.js

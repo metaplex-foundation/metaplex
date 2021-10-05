@@ -36,7 +36,7 @@ export class MemoryApi implements IMetaplexApi {
       promise: Promise<void>;
       finish: () => void;
     }
-  ): MemoryApi {
+  ) {
     let ptr: MemoryApi | undefined;
     new StateProvider(
       name,
@@ -58,6 +58,10 @@ export class MemoryApi implements IMetaplexApi {
 
   public get connection() {
     return this.provider.connection;
+  }
+
+  public flush() {
+    return Promise.resolve();
   }
 
   public subscribeIterator(
@@ -100,11 +104,13 @@ export class MemoryApi implements IMetaplexApi {
   }
 
   persistBatch(
-    batch: Array<[TPropNames, string, ParsedAccount<any>]>
+    clazz: any,
+    values: ParsedAccount<any>[],
+    prop: TPropNames
   ): Promise<void> {
-    batch.forEach(([prop, key, value]) => {
-      this.persistToState(this.internalState, prop, key, value);
-    });
+    values.forEach((value) =>
+      this.persistToState(this.internalState, prop, value.pubkey, value)
+    );
     return Promise.resolve();
   }
 
