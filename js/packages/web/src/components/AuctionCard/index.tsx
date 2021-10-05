@@ -635,7 +635,6 @@ export const AuctionCard = ({
               </div>
             </div>
           )}
-
         {!hideDefaultAction &&
           wallet.connected &&
           !auctionView.auction.info.ended() &&
@@ -658,7 +657,9 @@ export const AuctionCard = ({
             >
               {loading ? <Spin /> : 'Start auction'}
             </Button>
-          ) : (
+          ) : (loading ? (
+              <Spin />
+            ) : auctionView.isInstantSale && (
             <Button
               type="primary"
               size="large"
@@ -667,22 +668,15 @@ export const AuctionCard = ({
               onClick={instantSale}
               style={{ marginTop: 20, width: '100%' }}
             >
-              {loading ? (
-                <Spin />
-              ) : auctionView.isInstantSale ? (
-                !isAuctionManagerAuthorityNotWalletOwner ? (
+              {!isAuctionManagerAuthorityNotWalletOwner ? (
                   'CLAIM ITEM'
                 ) : auctionView.myBidderPot ? (
                   'Claim Purchase'
                 ) : (
                   'Buy Now'
-                )
-              ) : (
-                'Place bid'
-              )}
+                )}
             </Button>
-          ))}
-
+          )))}
         {!hideDefaultAction && !wallet.connected && (
           <Button
             type="primary"
