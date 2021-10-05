@@ -167,7 +167,7 @@ export const mintNFT = async (
   txnData = Buffer.from(
     serialize(
       METADATA_SCHEMA,
-      new CreateMasterEditionArgs({ maxSupply: new BN(1) }),
+      new CreateMasterEditionArgs({ maxSupply: new BN(0) }),
     ),
   );
 
