@@ -12,7 +12,13 @@ import {
   StringPublicKey,
   AuctionDataExtended,
   createPipelineExecutor,
+  useConnection,
+  loadAuction,
+  getEmptyMetaState,
+  MetaState,
 } from '@oyster/common';
+import { merge, take, drop } from 'lodash';
+import { Connection } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
 import { useEffect, useMemo, useState } from 'react';
@@ -134,6 +140,179 @@ export function useCachedRedemptionKeysByWallet() {
 
   return cachedRedemptionKeys;
 }
+
+const fetchAuctionsState = async (connection: Connection, auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]): Promise<MetaState> => {
+  const tempCache = getEmptyMetaState();
+
+  const responses = await Promise.all(
+    auctionManagers.map(auctionManager => loadAuction(connection, auctionManager))
+  )
+
+  const auctionsState = responses.reduce((memo, state) =>
+    merge(memo, state),
+    tempCache
+  );
+
+  return auctionsState
+}
+
+export const useInfiniteScrollAuctions = () => {
+  const connection = useConnection();
+  const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
+  const { publicKey } = useWallet();
+  const [initLoading, setInitLoading] = useState(true)
+  const [loading, setLoading] = useState(false);
+  const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
+  const [auctionManagersToQuery, setAuctionManagersToQuery] = useState<
+    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
+  >([]);
+
+  const {
+    isLoading,
+    auctionManagersByAuction,
+    auctions,
+    patchState,
+    ...metaState
+  } = useMeta();
+
+  const gatherAuctionViews = (
+    auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+    {
+      auctionDataExtended,
+      safetyDepositBoxesByVaultAndIndex,
+      metadataByMint,
+      bidderMetadataByAuctionAndBidder,
+      bidderPotsByAuctionAndBidder,
+      bidRedemptionV2sByAuctionManagerAndWinningIndex,
+      masterEditions,
+      vaults,
+      safetyDepositConfigsByAuctionManagerAndIndex,
+      masterEditionsByPrintingMint,
+      masterEditionsByOneTimeAuthMint,
+      metadataByMasterEdition,
+    }: MetaState) => {
+    return auctionManagers.reduce((memo: AuctionView[], auctionManager) => {
+      const auction = auctions[auctionManager.info.auction]
+      const nextAuctionView = processAccountsIntoAuctionView(
+        publicKey?.toBase58(),
+        auction,
+        auctionDataExtended,
+        auctionManagersByAuction,
+        safetyDepositBoxesByVaultAndIndex,
+        metadataByMint,
+        bidderMetadataByAuctionAndBidder,
+        bidderPotsByAuctionAndBidder,
+        bidRedemptionV2sByAuctionManagerAndWinningIndex,
+        masterEditions,
+        vaults,
+        safetyDepositConfigsByAuctionManagerAndIndex,
+        masterEditionsByPrintingMint,
+        masterEditionsByOneTimeAuthMint,
+        metadataByMasterEdition,
+        cachedRedemptionKeys,
+        undefined,
+      );
+
+      if (nextAuctionView) {
+        return [...memo, nextAuctionView];
+      }
+
+      return memo;
+    }, []);
+  }
+
+  useEffect(() => {
+    if (isLoading) {
+      return
+    }
+
+    (async () => {
+      const initializedAuctions = Object.values(auctions).filter(a => a.info.state > 0)
+      console.log(initializedAuctions, 'initialized auctions')
+      const startedAuctions = initializedAuctions
+        .filter(a => a.info.state === 1)
+        .sort((a, b) => {
+          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+            return (
+              a.info.endAuctionAt.toNumber() - b.info.endAuctionAt?.toNumber()
+            );
+          } else {
+            return -1;
+          }
+        });
+
+      const endedAuctions = initializedAuctions
+        .filter(a => a.info.state === 2)
+        .sort((a, b) => {
+          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+            return (
+              b.info.endAuctionAt.toNumber() - a.info.endAuctionAt?.toNumber()
+            );
+          } else {
+            return -1;
+          }
+        });
+      const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
+
+      const auctionManagers = auctionDisplayOrder.map(
+        auction => auctionManagersByAuction[auction.pubkey],
+      );
+
+      const auctionsToLoad = take(auctionManagers, 8);
+
+      const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
+
+      const views = gatherAuctionViews(
+        auctionsToLoad,
+        merge(
+          {},
+          metaState,
+          auctionsState,
+        )
+      )
+
+      setAuctionManagersToQuery(drop(auctionManagers, 8))
+      setAuctionViews(views)
+      setInitLoading(false)
+    })()
+  }, [isLoading]);
+
+
+  const loadMoreAuctions = () => {
+    const needLoading = [...auctionManagersToQuery];
+    const loaded = [...auctionViews];
+
+    setLoading(true);
+    const auctionsToLoad = take(needLoading, 8);
+
+    (async () => {
+      const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
+      const nextState = merge(
+        {},
+        metaState,
+        auctionsState,
+      )
+      
+      const views = gatherAuctionViews(
+        auctionsToLoad,
+        nextState,
+      )
+
+      patchState(nextState)
+      setAuctionManagersToQuery(drop(needLoading, 8));
+      setAuctionViews([...loaded, ...views]);
+      setLoading(false);
+    })()
+  };
+
+  return {
+    loading,
+    initLoading,
+    auctions: auctionViews,
+    loadMore: loadMoreAuctions,
+    hasNextPage: auctionManagersToQuery.length > 0,
+  };
+};
 
 export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
@@ -318,14 +497,14 @@ export function processAccountsIntoAuctionView(
     if (
       desiredState === AuctionViewState.Defective &&
       auctionManagerInstance.info.state.status !==
-        AuctionManagerStatus.Initialized
+      AuctionManagerStatus.Initialized
     )
       return undefined;
     // Generally the only way an initialized auction manager can get through is if you are asking for defective ones.
     else if (
       desiredState !== AuctionViewState.Defective &&
       auctionManagerInstance.info.state.status ===
-        AuctionManagerStatus.Initialized
+      AuctionManagerStatus.Initialized
     )
       return undefined;
 
@@ -354,7 +533,7 @@ export function processAccountsIntoAuctionView(
     const auctionDataExtendedKey =
       auctionManagerInstance.info.key == MetaplexKey.AuctionManagerV2
         ? (auctionManagerInstance as ParsedAccount<AuctionManagerV2>).info
-            .auctionDataExtended
+          .auctionDataExtended
         : null;
     const auctionDataExt = auctionDataExtendedKey
       ? auctionDataExtended[auctionDataExtendedKey]
@@ -365,8 +544,8 @@ export function processAccountsIntoAuctionView(
     const bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
       cachedRedemptionKeysByWallet[auction.pubkey]?.info
         ? (cachedRedemptionKeysByWallet[
-            auction.pubkey
-          ] as ParsedAccount<BidRedemptionTicket>)
+          auction.pubkey
+        ] as ParsedAccount<BidRedemptionTicket>)
         : undefined;
 
     const bidderMetadata =
@@ -444,8 +623,8 @@ export function processAccountsIntoAuctionView(
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
           metadataByMasterEdition[
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-              ?.pubkey
+          masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
+            ?.pubkey
           ] || metadataByMint[participationBox.info.tokenMint];
         if (participationMetadata) {
           participationMaster =
@@ -472,12 +651,12 @@ export function processAccountsIntoAuctionView(
         participationItem:
           participationMetadata && participationBox
             ? {
-                metadata: participationMetadata,
-                safetyDeposit: participationBox,
-                masterEdition: participationMaster,
-                amount: new BN(1),
-                winningConfigType: WinningConfigType.Participation,
-              }
+              metadata: participationMetadata,
+              safetyDeposit: participationBox,
+              masterEdition: participationMaster,
+              amount: new BN(1),
+              winningConfigType: WinningConfigType.Participation,
+            }
             : undefined,
         myBidderMetadata: bidderMetadata,
         myBidderPot: bidderPot,
@@ -492,11 +671,11 @@ export function processAccountsIntoAuctionView(
       view.totallyComplete = !!(
         view.thumbnail &&
         boxesExpected ===
-          (view.items || []).length +
-            (auctionManager.participationConfig === null ||
-            auctionManager.participationConfig === undefined
-              ? 0
-              : 1) &&
+        (view.items || []).length +
+        (auctionManager.participationConfig === null ||
+          auctionManager.participationConfig === undefined
+          ? 0
+          : 1) &&
         (auctionManager.participationConfig === null ||
           auctionManager.participationConfig === undefined ||
           (auctionManager.participationConfig !== null &&

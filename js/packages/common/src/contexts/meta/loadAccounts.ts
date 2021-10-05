@@ -523,6 +523,83 @@ const pullEditions = async (
   );
 };
 
+export const loadAuction = async (
+  connection: Connection,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
+  complete: boolean = false,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const rpcQueries = [
+    // safety deposit box config
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 1,
+            bytes: auctionManager.pubkey,
+          },
+        },
+      ],
+    }).then(forEachAccount(processMetaplexAccounts)),
+    // safety deposit
+    getProgramAccounts(connection, VAULT_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 1,
+            bytes: auctionManager.info.vault,
+          },
+        },
+      ],
+    }).then(forEachAccount(processVaultData)),
+  ]
+
+  if (complete) {
+    rpcQueries.push(
+      // bidder redemptions
+      getProgramAccounts(connection, METAPLEX_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 9,
+              bytes: auctionManager.pubkey,
+            },
+          },
+        ],
+      }).then(forEachAccount(processMetaplexAccounts)),
+      // bidder metadata
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 32,
+              bytes: auctionManager.info.auction,
+            },
+          },
+        ],
+      }).then(forEachAccount(processAuctions)),
+      // bidder pot
+      getProgramAccounts(connection, AUCTION_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 64,
+              bytes: auctionManager.info.auction,
+            },
+          },
+        ],
+      }).then(forEachAccount(processAuctions)),
+    )
+  }
+
+  await Promise.all(rpcQueries);
+
+  return state;
+};
+
 const pullMetadataByCreators = (
   connection: Connection,
   state: MetaState,
