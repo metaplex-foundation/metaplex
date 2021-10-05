@@ -1183,14 +1183,14 @@ const WaitingStep = (props: {
       <Card>
         <Steps direction="vertical" current={props.step}>
           <Step className={'white-description'} title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
-          <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  />
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
-          <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
-          <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
-          <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
-          <Step title="Updating Metadata" icon={setIconForStep(props.step, 7)} />
-          <Step title="Signing Token Transaction" description="Approve the final transaction from your wallet"  icon={setIconForStep(props.step, 8)}  />
+          <Step className={'white-description'} title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
+          <Step className={'white-description'} title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  />
+          <Step className={'white-description'} title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
+          <Step className={'white-description'} title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
+          <Step className={'white-description'} title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
+          <Step className={'white-description'} title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
+          <Step className={'white-description'} title="Updating Metadata" icon={setIconForStep(props.step, 7)} />
+          <Step className={'white-description'} title="Signing Token Transaction" description="Approve the final transaction from your wallet"  icon={setIconForStep(props.step, 8)}  />
         </Steps>
       </Card>
     </div>
