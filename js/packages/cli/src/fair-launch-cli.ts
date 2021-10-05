@@ -1190,10 +1190,11 @@ program
     '--keypair not provided',
   )
   .option('-f, --fair-launch <string>', 'fair launch id')
+  .option('-r, --rpc-url <string>', 'custom rpc url since this is a heavy command')
   .action(async (_, cmd) => {
-    const { env, keypair, fairLaunch } = cmd.opts();
+    const { env, keypair, fairLaunch, rpcUrl } = cmd.opts();
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env, rpcUrl);
 
     const fairLaunchKey = new anchor.web3.PublicKey(fairLaunch);
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
