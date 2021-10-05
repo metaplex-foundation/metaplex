@@ -3537,23 +3537,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "spl-auction-test-client"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "borsh",
- "clap",
- "rand 0.8.4",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "spl-auction",
- "spl-token",
-]
-
-[[package]]
 name = "spl-memo"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
