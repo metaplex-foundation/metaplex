@@ -367,6 +367,7 @@ programCommand('show')
         candyMachine,
       );
       log.info('...Candy Machine...');
+      log.info('Key:', candyMachine.toBase58());
       //@ts-ignore
       log.info('authority: ', machine.authority.toBase58());
       //@ts-ignore
@@ -581,7 +582,7 @@ programCommand('update_candy_machine')
       );
     if (lamports)
       log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
-    log.info('updated_candy_machine finished', tx);
+    log.info('update_candy_machine finished', tx);
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {

@@ -35,6 +35,7 @@ pub fn assert_data_valid(
     update_authority: &Pubkey,
     existing_metadata: &Metadata,
     allow_direct_creator_writes: bool,
+    update_authority_is_signer: bool,
 ) -> ProgramResult {
     if data.name.len() > MAX_NAME_LENGTH {
         return Err(MetadataError::NameTooLong.into());
@@ -83,7 +84,9 @@ pub fn assert_data_valid(
                     // cross check with array, only let them say verified=true here if
                     // it already was true and in the array.
                     // Conversely, dont let a verified creator be wiped.
-                    if creator.address != *update_authority && !allow_direct_creator_writes {
+                    if (!update_authority_is_signer || creator.address != *update_authority)
+                        && !allow_direct_creator_writes
+                    {
                         if let Some(existing_creators) = &existing_metadata.data.creators {
                             match existing_creators
                                 .iter()
@@ -842,6 +845,7 @@ pub fn process_create_metadata_accounts_logic(
         update_authority_info.key,
         &metadata,
         allow_direct_creator_writes,
+        update_authority_info.is_signer,
     )?;
 
     metadata.mint = *mint_info.key;
