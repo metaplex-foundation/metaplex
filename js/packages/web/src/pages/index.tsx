@@ -108,7 +108,7 @@ function App({ storefront }: AppProps) {
         <meta property="og:description" content={storefront.meta.description} />
         <title>{storefront.meta.title}</title>
       </Head>
-      (isMounted && <CreateReactAppEntryPoint storefront={storefront} />)
+      {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
     </>
   )
 
