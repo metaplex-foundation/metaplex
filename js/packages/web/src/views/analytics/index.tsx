@@ -314,69 +314,67 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [sortedSales, setSortedSales] = useState<number[]>([]);
   const {
     metadata,
-    stores,
+    // stores,
     auctionManagersByAuction,
     bidderPotsByAuctionAndBidder,
     auctionDataExtended,
   } = useMeta();
 
   const totalNFTs = metadata.length;
-  const totalMarketplaces = Object.values(stores).length;
+  // const totalMarketplaces = Object.values(stores).length;
 
   const auctionViews = useAuctions();
   const wallet = useWallet();
   const hasAccess = isPubkeyAdmin(wallet.publicKey?.toString())
 
-  if (!hasAccess) {
-    return (<AccessForbidden/>);
-  } else {
-    return (
-      <Content>
-        <Col style={{ marginTop: 10 }}>
-          <Button
-            type="primary"
-            size="large"
-            className="action-btn"
-            onClick={() =>
-              rerun({
-                auctionViews,
-                auctionManagersByAuction,
-                usersEngaged,
-                auctionDataExtended,
-                bidderPotsByAuctionAndBidder,
-                metadata,
-                setByType,
-                setAverageBids,
-                setUsersPublished,
-                setAverageSale,
-                setHighestSale,
-                setSortedSales,
-                setUsersWithMetadata,
-                setUsersBid,
-                setUsersEngaged,
-              })
-            }
-          >
-            RERUN CALCULATION
-          </Button>
-          <h1>Overview</h1>
-          <h3>
-            Total NFTs: {totalNFTs} Total Marketplaces: {totalMarketplaces}
-          </h3>
-          <h1>User Breakdown</h1>
-          <h3>Any Engagement: {Object.values(usersEngaged).length}</h3>
-          <h3>That bid: {Object.values(usersBid).length}</h3>
-          <h3>That sold items: {Object.values(usersPublished).length}</h3>
-          <h3>That minted NFTs: {Object.values(usersWithMetadata).length}</h3>
-          <h1>Sale Info</h1>
-          <h3>
-            Total Sales: ◎
-            {fromLamports(
-              sortedSales.reduce((acc, r) => (acc += r), 0),
-              mint,
-            )}
-          </h3>
-          <MemoizedBar sortedSales={sortedSales} mint={mint} />
+  return (
+    <Content>
+      <Col style={{ marginTop: 10 }}>
+        <Button
+          type="primary"
+          size="large"
+          className="action-btn"
+          onClick={() =>
+            rerun({
+              auctionViews,
+              auctionManagersByAuction,
+              usersEngaged,
+              auctionDataExtended,
+              bidderPotsByAuctionAndBidder,
+              metadata,
+              setByType,
+              setAverageBids,
+              setUsersPublished,
+              setAverageSale,
+              setHighestSale,
+              setSortedSales,
+              setUsersWithMetadata,
+              setUsersBid,
+              setUsersEngaged,
+            })
+          }
+        >
+          RERUN CALCULATION
+        </Button>
+        <h1>Overview</h1>
+        <h3>
+          Total NFTs: {totalNFTs}
+          {/* Total Marketplaces: {totalMarketplaces} */}
+        </h3>
+        <h1>User Breakdown</h1>
+        <h3>Any Engagement: {Object.values(usersEngaged).length}</h3>
+        <h3>That bid: {Object.values(usersBid).length}</h3>
+        <h3>That sold items: {Object.values(usersPublished).length}</h3>
+        <h3>That minted NFTs: {Object.values(usersWithMetadata).length}</h3>
+        <h1>Sale Info</h1>
+        <h3>
+          Total Sales: ◎
+          {fromLamports(
+            sortedSales.reduce((acc, r) => (acc += r), 0),
+            mint,
+          )}
+        </h3>
+        <MemoizedBar sortedSales={sortedSales} mint={mint} />
 
           <h3>Highest Sale: ◎ {fromLamports(highestSale, mint)}</h3>
           <h3>Average Sale: ◎ {fromLamports(averageSale, mint)}</h3>
@@ -387,4 +385,3 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
       </Content>
     );
   }
-}

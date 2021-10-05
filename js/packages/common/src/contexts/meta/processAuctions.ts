@@ -11,9 +11,9 @@ import {
   BIDDER_POT_LEN,
   MAX_AUCTION_DATA_EXTENDED_SIZE,
 } from '../../actions';
-import { AUCTION_ID } from '../../utils';
-import { ParsedAccount } from '../accounts/types';
-import { cache } from '../accounts/cache';
+import { AUCTION_ID, pubkeyToString } from '../../utils';
+import { ParsedAccount } from '../accounts';
+import { cache } from '../accounts';
 import { CheckAccountFunc, ProcessAccountsFunc } from './types';
 
 export const processAuctions: ProcessAccountsFunc = (
@@ -92,7 +92,7 @@ export const processAuctions: ProcessAccountsFunc = (
 };
 
 const isAuctionAccount: CheckAccountFunc = account =>
-  (account.owner as unknown as any) === AUCTION_ID;
+  pubkeyToString(account.owner) === AUCTION_ID;
 
 const isExtendedAuctionAccount: CheckAccountFunc = account =>
   account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE;

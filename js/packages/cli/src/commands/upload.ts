@@ -1,17 +1,29 @@
-import { EXTENSION_PNG, ARWEAVE_PAYMENT_WALLET } from "../helpers/constants";
-import path from "path";
-import { createConfig, loadAnchorProgram, loadWalletKey } from "../helpers/accounts";
-import { PublicKey } from "@solana/web3.js";
-import fs from "fs";
-import BN from "bn.js";
-import * as anchor from "@project-serum/anchor";
-import { sendTransactionWithRetryWithKeypair } from "../helpers/transactions";
-import FormData from "form-data";
-import { loadCache, saveCache } from "../helpers/cache";
-import fetch from 'node-fetch';
-import log from "loglevel";
+import { EXTENSION_PNG } from '../helpers/constants';
+import path from 'path';
+import {
+  createConfig,
+  loadCandyProgram,
+  loadWalletKey,
+} from '../helpers/accounts';
+import { PublicKey } from '@solana/web3.js';
+import fs from 'fs';
+import BN from 'bn.js';
+import { loadCache, saveCache } from '../helpers/cache';
+import log from 'loglevel';
+import { arweaveUpload } from '../helpers/upload/arweave';
+import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { chunks } from '../helpers/various';
 
-export async function upload(files: string[], cacheName: string, env: string, keypair: string, totalNFTs: number): Promise<boolean> {
+export async function upload(
+  files: string[],
+  cacheName: string,
+  env: string,
+  keypair: string,
+  totalNFTs: number,
+  storage: string,
+  retainAuthority: boolean,
+  ipfsCredentials: ipfsCreds,
+): Promise<boolean> {
   let uploadSuccessful = true;
 
   const savedContent = loadCache(cacheName, env);
@@ -48,7 +60,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadAnchorProgram(walletKeyPair, env);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
 
   let config = cacheContent.program.config
     ? new PublicKey(cacheContent.program.config)
@@ -64,8 +76,6 @@ export async function upload(files: string[], cacheName: string, env: string, ke
       log.info(`Processing file: ${i}`);
     }
 
-    const storageCost = 10;
-
     let link = cacheContent?.items?.[index]?.link;
     if (!link || !cacheContent.program.uuid) {
       const manifestPath = image.replace(EXTENSION_PNG, '.json');
@@ -80,7 +90,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
 
       if (i === 0 && !cacheContent.program.uuid) {
         // initialize config
-        log.info(`initializing config`)
+        log.info(`initializing config`);
         try {
           const res = await createConfig(anchorProgram, walletKeyPair, {
             maxNumberOfLines: new BN(totalNFTs),
@@ -88,7 +98,7 @@ export async function upload(files: string[], cacheName: string, env: string, ke
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
             isMutable: true,
             maxSupply: new BN(0),
-            retainAuthority: true,
+            retainAuthority: retainAuthority,
             creators: manifest.properties.creators.map(creator => {
               return {
                 address: new PublicKey(creator.address),
@@ -101,7 +111,9 @@ export async function upload(files: string[], cacheName: string, env: string, ke
           cacheContent.program.config = res.config.toBase58();
           config = res.config;
 
-          log.info(`initialized config for a candy machine with publickey: ${res.config.toBase58()}`)
+          log.info(
+            `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
+          );
 
           saveCache(cacheName, env, cacheContent);
         } catch (exx) {
@@ -111,47 +123,31 @@ export async function upload(files: string[], cacheName: string, env: string, ke
       }
 
       if (!link) {
-        const instructions = [
-          anchor.web3.SystemProgram.transfer({
-            fromPubkey: walletKeyPair.publicKey,
-            toPubkey: ARWEAVE_PAYMENT_WALLET,
-            lamports: storageCost,
-          }),
-        ];
-
-        const tx = await sendTransactionWithRetryWithKeypair(
-          anchorProgram.provider.connection,
-          walletKeyPair,
-          instructions,
-          [],
-          'single',
-        );
-        log.debug('transaction for arweave payment:', tx);
-
-        // data.append('tags', JSON.stringify(tags));
-        // payment transaction
-        const data = new FormData();
-        data.append('transaction', tx['txid']);
-        data.append('env', env);
-        data.append('file[]', fs.createReadStream(image), {filename: `image.png`, contentType: 'image/png'});
-        data.append('file[]', manifestBuffer, 'metadata.json');
         try {
-          const result = await uploadToArweave(data, manifest, index);
-
-          const metadataFile = result.messages?.find(
-            m => m.filename === 'manifest.json',
-          );
-          if (metadataFile?.transactionId) {
-            link = `https://arweave.net/${metadataFile.transactionId}`;
-            log.debug(`File uploaded: ${link}`);
+          if (storage === 'arweave') {
+            link = await arweaveUpload(
+              walletKeyPair,
+              anchorProgram,
+              env,
+              image,
+              manifestBuffer,
+              manifest,
+              index,
+            );
+          } else if (storage === 'ipfs') {
+            link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
           }
 
-          cacheContent.items[index] = {
-            link,
-            name: manifest.name,
-            onChain: false,
-          };
-          saveCache(cacheName, env, cacheContent);
+          if (link) {
+            log.debug('setting cache for ', index);
+            cacheContent.items[index] = {
+              link,
+              name: manifest.name,
+              onChain: false,
+            };
+            cacheContent.authority = walletKeyPair.publicKey.toBase58();
+            saveCache(cacheName, env, cacheContent);
+          }
         } catch (er) {
           uploadSuccessful = false;
           log.error(`Error uploading file ${index}`, er);
@@ -159,7 +155,6 @@ export async function upload(files: string[], cacheName: string, env: string, ke
       }
     }
   }
-
 
   const keys = Object.keys(cacheContent.items);
   try {
@@ -179,7 +174,9 @@ export async function upload(files: string[], cacheName: string, env: string, ke
             const ind = keys[indexes[0]];
 
             if (onChain.length != indexes.length) {
-              log.info(`Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`);
+              log.info(
+                `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
+              );
               try {
                 await anchorProgram.rpc.addConfigLines(
                   ind,
@@ -203,7 +200,12 @@ export async function upload(files: string[], cacheName: string, env: string, ke
                 });
                 saveCache(cacheName, env, cacheContent);
               } catch (e) {
-                log.error(`saving config line ${ind}-${keys[indexes[indexes.length - 1]]} failed`, e);
+                log.error(
+                  `saving config line ${ind}-${
+                    keys[indexes[indexes.length - 1]]
+                  } failed`,
+                  e,
+                );
                 uploadSuccessful = false;
               }
             }
@@ -218,24 +220,4 @@ export async function upload(files: string[], cacheName: string, env: string, ke
   }
   console.log(`Done. Successful = ${uploadSuccessful}.`);
   return uploadSuccessful;
-}
-
-async function uploadToArweave(data: FormData, manifest, index) {
-  log.debug(`trying to upload ${index}.png: ${manifest.name}`)
-  return await (
-    await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
-      {
-        method: 'POST',
-        // @ts-ignore
-        body: data,
-      },
-    )
-  ).json();
-}
-
-function chunks(array, size) {
-  return Array.apply(0, new Array(Math.ceil(array.length / size))).map(
-    (_, index) => array.slice(index * size, (index + 1) * size),
-  );
 }
