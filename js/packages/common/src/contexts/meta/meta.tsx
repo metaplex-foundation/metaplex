@@ -12,6 +12,7 @@ import { merge } from 'lodash';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
+import { merge } from 'lodash';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
 import {
   pullAuctionSubaccounts,
