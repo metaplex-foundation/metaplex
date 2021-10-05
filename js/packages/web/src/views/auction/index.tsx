@@ -14,7 +14,7 @@ import {
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
 
-import { format } from 'timeago.js';
+// import { format } from 'timeago.js';
 
 import {
   formatTokenAmount,
@@ -243,8 +243,7 @@ export const AuctionView = () => {
           {auction && <AuctionCard auctionView={auction} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
-      </Row>
-    </>
+    </Row>
   );
 };
 
@@ -321,7 +320,7 @@ const BidLine = (props: {
       </Col>
       <Col span={8} style={{ opacity: 0.7 }}>
         {/* uses milliseconds */}
-        {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
+        {/*{format(bid.info.lastBidTimestamp.toNumber() * 1000)}*/}
       </Col>
       <Col span={8}>
         <div className={'flex-right'}>

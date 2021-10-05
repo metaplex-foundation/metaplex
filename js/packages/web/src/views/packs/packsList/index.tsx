@@ -2,32 +2,27 @@ import React from 'react';
 import { Button, Typography, List, Avatar, Space, Switch, Row, Col, Divider } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 
+import PackItem from './packItem';
+
 const { Text } = Typography;
 
 const list = [
   {
     name: 'Pack1',
-    card: '1111',
+    card: 'CardName1',
   },
   {
     name: 'Pack2',
-    card: '1111',
-    voucher: '1111'
+    card: 'CardName2',
+    voucher: 'VoucherName2'
   },
   {
     name: 'Pack3',
-    voucher: '1111'
+    voucher: 'VoucherName3'
   },
 ];
 
 function PacksList() {
-  const onDelete = (id: string) => {
-      console.log('onDelete:', id);
-  };
-  const onActivate = (checked: boolean, id: string) => {
-      console.log('onActivate:', checked, id);
-  };
-
   const onDeleteVoucher = (id: string) => {
     console.log('onDeleteVoucher:', id);
   };
@@ -58,10 +53,17 @@ function PacksList() {
               }}>
                 <Text>Delete voucher:</Text>
               </Col>
-              <Col flex={4}>
+              <Col flex="auto" style={{
+                display: "flex",
+                alignItems: 'center',
+              }}>
+                <Text>{pack.voucher}</Text>
+              </Col>
+              <Col flex="40px">
                 <Button
                   onClick={() => onDeleteVoucher(pack.voucher)}
                   size="small"
+                  style={{ height: 32 }}
                   danger
                 >
                   <DeleteOutlined />
@@ -79,10 +81,17 @@ function PacksList() {
               }}>
                 <Text>Delete card:</Text>
               </Col>
-              <Col flex={4}>
+              <Col flex="auto" style={{
+                display: "flex",
+                alignItems: 'center',
+              }}>
+                <Text>{pack.card}</Text>
+              </Col>
+              <Col flex="40px">
                 <Button
                   onClick={() => onDeleteCard(pack.card)}
                   size="small"
+                  style={{ height: 32 }}
                   danger
                 >
                   <DeleteOutlined />
@@ -109,50 +118,7 @@ function PacksList() {
         }}
         dataSource={listData}
         renderItem={item => (
-          <List.Item
-            key={item.title}
-            actions={[
-              <Space
-                style={{
-                  display: "flex",
-                  alignItems: 'center'
-                }}
-              >
-                <Text>Activate pack:</Text>
-                <Switch
-                  defaultChecked={item.activate}
-                  onClick={(checked) => onActivate(checked, item.id)}
-                />
-              </Space>,
-              <Button
-                type="primary"
-                danger
-                onClick={() => onDelete(item.id)}
-              >
-                Delete pack
-              </Button>
-            ]}
-            style={{
-              marginBottom: 30,
-              paddingBottom: 40,
-              borderWidth: 3,
-              borderColor: "#ccc"
-            }}
-            extra={
-              <img
-                width={272}
-                alt="logo"
-                src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
-              />
-            }
-          >
-            <List.Item.Meta
-              avatar={<Avatar src={item.avatar} />}
-              title={<a href={item.href}>{item.title}</a>}
-              description={item.description}
-            />
-            { (item.voucherId || item.cardId) && item.content()}
-          </List.Item>
+          <PackItem pack={item} />
         )}
       />
     </div>
