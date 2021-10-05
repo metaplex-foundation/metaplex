@@ -1182,10 +1182,10 @@ const WaitingStep = (props: {
       <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
-          <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
+          <Step className={'white-description'} title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
           <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  /> 
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} /> 
+          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  />
+          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
           <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
           <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
           <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
