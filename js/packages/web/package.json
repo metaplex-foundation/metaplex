@@ -6,6 +6,7 @@
     "@babel/preset-typescript": "^7.12.13",
     "@bugsnag/js": "^7.11.0",
     "@bugsnag/plugin-react": "^7.11.0",
+    "@bugsnag/source-maps": "^2.3.0",
     "@cloudflare/stream-react": "^1.1.0",
     "@google/model-viewer": "^1.7.2",
     "@oyster/common": "0.0.2",

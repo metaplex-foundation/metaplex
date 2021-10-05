@@ -27,6 +27,7 @@ module.exports = withPlugins(plugins, {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  productionBrowserSourceMaps: true,
   env: {
     NEXT_PUBLIC_ARWEAVE_CDN: process.env.ARWEAVE_CDN,
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
