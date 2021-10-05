@@ -16,7 +16,7 @@ import {
   WalletSigner,
   Attribute,
 } from '@oyster/common';
-import React from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
 import {
   Keypair,
@@ -86,6 +86,7 @@ export const mintNFT = async (
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   },
+  progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
 ): Promise<{
   metadataAccount: StringPublicKey;
@@ -119,6 +120,8 @@ export const mintNFT = async (
 
   const { instructions: pushInstructions, signers: pushSigners } =
     await prepPayForFilesTxn(wallet, realFiles, metadata);
+
+  progressCallback(1)
 
   const TOKEN_PROGRAM_ID = programIds().token;
 
@@ -183,6 +186,7 @@ export const mintNFT = async (
     instructions,
     wallet.publicKey.toBase58(),
   );
+  progressCallback(2)
 
   // TODO: enable when using payer account to avoid 2nd popup
   // const block = await connection.getRecentBlockhash('singleGossip');
@@ -194,6 +198,7 @@ export const mintNFT = async (
   //   }),
   // );
 
+
   const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
@@ -201,9 +206,11 @@ export const mintNFT = async (
     signers,
     'single',
   );
+  progressCallback(3)
 
   try {
     await connection.confirmTransaction(txid, 'max');
+    progressCallback(4)
   } catch {
     // ignore
   }
@@ -211,6 +218,8 @@ export const mintNFT = async (
   // Force wait for max confirmations
   // await connection.confirmTransaction(txid, 'max');
   await connection.getParsedConfirmedTransaction(txid, 'confirmed');
+
+  progressCallback(5)
 
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
@@ -228,7 +237,9 @@ export const mintNFT = async (
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
+
   const result: IArweaveResult = await uploadToArweave(data);
+  progressCallback(6)
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,
@@ -265,6 +276,8 @@ export const mintNFT = async (
         1,
       ),
     );
+
+    progressCallback(7)
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
@@ -295,6 +308,8 @@ export const mintNFT = async (
     //   wallet.publicKey,
     //   updateInstructions,
     // );
+
+    progressCallback(8)
 
     const txid = await sendTransactionWithRetry(
       connection,
