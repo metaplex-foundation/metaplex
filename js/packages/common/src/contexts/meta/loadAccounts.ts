@@ -6,6 +6,7 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '../../utils/ids';
+import { getStoreID } from '../../utils';
 import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models';
 import {
   getEdition,
@@ -20,7 +21,11 @@ import {
   getAuctionExtended,
 } from '../../actions';
 import { uniqWith } from 'lodash';
-import { WhitelistedCreator } from '../../models/metaplex';
+import {
+  WhitelistedCreator,
+  AuctionManagerV1,
+  AuctionManagerV2,
+} from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AccountAndPubkey,
@@ -268,7 +273,10 @@ export const limitedLoadAccounts = async (connection: Connection) => {
   return tempCache;
 };
 
-export const loadAccounts = async (connection: Connection) => {
+export const loadAccounts = async (
+  connection: Connection,
+  ownerAddress: StringPublicKey,
+) => {
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
@@ -280,18 +288,116 @@ export const loadAccounts = async (connection: Connection) => {
       }
     };
 
-  const loadVaults = () =>
-    getProgramAccounts(connection, VAULT_ID).then(
-      forEachAccount(processVaultData),
+  const loadStorefront = async (ownerAddress: StringPublicKey) => {
+    const storeAddress = await getStoreID(ownerAddress);
+
+    if (!storeAddress) {
+      return;
+    }
+
+    const storePubkey = new PublicKey(storeAddress);
+    const storeData = await connection.getAccountInfo(storePubkey);
+
+    if (storeData) {
+      processMetaplexAccounts(
+        {
+          pubkey: storeAddress,
+          account: storeData,
+        },
+        updateState,
+      );
+    }
+  };
+
+  const loadAuctionManagers = async (
+    ownerAddress: StringPublicKey,
+  ): Promise<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]> => {
+    const response = await getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32, // store
+            bytes: ownerAddress,
+          },
+        },
+      ],
+    });
+
+    await forEachAccount(processMetaplexAccounts)(response);
+
+    return Object.values(state.auctionManagersByAuction);
+  };
+
+  const loadAuctionsFromAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction);
+
+    const auctionExtendedKeys = await Promise.all(
+      parsedAccounts.map(account =>
+        getAuctionExtended({
+          auctionProgramId: AUCTION_ID,
+          resource: account.info.vault,
+        }),
+      ),
     );
-  const loadAuctions = () =>
-    getProgramAccounts(connection, AUCTION_ID).then(
-      forEachAccount(processAuctions),
+
+    const auctionData = await getMultipleAccounts(
+      connection,
+      [...auctionIds, ...auctionExtendedKeys],
+      'single',
     );
-  const loadMetaplex = () =>
-    getProgramAccounts(connection, METAPLEX_ID).then(
-      forEachAccount(processMetaplexAccounts),
+
+    if (auctionData) {
+      await Promise.all(
+        auctionData.keys.map((pubkey, i) => {
+          processAuctions(
+            {
+              pubkey,
+              account: auctionData.array[i],
+            },
+            updateState,
+          );
+        }),
+      );
+    }
+  };
+
+  const loadVaultsForAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const vaultKeys = parsedAccounts.map(({ info: { vault } }) => vault);
+
+    const vaultData = await getMultipleAccounts(
+      connection,
+      vaultKeys,
+      'single',
     );
+
+    if (vaultData) {
+      await Promise.all(
+        vaultData.keys.map((pubkey, i) => {
+          processVaultData(
+            {
+              pubkey,
+              account: vaultData.array[i],
+            },
+            updateState,
+          );
+        }),
+      );
+    }
+  };
+  const loadAuctionsAndVaults = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    await Promise.all([
+      loadAuctionsFromAuctionManagers(parsedAccounts),
+      loadVaultsForAuctionManagers(parsedAccounts),
+    ]);
+  };
   const loadCreators = () =>
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -305,10 +411,9 @@ export const loadAccounts = async (connection: Connection) => {
   const loadEditions = () => pullEditions(connection, updateState, state);
 
   const loading = [
+    loadStorefront(ownerAddress),
     loadCreators().then(loadMetadata).then(loadEditions),
-    loadVaults(),
-    loadAuctions(),
-    loadMetaplex(),
+    loadAuctionManagers(ownerAddress).then(loadAuctionsAndVaults),
   ];
 
   await Promise.all(loading);

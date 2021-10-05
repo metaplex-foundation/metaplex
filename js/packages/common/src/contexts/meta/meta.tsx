@@ -18,8 +18,6 @@ import { LoadingOutlined } from '@ant-design/icons';
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
   isLoading: false,
-  // @ts-ignore
-  update: () => [AuctionData, BidderMetadata, BidderPot],
   patchState: () => {
     throw new Error('unreachable');
   },
@@ -52,41 +50,6 @@ export function MetaProvider({ children = null as any }) {
     [setState],
   );
 
-  async function update(auctionAddress?: any, bidderAddress?: any) {
-    if (!storeAddress) {
-      if (isReady) {
-        setIsLoading(false);
-      }
-      return;
-    } else if (!state.store) {
-      setIsLoading(true);
-    }
-
-    console.log('-----> Query started');
-
-    const nextState = !USE_SPEED_RUN
-      ? await loadAccounts(connection)
-      : await limitedLoadAccounts(connection);
-
-    console.log('------->Query finished');
-
-    setState(nextState);
-
-    setIsLoading(false);
-    console.log('------->set finished');
-
-    await updateMints(nextState.metadataByMint);
-
-    if (auctionAddress && bidderAddress) {
-      const auctionBidderKey = auctionAddress + '-' + bidderAddress;
-      return [
-        nextState.auctions[auctionAddress],
-        nextState.bidderPotsByAuctionAndBidder[auctionBidderKey],
-        nextState.bidderMetadataByAuctionAndBidder[auctionBidderKey],
-      ];
-    }
-  }
-
   const patchState: MetaContextState['patchState'] = temp => {
     const newState = merge({}, state, temp);
     newState.store = temp.store ?? state.store;
@@ -96,8 +59,33 @@ export function MetaProvider({ children = null as any }) {
   };
 
   useEffect(() => {
-    update();
-  }, [connection, setState, updateMints, storeAddress, isReady]);
+
+    (async () => {
+      if (!storeAddress || !ownerAddress) {
+        if (isReady) {
+          setIsLoading(false);
+        }
+        return;
+      } else if (!state.store) {
+        setIsLoading(true);
+      }
+
+      console.log('-----> Query started');
+
+      const nextState = !USE_SPEED_RUN
+        ? await loadAccounts(connection, ownerAddress)
+        : await limitedLoadAccounts(connection);
+
+      console.log('------->Query finished');
+
+      setState(nextState);
+
+      setIsLoading(false);
+      console.log('------->set finished');
+
+      await updateMints(nextState.metadataByMint);
+    })()
+  }, [connection, setState, updateMints, storeAddress, isReady, ownerAddress]);
 
   useEffect(() => {
     if (isLoading) {
@@ -139,8 +127,6 @@ export function MetaProvider({ children = null as any }) {
     <MetaContext.Provider
       value={{
         ...state,
-        // @ts-ignore
-        update,
         patchState,
         isLoading,
       }}

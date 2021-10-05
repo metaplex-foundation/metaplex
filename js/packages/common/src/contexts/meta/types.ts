@@ -75,16 +75,6 @@ export interface MetaState {
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
-  update: (
-    auctionAddress?: any,
-    bidderAddress?: any,
-  ) => Promise<
-    [
-      ParsedAccount<AuctionData>,
-      ParsedAccount<BidderPot>,
-      ParsedAccount<BidderMetadata>,
-    ]
-  >;
   patchState: (state: Partial<MetaState>) => MetaState;
 }
 
