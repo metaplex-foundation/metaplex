@@ -3,22 +3,24 @@ import {
   AuctionState,
   BidderMetadata,
   BidderPot,
-  isAuctionEnded
-} from "../actions/auction";
-import {
+  isAuctionEnded,
   Edition,
   MasterEditionV1,
   MasterEditionV2,
-  Metadata
-} from "../actions/metadata";
-import { SafetyDepositBox, Vault } from "../actions/vault";
+  Metadata,
+  SafetyDepositBox,
+  Vault,
+} from "../actions";
 import { ParsedAccount } from "../contexts/accounts/types";
 import { MetaState } from "../contexts/meta/types";
 import { StringPublicKey } from "../utils/ids";
 import {
   AmountRange,
-  AuctionManager, AuctionViewItem,
-  BidRedemptionTicket, ParticipationConfigV2, WinningConfigType
+  AuctionManager,
+  AuctionViewItem,
+  BidRedemptionTicket,
+  ParticipationConfigV2,
+  WinningConfigType,
 } from "./metaplex";
 
 export interface SafetyDepositDraft {

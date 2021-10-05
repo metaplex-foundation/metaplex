@@ -1,7 +1,8 @@
 import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { DecommissionAuctionManagerArgs, SCHEMA } from ".";
+import { SCHEMA } from "./schema";
+import { DecommissionAuctionManagerArgs } from "./DecommissionAuctionManagerArgs";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
 
 export async function decommissionAuctionManager(

@@ -1,15 +1,15 @@
 import { ExpressContext } from "apollo-server-express";
 import { makeSchema } from "nexus";
 import path from "path";
-import * as types from "./schema";
+import * as types from "../schema";
 
-const DIRNAME = __dirname.replace(/\/dist$/, "/src");
+const DIRNAME = path.resolve(__dirname, "..").replace(/\/dist$/, "/src");
 
 export const schema = makeSchema({
   types,
   outputs: {
-    schema: path.join(DIRNAME, "/generated/schema.graphql"),
-    typegen: path.join(DIRNAME, "/generated/typings.ts"),
+    schema: path.join(DIRNAME, "generated", "schema.graphql"),
+    typegen: path.join(DIRNAME, "generated", "typings.ts"),
   },
   formatTypegen: (content, type) => {
     if (type === "types") {

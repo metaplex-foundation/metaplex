@@ -20,7 +20,8 @@ import {
   SafetyDepositConfig,
   Store,
   WhitelistedCreator,
-} from "../../models/metaplex";
+} from "../../models";
+
 import { PublicKeyStringAndAccount, AccountInfoOwnerString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
 

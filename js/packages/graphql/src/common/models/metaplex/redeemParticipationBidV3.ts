@@ -6,14 +6,12 @@ import {
 import BN from "bn.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getBidderKeys,
-  RedeemParticipationBidV3Args,
-  SCHEMA,
-  getPrizeTrackingTicket,
-  getSafetyDepositConfig,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
+import { getBidderKeys } from "./getBidderKeys";
+import { SCHEMA } from "./schema";
+import { RedeemParticipationBidV3Args } from "./RedeemParticipationBidV3Args";
+import { getAuctionKeys } from "./getAuctionKeys";
 import {
   getAuctionExtended,
   getEdition,

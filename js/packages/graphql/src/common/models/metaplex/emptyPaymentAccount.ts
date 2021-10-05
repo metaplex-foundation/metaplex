@@ -5,14 +5,12 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import {
-  EmptyPaymentAccountArgs,
-  getAuctionWinnerTokenTypeTracker,
-  getPayoutTicket,
-  getSafetyDepositConfig,
-  SCHEMA,
-} from ".";
+import { getPayoutTicket } from "./getPayoutTicket";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { EmptyPaymentAccountArgs } from "./EmptyPaymentAccountArgs";
+import { getAuctionWinnerTokenTypeTracker } from "./getAuctionWinnerTokenTypeTracker";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { SCHEMA } from "./schema";
 
 export async function emptyPaymentAccount(
   acceptPayment: StringPublicKey,

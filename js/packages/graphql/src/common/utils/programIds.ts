@@ -50,5 +50,5 @@ export const programIds = () => {
     auction: AUCTION_ID,
     metaplex: METAPLEX_ID,
     store: STORE,
-  };
+  } as const;
 };

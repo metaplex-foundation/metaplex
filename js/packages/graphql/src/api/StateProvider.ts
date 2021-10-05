@@ -15,8 +15,8 @@ import {
   ParsedAccount,
   getProgramAccounts,
   Metadata,
+  MetaState,
 } from "../common";
-
 import queue from "queue";
 import { PubSub, withFilter } from "graphql-subscriptions";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
@@ -45,16 +45,29 @@ export interface IEvent {
 const bindToState =
   (process: ProcessAccountsFunc, api: IMetaplexApiWrite) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
-    process(account, (prop, key, value) => {
-      api.persist(prop, key, value);
+    return new Promise<void>((resolve, reject) => {
+      let start = false;
+      process(account, (prop, key, value) => {
+        start = true;
+        api.persist(prop, key, value).then(
+          () => resolve(),
+          (err) => {
+            logger.error(err);
+            reject(err);
+          }
+        );
+      });
+      if (!start) {
+        resolve();
+      }
     });
   };
 
 const bindToStateAndPubsub =
   (process: ProcessAccountsFunc, api: IMetaplexApiWrite, pubsub: PubSub) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
-    process(account, (prop, key, value) => {
-      api.persist(prop, key, value);
+    return process(account, (prop, key, value) => {
+      api.persist(prop, key, value).catch((err) => logger.error(err));
       logger.info(`⚡ event - ${prop}:${key}`);
       pubsub.publish(prop, { prop, key });
     });
@@ -67,20 +80,45 @@ export class StateProvider {
   private readonly pubsub = new PubSub();
   private readonly $api: IMetaplexApiWrite;
   private metadataByMint: Map<string, ParsedAccount<Metadata>> = new Map();
+
+  private ids: Map<string, Promise<void>> = new Map();
+  private cache: Partial<
+    Record<keyof MetaState, Map<string, ParsedAccount<any>>>
+  > = {};
+
   private readonly api: IMetaplexApiWrite = {
-    persist: (prop: TPropNames, key: string, value: ParsedAccount<any>) => {
+    flush: async () => {
+      const cache = this.cache;
+      this.cache = {};
+      const defers = Object.keys(cache).map((key) => {
+        const prop = key as keyof MetaState;
+        const ptr = cache[prop]!;
+        const docs = Array.from(ptr.values());
+        const clazz = docs[0].info.constructor;
+        return this.$api.persistBatch(clazz, docs, prop).catch(() => {});
+      });
+      await Promise.all(defers);
+      await this.$api.flush();
+    },
+    persistBatch: async (a, b, c) => {
+      return this.$api.persistBatch(a, b, c);
+    },
+    persist: async (
+      prop: TPropNames,
+      key: string,
+      value: ParsedAccount<any>
+    ) => {
+      const keySave = `${prop}-${key}`;
+      if (this.ids.has(keySave)) {
+        await this.ids.get(keySave);
+        this.api.persist(prop, key, value);
+        return;
+      }
       if (prop === "metadataByMint") {
         this.metadataByMint.set(key, value);
       }
-      return this.$api.persist(prop, key, value);
-    },
-    persistBatch: (batch: [TPropNames, string, ParsedAccount<any>][]) => {
-      batch.forEach(([prop, key, value]) => {
-        if (prop === "metadataByMint") {
-          this.metadataByMint.set(key, value);
-        }
-      });
-      return this.$api.persistBatch(batch);
+      const ptr = this.cache[prop] || (this.cache[prop] = new Map());
+      ptr.set(key, value);
     },
   };
 
@@ -94,6 +132,7 @@ export class StateProvider {
         this.pubsub
       ),
     },
+
     {
       pubkey: AUCTION_ID,
       process: bindToState(processAuctions, this.api),
@@ -130,11 +169,24 @@ export class StateProvider {
     const key = metadata.info.mint;
     await metadata.info.init();
     const masterEditionKey = metadata.info?.masterEdition;
+    const ops: Promise<void>[] = [];
+
     if (masterEditionKey) {
-      api.persist("metadataByMasterEdition", masterEditionKey, metadata);
+      ops[ops.length] = api
+        .persist("metadataByMasterEdition", masterEditionKey, metadata)
+        .catch((err) => {
+          logger.error(err);
+        });
     }
-    api.persist("metadataByMint", key, metadata);
-    api.persist("metadata", "", metadata);
+    ops[ops.length] = api
+      .persist("metadataByMint", key, metadata)
+      .catch((err) => {
+        logger.error(err);
+      });
+    ops[ops.length] = api.persist("metadata", "", metadata).catch((err) => {
+      logger.error(err);
+    });
+    await Promise.all(ops);
   }
 
   constructor(
@@ -187,33 +239,37 @@ export class StateProvider {
   private async loadAndProcessData() {
     logger.info(`⏱  ${this.name} - start loading data`);
 
-    const loading = this.programs.map((program) => {
+    const loading = this.programs.map(async (program, index, list) => {
       this.subscribeOnChange(program);
-      return this.loadProgramAccounts(program);
-    });
-
-    const loadedAccounts = await Promise.all(loading);
-    logger.info(`⏱  ${this.name} - data loaded and start processing data`);
-
-    const decoding = loadedAccounts.map(async (accounts, index) => {
-      const program = this.programs[index];
+      const accounts = await this.loadProgramAccounts(program);
+      logger.info(
+        `Need to processed ${accounts.length} tasks from ${program.pubkey}`
+      );
       await createPipelineExecutor(accounts.values(), program.process, {
         jobsCount: 2,
-        name: `⛏  ${this.name} - data`,
+        //name: `⛏  ${this.name}(${index + 1}-${list.length}) - data`,
+        sequence: 1000,
+        delay: () => this.api.flush(),
       });
+      logger.info(`Processed ${index + 1} from ${list.length}`);
     });
-    await Promise.all(decoding);
+    await Promise.all(loading);
+
+    await this.api.flush();
     logger.info(`⏱  ${this.name} - start processing metadata`);
 
     // processing metadata
+
     await createPipelineExecutor(
       this.metadataByMint.values(),
       async (metadata) => {
         await StateProvider.metadataByMintUpdater(metadata, this.api);
       },
       {
-        jobsCount: 3,
+        jobsCount: 1,
         name: `⛏  ${this.name} - metadata`,
+        sequence: 500,
+        delay: () => this.api.flush(),
       }
     );
   }

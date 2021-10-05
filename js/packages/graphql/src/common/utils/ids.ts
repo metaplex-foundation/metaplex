@@ -67,15 +67,14 @@ export const MEMO_ID = new PublicKey(
 );
 
 export const METADATA_PROGRAM_ID =
-  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s" as StringPublicKey;
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s" as const;
 
-export const VAULT_ID =
-  "vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn" as StringPublicKey;
+export const VAULT_ID = "vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn" as const;
 
 export const AUCTION_ID =
-  "auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8" as StringPublicKey;
+  "auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8" as const;
 
 export const METAPLEX_ID =
-  "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98" as StringPublicKey;
+  "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98" as const;
 
 export const SYSTEM = new PublicKey("11111111111111111111111111111111");

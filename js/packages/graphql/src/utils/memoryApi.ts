@@ -1,7 +1,7 @@
 import { performance } from "perf_hooks";
-import { ENDPOINTS, MemoryApi, MetaplexApiDataSource } from "./api";
-import { snapshot } from "./api/snapshot";
-import logger from "./logger";
+import { ENDPOINTS, MemoryApi, MetaplexApiDataSource } from "../api";
+import { snapshot } from "../api/snapshot";
+import logger from "../logger";
 
 function initFlowControl(size: number) {
   const len = size - 1;

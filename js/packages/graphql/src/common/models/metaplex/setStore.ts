@@ -1,8 +1,9 @@
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { SCHEMA, SetStoreArgs } from ".";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { SCHEMA } from "./schema";
+import { SetStoreArgs } from "./SetStoreArgs";
 
 export async function setStore(
   isPublic: boolean,

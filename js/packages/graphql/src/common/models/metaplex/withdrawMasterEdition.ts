@@ -1,13 +1,11 @@
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  WithdrawMasterEditionArgs,
-  SCHEMA,
-  getPrizeTrackingTicket,
-  getSafetyDepositConfig,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
+import { SCHEMA } from "./schema";
+import { WithdrawMasterEditionArgs } from "./WithdrawMasterEditionArgs";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { AUCTION_PREFIX, EXTENDED, VAULT_PREFIX } from "../../actions";
 import {
   findProgramAddress,

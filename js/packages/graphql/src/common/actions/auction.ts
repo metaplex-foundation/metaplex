@@ -15,6 +15,15 @@ import {
   toPublicKey,
   AccountInfoOwnerString,
 } from "../utils";
+import {
+  BidState,
+  AuctionData,
+  PriceFloor,
+  BidderPot,
+  AuctionDataExtended,
+  BidderMetadata,
+  Bid,
+} from "./entities";
 export const AUCTION_PREFIX = "auction";
 export const METADATA = "metadata";
 export const EXTENDED = "extended";
@@ -29,58 +38,6 @@ export enum AuctionState {
 export enum BidStateType {
   EnglishAuction = 0,
   OpenEdition = 1,
-}
-
-export class Bid {
-  key: StringPublicKey;
-  amount: BN;
-  constructor(args: { key: StringPublicKey; amount: BN }) {
-    this.key = args.key;
-    this.amount = args.amount;
-  }
-}
-
-export class BidState {
-  type: BidStateType;
-  bids: Bid[];
-  max: BN;
-
-  public getWinnerAt(winnerIndex: number): StringPublicKey | null {
-    const convertedIndex = this.bids.length - winnerIndex - 1;
-
-    if (convertedIndex >= 0 && convertedIndex < this.bids.length) {
-      return this.bids[convertedIndex].key;
-    } else {
-      return null;
-    }
-  }
-
-  public getAmountAt(winnerIndex: number): BN | null {
-    const convertedIndex = this.bids.length - winnerIndex - 1;
-
-    if (convertedIndex >= 0 && convertedIndex < this.bids.length) {
-      return this.bids[convertedIndex].amount;
-    } else {
-      return null;
-    }
-  }
-
-  public getWinnerIndex(bidder: StringPublicKey): number | null {
-    if (!this.bids) return null;
-
-    const index = this.bids.findIndex((b) => b.key === bidder);
-    // auction stores data in reverse order
-    if (index !== -1) {
-      const zeroBased = this.bids.length - index - 1;
-      return zeroBased < this.max.toNumber() ? zeroBased : null;
-    } else return null;
-  }
-
-  constructor(args: { type: BidStateType; bids: Bid[]; max: BN }) {
-    this.type = args.type;
-    this.bids = args.bids;
-    this.max = args.max;
-  }
 }
 
 export const AuctionParser: AccountParser = (
@@ -155,102 +112,11 @@ export enum PriceFloorType {
   Minimum = 1,
   BlindedPrice = 2,
 }
-export class PriceFloor {
-  type: PriceFloorType;
-  // It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
-  // thing is a hash and not actually a public key, and none is all zeroes
-  hash: Uint8Array;
-
-  minPrice?: BN;
-
-  constructor(args: {
-    type: PriceFloorType;
-    hash?: Uint8Array;
-    minPrice?: BN;
-  }) {
-    this.type = args.type;
-    this.hash = args.hash || new Uint8Array(32);
-    if (this.type === PriceFloorType.Minimum) {
-      if (args.minPrice) {
-        this.hash.set(args.minPrice.toArrayLike(Buffer, "le", 8), 0);
-      } else {
-        this.minPrice = new BN(
-          (args.hash || new Uint8Array(0)).slice(0, 8),
-          "le"
-        );
-      }
-    }
-  }
-}
-
-export class AuctionDataExtended {
-  /// Total uncancelled bids
-  totalUncancelledBids: BN;
-  tickSize: BN | null;
-  gapTickSizePercentage: number | null;
-
-  constructor(args: {
-    totalUncancelledBids: BN;
-    tickSize: BN | null;
-    gapTickSizePercentage: number | null;
-  }) {
-    this.totalUncancelledBids = args.totalUncancelledBids;
-    this.tickSize = args.tickSize;
-    this.gapTickSizePercentage = args.gapTickSizePercentage;
-  }
-}
-
 export interface CountdownState {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
-}
-
-export class AuctionData {
-  /// Pubkey of the authority with permission to modify this auction.
-  authority: StringPublicKey;
-  /// Token mint for the SPL token being used to bid
-  tokenMint: StringPublicKey;
-  /// The time the last bid was placed, used to keep track of auction timing.
-  lastBid: BN | null;
-  /// Slot time the auction was officially ended by.
-  endedAt: BN | null;
-  /// End time is the cut-off point that the auction is forced to end by.
-  endAuctionAt: BN | null;
-  /// Gap time is the amount of time in slots after the previous bid at which the auction ends.
-  auctionGap: BN | null;
-  /// Minimum price for any bid to meet.
-  priceFloor: PriceFloor;
-  /// The state the auction is in, whether it has started or ended.
-  state: AuctionState;
-  /// Auction Bids, each user may have one bid open at a time.
-  bidState: BidState;
-  /// Used for precalculation on the front end, not a backend key
-  bidRedemptionKey?: StringPublicKey;
-
-  constructor(args: {
-    authority: StringPublicKey;
-    tokenMint: StringPublicKey;
-    lastBid: BN | null;
-    endedAt: BN | null;
-    endAuctionAt: BN | null;
-    auctionGap: BN | null;
-    priceFloor: PriceFloor;
-    state: AuctionState;
-    bidState: BidState;
-    totalUncancelledBids: BN;
-  }) {
-    this.authority = args.authority;
-    this.tokenMint = args.tokenMint;
-    this.lastBid = args.lastBid;
-    this.endedAt = args.endedAt;
-    this.endAuctionAt = args.endAuctionAt;
-    this.auctionGap = args.auctionGap;
-    this.priceFloor = args.priceFloor;
-    this.state = args.state;
-    this.bidState = args.bidState;
-  }
 }
 
 export const isAuctionEnded = (auction: AuctionData) => {
@@ -302,52 +168,7 @@ export const timeToAuctionEnd = (auction: AuctionData): CountdownState => {
 };
 
 export const BIDDER_METADATA_LEN = 32 + 32 + 8 + 8 + 1;
-export class BidderMetadata {
-  // Relationship with the bidder who's metadata this covers.
-  bidderPubkey: StringPublicKey;
-  // Relationship with the auction this bid was placed on.
-  auctionPubkey: StringPublicKey;
-  // Amount that the user bid.
-  lastBid: BN;
-  // Tracks the last time this user bid.
-  lastBidTimestamp: BN;
-  // Whether the last bid the user made was cancelled. This should also be enough to know if the
-  // user is a winner, as if cancelled it implies previous bids were also cancelled.
-  cancelled: boolean;
-  constructor(args: {
-    bidderPubkey: StringPublicKey;
-    auctionPubkey: StringPublicKey;
-    lastBid: BN;
-    lastBidTimestamp: BN;
-    cancelled: boolean;
-  }) {
-    this.bidderPubkey = args.bidderPubkey;
-    this.auctionPubkey = args.auctionPubkey;
-    this.lastBid = args.lastBid;
-    this.lastBidTimestamp = args.lastBidTimestamp;
-    this.cancelled = args.cancelled;
-  }
-}
-
 export const BIDDER_POT_LEN = 32 + 32 + 32 + 1;
-export class BidderPot {
-  /// Points at actual pot that is a token account
-  bidderPot: StringPublicKey;
-  bidderAct: StringPublicKey;
-  auctionAct: StringPublicKey;
-  emptied: boolean;
-  constructor(args: {
-    bidderPot: StringPublicKey;
-    bidderAct: StringPublicKey;
-    auctionAct: StringPublicKey;
-    emptied: boolean;
-  }) {
-    this.bidderPot = args.bidderPot;
-    this.bidderAct = args.bidderAct;
-    this.auctionAct = args.auctionAct;
-    this.emptied = args.emptied;
-  }
-}
 
 export enum WinnerLimitType {
   Unlimited = 0,

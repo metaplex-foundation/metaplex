@@ -6,16 +6,14 @@ import {
 import BN from "bn.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getBidderKeys,
-  RedeemPrintingV2BidArgs,
-  getPrizeTrackingTicket,
-  SCHEMA,
-  getSafetyDepositConfig,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
+import { getBidderKeys } from "./getBidderKeys";
+import { RedeemPrintingV2BidArgs } from "./RedeemPrintingV2BidArgs";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { getEdition, getEditionMarkPda, getMetadata } from "../../actions";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { SCHEMA } from "./schema";
 
 export async function redeemPrintingV2Bid(
   vault: StringPublicKey,

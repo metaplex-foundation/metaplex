@@ -5,14 +5,12 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getBidderKeys,
-  SCHEMA,
-  getSafetyDepositConfig,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getBidderKeys } from "./getBidderKeys";
+import { SCHEMA } from "./schema";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
-import { DeprecatedRedeemParticipationBidArgs } from "./deprecatedStates";
+import { DeprecatedRedeemParticipationBidArgs } from "./DeprecatedRedeemParticipationBidArgs";
 
 export async function deprecatedRedeemParticipationBid(
   vault: StringPublicKey,

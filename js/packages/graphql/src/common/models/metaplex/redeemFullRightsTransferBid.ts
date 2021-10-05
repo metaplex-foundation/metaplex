@@ -5,15 +5,13 @@ import {
 } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import {
-  getAuctionKeys,
-  getBidderKeys,
-  getSafetyDepositConfig,
-  ProxyCallAddress,
-  RedeemFullRightsTransferBidArgs,
-  RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
-  SCHEMA,
-} from ".";
+import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
+import { getBidderKeys } from "./getBidderKeys";
+import { SCHEMA } from "./schema";
+import { RedeemUnusedWinningConfigItemsAsAuctioneerArgs } from "./RedeemUnusedWinningConfigItemsAsAuctioneerArgs";
+import { ProxyCallAddress } from "./ProxyCallAddress";
+import { RedeemFullRightsTransferBidArgs } from "./RedeemFullRightsTransferBidArgs";
+import { getAuctionKeys } from "./getAuctionKeys";
 import { VAULT_PREFIX } from "../../actions";
 import {
   findProgramAddress,

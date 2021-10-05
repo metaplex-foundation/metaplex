@@ -1,6 +1,8 @@
 /dist
 /logs
 /node_modules
+/data
+/temp
 .eslintcache
 .vscode
 .env

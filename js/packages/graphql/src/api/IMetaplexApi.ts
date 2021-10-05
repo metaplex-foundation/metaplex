@@ -10,7 +10,7 @@ import type {
   Store,
   Vault,
   WhitelistedCreator,
-} from "common";
+} from "../common";
 import type { NexusGenInputs } from "generated/typings";
 import type { ResolverFn } from "graphql-subscriptions";
 import type {
@@ -23,13 +23,16 @@ import type {
 export type TPropNames = keyof MetaState;
 
 export interface IMetaplexApiWrite {
+  flush(): Promise<void>;
   persist(
     prop: TPropNames,
     key: string,
     value: ParsedAccount<any>
   ): Promise<void>;
   persistBatch(
-    batch: Array<[TPropNames, string, ParsedAccount<any>]>
+    clazz: any,
+    values: ParsedAccount<any>[],
+    prop: TPropNames
   ): Promise<void>;
 }
 

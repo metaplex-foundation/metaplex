@@ -2,21 +2,22 @@ import {
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
+  BidRedemptionTicketV2,
   decodeAuctionManager,
   decodeBidRedemptionTicket,
+  decodePayoutTicket,
+  decodePrizeTrackingTicket,
+  decodeSafetyDepositConfig,
   decodeStore,
+  decodeWhitelistedCreator,
   MetaplexKey,
+  PayoutTicket,
+  PrizeTrackingTicket,
+  SafetyDepositConfig,
   Store,
   WhitelistedCreator,
-  PayoutTicket,
-  decodePayoutTicket,
-  PrizeTrackingTicket,
-  decodePrizeTrackingTicket,
-  decodeWhitelistedCreator,
-  BidRedemptionTicketV2,
-  decodeSafetyDepositConfig,
-  SafetyDepositConfig,
 } from "../../models/metaplex";
+import logger from "../../../logger";
 import { ProcessAccountsFunc } from "./types";
 import { METAPLEX_ID, AccountInfoOwnerString } from "../../utils";
 import { ParsedAccount } from "../accounts/types";
@@ -117,7 +118,8 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         parsedAccount
       );
     }
-  } catch {
+  } catch (err) {
+    logger.error(err);
     // ignore errors
     // add type as first byte for easier deserialization
   }

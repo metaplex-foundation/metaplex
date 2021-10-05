@@ -1,7 +1,9 @@
 import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { serialize } from "borsh";
 
-import { getWhitelistedCreator, SCHEMA, SetWhitelistedCreatorArgs } from ".";
+import { getWhitelistedCreator } from "./getWhitelistedCreator";
+import { SCHEMA } from "./schema";
+import { SetWhitelistedCreatorArgs } from "./SetWhitelistedCreatorArgs";
 import { programIds, StringPublicKey, toPublicKey } from "../../utils";
 
 export async function setWhitelistedCreator(
@@ -11,8 +13,8 @@ export async function setWhitelistedCreator(
   payer: StringPublicKey,
   instructions: TransactionInstruction[]
 ) {
-  const PROGRAM_IDS = programIds();
-  const store = PROGRAM_IDS.store;
+  const { store, system, metaplex } = programIds();
+
   if (!store) {
     throw new Error("Store not initialized");
   }
@@ -49,7 +51,7 @@ export async function setWhitelistedCreator(
       isWritable: false,
     },
     {
-      pubkey: PROGRAM_IDS.system,
+      pubkey: system,
       isSigner: false,
       isWritable: false,
     },
@@ -63,7 +65,7 @@ export async function setWhitelistedCreator(
   instructions.push(
     new TransactionInstruction({
       keys,
-      programId: toPublicKey(PROGRAM_IDS.metaplex),
+      programId: toPublicKey(metaplex),
       data,
     })
   );
