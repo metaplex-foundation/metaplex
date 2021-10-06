@@ -42,31 +42,45 @@ export interface IEvent {
   key: string;
 }
 
+function init<T>({ account }: PublicKeyStringAndAccount<T>) {
+  const ptr = account as { init?: () => Promise<void> };
+  if (ptr.init && ptr.init instanceof Function) {
+    return ptr.init();
+  }
+}
+
 const bindToState =
   (process: ProcessAccountsFunc, api: IMetaplexApiWrite) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
     return new Promise<void>((resolve, reject) => {
       let start = false;
-      process(account, (prop, key, value) => {
-        start = true;
-        api.persist(prop, key, value).then(
-          () => resolve(),
-          (err) => {
-            logger.error(err);
-            reject(err);
-          }
-        );
+      const ptr = init(account);
+      (ptr || Promise.resolve()).then(() => {
+        process(account, (prop, key, value) => {
+          start = true;
+          api.persist(prop, key, value).then(
+            () => resolve(),
+            (err) => {
+              logger.error(err);
+              reject(err);
+            }
+          );
+        });
+        if (!start) {
+          resolve();
+        }
       });
-      if (!start) {
-        resolve();
-      }
     });
   };
 
 const bindToStateAndPubsub =
   (process: ProcessAccountsFunc, api: IMetaplexApiWrite, pubsub: PubSub) =>
   (account: PublicKeyStringAndAccount<Buffer>) => {
-    return process(account, (prop, key, value) => {
+    return process(account, async (prop, key, value) => {
+      const ptr = init(account);
+      if (ptr) {
+        await ptr;
+      }
       api.persist(prop, key, value).catch((err) => logger.error(err));
       logger.info(`⚡ event - ${prop}:${key}`);
       pubsub.publish(prop, { prop, key });
@@ -167,7 +181,6 @@ export class StateProvider {
     api: IMetaplexApiWrite
   ) {
     const key = metadata.info.mint;
-    await metadata.info.init();
     const masterEditionKey = metadata.info?.masterEdition;
     const ops: Promise<void>[] = [];
 

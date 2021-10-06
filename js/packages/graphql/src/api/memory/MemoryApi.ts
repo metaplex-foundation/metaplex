@@ -1,6 +1,5 @@
 import {
   getAuctionBids,
-  isCreatorPartOfTheStore,
   MetaState,
   ParsedAccount,
   getEmptyState,
@@ -159,9 +158,7 @@ export class MemoryApi implements IMetaplexApi {
     if (!store) return [];
 
     for (const creator of creators.values()) {
-      const isWhitelistedCreator = await isCreatorPartOfTheStore(
-        creator.info.address,
-        creator.pubkey,
+      const isWhitelistedCreator = await creator.info.isCreatorPartOfTheStore(
         storeId
       );
       if (isWhitelistedCreator) {

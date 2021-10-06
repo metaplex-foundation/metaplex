@@ -3,6 +3,7 @@ import { MetaplexKey } from "../MetaplexKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
 import { ObjectIdConverter } from "../../../../api/mongo";
 import { ObjectId } from "mongodb";
+import { isCreatorPartOfTheStore } from "../isCreatorPartOfTheStore";
 
 @Serializable()
 export class WhitelistedCreator {
@@ -34,6 +35,10 @@ export class WhitelistedCreator {
 
   @JsonProperty()
   description?: string;
+
+  isCreatorPartOfTheStore(storeId: string) {
+    return isCreatorPartOfTheStore(this.address, this.pubkey, storeId);
+  }
 
   constructor(args?: { address: string; activated: boolean }) {
     if (args) {
