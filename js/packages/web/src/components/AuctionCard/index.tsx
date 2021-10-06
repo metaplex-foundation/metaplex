@@ -21,6 +21,7 @@ import {
   MAX_EDITION_LEN,
   useWalletModal,
   VaultState,
+  BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -254,14 +255,16 @@ export const AuctionCard = ({
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  //if instant sale auction bid and claimed hide buttons
-  if (
-    (auctionView.isInstantSale &&
-      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-      isAuctionManagerAuthorityNotWalletOwner &&
-      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
-    auctionView.vault.info.state === VaultState.Deactivated
-  ) {
+  const isOpenEditionInstantSale = auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isInstantSaleHasNoItems = Number(auctionView.myBidderPot?.info.emptied) !== 0 && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+
+  const shouldHideInstantSale = auctionView.isInstantSale
+    && isAuctionManagerAuthorityNotWalletOwner
+    && (!isOpenEditionInstantSale && isInstantSaleHasNoItems)
+
+  const shouldHide = shouldHideInstantSale || auctionView.vault.info.state === VaultState.Deactivated
+
+  if (shouldHide) {
     return <></>;
   }
 
@@ -515,13 +518,12 @@ export const AuctionCard = ({
 
               const instantSale = async () => {
                 setLoading(true);
+
                 const instantSalePrice =
                   auctionView.auctionDataExtended?.info.instantSalePrice;
                 const winningConfigType =
-                  auctionView.items[0][0].winningConfigType;
-                const isAuctionItemMaster =
-                  winningConfigType === WinningConfigType.FullRightsTransfer ||
-                  winningConfigType === WinningConfigType.TokenOnlyTransfer;
+                  auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType;
+                const isAuctionItemMaster = [WinningConfigType.FullRightsTransfer, WinningConfigType.TokenOnlyTransfer].includes(winningConfigType)
                 const allowBidToPublic =
                   myPayingAccount &&
                   !auctionView.myBidderPot &&
