@@ -6,7 +6,6 @@ import {
   ParsedAccount,
   StringPublicKey,
   useMeta,
-  USE_SPEED_RUN,
 } from '@oyster/common';
 
 export const useHighestBidForAuction = (

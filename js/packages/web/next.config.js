@@ -13,6 +13,7 @@ const plugins = [
             '@primary-color': '#768BF9',
             '@text-color': 'rgba(255, 255, 255)',
             '@assetPrefix': assetPrefix || "''",
+            '@background-color-secondary': 'rgba(255, 255, 255)',
           },
           javascriptEnabled: true,
         },

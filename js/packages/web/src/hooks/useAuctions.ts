@@ -16,6 +16,7 @@ import {
   loadAuction,
   getEmptyMetaState,
   MetaState,
+  useStore,
 } from '@oyster/common';
 import { merge, take, drop } from 'lodash';
 import { Connection } from '@solana/web3.js';
@@ -94,8 +95,12 @@ export function useCompactAuctions(): AuctionViewCompact[] {
 
 export function useStoreAuctionsList() {
   const { auctions, auctionManagersByAuction } = useMeta();
+  const { storeAddress } = useStore()
   const result = useMemo(() => {
-    return Object.values(auctionManagersByAuction).map(
+    return Object
+      .values(auctionManagersByAuction)
+      .filter(am => am.info.store === storeAddress)
+      .map(
       manager => auctions[manager.info.auction],
     );
   }, [auctions, auctionManagersByAuction]);
@@ -166,6 +171,7 @@ export const useInfiniteScrollAuctions = () => {
   const [auctionManagersToQuery, setAuctionManagersToQuery] = useState<
     ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
   >([]);
+  const { storeAddress } = useStore()
 
   const {
     isLoading,
@@ -227,8 +233,8 @@ export const useInfiniteScrollAuctions = () => {
     }
 
     (async () => {
-      const initializedAuctions = Object.values(auctions).filter(a => a.info.state > 0)
-      console.log(initializedAuctions, 'initialized auctions')
+      const storeAuctionManagers = Object.values(auctionManagersByAuction).filter(am => am.info.store ===  storeAddress)
+      const initializedAuctions = storeAuctionManagers.map(am => auctions[am.info.auction]).filter(a => a.info.state > 0)
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
         .sort((a, b) => {
@@ -271,6 +277,7 @@ export const useInfiniteScrollAuctions = () => {
         )
       )
 
+      patchState(auctionsState)
       setAuctionManagersToQuery(drop(auctionManagers, 8))
       setAuctionViews(views)
       setInitLoading(false)
@@ -283,7 +290,7 @@ export const useInfiniteScrollAuctions = () => {
     const loaded = [...auctionViews];
 
     setLoading(true);
-    const auctionsToLoad = take(needLoading, 8);
+    const auctionsToLoad = take(needLoading, 4);
 
     (async () => {
       const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
@@ -299,7 +306,7 @@ export const useInfiniteScrollAuctions = () => {
       )
 
       patchState(nextState)
-      setAuctionManagersToQuery(drop(needLoading, 8));
+      setAuctionManagersToQuery(drop(needLoading, 4));
       setAuctionViews([...loaded, ...views]);
       setLoading(false);
     })()

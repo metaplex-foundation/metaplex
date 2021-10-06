@@ -555,45 +555,40 @@ export const loadAuction = async (
         },
       ],
     }).then(forEachAccount(processVaultData)),
+    // bidder redemptions
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 9,
+            bytes: auctionManager.pubkey,
+          },
+        },
+      ],
+    }).then(forEachAccount(processMetaplexAccounts)),
+    // bidder metadata
+    getProgramAccounts(connection, AUCTION_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 32,
+            bytes: auctionManager.info.auction,
+          },
+        },
+      ],
+    }).then(forEachAccount(processAuctions)),
+    // bidder pot
+    getProgramAccounts(connection, AUCTION_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 64,
+            bytes: auctionManager.info.auction,
+          },
+        },
+      ],
+    }).then(forEachAccount(processAuctions)),
   ]
-
-  if (complete) {
-    rpcQueries.push(
-      // bidder redemptions
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 9,
-              bytes: auctionManager.pubkey,
-            },
-          },
-        ],
-      }).then(forEachAccount(processMetaplexAccounts)),
-      // bidder metadata
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 32,
-              bytes: auctionManager.info.auction,
-            },
-          },
-        ],
-      }).then(forEachAccount(processAuctions)),
-      // bidder pot
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 64,
-              bytes: auctionManager.info.auction,
-            },
-          },
-        ],
-      }).then(forEachAccount(processAuctions)),
-    )
-  }
 
   await Promise.all(rpcQueries);
 
@@ -653,31 +648,31 @@ const pullMetadataByCreators = (
 
 export const makeSetter =
   (state: MetaState): UpdateStateValueFunc<MetaState> =>
-  (prop, key, value) => {
-    if (prop === 'store') {
-      state[prop] = value;
-    } else if (prop === 'metadata') {
-      state.metadata.push(value);
-    } else {
-      state[prop][key] = value;
-    }
-    return state;
-  };
+    (prop, key, value) => {
+      if (prop === 'store') {
+        state[prop] = value;
+      } else if (prop === 'metadata') {
+        state.metadata.push(value);
+      } else {
+        state[prop][key] = value;
+      }
+      return state;
+    };
 
 export const processingAccounts =
   (updater: UpdateStateValueFunc) =>
-  (fn: ProcessAccountsFunc) =>
-  async (accounts: AccountAndPubkey[]) => {
-    await createPipelineExecutor(
-      accounts.values(),
-      account => fn(account, updater),
-      {
-        sequence: 10,
-        delay: 1,
-        jobsCount: 3,
-      },
-    );
-  };
+    (fn: ProcessAccountsFunc) =>
+      async (accounts: AccountAndPubkey[]) => {
+        await createPipelineExecutor(
+          accounts.values(),
+          account => fn(account, updater),
+          {
+            sequence: 10,
+            delay: 1,
+            jobsCount: 3,
+          },
+        );
+      };
 
 const postProcessMetadata = async (state: MetaState) => {
   const values = Object.values(state.metadataByMint);
