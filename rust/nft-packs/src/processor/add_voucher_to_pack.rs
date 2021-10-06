@@ -4,8 +4,9 @@ use crate::{
     find_pack_voucher_program_address, find_program_authority,
     instruction::AddVoucherToPackArgs,
     math::SafeMath,
-    state::{InitPackVoucherParams, PackSet, PackVoucher},
+    state::{InitPackVoucherParams, PackSet, PackVoucher, PackSetState},
     utils::*,
+    error::NFTPacksError,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -18,7 +19,7 @@ use solana_program::{
 use spl_token::state::Account;
 use spl_token_metadata::{
     error::MetadataError,
-    state::{MasterEditionV2, Metadata, EDITION, PREFIX},
+    state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
     utils::{assert_derivation, assert_initialized},
 };
 
@@ -47,13 +48,16 @@ pub fn add_voucher_to_pack(
     assert_owned_by(master_metadata_info, &spl_token_metadata::id())?;
 
     let AddVoucherToPackArgs {
-        max_supply,
         number_to_open,
         action_on_prove,
     } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
+
+    if pack_set.pack_state != PackSetState::NotActivated {
+        return Err(NFTPacksError::WrongPackStateToChangeData.into());
+    }
 
     // new pack voucher index
     let index = pack_set.pack_vouchers.error_increment()?;
@@ -84,7 +88,13 @@ pub fn add_voucher_to_pack(
     let token_metadata_program_id = spl_token_metadata::id();
 
     // Check for v2
-    let _master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
+    let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
+
+    if let Some(m_e_max_supply) = master_edition.max_supply() {
+        if (number_to_open as u64) > m_e_max_supply {
+            return Err(NFTPacksError::WrongNumberToOpen.into());
+        }
+    }
 
     let master_metadata = Metadata::from_account_info(master_metadata_info)?;
     assert_account_key(mint_info, &master_metadata.mint)?;
@@ -120,7 +130,7 @@ pub fn add_voucher_to_pack(
         source_info.clone(),
         token_account_info.clone(),
         authority_info.clone(),
-        1,
+        1,  // transfer master edition
         &[],
     )?;
 
@@ -129,7 +139,6 @@ pub fn add_voucher_to_pack(
         master: *master_edition_info.key,
         metadata: *master_metadata_info.key,
         token_account: *token_account_info.key,
-        max_supply,
         number_to_open,
         action_on_prove,
     });

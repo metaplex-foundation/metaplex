@@ -24,8 +24,8 @@ solana_program::declare_id!("Co1TG1QQyD9UyFxHWiUaEsPdWwH9adbYECwkuXKtQi5y");
 
 /// Default precision
 pub const PRECISION: u128 = 1000000000;
-/// Probability precision
-pub const PROBABILITY_PRECISION: u16 = 10000;
+/// Max probability value - 100% with precision
+pub const MAX_PROBABILITY_VALUE: u16 = 10000;
 
 /// Generates seed bump for authorities
 pub fn find_program_address(program_id: &Pubkey, pubkey: &Pubkey) -> (Pubkey, u8) {

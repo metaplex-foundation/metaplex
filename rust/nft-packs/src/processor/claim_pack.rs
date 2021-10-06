@@ -4,19 +4,22 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, MAX_LAG_SLOTS, PREFIX},
+    state::{
+        PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, MAX_LAG_SLOTS,
+        PREFIX,
+    },
     utils::*,
-    PROBABILITY_PRECISION,
+    MAX_PROBABILITY_VALUE,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
+    clock::Clock,
     entrypoint::ProgramResult,
     msg,
+    program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
-    program_error::ProgramError,
-    clock::Clock,
 };
 use spl_token_metadata::state::{MasterEditionV2, Metadata};
 use std::collections::hash_map::DefaultHasher;
@@ -169,10 +172,10 @@ fn get_card_probability(pack_set: &PackSet, pack_card: &PackCard) -> Result<u16,
 
             let probability = pack_card
                 .probability
-                .ok_or(NFTPacksError::CardProbabilityMissing)?
+                .ok_or(NFTPacksError::CardProbabilityMissing)? // it shouldn't happen because there is a check on AddCardToPack
                 .error_mul(u16::MAX)?
-                .error_div(PROBABILITY_PRECISION)?;
-            
+                .error_div(MAX_PROBABILITY_VALUE)?;
+
             Ok(probability)
         }
         PackDistributionType::MaxSupply => {
@@ -180,18 +183,21 @@ fn get_card_probability(pack_set: &PackSet, pack_card: &PackCard) -> Result<u16,
 
             let probability = ((pack_card.max_supply as u64)
                 .error_div(pack_set.total_editions)?
-                .error_mul(PROBABILITY_PRECISION as u64)?)
+                .error_mul(MAX_PROBABILITY_VALUE as u64)?)
             .error_mul(u16::MAX as u64)?
-            .error_div(PROBABILITY_PRECISION as u64)? as u16;
-            
+            .error_div(MAX_PROBABILITY_VALUE as u64)? as u16;
+
             Ok(probability)
         }
     }
 }
 
-fn get_random_oracle_value(randomness_oracle_account: &AccountInfo, clock: &Clock) -> Result<u16, ProgramError> {
+fn get_random_oracle_value(
+    randomness_oracle_account: &AccountInfo,
+    clock: &Clock,
+) -> Result<u16, ProgramError> {
     let (oracle_random_value, slot) =
-    randomness_oracle_program::read_value(randomness_oracle_account)?;
+        randomness_oracle_program::read_value(randomness_oracle_account)?;
 
     if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
         return Err(NFTPacksError::RandomOracleOutOfDate.into());
@@ -204,6 +210,6 @@ fn get_random_oracle_value(randomness_oracle_account: &AccountInfo, clock: &Cloc
 
     let mut random_value: [u8; 2] = [0u8; 2];
     random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..2]);
-    
+
     Ok(u16::from_le_bytes(random_value))
 }

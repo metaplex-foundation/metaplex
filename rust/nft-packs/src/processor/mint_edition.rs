@@ -55,56 +55,6 @@ pub struct MintEditionAccountsArgs<'a> {
     pub rent_program_account: &'a AccountInfo<'a>,
 }
 
-/// Process MintEditionWithCard instruction
-pub fn mint_edition_with_card<'a>(
-    program_id: &Pubkey,
-    accounts: &'a [AccountInfo<'a>],
-) -> ProgramResult {
-    let account_info_iter = &mut accounts.iter();
-
-    let accounts_args = MintEditionAccountsArgs {
-        pack_set_account: next_account_info(account_info_iter)?,
-        minting_authority_account: next_account_info(account_info_iter)?,
-        master_edition_holder_account: next_account_info(account_info_iter)?,
-        new_metadata_account: next_account_info(account_info_iter)?,
-        new_edition_account: next_account_info(account_info_iter)?,
-        master_edition_account: next_account_info(account_info_iter)?,
-        new_mint_account: next_account_info(account_info_iter)?,
-        new_mint_authority_account: next_account_info(account_info_iter)?,
-        payer_account: next_account_info(account_info_iter)?,
-        owner_account: next_account_info(account_info_iter)?,
-        token_account: next_account_info(account_info_iter)?,
-        update_authority_account: next_account_info(account_info_iter)?,
-        master_metadata_account: next_account_info(account_info_iter)?,
-        master_metadata_mint_account: next_account_info(account_info_iter)?,
-        edition_mark_account: next_account_info(account_info_iter)?,
-        token_program_account: next_account_info(account_info_iter)?,
-        system_program_account: next_account_info(account_info_iter)?,
-        rent_program_account: next_account_info(account_info_iter)?,
-    };
-
-    let mut pack_card: PackCard = PackCard::unpack(
-        &accounts_args
-            .master_edition_holder_account
-            .data
-            .borrow_mut(),
-    )?;
-
-    mint_edition(program_id, &pack_card, &accounts_args)?;
-
-    pack_card.increment_supply()?;
-
-    PackCard::pack(
-        pack_card,
-        *accounts_args
-            .master_edition_holder_account
-            .data
-            .borrow_mut(),
-    )?;
-
-    Ok(())
-}
-
 /// Process MintEditionWithVoucher instruction
 pub fn mint_edition_with_voucher<'a>(
     program_id: &Pubkey,
@@ -141,8 +91,6 @@ pub fn mint_edition_with_voucher<'a>(
     )?;
 
     mint_edition(program_id, &pack_voucher, &accounts_args)?;
-
-    pack_voucher.increment_supply()?;
 
     PackVoucher::pack(
         pack_voucher,

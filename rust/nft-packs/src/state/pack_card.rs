@@ -42,6 +42,7 @@ impl PackCard {
         self.metadata = params.metadata;
         self.token_account = params.token_account;
         self.max_supply = params.max_supply;
+        self.probability = params.probability;
     }
 }
 
@@ -57,6 +58,8 @@ pub struct InitPackCardParams {
     pub token_account: Pubkey,
     /// How many instances of this card will exists in a packs
     pub max_supply: u32,
+    /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
+    pub probability: Option<u16>,
 }
 
 impl Sealed for PackCard {}

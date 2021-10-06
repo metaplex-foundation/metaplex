@@ -15,10 +15,10 @@ use solana_program::{
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddCardToPackArgs {
-    /// How many instances of this card will exists in all packs
-    pub max_supply: Option<u32>,
-    /// Fixed number / probability-based
-    pub probability_type: PackDistributionType,
+    /// How many editions of this card will exists in pack
+    pub max_supply: u32,
+    /// Probability value, required only if PackSet distribution type == Fixed
+    pub probability: Option<u16>,
     /// Index
     pub index: u32,
 }
@@ -26,8 +26,6 @@ pub struct AddCardToPackArgs {
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddVoucherToPackArgs {
-    /// How many instances of this voucher will exists in all packs
-    pub max_supply: Option<u32>,
     /// How many vouchers of this type is required to open a pack
     pub number_to_open: u32,
     /// Burn / Redeem
@@ -58,28 +56,14 @@ pub struct InitPackSetArgs {
 pub struct EditPackSetArgs {
     /// Name
     pub name: Option<[u8; 32]>,
-    /// How many packs are available for redeeming
-    pub total_packs: Option<u32>,
     /// If true authority can make changes at deactivated phase
     pub mutable: Option<bool>,
-}
-
-/// Edit a PackCard arguments
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct EditPackCardArgs {
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
-    /// Fixed number / probability-based
-    pub distribution_type: Option<DistributionType>,
 }
 
 /// Edit a PackVoucher arguments
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct EditPackVoucherArgs {
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
     /// How many vouchers of this type is required to open a pack
     pub number_to_open: Option<u32>,
     /// Burn / redeem
@@ -297,21 +281,6 @@ pub enum NFTPacksInstruction {
     /// - mutable	Option<bool> (only can be changed from true to false)
     EditPack(EditPackSetArgs),
 
-    /// EditPackCard
-    ///
-    /// Edit pack card data.
-    ///
-    /// Accounts:
-    /// - read             pack_set
-    /// - signer           authority
-    /// - write            pack_card
-    ///
-    /// Parameters:
-    /// - max_supply	Option<u32>
-    /// - distribution_type	Option<enum[fixed number, probability based]>
-    /// - number_in_pack	Option<u64>
-    EditPackCard(EditPackCardArgs),
-
     /// EditPackVoucher
     ///
     /// Edit pack voucher data
@@ -320,38 +289,12 @@ pub enum NFTPacksInstruction {
     /// - read             pack_set
     /// - signer           authority
     /// - write            pack_voucher
+    /// - read             voucher_master
     ///
     /// Parameters:
-    /// - max_supply Option<u32>
     /// - number_to_open Option<u32>
     /// - action_on_prove Option<enum[burn, redeem]>
     EditPackVoucher(EditPackVoucherArgs),
-
-    /// MintEditionWithCard
-    ///
-    /// Mint new editions from card master edition
-    ///
-    /// Accounts:
-    /// - read                     pack_set
-    /// - signer                   minting_authority
-    /// - write                    pack_card
-    /// - write                    new_metadata
-    /// - write                    new_edition
-    /// - write                    master_edition
-    /// - write                    new_mint
-    /// - signer                   new_mint_authority
-    /// - signer                   payer
-    /// - signer                   token_account_owner
-    /// - read                     token_account
-    /// - read                     new_metadata_update_authority
-    /// - read                     metadata
-    /// - read                     metadata_mint
-    /// - write                    edition_mark_pda
-    /// - read                     spl_token program
-    /// - read                     system_program
-    /// - read                     rent
-    /// - read                     spl_token_metadata program
-    MintEditionWithCard,
 
     /// MintEditionWithVoucher
     ///
@@ -716,109 +659,25 @@ pub fn edit_pack(
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::EditPack(args), accounts)
 }
 
-/// Create `EditPackCard` instruction
-pub fn edit_pack_card(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    pack_card: &Pubkey,
-    authority: &Pubkey,
-    args: EditPackCardArgs,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new_readonly(*authority, true),
-        AccountMeta::new(*pack_card, false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::EditPackCard(args),
-        accounts,
-    )
-}
-
 /// Create `EditPackVoucher` instruction
 pub fn edit_pack_voucher(
     program_id: &Pubkey,
     pack_set: &Pubkey,
     pack_voucher: &Pubkey,
     authority: &Pubkey,
+    voucher_master: &Pubkey,
     args: EditPackVoucherArgs,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new_readonly(*pack_set, false),
         AccountMeta::new_readonly(*authority, true),
         AccountMeta::new(*pack_voucher, false),
+        AccountMeta::new_readonly(*voucher_master, false),
     ];
 
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::EditPackVoucher(args),
-        accounts,
-    )
-}
-
-/// Create `MintEditionWithCard` instruction
-#[allow(clippy::too_many_arguments)]
-pub fn mint_new_edition_from_card(
-    program_id: &Pubkey,
-    pack_set: &Pubkey,
-    minting_authority: &Pubkey,
-    pack_card: &Pubkey,
-    new_metadata: &Pubkey,
-    new_edition: &Pubkey,
-    master_edition: &Pubkey,
-    new_mint: &Pubkey,
-    new_mint_authority: &Pubkey,
-    payer: &Pubkey,
-    token_account_owner: &Pubkey,
-    token_account: &Pubkey,
-    new_metadata_update_authority: &Pubkey,
-    metadata: &Pubkey,
-    metadata_mint: &Pubkey,
-    index: u64,
-) -> Instruction {
-    let edition_number = index
-        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
-        .unwrap();
-    let as_string = edition_number.to_string();
-
-    let (edition_mark_pda, _) = Pubkey::find_program_address(
-        &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
-            metadata_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
-            as_string.as_bytes(),
-        ],
-        &spl_token_metadata::id(),
-    );
-
-    let accounts = vec![
-        AccountMeta::new_readonly(*pack_set, false),
-        AccountMeta::new_readonly(*minting_authority, true),
-        AccountMeta::new(*pack_card, false),
-        AccountMeta::new(*new_metadata, false),
-        AccountMeta::new(*new_edition, false),
-        AccountMeta::new(*master_edition, false),
-        AccountMeta::new(*new_mint, false),
-        AccountMeta::new_readonly(*new_mint_authority, true),
-        AccountMeta::new(*payer, true),
-        AccountMeta::new_readonly(*token_account_owner, false),
-        AccountMeta::new_readonly(*token_account, false),
-        AccountMeta::new_readonly(*new_metadata_update_authority, false),
-        AccountMeta::new_readonly(*metadata, false),
-        AccountMeta::new_readonly(*metadata_mint, false),
-        AccountMeta::new(edition_mark_pda, false),
-        AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(system_program::id(), false),
-        AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
-    ];
-
-    Instruction::new_with_borsh(
-        *program_id,
-        &NFTPacksInstruction::MintEditionWithCard,
         accounts,
     )
 }

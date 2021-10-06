@@ -39,10 +39,6 @@ pub struct PackVoucher {
     pub metadata: Pubkey,
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
-    /// How many cards already minted
-    pub current_supply: u32,
     /// How many vouchers of this type is required to open a pack
     pub number_to_open: u32,
     /// Burn / redeem
@@ -60,8 +56,6 @@ impl PackVoucher {
         self.master = params.master;
         self.metadata = params.metadata;
         self.token_account = params.token_account;
-        self.max_supply = params.max_supply;
-        self.current_supply = 0;
         self.number_to_open = params.number_to_open;
         self.action_on_prove = params.action_on_prove;
     }
@@ -77,8 +71,6 @@ pub struct InitPackVoucherParams {
     pub metadata: Pubkey,
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
-    /// How many instances of this card exists in all packs
-    pub max_supply: Option<u32>,
     /// How many vouchers of this type is required to open a pack
     pub number_to_open: u32,
     /// Burn / redeem
@@ -88,8 +80,8 @@ pub struct InitPackVoucherParams {
 impl Sealed for PackVoucher {}
 
 impl Pack for PackVoucher {
-    // 1 + 32 + 32 + 32 + 32 + (1 + 8) + 4 + 4 + 1
-    const LEN: usize = 147;
+    // 1 + 32 + 32 + 32 + 32 + 4 + 1
+    const LEN: usize = 134;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
@@ -129,9 +121,7 @@ impl MasterEditionHolder for PackVoucher {
         self.token_account
     }
 
-    fn increment_supply(&mut self) -> Result<(), ProgramError> {
-        self.current_supply = self.current_supply.error_increment()?;
-
+    fn decrement_supply(&mut self) -> Result<(), ProgramError> {
         Ok(())
     }
 }

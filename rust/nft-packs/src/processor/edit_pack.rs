@@ -34,7 +34,7 @@ pub fn edit_pack(
         return Err(NFTPacksError::ImmutablePackSet.into());
     }
 
-    if pack_set.pack_state == PackSetState::Activated {
+    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended {
         return Err(NFTPacksError::WrongPackState.into());
     }
 
@@ -51,13 +51,6 @@ fn apply_changes(pack_set: &mut PackSet, changes: EditPackSetArgs) -> Result<(),
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
         pack_set.name = new_name;
-    }
-
-    if let Some(new_total_packs) = changes.total_packs {
-        if new_total_packs < pack_set.pack_cards {
-            return Err(NFTPacksError::SmallTotalPacksAmount.into());
-        }
-        pack_set.total_packs = new_total_packs;
     }
 
     if let Some(new_mutable_value) = changes.mutable {

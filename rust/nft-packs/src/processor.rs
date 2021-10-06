@@ -12,10 +12,9 @@ use delete_pack::delete_pack;
 use delete_pack_card::delete_pack_card;
 use delete_pack_voucher::delete_pack_voucher;
 use edit_pack::edit_pack;
-use edit_pack_card::edit_pack_card;
 use edit_pack_voucher::edit_pack_voucher;
 use init_pack::init_pack;
-use mint_edition::{mint_edition_with_card, mint_edition_with_voucher};
+use mint_edition::mint_edition_with_voucher;
 use prove_ownership::prove_ownership;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
@@ -29,7 +28,6 @@ pub mod delete_pack;
 pub mod delete_pack_card;
 pub mod delete_pack_voucher;
 pub mod edit_pack;
-pub mod edit_pack_card;
 pub mod edit_pack_voucher;
 pub mod init_pack;
 pub mod mint_edition;
@@ -98,17 +96,9 @@ impl Processor {
                 msg!("Instruction: EditPack");
                 edit_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::EditPackCard(args) => {
-                msg!("Instruction: EditPackCard");
-                edit_pack_card(program_id, accounts, args)
-            }
             NFTPacksInstruction::EditPackVoucher(args) => {
                 msg!("Instruction: EditPackVoucher");
                 edit_pack_voucher(program_id, accounts, args)
-            }
-            NFTPacksInstruction::MintEditionWithCard => {
-                msg!("Instruction: MintEditionWithCard");
-                mint_edition_with_card(program_id, accounts)
             }
             NFTPacksInstruction::MintEditionWithVoucher => {
                 msg!("Instruction: MintEditionWithVoucher");

@@ -24,6 +24,10 @@ pub enum NFTPacksError {
     #[error("Card probability is missing")]
     CardProbabilityMissing,
 
+    /// Wrong card probability value
+    #[error("Wrong card probability value")]
+    WrongCardProbability,
+
     /// Proved vouchers mismatch pack vouchers
     #[error("Proved vouchers mismatch pack vouchers")]
     ProvedVouchersMismatchPackVouchers,
@@ -47,6 +51,10 @@ pub enum NFTPacksError {
     /// Pack set should be activated
     #[error("Pack set should be activated")]
     PackSetNotActivated,
+
+    /// Can't change pack data at current state
+    #[error("Can't change pack data at current state")]
+    WrongPackStateToChangeData,
 
     /// Proving process for this pack is completed
     #[error("Proving process for this pack is completed")]
@@ -104,8 +112,12 @@ pub enum NFTPacksError {
     #[error("Max supply can't be less then current supply")]
     SmallMaxSupply,
 
-    /// Number NFTs to open pack should be greater then zero
-    #[error("Number NFTs to open pack should be greater then zero")]
+    /// Wrong max supply value
+    #[error("Wrong max supply value")]
+    WrongMaxSupply,
+
+    /// Wrong amount of NFTs to open pack
+    #[error("Wrong amount of NFTs to open pack")]
     WrongNumberToOpen,
 
     /// Random oracle updated long time ago
