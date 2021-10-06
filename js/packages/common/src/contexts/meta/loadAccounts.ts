@@ -25,6 +25,7 @@ import {
   WhitelistedCreator,
   AuctionManagerV1,
   AuctionManagerV2,
+  getBidRedemption,
 } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -591,6 +592,38 @@ export const loadAuction = async (
   ]
 
   await Promise.all(rpcQueries);
+
+  const bidderRedemptionIds = await Promise.all(
+    Object
+      .values(state.bidderMetadataByAuctionAndBidder)
+      .map(bm => getBidRedemption(auctionManager.info.auction, bm.pubkey))
+  )
+
+  const bidRedemptionData = await getMultipleAccounts(
+    connection,
+    bidderRedemptionIds,
+    'single',
+  );
+
+  if (bidRedemptionData) {
+    await Promise.all(
+      bidRedemptionData.keys.map((pubkey, i) => {
+        const account = bidRedemptionData.array[i]
+
+        if (!account) {
+          return
+        }
+
+        processMetaplexAccounts(
+          {
+            pubkey,
+            account,
+          },
+          updateState,
+        );
+      }),
+    );
+  }
 
   return state;
 };
