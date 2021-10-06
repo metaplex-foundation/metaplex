@@ -1,8 +1,4 @@
 import {
-  AuctionManagerV1,
-  AuctionManagerV2,
-  BidRedemptionTicket,
-  BidRedemptionTicketV2,
   decodeAuctionManager,
   decodeBidRedemptionTicket,
   decodePayoutTicket,
@@ -11,16 +7,10 @@ import {
   decodeStore,
   decodeWhitelistedCreator,
   MetaplexKey,
-  PayoutTicket,
-  PrizeTrackingTicket,
-  SafetyDepositConfig,
-  Store,
-  WhitelistedCreator,
 } from "../../models/metaplex";
 import logger from "../../../logger";
 import { ProcessAccountsFunc } from "./types";
 import { METAPLEX_ID, AccountInfoOwnerString } from "../../utils";
-import { ParsedAccount } from "../accounts/types";
 
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
@@ -34,13 +24,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isAuctionManagerV2Account(account)
     ) {
       const auctionManager = decodeAuctionManager(account.data);
-
-      const parsedAccount: ParsedAccount<AuctionManagerV1 | AuctionManagerV2> =
-        {
-          pubkey,
-          info: auctionManager,
-        };
-      setter("auctionManagersByAuction", auctionManager.auction, parsedAccount);
+      await setter("auctionManager", pubkey, auctionManager);
     }
 
     if (
@@ -48,80 +32,35 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isBidRedemptionTicketV2Account(account)
     ) {
       const ticket = decodeBidRedemptionTicket(account.data);
-      const parsedAccount: ParsedAccount<BidRedemptionTicket> = {
-        pubkey,
-        info: ticket,
-      };
-      setter("bidRedemptions", pubkey, parsedAccount);
-
-      if (ticket.key == MetaplexKey.BidRedemptionTicketV2) {
-        const asV2 = ticket as BidRedemptionTicketV2;
-        if (asV2.winnerIndex) {
-          setter(
-            "bidRedemptionV2sByAuctionManagerAndWinningIndex",
-            asV2.auctionManager + "-" + asV2.winnerIndex.toNumber(),
-            parsedAccount
-          );
-        }
-      }
+      await setter("bidRedemption", pubkey, ticket);
     }
 
     if (isPayoutTicketV1Account(account)) {
       const ticket = decodePayoutTicket(account.data);
-      const parsedAccount: ParsedAccount<PayoutTicket> = {
-        pubkey,
-        info: ticket,
-      };
-      setter("payoutTickets", pubkey, parsedAccount);
+      await setter("payoutTicket", pubkey, ticket);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
       const ticket = decodePrizeTrackingTicket(account.data);
-      const parsedAccount: ParsedAccount<PrizeTrackingTicket> = {
-        pubkey,
-        info: ticket,
-      };
-      setter("prizeTrackingTickets", pubkey, parsedAccount);
-    }
-
-    if (isStoreV1Account(account)) {
-      const store = decodeStore(account.data);
-      const parsedAccount: ParsedAccount<Store> = {
-        pubkey,
-        info: store,
-      };
-      setter("stores", pubkey, parsedAccount);
+      await setter("prizeTrackingTicket", pubkey, ticket);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {
       const config = decodeSafetyDepositConfig(account.data);
-      const parsedAccount: ParsedAccount<SafetyDepositConfig> = {
-        pubkey,
-        info: config,
-      };
-      setter(
-        "safetyDepositConfigsByAuctionManagerAndIndex",
-        config.auctionManager + "-" + config.order.toNumber(),
-        parsedAccount
-      );
+      await setter("safetyDepositConfig", pubkey, config);
+    }
+
+    if (isStoreV1Account(account)) {
+      const store = decodeStore(account.data);
+      await setter("store", pubkey, store);
     }
 
     if (isWhitelistedCreatorV1Account(account)) {
       const creator = decodeWhitelistedCreator(account.data);
-      const parsedAccount: ParsedAccount<WhitelistedCreator> = {
-        pubkey,
-        info: creator,
-      };
-      setter(
-        "creators",
-        parsedAccount.info.address + "-" + pubkey,
-        parsedAccount
-      );
+      await setter("creator", pubkey, creator);
     }
   } catch (err) {
-    logger.error(err);
-    // ignore errors
-    // add type as first byte for easier deserialization
+    logger.warn(err);
   }
 };
 

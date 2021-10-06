@@ -1,10 +1,12 @@
 import { ObjectId } from "mongodb";
-import { StringPublicKey } from "../../utils";
+import { PublicKey } from "@solana/web3.js";
+import { StringPublicKey, toPublicKey, programIds } from "../../utils";
 import { Data } from "./Data";
 import { getEdition } from "../metadata/getEdition";
 import { MetadataKey } from "../metadata/MetadataKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
 import { ObjectIdConverter } from "../../../api/mongo";
+import { METADATA_PREFIX } from "../../actions/metadata/constants";
 @Serializable()
 export class Metadata {
   @JsonProperty(ObjectIdConverter)
@@ -61,8 +63,22 @@ export class Metadata {
   }
 
   public async init() {
-    const edition = await getEdition(this.mint);
-    this.edition = edition;
-    this.masterEdition = edition;
+    const metadata = toPublicKey(programIds().metadata);
+    if (this.editionNonce !== null) {
+      this.edition = (
+        await PublicKey.createProgramAddress(
+          [
+            Buffer.from(METADATA_PREFIX),
+            metadata.toBuffer(),
+            toPublicKey(this.mint).toBuffer(),
+            new Uint8Array([this.editionNonce || 0]),
+          ],
+          metadata
+        )
+      ).toBase58();
+    } else {
+      this.edition = await getEdition(this.mint);
+    }
+    this.masterEdition = this.edition;
   }
 }

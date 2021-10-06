@@ -1,16 +1,9 @@
 import logger from "../../../logger";
-import {
-  decodeSafetyDeposit,
-  decodeVault,
-  SafetyDepositBox,
-  Vault,
-  VaultKey,
-} from "../../actions";
+import { decodeSafetyDeposit, decodeVault, VaultKey } from "../../actions";
 import { VAULT_ID, AccountInfoOwnerString } from "../../utils";
-import { ParsedAccount } from "../accounts/types";
 import { ProcessAccountsFunc } from "./types";
 
-export const processVaultData: ProcessAccountsFunc = (
+export const processVaultData: ProcessAccountsFunc = async (
   { account, pubkey },
   setter
 ) => {
@@ -19,29 +12,15 @@ export const processVaultData: ProcessAccountsFunc = (
   try {
     if (isSafetyDepositBoxV1Account(account)) {
       const safetyDeposit = decodeSafetyDeposit(account.data);
-      const parsedAccount: ParsedAccount<SafetyDepositBox> = {
-        pubkey,
-        info: safetyDeposit,
-      };
-      setter(
-        "safetyDepositBoxesByVaultAndIndex",
-        safetyDeposit.vault + "-" + safetyDeposit.order,
-        parsedAccount
-      );
+      await setter("safetyDepositBox", pubkey, safetyDeposit);
     }
     if (isVaultV1Account(account)) {
       const vault = decodeVault(account.data);
-      const parsedAccount: ParsedAccount<Vault> = {
-        pubkey,
-        info: vault,
-      };
 
-      setter("vaults", pubkey, parsedAccount);
+      await setter("vault", pubkey, vault);
     }
   } catch (err) {
-    logger.error(err);
-    // ignore errors
-    // add type as first byte for easier deserialization
+    logger.warn(err);
   }
 };
 

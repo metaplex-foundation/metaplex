@@ -14,7 +14,6 @@ import {
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
-  BidRedemptionTicketV2,
   PayoutTicket,
   PrizeTrackingTicket,
   SafetyDepositConfig,
@@ -23,59 +22,42 @@ import {
 } from "../../models";
 
 import { PublicKeyStringAndAccount, AccountInfoOwnerString } from "../../utils";
-import { ParsedAccount } from "../accounts/types";
 
-export interface MetaState {
-  metadata: ParsedAccount<Metadata>[];
-  metadataByMint: Map<string, ParsedAccount<Metadata>>;
-  metadataByMasterEdition: Map<string, ParsedAccount<Metadata>>;
-  editions: Map<string, ParsedAccount<Edition>>;
-  masterEditions: Map<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>;
-  masterEditionsByPrintingMint: Map<string, ParsedAccount<MasterEditionV1>>;
-  masterEditionsByOneTimeAuthMint: Map<string, ParsedAccount<MasterEditionV1>>;
-  prizeTrackingTickets: Map<string, ParsedAccount<PrizeTrackingTicket>>;
-  auctionManagersByAuction: Map<
-    string,
-    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
-  >;
-  safetyDepositConfigsByAuctionManagerAndIndex: Map<
-    string,
-    ParsedAccount<SafetyDepositConfig>
-  >;
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: Map<
-    string,
-    ParsedAccount<BidRedemptionTicketV2>
-  >;
-  auctions: Map<string, ParsedAccount<AuctionData>>;
-  auctionDataExtended: Map<string, ParsedAccount<AuctionDataExtended>>;
-  vaults: Map<string, ParsedAccount<Vault>>;
-  bidderMetadataByAuctionAndBidder: Map<string, ParsedAccount<BidderMetadata>>;
-  safetyDepositBoxesByVaultAndIndex: Map<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >;
-  bidderPotsByAuctionAndBidder: Map<string, ParsedAccount<BidderPot>>;
-  bidRedemptions: Map<string, ParsedAccount<BidRedemptionTicket>>;
-  whitelistedCreatorsByCreator: Map<string, ParsedAccount<WhitelistedCreator>>;
-  payoutTickets: Map<string, ParsedAccount<PayoutTicket>>;
-  stores: Map<string, ParsedAccount<Store>>;
-  creators: Map<string, ParsedAccount<WhitelistedCreator>>;
-}
+export type MetaMap = {
+  vault: Vault;
+  safetyDepositBox: SafetyDepositBox;
+  auction: AuctionData;
+  auctionDataExtended: AuctionDataExtended;
+  bidderMetadata: BidderMetadata;
+  bidderPot: BidderPot;
+  auctionManager: AuctionManagerV1 | AuctionManagerV2;
+  bidRedemption: BidRedemptionTicket;
+  payoutTicket: PayoutTicket;
+  prizeTrackingTicket: PrizeTrackingTicket;
+  safetyDepositConfig: SafetyDepositConfig;
+  store: Store;
+  creator: WhitelistedCreator;
+  metadata: Metadata;
+  edition: Edition;
+  masterEdition: MasterEditionV1 | MasterEditionV2;
+};
 
-export interface MetaContextState extends MetaState {
-  isLoading: boolean;
-}
+type MapTree<T> = {
+  [K in keyof T]: Map<string, T[K]>;
+};
 
-export type UpdateStateValueFunc = (
-  prop: keyof Omit<MetaState, "metadata">,
+export type MetaState = MapTree<MetaMap>;
+
+export type UpdateStateValueFunc<T = MetaMap, K extends keyof T = keyof T> = (
+  prop: K,
   key: string,
-  value: ParsedAccount<any>
-) => void;
+  value: T[K]
+) => Promise<void>;
 
 export type ProcessAccountsFunc = (
   account: PublicKeyStringAndAccount<Buffer>,
   setter: UpdateStateValueFunc
-) => void;
+) => Promise<void>;
 
 export type CheckAccountFunc = (
   account: AccountInfoOwnerString<Buffer>

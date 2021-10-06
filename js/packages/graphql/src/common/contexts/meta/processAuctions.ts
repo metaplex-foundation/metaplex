@@ -1,8 +1,4 @@
 import {
-  AuctionData,
-  AuctionDataExtended,
-  BidderMetadata,
-  BidderPot,
   BIDDER_METADATA_LEN,
   BIDDER_POT_LEN,
   decodeAuction,
@@ -12,10 +8,9 @@ import {
   MAX_AUCTION_DATA_EXTENDED_SIZE,
 } from "../../actions";
 import { AUCTION_ID } from "../../utils";
-import { ParsedAccount } from "../accounts/types";
 import { CheckAccountFunc, ProcessAccountsFunc } from "./types";
 
-export const processAuctions: ProcessAccountsFunc = (
+export const processAuctions: ProcessAccountsFunc = async (
   { account, pubkey },
   setter
 ) => {
@@ -23,64 +18,36 @@ export const processAuctions: ProcessAccountsFunc = (
 
   try {
     const auction = decodeAuction(account.data);
-    const parsedAccount: ParsedAccount<AuctionData> = { pubkey, info: auction };
-    setter("auctions", pubkey, parsedAccount);
-  } catch (e) {
+    await setter("auction", pubkey, auction);
+  } catch {
     // ignore errors
-    // add type as first byte for easier deserialization
   }
 
   try {
     if (isExtendedAuctionAccount(account)) {
       const extendedAuction = decodeAuctionDataExtended(account.data);
-
-      const parsedAccount: ParsedAccount<AuctionDataExtended> = {
-        pubkey,
-        info: extendedAuction,
-      };
-      setter("auctionDataExtended", pubkey, parsedAccount);
+      await setter("auctionDataExtended", pubkey, extendedAuction);
     }
   } catch {
     // ignore errors
-    // add type as first byte for easier deserialization
   }
 
   try {
     if (isBidderMetadataAccount(account)) {
       const bidderMetadata = decodeBidderMetadata(account.data);
-      const parsedAccount: ParsedAccount<BidderMetadata> = {
-        pubkey,
-        info: bidderMetadata,
-      };
-      setter(
-        "bidderMetadataByAuctionAndBidder",
-        parsedAccount.info.auctionPubkey +
-          "-" +
-          parsedAccount.info.bidderPubkey,
-        parsedAccount
-      );
+      await setter("bidderMetadata", pubkey, bidderMetadata);
     }
   } catch {
     // ignore errors
-    // add type as first byte for easier deserialization
   }
 
   try {
     if (isBidderPotAccount(account)) {
       const bidderPot = decodeBidderPot(account.data);
-      const parsedAccount: ParsedAccount<BidderPot> = {
-        pubkey,
-        info: bidderPot,
-      };
-      setter(
-        "bidderPotsByAuctionAndBidder",
-        parsedAccount.info.auctionAct + "-" + parsedAccount.info.bidderAct,
-        parsedAccount
-      );
+      await setter("bidderPot", pubkey, bidderPot);
     }
-  } catch {
+  } catch (err) {
     // ignore errors
-    // add type as first byte for easier deserialization
   }
 };
 
