@@ -1,20 +1,15 @@
-import { ProcessAccountsFunc } from "./types";
-import { isValidHttpUrl } from "../../utils/isValidHttpUrl";
+import logger from "../../../logger";
 import {
   decodeEdition,
   decodeMasterEdition,
   decodeMetadata,
-  Edition,
-  MasterEditionV1,
-  MasterEditionV2,
-  Metadata,
   MetadataKey,
 } from "../../actions";
-import { ParsedAccount } from "../accounts/types";
-import { METADATA_PROGRAM_ID, AccountInfoOwnerString } from "../../utils";
-import logger from "../../../logger";
+import { AccountInfoOwnerString, METADATA_PROGRAM_ID } from "../../utils";
+import { isValidHttpUrl } from "../../utils/isValidHttpUrl";
+import { ProcessAccountsFunc } from "./types";
 
-export const processMetaData: ProcessAccountsFunc = (
+export const processMetaData: ProcessAccountsFunc = async (
   { account, pubkey },
   setter
 ) => {
@@ -28,56 +23,22 @@ export const processMetaData: ProcessAccountsFunc = (
         isValidHttpUrl(metadata.data.uri) &&
         metadata.data.uri.indexOf("arweave") >= 0
       ) {
-        const parsedAccount: ParsedAccount<Metadata> = {
-          pubkey,
-          info: metadata,
-        };
-        setter("metadataByMint", metadata.mint, parsedAccount);
+        await metadata.init();
+        await setter("metadata", pubkey, metadata);
       }
     }
 
     if (isEditionV1Account(account)) {
       const edition = decodeEdition(account.data);
-      const parsedAccount: ParsedAccount<Edition> = {
-        pubkey,
-        info: edition,
-      };
-      setter("editions", pubkey, parsedAccount);
+      await setter("edition", pubkey, edition);
     }
 
     if (isMasterEditionAccount(account)) {
       const masterEdition = decodeMasterEdition(account.data);
-
-      if (isMasterEditionV1(masterEdition)) {
-        const parsedAccount: ParsedAccount<MasterEditionV1> = {
-          pubkey,
-          info: masterEdition,
-        };
-        setter("masterEditions", pubkey, parsedAccount);
-
-        setter(
-          "masterEditionsByPrintingMint",
-          masterEdition.printingMint,
-          parsedAccount
-        );
-
-        setter(
-          "masterEditionsByOneTimeAuthMint",
-          masterEdition.oneTimePrintingAuthorizationMint,
-          parsedAccount
-        );
-      } else {
-        const parsedAccount: ParsedAccount<MasterEditionV2> = {
-          pubkey,
-          info: masterEdition,
-        };
-        setter("masterEditions", pubkey, parsedAccount);
-      }
+      await setter("masterEdition", pubkey, masterEdition);
     }
   } catch (err) {
-    logger.error(err);
-    // ignore errors
-    // add type as first byte for easier deserialization
+    logger.warn(err);
   }
 };
 
@@ -94,7 +55,3 @@ const isEditionV1Account = (account: AccountInfoOwnerString<Buffer>) =>
 const isMasterEditionAccount = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === MetadataKey.MasterEditionV1 ||
   account.data[0] === MetadataKey.MasterEditionV2;
-
-const isMasterEditionV1 = (
-  me: MasterEditionV1 | MasterEditionV2
-): me is MasterEditionV1 => me.key === MetadataKey.MasterEditionV1;
