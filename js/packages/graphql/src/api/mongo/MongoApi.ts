@@ -14,6 +14,9 @@ import {
   ParticipationConfigV1,
   SafetyDepositBox,
   Vault,
+  Edition,
+  MasterEditionV1,
+  MasterEditionV2,
 } from "../../common";
 import { ResolverFn } from "graphql-subscriptions";
 import { Fields, Auction, Artwork, AuctionManager } from "types/sourceTypes";
@@ -52,17 +55,33 @@ export class MongoApi implements IMetaplexApi {
     private db: Db
   ) {}
 
+  getVault(id?: string) {
+    const filters = { _id: new ObjectId(id) };
+    return this.table<Vault>(Vault).findOne(filters);
+  }
+
+  getEdition(id?: string) {
+    if (!id) {
+      return Promise.resolve(null);
+    }
+    return this.table<Edition>(Edition).findOne({ _id: new ObjectId(id) });
+  }
+  async getMasterEdition(id?: string) {
+    const filter = { _id: new ObjectId(id) };
+    const result = await this.table<MasterEditionV1>(MasterEditionV1).findOne(
+      filter
+    );
+    if (result) {
+      return result;
+    }
+
+    return this.table<MasterEditionV2>(MasterEditionV2).findOne(filter);
+  }
+
   getAuctionBids(auction: Auction): Promise<Fields<BidderMetadata>[]> {
     throw new Error("Method not implemented.");
   }
-  getManagerVault(manager: AuctionManager): Promise<Fields<Vault> | null> {
-    throw new Error("Method not implemented.");
-  }
-  getSafetyDepositBoxesExpected(
-    manager: AuctionManager
-  ): Promise<import("bn.js") | null> {
-    throw new Error("Method not implemented.");
-  }
+
   getSafetyDepositBoxes(
     manager: AuctionManager
   ): Promise<Fields<SafetyDepositBox>[]> {
@@ -183,18 +202,6 @@ export class MongoApi implements IMetaplexApi {
     throw new Error("Method not implemented.");
   }
   getAuctionThumbnail(auction: Auction): Promise<Fields<Metadata> | null> {
-    throw new Error("Method not implemented.");
-  }
-  artType(item: Artwork): Promise<0 | 1 | 2> {
-    throw new Error("Method not implemented.");
-  }
-  artSupply(item: Artwork): Promise<import("bn.js") | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  artMaxSupply(item: Artwork): Promise<import("bn.js") | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  artEditionNumber(item: Artwork): Promise<import("bn.js") | undefined> {
     throw new Error("Method not implemented.");
   }
 

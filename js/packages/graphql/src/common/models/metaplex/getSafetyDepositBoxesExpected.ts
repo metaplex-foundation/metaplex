@@ -7,8 +7,8 @@ import {
 } from "../../../common";
 
 export function getSafetyDepositBoxesExpected(
-  manager: AuctionManagerV2 | AuctionManagerV1,
-  vault: Vault
+  manager: Pick<AuctionManagerV2 | AuctionManagerV1, "state" | "key">,
+  vault: Pick<Vault, "tokenTypeCount">
 ) {
   return manager.key == MetaplexKey.AuctionManagerV2
     ? new BN(vault.tokenTypeCount)

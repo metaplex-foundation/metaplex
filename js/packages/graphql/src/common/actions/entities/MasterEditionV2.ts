@@ -9,6 +9,10 @@ export class MasterEditionV2 {
   @JsonProperty(ObjectIdConverter)
   _id!: ObjectId;
 
+  get pubkey() {
+    return this._id.toString();
+  }
+
   @JsonProperty()
   key: MetadataKey = MetadataKey.MasterEditionV2;
 

@@ -1,6 +1,7 @@
 import { DataSource, DataSourceConfig } from "apollo-datasource";
 import { Context } from "../types/context";
 import type { IMetaplexApi } from "./IMetaplexApi";
+import { MetaplexService } from "./MetaplexService";
 export class MetaplexApiDataSource<
   TContext extends Context = Context
 > extends DataSource<TContext> {
@@ -18,6 +19,7 @@ export class MetaplexApiDataSource<
       this.ENTRIES.find((entry) => entry.network === context.network) ??
       this.ENTRIES[0];
     context.api = entry;
+    context.service = new MetaplexService(entry);
   }
 
   // implementation for DataSource of apollo-datasource

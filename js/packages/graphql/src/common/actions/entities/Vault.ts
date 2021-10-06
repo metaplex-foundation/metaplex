@@ -11,6 +11,10 @@ export class Vault {
   @JsonProperty(ObjectIdConverter)
   _id!: ObjectId;
 
+  get pubkey() {
+    return this._id.toString();
+  }
+
   @JsonProperty()
   key!: VaultKey;
 

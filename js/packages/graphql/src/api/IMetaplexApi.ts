@@ -1,7 +1,9 @@
 import type { FilterFn, IEvent } from "api";
-import type BN from "bn.js";
 import type {
   BidderMetadata,
+  Edition,
+  MasterEditionV1,
+  MasterEditionV2,
   Metadata,
   MetaState,
   ParsedAccount,
@@ -13,12 +15,7 @@ import type {
 } from "../common";
 import type { NexusGenInputs } from "generated/typings";
 import type { ResolverFn } from "graphql-subscriptions";
-import type {
-  Artwork,
-  Auction,
-  AuctionManager,
-  Fields,
-} from "types/sourceTypes";
+import type { Auction, AuctionManager, Fields } from "types/sourceTypes";
 
 export type TPropNames = keyof MetaState;
 
@@ -77,17 +74,16 @@ export interface IMetaplexApi extends IMetaplexApiWrite {
   ): Promise<Fields<BidderMetadata> | null>;
   getAuctionThumbnail(auction: Auction): Promise<Fields<Metadata> | null>;
   getAuctionBids(auction: Auction): Promise<Fields<BidderMetadata>[]>;
-  getManagerVault(manager: AuctionManager): Promise<Fields<Vault> | null>;
-  getSafetyDepositBoxesExpected(manager: AuctionManager): Promise<BN | null>;
   getSafetyDepositBoxes(
     manager: AuctionManager
   ): Promise<Fields<SafetyDepositBox>[]>;
   getParticipationConfig(
     manager: AuctionManager
   ): Promise<ParticipationConfigV1 | null>;
+  getEdition(id?: string): Promise<Fields<Edition> | null>;
+  getMasterEdition(
+    id?: string
+  ): Promise<Fields<MasterEditionV1 | MasterEditionV2> | null>;
 
-  artType(item: Artwork): Promise<0 | 1 | 2>;
-  artSupply(item: Artwork): Promise<BN | undefined>;
-  artMaxSupply(item: Artwork): Promise<BN | undefined>;
-  artEditionNumber(item: Artwork): Promise<BN | undefined>;
+  getVault(id?: string): Promise<Fields<Vault> | null>;
 }

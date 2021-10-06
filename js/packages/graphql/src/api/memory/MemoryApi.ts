@@ -4,13 +4,12 @@ import {
   ParsedAccount,
   getEmptyState,
   getSafetyDepositBoxes,
-  getSafetyDepositBoxesExpected,
 } from "../../common";
 import { NexusGenInputs } from "../../generated/typings";
 import { loadUserTokenAccounts } from "../../utils/loadUserTokenAccounts";
 import { listWrapPubkey, wrapPubkey } from "../../utils/mapInfo";
 import { FilterFn, IEvent, StateProvider } from "../StateProvider";
-import { Artwork, Auction, AuctionManager } from "../../types/sourceTypes";
+import { Auction, AuctionManager } from "../../types/sourceTypes";
 import { IMetaplexApi, TPropNames } from "../IMetaplexApi";
 import { filterByParticipant } from "./filterByParticipant";
 import { filterByState } from "./filterByState";
@@ -220,42 +219,15 @@ export class MemoryApi implements IMetaplexApi {
   }
 
   // artwork
-  private async artEditions(item: Artwork) {
+
+  public async getEdition(id?: string) {
     const state = await this.state;
-    const edition = item.edition ? state.editions.get(item.edition) : undefined;
-    const meEdition = edition?.info.parent
-      ? state.masterEditions.get(edition?.info.parent)
-      : undefined;
-    const masterEdition = item.masterEdition
-      ? state.masterEditions.get(item.masterEdition)
-      : undefined;
-    return { edition, meEdition, masterEdition };
+    return (id ? state.editions.get(id)?.info : null) ?? null;
   }
 
-  public async artType(item: Artwork) {
-    const { meEdition, masterEdition } = await this.artEditions(item);
-    if (meEdition) {
-      return 1;
-    }
-    if (masterEdition) {
-      return 0;
-    }
-    return 2;
-  }
-
-  public async artEditionNumber(item: Artwork) {
-    const { edition, meEdition } = await this.artEditions(item);
-    return meEdition ? edition?.info.edition : undefined;
-  }
-
-  public async artSupply(item: Artwork) {
-    const { meEdition, masterEdition } = await this.artEditions(item);
-    return meEdition?.info.supply || masterEdition?.info.supply;
-  }
-
-  public async artMaxSupply(item: Artwork) {
-    const { masterEdition } = await this.artEditions(item);
-    return masterEdition?.info.maxSupply;
+  public async getMasterEdition(id?: string) {
+    const state = await this.state;
+    return (id ? state.masterEditions.get(id)?.info : null) ?? null;
   }
 
   // auction
@@ -286,15 +258,9 @@ export class MemoryApi implements IMetaplexApi {
     return listWrapPubkey(bids);
   }
 
-  public async getManagerVault(manager: AuctionManager) {
+  public async getVault(id?: string) {
     const state = await this.state;
-    const vault = state.vaults.get(manager.vault);
-    return vault ? wrapPubkey(vault) : null;
-  }
-
-  public async getSafetyDepositBoxesExpected(manager: AuctionManager) {
-    const vault = await this.getManagerVault(manager);
-    return vault ? getSafetyDepositBoxesExpected(manager, vault) : null;
+    return (id ? state.vaults.get(id)?.info : null) ?? null;
   }
 
   public async getSafetyDepositBoxes(manager: AuctionManager) {

@@ -15,16 +15,16 @@ export const Artwork = objectType({
       resolve: (item) => item.data.sellerFeeBasisPoints || 0,
     });
     t.nonNull.int("type", {
-      resolve: (item, args, { api }) => api.artType(item),
+      resolve: (item, args, { service }) => service.artType(item),
     });
     t.bn("supply", {
-      resolve: (item, args, { api }) => api.artSupply(item),
+      resolve: (item, args, { service }) => service.artSupply(item),
     });
     t.bn("maxSupply", {
-      resolve: (item, args, { api }) => api.artMaxSupply(item),
+      resolve: (item, args, { service }) => service.artMaxSupply(item),
     });
     t.bn("edition", {
-      resolve: (item, args, { api }) => api.artEditionNumber(item),
+      resolve: (item, args, { service }) => service.artEditionNumber(item),
     });
   },
 });

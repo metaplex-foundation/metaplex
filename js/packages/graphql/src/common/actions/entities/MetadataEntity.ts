@@ -10,6 +10,10 @@ export class Metadata {
   @JsonProperty(ObjectIdConverter)
   _id!: ObjectId;
 
+  get pubkey() {
+    return this._id.toString();
+  }
+
   @JsonProperty()
   key: MetadataKey = MetadataKey.MetadataV1;
 
