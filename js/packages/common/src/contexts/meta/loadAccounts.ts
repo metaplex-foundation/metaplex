@@ -68,17 +68,127 @@ export const pullPage = async (
   tempCache: MetaState = getEmptyMetaState(),
 ) => {
   const updateTemp = makeSetter(tempCache);
-  const pageZero = await getStoreIndexer(page);
-  const account = await connection.getAccountInfo(new PublicKey(pageZero));
+  const pageKey = await getStoreIndexer(page);
+  const account = await connection.getAccountInfo(new PublicKey(pageKey));
 
   if (account) {
     processMetaplexAccounts(
       {
-        pubkey: pageZero,
-        account: account,
+        pubkey: pageKey,
+        account,
       },
       updateTemp,
     );
+
+    const newPage = tempCache.storeIndexer.find(s => s.pubkey == pageKey);
+
+    const auctionCaches = await getMultipleAccounts(
+      connection,
+      newPage?.info.auctionCaches || [],
+      'single',
+    );
+
+    if (auctionCaches && auctionCaches.keys.length) {
+      console.log(
+        '-------->Page ',
+        page,
+        ' found',
+        auctionCaches.keys.length,
+        ' cached auction data',
+      );
+      auctionCaches.keys.map((pubkey, i) => {
+        processMetaplexAccounts(
+          {
+            pubkey,
+            account: auctionCaches.array[i],
+          },
+          updateTemp,
+        );
+      });
+
+      const batches: Array<StringPublicKey[]> = [];
+
+      const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
+      let currBatch: StringPublicKey[] = [];
+      for (let i = 0; i < auctionCaches.keys.length; i++) {
+        const cache = tempCache.auctionCaches[auctionCaches.keys[i]];
+
+        const totalNewAccountsToAdd = cache.info.metadata.length + 3;
+
+        if (
+          totalNewAccountsToAdd + currBatch.length >
+          MULTIPLE_ACCOUNT_BATCH_SIZE
+        ) {
+          batches.push(currBatch);
+          currBatch = [];
+        } else {
+          let newAdd = [
+            ...cache.info.metadata,
+            cache.info.auction,
+            cache.info.auctionManager,
+            cache.info.vault,
+          ];
+          currBatch = currBatch.concat(newAdd);
+        }
+      }
+
+      if (
+        currBatch.length > 0 &&
+        currBatch.length <= MULTIPLE_ACCOUNT_BATCH_SIZE
+      ) {
+        batches.push(currBatch);
+      }
+
+      console.log(
+        '------> From account caches for page',
+        page,
+        'produced',
+        batches.length,
+        'batches of accounts to pull',
+      );
+      for (let i = 0; i < batches.length; i++) {
+        const accounts = await getMultipleAccounts(
+          connection,
+          batches[i],
+          'single',
+        );
+        if (accounts) {
+          console.log('------->Pulled batch', i, 'processing....');
+          accounts.keys.map((pubkey, i) => {
+            processMetaplexAccounts(
+              {
+                pubkey,
+                account: accounts.array[i],
+              },
+              updateTemp,
+            );
+            processVaultData(
+              {
+                pubkey,
+                account: accounts.array[i],
+              },
+              updateTemp,
+            );
+            processMetaData(
+              {
+                pubkey,
+                account: accounts.array[i],
+              },
+              updateTemp,
+            );
+            processAuctions(
+              {
+                pubkey,
+                account: accounts.array[i],
+              },
+              updateTemp,
+            );
+          });
+        } else {
+          console.log('------->Failed to pull batch', i, 'skipping');
+        }
+      }
+    }
   }
   return tempCache;
 };
