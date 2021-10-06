@@ -195,8 +195,8 @@ export const AuctionManager = objectType({
     t.nonNull.pubkey("vault");
     t.nonNull.pubkey("acceptPayment");
     t.nonNull.bn("safetyDepositBoxesExpected", {
-      resolve: async (item, args, { api }) =>
-        api.getSafetyDepositBoxesExpected(item),
+      resolve: async (item, args, { service }) =>
+        service.getSafetyDepositBoxesExpected(item),
     });
     t.nonNull.field("safetyDepositBoxes", {
       type: list(nonNull(SafetyDepositBox)),
