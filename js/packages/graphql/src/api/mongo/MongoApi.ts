@@ -114,9 +114,7 @@ export class MongoApi implements IMetaplexApi {
     ]);
     if (!store) return [];
     const defers = creators.map(async (creator) => {
-      const isWhitelistedCreator = await isCreatorPartOfTheStore(
-        creator.address,
-        creator.pubkey,
+      const isWhitelistedCreator = await creator.isCreatorPartOfTheStore(
         storeId
       );
       return isWhitelistedCreator ? creator : undefined;
