@@ -121,7 +121,7 @@ pub mod nft_candy_machine {
         for c in &config.data.creators {
             creators.push(spl_token_metadata::state::Creator {
                 address: c.address,
-                verified: true,
+                verified: false,
                 share: c.share,
             });
         }
@@ -164,7 +164,7 @@ pub mod nft_candy_machine {
                 config_line.uri,
                 Some(creators),
                 config.data.seller_fee_basis_points,
-                false,
+                true,
                 config.data.is_mutable,
             ),
             metadata_infos.as_slice(),

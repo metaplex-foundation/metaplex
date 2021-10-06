@@ -3,9 +3,9 @@ import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
+import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
   AuctionView as Auction,
-  AuctionViewItem,
   useArt,
   useAuction,
   useBidsForAuction,
@@ -34,6 +34,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
+import { ClickToCopy  } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -226,7 +227,7 @@ export const AuctionView = () => {
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && <AuctionCard auctionView={auction} />}
-          <AuctionBids auctionView={auction} />
+          {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
       </Row>
     </>
@@ -331,13 +332,19 @@ const BidLine = (props: {
             address={bidder}
           />{' '}
           {bidderTwitterHandle ? (
-            <a
-              target="_blank"
-              title={shortenAddress(bidder)}
-              href={`https://twitter.com/${bidderTwitterHandle}`}
-            >{`@${bidderTwitterHandle}`}</a>
+            <Row className="pubkey-row"> 
+              <a
+                target="_blank"
+                title={shortenAddress(bidder)}
+                href={`https://twitter.com/${bidderTwitterHandle}`}
+              >{`@${bidderTwitterHandle}`}</a>
+              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+            </Row>
           ) : (
-            shortenAddress(bidder)
+            <Row className="pubkey-row"> 
+              {shortenAddress(bidder)}
+              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+            </Row>
           )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
         </Row>

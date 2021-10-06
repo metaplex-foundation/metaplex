@@ -1,22 +1,24 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
   utils,
-  actions,
-  models,
   findProgramAddress,
   MetadataKey,
   StringPublicKey,
   toPublicKey,
   WalletSigner,
 } from '@oyster/common';
+import { SafetyDepositConfig } from '@oyster/common/dist/lib/models/metaplex/index';
+import { approve } from '@oyster/common/dist/lib/models/account';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
+import {
+  addTokenToInactiveVault,
+  VAULT_PREFIX,
+} from '@oyster/common/dist/lib/actions/vault';
 
 import { AccountLayout } from '@solana/spl-token';
 import BN from 'bn.js';
 import { SafetyDepositDraft } from './createAuctionManager';
-import { SafetyDepositConfig } from '../models/metaplex';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-const { createTokenAccount, addTokenToInactiveVault, VAULT_PREFIX } = actions;
-const { approve } = models;
 
 export interface SafetyDepositInstructionTemplate {
   box: {

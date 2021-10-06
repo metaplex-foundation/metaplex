@@ -16,7 +16,7 @@ import {
   WalletSigner,
   Attribute,
 } from '@oyster/common';
-import React from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
 import {
   Keypair,
@@ -28,7 +28,9 @@ import crypto from 'crypto';
 import { getAssetCostToStore } from '../utils/assets';
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
+
 const RESERVED_TXN_MANIFEST = 'manifest.json';
+const RESERVED_METADATA = 'metadata.json';
 
 interface IArweaveResult {
   error?: string;
@@ -39,6 +41,33 @@ interface IArweaveResult {
     error?: string;
   }>;
 }
+
+const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
+  const resp = await fetch(
+    'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+    {
+      method: 'POST',
+      // @ts-ignore
+      body: data,
+    },
+  );
+
+  if (!resp.ok) {
+    return Promise.reject(
+      new Error(
+        'Unable to upload the artwork to Arweave. Please wait and then try again.',
+      ),
+    );
+  }
+
+  const result: IArweaveResult = await resp.json();
+
+  if (result.error) {
+    return Promise.reject(new Error(result.error));
+  }
+
+  return result;
+};
 
 export const mintNFT = async (
   connection: Connection,
@@ -57,6 +86,7 @@ export const mintNFT = async (
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   },
+  progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
 ): Promise<{
   metadataAccount: StringPublicKey;
@@ -85,11 +115,13 @@ export const mintNFT = async (
 
   const realFiles: File[] = [
     ...files,
-    new File([JSON.stringify(metadataContent)], 'metadata.json'),
+    new File([JSON.stringify(metadataContent)], RESERVED_METADATA),
   ];
 
   const { instructions: pushInstructions, signers: pushSigners } =
     await prepPayForFilesTxn(wallet, realFiles, metadata);
+
+  progressCallback(1)
 
   const TOKEN_PROGRAM_ID = programIds().token;
 
@@ -154,6 +186,7 @@ export const mintNFT = async (
     instructions,
     wallet.publicKey.toBase58(),
   );
+  progressCallback(2)
 
   // TODO: enable when using payer account to avoid 2nd popup
   // const block = await connection.getRecentBlockhash('singleGossip');
@@ -165,15 +198,19 @@ export const mintNFT = async (
   //   }),
   // );
 
+
   const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
     instructions,
     signers,
+    'single',
   );
+  progressCallback(3)
 
   try {
     await connection.confirmTransaction(txid, 'max');
+    progressCallback(4)
   } catch {
     // ignore
   }
@@ -182,8 +219,12 @@ export const mintNFT = async (
   // await connection.confirmTransaction(txid, 'max');
   await connection.getParsedConfirmedTransaction(txid, 'confirmed');
 
+  progressCallback(5)
+
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
+  data.append('transaction', txid);
+  data.append('env', env);
 
   const tags = realFiles.reduce(
     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
@@ -193,23 +234,12 @@ export const mintNFT = async (
     {},
   );
   data.append('tags', JSON.stringify(tags));
-  data.append('transaction', txid);
   realFiles.map(f => data.append('file[]', f));
 
   // TODO: convert to absolute file name for image
 
-  const result: IArweaveResult = await (
-    await fetch(
-      // TODO: add CNAME
-      env.startsWith('mainnet-beta')
-        ? 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFileProd2'
-        : 'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2',
-      {
-        method: 'POST',
-        body: data,
-      },
-    )
-  ).json();
+  const result: IArweaveResult = await uploadToArweave(data);
+  progressCallback(6)
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,
@@ -246,6 +276,8 @@ export const mintNFT = async (
         1,
       ),
     );
+
+    progressCallback(7)
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
@@ -276,6 +308,8 @@ export const mintNFT = async (
     //   wallet.publicKey,
     //   updateInstructions,
     // );
+
+    progressCallback(8)
 
     const txid = await sendTransactionWithRetry(
       connection,
@@ -323,7 +357,8 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: await getAssetCostToStore(files),
+        lamports: 2300000 // 0.0023 SOL per file (paid to arweave)
+          // await getAssetCostToStore(files),
       }),
     );
 
