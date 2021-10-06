@@ -11,6 +11,7 @@ import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
+import { pullPage } from '.';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -58,15 +59,47 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('-----> Query started');
 
-    const nextState = !USE_SPEED_RUN
-      ? await loadAccounts(connection)
-      : await limitedLoadAccounts(connection);
+    const primitiveState = await pullPage(connection, 0);
 
-    console.log('------->Query finished');
+    let nextState: MetaState;
+    if (primitiveState.storeIndexer.length) {
+      if (USE_SPEED_RUN) {
+        nextState = await limitedLoadAccounts(connection);
 
-    setState(nextState);
+        console.log('------->Query finished');
 
-    setIsLoading(false);
+        setState(nextState);
+
+        setIsLoading(false);
+      } else {
+        nextState = primitiveState;
+
+        let lastLength = nextState.storeIndexer.length;
+        let currPage = 1;
+        console.log('------->Loaded page', currPage - 1);
+
+        setIsLoading(false);
+        while (lastLength != nextState.storeIndexer.length) {
+          lastLength = nextState.storeIndexer.length;
+          console.log('------->Loading page', currPage);
+          nextState = await pullPage(connection, currPage, nextState);
+          setState(nextState);
+          console.log('------->Loaded page', currPage);
+          currPage++;
+        }
+      }
+    } else {
+      nextState = !USE_SPEED_RUN
+        ? await loadAccounts(connection)
+        : await limitedLoadAccounts(connection);
+
+      console.log('------->Query finished');
+
+      setState(nextState);
+
+      setIsLoading(false);
+    }
+
     console.log('------->set finished');
 
     await updateMints(nextState.metadataByMint);

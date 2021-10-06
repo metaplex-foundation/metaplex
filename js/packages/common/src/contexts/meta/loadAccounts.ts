@@ -20,7 +20,11 @@ import {
   getAuctionExtended,
 } from '../../actions';
 import { uniqWith } from 'lodash';
-import { WhitelistedCreator } from '../../models/metaplex';
+import {
+  decodeStoreIndexer,
+  getStoreIndexer,
+  WhitelistedCreator,
+} from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AccountAndPubkey,
@@ -39,6 +43,7 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
+import { programIds } from '../..';
 
 export const USE_SPEED_RUN = false;
 const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
@@ -56,6 +61,27 @@ const WHITELISTED_AUCTION_MANAGER = [
   '3HD2C8oCL8dpqbXo8hq3CMw6tRSZDZJGajLxnrZ3ZkYx',
 ];
 const WHITELISTED_VAULT = ['3wHCBd3fYRPWjd5GqzrXanLJUKRyU3nECKbTPKfVwcFX'];
+
+export const pullPage = async (
+  connection: Connection,
+  page: number,
+  tempCache: MetaState = getEmptyMetaState(),
+) => {
+  const updateTemp = makeSetter(tempCache);
+  const pageZero = await getStoreIndexer(page);
+  const account = await connection.getAccountInfo(new PublicKey(pageZero));
+
+  if (account) {
+    processMetaplexAccounts(
+      {
+        pubkey: pageZero,
+        account: account,
+      },
+      updateTemp,
+    );
+  }
+  return tempCache;
+};
 
 export const limitedLoadAccounts = async (connection: Connection) => {
   const tempCache: MetaState = getEmptyMetaState();
@@ -453,7 +479,7 @@ export const makeSetter =
       state.metadata.push(value);
     } else if (prop === 'storeIndexer') {
       state.storeIndexer = state.storeIndexer.filter(
-        p => p.info.page.toNumber() == value.info.page.toNumber(),
+        p => p.info.page.toNumber() != value.info.page.toNumber(),
       );
       state.storeIndexer.push(value);
       state.storeIndexer = state.storeIndexer.sort((a, b) =>
