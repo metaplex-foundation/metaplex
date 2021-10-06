@@ -180,8 +180,11 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    if (attributes.category === AuctionCategory.InstantSale && attributes.instantSaleType === InstantSaleType.Open) {
-      const { items, instantSalePrice } = attributes
+    if (
+      attributes.category === AuctionCategory.InstantSale &&
+      attributes.instantSaleType === InstantSaleType.Open
+    ) {
+      const { items, instantSalePrice } = attributes;
 
       if (items.length > 0 && items[0].participationConfig) {
         items[0].participationConfig.fixedPrice = new BN(
@@ -194,7 +197,7 @@ export const AuctionCreateView = () => {
         usize: ZERO,
       });
     } else if (attributes.category === AuctionCategory.InstantSale) {
-      const { items, editions } = attributes
+      const { items, editions } = attributes;
 
       if (items.length > 0) {
         const item = items[0];
@@ -472,8 +475,9 @@ export const AuctionCreateView = () => {
       name: null,
     };
 
-
-    const isOpenEdition = attributes.category === AuctionCategory.Open || attributes.instantSaleType === InstantSaleType.Open
+    const isOpenEdition =
+      attributes.category === AuctionCategory.Open ||
+      attributes.instantSaleType === InstantSaleType.Open;
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
@@ -774,7 +778,9 @@ const CategoryStep = (props: {
 };
 
 const InstantSaleStep = ({
-  attributes, setAttributes, confirm
+  attributes,
+  setAttributes,
+  confirm,
 }: {
   attributes: AuctionState;
   setAttributes: (attr: AuctionState) => void;
@@ -784,9 +790,14 @@ const InstantSaleStep = ({
     () => !!attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
     [attributes?.items?.[0]],
   );
-  const artistFilter = useCallback((i: SafetyDepositDraft) => !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified), [])
+  const artistFilter = useCallback(
+    (i: SafetyDepositDraft) =>
+      !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
+    [],
+  );
 
-  const isLimitedEdition = attributes.instantSaleType === InstantSaleType.Limited;
+  const isLimitedEdition =
+    attributes.instantSaleType === InstantSaleType.Limited;
   const shouldRenderSelect = attributes.items.length > 0;
 
   return (
@@ -811,7 +822,9 @@ const InstantSaleStep = ({
           {shouldRenderSelect && (
             <label className="action-field">
               <Select
-                defaultValue={attributes.instantSaleType || InstantSaleType.Single}
+                defaultValue={
+                  attributes.instantSaleType || InstantSaleType.Single
+                }
                 onChange={value =>
                   setAttributes({
                     ...attributes,
@@ -819,9 +832,19 @@ const InstantSaleStep = ({
                   })
                 }
               >
-                <Option value={InstantSaleType.Single}>Sell unique token</Option>
-                {copiesEnabled && <Option value={InstantSaleType.Limited}>Sell limited number of copies</Option>}
-                {!copiesEnabled && <Option value={InstantSaleType.Open}>Sell unlimited number of copies</Option>}
+                <Option value={InstantSaleType.Single}>
+                  Sell unique token
+                </Option>
+                {copiesEnabled && (
+                  <Option value={InstantSaleType.Limited}>
+                    Sell limited number of copies
+                  </Option>
+                )}
+                {!copiesEnabled && (
+                  <Option value={InstantSaleType.Open}>
+                    Sell unlimited number of copies
+                  </Option>
+                )}
               </Select>
               {isLimitedEdition && (
                 <>
