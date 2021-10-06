@@ -17,7 +17,7 @@
     "start": "yarn start:memory",
     "start:memory": "node --max-old-space-size=8192 dist/bin/inmemory-server.js",
     "start:ingester": "node --max-old-space-size=8192 dist/bin/ingester.js",
-    "start:server": "node dist/bin/server.js",
+    "start:server": "NODE_ENV=development node dist/bin/server.js",
     "dev": "yarn server",
     "tsc": "tsc",
     "tscCheck": "tsc --noEmit"

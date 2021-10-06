@@ -27,7 +27,7 @@ export class Store {
   tokenProgram!: StringPublicKey;
 
   get pubkey() {
-    return this._id.toString();
+    return this._id?.toString();
   }
 
   constructor(args?: {

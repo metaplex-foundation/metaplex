@@ -4,7 +4,7 @@ import logger from "../logger";
 import { extendBorsh } from "../common";
 import { startApolloServer } from "../utils/startApolloServer";
 
-function main() {
+async function main() {
   extendBorsh(); // it's need for proper work of decoding
   config();
   logger.info(
@@ -14,7 +14,8 @@ function main() {
     networkName: process.env.NETWORK,
     snapshotPath: process.env.SNAPSHOT,
   });
-  startApolloServer(api);
+  const { start } = await startApolloServer(api);
+  start();
   if (!process.env.WARM_UP_DISABLE) {
     warmUpInMemoryApi(api);
   }

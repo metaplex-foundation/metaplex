@@ -50,14 +50,17 @@ export async function startApolloServer(api: MetaplexApiDataSource<Context>) {
     path: "/",
   });
 
-  const PORT = process.env.PORT || 4000;
-  await new Promise((resolve) =>
-    httpServer.listen({ port: PORT }, resolve as any)
-  );
+  async function start(PORT = process.env.PORT || 4000) {
+    await new Promise((resolve) =>
+      httpServer.listen({ port: PORT }, resolve as any)
+    );
 
-  const URL_GRAPHQL = `http://localhost:${PORT}${server.graphqlPath}`;
-  const URL_GRAPHQL_WS = `ws://localhost:${PORT}${server.graphqlPath}`;
+    const URL_GRAPHQL = `http://localhost:${PORT}${server.graphqlPath}`;
+    const URL_GRAPHQL_WS = `ws://localhost:${PORT}${server.graphqlPath}`;
 
-  logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
-  logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
+    logger.info(`🚀 Server ready at ${URL_GRAPHQL}`);
+    logger.info(`🚀 Subscription ready at ${URL_GRAPHQL_WS}`);
+  }
+
+  return { start, app, httpServer, server };
 }

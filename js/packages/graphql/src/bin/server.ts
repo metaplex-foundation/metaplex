@@ -19,7 +19,8 @@ async function main() {
     snapshotPath: "",
     db,
   });
-  startApolloServer(api);
+  const { start } = await startApolloServer(api);
+  start();
 }
 
 // start program

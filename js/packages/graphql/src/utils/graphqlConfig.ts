@@ -7,6 +7,7 @@ const DIRNAME = path.resolve(__dirname, "..").replace(/\/dist$/, "/src");
 
 export const schema = makeSchema({
   types,
+  shouldGenerateArtifacts: process.env.NODE_ENV === "development",
   outputs: {
     schema: path.join(DIRNAME, "generated", "schema.graphql"),
     typegen: path.join(DIRNAME, "generated", "typings.ts"),
@@ -45,7 +46,7 @@ export const schema = makeSchema({
 });
 
 export const context = ({ req }: ExpressContext) => {
-  const network = req.headers.network;
+  const network = req?.headers?.network;
   return { network };
 };
 
