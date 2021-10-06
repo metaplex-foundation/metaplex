@@ -255,17 +255,17 @@ export const AuctionCard = ({
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  const isOpenEditionInstantSale =
+  const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
-  const isInstantSaleHasNoItems =
+  const doesInstantSaleHasNoItems =
     Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
     auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
   const shouldHideInstantSale =
+    !isOpenEditionSale &&
     auctionView.isInstantSale &&
     isAuctionManagerAuthorityNotWalletOwner &&
-    !isOpenEditionInstantSale &&
-    isInstantSaleHasNoItems;
+    doesInstantSaleHasNoItems;
 
   const shouldHide =
     shouldHideInstantSale ||
