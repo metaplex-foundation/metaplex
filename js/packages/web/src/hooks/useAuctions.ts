@@ -17,6 +17,7 @@ import {
   getEmptyMetaState,
   MetaState,
   useStore,
+  loadMetadataAndEditionsBySafetyDepositBoxes,
 } from '@oyster/common';
 import { merge, take, drop } from 'lodash';
 import { Connection } from '@solana/web3.js';
@@ -146,21 +147,6 @@ export function useCachedRedemptionKeysByWallet() {
   return cachedRedemptionKeys;
 }
 
-const fetchAuctionsState = async (connection: Connection, auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]): Promise<MetaState> => {
-  const tempCache = getEmptyMetaState();
-
-  const responses = await Promise.all(
-    auctionManagers.map(auctionManager => loadAuction(connection, auctionManager))
-  )
-
-  const auctionsState = responses.reduce((memo, state) =>
-    merge(memo, state),
-    tempCache
-  );
-
-  return auctionsState
-}
-
 export const useInfiniteScrollAuctions = () => {
   const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
@@ -177,9 +163,30 @@ export const useInfiniteScrollAuctions = () => {
     isLoading,
     auctionManagersByAuction,
     auctions,
+    store,
+    whitelistedCreatorsByCreator,
     patchState,
     ...metaState
   } = useMeta();
+
+  const fetchAuctionsState = async (connection: Connection, auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]): Promise<MetaState> => {
+    const tempCache = getEmptyMetaState();
+
+    const responses = await Promise.all(
+      auctionManagers.map(auctionManager => loadAuction(connection, auctionManager))
+    );
+
+    const auctionsState = responses.reduce((memo, state) =>
+      merge(memo, state),
+      tempCache
+    );
+  
+    const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(connection, { ...auctionsState, store, whitelistedCreatorsByCreator });
+
+    const finalState = merge({}, auctionsState, metadataState);
+
+    return finalState;
+  }
 
   const gatherAuctionViews = (
     auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
@@ -268,13 +275,15 @@ export const useInfiniteScrollAuctions = () => {
 
       const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
 
+      const viewState = merge(
+        {},
+        metaState,
+        auctionsState,
+      )
+
       const views = gatherAuctionViews(
         auctionsToLoad,
-        merge(
-          {},
-          metaState,
-          auctionsState,
-        )
+        viewState,
       )
 
       patchState(auctionsState)
@@ -294,7 +303,7 @@ export const useInfiniteScrollAuctions = () => {
 
     (async () => {
       const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
-      const nextState = merge(
+      const viewState = merge(
         {},
         metaState,
         auctionsState,
@@ -302,10 +311,10 @@ export const useInfiniteScrollAuctions = () => {
       
       const views = gatherAuctionViews(
         auctionsToLoad,
-        nextState,
+        viewState,
       )
 
-      patchState(nextState)
+      patchState(auctionsState)
       setAuctionManagersToQuery(drop(needLoading, 4));
       setAuctionViews([...loaded, ...views]);
       setLoading(false);

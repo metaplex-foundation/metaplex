@@ -1,4 +1,5 @@
 import { Connection } from '@solana/web3.js';
+import { Dispatch, SetStateAction } from 'react';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -17,14 +18,16 @@ import { MetaState, UpdateStateValueFunc } from './types';
 export const subscribeAccountsChange = (
   connection: Connection,
   getState: () => MetaState,
-  setState: (v: MetaState) => void,
+  setState: Dispatch<SetStateAction<MetaState>>,
 ) => {
   const subscriptions: number[] = [];
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
-    const state = getState();
-    const nextState = makeSetter({ ...state })(prop, key, value);
-    setState(nextState);
+    setState((current: MetaState) => {
+      const nextState = makeSetter({ ...current })(prop, key, value);
+
+      return nextState
+    });
   };
 
   subscriptions.push(

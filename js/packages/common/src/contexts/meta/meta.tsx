@@ -8,11 +8,12 @@ import {
   USE_SPEED_RUN,
 } from './loadAccounts';
 import { Spin, Space } from 'antd';
-import { merge } from 'lodash'
+import { merge, uniqWith } from 'lodash'
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
+import { ParsedAccount } from '..';
+import { AuctionData, BidderMetadata, BidderPot, Metadata } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -45,9 +46,7 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('-----> Query started');
 
-    const nextState = !USE_SPEED_RUN
-      ? await loadAccounts(connection, ownerAddress)
-      : await limitedLoadAccounts(connection);
+    const nextState = await loadAccounts(connection, ownerAddress)
 
     console.log('------->Query finished');
 
@@ -88,26 +87,35 @@ export function MetaProvider({ children = null as any }) {
   );
 
   const patchState: MetaContextState['patchState'] = temp => {
-    const newState = merge({}, state, temp);
-    newState.store = temp.store ?? state.store;
-    setState(newState);
+    setState(current => {
+      const newState = merge({}, current, temp);
 
-    return newState;
+      newState.store = temp.store ?? current.store;
+  
+      const currentMetdata = current.metadata ?? [];
+      const nextMetadata = temp.metadata ?? [];
+      newState.metadata = uniqWith(
+        [...currentMetdata, ...nextMetadata],
+        (a, b) => a.pubkey === b.pubkey
+      );
+  
+      return newState
+    })
   };
 
   useEffect(() => {
     (async () => {
       await update()
     })()
-  }, [connection, setState, updateMints, storeAddress, isReady, ownerAddress]);
+  }, [storeAddress, isReady, ownerAddress]);
 
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     return;
+  //   }
 
-    return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading]);
+  //   return subscribeAccountsChange(connection, () => state, setState);
+  // }, [connection, setState, isLoading]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators

@@ -1,3 +1,4 @@
+import { uniqWith, update } from 'lodash';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -19,8 +20,9 @@ import {
   METADATA_PREFIX,
   decodeMetadata,
   getAuctionExtended,
+  getMetadata,
+  SafetyDepositBox,
 } from '../../actions';
-import { uniqWith } from 'lodash';
 import {
   WhitelistedCreator,
   AuctionManagerV1,
@@ -277,7 +279,7 @@ export const limitedLoadAccounts = async (connection: Connection) => {
 export const loadAccounts = async (
   connection: Connection,
   ownerAddress: StringPublicKey,
-) => {
+): Promise<MetaState> => {
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
@@ -391,6 +393,16 @@ export const loadAccounts = async (
       );
     }
   };
+
+  const loadCreators = () =>
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
+        },
+      ],
+    }).then(forEachAccount(processMetaplexAccounts));
+  
   const loadAuctionsAndVaults = async (
     parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
   ) => {
@@ -399,34 +411,32 @@ export const loadAccounts = async (
       loadVaultsForAuctionManagers(parsedAccounts),
     ]);
   };
-  const loadCreators = () =>
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
-        },
-      ],
-    }).then(forEach(processMetaplexAccounts));
-  const loadMetadata = () =>
-    pullMetadataByCreators(connection, state, updateState);
-  const loadEditions = () => pullEditions(connection, updateState, state);
-
   const loading = [
+    loadCreators(),
     loadStorefront(ownerAddress),
-    loadCreators().then(loadMetadata).then(loadEditions),
     loadAuctionManagers(ownerAddress).then(loadAuctionsAndVaults),
   ];
 
   await Promise.all(loading);
 
-  state.metadata = uniqWith(
-    state.metadata,
-    (a: ParsedAccount<Metadata>, b: ParsedAccount<Metadata>) =>
-      a.pubkey === b.pubkey,
-  );
-
   return state;
 };
+
+export const loadMetaDataAndEditionsForCreators = async (
+  connection: Connection,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+
+  const loadMetadata = () =>
+    pullMetadataByCreators(connection, { ...state, whitelistedCreatorsByCreator }, updateState);
+  const loadEditions = () => pullEditions(connection, updateState, state);
+
+  await loadMetadata().then(loadEditions);
+
+  return state;
+}
 
 export const querySafetyDepositBoxByVault = async (
   connection: Connection,
@@ -524,10 +534,49 @@ const pullEditions = async (
   );
 };
 
+export const loadArtwork = async (
+  connection: Connection,
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
+  key: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const metaResponse = await getMultipleAccounts(connection, [key], 'single')
+
+  if (!metaResponse) {
+    console.error("No meta response");
+
+    return state;
+  }
+
+  const [metadataAccount] = metaResponse.keys.map((pubkey, i) => {
+    const account = metaResponse.array[i]
+
+    if (!account) {
+      return;
+    }
+
+    return {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    } as ParsedAccount<Metadata>
+  });
+
+  if (!metadataAccount) {
+    return state;
+  }
+
+  await initMetadata(metadataAccount, whitelistedCreatorsByCreator, updateState)
+
+  await pullEditions(connection, updateState, state);
+
+  return state;
+}
+
 export const loadAuction = async (
   connection: Connection,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
-  complete: boolean = false,
 ): Promise<MetaState> => {
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
@@ -614,7 +663,7 @@ export const loadAuction = async (
           return
         }
 
-        processMetaplexAccounts(
+        return processMetaplexAccounts(
           {
             pubkey,
             account,
@@ -627,6 +676,50 @@ export const loadAuction = async (
 
   return state;
 };
+
+export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
+  connection: Connection,
+  state: MetaState
+): Promise<MetaState> => {
+  const nextState: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(nextState);
+
+  const metadataKeys = await Promise.all(
+    Object
+      .values(state.safetyDepositBoxesByVaultAndIndex)
+      .map(({ info: { tokenMint } }) => getMetadata(tokenMint))
+  )
+
+  const metadataData = await getMultipleAccounts(
+    connection,
+    metadataKeys,
+    'single',
+  );
+
+  if (!metadataData) {
+    console.error("No response from metadata query by mint");
+
+    return nextState;
+  }
+
+  const metadata = metadataData.keys.map((pubkey, i) => {
+    const account = metadataData.array[i];
+
+    return {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    } as ParsedAccount<Metadata>
+  });
+
+  await Promise.all(
+    metadata.map(m => initMetadata(m, state.whitelistedCreatorsByCreator, updateState))
+  )
+
+  await pullEditions(connection, updateState, nextState);
+
+  return nextState;
+}
 
 const pullMetadataByCreators = (
   connection: Connection,

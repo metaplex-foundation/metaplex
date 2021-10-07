@@ -385,7 +385,11 @@ export const AuctionCard = ({
               onClick={async () => {
                 setLoading(true);
                 try {
-                  await startAuctionManually(connection, wallet, auctionView);
+                  await startAuctionManually(
+                    connection,
+                    wallet,
+                    auctionView.auctionManager.instance,
+                  );
                 } catch (e) {
                   console.error(e);
                 }
@@ -591,7 +595,7 @@ export const AuctionCard = ({
                             'confirmed',
                           );
 
-                          const newState = patchState(patch);
+                          patchState(patch);
                           setShowBidModal(true);
                           setLoading(true);
 
@@ -599,13 +603,13 @@ export const AuctionCard = ({
                             const auctionKey = auctionView.auction.pubkey;
                             const auctionBidderKey = `${auctionKey}-${wallet.publicKey}`;
 
-                            auctionView.auction = newState.auctions[auctionKey];
+                            auctionView.auction = patch.auctions[auctionKey];
                             auctionView.myBidderPot =
-                              newState.bidderPotsByAuctionAndBidder[
+                              patch.bidderPotsByAuctionAndBidder[
                                 auctionBidderKey
                               ];
                             auctionView.myBidderMetadata =
-                              newState.bidderMetadataByAuctionAndBidder[
+                              patch.bidderMetadataByAuctionAndBidder[
                                 auctionBidderKey
                               ];
                           }

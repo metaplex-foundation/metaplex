@@ -85,7 +85,7 @@ export interface MetaContextState extends MetaState {
       ParsedAccount<BidderMetadata>,
     ]
   >;
-  patchState: (state: Partial<MetaState>) => MetaState;
+  patchState: (state: Partial<MetaState>) => void;
 }
 
 export type AccountAndPubkey = {
