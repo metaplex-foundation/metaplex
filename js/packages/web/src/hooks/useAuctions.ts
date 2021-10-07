@@ -181,7 +181,11 @@ export const useInfiniteScrollAuctions = () => {
       tempCache
     );
   
-    const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(connection, { ...auctionsState, store, whitelistedCreatorsByCreator });
+    const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
+      connection,
+      auctionsState.safetyDepositBoxesByVaultAndIndex,
+      whitelistedCreatorsByCreator
+    );
 
     const finalState = merge({}, auctionsState, metadataState);
 

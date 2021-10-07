@@ -1,4 +1,4 @@
-import { uniqWith, update } from 'lodash';
+import { uniqWith, merge } from 'lodash';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -284,13 +284,6 @@ export const loadAccounts = async (
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
 
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateState);
-      }
-    };
-
   const loadStorefront = async (ownerAddress: StringPublicKey) => {
     const storeAddress = await getStoreID(ownerAddress);
 
@@ -426,14 +419,11 @@ export const loadMetaDataAndEditionsForCreators = async (
   connection: Connection,
   whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>
 ): Promise<MetaState> => {
-  const state: MetaState = getEmptyMetaState();
-  const updateState = makeSetter(state);
-
   const loadMetadata = () =>
-    pullMetadataByCreators(connection, { ...state, whitelistedCreatorsByCreator }, updateState);
-  const loadEditions = () => pullEditions(connection, updateState, state);
+    pullMetadataByCreators(connection, whitelistedCreatorsByCreator);
+  const loadEditions = (state: MetaState) => pullEditions(connection, state);
 
-  await loadMetadata().then(loadEditions);
+  const state = await loadMetadata().then(loadEditions);
 
   return state;
 }
@@ -464,9 +454,9 @@ export const querySafetyDepositBoxByVault = async (
 
 const pullEditions = async (
   connection: Connection,
-  updater: UpdateStateValueFunc,
   state: MetaState,
-) => {
+): Promise<MetaState> => {
+  const updateState = makeSetter(state);
   console.log('Pulling editions for optimized metadata');
 
   type MultipleAccounts = UnPromise<ReturnType<typeof getMultipleAccounts>>;
@@ -491,7 +481,7 @@ const pullEditions = async (
           pubkey: returnedAccounts.keys[j],
           account: returnedAccounts.array[j],
         },
-        updater,
+        updateState,
       );
     }
   };
@@ -532,6 +522,8 @@ const pullEditions = async (
     Object.keys(state.editions).length,
     Object.keys(state.masterEditions).length,
   );
+
+  return state;
 };
 
 export const loadArtwork = async (
@@ -569,7 +561,7 @@ export const loadArtwork = async (
 
   await initMetadata(metadataAccount, whitelistedCreatorsByCreator, updateState)
 
-  await pullEditions(connection, updateState, state);
+  await pullEditions(connection, state);
 
   return state;
 }
@@ -679,14 +671,15 @@ export const loadAuction = async (
 
 export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
   connection: Connection,
-  state: MetaState
+  safetyDepositBoxesByVaultAndIndex: Record<string,ParsedAccount<SafetyDepositBox>>,
+  whitelistedCreatorsByCreator: Record<string,ParsedAccount<WhitelistedCreator>>
 ): Promise<MetaState> => {
   const nextState: MetaState = getEmptyMetaState();
   const updateState = makeSetter(nextState);
 
   const metadataKeys = await Promise.all(
     Object
-      .values(state.safetyDepositBoxesByVaultAndIndex)
+      .values(safetyDepositBoxesByVaultAndIndex)
       .map(({ info: { tokenMint } }) => getMetadata(tokenMint))
   )
 
@@ -712,64 +705,89 @@ export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
     } as ParsedAccount<Metadata>
   });
 
-  await Promise.all(
-    metadata.map(m => initMetadata(m, state.whitelistedCreatorsByCreator, updateState))
-  )
+  const readyMetadata = metadata.map(m => initMetadata(m, whitelistedCreatorsByCreator, updateState))
 
-  await pullEditions(connection, updateState, nextState);
+  await Promise.all(readyMetadata)
+
+  await pullEditions(connection, nextState);
 
   return nextState;
 }
 
-const pullMetadataByCreators = (
+export const loadMetadataForCreator = async (
   connection: Connection,
-  state: MetaState,
-  updater: UpdateStateValueFunc,
-): Promise<any> => {
-  console.log('pulling optimized nfts');
-
-  const whitelistedCreators = Object.values(state.whitelistedCreatorsByCreator);
+  creator: ParsedAccount<WhitelistedCreator>
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
 
   const setter: UpdateStateValueFunc = async (prop, key, value) => {
     if (prop === 'metadataByMint') {
-      await initMetadata(value, state.whitelistedCreatorsByCreator, updater);
+      await initMetadata(value, { [creator.info.address]: creator }, updateState);
     } else {
-      updater(prop, key, value);
+      updateState(prop, key, value);
     }
   };
   const forEachAccount = processingAccounts(setter);
 
-  const additionalPromises: Promise<void>[] = [];
-  for (const creator of whitelistedCreators) {
-    for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-      const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset:
-                1 + // key
-                32 + // update auth
-                32 + // mint
-                4 + // name string length
-                MAX_NAME_LENGTH + // name
-                4 + // uri string length
-                MAX_URI_LENGTH + // uri
-                4 + // symbol string length
-                MAX_SYMBOL_LENGTH + // symbol
-                2 + // seller fee basis points
-                1 + // whether or not there is a creators vec
-                4 + // creators vec length
-                i * MAX_CREATOR_LEN,
-              bytes: creator.info.address,
-            },
+  const promises: Promise<void>[] = [];
+
+  for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+    const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32 + // update auth
+              32 + // mint
+              4 + // name string length
+              MAX_NAME_LENGTH + // name
+              4 + // uri string length
+              MAX_URI_LENGTH + // uri
+              4 + // symbol string length
+              MAX_SYMBOL_LENGTH + // symbol
+              2 + // seller fee basis points
+              1 + // whether or not there is a creators vec
+              4 + // creators vec length
+              i * MAX_CREATOR_LEN,
+            bytes: creator.info.address,
           },
-        ],
-      }).then(forEachAccount(processMetaData));
-      additionalPromises.push(promise);
-    }
+        },
+      ],
+    }).then(forEachAccount(processMetaData));
+
+    promises.push(promise);
   }
 
-  return Promise.all(additionalPromises);
+  await Promise.all(promises)
+
+  return state;
+}
+
+const pullMetadataByCreators = async (
+  connection: Connection,
+  whitelistedCreatorsByCreator: Record<string,ParsedAccount<WhitelistedCreator>>,
+): Promise<MetaState> => {
+  console.log('pulling optimized nfts');
+
+  const whitelistedCreators = Object.values(whitelistedCreatorsByCreator);
+
+  const additionalPromises: Promise<MetaState>[] = [];
+  for (const creator of whitelistedCreators) {
+    additionalPromises.push(loadMetadataForCreator(connection, creator))
+  }
+
+  const responses = await Promise.all(additionalPromises);
+
+  return responses.reduce((memo, state) => {
+    const next = merge({}, memo, state);
+    const currentMetadata = memo.metadata ?? [];
+    const metadata = state.metadata ?? [];
+    next.metadata = uniqWith([...currentMetadata, ...metadata], (a ,b) => a.pubkey === b.pubkey)
+
+    return next;
+  }, getEmptyMetaState());
 };
 
 export const makeSetter =

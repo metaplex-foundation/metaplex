@@ -1,15 +1,20 @@
 import { Col, Divider, Row } from 'antd';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Masonry from 'react-masonry-css';
+import { Spin } from 'antd'
+import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
-import { CardLoader } from '../../components/MyLoader';
 import { useCreator, useCreatorArts } from '../../hooks';
+import { LoadingOutlined } from '@ant-design/icons';
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
+  const { whitelistedCreatorsByCreator, patchState } = useMeta()
+  const [loadingArt, setLoadingArt] = useState(true)
   const creator = useCreator(id);
   const artwork = useCreatorArts(id);
+  const connection = useConnection();
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -17,22 +22,34 @@ export const ArtistView = () => {
     500: 1,
   };
 
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    (async () => {
+      const artistMetadataState = await loadMetadataForCreator(connection, whitelistedCreatorsByCreator[id]);
+
+      patchState(artistMetadataState);
+      setLoadingArt(false);
+    })()
+  }, [connection, id])
+
   const artworkGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {artwork.length > 0
-        ? artwork.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard key={id} pubkey={m.pubkey} preview={false} />
-              </Link>
-            );
-          })
-        : []}
+      {artwork.map((m, idx) => {
+        const id = m.pubkey;
+        return (
+          <Link to={`/art/${id}`} key={idx}>
+            <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+          </Link>
+        );
+      })
+      }
     </Masonry>
   );
 
@@ -52,11 +69,17 @@ export const ArtistView = () => {
             <div className="info-header">ABOUT THE CREATOR</div>
             <div className="info-content">{creator?.info.description}</div>
             <br />
-            <div className="info-header">Art Created</div>
-            {artworkGrid}
-          </Col>
-        </Row>
+            {loadingArt ? (
+              <Spin indicator={<LoadingOutlined />} />
+            ): (
+                <>
+              <div className = "info-header">Art Created</div>
+          {artworkGrid}
+        </>
+            )}
       </Col>
+    </Row>
+      </Col >
     </>
   );
 };

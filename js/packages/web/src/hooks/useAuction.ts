@@ -47,7 +47,11 @@ export const useAuction = (id: StringPublicKey) => {
     (async () => {
       const auctionState = await loadAuction(connection, auctionManagersByAuction[id]);
 
-      const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(connection, { ...auctionState, store, whitelistedCreatorsByCreator });
+      const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
+        connection,
+        auctionState.safetyDepositBoxesByVaultAndIndex,
+        whitelistedCreatorsByCreator
+      );
 
       const finalState = merge({}, auctionState, metadataState);
 
