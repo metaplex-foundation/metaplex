@@ -6,22 +6,24 @@ import {
   pubkeyToString,
   PublicKeyStringAndAccount,
   toPublicKey,
+  extendBorsh,
 } from "../common";
 import logger from "../logger";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
 import { PROGRAMS } from "./constants";
-import { createConnection } from "./createConnection";
+import { createConnection } from "../utils/createConnection";
 import { ProgramParse, WriterAdapter } from "./types";
 
-export class Loader {
+extendBorsh(); // it's need for proper work of decoding
+export class Loader<T extends WriterAdapter> {
   readonly connection: Connection;
   private defer: Promise<void> | undefined;
   private readonly changesQueue = queue({ autostart: false, concurrency: 1 });
 
   constructor(
-    public readonly name: string,
+    public readonly networkName: string,
     endpoint: string,
-    public readonly writer: WriterAdapter
+    public readonly writer: T
   ) {
     this.connection = createConnection(endpoint, "recent");
   }
@@ -42,6 +44,7 @@ export class Loader {
     try {
       await this.loadAndProcessData();
       // process emitted messages
+      this.writer.listenModeOn();
       this.changesQueue.autostart = true;
       this.changesQueue.start();
     } catch (e) {
@@ -51,29 +54,29 @@ export class Loader {
   }
 
   private async loadAndProcessData() {
-    logger.info(`⏱  ${this.name} - start loading data`);
+    logger.info(`⏱  ${this.networkName} - start loading data`);
     for (const program of this.programs) {
       this.subscribeOnChange(program);
       const accounts = await this.loadProgramAccounts(program);
       await this.processProgramAccounts(program, accounts);
     }
-    logger.info(`🏝️  ${this.name} - data loaded and processed`);
+    logger.info(`🏝️  ${this.networkName} - data loaded and processed`);
   }
 
   private async loadProgramAccounts(program: ProgramParse) {
     try {
       logger.info(
-        `🤞 ${this.name} - loading program accounts ${program.pubkey}`
+        `🤞 ${this.networkName} - loading program accounts ${program.pubkey}`
       );
       const accounts = await getProgramAccounts(
         this.connection,
         program.pubkey
       );
-      logger.info(`🍀 ${this.name} - loaded ${program.pubkey}`);
+      logger.info(`🍀 ${this.networkName} - loaded ${program.pubkey}`);
 
       return accounts;
     } catch (e) {
-      logger.error(`🐛 ${this.name} - failed loaded ${program.pubkey}`);
+      logger.error(`🐛 ${this.networkName} - failed loaded ${program.pubkey}`);
       throw e;
     }
   }
@@ -83,7 +86,7 @@ export class Loader {
     accounts: AccountAndPubkey[]
   ) {
     logger.info(
-      `⛏ ${this.name} - start processing ${accounts.length} accounts for ${program.pubkey}`
+      `⛏ ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`
     );
     await createPipelineExecutor(accounts.values(), program.process, {
       jobsCount: 2,
@@ -91,7 +94,9 @@ export class Loader {
       delay: () => this.writer.flush(),
     });
     await this.writer.flush();
-    logger.info(`⛏ ${this.name} - accounts processed for ${program.pubkey}`);
+    logger.info(
+      `⛏ ${this.networkName} - accounts processed for ${program.pubkey}`
+    );
   }
 
   private subscribeOnChange(program: ProgramParse) {

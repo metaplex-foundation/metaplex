@@ -1,8 +1,8 @@
-import type { IMetaplexApi } from "../api/IMetaplexApi";
+import { Reader } from "reader";
 import type { MetaplexService } from "../api/MetaplexService";
 
 export interface Context {
   network?: string;
-  api: IMetaplexApi;
+  api: Reader;
   service: MetaplexService;
 }

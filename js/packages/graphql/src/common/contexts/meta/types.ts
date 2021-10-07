@@ -42,6 +42,8 @@ export type MetaMap = {
   masterEdition: MasterEditionV1 | MasterEditionV2;
 };
 
+export type MetaTypes = keyof MetaMap;
+
 type MapTree<T> = {
   [K in keyof T]: Map<string, T[K]>;
 };
