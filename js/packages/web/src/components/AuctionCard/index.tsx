@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Button, InputNumber, Spin } from 'antd';
-import { Link, Route, MemoryRouter, Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import {
   useConnection,
@@ -23,6 +23,7 @@ import {
   fromLamports,
   useWalletModal,
   VaultState,
+  BidStateType,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -53,9 +54,8 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-  AuctionManagerV1,
-} from '@oyster/common';
-import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
+  WinningConfigType,
+} from '@oyster/common/dist/lib/models/metaplex/index';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -306,10 +306,13 @@ export const AuctionCard = ({
     setLoading(true);
     const instantSalePrice =
       auctionView.auctionDataExtended?.info.instantSalePrice;
-    const winningConfigType = auctionView.items[0][0].winningConfigType;
-    const isAuctionItemMaster =
-      winningConfigType === WinningConfigType.FullRightsTransfer ||
-      winningConfigType === WinningConfigType.TokenOnlyTransfer;
+    const winningConfigType =
+      auctionView.participationItem?.winningConfigType ||
+      auctionView.items[0][0].winningConfigType;
+    const isAuctionItemMaster = [
+      WinningConfigType.FullRightsTransfer,
+      WinningConfigType.TokenOnlyTransfer,
+    ].includes(winningConfigType);
     const allowBidToPublic =
       myPayingAccount &&
       !auctionView.myBidderPot &&
@@ -369,14 +372,23 @@ export const AuctionCard = ({
     setLoading(false);
   };
 
-  //if instant sale auction bid and claimed hide buttons
-  if (
-    (auctionView.isInstantSale &&
-      Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-      isAuctionManagerAuthorityNotWalletOwner &&
-      auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
-    auctionView.vault.info.state === VaultState.Deactivated
-  ) {
+  const isOpenEditionSale =
+    auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const doesInstantSaleHasNoItems =
+    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+    auctionView.auction.info.bidState.max.toNumber() === bids.length;
+
+  const shouldHideInstantSale =
+    !isOpenEditionSale &&
+    auctionView.isInstantSale &&
+    isAuctionManagerAuthorityNotWalletOwner &&
+    doesInstantSaleHasNoItems;
+
+  const shouldHide =
+    shouldHideInstantSale ||
+    auctionView.vault.info.state === VaultState.Deactivated;
+
+  if (shouldHide) {
     return <></>;
   }
 
@@ -657,26 +669,26 @@ export const AuctionCard = ({
             >
               {loading ? <Spin /> : 'Start auction'}
             </Button>
-          ) : (loading ? (
-              <Spin />
-            ) : auctionView.isInstantSale && (
-            <Button
-              type="primary"
-              size="large"
-              className="ant-btn secondary-btn"
-              disabled={loading}
-              onClick={instantSale}
-              style={{ marginTop: 20, width: '100%' }}
-            >
-              {!isAuctionManagerAuthorityNotWalletOwner ? (
-                  'CLAIM ITEM'
-                ) : auctionView.myBidderPot ? (
-                  'Claim Purchase'
-                ) : (
-                  'Buy Now'
-                )}
-            </Button>
-          )))}
+          ) : loading ? (
+            <Spin />
+          ) : (
+            auctionView.isInstantSale && (
+              <Button
+                type="primary"
+                size="large"
+                className="ant-btn secondary-btn"
+                disabled={loading}
+                onClick={instantSale}
+                style={{ marginTop: 20, width: '100%' }}
+              >
+                {!isAuctionManagerAuthorityNotWalletOwner
+                  ? 'CLAIM ITEM'
+                  : auctionView.myBidderPot
+                  ? 'Claim Purchase'
+                  : 'Buy Now'}
+              </Button>
+            )
+          ))}
         {!hideDefaultAction && !wallet.connected && (
           <Button
             type="primary"

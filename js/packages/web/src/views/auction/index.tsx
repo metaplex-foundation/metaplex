@@ -36,7 +36,7 @@ import { CheckOutlined } from '@ant-design/icons';
 import { ArtType } from '../../types';
 import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import { AmountLabel } from '../../components/AmountLabel';
-import { ClickToCopy  } from '../../components/ClickToCopy';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -525,12 +525,18 @@ const BidLine = (props: {
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
                   >{`@${bidderTwitterHandle}`}</a>
-                  <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+                  <ClickToCopy
+                    className="copy-pubkey"
+                    copyText={bidder as string}
+                  />
                 </Row>
               ) : (
                 <Row className="pubkey-row">
                   {shortenAddress(bidder)}
-                  <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+                  <ClickToCopy
+                    className="copy-pubkey"
+                    copyText={bidder as string}
+                  />
                 </Row>
               )}
             </span>
