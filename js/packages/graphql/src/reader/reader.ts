@@ -1,6 +1,6 @@
 import { Connection } from "@solana/web3.js";
 import { IEvent } from "api";
-import { MetaTypes } from "common";
+import { MetaTypes, Store } from "common";
 import { PubSub, withFilter } from "graphql-subscriptions";
 import { loadUserTokenAccounts } from "utils/loadUserTokenAccounts";
 import { FilterFn } from "./types";
@@ -35,4 +35,11 @@ export abstract class Reader {
     }
     return iter;
   }
+
+  abstract storesCount(): Promise<number>;
+  abstract creatorsCount(): Promise<number>;
+  abstract artworksCount(): Promise<number>;
+  abstract auctionsCount(): Promise<number>;
+
+  abstract getStores(): Promise<Store[]>;
 }

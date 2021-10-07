@@ -23,7 +23,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isAuctionManagerV1Account(account) ||
       isAuctionManagerV2Account(account)
     ) {
-      const auctionManager = decodeAuctionManager(account.data);
+      const auctionManager = decodeAuctionManager(account.data, pubkey);
       await setter("auctionManager", pubkey, auctionManager);
     }
 
@@ -36,12 +36,12 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     }
 
     if (isPayoutTicketV1Account(account)) {
-      const ticket = decodePayoutTicket(account.data);
+      const ticket = decodePayoutTicket(account.data, pubkey);
       await setter("payoutTicket", pubkey, ticket);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
-      const ticket = decodePrizeTrackingTicket(account.data);
+      const ticket = decodePrizeTrackingTicket(account.data, pubkey);
       await setter("prizeTrackingTicket", pubkey, ticket);
     }
 
@@ -51,12 +51,12 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     }
 
     if (isStoreV1Account(account)) {
-      const store = decodeStore(account.data);
+      const store = decodeStore(account.data, pubkey);
       await setter("store", pubkey, store);
     }
 
     if (isWhitelistedCreatorV1Account(account)) {
-      const creator = decodeWhitelistedCreator(account.data);
+      const creator = decodeWhitelistedCreator(account.data, pubkey);
       await setter("creator", pubkey, creator);
     }
   } catch (err) {

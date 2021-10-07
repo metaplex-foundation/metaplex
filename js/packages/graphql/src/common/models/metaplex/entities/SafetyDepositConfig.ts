@@ -1,22 +1,19 @@
 import { SystemProgram } from "@solana/web3.js";
 import BN from "bn.js";
 import bs58 from "bs58";
-import { StringPublicKey } from "../../../utils";
-import { ParticipationStateV2 } from "./ParticipationStateV2";
-import { ParticipationConfigV2 } from "./ParticipationConfigV2";
-import { TupleNumericType } from "../TupleNumericType";
-import { AmountRange } from "./AmountRange";
-import { MetaplexKey } from "../MetaplexKey";
-import { WinningConfigType } from "../WinningConfigType";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter, BNConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { BNConverter } from "../../../../api/mongo";
+import { StringPublicKey } from "../../../utils";
+import { MetaplexKey } from "../MetaplexKey";
+import { TupleNumericType } from "../TupleNumericType";
+import { WinningConfigType } from "../WinningConfigType";
+import { AmountRange } from "./AmountRange";
+import { BaseEntry } from "./BaseEntry";
+import { ParticipationConfigV2 } from "./ParticipationConfigV2";
+import { ParticipationStateV2 } from "./ParticipationStateV2";
 
 @Serializable()
-export class SafetyDepositConfig {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class SafetyDepositConfig extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.SafetyDepositConfigV1;
 
@@ -57,6 +54,8 @@ export class SafetyDepositConfig {
       participationState: ParticipationStateV2 | null;
     };
   }) {
+    super();
+
     if (args) {
       if (args.directArgs) {
         Object.assign(this, args.directArgs);

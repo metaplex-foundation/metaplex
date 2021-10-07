@@ -1,14 +1,11 @@
 import BN from "bn.js";
-import { MetaplexKey } from "../MetaplexKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter, BNConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { BNConverter } from "../../../../api/mongo";
+import { MetaplexKey } from "../MetaplexKey";
+import { BaseEntry } from "./BaseEntry";
 
 @Serializable()
-export class PrizeTrackingTicket {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class PrizeTrackingTicket extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
 
@@ -30,6 +27,8 @@ export class PrizeTrackingTicket {
     expectedRedemptions: BN;
     redemptions: BN;
   }) {
+    super();
+
     if (args) {
       this.metadata = args.metadata;
       this.supplySnapshot = args.supplySnapshot;

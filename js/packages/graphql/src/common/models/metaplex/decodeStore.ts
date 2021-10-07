@@ -1,7 +1,4 @@
-import { deserializeUnchecked } from "borsh";
+import { decodeEntry } from "./entities/BaseEntry";
 import { Store } from "./entities/Store";
-import { SCHEMA } from "./schema";
 
-export function decodeStore(buffer: Buffer) {
-  return deserializeUnchecked(SCHEMA, Store, buffer) as Store;
-}
+export const decodeStore = decodeEntry(Store);

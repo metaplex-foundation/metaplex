@@ -1,14 +1,10 @@
-import { StringPublicKey } from "../../../utils";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { StringPublicKey } from "../../../utils";
 import { MetaplexKey } from "../MetaplexKey";
+import { BaseEntry } from "./BaseEntry";
 
 @Serializable()
-export class Store {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class Store extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.StoreV1;
   @JsonProperty()
@@ -26,10 +22,6 @@ export class Store {
   @JsonProperty()
   tokenProgram!: StringPublicKey;
 
-  get pubkey() {
-    return this._id?.toString();
-  }
-
   constructor(args?: {
     public: boolean;
     auctionProgram: StringPublicKey;
@@ -37,6 +29,8 @@ export class Store {
     tokenMetadataProgram: StringPublicKey;
     tokenProgram: StringPublicKey;
   }) {
+    super();
+
     this.key = MetaplexKey.StoreV1;
     if (args) {
       this.public = args.public;

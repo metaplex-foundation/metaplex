@@ -8,6 +8,7 @@ export class AmountRange {
   amount!: BN;
   @JsonProperty(BNConverter)
   length!: BN;
+
   constructor(args?: { amount: BN; length: BN }) {
     if (args) {
       this.amount = args.amount;
