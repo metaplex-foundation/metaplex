@@ -1,8 +1,8 @@
-import { ReaderAdapter } from "../../reader";
+import { ReadAdapter } from "../../reader";
 import { getEndpoints } from "../../utils/getEndpoints";
 import { MongoReader } from "./MongoReader";
 
-export class MongoAdapter extends ReaderAdapter {
+export class MongoAdapter extends ReadAdapter {
   readonly readers: MongoReader[] = [];
 
   async init() {
