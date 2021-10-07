@@ -9,7 +9,7 @@
     // "outFile": "./",
     "outDir": "./dist",
     "noImplicitAny": true,
-    "baseUrl": "./src",
+    "rootDir": "./src",
 
     "strict": true,
     "strictNullChecks": true,
@@ -20,7 +20,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },

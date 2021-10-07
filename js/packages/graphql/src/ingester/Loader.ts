@@ -2,16 +2,16 @@ import { Connection } from "@solana/web3.js";
 import queue from "queue";
 import {
   AccountAndPubkey,
+  extendBorsh,
   getProgramAccounts,
   pubkeyToString,
   PublicKeyStringAndAccount,
   toPublicKey,
-  extendBorsh,
 } from "../common";
 import logger from "../logger";
+import { createConnection } from "../utils/createConnection";
 import { createPipelineExecutor } from "../utils/createPipelineExecutor";
 import { PROGRAMS } from "./constants";
-import { createConnection } from "../utils/createConnection";
 import { ProgramParse, WriterAdapter } from "./types";
 
 extendBorsh(); // it's need for proper work of decoding

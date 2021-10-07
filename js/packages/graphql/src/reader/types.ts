@@ -1,4 +1,4 @@
-import { MetaTypes } from "common";
+import { MetaTypes } from "../common";
 
 export declare type FilterFn<T = any> = (
   rootValue?: T,

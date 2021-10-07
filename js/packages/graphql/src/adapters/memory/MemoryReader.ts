@@ -1,5 +1,5 @@
 import { Connection } from "@solana/web3.js";
-import { Reader } from "reader";
+import { Reader } from "../../reader";
 import { MemoryWriter } from "./MemoryWriter";
 
 export class MemoryReader extends Reader {

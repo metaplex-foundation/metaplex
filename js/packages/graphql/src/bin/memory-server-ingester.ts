@@ -1,9 +1,8 @@
-import { MemoryWriter } from "adapters/memory/MemoryWriter";
-import { MemoryAdapter } from "adapters/memory/MemoryAdapter";
-import { Ingester } from "ingester";
-import { MetaplexDataSource } from "reader";
-import { startApolloServer } from "server";
 import { config } from "dotenv";
+import { MemoryAdapter, MemoryWriter } from "../adapters/memory";
+import { Ingester } from "../ingester";
+import { MetaplexDataSource } from "../reader";
+import { startApolloServer } from "../server";
 
 const main = async () => {
   const ingester = new Ingester(MemoryWriter);

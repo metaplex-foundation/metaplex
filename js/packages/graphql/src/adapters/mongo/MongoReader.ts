@@ -1,6 +1,6 @@
 import { Db } from "mongodb";
-import { Reader } from "reader";
-import { createConnection } from "utils/createConnection";
+import { Reader } from "../../reader";
+import { createConnection } from "../../utils/createConnection";
 import { connectionString } from "./constants";
 import { createOrm } from "./createOrm";
 

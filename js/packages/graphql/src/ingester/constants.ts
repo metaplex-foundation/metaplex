@@ -7,7 +7,7 @@ import {
   processMetaplexAccounts,
   processVaultData,
   VAULT_ID,
-} from "common";
+} from "../common";
 import { ProgramParserMap } from "./types";
 
 export const PROGRAMS: ProgramParserMap = [

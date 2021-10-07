@@ -1,5 +1,5 @@
-import { ReadAdapter } from "reader";
-import { getEndpoints } from "utils/getEndpoints";
+import { ReadAdapter } from "../../reader";
+import { getEndpoints } from "../../utils/getEndpoints";
 import { MongoReader } from "./MongoReader";
 
 export class MongoAdapter implements ReadAdapter {

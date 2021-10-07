@@ -1,8 +1,8 @@
-import { MetaTypes, UpdateStateValueFunc } from "common";
-import logger from "logger";
 import { AnyBulkWriteOperation, Db } from "mongodb";
 import { serialize } from "typescript-json-serializer";
+import { MetaTypes, UpdateStateValueFunc } from "../../common";
 import { WriterAdapter } from "../../ingester/";
+import logger from "../../logger";
 import { connectionString } from "./constants";
 import { createOrm } from "./createOrm";
 

@@ -1,3 +1,4 @@
+import { sleep } from "./sleep";
 import logger from "../logger";
 
 export async function createPipelineExecutor<T>(
@@ -72,7 +73,7 @@ export async function createPipelineExecutor<T>(
       if (delay instanceof Function) {
         await delay();
       } else if (delay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await sleep(delay);
       }
       iter = data.next();
     }

@@ -1,6 +1,6 @@
-import { getEmptyState, MetaState, UpdateStateValueFunc } from "common";
-import { WriterAdapter } from "ingester";
-import { PublishFn } from "reader";
+import { getEmptyState, MetaState, UpdateStateValueFunc } from "../../common";
+import { WriterAdapter } from "../../ingester";
+import { PublishFn } from "../../reader";
 
 export class MemoryWriter implements WriterAdapter {
   private readonly state: MetaState = getEmptyState();
