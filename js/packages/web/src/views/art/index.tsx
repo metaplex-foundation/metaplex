@@ -32,7 +32,7 @@ export const ArtView = () => {
   const connection = useConnection();
   const art = useArt(id);
   let badge = '';
-  let maxSupply = ''
+  let maxSupply = '';
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
   } else if (art.type === ArtType.Master) {
