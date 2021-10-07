@@ -32,10 +32,16 @@ export const ArtView = () => {
   const connection = useConnection();
   const art = useArt(id);
   let badge = '';
+  let maxSupply = ''
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
   } else if (art.type === ArtType.Master) {
     badge = 'NFT 0';
+    if (art.maxSupply !== undefined) {
+      maxSupply = art.maxSupply.toString();
+    } else {
+      maxSupply = 'Unlimited';
+    }
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
@@ -172,7 +178,14 @@ export const ArtView = () => {
                 <div className="art-edition">{badge}</div>
               </Col>
             </Row>
-
+            {art.type === ArtType.Master && (
+              <Row>
+                <Col>
+                  <h6 style={{ marginTop: 5 }}>Max Supply</h6>
+                  <div className="art-edition">{maxSupply}</div>
+                </Col>
+              </Row>
+            )}
             {/* <Button
                   onClick={async () => {
                     if(!art.mint) {
