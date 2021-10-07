@@ -38,6 +38,8 @@ pub struct AddVoucherToPackArgs {
 pub struct InitPackSetArgs {
     /// Name
     pub name: [u8; 32],
+    /// Pack set preview image
+    pub uri: String,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
     /// Distribution type

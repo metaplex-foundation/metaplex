@@ -51,6 +51,8 @@ pub struct PackSet {
     pub account_type: AccountType,
     /// Name
     pub name: [u8; 32],
+    /// Link to pack set image
+    pub uri: String,
     /// Pack authority
     pub authority: Pubkey,
     /// Authority to mint voucher editions
@@ -80,6 +82,7 @@ impl PackSet {
     pub fn init(&mut self, params: InitPackSetParams) {
         self.account_type = AccountType::PackSet;
         self.name = params.name;
+        self.uri = params.uri;
         self.authority = params.authority;
         self.minting_authority = params.minting_authority;
         self.total_editions = 0;
@@ -108,6 +111,8 @@ impl PackSet {
 pub struct InitPackSetParams {
     /// Name
     pub name: [u8; 32],
+    /// URI
+    pub uri: String,
     /// Pack authority
     pub authority: Pubkey,
     /// Authority to mint voucher editions

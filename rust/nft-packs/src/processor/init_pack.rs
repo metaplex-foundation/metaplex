@@ -14,6 +14,7 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar::{clock::Clock, rent::Rent, Sysvar},
 };
+use spl_token_metadata::state::MAX_URI_LENGTH;
 
 /// Process InitPack instruction
 pub fn init_pack(
@@ -39,6 +40,10 @@ pub fn init_pack(
         return Err(ProgramError::AccountAlreadyInitialized);
     }
 
+    if args.uri.len() > MAX_URI_LENGTH {
+        return Err(NFTPacksError::UriTooLong.into());
+    }
+
     if args.allowed_amount_to_redeem == 0 {
         return Err(NFTPacksError::WrongAllowedAmountToRedeem.into());
     }
@@ -59,6 +64,7 @@ pub fn init_pack(
 
     pack_set.init(InitPackSetParams {
         name: args.name,
+        uri: args.uri,
         authority: *authority_account.key,
         minting_authority: *minting_authority_account.key,
         mutable: args.mutable,

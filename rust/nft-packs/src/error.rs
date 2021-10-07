@@ -135,6 +135,10 @@ pub enum NFTPacksError {
     /// User redeemed all allowed cards
     #[error("User redeemed all allowed cards")]
     UserRedeemedAllCards,
+
+    /// URI too long
+    #[error("URI too long")]
+    UriTooLong,
 }
 
 impl From<NFTPacksError> for ProgramError {
