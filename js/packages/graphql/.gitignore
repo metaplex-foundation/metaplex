@@ -5,4 +5,5 @@
 /temp
 .eslintcache
 .vscode
+.snapshot
 .env

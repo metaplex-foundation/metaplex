@@ -1,6 +1,7 @@
 import { WriterAdapter, WriterConstructor } from "../ingester";
 import { getEndpoints } from "../utils/getEndpoints";
 import { Loader } from "./Loader";
+import { wrapLoaderConnection } from "./snapshot";
 
 export class Ingester<T extends WriterAdapter = WriterAdapter> {
   private readonly entries: Loader<T>[] = [];
@@ -19,7 +20,9 @@ export class Ingester<T extends WriterAdapter = WriterAdapter> {
         endpoints.map(async ({ name, endpoint }) => {
           const writer = new Writer(name);
           await writer.init();
-          return new Loader(name, endpoint, writer);
+          const loader = new Loader(name, endpoint, writer);
+          wrapLoaderConnection(loader);
+          return loader;
         })
       ))
     );
