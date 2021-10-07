@@ -22,6 +22,7 @@ import {
   useWalletModal,
   VaultState,
   loadMultipleAccounts,
+  BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -256,27 +257,23 @@ export const AuctionCard = ({
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  // if instant sale auction bid and claimed hide buttons
-  const outstandingBid =
-    auctionView.myBidderPot && !auctionView.myBidRedemption;
+  const isOpenEditionSale =
+    auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const doesInstantSaleHasNoItems =
+    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+    auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
-  // if (
-  //   (!outstandingBid &&
-  //     auctionView.isInstantSale &&
-  //     Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-  //     isAuctionManagerAuthorityNotWalletOwner &&
-  //     auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
-  //   auctionView.vault.info.state === VaultState.Deactivated
-  // ) {
-  //   return <></>;
-  // }
-
-  //if instant sale auction bid and claimed hide buttons
-  if (
-    !outstandingBid &&
+  const shouldHideInstantSale =
+    !isOpenEditionSale &&
     auctionView.isInstantSale &&
-    auctionView.myBidderPot?.info.emptied
-  ) {
+    isAuctionManagerAuthorityNotWalletOwner &&
+    doesInstantSaleHasNoItems;
+
+  const shouldHide =
+    shouldHideInstantSale ||
+    auctionView.vault.info.state === VaultState.Deactivated;
+
+  if (shouldHide) {
     return <></>;
   }
 
