@@ -25,7 +25,7 @@ export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [
     ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow)
+    ...useAuctions(AuctionViewState.BuyNow),
   ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
