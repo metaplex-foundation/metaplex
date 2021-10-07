@@ -1,7 +1,7 @@
-import { startApolloServer } from "../server";
 import { config } from "dotenv";
-import { MetaplexDataSource } from "reader";
-import { MongoAdapter } from "adapters/mongo/MongoAdapter";
+import { MongoAdapter } from "../adapters/mongo";
+import { MetaplexDataSource } from "../reader";
+import { startApolloServer } from "../server";
 
 const main = async () => {
   const adapter = new MongoAdapter();

@@ -1,8 +1,8 @@
 import { Connection } from "@solana/web3.js";
-import { IEvent } from "api";
-import { MetaTypes, Store } from "common";
 import { PubSub, withFilter } from "graphql-subscriptions";
-import { loadUserTokenAccounts } from "utils/loadUserTokenAccounts";
+import { IEvent } from "../api";
+import { MetaTypes, Store } from "../common";
+import { loadUserTokenAccounts } from "../utils/loadUserTokenAccounts";
 import { FilterFn } from "./types";
 
 export interface ReadAdapter {

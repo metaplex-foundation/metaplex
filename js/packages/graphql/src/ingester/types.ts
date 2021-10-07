@@ -2,7 +2,7 @@ import {
   ProcessAccountsFunc,
   StringPublicKey,
   UpdateStateValueFunc,
-} from "common";
+} from "../common";
 
 export type EndpointsMap = {
   name: string;

@@ -1,8 +1,8 @@
 import { DataSource, DataSourceConfig } from "apollo-datasource";
-import logger from "logger";
-import { ReadAdapter } from "reader";
-import { getDefaultEndpointName } from "utils/getEndpoints";
+import logger from "../logger";
+import { ReadAdapter } from "../reader";
 import { Context } from "../types/context";
+import { getDefaultEndpointName } from "../utils/getEndpoints";
 
 export class MetaplexDataSource<
   TContext extends Context = Context

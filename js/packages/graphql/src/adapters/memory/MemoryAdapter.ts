@@ -1,5 +1,5 @@
-import { Ingester } from "ingester";
-import { ReadAdapter } from "reader";
+import { Ingester } from "../../ingester";
+import { ReadAdapter } from "../../reader";
 import { MemoryReader } from "./MemoryReader";
 import { MemoryWriter } from "./MemoryWriter";
 

@@ -1,4 +1,4 @@
-import { WriterAdapter, WriterConstructor } from "ingester";
+import { WriterAdapter, WriterConstructor } from "../ingester";
 import { getEndpoints } from "../utils/getEndpoints";
 import { Loader } from "./Loader";
 

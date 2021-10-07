@@ -1,10 +1,8 @@
+import { parseChunked } from "@discoveryjs/json-ext";
 import { Commitment, Connection, ConnectionConfig } from "@solana/web3.js";
 import fetch from "cross-fetch";
-import { parseChunked } from "@discoveryjs/json-ext";
 import logger from "../logger";
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { sleep } from "./sleep";
 
 // rewrite me if https://github.com/solana-labs/solana/pull/19821 or
 // https://github.com/solana-labs/solana/pull/20063 will be merged or maybe not so hucky way
