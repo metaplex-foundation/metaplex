@@ -28,7 +28,7 @@ export class Ingester<T extends WriterAdapter = WriterAdapter> {
   }
 
   async load() {
-    this.init();
+    await this.init();
     for (const entry of this.entries) {
       await entry.load();
     }

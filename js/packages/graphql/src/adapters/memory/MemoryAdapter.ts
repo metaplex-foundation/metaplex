@@ -3,12 +3,14 @@ import { ReadAdapter } from "../../reader";
 import { MemoryReader } from "./MemoryReader";
 import { MemoryWriter } from "./MemoryWriter";
 
-export class MemoryAdapter implements ReadAdapter {
-  private readonly readers: MemoryReader[] = [];
+export class MemoryAdapter extends ReadAdapter {
+  readonly readers: MemoryReader[] = [];
 
-  constructor(private ingester: Ingester<MemoryWriter>) {}
+  constructor(private ingester: Ingester<MemoryWriter>) {
+    super();
+  }
 
-  public async init() {
+  async init() {
     const loaders = await this.ingester.init();
     loaders.forEach((loader) => {
       const reader = new MemoryReader(
@@ -18,14 +20,5 @@ export class MemoryAdapter implements ReadAdapter {
       );
       this.readers.push(reader);
     });
-  }
-
-  getReader(network: string) {
-    const reader = this.readers.find(
-      (loader) => loader.networkName === network
-    );
-    if (!reader) return null;
-
-    return reader;
   }
 }

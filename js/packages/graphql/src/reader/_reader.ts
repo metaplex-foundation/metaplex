@@ -5,11 +5,6 @@ import { MetaTypes, Store } from "../common";
 import { loadUserTokenAccounts } from "../utils/loadUserTokenAccounts";
 import { FilterFn } from "./types";
 
-export interface ReadAdapter {
-  getReader(network: string): Reader | null;
-  init(): Promise<void>;
-}
-
 export abstract class Reader {
   protected readonly pubsub = new PubSub();
 
