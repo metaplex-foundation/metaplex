@@ -1,4 +1,4 @@
 export * from "./MetaplexDataSource";
-export * from "./_reader";
+export * from "./Reader";
 export * from "./ReadAdapter";
 export * from "./types";

@@ -1,4 +1,4 @@
-import { Reader } from "./_reader";
+import { Reader } from "./Reader";
 
 export abstract class ReadAdapter {
   abstract readonly readers: Reader[];
