@@ -52,6 +52,10 @@ pub enum NFTPacksError {
     #[error("Pack set should be activated")]
     PackSetNotActivated,
 
+    /// Pack is in ended state can't be activated
+    #[error("Pack is in ended state can't be activated")]
+    PackInEndedState,
+
     /// Can't change pack data at current state
     #[error("Can't change pack data at current state")]
     WrongPackStateToChangeData,

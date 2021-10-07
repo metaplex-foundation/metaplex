@@ -31,6 +31,10 @@ pub fn activate_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramR
         return Err(NFTPacksError::PackAlreadyActivated.into());
     }
 
+    if pack_set.pack_state == PackSetState::Ended {
+        return Err(NFTPacksError::PackInEndedState.into());   
+    }
+
     pack_set.pack_state = PackSetState::Activated;
 
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;

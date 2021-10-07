@@ -29,6 +29,10 @@ pub fn deactivate_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
         return Err(NFTPacksError::PackAlreadyDeactivated.into());
     }
 
+    if pack_set.pack_state == PackSetState::Ended {
+        return Err(NFTPacksError::PackInEndedState.into());   
+    }
+
     pack_set.pack_state = PackSetState::Deactivated;
 
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
