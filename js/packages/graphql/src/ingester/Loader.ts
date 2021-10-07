@@ -15,7 +15,7 @@ import { PROGRAMS } from "./constants";
 import { ProgramParse, WriterAdapter } from "./types";
 
 extendBorsh(); // it's need for proper work of decoding
-export class Loader<T extends WriterAdapter> {
+export class Loader<T extends WriterAdapter = WriterAdapter> {
   readonly connection: Connection;
   private defer: Promise<void> | undefined;
   private readonly changesQueue = queue({ autostart: false, concurrency: 1 });
