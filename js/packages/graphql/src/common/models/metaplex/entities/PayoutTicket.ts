@@ -1,15 +1,12 @@
 import BN from "bn.js";
+import { JsonProperty, Serializable } from "typescript-json-serializer";
+import { BNConverter } from "../../../../api/mongo";
 import { StringPublicKey } from "../../../utils";
 import { MetaplexKey } from "../MetaplexKey";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter, BNConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { BaseEntry } from "./BaseEntry";
 
 @Serializable()
-export class PayoutTicket {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class PayoutTicket extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
 
@@ -20,6 +17,8 @@ export class PayoutTicket {
   amountPaid!: BN;
 
   constructor(args?: { recipient: StringPublicKey; amountPaid: BN }) {
+    super();
+
     this.key = MetaplexKey.PayoutTicketV1;
     if (args) {
       this.recipient = args.recipient;

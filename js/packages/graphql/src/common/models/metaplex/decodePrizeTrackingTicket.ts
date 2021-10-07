@@ -1,11 +1,4 @@
-import { deserializeUnchecked } from "borsh";
+import { decodeEntry } from "./entities/BaseEntry";
 import { PrizeTrackingTicket } from "./entities/PrizeTrackingTicket";
-import { SCHEMA } from "./schema";
 
-export function decodePrizeTrackingTicket(buffer: Buffer) {
-  return deserializeUnchecked(
-    SCHEMA,
-    PrizeTrackingTicket,
-    buffer
-  ) as PrizeTrackingTicket;
-}
+export const decodePrizeTrackingTicket = decodeEntry(PrizeTrackingTicket);

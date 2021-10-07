@@ -1,13 +1,12 @@
-import { ObjectId } from "mongodb";
 import { MetaplexKey } from "../MetaplexKey";
 import { BidRedemptionTicket } from "../BidRedemptionTicket";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../../api/mongo";
+import { BaseEntry } from "./BaseEntry";
 @Serializable()
-export class BidRedemptionTicketV1 implements BidRedemptionTicket {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class BidRedemptionTicketV1
+  extends BaseEntry
+  implements BidRedemptionTicket
+{
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV1;
 
@@ -18,6 +17,8 @@ export class BidRedemptionTicketV1 implements BidRedemptionTicket {
   itemsRedeemed: number = 0;
 
   constructor(args?: BidRedemptionTicketV1) {
+    super();
+
     Object.assign(this, args);
   }
 

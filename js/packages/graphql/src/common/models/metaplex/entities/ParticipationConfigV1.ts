@@ -7,11 +7,14 @@ import { BNConverter } from "../../../../api/mongo";
 export class ParticipationConfigV1 {
   @JsonProperty()
   winnerConstraint: WinningConstraint = WinningConstraint.NoParticipationPrize;
+
   @JsonProperty()
   nonWinningConstraint: NonWinningConstraint =
     NonWinningConstraint.GivenForFixedPrice;
+
   @JsonProperty()
   safetyDepositBoxIndex: number = 0;
+
   @JsonProperty(BNConverter)
   fixedPrice: BN | null = new BN(0);
 

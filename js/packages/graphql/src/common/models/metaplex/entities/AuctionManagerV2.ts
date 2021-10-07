@@ -3,17 +3,9 @@ import { MetaplexKey } from "../MetaplexKey";
 import { AuctionManagerStateV2 } from "./AuctionManagerStateV2";
 
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { BaseEntry } from "./BaseEntry";
 @Serializable()
-export class AuctionManagerV2 {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
-  get pubkey() {
-    return this._id.toString();
-  }
-
+export class AuctionManagerV2 extends BaseEntry {
   @JsonProperty()
   key!: MetaplexKey;
 
@@ -43,6 +35,8 @@ export class AuctionManagerV2 {
     acceptPayment: StringPublicKey;
     state: AuctionManagerStateV2;
   }) {
+    super();
+
     this.key = MetaplexKey.AuctionManagerV2;
     if (args) {
       this.store = args.store;

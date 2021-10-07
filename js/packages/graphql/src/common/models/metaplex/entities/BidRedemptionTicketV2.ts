@@ -1,18 +1,17 @@
 import BN from "bn.js";
 import bs58 from "bs58";
+import { JsonProperty, Serializable } from "typescript-json-serializer";
+import { BNConverter } from "../../../../api/mongo";
 import { StringPublicKey } from "../../../utils";
-
 import { BidRedemptionTicket } from "../BidRedemptionTicket";
 import { MetaplexKey } from "../MetaplexKey";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter, BNConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { BaseEntry } from "./BaseEntry";
 
 @Serializable()
-export class BidRedemptionTicketV2 implements BidRedemptionTicket {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+export class BidRedemptionTicketV2
+  extends BaseEntry
+  implements BidRedemptionTicket
+{
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.BidRedemptionTicketV2;
 
@@ -26,6 +25,8 @@ export class BidRedemptionTicketV2 implements BidRedemptionTicket {
   data: number[] = [];
 
   constructor(args?: { key: MetaplexKey; data: number[] }) {
+    super();
+
     if (args) {
       Object.assign(this, args);
       let offset = 2;

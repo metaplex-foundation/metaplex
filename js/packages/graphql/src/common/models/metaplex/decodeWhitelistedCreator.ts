@@ -1,11 +1,4 @@
-import { deserializeUnchecked } from "borsh";
+import { decodeEntry } from "./entities/BaseEntry";
 import { WhitelistedCreator } from "./entities/WhitelistedCreator";
-import { SCHEMA } from "./schema";
 
-export function decodeWhitelistedCreator(buffer: Buffer) {
-  return deserializeUnchecked(
-    SCHEMA,
-    WhitelistedCreator,
-    buffer
-  ) as WhitelistedCreator;
-}
+export const decodeWhitelistedCreator = decodeEntry(WhitelistedCreator);

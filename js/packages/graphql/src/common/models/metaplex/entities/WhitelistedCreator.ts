@@ -1,19 +1,11 @@
-import { StringPublicKey } from "../../../utils";
-import { MetaplexKey } from "../MetaplexKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../../api/mongo";
-import { ObjectId } from "mongodb";
+import { StringPublicKey } from "../../../utils";
 import { isCreatorPartOfTheStore } from "../isCreatorPartOfTheStore";
+import { MetaplexKey } from "../MetaplexKey";
+import { BaseEntry } from "./BaseEntry";
 
 @Serializable()
-export class WhitelistedCreator {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
-  get pubkey() {
-    return this._id.toString();
-  }
-
+export class WhitelistedCreator extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.WhitelistedCreatorV1;
 
@@ -41,6 +33,8 @@ export class WhitelistedCreator {
   }
 
   constructor(args?: { address: string; activated: boolean }) {
+    super();
+
     if (args) {
       this.address = args.address;
       this.activated = args.activated;
