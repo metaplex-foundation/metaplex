@@ -2391,7 +2391,7 @@ program
 
       console.log('Doing lottery for', numWinnersRemaining);
       while (numWinnersRemaining > 0) {
-        const rand = Math.round(Math.random() * (chosen.length - 1));
+        const rand = Math.floor(Math.random() * (chosen.length));
         if (chosen[rand].chosen != true && chosen[rand].eligible) {
           chosen[rand].chosen = true;
           numWinnersRemaining--;
