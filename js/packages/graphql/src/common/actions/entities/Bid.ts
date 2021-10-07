@@ -1,7 +1,7 @@
 import BN from "bn.js";
 import { StringPublicKey } from "../../utils";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../api/mongo";
+import { BNConverter } from "../../serialize";
 
 @Serializable()
 export class Bid {

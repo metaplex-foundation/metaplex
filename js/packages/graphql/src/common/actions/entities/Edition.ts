@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import { StringPublicKey } from "../../utils";
 import { MetadataKey } from "../metadata/MetadataKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../api/mongo";
+import { ObjectIdConverter } from "../../serialize";
 @Serializable()
 export class Edition {
   @JsonProperty(ObjectIdConverter)

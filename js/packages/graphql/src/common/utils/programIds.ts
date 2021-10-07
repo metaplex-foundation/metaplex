@@ -1,4 +1,3 @@
-import { PublicKey } from "@solana/web3.js";
 import { findProgramAddress } from "../utils";
 
 import {
@@ -32,11 +31,7 @@ export const getStoreID = async (storeOwnerAddress?: string) => {
   return storeAddress;
 };
 
-export const setProgramIds = async (store?: string) => {
-  STORE = store ? toPublicKey(store) : undefined;
-};
-
-let STORE: PublicKey | undefined;
+let STORE: undefined;
 
 export const programIds = () => {
   return {

@@ -4,10 +4,6 @@ import { TokenAccount } from "./../models";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { WAD, ZERO } from "../constants";
-//import { TokenInfo } from '@solana/spl-token-registry';
-import { useLocalStorage } from "./useLocalStorage";
-
-//export type KnownTokenMap = Map<string, TokenInfo>;
 
 export const formatPriceNumber = new Intl.NumberFormat("en-US", {
   style: "decimal",
@@ -19,106 +15,16 @@ export const findProgramAddress = async (
   seeds: (Buffer | Uint8Array)[],
   programId: PublicKey
 ) => {
-  const localStorage = useLocalStorage();
-  const key =
-    "pda-" +
-    seeds.reduce((agg, item) => agg + item.toString("hex"), "") +
-    programId.toString();
-  const cached = localStorage.getItem(key);
-  if (cached) {
-    const value = JSON.parse(cached);
+  const [pubkey, seed] = await PublicKey.findProgramAddress(seeds, programId);
 
-    return [value.key, parseInt(value.nonce)] as [string, number];
-  }
-
-  const result = await PublicKey.findProgramAddress(seeds, programId);
-
-  try {
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        key: result[0].toBase58(),
-        nonce: result[1],
-      })
-    );
-  } catch {
-    // ignore
-  }
-
-  return [result[0].toBase58(), result[1]] as [string, number];
+  return [pubkey.toBase58(), seed];
 };
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
 export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
-/*
-export function getTokenName(
-  map: KnownTokenMap,
-  mint?: string | PublicKey,
-  shorten = true,
-): string {
-  const mintAddress = typeof mint === 'string' ? mint : mint?.toBase58();
 
-  if (!mintAddress) {
-    return 'N/A';
-  }
-
-  const knownSymbol = map.get(mintAddress)?.symbol;
-  if (knownSymbol) {
-    return knownSymbol;
-  }
-
-  return shorten ? `${mintAddress.substring(0, 5)}...` : mintAddress;
-}
-
-export function getVerboseTokenName(
-  map: KnownTokenMap,
-  mint?: string | PublicKey,
-  shorten = true,
-): string {
-  const mintAddress = typeof mint === 'string' ? mint : mint?.toBase58();
-
-  if (!mintAddress) {
-    return 'N/A';
-  }
-
-  const knownName = map.get(mintAddress)?.name;
-  if (knownName) {
-    return knownName;
-  }
-
-  return shorten ? `${mintAddress.substring(0, 5)}...` : mintAddress;
-}
-
-export function getTokenByName(tokenMap: KnownTokenMap, name: string) {
-  let token: TokenInfo | null = null;
-  for (const val of tokenMap.values()) {
-    if (val.symbol === name) {
-      token = val;
-      break;
-    }
-  }
-  return token;
-}
-
-export function getTokenIcon(
-  map: KnownTokenMap,
-  mintAddress?: string | PublicKey,
-): string | undefined {
-  const address =
-    typeof mintAddress === 'string' ? mintAddress : mintAddress?.toBase58();
-  if (!address) {
-    return;
-  }
-
-  return map.get(address)?.logoURI;
-}
-
-export function isKnownMint(map: KnownTokenMap, mintAddress: string) {
-  return !!map.get(mintAddress);
-}
-*/
 export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
 
 export function chunks<T>(array: T[], size: number): T[][] {

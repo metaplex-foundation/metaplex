@@ -1,7 +1,7 @@
 import { EDITION_MARKER_BIT_SIZE } from "../constants";
 import { MetadataKey } from "../metadata/MetadataKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../api/mongo";
+import { ObjectIdConverter } from "../../serialize";
 import { ObjectId } from "mongodb";
 
 @Serializable()

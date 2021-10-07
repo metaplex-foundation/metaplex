@@ -2,7 +2,7 @@ import BN from "bn.js";
 import { ObjectId } from "mongodb";
 import { MetadataKey } from "../metadata/MetadataKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter, ObjectIdConverter } from "../../../api/mongo";
+import { BNConverter, ObjectIdConverter } from "../../serialize";
 
 @Serializable()
 export class MasterEditionV2 {

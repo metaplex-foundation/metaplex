@@ -3,7 +3,7 @@ import { StringPublicKey } from "../../utils";
 import { BidStateType } from "../auction";
 import { Bid } from "./Bid";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../api/mongo";
+import { BNConverter } from "../../serialize";
 
 @Serializable()
 export class BidState {

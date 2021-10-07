@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../../api/mongo";
+import { BNConverter } from "../../../serialize";
 @Serializable()
 export class ParticipationStateV1 {
   @JsonProperty(BNConverter)
