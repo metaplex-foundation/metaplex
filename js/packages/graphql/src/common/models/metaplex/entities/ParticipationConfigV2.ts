@@ -2,7 +2,7 @@ import BN from "bn.js";
 import { NonWinningConstraint } from "../NonWinningConstraint";
 import { WinningConstraint } from "../WinningConstraint";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../../api/mongo";
+import { BNConverter } from "../../../serialize";
 
 @Serializable()
 export class ParticipationConfigV2 {

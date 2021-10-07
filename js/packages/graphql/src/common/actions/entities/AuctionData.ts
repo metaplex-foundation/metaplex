@@ -8,7 +8,7 @@ import { AuctionManagerV1, AuctionManagerV2 } from "../../../common";
 import { Auction } from "../../../types/sourceTypes";
 import { ObjectId } from "mongodb";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter, ObjectIdConverter } from "../../../api/mongo";
+import { BNConverter, ObjectIdConverter } from "../../serialize";
 
 @Serializable()
 export class AuctionData implements Auction {

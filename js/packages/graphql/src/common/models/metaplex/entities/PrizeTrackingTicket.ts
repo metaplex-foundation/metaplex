@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../../api/mongo";
+import { BNConverter } from "../../../serialize";
 import { MetaplexKey } from "../MetaplexKey";
 import { BaseEntry } from "./BaseEntry";
 

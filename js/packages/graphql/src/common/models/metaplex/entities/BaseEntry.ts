@@ -1,7 +1,7 @@
 import { deserializeUnchecked } from "borsh";
 import { ObjectId } from "mongodb";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../../api/mongo";
+import { ObjectIdConverter } from "../../../serialize";
 import { StringPublicKey } from "../../../utils";
 import { SCHEMA } from "../schema";
 

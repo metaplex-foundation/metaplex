@@ -5,7 +5,7 @@ import { Data } from "./Data";
 import { getEdition } from "../metadata/getEdition";
 import { MetadataKey } from "../metadata/MetadataKey";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../api/mongo";
+import { ObjectIdConverter } from "../../serialize";
 import { METADATA_PREFIX } from "../../actions/metadata/constants";
 @Serializable()
 export class Metadata {

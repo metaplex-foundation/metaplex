@@ -2,7 +2,7 @@ import type { StringPublicKey } from "../../utils";
 import { VaultKey } from "../VaultKey";
 import { ObjectId } from "mongodb";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { ObjectIdConverter } from "../../../api/mongo";
+import { ObjectIdConverter } from "../../serialize";
 @Serializable()
 export class SafetyDepositBox {
   @JsonProperty(ObjectIdConverter)

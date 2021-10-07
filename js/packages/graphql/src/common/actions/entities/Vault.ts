@@ -4,7 +4,7 @@ import { StringPublicKey } from "../../utils";
 import { VaultKey } from "../VaultKey";
 import { VaultState } from "../VaultState";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter, ObjectIdConverter } from "../../../api/mongo";
+import { BNConverter, ObjectIdConverter } from "../../serialize";
 
 @Serializable()
 export class Vault {

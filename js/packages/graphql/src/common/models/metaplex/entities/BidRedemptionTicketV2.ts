@@ -1,7 +1,7 @@
 import BN from "bn.js";
 import bs58 from "bs58";
 import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../../api/mongo";
+import { BNConverter } from "../../../serialize";
 import { StringPublicKey } from "../../../utils";
 import { BidRedemptionTicket } from "../BidRedemptionTicket";
 import { MetaplexKey } from "../MetaplexKey";
