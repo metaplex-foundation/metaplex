@@ -1,15 +1,15 @@
-import { ApolloServer } from "apollo-server-express";
 import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
+import { ApolloServer } from "apollo-server-express";
 import express from "express";
+import { execute, subscribe } from "graphql";
 import { createServer } from "http";
 import { SubscriptionServer } from "subscriptions-transport-ws";
-import { Context } from "../types/context";
 import logger from "../logger";
-import { MetaplexApiDataSource } from "../api";
-import { execute, subscribe } from "graphql";
-import { schema, context } from "./graphqlConfig";
+import { MetaplexDataSource } from "../reader";
+import { Context } from "../types/context";
+import { context, schema } from "./graphqlConfig";
 
-export async function getServer(api: MetaplexApiDataSource<Context>) {
+export async function getServer(api: MetaplexDataSource<Context>) {
   const app = express();
   const httpServer = createServer(app);
 
@@ -54,7 +54,7 @@ export async function getServer(api: MetaplexApiDataSource<Context>) {
   return { app, httpServer, apolloServer };
 }
 
-export async function startApolloServer(api: MetaplexApiDataSource<Context>) {
+export async function startApolloServer(api: MetaplexDataSource<Context>) {
   const { httpServer, apolloServer } = await getServer(api);
   const PORT = process.env.PORT || 4000;
 

@@ -19,18 +19,14 @@ export type ProgramParse = {
   process: (account: Parameters<ProcessAccountsFunc>[0]) => Promise<void>;
 };
 
-export interface WriterConstructor {
-  build(name: string): Promise<WriterAdapter>;
+export interface WriterConstructor<T extends WriterAdapter = WriterAdapter> {
+  new (name: string): T;
 }
 
 export interface WriterAdapter {
+  networkName: string;
+  init(): Promise<void>;
+  listenModeOn(): void;
   flush(): Promise<void>;
   persist: UpdateStateValueFunc;
 }
-
-export declare type FilterFn<T = any> = (
-  rootValue?: T,
-  args?: any,
-  context?: any,
-  info?: any
-) => boolean | Promise<boolean>;

@@ -1,37 +1,34 @@
-import { extendBorsh } from "common";
-import { WriterConstructor } from "ingester";
-import { ENDPOINTS } from "./constants";
+import { WriterAdapter, WriterConstructor } from "ingester";
+import { getEndpoints } from "../utils/getEndpoints";
 import { Loader } from "./Loader";
-import { EndpointsMap } from "./types";
 
-extendBorsh(); // it's need for proper work of decoding
+export class Ingester<T extends WriterAdapter = WriterAdapter> {
+  private readonly entries: Loader<T>[] = [];
+  private readonly endpoints = getEndpoints();
 
-const getEndpoints = (endpoints: EndpointsMap, filter?: string) => {
-  return filter
-    ? endpoints.filter(({ name }) => name.startsWith(filter))
-    : endpoints;
-};
-
-export class Ingester {
-  private entries: Loader[] = [];
-  private readonly endpoints = getEndpoints(ENDPOINTS, process.env.NETWORK);
-
-  constructor(private Writer: WriterConstructor) {}
+  constructor(private Writer: WriterConstructor<T>) {}
 
   async init() {
-    const { Writer, endpoints } = this;
+    const { Writer, endpoints, entries } = this;
+    if (entries.length) {
+      return this.entries;
+    }
 
-    this.entries = await Promise.all(
-      endpoints.map(async ({ name, endpoint }) => {
-        const writer = await Writer.build(name);
-        return new Loader(name, endpoint, writer);
-      })
+    entries.push(
+      ...(await Promise.all(
+        endpoints.map(async ({ name, endpoint }) => {
+          const writer = new Writer(name);
+          await writer.init();
+          return new Loader(name, endpoint, writer);
+        })
+      ))
     );
+
+    return entries;
   }
 
   async load() {
-    await this.init();
-
+    this.init();
     for (const entry of this.entries) {
       await entry.load();
     }

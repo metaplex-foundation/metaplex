@@ -1,4 +1,4 @@
-import { MetaMap, UpdateStateValueFunc } from "common";
+import { MetaTypes, UpdateStateValueFunc } from "common";
 import logger from "logger";
 import { AnyBulkWriteOperation, Db } from "mongodb";
 import { serialize } from "typescript-json-serializer";
@@ -8,21 +8,17 @@ import { createOrm } from "./createOrm";
 
 export class MongoWriter implements WriterAdapter {
   private db!: Db;
-  private cache: Partial<Record<keyof MetaMap, AnyBulkWriteOperation[]>> = {};
+  private cache: Partial<Record<MetaTypes, AnyBulkWriteOperation[]>> = {};
 
-  public static async build(name: string) {
-    const instance = new this(name);
-    await instance.init();
-    return instance;
+  constructor(public networkName: string) {}
+
+  async init() {
+    this.db = await createOrm(connectionString, `metaplex-${this.networkName}`);
   }
 
-  constructor(private name: string) {}
+  listenModeOn() {}
 
-  private async init() {
-    this.db = await createOrm(connectionString, `metaplex-${this.name}`);
-  }
-
-  public persist: UpdateStateValueFunc = async (prop, key, value) => {
+  persist: UpdateStateValueFunc = async (prop, key, value) => {
     const $set = serialize(value, true);
     const doc: AnyBulkWriteOperation = {
       updateOne: {

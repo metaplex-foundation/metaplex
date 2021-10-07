@@ -1,4 +1,4 @@
-import { MetaState } from "../common";
+import { MetaTypes } from "../common";
 import { nonNull, stringArg, subscriptionType } from "nexus";
 import { NexusObjectTypeDef } from "nexus/dist/definitions/objectType";
 import { Auction } from "./auction";
@@ -23,7 +23,7 @@ export const truths = subscriptionType({
     function createSubscribeListEnpoint<T extends string>(
       ttype: NexusObjectTypeDef<T>,
       endpoint: string,
-      prop: keyof MetaState
+      prop: MetaTypes
     ) {
       t.field(endpoint, {
         type: ttype,
@@ -39,7 +39,7 @@ export const truths = subscriptionType({
     function createSubscribeItemEnpoint<T extends string>(
       ttype: NexusObjectTypeDef<T>,
       endpoint: string,
-      prop: keyof MetaState
+      prop: MetaTypes
     ) {
       t.field(endpoint, {
         type: ttype,
@@ -56,7 +56,7 @@ export const truths = subscriptionType({
     function createSubscribeIterator<T extends string>(
       ttype: NexusObjectTypeDef<T>,
       [item, list]: [string, string],
-      prop: keyof MetaState
+      prop: MetaTypes
     ) {
       createSubscribeListEnpoint(ttype, list, prop);
       createSubscribeItemEnpoint(ttype, item, prop);
