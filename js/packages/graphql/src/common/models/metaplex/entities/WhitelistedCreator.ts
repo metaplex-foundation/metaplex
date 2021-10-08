@@ -28,7 +28,7 @@ export class WhitelistedCreator extends BaseEntry {
   @JsonProperty()
   description?: string;
 
-  isCreatorPartOfTheStore(storeId: string) {
+  async isCreatorPartOfTheStore(storeId: string) {
     return isCreatorPartOfTheStore(this.address, this.pubkey, storeId);
   }
 

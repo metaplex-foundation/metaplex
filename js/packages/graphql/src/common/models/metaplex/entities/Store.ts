@@ -7,6 +7,7 @@ import { BaseEntry } from "./BaseEntry";
 export class Store extends BaseEntry {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.StoreV1;
+
   @JsonProperty()
   public: boolean = true;
 

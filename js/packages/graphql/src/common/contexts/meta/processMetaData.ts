@@ -34,12 +34,12 @@ export const processMetaData: ProcessAccountsFunc = async (
 
     if (isEditionV1Account(account)) {
       const edition = decodeEdition(account.data);
-      await setter("edition", pubkey, edition);
+      await setter("editions", pubkey, edition);
     }
 
     if (isMasterEditionAccount(account)) {
       const masterEdition = decodeMasterEdition(account.data);
-      await setter("masterEdition", pubkey, masterEdition);
+      await setter("masterEditions", pubkey, masterEdition);
     }
   } catch (err) {
     logger.warn(err);

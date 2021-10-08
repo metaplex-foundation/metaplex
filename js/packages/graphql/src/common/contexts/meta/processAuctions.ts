@@ -18,7 +18,7 @@ export const processAuctions: ProcessAccountsFunc = async (
 
   try {
     const auction = decodeAuction(account.data);
-    await setter("auction", pubkey, auction);
+    await setter("auctions", pubkey, auction);
   } catch {
     // ignore errors
   }
@@ -26,7 +26,7 @@ export const processAuctions: ProcessAccountsFunc = async (
   try {
     if (isExtendedAuctionAccount(account)) {
       const extendedAuction = decodeAuctionDataExtended(account.data);
-      await setter("auctionDataExtended", pubkey, extendedAuction);
+      await setter("auctionsDataExtended", pubkey, extendedAuction);
     }
   } catch {
     // ignore errors
@@ -35,7 +35,7 @@ export const processAuctions: ProcessAccountsFunc = async (
   try {
     if (isBidderMetadataAccount(account)) {
       const bidderMetadata = decodeBidderMetadata(account.data);
-      await setter("bidderMetadata", pubkey, bidderMetadata);
+      await setter("bidderMetadatas", pubkey, bidderMetadata);
     }
   } catch {
     // ignore errors
@@ -44,7 +44,7 @@ export const processAuctions: ProcessAccountsFunc = async (
   try {
     if (isBidderPotAccount(account)) {
       const bidderPot = decodeBidderPot(account.data);
-      await setter("bidderPot", pubkey, bidderPot);
+      await setter("bidderPots", pubkey, bidderPot);
     }
   } catch (err) {
     // ignore errors

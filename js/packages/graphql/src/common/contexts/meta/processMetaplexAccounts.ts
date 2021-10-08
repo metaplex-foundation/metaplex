@@ -24,7 +24,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isAuctionManagerV2Account(account)
     ) {
       const auctionManager = decodeAuctionManager(account.data, pubkey);
-      await setter("auctionManager", pubkey, auctionManager);
+      await setter("auctionManagers", pubkey, auctionManager);
     }
 
     if (
@@ -32,32 +32,32 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isBidRedemptionTicketV2Account(account)
     ) {
       const ticket = decodeBidRedemptionTicket(account.data);
-      await setter("bidRedemption", pubkey, ticket);
+      await setter("bidRedemptions", pubkey, ticket);
     }
 
     if (isPayoutTicketV1Account(account)) {
       const ticket = decodePayoutTicket(account.data, pubkey);
-      await setter("payoutTicket", pubkey, ticket);
+      await setter("payoutTickets", pubkey, ticket);
     }
 
     if (isPrizeTrackingTicketV1Account(account)) {
       const ticket = decodePrizeTrackingTicket(account.data, pubkey);
-      await setter("prizeTrackingTicket", pubkey, ticket);
+      await setter("prizeTrackingTickets", pubkey, ticket);
     }
 
     if (isSafetyDepositConfigV1Account(account)) {
       const config = decodeSafetyDepositConfig(account.data);
-      await setter("safetyDepositConfig", pubkey, config);
+      await setter("safetyDepositConfigs", pubkey, config);
     }
 
     if (isStoreV1Account(account)) {
       const store = decodeStore(account.data, pubkey);
-      await setter("store", pubkey, store);
+      await setter("stores", pubkey, store);
     }
 
     if (isWhitelistedCreatorV1Account(account)) {
       const creator = decodeWhitelistedCreator(account.data, pubkey);
-      await setter("creator", pubkey, creator);
+      await setter("creators", pubkey, creator);
     }
   } catch (err) {
     logger.warn(err);

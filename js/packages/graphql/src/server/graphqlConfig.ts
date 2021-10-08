@@ -28,10 +28,7 @@ export const schema = makeSchema({
       },
     ],
     mapping: {
-      Artwork: "common.Artwork",
-      Creator: "common.Creator",
-      Auction: "common.Auction",
-      AuctionManager: "common.AuctionManager",
+      Creator: "common.WhitelistedCreator",
     },
   },
   contextType: {

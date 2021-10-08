@@ -24,22 +24,22 @@ import {
 import { PublicKeyStringAndAccount, AccountInfoOwnerString } from "../../utils";
 
 export type MetaMap = {
-  vault: Vault;
-  safetyDepositBox: SafetyDepositBox;
-  auction: AuctionData;
-  auctionDataExtended: AuctionDataExtended;
-  bidderMetadata: BidderMetadata;
-  bidderPot: BidderPot;
-  auctionManager: AuctionManagerV1 | AuctionManagerV2;
-  bidRedemption: BidRedemptionTicket;
-  payoutTicket: PayoutTicket;
-  prizeTrackingTicket: PrizeTrackingTicket;
-  safetyDepositConfig: SafetyDepositConfig;
-  store: Store;
-  creator: WhitelistedCreator;
+  vaults: Vault;
+  safetyDepositBoxes: SafetyDepositBox;
+  auctions: AuctionData;
+  auctionsDataExtended: AuctionDataExtended;
+  bidderMetadatas: BidderMetadata;
+  bidderPots: BidderPot;
+  auctionManagers: AuctionManagerV1 | AuctionManagerV2;
+  bidRedemptions: BidRedemptionTicket;
+  payoutTickets: PayoutTicket;
+  prizeTrackingTickets: PrizeTrackingTicket;
+  safetyDepositConfigs: SafetyDepositConfig;
+  stores: Store;
+  creators: WhitelistedCreator;
   metadata: Metadata;
-  edition: Edition;
-  masterEdition: MasterEditionV1 | MasterEditionV2;
+  editions: Edition;
+  masterEditions: MasterEditionV1 | MasterEditionV2;
 };
 
 export type MetaTypes = keyof MetaMap;

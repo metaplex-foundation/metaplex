@@ -1,9 +1,17 @@
 import { Connection } from "@solana/web3.js";
 import { PubSub, withFilter } from "graphql-subscriptions";
-import { IEvent } from "../api";
-import { MetaTypes, Store } from "../common";
+import {
+  Edition,
+  MasterEditionV1,
+  MasterEditionV2,
+  Metadata,
+  MetaTypes,
+  Store,
+  WhitelistedCreator,
+} from "../common";
+import { NexusGenInputs } from "../generated/typings";
 import { loadUserTokenAccounts } from "../utils/loadUserTokenAccounts";
-import { FilterFn } from "./types";
+import { FilterFn, IEvent } from "./types";
 
 export abstract class Reader {
   protected readonly pubsub = new PubSub();
@@ -37,4 +45,20 @@ export abstract class Reader {
   abstract auctionsCount(): Promise<number>;
 
   abstract getStores(): Promise<Store[]>;
+  abstract getStore(storeId: string): Promise<Store | null>;
+
+  abstract getCreators(storeId: string): Promise<WhitelistedCreator[]>;
+  abstract getCreator(
+    storeId: string,
+    creatorId: string
+  ): Promise<WhitelistedCreator | null>;
+
+  abstract getArtworks(
+    args: NexusGenInputs["ArtworksInput"]
+  ): Promise<Metadata[]>;
+  abstract getArtwork(artId: string): Promise<Metadata | null>;
+  abstract getEdition(id?: string): Promise<Edition | null>;
+  abstract getMasterEdition(
+    id?: string
+  ): Promise<MasterEditionV1 | MasterEditionV2 | null>;
 }
