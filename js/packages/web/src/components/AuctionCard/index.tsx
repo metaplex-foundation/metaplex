@@ -374,8 +374,10 @@ export const AuctionCard = ({
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+
+  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
   const doesInstantSaleHasNoItems =
-    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+    isBidderPotEmpty &&
     auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
   const shouldHideInstantSale =
@@ -386,7 +388,8 @@ export const AuctionCard = ({
 
   const shouldHide =
     shouldHideInstantSale ||
-    auctionView.vault.info.state === VaultState.Deactivated;
+    (auctionView.vault.info.state === VaultState.Deactivated &&
+      isBidderPotEmpty);
 
   if (shouldHide) {
     return <></>;
