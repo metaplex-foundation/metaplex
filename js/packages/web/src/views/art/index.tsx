@@ -224,7 +224,7 @@ export const ArtView = () => {
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
             <div className="info-header">ABOUT THE CREATION</div>
-            <pre className="info-content">{description}</pre>
+            <div className="info-content">{description}</div>
             <br />
             {/*
               TODO: add info about artist
