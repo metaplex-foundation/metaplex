@@ -77,7 +77,7 @@ export function MetaProvider({ children = null as any }) {
     }
 
     return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
-  }, [connection, patchState, isLoading, whitelistedCreatorsByCreator]);
+  }, [isLoading]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators

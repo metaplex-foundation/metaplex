@@ -26,6 +26,7 @@ export const subscribeAccountsChange = (
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
     const state = getEmptyMetaState();
+    
     makeSetter(state)(prop, key, value);
 
     patchState(state);
