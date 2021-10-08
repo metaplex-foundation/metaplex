@@ -2,14 +2,17 @@ import { Form, Input, Button} from 'antd';
 import {useHistory} from "react-router-dom";
 import {login} from "../../actions/lmsIntegration";
 import { useState} from "react";
+import {useConnectionConfig} from "@oyster/common";
 
 export const LoginForm = () => {
   const history = useHistory();
   let [loading, setLoading] = useState(false);
   let [error, setError] = useState(null);
+  const {env} = useConnectionConfig();
+
   const onFinish = (values: any) => {
     setLoading(true);
-    login(values).then(r => {
+    login(values, env).then(r => {
       sessionStorage.setItem('token', r);
       history.push('/');
       setLoading(false);
