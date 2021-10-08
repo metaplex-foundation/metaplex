@@ -10,8 +10,7 @@ import { merge, uniqWith } from 'lodash'
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { ParsedAccount } from '..';
-import { AuctionData, BidderMetadata, BidderPot, Metadata } from '../../actions';
+import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -107,13 +106,13 @@ export function MetaProvider({ children = null as any }) {
     })()
   }, [storeAddress, isReady, ownerAddress]);
 
-  // useEffect(() => {
-  //   if (isLoading) {
-  //     return;
-  //   }
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
 
-  //   return subscribeAccountsChange(connection, () => state, setState);
-  // }, [connection, setState, isLoading]);
+    return subscribeAccountsChange(connection, patchState);
+  }, [connection, setState, isLoading]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators

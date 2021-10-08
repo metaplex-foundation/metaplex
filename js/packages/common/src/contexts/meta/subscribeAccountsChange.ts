@@ -1,5 +1,6 @@
 import { Connection } from '@solana/web3.js';
 import { Dispatch, SetStateAction } from 'react';
+import { getEmptyMetaState } from '.';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -17,17 +18,15 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
-  getState: () => MetaState,
-  setState: Dispatch<SetStateAction<MetaState>>,
+  patchState: (state: Partial<MetaState>) => void,
 ) => {
   const subscriptions: number[] = [];
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
-    setState((current: MetaState) => {
-      const nextState = makeSetter({ ...current })(prop, key, value);
+    const state = getEmptyMetaState();
+    makeSetter(state)(prop, key, value);
 
-      return nextState
-    });
+    patchState(state);
   };
 
   subscriptions.push(
@@ -55,7 +54,7 @@ export const subscribeAccountsChange = (
     connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
       onChangeAccount(processMetaData, async (prop, key, value) => {
-        const state = { ...getState() };
+        const state = getEmptyMetaState();
         const setter = makeSetter(state);
         let hasChanges = false;
         const updater: UpdateStateValueFunc = (...args) => {
@@ -72,8 +71,9 @@ export const subscribeAccountsChange = (
         } else {
           updater(prop, key, value);
         }
+
         if (hasChanges) {
-          setState(state);
+          patchState(state);
         }
       }),
     ),
