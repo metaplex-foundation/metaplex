@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {GatewayProvider as CivicGatewayProvider} from "@civic/solana-gateway-react";
+import { SolanaGatewayProvider } from "@civic/solana-gateway-react";
 import {useConnectionConfig} from "@oyster/common";
 import {PublicKey, Transaction} from "@solana/web3.js";
 import {useWallet} from "@solana/wallet-adapter-react";
@@ -18,14 +18,14 @@ export function GatewayProvider({ children = null as any }) {
 
   return (
     (wallet && wallet.connected && wallet.publicKey) ?
-      <CivicGatewayProvider
+      <SolanaGatewayProvider
         wallet={wallet as GatewayWallet}
       gatekeeperNetwork={gatekeeperNetwork}
   stage='dev'
   clusterUrl={endpoint}
     >
     {children}
-    </CivicGatewayProvider>
+    </SolanaGatewayProvider>
 : <>
     {children}
   </>

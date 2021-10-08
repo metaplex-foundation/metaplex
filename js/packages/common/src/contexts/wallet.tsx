@@ -11,7 +11,7 @@ import {
   getSolletWallet,
   getSolongWallet,
   getTorusWallet,
-  getCryptidWallet,
+  // getCryptidWallet,
   WalletName,
 } from '@solana/wallet-adapter-wallets';
 import { Button } from 'antd';
@@ -194,7 +194,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
     () => [
-      getCryptidWallet(),
+      // getCryptidWallet(),
       getPhantomWallet(),
       getSolflareWallet(),
       getTorusWallet({
