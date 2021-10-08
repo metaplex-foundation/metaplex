@@ -14,4 +14,44 @@ export class MongoReader extends Reader {
   async init() {
     this.db = await createOrm(connectionString, `metaplex-${this.networkName}`);
   }
+
+  async storesCount() {
+    return 0;
+  }
+  async creatorsCount() {
+    return 0;
+  }
+  async artworksCount() {
+    return 0;
+  }
+  async auctionsCount() {
+    return 0;
+  }
+
+  async getStores() {
+    return [];
+  }
+  async getStore() {
+    return null;
+  }
+
+  async getCreators() {
+    return [];
+  }
+  async getCreator() {
+    return null;
+  }
+
+  async getArtworks() {
+    return [];
+  }
+  async getArtwork() {
+    return null;
+  }
+  async getEdition() {
+    return null;
+  }
+  async getMasterEdition() {
+    return null;
+  }
 }

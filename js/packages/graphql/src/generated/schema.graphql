@@ -8,14 +8,10 @@ type AmountRange {
 
 type Artwork {
   creators: [ArtworkCreator]
-  edition: BN
-  maxSupply: BN
   mint: PublicKey
   pubkey: PublicKey!
   sellerFeeBasisPoints: Int!
-  supply: BN
   title: String!
-  type: Int!
   uri: String!
 }
 
@@ -53,7 +49,6 @@ type Auction {
   Auction Bids, each user may have one bid open at a time.
   """
   bidState: BidState!
-  bids: [BidderMetadata!]!
 
   """
   End time is the cut-off point that the auction is forced to end by.
@@ -64,7 +59,6 @@ type Auction {
   Slot time the auction was officially ended by.
   """
   endedAt: BN
-  highestBid: BidderMetadata
 
   """
   The time the last bid was placed, used to keep track of auction timing.
@@ -83,19 +77,12 @@ type Auction {
   The state the auction is in, whether it has started or ended.
   """
   state: AuctionState!
-  thumbnail: Artwork
 
   """
   Token mint for the SPL token being used to bid
   """
   tokenMint: PublicKey!
   viewState: AuctionViewState!
-}
-
-type AuctionDataExtended {
-  gapTickSizePercentage: Int
-  tickSize: BN
-  totalUncancelledBids: BN
 }
 
 enum AuctionInputState {
@@ -109,9 +96,6 @@ type AuctionManager {
   acceptPayment: PublicKey!
   auction: PublicKey!
   authority: PublicKey!
-  participationConfig: ParticipationConfig
-  safetyDepositBoxes: [SafetyDepositBox!]!
-  safetyDepositBoxesExpected: BN!
   store: PublicKey!
   vault: PublicKey!
 }
@@ -191,45 +175,6 @@ type BidState {
 enum BidStateType {
   EnglishAuction
   OpenEdition
-}
-
-type BidderMetadata {
-  """
-  Relationship with the auction this bid was placed on.
-  """
-  auctionPubkey: PublicKey!
-
-  """
-  Relationship with the bidder who's metadata this covers.
-  """
-  bidderPubkey: PublicKey!
-
-  """
-  Whether the last bid the user made was cancelled. This should also be enough to know if the
-  user is a winner, as if cancelled it implies previous bids were also cancelled.
-  """
-  cancelled: Boolean!
-
-  """
-  Amount that the user bid
-  """
-  lastBid: BN!
-
-  """
-  Tracks the last time this user bid.
-  """
-  lastBidTimestamp: BN!
-}
-
-type BidderPot {
-  auctionAct: PublicKey
-  bidderAct: PublicKey
-
-  """
-  Points at actual pot that is a token account
-  """
-  bidderPot: PublicKey
-  emptied: Boolean
 }
 
 scalar Buffer
@@ -332,8 +277,6 @@ type Query {
   artwork(artId: String!, storeId: String): Artwork
   artworks(filter: ArtworksInput!): [Artwork!]
   artworksCount: Int
-  auction(auctionId: String!, storeId: String): Auction
-  auctions(filter: AuctionsInput!): [Auction!]
   auctionsCount: Int
   creator(creatorId: String!, storeId: String!): Creator
   creators(storeId: String!): [Creator!]

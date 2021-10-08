@@ -108,7 +108,7 @@ export interface NexusGenObjects {
     amount?: NexusGenScalars["BN"] | null; // BN
     length?: NexusGenScalars["BN"] | null; // BN
   };
-  Artwork: common.Artwork;
+  Artwork: common.Metadata;
   ArtworkCreator: {
     // root type
     address: NexusGenScalars["PublicKey"]; // PublicKey!
@@ -116,12 +116,6 @@ export interface NexusGenObjects {
     verified: boolean; // Boolean!
   };
   Auction: common.Auction;
-  AuctionDataExtended: {
-    // root type
-    gapTickSizePercentage?: number | null; // Int
-    tickSize?: NexusGenScalars["BN"] | null; // BN
-    totalUncancelledBids?: NexusGenScalars["BN"] | null; // BN
-  };
   AuctionManager: common.AuctionManager;
   AuctionManagerStateV1: {
     // root type
@@ -170,22 +164,7 @@ export interface NexusGenObjects {
     max: NexusGenScalars["BN"]; // BN!
     type: NexusGenEnums["BidStateType"]; // BidStateType!
   };
-  BidderMetadata: {
-    // root type
-    auctionPubkey: NexusGenScalars["PublicKey"]; // PublicKey!
-    bidderPubkey: NexusGenScalars["PublicKey"]; // PublicKey!
-    cancelled: boolean; // Boolean!
-    lastBid: NexusGenScalars["BN"]; // BN!
-    lastBidTimestamp: NexusGenScalars["BN"]; // BN!
-  };
-  BidderPot: {
-    // root type
-    auctionAct?: NexusGenScalars["PublicKey"] | null; // PublicKey
-    bidderAct?: NexusGenScalars["PublicKey"] | null; // PublicKey
-    bidderPot?: NexusGenScalars["PublicKey"] | null; // PublicKey
-    emptied?: boolean | null; // Boolean
-  };
-  Creator: common.Creator;
+  Creator: common.WhitelistedCreator;
   Edition: {
     // root type
     edition?: NexusGenScalars["BN"] | null; // BN
@@ -308,14 +287,10 @@ export interface NexusGenFieldTypes {
   Artwork: {
     // field return type
     creators: Array<NexusGenRootTypes["ArtworkCreator"] | null> | null; // [ArtworkCreator]
-    edition: NexusGenScalars["BN"] | null; // BN
-    maxSupply: NexusGenScalars["BN"] | null; // BN
     mint: NexusGenScalars["PublicKey"] | null; // PublicKey
     pubkey: NexusGenScalars["PublicKey"]; // PublicKey!
     sellerFeeBasisPoints: number; // Int!
-    supply: NexusGenScalars["BN"] | null; // BN
     title: string; // String!
-    type: number; // Int!
     uri: string; // String!
   };
   ArtworkCreator: {
@@ -330,34 +305,22 @@ export interface NexusGenFieldTypes {
     authority: NexusGenScalars["PublicKey"]; // PublicKey!
     bidRedemptionKey: NexusGenScalars["PublicKey"] | null; // PublicKey
     bidState: NexusGenRootTypes["BidState"]; // BidState!
-    bids: NexusGenRootTypes["BidderMetadata"][]; // [BidderMetadata!]!
     endAuctionAt: NexusGenScalars["BN"] | null; // BN
     endedAt: NexusGenScalars["BN"] | null; // BN
-    highestBid: NexusGenRootTypes["BidderMetadata"] | null; // BidderMetadata
     lastBid: NexusGenScalars["BN"] | null; // BN
     manager: NexusGenRootTypes["AuctionManager"]; // AuctionManager!
     numWinners: NexusGenScalars["BN"]; // BN!
     priceFloor: NexusGenRootTypes["PriceFloor"]; // PriceFloor!
     pubkey: NexusGenScalars["PublicKey"]; // PublicKey!
     state: NexusGenEnums["AuctionState"]; // AuctionState!
-    thumbnail: NexusGenRootTypes["Artwork"] | null; // Artwork
     tokenMint: NexusGenScalars["PublicKey"]; // PublicKey!
     viewState: NexusGenEnums["AuctionViewState"]; // AuctionViewState!
-  };
-  AuctionDataExtended: {
-    // field return type
-    gapTickSizePercentage: number | null; // Int
-    tickSize: NexusGenScalars["BN"] | null; // BN
-    totalUncancelledBids: NexusGenScalars["BN"] | null; // BN
   };
   AuctionManager: {
     // field return type
     acceptPayment: NexusGenScalars["PublicKey"]; // PublicKey!
     auction: NexusGenScalars["PublicKey"]; // PublicKey!
     authority: NexusGenScalars["PublicKey"]; // PublicKey!
-    participationConfig: NexusGenRootTypes["ParticipationConfig"] | null; // ParticipationConfig
-    safetyDepositBoxes: NexusGenRootTypes["SafetyDepositBox"][]; // [SafetyDepositBox!]!
-    safetyDepositBoxesExpected: NexusGenScalars["BN"]; // BN!
     store: NexusGenScalars["PublicKey"]; // PublicKey!
     vault: NexusGenScalars["PublicKey"]; // PublicKey!
   };
@@ -407,21 +370,6 @@ export interface NexusGenFieldTypes {
     bids: Array<NexusGenRootTypes["Bid"] | null>; // [Bid]!
     max: NexusGenScalars["BN"]; // BN!
     type: NexusGenEnums["BidStateType"]; // BidStateType!
-  };
-  BidderMetadata: {
-    // field return type
-    auctionPubkey: NexusGenScalars["PublicKey"]; // PublicKey!
-    bidderPubkey: NexusGenScalars["PublicKey"]; // PublicKey!
-    cancelled: boolean; // Boolean!
-    lastBid: NexusGenScalars["BN"]; // BN!
-    lastBidTimestamp: NexusGenScalars["BN"]; // BN!
-  };
-  BidderPot: {
-    // field return type
-    auctionAct: NexusGenScalars["PublicKey"] | null; // PublicKey
-    bidderAct: NexusGenScalars["PublicKey"] | null; // PublicKey
-    bidderPot: NexusGenScalars["PublicKey"] | null; // PublicKey
-    emptied: boolean | null; // Boolean
   };
   Creator: {
     // field return type
@@ -486,8 +434,6 @@ export interface NexusGenFieldTypes {
     artwork: NexusGenRootTypes["Artwork"] | null; // Artwork
     artworks: NexusGenRootTypes["Artwork"][] | null; // [Artwork!]
     artworksCount: number | null; // Int
-    auction: NexusGenRootTypes["Auction"] | null; // Auction
-    auctions: NexusGenRootTypes["Auction"][] | null; // [Auction!]
     auctionsCount: number | null; // Int
     creator: NexusGenRootTypes["Creator"] | null; // Creator
     creators: NexusGenRootTypes["Creator"][] | null; // [Creator!]
@@ -561,14 +507,10 @@ export interface NexusGenFieldTypeNames {
   Artwork: {
     // field return type name
     creators: "ArtworkCreator";
-    edition: "BN";
-    maxSupply: "BN";
     mint: "PublicKey";
     pubkey: "PublicKey";
     sellerFeeBasisPoints: "Int";
-    supply: "BN";
     title: "String";
-    type: "Int";
     uri: "String";
   };
   ArtworkCreator: {
@@ -583,34 +525,22 @@ export interface NexusGenFieldTypeNames {
     authority: "PublicKey";
     bidRedemptionKey: "PublicKey";
     bidState: "BidState";
-    bids: "BidderMetadata";
     endAuctionAt: "BN";
     endedAt: "BN";
-    highestBid: "BidderMetadata";
     lastBid: "BN";
     manager: "AuctionManager";
     numWinners: "BN";
     priceFloor: "PriceFloor";
     pubkey: "PublicKey";
     state: "AuctionState";
-    thumbnail: "Artwork";
     tokenMint: "PublicKey";
     viewState: "AuctionViewState";
-  };
-  AuctionDataExtended: {
-    // field return type name
-    gapTickSizePercentage: "Int";
-    tickSize: "BN";
-    totalUncancelledBids: "BN";
   };
   AuctionManager: {
     // field return type name
     acceptPayment: "PublicKey";
     auction: "PublicKey";
     authority: "PublicKey";
-    participationConfig: "ParticipationConfig";
-    safetyDepositBoxes: "SafetyDepositBox";
-    safetyDepositBoxesExpected: "BN";
     store: "PublicKey";
     vault: "PublicKey";
   };
@@ -660,21 +590,6 @@ export interface NexusGenFieldTypeNames {
     bids: "Bid";
     max: "BN";
     type: "BidStateType";
-  };
-  BidderMetadata: {
-    // field return type name
-    auctionPubkey: "PublicKey";
-    bidderPubkey: "PublicKey";
-    cancelled: "Boolean";
-    lastBid: "BN";
-    lastBidTimestamp: "BN";
-  };
-  BidderPot: {
-    // field return type name
-    auctionAct: "PublicKey";
-    bidderAct: "PublicKey";
-    bidderPot: "PublicKey";
-    emptied: "Boolean";
   };
   Creator: {
     // field return type name
@@ -739,8 +654,6 @@ export interface NexusGenFieldTypeNames {
     artwork: "Artwork";
     artworks: "Artwork";
     artworksCount: "Int";
-    auction: "Auction";
-    auctions: "Auction";
     auctionsCount: "Int";
     creator: "Creator";
     creators: "Creator";
@@ -815,15 +728,6 @@ export interface NexusGenArgTypes {
     artworks: {
       // args
       filter: NexusGenInputs["ArtworksInput"]; // ArtworksInput!
-    };
-    auction: {
-      // args
-      auctionId: string; // String!
-      storeId?: string | null; // String
-    };
-    auctions: {
-      // args
-      filter: NexusGenInputs["AuctionsInput"]; // AuctionsInput!
     };
     creator: {
       // args
