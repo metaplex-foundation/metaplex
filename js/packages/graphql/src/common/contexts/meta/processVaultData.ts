@@ -12,12 +12,12 @@ export const processVaultData: ProcessAccountsFunc = async (
   try {
     if (isSafetyDepositBoxV1Account(account)) {
       const safetyDeposit = decodeSafetyDeposit(account.data);
-      await setter("safetyDepositBox", pubkey, safetyDeposit);
+      await setter("safetyDepositBoxes", pubkey, safetyDeposit);
     }
     if (isVaultV1Account(account)) {
       const vault = decodeVault(account.data);
 
-      await setter("vault", pubkey, vault);
+      await setter("vaults", pubkey, vault);
     }
   } catch (err) {
     logger.warn(err);

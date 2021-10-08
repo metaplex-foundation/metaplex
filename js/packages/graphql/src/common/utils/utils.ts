@@ -17,7 +17,7 @@ export const findProgramAddress = async (
 ) => {
   const [pubkey, seed] = await PublicKey.findProgramAddress(seeds, programId);
 
-  return [pubkey.toBase58(), seed];
+  return [pubkey.toBase58(), seed] as const;
 };
 
 // shorten the checksummed version of the input address to have 4 characters at start and end
