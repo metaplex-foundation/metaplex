@@ -147,7 +147,7 @@ export const ArtCreateView = () => {
               style={{
                 width: 'fit-content',
                 margin: '0 auto 30px auto',
-                overflowX: 'auto',
+                overflowX: 'visible',
                 maxWidth: '100%',
               }}
             >
@@ -961,11 +961,10 @@ const RoyaltiesStep = (props: {
           style={{ padding: 10, marginBottom: 10 }}
         >
           <span
+            className="metaplex-icon-circle"
             style={{
-              color: 'white',
               fontSize: 25,
               padding: '0px 8px 3px 8px',
-              background: 'rgb(57, 57, 57)',
               borderRadius: '50%',
               marginRight: 5,
               verticalAlign: 'middle',
@@ -974,8 +973,8 @@ const RoyaltiesStep = (props: {
             +
           </span>
           <span
+            className="metaplex-btn-label"
             style={{
-              color: 'rgba(255, 255, 255, 0.7)',
               verticalAlign: 'middle',
               lineHeight: 1,
             }}
@@ -1127,7 +1126,7 @@ const LaunchStep = (props: {
           {cost ? (
             <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
           ) : (
-            <Spin />
+            <Spin indicator={<LoadingOutlined />} />
           )}
         </Col>
       </Row>

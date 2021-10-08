@@ -112,7 +112,7 @@ export const AuctionListView = () => {
               </Link>
             );
           })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
   const endedAuctions = (
@@ -130,7 +130,7 @@ export const AuctionListView = () => {
               </Link>
             );
           })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
 

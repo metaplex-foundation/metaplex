@@ -29,9 +29,57 @@ body {
 
   font-style: normal;
   font-weight: normal;
-  font-family: 'Graphik Web' !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: @background-color-base;
+}
+
+.holaplex-not-found {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 62px 0 0 0;
+  font-size: 32px;
+  line-height: 32px;
+  background: linear-gradient(128.42deg, #841896 24.41%, #4F1364 83.01%);
+  color: white;
+  text-align: center;
+  a:link {
+    color: #d24089;
+    &:hover {
+      color: #d24089;
+    }
+  }
+  p {
+    font-size: 24px;
+    color: white;
+  }
+}
+
+.app {
+  &-auctions-list {
+    &--loading {
+      text-align: center;
+      padding: 30px 0 0 0;
+    }
+  }
+  &--loading {
+    &-logo {
+      width: 42px;
+    }
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    text-align: center;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .no-events {
@@ -109,11 +157,7 @@ code {
   width: 30px;
   height: 30px;
   border-radius: 30px;
-  background-color: #434343 !important;
 
-  :hover {
-    background-color: #434343;
-  }
 }
 
 .text-center {
