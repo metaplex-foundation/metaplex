@@ -22,7 +22,7 @@ import {
   useWalletModal,
   VaultState, WalletSigner,
 } from '@oyster/common';
-import { useWallet } from '@identity.com/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
 // import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';

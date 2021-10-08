@@ -2,7 +2,7 @@ import {SignerWalletAdapter, WalletError} from '@solana/wallet-adapter-base';
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
-} from '@identity.com/wallet-adapter-react';
+} from '@solana/wallet-adapter-react';
 import {
   getLedgerWallet,
   getMathWallet,
@@ -13,7 +13,7 @@ import {
   getTorusWallet,
   getCryptidWallet,
   WalletName,
-} from '@identity.com/wallet-adapter-wallets';
+} from '@solana/wallet-adapter-wallets';
 import { Button } from 'antd';
 import React, {
   createContext,

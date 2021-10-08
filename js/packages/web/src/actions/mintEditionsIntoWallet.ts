@@ -10,7 +10,7 @@ import {
 } from '@oyster/common';
 import { setupMintEditionIntoWalletInstructions } from './setupMintEditionIntoWalletInstructions';
 import { Art } from '../types';
-import { WalletContextState } from '@identity.com/wallet-adapter-react';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // TODO: Refactor. Extract batching logic,
 //  as the similar one is used in settle.ts and convertMasterEditions.ts

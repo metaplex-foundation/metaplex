@@ -4,7 +4,7 @@ import {
   useWalletModal, WalletSigner,
   WhitelistedCreator,
 } from '@oyster/common';
-import { useWallet } from '@identity.com/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';

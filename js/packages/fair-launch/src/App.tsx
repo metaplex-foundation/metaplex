@@ -10,14 +10,14 @@ import {
   getPhantomWallet,
   getSolflareWallet,
   getSolletWallet,
-} from '@identity.com/wallet-adapter-wallets';
+} from '@solana/wallet-adapter-wallets';
 
 import {
   ConnectionProvider,
   WalletProvider,
-} from '@identity.com/wallet-adapter-react';
+} from '@solana/wallet-adapter-react';
 
-import { WalletDialogProvider } from '@identity.com/wallet-adapter-material-ui';
+import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui-starter';
 import { ThemeProvider, createTheme } from '@material-ui/core';
 import { ConfettiProvider } from './confetti';
 
