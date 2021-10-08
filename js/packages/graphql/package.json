@@ -2,11 +2,7 @@
   "name": "@metaplex/graphql",
   "version": "0.0.1",
   "description": "",
-  "main": "dist/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/metaplex/graphql"
-  },
+  "main": "dist/bin/memory-server-ingester.js",
   "scripts": {
     "test": "jest src",
     "clean": "rimraf dist/*",
@@ -14,6 +10,7 @@
     "lint:eslint": "eslint 'src/**/*.ts'",
     "lint": "yarn lint:format && yarn lint:eslint --fix",
     "build": "yarn clean && tsc",
+    "build:watch": "yarn build -- --watch",
     "start": "yarn start:memory",
     "start:memory": "node --max-old-space-size=8192 dist/bin/memory-server-ingester.js",
     "dev": "yarn dev:memory",
