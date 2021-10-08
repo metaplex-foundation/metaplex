@@ -188,7 +188,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { patchState, update } = useMeta();
+  const { patchState } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -642,13 +642,6 @@ export const AuctionCard = ({
                   } catch (e) {
                     console.error('sendRedeemBid', e);
                     setShowRedemptionIssue(true);
-                    return;
-                  }
-
-                  try {
-                    await update();
-                  } catch (e) {
-                    console.error('update (post-sendRedeemBid)', e);
                     return;
                   }
 

@@ -7,6 +7,5 @@ export * from './processAuctions';
 export * from './processMetaData';
 export * from './processMetaplexAccounts';
 export * from './processVaultData';
-export * from './queryExtendedMetadata';
 export * from './getEmptyMetaState';
 export * from './types';
