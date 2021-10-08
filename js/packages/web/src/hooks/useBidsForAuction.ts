@@ -51,7 +51,7 @@ const getBids = (
   const bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
       b => b.info.auctionPubkey === id,
     );
- 
+    
   return bids
     .sort((a, b) => {
       const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber();

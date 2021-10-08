@@ -41,7 +41,7 @@ export function MetaProvider({ children = null as any }) {
         [...currentMetdata, ...nextMetadata],
         (a, b) => a.pubkey === b.pubkey
       );
-  
+        
       return newState
     })
   };
