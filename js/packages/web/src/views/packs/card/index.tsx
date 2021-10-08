@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { Form, Input, Button, Select } from 'antd';
+import { Form, Input, Button, Space } from 'antd';
 import { ArtSelector } from "../../auctionCreate/artSelector";
 import { AuctionCategory, AuctionState } from "../../auctionCreate";
 import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
@@ -7,7 +7,7 @@ import { Creator } from "@oyster/common";
 
 const valueU32 = 4294967295;
 
-function AddCard() {
+function AddCard({ confirm, backButton }) {
   const [distribution, setDistribution] = useState();
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
@@ -21,7 +21,8 @@ function AddCard() {
   });
   const pack = attributes.items[0];
   const onSubmit = (values: any) => {
-      console.log('Success:', values);
+    console.log('Success:', values);
+    confirm({ step: 2, values })
   };
 
   const onSubmitFailed = (errorInfo: any) => {
@@ -79,11 +80,14 @@ function AddCard() {
           )
         }
 
-        <Form.Item style={{ paddingTop: 30 }}>
-            <Button type="primary" htmlType="submit">
-                Add card to pack
+        <Space style={{ marginTop: 30 }}>
+          <Form.Item style={{ margin: 0 }}>
+            <Button type="primary" htmlType="submit" style={{ height: 50 }}>
+              Add card to pack
             </Button>
-        </Form.Item>
+          </Form.Item>
+          {backButton}
+        </Space>
       </Form>
     </div>
   );

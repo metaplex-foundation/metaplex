@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Form, Input, Button, Select} from 'antd';
+import {Form, Input, Button, Select, Space} from 'antd';
 import { Creator } from "@oyster/common";
 
 import { ArtSelector } from "../../auctionCreate/artSelector";
@@ -8,7 +8,7 @@ import { AuctionCategory, AuctionState } from "../../auctionCreate";
 
 const { Option } = Select;
 
-function AddVoucher() {
+function AddVoucher({ confirm, backButton }) {
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -21,6 +21,7 @@ function AddVoucher() {
   });
   const onSubmit = (values: any) => {
     console.log('Success:', values);
+    confirm({ step: 1, values })
   };
 
   const onSubmitFailed = (errorInfo: any) => {
@@ -38,8 +39,6 @@ function AddVoucher() {
     <div className="form-box">
       <Form
         name="addVoucher"
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
         initialValues={{ remember: true }}
         onFinish={onSubmit}
         onFinishFailed={onSubmitFailed}
@@ -70,15 +69,18 @@ function AddVoucher() {
             allowClear
           >
             <Option value="Burn">Burn</Option>
-            <Option value="Redeem">Redeem</Option>
+            <Option value="NoBurn">No Burn</Option>
           </Select>
         </Form.Item>
 
-        <Form.Item style={{ paddingTop: 30 }}>
-          <Button type="primary" htmlType="submit">
-            Add voucher to pack
-          </Button>
-        </Form.Item>
+        <Space style={{ marginTop: 30 }}>
+          <Form.Item style={{ margin: 0 }}>
+            <Button type="primary" htmlType="submit" style={{ height: 50 }}>
+              Add voucher to pack
+            </Button>
+          </Form.Item>
+          {backButton}
+        </Space>
       </Form>
     </div>
   );
