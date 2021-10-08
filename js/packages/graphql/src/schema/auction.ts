@@ -1,9 +1,6 @@
-import { getAuctionState } from "../common";
 import dedent from "dedent";
-import { enumType, list, nonNull, objectType } from "nexus";
-import { ParticipationConfig } from "./metaplex";
-import { SafetyDepositBox } from "./vault";
-import { Artwork } from "./artwork";
+import { enumType, objectType } from "nexus";
+import { getAuctionState } from "../common";
 
 export const AuctionViewState = enumType({
   name: "AuctionViewState",
@@ -125,18 +122,18 @@ export const Auction = objectType({
       type: AuctionViewState,
       resolve: (item) => getAuctionState(item),
     });
-    t.nullable.field("thumbnail", {
-      type: Artwork,
-      resolve: (item, args, { api }) => api.getAuctionThumbnail(item),
-    });
-    t.nullable.field("highestBid", {
-      type: BidderMetadata,
-      resolve: (item, args, { api }) => api.getAuctionHighestBid(item),
-    });
-    t.nonNull.field("bids", {
-      type: list(nonNull(BidderMetadata)),
-      resolve: (item, args, { api }) => api.getAuctionBids(item),
-    });
+    // t.nullable.field("thumbnail", {
+    //   type: Artwork,
+    //   resolve: (item, args, { api }) => api.getAuctionThumbnail(item),
+    // });
+    // t.nullable.field("highestBid", {
+    //   type: BidderMetadata,
+    //   resolve: (item, args, { api }) => api.getAuctionHighestBid(item),
+    // });
+    // t.nonNull.field("bids", {
+    //   type: list(nonNull(BidderMetadata)),
+    //   resolve: (item, args, { api }) => api.getAuctionBids(item),
+    // });
     t.nonNull.bn("numWinners", {
       resolve: (item) => item.bidState.max,
     });
@@ -194,17 +191,17 @@ export const AuctionManager = objectType({
     t.nonNull.pubkey("auction");
     t.nonNull.pubkey("vault");
     t.nonNull.pubkey("acceptPayment");
-    t.nonNull.bn("safetyDepositBoxesExpected", {
-      resolve: async (item, args, { service }) =>
-        service.getSafetyDepositBoxesExpected(item),
-    });
-    t.nonNull.field("safetyDepositBoxes", {
-      type: list(nonNull(SafetyDepositBox)),
-      resolve: async (item, args, { api }) => api.getSafetyDepositBoxes(item),
-    });
-    t.nullable.field("participationConfig", {
-      type: ParticipationConfig,
-      resolve: (item, args, { api }) => api.getParticipationConfig(item),
-    });
+    // t.nonNull.bn("safetyDepositBoxesExpected", {
+    //   resolve: async (item, args, { service }) =>
+    //     service.getSafetyDepositBoxesExpected(item),
+    // });
+    // t.nonNull.field("safetyDepositBoxes", {
+    //   type: list(nonNull(SafetyDepositBox)),
+    //   resolve: async (item, args, { api }) => api.getSafetyDepositBoxes(item),
+    // });
+    // t.nullable.field("participationConfig", {
+    //   type: ParticipationConfig,
+    //   resolve: (item, args, { api }) => api.getParticipationConfig(item),
+    // });
   },
 });

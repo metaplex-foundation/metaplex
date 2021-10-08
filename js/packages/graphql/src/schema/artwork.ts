@@ -14,18 +14,18 @@ export const Artwork = objectType({
     t.nonNull.int("sellerFeeBasisPoints", {
       resolve: (item) => item.data.sellerFeeBasisPoints || 0,
     });
-    t.nonNull.int("type", {
-      resolve: (item, args, { service }) => service.artType(item),
-    });
-    t.bn("supply", {
-      resolve: (item, args, { service }) => service.artSupply(item),
-    });
-    t.bn("maxSupply", {
-      resolve: (item, args, { service }) => service.artMaxSupply(item),
-    });
-    t.bn("edition", {
-      resolve: (item, args, { service }) => service.artEditionNumber(item),
-    });
+    // t.nonNull.int("type", {
+    //   resolve: (item, args, { service }) => service.artType(item),
+    // });
+    // t.bn("supply", {
+    //   resolve: (item, args, { service }) => service.artSupply(item),
+    // });
+    // t.bn("maxSupply", {
+    //   resolve: (item, args, { service }) => service.artMaxSupply(item),
+    // });
+    // t.bn("edition", {
+    //   resolve: (item, args, { service }) => service.artEditionNumber(item),
+    // });
   },
 });
 

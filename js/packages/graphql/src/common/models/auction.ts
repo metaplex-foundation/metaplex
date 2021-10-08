@@ -90,7 +90,7 @@ export function getAuctionState(auction: AuctionData): AuctionViewState {
 
 export function getSafetyDepositBoxes(
   vaultId: StringPublicKey,
-  safetyDepositBoxesByVaultAndIndex: MetaState["safetyDepositBoxesByVaultAndIndex"]
+  safetyDepositBoxesByVaultAndIndex: MetaState["safetyDepositBoxes"]
 ) {
   return buildListWhileNonZero(safetyDepositBoxesByVaultAndIndex, vaultId);
 }
