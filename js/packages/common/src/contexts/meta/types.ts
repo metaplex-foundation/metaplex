@@ -1,4 +1,5 @@
 import { AccountInfo } from '@solana/web3.js';
+import { TokenAccount } from '../..';
 import {
   AuctionData,
   AuctionDataExtended,
@@ -24,12 +25,15 @@ import {
   StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
-import { PublicKeyStringAndAccount } from '../../utils';
+import { PublicKeyStringAndAccount, StringPublicKey } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
   metadataByMint: Record<string, ParsedAccount<Metadata>>;
+  metadataByMetadata: Record<string, ParsedAccount<Metadata>>;
+
+  metadataByAuction: Record<string, ParsedAccount<Metadata>[]>;
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
   editions: Record<string, ParsedAccount<Edition>>;
   masterEditions: Record<
@@ -87,6 +91,9 @@ export interface MetaContextState extends MetaState {
     ParsedAccount<BidderPot>,
     ParsedAccount<BidderMetadata>,
   ];
+  pullAuctionPage: (auctionAddress: StringPublicKey) => void;
+
+  pullUserMetadata: (tokenAccounts: TokenAccount[]) => void;
 }
 
 export type AccountAndPubkey = {

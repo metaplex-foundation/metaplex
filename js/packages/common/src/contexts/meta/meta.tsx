@@ -5,13 +5,15 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
   loadAccounts,
+  pullYourMetadata,
   USE_SPEED_RUN,
 } from './loadAccounts';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
-import { pullPage } from '.';
+import { pullAuctionSubaccounts, pullPage } from '.';
+import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -25,6 +27,10 @@ export function MetaProvider({ children = null as any }) {
   const { isReady, storeAddress } = useStore();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
+  const [page, setPage] = useState(0);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+  const [lastLength, setLastLength] = useState(0);
+  const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,7 +53,31 @@ export function MetaProvider({ children = null as any }) {
     [setState],
   );
 
-  async function update(auctionAddress?: any, bidderAddress?: any) {
+  async function pullAuctionPage(auctionAddress: StringPublicKey) {
+    if (isLoading) return false;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    const nextState = await pullAuctionSubaccounts(
+      connection,
+      auctionAddress,
+      state,
+    );
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return [];
+  }
+
+  async function update(
+    auctionAddress?: any,
+    bidderAddress?: any,
+    userTokenAccounts?: TokenAccount[],
+  ) {
     if (!storeAddress) {
       if (isReady) {
         setIsLoading(false);
@@ -59,10 +89,9 @@ export function MetaProvider({ children = null as any }) {
 
     console.log('-----> Query started');
 
-    const primitiveState = await pullPage(connection, 0);
+    let nextState = await pullPage(connection, page, state);
 
-    let nextState: MetaState;
-    if (primitiveState.storeIndexer.length) {
+    if (nextState.storeIndexer.length) {
       if (USE_SPEED_RUN) {
         nextState = await limitedLoadAccounts(connection);
 
@@ -72,23 +101,39 @@ export function MetaProvider({ children = null as any }) {
 
         setIsLoading(false);
       } else {
-        nextState = primitiveState;
+        console.log('------->Pagination detected, pulling page', page);
 
-        let lastLength = nextState.storeIndexer.length;
-        let currPage = 1;
-        console.log('------->Loaded page', currPage - 1);
-
-        setIsLoading(false);
-        while (lastLength != nextState.storeIndexer.length) {
-          lastLength = nextState.storeIndexer.length;
-          console.log('------->Loading page', currPage);
-          nextState = await pullPage(connection, currPage, nextState);
-          setState(nextState);
-          console.log('------->Loaded page', currPage);
-          currPage++;
+        if (userTokenAccounts && userTokenAccounts.length && !metadataLoaded) {
+          console.log('--------->User metadata loading now.');
+          nextState = await pullYourMetadata(
+            connection,
+            userTokenAccounts,
+            nextState,
+          );
+          setMetadataLoaded(true);
         }
+        const auction = window.location.href.match(/#\/auction\/(\w+)/);
+        if (auction && page == 0) {
+          console.log(
+            '---------->Loading auction page on initial load, pulling sub accounts',
+          );
+          nextState = await pullAuctionSubaccounts(
+            connection,
+            auction[1],
+            nextState,
+          );
+        }
+
+        if (nextState.storeIndexer.length != lastLength) {
+          setPage(page => page + 1);
+        }
+        setLastLength(nextState.storeIndexer.length);
+        console.log('Next', nextState);
+        setIsLoading(false);
+        setState(nextState);
       }
     } else {
+      console.log('------->No pagination detected');
       nextState = !USE_SPEED_RUN
         ? await loadAccounts(connection)
         : await limitedLoadAccounts(connection);
@@ -115,8 +160,16 @@ export function MetaProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    update();
-  }, [connection, setState, updateMints, storeAddress, isReady]);
+    update(undefined, undefined, userAccounts);
+  }, [
+    connection,
+    setState,
+    updateMints,
+    storeAddress,
+    isReady,
+    page,
+    userAccounts.length > 0,
+  ]);
 
   useEffect(() => {
     if (isLoading) {
@@ -160,6 +213,7 @@ export function MetaProvider({ children = null as any }) {
         ...state,
         // @ts-ignore
         update,
+        pullAuctionPage,
         isLoading,
       }}
     >

@@ -51,7 +51,12 @@ export const AdminView = () => {
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
   useEffect(() => {
-    if (!store && !storeAddress && wallet.publicKey) {
+    if (
+      !store &&
+      !storeAddress &&
+      wallet.publicKey &&
+      !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+    ) {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
@@ -185,11 +190,10 @@ function InnerAdminView({
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] =
-    useState<{
-      available: ParsedAccount<MasterEditionV1>[];
-      unavailable: ParsedAccount<MasterEditionV1>[];
-    }>();
+  const [filteredMetadata, setFilteredMetadata] = useState<{
+    available: ParsedAccount<MasterEditionV1>[];
+    unavailable: ParsedAccount<MasterEditionV1>[];
+  }>();
   const [loading, setLoading] = useState<boolean>();
   const { metadata, masterEditions } = useMeta();
 
