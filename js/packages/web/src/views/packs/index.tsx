@@ -1,42 +1,40 @@
 import React from 'react';
+import { Layout, Button, Row, Col, Typography } from 'antd';
+import { useHistory } from "react-router-dom";
 
-import CreatePack from './createPack';
-import AddVoucher from './voucher';
-import AddCard from './card';
 import PacksList from './packsList';
 
-import {
-  Layout,
-  Tabs,
-} from 'antd';
-
-const { TabPane } = Tabs;
-
 const { Content } = Layout;
-export const AdminPacksView = () => {
 
-  const callback = (key: string) => {
-    console.log(key);
-  }
+export const AdminPacksView = () => {
+  const history = useHistory();
 
   return (
     <Content>
-      <div className="tabs-wrapper">
-        <Tabs defaultActiveKey="1" onChange={callback}>
-          <TabPane tab="Create Pack set" key="1">
-            <CreatePack />
-          </TabPane>
-          <TabPane tab="Add voucher to pack" key="2">
-            <AddVoucher />
-          </TabPane>
-          <TabPane tab="Add cart to pack" key="3">
-            <AddCard />
-          </TabPane>
-          <TabPane tab="List of packs" key="4">
-            <PacksList />
-          </TabPane>
-        </Tabs>
-      </div>
+      <Row style={{ marginBottom: 30 }}>
+        <Col span={8}>
+          <Typography.Title
+            level={3}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            List of Packs
+          </Typography.Title>
+        </Col>
+
+        <Col span={4} offset={12} style={{ display: "flex", justifyContent: "end" }}>
+          <Button
+            onClick={() => history.push(`/admin/pack/create/0`)}
+          >
+            Create Pack
+          </Button>
+        </Col>
+      </Row>
+
+      <PacksList />
     </Content>
   );
 };
