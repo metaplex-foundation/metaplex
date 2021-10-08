@@ -269,6 +269,7 @@ export const useInfiniteScrollAuctions = () => {
             return -1;
           }
         });
+
       const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
 
       const auctionManagers = auctionDisplayOrder.map(

@@ -25,6 +25,8 @@ export function MetaProvider({ children = null as any }) {
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
+  const { whitelistedCreatorsByCreator } = state;
+
   const [isLoading, setIsLoading] = useState(true);
 
   const patchState: MetaContextState['patchState'] = temp => {
@@ -74,8 +76,8 @@ export function MetaProvider({ children = null as any }) {
       return;
     }
 
-    return subscribeAccountsChange(connection, patchState);
-  }, [connection, setState, isLoading]);
+    return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
+  }, [connection, patchState, isLoading, whitelistedCreatorsByCreator]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators

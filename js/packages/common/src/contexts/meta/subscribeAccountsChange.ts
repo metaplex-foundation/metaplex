@@ -1,6 +1,7 @@
 import { Connection } from '@solana/web3.js';
 import { Dispatch, SetStateAction } from 'react';
 import { getEmptyMetaState } from '.';
+import { WhitelistedCreator, ParsedAccount } from '../..';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -18,6 +19,7 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
+  whitelistedCreators: Record<string, ParsedAccount<WhitelistedCreator>>,
   patchState: (state: Partial<MetaState>) => void,
 ) => {
   const subscriptions: number[] = [];
@@ -65,7 +67,7 @@ export const subscribeAccountsChange = (
         if (prop === 'metadataByMint') {
           await initMetadata(
             value,
-            state.whitelistedCreatorsByCreator,
+            whitelistedCreators,
             updater,
           );
         } else {

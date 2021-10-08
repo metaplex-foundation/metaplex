@@ -662,10 +662,6 @@ export const AuctionCard = ({
                   {!!gapTime && (
                     <div
                       className="info-content"
-                      style={{
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontSize: '0.9rem',
-                      }}
                     >
                       Bids placed in the last {gapTime} minutes will extend
                       bidding for another {gapTime} minutes beyond the point in
@@ -695,12 +691,6 @@ export const AuctionCard = ({
 
                   <div
                     className="amount-container"
-                    style={{
-                      width: '100%',
-                      background: '#242424',
-                      borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5)',
-                    }}
                   >
                     {!auctionView.isInstantSale && (
                       <InputNumber
@@ -709,7 +699,6 @@ export const AuctionCard = ({
                         value={value}
                         style={{
                           width: '100%',
-                          background: '#393939',
                           borderRadius: 16,
                         }}
                         onChange={setValue}
@@ -734,7 +723,7 @@ export const AuctionCard = ({
                         >
                           ◎ {formatAmount(balance.balance, 2)}{' '}
                           <span
-                            style={{ color: '#717171', paddingLeft: '5px' }}
+                            style={{ paddingLeft: '5px' }}
                           >
                             available
                           </span>
@@ -744,7 +733,6 @@ export const AuctionCard = ({
                           style={{
                             float: 'right',
                             margin: '5px 20px',
-                            color: '#5870EE',
                           }}
                         >
                           Add funds

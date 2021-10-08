@@ -3,6 +3,7 @@ import {
   StringPublicKey,
   VaultState,
   AuctionManagerStatus,
+  AuctionManagerStateV2,
 } from '@oyster/common';
 import { AuctionViewCompact, useCompactAuctions } from '.';
 
@@ -24,6 +25,7 @@ export const useNotifications = (
 
         if (
           av.auction.info.state === AuctionState.Created &&
+          av.auctionManager.info.state.status === AuctionManagerStatus.Validated &&
           av.auctionManager.info.authority === walletPubkey
         ) {
           upcoming = [...upcoming, av];

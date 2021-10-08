@@ -57,14 +57,14 @@ export const loadAccounts = async (
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
+  const storeAddress = await getStoreID(ownerAddress);
 
-  const loadStorefront = async (ownerAddress: StringPublicKey) => {
-    const storeAddress = await getStoreID(ownerAddress);
+  if (!storeAddress) {
+    console.error("no store address. unable to lookup store account.");
+    return state;
+  }
 
-    if (!storeAddress) {
-      return;
-    }
-
+  const loadStorefront = async (storeAddress: StringPublicKey) => {
     const storePubkey = new PublicKey(storeAddress);
     const storeData = await connection.getAccountInfo(storePubkey);
 
@@ -80,16 +80,15 @@ export const loadAccounts = async (
   };
 
   const loadAuctionManagers = async (
-    ownerAddress: StringPublicKey,
+    storeAddress: StringPublicKey,
   ): Promise<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]> => {
     const response = await getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
         {
           memcmp: {
             offset:
-              1 + // key
-              32, // store
-            bytes: ownerAddress,
+              1, // key
+            bytes: storeAddress,
           },
         },
       ],
@@ -180,8 +179,8 @@ export const loadAccounts = async (
   };
   const loading = [
     loadCreators(),
-    loadStorefront(ownerAddress),
-    loadAuctionManagers(ownerAddress).then(loadAuctionsAndVaults),
+    loadStorefront(storeAddress),
+    loadAuctionManagers(storeAddress).then(loadAuctionsAndVaults),
   ];
 
   await Promise.all(loading);
@@ -196,8 +195,6 @@ export const loadPrizeTrackingTickets = async (
 ): Promise<MetaState> => {
   const state = getEmptyMetaState();
   const updateState = makeSetter(state);
-  const forEachAccount = processingAccounts(updateState);
-
 
   const prizeTrackingKeys = await Promise.all(
     metadata.map(m => getPrizeTrackingTicket(auctionManager.pubkey, m.info.mint))

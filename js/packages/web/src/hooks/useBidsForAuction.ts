@@ -34,18 +34,9 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
   const [bids, setBids] = useState<ParsedAccount<BidderMetadata>[]>([]);
 
   useEffect(() => {
-    const dispose = cache.emitter.onCache(args => {
-      if (args.parser === BidderMetadataParser) {
-        setBids(getBids(bidderMetadataByAuctionAndBidder, id));
-      }
-    });
-
     setBids(getBids(bidderMetadataByAuctionAndBidder, id));
 
-    return () => {
-      dispose();
-    };
-  }, [id]);
+  }, [id, bidderMetadataByAuctionAndBidder]);
 
   return bids;
 };
@@ -57,9 +48,6 @@ const getBids = (
   >,
   id?: StringPublicKey,
 ) => {
-  // I have no idea why, but cache doesnt work with speed run and i couldnt figure it out for the life of me,
-  // because that file is so confusing I have no idea how it works.
-  // so we use the tempCache for pulling bids. B come save me.- J
   const bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
       b => b.info.auctionPubkey === id,
     );
