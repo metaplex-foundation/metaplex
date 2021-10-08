@@ -35,6 +35,8 @@ pub enum PackDistributionType {
     MaxSupply,
     /// Fixed
     Fixed,
+    /// Unlimited
+    Unlimited,
 }
 
 impl Default for PackDistributionType {
@@ -62,7 +64,7 @@ pub struct PackSet {
     /// Pack voucher counter
     pub pack_vouchers: u32,
     /// Total amount of editions pack can mint
-    pub total_editions: u64,
+    pub total_editions: Option<u64>,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
     /// Pack state
@@ -85,7 +87,7 @@ impl PackSet {
         self.uri = params.uri;
         self.authority = params.authority;
         self.minting_authority = params.minting_authority;
-        self.total_editions = 0;
+        self.total_editions = if params.distribution_type == PackDistributionType::Unlimited {None} else {Some(0)};
         self.pack_cards = 0;
         self.pack_vouchers = 0;
         self.mutable = params.mutable;

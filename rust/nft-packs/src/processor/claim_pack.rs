@@ -87,10 +87,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let (program_authority_key, bump_seed) = find_program_authority(program_id);
     assert_account_key(program_authority_account, &program_authority_key)?;
 
-    if pack_card.max_supply == 0 {
-        return Err(NFTPacksError::CardDoesntHaveEditions.into());
-    }
-
     if pack_set.pack_state != PackSetState::Activated {
         return Err(NFTPacksError::PackSetNotActivated.into());
     }
@@ -116,16 +112,12 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     // set value to 0 so user can't redeem same card twice and can't redeem any card
     proving_process.next_card_to_redeem = 0;
 
-    let probability = get_card_probability(&pack_set, &pack_card)?;
+    let probability = get_card_probability(&mut pack_set, &mut pack_card)?;
 
     let random_value = get_random_oracle_value(randomness_oracle_account, &clock)?;
 
     if random_value <= probability {
         msg!("User get NFT");
-
-        pack_set.total_editions = pack_set.total_editions.error_decrement()?;
-
-        pack_card.max_supply = pack_card.max_supply.error_decrement()?;
 
         // Mint token
         spl_token_metadata_mint_new_edition_from_master_edition_via_token(
@@ -165,10 +157,18 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     Ok(())
 }
 
-fn get_card_probability(pack_set: &PackSet, pack_card: &PackCard) -> Result<u16, ProgramError> {
+// TODO: make this function prettier
+fn get_card_probability(pack_set: &mut PackSet, pack_card: &mut PackCard) -> Result<u16, ProgramError> {
     match pack_set.distribution_type {
         PackDistributionType::Fixed => {
             msg!("Fixed number distribution type");
+
+            let card_max_supply = pack_card.max_supply.ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+            let pack_total_editions = pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?;
+
+            if card_max_supply == 0 {
+                return Err(NFTPacksError::CardDoesntHaveEditions.into());
+            }
 
             let probability = pack_card
                 .probability
@@ -176,17 +176,43 @@ fn get_card_probability(pack_set: &PackSet, pack_card: &PackCard) -> Result<u16,
                 .error_mul(u16::MAX)?
                 .error_div(MAX_PROBABILITY_VALUE)?;
 
+            pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+
+            pack_card.max_supply = Some(card_max_supply.error_decrement()?);
+
             Ok(probability)
         }
         PackDistributionType::MaxSupply => {
             msg!("Max supply distribution type");
 
-            let probability = ((pack_card.max_supply as u64)
-                .error_div(pack_set.total_editions)?
-                .error_mul(MAX_PROBABILITY_VALUE as u64)?)
-            .error_mul(u16::MAX as u64)?
-            .error_div(MAX_PROBABILITY_VALUE as u64)? as u16;
+            let card_max_supply = pack_card.max_supply.ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+            let pack_total_editions = pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?;
 
+            if card_max_supply == 0 {
+                return Err(NFTPacksError::CardDoesntHaveEditions.into());
+            }
+
+            let probability = ((card_max_supply as u64)
+                .error_div(pack_total_editions)?
+                .error_mul(MAX_PROBABILITY_VALUE as u64)?)
+                .error_mul(u16::MAX as u64)?
+                .error_div(MAX_PROBABILITY_VALUE as u64)? as u16;
+
+            pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+
+            pack_card.max_supply = Some(card_max_supply.error_decrement()?);
+
+            Ok(probability)
+        }
+        PackDistributionType::Unlimited => {
+            msg!("Unlimited distribution type");
+
+            let probability = pack_card
+                .probability
+                .ok_or(NFTPacksError::CardProbabilityMissing)? // it shouldn't happen because there is a check on AddCardToPack
+                .error_mul(u16::MAX)?
+                .error_div(MAX_PROBABILITY_VALUE)?;
+            
             Ok(probability)
         }
     }

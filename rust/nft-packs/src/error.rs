@@ -139,6 +139,18 @@ pub enum NFTPacksError {
     /// URI too long
     #[error("URI too long")]
     UriTooLong,
+
+    /// Card doesn't have max supply
+    #[error("Card doesn't have max supply")]
+    CardDoesntHaveMaxSupply,
+
+    /// Master edition should have unlimited supply
+    #[error("Master edition should have unlimited supply")]
+    WrongMasterSupply,
+
+    /// Pack set doesn't have total editions
+    #[error("Pack set doesn't have total editions")]
+    MissingEditionsInPack,
 }
 
 impl From<NFTPacksError> for ProgramError {

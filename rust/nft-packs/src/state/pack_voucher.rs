@@ -1,7 +1,6 @@
 //! Pack voucher definitions
 
 use super::*;
-use crate::math::SafeMath;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,

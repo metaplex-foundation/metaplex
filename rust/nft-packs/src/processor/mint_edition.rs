@@ -3,7 +3,7 @@
 use crate::{
     find_program_authority,
     math::SafeMath,
-    state::{MasterEditionHolder, PackCard, PackSet, PackVoucher},
+    state::{MasterEditionHolder, PackSet, PackVoucher},
     utils::*,
     PREFIX,
 };
@@ -83,7 +83,7 @@ pub fn mint_edition_with_voucher<'a>(
         rent_program_account: next_account_info(account_info_iter)?,
     };
 
-    let mut pack_voucher = PackVoucher::unpack(
+    let pack_voucher = PackVoucher::unpack(
         &accounts_args
             .master_edition_holder_account
             .data

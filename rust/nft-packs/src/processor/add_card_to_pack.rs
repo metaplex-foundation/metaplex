@@ -61,7 +61,7 @@ pub fn add_card_to_pack(
         return Err(NFTPacksError::WrongPackStateToChangeData.into());
     }
 
-    if pack_set.distribution_type == PackDistributionType::Fixed && probability.is_none() {
+    if pack_set.distribution_type != PackDistributionType::MaxSupply && probability.is_none() {
         return Err(NFTPacksError::CardProbabilityMissing.into());
     }
 
@@ -102,9 +102,32 @@ pub fn add_card_to_pack(
     // Check for v2
     let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
 
-    if let Some(m_e_max_supply) = master_edition.max_supply() {
-        if (max_supply as u64) > m_e_max_supply.error_sub(master_edition.supply())? {
-            return Err(NFTPacksError::WrongMaxSupply.into());
+    // TODO: move this match to a function
+    match pack_set.distribution_type {
+        PackDistributionType::Unlimited => {
+            if max_supply.is_some() {
+                return Err(NFTPacksError::WrongMaxSupply.into());
+            }
+
+            if master_edition.max_supply().is_some() {
+                return Err(NFTPacksError::WrongMasterSupply.into());
+            }
+        }
+        _ => {
+            if let Some(m_supply) = max_supply {
+                if let Some(m_e_max_supply) = master_edition.max_supply() {
+                    if (m_supply as u64) > m_e_max_supply.error_sub(master_edition.supply())? {
+                        return Err(NFTPacksError::WrongMaxSupply.into());
+                    }
+                }
+                if m_supply == 0 {
+                    return Err(NFTPacksError::WrongMaxSupply.into());
+                }
+                // TODO: it can be a function
+                pack_set.total_editions = Some(pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?.error_add(m_supply as u64)?);
+            } else {
+                return Err(NFTPacksError::WrongMaxSupply.into());
+            }
         }
     }
 

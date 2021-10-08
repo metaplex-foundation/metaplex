@@ -16,7 +16,7 @@ use solana_program::{
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddCardToPackArgs {
     /// How many editions of this card will exists in pack
-    pub max_supply: u32,
+    pub max_supply: Option<u32>,
     /// Probability value, required only if PackSet distribution type == Fixed
     pub probability: Option<u16>,
     /// Index

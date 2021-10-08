@@ -1,7 +1,7 @@
 //! Pack card definitions
 
 use super::*;
-use crate::math::SafeMath;
+use crate::{math::SafeMath, error::NFTPacksError};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,
@@ -25,7 +25,7 @@ pub struct PackCard {
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
     /// How many instances(editions) of this card exists in this pack
-    pub max_supply: u32,
+    pub max_supply: Option<u32>,
     /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
     pub probability: Option<u16>,
 }
@@ -57,7 +57,7 @@ pub struct InitPackCardParams {
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
     /// How many instances of this card will exists in a packs
-    pub max_supply: u32,
+    pub max_supply: Option<u32>,
     /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
     pub probability: Option<u16>,
 }
@@ -107,7 +107,11 @@ impl MasterEditionHolder for PackCard {
     }
 
     fn decrement_supply(&mut self) -> Result<(), ProgramError> {
-        self.max_supply = self.max_supply.error_decrement()?;
+        if let Some(max_supply) = self.max_supply {
+            self.max_supply = Some(max_supply.error_decrement()?);
+        } else {
+            return Err(NFTPacksError::CardDoesntHaveMaxSupply.into());
+        }
 
         Ok(())
     }
