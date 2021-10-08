@@ -187,7 +187,7 @@ export const AuctionView = () => {
         <Col className="auction-mobile-section" span={24}>
           <h6 className={'info-title'}>Details</h6>
           <div className="description">
-            <p className={'about-nft-collection a-description'}>
+            <pre className={'about-nft-collection a-description'}>
               {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
               {description ||
                 (winnerCount !== undefined && (
@@ -195,7 +195,7 @@ export const AuctionView = () => {
                     No description provided.
                   </div>
                 ))}
-            </p>
+            </pre>
           </div>
         </Col>
         {attributes && (
