@@ -2,14 +2,14 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
-} from "@solana/web3.js";
-import { programIds } from "../utils/programIds";
-import { serialize } from "borsh";
-import BN from "bn.js";
-import { StringPublicKey, toPublicKey } from "../utils";
-import { AmountArgs } from "./AmountArgs";
-import { VAULT_SCHEMA } from "./schemas";
-import { getSafetyDepositBox } from "./getSafetyDepositBox";
+} from '@solana/web3.js';
+import { programIds } from '../utils/programIds';
+import { serialize } from 'borsh';
+import BN from 'bn.js';
+import { StringPublicKey, toPublicKey } from '../utils';
+import { AmountArgs } from './AmountArgs';
+import { VAULT_SCHEMA } from './schemas';
+import { getSafetyDepositBox } from './getSafetyDepositBox';
 
 export async function addTokenToInactiveVault(
   amount: BN,
@@ -20,10 +20,9 @@ export async function addTokenToInactiveVault(
   vaultAuthority: StringPublicKey,
   payer: StringPublicKey,
   transferAuthority: StringPublicKey,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const vaultProgramId = programIds().vault;
-
   const safetyDepositBox = await getSafetyDepositBox(vault, tokenMint);
 
   const value = new AmountArgs({
@@ -89,6 +88,6 @@ export async function addTokenToInactiveVault(
       keys,
       programId: toPublicKey(vaultProgramId),
       data,
-    })
+    }),
   );
 }

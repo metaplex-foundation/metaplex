@@ -4,6 +4,12 @@
 // import { Store } from "../common";
 // import { ObjectId } from "bson";
 
+describe('stub', () => {
+  it('test', () => {
+    expect(true).toBeTruthy();
+  });
+})
+
 // describe("startApolloServer", () => {
 //   async function setup(entrypoint: Partial<IMetaplexApi>) {
 //     const api = new MetaplexApiDataSource([{ ...entrypoint } as IMetaplexApi]);

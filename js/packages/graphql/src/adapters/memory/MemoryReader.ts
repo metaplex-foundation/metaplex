@@ -1,23 +1,24 @@
-import { Connection } from "@solana/web3.js";
-import { WhitelistedCreator } from "../../common";
-import { NexusGenInputs } from "../../generated/typings";
-import { Reader } from "../../reader";
-import { filterByOwner } from "./filterByOwner";
-import { filterByStoreAndCreator } from "./filterByStoreAndCreator";
-import { MemoryWriter } from "./MemoryWriter";
+import { Connection } from '@solana/web3.js';
+import { WhitelistedCreator } from '../../common';
+import { NexusGenInputs } from '../../generated/typings';
+import { Reader } from '../../reader';
+import { filterByOwner } from './filterByOwner';
+import { filterByStoreAndCreator } from './filterByStoreAndCreator';
+import { MemoryWriter } from './MemoryWriter';
+import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 
 export class MemoryReader extends Reader {
   constructor(
     public networkName: string,
     connection: Connection,
-    private writer: MemoryWriter
+    private writer: MemoryWriter,
   ) {
     super(connection);
   }
 
   async init() {
     this.writer.setPublishFn((prop, key) =>
-      this.pubsub.publish(prop, { prop, key })
+      this.pubsub.publish(prop, { prop, key }),
     );
   }
 
@@ -57,14 +58,20 @@ export class MemoryReader extends Reader {
     if (!store) return [];
     const creatorsByStore: WhitelistedCreator[] = [];
 
-    for (const creator of this.state.creators.values()) {
-      const isWhitelistedCreator = await creator.isCreatorPartOfTheStore(
-        storeId
-      );
-      if (isWhitelistedCreator) {
-        creatorsByStore.push(creator);
-      }
-    }
+    await createPipelineExecutor(
+      this.state.creators.values(),
+      async creator => {
+        const isWhitelistedCreator = await creator.isCreatorPartOfTheStore(
+          storeId,
+        );
+        if (isWhitelistedCreator) {
+          creatorsByStore.push(creator);
+        }
+      },
+      {
+        jobsCount: 3
+      },
+    );
     return creatorsByStore;
   }
 
@@ -73,7 +80,7 @@ export class MemoryReader extends Reader {
     if (!store) return null;
     const creator = this.state.creators.get(creatorId);
     const isWhitelistedCreator = await creator?.isCreatorPartOfTheStore(
-      storeId
+      storeId,
     );
     return (isWhitelistedCreator && creator) || null;
   }
@@ -83,18 +90,18 @@ export class MemoryReader extends Reader {
     creatorId,
     ownerId,
     onlyVerified,
-  }: NexusGenInputs["ArtworksInput"]) {
+  }: NexusGenInputs['ArtworksInput']) {
     const storeCreators = await this.getCreators(storeId);
     const [storeFilter, ownerFilter] = await Promise.all([
       filterByStoreAndCreator(
         { storeId, creatorId, onlyVerified },
-        storeCreators
+        storeCreators,
       ),
       filterByOwner({ ownerId }, this.loadUserAccounts),
     ]);
 
     const metadata = Array.from(this.state.metadata.values());
-    return metadata.filter((art) => storeFilter(art) && ownerFilter(art));
+    return metadata.filter(art => storeFilter(art) && ownerFilter(art));
   }
 
   async getArtwork(artId: string) {
