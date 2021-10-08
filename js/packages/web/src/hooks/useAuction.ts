@@ -1,4 +1,4 @@
-import { StringPublicKey, loadAuction, useConnection, loadMetadataAndEditionsBySafetyDepositBoxes } from '@oyster/common';
+import { StringPublicKey, loadAuction, useConnection, loadMetadataAndEditionsBySafetyDepositBoxes, loadPrizeTrackingTickets } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
@@ -34,7 +34,6 @@ export const useAuction = (id: StringPublicKey) => {
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
     auctionDataExtended,
     isLoading,
-    store,
     whitelistedCreatorsByCreator,
     patchState,
   } = useMeta();
@@ -45,7 +44,8 @@ export const useAuction = (id: StringPublicKey) => {
     }
 
     (async () => {
-      const auctionState = await loadAuction(connection, auctionManagersByAuction[id]);
+      const auctionManager = auctionManagersByAuction[id];
+      const auctionState = await loadAuction(connection, auctionManager);
 
       const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
         connection,
@@ -53,7 +53,9 @@ export const useAuction = (id: StringPublicKey) => {
         whitelistedCreatorsByCreator
       );
 
-      const finalState = merge({}, auctionState, metadataState);
+      const prizeTrackingTicketState = await loadPrizeTrackingTickets(connection, auctionManager, metadataState.metadata);
+
+      const finalState = merge({}, prizeTrackingTicketState, auctionState, metadataState);
 
       patchState(finalState);
     })()

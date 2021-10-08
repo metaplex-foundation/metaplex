@@ -70,15 +70,17 @@ export const ArtistView = () => {
             <div className="info-content">{creator?.info.description}</div>
             <br />
             {loadingArt ? (
-              <Spin indicator={<LoadingOutlined />} />
-            ): (
-                <>
-              <div className = "info-header">Art Created</div>
-          {artworkGrid}
-        </>
+              <div className="app-section--loading">
+                <Spin indicator={<LoadingOutlined />} />
+              </div>
+            ) : (
+              <>
+                <div className="info-header">Art Created</div>
+                {artworkGrid}
+              </>
             )}
-      </Col>
-    </Row>
+          </Col>
+        </Row>
       </Col >
     </>
   );

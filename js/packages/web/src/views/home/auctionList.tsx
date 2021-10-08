@@ -1,4 +1,5 @@
 import { Layout, Tabs, Spin, List } from 'antd';
+import Masonry from 'react-masonry-css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
@@ -23,30 +24,40 @@ export const AuctionListView = () => {
     rootMargin: '0px 0px 200px 0px',
   });
 
+  const breakpointColumnsObj = {
+    default: 4,
+    1100: 3,
+    700: 2,
+    500: 1,
+  };
+
   return (
     initLoading ? (
-      <div className="app-auctions-list--loading">
+      <div className="app-section--loading">
         <Spin indicator={<LoadingOutlined />} />
       </div>
     ) : (
-      <List
-        grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 4 }}
-        dataSource={auctions}
-        loadMore={
-          hasNextPage && (
-            <div className="app-auctions-list--loading" ref={sentryRef}>
-              <Spin indicator={<LoadingOutlined />} />
-            </div>
-          )
+      <>
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="my-masonry-grid"
+          columnClassName="my-masonry-grid_column"
+        >
+          {auctions.map((m, idx) => {
+            const id = m.auction.pubkey;
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })}
+        </Masonry>
+        {hasNextPage && (
+          <div className="app-section--loading" ref={sentryRef}>
+            <Spin indicator={<LoadingOutlined />} />
+          </div>)
         }
-        renderItem={item => (
-          <List.Item key={item.auction.pubkey}>
-            <Link to={`/auction/${item.auction.pubkey}`}>
-              <AuctionRenderCard auctionView={item} />
-            </Link>
-          </List.Item>
-        )}
-      />
+      </>
     )
   );
 };

@@ -3,9 +3,7 @@ import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
-  limitedLoadAccounts,
   loadAccounts,
-  USE_SPEED_RUN,
 } from './loadAccounts';
 import { Spin, Space } from 'antd';
 import { merge, uniqWith } from 'lodash'

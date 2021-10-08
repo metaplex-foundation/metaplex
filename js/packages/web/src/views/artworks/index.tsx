@@ -54,7 +54,7 @@ export const ArtworksView = () => {
   useEffect(() => {
     (async () => {
       const metadataState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
-      
+
       patchState(metadataState);
       setLoadingArt(false);
     })()
@@ -66,28 +66,20 @@ export const ArtworksView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {loadingArt ?
-        (
-          <div className="app-auctions-list--loading">
-            <Spin indicator={<LoadingOutlined />} />
-          </div>
-        ) : (
-          items.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard
-                  key={id}
-                  pubkey={m.pubkey}
-                  preview={false}
-                  height={250}
-                  width={250}
-                />
-              </Link>
-            );
-          })
-        )
-      }
+      {items.map((m, idx) => {
+        const id = m.pubkey;
+        return (
+          <Link to={`/art/${id}`} key={idx}>
+            <ArtCard
+              key={id}
+              pubkey={m.pubkey}
+              preview={false}
+              height={250}
+              width={250}
+            />
+          </Link>
+        );
+      })}
     </Masonry>
   );
 
@@ -96,33 +88,39 @@ export const ArtworksView = () => {
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
           <Row>
-            <Tabs
-              activeKey={activeKey}
-              onTabClick={key => setActiveKey(key as ArtworkViewState)}
-            >
-              <TabPane
-                tab={<span className="tab-title">All</span>}
-                key={ArtworkViewState.Metaplex}
+            {loadingArt ? (
+              <div className="app-section--loading">
+                <Spin indicator={<LoadingOutlined />} />
+              </div>
+            ) : (
+              <Tabs
+                activeKey={activeKey}
+                onTabClick={key => setActiveKey(key as ArtworkViewState)}
               >
-                {artworkGrid}
-              </TabPane>
-              {connected && (
                 <TabPane
-                  tab={<span className="tab-title">Owned</span>}
-                  key={ArtworkViewState.Owned}
+                  tab={<span className="tab-title">All</span>}
+                  key={ArtworkViewState.Metaplex}
                 >
                   {artworkGrid}
                 </TabPane>
-              )}
-              {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Created</span>}
-                  key={ArtworkViewState.Created}
-                >
-                  {artworkGrid}
-                </TabPane>
-              )}
-            </Tabs>
+                {connected && (
+                  <TabPane
+                    tab={<span className="tab-title">Owned</span>}
+                    key={ArtworkViewState.Owned}
+                  >
+                    {artworkGrid}
+                  </TabPane>
+                )}
+                {connected && (
+                  <TabPane
+                    tab={<span className="tab-title">Created</span>}
+                    key={ArtworkViewState.Created}
+                  >
+                    {artworkGrid}
+                  </TabPane>
+                )}
+              </Tabs>
+            )}
           </Row>
         </Col>
       </Content>
