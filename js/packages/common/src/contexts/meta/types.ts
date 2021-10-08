@@ -93,7 +93,7 @@ export interface MetaContextState extends MetaState {
   ];
   pullAuctionPage: (auctionAddress: StringPublicKey) => void;
 
-  pullUserMetadata: (tokenAccounts: TokenAccount[]) => void;
+  pullAllMetadata: () => void;
 }
 
 export type AccountAndPubkey = {

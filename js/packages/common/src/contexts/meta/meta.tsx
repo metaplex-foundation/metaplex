@@ -12,7 +12,7 @@ import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
-import { pullAuctionSubaccounts, pullPage } from '.';
+import { pullAuctionSubaccounts, pullPage, pullStoreMetadata } from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -52,6 +52,23 @@ export function MetaProvider({ children = null as any }) {
     },
     [setState],
   );
+  async function pullAllMetadata() {
+    if (isLoading) return false;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    setIsLoading(true);
+    const nextState = await pullStoreMetadata(connection, state);
+    setIsLoading(false);
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return [];
+  }
 
   async function pullAuctionPage(auctionAddress: StringPublicKey) {
     if (isLoading) return false;
@@ -103,14 +120,25 @@ export function MetaProvider({ children = null as any }) {
       } else {
         console.log('------->Pagination detected, pulling page', page);
 
-        if (userTokenAccounts && userTokenAccounts.length && !metadataLoaded) {
+        // Ensures we get the latest so beat race conditions and avoid double pulls.
+        let currMetadataLoaded = false;
+        setMetadataLoaded(loaded => {
+          currMetadataLoaded = loaded;
+          return loaded;
+        });
+        if (
+          userTokenAccounts &&
+          userTokenAccounts.length &&
+          !currMetadataLoaded
+        ) {
           console.log('--------->User metadata loading now.');
+
+          setMetadataLoaded(true);
           nextState = await pullYourMetadata(
             connection,
             userTokenAccounts,
             nextState,
           );
-          setMetadataLoaded(true);
         }
         const auction = window.location.href.match(/#\/auction\/(\w+)/);
         if (auction && page == 0) {
@@ -177,7 +205,7 @@ export function MetaProvider({ children = null as any }) {
     }
 
     return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading]);
+  }, [connection, setState, isLoading, state]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
@@ -214,6 +242,7 @@ export function MetaProvider({ children = null as any }) {
         // @ts-ignore
         update,
         pullAuctionPage,
+        pullAllMetadata,
         isLoading,
       }}
     >

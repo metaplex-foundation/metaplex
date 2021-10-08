@@ -65,6 +65,26 @@ const WHITELISTED_AUCTION_MANAGER = [
 ];
 const WHITELISTED_VAULT = ['3wHCBd3fYRPWjd5GqzrXanLJUKRyU3nECKbTPKfVwcFX'];
 
+export const pullStoreMetadata = async (
+  connection: Connection,
+  tempCache: MetaState,
+) => {
+  const updateTemp = makeSetter(tempCache);
+
+  const loadMetadata = () =>
+    pullMetadataByCreators(connection, tempCache, updateTemp);
+  const loadEditions = () => pullEditions(connection, updateTemp, tempCache);
+
+  console.log('-------->Loading all metadata for store.');
+
+  await loadMetadata();
+  await loadEditions();
+
+  await postProcessMetadata(tempCache);
+  console.log('-------->Metadata processing complete.');
+  return tempCache;
+};
+
 export const pullYourMetadata = async (
   connection: Connection,
   userTokenAccounts: TokenAccount[],
