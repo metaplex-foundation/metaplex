@@ -300,6 +300,7 @@ pub fn assert_supply_invariance(
 
     Ok(())
 }
+
 pub fn transfer_mint_authority<'a>(
     edition_key: &Pubkey,
     edition_account_info: &AccountInfo<'a>,
@@ -323,7 +324,7 @@ pub fn transfer_mint_authority<'a>(
             mint_authority_info.key,
             &[&mint_authority_info.key],
         )
-        .unwrap(),
+            .unwrap(),
         accounts,
         &[],
     )?;
@@ -339,7 +340,7 @@ pub fn transfer_mint_authority<'a>(
                 mint_authority_info.key,
                 &[&mint_authority_info.key],
             )
-            .unwrap(),
+                .unwrap(),
             accounts,
             &[],
         )?;
@@ -625,7 +626,7 @@ pub fn mint_limited_edition<'a>(
         edition_override,
         me_supply,
     )?
-    .to_le_bytes();
+        .to_le_bytes();
 
     // Now make sure this mint can never be used by anybody else.
     transfer_mint_authority(
@@ -789,13 +790,20 @@ pub struct CreateMetadataAccountsLogicArgs<'a> {
     pub rent_info: &'a AccountInfo<'a>,
 }
 
+// This equals the upgrade authority of the metadata program:
+// AqH29mZfQFgRpfwaPoTMWSKJ5kqauoc1FwVBRksZyQrt
+const SEED_AUTHORITY: Pubkey = Pubkey::new_from_array([
+    0x92, 0x17, 0x2c, 0xc4, 0x72, 0x5d, 0xc0, 0x41, 0xf9, 0xdd, 0x8c, 0x51, 0x52, 0x60, 0x04, 0x26,
+    0x00, 0x93, 0xa3, 0x0b, 0x02, 0x73, 0xdc, 0xfa, 0x74, 0x92, 0x17, 0xfc, 0x94, 0xa2, 0x40, 0x49,
+]);
+
 /// Create a new account instruction
 pub fn process_create_metadata_accounts_logic(
     program_id: &Pubkey,
     accounts: CreateMetadataAccountsLogicArgs,
     data: Data,
     allow_direct_creator_writes: bool,
-    is_mutable: bool,
+    mut is_mutable: bool,
 ) -> ProgramResult {
     let CreateMetadataAccountsLogicArgs {
         metadata_account_info,
@@ -807,8 +815,26 @@ pub fn process_create_metadata_accounts_logic(
         rent_info,
     } = accounts;
 
+    let mut update_authority_key = *update_authority_info.key;
     let mint_authority = get_mint_authority(mint_info)?;
-    assert_mint_authority_matches_mint(&mint_authority, mint_authority_info)?;
+    assert_mint_authority_matches_mint(&mint_authority, mint_authority_info).or_else(|e| {
+        // Allow seeding by the authority seed populator
+        if mint_authority_info.key == &SEED_AUTHORITY {
+            // Seed authority should not be able to set creators
+            if data.creators.is_some() {
+                return Err(MetadataError::InvalidOperation.into());
+            }
+
+            // When metadata is seeded, the mint authority should be able to change it
+            if let COption::Some(auth) = mint_authority {
+                update_authority_key = auth;
+                is_mutable = true;
+            }
+            Ok(())
+        } else {
+            Err(e)
+        }
+    })?;
     assert_owned_by(mint_info, &spl_token::id())?;
 
     let metadata_seeds = &[
@@ -842,7 +868,7 @@ pub fn process_create_metadata_accounts_logic(
     let mut metadata = Metadata::from_account_info(metadata_account_info)?;
     assert_data_valid(
         &data,
-        update_authority_info.key,
+        &update_authority_key,
         &metadata,
         allow_direct_creator_writes,
         update_authority_info.is_signer,
@@ -852,7 +878,7 @@ pub fn process_create_metadata_accounts_logic(
     metadata.key = Key::MetadataV1;
     metadata.data = data;
     metadata.is_mutable = is_mutable;
-    metadata.update_authority = *update_authority_info.key;
+    metadata.update_authority = update_authority_key;
 
     puff_out_data_fields(&mut metadata);
 
