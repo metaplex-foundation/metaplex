@@ -23,6 +23,7 @@ import {
   fromLamports,
   useWalletModal,
   VaultState,
+  loadMultipleAccounts,
   BidStateType,
 } from '@oyster/common';
 import {
@@ -56,6 +57,7 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { LoadingOutlined } from '@ant-design/icons';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -195,7 +197,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { update } = useMeta();
+  const { patchState, update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -304,72 +306,129 @@ export const AuctionCard = ({
 
   const instantSale = async () => {
     setLoading(true);
-    const instantSalePrice =
-      auctionView.auctionDataExtended?.info.instantSalePrice;
-    const winningConfigType =
-      auctionView.participationItem?.winningConfigType ||
-      auctionView.items[0][0].winningConfigType;
-    const isAuctionItemMaster = [
-      WinningConfigType.FullRightsTransfer,
-      WinningConfigType.TokenOnlyTransfer,
-    ].includes(winningConfigType);
-    const allowBidToPublic =
-      myPayingAccount &&
-      !auctionView.myBidderPot &&
-      isAuctionManagerAuthorityNotWalletOwner;
-    const allowBidToAuctionOwner =
-      myPayingAccount &&
-      !isAuctionManagerAuthorityNotWalletOwner &&
-      isAuctionItemMaster;
 
-    // Placing a "bid" of the full amount results in a purchase to redeem.
-    if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+    try {
+      const instantSalePrice =
+        auctionView.auctionDataExtended?.info.instantSalePrice;
+      const winningConfigType =
+        auctionView.participationItem?.winningConfigType ||
+        auctionView.items[0][0].winningConfigType;
+      const isAuctionItemMaster = [
+        WinningConfigType.FullRightsTransfer,
+        WinningConfigType.TokenOnlyTransfer,
+      ].includes(winningConfigType);
+      const allowBidToPublic =
+        myPayingAccount &&
+        !auctionView.myBidderPot &&
+        isAuctionManagerAuthorityNotWalletOwner;
+      const allowBidToAuctionOwner =
+        myPayingAccount &&
+        !isAuctionManagerAuthorityNotWalletOwner &&
+        isAuctionItemMaster;
+
+      // Placing a "bid" of the full amount results in a purchase to redeem.
+      if (instantSalePrice && (allowBidToPublic || allowBidToAuctionOwner)) {
+        let bidTxid: string | undefined;
+
+        try {
+          console.log('sendPlaceBid');
+          const { amount, txid } = await sendPlaceBid(
+            connection,
+            wallet,
+            myPayingAccount.pubkey,
+            auctionView,
+            accountByMint,
+            instantSalePrice,
+            'confirmed',
+          );
+          setLastBid({ amount });
+          bidTxid = txid;
+        } catch (e) {
+          console.error('sendPlaceBid', e);
+          return;
+        }
+
+        try {
+          // Attempt to load the transaction, retrying up to 5 times
+          retry: do {
+            for (let i = 0; i < 5; ++i) {
+              const tx = await connection.getTransaction(bidTxid, {
+                commitment: 'confirmed',
+              });
+
+              const keys = tx?.transaction.message.accountKeys;
+
+              if (!keys) {
+                await new Promise(o => setTimeout(o, 2000));
+                continue;
+              }
+
+              const patch = await loadMultipleAccounts(
+                connection,
+                keys.map(k => k.toBase58()),
+                'confirmed',
+              );
+
+              const newState = patchState(patch);
+              setLoading(true);
+
+              {
+                const auctionKey = auctionView.auction.pubkey;
+                const auctionBidderKey = `${auctionKey}-${wallet.publicKey}`;
+
+                auctionView.auction = newState.auctions[auctionKey];
+                auctionView.myBidderPot =
+                  newState.bidderPotsByAuctionAndBidder[
+                    auctionBidderKey
+                  ];
+                auctionView.myBidderMetadata =
+                  newState.bidderMetadataByAuctionAndBidder[
+                    auctionBidderKey
+                  ];
+              }
+
+              // Stop retrying on success
+              break retry;
+            }
+
+            // Throw an error if we retry too many times
+            throw new Error("Couldn't get PlaceBid transaction");
+          } while (false);
+        } catch (e) {
+          console.error('update (post-sendPlaceBid)', e);
+          return;
+        }
+      }
+
+      // Claim the purchase
       try {
-        console.log('sendPlaceBid');
-        const bid = await sendPlaceBid(
+        await sendRedeemBid(
           connection,
           wallet,
           myPayingAccount.pubkey,
           auctionView,
           accountByMint,
-          instantSalePrice,
+          prizeTrackingTickets,
+          bidRedemptions,
+          bids,
         );
-        setLastBid(bid);
       } catch (e) {
-        console.error('sendPlaceBid', e);
-        setLoading(false);
+        console.error('sendRedeemBid', e);
+        setShowRedemptionIssue(true);
         return;
       }
-    }
 
-    const newAuctionState = await update(
-      auctionView.auction.pubkey,
-      wallet.publicKey,
-    );
-    auctionView.auction = newAuctionState[0];
-    auctionView.myBidderPot = newAuctionState[1];
-    auctionView.myBidderMetadata = newAuctionState[2];
-    // Claim the purchase
-    try {
-      await sendRedeemBid(
-        connection,
-        wallet,
-        myPayingAccount.pubkey,
-        auctionView,
-        accountByMint,
-        prizeTrackingTickets,
-        bidRedemptions,
-        bids,
-      ).then(async () => {
+      try {
         await update();
-        setShowRedeemedBidModal(true);
-      });
-    } catch (e) {
-      console.error(e);
-      setShowRedemptionIssue(true);
-    }
+      } catch (e) {
+        console.error('update (post-sendRedeemBid)', e);
+        return;
+      }
 
-    setLoading(false);
+      setShowRedeemedBidModal(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isOpenEditionSale =
@@ -667,7 +726,11 @@ export const AuctionCard = ({
               }}
               style={{ marginTop: 20 }}
             >
-              {loading ? <Spin /> : 'Start auction'}
+              {loading ? (
+                <Spin indicator={<LoadingOutlined />} />
+              ) : (
+                'Start auction'
+              )}
             </Button>
           ) : loading ? (
             <Spin />
@@ -727,7 +790,6 @@ export const AuctionCard = ({
       <MetaplexOverlay visible={showBidPlaced}>
         <Confetti />
         <h1
-          className="title"
           style={{
             fontSize: '3rem',
             marginBottom: 20,
@@ -737,7 +799,6 @@ export const AuctionCard = ({
         </h1>
         <p
           style={{
-            color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
           }}
@@ -753,7 +814,6 @@ export const AuctionCard = ({
       <MetaplexOverlay visible={showRedeemedBidModal}>
         <Confetti />
         <h1
-          className="title"
           style={{
             fontSize: '3rem',
             marginBottom: 20,
@@ -763,7 +823,6 @@ export const AuctionCard = ({
         </h1>
         <p
           style={{
-            color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
           }}

@@ -106,9 +106,7 @@ export const ArtView = () => {
             style={{ textAlign: 'left', fontSize: '1.4rem' }}
           >
             <Row>
-              <div style={{ fontWeight: 700, fontSize: '4rem' }}>
-                {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-              </div>
+              <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
             </Row>
             <Row>
               <Col span={6}>
@@ -239,10 +237,11 @@ export const ArtView = () => {
                 <div className="info-header">Attributes</div>
                 <List size="large" grid={{ column: 4 }}>
                   {attributes.map(attribute => (
-                    <List.Item key={attribute.trait_type}>
-                      <Card title={attribute.trait_type}>
-                        {attribute.value}
-                      </Card>
+                    <List.Item key={attribute.display_type}>
+                      <List.Item.Meta
+                        title={attribute.trait_type}
+                        description={attribute.value}
+                      />
                     </List.Item>
                   ))}
                 </List>

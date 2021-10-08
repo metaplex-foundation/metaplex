@@ -67,7 +67,7 @@ export const ArtworksView = () => {
               </Link>
             );
           })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        : []}
     </Masonry>
   );
 

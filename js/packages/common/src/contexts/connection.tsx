@@ -42,7 +42,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: 'mainnet-beta' as ENV,
-    endpoint: 'https://api.metaplex.solana.com/',
+    endpoint: 'https://holaplex.rpcpool.com/',
     ChainId: ChainId.MainnetBeta,
   },
   {
@@ -558,7 +558,7 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Timeout Error caught', err);
     if (err.timeout) {
       throw new Error('Timed out awaiting confirmation on transaction');

@@ -52,7 +52,7 @@ import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
 import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
-import { PlusCircleOutlined } from '@ant-design/icons';
+import { LoadingOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
 
 const { Option } = Select;
@@ -660,7 +660,7 @@ export const AuctionCreateView = () => {
               style={{
                 width: 'fit-content',
                 margin: '0 auto 30px auto',
-                overflowX: 'auto',
+                overflowX: 'visible',
                 maxWidth: '100%',
               }}
             >
@@ -1815,7 +1815,7 @@ const ReviewStep = (props: {
           {cost ? (
             <AmountLabel title="Cost to Create" amount={cost} />
           ) : (
-            <Spin />
+            <Spin indicator={<LoadingOutlined />} />
           )}
         </Col>
       </Row>

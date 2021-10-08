@@ -15,7 +15,7 @@ import {
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
-import useWindowDimensions from '../utils/layout';
+import { maybeCDN } from '../utils/cdn';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -173,7 +173,6 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
-  const { width } = useWindowDimensions();
   const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' });
   const localStorage = useLocalStorage();
 
@@ -185,22 +184,9 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   );
 
   useEffect(() => {
-    if ((inView || width < 768) && id && !data) {
-      const USE_CDN = false;
-      const routeCDN = (uri: string) => {
-        let result = uri;
-        if (USE_CDN) {
-          result = uri.replace(
-            'https://arweave.net/',
-            'https://coldcdn.com/api/cdn/bronil/',
-          );
-        }
-
-        return result;
-      };
-
+    if (inView && id && !data) {
       if (account && account.info.data.uri) {
-        const uri = routeCDN(account.info.data.uri);
+        const uri = maybeCDN(account.info.data.uri);
 
         const processJson = (extended: any) => {
           if (!extended || extended?.properties?.files?.length === 0) {
@@ -211,7 +197,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
             const file = extended.image.startsWith('http')
               ? extended.image
               : `${account.info.data.uri}/${extended.image}`;
-            extended.image = routeCDN(file);
+            extended.image = maybeCDN(file);
           }
 
           return extended;

@@ -10,15 +10,22 @@ import { ConfettiProvider } from './components/Confetti';
 import { AppLayout } from './components/Layout';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
+import { Storefront } from '@oyster/common';
 
-export const Providers: FC = ({ children }) => {
+interface ProvidersProps {
+  storefront: Storefront;
+  children: React.ReactNode;
+}
+
+export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
   return (
     <ConnectionProvider>
       <WalletProvider>
         <AccountsProvider>
           <CoingeckoProvider>
             <StoreProvider
-              ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
+              storefront={storefront}
+
               storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
             >
               <MetaProvider>
