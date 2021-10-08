@@ -3,17 +3,20 @@ import {useWallet} from '@solana/wallet-adapter-react';
 import {useHistory} from "react-router-dom";
 import {signUp} from "../../actions/lmsIntegration";
 import {useState} from "react";
+import {useConnectionConfig} from "@oyster/common";
 
 export const SignUpForm = () => {
   const wallet = useWallet();
   const history = useHistory();
   let [loading, setLoading] = useState(false);
   let [error, setError] = useState(null);
+  const {env} = useConnectionConfig();
+
   const onFinish = (values: any) => {
     // @ts-ignore
     values.walletPubkey = wallet.publicKey.toString();
     setLoading(true);
-    signUp(values).then(r => {
+    signUp(values, env).then(r => {
       sessionStorage.setItem('token', r);
       history.push('/');
       setLoading(false);

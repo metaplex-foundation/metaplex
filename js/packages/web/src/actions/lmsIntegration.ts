@@ -1,16 +1,14 @@
 import uuid from 'uuid';
+import { backendLMSAddresses } from '../constants';
 
-const registrationUrl =
-  'https://api2-dev.letmespeak.pro/user/wallet_registration';
-const loginUrl = 'https://api2-dev.letmespeak.pro/user/auth';
-const getAttributesByNftIdUrl = 'https://api2-dev.letmespeak.pro/user/skills/';
-
-export async function signUp(values) {
+export async function signUp(values, cluster) {
   if (values.password !== values.confirmPassword) {
     throw Error('Password and confirm password do not match');
   }
   delete values.confirmPassword;
-  const response = await fetch(registrationUrl, {
+  const LMSAddresses = backendLMSAddresses(cluster);
+
+  const response = await fetch(LMSAddresses.registrationUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
@@ -26,8 +24,10 @@ export async function signUp(values) {
   }
 }
 
-export async function login(values) {
-  const response = await fetch(loginUrl, {
+export async function login(values, cluster) {
+  const LMSAddresses = backendLMSAddresses(cluster);
+
+  const response = await fetch(LMSAddresses.loginUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
@@ -43,8 +43,10 @@ export async function login(values) {
   }
 }
 
-export async function getAttributesByNftId(nftId) {
-  const response = await fetch(getAttributesByNftIdUrl + nftId, {
+export async function getAttributesByNftId(nftId, cluster) {
+  const LMSAddresses = backendLMSAddresses(cluster);
+
+  const response = await fetch(LMSAddresses.getAttributesByNftIdUrl + nftId, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',

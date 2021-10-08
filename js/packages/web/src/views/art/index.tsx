@@ -18,6 +18,7 @@ import {
   shortenAddress,
   TokenAccount,
   useConnection,
+  useConnectionConfig,
   useUserAccounts
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -55,6 +56,8 @@ export const ArtView = () => {
     return prev;
   }, new Map<string, TokenAccount>());
 
+  const {env} = useConnectionConfig();
+
   const description = data?.description;
   // const attributes = data?.attributes;
   useEffect(() => {
@@ -63,7 +66,7 @@ export const ArtView = () => {
       if (art.mint != null) {
         token_acc = accountByMint.get(art?.mint)
       }
-      getAttributesByNftId(token_acc.pubkey).then(res => {
+      getAttributesByNftId(token_acc.pubkey, env).then(res => {
         setAttributes(res);
       }).catch(e => {
         console.log(e);
