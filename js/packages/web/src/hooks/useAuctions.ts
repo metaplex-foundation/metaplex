@@ -209,7 +209,7 @@ function isInstantSale(
   );
 }
 
-function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
+export function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   const list: T[] = [];
   let ticket = hash[key + '-0'];
   if (ticket) {
@@ -413,10 +413,14 @@ export function processAccountsIntoAuctionView(
       myBidRedemption: bidRedemption,
     };
 
-    view.thumbnail = ((view.items || [])[0] || [])[0] ||
-      view.participationItem || {
-        metadata: metadataByAuction[auction.pubkey][0],
-      };
+    view.thumbnail =
+      ((view.items || [])[0] || [])[0] ||
+      view.participationItem ||
+      (metadataByAuction[auction.pubkey]
+        ? {
+            metadata: metadataByAuction[auction.pubkey][0],
+          }
+        : null);
 
     view.isInstantSale = isInstantSale(auctionDataExt, auction);
 

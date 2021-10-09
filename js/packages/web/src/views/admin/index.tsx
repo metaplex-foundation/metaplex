@@ -37,6 +37,7 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { cacheAllAuctions } from '../../actions/cacheAllAuctions';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -196,6 +197,7 @@ function InnerAdminView({
   }>();
   const [loading, setLoading] = useState<boolean>();
   const { metadata, masterEditions } = useMeta();
+  const state = useMeta();
 
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
@@ -361,6 +363,20 @@ function InnerAdminView({
           </Col>{' '}
         </>
       )}
+      <Col>
+        <Row>
+          <Button
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              await cacheAllAuctions(wallet, connection, state);
+              setLoading(false);
+            }}
+          >
+            {loading ? <Spin /> : <span>Make Metaplex Great Again</span>}
+          </Button>
+        </Row>
+      </Col>
     </Content>
   );
 }

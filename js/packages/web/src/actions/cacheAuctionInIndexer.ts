@@ -1,23 +1,8 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { ParsedAccount, StringPublicKey, WalletSigner } from '@oyster/common';
+import { getSafetyDepositBoxAddress } from '@oyster/common/dist/lib/actions/vault';
 import {
-  ParsedAccount,
-  programIds,
-  sendTransactions,
-  sendTransactionWithRetry,
-  SequenceType,
-  StringPublicKey,
-  toPublicKey,
-  WalletSigner,
-} from '@oyster/common';
-import {
-  activateVault,
-  combineVault,
-  getSafetyDepositBoxAddress,
-} from '@oyster/common/dist/lib/actions/vault';
-import { approve } from '@oyster/common/dist/lib/models/account';
-import {
-  AuctionCache,
   StoreIndexer,
   getStoreIndexer,
   getAuctionCache,
