@@ -152,11 +152,15 @@ export function MetaProvider({ children = null as any }) {
           );
         }
 
-        if (nextState.storeIndexer.length != lastLength) {
+        let currLastLength;
+        setLastLength(last => {
+          currLastLength = last;
+          return last;
+        });
+        if (nextState.storeIndexer.length != currLastLength) {
           setPage(page => page + 1);
         }
         setLastLength(nextState.storeIndexer.length);
-        console.log('Next', nextState);
         setIsLoading(false);
         setState(nextState);
       }

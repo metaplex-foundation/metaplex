@@ -5,6 +5,7 @@ import {
   MetaState,
   ParsedAccount,
   programIds,
+  pullPages,
   SafetyDepositBox,
   sendTransactions,
   sendTransactionWithRetry,
@@ -13,6 +14,7 @@ import {
 } from '@oyster/common';
 import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
 import { buildListWhileNonZero } from '../hooks';
+import { BN } from 'bn.js';
 
 // This command caches an auction at position 0, page 0, and moves everything up
 export async function cacheAllAuctions(
@@ -31,9 +33,19 @@ export async function cacheAllAuctions(
     tempCache = await loadAccounts(connection);
   }
 
-  let auctionManagersToCache = Object.values(
-    tempCache.auctionManagersByAuction,
-  ).filter(a => a.info.store == store);
+  let auctionManagersToCache = Object.values(tempCache.auctionManagersByAuction)
+    .filter(a => a.info.store == store)
+    .sort((a, b) =>
+      (
+        tempCache.auctions[b.info.auction].info.endedAt ||
+        new BN(Date.now() / 1000)
+      )
+        .sub(
+          tempCache.auctions[a.info.auction].info.endedAt ||
+            new BN(Date.now() / 1000),
+        )
+        .toNumber(),
+    );
 
   const alreadyIndexed = Object.values(tempCache.auctionCaches)
     .map(a => a.info.auctionManager)
@@ -51,12 +63,7 @@ export async function cacheAllAuctions(
     'auctions to cache.',
   );
 
-  const batchInstructions: Array<TransactionInstruction[][]> = [];
-  const batchSigners: Array<Keypair[][]> = [];
-  let currBatchInstructions: TransactionInstruction[][] = [];
-  let currBatchSigners: Keypair[][] = [];
-
-  const DESIRED_BATCH_SIZE = 10;
+  let storeIndex = tempCache.storeIndexer;
   for (let i = 0; i < auctionManagersToCache.length; i++) {
     const auctionManager = auctionManagersToCache[i];
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
@@ -70,49 +77,19 @@ export async function cacheAllAuctions(
         auctionManager.info.auction,
         auctionManager.pubkey,
         boxes.map(a => a.info.tokenMint),
-        tempCache.storeIndexer,
+        storeIndex,
       );
 
-      if (
-        instructions.length + currBatchInstructions.length >
-        DESIRED_BATCH_SIZE
-      ) {
-        batchInstructions.push(currBatchInstructions);
-        batchSigners.push(currBatchSigners);
-      } else {
-        currBatchInstructions = currBatchInstructions.concat(instructions);
-        currBatchSigners = currBatchSigners.concat(signers);
-      }
-    }
-  }
-
-  if (currBatchInstructions.length > 0) {
-    batchInstructions.push(currBatchInstructions);
-    batchSigners.push(currBatchSigners);
-  }
-
-  for (let i = 0; i < batchInstructions.length; i++) {
-    const instructionBatch = batchInstructions[i];
-    const signerBatch = batchSigners[i];
-    console.log('Running batch', i);
-    if (instructionBatch.length >= 2)
-      // Pump em through!
       await sendTransactions(
         connection,
         wallet,
-        instructionBatch,
-        signerBatch,
+        instructions,
+        signers,
         SequenceType.StopOnFailure,
         'max',
       );
-    else
-      await sendTransactionWithRetry(
-        connection,
-        wallet,
-        instructionBatch[0],
-        signerBatch[0],
-        'single',
-      );
-    console.log('Done');
+
+      storeIndex = await pullPages(connection);
+    }
   }
 }

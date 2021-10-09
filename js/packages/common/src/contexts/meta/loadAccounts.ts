@@ -25,6 +25,7 @@ import {
   decodeStoreIndexer,
   getAuctionCache,
   getStoreIndexer,
+  StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -253,6 +254,28 @@ export const pullAuctionSubaccounts = async (
   console.log('---------->Pulled sub accounts for auction', auction);
 
   return tempCache;
+};
+
+export const pullPages = async (
+  connection: Connection,
+): Promise<ParsedAccount<StoreIndexer>[]> => {
+  let i = 0;
+
+  let pageKey = await getStoreIndexer(i);
+  let account = await connection.getAccountInfo(new PublicKey(pageKey));
+  const pages: ParsedAccount<StoreIndexer>[] = [];
+  while (account) {
+    pages.push({
+      info: decodeStoreIndexer(account.data),
+      pubkey: pageKey,
+      account,
+    });
+    i++;
+
+    pageKey = await getStoreIndexer(i);
+    account = await connection.getAccountInfo(new PublicKey(pageKey));
+  }
+  return pages;
 };
 
 export const pullPage = async (
