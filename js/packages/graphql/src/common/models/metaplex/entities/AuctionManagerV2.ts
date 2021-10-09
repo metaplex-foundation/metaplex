@@ -1,11 +1,11 @@
-import { StringPublicKey } from "../../../utils";
-import { MetaplexKey } from "../MetaplexKey";
-import { AuctionManagerStateV2 } from "./AuctionManagerStateV2";
+import { StringPublicKey } from '../../../utils';
+import { MetaplexKey } from '../MetaplexKey';
+import { AuctionManagerStateV2 } from './AuctionManagerStateV2';
 
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BaseEntry } from "./BaseEntry";
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { BaseEntity } from '../../BaseEntity';
 @Serializable()
-export class AuctionManagerV2 extends BaseEntry {
+export class AuctionManagerV2 extends BaseEntity {
   @JsonProperty()
   key!: MetaplexKey;
 

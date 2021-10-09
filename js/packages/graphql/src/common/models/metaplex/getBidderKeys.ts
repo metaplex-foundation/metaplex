@@ -1,10 +1,10 @@
-import { AUCTION_PREFIX, METADATA } from "../../actions";
-import { findProgramAddress, programIds, toPublicKey } from "../../utils";
-import { getBidRedemption } from "./getBidRedemption";
+import { AUCTION_PREFIX, METADATA } from '../auctions';
+import { findProgramAddress, programIds, toPublicKey } from '../../utils';
+import { getBidRedemption } from './getBidRedemption';
 
 export async function getBidderKeys(
   auctionKey: string,
-  bidder: string
+  bidder: string,
 ): Promise<{ bidMetadata: string; bidRedemption: string }> {
   const PROGRAM_IDS = programIds();
 
@@ -17,7 +17,7 @@ export async function getBidderKeys(
         toPublicKey(bidder).toBuffer(),
         Buffer.from(METADATA),
       ],
-      toPublicKey(PROGRAM_IDS.auction)
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 

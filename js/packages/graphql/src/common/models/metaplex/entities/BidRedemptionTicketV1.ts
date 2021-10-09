@@ -1,10 +1,10 @@
-import { MetaplexKey } from "../MetaplexKey";
-import { BidRedemptionTicket } from "../BidRedemptionTicket";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BaseEntry } from "./BaseEntry";
+import { MetaplexKey } from '../MetaplexKey';
+import { BidRedemptionTicket } from '../BidRedemptionTicket';
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { BaseEntity } from '../../BaseEntity';
 @Serializable()
 export class BidRedemptionTicketV1
-  extends BaseEntry
+  extends BaseEntity
   implements BidRedemptionTicket
 {
   @JsonProperty()

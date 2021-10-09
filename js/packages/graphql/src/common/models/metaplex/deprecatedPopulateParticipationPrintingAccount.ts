@@ -1,14 +1,15 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
-import { serialize } from "borsh";
-import { SCHEMA } from ".";
-import { getAuctionExtended, VAULT_PREFIX } from "../../actions";
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { serialize } from 'borsh';
 import {
   findProgramAddress,
   programIds,
   StringPublicKey,
   toPublicKey,
-} from "../../utils";
-import { DeprecatedPopulateParticipationPrintingAccountArgs } from "./DeprecatedPopulateParticipationPrintingAccountArgs";
+} from '../../utils';
+import { getAuctionExtended } from '../auctions';
+import { VAULT_PREFIX } from '../vaults';
+import { DeprecatedPopulateParticipationPrintingAccountArgs } from './DeprecatedPopulateParticipationPrintingAccountArgs';
+import { SCHEMA } from './schema';
 
 export async function deprecatedPopulateParticipationPrintingAccount(
   vault: StringPublicKey,
@@ -24,12 +25,12 @@ export async function deprecatedPopulateParticipationPrintingAccount(
   masterEdition: StringPublicKey,
   metadata: StringPublicKey,
   payer: StringPublicKey,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
-    throw new Error("Store not initialized");
+    throw new Error('Store not initialized');
   }
 
   const transferAuthority = (
@@ -39,7 +40,7 @@ export async function deprecatedPopulateParticipationPrintingAccount(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault)
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -97,7 +98,7 @@ export async function deprecatedPopulateParticipationPrintingAccount(
         await getAuctionExtended({
           auctionProgramId: PROGRAM_IDS.auction,
           resource: vault,
-        })
+        }),
       ),
       isSigner: false,
       isWritable: false,
@@ -159,6 +160,6 @@ export async function deprecatedPopulateParticipationPrintingAccount(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    })
+    }),
   );
 }

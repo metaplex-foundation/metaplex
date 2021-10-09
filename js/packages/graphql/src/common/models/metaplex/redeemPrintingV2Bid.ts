@@ -2,18 +2,18 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
-} from "@solana/web3.js";
-import BN from "bn.js";
-import { serialize } from "borsh";
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import { serialize } from 'borsh';
 
-import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
-import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
-import { getBidderKeys } from "./getBidderKeys";
-import { RedeemPrintingV2BidArgs } from "./RedeemPrintingV2BidArgs";
-import { getAuctionKeys } from "./getAuctionKeys";
-import { getEdition, getEditionMarkPda, getMetadata } from "../../actions";
-import { programIds, StringPublicKey, toPublicKey } from "../../utils";
-import { SCHEMA } from "./schema";
+import { getSafetyDepositConfig } from './getSafetyDepositConfig';
+import { getPrizeTrackingTicket } from './getPrizeTrackingTicket';
+import { getBidderKeys } from './getBidderKeys';
+import { RedeemPrintingV2BidArgs } from './RedeemPrintingV2BidArgs';
+import { getAuctionKeys } from './getAuctionKeys';
+import { getEdition, getEditionMarkPda, getMetadata } from '../metadata';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
+import { SCHEMA } from './schema';
 
 export async function redeemPrintingV2Bid(
   vault: StringPublicKey,
@@ -29,29 +29,29 @@ export async function redeemPrintingV2Bid(
   edition: BN,
   editionOffset: BN,
   winIndex: BN,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
-    throw new Error("Store not initialized");
+    throw new Error('Store not initialized');
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
   const { bidRedemption, bidMetadata } = await getBidderKeys(
     auctionKey,
-    bidder
+    bidder,
   );
 
   const prizeTrackingTicket = await getPrizeTrackingTicket(
     auctionManagerKey,
-    originalMint
+    originalMint,
   );
 
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
-    safetyDeposit
+    safetyDeposit,
   );
 
   const newMetadata = await getMetadata(newMint);
@@ -198,6 +198,6 @@ export async function redeemPrintingV2Bid(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    })
+    }),
   );
 }

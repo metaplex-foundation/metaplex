@@ -1,26 +1,21 @@
-import BN from "bn.js";
-import {
-  AuctionData,
-  MasterEditionV1,
-  MasterEditionV2,
-  Metadata,
-  SafetyDepositBox,
-  Vault,
-} from "../../actions";
-import { ParsedAccount } from "../../contexts/accounts";
-import { StringPublicKey } from "../../utils";
-import { AuctionViewItem } from "./AuctionViewItem";
-import { AuctionManagerStatus } from "./AuctionManagerStatus";
-import { WinningConstraint } from "./WinningConstraint";
-import { NonWinningConstraint } from "./NonWinningConstraint";
-import { MetaplexKey } from "./MetaplexKey";
+import BN from 'bn.js';
+import { MasterEditionV1, MasterEditionV2, Metadata } from '../metadata';
+import { SafetyDepositBox, Vault } from '../vaults';
+import { AuctionData } from '../auctions';
+import { ParsedAccount } from '../accounts';
+import { StringPublicKey } from '../../utils';
+import { AuctionViewItem } from './AuctionViewItem';
+import { AuctionManagerStatus } from './AuctionManagerStatus';
+import { WinningConstraint } from './WinningConstraint';
+import { NonWinningConstraint } from './NonWinningConstraint';
+import { MetaplexKey } from './MetaplexKey';
 import {
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicketV2,
   ParticipationConfigV1,
   SafetyDepositConfig,
-} from "./entities";
+} from './entities';
 
 export class AuctionManager {
   pubkey: StringPublicKey;
@@ -53,7 +48,7 @@ export class AuctionManager {
         : new BN(
             (
               this.instance.info as AuctionManagerV1
-            ).state.winningConfigItemsValidated
+            ).state.winningConfigItemsValidated,
           );
     this.store = this.instance.info.store;
     this.authority = this.instance.info.authority;
@@ -66,8 +61,8 @@ export class AuctionManager {
     this.participationConfig =
       this.instance.info.key == MetaplexKey.AuctionManagerV2
         ? this.safetyDepositConfigs
-            ?.filter((s) => s.info.participationConfig)
-            .map((s) => ({
+            ?.filter(s => s.info.participationConfig)
+            .map(s => ({
               winnerConstraint:
                 s.info.participationConfig?.winnerConstraint ||
                 WinningConstraint.NoParticipationPrize,
@@ -86,15 +81,13 @@ export class AuctionManager {
       const asV1 = this.instance.info as AuctionManagerV1;
       const itemIndex = asV1.settings.winningConfigs[
         winnerIndex
-      ].items.findIndex(
-        (i) => i.safetyDepositBoxIndex == safetyDepositBoxIndex
-      );
+      ].items.findIndex(i => i.safetyDepositBoxIndex == safetyDepositBoxIndex);
 
       return asV1.state.winningConfigStates[winnerIndex].items[itemIndex]
         .claimed;
     } else {
       const winner = this.bidRedemptions.find(
-        (b) => b.info.winnerIndex && b.info.winnerIndex.eq(new BN(winnerIndex))
+        b => b.info.winnerIndex && b.info.winnerIndex.eq(new BN(winnerIndex)),
       );
       if (!winner) {
         return false;
@@ -109,8 +102,8 @@ export class AuctionManager {
       return new BN(
         (this.instance.info as AuctionManagerV1).settings.winningConfigs[
           winnerIndex
-        ].items.find((i) => i.safetyDepositBoxIndex == safetyDepositBoxIndex)
-          ?.amount || 0
+        ].items.find(i => i.safetyDepositBoxIndex == safetyDepositBoxIndex)
+          ?.amount || 0,
       );
     } else {
       const safetyDepositConfig =
@@ -130,13 +123,13 @@ export class AuctionManager {
       string,
       ParsedAccount<MasterEditionV1 | MasterEditionV2>
     >,
-    boxes: ParsedAccount<SafetyDepositBox>[]
+    boxes: ParsedAccount<SafetyDepositBox>[],
   ): AuctionViewItem[][] {
     if (this.instance.info.key == MetaplexKey.AuctionManagerV1) {
       return (
         this.instance.info as AuctionManagerV1
-      ).settings.winningConfigs.map((w) => {
-        return w.items.map((it) => {
+      ).settings.winningConfigs.map(w => {
+        return w.items.map(it => {
           let metadata =
             metadataByMint[boxes[it.safetyDepositBoxIndex]?.info.tokenMint];
           if (!metadata) {
@@ -165,7 +158,7 @@ export class AuctionManager {
       for (let i = 0; i < this.numWinners.toNumber(); i++) {
         const newWinnerArr: AuctionViewItem[] = [];
         items.push(newWinnerArr);
-        this.safetyDepositConfigs?.forEach((s) => {
+        this.safetyDepositConfigs?.forEach(s => {
           const amount = s.info.getAmountForWinner(new BN(i));
           if (amount.gt(new BN(0))) {
             const safetyDeposit = boxes[s.info.order.toNumber()];

@@ -1,12 +1,12 @@
-import BN from "bn.js";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../serialize";
-import { StringPublicKey } from "../../../utils";
-import { MetaplexKey } from "../MetaplexKey";
-import { BaseEntry } from "./BaseEntry";
+import BN from 'bn.js';
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { BNConverter } from '../../serialize';
+import { StringPublicKey } from '../../../utils';
+import { MetaplexKey } from '../MetaplexKey';
+import { BaseEntity } from '../../BaseEntity';
 
 @Serializable()
-export class PayoutTicket extends BaseEntry {
+export class PayoutTicket extends BaseEntity {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.PayoutTicketV1;
 

@@ -1,5 +1,5 @@
-import { Connection } from "@solana/web3.js";
-import { PubSub, withFilter } from "graphql-subscriptions";
+import { Connection } from '@solana/web3.js';
+import { PubSub, withFilter } from 'graphql-subscriptions';
 import {
   Edition,
   MasterEditionV1,
@@ -8,10 +8,10 @@ import {
   MetaTypes,
   Store,
   WhitelistedCreator,
-} from "../common";
-import { NexusGenInputs } from "../generated/typings";
-import { loadUserTokenAccounts } from "../utils/loadUserTokenAccounts";
-import { FilterFn, IEvent } from "./types";
+  loadUserTokenAccounts,
+} from '../common';
+import { NexusGenInputs } from '../generated/typings';
+import { FilterFn, IEvent } from './types';
 
 export abstract class Reader {
   protected readonly pubsub = new PubSub();
@@ -29,7 +29,7 @@ export abstract class Reader {
   subscribeIterator(prop: MetaTypes, key?: string | FilterFn<IEvent>) {
     const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
     if (key !== undefined) {
-      if (typeof key === "string") {
+      if (typeof key === 'string') {
         return withFilter(iter, (payload: IEvent) => {
           return payload.key === key;
         });
@@ -50,15 +50,37 @@ export abstract class Reader {
   abstract getCreators(storeId: string): Promise<WhitelistedCreator[]>;
   abstract getCreator(
     storeId: string,
-    creatorId: string
+    creatorId: string,
   ): Promise<WhitelistedCreator | null>;
 
   abstract getArtworks(
-    args: NexusGenInputs["ArtworksInput"]
+    args: NexusGenInputs['ArtworksInput'],
   ): Promise<Metadata[]>;
   abstract getArtwork(artId: string): Promise<Metadata | null>;
   abstract getEdition(id?: string): Promise<Edition | null>;
   abstract getMasterEdition(
-    id?: string
+    id?: string,
   ): Promise<MasterEditionV1 | MasterEditionV2 | null>;
+
+  // abstract getAuction(auctionId: string): Promise<Auction | null>;
+  // abstract getAuctions({
+  //   storeId,
+  //   state,
+  //   participantId,
+  // }: NexusGenInputs['AuctionsInput']): Promise<Auction[]>;
+
+  // abstract getVault(id?: string): Promise<Vault | null>;
+  // abstract getAuctionHighestBid(
+  //   auction: Auction,
+  // ): Promise<BidderMetadata | null>;
+  // abstract getAuctionThumbnail(
+  //   auction: Auction,
+  // ): Promise<Metadata | null>;
+  // abstract getAuctionBids(auction: Auction): Promise<BidderMetadata[]>;
+  // abstract getSafetyDepositBoxes(
+  //   manager: AuctionManager,
+  // ): Promise<SafetyDepositBox[]>;
+  // abstract getParticipationConfig(
+  //   manager: AuctionManager,
+  // ): Promise<ParticipationConfigV1 | null>;
 }

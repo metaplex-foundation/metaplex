@@ -1,6 +1,7 @@
-import { Reader } from "../reader";
+import { Reader, Resolver } from '../reader';
 
 export interface Context {
   network?: string;
   api: Reader;
+  resolver: Resolver;
 }

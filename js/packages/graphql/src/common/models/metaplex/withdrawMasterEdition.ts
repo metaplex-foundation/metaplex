@@ -1,18 +1,19 @@
-import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
-import { serialize } from "borsh";
+import { SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { serialize } from 'borsh';
 
-import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
-import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
-import { SCHEMA } from "./schema";
-import { WithdrawMasterEditionArgs } from "./WithdrawMasterEditionArgs";
-import { getAuctionKeys } from "./getAuctionKeys";
-import { AUCTION_PREFIX, EXTENDED, VAULT_PREFIX } from "../../actions";
+import { getSafetyDepositConfig } from './getSafetyDepositConfig';
+import { getPrizeTrackingTicket } from './getPrizeTrackingTicket';
+import { SCHEMA } from './schema';
+import { WithdrawMasterEditionArgs } from './WithdrawMasterEditionArgs';
+import { getAuctionKeys } from './getAuctionKeys';
+import { AUCTION_PREFIX, EXTENDED } from '../auctions';
+import { VAULT_PREFIX } from '../vaults';
 import {
   findProgramAddress,
   programIds,
   toPublicKey,
   StringPublicKey,
-} from "../../utils";
+} from '../../utils';
 
 export async function withdrawMasterEdition(
   vault: StringPublicKey,
@@ -21,19 +22,19 @@ export async function withdrawMasterEdition(
   safetyDeposit: StringPublicKey,
   fractionMint: StringPublicKey,
   mint: StringPublicKey,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
-    throw new Error("Store not initialized");
+    throw new Error('Store not initialized');
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
 
   const prizeTrackingTicket = await getPrizeTrackingTicket(
     auctionManagerKey,
-    mint
+    mint,
   );
   const vaultAuthority = (
     await findProgramAddress(
@@ -42,7 +43,7 @@ export async function withdrawMasterEdition(
         toPublicKey(PROGRAM_IDS.vault).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.vault)
+      toPublicKey(PROGRAM_IDS.vault),
     )
   )[0];
 
@@ -54,13 +55,13 @@ export async function withdrawMasterEdition(
         toPublicKey(vault).toBuffer(),
         Buffer.from(EXTENDED),
       ],
-      toPublicKey(PROGRAM_IDS.auction)
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
-    safetyDeposit
+    safetyDeposit,
   );
 
   const value = new WithdrawMasterEditionArgs();
@@ -148,6 +149,6 @@ export async function withdrawMasterEdition(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    })
+    }),
   );
 }

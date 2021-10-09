@@ -1,11 +1,10 @@
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { StringPublicKey } from "../../../utils";
-import { isCreatorPartOfTheStore } from "../isCreatorPartOfTheStore";
-import { MetaplexKey } from "../MetaplexKey";
-import { BaseEntry } from "./BaseEntry";
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { StringPublicKey } from '../../../utils';
+import { MetaplexKey } from '../MetaplexKey';
+import { BaseEntity } from '../../BaseEntity';
 
 @Serializable()
-export class WhitelistedCreator extends BaseEntry {
+export class WhitelistedCreator extends BaseEntity {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.WhitelistedCreatorV1;
 
@@ -27,10 +26,6 @@ export class WhitelistedCreator extends BaseEntry {
 
   @JsonProperty()
   description?: string;
-
-  async isCreatorPartOfTheStore(storeId: string) {
-    return isCreatorPartOfTheStore(this.address, this.pubkey, storeId);
-  }
 
   constructor(args?: { address: string; activated: boolean }) {
     super();

@@ -1,7 +1,7 @@
-import BN from "bn.js";
-import { AuctionManagerStatus } from "../AuctionManagerStatus";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../serialize";
+import BN from 'bn.js';
+import { AuctionManagerStatus } from '../AuctionManagerStatus';
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { BNConverter } from '../../serialize';
 @Serializable()
 export class AuctionManagerStateV2 {
   @JsonProperty()

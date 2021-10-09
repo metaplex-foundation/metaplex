@@ -1,11 +1,11 @@
-import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from "@solana/web3.js";
-import { serialize } from "borsh";
+import { SYSVAR_CLOCK_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { serialize } from 'borsh';
 
-import { SCHEMA } from "./schema";
-import { ClaimBidArgs } from "./ClaimBidArgs";
-import { getAuctionKeys } from "./getAuctionKeys";
-import { getBidderPotKey } from "../../actions";
-import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { SCHEMA } from './schema';
+import { ClaimBidArgs } from './ClaimBidArgs';
+import { getAuctionKeys } from './getAuctionKeys';
+import { getBidderPotKey } from '../auctions';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function claimBid(
   acceptPayment: StringPublicKey,
@@ -13,12 +13,12 @@ export async function claimBid(
   bidderPotToken: StringPublicKey,
   vault: StringPublicKey,
   tokenMint: StringPublicKey,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
-    throw new Error("Store not initialized");
+    throw new Error('Store not initialized');
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
@@ -101,6 +101,6 @@ export async function claimBid(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    })
+    }),
   );
 }

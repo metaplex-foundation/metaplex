@@ -2,23 +2,19 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
-} from "@solana/web3.js";
-import BN from "bn.js";
-import { serialize } from "borsh";
+} from '@solana/web3.js';
+import BN from 'bn.js';
+import { serialize } from 'borsh';
 
-import { getSafetyDepositConfig } from "./getSafetyDepositConfig";
-import { getPrizeTrackingTicket } from "./getPrizeTrackingTicket";
-import { getBidderKeys } from "./getBidderKeys";
-import { SCHEMA } from "./schema";
-import { RedeemParticipationBidV3Args } from "./RedeemParticipationBidV3Args";
-import { getAuctionKeys } from "./getAuctionKeys";
-import {
-  getAuctionExtended,
-  getEdition,
-  getEditionMarkPda,
-  getMetadata,
-} from "../../actions";
-import { programIds, StringPublicKey, toPublicKey } from "../../utils";
+import { getSafetyDepositConfig } from './getSafetyDepositConfig';
+import { getPrizeTrackingTicket } from './getPrizeTrackingTicket';
+import { getBidderKeys } from './getBidderKeys';
+import { SCHEMA } from './schema';
+import { RedeemParticipationBidV3Args } from './RedeemParticipationBidV3Args';
+import { getAuctionKeys } from './getAuctionKeys';
+import { getAuctionExtended } from '../auctions';
+import { getEdition, getEditionMarkPda, getMetadata } from '../metadata';
+import { programIds, StringPublicKey, toPublicKey } from '../../utils';
 
 export async function redeemParticipationBidV3(
   vault: StringPublicKey,
@@ -36,12 +32,12 @@ export async function redeemParticipationBidV3(
   newMint: StringPublicKey,
   edition: BN,
   winIndex: BN | null,
-  instructions: TransactionInstruction[]
+  instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
   const store = PROGRAM_IDS.store;
   if (!store) {
-    throw new Error("Store not initialized");
+    throw new Error('Store not initialized');
   }
 
   const { auctionKey, auctionManagerKey } = await getAuctionKeys(vault);
@@ -52,12 +48,12 @@ export async function redeemParticipationBidV3(
 
   const { bidRedemption, bidMetadata } = await getBidderKeys(
     auctionKey,
-    bidder
+    bidder,
   );
 
   const prizeTrackingTicket = await getPrizeTrackingTicket(
     auctionManagerKey,
-    originalMint
+    originalMint,
   );
 
   const newMetadata = await getMetadata(newMint);
@@ -67,7 +63,7 @@ export async function redeemParticipationBidV3(
 
   const safetyDepositConfig = await getSafetyDepositConfig(
     auctionManagerKey,
-    safetyDeposit
+    safetyDeposit,
   );
 
   const value = new RedeemParticipationBidV3Args({ winIndex });
@@ -230,6 +226,6 @@ export async function redeemParticipationBidV3(
       keys,
       programId: toPublicKey(PROGRAM_IDS.metaplex),
       data,
-    })
+    }),
   );
 }
