@@ -2,21 +2,21 @@ import {
   Commitment,
   Connection,
   GetProgramAccountsConfig,
-} from "@solana/web3.js";
-import { StringPublicKey } from "./ids";
-import { AccountAndPubkey, AccountInfoOwnerString } from "./types";
+} from '@solana/web3.js';
+import { StringPublicKey } from './ids';
+import { AccountAndPubkey, AccountInfoOwnerString } from './types';
 
 export async function getProgramAccounts(
   connection: Connection,
   programId: StringPublicKey,
-  configOrCommitment?: GetProgramAccountsConfig | Commitment
+  configOrCommitment?: GetProgramAccountsConfig | Commitment,
 ): Promise<Array<AccountAndPubkey>> {
   const extra: any = {};
   let commitment;
   let encoding;
 
   if (configOrCommitment) {
-    if (typeof configOrCommitment === "string") {
+    if (typeof configOrCommitment === 'string') {
       commitment = configOrCommitment;
     } else {
       commitment = configOrCommitment.commitment;
@@ -35,12 +35,12 @@ export async function getProgramAccounts(
   const args = connection._buildArgs(
     [programId],
     commitment,
-    encoding || "base64",
-    extra
+    encoding || 'base64',
+    extra,
   );
   const unsafeRes = await (connection as any)._rpcRequest(
-    "getProgramAccounts",
-    args
+    'getProgramAccounts',
+    args,
   );
   return unsafeResAccounts(unsafeRes.result);
 }
@@ -55,11 +55,11 @@ export async function getTokenAccountsByOwner(
     | {
         programId: StringPublicKey;
       },
-  commitment?: Commitment
+  commitment?: Commitment,
 ) {
   const _args: any[] = [ownerAddress];
 
-  if ("mint" in filter) {
+  if ('mint' in filter) {
     _args.push({
       mint: filter.mint, // StringPublicKey
     });
@@ -69,11 +69,11 @@ export async function getTokenAccountsByOwner(
     });
   }
 
-  const args = connection._buildArgs(_args, commitment, "base64");
+  const args = connection._buildArgs(_args, commitment, 'base64');
 
   const unsafeRes = await (connection as any)._rpcRequest(
-    "getTokenAccountsByOwner",
-    args
+    'getTokenAccountsByOwner',
+    args,
   );
 
   return unsafeResAccounts(unsafeRes.result.value);
@@ -82,27 +82,25 @@ export async function getTokenAccountsByOwner(
 export async function getAccountInfoAndContext(
   connection: Connection,
   publicKey: StringPublicKey,
-  commitment?: Commitment
+  commitment?: Commitment,
 ) {
-  const args = connection._buildArgs([publicKey], commitment, "base64");
+  const args = connection._buildArgs([publicKey], commitment, 'base64');
 
   const unsafeRes = await (connection as any)._rpcRequest(
-    "getAccountInfo",
-    args
+    'getAccountInfo',
+    args,
   );
 
   return unsafeAccount(unsafeRes.result.value);
 }
 
 export function unsafeAccount(
-  account: AccountInfoOwnerString<[string, string]>
+  account: AccountInfoOwnerString<[string, string]>,
 ): AccountInfoOwnerString<Buffer> {
   return {
-    // TODO: possible delay parsing could be added here
-    data: Buffer.from(account.data[0], "base64"),
+    data: Buffer.from(account.data[0], 'base64'),
     executable: account.executable,
     lamports: account.lamports,
-    // TODO: maybe we can do it in lazy way? or just use string
     owner: account.owner,
   };
 }
@@ -111,9 +109,9 @@ export function unsafeResAccounts(
   data: Array<{
     account: AccountInfoOwnerString<[string, string]>;
     pubkey: string;
-  }>
+  }>,
 ) {
-  return data.map((item) => ({
+  return data.map(item => ({
     account: unsafeAccount(item.account),
     pubkey: item.pubkey,
   }));

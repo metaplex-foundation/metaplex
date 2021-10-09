@@ -1,40 +1,40 @@
-import { ExpressContext } from "apollo-server-express";
-import { makeSchema } from "nexus";
-import path from "path";
-import * as types from "../schema";
+import { ExpressContext } from 'apollo-server-express';
+import { makeSchema } from 'nexus';
+import path from 'path';
+import * as types from '../schema';
 
-const DIRNAME = path.resolve(__dirname, "..").replace(/\/dist$/, "/src");
+const DIRNAME = path.resolve(__dirname, '..').replace(/\/dist$/, '/src');
 
 export const schema = makeSchema({
   types,
-  shouldGenerateArtifacts: !process.env.SKIP_BUILD_SCHEMA,
+  shouldGenerateArtifacts: !process.env.DISABLE_BUILD_SCHEMA,
   outputs: {
-    schema: path.join(DIRNAME, "generated", "schema.graphql"),
-    typegen: path.join(DIRNAME, "generated", "typings.ts"),
+    schema: path.join(DIRNAME, 'schema/generated', 'schema.graphql'),
+    typegen: path.join(DIRNAME, 'schema/generated', 'typings.ts'),
   },
   formatTypegen: (content, type) => {
-    if (type === "types") {
+    if (type === 'types') {
       content = `/* eslint-disable */ \n ${content}`;
     }
-    return require("prettier").format(content, {
-      parser: type === "types" ? "typescript" : "graphql",
+    return require('prettier').format(content, {
+      parser: type === 'types' ? 'typescript' : 'graphql',
     });
   },
   sourceTypes: {
     modules: [
       {
-        module: path.join(DIRNAME, "types", "sourceTypes.ts"),
-        alias: "common",
+        module: path.join(DIRNAME, 'types', 'sourceTypes.ts'),
+        alias: 'common',
       },
     ],
     mapping: {
-      Artwork: "common.Metadata",
-      Creator: "common.WhitelistedCreator",
+      Artwork: 'common.Metadata',
+      Creator: 'common.WhitelistedCreator',
     },
   },
   contextType: {
-    module: path.join(DIRNAME, "types", "context.ts"),
-    export: "Context",
+    module: path.join(DIRNAME, 'types', 'context.ts'),
+    export: 'Context',
   },
   features: {
     abstractTypeStrategies: {
