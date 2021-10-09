@@ -1,9 +1,9 @@
-import { AUCTION_PREFIX } from "../../actions";
-import { findProgramAddress, programIds, toPublicKey } from "../../utils";
-import { getAuctionManagerKey } from "./getAuctionManagerKey";
+import { AUCTION_PREFIX } from '../auctions';
+import { findProgramAddress, programIds, toPublicKey } from '../../utils';
+import { getAuctionManagerKey } from './getAuctionManagerKey';
 
 export async function getAuctionKeys(
-  vault: string
+  vault: string,
 ): Promise<{ auctionKey: string; auctionManagerKey: string }> {
   const PROGRAM_IDS = programIds();
 
@@ -14,7 +14,7 @@ export async function getAuctionKeys(
         toPublicKey(PROGRAM_IDS.auction).toBuffer(),
         toPublicKey(vault).toBuffer(),
       ],
-      toPublicKey(PROGRAM_IDS.auction)
+      toPublicKey(PROGRAM_IDS.auction),
     )
   )[0];
 

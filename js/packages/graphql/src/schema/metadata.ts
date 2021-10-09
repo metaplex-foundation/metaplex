@@ -1,7 +1,7 @@
-import { objectType, enumType, unionType } from "nexus";
+import { objectType, enumType, unionType } from 'nexus';
 
 export const MetadataKey = enumType({
-  name: "MetadataKey",
+  name: 'MetadataKey',
   members: {
     Uninitialized: 0,
     MetadataV1: 4,
@@ -13,46 +13,46 @@ export const MetadataKey = enumType({
 });
 
 export const Edition = objectType({
-  name: "Edition",
+  name: 'Edition',
   definition(t) {
-    t.field("key", { type: MetadataKey }); // Int
-    t.pubkey("parent", {
-      description: "Points at MasterEdition struct",
+    t.field('key', { type: MetadataKey });
+    t.pubkey('parent', {
+      description: 'Points at MasterEdition struct',
     });
-    t.bn("edition", {
+    t.bn('edition', {
       description:
-        "Starting at 0 for master record, this is incremented for each edition minted",
+        'Starting at 0 for master record, this is incremented for each edition minted',
     });
   },
 });
 
 export const MasterEditionV1 = objectType({
-  name: "MasterEditionV1",
+  name: 'MasterEditionV1',
   definition(t) {
-    t.field("key", { type: MetadataKey });
-    t.bn("supply");
-    t.bn("maxSupply");
-    t.pubkey("printingMint");
-    t.pubkey("oneTimePrintingAuthorizationMint");
+    t.field('key', { type: MetadataKey });
+    t.bn('supply');
+    t.bn('maxSupply');
+    t.pubkey('printingMint');
+    t.pubkey('oneTimePrintingAuthorizationMint');
   },
 });
 
 export const MasterEditionV2 = objectType({
-  name: "MasterEditionV2",
+  name: 'MasterEditionV2',
   definition(t) {
-    t.field("key", { type: MetadataKey });
-    t.bn("supply");
-    t.bn("maxSupply");
+    t.field('key', { type: MetadataKey });
+    t.bn('supply');
+    t.bn('maxSupply');
   },
 });
 
 export const MasterEdition = unionType({
-  name: "MasterEdition",
+  name: 'MasterEdition',
   resolveType(obj) {
-    if ("printingMint" in obj) {
-      return "MasterEditionV1";
+    if ('printingMint' in obj) {
+      return 'MasterEditionV1';
     }
-    return "MasterEditionV2";
+    return 'MasterEditionV2';
   },
   definition(t) {
     t.members(MasterEditionV1, MasterEditionV2);

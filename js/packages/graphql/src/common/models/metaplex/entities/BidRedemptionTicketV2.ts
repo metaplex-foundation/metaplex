@@ -1,15 +1,15 @@
-import BN from "bn.js";
-import bs58 from "bs58";
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { BNConverter } from "../../../serialize";
-import { StringPublicKey } from "../../../utils";
-import { BidRedemptionTicket } from "../BidRedemptionTicket";
-import { MetaplexKey } from "../MetaplexKey";
-import { BaseEntry } from "./BaseEntry";
+import BN from 'bn.js';
+import bs58 from 'bs58';
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { BNConverter } from '../../serialize';
+import { StringPublicKey } from '../../../utils';
+import { BidRedemptionTicket } from '../BidRedemptionTicket';
+import { MetaplexKey } from '../MetaplexKey';
+import { BaseEntity } from '../../BaseEntity';
 
 @Serializable()
 export class BidRedemptionTicketV2
-  extends BaseEntry
+  extends BaseEntity
   implements BidRedemptionTicket
 {
   @JsonProperty()
@@ -24,7 +24,7 @@ export class BidRedemptionTicketV2
   @JsonProperty()
   data: number[] = [];
 
-  constructor(args?: { key: MetaplexKey; data: number[] }) {
+  constructor(args?: { key: MetaplexKey; data: number[]; pubkey?: string }) {
     super();
 
     if (args) {
@@ -33,7 +33,7 @@ export class BidRedemptionTicketV2
       if (this.data[1] == 0) {
         this.winnerIndex = null;
       } else {
-        this.winnerIndex = new BN(this.data.slice(1, 9), "le");
+        this.winnerIndex = new BN(this.data.slice(1, 9), 'le');
         offset += 8;
       }
 

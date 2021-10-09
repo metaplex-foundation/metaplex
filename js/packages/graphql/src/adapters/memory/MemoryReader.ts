@@ -1,5 +1,5 @@
 import { Connection } from '@solana/web3.js';
-import { WhitelistedCreator } from '../../common';
+import { isCreatorPartOfTheStore, WhitelistedCreator } from '../../common';
 import { NexusGenInputs } from '../../generated/typings';
 import { Reader } from '../../reader';
 import { filterByOwner } from './filterByOwner';
@@ -61,7 +61,9 @@ export class MemoryReader extends Reader {
     await createPipelineExecutor(
       this.state.creators.values(),
       async creator => {
-        const isWhitelistedCreator = await creator.isCreatorPartOfTheStore(
+        const isWhitelistedCreator = await isCreatorPartOfTheStore(
+          creator.address,
+          creator.pubkey,
           storeId,
         );
         if (isWhitelistedCreator) {
@@ -69,7 +71,7 @@ export class MemoryReader extends Reader {
         }
       },
       {
-        jobsCount: 3
+        jobsCount: 3,
       },
     );
     return creatorsByStore;
@@ -79,9 +81,13 @@ export class MemoryReader extends Reader {
     const store = this.getStore(storeId);
     if (!store) return null;
     const creator = this.state.creators.get(creatorId);
-    const isWhitelistedCreator = await creator?.isCreatorPartOfTheStore(
-      storeId,
-    );
+    const isWhitelistedCreator =
+      creator &&
+      (await isCreatorPartOfTheStore(
+        creator?.address,
+        creator.pubkey,
+        storeId,
+      ));
     return (isWhitelistedCreator && creator) || null;
   }
 

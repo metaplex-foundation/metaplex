@@ -1,11 +1,12 @@
-import { DataSource, DataSourceConfig } from "apollo-datasource";
-import logger from "../logger";
-import { ReadAdapter } from "../reader";
-import { Context } from "../types/context";
-import { getDefaultEndpointName } from "../utils/getEndpoints";
+import { DataSource, DataSourceConfig } from 'apollo-datasource';
+import logger from '../logger';
+import { ReadAdapter } from '../reader';
+import { Context } from '../types/context';
+import { getDefaultEndpointName } from '../utils/getEndpoints';
+import { Resolver } from './Resolver';
 
 export class MetaplexDataSource<
-  TContext extends Context = Context
+  TContext extends Context = Context,
 > extends DataSource<TContext> {
   constructor(private readonly adapter: ReadAdapter) {
     super();
@@ -13,16 +14,16 @@ export class MetaplexDataSource<
 
   initContext(context: TContext) {
     const reader = this.adapter.getReader(
-      context.network || getDefaultEndpointName()
+      context.network || getDefaultEndpointName(),
     );
 
     if (!reader) {
-      const err = new Error("There are no proper reader context");
+      const err = new Error('There are no proper reader context');
       logger.error(err);
       throw err;
     }
     context.api = reader;
-    // context.service = new MetaplexService(entry);
+    context.resolver = new Resolver(reader);
   }
 
   // implementation for DataSource of apollo-datasource

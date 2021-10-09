@@ -1,10 +1,10 @@
-import { JsonProperty, Serializable } from "typescript-json-serializer";
-import { StringPublicKey } from "../../../utils";
-import { MetaplexKey } from "../MetaplexKey";
-import { BaseEntry } from "./BaseEntry";
+import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { StringPublicKey } from '../../../utils';
+import { MetaplexKey } from '../MetaplexKey';
+import { BaseEntity } from '../../BaseEntity';
 
 @Serializable()
-export class Store extends BaseEntry {
+export class Store extends BaseEntity {
   @JsonProperty()
   key: MetaplexKey = MetaplexKey.StoreV1;
 
