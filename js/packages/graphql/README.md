@@ -11,12 +11,16 @@ The server currently requires at least 8GB of RAM.
 
 ```
 yarn build
-
 yarn start
-
 ```
+
 it will start GraphQL at `http://localhost:4000/`
 
+## Generate GraphQL schema:
+
+```
+yarn generate:schema
+```
 
 ## Roadmap
 

@@ -51,6 +51,5 @@ const getMultipleAccountsCore = async (
     return { keys, array };
   }
 
-  // TODO: fix
   throw new Error();
 };

@@ -3,7 +3,7 @@ import { StringPublicKey, AccountInfoOwnerString } from '../../utils';
 export interface ParsedAccountBase {
   pubkey: StringPublicKey;
   account: AccountInfoOwnerString<Buffer>;
-  info: any; // TODO: change to unknown
+  info: any;
 }
 
 export type AccountParser = (

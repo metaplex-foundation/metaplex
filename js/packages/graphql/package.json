@@ -15,6 +15,7 @@
     "start:memory": "node --max-old-space-size=8192 dist/bin/memory-server-ingester.js",
     "dev": "yarn dev:memory",
     "dev:memory": "ts-node-dev --transpile-only src/bin/memory-server-ingester.ts",
+    "generate:schema": "ts-node --transpile-only src/bin/generate.ts",
     "tsc": "tsc",
     "tscCheck": "tsc --noEmit"
   },

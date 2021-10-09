@@ -8,10 +8,14 @@ type AmountRange {
 
 type Artwork {
   creators: [ArtworkCreator]
+  edition: BN
+  maxSupply: BN
   mint: PublicKey
   pubkey: PublicKey!
   sellerFeeBasisPoints: Int!
+  supply: BN
   title: String!
+  type: Int!
   uri: String!
 }
 
@@ -177,8 +181,6 @@ enum BidStateType {
   OpenEdition
 }
 
-scalar Buffer
-
 type Creator {
   activated: Boolean!
   address: PublicKey!
@@ -248,11 +250,6 @@ type PayoutTicket {
 }
 
 type PriceFloor {
-  """
-  It's an array of 32 u8s, when minimum, only first 8 are used (a u64), when blinded price, the entire
-  thing is a hash and not actually a public key, and none is all zeroes
-  """
-  hash: Uint8Array!
   minPrice: BN
   type: PriceFloorType!
 }
@@ -318,13 +315,13 @@ type SafetyDepositConfig {
 }
 
 type Store {
-  auctionProgram: PublicKey
-  key: Int
-  pubkey: PublicKey
-  public: Boolean
-  tokenMetadataProgram: PublicKey
-  tokenProgram: PublicKey
-  tokenVaultProgram: PublicKey
+  auctionProgram: PublicKey!
+  key: Int!
+  pubkey: PublicKey!
+  public: Boolean!
+  tokenMetadataProgram: PublicKey!
+  tokenProgram: PublicKey!
+  tokenVaultProgram: PublicKey!
 }
 
 type Subscription {
@@ -343,8 +340,6 @@ enum TupleNumericType {
   U32
   U64
 }
-
-scalar Uint8Array
 
 type Vault {
   """

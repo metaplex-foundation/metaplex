@@ -1,5 +1,5 @@
-import { Connection } from "@solana/web3.js";
-import queue from "queue";
+import { Connection } from '@solana/web3.js';
+import queue from 'queue';
 import {
   AccountAndPubkey,
   extendBorsh,
@@ -7,12 +7,12 @@ import {
   pubkeyToString,
   PublicKeyStringAndAccount,
   toPublicKey,
-} from "../common";
-import logger from "../logger";
-import { createConnection } from "../utils/createConnection";
-import { createPipelineExecutor } from "../utils/createPipelineExecutor";
-import { PROGRAMS } from "./constants";
-import { ProgramParse, WriterAdapter } from "./types";
+} from '../common';
+import logger from '../logger';
+import { createConnection } from '../utils/createConnection';
+import { createPipelineExecutor } from '../utils/createPipelineExecutor';
+import { PROGRAMS } from './constants';
+import { ProgramParse, WriterAdapter } from './types';
 
 extendBorsh(); // it's need for proper work of decoding
 export class Loader<T extends WriterAdapter = WriterAdapter> {
@@ -23,14 +23,14 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
   constructor(
     public readonly networkName: string,
     endpoint: string,
-    public readonly writer: T
+    public readonly writer: T,
   ) {
-    this.connection = createConnection(endpoint, "recent");
+    this.connection = createConnection(endpoint, 'recent');
   }
 
   readonly programs: ProgramParse[] = PROGRAMS.map(({ pubkey, process }) => ({
     pubkey,
-    process: (account) => process(account, this.writer.persist),
+    process: account => process(account, this.writer.persist),
   }));
 
   async load() {
@@ -66,11 +66,11 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
   private async loadProgramAccounts(program: ProgramParse) {
     try {
       logger.info(
-        `🤞 ${this.networkName} - loading program accounts ${program.pubkey}`
+        `🤞 ${this.networkName} - loading program accounts ${program.pubkey}`,
       );
       const accounts = await getProgramAccounts(
         this.connection,
-        program.pubkey
+        program.pubkey,
       );
       logger.info(`🍀 ${this.networkName} - loaded ${program.pubkey}`);
 
@@ -83,10 +83,10 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
 
   private async processProgramAccounts(
     program: ProgramParse,
-    accounts: AccountAndPubkey[]
+    accounts: AccountAndPubkey[],
   ) {
     logger.info(
-      `⛏ ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`
+      `⛏ ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`,
     );
     await createPipelineExecutor(accounts.values(), program.process, {
       jobsCount: 2,
@@ -95,26 +95,27 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
     });
     await this.writer.flush();
     logger.info(
-      `⛏ ${this.networkName} - accounts processed for ${program.pubkey}`
+      `⛏ ${this.networkName} - accounts processed for ${program.pubkey}`,
     );
   }
 
   private subscribeOnChange(program: ProgramParse) {
-    this.connection.onProgramAccountChange(
-      toPublicKey(program.pubkey),
-      (block) => {
-        const account: PublicKeyStringAndAccount<Buffer> = {
-          pubkey: pubkeyToString(block.accountId),
-          account: {
-            ...block.accountInfo,
-            owner: pubkeyToString(block.accountInfo.owner),
-          },
-        };
-        this.changesQueue.push((cb) => {
-          program.process(account);
-          cb?.();
-        });
-      }
-    );
+    if (process.env.DISABLE_SUBSCRIPTION)
+      this.connection.onProgramAccountChange(
+        toPublicKey(program.pubkey),
+        block => {
+          const account: PublicKeyStringAndAccount<Buffer> = {
+            pubkey: pubkeyToString(block.accountId),
+            account: {
+              ...block.accountInfo,
+              owner: pubkeyToString(block.accountInfo.owner),
+            },
+          };
+          this.changesQueue.push(cb => {
+            program.process(account);
+            cb?.();
+          });
+        },
+      );
   }
 }

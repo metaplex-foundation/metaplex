@@ -7,3 +7,5 @@
 .vscode
 .snapshot
 .env
+!/src/bin
+!/src/schema/generated
