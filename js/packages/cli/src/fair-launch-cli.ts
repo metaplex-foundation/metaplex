@@ -2474,12 +2474,20 @@ program
     '--keypair not provided',
   )
   .option('-f, --fair-launch <string>', 'fair launch id')
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
   .action(async (_, cmd) => {
-    const { env, keypair, fairLaunch } = cmd.opts();
+    const { env, keypair, fairLaunch, rpcUrl } = cmd.opts();
     const fairLaunchTicketSeqStart = 8 + 32 + 32 + 8 + 1 + 1;
     const fairLaunchTicketState = 8 + 32 + 32 + 8;
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadFairLaunchProgram(walletKeyPair, env);
+    const anchorProgram = await loadFairLaunchProgram(
+      walletKeyPair,
+      env,
+      rpcUrl,
+    );
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunch,
     );
@@ -2497,43 +2505,49 @@ program
       },
     );
 
-    for (let i = 0; i < tickets.length; i++) {
-      const accountAndPubkey = tickets[i];
-      const { account, pubkey } = accountAndPubkey;
-      const state = account.data[fairLaunchTicketState];
-      if (state == 0) {
-        console.log('Missing sequence for ticket', pubkey.toBase58());
-        const [fairLaunchTicketSeqLookup, seqBump] =
-          await getFairLaunchTicketSeqLookup(
-            //@ts-ignore
-            fairLaunchObj.tokenMint,
-            new anchor.BN(
-              account.data.slice(
-                fairLaunchTicketSeqStart,
-                fairLaunchTicketSeqStart + 8,
-              ),
-              undefined,
-              'le',
-            ),
-          );
+    await Promise.all(
+      chunks(Array.from(Array(tickets.length).keys()), 500).map(
+        async allIndexesInSlice => {
+          for (let i = 0; i < allIndexesInSlice.length; i++) {
+            const accountAndPubkey = tickets[allIndexesInSlice[i]];
+            const { account, pubkey } = accountAndPubkey;
+            const state = account.data[fairLaunchTicketState];
+            if (state == 0) {
+              console.log('Missing sequence for ticket', pubkey.toBase58());
+              const [fairLaunchTicketSeqLookup, seqBump] =
+                await getFairLaunchTicketSeqLookup(
+                  //@ts-ignore
+                  fairLaunchObj.tokenMint,
+                  new anchor.BN(
+                    account.data.slice(
+                      fairLaunchTicketSeqStart,
+                      fairLaunchTicketSeqStart + 8,
+                    ),
+                    undefined,
+                    'le',
+                  ),
+                );
 
-        await anchorProgram.rpc.createTicketSeq(seqBump, {
-          accounts: {
-            fairLaunchTicketSeqLookup,
-            fairLaunch,
-            fairLaunchTicket: pubkey,
-            payer: walletKeyPair.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          },
-          options: {
-            commitment: 'single',
-          },
-          signers: [],
-        });
-        console.log('Created...');
-      }
-    }
+              await anchorProgram.rpc.createTicketSeq(seqBump, {
+                accounts: {
+                  fairLaunchTicketSeqLookup,
+                  fairLaunch,
+                  fairLaunchTicket: pubkey,
+                  payer: walletKeyPair.publicKey,
+                  systemProgram: anchor.web3.SystemProgram.programId,
+                  rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+                },
+                options: {
+                  commitment: 'single',
+                },
+                signers: [],
+              });
+              console.log('Created...');
+            }
+          }
+        },
+      ),
+    );
   });
 
 program
