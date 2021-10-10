@@ -97,10 +97,14 @@ export function MetaProvider({ children = null as any }) {
   ) {
     if (!storeAddress) {
       if (isReady) {
+        //@ts-ignore
+        window.loadingData = false;
         setIsLoading(false);
       }
       return;
     } else if (!state.store) {
+      //@ts-ignore
+      window.loadingData = true;
       setIsLoading(true);
     }
 
@@ -116,6 +120,8 @@ export function MetaProvider({ children = null as any }) {
 
         setState(nextState);
 
+        //@ts-ignore
+        window.loadingData = false;
         setIsLoading(false);
       } else {
         console.log('------->Pagination detected, pulling page', page);
@@ -161,6 +167,9 @@ export function MetaProvider({ children = null as any }) {
           setPage(page => page + 1);
         }
         setLastLength(nextState.storeIndexer.length);
+
+        //@ts-ignore
+        window.loadingData = false;
         setIsLoading(false);
         setState(nextState);
       }
@@ -174,6 +183,8 @@ export function MetaProvider({ children = null as any }) {
 
       setState(nextState);
 
+      //@ts-ignore
+      window.loadingData = false;
       setIsLoading(false);
     }
 
@@ -192,7 +203,23 @@ export function MetaProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    update(undefined, undefined, userAccounts);
+    //@ts-ignore
+    if (window.loadingData) {
+      console.log('currently another update is running, so queue for 1s...');
+      const interval = setInterval(() => {
+        //@ts-ignore
+        if (window.loadingData) {
+          console.log('not running queued update right now, still loading');
+        } else {
+          console.log('running queued update');
+          update(undefined, undefined, userAccounts);
+          clearInterval(interval);
+        }
+      }, 3000);
+    } else {
+      console.log('no update is running, updating.');
+      update(undefined, undefined, userAccounts);
+    }
   }, [
     connection,
     setState,
