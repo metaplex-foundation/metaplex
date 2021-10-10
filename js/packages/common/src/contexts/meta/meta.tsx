@@ -205,7 +205,7 @@ export function MetaProvider({ children = null as any }) {
   useEffect(() => {
     //@ts-ignore
     if (window.loadingData) {
-      console.log('currently another update is running, so queue for 1s...');
+      console.log('currently another update is running, so queue for 3s...');
       const interval = setInterval(() => {
         //@ts-ignore
         if (window.loadingData) {
