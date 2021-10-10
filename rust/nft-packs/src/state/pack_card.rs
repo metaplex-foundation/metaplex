@@ -1,7 +1,7 @@
 //! Pack card definitions
 
 use super::*;
-use crate::{math::SafeMath, error::NFTPacksError};
+use crate::{error::NFTPacksError, math::SafeMath};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,
@@ -65,8 +65,8 @@ pub struct InitPackCardParams {
 impl Sealed for PackCard {}
 
 impl Pack for PackCard {
-    // 1 + 32 + 32 + 32 + 32 + (1 + 8) + 1 + 8 + 4
-    const LEN: usize = 151;
+    // 1 + 32 + 32 + 32 + 32 + 9 + 9
+    const LEN: usize = 147;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;

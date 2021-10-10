@@ -1,12 +1,12 @@
 //! Add voucher to pack instruction processing
 
 use crate::{
+    error::NFTPacksError,
     find_pack_voucher_program_address, find_program_authority,
     instruction::AddVoucherToPackArgs,
     math::SafeMath,
-    state::{InitPackVoucherParams, PackSet, PackVoucher, PackSetState},
+    state::{InitPackVoucherParams, PackSet, PackSetState, PackVoucher},
     utils::*,
-    error::NFTPacksError,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -130,7 +130,7 @@ pub fn add_voucher_to_pack(
         source_info.clone(),
         token_account_info.clone(),
         authority_info.clone(),
-        1,  // transfer master edition
+        1, // transfer master edition
         &[],
     )?;
 

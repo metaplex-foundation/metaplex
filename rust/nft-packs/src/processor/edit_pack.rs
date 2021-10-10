@@ -34,7 +34,8 @@ pub fn edit_pack(
         return Err(NFTPacksError::ImmutablePackSet.into());
     }
 
-    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended {
+    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended
+    {
         return Err(NFTPacksError::WrongPackState.into());
     }
 

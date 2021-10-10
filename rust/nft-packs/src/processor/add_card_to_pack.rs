@@ -124,7 +124,12 @@ pub fn add_card_to_pack(
                     return Err(NFTPacksError::WrongMaxSupply.into());
                 }
                 // TODO: it can be a function
-                pack_set.total_editions = Some(pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?.error_add(m_supply as u64)?);
+                pack_set.total_editions = Some(
+                    pack_set
+                        .total_editions
+                        .ok_or(NFTPacksError::MissingEditionsInPack)?
+                        .error_add(m_supply as u64)?,
+                );
             } else {
                 return Err(NFTPacksError::WrongMaxSupply.into());
             }
@@ -165,7 +170,7 @@ pub fn add_card_to_pack(
         source_info.clone(),
         token_account_info.clone(),
         authority_info.clone(),
-        1,  // transfer master edition
+        1, // transfer master edition
         &[],
     )?;
 

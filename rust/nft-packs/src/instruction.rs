@@ -323,6 +323,18 @@ pub enum NFTPacksInstruction {
     /// - read                     rent
     /// - read                     spl_token_metadata program
     MintEditionWithVoucher,
+
+    /// RequestCardForRedeem
+    ///
+    /// Count card index which user can redeem next
+    ///
+    /// Accounts:
+    /// - read                     pack_set
+    /// - read, write              proving_process (PDA, [pack, 'proving', user_wallet])
+    /// - signer                   user_wallet
+    /// - read                     randomness_oracle
+    /// - read                     clock
+    RequestCardForRedeem,
 }
 
 /// Create `InitPack` instruction
@@ -745,6 +757,31 @@ pub fn mint_new_edition_from_voucher(
     Instruction::new_with_borsh(
         *program_id,
         &NFTPacksInstruction::MintEditionWithVoucher,
+        accounts,
+    )
+}
+
+/// Create `RequestCardForRedeem` instruction
+#[allow(clippy::too_many_arguments)]
+pub fn request_card_for_redeem(
+    program_id: &Pubkey,
+    pack_set: &Pubkey,
+    user_wallet: &Pubkey,
+) -> Instruction {
+    let (proving_process, _) =
+        find_proving_process_program_address(program_id, pack_set, user_wallet);
+
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new(proving_process, false),
+        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new_readonly(randomness_oracle_program::id(), false),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+    ];
+
+    Instruction::new_with_borsh(
+        *program_id,
+        &NFTPacksInstruction::RequestCardForRedeem,
         accounts,
     )
 }

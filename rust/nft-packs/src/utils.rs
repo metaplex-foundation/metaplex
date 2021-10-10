@@ -1,7 +1,9 @@
 //! Program utils
 
+use crate::{error::NFTPacksError, math::SafeMath, state::MAX_LAG_SLOTS};
 use solana_program::{
     account_info::AccountInfo,
+    clock::Clock,
     entrypoint::ProgramResult,
     program::{invoke, invoke_signed},
     program_error::ProgramError,
@@ -10,8 +12,10 @@ use solana_program::{
     rent::Rent,
     system_instruction,
 };
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
 
-/// Assert unitialized
+/// Assert uninitialized
 pub fn assert_uninitialized<T: IsInitialized>(account: &T) -> ProgramResult {
     if account.is_initialized() {
         Err(ProgramError::AccountAlreadyInitialized)
@@ -237,4 +241,27 @@ pub fn empty_account_balance(
     **to += **from;
     **from = 0;
     Ok(())
+}
+
+/// get random value from oracle account
+pub fn get_random_oracle_value(
+    randomness_oracle_account: &AccountInfo,
+    clock: &Clock,
+) -> Result<u16, ProgramError> {
+    let (oracle_random_value, slot) =
+        randomness_oracle_program::read_value(randomness_oracle_account)?;
+
+    if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
+        return Err(NFTPacksError::RandomOracleOutOfDate.into());
+    }
+
+    // Hash random value from the oracle with current slot and receive new random u16
+    let mut hasher = DefaultHasher::new();
+    hasher.write(oracle_random_value.as_ref());
+    hasher.write_u64(clock.slot);
+
+    let mut random_value: [u8; 2] = [0u8; 2];
+    random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..2]);
+
+    Ok(u16::from_le_bytes(random_value))
 }

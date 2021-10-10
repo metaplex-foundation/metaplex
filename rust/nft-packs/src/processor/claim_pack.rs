@@ -4,10 +4,7 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{
-        PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, MAX_LAG_SLOTS,
-        PREFIX,
-    },
+    state::{PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, PREFIX},
     utils::*,
     MAX_PROBABILITY_VALUE,
 };
@@ -22,8 +19,6 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 use spl_token_metadata::state::{MasterEditionV2, Metadata};
-use std::collections::hash_map::DefaultHasher;
-use std::hash::Hasher;
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -158,13 +153,20 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 }
 
 // TODO: make this function prettier
-fn get_card_probability(pack_set: &mut PackSet, pack_card: &mut PackCard) -> Result<u16, ProgramError> {
+fn get_card_probability(
+    pack_set: &mut PackSet,
+    pack_card: &mut PackCard,
+) -> Result<u16, ProgramError> {
     match pack_set.distribution_type {
         PackDistributionType::Fixed => {
             msg!("Fixed number distribution type");
 
-            let card_max_supply = pack_card.max_supply.ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-            let pack_total_editions = pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?;
+            let card_max_supply = pack_card
+                .max_supply
+                .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+            let pack_total_editions = pack_set
+                .total_editions
+                .ok_or(NFTPacksError::MissingEditionsInPack)?;
 
             if card_max_supply == 0 {
                 return Err(NFTPacksError::CardDoesntHaveEditions.into());
@@ -185,8 +187,12 @@ fn get_card_probability(pack_set: &mut PackSet, pack_card: &mut PackCard) -> Res
         PackDistributionType::MaxSupply => {
             msg!("Max supply distribution type");
 
-            let card_max_supply = pack_card.max_supply.ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-            let pack_total_editions = pack_set.total_editions.ok_or(NFTPacksError::MissingEditionsInPack)?;
+            let card_max_supply = pack_card
+                .max_supply
+                .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+            let pack_total_editions = pack_set
+                .total_editions
+                .ok_or(NFTPacksError::MissingEditionsInPack)?;
 
             if card_max_supply == 0 {
                 return Err(NFTPacksError::CardDoesntHaveEditions.into());
@@ -195,8 +201,8 @@ fn get_card_probability(pack_set: &mut PackSet, pack_card: &mut PackCard) -> Res
             let probability = ((card_max_supply as u64)
                 .error_div(pack_total_editions)?
                 .error_mul(MAX_PROBABILITY_VALUE as u64)?)
-                .error_mul(u16::MAX as u64)?
-                .error_div(MAX_PROBABILITY_VALUE as u64)? as u16;
+            .error_mul(u16::MAX as u64)?
+            .error_div(MAX_PROBABILITY_VALUE as u64)? as u16;
 
             pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
 
@@ -212,30 +218,8 @@ fn get_card_probability(pack_set: &mut PackSet, pack_card: &mut PackCard) -> Res
                 .ok_or(NFTPacksError::CardProbabilityMissing)? // it shouldn't happen because there is a check on AddCardToPack
                 .error_mul(u16::MAX)?
                 .error_div(MAX_PROBABILITY_VALUE)?;
-            
+
             Ok(probability)
         }
     }
-}
-
-fn get_random_oracle_value(
-    randomness_oracle_account: &AccountInfo,
-    clock: &Clock,
-) -> Result<u16, ProgramError> {
-    let (oracle_random_value, slot) =
-        randomness_oracle_program::read_value(randomness_oracle_account)?;
-
-    if clock.slot.error_sub(slot)? > MAX_LAG_SLOTS {
-        return Err(NFTPacksError::RandomOracleOutOfDate.into());
-    }
-
-    // Hash random value from the oracle with current slot and receive new random u16
-    let mut hasher = DefaultHasher::new();
-    hasher.write(oracle_random_value.as_ref());
-    hasher.write_u64(clock.slot);
-
-    let mut random_value: [u8; 2] = [0u8; 2];
-    random_value.copy_from_slice(&hasher.finish().to_le_bytes()[..2]);
-
-    Ok(u16::from_le_bytes(random_value))
 }

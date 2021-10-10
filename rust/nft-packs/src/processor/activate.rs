@@ -32,7 +32,7 @@ pub fn activate_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramR
     }
 
     if pack_set.pack_state == PackSetState::Ended {
-        return Err(NFTPacksError::PackInEndedState.into());   
+        return Err(NFTPacksError::PackInEndedState.into());
     }
 
     pack_set.pack_state = PackSetState::Activated;

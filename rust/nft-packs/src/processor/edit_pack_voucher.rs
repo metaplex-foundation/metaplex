@@ -3,9 +3,9 @@
 use crate::{
     error::NFTPacksError,
     instruction::EditPackVoucherArgs,
+    math::SafeMath,
     state::{PackSet, PackSetState, PackVoucher},
     utils::*,
-    math::SafeMath,
 };
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -14,7 +14,7 @@ use solana_program::{
     program_pack::Pack,
     pubkey::Pubkey,
 };
-use spl_token_metadata::state::{MasterEditionV2, MasterEdition};
+use spl_token_metadata::state::{MasterEdition, MasterEditionV2};
 
 /// Process EditPackVoucher instruction
 pub fn edit_pack_voucher(
@@ -40,7 +40,8 @@ pub fn edit_pack_voucher(
         return Err(NFTPacksError::ImmutablePackSet.into());
     }
 
-    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended {
+    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended
+    {
         return Err(NFTPacksError::WrongPackState.into());
     }
 
@@ -64,7 +65,6 @@ fn apply_changes(
     master_edition: &MasterEditionV2,
     changes: EditPackVoucherArgs,
 ) -> Result<(), ProgramError> {
-
     if let Some(new_number_to_open) = changes.number_to_open {
         if new_number_to_open == 0 {
             return Err(NFTPacksError::WrongNumberToOpen.into());

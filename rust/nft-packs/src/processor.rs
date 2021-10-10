@@ -16,6 +16,7 @@ use edit_pack_voucher::edit_pack_voucher;
 use init_pack::init_pack;
 use mint_edition::mint_edition_with_voucher;
 use prove_ownership::prove_ownership;
+use request_card_to_redeem::request_card_for_redeem;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 pub mod activate;
@@ -32,6 +33,7 @@ pub mod edit_pack_voucher;
 pub mod init_pack;
 pub mod mint_edition;
 pub mod prove_ownership;
+pub mod request_card_to_redeem;
 
 /// Program state handler.
 pub struct Processor {}
@@ -103,6 +105,10 @@ impl Processor {
             NFTPacksInstruction::MintEditionWithVoucher => {
                 msg!("Instruction: MintEditionWithVoucher");
                 mint_edition_with_voucher(program_id, accounts)
+            }
+            NFTPacksInstruction::RequestCardForRedeem => {
+                msg!("Instruction: RequestCardForRedeem");
+                request_card_for_redeem(program_id, accounts)
             }
         }
     }

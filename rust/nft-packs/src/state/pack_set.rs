@@ -87,7 +87,11 @@ impl PackSet {
         self.uri = params.uri;
         self.authority = params.authority;
         self.minting_authority = params.minting_authority;
-        self.total_editions = if params.distribution_type == PackDistributionType::Unlimited {None} else {Some(0)};
+        self.total_editions = if params.distribution_type == PackDistributionType::Unlimited {
+            None
+        } else {
+            Some(0)
+        };
         self.pack_cards = 0;
         self.pack_vouchers = 0;
         self.mutable = params.mutable;
@@ -134,8 +138,8 @@ pub struct InitPackSetParams {
 impl Sealed for PackSet {}
 
 impl Pack for PackSet {
-    // 1 + 32 + 32 + 32 + 4 + 4 + 4 + 1 + 1
-    const LEN: usize = 111;
+    // 1 + 32 + 200 + 32 + 32 + 4 + 4 + 9 + 1 + 1 + 1 + 4 + 8 + 9
+    const LEN: usize = 338;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
