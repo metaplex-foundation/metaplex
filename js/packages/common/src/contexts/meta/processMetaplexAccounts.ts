@@ -184,7 +184,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
 };
 
 const isMetaplexAccount = (account: AccountInfo<Buffer>) =>
-  pubkeyToString(account.owner) === METAPLEX_ID;
+  account && pubkeyToString(account.owner) === METAPLEX_ID;
 
 const isAuctionManagerV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === MetaplexKey.AuctionManagerV1;
