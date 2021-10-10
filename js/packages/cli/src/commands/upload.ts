@@ -1,4 +1,4 @@
-import { EXTENSION_PNG } from '../helpers/constants';
+import { EXTENSION_GLB, EXTENSION_PNG } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -52,11 +52,14 @@ export async function upload(
   existingInCache.forEach(f => {
     if (!seen[f]) {
       seen[f] = true;
-      newFiles.push(f + '.png');
+      newFiles.push(f + `${EXTENSION_PNG}`);
     }
   });
 
   const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+  const animations = newFiles.filter(
+    val => path.extname(val) === EXTENSION_GLB,
+  );
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
@@ -71,6 +74,10 @@ export async function upload(
     const imageName = path.basename(image);
     const index = imageName.replace(EXTENSION_PNG, '');
 
+    const animation = animations[i];
+    const animatonName = path.basename(animation);
+    // const glbIndex = imageName.replace('.glb', ''); i think i can do something with that
+
     log.debug(`Processing file: ${i}`);
     if (i % 50 === 0) {
       log.info(`Processing file: ${i}`);
@@ -82,8 +89,10 @@ export async function upload(
       const manifestContent = fs
         .readFileSync(manifestPath)
         .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
+        .replace(imageName, `image${EXTENSION_PNG}`)
+        .replace(imageName, `image${EXTENSION_PNG}`)
+        .replace(animatonName, `animation${EXTENSION_GLB}`)
+        .replace(animatonName, `animation${EXTENSION_GLB}`);
       const manifest = JSON.parse(manifestContent);
 
       const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -133,6 +142,7 @@ export async function upload(
               manifestBuffer,
               manifest,
               index,
+              animation,
             );
           } else if (storage === 'ipfs') {
             link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);

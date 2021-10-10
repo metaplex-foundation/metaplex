@@ -3,7 +3,11 @@ import FormData from 'form-data';
 import fs from 'fs';
 import log from 'loglevel';
 import fetch from 'node-fetch';
-import { ARWEAVE_PAYMENT_WALLET } from '../constants';
+import {
+  ARWEAVE_PAYMENT_WALLET,
+  EXTENSION_GLB,
+  EXTENSION_PNG,
+} from '../constants';
 import { sendTransactionWithRetryWithKeypair } from '../transactions';
 
 async function upload(data: FormData, manifest, index) {
@@ -28,6 +32,7 @@ export async function arweaveUpload(
   manifestBuffer,
   manifest,
   index,
+  animation,
 ) {
   const storageCost = 2300000; // 0.0023 SOL per file (paid to arweave)
 
@@ -52,8 +57,12 @@ export async function arweaveUpload(
   data.append('transaction', tx['txid']);
   data.append('env', env);
   data.append('file[]', fs.createReadStream(image), {
-    filename: `image.png`,
+    filename: `image${EXTENSION_PNG}`,
     contentType: 'image/png',
+  });
+  data.append('file[]', fs.createReadStream(animation), {
+    filename: `animation${EXTENSION_GLB}`,
+    contentType: 'vr',
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
 
