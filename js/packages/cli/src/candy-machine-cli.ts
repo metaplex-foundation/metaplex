@@ -57,7 +57,7 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .option(
     '-s, --storage <string>',
-    'Database to use for storage (arweave, ipfs)',
+    'Database to use for storage (arweave, ipfs, aws)',
     'arweave',
   )
   .option(
@@ -67,6 +67,10 @@ programCommand('upload')
   .option(
     '--ipfs-infura-secret <string>',
     'Infura IPFS scret key (required if using IPFS)',
+  )
+  .option(
+    '--aws-s3-bucket <string>',
+    '(existing) AWS S3 Bucket name (required if using aws)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .action(async (files: string[], options, cmd) => {
@@ -78,6 +82,7 @@ programCommand('upload')
       storage,
       ipfsInfuraProjectId,
       ipfsInfuraSecret,
+      awsS3Bucket,
       retainAuthority,
     } = cmd.opts();
 
@@ -86,8 +91,13 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (!(storage === 'arweave' || storage === 'ipfs')) {
-      throw new Error("Storage option must either be 'arweave' or 'ipfs'.");
+    if (storage === 'aws' && (!awsS3Bucket)) {
+      throw new Error(
+        'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
+      );
+    }
+    if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
+      throw new Error("Storage option must either be 'arweave', 'ipfs', or 'aws'.");
     }
     const ipfsCredentials = {
       projectId: ipfsInfuraProjectId,
@@ -131,6 +141,7 @@ programCommand('upload')
         storage,
         retainAuthority,
         ipfsCredentials,
+        awsS3Bucket,
       );
 
       if (successful) {
