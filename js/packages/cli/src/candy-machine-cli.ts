@@ -6,7 +6,12 @@ import * as anchor from '@project-serum/anchor';
 import BN from 'bn.js';
 import fetch from 'node-fetch';
 
-import { fromUTF8Array, parseDate, parsePrice } from './helpers/various';
+import {
+  chunks,
+  fromUTF8Array,
+  parseDate,
+  parsePrice,
+} from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { PublicKey } from '@solana/web3.js';
 import {
@@ -52,7 +57,7 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .option(
     '-s, --storage <string>',
-    'Database to use for storage (arweave, ipfs)',
+    'Database to use for storage (arweave, ipfs, aws)',
     'arweave',
   )
   .option(
@@ -62,6 +67,10 @@ programCommand('upload')
   .option(
     '--ipfs-infura-secret <string>',
     'Infura IPFS scret key (required if using IPFS)',
+  )
+  .option(
+    '--aws-s3-bucket <string>',
+    '(existing) AWS S3 Bucket name (required if using aws)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .action(async (files: string[], options, cmd) => {
@@ -73,6 +82,7 @@ programCommand('upload')
       storage,
       ipfsInfuraProjectId,
       ipfsInfuraSecret,
+      awsS3Bucket,
       retainAuthority,
     } = cmd.opts();
 
@@ -81,8 +91,15 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (!(storage === 'arweave' || storage === 'ipfs')) {
-      throw new Error("Storage option must either be 'arweave' or 'ipfs'.");
+    if (storage === 'aws' && !awsS3Bucket) {
+      throw new Error(
+        'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
+      );
+    }
+    if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
+      throw new Error(
+        "Storage option must either be 'arweave', 'ipfs', or 'aws'.",
+      );
     }
     const ipfsCredentials = {
       projectId: ipfsInfuraProjectId,
@@ -126,6 +143,7 @@ programCommand('upload')
         storage,
         retainAuthority,
         ipfsCredentials,
+        awsS3Bucket,
       );
 
       if (successful) {
@@ -185,87 +203,111 @@ programCommand('verify').action(async (directory, cmd) => {
   let allGood = true;
 
   const keys = Object.keys(cacheContent.items);
-  for (let i = 0; i < keys.length; i++) {
-    log.debug('Looking at key ', i);
-    const key = keys[i];
-    const thisSlice = config.data.slice(
-      CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * i,
-      CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * (i + 1),
-    );
-    const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
-    const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
-    const cacheItem = cacheContent.items[key];
-    if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
-      //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
-      // log.info(
-      //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
-      //   `and (${cacheItem.link}). marking to rerun for image`,
-      //   key,
-      // );
-      cacheItem.onChain = false;
-      allGood = false;
-    } else {
-      const json = await fetch(cacheItem.link);
-      if (json.status == 200 || json.status == 204 || json.status == 202) {
-        const body = await json.text();
-        const parsed = JSON.parse(body);
-        if (parsed.image) {
-          const check = await fetch(parsed.image);
-          if (
-            check.status == 200 ||
-            check.status == 204 ||
-            check.status == 202
-          ) {
-            const text = await check.text();
-            if (!text.match(/Not found/i)) {
-              if (text.length == 0) {
+  await Promise.all(
+    chunks(Array.from(Array(keys.length).keys()), 500).map(
+      async allIndexesInSlice => {
+        for (let i = 0; i < allIndexesInSlice.length; i++) {
+          const key = keys[allIndexesInSlice[i]];
+          log.debug('Looking at key ', allIndexesInSlice[i]);
+
+          const thisSlice = config.data.slice(
+            CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * allIndexesInSlice[i],
+            CONFIG_ARRAY_START +
+              4 +
+              CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
+          );
+          const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
+          const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
+          const cacheItem = cacheContent.items[key];
+          if (!name.match(cacheItem.name) || !uri.match(cacheItem.link)) {
+            //leaving here for debugging reasons, but it's pretty useless. if the first upload fails - all others are wrong
+            // log.info(
+            //   `Name (${name}) or uri (${uri}) didnt match cache values of (${cacheItem.name})` +
+            //   `and (${cacheItem.link}). marking to rerun for image`,
+            //   key,
+            // );
+            cacheItem.onChain = false;
+            allGood = false;
+          } else {
+            const json = await fetch(cacheItem.link);
+            if (
+              json.status == 200 ||
+              json.status == 204 ||
+              json.status == 202
+            ) {
+              const body = await json.text();
+              const parsed = JSON.parse(body);
+              if (parsed.image) {
+                const check = await fetch(parsed.image);
+                if (
+                  check.status == 200 ||
+                  check.status == 204 ||
+                  check.status == 202
+                ) {
+                  const text = await check.text();
+                  if (!text.match(/Not found/i)) {
+                    if (text.length == 0) {
+                      log.info(
+                        'Name',
+                        name,
+                        'with',
+                        uri,
+                        'has zero length, failing',
+                      );
+                      cacheItem.link = null;
+                      cacheItem.onChain = false;
+                      allGood = false;
+                    } else {
+                      log.info('Name', name, 'with', uri, 'checked out');
+                    }
+                  } else {
+                    log.info(
+                      'Name',
+                      name,
+                      'with',
+                      uri,
+                      'never got uploaded to arweave, failing',
+                    );
+                    cacheItem.link = null;
+                    cacheItem.onChain = false;
+                    allGood = false;
+                  }
+                } else {
+                  log.info(
+                    'Name',
+                    name,
+                    'with',
+                    uri,
+                    'returned non-200 from uploader',
+                    check.status,
+                  );
+                  cacheItem.link = null;
+                  cacheItem.onChain = false;
+                  allGood = false;
+                }
+              } else {
                 log.info(
                   'Name',
                   name,
                   'with',
                   uri,
-                  'has zero length, failing',
+                  'lacked image in json, failing',
                 );
+                cacheItem.link = null;
                 cacheItem.onChain = false;
                 allGood = false;
-              } else {
-                log.info('Name', name, 'with', uri, 'checked out');
               }
             } else {
-              log.info(
-                'Name',
-                name,
-                'with',
-                uri,
-                'never got uploaded to arweave, failing',
-              );
+              log.info('Name', name, 'with', uri, 'returned no json from link');
+              cacheItem.link = null;
               cacheItem.onChain = false;
               allGood = false;
             }
-          } else {
-            log.info(
-              'Name',
-              name,
-              'with',
-              uri,
-              'returned non-200 from uploader',
-              check.status,
-            );
-            cacheItem.onChain = false;
-            allGood = false;
           }
-        } else {
-          log.info('Name', name, 'with', uri, 'lacked image in json, failing');
-          cacheItem.onChain = false;
-          allGood = false;
         }
-      } else {
-        log.info('Name', name, 'with', uri, 'returned no json from link');
-        cacheItem.onChain = false;
-        allGood = false;
-      }
-    }
-  }
+      },
+    ),
+  );
 
   if (!allGood) {
     saveCache(cacheName, env, cacheContent);
