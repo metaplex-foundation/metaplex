@@ -214,7 +214,8 @@ export const HomeView = () => {
   const connection = useConnection();
   const [remaining, setRemaining] = useState<string>("????");
   // This is from the .cache directory after uploading, copy yours here without "items"
-  const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
+  // const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
+  const cachedContent = {"program":{"uuid":"CCE91L","config":"CCE91L2Um3TscmN1PfbT3Fod4GR3HCAYX7JsUfpfKKUJ"}};
 
   const { setVisible } = useWalletModal();
   const connect = useCallback(
@@ -338,12 +339,17 @@ export const HomeView = () => {
 
   return (
     <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
+      <h1 style={{fontSize:"1.75rem"}} className="desc">Welcome to the Solana Doge Generation 2 mint! A 2-step process:</h1>
+      {/* <h1 style={{fontSize:"1.5rem"}} className="desc">Minting is a 2-step process:</h1> */}
+      <h1 style={{fontSize:"1.5rem"}} className="desc">1) Send a valid Gen-1 SolanaDogeNFT to the unleash address:</h1> 
+      <h2 style={{fontSize:"1rem"}}> Djpe9euQcknxZw6QRUtu3XiBkADT7wc96SH8fHoaKRJY</h2>
+      <h1 style={{fontSize:"1.5rem"}} className="desc">2) A voucher token (mint address TBD) will be automatically sent back. Use this token to mint below!</h1>
       <Button type="primary" className="button remaining" style={{ fontFamily: 'early_gameboy', fontSize: '25px', height: '80px' }} onClick={ () => !wallet.connected  ? connect() : mint({wallet, connection})}>
-        {!wallet.connected ? 'Connect' : 'ADOPT'} 
+        {!wallet.connected ? 'Connect' : 'MINT GEN-2 DOGE'} 
       </Button>{' '}
-      <h1 className="desc">Remaining: {remaining} / 9999</h1>
-      <div className="desc" style={{fontSize:'12px'}}>Mint price:  0.75  SOL</div>
-      <img style={{marginTop:'1.5rem'}} src="/img/babygif.gif"></img>
+      <h1 className="desc">Remaining: {remaining} / 2500</h1>
+      {/* <div className="desc" style={{fontSize:'12px'}}>Mint price:  One Voucher Token</div> */}
+      <img style={{marginTop:'1.5rem'}} src="/img/saiyan.png"></img>
       <RenderFooter></RenderFooter>
     </Layout>
   );
@@ -353,8 +359,8 @@ const RenderFooter = () => {
   return (
     <>
     <div className={"footer"} style={{margin:0}}>
-        <a href="https://twitter.com/BabySolPunks" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/twitter.png"></img></a>
-        <a href="https://discord.gg/BabySolPunks" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/discord.png"></img></a>
+        <a href="https://twitter.com/SolanaDogeNFTs" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/twitter.png"></img></a>
+        <a href="https://discord.gg/Us8NkrSFfX" target="_blank"> <img style={{width:"50px", height:"50px", marginTop:"25px"}} src="/img/discord.png"></img></a>
     </div>
     </>
   );
