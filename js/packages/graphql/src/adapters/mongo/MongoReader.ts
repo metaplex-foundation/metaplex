@@ -1,6 +1,7 @@
-import { Db } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 import { Reader } from '../../reader';
 import { Connection } from '@solana/web3.js';
+import { MetaMap } from '../../common';
 
 export class MongoReader extends Reader {
   private db!: Db;
@@ -13,55 +14,75 @@ export class MongoReader extends Reader {
     super(connection);
   }
 
+  private collection<TKey extends keyof MetaMap>(name: TKey) {
+    return this.db.collection<MetaMap[TKey]>(name);
+  }
+
   async init() {
     this.db = await this.initOrm();
   }
 
-  async storesCount() {
-    return 0;
+  storesCount() {
+    return this.collection('stores').countDocuments();
   }
-  async creatorsCount() {
-    return 0;
+  creatorsCount() {
+    return this.collection('creators').countDocuments();
   }
-  async artworksCount() {
-    return 0;
+  artworksCount() {
+    return this.collection('metadata').countDocuments({
+      $where: '???', // TODO: what is it artwork in db?
+    });
   }
-  async auctionsCount() {
-    return 0;
-  }
-
-  async getStoreIds(): Promise<string[]> {
-    return [];
+  auctionsCount() {
+    return this.collection('auctions').countDocuments();
   }
 
-  async getStores() {
-    return [];
-  }
-  async getStore() {
-    return null;
-  }
-
-  async getCreatorIds(): Promise<string[]> {
-    return [];
+  getStoreIds(): Promise<string[]> {
+    return this.collection('stores')
+      .distinct('_id')
+      .then(list => list.map(p => p.toString()));
   }
 
-  async getCreators() {
-    return [];
+  getStores() {
+    return this.collection('stores').find({}).toArray();
   }
-  async getCreator() {
-    return null;
+  getStore(storeId: string) {
+    return this.collection('stores').findOne({ _id: new ObjectId(storeId) });
   }
 
-  async getArtworks() {
-    return [];
+  getCreatorIds(): Promise<string[]> {
+    return this.collection('creators')
+      .distinct('_id')
+      .then(list => list.map(p => p.toString()));
   }
-  async getArtwork() {
-    return null;
+
+  getCreators() {
+    return this.collection('creators').find({}).toArray();
   }
-  async getEdition() {
-    return null;
+  getCreator(storeId: string) {
+    return this.collection('creators').findOne({
+      qty: { $in: [storeId] },
+    });
   }
-  async getMasterEdition() {
-    return null;
+
+  getArtworks() {
+    return this.collection('metadata')
+      .find({
+        $where: '???', // TODO: what is it artwork in db?
+      })
+      .toArray();
+  }
+  getArtwork(artId: string) {
+    return this.collection('metadata').findOne({ _id: new ObjectId(artId) });
+  }
+  getEdition(id?: string) {
+    return id
+      ? this.collection('editions').findOne({ _id: new ObjectId(id) })
+      : Promise.resolve(null);
+  }
+  getMasterEdition(id?: string) {
+    return id
+      ? this.collection('masterEditions').findOne({ _id: new ObjectId(id) })
+      : Promise.resolve(null);
   }
 }
