@@ -9,6 +9,7 @@ import {
   useUserBalance,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
+import { Link } from 'react-router-dom';
 import {
   useConnection,
   BidderMetadata,
@@ -158,8 +159,8 @@ function usePayoutTickets(
         const creators = item.metadata?.info?.data?.creators || [];
         const recipientAddresses = creators
           ? creators
-              .map(c => c.address)
-              .concat([auctionView.auctionManager.authority])
+            .map(c => c.address)
+            .concat([auctionView.auctionManager.authority])
           : [auctionView.auctionManager.authority];
 
         for (let k = 0; k < recipientAddresses.length; k++) {
@@ -342,12 +343,12 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     metadata: ParsedAccount<BidderMetadata>;
     pot: ParsedAccount<BidderPot>;
   }[] = [
-    ...winnersThatCanBeEmptied.map(pot => ({
-      metadata:
-        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
-      pot,
-    })),
-  ];
+      ...winnersThatCanBeEmptied.map(pot => ({
+        metadata:
+          bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
+        pot,
+      })),
+    ];
 
   return {
     bidsToClaim,
@@ -418,7 +419,9 @@ export const InnerBillingView = ({
             />
           </Col>
           <Col span={12}>
-            <div style={{ fontWeight: 700 }}>{art.title}</div>
+            <h1>
+              {art.title}
+            </h1>
             <br />
             <div className="info-header">TOTAL AUCTION VALUE</div>
             <div className="escrow">
@@ -434,8 +437,8 @@ export const InnerBillingView = ({
               ◎
               {fromLamports(
                 totalWinnerPayments +
-                  participationPossibleTotal -
-                  participationUnredeemedTotal,
+                participationPossibleTotal -
+                participationUnredeemedTotal,
                 mint,
               )}
             </div>

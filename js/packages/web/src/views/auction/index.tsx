@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Space } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
+import { Link } from 'react-router-dom';
 import {
   AuctionView as Auction,
   useArt,
@@ -33,7 +34,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { ClickToCopy  } from '../../components/ClickToCopy';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -52,9 +53,9 @@ export const AuctionItem = ({
       index === 0
         ? ''
         : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-            1 - 0.2 * index,
-            0,
-          )})`,
+          1 - 0.2 * index,
+          0,
+        )})`,
     transformOrigin: 'right bottom',
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1 * index,
@@ -78,6 +79,7 @@ export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
+  const wallet = useWallet()
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
@@ -165,8 +167,8 @@ export const AuctionView = () => {
               <h6>Attributes</h6>
               <List grid={{ column: 4 }}>
                 {attributes.map(attribute => (
-                  <List.Item>
-                    <Card title={attribute.trait_type}>{attribute.value}</Card>
+                  <List.Item key={attribute.trait_type}>
+                    <List.Item.Meta title={attribute.trait_type} description={attribute.value} />
                   </List.Item>
                 ))}
               </List>
@@ -184,45 +186,56 @@ export const AuctionView = () => {
           <h2 className="art-title">
             {art.title || <Skeleton paragraph={{ rows: 0 }} />}
           </h2>
-          <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
-            <Col>
-              <h6>Edition</h6>
-              {!auction && (
-                <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
-              )}
-              {auction && (
-                <p className="auction-art-edition">
-                  {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
-                </p>
-              )}
-            </Col>
+          <Row>
+            <Col span={18}>
+              <Row justify="start">
+                <Col>
+                  <h6>Edition</h6>
+                  {!auction && (
+                    <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
+                  )}
+                  {auction && (
+                    <p className="auction-art-edition">
+                      {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
+                    </p>
+                  )}
+                </Col>
 
-            <Col>
-              <h6>View on</h6>
-              <div style={{ display: 'flex' }}>
-                <Button
-                  className="tag"
-                  onClick={() => window.open(art.uri || '', '_blank')}
-                >
-                  Arweave
-                </Button>
-                <Button
-                  className="tag"
-                  onClick={() =>
-                    window.open(
-                      `https://explorer.solana.com/account/${art?.mint || ''}${
-                        env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                      }`,
-                      '_blank',
-                    )
-                  }
-                >
-                  Solana
-                </Button>
-              </div>
+                <Col offset={2}>
+                  <h6>View on</h6>
+                  <Space direction="horizontal" size="middle">
+                    <Button
+                      className="tag"
+                      onClick={() => window.open(art.uri || '', '_blank')}
+                    >
+                      Arweave
+                    </Button>
+                    <Button
+                      className="tag"
+                      onClick={() =>
+                        window.open(
+                          `https://explorer.solana.com/account/${art?.mint || ''}${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
+                          }`,
+                          '_blank',
+                        )
+                      }
+                    >
+                      Solana
+                    </Button>
+                  </Space>
+                </Col>
+              </Row>
             </Col>
+            {auction?.auctionManager.authority === wallet?.publicKey?.toBase58() && (
+              <Col span={6}>
+                <Row justify="end">
+                  <Link to={`/auction/${id}/billing`}>
+                    <Button>Billing</Button>
+                  </Link>
+                </Row>
+              </Col>
+            )}
           </Row>
-
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && <AuctionCard auctionView={auction} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
@@ -276,8 +289,8 @@ const BidLine = (props: {
         opacity: isActive ? undefined : 0.5,
         ...(isme
           ? {
-              backgroundColor: '#ffffff21',
-            }
+            backgroundColor: '#ffffff21',
+          }
           : {}),
       }}
     >
@@ -330,7 +343,7 @@ const BidLine = (props: {
             address={bidder}
           />{' '}
           {bidderTwitterHandle ? (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               <a
                 target="_blank"
                 title={shortenAddress(bidder)}
@@ -339,7 +352,7 @@ const BidLine = (props: {
               <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
             </Row>
           ) : (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               {shortenAddress(bidder)}
               <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
             </Row>

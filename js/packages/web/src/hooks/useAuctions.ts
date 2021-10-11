@@ -249,9 +249,9 @@ export const useInfiniteScrollAuctions = () => {
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
         .sort((a, b) => {
-          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+          if (a.info.endedAt && b.info.endedAt) {
             return (
-              a.info.endAuctionAt.toNumber() - b.info.endAuctionAt?.toNumber()
+              a.info.endedAt.toNumber() - b.info.endedAt.toNumber()
             );
           } else {
             return -1;
@@ -261,9 +261,9 @@ export const useInfiniteScrollAuctions = () => {
       const endedAuctions = initializedAuctions
         .filter(a => a.info.state === 2)
         .sort((a, b) => {
-          if (a.info.endAuctionAt && b.info.endAuctionAt) {
+          if (a.info.endedAt && b.info.endedAt) {
             return (
-              b.info.endAuctionAt.toNumber() - a.info.endAuctionAt?.toNumber()
+              b.info.endedAt.toNumber() - a.info.endedAt.toNumber()
             );
           } else {
             return -1;
