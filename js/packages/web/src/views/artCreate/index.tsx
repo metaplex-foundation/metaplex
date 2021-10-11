@@ -19,6 +19,7 @@ import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
 import { mintNFT } from '../../actions';
+import 'antd/dist/antd.css';
 import {
   MAX_METADATA_LEN,
   useConnection,
@@ -138,13 +139,14 @@ export const ArtCreateView = () => {
           <Col span={24} md={4}>
             <Steps
               progressDot
-              direction={width < 768 ? 'horizontal' : 'vertical'}
+              direction='vertical'
               current={step}
               style={{
                 width: 'fit-content',
-                margin: '0 auto 30px auto',
+                margin: '60px auto 0 auto',
                 overflowX: 'auto',
                 maxWidth: '100%',
+                padding: '0 10px',
               }}
             >
               <Step title="Category" />
@@ -155,7 +157,7 @@ export const ArtCreateView = () => {
             </Steps>
           </Col>
         )}
-        <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
+        <Col span={24} {...(stepsVisible ? { md: 18 } : { md: 22 })}>
           {step === 0 && (
             <CategoryStep
               confirm={(category: MetadataCategory) => {
@@ -380,7 +382,7 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-        <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
+        <h3 className="container-action-title">Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
           accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20 }}
@@ -464,7 +466,7 @@ const UploadStep = (props: {
           paddingTop: 30,
           marginBottom: 4,
         }}
-        label={<h3>OR use absolute URL to content</h3>}
+        label={<h3 className="absolute-url">OR use absolute URL to content</h3>}
         labelAlign="left"
         colon={false}
         validateStatus={customURLErr ? 'error' : 'success'}

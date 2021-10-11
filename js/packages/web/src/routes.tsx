@@ -1,4 +1,4 @@
-import { HashRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { Providers } from './providers';
 import {
   AnalyticsView,
@@ -10,6 +10,7 @@ import {
   AuctionCreateView,
   AuctionView,
   HomeView,
+  MarketplaceView,
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
@@ -17,7 +18,7 @@ import { BillingView } from './views/auction/billing';
 export function Routes() {
   return (
     <>
-      <HashRouter basename={'/'}>
+      <BrowserRouter basename={'/'}>
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
@@ -26,6 +27,7 @@ export function Routes() {
               path="/analytics"
               component={() => <AnalyticsView />}
             />
+            <Route exact path="/auction" component={() => <AnalyticsView />} />
             <Route
               exact
               path="/art/create/:step_param?"
@@ -54,10 +56,20 @@ export function Routes() {
               path="/auction/:id/billing"
               component={() => <BillingView />}
             />
+            {/* <Route
+              exact
+              path="/marketplace"
+              component={() => <MarketplaceView />}
+            /> */}
+            <Route
+              exact
+              path="/marketplace/:id"
+              component={() => <MarketplaceView />}
+            />
             <Route path="/" component={() => <HomeView />} />
           </Switch>
         </Providers>
-      </HashRouter>
+      </BrowserRouter>
     </>
   );
 }
