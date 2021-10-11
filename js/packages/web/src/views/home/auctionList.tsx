@@ -1,4 +1,4 @@
-import { useWallet } from '@identity.com/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';

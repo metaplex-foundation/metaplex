@@ -2,7 +2,7 @@ import {SignerWalletAdapter, WalletError} from '@solana/wallet-adapter-base';
 import {
   useWallet,
   WalletProvider as BaseWalletProvider,
-} from '@identity.com/wallet-adapter-react';
+} from '@solana/wallet-adapter-react';
 import {
   getLedgerWallet,
   getMathWallet,
@@ -11,9 +11,9 @@ import {
   getSolletWallet,
   getSolongWallet,
   getTorusWallet,
-  getCryptidWallet,
+  // getCryptidWallet,
   WalletName,
-} from '@identity.com/wallet-adapter-wallets';
+} from '@solana/wallet-adapter-wallets';
 import { Button } from 'antd';
 import React, {
   createContext,
@@ -194,7 +194,7 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const wallets = useMemo(
     () => [
-      getCryptidWallet(),
+      // getCryptidWallet(),
       getPhantomWallet(),
       getSolflareWallet(),
       getTorusWallet({

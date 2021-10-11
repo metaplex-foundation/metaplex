@@ -13,7 +13,7 @@ import {
   AuctionDataExtended,
   createPipelineExecutor,
 } from '@oyster/common';
-import { useWallet } from '@identity.com/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useMeta } from '../contexts';

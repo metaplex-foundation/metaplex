@@ -14,7 +14,7 @@ import {
   VaultState,
   WalletSigner,
 } from '@oyster/common';
-import { useWallet } from '@identity.com/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
