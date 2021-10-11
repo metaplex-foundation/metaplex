@@ -69,7 +69,7 @@ export const WalletModal: FC = () => {
         BSP
       </div>
 
-      <h2>{selected ? 'Change provider' : 'Welcome to BabySolPunks'}</h2>
+      <h2>{selected ? 'Change provider' : 'Welcome to SolanaDoge Gen2'}</h2>
       <p>
         {selected
           ? 'Feel free to switch wallet provider'
