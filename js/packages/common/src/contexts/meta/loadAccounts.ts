@@ -74,7 +74,8 @@ export const pullStoreMetadata = async (
 
   const loadMetadata = () =>
     pullMetadataByCreators(connection, tempCache, updateTemp);
-  const loadEditions = () => pullEditions(connection, updateTemp, tempCache);
+  const loadEditions = () =>
+    pullEditions(connection, updateTemp, tempCache, tempCache.metadata);
 
   console.log('-------->Loading all metadata for store.');
 
@@ -175,7 +176,12 @@ export const pullAuctionSubaccounts = async (
     };
   const promises = [
     // bidder metadata pull
-
+    pullEditions(
+      connection,
+      updateTemp,
+      tempCache,
+      cache.metadata.map(m => tempCache.metadataByMetadata[m]),
+    ),
     getProgramAccounts(connection, AUCTION_ID, {
       filters: [
         {
@@ -416,15 +422,15 @@ export const pullPage = async (
           console.log('------->Failed to pull batch', i, 'skipping');
         }
       }
-    }
 
-    for (let i = 0; i < auctionCaches.keys.length; i++) {
-      const auctionCache = tempCache.auctionCaches[auctionCaches.keys[i]];
+      for (let i = 0; i < auctionCaches.keys.length; i++) {
+        const auctionCache = tempCache.auctionCaches[auctionCaches.keys[i]];
 
-      const metadata = auctionCache.info.metadata.map(
-        s => tempCache.metadataByMetadata[s],
-      );
-      tempCache.metadataByAuction[auctionCache.info.auction] = metadata;
+        const metadata = auctionCache.info.metadata.map(
+          s => tempCache.metadataByMetadata[s],
+        );
+        tempCache.metadataByAuction[auctionCache.info.auction] = metadata;
+      }
     }
 
     if (page == 0) {
@@ -698,7 +704,8 @@ export const loadAccounts = async (connection: Connection) => {
     }).then(forEach(processMetaplexAccounts));
   const loadMetadata = () =>
     pullMetadataByCreators(connection, state, updateState);
-  const loadEditions = () => pullEditions(connection, updateState, state);
+  const loadEditions = () =>
+    pullEditions(connection, updateState, state, state.metadata);
 
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
@@ -722,6 +729,7 @@ const pullEditions = async (
   connection: Connection,
   updater: UpdateStateValueFunc,
   state: MetaState,
+  metadataArr: ParsedAccount<Metadata>[],
 ) => {
   console.log('Pulling editions for optimized metadata');
 
@@ -752,7 +760,7 @@ const pullEditions = async (
     }
   };
 
-  for (const metadata of state.metadata) {
+  for (const metadata of metadataArr) {
     let editionKey: StringPublicKey;
     if (metadata.info.editionNonce === null) {
       editionKey = await getEdition(metadata.info.mint);
