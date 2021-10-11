@@ -1298,10 +1298,10 @@
     eip1193-provider "^1.0.1"
     js-sha3 "^0.8.0"
 
-"@civic/solana-gateway-react@0.3.17-alpha.5":
-  version "0.3.17-alpha.5"
-  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.3.17-alpha.5.tgz#7e5e6cc68ac396b3757c882523e700ee5e9b581e"
-  integrity sha512-nWIhi5LFbXttEQ4eSYvFadNGhOLDv0avZDOx0i3DThGBRkQsOtIKYKelv5dHa2wqwBatFuVVVDv019jZij7+8g==
+"@civic/solana-gateway-react@0.3.17-alpha.6":
+  version "0.3.17-alpha.6"
+  resolved "https://registry.yarnpkg.com/@civic/solana-gateway-react/-/solana-gateway-react-0.3.17-alpha.6.tgz#025865ae94e640ead48cf19e2d0b76cebb378164"
+  integrity sha512-4LPONCME54uBgvWX2JNqhPRSXIy/RQM+mhv9NyPgoWwaqace8ZHB5FYAed0fS56pGe0O196if8YXnJc8RSXd9w==
   dependencies:
     "@identity.com/prove-solana-wallet" "^0.2.3"
     "@identity.com/solana-gateway-ts" "^0.3.3"
