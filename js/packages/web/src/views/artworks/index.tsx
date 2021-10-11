@@ -94,14 +94,18 @@ export const ArtworksView = () => {
               </div>
             ) : (
               <>
-                <Link to={`/auction/create/0`}>
-                  <Button className="connector" size="large" type="primary">
-                    Sell
-                  </Button>
-                </Link>
                 <Tabs
                   activeKey={activeKey}
                   onTabClick={key => setActiveKey(key as ArtworkViewState)}
+                  tabBarExtraContent={{
+                    right: (
+                      <Link to={`/auction/create/0`}>
+                        <Button className="connector" size="large" type="primary">
+                          Sell
+                        </Button>
+                      </Link>
+                    )
+                  }}
                 >
                   <TabPane
                     tab={<span className="tab-title">All</span>}
