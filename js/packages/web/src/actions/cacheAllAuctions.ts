@@ -1,5 +1,6 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
+  getAuctionCache,
   loadAccounts,
   MetaplexKey,
   MetaState,
@@ -47,12 +48,20 @@ export async function cacheAllAuctions(
         .toNumber(),
     );
 
-  const alreadyIndexed = Object.values(tempCache.auctionCaches)
-    .map(a => a.info.auctionManager)
-    .reduce((hash, val) => {
-      hash[val] = true;
+  const indexedInStoreIndexer = {};
+
+  tempCache.storeIndexer.forEach(s => {
+    s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
+  });
+
+  const alreadyIndexed = Object.values(tempCache.auctionCaches).reduce(
+    (hash, val) => {
+      hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
+
       return hash;
-    }, {});
+    },
+    {},
+  );
   auctionManagersToCache = auctionManagersToCache.filter(
     a => !alreadyIndexed[a.pubkey],
   );
@@ -78,6 +87,9 @@ export async function cacheAllAuctions(
         auctionManager.pubkey,
         boxes.map(a => a.info.tokenMint),
         storeIndex,
+        !!tempCache.auctionCaches[
+          await getAuctionCache(auctionManager.info.auction)
+        ],
       );
 
       await sendTransactions(

@@ -832,9 +832,10 @@ const pullEditions = async (
 
   for (const metadata of metadataArr) {
     let editionKey: StringPublicKey;
-    if (metadata.info.editionNonce === null) {
-      editionKey = await getEdition(metadata.info.mint);
-    } else {
+    // TODO the nonce builder isnt working here, figure out why
+    //if (metadata.info.editionNonce === null) {
+    editionKey = await getEdition(metadata.info.mint);
+    /*} else {
       editionKey = (
         await PublicKey.createProgramAddress(
           [
@@ -846,7 +847,7 @@ const pullEditions = async (
           toPublicKey(METADATA_PROGRAM_ID),
         )
       ).toBase58();
-    }
+    }*/
 
     setOf100MetadataEditionKeys.push(editionKey);
 

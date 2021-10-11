@@ -20,6 +20,7 @@ export async function cacheAuctionIndexer(
   auctionManager: StringPublicKey,
   tokenMints: StringPublicKey[],
   storeIndexer: ParsedAccount<StoreIndexer>[],
+  skipCache?: boolean,
 ): Promise<{
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
@@ -63,11 +64,15 @@ export async function cacheAuctionIndexer(
 
   return {
     instructions: [
-      ...createAuctionCacheInstructions,
+      ...(skipCache ? [] : createAuctionCacheInstructions),
       instructions,
       ...propagationInstructions,
     ],
-    signers: [...createAuctionCacheSigners, [], ...propagationSigners],
+    signers: [
+      ...(skipCache ? [] : createAuctionCacheSigners),
+      [],
+      ...propagationSigners,
+    ],
   };
 }
 
