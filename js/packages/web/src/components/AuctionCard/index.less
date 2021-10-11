@@ -1,60 +1,50 @@
-
-.auction-container {
-  padding: 10px 20px;
-  background: #282828;
-  border-radius: 24px;
-  margin: 30px 0;
-  max-width: 100%;
+#auction-sec .card {
+  background: #282f3f;
+  border: 2px solid #18a0fb;
+  box-shadow: rgba(133, 28, 239, 0.5) 0px 5px 15px 0px;
 }
 
-.ant-modal-body {
-  background: #212121 !important;
+#auction-sec .card .wish-count {
+  position: absolute;
+  z-index: 999;
+  top: 30px;
+  right: 30px;
+  color: #fff;
 }
 
-.ant-card-body {
-  padding: 12px;
+#auction-sec .card .card-body {
+  position: relative;
+  padding: 10px 0px;
 }
 
-.cd-number {
-  font-style: normal;
-  font-weight: 600;
-  font-size: 36px;
-  color: #FFFFFF;
-  line-height: 44px;
-  // letter-spacing: 3px;
+#auction-sec .card .card-body .card-title {
+  font-size: 18px;
+  margin-top: 20px !important;
 }
 
-.cd-label {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 44px;
+#auction-sec .card .card-body .card-text {
+  color: #0ee9a7;
+  padding-top: 5px;
 }
 
-.modal-title {
-  font-style: normal;
-  font-weight: 600;
-  font-size: 2rem;
-
-  letter-spacing: -0.02em;
-  color: #FFFFFF;
+#auction-sec .card .card-body .btn-primary {
+  font-size: 14px;
+  background: #3d4967;
+  border-color: #3d4967;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.overlay-btn {
-  background: #5626BA;
-  border-radius: 8px;
-  width: 200px;
-  font-size: 2rem;
-  height: auto;
-
-  &:hover {
-    background: #a99ac7;
-    color: #5300ff;
-  }
-}
-
-@media (max-width: 768px) {
-  .auction-container {
-    max-width: 100%;
-    margin: 10px 0;
-  }
+#auction-sec .card .card-body .circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  z-index: 999;
+  background: #0ee9a7;
+  border: 3px solid #282f3f;
+  top: 0%;
+  transform: translate(-50%, -50%);
 }

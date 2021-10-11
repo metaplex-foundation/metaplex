@@ -40,7 +40,15 @@ export default class MetaplexDocument extends Document {
             href="/favicon-16x16.png"
           />
           <meta name="theme-color" content="#000000" />
-          <meta name="description" content="Metaplex NFT Marketplace" />
+          <meta
+            name="description"
+            content="NFT Marketplace featuring collections by Ninja Protocol on the Solana blockchain."
+          />
+          <meta
+            property="og:image"
+            content="/featured.png"
+            data-addsearch="no_crop"
+          ></meta>
           <link rel="manifest" href="/manifest.json" />
           <link
             rel="stylesheet"
@@ -49,9 +57,16 @@ export default class MetaplexDocument extends Document {
             crossOrigin="anonymous"
           />
         </Head>
-        <body>
+        <body style={{ background: '#12151d' }}>
           <Main />
           <NextScript />
+          <style>{`
+            /* Other global styles such as 'html, body' etc... */
+
+            #__next {
+              min-height: 100%;
+            }
+          `}</style>
           <script
             async
             src="https://platform.twitter.com/widgets.js"

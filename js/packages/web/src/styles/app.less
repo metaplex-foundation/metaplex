@@ -9,6 +9,8 @@ html {
 #root {
   height: 100%;
   font-family: 'Graphik Web', sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 #root::before {
@@ -93,7 +95,7 @@ code {
   iframe {
     height: 300px;
     object-fit: cover;
-    border:none;
+    border: none;
   }
 }
 
@@ -125,6 +127,10 @@ code {
 .ant-upload.ant-upload-drag {
   border-radius: 8px;
   border-color: transparent;
+  border: 2px solid #851cef !important;
+}
+.ant-form-item-control-input{
+  border: 1px solid #851cef !important;
 }
 
 .tab-title {
@@ -153,19 +159,6 @@ code {
 
 .ant-avatar-group .ant-avatar-image:not(:first-child) {
   margin-left: -12px !important;
-}
-
-.pubkey-row {
-  line-height: 30px;
-}
-
-.copy-pubkey {
-  height: 100%;
-  cursor: pointer;
-  margin-left: 10px;
-  :hover {
-    color: @text-color;
-  }
 }
 
 .creator-name {

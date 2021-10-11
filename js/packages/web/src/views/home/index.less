@@ -1,72 +1,118 @@
-section.ant-layout {
+/* top slider starts */
+
+#top-slider-sec {
+  margin: 40px 20px;
+}
+
+.blur-bg1 {
+  position: absolute;
+  width: 317.48px;
+  height: 300px;
+  top: 0px;
+  background: #851cef;
+  filter: blur(200px);
+  right: -100px;
+}
+#top-slider-sec h1 {
+  font-family: Open Sans;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 32.44px;
+  line-height: 48px;
+  letter-spacing: -0.017em;
+  color: #ffffff;
+  margin-top: 40px;
+}
+#top-slider-sec p {
+  font-family: Open Sans;
+  font-style: normal;
+  color: #ffffff;
+  line-height: 32px;
+}
+#top-slider-sec #topcarouselControls .card {
+  background: #1f2331;
   width: 100%;
-  margin: auto;
+  border-radius: 4px;
+  border: 2px solid #18a0fb;
+  box-shadow: rgba(133, 28, 239, 0.5) 0px 5px 15px 0px;
+}
+#top-slider-sec #topcarouselControls .card .card-body .card-text {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 32px;
+}
+#top-slider-sec #topcarouselControls .card .card-body {
   position: relative;
 }
+#top-slider-sec #topcarouselControls .card .card-body .user {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  border: 2px solid #18a0fb;
+  border-radius: 50%;
+}
+#top-slider-sec #topcarouselControls .card .card-body .btn-primary {
+  background: #282f3f;
+  border: 1px solid #851cef;
+  box-sizing: border-box;
+  border-radius: 4px;
+  height: 40px;
+}
+#top-slider-sec #topcarouselControls .carousel-control-prev {
+  left: -15px;
+}
+#top-slider-sec #topcarouselControls .carousel-control-next {
+  right: -15px;
+}
+#top-slider-sec #topcarouselControls .carousel-control-prev,
+#top-slider-sec #topcarouselControls .carousel-control-next {
+  opacity: 1;
+  width: auto;
+}
+#top-slider-sec #topcarouselControls .fa-angle-left,
+#top-slider-sec #topcarouselControls .fa-angle-right {
+  color: #fff;
+  background: #1f2331;
+  width: 40px;
+  height: 40px;
+  font-size: 34px;
+  padding: 1px 0px;
+  box-shadow: rgba(44, 49, 66, 0.5) 0px 5px 15px 0px;
+}
+#top-slider-sec #topcarouselControls .carousel-indicators {
+  position: relative;
+  margin-top: 20px;
+}
 
-header.ant-layout-header.App-Bar {
-  width: 100%;
-  background: transparent;
+#top-slider-sec #topcarouselControls .carousel-indicators li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.hero-section {
+  .hero-text {
+    margin: 2rem 0 1rem 0;
+    h1 {
+      font-weight: bold;
+      font-size: 32.44px;
+      line-height: 48px;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-weight: 600;
+      font-size: 18px;
+      line-height: 32px;
+      text-align: center;
+      letter-spacing: -0.017em;
+      color: rgba(255, 255, 255, 0.8) !important;
+      justify-content: justify;
+    }
+  }
+}
+
+#topcarousel {
   display: flex;
   justify-content: center;
-  height: 80px;
-}
-
-footer.ant-layout-footer {
-  padding: 10px 0;
-  width: 100%;
-}
-
-.ant-layout-sider {
-  background-color: unset;
-}
-
-a:link {
-  color: #b480eb;
-}
-a:visited {
-  color: #b480eb;
-}
-a:hover {
-  color: #b480eb;
-}
-a:active {
-  color: #b480eb;
-}
-
-.my-masonry-grid {
-  display: -webkit-box; /* Not needed if autoprefixing */
-  display: -ms-flexbox; /* Not needed if autoprefixing */
-  display: flex;
-  width: auto;
-  margin-left: auto;
-  margin-right: auto;
-  margin-left: -16px;
-}
-
-.my-masonry-grid_column {
-  padding-left: 16px; /* gutter size */
-  background-clip: padding-box;
-}
-
-.my-masonry-grid_column > div {
-  /* change div to reference your elements you put in <Masonry> */
-  margin-bottom: 30px;
-}
-
-/* Optional, different gutter size on mobile */
-@media (max-width: 800px) {
-  .my-masonry-grid {
-    margin-left: -15px; /* gutter size offset */
-  }
-  .my-masonry-grid_column {
-    padding-left: 15px; /* gutter size offset */
-  }
-  .my-masonry-grid_column > div {
-    margin-bottom: 15px; /* space between items */
-  }
-}
-
-.ant-card-body {
-  padding: 0;
 }

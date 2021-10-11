@@ -1,95 +1,169 @@
-.art-title {
+#auctionview-sec {
+  margin: 40px 0px;
+}
+
+#auctionview-sec .card-text {
+  color: #7b61ff;
+  margin-bottom: 0;
+  margin-top: 0px;
+}
+
+#auctionview-sec h3 {
+  font-family: Open Sans;
   font-style: normal;
-  font-weight: 600;
-  font-size: 3rem;
-  @media (max-width: 375px) {
-    font-size: 2.8rem;
-  }
-
-  line-height: 1em;
-  letter-spacing: -0.02em;
-  color: #FFFFFF;
+  font-weight: bold;
+  font-size: 24.44px;
+  line-height: 36px;
+  letter-spacing: -0.017em;
+  color: #fff;
+  margin-top: 0px;
+  margin-bottom: 20px;
 }
 
-.auction-view {
-  .ant-skeleton-image {
-    min-width: 300px;
-    min-height: 300px;
-
-    display: flex !important;
-  }
+#auctionview-sec .sales-card {
+  background: rgba(28, 33, 49, 0.6);
+  border: 1px solid #888 !important;
+  border-radius: 4px;
 }
 
-.image-stack {
-  padding: 0;
-  position: relative;
-  max-width: 100%;
-
-  .stack-item {
-    max-width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    -webkit-transition: all 0.3s;
-    transition: all 0.3s;
-    outline: 1px solid transparent;
-  }
+#auctionview-sec .sales-card .card-body .place-btn {
+  background: #851cef;
+  border-color: #851cef;
+  mix-blend-mode: normal;
+  border-radius: 6px;
 }
 
-h6 {
-  display: block;
-  font-style: normal;
-  font-weight: 600;
-  font-size: 1rem;
-
-  color: #FFFFFF;
-  opacity: 0.5;
+#auctionview-sec .page-item .page-link {
+  background: #282f3f;
+  border-color: #282f3f;
+  color: #ccc;
+  padding: 12px 15px;
+  font-size: 14px;
 }
 
-.tag {
+#auctionview-sec .page-item.active .page-link {
+  background: #282f3f;
+  border-color: #851cef !important;
+  color: #851cef !important;
+}
+
+#auctionview-sec .dropdown .btn-secondary {
+  background: #282f3f;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: 6px 10px;
-
-  background: #212121;
-  border-radius: 20px;
-  margin: 0 5px;
-  border-color: transparent;
+  justify-content: space-between;
+  padding: 9px 15px;
+  color: #ccc;
+  border-image-slice: 1 !important;
+  border: 1px solid;
+  border-image-source: linear-gradient(180deg, #851cef 0%, #0ee9a7 100%);
 }
 
-.pr-4 {
-  padding-right: 32px;
-}
-
-.artwork-image-lg {
+#auctionview-sec .btn-sales {
+  background: #282f3f;
+  border-color: #851cef;
   display: flex;
-  // width: 70%;
-  margin: auto;
-  max-height: 100%;
-  border-radius: 10px;
-  overflow: hidden;
-  align-content: center;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
+  padding: 9px 15px;
+  color: #ccc;
 }
 
-.ant-carousel {
-  padding-bottom: 16px;
+.blur-bg1 {
+  position: absolute;
+  width: 317.48px;
+  height: 300px;
+  top: 0px;
+  z-index: -1;
+  background: #851cef;
+  filter: blur(200px);
+  right: -100px;
 }
 
-.auction-art-edition {
-  font-weight: 600;
-  font-size: 1.3rem;
+.blur-bg2 {
+  position: absolute;
+  width: 317.48px;
+  height: 300px;
+  bottom: 0px;
+  background: #851cef;
+  filter: blur(200px);
+  z-index: -1;
+  left: -100px;
+}
+
+.cubic-blur1 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  top: 150px;
+  filter: blur(10px);
+  z-index: -1;
+  left: 0px;
+}
+
+.cubic-blur4 {
+  position: absolute;
+  width: 200px;
+  height: 300px;
+  bottom: -100px;
+  right: 100px;
+  filter: blur(15px);
+  z-index: -1;
+}
+
+.cubic-blur2 {
+  width: 317.48px;
+  height: 300px;
+  left: -100px;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+#auctionview-sec .card {
+  background: #282f3f;
+  border-image-slice: 1 !important;
+  border: 2px solid;
+  border-image-source: linear-gradient(180deg, #851cef 0%, #0ee9a7 100%);
+}
+
+#auctionview-sec .card .wish-count {
+  position: absolute;
+  z-index: 999;
+  top: 30px;
+  right: 30px;
   color: #fff;
 }
 
-.auction-paragraph {
-  margin-top: 0;
-  margin-bottom: 1em;
-  color: #6d6d6d;
-  font-family: Inter, sans-serif;
+#auctionview-sec .page-item .page-link {
+  background: #282f3f;
+  border-color: #282f3f;
+  color: #ccc;
+  padding: 12px 15px;
+  font-size: 14px;
+}
+
+#auctionview-sec .page-item.active .page-link {
+  background: #282f3f;
+  border-color: #851cef !important;
+  color: #851cef !important;
+}
+
+#auctionview-sec h3 {
+  font-family: Open Sans;
   font-style: normal;
-  font-size: 0.9rem;
+  font-weight: bold;
+  font-size: 24.44px;
+  line-height: 36px;
+  letter-spacing: -0.017em;
+  color: #ccc;
+  margin-top: 0px;
+  margin-bottom: 20px;
+}
+#auctionview-sec {
+  margin-bottom: 13%;
+}
+@media screen and (min-width: 1600px) {
+  #auctionview-sec {
+    margin-bottom: 16%;
+  }
 }
