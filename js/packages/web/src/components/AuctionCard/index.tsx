@@ -219,6 +219,8 @@ export const AuctionCard = ({
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
 
+  const walletPublickKey = wallet?.publicKey?.toBase58();
+
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
@@ -252,27 +254,32 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== walletPublickKey;
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
   const doesInstantSaleHasNoItems =
-    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-    auctionView.auction.info.bidState.max.toNumber() === bids.length;
-
+    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+  
+  const myBidRedemption = auctionView.myBidRedemption;
+  const myBidderMetadata = auctionView.myBidderMetadata;
+  
   const shouldHideInstantSale =
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
     isAuctionManagerAuthorityNotWalletOwner &&
     doesInstantSaleHasNoItems;
 
-  const shouldHide =
-    shouldHideInstantSale ||
-    auctionView.vault.info.state === VaultState.Deactivated;
-  
+  const shouldHide = shouldHideInstantSale ||
+    (
+      auctionView.vault.info.state === VaultState.Deactivated &&
+      isBidderPotEmpty
+    );
+
   if (shouldHide) {
     return <></>;
   }
