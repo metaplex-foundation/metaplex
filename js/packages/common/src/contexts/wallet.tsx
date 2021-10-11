@@ -13,7 +13,7 @@ import {
   getTorusWallet,
   WalletName,
 } from '@solana/wallet-adapter-wallets';
-import { Button } from 'antd';
+import { Button, Image } from 'antd';
 import React, {
   createContext,
   FC,
@@ -26,6 +26,7 @@ import React, {
 } from 'react';
 import { notify } from '../utils';
 import { MetaplexModal } from '../components';
+import { useStore } from './store';
 
 export interface WalletModalContextState {
   visible: boolean;
@@ -40,10 +41,11 @@ export function useWalletModal(): WalletModalContextState {
   return useContext(WalletModalContext);
 }
 
-export const WalletModal: FC = () => {
+export const WalletModal = () => {
   const { wallets, wallet: selected, select } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const [showWallets, setShowWallets] = useState(false);
+  const { storefront } = useStore()
   const close = useCallback(() => {
     setVisible(false);
     setShowWallets(false);
@@ -51,23 +53,8 @@ export const WalletModal: FC = () => {
 
   return (
     <MetaplexModal visible={visible} onCancel={close}>
-      <div
-        style={{
-          borderRadius: 36,
-          width: 50,
-          height: 50,
-          textAlign: 'center',
-          verticalAlign: 'middle',
-          fontWeight: 700,
-          fontSize: '1.3rem',
-          lineHeight: 2.4,
-          marginBottom: 10,
-        }}
-      >
-        M
-      </div>
-
-      <h2>{selected ? 'Change provider' : 'Welcome to Metaplex'}</h2>
+      <Image preview={false} height={45} width={45} src={storefront.theme.logo} />
+      <h2>{selected ? 'Change provider' : 'Welcome!'}</h2>
       <p>
         {selected
           ? 'Feel free to switch wallet provider'
@@ -153,9 +140,9 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const keyToDisplay =
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
-              base58.length - 7,
-              base58.length,
-            )}`
+            base58.length - 7,
+            base58.length,
+          )}`
           : base58;
 
       notify({

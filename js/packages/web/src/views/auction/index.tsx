@@ -203,7 +203,7 @@ export const AuctionView = () => {
 
                 <Col offset={2}>
                   <h6>View on</h6>
-                  <Space direction="horizontal" size="middle">
+                  <Space direction="horizontal" size="small">
                     <Button
                       className="tag"
                       onClick={() => window.open(art.uri || '', '_blank')}

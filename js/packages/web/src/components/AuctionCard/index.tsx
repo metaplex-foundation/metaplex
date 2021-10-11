@@ -272,7 +272,7 @@ export const AuctionCard = ({
   const shouldHide =
     shouldHideInstantSale ||
     auctionView.vault.info.state === VaultState.Deactivated;
-
+  
   if (shouldHide) {
     return <></>;
   }

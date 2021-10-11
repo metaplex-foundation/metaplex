@@ -252,7 +252,7 @@ export const useInfiniteScrollAuctions = () => {
           if (a.info.endedAt && b.info.endedAt) {
             return (
               a.info.endedAt.toNumber() - b.info.endedAt.toNumber()
-            );
+            );  
           } else {
             return -1;
           }
