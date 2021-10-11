@@ -215,7 +215,7 @@ export const HomeView = () => {
   const [remaining, setRemaining] = useState<string>("????");
   // This is from the .cache directory after uploading, copy yours here without "items"
   // const cachedContent = {"program":{"uuid":"Fx2njX","config":"Fx2njXz2p6RLWSecvt6LpeGPpH24nDkJ7s4tHpJDPjGN"}};
-  const cachedContent = {"program":{"uuid":"CCE91L","config":"CCE91L2Um3TscmN1PfbT3Fod4GR3HCAYX7JsUfpfKKUJ"}};
+  const cachedContent = {"program":{"uuid":"HhAysh","config":"HhAysh1RvE8nCrbQsUKsF3aDpHM2ZNsC6gPcQobuvMkB"}};
 
   const { setVisible } = useWalletModal();
   const connect = useCallback(
