@@ -1,6 +1,5 @@
 import { getServer } from './startApolloServer';
 import { Store } from '../common';
-import { ObjectId } from 'mongodb';
 import { IReader, MetaplexDataSource } from '../reader';
 
 describe('stub', () => {
@@ -75,7 +74,7 @@ describe('startApolloServer', () => {
       tokenMetadataProgram: 'tokenMetadataProgram',
       tokenProgram: 'tokenProgram',
     });
-    store._id = new ObjectId('00000001121f2d7a9665cc97');
+    store.pubkey = '00000001121f2d7a9665cc97';
 
     it('store', async () => {
       const server = await setup({

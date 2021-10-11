@@ -124,7 +124,7 @@ export class Loader<TW extends IWriter = IWriter> {
     });
 
     if (this.cache.creators.size || this.cache.stores.size) {
-      logger.info('⛏ linkd creators & stores');
+      logger.info('⛏ links creators & stores');
 
       await Promise.all([
         this.reader

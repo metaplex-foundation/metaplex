@@ -1,14 +1,9 @@
 import { EDITION_MARKER_BIT_SIZE } from '../../vaults/constants';
 import { MetadataKey } from '../MetadataKey';
-import { JsonProperty, Serializable } from 'typescript-json-serializer';
-import { ObjectIdConverter } from '../../serialize';
-import { ObjectId } from 'mongodb';
+import { JsonProperty } from 'typescript-json-serializer';
 
-@Serializable()
-export class EditionMarker {
-  @JsonProperty(ObjectIdConverter)
-  _id!: ObjectId;
-
+import { BaseEntity } from '../../BaseEntity';
+export class EditionMarker extends BaseEntity {
   @JsonProperty()
   key: MetadataKey = MetadataKey.EditionMarker;
 
@@ -16,6 +11,7 @@ export class EditionMarker {
   ledger!: number[];
 
   constructor(args?: { key: MetadataKey; ledger: number[] }) {
+    super();
     if (args) {
       this.key = args?.key ?? MetadataKey.EditionMarker;
       this.ledger = args.ledger;
