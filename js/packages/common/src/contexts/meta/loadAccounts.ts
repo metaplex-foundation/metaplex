@@ -96,17 +96,22 @@ export const pullYourMetadata = async (
 
   console.log('--------->Pulling metadata for user.');
   let currBatch: string[] = [];
-  const batches = [];
+  let batches = [];
+  const editions = [];
   for (let i = 0; i < userTokenAccounts.length; i++) {
     if (userTokenAccounts[i].info.amount.toNumber() == 1) {
       if (2 + currBatch.length > MULTIPLE_ACCOUNT_BATCH_SIZE) {
         batches.push(currBatch);
         currBatch = [];
       } else {
+        const edition = await getEdition(
+          userTokenAccounts[i].info.mint.toBase58(),
+        );
         let newAdd = [
           await getMetadata(userTokenAccounts[i].info.mint.toBase58()),
-          await getEdition(userTokenAccounts[i].info.mint.toBase58()),
+          edition,
         ];
+        editions.push(edition);
         currBatch = currBatch.concat(newAdd);
       }
     }
@@ -136,12 +141,63 @@ export const pullYourMetadata = async (
         batches[i].length,
         'accounts, processing....',
       );
-      for (let i = 0; i < accounts.keys.length; i++) {
-        const pubkey = accounts.keys[i];
+      for (let j = 0; j < accounts.keys.length; j++) {
+        const pubkey = accounts.keys[j];
         await processMetaData(
           {
             pubkey,
-            account: accounts.array[i],
+            account: accounts.array[j],
+          },
+          updateTemp,
+        );
+      }
+    } else {
+      console.log('------->Failed to pull batch', i, 'skipping');
+    }
+  }
+
+  console.log('------> Pulling master editions for user');
+  currBatch = [];
+  batches = [];
+  for (let i = 0; i < editions.length; i++) {
+    if (1 + currBatch.length > MULTIPLE_ACCOUNT_BATCH_SIZE) {
+      batches.push(currBatch);
+      currBatch = [];
+    } else if (tempCache.editions[editions[i]]) {
+      currBatch.push(tempCache.editions[editions[i]].info.parent);
+    }
+  }
+
+  if (currBatch.length > 0 && currBatch.length <= MULTIPLE_ACCOUNT_BATCH_SIZE) {
+    batches.push(currBatch);
+  }
+
+  console.log(
+    '------> From token accounts for user',
+    'produced',
+    batches.length,
+    'batches of accounts to pull',
+  );
+  for (let i = 0; i < batches.length; i++) {
+    const accounts = await getMultipleAccounts(
+      connection,
+      batches[i],
+      'single',
+    );
+    if (accounts) {
+      console.log(
+        '------->Pulled batch',
+        i,
+        'with',
+        batches[i].length,
+        'accounts, processing....',
+      );
+      for (let j = 0; j < accounts.keys.length; j++) {
+        const pubkey = accounts.keys[j];
+        await processMetaData(
+          {
+            pubkey,
+            account: accounts.array[j],
           },
           updateTemp,
         );
@@ -152,6 +208,7 @@ export const pullYourMetadata = async (
   }
 
   await postProcessMetadata(tempCache);
+
   console.log('-------->User metadata processing complete.');
   return tempCache;
 };
@@ -174,14 +231,27 @@ export const pullAuctionSubaccounts = async (
         await fn(account, updateTemp);
       }
     };
+  const auctionExtKey = await getAuctionExtended({
+    auctionProgramId: AUCTION_ID,
+    resource: cache.vault,
+  });
   const promises = [
-    // bidder metadata pull
+    // pull editions
     pullEditions(
       connection,
       updateTemp,
       tempCache,
       cache.metadata.map(m => tempCache.metadataByMetadata[m]),
     ),
+    // pull auction data ext
+    connection
+      .getAccountInfo(toPublicKey(auctionExtKey))
+      .then(a =>
+        a
+          ? processAuctions({ pubkey: auctionExtKey, account: a }, updateTemp)
+          : null,
+      ),
+    // bidder metadata pull
     getProgramAccounts(connection, AUCTION_ID, {
       filters: [
         {
