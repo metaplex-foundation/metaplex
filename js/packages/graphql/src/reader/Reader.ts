@@ -13,7 +13,53 @@ import {
 import { NexusGenInputs } from '../generated/typings';
 import { FilterFn, IEvent } from './types';
 
-export abstract class Reader {
+export interface IReader {
+  storesCount(): Promise<number>;
+  creatorsCount(): Promise<number>;
+  artworksCount(): Promise<number>;
+  auctionsCount(): Promise<number>;
+  getStoreIds(): Promise<string[]>;
+  getStores(): Promise<Store[]>;
+  getStore(storeId: string): Promise<Store | null>;
+
+  getCreatorIds(): Promise<string[]>;
+  getCreators(storeId: string): Promise<WhitelistedCreator[]>;
+  getCreator(
+    storeId: string,
+    creatorId: string,
+  ): Promise<WhitelistedCreator | null>;
+
+  getArtworks(args: NexusGenInputs['ArtworksInput']): Promise<Metadata[]>;
+  getArtwork(artId: string): Promise<Metadata | null>;
+  getEdition(id?: string): Promise<Edition | null>;
+  getMasterEdition(
+    id?: string,
+  ): Promise<MasterEditionV1 | MasterEditionV2 | null>;
+
+  // getAuction(auctionId: string): Promise<Auction | null>;
+  // getAuctions({
+  //   storeId,
+  //   state,
+  //   participantId,
+  // }: NexusGenInputs['AuctionsInput']): Promise<Auction[]>;
+
+  // getVault(id?: string): Promise<Vault | null>;
+  // getAuctionHighestBid(
+  //   auction: Auction,
+  // ): Promise<BidderMetadata | null>;
+  // getAuctionThumbnail(
+  //   auction: Auction,
+  // ): Promise<Metadata | null>;
+  // getAuctionBids(auction: Auction): Promise<BidderMetadata[]>;
+  // getSafetyDepositBoxes(
+  //   manager: AuctionManager,
+  // ): Promise<SafetyDepositBox[]>;
+  //  getParticipationConfig(
+  //   manager: AuctionManager,
+  // ): Promise<ParticipationConfigV1 | null>;
+}
+
+export abstract class ReaderBase {
   protected readonly pubsub = new PubSub();
 
   abstract networkName: string;
@@ -38,50 +84,6 @@ export abstract class Reader {
     }
     return iter;
   }
-
-  abstract storesCount(): Promise<number>;
-  abstract creatorsCount(): Promise<number>;
-  abstract artworksCount(): Promise<number>;
-  abstract auctionsCount(): Promise<number>;
-  abstract getStoreIds(): Promise<string[]>;
-  abstract getStores(): Promise<Store[]>;
-  abstract getStore(storeId: string): Promise<Store | null>;
-
-  abstract getCreatorIds(): Promise<string[]>;
-  abstract getCreators(storeId: string): Promise<WhitelistedCreator[]>;
-  abstract getCreator(
-    storeId: string,
-    creatorId: string,
-  ): Promise<WhitelistedCreator | null>;
-
-  abstract getArtworks(
-    args: NexusGenInputs['ArtworksInput'],
-  ): Promise<Metadata[]>;
-  abstract getArtwork(artId: string): Promise<Metadata | null>;
-  abstract getEdition(id?: string): Promise<Edition | null>;
-  abstract getMasterEdition(
-    id?: string,
-  ): Promise<MasterEditionV1 | MasterEditionV2 | null>;
-
-  // abstract getAuction(auctionId: string): Promise<Auction | null>;
-  // abstract getAuctions({
-  //   storeId,
-  //   state,
-  //   participantId,
-  // }: NexusGenInputs['AuctionsInput']): Promise<Auction[]>;
-
-  // abstract getVault(id?: string): Promise<Vault | null>;
-  // abstract getAuctionHighestBid(
-  //   auction: Auction,
-  // ): Promise<BidderMetadata | null>;
-  // abstract getAuctionThumbnail(
-  //   auction: Auction,
-  // ): Promise<Metadata | null>;
-  // abstract getAuctionBids(auction: Auction): Promise<BidderMetadata[]>;
-  // abstract getSafetyDepositBoxes(
-  //   manager: AuctionManager,
-  // ): Promise<SafetyDepositBox[]>;
-  // abstract getParticipationConfig(
-  //   manager: AuctionManager,
-  // ): Promise<ParticipationConfigV1 | null>;
 }
+
+export type Reader = ReaderBase & IReader;

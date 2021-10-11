@@ -1,13 +1,13 @@
 import { Connection } from '@solana/web3.js';
 import { isCreatorPartOfTheStore, WhitelistedCreator } from '../../common';
 import { NexusGenInputs } from '../../generated/typings';
-import { Reader } from '../../reader';
+import { ReaderBase, IReader } from '../../reader';
 import { filterByOwner } from './filterByOwner';
 import { filterByStoreAndCreator } from './filterByStoreAndCreator';
 import { MemoryWriter } from './MemoryWriter';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 
-export class MemoryReader extends Reader {
+export class MemoryReader extends ReaderBase implements IReader {
   constructor(
     public networkName: string,
     connection: Connection,

@@ -7,7 +7,7 @@ const DIRNAME = path.resolve(__dirname, '..').replace(/\/dist$/, '/src');
 
 export const schema = makeSchema({
   types,
-  shouldGenerateArtifacts: !process.env.DISABLE_BUILD_SCHEMA,
+  shouldGenerateArtifacts: process.env.NODE_ENV === 'development',
   outputs: {
     schema: path.join(DIRNAME, 'schema/generated', 'schema.graphql'),
     typegen: path.join(DIRNAME, 'schema/generated', 'typings.ts'),

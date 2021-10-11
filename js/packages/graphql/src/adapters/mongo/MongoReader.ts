@@ -1,9 +1,9 @@
 import { Db, ObjectId } from 'mongodb';
-import { Reader } from '../../reader';
+import { IReader, ReaderBase } from '../../reader';
 import { Connection } from '@solana/web3.js';
 import { MetaMap } from '../../common';
 
-export class MongoReader extends Reader {
+export class MongoReader extends ReaderBase implements IReader {
   private db!: Db;
 
   constructor(

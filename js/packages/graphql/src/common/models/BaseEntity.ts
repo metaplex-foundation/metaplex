@@ -2,7 +2,6 @@ import { deserializeUnchecked } from 'borsh';
 import { ObjectId } from 'mongodb';
 import { JsonProperty, Serializable } from 'typescript-json-serializer';
 import { ObjectIdConverter } from './serialize';
-import { StringPublicKey } from '../utils';
 
 export function decodeEntity<T>(
   type: { new (args: any): T },
@@ -20,6 +19,11 @@ export class BaseEntity {
   @JsonProperty(ObjectIdConverter)
   _id!: ObjectId;
 
-  @JsonProperty()
-  pubkey: StringPublicKey = '';
+  get pubkey() {
+    return this._id?.toString();
+  }
+
+  set pubkey(val) {
+    this._id = new ObjectId(val);
+  }
 }
