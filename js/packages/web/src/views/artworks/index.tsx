@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { ArtCard } from '../../components/ArtCard';
-import { Layout, Row, Col, Tabs } from 'antd';
+import { Layout, Row, Col, Tabs, Spin, Button } from 'antd';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { useMeta } from '../../contexts';
+import { loadMetaDataAndEditionsForCreators, useConnection } from '@oyster/common';
 import { CardLoader } from '../../components/MyLoader';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { LoadingOutlined } from '@ant-design/icons';
+
 
 const { TabPane } = Tabs;
 
@@ -21,8 +24,10 @@ export enum ArtworkViewState {
 export const ArtworksView = () => {
   const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
+  const [loadingArt, setLoadingArt] = useState(true);
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata, isLoading } = useMeta();
+  const { metadata, whitelistedCreatorsByCreator, patchState } = useMeta();
+  const connection = useConnection();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,
@@ -35,8 +40,8 @@ export const ArtworksView = () => {
     activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
       : activeKey === ArtworkViewState.Created
-      ? createdMetadata
-      : metadata;
+        ? createdMetadata
+        : metadata;
 
   useEffect(() => {
     if (connected) {
@@ -46,28 +51,35 @@ export const ArtworksView = () => {
     }
   }, [connected, setActiveKey]);
 
+  useEffect(() => {
+    (async () => {
+      const metadataState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
+
+      patchState(metadataState);
+      setLoadingArt(false);
+    })()
+  }, [connection])
+
   const artworkGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {!isLoading
-        ? items.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard
-                  key={id}
-                  pubkey={m.pubkey}
-                  preview={false}
-                  height={250}
-                  width={250}
-                />
-              </Link>
-            );
-          })
-        : []}
+      {items.map((m, idx) => {
+        const id = m.pubkey;
+        return (
+          <Link to={`/art/${id}`} key={idx}>
+            <ArtCard
+              key={id}
+              pubkey={m.pubkey}
+              preview={false}
+              height={250}
+              width={250}
+            />
+          </Link>
+        );
+      })}
     </Masonry>
   );
 
@@ -75,34 +87,51 @@ export const ArtworksView = () => {
     <Layout style={{ margin: 0, marginTop: 30 }}>
       <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
         <Col style={{ width: '100%', marginTop: 10 }}>
-          <Row>
-            <Tabs
-              activeKey={activeKey}
-              onTabClick={key => setActiveKey(key as ArtworkViewState)}
-            >
-              <TabPane
-                tab={<span className="tab-title">All</span>}
-                key={ArtworkViewState.Metaplex}
-              >
-                {artworkGrid}
-              </TabPane>
-              {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Owned</span>}
-                  key={ArtworkViewState.Owned}
+          <Row justify="end">
+            {loadingArt ? (
+              <div className="app-section--loading">
+                <Spin indicator={<LoadingOutlined />} />
+              </div>
+            ) : (
+              <>
+                <Tabs
+                  activeKey={activeKey}
+                  onTabClick={key => setActiveKey(key as ArtworkViewState)}
+                  tabBarExtraContent={{
+                    right: (
+                      <Link to={`/auction/create/0`}>
+                        <Button className="connector" size="large" type="primary">
+                          Sell
+                        </Button>
+                      </Link>
+                    )
+                  }}
                 >
-                  {artworkGrid}
-                </TabPane>
-              )}
-              {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Created</span>}
-                  key={ArtworkViewState.Created}
-                >
-                  {artworkGrid}
-                </TabPane>
-              )}
-            </Tabs>
+                  <TabPane
+                    tab={<span className="tab-title">All</span>}
+                    key={ArtworkViewState.Metaplex}
+                  >
+                    {artworkGrid}
+                  </TabPane>
+                  {connected && (
+                    <TabPane
+                      tab={<span className="tab-title">Owned</span>}
+                      key={ArtworkViewState.Owned}
+                    >
+                      {artworkGrid}
+                    </TabPane>
+                  )}
+                  {connected && (
+                    <TabPane
+                      tab={<span className="tab-title">Created</span>}
+                      key={ArtworkViewState.Created}
+                    >
+                      {artworkGrid}
+                    </TabPane>
+                  )}
+                </Tabs>
+              </>
+            )}
           </Row>
         </Col>
       </Content>

@@ -32,11 +32,6 @@ const UserActions = () => {
               <Button className="app-btn">Create</Button>
             </Link>
           ) : null}
-          <Link to={`/auction/create/0`}>
-            <Button className="connector" type="primary">
-              Sell
-            </Button>
-          </Link>
         </>
       )}
     </>
@@ -53,11 +48,11 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
       }}
     >
       <Link to={`/`}>
-        <Button className="app-btn">Explore</Button>
+        <Button className="app-btn">Listings</Button>
       </Link>
       <Link to={`/artworks`}>
         <Button className="app-btn">
-          {connected ? 'My Items' : 'Artworks'}
+          Artworks
         </Button>
       </Link>
       <Link to={`/artists`}>

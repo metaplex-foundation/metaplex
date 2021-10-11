@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Layout, Spin, Button, Table } from 'antd';
+import { Row, Col, Layout, Spin, Button, Table, Typography, Space } from 'antd';
 import {
   useArt,
   useAuction,
@@ -39,6 +39,7 @@ import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
 import { LoadingOutlined } from '@ant-design/icons';
 const { Content } = Layout;
+const { Text } = Typography;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
@@ -158,8 +159,8 @@ function usePayoutTickets(
         const creators = item.metadata?.info?.data?.creators || [];
         const recipientAddresses = creators
           ? creators
-              .map(c => c.address)
-              .concat([auctionView.auctionManager.authority])
+            .map(c => c.address)
+            .concat([auctionView.auctionManager.authority])
           : [auctionView.auctionManager.authority];
 
         for (let k = 0; k < recipientAddresses.length; k++) {
@@ -342,12 +343,12 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     metadata: ParsedAccount<BidderMetadata>;
     pot: ParsedAccount<BidderPot>;
   }[] = [
-    ...winnersThatCanBeEmptied.map(pot => ({
-      metadata:
-        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
-      pot,
-    })),
-  ];
+      ...winnersThatCanBeEmptied.map(pot => ({
+        metadata:
+          bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
+        pot,
+      })),
+    ];
 
   return {
     bidsToClaim,
@@ -373,6 +374,7 @@ export const InnerBillingView = ({
 }) => {
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
+  const [settleErrorMessage, setSettleErrorMessage] = useState<string>();
   const balance = useUserBalance(auctionView.auction.info.tokenMint);
   const [escrowBalance, setEscrowBalance] = useState<number | undefined>();
   const { whitelistedCreatorsByCreator } = useMeta();
@@ -418,7 +420,9 @@ export const InnerBillingView = ({
             />
           </Col>
           <Col span={12}>
-            <div style={{ fontWeight: 700 }}>{art.title}</div>
+            <h1>
+              {art.title}
+            </h1>
             <br />
             <div className="info-header">TOTAL AUCTION VALUE</div>
             <div className="escrow">
@@ -434,8 +438,8 @@ export const InnerBillingView = ({
               ◎
               {fromLamports(
                 totalWinnerPayments +
-                  participationPossibleTotal -
-                  participationUnredeemedTotal,
+                participationPossibleTotal -
+                participationUnredeemedTotal,
                 mint,
               )}
             </div>
@@ -488,51 +492,63 @@ export const InnerBillingView = ({
               size="large"
               className="action-btn"
               onClick={async () => {
-                await settle(
-                  connection,
-                  wallet,
-                  auctionView,
-                  bidsToClaim.map(b => b.pot),
-                  myPayingAccount.pubkey,
-                  accountByMint,
-                );
-                setEscrowBalanceRefreshCounter(ctr => ctr + 1);
+                try {
+                  await settle(
+                    connection,
+                    wallet,
+                    auctionView,
+                    bidsToClaim.map(b => b.pot),
+                    myPayingAccount.pubkey,
+                    accountByMint,
+                  );
+                  setEscrowBalanceRefreshCounter(ctr => ctr + 1);
+                  setSettleErrorMessage(undefined);
+                } catch (e: any) {
+                  setSettleErrorMessage(e.message)
+                }
               }}
             >
               SETTLE OUTSTANDING
             </Button>
+            {settleErrorMessage && (
+              <Space direction="horizontal" size="small">
+                <Text type="danger">***</Text>
+                <Text>{settleErrorMessage}</Text>
+              </Space>
+            )}
           </Col>
         </Row>
         <Row>
-          <Table
-            style={{ width: '100%' }}
-            columns={[
-              {
-                title: 'Name',
-                dataIndex: 'name',
-                key: 'name',
-              },
-              {
-                title: 'Address',
-                dataIndex: 'address',
-                key: 'address',
-              },
-              {
-                title: 'Amount Paid',
-                dataIndex: 'amountPaid',
-                render: (val: number) => (
-                  <span>◎{fromLamports(val, mint)}</span>
-                ),
-                key: 'amountPaid',
-              },
-            ]}
-            dataSource={Object.keys(payoutTickets).map(t => ({
-              key: t,
-              name: whitelistedCreatorsByCreator[t]?.info?.name || 'N/A',
-              address: t,
-              amountPaid: payoutTickets[t].sum,
-            }))}
-          />
+          <Col span={24}>
+            <Table
+              columns={[
+                {
+                  title: 'Name',
+                  dataIndex: 'name',
+                  key: 'name',
+                },
+                {
+                  title: 'Address',
+                  dataIndex: 'address',
+                  key: 'address',
+                },
+                {
+                  title: 'Amount Paid',
+                  dataIndex: 'amountPaid',
+                  render: (val: number) => (
+                    <span>◎{fromLamports(val, mint)}</span>
+                  ),
+                  key: 'amountPaid',
+                },
+              ]}
+              dataSource={Object.keys(payoutTickets).map(t => ({
+                key: t,
+                name: whitelistedCreatorsByCreator[t]?.info?.name || 'N/A',
+                address: t,
+                amountPaid: payoutTickets[t].sum,
+              }))}
+            />
+          </Col>
         </Row>
       </Col>
     </Content>

@@ -20,14 +20,13 @@ interface ProvidersProps {
 export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
   return (
     <ConnectionProvider>
-      <WalletProvider>
-        <AccountsProvider>
-          <CoingeckoProvider>
-            <StoreProvider
-              storefront={storefront}
-
-              storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
-            >
+      <StoreProvider
+        storefront={storefront}
+        storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
+      >
+        <WalletProvider>
+          <AccountsProvider>
+            <CoingeckoProvider>
               <MetaProvider>
                 <LoaderProvider>
                   <ConfettiProvider>
@@ -35,10 +34,10 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
                   </ConfettiProvider>
                 </LoaderProvider>
               </MetaProvider>
-            </StoreProvider>
-          </CoingeckoProvider>
-        </AccountsProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+            </CoingeckoProvider>
+          </AccountsProvider>
+        </WalletProvider>
+      </StoreProvider>
+    </ConnectionProvider >
   );
 };

@@ -86,5 +86,6 @@ export const useUserArts = (): SafetyDepositDraft[] => {
     i++;
   });
 
+
   return safetyDeposits;
 };

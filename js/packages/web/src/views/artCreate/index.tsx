@@ -1167,8 +1167,7 @@ const WaitingStep = (props: {
         alignItems: 'center',
       }}
     >
-      <Spin size="large" />
-      <Card>
+      <Card hoverable={false}>
         <Steps direction="vertical" current={props.step}>
           <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
           <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
