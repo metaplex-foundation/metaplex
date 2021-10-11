@@ -1,6 +1,6 @@
 import { DataSource, DataSourceConfig } from 'apollo-datasource';
 import logger from '../logger';
-import { ReadAdapter } from '../reader';
+import { IDataAdapter } from '../adapters/IDataAdapter';
 import { Context } from '../types/context';
 import { getDefaultEndpointName } from '../utils/getEndpoints';
 import { Resolver } from './Resolver';
@@ -8,7 +8,7 @@ import { Resolver } from './Resolver';
 export class MetaplexDataSource<
   TContext extends Context = Context,
 > extends DataSource<TContext> {
-  constructor(private readonly adapter: ReadAdapter) {
+  constructor(private readonly adapter: IDataAdapter<any, any>) {
     super();
   }
 
@@ -28,7 +28,6 @@ export class MetaplexDataSource<
 
   // implementation for DataSource of apollo-datasource
   async initialize({ context }: DataSourceConfig<TContext>) {
-    await this.adapter.init();
     this.initContext(context);
   }
 }

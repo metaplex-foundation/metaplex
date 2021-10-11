@@ -43,10 +43,11 @@ export abstract class Reader {
   abstract creatorsCount(): Promise<number>;
   abstract artworksCount(): Promise<number>;
   abstract auctionsCount(): Promise<number>;
-
+  abstract getStoreIds(): Promise<string[]>;
   abstract getStores(): Promise<Store[]>;
   abstract getStore(storeId: string): Promise<Store | null>;
 
+  abstract getCreatorIds(): Promise<string[]>;
   abstract getCreators(storeId: string): Promise<WhitelistedCreator[]>;
   abstract getCreator(
     storeId: string,

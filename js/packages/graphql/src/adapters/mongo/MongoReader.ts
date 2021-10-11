@@ -1,18 +1,20 @@
-import { Db } from "mongodb";
-import { Reader } from "../../reader";
-import { createConnection } from "../../utils/createConnection";
-import { connectionString } from "./constants";
-import { createOrm } from "./createOrm";
+import { Db } from 'mongodb';
+import { Reader } from '../../reader';
+import { Connection } from '@solana/web3.js';
 
 export class MongoReader extends Reader {
   private db!: Db;
 
-  constructor(public networkName: string, endpoint: string) {
-    super(createConnection(endpoint, "recent"));
+  constructor(
+    public networkName: string,
+    connection: Connection,
+    private initOrm: () => Promise<Db>,
+  ) {
+    super(connection);
   }
 
   async init() {
-    this.db = await createOrm(connectionString, `metaplex-${this.networkName}`);
+    this.db = await this.initOrm();
   }
 
   async storesCount() {
@@ -28,11 +30,19 @@ export class MongoReader extends Reader {
     return 0;
   }
 
+  async getStoreIds(): Promise<string[]> {
+    return [];
+  }
+
   async getStores() {
     return [];
   }
   async getStore() {
     return null;
+  }
+
+  async getCreatorIds(): Promise<string[]> {
+    return [];
   }
 
   async getCreators() {

@@ -58,7 +58,7 @@ export class SafetyDepositConfig extends BaseEntity {
     super();
 
     if (args) {
-      this.pubkey = args.pubkey;
+      this.pubkey = args.pubkey ?? '';
       if (args.directArgs) {
         Object.assign(this, args.directArgs);
       } else if (args.data) {

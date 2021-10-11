@@ -31,7 +31,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
       isBidRedemptionTicketV1Account(account) ||
       isBidRedemptionTicketV2Account(account)
     ) {
-      const ticket = decodeBidRedemptionTicket(account.data);
+      const ticket = decodeBidRedemptionTicket(account.data, pubkey);
       await setter('bidRedemptions', pubkey, ticket);
     }
 

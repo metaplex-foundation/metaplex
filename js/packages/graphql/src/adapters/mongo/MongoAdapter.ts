@@ -1,16 +1,64 @@
-import { ReadAdapter } from "../../reader";
-import { getEndpoints } from "../../utils/getEndpoints";
-import { MongoReader } from "./MongoReader";
+import { IDataAdapter } from '../IDataAdapter';
+import { MongoReader } from './MongoReader';
+import { MongoWriter } from './MongoWriter';
+import { createConnection } from '../../utils/createConnection';
+import { Connection } from '@solana/web3.js';
 
-export class MongoAdapter extends ReadAdapter {
-  readonly readers: MongoReader[] = [];
+import { createOrm } from './createOrm';
+import { Db } from 'mongodb';
+import { getEndpoints } from '../../utils/getEndpoints';
 
-  async init() {
-    const endpoints = getEndpoints();
-    for (const endpoint of endpoints) {
-      const reader = new MongoReader(endpoint.name, endpoint.endpoint);
-      await reader.init();
-      this.readers.push(reader);
+export class MongoAdapter implements IDataAdapter<MongoWriter, MongoReader> {
+  constructor(
+    public readonly endpoints = getEndpoints(),
+    private connectionString = process.env.MONGO_DB ||
+      'mongodb://127.0.0.1:27017/?readPreference=primary&directConnection=true&ssl=false',
+  ) {}
+
+  private readonly container = new Map<
+    string,
+    readonly [MongoReader, MongoWriter, Connection]
+  >();
+
+  private getBox(
+    network: string,
+  ): readonly [MongoReader, MongoWriter, Connection] {
+    if (this.container.has(network)) {
+      return this.container.get(network)!;
     }
+    const entry = this.endpoints.find(p => p.name === network)!;
+    const connection = createConnection(entry.endpoint, 'recent');
+
+    let db: Db | undefined;
+    const init = async () => {
+      if (db) {
+        return db;
+      }
+      db = await createOrm(this.connectionString, `metaplex-${network}`);
+      return db;
+    };
+
+    const writer = new MongoWriter(network, init);
+    const reader = new MongoReader(network, connection, init);
+    const box = [reader, writer, connection] as const;
+    this.container.set(network, box);
+    return box;
+  }
+
+  async init(network: string) {
+    const [reader, writer] = this.getBox(network);
+    await Promise.all([reader.init(), writer.init()]);
+  }
+
+  getReader(network: string): MongoReader {
+    return this.getBox(network)[0];
+  }
+
+  getWriter(network: string): MongoWriter {
+    return this.getBox(network)[1];
+  }
+
+  getConnection(network: string): Connection {
+    return this.getBox(network)[2];
   }
 }

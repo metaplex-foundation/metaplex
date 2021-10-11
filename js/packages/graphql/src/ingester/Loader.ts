@@ -4,33 +4,62 @@ import {
   AccountAndPubkey,
   extendBorsh,
   getProgramAccounts,
+  isCreatorPartOfTheStore,
   pubkeyToString,
   PublicKeyStringAndAccount,
+  Store,
   toPublicKey,
+  WhitelistedCreator,
 } from '../common';
 import logger from '../logger';
-import { createConnection } from '../utils/createConnection';
+import { IDataAdapter } from '../adapters/IDataAdapter';
 import { createPipelineExecutor } from '../utils/createPipelineExecutor';
 import { PROGRAMS } from './constants';
-import { ProgramParse, WriterAdapter } from './types';
+import { ProgramParse, IWriter } from './types';
+import { Reader } from '../reader';
 
 extendBorsh(); // it's need for proper work of decoding
-export class Loader<T extends WriterAdapter = WriterAdapter> {
+export class Loader<TW extends IWriter = IWriter> {
   readonly connection: Connection;
   private defer: Promise<void> | undefined;
   private readonly changesQueue = queue({ autostart: false, concurrency: 1 });
 
+  private readonly cache = {
+    creators: new Map<string, WhitelistedCreator>(),
+    stores: new Map<string, Store>(),
+  } as const;
+
+  private readonly writerAdapter: IWriter = {
+    networkName: this.networkName,
+    flush: () => this.writer.flush(),
+    init: () => this.writer.init(),
+    listenModeOn: () => this.writer.listenModeOn(),
+    persist: (prop, key, value) => {
+      const kprop = prop as keyof typeof this.cache;
+      if (this.cache[kprop]) {
+        this.cache[kprop].set(key, value as any);
+        return Promise.resolve();
+      } else {
+        return this.writer.persist(prop, key, value);
+      }
+    },
+  };
+
+  private readonly writer: TW;
+  private readonly reader: Reader;
+
   constructor(
     public readonly networkName: string,
-    endpoint: string,
-    public readonly writer: T,
+    readonly adapter: IDataAdapter<TW, Reader>,
   ) {
-    this.connection = createConnection(endpoint, 'recent');
+    this.connection = adapter.getConnection(networkName);
+    this.writer = adapter.getWriter(networkName);
+    this.reader = adapter.getReader(networkName);
   }
 
   readonly programs: ProgramParse[] = PROGRAMS.map(({ pubkey, process }) => ({
     pubkey,
-    process: account => process(account, this.writer.persist),
+    process: account => process(account, this.writerAdapter.persist),
   }));
 
   async load() {
@@ -44,7 +73,7 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
     try {
       await this.loadAndProcessData();
       // process emitted messages
-      this.writer.listenModeOn();
+      this.writerAdapter.listenModeOn();
       this.changesQueue.autostart = true;
       this.changesQueue.start();
     } catch (e) {
@@ -91,9 +120,48 @@ export class Loader<T extends WriterAdapter = WriterAdapter> {
     await createPipelineExecutor(accounts.values(), program.process, {
       jobsCount: 2,
       sequence: 1000,
-      delay: () => this.writer.flush(),
+      delay: () => this.writerAdapter.flush(),
     });
-    await this.writer.flush();
+
+    if (this.cache.creators.size || this.cache.stores.size) {
+      logger.info('⛏ linkd creators & stores');
+
+      await Promise.all([
+        this.reader
+          .getCreatorIds()
+          .then(ids => ids.forEach(id => this.cache.creators.delete(id))),
+        this.reader
+          .getStoreIds()
+          .then(ids => ids.forEach(id => this.cache.stores.delete(id))),
+      ]);
+
+      for (const [creatorId, creator] of this.cache.creators.entries()) {
+        await createPipelineExecutor(
+          this.cache.stores.entries(),
+          async ([storeId, store]) => {
+            const isPart = await isCreatorPartOfTheStore(
+              creator.address,
+              creator.pubkey,
+              storeId,
+            );
+            if (isPart) {
+              store.creatorIds.push(creatorId);
+              creator.storeIds.push(storeId);
+            }
+          },
+          {},
+        );
+        this.writer.persist('creators', creatorId, creator);
+      }
+      this.cache.creators.clear();
+      await this.writerAdapter.flush();
+      this.cache.stores.forEach((store, storeId) => {
+        this.writer.persist('stores', storeId, store);
+      });
+      this.cache.stores.clear();
+    }
+
+    await this.writerAdapter.flush();
     logger.info(
       `⛏ ${this.networkName} - accounts processed for ${program.pubkey}`,
     );

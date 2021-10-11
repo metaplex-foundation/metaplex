@@ -27,6 +27,9 @@ export class WhitelistedCreator extends BaseEntity {
   @JsonProperty()
   description?: string;
 
+  @JsonProperty()
+  storeIds: StringPublicKey[] = [];
+
   constructor(args?: { address: string; activated: boolean }) {
     super();
 

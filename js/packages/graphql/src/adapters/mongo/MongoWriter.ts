@@ -1,19 +1,17 @@
-import { AnyBulkWriteOperation, Db } from "mongodb";
-import { serialize } from "typescript-json-serializer";
-import { MetaTypes, UpdateStateValueFunc } from "../../common";
-import { WriterAdapter } from "../../ingester/";
-import logger from "../../logger";
-import { connectionString } from "./constants";
-import { createOrm } from "./createOrm";
+import { AnyBulkWriteOperation, Db } from 'mongodb';
+import { serialize } from 'typescript-json-serializer';
+import { MetaTypes, UpdateStateValueFunc } from '../../common';
+import { IWriter } from '../../ingester';
+import logger from '../../logger';
 
-export class MongoWriter implements WriterAdapter {
+export class MongoWriter implements IWriter {
   private db!: Db;
   private cache: Partial<Record<MetaTypes, AnyBulkWriteOperation[]>> = {};
 
-  constructor(public networkName: string) {}
+  constructor(public networkName: string, private initOrm: () => Promise<Db>) {}
 
   async init() {
-    this.db = await createOrm(connectionString, `metaplex-${this.networkName}`);
+    this.db = await this.initOrm();
   }
 
   listenModeOn() {}

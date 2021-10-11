@@ -23,6 +23,9 @@ export class Store extends BaseEntity {
   @JsonProperty()
   tokenProgram!: StringPublicKey;
 
+  @JsonProperty()
+  creatorIds: StringPublicKey[] = [];
+
   constructor(args?: {
     public: boolean;
     auctionProgram: StringPublicKey;

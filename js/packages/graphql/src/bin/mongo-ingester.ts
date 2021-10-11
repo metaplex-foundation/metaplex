@@ -1,10 +1,10 @@
-import { config } from "dotenv";
-import { MongoWriter } from "../adapters/mongo";
-import { Ingester } from "../ingester";
+import { config } from 'dotenv';
+import { MongoAdapter } from '../adapters/mongo';
+import { Ingester } from '../ingester';
 
 const main = async () => {
-  const ingester = new Ingester(MongoWriter);
-
+  const adapter = new MongoAdapter();
+  const ingester = new Ingester(adapter, adapter.endpoints);
   ingester.load();
 };
 

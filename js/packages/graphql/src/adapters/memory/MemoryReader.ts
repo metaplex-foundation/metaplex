@@ -42,6 +42,10 @@ export class MemoryReader extends Reader {
     return this.state.auctions.size;
   }
 
+  async getStoreIds(): Promise<string[]> {
+    return Array.from(this.state.stores.keys());
+  }
+
   async getStores() {
     const { stores } = this.state;
     return Array.from(stores.values());
@@ -51,6 +55,10 @@ export class MemoryReader extends Reader {
     const { stores } = this.state;
     const store = stores.get(storeId);
     return store || null;
+  }
+
+  async getCreatorIds(): Promise<string[]> {
+    return Array.from(this.state.creators.keys());
   }
 
   async getCreators(storeId: string) {

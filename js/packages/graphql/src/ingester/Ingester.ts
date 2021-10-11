@@ -1,32 +1,33 @@
-import { WriterAdapter, WriterConstructor } from "../ingester";
-import { getEndpoints } from "../utils/getEndpoints";
-import { Loader } from "./Loader";
-import { wrapLoaderConnection } from "./snapshot";
+import { IDataAdapter } from '../adapters/IDataAdapter';
+import { EndpointsMap, IWriter } from '../ingester';
+import { Reader } from '../reader';
+import { Loader } from './Loader';
+import { wrapLoaderConnection } from './snapshot';
 
-export class Ingester<T extends WriterAdapter = WriterAdapter> {
+export class Ingester<T extends IWriter = IWriter> {
   private readonly entries: Loader<T>[] = [];
-  private readonly endpoints = getEndpoints();
 
-  constructor(private Writer: WriterConstructor<T>) {}
+  constructor(
+    private readonly adapter: IDataAdapter<T, Reader>,
+    private readonly endpoints: EndpointsMap,
+  ) {}
 
   async init() {
-    const { Writer, endpoints, entries } = this;
+    const { endpoints, entries } = this;
     if (entries.length) {
       return this.entries;
     }
 
-    entries.push(
-      ...(await Promise.all(
-        endpoints.map(async ({ name, endpoint }) => {
-          const writer = new Writer(name);
-          await writer.init();
-          const loader = new Loader(name, endpoint, writer);
-          wrapLoaderConnection(loader);
-          return loader;
-        })
-      ))
+    const list = await Promise.all(
+      endpoints.map(async ({ name }) => {
+        await this.adapter.init(name);
+        const loader = new Loader(name, this.adapter);
+        wrapLoaderConnection(loader);
+        return loader;
+      }),
     );
 
+    entries.push(...list);
     return entries;
   }
 

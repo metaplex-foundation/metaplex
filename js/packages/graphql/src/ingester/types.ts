@@ -2,7 +2,7 @@ import {
   ProcessAccountsFunc,
   StringPublicKey,
   UpdateStateValueFunc,
-} from "../common";
+} from '../common';
 
 export type EndpointsMap = {
   name: string;
@@ -19,11 +19,7 @@ export type ProgramParse = {
   process: (account: Parameters<ProcessAccountsFunc>[0]) => Promise<void>;
 };
 
-export interface WriterConstructor<T extends WriterAdapter = WriterAdapter> {
-  new (name: string): T;
-}
-
-export interface WriterAdapter {
+export interface IWriter {
   networkName: string;
   init(): Promise<void>;
   listenModeOn(): void;
