@@ -1,0 +1,33 @@
+[package]
+name = "cli"
+authors = ["calebeverett <caleb@calebeverett.io>"]
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/CalebEverett/solana-program-library"
+
+# Comment out the tokens for name and authors and uncomment the dummy ones to get
+# rustanalyzer to work while editing code.
+#
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+borsh = "0.9.1"
+clap = "2.33.3"
+console = "0.14.1"
+indicatif = "0.16.2"
+serde = "1.0.130"
+serde_derive = "1.0.130"
+serde_json = "1.0.68"
+solana-account-decoder = "1.7.11"
+solana-clap-utils = "1.7.11"
+solana-cli-config = "1.7.11"
+solana-cli-output = "1.7.11"
+solana-client = "1.7.11"
+solana-remote-wallet = "1.7.11"
+solana-logger = "1.7.11"
+solana-sdk = "1.7.11"
+spl-token = { version = "3.2", features = [ "no-entrypoint" ] }
+spl-memo = { version = "3.0.1", features = ["no-entrypoint"] }
+spl-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
+
