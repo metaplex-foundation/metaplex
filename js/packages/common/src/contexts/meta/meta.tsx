@@ -1,25 +1,19 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
-  limitedLoadAccounts,
   loadAccounts,
-  USE_SPEED_RUN,
 } from './loadAccounts';
 import { Spin, Space } from 'antd';
-import { merge } from 'lodash'
+import { merge, uniqWith } from 'lodash'
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
   isLoading: false,
-  // @ts-ignore
-  update: () => [AuctionData, BidderMetadata, BidderPot],
   patchState: () => {
     throw new Error('unreachable');
   },
@@ -31,81 +25,59 @@ export function MetaProvider({ children = null as any }) {
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
+  const { whitelistedCreatorsByCreator } = state;
+
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateMints = useCallback(
-    async metadataByMint => {
-      try {
-        const { metadata, mintToMetadata } = await queryExtendedMetadata(
-          connection,
-          metadataByMint,
-        );
-        setState(current => ({
-          ...current,
-          metadata,
-          metadataByMint: mintToMetadata,
-        }));
-      } catch (er) {
-        console.error(er);
-      }
-    },
-    [setState],
-  );
-
-  async function update(auctionAddress?: any, bidderAddress?: any) {
-    if (!storeAddress) {
-      if (isReady) {
-        setIsLoading(false);
-      }
-      return;
-    } else if (!state.store) {
-      setIsLoading(true);
-    }
-
-    console.log('-----> Query started');
-
-    const nextState = !USE_SPEED_RUN
-      ? await loadAccounts(connection)
-      : await limitedLoadAccounts(connection);
-
-    console.log('------->Query finished');
-
-    setState(nextState);
-
-    setIsLoading(false);
-    console.log('------->set finished');
-
-    await updateMints(nextState.metadataByMint);
-
-    if (auctionAddress && bidderAddress) {
-      const auctionBidderKey = auctionAddress + '-' + bidderAddress;
-      return [
-        nextState.auctions[auctionAddress],
-        nextState.bidderPotsByAuctionAndBidder[auctionBidderKey],
-        nextState.bidderMetadataByAuctionAndBidder[auctionBidderKey],
-      ];
-    }
-  }
-
   const patchState: MetaContextState['patchState'] = temp => {
-    const newState = merge({}, state, temp);
-    newState.store = temp.store ?? state.store;
-    setState(newState);
+    setState(current => {
+      const newState = merge({}, current, temp);
 
-    return newState;
+      newState.store = temp.store ?? current.store;
+  
+      const currentMetdata = current.metadata ?? [];
+      const nextMetadata = temp.metadata ?? [];
+      newState.metadata = uniqWith(
+        [...currentMetdata, ...nextMetadata],
+        (a, b) => a.pubkey === b.pubkey
+      );
+        
+      return newState
+    })
   };
 
   useEffect(() => {
-    update();
-  }, [connection, setState, updateMints, storeAddress, isReady]);
+    (async () => {
+      if (!storeAddress || !ownerAddress) {
+        if (isReady) {
+          setIsLoading(false);
+        }
+        return;
+      } else if (!state.store) {
+        setIsLoading(true);
+      }
+  
+      console.log('-----> Query started');
+  
+      const nextState = await loadAccounts(connection, ownerAddress)
+  
+      console.log('------->Query finished');
+  
+      setState(nextState);
+  
+      setIsLoading(false);
+      console.log('------->set finished');
+  
+    })()
+  }, [storeAddress, isReady, ownerAddress]);
 
   useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading]);
+    return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
+  }, [isLoading]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
@@ -139,8 +111,6 @@ export function MetaProvider({ children = null as any }) {
     <MetaContext.Provider
       value={{
         ...state,
-        // @ts-ignore
-        update,
         patchState,
         isLoading,
       }}

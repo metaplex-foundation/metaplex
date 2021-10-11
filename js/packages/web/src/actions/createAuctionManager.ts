@@ -118,6 +118,7 @@ export async function createAuctionManager(
     AccountLayout.span,
   );
 
+
   const {
     externalPriceAccount,
     priceMint,

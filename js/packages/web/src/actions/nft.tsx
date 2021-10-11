@@ -236,7 +236,10 @@ export const mintNFT = async (
   data.append('tags', JSON.stringify(tags));
   realFiles.map(f => data.append('file[]', f));
 
+  // TODO: convert to absolute file name for image
+
   const result: IArweaveResult = await uploadToArweave(data);
+  progressCallback(6)
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -14,7 +14,7 @@ import { useParams } from 'react-router-dom';
 import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
-import { shortenAddress, useConnection } from '@oyster/common';
+import { shortenAddress, useConnection, loadArtwork, useMeta } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
@@ -27,10 +27,12 @@ const { Content } = Layout;
 export const ArtView = () => {
   const { id } = useParams<{ id: string }>();
   const wallet = useWallet();
+  const { patchState, whitelistedCreatorsByCreator, isLoading } = useMeta()
   const [remountArtMinting, setRemountArtMinting] = useState(0);
 
   const connection = useConnection();
   const art = useArt(id);
+  
   let badge = '';
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
@@ -40,6 +42,14 @@ export const ArtView = () => {
     badge = `${art.edition} of ${art.supply}`;
   }
   const { ref, data } = useExtendedArt(id);
+
+  useEffect(() => {
+    (async () => {
+      const artState = await loadArtwork(connection, whitelistedCreatorsByCreator, id);
+
+      patchState(artState);
+    })()
+  }, [connection])
 
   // const { userAccounts } = useUserAccounts();
 

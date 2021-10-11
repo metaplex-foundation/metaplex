@@ -12,6 +12,7 @@ import {
   findProgramAddress,
   toPublicKey,
   WalletSigner,
+  querySafetyDepositBoxByVault,
 } from '@oyster/common';
 
 import BN from 'bn.js';
@@ -25,10 +26,6 @@ export async function unwindVault(
   connection: Connection,
   wallet: WalletSigner,
   vault: ParsedAccount<Vault>,
-  safetyDepositBoxesByVaultAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -39,6 +36,9 @@ export async function unwindVault(
 
   let currSigners: Keypair[] = [];
   let currInstructions: TransactionInstruction[] = [];
+
+  const { safetyDepositBoxesByVaultAndIndex } =
+    await querySafetyDepositBoxByVault(connection, vault.pubkey);
 
   if (vault.info.state === VaultState.Inactive) {
     console.log('Vault is inactive, combining');

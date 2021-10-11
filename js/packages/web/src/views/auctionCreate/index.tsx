@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Divider,
   Steps,
@@ -67,6 +67,12 @@ export enum AuctionCategory {
   Tiered,
 }
 
+enum InstantSaleType {
+  Limited,
+  Single,
+  Open,
+}
+
 interface TierDummyEntry {
   safetyDepositBoxIndex: number;
   amount: number;
@@ -123,6 +129,7 @@ export interface AuctionState {
   winnersCount: number;
 
   instantSalePrice?: number;
+  instantSaleType?: InstantSaleType;
 }
 
 export const AuctionCreateView = () => {
@@ -173,26 +180,47 @@ export const AuctionCreateView = () => {
 
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
-    if (attributes.category === AuctionCategory.InstantSale) {
-      if (attributes.items.length > 0) {
-        const item = attributes.items[0];
-        if (!attributes.editions) {
+    if (
+      attributes.category === AuctionCategory.InstantSale &&
+      attributes.instantSaleType === InstantSaleType.Open
+    ) {
+      const { items, instantSalePrice } = attributes;
+
+      if (items.length > 0 && items[0].participationConfig) {
+        items[0].participationConfig.fixedPrice = new BN(
+          toLamports(instantSalePrice, mint) || 0,
+        );
+      }
+
+      winnerLimit = new WinnerLimit({
+        type: WinnerLimitType.Unlimited,
+        usize: ZERO,
+      });
+    } else if (attributes.category === AuctionCategory.InstantSale) {
+      const { items, editions } = attributes;
+
+      if (items.length > 0) {
+        const item = items[0];
+
+        if (!editions) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
             (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
+
         item.amountRanges = [
           new AmountRange({
             amount: new BN(1),
-            length: new BN(attributes.editions || 1),
+            length: new BN(editions || 1),
           }),
         ];
       }
+
       winnerLimit = new WinnerLimit({
         type: WinnerLimitType.Capped,
-        usize: new BN(attributes.editions || 1),
+        usize: new BN(editions || 1),
       });
     } else if (attributes.category === AuctionCategory.Open) {
       if (
@@ -447,19 +475,25 @@ export const AuctionCreateView = () => {
       name: null,
     };
 
+    const isOpenEdition =
+      attributes.category === AuctionCategory.Open ||
+      attributes.instantSaleType === InstantSaleType.Open;
+    const safetyDepositDrafts = isOpenEdition
+      ? []
+      : attributes.category !== AuctionCategory.Tiered
+      ? attributes.items
+      : tieredAttributes.items;
+    const participationSafetyDepositDraft = isOpenEdition
+      ? attributes.items[0]
+      : attributes.participationNFT;
+
     const _auctionObj = await createAuctionManager(
       connection,
       wallet,
       whitelistedCreatorsByCreator,
       auctionSettings,
-      attributes.category === AuctionCategory.Open
-        ? []
-        : attributes.category !== AuctionCategory.Tiered
-        ? attributes.items
-        : tieredAttributes.items,
-      attributes.category === AuctionCategory.Open
-        ? attributes.items[0]
-        : attributes.participationNFT,
+      safetyDepositDrafts,
+      participationSafetyDepositDraft,
       QUOTE_MINT.toBase58(),
     );
     setAuctionObj(_auctionObj);
@@ -743,19 +777,28 @@ const CategoryStep = (props: {
   );
 };
 
-const InstantSaleStep = (props: {
+const InstantSaleStep = ({
+  attributes,
+  setAttributes,
+  confirm,
+}: {
   attributes: AuctionState;
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  const [copiesChecked, setCopiesChecked] = useState(false);
-  const copiesEnabled = React.useMemo(
-    () => !!props.attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
-    [props.attributes?.items?.[0]],
+  const copiesEnabled = useMemo(
+    () => !!attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
+    [attributes?.items?.[0]],
+  );
+  const artistFilter = useCallback(
+    (i: SafetyDepositDraft) =>
+      !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
+    [],
   );
 
-  let artistFilter = (i: SafetyDepositDraft) =>
-    !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
+  const isLimitedEdition =
+    attributes.instantSaleType === InstantSaleType.Limited;
+  const shouldRenderSelect = attributes.items.length > 0;
 
   return (
     <>
@@ -767,46 +810,63 @@ const InstantSaleStep = (props: {
         <Col xl={24}>
           <ArtSelector
             filter={artistFilter}
-            selected={props.attributes.items}
+            selected={attributes.items}
             setSelected={items => {
-              props.setAttributes({ ...props.attributes, items });
+              setAttributes({ ...attributes, items });
             }}
             allowMultiple={false}
           >
             Select NFT
           </ArtSelector>
 
-          <label className="action-field">
-            <Checkbox
-              defaultChecked={false}
-              checked={copiesChecked}
-              disabled={!copiesEnabled}
-              onChange={e => setCopiesChecked(e.target.checked)}
-            >
-              <span className="field-title">
-                Create copies of a Master Edition NFT?
-              </span>
-            </Checkbox>
-            {copiesChecked && copiesEnabled && (
-              <>
-                <span className="field-info">
-                  Each copy will be given unique edition number e.g. 1 of 30
-                </span>
-                <Input
-                  autoFocus
-                  className="input"
-                  placeholder="Enter number of copies sold"
-                  allowClear
-                  onChange={info =>
-                    props.setAttributes({
-                      ...props.attributes,
-                      editions: parseInt(info.target.value),
-                    })
-                  }
-                />
-              </>
-            )}
-          </label>
+          {shouldRenderSelect && (
+            <label className="action-field">
+              <Select
+                defaultValue={
+                  attributes.instantSaleType || InstantSaleType.Single
+                }
+                onChange={value =>
+                  setAttributes({
+                    ...attributes,
+                    instantSaleType: value,
+                  })
+                }
+              >
+                <Option value={InstantSaleType.Single}>
+                  Sell unique token
+                </Option>
+                {copiesEnabled && (
+                  <Option value={InstantSaleType.Limited}>
+                    Sell limited number of copies
+                  </Option>
+                )}
+                {!copiesEnabled && (
+                  <Option value={InstantSaleType.Open}>
+                    Sell unlimited number of copies
+                  </Option>
+                )}
+              </Select>
+              {isLimitedEdition && (
+                <>
+                  <span className="field-info">
+                    Each copy will be given unique edition number e.g. 1 of 30
+                  </span>
+                  <Input
+                    autoFocus
+                    className="input"
+                    placeholder="Enter number of copies sold"
+                    allowClear
+                    onChange={info =>
+                      setAttributes({
+                        ...attributes,
+                        editions: parseInt(info.target.value),
+                      })
+                    }
+                  />
+                </>
+              )}
+            </label>
+          )}
 
           <label className="action-field">
             <span className="field-title">Price</span>
@@ -822,8 +882,8 @@ const InstantSaleStep = (props: {
               prefix="◎"
               suffix="SOL"
               onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
+                setAttributes({
+                  ...attributes,
                   priceFloor: parseFloat(info.target.value),
                   instantSalePrice: parseFloat(info.target.value),
                 })
@@ -837,7 +897,7 @@ const InstantSaleStep = (props: {
           type="primary"
           size="large"
           onClick={() => {
-            props.confirm();
+            confirm();
           }}
           className="action-btn"
         >

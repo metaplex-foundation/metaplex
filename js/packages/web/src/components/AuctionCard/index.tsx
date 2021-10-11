@@ -22,6 +22,7 @@ import {
   useWalletModal,
   VaultState,
   loadMultipleAccounts,
+  BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -187,7 +188,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { patchState, update } = useMeta();
+  const { patchState } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -217,6 +218,8 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
+
+  const walletPublickKey = wallet?.publicKey?.toBase58();
 
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
@@ -251,32 +254,33 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== walletPublickKey;
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
-  // if instant sale auction bid and claimed hide buttons
-  const outstandingBid =
-    auctionView.myBidderPot && !auctionView.myBidRedemption;
-
-  // if (
-  //   (!outstandingBid &&
-  //     auctionView.isInstantSale &&
-  //     Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-  //     isAuctionManagerAuthorityNotWalletOwner &&
-  //     auctionView.auction.info.bidState.max.toNumber() === bids.length) ||
-  //   auctionView.vault.info.state === VaultState.Deactivated
-  // ) {
-  //   return <></>;
-  // }
-
-  //if instant sale auction bid and claimed hide buttons
-  if (
-    !outstandingBid &&
+  const isOpenEditionSale =
+    auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
+  const doesInstantSaleHasNoItems =
+    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+  
+  const myBidRedemption = auctionView.myBidRedemption;
+  const myBidderMetadata = auctionView.myBidderMetadata;
+  
+  const shouldHideInstantSale =
+    !isOpenEditionSale &&
     auctionView.isInstantSale &&
-    auctionView.myBidderPot?.info.emptied
-  ) {
+    isAuctionManagerAuthorityNotWalletOwner &&
+    doesInstantSaleHasNoItems;
+
+  const shouldHide = shouldHideInstantSale ||
+    (
+      auctionView.vault.info.state === VaultState.Deactivated &&
+      isBidderPotEmpty
+    );
+
+  if (shouldHide) {
     return <></>;
   }
 
@@ -388,7 +392,11 @@ export const AuctionCard = ({
               onClick={async () => {
                 setLoading(true);
                 try {
-                  await startAuctionManually(connection, wallet, auctionView);
+                  await startAuctionManually(
+                    connection,
+                    wallet,
+                    auctionView.auctionManager.instance,
+                  );
                 } catch (e) {
                   console.error(e);
                 }
@@ -594,7 +602,7 @@ export const AuctionCard = ({
                             'confirmed',
                           );
 
-                          const newState = patchState(patch);
+                          patchState(patch);
                           setShowBidModal(true);
                           setLoading(true);
 
@@ -602,13 +610,13 @@ export const AuctionCard = ({
                             const auctionKey = auctionView.auction.pubkey;
                             const auctionBidderKey = `${auctionKey}-${wallet.publicKey}`;
 
-                            auctionView.auction = newState.auctions[auctionKey];
+                            auctionView.auction = patch.auctions[auctionKey];
                             auctionView.myBidderPot =
-                              newState.bidderPotsByAuctionAndBidder[
+                              patch.bidderPotsByAuctionAndBidder[
                                 auctionBidderKey
                               ];
                             auctionView.myBidderMetadata =
-                              newState.bidderMetadataByAuctionAndBidder[
+                              patch.bidderMetadataByAuctionAndBidder[
                                 auctionBidderKey
                               ];
                           }
@@ -644,13 +652,6 @@ export const AuctionCard = ({
                     return;
                   }
 
-                  try {
-                    await update();
-                  } catch (e) {
-                    console.error('update (post-sendRedeemBid)', e);
-                    return;
-                  }
-
                   setShowRedeemedBidModal(true);
                 } finally {
                   setShowBidModal(false);
@@ -668,10 +669,6 @@ export const AuctionCard = ({
                   {!!gapTime && (
                     <div
                       className="info-content"
-                      style={{
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontSize: '0.9rem',
-                      }}
                     >
                       Bids placed in the last {gapTime} minutes will extend
                       bidding for another {gapTime} minutes beyond the point in
@@ -701,12 +698,6 @@ export const AuctionCard = ({
 
                   <div
                     className="amount-container"
-                    style={{
-                      width: '100%',
-                      background: '#242424',
-                      borderRadius: 14,
-                      color: 'rgba(0, 0, 0, 0.5)',
-                    }}
                   >
                     {!auctionView.isInstantSale && (
                       <InputNumber
@@ -715,7 +706,6 @@ export const AuctionCard = ({
                         value={value}
                         style={{
                           width: '100%',
-                          background: '#393939',
                           borderRadius: 16,
                         }}
                         onChange={setValue}
@@ -740,7 +730,7 @@ export const AuctionCard = ({
                         >
                           ◎ {formatAmount(balance.balance, 2)}{' '}
                           <span
-                            style={{ color: '#717171', paddingLeft: '5px' }}
+                            style={{ paddingLeft: '5px' }}
                           >
                             available
                           </span>
@@ -750,7 +740,6 @@ export const AuctionCard = ({
                           style={{
                             float: 'right',
                             margin: '5px 20px',
-                            color: '#5870EE',
                           }}
                         >
                           Add funds
