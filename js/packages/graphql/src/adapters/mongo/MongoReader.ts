@@ -1,7 +1,17 @@
-import { Db, ObjectId } from 'mongodb';
+import type { Db } from 'mongodb';
 import { IReader, ReaderBase } from '../../reader';
 import { Connection } from '@solana/web3.js';
-import { MetaMap } from '../../common';
+import {
+  Edition,
+  MasterEditionV1,
+  MasterEditionV2,
+  Metadata,
+  MetadataKey,
+  MetaMap,
+  Store,
+  WhitelistedCreator,
+} from '../../common';
+import { deserialize } from 'typescript-json-serializer';
 
 export class MongoReader extends ReaderBase implements IReader {
   private db!: Db;
@@ -30,7 +40,7 @@ export class MongoReader extends ReaderBase implements IReader {
   }
   artworksCount() {
     return this.collection('metadata').countDocuments({
-      $where: '???', // TODO: what is it artwork in db?
+      //$where: '???', // TODO: what is it artwork in db?
     });
   }
   auctionsCount() {
@@ -44,10 +54,15 @@ export class MongoReader extends ReaderBase implements IReader {
   }
 
   getStores() {
-    return this.collection('stores').find({}).toArray();
+    return this.collection('stores')
+      .find({})
+      .map(doc => deserialize(doc, Store))
+      .toArray();
   }
   getStore(storeId: string) {
-    return this.collection('stores').findOne({ _id: new ObjectId(storeId) });
+    return this.collection('stores')
+      .findOne({ _id: storeId })
+      .then(doc => (doc ? deserialize(doc, Store) : null));
   }
 
   getCreatorIds(): Promise<string[]> {
@@ -57,32 +72,51 @@ export class MongoReader extends ReaderBase implements IReader {
   }
 
   getCreators() {
-    return this.collection('creators').find({}).toArray();
+    return this.collection('creators')
+      .find({})
+      .map(doc => deserialize(doc, WhitelistedCreator))
+      .toArray();
   }
   getCreator(storeId: string) {
-    return this.collection('creators').findOne({
-      qty: { $in: [storeId] },
-    });
+    const filter: Pick<WhitelistedCreator, 'storeIds'> = {
+      storeIds: { $in: [storeId] } as any,
+    };
+    return this.collection('creators')
+      .findOne(filter)
+      .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null));
   }
 
   getArtworks() {
     return this.collection('metadata')
       .find({
-        $where: '???', // TODO: what is it artwork in db?
+        //$where: '???', // TODO: what is it artwork in db?
       })
+      .map(doc => deserialize(doc, Metadata))
       .toArray();
   }
   getArtwork(artId: string) {
-    return this.collection('metadata').findOne({ _id: new ObjectId(artId) });
+    return this.collection('metadata')
+      .findOne({ _id: artId })
+      .then(doc => (doc ? deserialize(doc, Metadata) : null));
   }
   getEdition(id?: string) {
     return id
-      ? this.collection('editions').findOne({ _id: new ObjectId(id) })
+      ? this.collection('editions')
+          .findOne({ _id: id })
+          .then(doc => (doc ? deserialize(doc, Edition) : null))
       : Promise.resolve(null);
   }
   getMasterEdition(id?: string) {
     return id
-      ? this.collection('masterEditions').findOne({ _id: new ObjectId(id) })
+      ? this.collection('masterEditions')
+          .findOne({ _id: id })
+          .then((doc: any) =>
+            !doc
+              ? null
+              : doc.key === MetadataKey.MasterEditionV1
+              ? deserialize(doc, MasterEditionV1)
+              : deserialize(doc, MasterEditionV2),
+          )
       : Promise.resolve(null);
   }
 }

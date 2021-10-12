@@ -15,7 +15,6 @@ describe('MetaplexService', () => {
     }
     async function getMasterEdition() {
       return new MasterEditionV2({
-        key: MetadataKey.MasterEditionV2,
         supply: new BN(1),
         maxSupply: new BN(2),
       });
@@ -119,12 +118,10 @@ describe('MetaplexService', () => {
 
     describe('artSupply', () => {
       const edition1 = new MasterEditionV2({
-        key: MetadataKey.MasterEditionV2,
         supply: new BN(1),
       });
 
       const edition2 = new MasterEditionV2({
-        key: MetadataKey.MasterEditionV2,
         supply: new BN(2),
       });
 

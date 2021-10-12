@@ -32,21 +32,12 @@ export class MasterEditionV1 extends BaseEntity {
   oneTimePrintingAuthorizationMint!: StringPublicKey;
 
   constructor(args?: {
-    key: MetadataKey;
+    _id?: StringPublicKey;
     supply: BN;
     maxSupply?: BN;
     printingMint: StringPublicKey;
     oneTimePrintingAuthorizationMint: StringPublicKey;
   }) {
-    super();
-
-    if (args) {
-      this.key = MetadataKey.MasterEditionV1;
-      this.supply = args.supply;
-      this.maxSupply = args.maxSupply;
-      this.printingMint = args.printingMint;
-      this.oneTimePrintingAuthorizationMint =
-        args.oneTimePrintingAuthorizationMint;
-    }
+    super(args);
   }
 }

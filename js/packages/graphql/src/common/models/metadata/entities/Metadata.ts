@@ -38,26 +38,24 @@ export class Metadata extends BaseEntity {
   edition?: StringPublicKey;
 
   constructor(args?: {
+    _id?: StringPublicKey;
     updateAuthority: StringPublicKey;
     mint: StringPublicKey;
     data: Data;
     primarySaleHappened: boolean;
     isMutable: boolean;
     editionNonce: number | null;
+    edition?: StringPublicKey;
   }) {
-    super();
-
+    super(args);
     if (args) {
-      this.updateAuthority = args.updateAuthority;
-      this.mint = args.mint;
-      this.data = args.data;
-      this.primarySaleHappened = args.primarySaleHappened;
-      this.isMutable = args.isMutable;
-      this.editionNonce = args.editionNonce;
-
-      this.data.name = this.data.name.replace(METADATA_REPLACE, '');
-      this.data.uri = this.data.uri.replace(METADATA_REPLACE, '');
-      this.data.symbol = this.data.symbol.replace(METADATA_REPLACE, '');
+      const data = args.data;
+      this.data = new Data({
+        ...data,
+        name: data.name.replace(METADATA_REPLACE, ''),
+        uri: data.uri.replace(METADATA_REPLACE, ''),
+        symbol: data.symbol.replace(METADATA_REPLACE, ''),
+      });
     }
   }
 

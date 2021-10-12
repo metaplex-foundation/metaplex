@@ -27,21 +27,17 @@ export class Store extends BaseEntity {
   creatorIds: StringPublicKey[] = [];
 
   constructor(args?: {
+    _id?: StringPublicKey;
     public: boolean;
     auctionProgram: StringPublicKey;
     tokenVaultProgram: StringPublicKey;
     tokenMetadataProgram: StringPublicKey;
     tokenProgram: StringPublicKey;
+    creatorIds?: StringPublicKey[];
   }) {
-    super();
-
-    this.key = MetaplexKey.StoreV1;
-    if (args) {
-      this.public = args.public;
-      this.auctionProgram = args.auctionProgram;
-      this.tokenVaultProgram = args.tokenVaultProgram;
-      this.tokenMetadataProgram = args.tokenMetadataProgram;
-      this.tokenProgram = args.tokenProgram;
-    }
+    super({
+      ...args,
+      creatorIds: args?.creatorIds ?? [],
+    });
   }
 }

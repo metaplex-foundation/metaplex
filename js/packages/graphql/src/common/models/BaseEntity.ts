@@ -18,6 +18,12 @@ export class BaseEntity {
   @JsonProperty()
   _id!: StringPublicKey;
 
+  constructor(args?: any) {
+    if (typeof args === 'object') {
+      Object.assign(this, args);
+    }
+  }
+
   get pubkey() {
     return this._id;
   }

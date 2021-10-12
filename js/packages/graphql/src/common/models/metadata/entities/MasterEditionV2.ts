@@ -1,5 +1,6 @@
 import BN from 'bn.js';
 import { JsonProperty, Serializable } from 'typescript-json-serializer';
+import { StringPublicKey } from '../../../utils';
 import { BaseEntity } from '../../BaseEntity';
 import { BNConverter } from '../../serialize';
 import { MetadataKey } from '../MetadataKey';
@@ -15,13 +16,7 @@ export class MasterEditionV2 extends BaseEntity {
   @JsonProperty(BNConverter)
   maxSupply?: BN;
 
-  constructor(args?: { key: MetadataKey; supply: BN; maxSupply?: BN }) {
-    super();
-
-    if (args) {
-      this.key = args.key ?? MetadataKey.MasterEditionV2;
-      this.supply = args.supply;
-      this.maxSupply = args.maxSupply;
-    }
+  constructor(args?: { _id?: StringPublicKey; supply: BN; maxSupply?: BN }) {
+    super(args);
   }
 }

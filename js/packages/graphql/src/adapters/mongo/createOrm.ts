@@ -1,7 +1,7 @@
-import { MongoClient } from "mongodb";
+import { MongoClient } from 'mongodb';
 
-export async function createOrm(mongoConnString: string, dbName = "metaplex") {
+export async function createOrm(mongoConnString: string, dbName = 'metaplex') {
   const client = new MongoClient(mongoConnString);
   await client.connect();
-  return client.db(dbName);
+  return { db: client.db(dbName), client };
 }

@@ -34,7 +34,8 @@ export class MongoAdapter implements IDataAdapter<MongoWriter, MongoReader> {
       if (db) {
         return db;
       }
-      db = await createOrm(this.connectionString, `metaplex-${network}`);
+      const orm = await createOrm(this.connectionString, `metaplex-${network}`);
+      db = orm.db;
       return db;
     };
 

@@ -17,15 +17,12 @@ export class Edition extends BaseEntity {
   edition!: BN;
 
   constructor(args?: {
+    _id?: StringPublicKey;
     key: MetadataKey;
     parent: StringPublicKey;
     edition: BN;
   }) {
-    super();
-
-    if (args) {
-      this.parent = args.parent;
-      this.edition = args.edition;
-    }
+    super(args);
+    this.key = args?.key ?? this.key;
   }
 }
