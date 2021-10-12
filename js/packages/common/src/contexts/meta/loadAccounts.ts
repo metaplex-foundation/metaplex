@@ -25,6 +25,7 @@ import {
   decodeStoreIndexer,
   getAuctionCache,
   getStoreIndexer,
+  MAX_PAYOUT_TICKET_SIZE,
   StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
@@ -210,6 +211,29 @@ export const pullYourMetadata = async (
   await postProcessMetadata(tempCache);
 
   console.log('-------->User metadata processing complete.');
+  return tempCache;
+};
+
+export const pullPayoutTickets = async (
+  connection: Connection,
+  tempCache: MetaState,
+) => {
+  const updateTemp = makeSetter(tempCache);
+
+  const forEach =
+    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
+      for (const account of accounts) {
+        await fn(account, updateTemp);
+      }
+    };
+  getProgramAccounts(connection, METAPLEX_ID, {
+    filters: [
+      {
+        dataSize: MAX_PAYOUT_TICKET_SIZE,
+      },
+    ],
+  }).then(forEach(processMetaplexAccounts));
+
   return tempCache;
 };
 

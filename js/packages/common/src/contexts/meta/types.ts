@@ -92,6 +92,7 @@ export interface MetaContextState extends MetaState {
     ParsedAccount<BidderMetadata>,
   ];
   pullAuctionPage: (auctionAddress: StringPublicKey) => void;
+  pullBillingPage: (auctionAddress: StringPublicKey) => void;
 
   pullAllMetadata: () => void;
 }

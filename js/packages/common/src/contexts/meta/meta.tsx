@@ -12,7 +12,12 @@ import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
-import { pullAuctionSubaccounts, pullPage, pullStoreMetadata } from '.';
+import {
+  pullAuctionSubaccounts,
+  pullPage,
+  pullPayoutTickets,
+  pullStoreMetadata,
+} from '.';
 import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
 const MetaContext = React.createContext<MetaContextState>({
@@ -65,6 +70,30 @@ export function MetaProvider({ children = null as any }) {
     setIsLoading(true);
     const nextState = await pullStoreMetadata(connection, state);
     setIsLoading(false);
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return [];
+  }
+
+  async function pullBillingPage(auctionAddress: StringPublicKey) {
+    if (isLoading) return false;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    const nextState = await pullAuctionSubaccounts(
+      connection,
+      auctionAddress,
+      state,
+    );
+
+    console.log('-----> Pulling all payout tickets');
+    await pullPayoutTickets(connection, nextState);
+
     setState(nextState);
     await updateMints(nextState.metadataByMint);
     return [];
@@ -146,16 +175,26 @@ export function MetaProvider({ children = null as any }) {
             nextState,
           );
         }
+
         const auction = window.location.href.match(/#\/auction\/(\w+)/);
+        const billing = window.location.href.match(
+          /#\/auction\/(\w+)\/billing/,
+        );
         if (auction && page == 0) {
           console.log(
             '---------->Loading auction page on initial load, pulling sub accounts',
           );
+
           nextState = await pullAuctionSubaccounts(
             connection,
             auction[1],
             nextState,
           );
+
+          if (billing) {
+            console.log('-----> Pulling all payout tickets');
+            await pullPayoutTickets(connection, nextState);
+          }
         }
 
         let currLastLength;
@@ -274,6 +313,7 @@ export function MetaProvider({ children = null as any }) {
         update,
         pullAuctionPage,
         pullAllMetadata,
+        pullBillingPage,
         isLoading,
       }}
     >
