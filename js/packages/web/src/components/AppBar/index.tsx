@@ -19,25 +19,32 @@ const UserActions = () => {
       store?.info?.public ||
       whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
+  }, [ pubkey, whitelistedCreatorsByCreator, store ]);
 
   return (
     <>
       {store && (
         <>
-          {/* <Link to={`#`}>
+          <Menu>
+            {/* <Link to={`#`}>
             <Button className="app-btn">Bids</Button>
           </Link> */}
-          {canCreate ? (
-            <Link to={`/art/create`}>
-              <Button className="app-btn">Create</Button>
-            </Link>
-          ) : null}
-          <Link to={`/auction/create/0`}>
-            <Button className="connector" type="primary">
-              Sell
-            </Button>
-          </Link>
+            {canCreate ? (
+              <Menu.Item>
+                <Link to={`/art/create`}>
+                  <Button className="app-btn">Create</Button>
+                </Link>
+              </Menu.Item>
+            ) : null}
+            <Menu.Item>
+              <Link to={`/auction/create/0`}>
+                <Button className="connector" type="primary">
+                  Sell
+                </Button>
+              </Link>
+            </Menu.Item>
+          </Menu>
+          <div className="divider" />
         </>
       )}
     </>
@@ -78,7 +85,7 @@ const MetaplexMenu = () => {
         <Dropdown
           arrow
           placement="bottomLeft"
-          trigger={['click']}
+          trigger={[ 'click' ]}
           overlay={
             <Menu>
               <Menu.Item>
