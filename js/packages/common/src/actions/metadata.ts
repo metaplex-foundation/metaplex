@@ -68,6 +68,10 @@ export type Attribute = {
   value: string | number;
 };
 
+export interface ICollection {
+  name: string;
+  family: string;
+}
 export interface IMetadataExtension {
   name: string;
   symbol: string;
@@ -84,7 +88,7 @@ export interface IMetadataExtension {
   external_url: string;
 
   seller_fee_basis_points: number;
-
+  collection: ICollection;
   properties: {
     files?: FileOrString[];
     category: MetadataCategory;

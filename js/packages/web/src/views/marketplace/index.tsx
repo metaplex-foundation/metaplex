@@ -19,7 +19,7 @@ import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Form } from 'react-bootstrap';
 import { Button } from 'antd';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import { useColection } from '../../hooks/useColections';
+import { useCollection } from '../../hooks/useCollections';
 export enum ArtworkViewState {
   Metaplex = 0,
   Owned = 1,
@@ -40,7 +40,7 @@ export const MarketplaceView = () => {
     ParsedAccount<Metadata>[] | SafetyDepositDraft[]
   >([]);
   const { id } = useParams<{ id: string }>();
-  const { colectionData } = useColection(id);
+  const { collectionData } = useCollection(id);
   const optionData = ['select1', 'select2'];
 
   const items = useMemo(() => {
@@ -110,20 +110,20 @@ export const MarketplaceView = () => {
   //   debugger;
   //   console.log("VALOD>>>>>>>>", activePage)
   // }, [activePage])
-  
+
   // useEffect(()=> {
   //   debugger;
   //   console.log("VALOD>>>>>>>>", onePageItem)
   // }, [onePageItem])
-  
+
   // useEffect(()=> {
   //   debugger;
   //   console.log("VALOD>>>>>>>>", id)
   // }, [id])
-  
+
   // useEffect(()=> {
   //   debugger;
-  //   console.log("VALOD>>>>>>>>", colectionData)
+  //   console.log("VALOD>>>>>>>>", collectionData)
   // }, [colectionData])
   console.log(isLoading);
   return (
@@ -133,24 +133,24 @@ export const MarketplaceView = () => {
         <div className="container-fluid">
           <div className="row">
             <div className="col-2">
-              <img src={colectionData?.image} className="mt-4" />
+              <img src={collectionData?.image} className="mt-4" />
             </div>
             <div className="col-md-6">
-              <h1 className="mt-0">{colectionData?.colectionName}</h1>
+              <h1 className="mt-0">{collectionData?.collectionName}</h1>
               <div
                 className="btn-group mb-3"
                 role="group"
                 aria-label="Basic example"
               >
                 <button type="button" className="btn btn-secondary text-left">
-                  <strong>{colectionData?.items}</strong>
+                  <strong>{collectionData?.items}</strong>
                   <br />
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     Items
                   </span>
                 </button>
                 <button type="button" className="btn btn-secondary text-left">
-                  <strong>{colectionData?.owner}</strong>
+                  <strong>{collectionData?.owner}</strong>
                   <br />
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     Owner
@@ -161,26 +161,26 @@ export const MarketplaceView = () => {
                   className="btn btn-secondary text-left d-flex align-items-center"
                 >
                   <span>
-                    <strong>{colectionData?.floorPrice}</strong>
+                    <strong>{collectionData?.floorPrice}</strong>
                     <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       Floor Price
                     </span>
                   </span>{' '}
-                  <img src={colectionData?.image} className="ml-3" />
+                  <img src={collectionData?.image} className="ml-3" />
                 </button>
                 <button
                   type="button"
                   className="btn btn-secondary text-left d-flex align-items-center"
                 >
                   <span>
-                    <strong>{colectionData?.volumeTraded}</strong>
+                    <strong>{collectionData?.volumeTraded}</strong>
                     <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       Floor Price
                     </span>
                   </span>{' '}
-                  <img src={colectionData?.image} className="ml-3" />
+                  <img src={collectionData?.image} className="ml-3" />
                 </button>
               </div>
               <div className="bottom-sec d-flex">
@@ -190,17 +190,17 @@ export const MarketplaceView = () => {
                   aria-label="Basic example"
                 >
                   <button type="button" className="btn btn-secondary">
-                    <a href={colectionData?.twitterUrl} target="_blank">
+                    <a href={collectionData?.twitterUrl} target="_blank">
                       <img src="/images/twit1.png" />
                     </a>
                   </button>
                   <button type="button" className="btn btn-secondary">
-                    <a href={colectionData?.discordUrl} target="_blank">
+                    <a href={collectionData?.discordUrl} target="_blank">
                       <img src="/images/twit3.png" />
                     </a>
                   </button>
                   <button type="button" className="btn btn-secondary">
-                    <a href={colectionData?.daringDragonsUrl} target="_blank">
+                    <a href={collectionData?.daringDragonsUrl} target="_blank">
                       <img src="/images/twit2.png" />
                     </a>
                   </button>

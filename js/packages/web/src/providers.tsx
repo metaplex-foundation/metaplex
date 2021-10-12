@@ -4,6 +4,7 @@ import {
   StoreProvider,
   WalletProvider,
   MetaProvider,
+  CollectionsProvider
 } from '@oyster/common';
 import React, { FC } from 'react';
 import { ConfettiProvider } from './components/Confetti';
@@ -21,9 +22,11 @@ export const Providers: FC = ({ children }) => {
               storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
             >
               <MetaProvider>
+                <CollectionsProvider>
                   <ConfettiProvider>
                     <AppLayout>{children}</AppLayout>
                   </ConfettiProvider>
+                </CollectionsProvider>
               </MetaProvider>
             </StoreProvider>
           </CoingeckoProvider>

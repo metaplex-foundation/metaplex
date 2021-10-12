@@ -7,7 +7,7 @@ import { Button } from 'antd';
 
 // modules
 import useWindowDimensions from '../../utils/layout';
-import { useColections } from '../../hooks/useColections';
+import { useCollections } from '../../hooks/useCollections';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -21,8 +21,7 @@ export const Slider = () => {
 
   SwiperCore.use([Autoplay, Pagination, Navigation]);
   const { width } = useWindowDimensions();
-  const { data } = useColections();
-  console.log(data);
+  const { collections } = useCollections();
 
   return (
     <Swiper
@@ -35,7 +34,7 @@ export const Slider = () => {
       navigation
       className="mySwiper"
     >
-      {data.map((element, i) => (
+      {collections.map((element, i) => (
         <SwiperSlide key={i} className="next">
           <Card className="text-center card-container">
             <img
@@ -46,7 +45,7 @@ export const Slider = () => {
             <div className="card-body">
               <img src={element.image} className="img-fluid user" />
               <h5 className="card-title text-white mb-0 mt-3">
-                {element.colectionName}
+                {element.collectionName}
               </h5>
               <p className="m-0 below-heading-text">{element.userName}</p>
               <p className="card-text">
