@@ -13,6 +13,7 @@ import {
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
+import { Swap } from './views/swap';
 
 export function Routes() {
   return (
@@ -25,6 +26,11 @@ export function Routes() {
               exact
               path="/analytics"
               component={() => <AnalyticsView />}
+            />
+            <Route
+              exact
+              path="/swap"
+              component={() => <Swap />}
             />
             <Route
               exact

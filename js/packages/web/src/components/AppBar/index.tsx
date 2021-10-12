@@ -7,6 +7,7 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
+import { SwapOutlined } from '@ant-design/icons';
 
 const UserActions = () => {
   const { publicKey } = useWallet();
@@ -121,6 +122,10 @@ export const AppBar = () => {
       {connected ? (
         <div className="app-right app-bar-box">
           <UserActions />
+          <Link to={`/swap`}>
+            <Button className="app-btn"><SwapOutlined /> Swap</Button>
+          </Link>
+          <div className="divider" />
           <CurrentUserBadge
             showBalance={false}
             showAddress={false}
