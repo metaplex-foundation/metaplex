@@ -8,7 +8,7 @@ use solana_clap_utils::{
     fee_payer::fee_payer_arg,
     input_parsers::{pubkey_of, pubkey_of_signer, value_of},
     input_validators::{
-        is_parsable, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
+        is_parsable, is_pubkey, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
         normalize_to_url_if_moniker,
     },
     keypair::{signer_from_path, CliSignerInfo},
@@ -23,17 +23,17 @@ use solana_sdk::{
     message::Message,
     native_token::lamports_to_sol,
     program_pack::Pack,
-    pubkey::Pubkey,
+    pubkey::{ParsePubkeyError, Pubkey},
     signer::{keypair::Keypair, Signer},
     system_instruction,
     transaction::Transaction,
 };
-use spl_token::{self, instruction, native_mint, state::Mint};
+use spl_token::{self, error::TokenError, instruction, native_mint, state::Mint};
 use spl_token_metadata::{
     instruction::create_metadata_accounts,
-    state::{Creator, MAX_METADATA_LEN, PREFIX},
+    state::{Creator, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
 };
-use std::{fmt::Display, process::exit, sync::Arc};
+use std::{fmt::Display, num::ParseIntError, process::exit, str::FromStr, sync::Arc};
 
 pub mod config;
 use crate::config::Config;
@@ -71,6 +71,47 @@ where
                 Ok(())
             }
         })
+}
+
+fn are_valid_creators<T>(creators: T) -> Result<(), String>
+where
+    T: AsRef<str> + Display,
+{
+    let mut pubkey_strings = Vec::<&str>::new();
+    let mut share_strings = Vec::<&str>::new();
+
+    creators
+        .as_ref()
+        .split_whitespace()
+        .map(|c| c.split_at(c.find(":").unwrap()))
+        .for_each(|(p, s)| {
+            pubkey_strings.push(p);
+            share_strings.push(&s[1..]);
+        });
+
+    let pubkey_result: Result<Vec<Pubkey>, ParsePubkeyError> =
+        pubkey_strings.iter().map(|p| p.parse::<Pubkey>()).collect();
+
+    let share_result: Result<Vec<u8>, ParseIntError> =
+        share_strings.iter().map(|s| s.parse::<u8>()).collect();
+
+    if let Err(error) = pubkey_result {
+        Err(format!("{}", error))
+    } else {
+        if let Err(error) = share_result {
+            Err(format!("{}", error))
+        } else {
+            let share_sum: u8 = share_result.unwrap().iter().sum();
+            if share_sum > 100 {
+                Err(format!(
+                    "Sum of shares of {} is greater than 100.",
+                    share_sum
+                ))
+            } else {
+                Ok(())
+            }
+        }
+    }
 }
 
 fn new_throwaway_signer() -> (Box<dyn Signer>, Pubkey) {
@@ -171,12 +212,13 @@ fn main() {
                         .validator(is_valid_pubkey)
                         .value_name("MINT_ADDRESS")
                         .takes_value(true)
+                        .required(true)
                         .index(1)
-                        .help("Address of mint account"),
+                        .help("Address of the existing mint account."),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("create_metadata_account")
+            SubCommand::with_name("create-metadata-account")
                 .about("Create metadata account for existing mint")
                 .arg(
                     Arg::with_name("mint_address")
@@ -241,6 +283,24 @@ fn main() {
                         .help(
                             "Specify seller fee in basis points. \
                             1000 basis points equals 100%.",
+                        ),
+                )
+                .arg(
+                    Arg::with_name("creators")
+                        .long("creators")
+                        .value_name("CREATORS")
+                        .multiple(true)
+                        .takes_value(true)
+                        .validator(are_valid_creators)
+                        .max_values(MAX_CREATOR_LIMIT as u64)
+                        .help(
+                            format!(
+                                "Specify up to five ({}) creator addresses with \
+                                percentage shares as <ADDRESS>:<SHARE> \
+                                separated by spaces.",
+                                MAX_CREATOR_LIMIT
+                            )
+                            .as_ref(),
                         ),
                 ),
         )
@@ -371,7 +431,7 @@ fn main() {
             let address = pubkey_of(arg_matches, "address").unwrap();
             command_mint_info(&config, address)
         }
-        ("create_metadata_account", Some(arg_matches)) => {
+        ("create-metadata-account", Some(arg_matches)) => {
             let mint_address = pubkey_of(arg_matches, "mint_address").unwrap();
             let update_authority =
                 config.pubkey_or_default(arg_matches, "update_authority", &mut wallet_manager);
@@ -382,6 +442,19 @@ fn main() {
             let uri = arg_matches.value_of("uri").unwrap_or(&"").to_string();
             let seller_fee_basis_points =
                 value_of::<u16>(arg_matches, "seller_fee_basis_points").unwrap();
+
+            let mut creators = Vec::<Creator>::new();
+            if let Some(creator_strings) = arg_matches.values_of("creators") {
+                creator_strings.for_each(|c| {
+                    let split: Vec<&str> = c.split(":").collect();
+                    creators.push(Creator {
+                        address: Pubkey::from_str(split[0]).unwrap(),
+                        verified: false,
+                        share: u8::from_str(split[1]).unwrap(),
+                    })
+                });
+            }
+
             let creators = None;
             command_create_metadata_account(
                 &config,
@@ -488,11 +561,23 @@ fn command_create_metadata_account(
     seller_fee_basis_points: u16,
     is_mutable: bool,
 ) -> CommandResult {
+    let program_id = spl_token_metadata::id();
+
+    let metadata_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        mint_address.as_ref(),
+    ];
+
+    let (metadata_account, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
+
+    if let Ok(_) = config.rpc_client.get_account(&metadata_account) {
+        return Err(Box::new(TokenError::AlreadyInUse));
+    }
+
     let minimum_balance_for_rent_exemption = config
         .rpc_client
         .get_minimum_balance_for_rent_exemption(MAX_METADATA_LEN)?;
-
-    let program_id = spl_token_metadata::id();
 
     let account = config
         .rpc_client
@@ -505,14 +590,6 @@ fn command_create_metadata_account(
     // I think this should be set to true if the update authority is different than the mint authority in which
     // case a signature from the update authority is required.
     let update_authority_is_signer = mint.mint_authority.unwrap() != update_authority;
-
-    let metadata_seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        mint_address.as_ref(),
-    ];
-
-    let (metadata_account, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
 
     println_display(config, format!("Creating metadata {}", metadata_account));
 
