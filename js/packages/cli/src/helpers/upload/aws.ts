@@ -14,11 +14,11 @@ async function uploadFile(s3Client: S3Client, awsS3Bucket: string, filename: str
   };
 
   try {
-    const data = await s3Client.send(new PutObjectCommand(mediaUploadParams));
+    await s3Client.send(new PutObjectCommand(mediaUploadParams));
     log.info('uploaded filename:', filename);
   } catch (err) {
     log.debug('Error', err);
-  };
+  }
 
   const url = `https://${awsS3Bucket}.s3.amazonaws.com/${filename}`
   log.debug("Location:", url);
