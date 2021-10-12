@@ -1,3 +1,4 @@
+import { useCollectionsContext } from '@oyster/common';
 import { useMemo } from 'react';
 import json from '../db.json';
 
@@ -19,4 +20,11 @@ export const useCollection = (param?: string) => {
     }
   });
   return { collectionData };
+};
+
+export const useCollectionTokenMetadataList = (collectionName: string) => {
+  return useMemo(() => {
+    const collectionsContext = useCollectionsContext();
+    return collectionsContext.tokenMetadataByCollection[collectionName];
+  }, [collectionName]);
 };

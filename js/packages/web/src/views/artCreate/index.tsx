@@ -43,7 +43,7 @@ import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { DEFAULT_COLLECTION_FAMILY, useCollections } from '../../hooks/useCollections';
+import { DEFAULT_COLLECTION_FAMILY, useCollections, useCollectionTokenMetadataList } from '../../hooks/useCollections';
 import {Select} from 'antd';
 
 const { Step } = Steps;
@@ -604,6 +604,8 @@ const InfoStep = (props: {
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>(collections[0].collectionName);
+  const tokens = useCollectionTokenMetadataList(selectedCollection);
+  console.log('HEEEY', tokens);
 
   const { image, animation_url } = useArtworkFiles(
     props.files,
