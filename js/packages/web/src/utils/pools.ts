@@ -67,12 +67,12 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
       // reset pool during query
       setPool(undefined);
       const matchingPool = pools
-        .filter((p) => !p.legacy)
-        .filter((p) =>
+        .filter(p => !p.legacy)
+        .filter(p =>
           p.pubkeys.holdingMints
-            .map((a) => a.toBase58())
+            .map(a => a.toBase58())
             .sort()
-            .every((address, i) => address === sortedMints[i])
+            .every((address, i) => address === sortedMints[i]),
         );
 
       const poolQuantities: { [pool: string]: number } = {};
@@ -92,10 +92,10 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
       }
       if (Object.keys(poolQuantities).length > 0) {
         const sorted = Object.entries(
-          poolQuantities
+          poolQuantities,
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ).sort(([pool0Idx, amount0], [pool1Idx, amount1]) =>
-          amount0 > amount1 ? -1 : 1
+          amount0 > amount1 ? -1 : 1,
         );
         const bestPool = matchingPool[parseInt(sorted[0][0])];
         setPool(bestPool);
@@ -110,7 +110,7 @@ export const usePoolForBasket = (mints: (string | undefined)[]) => {
 function estimateProceedsFromInput(
   inputQuantityInPool: number,
   proceedsQuantityInPool: number,
-  inputAmount: number
+  inputAmount: number,
 ): number {
   return (
     (proceedsQuantityInPool * inputAmount) / (inputQuantityInPool + inputAmount)
@@ -120,10 +120,10 @@ function estimateProceedsFromInput(
 function estimateInputFromProceeds(
   inputQuantityInPool: number,
   proceedsQuantityInPool: number,
-  proceedsAmount: number
+  proceedsAmount: number,
 ): number | string {
   if (proceedsAmount >= proceedsQuantityInPool) {
-    return "Not possible";
+    return 'Not possible';
   }
 
   return (
@@ -137,23 +137,23 @@ export async function calculateDependentAmount(
   independent: string,
   amount: number,
   pool: PoolInfo,
-  op: PoolOperation
+  op: PoolOperation,
 ): Promise<number | string | undefined> {
   const poolMint = await cache.queryMint(connection, pool.pubkeys.mint);
   const accountA = await cache.query(
     connection,
-    pool.pubkeys.holdingAccounts[0]
+    pool.pubkeys.holdingAccounts[0],
   );
   const amountA = accountA.info.amount.toNumber();
 
   const accountB = await cache.query(
     connection,
-    pool.pubkeys.holdingAccounts[1]
+    pool.pubkeys.holdingAccounts[1],
   );
   let amountB = accountB.info.amount.toNumber();
 
   if (!poolMint.mintAuthority) {
-    throw new Error("Mint doesnt have authority");
+    throw new Error('Mint doesnt have authority');
   }
 
   if (poolMint.supply.eqn(0)) {
@@ -177,11 +177,11 @@ export async function calculateDependentAmount(
   const isFirstIndependent = accountA.info.mint.toBase58() === independent;
   const depPrecision = Math.pow(
     10,
-    isFirstIndependent ? mintB.decimals : mintA.decimals
+    isFirstIndependent ? mintB.decimals : mintA.decimals,
   );
   const indPrecision = Math.pow(
     10,
-    isFirstIndependent ? mintA.decimals : mintB.decimals
+    isFirstIndependent ? mintA.decimals : mintB.decimals,
   );
   const indAdjustedAmount = amount * indPrecision;
   const indBasketQuantity = isFirstIndependent ? amountA : amountB;
@@ -194,7 +194,7 @@ export async function calculateDependentAmount(
     if (isFirstIndependent) {
       depAdjustedAmount = (amount * depPrecision) / constantPrice.token_b_price;
     } else {
-      depAdjustedAmount = (amount * depPrecision) * constantPrice.token_b_price;
+      depAdjustedAmount = amount * depPrecision * constantPrice.token_b_price;
     }
   } else {
     switch (+op) {
@@ -206,20 +206,20 @@ export async function calculateDependentAmount(
         depAdjustedAmount = estimateInputFromProceeds(
           depBasketQuantity,
           indBasketQuantity,
-          indAdjustedAmount
+          indAdjustedAmount,
         );
         break;
       case PoolOperation.SwapGivenInput:
         depAdjustedAmount = estimateProceedsFromInput(
           indBasketQuantity,
           depBasketQuantity,
-          indAdjustedAmount
+          indAdjustedAmount,
         );
         break;
     }
   }
 
-  if (typeof depAdjustedAmount === "string") {
+  if (typeof depAdjustedAmount === 'string') {
     return depAdjustedAmount;
   }
   if (depAdjustedAmount === undefined) {

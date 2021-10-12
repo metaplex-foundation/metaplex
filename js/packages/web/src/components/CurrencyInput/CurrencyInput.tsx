@@ -36,17 +36,16 @@ export function CurrencyInput(props: {
   return (
     <Card
       className="ccy-input"
-      style={{ borderRadius: 20 }}
-      bodyStyle={{ padding: 0 }}
+      style={{ borderRadius: 20, width: '100%', margin: 0 }}
     >
-      <div className="ccy-input-header">
+      <div className="ccy-input-header" style={{ paddingLeft: '10px', paddingBottom: '5px' }}>
         <div className="ccy-input-header-left">{props.title}</div>
 
         <div
           className="ccy-input-header-right"
           onClick={handleClick}
         >
-          Balance: 123
+          Balance: 0
           {/*Balance: {userUiBalance().toFixed(6)}*/}
         </div>
       </div>
@@ -63,10 +62,13 @@ export function CurrencyInput(props: {
             boxShadow: "none",
             borderColor: "transparent",
             outline: "transpaernt",
+            minWidth: '50%',
+            background: 'none',
+            padding: 0
           }}
           placeholder="0.00"
         />
-        <div className="ccy-input-header-right" style={{ display: "felx" }}>
+        <div className="ccy-input-header-right" style={{ minWidth: '50%' }}>
           {!props.hideSelect ? (
             <Select
               size="large"

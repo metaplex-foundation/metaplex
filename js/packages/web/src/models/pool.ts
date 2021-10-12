@@ -1,2 +1,1 @@
-
 export const DEFAULT_DENOMINATOR = 10_000;

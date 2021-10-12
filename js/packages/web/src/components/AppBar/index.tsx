@@ -25,35 +25,27 @@ const UserActions = () => {
       store?.info?.public ||
       whitelistedCreatorsByCreator[pubkey]?.info?.activated
     );
-  }, [ pubkey, whitelistedCreatorsByCreator, store ]);
+  }, [pubkey, whitelistedCreatorsByCreator, store]);
 
   return (
     <>
       {store && (
         <>
-          <Menu>
-            {/* <Link to={`#`}>
+          {/* <Link to={`#`}>
             <Button className="app-btn">Bids</Button>
           </Link> */}
-            <div>
+          <div>
             {canCreate ? (
-              <Menu.Item>
-                <Link to={`/art/create`}><Button className="app-btn">Create</Button></Link>
-            </Menu.Item>) : null}
-            <Menu.Item>
-              <Link to={`/auction/create/0`}><Button className="connector" type="primary">Sell</Button></Link>
+              <Link to={`/art/create`}><Button className="app-btn">Create</Button></Link>
+            ) : null}
+            <Link to={`/auction/create/0`}><Button className="connector" type="primary">Sell</Button></Link>
           </div>
           <Divider type='vertical' style={{ marginLeft: '18px', marginRight: '0', top: 0, height: '40px' }}/>
-              <Link to={`/swap`}><Button className="app-btn"><SwapOutlined /> Swap</Button></Link>
+          <Link to={`/swap`}><Button className="app-btn"><SwapOutlined /> Swap</Button></Link>
           <Divider type='vertical' style={{ marginLeft: '0', marginRight: '0', top: 0, height: '40px' }}/>
-            </Menu.Item>
-            <Menu.Item>
-              <Link to={isAuth ? '/' : `/login`}>
-                <Button onClick={logOut} className="app-btn">{isAuth ? 'Logout' : 'Login'}</Button>
-              </Link>
-            </Menu.Item>
-          </Menu>
-          <div className="divider" />
+          <Link to={isAuth ? '/' : `/login`}>
+            <Button onClick={logOut} className="app-btn">{isAuth ? 'Logout' : 'Login'}</Button>
+          </Link>
         </>
       )}
     </>
@@ -94,7 +86,7 @@ const MetaplexMenu = () => {
         <Dropdown
           arrow
           placement="bottomLeft"
-          trigger={[ 'click' ]}
+          trigger={['click']}
           overlay={
             <Menu>
               <Menu.Item>
