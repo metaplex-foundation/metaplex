@@ -267,7 +267,6 @@ export function processAccountsIntoAuctionView(
   >,
   metadataByAuction: Record<string, ParsedAccount<Metadata>[]>,
   desiredState: AuctionViewState | undefined,
-  existingAuctionView?: AuctionView,
 ): AuctionView | undefined {
   let state: AuctionViewState;
   if (auction.info.ended()) {

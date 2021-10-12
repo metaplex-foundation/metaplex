@@ -243,7 +243,14 @@ export const pullAuctionSubaccounts = async (
   tempCache: MetaState,
 ) => {
   const updateTemp = makeSetter(tempCache);
-  const cacheKey = await getAuctionCache(auction);
+  let cacheKey;
+  try {
+    cacheKey = await getAuctionCache(auction);
+  } catch (e) {
+    console.log(e);
+    console.log('Failed to get auction cache key');
+    return tempCache;
+  }
   const cache = tempCache.auctionCaches[cacheKey]?.info;
   if (!cache) {
     console.log('-----> No auction cache exists for', auction, 'returning');

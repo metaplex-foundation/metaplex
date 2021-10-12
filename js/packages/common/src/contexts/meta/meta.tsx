@@ -100,12 +100,12 @@ export function MetaProvider({ children = null as any }) {
   }
 
   async function pullAuctionPage(auctionAddress: StringPublicKey) {
-    if (isLoading) return false;
+    if (isLoading) return state;
     if (!storeAddress) {
       if (isReady) {
         setIsLoading(false);
       }
-      return;
+      return state;
     } else if (!state.store) {
       setIsLoading(true);
     }
@@ -116,7 +116,7 @@ export function MetaProvider({ children = null as any }) {
     );
     setState(nextState);
     await updateMints(nextState.metadataByMint);
-    return [];
+    return nextState;
   }
 
   async function update(
