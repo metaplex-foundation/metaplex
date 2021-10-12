@@ -36,7 +36,7 @@ export class AuctionData extends BaseEntity implements Auction {
   auctionGap!: BN | null;
 
   /// Minimum price for any bid to meet.
-  @JsonProperty(BNConverter)
+  @JsonProperty()
   priceFloor!: PriceFloor;
 
   /// The state the auction is in, whether it has started or ended.

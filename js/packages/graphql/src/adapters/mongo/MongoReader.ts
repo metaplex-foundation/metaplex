@@ -1,4 +1,5 @@
 import type { Db } from 'mongodb';
+import set from 'lodash/set';
 import { IReader, ReaderBase } from '../../reader';
 import { Connection } from '@solana/web3.js';
 import {
@@ -71,12 +72,15 @@ export class MongoReader extends ReaderBase implements IReader {
       .then(list => list.map(p => p.toString()));
   }
 
-  getCreators() {
+  getCreators(storeId: string) {
     return this.collection('creators')
-      .find({})
+      .find({
+        storeIds: { $in: [storeId] },
+      })
       .map(doc => deserialize(doc, WhitelistedCreator))
       .toArray();
   }
+
   getCreator(storeId: string) {
     const filter: Pick<WhitelistedCreator, 'storeIds'> = {
       storeIds: { $in: [storeId] } as any,
@@ -86,11 +90,65 @@ export class MongoReader extends ReaderBase implements IReader {
       .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null));
   }
 
-  getArtworks() {
-    return this.collection('metadata')
-      .find({
-        //$where: '???', // TODO: what is it artwork in db?
+  async $filterArtworks({
+    storeId,
+    creatorId,
+    ownerId,
+    onlyVerified,
+  }: {
+    creatorId?: string | null; // String
+    onlyVerified?: boolean | null; // Boolean
+    ownerId?: string | null; // String
+    storeId: string; // String!
+  }) {
+    const userAccounts = ownerId ? await this.loadUserAccounts(ownerId) : [];
+    // filterByOwner
+    let filter2: any = undefined;
+    const mint = userAccounts
+      .filter(({ info }) => {
+        return info.amount.toNumber() > 0;
       })
+      .map(({ info }) => info.mint.toBase58());
+    if (mint.length) {
+      filter2 = set(filter2 ?? {}, 'mint', mint);
+    }
+
+    const creator =
+      storeId && creatorId
+        ? await this.collection('creators')
+            .findOne({
+              _id: creatorId,
+              storeIds: { $in: [storeId] },
+            })
+            .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null))
+        : null;
+
+    // filterByStoreAndCreator
+    let filter1: any = undefined;
+    if (creatorId) {
+      filter1 = set(filter1 ?? {}, 'data.creators.address', creatorId);
+    }
+
+    if (onlyVerified) {
+      filter1 = set(filter1 ?? {}, 'data.creators.verified', onlyVerified);
+    }
+    if (creatorId && !creator) {
+      return filter2;
+    }
+    return filter1 && filter2
+      ? { $or: [filter1, filter2] }
+      : filter1 ?? filter2;
+  }
+
+  async getArtworks(args: {
+    creatorId?: string | null; // String
+    onlyVerified?: boolean | null; // Boolean
+    ownerId?: string | null; // String
+    storeId: string; // String!
+  }) {
+    const filter = await this.$filterArtworks(args);
+    return await this.collection('metadata')
+      .find(filter)
       .map(doc => deserialize(doc, Metadata))
       .toArray();
   }
