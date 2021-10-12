@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown, Menu, Divider } from 'antd';
 import { ConnectButton, CurrentUserBadge } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
@@ -35,19 +35,17 @@ const UserActions = () => {
             {/* <Link to={`#`}>
             <Button className="app-btn">Bids</Button>
           </Link> */}
+            <div>
             {canCreate ? (
               <Menu.Item>
-                <Link to={`/art/create`}>
-                  <Button className="app-btn">Create</Button>
-                </Link>
-              </Menu.Item>
-            ) : null}
+                <Link to={`/art/create`}><Button className="app-btn">Create</Button></Link>
+            </Menu.Item>) : null}
             <Menu.Item>
-              <Link to={`/auction/create/0`}>
-                <Button className="connector" type="primary">
-                  Sell
-                </Button>
-              </Link>
+              <Link to={`/auction/create/0`}><Button className="connector" type="primary">Sell</Button></Link>
+          </div>
+          <Divider type='vertical' style={{ marginLeft: '18px', marginRight: '0', top: 0, height: '40px' }}/>
+              <Link to={`/swap`}><Button className="app-btn"><SwapOutlined /> Swap</Button></Link>
+          <Divider type='vertical' style={{ marginLeft: '0', marginRight: '0', top: 0, height: '40px' }}/>
             </Menu.Item>
             <Menu.Item>
               <Link to={isAuth ? '/' : `/login`}>
@@ -140,10 +138,7 @@ export const AppBar = () => {
       {connected ? (
         <div className="app-right app-bar-box">
           <UserActions />
-          <Link to={`/swap`}>
-            <Button className="app-btn"><SwapOutlined /> Swap</Button>
-          </Link>
-          <div className="divider" />
+          <Divider type='vertical' style={{ marginLeft: '0', marginRight: '0', top: 0, height: '40px' }}/>
           <CurrentUserBadge
             showBalance={false}
             showAddress={false}
