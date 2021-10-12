@@ -15,7 +15,7 @@ export const useCollections = () => {
 export const useCollection = (param?: string) => {
   let collectionData;
   json.collections.map(item => {
-    if (item.id == param) {
+    if (item.collectionName == param) {
       collectionData = item;
     }
   });
@@ -23,8 +23,6 @@ export const useCollection = (param?: string) => {
 };
 
 export const useCollectionTokenMetadataList = (collectionName: string) => {
-  return useMemo(() => {
-    const collectionsContext = useCollectionsContext();
-    return collectionsContext.tokenMetadataByCollection[collectionName];
-  }, [collectionName]);
+  const collectionsContext = useCollectionsContext();
+  return collectionsContext.tokenMetadataByCollection[collectionName];
 };

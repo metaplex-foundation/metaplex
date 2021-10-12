@@ -1,6 +1,6 @@
 import { ParsedAccount } from '..';
 import { Metadata } from '../..';
-import { IMetadataExtension } from '../../../dist/lib';
+import { IMetadataExtension } from '../../actions/metadata';
 
 export interface CollectionsState {
   tokenMetadataByCollection: Record<

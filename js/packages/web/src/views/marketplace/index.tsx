@@ -19,7 +19,10 @@ import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Form } from 'react-bootstrap';
 import { Button } from 'antd';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
-import { useCollection } from '../../hooks/useCollections';
+import {
+  useCollection,
+  useCollectionTokenMetadataList,
+} from '../../hooks/useCollections';
 export enum ArtworkViewState {
   Metaplex = 0,
   Owned = 1,
@@ -29,36 +32,48 @@ export enum ArtworkViewState {
 const ITEMS_PER_PAGE = 9;
 
 export const MarketplaceView = () => {
-  const { isLoading, metadata } = useMeta();
+  const { metadata } = useMeta();
+  const [isLoading, setIsloading] = useState(true);
   const [latestsale, setLatestsale] = useState(false);
   const { publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const [activePage, setActivPage] = useState(0);
+  const [items, setItems] = useState([]);
+  const [pageLen, setPageLen] = useState(90);
   const [onePageItem, setOnePageItem] = useState<
     ParsedAccount<Metadata>[] | SafetyDepositDraft[]
   >([]);
   const { id } = useParams<{ id: string }>();
+  const x = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
   const optionData = ['select1', 'select2'];
-
-  const items = useMemo(() => {
-    switch (activeKey) {
-      case ArtworkViewState.Metaplex:
-        return metadata;
-      case ArtworkViewState.Owned:
-        return ownedMetadata;
-      case ArtworkViewState.Created:
-        return createdMetadata;
-    }
-  }, [activeKey, metadata, ownedMetadata, createdMetadata]);
-
-  const pageLen = useMemo(() => items.length, [items]);
-
   useEffect(() => {
-    if (items) setOnePageItem(items.slice(0, 9));
-  }, [items]);
+    const arr: any = [];
+    if (x != undefined) {
+      setIsloading(false);
+      x.map(item => {
+        arr.push(item.ParsedAccount);
+      });
+      setOnePageItem(arr.slice(0, 9));
+      setPageLen(arr.length);
+    }
+    setItems(arr);
+  }, [x]);
+
+  // const items = useMemo(() => {
+  //   switch (activeKey) {
+  //     case ArtworkViewState.Metaplex:
+  //       return metadata;
+  //     case ArtworkViewState.Owned:
+  //       return ownedMetadata;
+  //     case ArtworkViewState.Created:
+  //       return createdMetadata;
+  //   }
+  // }, [activeKey, metadata, ownedMetadata, createdMetadata]);
+
+  // const pageLen = useMemo(() => items.length, [items]);
 
   const onChange = event => {
     setActivPage(event.selected);
@@ -73,59 +88,8 @@ export const MarketplaceView = () => {
 
   // useEffect(()=> {
   //   debugger;
-  //   console.log("VALOD>>>>>>>>", isLoading)
-  // }, [isLoading])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", metadata)
-  // }, [metadata])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", latestsale)
-  // }, [latestsale])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", publicKey)
-  // }, [publicKey])
-
-  // useEffect(()=> {
-  //   debugger;
   //   console.log("VALOD>>>>>>>>", ownedMetadata)
   // }, [ownedMetadata])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", createdMetadata)
-  // }, [createdMetadata])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", activeKey)
-  // }, [activeKey])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", activePage)
-  // }, [activePage])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", onePageItem)
-  // }, [onePageItem])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", id)
-  // }, [id])
-
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", collectionData)
-  // }, [colectionData])
-  console.log(isLoading);
   return (
     <div style={{ margin: '0px 5%' }}>
       {latestsale && <LatestsaleView handle_latest_sale={handle_latest_sale} />}
@@ -236,7 +200,7 @@ export const MarketplaceView = () => {
               <nav aria-label="..." style={{ height: '93%' }}>
                 <ul className="pagination m-0 d-flex flex-wrap">
                   <CustomPagination
-                    len={pageLen / 9}
+                    len={pageLen/9}
                     active={activePage}
                     changePage={event => onChange(event)}
                   />

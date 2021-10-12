@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown, Menu, Select } from 'antd';
 import { useWallet } from '@solana/wallet-adapter-react';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined, DownOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 import { Navbar, Container, Nav } from 'react-bootstrap';
-import { useWalletModal } from '@oyster/common';
+import { contexts, useWalletModal } from '@oyster/common';
 
 import 'bootstrap/dist/css/bootstrap.css';
 
@@ -180,6 +180,8 @@ export const AppBar = () => {
   );
 
   const handleDisconnect = () => disconnect().catch();
+  const { ENDPOINTS, useConnectionConfig } = contexts.Connection;
+  const { endpoint, setEndpoint } = useConnectionConfig();
 
   const handleMenuClick = menuItem => {
     setMenuItem(menuItem);
@@ -221,7 +223,22 @@ export const AppBar = () => {
               />
             ))}
           </Nav>
-          <Nav className="ml-auto">
+          <Nav
+            className="ml-auto"
+            style={{
+              position: 'relative',
+            }}
+          >
+            <Select
+              onSelect={setEndpoint}
+              value={endpoint}
+            >
+              {ENDPOINTS.map(({ name, endpoint }) => (
+                <Select.Option value={endpoint} key={endpoint}>
+                  {name}
+                </Select.Option>
+              ))}
+            </Select>
             <Navbar.Text>
               <button
                 className="connect-btn"

@@ -4,7 +4,6 @@ import { useArt, useExtendedArt } from '../../hooks/useArt';
 
 
 export const ItemList = props => {
-  console.log("VALOD")
   const { pubkey } = props;
   const { title, uri } = useArt(pubkey);
   const [cardObj, getCardObj] = useState<IMetadataExtension | undefined>();

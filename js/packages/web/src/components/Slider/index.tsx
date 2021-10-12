@@ -51,7 +51,7 @@ export const Slider = () => {
               <p className="card-text">
                 {element.description}
               </p>
-              <Link to={"/marketplace/" + element.id} >
+              <Link to={"/marketplace/" + element.collectionName} >
                 <Button className="btn btn-primary explore-more-btn" style={{color: 'white'}}>Explore Marketplace</Button>
               </Link>
             </div>
