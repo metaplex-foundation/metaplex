@@ -1,4 +1,4 @@
-import { EXTENSION_PNG } from '../helpers/constants';
+import { EXTENSION_PNG, EXTENSION_JSON } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -68,19 +68,22 @@ export async function upload(
     ? new PublicKey(cacheContent.program.config)
     : undefined;
 
+  const tick = SIZE / 100; //print every one percent
+  let lastPrinted = 0;
   for (let i = 0; i < SIZE; i++) {
     const image = images[i];
     const imageName = path.basename(image);
     const index = imageName.replace(EXTENSION_PNG, '');
 
     log.debug(`Processing file: ${i}`);
-    if (i % 50 === 0) {
-      log.info(`Processing file: ${i}`);
-    }
 
     let link = cacheContent?.items?.[index]?.link;
     if (!link || !cacheContent.program.uuid) {
-      const manifestPath = image.replace(EXTENSION_PNG, '.json');
+      if (i >= lastPrinted + tick || i === 0) {
+        lastPrinted = i;
+        log.info(`Processing file: ${i}, ${imageName}`);
+      }
+      const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
       const manifestContent = fs
         .readFileSync(manifestPath)
         .toString()
@@ -157,6 +160,8 @@ export async function upload(
           log.error(`Error uploading file ${index}`, er);
         }
       }
+    } else {
+      log.debug(`file ${index} already has a link`);
     }
   }
 

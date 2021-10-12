@@ -33,10 +33,11 @@ import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
 import { signMetadata } from './commands/sign';
-import { signAllMetadataFromCandyMachine } from './commands/signAll';
+import { getAccountsByCreatorAddress, signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
+import { web3 } from "@project-serum/anchor";
 
 program.version('0.0.2');
 
@@ -635,6 +636,23 @@ programCommand('mint_one_token').action(async (directory, cmd) => {
   log.info('mint_one_token finished', tx);
 });
 
+programCommand('mint_tokens')
+  .option('-n, --number <number>', 'Number of tokens to mint', '1')
+  .action(async (directory, cmd) => {
+  const { keypair, env, cacheName, number } = cmd.opts();
+
+  const parsedNumber = parseInt(number);
+
+  const cacheContent = loadCache(cacheName, env);
+  const configAddress = new PublicKey(cacheContent.program.config);
+    for (let i = 0; i < parsedNumber; i++) {
+      const tx = await mint(keypair, env, configAddress);
+      log.info(`token ${i} minted with tx: `, tx);
+    }
+
+    log.info(`minted ${parsedNumber} tokens`)
+});
+
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')
@@ -668,7 +686,7 @@ programCommand('sign_all')
       walletKeyPair,
       candyAddress,
       batchSizeParsed,
-      daemon,
+      daemon
     );
   });
 
@@ -720,6 +738,22 @@ programCommand('create_generative_art')
     await createGenerativeArt(configLocation, randomSets);
 
     log.info('Images have been created successfully!');
+  });
+
+//very useful if you want to get listed on DigitalEyes ;)
+programCommand('get_all_mint_addresses')
+  .action(async (directory, cmd) => {
+    const { env, cacheName} = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env);
+    const solConnection = new web3.Connection(web3.clusterApiUrl(env));
+
+    const accountsByCreatorAddress = await getAccountsByCreatorAddress(cacheContent.candyMachineAddress, solConnection);
+    const addresses = accountsByCreatorAddress.map(it => {
+      return new PublicKey(it[0].mint).toBase58()
+    });
+
+    console.log(JSON.stringify(addresses, null, 2))
   });
 
 function programCommand(name: string) {

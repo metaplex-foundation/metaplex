@@ -129,7 +129,9 @@ export async function sendSignedTransaction({
       log.error('Simulate Transaction error', e);
     }
     if (simulateResult && simulateResult.err) {
+      log.warn("simRes", simulateResult.err)
       if (simulateResult.logs) {
+        log.warn("simRes logs", simulateResult.logs)
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
           const line = simulateResult.logs[i];
           if (line.startsWith('Program log: ')) {
@@ -240,7 +242,7 @@ async function awaitTransactionSignatureConfirmation(
               done = true;
               reject(status.err);
             } else if (!status.confirmations) {
-              log.error('REST no confirmations for', txid, status);
+              log.debug('REST no confirmations for', txid, status);
             } else {
               log.debug('REST confirmation for', txid, status);
               done = true;

@@ -19,7 +19,7 @@ import { signMetadataInstruction } from './sign';
 import log from 'loglevel';
 import { sleep } from '../helpers/various';
 
-const SIGNING_INTERVAL = 60 * 1000; //60s
+const ONE_MINUTE_IN_MS = 1000 * 60;
 let lastCount = 0;
 /*
  Get accounts by candy machine creator address
@@ -34,8 +34,9 @@ export async function signAllMetadataFromCandyMachine(
   wallet: Keypair,
   candyMachineAddress: string,
   batchSize: number,
-  daemon: boolean,
+  daemon: boolean
 ) {
+  const interval = 30 * ONE_MINUTE_IN_MS;
   if (daemon) {
     // noinspection InfiniteLoopJS
     for (;;) {
@@ -45,7 +46,9 @@ export async function signAllMetadataFromCandyMachine(
         wallet,
         batchSize,
       );
-      await sleep(SIGNING_INTERVAL);
+      const timeTaken = new Date(interval).toISOString().substr(11, 8);
+      log.info(`waiting for another ${timeTaken} before next check`)
+      await sleep(interval);
     }
   } else {
     await findAndSignMetadata(
@@ -68,7 +71,7 @@ async function findAndSignMetadata(
     connection,
   );
   if (lastCount === metadataByCandyMachine.length) {
-    log.debug(`Didn't find any new NFTs to sign - ${new Date()}`);
+    log.info(`Didn't find any new NFTs to sign - ${new Date()}`);
     return;
   }
   lastCount = metadataByCandyMachine.length;
@@ -93,7 +96,7 @@ async function findAndSignMetadata(
   );
 }
 
-async function getAccountsByCreatorAddress(creatorAddress, connection) {
+export async function getAccountsByCreatorAddress(creatorAddress, connection) {
   const metadataAccounts = await getProgramAccounts(
     connection,
     TOKEN_METADATA_PROGRAM_ID.toBase58(),
