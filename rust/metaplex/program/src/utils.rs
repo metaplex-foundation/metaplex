@@ -1,10 +1,9 @@
-
 use {
     crate::{
         error::MetaplexError,
         state::{
             get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX
+            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX,
         },
     },
     arrayref::array_ref,
@@ -24,7 +23,10 @@ use {
     },
     spl_auction::{
         instruction::end_auction_instruction,
-        processor::{end_auction::EndAuctionArgs, AuctionData, AuctionDataExtended, AuctionState, BidderMetadata},
+        processor::{
+            end_auction::EndAuctionArgs, AuctionData, AuctionDataExtended, AuctionState,
+            BidderMetadata,
+        },
     },
     spl_token::instruction::{set_authority, AuthorityType},
     spl_token_metadata::{

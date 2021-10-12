@@ -255,6 +255,8 @@ export class Metadata {
 
   public async init() {
     const metadata = toPublicKey(programIds().metadata);
+    /*
+    This nonce stuff doesnt work - we are doing something wrong here. TODO fix.
     if (this.editionNonce !== null) {
       this.edition = (
         await PublicKey.createProgramAddress(
@@ -267,9 +269,9 @@ export class Metadata {
           metadata,
         )
       ).toBase58();
-    } else {
-      this.edition = await getEdition(this.mint);
-    }
+    } else {*/
+    this.edition = await getEdition(this.mint);
+    //}
     this.masterEdition = this.edition;
   }
 }
@@ -433,6 +435,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['data', Data],
         ['primarySaleHappened', 'u8'], // bool
         ['isMutable', 'u8'], // bool
+        ['editionNonce', { kind: 'option', type: 'u8' }],
       ],
     },
   ],
