@@ -6,7 +6,6 @@ import { swap } from '../../actions/swap';
 import { CurrencyInput } from '../../components/CurrencyInput/CurrencyInput';
 import { useCurrencyPairState } from '../../contexts';
 import { PoolOperation, usePoolForBasket } from '../../utils/pools';
-// import './index.less';
 
 export function Swap() {
   const { wallet, connect, connected } = useWallet();
@@ -113,9 +112,8 @@ export function Swap() {
         size="large"
         onClick={connected ? handleSwap : connect}
         style={{ width: '100%' }}
-        disabled={true}
       >
-        Swap is being deprecated
+        Swap tokens
       </Button>
       {/*<TradeInfo pool={pool} />*/}
     </>
