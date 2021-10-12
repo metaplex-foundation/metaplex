@@ -8,18 +8,18 @@ use {
             assert_store_safety_vault_manager_match, transfer_safety_deposit_box_items,
         },
     },
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
+    metaplex_token_metadata::{
+        deprecated_instruction::deprecated_mint_printing_tokens_via_token, state::MasterEditionV1,
+    },
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         pubkey::Pubkey,
     },
-    spl_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
     spl_token::{instruction::close_account, state::Account},
-    spl_token_metadata::{
-        deprecated_instruction::deprecated_mint_printing_tokens_via_token, state::MasterEditionV1,
-    },
-    spl_token_vault::state::SafetyDepositBox,
 };
 
 fn mint_printing_tokens<'a: 'b, 'b>(
@@ -197,10 +197,10 @@ pub fn process_deprecated_populate_participation_printing_account<'a>(
         &store.auction_program,
         auction_extended_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             store.auction_program.as_ref(),
             vault_info.key.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
     )?;
 

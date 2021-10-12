@@ -19,7 +19,7 @@ use spl_token::state::Mint;
 pub use vault::Vault;
 
 pub fn program_test<'a>() -> ProgramTest {
-    ProgramTest::new("spl_token_metadata", spl_token_metadata::id(), None)
+    ProgramTest::new("metaplex_token_metadata", metaplex_token_metadata::id(), None)
 }
 
 pub async fn get_account(context: &mut ProgramTestContext, pubkey: &Pubkey) -> Account {

@@ -4,15 +4,17 @@ use {
         state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
         utils::{assert_derivation, assert_owned_by},
     },
+    metaplex_auction::{
+        instruction::claim_bid_instruction,
+        processor::{
+            claim_bid::ClaimBidArgs, AuctionData, AuctionDataExtended, AuctionState, BidderPot,
+        },
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         pubkey::Pubkey,
-    },
-    spl_auction::{
-        instruction::claim_bid_instruction,
-        processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot, AuctionDataExtended},
     },
 };
 
@@ -127,7 +129,8 @@ pub fn process_claim_bid(program_id: &Pubkey, accounts: &[AccountInfo]) -> Progr
 
     let mut instant_sale_price: Option<u64> = None;
     if let Some(auction_extended) = auction_extended_info {
-        instant_sale_price = AuctionDataExtended::get_instant_sale_price(&auction_extended.data.borrow());
+        instant_sale_price =
+            AuctionDataExtended::get_instant_sale_price(&auction_extended.data.borrow());
     }
     if !instant_sale_price.is_some() {
         if auction.state != AuctionState::Ended {

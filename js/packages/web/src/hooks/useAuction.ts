@@ -55,8 +55,7 @@ export const useAuction = (id: StringPublicKey) => {
         metadataByMasterEdition,
         cachedRedemptionKeys,
         metadataByAuction,
-        undefined,
-        existingAuctionView || undefined,
+        undefined
       );
 
       if (auctionView) setAuctionView(auctionView);

@@ -4,12 +4,12 @@ use {
         state::{SafetyDepositConfig, TupleNumericType, PREFIX},
     },
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_token_metadata::state::EDITION_MARKER_BIT_SIZE,
     solana_program::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
         sysvar,
     },
-    spl_token_metadata::state::EDITION_MARKER_BIT_SIZE,
 };
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub struct SetStoreArgs {
@@ -817,7 +817,7 @@ pub fn create_deprecated_validate_safety_deposit_box_v1_instruction(
         AccountMeta::new_readonly(auction_manager_authority, true),
         AccountMeta::new_readonly(metadata_authority, true),
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
@@ -882,7 +882,7 @@ pub fn create_validate_safety_deposit_box_v2_instruction(
         AccountMeta::new_readonly(auction_manager_authority, true),
         AccountMeta::new_readonly(metadata_authority, true),
         AccountMeta::new_readonly(payer, true),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
@@ -930,8 +930,8 @@ pub fn create_redeem_bid_instruction(
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new_readonly(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
@@ -978,8 +978,8 @@ pub fn create_redeem_full_rights_transfer_bid_instruction(
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new_readonly(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
@@ -1031,8 +1031,8 @@ pub fn create_deprecated_redeem_participation_bid_instruction(
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
@@ -1064,7 +1064,7 @@ pub fn create_start_auction_instruction(
             AccountMeta::new(auction, false),
             AccountMeta::new_readonly(auction_manager_authority, true),
             AccountMeta::new_readonly(store, false),
-            AccountMeta::new_readonly(spl_auction::id(), false),
+            AccountMeta::new_readonly(metaplex_auction::id(), false),
             AccountMeta::new_readonly(sysvar::clock::id(), false),
         ],
         data: MetaplexInstruction::StartAuction.try_to_vec().unwrap(),
@@ -1084,9 +1084,9 @@ pub fn create_set_store_instruction(
         AccountMeta::new_readonly(admin, true),
         AccountMeta::new_readonly(payer, true),
         AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(spl_token_vault::id(), false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
-        AccountMeta::new_readonly(spl_auction::id(), false),
+        AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_auction::id(), false),
         AccountMeta::new_readonly(solana_program::system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
@@ -1129,8 +1129,8 @@ pub fn create_deprecated_populate_participation_printing_account_instruction(
         AccountMeta::new_readonly(auction, false),
         AccountMeta::new_readonly(auction_manager, false),
         AccountMeta::new_readonly(spl_token::id(), false),
-        AccountMeta::new_readonly(spl_token_vault::id(), false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
         AccountMeta::new_readonly(store, false),
         AccountMeta::new_readonly(master_edition, false),
         AccountMeta::new_readonly(transfer_authority, false),
@@ -1161,7 +1161,7 @@ pub fn create_decommission_auction_manager_instruction(
         AccountMeta::new_readonly(authority, true),
         AccountMeta::new_readonly(vault, false),
         AccountMeta::new_readonly(store, false),
-        AccountMeta::new_readonly(spl_auction::id(), false),
+        AccountMeta::new_readonly(metaplex_auction::id(), false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
     ];
     Instruction {
@@ -1221,42 +1221,42 @@ pub fn create_redeem_printing_v2_bid_instruction(
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
             edition_number.to_string().as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (metadata, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (master_edition, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (new_edition, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             new_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     Instruction {
@@ -1274,8 +1274,8 @@ pub fn create_redeem_printing_v2_bid_instruction(
             AccountMeta::new_readonly(bidder, false),
             AccountMeta::new(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
@@ -1324,21 +1324,21 @@ pub fn create_withdraw_master_edition(
 
     let (vault_authority, _) = Pubkey::find_program_address(
         &[
-            spl_token_vault::state::PREFIX.as_bytes(),
-            spl_token_vault::id().as_ref(),
+            metaplex_token_vault::state::PREFIX.as_bytes(),
+            metaplex_token_vault::id().as_ref(),
             vault.as_ref(),
         ],
-        &spl_token_vault::id(),
+        &metaplex_token_vault::id(),
     );
 
     let (auction_data_extended, _) = Pubkey::find_program_address(
         &[
-            spl_auction::PREFIX.as_bytes(),
-            spl_auction::id().as_ref(),
+            metaplex_auction::PREFIX.as_bytes(),
+            metaplex_auction::id().as_ref(),
             vault.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
-        &spl_auction::id(),
+        &metaplex_auction::id(),
     );
 
     Instruction {
@@ -1355,7 +1355,7 @@ pub fn create_withdraw_master_edition(
             AccountMeta::new_readonly(auction, false),
             AccountMeta::new_readonly(auction_data_extended, false),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
         ],
@@ -1417,52 +1417,52 @@ pub fn create_redeem_participation_bid_v3_instruction(
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
             edition_number.to_string().as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (metadata, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (master_edition, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             original_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (new_edition, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             new_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let (extended, _) = Pubkey::find_program_address(
         &[
-            spl_auction::PREFIX.as_bytes(),
-            spl_auction::id().as_ref(),
+            metaplex_auction::PREFIX.as_bytes(),
+            metaplex_auction::id().as_ref(),
             vault.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
-        &spl_auction::id(),
+        &metaplex_auction::id(),
     );
 
     Instruction {
@@ -1480,8 +1480,8 @@ pub fn create_redeem_participation_bid_v3_instruction(
             AccountMeta::new_readonly(bidder, true),
             AccountMeta::new(payer, true),
             AccountMeta::new_readonly(spl_token::id(), false),
-            AccountMeta::new_readonly(spl_token_vault::id(), false),
-            AccountMeta::new_readonly(spl_token_metadata::id(), false),
+            AccountMeta::new_readonly(metaplex_token_vault::id(), false),
+            AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
             AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
@@ -1526,7 +1526,7 @@ pub fn create_end_auction_instruction(
             AccountMeta::new_readonly(auction_data_extended, false),
             AccountMeta::new_readonly(auction_manager_authority, true),
             AccountMeta::new_readonly(store, false),
-            AccountMeta::new_readonly(spl_auction::id(), false),
+            AccountMeta::new_readonly(metaplex_auction::id(), false),
             AccountMeta::new_readonly(sysvar::clock::id(), false),
         ],
         data: MetaplexInstruction::EndAuction(end_auction_args)

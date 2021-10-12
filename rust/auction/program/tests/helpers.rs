@@ -6,7 +6,7 @@ use solana_sdk::{
     transaction::Transaction,
     transport::TransportError,
 };
-use spl_auction::{
+use metaplex_auction::{
     instruction,
     processor::{
         CancelBidArgs, ClaimBidArgs, CreateAuctionArgs, CreateAuctionArgsV2, EndAuctionArgs,
