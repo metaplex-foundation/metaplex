@@ -15,6 +15,7 @@ import {
   toPublicKey,
   WalletSigner,
   Attribute,
+  ICollection,
 } from '@oyster/common';
 import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -82,6 +83,7 @@ export const mintNFT = async (
     animation_url: string | undefined;
     attributes: Attribute[] | undefined;
     external_url: string;
+    collection: ICollection;
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
@@ -102,6 +104,7 @@ export const mintNFT = async (
     animation_url: metadata.animation_url,
     attributes: metadata.attributes,
     external_url: metadata.external_url,
+    collection: metadata.collection,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map(creator => {

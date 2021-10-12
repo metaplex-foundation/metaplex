@@ -43,6 +43,8 @@ import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { DEFAULT_COLLECTION_FAMILY, useCollections } from '../../hooks/useCollections';
+import {Select} from 'antd';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -74,6 +76,10 @@ export const ArtCreateView = () => {
     attributes: undefined,
     seller_fee_basis_points: 0,
     creators: [],
+    collection : {
+      name : '',
+      family : ''
+    },
     properties: {
       files: [],
       category: MetadataCategory.Image,
@@ -105,6 +111,7 @@ export const ArtCreateView = () => {
       animation_url: attributes.animation_url,
       attributes: attributes.attributes,
       external_url: attributes.external_url,
+      collection : attributes.collection,
       properties: {
         files: attributes.properties.files,
         category: attributes.properties?.category,
@@ -593,13 +600,21 @@ const InfoStep = (props: {
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
+  const {collections} = useCollections();
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
+  const [selectedCollection, setSelectedCollection] = useState<string>(collections[0].collectionName);
+
   const { image, animation_url } = useArtworkFiles(
     props.files,
     props.attributes,
   );
   const [form] = Form.useForm();
+
+  const setCollection = (name: string) => {
+    props.attributes.collection.name = name;
+    props.attributes.collection.family = DEFAULT_COLLECTION_FAMILY;
+  };
 
   useEffect(() => {
     setRoyalties(
@@ -648,6 +663,21 @@ const InfoStep = (props: {
               }
             />
           </label>
+
+          <label className="action-field">
+            <span className="field-title">Collection</span>
+            <Select
+              onSelect={setSelectedCollection}
+              value={selectedCollection}
+            >
+              {collections.map(({collectionName}) => (
+                <Select.Option value={collectionName!} key={collectionName}>
+                  {collectionName}
+                </Select.Option>
+              ))}
+            </Select>
+          </label>
+
           {/* <label className="action-field">
             <span className="field-title">Symbol</span>
             <Input
@@ -766,6 +796,7 @@ const InfoStep = (props: {
                 attributes: nftAttributes,
               });
 
+              setCollection(selectedCollection);
               props.confirm();
             });
           }}
@@ -1175,8 +1206,8 @@ const WaitingStep = (props: {
         <Steps direction="vertical" current={props.step}>
           <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
           <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  /> 
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} /> 
+          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  />
+          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
           <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
           <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
           <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
