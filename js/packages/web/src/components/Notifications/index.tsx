@@ -28,7 +28,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
-import {useGateway} from "@civic/solana-gateway-react";
+import { useSolanaGateway as useGateway } from "@civic/solana-gateway-react";
 
 interface NotificationCard {
   id: string;

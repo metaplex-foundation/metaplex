@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Layout, Spin, Button, Table } from 'antd';
-import {useGateway} from "@civic/solana-gateway-react";
+import { useSolanaGateway as useGateway } from "@civic/solana-gateway-react";
 import {
   useArt,
   useAuction,

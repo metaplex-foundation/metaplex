@@ -115,7 +115,7 @@ export const AuctionView = () => {
         }
       }
     }
-  }, [auction?.gatekeeperNetwork.toString(), setGatekeeperNetwork])
+  }, [auction?.gatekeeperNetwork?.toString(), setGatekeeperNetwork])
 
   const items = [
     ...(auction?.items
