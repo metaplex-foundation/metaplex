@@ -16,13 +16,21 @@ export const gatekeeperNetworks:GatekeeperNetworkSelection[] = [{
   description: 'Full KYC'
 }]
 
-export type GatekeeperNetworkProps = { gatekeeperNetwork?: GatekeeperNetworkSelection, setGatekeeperNetwork: (gatekeeperNetwork: GatekeeperNetworkSelection) => void }
+export type GatekeeperNetworkProps = { gatekeeperNetwork?: GatekeeperNetworkSelection, setGatekeeperNetwork: (key?: PublicKey) => void }
 const GatekeeperNetworkContext = React.createContext<GatekeeperNetworkProps>({
   gatekeeperNetwork: undefined,
   setGatekeeperNetwork: () => {},
 });
-export const GatekeeperNetworkProvider:React.FC<{}> = ({ children }) => {
-  const [gatekeeperNetwork, setGatekeeperNetwork] = useState<GatekeeperNetworkSelection|undefined>();
+export const GatekeeperNetworkProvider:React.FC = ({ children }) => {
+  const [gatekeeperNetwork, setGatekeeperNetworkSelection] = useState<GatekeeperNetworkSelection|undefined>();
+
+  const setGatekeeperNetwork = (key?: PublicKey) => {
+    if (!key) {
+      setGatekeeperNetworkSelection(undefined)
+    } else {
+      setGatekeeperNetworkSelection(gatekeeperNetworks.find(gkn => gkn.publicKey.toBase58() === key.toBase58()))
+    }
+  }
 
   return <GatekeeperNetworkContext.Provider value={{
     gatekeeperNetwork,

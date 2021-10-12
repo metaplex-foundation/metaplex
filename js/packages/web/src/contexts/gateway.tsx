@@ -14,8 +14,6 @@ export const GatewayProvider:React.FC = ({ children}) => {
   const { endpoint } = useConnectionConfig();
   const {gatekeeperNetwork} = useGatekeeperNetwork();
 
-  console.log(gatekeeperNetwork);
-
   return (
     (wallet && wallet.connected && wallet.publicKey && gatekeeperNetwork) ?
       <SolanaGatewayProvider

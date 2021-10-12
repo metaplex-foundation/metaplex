@@ -30,6 +30,7 @@ import {
   WinningConfigType,
   AuctionViewItem,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import {PublicKey} from "@solana/web3.js";
 
 export enum AuctionViewState {
   Live = '0',
@@ -57,6 +58,7 @@ export interface AuctionView {
   vault: ParsedAccount<Vault>;
   totallyComplete: boolean;
   isInstantSale: boolean;
+  gatekeeperNetwork: PublicKey;
 }
 
 type CachedRedemptionKeys = Record<
@@ -460,6 +462,7 @@ export function processAccountsIntoAuctionView(
         myBidderMetadata: bidderMetadata,
         myBidderPot: bidderPot,
         myBidRedemption: bidRedemption,
+        gatekeeperNetwork: auction.info.gatekeeperNetwork ? new PublicKey(auction.info.gatekeeperNetwork) : undefined
       };
 
       view.thumbnail =

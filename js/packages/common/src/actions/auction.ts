@@ -564,6 +564,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['priceFloor', PriceFloor],
         ['state', 'u8'],
         ['bidState', BidState],
+        ['gatekeeperNetwork', 'pubkeyAsString'],
       ],
     },
   ],
