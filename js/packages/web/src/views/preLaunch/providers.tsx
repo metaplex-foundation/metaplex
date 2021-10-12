@@ -1,10 +1,12 @@
-import React from 'react';
-import { StoreProvider } from '@oyster/common';
-import { FC } from 'react';
-export const Providers: FC = ({ children }) => {
+import { Storefront, StoreProvider } from '@oyster/common';
+import React, { FC } from 'react';
+export const Providers: FC<{ storefront: Storefront }> = ({
+  children,
+  storefront,
+}) => {
   return (
     <StoreProvider
-      ownerAddress={process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS}
+      storefront={storefront}
       storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
     >
       {children}
