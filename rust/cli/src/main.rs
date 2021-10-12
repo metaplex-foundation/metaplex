@@ -6,9 +6,9 @@ use clap::{
 use solana_account_decoder::parse_token::{parse_token, TokenAccountType};
 use solana_clap_utils::{
     fee_payer::fee_payer_arg,
-    input_parsers::{pubkey_of, pubkey_of_signer},
+    input_parsers::{pubkey_of, pubkey_of_signer, value_of},
     input_validators::{
-        is_parsable, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
+        is_parsable, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
         normalize_to_url_if_moniker,
     },
     keypair::{signer_from_path, CliSignerInfo},
@@ -33,8 +33,7 @@ use spl_token_metadata::{
     instruction::create_metadata_accounts,
     state::{Creator, MAX_METADATA_LEN, PREFIX},
 };
-use std::process::exit;
-use std::sync::Arc;
+use std::{fmt::Display, process::exit, sync::Arc};
 
 pub mod config;
 use crate::config::Config;
@@ -47,6 +46,31 @@ type CommandResult = Result<Option<(u64, Vec<Vec<Instruction>>)>, Error>;
 
 fn is_mint_decimals(string: String) -> Result<(), String> {
     is_parsable::<u8>(string)
+}
+
+fn is_valid_basis_points<T>(basis_points: T) -> Result<(), String>
+where
+    T: AsRef<str> + Display,
+{
+    basis_points
+        .as_ref()
+        .parse::<u16>()
+        .map_err(|e| {
+            format!(
+                "Unable to parse input basis points, provided: {}, err: {}",
+                basis_points, e
+            )
+        })
+        .and_then(|v| {
+            if v > 1000 {
+                Err(format!(
+                    "Basis points must be in range of 0 to 1000, provided: {}",
+                    v
+                ))
+            } else {
+                Ok(())
+            }
+        })
 }
 
 fn new_throwaway_signer() -> (Box<dyn Signer>, Pubkey) {
@@ -152,17 +176,25 @@ fn main() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("create_metadata_accounts")
+            SubCommand::with_name("create_metadata_account")
                 .about("Create metadata account for existing mint")
                 .arg(
-                    Arg::with_name("mint_authority")
-                        .long("mint-authority")
-                        .alias("owner")
-                        .value_name("ADDRESS")
+                    Arg::with_name("mint_address")
+                        .long("mint-address")
+                        .value_name("MINT_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .required(true)
+                        .help("Address of mint account"),
+                )
+                .arg(
+                    Arg::with_name("update_authority")
+                        .long("update-authority")
+                        .value_name("UPDATE_AUTHORITY_ADDRESS")
                         .validator(is_valid_pubkey)
                         .takes_value(true)
                         .help(
-                            "Specify the mint authority address. \
+                            "Specify the update authority address. \
                              Defaults to the client keypair address.",
                         ),
                 )
@@ -172,15 +204,14 @@ fn main() {
                         .global(true)
                         .value_name("NAME")
                         .takes_value(true)
-                        .help("name for the Mint"),
+                        .help("Specify the name for the mint."),
                 )
                 .arg(
                     Arg::with_name("symbol")
                         .long("symbol")
                         .value_name("SYMBOL")
                         .takes_value(true)
-                        .global(true)
-                        .help("symbol for the Mint"),
+                        .help("Specify the symbol for the mint."),
                 )
                 .arg(
                     Arg::with_name("uri")
@@ -188,7 +219,8 @@ fn main() {
                         .value_name("URI")
                         .takes_value(true)
                         .required(true)
-                        .help("URI for the Mint"),
+                        .validator(is_url)
+                        .help("Specify the URI for the mint."),
                 )
                 .arg(
                     Arg::with_name("mutable")
@@ -197,6 +229,19 @@ fn main() {
                         .takes_value(false)
                         .required(false)
                         .help("Permit future metadata updates"),
+                )
+                .arg(
+                    Arg::with_name("seller_fee_basis_points")
+                        .long("seller-fee-basis-points")
+                        .alias("sell-bps")
+                        .value_name("SELLER_FEE_BASIS_POINTS")
+                        .takes_value(true)
+                        .required(true)
+                        .validator(is_valid_basis_points)
+                        .help(
+                            "Specify seller fee in basis points. \
+                            1000 basis points equals 100%.",
+                        ),
                 ),
         )
         .subcommand(
@@ -326,32 +371,30 @@ fn main() {
             let address = pubkey_of(arg_matches, "address").unwrap();
             command_mint_info(&config, address)
         }
-        // ("create_metadata_accounts", Some(arg_matches)) => {
+        ("create_metadata_account", Some(arg_matches)) => {
+            let mint_address = pubkey_of(arg_matches, "mint_address").unwrap();
+            let update_authority =
+                config.pubkey_or_default(arg_matches, "update_authority", &mut wallet_manager);
 
-        //     mint: Pubkey,
-        //     mint_authority: Pubkey,
-        //     payer: Pubkey,
-        //     update_authority: Pubkey,
-        //     name: String,
-        //     symbol: String,
-        //     uri: String,
-        //     creators: Option<Vec<Creator>>,
-        //     seller_fee_basis_points: u16,
-        //     update_authority_is_signer: bool,
-        //     is_mutable: bool,
-        //     //     let update_authority = read_keypair_file(
-        //     //         app_matches
-        //     //             .value_of("update_authority")
-        //     //             .unwrap_or_else(|| app_matches.value_of("keypair").unwrap()),
-        //     //     )
-        //     //     .unwrap();
-
-        //     //     let (metadata, metadata_key) = create_metadata_account_call(arg_matches, payer, client);
-        //     //     println!(
-        //     //         "Create metadata account with mint {:?} and key {:?} and name of {:?} and symbol of {:?}",
-        //     //         metadata.mint, metadata_key, metadata.data.name, metadata.data.symbol
-        //     //     );
-        // }
+            let is_mutable = arg_matches.is_present("mutable");
+            let name = arg_matches.value_of("name").unwrap_or(&"").to_string();
+            let symbol = arg_matches.value_of("symbol").unwrap_or(&"").to_string();
+            let uri = arg_matches.value_of("uri").unwrap_or(&"").to_string();
+            let seller_fee_basis_points =
+                value_of::<u16>(arg_matches, "seller_fee_basis_points").unwrap();
+            let creators = None;
+            command_create_metadata_account(
+                &config,
+                mint_address,
+                update_authority,
+                name,
+                symbol,
+                uri,
+                creators,
+                seller_fee_basis_points,
+                is_mutable,
+            )
+        }
         ("supply", Some(arg_matches)) => {
             let address = pubkey_of_signer(arg_matches, "address", &mut wallet_manager)
                 .unwrap()
@@ -436,16 +479,13 @@ fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
 
 fn command_create_metadata_account(
     config: &Config,
-    mint: Pubkey,
-    mint_authority: Pubkey,
-    payer: Pubkey,
+    mint_address: Pubkey,
     update_authority: Pubkey,
     name: String,
     symbol: String,
     uri: String,
     creators: Option<Vec<Creator>>,
     seller_fee_basis_points: u16,
-    update_authority_is_signer: bool,
     is_mutable: bool,
 ) -> CommandResult {
     let minimum_balance_for_rent_exemption = config
@@ -454,7 +494,23 @@ fn command_create_metadata_account(
 
     let program_id = spl_token_metadata::id();
 
-    let metadata_seeds = &[PREFIX.as_bytes(), program_id.as_ref(), mint.as_ref()];
+    let account = config
+        .rpc_client
+        .get_account(&mint_address)
+        .map_err(|_| format!("Could not find mint account {}", &mint_address))
+        .unwrap();
+
+    let mint = Mint::unpack(&account.data)?;
+
+    // I think this should be set to true if the update authority is different than the mint authority in which
+    // case a signature from the update authority is required.
+    let update_authority_is_signer = mint.mint_authority.unwrap() != update_authority;
+
+    let metadata_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        mint_address.as_ref(),
+    ];
 
     let (metadata_account, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
 
@@ -463,9 +519,9 @@ fn command_create_metadata_account(
     let instructions = vec![create_metadata_accounts(
         program_id,
         metadata_account,
-        mint,
-        mint_authority,
-        payer,
+        mint_address,
+        mint.mint_authority.unwrap(),
+        config.fee_payer,
         update_authority,
         name,
         symbol,
