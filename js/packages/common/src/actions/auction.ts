@@ -377,7 +377,7 @@ export interface IPartialCreateAuctionArgs {
   /// Token mint for the SPL token used for bidding.
   tokenMint: StringPublicKey;
   /// The gatekeeper network that grants permission to bid on this auction
-  gatekeeperNetwork: StringPublicKey;
+  gatekeeperNetwork: StringPublicKey | null;
 
   priceFloor: PriceFloor;
 
@@ -405,7 +405,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
   /// The resource being auctioned. See AuctionData.
   resource: StringPublicKey;
   /// The gatekeeper network that grants permission to bid on this auction
-  gatekeeperNetwork: StringPublicKey;
+  gatekeeperNetwork: StringPublicKey | null;
 
   priceFloor: PriceFloor;
 
@@ -424,7 +424,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     tokenMint: StringPublicKey;
     authority: StringPublicKey;
     resource: StringPublicKey;
-    gatekeeperNetwork: StringPublicKey;
+    gatekeeperNetwork: StringPublicKey | null;
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
