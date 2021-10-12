@@ -65,7 +65,7 @@ pub enum PriceFloor {
 // usize in bid state.
 // NOTE: New research suggests u32s are used for vecs in borsh, not u64s, so the first extra 8 should be a 4
 // but for legacy reasons we leave it behind.
-pub const BASE_AUCTION_DATA_SIZE: usize = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 8 + 8 + 8 + 32;
+pub const BASE_AUCTION_DATA_SIZE: usize = 32 + 32 + 9 + 9 + 9 + 9 + 1 + 32 + 1 + 8 + 8 + 8 + 33;
 pub const BID_LENGTH: usize = 32 + 8;
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug)]
@@ -94,7 +94,7 @@ pub struct AuctionData {
     /// Auction Bids, each user may have one bid open at a time.
     pub bid_state: BidState,
     /// Bidders must have a gateway token issued by this gatekeeper network
-    pub gatekeeper_network: Pubkey,
+    pub gatekeeper_network: Option<Pubkey>,
 }
 
 // Alias for auction name.

@@ -493,7 +493,7 @@ export const InnerBillingView = ({
                 await settle(
                   connection,
                   wallet,
-                  gatewayToken!.publicKey,
+                  gatewayToken?.publicKey,
                   auctionView,
                   bidsToClaim.map(b => b.pot),
                   myPayingAccount.pubkey,

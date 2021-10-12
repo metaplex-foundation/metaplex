@@ -65,7 +65,7 @@ struct Accounts<'a, 'b: 'a> {
     bidder_pot: &'a AccountInfo<'b>,
     bidder_pot_token: &'a AccountInfo<'b>,
     bidder: &'a AccountInfo<'b>,
-    bidder_gateway_token: &'a AccountInfo<'b>,
+    bidder_gateway_token: Option<&'a AccountInfo<'b>>,
     bidder_token: &'a AccountInfo<'b>,
     clock_sysvar: &'a AccountInfo<'b>,
     mint: &'a AccountInfo<'b>,
@@ -83,7 +83,6 @@ fn parse_accounts<'a, 'b: 'a>(
     let account_iter = &mut accounts.iter();
     let accounts = Accounts {
         bidder: next_account_info(account_iter)?,
-        bidder_gateway_token: next_account_info(account_iter)?,
         bidder_token: next_account_info(account_iter)?,
         bidder_pot: next_account_info(account_iter)?,
         bidder_pot_token: next_account_info(account_iter)?,
@@ -97,6 +96,7 @@ fn parse_accounts<'a, 'b: 'a>(
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
         token_program: next_account_info(account_iter)?,
+        bidder_gateway_token: next_account_info(account_iter).ok()
     };
 
     assert_owned_by(accounts.auction, program_id)?;
@@ -136,9 +136,12 @@ pub fn place_bid<'r, 'b: 'r>(
     // Load the auction and verify this bid is valid.
     let mut auction = AuctionData::from_account_info(accounts.auction)?;
 
-    // Verify the bidder's gateway token
-    let gateway_verification_result = Gateway::verify_gateway_token_account_info(accounts.bidder_gateway_token, accounts.bidder.key, &auction.gatekeeper_network)?;
-    msg!("Gateway Token validated {:?}", gateway_verification_result);
+    // Verify the bidder's gateway token, if the auction requires one
+    if auction.gatekeeper_network != None {
+        assert_eq!(accounts.bidder_gateway_token.is_none(), false);
+        let gateway_verification_result = Gateway::verify_gateway_token_account_info(accounts.bidder_gateway_token.unwrap(), accounts.bidder.key, &auction.gatekeeper_network.unwrap())?;
+        msg!("Gateway Token validated {:?}", gateway_verification_result);
+    }
 
     // Load the clock, used for various auction timing.
     let clock = Clock::from_account_info(accounts.clock_sysvar)?;
@@ -337,7 +340,7 @@ pub fn place_bid<'r, 'b: 'r>(
         last_bid_timestamp: clock.unix_timestamp,
         cancelled: false,
     }
-    .serialize(&mut *accounts.bidder_meta.data.borrow_mut())?;
+        .serialize(&mut *accounts.bidder_meta.data.borrow_mut())?;
 
     Ok(())
 }

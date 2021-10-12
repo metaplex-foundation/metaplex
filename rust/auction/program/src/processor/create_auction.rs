@@ -39,7 +39,7 @@ pub struct CreateAuctionArgs {
     /// The resource being auctioned. See AuctionData.
     pub resource: Pubkey,
     /// Bidders must have a gateway token issued by this gatekeeper network
-    pub gatekeeper_network: Pubkey,
+    pub gatekeeper_network: Option<Pubkey>,
     /// Set a price floor.
     pub price_floor: PriceFloor,
     /// Add a tick size increment

@@ -1,4 +1,9 @@
-import {Keypair, Connection, TransactionInstruction, PublicKey} from '@solana/web3.js';
+import {
+  Keypair,
+  Connection,
+  TransactionInstruction,
+  PublicKey,
+} from '@solana/web3.js';
 import {
   ParsedAccount,
   programIds,
@@ -82,7 +87,7 @@ export function eligibleForParticipationPrizeGivenWinningIndex(
 export async function sendRedeemBid(
   connection: Connection,
   wallet: WalletSigner,
-  gatewayToken: PublicKey,
+  gatewayToken: PublicKey | undefined,
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,

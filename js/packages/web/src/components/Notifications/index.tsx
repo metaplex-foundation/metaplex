@@ -278,7 +278,7 @@ export function useSettlementAuctions({
             await settle(
               connection,
               wallet,
-              gatewayToken!.publicKey,
+              gatewayToken?.publicKey,
               auctionView,
               // Just claim all bidder pots
               bidsToClaim,

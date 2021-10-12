@@ -19,7 +19,7 @@ export const GatewayProvider:React.FC = ({ children}) => {
       <SolanaGatewayProvider
         wallet={wallet as GatewayWallet}
         gatekeeperNetwork={gatekeeperNetwork.publicKey}
-        stage='dev'
+        stage='prod'
         clusterUrl={endpoint}
       >
         {children}

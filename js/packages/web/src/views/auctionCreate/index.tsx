@@ -1722,7 +1722,7 @@ const ParticipationStep = (props: {
           onClick={props.confirm}
           className="action-btn"
         >
-          Continue to Review
+          Continue to Permissions
         </Button>
       </Row>
     </>

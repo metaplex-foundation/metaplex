@@ -338,7 +338,7 @@ export const AuctionCard = ({
                   await sendRedeemBid(
                     connection,
                     wallet as WalletSigner,
-                    gatewayToken!.publicKey,
+                    gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
@@ -350,7 +350,7 @@ export const AuctionCard = ({
                   await sendCancelBid(
                     connection,
                     wallet as WalletSigner,
-                    gatewayToken!.publicKey,
+                    gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
@@ -525,7 +525,7 @@ export const AuctionCard = ({
                   const bid = await sendPlaceBid(
                     connection,
                     wallet as WalletSigner,
-                    gatewayToken!.publicKey,
+                    gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
@@ -562,7 +562,7 @@ export const AuctionCard = ({
                     const bid = await sendPlaceBid(
                       connection,
                       wallet as WalletSigner,
-                      gatewayToken!.publicKey,
+                      gatewayToken?.publicKey,
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
@@ -589,7 +589,7 @@ export const AuctionCard = ({
                   await sendRedeemBid(
                     connection,
                     wallet as WalletSigner,
-                    gatewayToken!.publicKey,
+                    gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,

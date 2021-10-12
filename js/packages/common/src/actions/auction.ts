@@ -492,7 +492,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['tokenMint', 'pubkeyAsString'],
         ['authority', 'pubkeyAsString'],
         ['resource', 'pubkeyAsString'],
-        ['gatekeeperNetwork', 'pubkeyAsString'],
+        ['gatekeeperNetwork', { kind: 'option', type: 'pubkeyAsString' }],
         ['priceFloor', PriceFloor],
         ['tickSize', { kind: 'option', type: 'u64' }],
         ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
@@ -564,7 +564,7 @@ export const AUCTION_SCHEMA = new Map<any, any>([
         ['priceFloor', PriceFloor],
         ['state', 'u8'],
         ['bidState', BidState],
-        ['gatekeeperNetwork', 'pubkeyAsString'],
+        ['gatekeeperNetwork', { kind: 'option', type: 'pubkeyAsString' }],
       ],
     },
   ],
@@ -799,7 +799,7 @@ export async function setAuctionAuthority(
 
 export async function placeBid(
   bidderPubkey: StringPublicKey,
-  bidderGatewayTokenPubkey: StringPublicKey,
+  bidderGatewayTokenPubkey: StringPublicKey | undefined,
   bidderTokenPubkey: StringPublicKey,
   bidderPotTokenPubkey: StringPublicKey,
   tokenMintPubkey: StringPublicKey,
@@ -855,11 +855,6 @@ export async function placeBid(
     {
       pubkey: toPublicKey(bidderPubkey),
       isSigner: true,
-      isWritable: false,
-    },
-    {
-      pubkey: toPublicKey(bidderGatewayTokenPubkey),
-      isSigner: false,
       isWritable: false,
     },
     {
@@ -930,6 +925,15 @@ export async function placeBid(
       isWritable: false,
     },
   ];
+
+  if (bidderGatewayTokenPubkey) {
+    keys.push({
+      pubkey: toPublicKey(bidderGatewayTokenPubkey),
+      isSigner: false,
+      isWritable: false,
+    });
+  }
+
   instructions.push(
     new TransactionInstruction({
       keys,
