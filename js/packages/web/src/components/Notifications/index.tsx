@@ -320,18 +320,20 @@ export function useSettlementAuctions({
               metadataByAuction,
               undefined,
             );
-            await settle(
-              connection,
-              wallet,
-              completeAuctionView,
-              // Just claim all bidder pots
-              bidsToClaim,
-              myPayingAccount?.pubkey,
-              accountByMint,
-            );
-            if (wallet.publicKey) {
-              const ata = await getPersonalEscrowAta(wallet);
-              if (ata) await closePersonalEscrow(connection, wallet, ata);
+            if(completeAuctionView) {
+              await settle(
+                connection,
+                wallet,
+                completeAuctionView,
+                // Just claim all bidder pots
+                bidsToClaim,
+                myPayingAccount?.pubkey,
+                accountByMint,
+              );
+              if (wallet.publicKey) {
+                const ata = await getPersonalEscrowAta(wallet);
+                if (ata) await closePersonalEscrow(connection, wallet, ata);
+              }
             }
           } catch (e) {
             console.error(e);
