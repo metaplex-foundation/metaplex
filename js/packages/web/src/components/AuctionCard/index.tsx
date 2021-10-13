@@ -671,9 +671,10 @@ export const AuctionCard = ({
               return (
                 <>
                   <h2 className="modal-title">
-                    {auctionView.isInstantSale
+                    {canEndInstantSale && 'End instant sale'}
+                    {!canEndInstantSale && (auctionView.isInstantSale
                       ? 'Confirm Purchase'
-                      : 'Place a bid'}
+                      : 'Place a bid')}
                   </h2>
                   {!!gapTime && (
                     <div
@@ -695,7 +696,7 @@ export const AuctionCard = ({
                       )}
                     </div>
                   )}
-                  <AuctionNumbers auctionView={auctionView} />
+                  {!canEndInstantSale && <AuctionNumbers auctionView={auctionView} />}
                   <br />
                   {tickSizeInvalid && tickSize && (
                     <span style={{ color: 'red' }}>
