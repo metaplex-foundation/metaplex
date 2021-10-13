@@ -102,6 +102,8 @@ export function isUserTokenBAccount(): boolean {
 }
 
 export async function signAndSendTx(tx: Transaction) {
+  tx.recentBlockhash = (await connection.getRecentBlockhash('finalized')).blockhash;
+  tx.feePayer = userPubkey;
   const signedTransaction = await wallet.signTransaction(tx);
   await sendSignedTransaction({
     connection,
@@ -115,9 +117,6 @@ export async function createTokenATransaction(): Promise<any> {
   let mintA = new Token(connection, mintAAddress, TOKEN_PROGRAM_ID, acc);
   const associatedAddress = await Token.getAssociatedTokenAddress(mintA.associatedProgramId, mintA.programId, mintA.publicKey, userPubkey);
   const transaction = new Transaction().add(Token.createAssociatedTokenAccountInstruction(mintA.associatedProgramId, mintA.programId, mintA.publicKey, associatedAddress, userPubkey, userPubkey));
-  transaction.recentBlockhash = (await connection.getRecentBlockhash('finalized')).blockhash;
-  transaction.feePayer = userPubkey;
-  console.log('--recentA', transaction.recentBlockhash)
   return signAndSendTx(transaction);
 }
 
@@ -126,9 +125,6 @@ export async function createTokenBTransaction(): Promise<any> {
   let mintB = new Token(connection, mintBAddress, TOKEN_PROGRAM_ID, acc);
   const associatedAddress = await Token.getAssociatedTokenAddress(mintB.associatedProgramId, mintB.programId, mintB.publicKey, userPubkey);
   const transaction = new Transaction().add(Token.createAssociatedTokenAccountInstruction(mintB.associatedProgramId, mintB.programId, mintB.publicKey, associatedAddress, userPubkey, userPubkey));
-  transaction.recentBlockhash = (await connection.getRecentBlockhash('finalized')).blockhash;
-  transaction.feePayer = userPubkey;
-  console.log('--recent', transaction.recentBlockhash)
   return signAndSendTx(transaction);
 }
 
@@ -136,6 +132,8 @@ export async function swap(): Promise<any> {
   let userTokenAccountA = userTokenAAcc!.pubkey;
   let userTokenAccountB = userTokenBAcc!.pubkey;
   let transaction = new Transaction();
+
+  console.log('--swap', amountIn, amountOut)
 
   let swapInstruction = TokenSwap.swapInstruction(
     tokenSwap.tokenSwap,
@@ -158,13 +156,20 @@ export async function swap(): Promise<any> {
 
 }
 
+export function getPoolBalanceA() {
+
+}
+
 function updateAmountOut() {
   if (tokenAccountA != null && tokenAccountB != null) {
     let tokenAAmount = parseInt((tokenAccountA!.data as ParsedAccountData).parsed['info']['tokenAmount']['amount']);
     let tokenBAmount = parseInt((tokenAccountB!.data as ParsedAccountData).parsed['info']['tokenAmount']['amount']);
     let aTotal = isReverse ? tokenBAmount : tokenAAmount;
     let bTotal = isReverse ? tokenAAmount : tokenBAmount;
-    amountOut = calculateAmountOut(aTotal, bTotal);
+
+    console.log('--aaa', aTotal/1000000, bTotal/1000000)
+
+    amountOut = calculateAmountOut(aTotal , bTotal);
   }
 }
 

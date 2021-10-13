@@ -46,6 +46,12 @@ export function Swap() {
     });
   }, []);
 
+  const updateBalances = useCallback(async () => {
+    await updateUserTokenAccounts();
+    setBalanceA(getUserTokenABalance());
+    setBalanceB(getUserTokenBBalance());
+  }, []);
+
   const handleSwap = useCallback(async () => {
     if (!isTokenCreated) {
       return handleCreateToken();
@@ -53,13 +59,15 @@ export function Swap() {
 
     try {
       const result = await swap();
+      await updateBalances();
       if (result) {
         notify({
           message: 'Swap completed.',
           type: 'success',
         });
       }
-    } catch {
+    } catch(e) {
+      console.error(e);
       notify({
         description:
           'Please try again and approve transactions from your wallet',
@@ -67,13 +75,7 @@ export function Swap() {
         type: 'error',
       });
     }
-  }, [isTokenCreated, handleCreateToken]);
-
-  const updateBalances = useCallback(async () => {
-    await updateUserTokenAccounts();
-    setBalanceA(getUserTokenABalance());
-    setBalanceB(getUserTokenBBalance());
-  }, []);
+  }, [isTokenCreated, handleCreateToken, updateBalances]);
 
   const handleFromChange = useCallback((value) => {
     setAmountIn(value);
