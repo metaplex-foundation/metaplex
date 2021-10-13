@@ -72,19 +72,23 @@ export const AuctionListView = () => {
     )
     .filter(a => !resaleAuctions.includes(a));
 
+  const asStr = publicKey?.toBase58();
+  const participated = useMemo(
+    () =>
+      liveAuctions
+        .concat(auctionsEnded)
+        .filter((m, idx) =>
+          m.auction.info.bidState.bids.find(b => b.key == asStr),
+        ),
+    [publicKey, auctionsEnded.length],
+  );
   let items = liveAuctions;
-
   switch (activeKey) {
     case LiveAuctionViewState.All:
       items = liveAuctions;
       break;
     case LiveAuctionViewState.Participated:
-      items = liveAuctions
-        .concat(auctionsEnded)
-        .filter(
-          (m, idx) =>
-            m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
-        );
+      items = participated;
       break;
     case LiveAuctionViewState.Resale:
       items = resaleAuctions;

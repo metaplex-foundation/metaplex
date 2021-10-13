@@ -73,6 +73,12 @@ pub struct EndAuctionArgs {
     pub reveal: Option<(u64, u64)>,
 }
 
+#[derive(BorshSerialize, BorshDeserialize, Clone)]
+pub struct SetStoreIndexArgs {
+    pub page: u64,
+    pub offset: u64,
+}
+
 /// Instructions supported by the Fraction program.
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
 pub enum MetaplexInstruction {
@@ -635,6 +641,30 @@ pub enum MetaplexInstruction {
     ///   5. `[]` Auction program
     ///   6. `[]` Clock sysvar
     EndAuction(EndAuctionArgs),
+    /// Creates/Updates a store index page
+    ///
+    ///   0. `[writable]` Store index (pda of ['metaplex', program id, store key, 'index', page_number])
+    ///   1. `[signer]` Payer info
+    ///   2. `[]` Auction cache (pda of ['metaplex', program id, store key, auction key, 'cache'])
+    ///   3. `[]` Store key
+    ///   4. `[]` System
+    ///   5. `[]` Rent sysvar
+    ///   7. `[optional]` Auction cache above current (pda of ['metaplex', program id, store key, auction key, 'cache'])
+    ///                   Note: Can pass the below in this slot if there is no above
+    ///   8. `[optional]` Auction cache below current (pda of ['metaplex', program id, store key, auction key, 'cache'])
+    SetStoreIndex(SetStoreIndexArgs),
+    /// Creates/Updates a store index page
+    ///
+    ///   0. `[writable]` Auction cache (pda of ['metaplex', program id, store key, auction key, 'cache'])
+    ///   1. `[signer]` Payer info
+    ///   2. `[]` Auction
+    ///   3. `[]` Safety deposit box account
+    ///   4. `[]` Auction manager
+    ///   5. `[]` Store key
+    ///   6. `[]` System
+    ///   7. `[]` Rent sysvar
+    ///   8. `[]` Clock sysvar
+    SetAuctionCache,
 }
 
 /// Creates an DeprecatedInitAuctionManager instruction
