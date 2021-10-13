@@ -9,7 +9,6 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from 'bn.js';
 import { createConfigAccount } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
@@ -18,11 +17,11 @@ export const createConfig = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
   configData: {
-    maxNumberOfLines: BN;
+    maxNumberOfLines: anchor.BN;
     symbol: string;
     sellerFeeBasisPoints: number;
     isMutable: boolean;
-    maxSupply: BN;
+    maxSupply: anchor.BN;
     retainAuthority: boolean;
     creators: {
       address: PublicKey;

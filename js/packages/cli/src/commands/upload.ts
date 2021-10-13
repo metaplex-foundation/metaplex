@@ -7,7 +7,7 @@ import {
 } from '../helpers/accounts';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
-import BN from 'bn.js';
+import { BN } from '@project-serum/anchor';
 import { loadCache, saveCache } from '../helpers/cache';
 import log from 'loglevel';
 import { awsUpload } from '../helpers/upload/aws';

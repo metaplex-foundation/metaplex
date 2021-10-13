@@ -28,7 +28,6 @@ import {
   TransactionInstruction,
   PublicKey,
 } from '@solana/web3.js';
-import BN from 'bn.js';
 import log from 'loglevel';
 
 export const mintNFT = async (
@@ -167,7 +166,7 @@ export const mintNFT = async (
   txnData = Buffer.from(
     serialize(
       METADATA_SCHEMA,
-      new CreateMasterEditionArgs({ maxSupply: new BN(0) }),
+      new CreateMasterEditionArgs({ maxSupply: new anchor.BN(0) }),
     ),
   );
 

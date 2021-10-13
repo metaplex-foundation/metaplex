@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
-import BN from 'bn.js';
 import fetch from 'node-fetch';
 
 import {
@@ -91,13 +90,15 @@ programCommand('upload')
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (storage === 'aws' && (!awsS3Bucket)) {
+    if (storage === 'aws' && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
       );
     }
     if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
-      throw new Error("Storage option must either be 'arweave', 'ipfs', or 'aws'.");
+      throw new Error(
+        "Storage option must either be 'arweave', 'ipfs', or 'aws'.",
+      );
     }
     const ipfsCredentials = {
       projectId: ipfsInfuraProjectId,
@@ -319,7 +320,11 @@ programCommand('verify').action(async (directory, cmd) => {
     configAddress,
   )) as Config;
 
-  const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+  const lineCount = new anchor.BN(
+    config.data.slice(247, 247 + 4),
+    undefined,
+    'le',
+  );
 
   log.info(
     `uploaded (${lineCount.toNumber()}) out of (${
