@@ -3,11 +3,12 @@ import { Typography } from 'antd';
 import React from 'react';
 import styles from './InputAmount.module.less';
 
-export function InputAmount({ value, label, balance, symbol, onChange }: {
+export function InputAmount({ value, label, balance, symbol, disabled, onChange }: {
   value: number;
   balance: number;
   label: string;
   symbol: string;
+  disabled: boolean;
   onChange: (value: number) => void;
 }) {
 
@@ -24,6 +25,7 @@ export function InputAmount({ value, label, balance, symbol, onChange }: {
             value={value}
             onChange={onChange}
             placeholder="0.00"
+            disabled={disabled}
           />
         </div>
         <div className={styles.symbolBox}>

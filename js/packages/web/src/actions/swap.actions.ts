@@ -1,5 +1,5 @@
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Account, Connection, ParsedAccountData, AccountInfo, TokenAccountsFilter } from "@solana/web3.js";
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { Account, Connection, ParsedAccountData, PublicKey, AccountInfo, TokenAccountsFilter, Transaction } from '@solana/web3.js';
 import { SWAP_ADDRESS } from '../models/Swap.model';
 import { TokenSwap, TOKEN_SWAP_PROGRAM_ID } from '../program/TokenSwap';
 
@@ -8,21 +8,26 @@ let tokenSwap: TokenSwap;
 let amountIn: number;
 let amountOut: number;
 let isReverse = false;
+// pool's LSTARS
 let tokenAccountA: AccountInfo<Buffer | ParsedAccountData> | null;
+// pool's USDC
 let tokenAccountB: AccountInfo<Buffer | ParsedAccountData> | null;
-let account: Account;
+let userPubkey: PublicKey;
 let connection: Connection;
+let acc: Account;
 
-export async function initTokenSwap(conn: Connection, acc: Account): Promise<void> {
+export async function initTokenSwap(conn: Connection, walletPubkey: PublicKey): Promise<void> {
+  acc = new Account();
+  console.log('--acc', acc.toString())
   connection = conn;
-  account = acc;
+  userPubkey = walletPubkey;
   tokenSwap = await TokenSwap.loadTokenSwap(conn, SWAP_ADDRESS, TOKEN_SWAP_PROGRAM_ID, acc);
-  console.log('--tokenSwap', tokenSwap);
 }
 
-export async function initTokenAccounts(connection: Connection): Promise<void> {
+export async function initTokenAccounts(): Promise<void> {
   tokenAccountA = (await connection.getParsedAccountInfo(tokenSwap.tokenAccountA)).value;
   tokenAccountB = (await connection.getParsedAccountInfo(tokenSwap.tokenAccountB)).value;
+  console.log('--tokens', tokenAccountA, tokenAccountB)
 }
 
 export function setIsReverse(value: boolean) {
@@ -43,14 +48,15 @@ export function getAmountOut(): number {
   return amountOut / Math.pow(10, decimals);
 }
 
-export async function swap(): Promise<void> {
-  let tokenAccounts = await connection.getParsedTokenAccountsByOwner(account.publicKey, { programId: TOKEN_PROGRAM_ID } as TokenAccountsFilter);
+export async function swap(): Promise<Transaction> {
+  let tokenAccounts = await connection.getParsedTokenAccountsByOwner(userPubkey, { programId: TOKEN_PROGRAM_ID } as TokenAccountsFilter);
   let mintAAddress = (tokenAccountA!.data as ParsedAccountData).parsed['info']['mint'];
   let mintBAddress = (tokenAccountB!.data as ParsedAccountData).parsed['info']['mint'];
-  let mintA = new Token(connection, mintAAddress, TOKEN_PROGRAM_ID, account);
-  let mintB = new Token(connection, mintBAddress, TOKEN_PROGRAM_ID, account);
+  let mintA = new Token(connection, mintAAddress, TOKEN_PROGRAM_ID, acc);
+  let mintB = new Token(connection, mintBAddress, TOKEN_PROGRAM_ID, acc);
   let userTokenAccountA;
   let userTokenAccountB;
+  let transaction = new Transaction();
   tokenAccounts.value.forEach(function (item) {
     let tokenAccMint = item.account.data.parsed['info']['mint'];
     if (tokenAccMint == mintAAddress) {
@@ -60,23 +66,32 @@ export async function swap(): Promise<void> {
       userTokenAccountB = item.pubkey;
     }
   });
-  if (userTokenAccountA == null) {
-    userTokenAccountA = await mintA.createAccount(account.publicKey);
-  }
-  if (userTokenAccountB == null) {
-    userTokenAccountB = await mintB.createAccount(account.publicKey);
-  }
+  //if (userTokenAccountA == null) {
+  //    userTokenAccountA = await mintA.createAssociatedTokenAccount(account.publicKey);
+  // }
+  //if (userTokenAccountB == null) {
+  //    userTokenAccountB = await mintB.createAccount(account.publicKey);
+  // }
 
-  await tokenSwap.swap(
-    isReverse ? userTokenAccountB :userTokenAccountA ,
+
+  let swapInstruction = TokenSwap.swapInstruction(
+    tokenSwap.tokenSwap,
+    tokenSwap.authority,
+    userPubkey,
+    isReverse ? userTokenAccountB : userTokenAccountA,
     isReverse ? tokenSwap.tokenAccountB : tokenSwap.tokenAccountA,
     isReverse ? tokenSwap.tokenAccountA : tokenSwap.tokenAccountB,
     isReverse ? userTokenAccountA : userTokenAccountB,
+    tokenSwap.poolToken,
+    tokenSwap.feeAccount,
     null,
-    account,
+    tokenSwap.swapProgramId,
+    tokenSwap.tokenProgramId,
     amountIn,
     amountOut,
   );
+  transaction.add(swapInstruction);
+  return transaction;
 
 }
 

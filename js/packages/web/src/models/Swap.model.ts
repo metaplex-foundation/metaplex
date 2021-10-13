@@ -5,5 +5,5 @@ export enum SwapSymbolTypes {
   USDC = 'usdc',
 }
 
-// const SWAP_ADDRESS = new PublicKey("AHZ6YVoGLebx6GJt1n8jtj5eFkoWPE6fdCPDYK8Yv6Xy");
+// pool's devnet
 export const SWAP_ADDRESS = new PublicKey("gszXA2RmCDbLHuJaV2YcUsHrFydHPMzo1okMLkp4uTw");

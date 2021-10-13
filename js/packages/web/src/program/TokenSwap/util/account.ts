@@ -11,6 +11,8 @@ export async function loadAccount(
     throw new Error('Failed to find account');
   }
 
+  console.log('--id', programId.toString(), accountInfo.owner.toString(), accountInfo)
+
   if (!accountInfo.owner.equals(programId)) {
     throw new Error(`Invalid owner: ${JSON.stringify(accountInfo.owner)}`);
   }

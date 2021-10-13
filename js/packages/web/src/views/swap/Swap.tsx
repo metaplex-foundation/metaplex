@@ -9,7 +9,7 @@ import { SwapSymbolTypes } from '../../models/Swap.model';
 import styles from './Swap.module.less';
 
 export function Swap() {
-  const { connect, connected, wallet } = useWallet();
+  const { connect, connected } = useWallet();
   useTokenSwap();
 
   const [ pendingTx, setPendingTx ] = useState(false);
@@ -75,6 +75,7 @@ export function Swap() {
         balance={200}
         symbol={SwapSymbolTypes.USDC}
         label="To (Estimate)"
+        disabled
       />
 
       <Button

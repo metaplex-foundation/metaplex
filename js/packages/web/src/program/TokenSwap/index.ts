@@ -9,8 +9,7 @@ import { loadAccount } from './util/account';
 import { sendAndConfirmTransaction } from './util/send-and-confirm-transaction';
 
 export const TOKEN_SWAP_PROGRAM_ID: PublicKey = new PublicKey(
-  // 'SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8',
-  'EBbBojAg2vb7MmVFn1FVVsnAjHZnP2Vk3yRyF5KBi2oS',
+  'SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8',
 );
 
 /**

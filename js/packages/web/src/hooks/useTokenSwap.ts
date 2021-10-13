@@ -1,23 +1,25 @@
-import { useAccount, useConnection } from '@oyster/common';
+import { useConnection } from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect } from 'react';
-import { initTokenSwap } from '../actions/swap.actions';
+import { initTokenAccounts, initTokenSwap } from '../actions/swap.actions';
 
 export function useTokenSwap() {
   const connection = useConnection();
-  const account = useAccount();
+  const { publicKey } = useWallet();
 
   useEffect(() => {
-    console.log('--conn', connection, account)
+    console.log('--conn', connection, publicKey)
 
-    if (!connection || !account) {
+    if (!connection || !publicKey) {
       return;
     }
 
     const init = async () => {
-      await initTokenSwap(connection);
+      await initTokenSwap(connection, publicKey);
+      await initTokenAccounts();
     }
 
     init();
-  }, [connection, account]);
+  }, [connection, publicKey]);
 
 }
