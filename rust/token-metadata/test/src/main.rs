@@ -2,6 +2,17 @@ use solana_client::rpc_request::TokenAccountsFilter;
 
 use {
     clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, SubCommand},
+    metaplex_token_metadata::{
+        instruction::{
+            create_master_edition, create_metadata_accounts,
+            mint_new_edition_from_master_edition_via_token, puff_metadata_account,
+            update_metadata_accounts,
+        },
+        state::{
+            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
+            EDITION, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
+        },
+    },
     solana_clap_utils::{
         input_parsers::pubkey_of,
         input_validators::{is_url, is_valid_pubkey, is_valid_signer},
@@ -20,24 +31,13 @@ use {
         instruction::{initialize_account, initialize_mint, mint_to},
         state::{Account, Mint},
     },
-    spl_token_metadata::{
-        instruction::{
-            create_master_edition, create_metadata_accounts,
-            mint_new_edition_from_master_edition_via_token, puff_metadata_account,
-            update_metadata_accounts,
-        },
-        state::{
-            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
-            EDITION, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
-        },
-    },
     std::str::FromStr,
 };
 
 const TOKEN_PROGRAM_PUBKEY: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     let metadata_accounts = client
-        .get_program_accounts(&spl_token_metadata::id())
+        .get_program_accounts(&metaplex_token_metadata::id())
         .unwrap();
     let mut needing_puffing = vec![];
     for acct in metadata_accounts {
@@ -65,7 +65,7 @@ fn puff_unpuffed_metadata(_app_matches: &ArgMatches, payer: Keypair, client: Rpc
     let mut i = 0;
     while i < needing_puffing.len() {
         let pubkey = needing_puffing[i];
-        instructions.push(puff_metadata_account(spl_token_metadata::id(), pubkey));
+        instructions.push(puff_metadata_account(metaplex_token_metadata::id(), pubkey));
         if instructions.len() >= 20 {
             let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));
             let recent_blockhash = client.get_recent_blockhash().unwrap().0;
@@ -171,7 +171,7 @@ fn show_reservation_list(app_matches: &ArgMatches, _payer: Keypair, client: RpcC
 }
 
 fn show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
-    let program_key = spl_token_metadata::id();
+    let program_key = metaplex_token_metadata::id();
 
     let printing_mint_key = pubkey_of(app_matches, "mint").unwrap();
     let master_metadata_seeds = &[
@@ -234,7 +234,7 @@ fn mint_edition_via_token_call(
     )
     .unwrap();
 
-    let program_key = spl_token_metadata::id();
+    let program_key = metaplex_token_metadata::id();
     let token_key = Pubkey::from_str(TOKEN_PROGRAM_PUBKEY).unwrap();
 
     let mint_key = pubkey_of(app_matches, "mint").unwrap();
@@ -384,7 +384,7 @@ fn master_edition_call(
     )
     .unwrap();
 
-    let program_key = spl_token_metadata::id();
+    let program_key = metaplex_token_metadata::id();
     let token_key = Pubkey::from_str(TOKEN_PROGRAM_PUBKEY).unwrap();
 
     let mint_key = pubkey_of(app_matches, "mint").unwrap();
@@ -478,7 +478,7 @@ fn update_metadata_account_call(
             .unwrap_or_else(|| app_matches.value_of("keypair").unwrap()),
     )
     .unwrap();
-    let program_key = spl_token_metadata::id();
+    let program_key = metaplex_token_metadata::id();
     let mint_key = pubkey_of(app_matches, "mint").unwrap();
     let metadata_seeds = &[PREFIX.as_bytes(), &program_key.as_ref(), mint_key.as_ref()];
     let (metadata_key, _) = Pubkey::find_program_address(metadata_seeds, &program_key);
@@ -538,7 +538,7 @@ fn create_metadata_account_call(
     )
     .unwrap();
 
-    let program_key = spl_token_metadata::id();
+    let program_key = metaplex_token_metadata::id();
     let token_key = Pubkey::from_str(TOKEN_PROGRAM_PUBKEY).unwrap();
     let name = app_matches.value_of("name").unwrap().to_owned();
     let symbol = app_matches.value_of("symbol").unwrap().to_owned();
