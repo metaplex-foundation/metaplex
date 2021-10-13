@@ -9,6 +9,7 @@ interface IAmountLabel {
   title?: string;
   style?: object;
   containerStyle?: object;
+  ended?: boolean;
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
@@ -18,6 +19,7 @@ export const AmountLabel = (props: IAmountLabel) => {
     title = '',
     style = {},
     containerStyle = {},
+    ended,
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
@@ -47,7 +49,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           {PriceNaN === false ? (
             formatUSD.format(priceUSD || 0)
           ) : (
-            <div className="placebid">Place Bid</div>
+            <div className="placebid">{ended ? 'N/A' : 'Place Bid'}</div>
           )}
         </div>
       )}
