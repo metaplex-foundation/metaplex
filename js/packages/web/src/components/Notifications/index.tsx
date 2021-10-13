@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BellFilled,
-  BellOutlined,
   CheckCircleTwoTone,
   LoadingOutlined,
   PlayCircleOutlined,

@@ -12,16 +12,13 @@ import {
   AuctionView,
   AuctionViewState,
   useArt,
-  useBidsForAuction,
   useCreators,
 } from '../../hooks';
-import { AuctionView, AuctionViewState, useArt } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { BN } from 'bn.js';
 import { MetaAvatar } from '../MetaAvatar';
 import { AuctionCountdown } from '../AuctionNumbers';
 
-const { Meta } = Card;
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
 }

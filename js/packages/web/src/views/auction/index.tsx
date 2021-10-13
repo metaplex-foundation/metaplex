@@ -27,9 +27,6 @@ import {
   useConnection,
   useConnectionConfig,
   useMint,
-  AuctionState,
-  StringPublicKey,
-  toPublicKey,
   useMeta,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -54,14 +51,14 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  var style: React.CSSProperties = {
+  const style: React.CSSProperties = {
     transform:
       index === 0
         ? ''
         : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-            1 - 0.2 * index,
-            0,
-          )})`,
+          1 - 0.2 * index,
+          0,
+        )})`,
     transformOrigin: 'right bottom',
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1 * index,
