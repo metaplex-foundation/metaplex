@@ -46,7 +46,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
       onClick={handleClick}
       disabled={connected && disabled}
       overlay={
-        <Menu>
+        <Menu className={'black-dropdown'}>
           <Menu.Item onClick={open}>Change Wallet</Menu.Item>
         </Menu>
       }
