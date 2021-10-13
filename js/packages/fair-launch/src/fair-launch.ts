@@ -398,7 +398,7 @@ const getSetupForTicketing = async (
     );
     if (!seq) {
       instructions.push(
-        await anchorProgram.instruction.createTicketSeq(seqBump, {
+        anchorProgram.instruction.createTicketSeq(seqBump, {
           accounts: {
             fairLaunchTicketSeqLookup,
             fairLaunch: fairLaunch.id,

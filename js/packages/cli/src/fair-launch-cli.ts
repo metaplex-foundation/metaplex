@@ -486,7 +486,7 @@ program
     }
 
     instructions.push(
-      await anchorProgram.instruction.purchaseTicket(
+      anchorProgram.instruction.purchaseTicket(
         bump,
         new anchor.BN(amountNumber),
         {
@@ -786,7 +786,7 @@ async function adjustTicket({
   }
 
   instructions.push(
-    await anchorProgram.instruction.adjustTicket(new anchor.BN(amountNumber), {
+    anchorProgram.instruction.adjustTicket(new anchor.BN(amountNumber), {
       accounts: {
         fairLaunchTicket,
         fairLaunch,
