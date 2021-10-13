@@ -22,8 +22,8 @@ that can be perused for learning and built if desired with `cargo build`. It all
 ## Interface
 
 The on-chain Token Fraction program is written in Rust and available on crates.io as
-[spl-vault](https://crates.io/crates/spl-token-vault) and
-[docs.rs](https://docs.rs/spl-token-vault).
+[spl-vault](https://crates.io/crates/metaplex-token-vault) and
+[docs.rs](https://docs.rs/metaplex-token-vault).
 
 ## Operational overview
 

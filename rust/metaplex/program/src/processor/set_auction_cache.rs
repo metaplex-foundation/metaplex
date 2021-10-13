@@ -10,14 +10,14 @@ use {
         },
     },
     borsh::BorshSerialize,
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         pubkey::Pubkey,
         sysvar::{clock::Clock, Sysvar},
     },
-    spl_auction::processor::AuctionData,
-    spl_token_vault::state::SafetyDepositBox,
 };
 
 pub fn process_set_auction_cache<'a>(
@@ -52,7 +52,7 @@ pub fn process_set_auction_cache<'a>(
         &store.auction_program,
         auction_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             store.auction_program.as_ref(),
             deposit_box.vault.as_ref(),
         ],
@@ -62,7 +62,7 @@ pub fn process_set_auction_cache<'a>(
         &store.token_vault_program,
         safety_deposit_box_info,
         &[
-            spl_token_vault::state::PREFIX.as_bytes(),
+            metaplex_token_vault::state::PREFIX.as_bytes(),
             auction_manager.vault.as_ref(),
             deposit_box.token_mint.as_ref(),
         ],
@@ -90,7 +90,7 @@ pub fn process_set_auction_cache<'a>(
 
     let (metadata, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
             store.token_metadata_program.as_ref(),
             deposit_box.token_mint.as_ref(),
         ],
