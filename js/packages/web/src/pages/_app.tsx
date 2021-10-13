@@ -8,7 +8,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Metaplex NFT Marketplace</title>
+        <title>Synqtec NFT Marketplace</title>
       </Head>
       <div id="root">
         <Component {...pageProps} />
