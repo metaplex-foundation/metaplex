@@ -8,7 +8,7 @@ use solana_clap_utils::{
     fee_payer::fee_payer_arg,
     input_parsers::{pubkey_of, pubkey_of_signer, value_of},
     input_validators::{
-        is_parsable, is_pubkey, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
+        is_parsable, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
         normalize_to_url_if_moniker,
     },
     keypair::{signer_from_path, CliSignerInfo},
@@ -24,14 +24,19 @@ use solana_sdk::{
     native_token::lamports_to_sol,
     program_pack::Pack,
     pubkey::{ParsePubkeyError, Pubkey},
-    signer::{keypair::Keypair, Signer},
+    signer::{
+        keypair::{read_keypair_file, Keypair},
+        Signer,
+    },
     system_instruction,
     transaction::Transaction,
 };
 use spl_token::{self, error::TokenError, instruction, native_mint, state::Mint};
 use spl_token_metadata::{
+    self,
     instruction::create_metadata_accounts,
-    state::{Creator, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
+    state::{Creator, Key, Metadata, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
+    utils::try_from_slice_checked,
 };
 use std::{fmt::Display, num::ParseIntError, process::exit, str::FromStr, sync::Arc};
 
@@ -39,7 +44,7 @@ pub mod config;
 use crate::config::Config;
 
 pub mod output;
-use output::{println_display, CliMint, CliTokenAmount};
+use output::{println_display, CliMetadata, CliMint, CliTokenAmount, UiMetadata};
 
 pub(crate) type Error = Box<dyn std::error::Error>;
 type CommandResult = Result<Option<(u64, Vec<Vec<Instruction>>)>, Error>;
@@ -73,6 +78,8 @@ where
         })
 }
 
+// Checks that address are valid pubkeys, shares can be parsed to integers and
+// that they sum to 100.
 fn are_valid_creators<T>(creators: T) -> Result<(), String>
 where
     T: AsRef<str> + Display,
@@ -102,9 +109,9 @@ where
             Err(format!("{}", error))
         } else {
             let share_sum: u8 = share_result.unwrap().iter().sum();
-            if share_sum > 100 {
+            if share_sum != 100 {
                 Err(format!(
-                    "Sum of shares of {} is greater than 100.",
+                    "Sum of shares of {} must equal 100.",
                     share_sum
                 ))
             } else {
@@ -192,7 +199,7 @@ fn main() {
                 .long("verbose")
                 .takes_value(false)
                 .global(true)
-                .help("Show additional information"),
+                .help("Show additional information."),
         )
         .arg(
             Arg::with_name("output_format")
@@ -201,7 +208,14 @@ fn main() {
                 .global(true)
                 .takes_value(true)
                 .possible_values(&["json", "json-compact"])
-                .help("Return information in specified output format"),
+                .help("Return information in specified output format."),
+        )
+        .arg(
+            Arg::with_name("dry_run")
+                .long("dry-run")
+                .takes_value(false)
+                .global(true)
+                .help("Simulate transaction instead of executing."),
         )
         .arg(fee_payer_arg().global(true))
         .subcommand(
@@ -218,7 +232,20 @@ fn main() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("create-metadata-account")
+            SubCommand::with_name("metadata-info")
+                .about("Query details of a Metadata account by address")
+                .arg(
+                    Arg::with_name("address")
+                        .validator(is_valid_pubkey)
+                        .value_name("METADATA_ADDRESS")
+                        .takes_value(true)
+                        .required(true)
+                        .index(1)
+                        .help("Address of the existing metadata account."),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("create-metadata")
                 .about("Create metadata account for existing mint")
                 .arg(
                     Arg::with_name("mint_address")
@@ -429,9 +456,15 @@ fn main() {
     let _ = match (sub_command, sub_matches) {
         ("mint-info", Some(arg_matches)) => {
             let address = pubkey_of(arg_matches, "address").unwrap();
+            println!("program {}", spl_token_metadata::id());
+            println!("file {}", read_keypair_file("/home/caleb/projects/metaplex/rust/target/deploy/spl_token_metadata-keypair.json").unwrap().pubkey());
             command_mint_info(&config, address)
         }
-        ("create-metadata-account", Some(arg_matches)) => {
+        ("metadata-info", Some(arg_matches)) => {
+            let address = pubkey_of(arg_matches, "address").unwrap();
+            command_metadata_info(&config, address)
+        }
+        ("create-metadata", Some(arg_matches)) => {
             let mint_address = pubkey_of(arg_matches, "mint_address").unwrap();
             let update_authority =
                 config.pubkey_or_default(arg_matches, "update_authority", &mut wallet_manager);
@@ -447,15 +480,18 @@ fn main() {
             if let Some(creator_strings) = arg_matches.values_of("creators") {
                 creator_strings.for_each(|c| {
                     let split: Vec<&str> = c.split(":").collect();
-                    creators.push(Creator {
+                    let creator = Creator {
                         address: Pubkey::from_str(split[0]).unwrap(),
                         verified: false,
                         share: u8::from_str(split[1]).unwrap(),
-                    })
+                    };
+                    println!("{:?}", creator);
+                    creators.push(creator)
                 });
             }
 
-            let creators = None;
+            let creators = Some(creators);
+
             command_create_metadata_account(
                 &config,
                 mint_address,
@@ -511,6 +547,7 @@ fn main() {
                 )?;
                 let signers = signer_info.signers_for_message(&message);
                 let mut transaction = Transaction::new_unsigned(message);
+        
                 transaction.try_sign(&signers, recent_blockhash)?;
                 let signature = if no_wait {
                     config.rpc_client.send_transaction(&transaction)?
@@ -540,14 +577,42 @@ fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
         .map_err(|_| format!("Could not find mint account {}", address))
         .unwrap();
 
-    if let TokenAccountType::Mint(mint) = parse_token(&account.data, None)? {
-        let cli_mint = CliMint {
-            address: address.to_string(),
-            mint,
-        };
-        println!("{}", config.output_format.formatted_string(&cli_mint));
+    match parse_token(&account.data, None)? {
+        TokenAccountType::Mint(mint) => {
+            let cli_mint = CliMint {
+                address: address.to_string(),
+                mint,
+            };
+            println!("{}", config.output_format.formatted_string(&cli_mint));
+        }
+        _ => {
+            println!("{} is not a mint account.", address);
+        }
     };
     Ok(None)
+}
+
+fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
+    let account = config
+        .rpc_client
+        .get_account(&address)
+        .map_err(|_| format!("Could not find metadata account {}", address))
+        .unwrap();
+
+    match try_from_slice_checked::<Metadata>(&account.data, Key::MetadataV1, MAX_METADATA_LEN) {
+        Ok(metadata) => {
+            let cli_metadata = CliMetadata {
+                address: address.to_string(),
+                metadata: UiMetadata::from(metadata),
+            };
+            println!("{}", config.output_format.formatted_string(&cli_metadata));
+            Ok(None)
+        }
+        Err(error) => {
+            println!("{} is not a metadata account", address);
+            Err(Box::new(error))
+        }
+    }
 }
 
 fn command_create_metadata_account(
@@ -589,7 +654,7 @@ fn command_create_metadata_account(
 
     // I think this should be set to true if the update authority is different than the mint authority in which
     // case a signature from the update authority is required.
-    let update_authority_is_signer = mint.mint_authority.unwrap() != update_authority;
+    let update_authority_is_signer = mint.mint_authority.unwrap() != config.fee_payer;
 
     println_display(config, format!("Creating metadata {}", metadata_account));
 
@@ -666,3 +731,4 @@ fn command_supply(config: &Config, address: Pubkey) -> CommandResult {
 
     Ok(None)
 }
+
