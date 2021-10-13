@@ -57,6 +57,7 @@ export enum MetaplexKey {
   AuctionManagerV2 = 10,
   BidRedemptionTicketV2 = 11,
   AuctionWinnerTokenTypeTrackerV1 = 12,
+  PackSet = 13,
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
@@ -614,6 +615,18 @@ export enum TupleNumericType {
   U64 = 8,
 }
 
+export enum PackSetState {
+  NotActivated,
+  Activated,
+  Deactivated,
+  Ended,
+}
+
+export enum PackDistributionType {
+  max_supply,
+  fixed,
+}
+
 export class AmountRange {
   amount: BN;
   length: BN;
@@ -637,6 +650,35 @@ export class InitAuctionManagerV2Args {
     this.amountType = args.amountType;
     this.lengthType = args.lengthType;
     this.maxRanges = args.maxRanges;
+  }
+}
+
+export class InitPackSetArgs {
+  instruction = 0;
+  name: Uint32Array;
+  uri: string;
+  mutable: boolean;
+  distribution_type: PackDistributionType;
+  allowed_amount_to_redeem: BN;
+  redeem_start_date: BN | null;
+  redeem_end_date: BN | null;
+
+  constructor(args: {
+    name: Uint32Array;
+    uri: string;
+    mutable: boolean;
+    distribution_type: PackDistributionType;
+    allowed_amount_to_redeem: BN;
+    redeem_start_date: BN | null;
+    redeem_end_date: BN | null;
+  }) {
+    this.name = args.name;
+    this.uri = args.uri;
+    this.mutable = args.mutable;
+    this.distribution_type = args.distribution_type;
+    this.allowed_amount_to_redeem = args.allowed_amount_to_redeem;
+    this.redeem_start_date = args.redeem_start_date;
+    this.redeem_end_date = args.redeem_end_date;
   }
 }
 
@@ -788,6 +830,22 @@ export const SCHEMA = new Map<any, any>([
         ['vault', 'pubkeyAsString'],
         ['acceptPayment', 'pubkeyAsString'],
         ['state', AuctionManagerStateV2],
+      ],
+    },
+  ],
+  [
+    InitPackSetArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['name', [32]],
+        ['uri', 'string'],
+        ['mutable', 'u8'], //bool
+        ['distribution_type', 'u8'],
+        ['allowed_amount_to_redeem', 'u32'],
+        ['redeem_start_date', { kind: 'option', type: 'u64' }],
+        ['redeem_end_date', { kind: 'option', type: 'u64' }],
       ],
     },
   ],
