@@ -24,5 +24,9 @@ export const useCollection = (param?: string) => {
 
 export const useCollectionTokenMetadataList = (collectionName: string) => {
   const collectionsContext = useCollectionsContext();
-  return collectionsContext.tokenMetadataByCollection[collectionName];
+  return {
+    collection: collectionsContext.tokenMetadataByCollection[collectionName],
+    isLoading: collectionsContext.isLoading,
+    update: collectionsContext.update,
+  };
 };

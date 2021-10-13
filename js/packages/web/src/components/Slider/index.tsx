@@ -27,8 +27,8 @@ export const Slider = () => {
     <Swiper
       slidesPerView={width < 768 ? 1 : 3}
       spaceBetween={40}
-      autoplay={{ delay: 3000 }}
-      slidesPerGroup={3}
+      autoplay={{delay: 10000,disableOnInteraction: false, }}
+      slidesPerGroup={1}
       loop={true}
       // loopFillGroupWithBlank={true}
       navigation
@@ -36,26 +36,29 @@ export const Slider = () => {
     >
       {collections.map((element, i) => (
         <SwiperSlide key={i} className="next">
-          <Card className="text-center card-container">
-            <img
-              src={element.backgroundImage}
-              className="card-img-top"
-              alt="card-logo"
-            />
-            <div className="card-body">
-              <img src={element.image} className="img-fluid user" />
-              <h5 className="card-title text-white mb-0 mt-3">
-                {element.collectionName}
-              </h5>
-              <p className="m-0 below-heading-text">{element.userName}</p>
-              <p className="card-text">
-                {element.description}
-              </p>
-              <Link to={"/marketplace/" + element.collectionName} >
-                <Button className="btn btn-primary explore-more-btn" style={{color: 'white'}}>Explore Marketplace</Button>
-              </Link>
-            </div>
-          </Card>
+          <Link to={'/marketplace/' + element.collectionName}>
+            <Card className="text-center card-container">
+              <img
+                src={element.backgroundImage}
+                className="card-img-top"
+                alt="card-logo"
+              />
+              <div className="card-body">
+                <img src={element.image} className="img-fluid user" />
+                <h5 className="card-title text-white mb-0 mt-3">
+                  {element.collectionName}
+                </h5>
+                <p className="m-0 below-heading-text">{element.userName}</p>
+                <p className="card-text">{element.description}</p>
+                <Button
+                  className="btn btn-primary explore-more-btn"
+                  style={{ color: 'white' }}
+                >
+                  Explore Marketplace
+                </Button>
+              </div>
+            </Card>
+          </Link>
         </SwiperSlide>
       ))}
     </Swiper>

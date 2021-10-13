@@ -1,9 +1,26 @@
 import { Modal } from 'antd';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
-import { CustomPagination } from '../../components/Pagination/Pagination';
+import { useCollectionTokenMetadataList } from '../../hooks/useCollections';
 export const LatestsaleView = props => {
+  const [pageLen, setPageLen] = useState(90);
+  const [items, setItems] = useState<any>();
   const optionData = ['last 24 hour', 'last 7 days', 'last mount']
   const { handle_latest_sale } = props;
+  const { id } = useParams<{ id: string }>();
+  const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
+  useEffect(() => {
+    const arr: any = [];
+    if (collection) {
+      collection.map(item => {
+        arr.push(item.ParsedAccount);
+      });
+      setPageLen(arr.length);
+      setItems(arr);
+    }
+  }, [collection]);
+  console.log(items)
   return (
     <Modal
       width={1000}
@@ -25,32 +42,6 @@ export const LatestsaleView = props => {
             <div className="col-md-3">
               <div className="dropdown mb-3">
                 <CustomSelect option={optionData} defoultParam="all time"/>
-                {/* <a
-                  className="btn btn-secondary w-100"
-                  href="#"
-                  role="button"
-                  id="dropdownMenuLink"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  <span>Last 7 days</span>{' '}
-                  <i className="fa fa-angle-down" aria-hidden="true" />
-                </a>
-                <div
-                  className="dropdown-menu"
-                  aria-labelledby="dropdownMenuLink"
-                >
-                  <a className="dropdown-item" href="#">
-                    Action
-                  </a>
-                  <a className="dropdown-item" href="#">
-                    Another action
-                  </a>
-                  <a className="dropdown-item" href="#">
-                    Something else here
-                  </a>
-                </div> */}
               </div>
             </div>
             <div className="col-md-9">
@@ -97,195 +88,6 @@ export const LatestsaleView = props => {
                       <div className="media d-flex align-items-center">
                         <img
                           src="/images/item-img1.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img2.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img3.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img4.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img5.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img6.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img7.png"
-                          className="mr-3"
-                          alt="..."
-                          style={{ width: 60 }}
-                        />
-                        <div className="media-body">
-                          <h5 className="card-title mb-1 ">Flying City</h5>
-                          <p className="card-text m-0 pb-1">Ninjawolf</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href="#"
-                        className="btn btn-primary price d-flex align-items-center pl-0"
-                      >
-                        <img src="/images/btn-user.png" className="mr-1" />{' '}
-                        25.078
-                      </a>
-                    </td>
-                    <td>Am5UrnkRd5p9xL7CWycGSTG...</td>
-                    <td>@Am5UrnkRd5p9xL7CWycGSTG...</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div className="media d-flex align-items-center">
-                        <img
-                          src="/images/item-img8.png"
                           className="mr-3"
                           alt="..."
                           style={{ width: 60 }}

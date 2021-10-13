@@ -33,34 +33,32 @@ const ITEMS_PER_PAGE = 9;
 
 export const MarketplaceView = () => {
   const { metadata } = useMeta();
-  const [isLoading, setIsloading] = useState(true);
   const [latestsale, setLatestsale] = useState(false);
   const { publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const [activePage, setActivPage] = useState(0);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<any>();
   const [pageLen, setPageLen] = useState(90);
   const [onePageItem, setOnePageItem] = useState<
     ParsedAccount<Metadata>[] | SafetyDepositDraft[]
   >([]);
   const { id } = useParams<{ id: string }>();
-  const x = useCollectionTokenMetadataList(id);
+  const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
   const optionData = ['select1', 'select2'];
   useEffect(() => {
     const arr: any = [];
-    if (x != undefined) {
-      setIsloading(false);
-      x.map(item => {
+    if (collection) {
+      collection.map(item => {
         arr.push(item.ParsedAccount);
       });
-      setOnePageItem(arr.slice(0, 9));
+      setOnePageItem(arr.slice(activePage * 9, activePage * 9 + 9));
       setPageLen(arr.length);
+      setItems(arr);
     }
-    setItems(arr);
-  }, [x]);
+  }, [collection]);
 
   // const items = useMemo(() => {
   //   switch (activeKey) {
@@ -86,10 +84,6 @@ export const MarketplaceView = () => {
     setLatestsale(!latestsale);
   };
 
-  // useEffect(()=> {
-  //   debugger;
-  //   console.log("VALOD>>>>>>>>", ownedMetadata)
-  // }, [ownedMetadata])
   return (
     <div style={{ margin: '0px 5%' }}>
       {latestsale && <LatestsaleView handle_latest_sale={handle_latest_sale} />}
@@ -97,7 +91,7 @@ export const MarketplaceView = () => {
         <div className="container-fluid">
           <div className="row">
             <div className="col-2">
-              <img src={collectionData?.image} className="mt-4" />
+              <img src={collectionData?.image} className="mt-4 container-img" />
             </div>
             <div className="col-md-6">
               <h1 className="mt-0">{collectionData?.collectionName}</h1>
@@ -131,7 +125,10 @@ export const MarketplaceView = () => {
                       Floor Price
                     </span>
                   </span>{' '}
-                  <img src={collectionData?.image} className="ml-3" />
+                  <img
+                    src="/images/exchange-white.png"
+                    className="ml-3 exchange-white"
+                  />
                 </button>
                 <button
                   type="button"
@@ -144,7 +141,10 @@ export const MarketplaceView = () => {
                       Floor Price
                     </span>
                   </span>{' '}
-                  <img src={collectionData?.image} className="ml-3" />
+                  <img
+                    src="/images/exchange-white.png"
+                    className="ml-3 exchange-white"
+                  />
                 </button>
               </div>
               <div className="bottom-sec d-flex">
@@ -200,7 +200,7 @@ export const MarketplaceView = () => {
               <nav aria-label="..." style={{ height: '93%' }}>
                 <ul className="pagination m-0 d-flex flex-wrap">
                   <CustomPagination
-                    len={pageLen/9}
+                    len={pageLen / 9}
                     active={activePage}
                     changePage={event => onChange(event)}
                   />
@@ -221,6 +221,14 @@ export const MarketplaceView = () => {
               </div>
             </div>
             <div className="col-md-2">
+              <div
+                className="refresh-button"
+                onClick={() => {
+                  update();
+                }}
+              >
+                <i className="fas fa-redo-alt"></i>
+              </div>
               <a
                 href="#"
                 onClick={handle_latest_sale}
@@ -287,7 +295,14 @@ export const MarketplaceView = () => {
             <div className="col-md-4">
               {!isLoading
                 ? onePageItem.map((item, idx) => {
-                    return <ItemList key={idx} pubkey={item.pubkey} />;
+                  const id = item.pubkey
+                    return (
+                      <ItemList
+                        key={id}
+                        pubkey={item.pubkey}
+                        lamports={item.account.lamports}
+                      />
+                    );
                   })
                 : [...Array(ITEMS_PER_PAGE)].map((_, idx) => (
                     <ThreeDots key={idx} />

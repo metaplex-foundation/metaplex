@@ -57,7 +57,7 @@ export default class MetaplexDocument extends Document {
             crossOrigin="anonymous"
           />
         </Head>
-        <body style={{ background: '#12151d' }}>
+        <body style={{ background: '#12151d', overflow: 'hidden', height: 'auto', minHeight: '100vh'}}>
           <Main />
           <NextScript />
           <style>{`
