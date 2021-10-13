@@ -14,7 +14,7 @@ import {
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
-import { Swap } from './views/swap';
+import { Swap } from './views/swap/Swap';
 
 export function Routes() {
   return (

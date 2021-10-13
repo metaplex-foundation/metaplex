@@ -19,8 +19,6 @@ export const keyToAccountParser = new Map<string, AccountParser>();
 export function useCachedPool(legacy = false) {
   const context = useAccountsContext();
 
-  console.log('--con', context)
-
   const allPools = context.pools as PoolInfo[] || [];
   const pools = useMemo(() => {
     return allPools.filter((p) => p.legacy === legacy);
