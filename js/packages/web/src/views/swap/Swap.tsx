@@ -27,7 +27,9 @@ export function Swap() {
   // usdc
   const [ balanceB, setBalanceB ] = useState(0);
 
-  const currentBalance = useMemo(() => isReserseState ? balanceA : balanceB, [isReserseState, balanceA, balanceB]);
+  const currentBalance = useMemo(() => !isReserseState ? balanceA : balanceB, [isReserseState, balanceA, balanceB]);
+
+  console.log('--cur', currentBalance, fromAmount)
 
   const handleCreateToken = useCallback(async () => {
     if (!isUserTokenAAccount()) {
@@ -65,7 +67,7 @@ export function Swap() {
         type: 'error',
       });
     }
-  }, []);
+  }, [isTokenCreated, handleCreateToken]);
 
   const updateBalances = useCallback(async () => {
     await updateUserTokenAccounts();
@@ -74,18 +76,16 @@ export function Swap() {
   }, []);
 
   const handleFromChange = useCallback((value) => {
-    setFromAmount(value);
     setAmountIn(value);
+    setFromAmount(value);
     setToAmount(getAmountOut());
   }, []);
 
   const handleReverse = useCallback(() => {
-    const tempTo = toAmount;
-    setToAmount(fromAmount);
-    setFromAmount(tempTo);
     setIsReverse();
     setIsReverseState((prev) => !prev);
-  }, [ toAmount, fromAmount ]);
+    handleFromChange(toAmount);
+  }, [ toAmount, handleFromChange ]);
 
   useEffect(() => {
     if (!connection || !wallet.publicKey) {
@@ -103,7 +103,7 @@ export function Swap() {
     };
 
     init();
-  }, [ connection, wallet ]);
+  }, [ connection, wallet, updateBalances ]);
 
   return (
     <div className={styles.root}>
@@ -141,7 +141,7 @@ export function Swap() {
         type="primary"
         size="large"
         onClick={wallet.connected ? handleSwap : wallet.connect}
-        disabled={!isInited || !wallet.connected || toAmount > currentBalance}
+        disabled={!isInited || !wallet.connected || fromAmount > currentBalance || Number(fromAmount) === 0}
       >
         {isTokenCreated ? 'Swap tokens' : 'Create token account'}
       </Button>
