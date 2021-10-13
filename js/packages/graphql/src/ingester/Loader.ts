@@ -4,7 +4,6 @@ import {
   AccountAndPubkey,
   extendBorsh,
   getProgramAccounts,
-  isCreatorPartOfTheStore,
   pubkeyToString,
   PublicKeyStringAndAccount,
   Store,
@@ -17,6 +16,7 @@ import { createPipelineExecutor } from '../utils/createPipelineExecutor';
 import { PROGRAMS } from './constants';
 import { ProgramParse, IWriter } from './types';
 import { Reader } from '../reader';
+import { getWhitelistedCreatorList } from '../../ingester/index';
 
 extendBorsh(); // it's need for proper work of decoding
 export class Loader<TW extends IWriter = IWriter> {
@@ -126,6 +126,7 @@ export class Loader<TW extends IWriter = IWriter> {
     if (this.cache.creators.size || this.cache.stores.size) {
       logger.info('⛏ links creators & stores');
 
+      /*
       await Promise.all([
         this.reader
           .getCreatorIds()
@@ -134,31 +135,41 @@ export class Loader<TW extends IWriter = IWriter> {
           .getStoreIds()
           .then(ids => ids.forEach(id => this.cache.stores.delete(id))),
       ]);
+      */
+      const creatorsAddressList = Array.from(this.cache.creators.values()).map(
+        p => p.address,
+      );
+      const storeList = Array.from(this.cache.stores.keys());
+      const metadata = await getWhitelistedCreatorList(
+        creatorsAddressList,
+        storeList,
+      );
 
-      for (const [creatorId, creator] of this.cache.creators.entries()) {
-        await createPipelineExecutor(
-          this.cache.stores.entries(),
-          async ([storeId, store]) => {
-            const isPart = await isCreatorPartOfTheStore(
-              creator.address,
-              creator.pubkey,
-              storeId,
-            );
-            if (isPart) {
-              store.creatorIds.push(creatorId);
-              creator.storeIds.push(storeId);
-            }
-          },
-          {},
-        );
-        this.writer.persist('creators', creatorId, creator);
-      }
-      this.cache.creators.clear();
-      await this.writerAdapter.flush();
+      metadata.forEach(item => {
+        const storeId = item[0];
+        const address = item[1];
+        const creator = this.cache.creators.get(address);
+        const store = this.cache.stores.get(storeId);
+        if (creator && store) {
+          if (!store.creatorIds.includes(creator.pubkey)) {
+            store.creatorIds.push(creator.pubkey);
+          }
+          if (!creator.storeIds.includes(store.pubkey)) {
+            creator.storeIds.push(store.pubkey);
+          }
+        }
+      });
       this.cache.stores.forEach((store, storeId) => {
         this.writer.persist('stores', storeId, store);
       });
       this.cache.stores.clear();
+      await this.writerAdapter.flush();
+
+      this.cache.creators.forEach((creator, creatorId) => {
+        this.writer.persist('creators', creatorId, creator);
+      });
+      this.cache.creators.clear();
+      await this.writerAdapter.flush();
     }
 
     await this.writerAdapter.flush();

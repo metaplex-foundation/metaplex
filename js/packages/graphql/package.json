@@ -11,6 +11,7 @@
     "lint": "yarn lint:format && yarn lint:eslint --fix",
     "build": "yarn clean && tsc",
     "build:watch": "yarn build -- --watch",
+    "build:native": "cd ingester && yarn && yarn build-release",
     "start": "yarn start:memory",
     "start:memory": "node --max-old-space-size=8192 dist/bin/memory-server-ingester.js",
     "start:mongo:ingester": "node --max-old-space-size=8192 dist/bin/mongo-ingester.js",
