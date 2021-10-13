@@ -66,7 +66,7 @@ export const WalletModal: FC = () => {
           marginBottom: 10,
         }}
       >
-        M
+        Synqtec
       </div>
 
       <h2>{selected ? 'Change provider' : 'Welcome to Metaplex'}</h2>
