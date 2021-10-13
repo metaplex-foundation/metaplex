@@ -1,3 +1,4 @@
+import { StarOutlined } from '@ant-design/icons';
 import { notify, useConnection } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
@@ -6,7 +7,6 @@ import { createTokenATransaction, createTokenBTransaction, getAmountOut, getUser
 import { InputAmount } from '../../components/InputAmount/InputAmount';
 import { SwapSymbolTypes } from '../../models/Swap.model';
 import styles from './Swap.module.less';
-import { StarOutlined } from '@ant-design/icons';
 
 const IconsMap = {
   usdt: <img src="/symbols/usdc.png" />,
@@ -116,7 +116,7 @@ export function Swap() {
         balance={!isReserseState ? balanceA : balanceB}
         symbol={!isReserseState ? SwapSymbolTypes.Lstar : SwapSymbolTypes.USDC}
         icon={!isReserseState ? IconsMap.lstar : IconsMap.usdt}
-        label="Input"
+        label="From"
       />
 
       <div className={styles.swapBox}>

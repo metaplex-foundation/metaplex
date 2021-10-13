@@ -1,7 +1,6 @@
-import { sendSignedTransaction, sendTransactionWithRetry } from '@oyster/common';
+import { sendSignedTransaction } from '@oyster/common';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { Account, AccountInfo, Connection, ParsedAccountData, PublicKey, TokenAccountsFilter, Transaction } from '@solana/web3.js';
-import { signTransaction } from 'borsh/borsh-ts/test/fuzz/transaction-example/transaction';
 import { TOKEN_SWAP_PROGRAM_ID, TokenSwap } from '../program/TokenSwap';
 
 let tokenSwap: TokenSwap;
