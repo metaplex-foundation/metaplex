@@ -87,8 +87,8 @@ export function CollectionsProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    update();
-  }, [metadata, setState]);
+    if (metadata.length > 0) update();
+  }, [metadata]);
 
   return (
     <CollectionsContext.Provider

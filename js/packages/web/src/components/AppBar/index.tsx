@@ -12,7 +12,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 const MENU_ITEMS = [
   {
-    label: 'Home',
+    label: 'NFT',
     href: '/',
     external: false,
   },
@@ -20,11 +20,6 @@ const MENU_ITEMS = [
     label: 'Trade',
     href: 'https://dex.ninjaprotocol.io',
     external: true,
-  },
-  {
-    label: 'NFT',
-    href: '/marketplace',
-    external: false,
   },
   {
     label: 'Profile',
@@ -172,7 +167,7 @@ export const AppBar = () => {
   const { wallet, connect, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
-  const [menuItem, setMenuItem] = useState('Home');
+  const [menuItem, setMenuItem] = useState('NFT');
 
   const handleClick = useCallback(
     () => (wallet ? connect().catch(() => {}) : open()),
@@ -184,7 +179,7 @@ export const AppBar = () => {
   const { endpoint, setEndpoint } = useConnectionConfig();
 
   const handleMenuClick = menuItem => {
-    setMenuItem(menuItem);
+    setMenuItem("NFT");
   };
 
   return (
@@ -213,6 +208,7 @@ export const AppBar = () => {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="m-auto">
             {MENU_ITEMS.map(({ label, href, external }) => (
+              
               <MenuItems
                 key={label}
                 label={label}
