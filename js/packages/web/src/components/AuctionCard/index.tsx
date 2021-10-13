@@ -190,7 +190,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { patchState, update } = useMeta();
+  const { patchState } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -222,6 +222,8 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
+
+  const walletPublickKey = wallet?.publicKey?.toBase58();
 
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
@@ -256,17 +258,18 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== walletPublickKey;
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
-  const doesInstantSaleHasNoItems =
-    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-    auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
+  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
+  const doesInstantSaleHasNoItems =
+    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+   
   const shouldHideInstantSale =
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
@@ -394,7 +397,11 @@ export const AuctionCard = ({
               onClick={async () => {
                 setLoading(true);
                 try {
-                  await startAuctionManually(connection, wallet, auctionView);
+                  await startAuctionManually(
+                    connection,
+                    wallet,
+                    auctionView,
+                  );
                 } catch (e) {
                   console.error(e);
                 }
@@ -402,7 +409,11 @@ export const AuctionCard = ({
               }}
               style={{ marginTop: 20 }}
             >
-              {loading ? <Spin /> : 'Start auction'}
+              {loading ? (
+                <Spin />
+              ) : (
+                'Start auction'
+              )}
             </Button>
           ) : (
             <Button
@@ -494,7 +505,6 @@ export const AuctionCard = ({
       <MetaplexOverlay visible={showRedeemedBidModal}>
         <Confetti />
         <h1
-          className="title"
           style={{
             fontSize: '3rem',
             marginBottom: 20,
@@ -504,7 +514,6 @@ export const AuctionCard = ({
         </h1>
         <p
           style={{
-            color: 'white',
             textAlign: 'center',
             fontSize: '2rem',
           }}
@@ -657,11 +666,11 @@ export const AuctionCard = ({
                             auctionView.auction = patch.auctions[auctionKey];
                             auctionView.myBidderPot =
                               patch.bidderPotsByAuctionAndBidder[
-                              auctionBidderKey
+                                auctionBidderKey
                               ];
                             auctionView.myBidderMetadata =
                               patch.bidderMetadataByAuctionAndBidder[
-                              auctionBidderKey
+                                auctionBidderKey
                               ];
                           }
 
@@ -772,7 +781,6 @@ export const AuctionCard = ({
                         value={value}
                         style={{
                           width: '100%',
-                          background: '#393939',
                           borderRadius: 16,
                         }}
                         onChange={setValue}

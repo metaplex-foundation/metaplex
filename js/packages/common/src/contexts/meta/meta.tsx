@@ -250,8 +250,6 @@ export function MetaProvider({ children = null as any }) {
     const newState = merge({}, state, temp);
     newState.store = temp.store ?? state.store;
     setState(newState);
-
-    return newState;
   };
 
   useEffect(() => {
