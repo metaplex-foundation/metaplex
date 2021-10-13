@@ -1,18 +1,16 @@
-import { notify, useConnection } from '@oyster/common';
+import { notify } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from 'antd';
 import React, { useCallback, useState } from 'react';
+import { swap } from '../../actions/swap.actions';
 import { InputAmount } from '../../components/InputAmount/InputAmount';
-import { useCurrencyPairState } from '../../contexts';
+import { useTokenSwap } from '../../hooks/useTokenSwap';
 import { SwapSymbolTypes } from '../../models/Swap.model';
-import { usePoolForBasket } from '../../utils/pools';
 import styles from './Swap.module.less';
 
 export function Swap() {
-  const { wallet, connect, connected } = useWallet();
-  const { A, B } = useCurrencyPairState();
-  const connection = useConnection();
-  const pool = usePoolForBasket([ A?.mintAddress, B?.mintAddress ]);
+  const { connect, connected, wallet } = useWallet();
+  useTokenSwap();
 
   const [ pendingTx, setPendingTx ] = useState(false);
   const [ fromSelect, setFromSelect ] = useState('lstar');
@@ -21,33 +19,17 @@ export function Swap() {
   const [ toInput, setToInput ] = useState(0);
 
   const handleSwap = useCallback(async () => {
-    if (A.account && B.mintAddress) {
-      try {
-        setPendingTx(true);
-
-        const components = [
-          {
-            account: A.account,
-            mintAddress: A.mintAddress,
-            amount: A.convertAmount(),
-          },
-          {
-            mintAddress: B.mintAddress,
-            amount: B.convertAmount(),
-          },
-        ];
-
-        await swap(connection, wallet, components, /*slippage, */ pool);
-      } catch {
-        notify({
-          description:
-            'Please try again and approve transactions from your wallet',
-          message: 'Swap trade cancelled.',
-          type: 'error',
-        });
-      } finally {
-        setPendingTx(false);
-      }
+    try {
+      await swap();
+    } catch {
+      notify({
+        description:
+          'Please try again and approve transactions from your wallet',
+        message: 'Swap trade cancelled.',
+        type: 'error',
+      });
+    } finally {
+      setPendingTx(false);
     }
   }, []);
 
