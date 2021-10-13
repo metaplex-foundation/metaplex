@@ -315,7 +315,7 @@ const getSetupForTicketing = async (
   const ticket = fairLaunch.ticket;
 
   const remainingAccounts = [];
-  const instructions = [];
+  const instructions: anchor.web3.TransactionInstruction[] = [];
   const signers = [];
 
   let amountLamports = 0;

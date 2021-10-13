@@ -42,7 +42,7 @@ export async function mint(
 
   const remainingAccounts = [];
   const signers = [mint, userKeyPair];
-  const instructions = [
+  const instructions: anchor.web3.TransactionInstruction[] = [
     anchor.web3.SystemProgram.createAccount({
       fromPubkey: userKeyPair.publicKey,
       newAccountPubkey: mint.publicKey,

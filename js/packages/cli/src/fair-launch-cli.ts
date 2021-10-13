@@ -419,7 +419,7 @@ program
     );
 
     const remainingAccounts = [];
-    const instructions = [];
+    const instructions: anchor.web3.TransactionInstruction[] = [];
     const signers = [];
     //@ts-ignore
     const tokenAta = fairLaunchObj.treasuryMint
@@ -591,7 +591,7 @@ program
     const mintKey = new anchor.web3.PublicKey(mint);
     const dest = new anchor.web3.PublicKey(destination);
     const token = (await getAtaForMint(mintKey, dest))[0];
-    const instructions = [];
+    const instructions: anchor.web3.TransactionInstruction[] = [];
     const tokenApp = new Token(
       anchorProgram.provider.connection,
       //@ts-ignore
@@ -719,7 +719,7 @@ async function adjustTicket({
   adjustMantissa: boolean;
 }) {
   const remainingAccounts = [];
-  const instructions = [];
+  const instructions: anchor.web3.TransactionInstruction[] = [];
   const signers = [];
   //@ts-ignore
   const tokenAta = fairLaunchObj.treasuryMint
@@ -1992,7 +1992,7 @@ program
       tokenAccount,
     );
 
-    const instructions = [];
+    const instructions: anchor.web3.TransactionInstruction[] = [];
     if (!exists) {
       instructions.push(
         createAssociatedTokenAccountInstruction(
