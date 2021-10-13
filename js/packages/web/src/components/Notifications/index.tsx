@@ -322,7 +322,7 @@ export function useSettlementAuctions({
               metadataByAuction,
               undefined,
             );
-            if(completeAuctionView) {
+            if (completeAuctionView) {
               await settle(
                 connection,
                 wallet,
