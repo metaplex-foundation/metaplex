@@ -224,7 +224,7 @@ export const AppBar = () => {
             ))}
           </Nav>
           <Nav
-            className="ml-auto"
+            className="ml-auto connectNavbar"
             style={{
               position: 'relative',
             }}
