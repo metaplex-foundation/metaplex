@@ -15,6 +15,9 @@ use {
         },
     },
     borsh::BorshSerialize,
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::state::{MasterEditionV1, Metadata},
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -24,10 +27,7 @@ use {
         rent::Rent,
         sysvar::Sysvar,
     },
-    spl_auction::processor::AuctionData,
     spl_token::state::Account,
-    spl_token_metadata::state::{MasterEditionV1, Metadata},
-    spl_token_vault::state::SafetyDepositBox,
 };
 
 fn assert_destination_ownership_validity(
@@ -334,7 +334,7 @@ pub fn process_empty_payment_account(
     // assert that the metadata sent up is the metadata in the safety deposit
     if metadata.mint != safety_deposit.token_mint {
         if master_edition_info.data.borrow()[0]
-            == spl_token_metadata::state::Key::MasterEditionV1 as u8
+            == metaplex_token_metadata::state::Key::MasterEditionV1 as u8
         {
             // Could be a limited edition, in which case printing tokens or auth tokens were offered, not the original.
             let master_edition: MasterEditionV1 =

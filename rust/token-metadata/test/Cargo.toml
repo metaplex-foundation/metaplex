@@ -1,5 +1,5 @@
 [package]
-name = "spl-token-metadata-test-client"
+name = "metaplex-token-metadata-test-client"
 version = "0.1.0"
 description = "Metaplex Library Metadata Integration Test Client"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
@@ -17,5 +17,5 @@ borsh = "0.9.1"
 clap = "2.33.3"
 solana-clap-utils = "1.6"
 solana-cli-config = "1.6"
-spl-token-metadata = { path = "../program", features = [ "no-entrypoint" ] }
+metaplex-token-metadata = { path = "../program", features = [ "no-entrypoint" ] }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
