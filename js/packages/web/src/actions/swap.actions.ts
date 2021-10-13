@@ -1,37 +1,82 @@
+import { sendSignedTransaction, sendTransactionWithRetry } from '@oyster/common';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { Account, Connection, ParsedAccountData, PublicKey, AccountInfo, TokenAccountsFilter, Transaction } from '@solana/web3.js';
-import { SWAP_ADDRESS } from '../models/Swap.model';
-import { TokenSwap, TOKEN_SWAP_PROGRAM_ID } from '../program/TokenSwap';
+import { Account, AccountInfo, Connection, ParsedAccountData, PublicKey, TokenAccountsFilter, Transaction } from '@solana/web3.js';
+import { signTransaction } from 'borsh/borsh-ts/test/fuzz/transaction-example/transaction';
+import { TOKEN_SWAP_PROGRAM_ID, TokenSwap } from '../program/TokenSwap';
 
 let tokenSwap: TokenSwap;
+
+const SWAP_ADDRESS = new PublicKey('gszXA2RmCDbLHuJaV2YcUsHrFydHPMzo1okMLkp4uTw');
 
 let amountIn: number;
 let amountOut: number;
 let isReverse = false;
-// pool's LSTARS
+// lstart
 let tokenAccountA: AccountInfo<Buffer | ParsedAccountData> | null;
-// pool's USDC
+// usdc
 let tokenAccountB: AccountInfo<Buffer | ParsedAccountData> | null;
 let userPubkey: PublicKey;
 let connection: Connection;
 let acc: Account;
+let userTokenAccounts: Array<{
+  pubkey: PublicKey;
+  account: AccountInfo<ParsedAccountData>;
+}>;
+let userTokenAAcc: {
+  pubkey: PublicKey;
+  account: AccountInfo<ParsedAccountData>;
+} | null;
+let userTokenBAcc: {
+  pubkey: PublicKey;
+  account: AccountInfo<ParsedAccountData>;
+} | null;
 
-export async function initTokenSwap(conn: Connection, walletPubkey: PublicKey): Promise<void> {
+let wallet;
+
+export async function initTokenSwap(conn: Connection, userWallet: any): Promise<void> {
   acc = new Account();
-  console.log('--acc', acc.toString())
   connection = conn;
-  userPubkey = walletPubkey;
+  wallet = userWallet;
+  userPubkey = wallet.publicKey;
   tokenSwap = await TokenSwap.loadTokenSwap(conn, SWAP_ADDRESS, TOKEN_SWAP_PROGRAM_ID, acc);
 }
 
 export async function initTokenAccounts(): Promise<void> {
   tokenAccountA = (await connection.getParsedAccountInfo(tokenSwap.tokenAccountA)).value;
   tokenAccountB = (await connection.getParsedAccountInfo(tokenSwap.tokenAccountB)).value;
-  console.log('--tokens', tokenAccountA, tokenAccountB)
 }
 
-export function setIsReverse(value: boolean) {
-  isReverse = value;
+export async function updateUserTokenAccounts(): Promise<void> {
+  userTokenAccounts = (await connection.getParsedTokenAccountsByOwner(userPubkey, { programId: TOKEN_PROGRAM_ID } as TokenAccountsFilter)).value;
+  let mintAAddress = (tokenAccountA!.data as ParsedAccountData).parsed['info']['mint'];
+  let mintBAddress = (tokenAccountB!.data as ParsedAccountData).parsed['info']['mint'];
+  userTokenAccounts.forEach(function (item) {
+    let tokenAccMint = item.account.data.parsed['info']['mint'];
+    if (tokenAccMint == mintAAddress) {
+      userTokenAAcc = item;
+    }
+    if (tokenAccMint == mintBAddress) {
+      userTokenBAcc = item;
+    }
+  });
+}
+
+export function getUserTokenABalance() {
+  if (!userTokenAAcc) {
+    return 0;
+  }
+  return userTokenAAcc.account.data.parsed['info']['tokenAmount']['uiAmount']
+}
+
+export function getUserTokenBBalance() {
+  if (!userTokenBAcc) {
+    return 0;
+  }
+  return userTokenBAcc.account.data.parsed['info']['tokenAmount']['uiAmount']
+}
+
+export function setIsReverse() {
+  isReverse = !isReverse;
   updateAmountOut();
 }
 
@@ -48,31 +93,49 @@ export function getAmountOut(): number {
   return amountOut / Math.pow(10, decimals);
 }
 
-export async function swap(): Promise<Transaction> {
-  let tokenAccounts = await connection.getParsedTokenAccountsByOwner(userPubkey, { programId: TOKEN_PROGRAM_ID } as TokenAccountsFilter);
-  let mintAAddress = (tokenAccountA!.data as ParsedAccountData).parsed['info']['mint'];
-  let mintBAddress = (tokenAccountB!.data as ParsedAccountData).parsed['info']['mint'];
-  let mintA = new Token(connection, mintAAddress, TOKEN_PROGRAM_ID, acc);
-  let mintB = new Token(connection, mintBAddress, TOKEN_PROGRAM_ID, acc);
-  let userTokenAccountA;
-  let userTokenAccountB;
-  let transaction = new Transaction();
-  tokenAccounts.value.forEach(function (item) {
-    let tokenAccMint = item.account.data.parsed['info']['mint'];
-    if (tokenAccMint == mintAAddress) {
-      userTokenAccountA = item.pubkey;
-    }
-    if (tokenAccMint == mintBAddress) {
-      userTokenAccountB = item.pubkey;
-    }
-  });
-  //if (userTokenAccountA == null) {
-  //    userTokenAccountA = await mintA.createAssociatedTokenAccount(account.publicKey);
-  // }
-  //if (userTokenAccountB == null) {
-  //    userTokenAccountB = await mintB.createAccount(account.publicKey);
-  // }
+export function isUserTokenAAccount(): boolean {
+  return userTokenAAcc != null;
+}
 
+export function isUserTokenBAccount(): boolean {
+  return userTokenBAcc != null;
+}
+
+export async function signAndSendTx(tx: Transaction) {
+  const signedTransaction = await wallet.signTransaction(tx);
+  await sendSignedTransaction({
+    connection,
+    signedTransaction,
+  });
+  return true;
+}
+
+export async function createTokenATransaction(): Promise<any> {
+  let mintAAddress = new PublicKey((tokenAccountA!.data as ParsedAccountData).parsed['info']['mint']);
+  let mintA = new Token(connection, mintAAddress, TOKEN_PROGRAM_ID, acc);
+  const associatedAddress = await Token.getAssociatedTokenAddress(mintA.associatedProgramId, mintA.programId, mintA.publicKey, userPubkey);
+  const transaction = new Transaction().add(Token.createAssociatedTokenAccountInstruction(mintA.associatedProgramId, mintA.programId, mintA.publicKey, associatedAddress, userPubkey, userPubkey));
+  transaction.recentBlockhash = (await connection.getRecentBlockhash('finalized')).blockhash;
+  transaction.feePayer = userPubkey;
+  console.log('--recentA', transaction.recentBlockhash)
+  return signAndSendTx(transaction);
+}
+
+export async function createTokenBTransaction(): Promise<any> {
+  let mintBAddress = new PublicKey((tokenAccountB!.data as ParsedAccountData).parsed['info']['mint']);
+  let mintB = new Token(connection, mintBAddress, TOKEN_PROGRAM_ID, acc);
+  const associatedAddress = await Token.getAssociatedTokenAddress(mintB.associatedProgramId, mintB.programId, mintB.publicKey, userPubkey);
+  const transaction = new Transaction().add(Token.createAssociatedTokenAccountInstruction(mintB.associatedProgramId, mintB.programId, mintB.publicKey, associatedAddress, userPubkey, userPubkey));
+  transaction.recentBlockhash = (await connection.getRecentBlockhash('finalized')).blockhash;
+  transaction.feePayer = userPubkey;
+  console.log('--recent', transaction.recentBlockhash)
+  return signAndSendTx(transaction);
+}
+
+export async function swap(): Promise<any> {
+  let userTokenAccountA = userTokenAAcc!.pubkey;
+  let userTokenAccountB = userTokenBAcc!.pubkey;
+  let transaction = new Transaction();
 
   let swapInstruction = TokenSwap.swapInstruction(
     tokenSwap.tokenSwap,
@@ -91,7 +154,7 @@ export async function swap(): Promise<Transaction> {
     amountOut,
   );
   transaction.add(swapInstruction);
-  return transaction;
+  return signAndSendTx(transaction);
 
 }
 
