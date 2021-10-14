@@ -1,6 +1,6 @@
 use clap::{
     self, crate_description, crate_name, crate_version, value_t, value_t_or_exit, App, AppSettings,
-    Arg, ArgMatches, SubCommand, Values,
+    Arg, ArgGroup, ArgMatches, SubCommand, Values,
 };
 
 use solana_account_decoder::{
@@ -29,7 +29,6 @@ use solana_sdk::{
     instruction::Instruction,
     message::Message,
     native_token::lamports_to_sol,
-    program_error::{PrintProgramError, ProgramError},
     program_pack::Pack,
     pubkey::Pubkey,
     signer::{keypair::Keypair, Signer},
@@ -40,8 +39,8 @@ use spl_token::{self, instruction, state::Mint};
 use spl_token_metadata::{
     self,
     error::MetadataError,
-    instruction::create_metadata_accounts,
-    state::{Creator, Key, Metadata, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
+    instruction::{create_metadata_accounts, update_metadata_accounts},
+    state::{Creator, Data, Key, Metadata, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
     utils::try_from_slice_checked,
 };
 use std::{fmt::Display, process::exit, str::FromStr, sync::Arc};
@@ -54,6 +53,8 @@ use output::{println_display, CliMetadata, CliMint, CliTokenAmount, UiMetadata};
 
 pub(crate) type Error = Box<dyn std::error::Error>;
 type CommandResult = Result<Option<(u64, Vec<Vec<Instruction>>)>, Error>;
+
+// INPUT VALIDATORS
 
 fn is_mint_decimals(string: String) -> Result<(), String> {
     is_parsable::<u8>(string)
@@ -97,24 +98,6 @@ fn validate_creator_shares(creators: &Vec<Creator>) -> Result<(), clap::Error> {
     }
 }
 
-fn get_creators_vec(creator_values: Option<Values>) -> Option<Vec<Creator>> {
-    let mut creators = Vec::<Creator>::new();
-    if let Some(creator_strings) = creator_values {
-        creator_strings.for_each(|c| {
-            let split: Vec<&str> = c.split(":").collect();
-            let creator = Creator {
-                address: Pubkey::from_str(split[0]).unwrap(),
-                verified: false,
-                share: u8::from_str(split[1]).unwrap(),
-            };
-            creators.push(creator)
-        });
-        Some(creators)
-    } else {
-        None
-    }
-}
-
 // Validates individuals creator <PUBKEY:SHARE> arguments to make sure the
 // pubkey is valid and the individual share is less than 100. Clap doesn't have
 // the native ability to validate over multiple values, i.e, to validate that sum
@@ -145,6 +128,72 @@ where
         }
     }
 }
+
+// DATA HELPERS
+
+fn get_creators_vec(creator_values: Option<Values>) -> Option<Vec<Creator>> {
+    let mut creators = Vec::<Creator>::new();
+    if let Some(creator_strings) = creator_values {
+        creator_strings.for_each(|c| {
+            let split: Vec<&str> = c.split(":").collect();
+            let creator = Creator {
+                address: Pubkey::from_str(split[0]).unwrap(),
+                verified: false,
+                share: u8::from_str(split[1]).unwrap(),
+            };
+            creators.push(creator)
+        });
+        Some(creators)
+    } else {
+        None
+    }
+}
+
+fn parse_metadata_account(data: &Vec<u8>) -> Result<Metadata, Error> {
+    try_from_slice_checked::<Metadata>(data, Key::MetadataV1, MAX_METADATA_LEN)
+        .map_err(|e| e.into())
+}
+
+fn parse_cli_metadata(address: Pubkey, metadata: Metadata) -> CliMetadata {
+    CliMetadata {
+        address: address.to_string(),
+        metadata: UiMetadata::from(metadata),
+    }
+}
+
+fn get_metadata_address(mint_address: &Pubkey) -> Pubkey {
+    let program_id = spl_token_metadata::id();
+
+    let metadata_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        mint_address.as_ref(),
+    ];
+
+    let (metadata_address, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
+
+    metadata_address
+}
+
+/// First tries to get the metadata account directly from the provided address. If unsuccessful, calculates
+/// program address assuming provided addresses is mint address and tries to retrieve again.
+fn fetch_and_parse_metadata_account(
+    config: &Config,
+    address: Pubkey,
+) -> Result<(Pubkey, Metadata), Error> {
+    let account = config.rpc_client.get_account(&address)?;
+
+    if let Ok(metadata) = parse_metadata_account(&account.data) {
+        Ok((address, metadata))
+    } else {
+        let address = get_metadata_address(&address);
+        let account = config.rpc_client.get_account(&address)?;
+        let metadata = parse_metadata_account(&account.data)?;
+        Ok((address, metadata))
+    }
+}
+
+// TRANSACTION HELPERS
 
 fn new_throwaway_signer() -> (Box<dyn Signer>, Pubkey) {
     let keypair = Keypair::new();
@@ -277,7 +326,7 @@ fn get_app() -> App<'static, 'static> {
                     .index(1)
                     .help(
                         "Address of the existing metadata account. \
-                        Can be either token 
+                        Can be either token or metadata account.
                         ",
                     ),
             ),
@@ -340,7 +389,6 @@ fn get_app() -> App<'static, 'static> {
                 .arg(
                     Arg::with_name("seller_fee_basis_points")
                         .long("seller-fee-basis-points")
-                        .alias("sell-bps")
                         .value_name("SELLER_FEE_BASIS_POINTS")
                         .takes_value(true)
                         .required(true)
@@ -363,6 +411,113 @@ fn get_app() -> App<'static, 'static> {
                     percentage shares as <ADDRESS>:<SHARE> \
                     separated by spaces.",
                         ),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("update-metadata")
+                .about("Update an existing metadata account.")
+                .arg(
+                    Arg::with_name("address")
+                        .value_name("ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .index(1)
+                        .help(
+                            "Address of the existing metadata account. \
+                        Can be either token 
+                        ",
+                        ),
+                )
+                .arg(
+                    Arg::with_name("update_authority")
+                        .long("update-authority")
+                        .value_name("UPDATE_AUTHORITY_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .help(
+                            "Specify the update authority address. \
+                         Defaults to the client keypair address.",
+                        ),
+                )
+                .arg(
+                    Arg::with_name("new_update_authority")
+                        .long("new-update-authority")
+                        .value_name("NEW_UPDATE_AUTHORITY_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .help("Specify the new update authority address."),
+                )
+                .arg(
+                    Arg::with_name("name")
+                        .long("name")
+                        .global(true)
+                        .value_name("NAME")
+                        .takes_value(true)
+                        .help("Specify the name for the mint."),
+                )
+                .arg(
+                    Arg::with_name("symbol")
+                        .long("symbol")
+                        .value_name("SYMBOL")
+                        .takes_value(true)
+                        .help("Specify the symbol for the mint."),
+                )
+                .arg(
+                    Arg::with_name("uri")
+                        .long("uri")
+                        .value_name("URI")
+                        .takes_value(true)
+                        .validator(is_url)
+                        .help("Specify the URI for the mint."),
+                )
+                .arg(
+                    Arg::with_name("seller_fee_basis_points")
+                        .long("seller-fee-basis-points")
+                        .value_name("SELLER_FEE_BASIS_POINTS")
+                        .takes_value(true)
+                        .validator(is_valid_basis_points)
+                        .help(
+                            "Specify seller fee in basis points. \
+                        1000 basis points equals 100%.",
+                        ),
+                )
+                .arg(
+                    Arg::with_name("creators")
+                        .long("creators")
+                        .value_name("CREATORS")
+                        .multiple(true)
+                        .takes_value(true)
+                        .validator(is_valid_creator)
+                        .max_values(MAX_CREATOR_LIMIT as u64)
+                        .help(
+                            "Specify up to five creator addresses with \
+                            percentage shares as <ADDRESS>:<SHARE> \
+                            separated by spaces.",
+                        ),
+                )
+                .arg(
+                    Arg::with_name("primary_sale_happened")
+                        .long("primary-sale-happened")
+                        .alias("sell-bps")
+                        .value_name("SELLER_FEE_BASIS_POINTS")
+                        .takes_value(false)
+                        .help(
+                            "Include to indicate that primary sale \
+                            has happened.",
+                        ),
+                )
+                .group(
+                    ArgGroup::with_name("update_values")
+                        .args(&vec![
+                            "new_update_authority",
+                            "name",
+                            "symbol",
+                            "uri",
+                            "seller_fee_basis_points",
+                            "creators",
+                            "primary_sale_happened",
+                        ])
+                        .required(true)
+                        .multiple(true),
                 ),
         )
         .subcommand(
@@ -531,6 +686,35 @@ fn main() {
                 is_mutable,
             )
         }
+        ("update-metadata", Some(arg_matches)) => {
+            let address = pubkey_of(arg_matches, "address").unwrap();
+            let update_authority =
+                config.pubkey_or_default(arg_matches, "update_authority", &mut wallet_manager);
+            let new_update_authority = pubkey_of(arg_matches, "new_update_authority");
+
+            let name = arg_matches.value_of("name").map(|v| v.to_string());
+            let symbol = arg_matches.value_of("symbol").map(|v| v.to_string());
+            let uri = arg_matches.value_of("uri").map(|v| v.to_string());
+            let seller_fee_basis_points = value_of::<u16>(arg_matches, "seller_fee_basis_points");
+            let creators = get_creators_vec(arg_matches.values_of("creators"));
+
+            let primary_sale_happened = arg_matches
+                .is_present("primary_sale_happened")
+                .then(|| true);
+
+            command_update_metadata_account(
+                &config,
+                address,
+                update_authority,
+                new_update_authority,
+                name,
+                symbol,
+                uri,
+                seller_fee_basis_points,
+                creators,
+                primary_sale_happened,
+            )
+        }
         ("supply", Some(arg_matches)) => {
             let address = pubkey_of_signer(arg_matches, "address", &mut wallet_manager)
                 .unwrap()
@@ -643,49 +827,11 @@ fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandRes
     Ok(None)
 }
 
-/// First tries to get the metadata account directly from the provided address. If unsuccessful, calculates
-/// program address assuming provided addresses is mint address and tries to retrieve again.
 fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
-    let account = config.rpc_client.get_account(&address)?;
-
-    fn parse_metadata_account(data: &Vec<u8>) -> Result<Metadata, ProgramError> {
-        try_from_slice_checked::<Metadata>(data, Key::MetadataV1, MAX_METADATA_LEN)
-    }
-
-    fn parse_cli_metadata(address: Pubkey, metadata: Metadata) -> CliMetadata {
-        CliMetadata {
-            address: address.to_string(),
-            metadata: UiMetadata::from(metadata),
-        }
-    }
-
-    if let Ok(metadata) = parse_metadata_account(&account.data) {
-        let cli_metadata = parse_cli_metadata(address, metadata);
-        println!("{}", &config.output_format.formatted_string(&cli_metadata));
-        Ok(None)
-    } else {
-        let metadata_address = get_metadata_address(&address);
-        let account = config.rpc_client.get_account(&metadata_address)?;
-
-        let metadata = parse_metadata_account(&account.data)?;
-        let cli_metadata = parse_cli_metadata(metadata_address, metadata);
-        println!("{}", &config.output_format.formatted_string(&cli_metadata));
-        Ok(None)
-    }
-}
-
-fn get_metadata_address(mint_address: &Pubkey) -> Pubkey {
-    let program_id = spl_token_metadata::id();
-
-    let metadata_seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        mint_address.as_ref(),
-    ];
-
-    let (metadata_address, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
-
-    metadata_address
+    let (address, metadata) = fetch_and_parse_metadata_account(config, address)?;
+    let cli_metadata = parse_cli_metadata(address, metadata);
+    println!("{}", &config.output_format.formatted_string(&cli_metadata));
+    Ok(None)
 }
 
 fn command_create_metadata_account(
@@ -739,6 +885,75 @@ fn command_create_metadata_account(
         seller_fee_basis_points,
         update_authority_is_signer,
         is_mutable,
+    )];
+
+    Ok(Some((
+        minimum_balance_for_rent_exemption,
+        vec![instructions],
+    )))
+}
+
+fn command_update_metadata_account(
+    config: &Config,
+    address: Pubkey,
+    update_authority: Pubkey,
+    new_update_authority: Option<Pubkey>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
+    seller_fee_basis_points: Option<u16>,
+    creators: Option<Vec<Creator>>,
+    primary_sale_happened: Option<bool>,
+) -> CommandResult {
+    let (metadata_address, mut metadata) = fetch_and_parse_metadata_account(config, address)?;
+
+    let mut data: Option<Data> = None;
+    let mut is_new_data: bool = false;
+
+    if let Some(name) = name {
+        metadata.data.name = name;
+        is_new_data = true;
+    }
+
+    if let Some(symbol) = symbol {
+        metadata.data.symbol = symbol;
+        is_new_data = true;
+    }
+
+    if let Some(uri) = uri {
+        metadata.data.uri = uri;
+        is_new_data = true;
+    }
+
+    if let Some(seller_fee_basis_points) = seller_fee_basis_points {
+        metadata.data.seller_fee_basis_points = seller_fee_basis_points;
+        is_new_data = true;
+    }
+
+    if let Some(creators) = creators {
+        if let Err(error) = validate_creator_shares(&creators) {
+            return Err(error.into());
+        } else {
+            metadata.data.creators = Some(creators);
+            is_new_data = true;
+        }
+    }
+
+    if is_new_data {
+        data = Some(metadata.data);
+    }
+
+    let minimum_balance_for_rent_exemption = config
+        .rpc_client
+        .get_minimum_balance_for_rent_exemption(MAX_METADATA_LEN)?;
+
+    let instructions = vec![update_metadata_accounts(
+        spl_token_metadata::id(),
+        metadata_address,
+        update_authority,
+        new_update_authority,
+        data,
+        primary_sale_happened,
     )];
 
     Ok(Some((
@@ -899,5 +1114,60 @@ mod tests {
 
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().kind, ErrorKind::ValueValidation);
+    }
+
+    #[test]
+    fn update_metadata() {
+        let test_pubkey: Pubkey = Keypair::new().pubkey();
+        let m = get_app().get_matches_from(vec![
+            "testeroni",
+            "update-metadata",
+            &test_pubkey.to_string(),
+            "--new-update-authority",
+            &test_pubkey.to_string(),
+            "--name",
+            "yo yo",
+            "--symbol",
+            "YO",
+            "--uri",
+            "ifps://testeroni",
+            "--seller-fee-basis-points",
+            "1000",
+            "--creators",
+            &format!("{k}:50", k = &test_pubkey.to_string()),
+            &format!("{k}:50", k = &test_pubkey.to_string()),
+        ]);
+        let sub_m = m.subcommand_matches("update-metadata").unwrap();
+        let creators = get_creators_vec(sub_m.values_of("creators")).unwrap();
+        assert_eq!(validate_creator_shares(&creators).unwrap(), ());
+    }
+
+    #[test]
+    fn update_metadata_not_all_args() {
+        let test_pubkey: Pubkey = Keypair::new().pubkey();
+        let m = get_app().get_matches_from(vec![
+            "testeroni",
+            "update-metadata",
+            &test_pubkey.to_string(),
+            "--new-update-authority",
+            &test_pubkey.to_string(),
+        ]);
+        let sub_m = m.subcommand_matches("update-metadata").unwrap();
+        assert_eq!(
+            sub_m.value_of("new_update_authority").unwrap(),
+            test_pubkey.to_string()
+        );
+    }
+
+    #[test]
+    fn update_metadata_no_args() {
+        let test_pubkey: Pubkey = Keypair::new().pubkey();
+        let res = get_app().get_matches_from_safe(vec![
+            "testeroni",
+            "update-metadata",
+            &test_pubkey.to_string(),
+        ]);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err().kind, ErrorKind::MissingRequiredArgument);
     }
 }
