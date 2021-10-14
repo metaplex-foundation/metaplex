@@ -82,8 +82,8 @@ pub fn process_end_auction(
         return Err(MetaplexError::AuctionManagerAuctionProgramMismatch.into());
     }
 
-    if auction_manager.status() != AuctionManagerStatus::Validated {
-        return Err(MetaplexError::AuctionManagerMustBeValidated.into());
+    if auction_manager.status() == AuctionManagerStatus::Finished {
+        return Err(MetaplexError::AuctionManagerInFishedState.into());
     }
 
     let auction_key = auction_manager.auction();
