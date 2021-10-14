@@ -10,7 +10,14 @@ This is a starting point to develop command line applications that interact with
 * `mint-info`: display information for an existing mint account.
 * `metadata-info`: dispaly information for an existing metadata account.
 * `create-metadata`: create a new metadata account for an existing mint, including creators and shares.
-* `update-metadata`: update and existing metadata account by providing either a mint or metadata account address and providing values for one or more updatable fields.
+* `update-metadata`: update an existing metadata account by providing either a mint or metadata account address and providing values for one or more updatable fields:
+    * new_update_authority
+    * name
+    * symbol
+    * uri
+    * seller_fee_basis_points
+    * creators
+    * primary_sale_happened
 
 ### Getting Started
 
@@ -20,4 +27,3 @@ This is a starting point to develop command line applications that interact with
 
 ### Todo
 1. Build out remaining commands for full featured metaplex cli.
-2. Remove `create-token` and `supply` commands - leaving in for now to serve as templates for other commands
