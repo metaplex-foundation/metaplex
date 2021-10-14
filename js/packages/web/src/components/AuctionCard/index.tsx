@@ -216,8 +216,7 @@ export const AuctionCard = ({
 
   const [showRedeemedBidModal, setShowRedeemedBidModal] =
     useState<boolean>(false);
-  const [showEndingBidModal, setShowEndingBidModal] =
-    useState<boolean>(false);
+  const [showEndingBidModal, setShowEndingBidModal] = useState<boolean>(false);
   const [showRedemptionIssue, setShowRedemptionIssue] =
     useState<boolean>(false);
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
@@ -306,6 +305,35 @@ export const AuctionCard = ({
       if (showPlaceBid) setShowPlaceBid(false);
     }
   }, [wallet.connected]);
+
+  const endInstantSale = async () => {
+    setLoading(true);
+
+    try {
+      await endSale({
+        auctionView,
+        connection,
+        accountByMint,
+        bids,
+        bidRedemptions,
+        prizeTrackingTickets,
+        wallet,
+      });
+    } catch (e) {
+      console.error('endAuction', e);
+      setLoading(false);
+      return;
+    }
+    setShowEndingBidModal(true);
+    setLoading(false);
+  };
+  const instantSaleAction = () => {
+    if (canEndInstantSale) {
+      return endInstantSale();
+    }
+
+    return instantSale();
+  };
 
   const instantSale = async () => {
     setLoading(true);
@@ -396,11 +424,9 @@ export const AuctionCard = ({
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
 
-  const {
-    isInstantSale,
-    canEndInstantSale
-  } = useInstantSaleState(auctionView)
-  const actionButtonContent = useActionButtonContent(auctionView)
+  const { canEndInstantSale } = useInstantSaleState(auctionView);
+
+  const actionButtonContent = useActionButtonContent(auctionView);
 
   if (shouldHide) {
     return <></>;
@@ -548,15 +574,17 @@ export const AuctionCard = ({
                     {loading ? <Spin /> : 'Start auction'}
                   </Button>
                 ) : (
-                  <Button
-                    className="secondary-btn"
-                    onClick={() => {
-                      if (wallet.connected) setShowPlaceBid(true);
-                      else connect();
-                    }}
-                  >
-                    Place Bid
-                  </Button>
+                  !showPlaceBid && (
+                    <Button
+                      className="secondary-btn"
+                      onClick={() => {
+                        if (wallet.connected) setShowPlaceBid(true);
+                        else connect();
+                      }}
+                    >
+                      Place Bid
+                    </Button>
+                  )
                 ))}
             </div>
           )}
@@ -683,21 +711,21 @@ export const AuctionCard = ({
             >
               {loading ? <Spin /> : 'Start auction'}
             </Button>
+          ) : loading ? (
+            <Spin />
           ) : (
-            <Button
-              type="primary"
-              size="large"
-              className="ant-btn secondary-btn"
-              disabled={loading}
-              onClick={instantSale}
-              style={{ marginTop: 20 }}
-            >
-              {loading ? (
-                <Spin />
-              ) : (
-                actionButtonContent
-              )}
-            </Button>
+            auctionView.isInstantSale && (
+              <Button
+                type="primary"
+                size="large"
+                className="ant-btn secondary-btn"
+                disabled={loading}
+                onClick={instantSaleAction}
+                style={{ marginTop: 20, width: '100%' }}
+              >
+                {actionButtonContent}
+              </Button>
+            )
           ))}
         {!hideDefaultAction && !wallet.connected && (
           <Button
@@ -778,8 +806,8 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your sale has been ended please view your NFTs in <Link to="/artworks">My Items</Link>
-          .
+          Your sale has been ended please view your NFTs in{' '}
+          <Link to="/artworks">My Items</Link>.
         </p>
         <Button
           onClick={() => setShowEndingBidModal(false)}

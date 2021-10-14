@@ -56,9 +56,9 @@ export const AuctionItem = ({
       index === 0
         ? ''
         : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-          1 - 0.2 * index,
-          0,
-        )})`,
+            1 - 0.2 * index,
+            0,
+          )})`,
     transformOrigin: 'right bottom',
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1 * index,

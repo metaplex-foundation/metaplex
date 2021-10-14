@@ -1,8 +1,9 @@
 import {
+  BidStateType,
   formatTokenAmount,
   fromLamports,
-  useMint,
   PriceFloorType,
+  useMint,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -15,6 +16,7 @@ import { BN } from 'bn.js';
 interface AuctionStatusLabels {
   status: string;
   amount: string | number;
+  ended: boolean;
 }
 
 export const useAuctionStatus = (
@@ -48,10 +50,12 @@ export const useAuctionStatus = (
 
   if (auctionView.isInstantSale) {
     const soldOut = bids.length === auctionView.items.length;
+    const isOpen =
+      auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
 
     status = auctionView.state === AuctionViewState.Ended ? 'Ended' : 'Price';
 
-    if (soldOut) {
+    if (soldOut && !isOpen) {
       status = 'Sold Out';
     }
 
@@ -62,6 +66,7 @@ export const useAuctionStatus = (
     return {
       status,
       amount,
+      ended,
     };
   }
 
@@ -75,17 +80,20 @@ export const useAuctionStatus = (
       return {
         status: 'Ended',
         amount,
+        ended,
       };
     }
 
     return {
       status: 'Winning Bid',
       amount,
+      ended,
     };
   }
 
   return {
     status,
     amount,
+    ended,
   };
 };
