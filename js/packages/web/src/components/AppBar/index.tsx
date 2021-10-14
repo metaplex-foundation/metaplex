@@ -225,10 +225,7 @@ export const AppBar = () => {
               position: 'relative',
             }}
           >
-            <Select
-              onSelect={setEndpoint}
-              value={endpoint}
-            >
+            <Select onSelect={setEndpoint} value={endpoint}>
               {ENDPOINTS.map(({ name, endpoint }) => (
                 <Select.Option value={endpoint} key={endpoint}>
                   {name}

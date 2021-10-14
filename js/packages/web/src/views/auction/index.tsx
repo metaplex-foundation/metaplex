@@ -62,7 +62,6 @@ export const AuctionItem = ({
     marginLeft: size > 1 && index === 0 ? '0px' : 'auto',
     background: 'black',
     boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
-    height: 300,
   };
   return (
     <ArtContent
@@ -125,8 +124,8 @@ export const AuctionView = () => {
 
   return (
     <>
-      <Row justify="space-around" ref={ref}>
-        <Col span={24} md={12} className="pr-4">
+      <Row justify="space-around" ref={ref} className="auctionComponent">
+        <Col span={24} md={12} className="pr-4 attributes">
           <div className="auction-view" style={{ minHeight: 300 }}>
             <Carousel
               autoplay={false}
@@ -199,7 +198,7 @@ export const AuctionView = () => {
               )}
             </Col>
 
-            <Col>
+            <Col className="viewOn">
               <h6>View on</h6>
               <div style={{ display: 'flex' }}>
                 <Button
@@ -226,7 +225,7 @@ export const AuctionView = () => {
           </Row>
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction} />}
+          {auction && <AuctionCard auctionView={auction} pubkey={auction?.auction.pubkey} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
       </Row>
@@ -408,7 +407,7 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Col style={{ width: '100%' }}>
+    <Col style={{ width: '100%'}}>
       <h6>Bid History</h6>
       {bidLines.slice(0, 10)}
       {bids.length > 10 && (
