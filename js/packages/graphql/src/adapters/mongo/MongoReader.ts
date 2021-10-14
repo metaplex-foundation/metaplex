@@ -73,17 +73,18 @@ export class MongoReader extends ReaderBase implements IReader {
   }
 
   getCreators(storeId: string) {
+    const filter: Pick<WhitelistedCreator, 'storeId'> = {
+      storeId: storeId as any,
+    };
     return this.collection('creators')
-      .find({
-        storeIds: { $in: [storeId] },
-      })
+      .find(filter)
       .map(doc => deserialize(doc, WhitelistedCreator))
       .toArray();
   }
 
   getCreator(storeId: string) {
-    const filter: Pick<WhitelistedCreator, 'storeIds'> = {
-      storeIds: { $in: [storeId] } as any,
+    const filter: Pick<WhitelistedCreator, 'storeId'> = {
+      storeId: storeId as any,
     };
     return this.collection('creators')
       .findOne(filter)

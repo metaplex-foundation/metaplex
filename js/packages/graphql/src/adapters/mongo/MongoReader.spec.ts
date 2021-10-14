@@ -169,7 +169,7 @@ describe('MongoReader', () => {
       name: 'name',
       image: 'image',
       description: 'description',
-      storeIds: ['3', '4'],
+      storeId: '3',
     });
 
     const docs = [serialize(creator)];
@@ -195,15 +195,15 @@ describe('MongoReader', () => {
       expect(item.name).toEqual(creator.name);
       expect(item.image).toEqual(creator.image);
       expect(item.description).toEqual(creator.description);
-      expect(item.storeIds).toEqual(creator.storeIds);
+      expect(item.storeId).toEqual(creator.storeId);
     });
 
     it('getCreator', async () => {
       await db.collection('creators').insertMany(docs);
-      const storeId = creator.storeIds[0];
+      const storeId = creator.storeId;
       const resultNull = await reader.getCreator('888');
       expect(resultNull).toBeNull();
-      const result = await reader.getCreator(storeId);
+      const result = await reader.getCreator(storeId!);
       expect(result).not.toBeNull();
       const item = result!;
       expect(item).toBeInstanceOf(WhitelistedCreator);
@@ -214,7 +214,7 @@ describe('MongoReader', () => {
       expect(item.name).toEqual(creator.name);
       expect(item.image).toEqual(creator.image);
       expect(item.description).toEqual(creator.description);
-      expect(item.storeIds).toEqual(creator.storeIds);
+      expect(item.storeId).toEqual(creator.storeId);
     });
   });
 

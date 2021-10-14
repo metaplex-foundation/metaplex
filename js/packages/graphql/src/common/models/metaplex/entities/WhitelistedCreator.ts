@@ -38,7 +38,7 @@ export class WhitelistedCreator extends BaseEntity {
     name?: string;
     image?: string;
     description?: string;
-    storeIds?: StringPublicKey[];
+    storeId?: StringPublicKey;
   }) {
     super(args);
   }
