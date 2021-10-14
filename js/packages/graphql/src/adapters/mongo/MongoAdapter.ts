@@ -46,9 +46,13 @@ export class MongoAdapter implements IDataAdapter<MongoWriter, MongoReader> {
     return box;
   }
 
-  async init(network: string) {
-    const [reader, writer] = this.getBox(network);
-    await Promise.all([reader.init(), writer.init()]);
+  async init(network?: string) {
+    if (network) {
+      const [reader, writer] = this.getBox(network);
+      await Promise.all([reader.init(), writer.init()]);
+    } else {
+      await Promise.all(this.endpoints.map(({ name }) => this.init(name)));
+    }
   }
 
   getReader(network: string): MongoReader {
