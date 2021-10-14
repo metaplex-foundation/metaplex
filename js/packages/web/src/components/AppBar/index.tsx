@@ -208,6 +208,7 @@ export const AppBar = () => {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="m-auto">
             {MENU_ITEMS.map(({ label, href, external }) => (
+              
               <MenuItems
                 key={label}
                 label={label}
