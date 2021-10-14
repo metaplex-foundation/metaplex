@@ -654,31 +654,21 @@ fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
         }
     }
     
-    match parse_metadata_account(&account.data) {
-        Ok(metadata) => {
-            let cli_metadata = parse_cli_metadata(address, metadata);
-            println!("{}", &config.output_format.formatted_string(&cli_metadata));
-            Ok(None)
-        }
-        Err(_) => {
-            let metadata_address = get_metadata_address(&address);
-            let account = config
-            .rpc_client
-            .get_account(&metadata_address)?;
+    if let Ok(metadata) = parse_metadata_account(&account.data) {
+        let cli_metadata = parse_cli_metadata(address, metadata);
+        println!("{}", &config.output_format.formatted_string(&cli_metadata));
+        Ok(None)
+    } else {
+                let metadata_address = get_metadata_address(&address);
+                let account = config
+                .rpc_client
+                .get_account(&metadata_address)?;
 
-
-            match parse_metadata_account(&account.data) {
-                Ok(metadata) => {
-                    let cli_metadata = parse_cli_metadata(metadata_address, metadata);
-                    println!("{}", &config.output_format.formatted_string(&cli_metadata));
-                    Ok(None)
-                }
-                Err(error) => {
-                    Err(Box::new(error))
-                }
+                let metadata =  parse_metadata_account(&account.data)?;
+                let cli_metadata = parse_cli_metadata(metadata_address, metadata);
+                println!("{}", &config.output_format.formatted_string(&cli_metadata));
+                Ok(None)
             }
-        }
-    }
 }
 
 fn get_metadata_address(mint_address: &Pubkey) -> Pubkey {
