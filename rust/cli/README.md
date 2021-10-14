@@ -1,4 +1,4 @@
-[![build status](https://github.com/CalebEverett/metaplex/actions/workflows/main.yml/badge.svg)](https://github.com/CalebEverett/metaplex/actions/workflows/rust-cli.yml)
+[![build status](https://github.com/CalebEverett/metaplex/actions/workflows/rust-cli.yml/badge.svg)](https://github.com/CalebEverett/metaplex/actions/workflows/rust-cli.yml)
 
 
 ## Metaplex Command Line Interface

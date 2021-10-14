@@ -1,9 +1,12 @@
-use clap::{self,
-    crate_description, crate_name, crate_version, value_t, value_t_or_exit, App, AppSettings, Arg,
-    ArgMatches, SubCommand, Values
+use clap::{
+    self, crate_description, crate_name, crate_version, value_t, value_t_or_exit, App, AppSettings,
+    Arg, ArgMatches, SubCommand, Values,
 };
 
-use solana_account_decoder::{UiAccountEncoding, parse_token::{parse_token, TokenAccountType}};
+use solana_account_decoder::{
+    parse_token::{parse_token, TokenAccountType},
+    UiAccountEncoding,
+};
 use solana_clap_utils::{
     fee_payer::fee_payer_arg,
     input_parsers::{pubkey_of, pubkey_of_signer, value_of},
@@ -15,15 +18,28 @@ use solana_clap_utils::{
     memo::memo_arg,
 };
 use solana_cli_output::{CliSignature, OutputFormat};
-use solana_client::{rpc_config::{RpcProgramAccountsConfig, RpcAccountInfoConfig}, rpc_client::RpcClient, rpc_filter::{RpcFilterType, MemcmpEncodedBytes, Memcmp}};
+use solana_client::{
+    rpc_client::RpcClient,
+    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+    rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
+};
 use solana_remote_wallet::remote_wallet::RemoteWalletManager;
-use solana_sdk::{commitment_config::CommitmentConfig, instruction::Instruction, message::Message, native_token::lamports_to_sol, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, signer::{
-        keypair::{read_keypair_file, Keypair},
-        Signer,
-    }, system_instruction, transaction::Transaction};
-use spl_token::{self, error::TokenError, instruction, state::Mint};
+use solana_sdk::{
+    commitment_config::CommitmentConfig,
+    instruction::Instruction,
+    message::Message,
+    native_token::lamports_to_sol,
+    program_error::{PrintProgramError, ProgramError},
+    program_pack::Pack,
+    pubkey::Pubkey,
+    signer::{keypair::Keypair, Signer},
+    system_instruction,
+    transaction::Transaction,
+};
+use spl_token::{self, instruction, state::Mint};
 use spl_token_metadata::{
     self,
+    error::MetadataError,
     instruction::create_metadata_accounts,
     state::{Creator, Key, Metadata, MAX_CREATOR_LIMIT, MAX_METADATA_LEN, PREFIX},
     utils::try_from_slice_checked,
@@ -71,13 +87,11 @@ where
 // Checks to make sure creator shares sum to 100.
 fn validate_creator_shares(creators: &Vec<Creator>) -> Result<(), clap::Error> {
     let share_sum: u64 = creators.iter().map(|c| c.share as u64).sum();
-    if  share_sum > 100 {
-        Err(
-            clap::Error::with_description(
+    if share_sum > 100 {
+        Err(clap::Error::with_description(
             &format!("Sum of shares of {} must equal 100.", share_sum),
-            clap::ErrorKind::ValueValidation
-            )
-        )
+            clap::ErrorKind::ValueValidation,
+        ))
     } else {
         Ok(())
     }
@@ -96,11 +110,9 @@ fn get_creators_vec(creator_values: Option<Values>) -> Option<Vec<Creator>> {
             creators.push(creator)
         });
         Some(creators)
-    }
-    else {
+    } else {
         None
     }
-
 }
 
 // Validates individuals creator <PUBKEY:SHARE> arguments to make sure the
@@ -119,7 +131,7 @@ where
         Err(format!("{}", error))
     } else {
         match share_result {
-            Err(error) => { Err(format!("{}", error)) }
+            Err(error) => Err(format!("{}", error)),
             Ok(share) => {
                 if share > 100 {
                     Err(format!(
@@ -128,9 +140,8 @@ where
                     ))
                 } else {
                     Ok(())
-                }    
+                }
             }
-        
         }
     }
 }
@@ -164,7 +175,7 @@ pub(crate) fn check_fee_payer_balance(config: &Config, required_balance: u64) ->
             "Fee payer, {}, has insufficient balance: {} required, {} available",
             config.fee_payer,
             lamports_to_sol(required_balance),
-          lamports_to_sol(balance)
+            lamports_to_sol(balance)
         )
         .into())
     } else {
@@ -174,79 +185,92 @@ pub(crate) fn check_fee_payer_balance(config: &Config, required_balance: u64) ->
 
 fn get_app() -> App<'static, 'static> {
     let app_matches = App::new(crate_name!())
-    .about(crate_description!())
-    .version(crate_version!())
-    .setting(AppSettings::SubcommandRequiredElseHelp)
-    .arg({
-        let arg = Arg::with_name("config_file")
-            .short("C")
-            .long("config")
-            .value_name("PATH")
-            .takes_value(true)
-            .global(true)
-            .help("Configuration file to use");
-        if let Some(ref config_file) = *solana_cli_config::CONFIG_FILE {
-            arg.default_value(config_file)
-        } else {
-            arg
-        }
-    })
-    .arg(
-        Arg::with_name("json_rpc_url")
-            .short("u")
-            .long("url")
-            .value_name("URL_OR_MONIKER")
-            .takes_value(true)
-            .global(true)
-            .validator(is_url_or_moniker)
-            .help(
-                "URL for Solana's JSON RPC or moniker (or their first letter): \
+        .about(crate_description!())
+        .version(crate_version!())
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .arg({
+            let arg = Arg::with_name("config_file")
+                .short("C")
+                .long("config")
+                .value_name("PATH")
+                .takes_value(true)
+                .global(true)
+                .help("Configuration file to use");
+            if let Some(ref config_file) = *solana_cli_config::CONFIG_FILE {
+                arg.default_value(config_file)
+            } else {
+                arg
+            }
+        })
+        .arg(
+            Arg::with_name("json_rpc_url")
+                .short("u")
+                .long("url")
+                .value_name("URL_OR_MONIKER")
+                .takes_value(true)
+                .global(true)
+                .validator(is_url_or_moniker)
+                .help(
+                    "URL for Solana's JSON RPC or moniker (or their first letter): \
                    [mainnet-beta, testnet, devnet, localhost] \
                 Default from the configuration file.",
-            ),
-    )
-    .arg(
-        Arg::with_name("verbose")
-            .short("v")
-            .long("verbose")
-            .takes_value(false)
-            .global(true)
-            .help("Show additional information."),
-    )
-    .arg(
-        Arg::with_name("output_format")
-            .long("output")
-            .value_name("FORMAT")
-            .global(true)
-            .takes_value(true)
-            .possible_values(&["json", "json-compact"])
-            .help("Return information in specified output format."),
-    )
-    .arg(
-        Arg::with_name("dry_run")
-            .long("dry-run")
-            .takes_value(false)
-            .global(true)
-            .help("Simulate transaction instead of executing."),
-    )
-    .arg(fee_payer_arg().global(true))
-    .subcommand(
-        SubCommand::with_name("mint-info")
-            .about("Query details of an SPL Mint account by address")
-            .arg(
-                Arg::with_name("address")
-                    .value_name("MINT_ADDRESS")
-                    .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .required(true)
-                    .index(1)
-                    .help("Address of the existing mint account."),
-            ),
-    )
-    .subcommand(
-        SubCommand::with_name("metadata-info")
-            .about("Query details of a Metadata account by address")
-            .arg(
+                ),
+        )
+        .arg(
+            Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .takes_value(false)
+                .global(true)
+                .help("Show additional information."),
+        )
+        .arg(
+            Arg::with_name("output_format")
+                .long("output")
+                .value_name("FORMAT")
+                .global(true)
+                .takes_value(true)
+                .possible_values(&["json", "json-compact"])
+                .help("Return information in specified output format."),
+        )
+        .arg(
+            Arg::with_name("dry_run")
+                .long("dry-run")
+                .takes_value(false)
+                .global(true)
+                .help("Simulate transaction instead of executing."),
+        )
+        .arg(fee_payer_arg().global(true))
+        .subcommand(
+            SubCommand::with_name("mint-info")
+                .about("Query details of an SPL Mint account by address")
+                .arg(
+                    Arg::with_name("address")
+                        .value_name("MINT_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .required(true)
+                        .index(1)
+                        .help("Address of the existing mint account."),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("metadata-info")
+                .about("Query details of a Metadata account by address")
+                .arg(
+                    Arg::with_name("address")
+                        .value_name("ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .index(1)
+                        .help(
+                            "Address of the existing metadata account. \
+                        Can be either token 
+                        ",
+                        ),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("filter").arg(
                 Arg::with_name("address")
                     .value_name("ADDRESS")
                     .validator(is_valid_pubkey)
@@ -254,162 +278,150 @@ fn get_app() -> App<'static, 'static> {
                     .help(
                         "Address of the existing metadata account. \
                         Can be either token 
-                        "),
-            )
-    )
-    .subcommand(
-        SubCommand::with_name("filter")
-            .arg(
-                Arg::with_name("address")
-                    .value_name("ADDRESS")
-                    .validator(is_valid_pubkey)
-                    .index(1)
-                    .help(
-                        "Address of the existing metadata account. \
-                        Can be either token 
-                        "),
-            )
-    )
-    .subcommand(
-        SubCommand::with_name("create-metadata")
-            .about("Create metadata account for existing mint")
-            .arg(
-                Arg::with_name("mint_address")
-                    .long("mint-address")
-                    .value_name("MINT_ADDRESS")
-                    .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .required(true)
-                    .help("Address of mint account"),
-            )
-            .arg(
-                Arg::with_name("update_authority")
-                    .long("update-authority")
-                    .value_name("UPDATE_AUTHORITY_ADDRESS")
-                    .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .help(
-                        "Specify the update authority address. \
+                        ",
+                    ),
+            ),
+        )
+        .subcommand(
+            SubCommand::with_name("create-metadata")
+                .about("Create metadata account for existing mint")
+                .arg(
+                    Arg::with_name("mint_address")
+                        .long("mint-address")
+                        .value_name("MINT_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .required(true)
+                        .help("Address of mint account"),
+                )
+                .arg(
+                    Arg::with_name("update_authority")
+                        .long("update-authority")
+                        .value_name("UPDATE_AUTHORITY_ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .help(
+                            "Specify the update authority address. \
                          Defaults to the client keypair address.",
-                    ),
-            )
-            .arg(
-                Arg::with_name("name")
-                    .long("name")
-                    .global(true)
-                    .value_name("NAME")
-                    .takes_value(true)
-                    .help("Specify the name for the mint."),
-            )
-            .arg(
-                Arg::with_name("symbol")
-                    .long("symbol")
-                    .value_name("SYMBOL")
-                    .takes_value(true)
-                    .help("Specify the symbol for the mint."),
-            )
-            .arg(
-                Arg::with_name("uri")
-                    .long("uri")
-                    .value_name("URI")
-                    .takes_value(true)
-                    .required(true)
-                    .validator(is_url)
-                    .help("Specify the URI for the mint."),
-            )
-            .arg(
-                Arg::with_name("mutable")
-                    .long("mutable")
-                    .value_name("MUTABLE")
-                    .takes_value(false)
-                    .required(false)
-                    .help("Permit future metadata updates"),
-            )
-            .arg(
-                Arg::with_name("seller_fee_basis_points")
-                    .long("seller-fee-basis-points")
-                    .alias("sell-bps")
-                    .value_name("SELLER_FEE_BASIS_POINTS")
-                    .takes_value(true)
-                    .required(true)
-                    .validator(is_valid_basis_points)
-                    .help(
-                        "Specify seller fee in basis points. \
+                        ),
+                )
+                .arg(
+                    Arg::with_name("name")
+                        .long("name")
+                        .global(true)
+                        .value_name("NAME")
+                        .takes_value(true)
+                        .help("Specify the name for the mint."),
+                )
+                .arg(
+                    Arg::with_name("symbol")
+                        .long("symbol")
+                        .value_name("SYMBOL")
+                        .takes_value(true)
+                        .help("Specify the symbol for the mint."),
+                )
+                .arg(
+                    Arg::with_name("uri")
+                        .long("uri")
+                        .value_name("URI")
+                        .takes_value(true)
+                        .required(true)
+                        .validator(is_url)
+                        .help("Specify the URI for the mint."),
+                )
+                .arg(
+                    Arg::with_name("mutable")
+                        .long("mutable")
+                        .value_name("MUTABLE")
+                        .takes_value(false)
+                        .required(false)
+                        .help("Permit future metadata updates"),
+                )
+                .arg(
+                    Arg::with_name("seller_fee_basis_points")
+                        .long("seller-fee-basis-points")
+                        .alias("sell-bps")
+                        .value_name("SELLER_FEE_BASIS_POINTS")
+                        .takes_value(true)
+                        .required(true)
+                        .validator(is_valid_basis_points)
+                        .help(
+                            "Specify seller fee in basis points. \
                         1000 basis points equals 100%.",
-                    ),
-            )
-            .arg(
-                Arg::with_name("creators")
-                    .long("creators")
-                    .value_name("CREATORS")
-                    .multiple(true)
-                    .takes_value(true)
-                    .validator(is_valid_creator)
-                    .max_values(MAX_CREATOR_LIMIT as u64)
-                    .help(
-                    "Specify up to five creator addresses with \
+                        ),
+                )
+                .arg(
+                    Arg::with_name("creators")
+                        .long("creators")
+                        .value_name("CREATORS")
+                        .multiple(true)
+                        .takes_value(true)
+                        .validator(is_valid_creator)
+                        .max_values(MAX_CREATOR_LIMIT as u64)
+                        .help(
+                            "Specify up to five creator addresses with \
                     percentage shares as <ADDRESS>:<SHARE> \
-                    separated by spaces."
-                    ),
-            ),
-    )
-    .subcommand(
-        SubCommand::with_name("create-token")
-            .about("Create a new token")
-            .arg(
-                Arg::with_name("token_keypair")
-                    .value_name("TOKEN_KEYPAIR")
-                    .validator(is_valid_signer)
-                    .takes_value(true)
-                    .index(1)
-                    .help(
-                        "Specify the token keypair. \
+                    separated by spaces.",
+                        ),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("create-token")
+                .about("Create a new token")
+                .arg(
+                    Arg::with_name("token_keypair")
+                        .value_name("TOKEN_KEYPAIR")
+                        .validator(is_valid_signer)
+                        .takes_value(true)
+                        .index(1)
+                        .help(
+                            "Specify the token keypair. \
                          This may be a keypair file or the ASK keyword. \
                          [default: randomly generated keypair]",
-                    ),
-            )
-            .arg(
-                Arg::with_name("mint_authority")
-                    .long("mint-authority")
-                    .alias("owner")
-                    .value_name("ADDRESS")
-                    .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .help(
-                        "Specify the mint authority address. \
+                        ),
+                )
+                .arg(
+                    Arg::with_name("mint_authority")
+                        .long("mint-authority")
+                        .alias("owner")
+                        .value_name("ADDRESS")
+                        .validator(is_valid_pubkey)
+                        .takes_value(true)
+                        .help(
+                            "Specify the mint authority address. \
                          Defaults to the client keypair address.",
-                    ),
-            )
-            .arg(
-                Arg::with_name("decimals")
-                    .long("decimals")
-                    .validator(is_mint_decimals)
-                    .value_name("DECIMALS")
-                    .takes_value(true)
-                    .default_value("9")
-                    .help("Number of base 10 digits to the right of the decimal place"),
-            )
-            .arg(
-                Arg::with_name("enable_freeze")
-                    .long("enable-freeze")
-                    .takes_value(false)
-                    .help("Enable the mint authority to freeze associated token accounts."),
-            )
-            .arg(memo_arg()),
-    )
-    .subcommand(
-        SubCommand::with_name("supply")
-            .about("Get token supply")
-            .arg(
-                Arg::with_name("address")
-                    .validator(is_valid_pubkey)
-                    .value_name("TOKEN_ADDRESS")
-                    .takes_value(true)
-                    .index(1)
-                    .required(true)
-                    .help("The token address"),
-            ),
-    );
+                        ),
+                )
+                .arg(
+                    Arg::with_name("decimals")
+                        .long("decimals")
+                        .validator(is_mint_decimals)
+                        .value_name("DECIMALS")
+                        .takes_value(true)
+                        .default_value("9")
+                        .help("Number of base 10 digits to the right of the decimal place"),
+                )
+                .arg(
+                    Arg::with_name("enable_freeze")
+                        .long("enable-freeze")
+                        .takes_value(false)
+                        .help("Enable the mint authority to freeze associated token accounts."),
+                )
+                .arg(memo_arg()),
+        )
+        .subcommand(
+            SubCommand::with_name("supply")
+                .about("Get token supply")
+                .arg(
+                    Arg::with_name("address")
+                        .validator(is_valid_pubkey)
+                        .value_name("TOKEN_ADDRESS")
+                        .takes_value(true)
+                        .index(1)
+                        .required(true)
+                        .help("The token address"),
+                ),
+        );
     app_matches
 }
 
@@ -483,8 +495,6 @@ fn main() {
     let _ = match (sub_command, sub_matches) {
         ("mint-info", Some(arg_matches)) => {
             let address = pubkey_of(arg_matches, "address").unwrap();
-            println!("program {}", spl_token_metadata::id());
-            println!("file {}", read_keypair_file("/home/caleb/projects/metaplex/rust/target/deploy/spl_token_metadata-keypair.json").unwrap().pubkey());
             command_mint_info(&config, address)
         }
         ("metadata-info", Some(arg_matches)) => {
@@ -508,7 +518,7 @@ fn main() {
                 value_of::<u16>(arg_matches, "seller_fee_basis_points").unwrap();
 
             let creators = get_creators_vec(arg_matches.values_of("creators"));
-            
+
             command_create_metadata_account(
                 &config,
                 mint_address,
@@ -520,7 +530,6 @@ fn main() {
                 seller_fee_basis_points,
                 is_mutable,
             )
-            
         }
         ("supply", Some(arg_matches)) => {
             let address = pubkey_of_signer(arg_matches, "address", &mut wallet_manager)
@@ -565,7 +574,7 @@ fn main() {
                 )?;
                 let signers = signer_info.signers_for_message(&message);
                 let mut transaction = Transaction::new_unsigned(message);
-        
+
                 transaction.try_sign(&signers, recent_blockhash)?;
                 let signature = if no_wait {
                     config.rpc_client.send_transaction(&transaction)?
@@ -589,9 +598,7 @@ fn main() {
 }
 
 fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
-    let account = config
-        .rpc_client
-        .get_account(&address)?;
+    let account = config.rpc_client.get_account(&address)?;
 
     match parse_token(&account.data, None)? {
         TokenAccountType::Mint(mint) => {
@@ -608,7 +615,7 @@ fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
     Ok(None)
 }
 
-// Retrieving metadata account based on calculated program account address, but 
+// Retrieving metadata account based on calculated program account address, but
 // leaving this here as template for filtering on bytes.
 fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandResult {
     let method_config = RpcProgramAccountsConfig {
@@ -627,11 +634,11 @@ fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandRes
         },
         with_context: Some(false),
     };
-    let accounts = config.rpc_client.get_program_accounts_with_config(
-        &spl_token_metadata::id(),
-        method_config,
-    ).map_err(|_| format!("Could not find metadata account {}", address))
-    .unwrap();
+    let accounts = config
+        .rpc_client
+        .get_program_accounts_with_config(&spl_token_metadata::id(), method_config)
+        .map_err(|_| format!("Could not find metadata account {}", address))
+        .unwrap();
     println!("{:?}", accounts);
     Ok(None)
 }
@@ -639,10 +646,8 @@ fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandRes
 /// First tries to get the metadata account directly from the provided address. If unsuccessful, calculates
 /// program address assuming provided addresses is mint address and tries to retrieve again.
 fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
-    let account = config
-        .rpc_client
-        .get_account(&address)?;
-    
+    let account = config.rpc_client.get_account(&address)?;
+
     fn parse_metadata_account(data: &Vec<u8>) -> Result<Metadata, ProgramError> {
         try_from_slice_checked::<Metadata>(data, Key::MetadataV1, MAX_METADATA_LEN)
     }
@@ -653,22 +658,20 @@ fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
             metadata: UiMetadata::from(metadata),
         }
     }
-    
+
     if let Ok(metadata) = parse_metadata_account(&account.data) {
         let cli_metadata = parse_cli_metadata(address, metadata);
         println!("{}", &config.output_format.formatted_string(&cli_metadata));
         Ok(None)
     } else {
-                let metadata_address = get_metadata_address(&address);
-                let account = config
-                .rpc_client
-                .get_account(&metadata_address)?;
+        let metadata_address = get_metadata_address(&address);
+        let account = config.rpc_client.get_account(&metadata_address)?;
 
-                let metadata =  parse_metadata_account(&account.data)?;
-                let cli_metadata = parse_cli_metadata(metadata_address, metadata);
-                println!("{}", &config.output_format.formatted_string(&cli_metadata));
-                Ok(None)
-            }
+        let metadata = parse_metadata_account(&account.data)?;
+        let cli_metadata = parse_cli_metadata(metadata_address, metadata);
+        println!("{}", &config.output_format.formatted_string(&cli_metadata));
+        Ok(None)
+    }
 }
 
 fn get_metadata_address(mint_address: &Pubkey) -> Pubkey {
@@ -698,59 +701,50 @@ fn command_create_metadata_account(
 ) -> CommandResult {
     if let Some(creators) = &creators {
         if let Err(error) = validate_creator_shares(creators) {
-            return Err(Box::new(error));    
+            return Err(error.into());
         }
     }
-    
+
     let metadata_address = get_metadata_address(&mint_address);
-    
+
     if let Ok(_) = config.rpc_client.get_account(&metadata_address) {
-        return Err(Box::new(TokenError::AlreadyInUse))
+        return Err(MetadataError::AlreadyInitialized.into());
     }
 
     let minimum_balance_for_rent_exemption = config
         .rpc_client
         .get_minimum_balance_for_rent_exemption(MAX_METADATA_LEN)?;
 
-    let result = config
-        .rpc_client
-        .get_account(&mint_address);
-    
-    match result {
-        Ok(account) => {
-            let mint = Mint::unpack(&account.data)?;
+    let account = config.rpc_client.get_account(&mint_address)?;
 
-            // I think this should be set to true if the update authority is different than the mint authority in which
-            // case a signature from the update authority is required.
-            let update_authority_is_signer = mint.mint_authority.unwrap() != config.fee_payer;
-        
-            println_display(config, format!("Creating metadata {}", metadata_address));
-        
-            let instructions = vec![create_metadata_accounts(
-                spl_token_metadata::id(),
-                metadata_address,
-                mint_address,
-                mint.mint_authority.unwrap(),
-                config.fee_payer,
-                update_authority,
-                name,
-                symbol,
-                uri,
-                creators,
-                seller_fee_basis_points,
-                update_authority_is_signer,
-                is_mutable,
-            )];
-        
-            Ok(Some((
-                minimum_balance_for_rent_exemption,
-                vec![instructions],
-            )))
-        }
-        Err(error) => {
-            Err(Box::new(error))
-        }
-    }
+    let mint = Mint::unpack(&account.data)?;
+
+    // I think this should be set to true if the update authority is different than the mint authority in which
+    // case a signature from the update authority is required.
+    let update_authority_is_signer = mint.mint_authority.unwrap() != config.fee_payer;
+
+    println_display(config, format!("Creating metadata {}", metadata_address));
+
+    let instructions = vec![create_metadata_accounts(
+        spl_token_metadata::id(),
+        metadata_address,
+        mint_address,
+        mint.mint_authority.unwrap(),
+        config.fee_payer,
+        update_authority,
+        name,
+        symbol,
+        uri,
+        creators,
+        seller_fee_basis_points,
+        update_authority_is_signer,
+        is_mutable,
+    )];
+
+    Ok(Some((
+        minimum_balance_for_rent_exemption,
+        vec![instructions],
+    )))
 }
 
 fn command_create_token(
@@ -807,14 +801,17 @@ fn command_supply(config: &Config, address: Pubkey) -> CommandResult {
 
 #[cfg(test)]
 mod tests {
+    use super::{get_app, get_creators_vec, validate_creator_shares};
     use clap::ErrorKind;
-    use solana_sdk::{pubkey::Pubkey, signer::{Signer, keypair::Keypair}};
-    use super::{get_creators_vec, validate_creator_shares, get_app};
+    use solana_sdk::{
+        pubkey::Pubkey,
+        signer::{keypair::Keypair, Signer},
+    };
 
     #[test]
     fn create_metadata_creators() {
         // It passes if pubkeys are valid and shares sum to 100.
-        
+
         let test_pubkey: Pubkey = Keypair::new().pubkey();
         let m = get_app().get_matches_from(vec![
             "testeroni",
@@ -828,15 +825,19 @@ mod tests {
             "--creators",
             &format!("{k}:50", k = &test_pubkey.to_string()),
             &format!("{k}:50", k = &test_pubkey.to_string()),
-            ]);
+        ]);
         let sub_m = m.subcommand_matches("create-metadata").unwrap();
         let creators = get_creators_vec(sub_m.values_of("creators")).unwrap();
-        assert_eq!(validate_creator_shares(&creators).unwrap(), (), "Sum of creator shares is greater than 100.");
+        assert_eq!(
+            validate_creator_shares(&creators).unwrap(),
+            (),
+            "Sum of creator shares is greater than 100."
+        );
     }
     #[test]
     fn create_metadata_creators_shares_sum() {
         // It fails if shares don't sum to 100.
-        
+
         let test_pubkey: Pubkey = Keypair::new().pubkey();
         let m = get_app().get_matches_from(vec![
             "testeroni",
@@ -850,7 +851,7 @@ mod tests {
             "--creators",
             &format!("{k}:51", k = &test_pubkey.to_string()),
             &format!("{k}:50", k = &test_pubkey.to_string()),
-            ]);
+        ]);
         let sub_m = m.subcommand_matches("create-metadata").unwrap();
         let creators = get_creators_vec(sub_m.values_of("creators")).unwrap();
         println!("{:?}", creators);
@@ -859,7 +860,7 @@ mod tests {
     }
 
     #[test]
-    fn create_metadata_creators_pubkey() {        
+    fn create_metadata_creators_pubkey() {
         // It fails if pubkey is not valid.
         let test_pubkey: Pubkey = Keypair::new().pubkey();
         let res = get_app().get_matches_from_safe(vec![
@@ -873,15 +874,14 @@ mod tests {
             "ifps://testeroni",
             "--creators",
             &format!("{k}:50", k = "bogus_pubkey"),
-            ]);
+        ]);
 
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().kind, ErrorKind::ValueValidation);
-
     }
-    
+
     #[test]
-    fn create_metadata_creators_share_too_high() {        
+    fn create_metadata_creators_share_too_high() {
         // It fails if share value is too high.
         let test_pubkey: Pubkey = Keypair::new().pubkey();
         let res = get_app().get_matches_from_safe(vec![
@@ -895,10 +895,9 @@ mod tests {
             "ifps://testeroni",
             "--creators",
             &format!("{k}:101", k = "bogus_pubkey"),
-            ]);
+        ]);
 
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().kind, ErrorKind::ValueValidation);
     }
-
 }
