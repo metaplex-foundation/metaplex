@@ -1,5 +1,5 @@
 import { getServer } from './startApolloServer';
-import { Store } from '../common';
+import { Store, WhitelistedCreator } from '../common';
 import { IReader, MetaplexDataSource } from '../reader';
 
 describe('stub', () => {
@@ -151,6 +151,78 @@ describe('startApolloServer', () => {
             tokenVaultProgram: 'tokenVaultProgram',
           },
         ],
+      });
+    });
+  });
+
+  describe('creator', () => {
+    const creator = new WhitelistedCreator({
+      _id: '5go8Lmpj5m7NZhoztNyBiV1rusyxT8Sn8zLJP4gWKB1h',
+      activated: true,
+      address: 'EQELCK3mMrKLwaZanubXdG62mExxw2ecNULHx45jbx8t',
+    });
+    it('creators', async () => {
+      const server = await setup({
+        async getCreators() {
+          return [creator];
+        },
+      });
+      const query = `
+      query ($creatorsStoreId: String!) {
+        creators(storeId: $creatorsStoreId) {
+          pubkey
+          key
+          address
+          activated
+        }
+      }`;
+      const result = await server.executeOperation({
+        query,
+        variables: { creatorsStoreId: '1' },
+      });
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data).toEqual({
+        creators: [
+          {
+            pubkey: creator.pubkey,
+            key: creator.key,
+            address: creator.address,
+            activated: creator.activated,
+          },
+        ],
+      });
+    });
+
+    it('creator', async () => {
+      const server = await setup({
+        async getCreator() {
+          return creator;
+        },
+      });
+      const query = `
+      query ($creatorStoreId: String!, $creatorCreatorId: String!) {
+        creator(storeId: $creatorStoreId, creatorId: $creatorCreatorId) {
+           pubkey
+          key
+          address
+          activated
+        }
+      }
+      `;
+      const result = await server.executeOperation({
+        query,
+        variables: { creatorStoreId: '1', creatorCreatorId: '2' },
+      });
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data).toEqual({
+        creator: {
+          pubkey: creator.pubkey,
+          key: creator.key,
+          address: creator.address,
+          activated: creator.activated,
+        },
       });
     });
   });
