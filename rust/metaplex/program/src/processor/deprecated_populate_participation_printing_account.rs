@@ -1,8 +1,7 @@
 use {
     crate::{
         deprecated_state::{AuctionManagerV1, ParticipationConfigV1},
-        error::MetaplexError,
-        state::{NonWinningConstraint, Store, WinningConstraint, PREFIX},
+        state::{NonWinningConstraint, WinningConstraint, PREFIX},
         utils::{
             assert_derivation, assert_initialized, assert_owned_by,
             assert_store_safety_vault_manager_match, transfer_safety_deposit_box_items,
@@ -20,6 +19,10 @@ use {
         deprecated_instruction::deprecated_mint_printing_tokens_via_token, state::MasterEditionV1,
     },
     spl_token_vault::state::SafetyDepositBox,
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 fn mint_printing_tokens<'a: 'b, 'b>(

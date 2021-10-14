@@ -1,8 +1,7 @@
 use {
     crate::{
         deprecated_state::{AuctionManagerV1, ParticipationStateV1},
-        error::MetaplexError,
-        state::{AuctionManagerStatus, Store},
+        state::{AuctionManagerStatus},
         utils::{
             assert_at_least_one_creator_matches_or_store_public_and_all_verified,
             assert_authority_correct, assert_derivation, assert_initialized, assert_owned_by,
@@ -21,6 +20,10 @@ use {
     spl_token::state::Account,
     spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::{SafetyDepositBox, Vault},
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 pub fn process_deprecated_validate_participation(

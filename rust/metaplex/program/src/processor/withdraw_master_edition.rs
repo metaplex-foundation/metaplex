@@ -1,7 +1,6 @@
 use {
     crate::{
-        error::MetaplexError,
-        state::{get_auction_manager, PrizeTrackingTicket, Store, PREFIX},
+        state::{get_auction_manager, PrizeTrackingTicket, PREFIX},
         utils::{
             assert_derivation, assert_is_ata, assert_owned_by, assert_rent_exempt,
             assert_safety_deposit_config_valid, assert_store_safety_vault_manager_match,
@@ -17,6 +16,10 @@ use {
     },
     spl_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
     spl_token_vault::state::SafetyDepositBox,
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 pub fn process_withdraw_master_edition<'a>(

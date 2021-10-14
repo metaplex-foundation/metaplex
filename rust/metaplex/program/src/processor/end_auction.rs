@@ -1,8 +1,7 @@
 use {
     crate::{
-        error::MetaplexError,
         instruction::EndAuctionArgs as MetaplexEndAuctionArgs,
-        state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
+        state::{get_auction_manager, AuctionManagerStatus, PREFIX},
         utils::{assert_authority_correct, assert_owned_by},
     },
     solana_program::{
@@ -15,6 +14,10 @@ use {
         instruction::{end_auction_instruction, EndAuctionArgs},
         processor::{AuctionData, AuctionDataExtended, BidState},
     },
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::Store
+    }
 };
 
 pub fn issue_end_auction<'a>(

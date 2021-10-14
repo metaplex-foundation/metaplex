@@ -30,9 +30,9 @@ import {
   PriceFloorType,
   IPartialCreateAuctionArgs,
   MetadataKey,
-  StringPublicKey, WalletSigner,
+  StringPublicKey, WalletSigner, useStore,
 } from '@oyster/common';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import {Connection, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
@@ -135,6 +135,7 @@ export const AuctionCreateView = () => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
+  const { storeAddress } = useStore()
   const mint = useMint(QUOTE_MINT);
   const { width } = useWindowDimensions();
 
@@ -414,6 +415,7 @@ export const AuctionCreateView = () => {
 
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
+      store: storeAddress!, // TODO handle undefined
       endAuctionAt: isInstantSale
         ? null
         : new BN(

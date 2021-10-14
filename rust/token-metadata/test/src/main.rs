@@ -513,6 +513,7 @@ fn update_metadata_account_call(
         new_update_authority,
         Some(new_data),
         None,
+        None,
     )];
 
     let mut transaction = Transaction::new_with_payer(&instructions, Some(&payer.pubkey()));

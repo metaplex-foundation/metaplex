@@ -1,7 +1,7 @@
 
 use {
     crate::{
-        deprecated_state::AuctionManagerV1, error::MetaplexError, utils::try_from_slice_checked,
+        deprecated_state::AuctionManagerV1,
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
     borsh::{BorshDeserialize, BorshSerialize},
@@ -12,8 +12,14 @@ use {
     spl_auction::processor::AuctionData,
     spl_token_metadata::state::Metadata,
     spl_token_vault::state::SafetyDepositBox,
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Key},
+        utils::try_from_slice_checked
+    },
     std::cell::{Ref, RefMut},
 };
+
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
 pub const TOTALS: &str = "totals";
@@ -29,7 +35,6 @@ pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
 1 + //status
 8 + // winning configs validated
 200; // padding
-pub const MAX_STORE_SIZE: usize = 2 + 32 + 32 + 32 + 32 + 100;
 pub const MAX_WHITELISTED_CREATOR_SIZE: usize = 2 + 32 + 10;
 pub const MAX_PAYOUT_TICKET_SIZE: usize = 1 + 32 + 8;
 pub const MAX_BID_REDEMPTION_TICKET_SIZE: usize = 3;
@@ -49,24 +54,6 @@ pub const BASE_SAFETY_CONFIG_SIZE: usize = 1 +// Key
  1 + // participation state option
  8 + // collected to accept payment
  20; // padding
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq, Debug, Copy)]
-pub enum Key {
-    Uninitialized,
-    OriginalAuthorityLookupV1,
-    BidRedemptionTicketV1,
-    StoreV1,
-    WhitelistedCreatorV1,
-    PayoutTicketV1,
-    SafetyDepositValidationTicketV1,
-    AuctionManagerV1,
-    PrizeTrackingTicketV1,
-    SafetyDepositConfigV1,
-    AuctionManagerV2,
-    BidRedemptionTicketV2,
-    AuctionWinnerTokenTypeTrackerV1,
-}
 
 pub struct CommonWinningIndexChecks<'a> {
     pub safety_deposit_info: &'a AccountInfo<'a>,
@@ -644,26 +631,6 @@ impl PayoutTicket {
         )?;
 
         Ok(pt)
-    }
-}
-
-#[repr(C)]
-#[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
-pub struct Store {
-    pub key: Key,
-    pub public: bool,
-    pub auction_program: Pubkey,
-    pub token_vault_program: Pubkey,
-    pub token_metadata_program: Pubkey,
-    pub token_program: Pubkey,
-}
-
-impl Store {
-    pub fn from_account_info(a: &AccountInfo) -> Result<Store, ProgramError> {
-        let store: Store =
-            try_from_slice_checked(&a.data.borrow_mut(), Key::StoreV1, MAX_STORE_SIZE)?;
-
-        Ok(store)
     }
 }
 

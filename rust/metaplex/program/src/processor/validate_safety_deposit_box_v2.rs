@@ -1,9 +1,8 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{
             AuctionManager, AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker,
-            Key, OriginalAuthorityLookup, SafetyDepositConfig, Store, WinningConfigType,
+            OriginalAuthorityLookup, SafetyDepositConfig, WinningConfigType,
             MAX_AUTHORITY_LOOKUP_SIZE, PREFIX, TOTALS,
         },
         utils::{
@@ -25,7 +24,13 @@ use {
         utils::assert_update_authority_is_correct,
     },
     spl_token_vault::state::{SafetyDepositBox, Vault},
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::Store
+    }
 };
+use spl_shared_metaplex::state::Key;
+
 pub fn make_safety_deposit_config<'a>(
     program_id: &Pubkey,
     auction_manager_info: &AccountInfo<'a>,

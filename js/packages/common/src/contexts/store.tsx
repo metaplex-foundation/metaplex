@@ -12,6 +12,8 @@ import { useQuerySearch } from '../hooks';
 interface StoreConfig {
   // Store Address
   storeAddress?: StringPublicKey;
+  // The gatekeeper network that must be used in all auctions on this store
+  gatekeeperNetwork?: StringPublicKey;
   // Store was configured via ENV or query params
   isConfigured: boolean;
   // Initial calculating of store address completed (successfully or not)
@@ -34,7 +36,7 @@ export const StoreProvider: FC<{
   const isConfigured = Boolean(initStoreAddress || initOwnerAddress);
 
   const [store, setStore] = useState<
-    Pick<StoreConfig, 'storeAddress' | 'isReady'>
+    Pick<StoreConfig, 'storeAddress' | 'gatekeeperNetwork' | 'isReady'>
   >({
     storeAddress: initStoreAddress,
     isReady: Boolean(!initOwnerAddress || initStoreAddress),

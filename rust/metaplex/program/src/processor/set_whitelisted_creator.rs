@@ -1,6 +1,6 @@
 use {
     crate::{
-        state::{Key, WhitelistedCreator, MAX_WHITELISTED_CREATOR_SIZE, PREFIX},
+        state::{WhitelistedCreator, MAX_WHITELISTED_CREATOR_SIZE, PREFIX},
         utils::{
             assert_derivation, assert_owned_by, assert_signer, create_or_allocate_account_raw,
         },
@@ -12,6 +12,7 @@ use {
         pubkey::Pubkey,
     },
 };
+use spl_shared_metaplex::state::Key;
 
 pub fn process_set_whitelisted_creator<'a>(
     program_id: &'a Pubkey,

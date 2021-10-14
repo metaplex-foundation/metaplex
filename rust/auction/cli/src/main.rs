@@ -121,16 +121,21 @@ fn create_auction(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
     transaction.sign(&signers, recent_blockhash);
     client.send_and_confirm_transaction(&transaction).unwrap();
 
+    // TODO
+    let store = Keypair::new().pubkey();
+
     let instructions = [
         // Create an auction for the auction seller as their own resource.
         instruction::create_auction_instruction_v2(
             program_key,
             payer.pubkey(),
+            store,
             CreateAuctionArgsV2 {
                 authority: payer.pubkey(),
                 end_auction_at: None,
                 end_auction_gap: None,
                 resource,
+                gatekeeper_network: None,
                 token_mint: mint.pubkey(),
                 winners: WinnerLimit::Capped(5),
                 price_floor: floor.unwrap_or(PriceFloor::None([0; 32])),
@@ -324,6 +329,7 @@ fn place_bid(app_matches: &ArgMatches, payer: Keypair, client: RpcClient) {
         instruction::place_bid_instruction(
             program_key,
             bidder.pubkey(), // Bidder identifier (can be any valid account, we just use spl token acct)
+            Keypair::new().pubkey(),    // TODO
             bidder.pubkey(), // SPL Token Account (Source)
             bid_pot.pubkey(), // SPL Token Account (Destination)
             mint.pubkey(),   // Token Mint

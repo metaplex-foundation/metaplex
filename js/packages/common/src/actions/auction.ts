@@ -378,6 +378,8 @@ export interface IPartialCreateAuctionArgs {
   tokenMint: StringPublicKey;
   /// The gatekeeper network that grants permission to bid on this auction
   gatekeeperNetwork: StringPublicKey | null;
+  /// The store that the auction belongs to.
+  store: StringPublicKey;
 
   priceFloor: PriceFloor;
 
@@ -406,6 +408,8 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
   resource: StringPublicKey;
   /// The gatekeeper network that grants permission to bid on this auction
   gatekeeperNetwork: StringPublicKey | null;
+  /// The store that the auction belongs to.
+  store: StringPublicKey;
 
   priceFloor: PriceFloor;
 
@@ -425,6 +429,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     authority: StringPublicKey;
     resource: StringPublicKey;
     gatekeeperNetwork: StringPublicKey | null;
+    store: StringPublicKey;
     priceFloor: PriceFloor;
     tickSize: BN | null;
     gapTickSizePercentage: number | null;
@@ -438,6 +443,7 @@ export class CreateAuctionArgs implements IPartialCreateAuctionArgs {
     this.authority = args.authority;
     this.resource = args.resource;
     this.gatekeeperNetwork = args.gatekeeperNetwork;
+    this.store = args.store;
     this.priceFloor = args.priceFloor;
     this.tickSize = args.tickSize;
     this.gapTickSizePercentage = args.gapTickSizePercentage;
@@ -687,6 +693,11 @@ export async function createAuction(
       ),
       isSigner: false,
       isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(settings.store),
+      isSigner: false,
+      isWritable: false,
     },
     {
       pubkey: SYSVAR_RENT_PUBKEY,

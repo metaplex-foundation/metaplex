@@ -7,8 +7,7 @@ use {
             AuctionManagerV1, ParticipationStateV1, SafetyDepositValidationTicket,
             MAX_VALIDATION_TICKET_SIZE,
         },
-        error::MetaplexError,
-        state::{AuctionManagerStatus, Key, Store, WinningConfigType, PREFIX},
+        state::{AuctionManagerStatus, WinningConfigType, PREFIX},
         utils::{assert_derivation, assert_initialized, create_or_allocate_account_raw},
     },
     borsh::BorshSerialize,
@@ -20,6 +19,10 @@ use {
     spl_token::state::Account,
     spl_token_metadata::state::Metadata,
     spl_token_vault::state::{SafetyDepositBox, Vault},
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store, Key},
+    }
 };
 pub fn make_safety_deposit_validation<'a>(
     program_id: &Pubkey,

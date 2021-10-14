@@ -5,12 +5,16 @@ import {
   WhitelistedCreator,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import {Button, Row} from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { useMeta } from '../../contexts';
 import { SetupVariables } from '../../components/SetupVariables';
+import {gatekeeperNetworks, GatekeeperNetworkSelection} from "../../contexts/gatekeeperNetwork";
+import {GatewayRulesetSelector} from "../../components/gateway/GatewayRulesetSelector";
+import {GatewayDescriptionText} from "../../components/gateway/GatewayDescriptionText";
+import {GatewayRulesetComponent} from "../../components/gateway/GatewayRulesetComponent";
 
 export const SetupView = () => {
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
@@ -25,6 +29,7 @@ export const SetupView = () => {
     [wallet.wallet, wallet.connect, setVisible],
   );
   const [storeAddress, setStoreAddress] = useState<string | undefined>();
+  const [gatekeeperNetwork, setGatekeeperNetwork] = useState<GatekeeperNetworkSelection|undefined>();
 
   useEffect(() => {
     const getStore = async () => {
@@ -46,11 +51,13 @@ export const SetupView = () => {
     setIsInitalizingStore(true);
 
     await saveAdmin(connection, wallet as WalletSigner, false, [
-      new WhitelistedCreator({
-        address: wallet.publicKey.toBase58(),
-        activated: true,
-      }),
-    ]);
+        new WhitelistedCreator({
+          address: wallet.publicKey.toBase58(),
+          activated: true,
+        }),
+      ],
+      gatekeeperNetwork?.publicKey
+    );
 
     // TODO: process errors
 
@@ -72,13 +79,17 @@ export const SetupView = () => {
       )}
       {wallet.connected && !store && (
         <>
-          <p>Store is not initialized yet</p>
-          <p>There must be some ◎ SOL in the wallet before initialization.</p>
-          <p>
-            After initialization, you will be able to manage the list of
-            creators
-          </p>
-
+          <Row className="call-to-action init-store-row" style={{ marginBottom: 20 }}>
+            <h2>Initialize Store</h2>
+            <p>Store is not initialized yet</p>
+            <p>There must be some ◎ SOL in the wallet before initialization.</p>
+            <p>
+              After initialization, you will be able to manage the list of
+              creators
+            </p>
+          </Row>
+          <GatewayDescriptionText/>
+          <GatewayRulesetComponent setGatekeeperNetwork={setGatekeeperNetwork}/>
           <p>
             <Button
               className="app-btn"

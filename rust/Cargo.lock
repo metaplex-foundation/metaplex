@@ -3530,6 +3530,7 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "spl-shared-metaplex",
  "spl-token",
  "thiserror",
 ]
@@ -3570,6 +3571,7 @@ dependencies = [
  "num-traits",
  "solana-program",
  "spl-auction",
+ "spl-shared-metaplex",
  "spl-token",
  "spl-token-metadata",
  "spl-token-vault",
@@ -3597,6 +3599,20 @@ dependencies = [
  "spl-token",
  "spl-token-metadata",
  "spl-token-vault",
+]
+
+[[package]]
+name = "spl-shared-metaplex"
+version = "0.0.1"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]

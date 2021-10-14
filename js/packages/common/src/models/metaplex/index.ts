@@ -378,8 +378,12 @@ export class EmptyPaymentAccountArgs {
 export class SetStoreArgs {
   instruction = 8;
   public: boolean;
-  constructor(args: { public: boolean }) {
+  // The gatekeeper network that grants permission to bid on all auctions in the store
+  gatekeeperNetwork: StringPublicKey | null;
+
+  constructor(args: { public: boolean, gatekeeperNetwork: StringPublicKey | null }) {
     this.public = args.public;
+    this.gatekeeperNetwork = args.gatekeeperNetwork;
   }
 }
 
@@ -535,6 +539,7 @@ export class Store {
   tokenVaultProgram: StringPublicKey;
   tokenMetadataProgram: StringPublicKey;
   tokenProgram: StringPublicKey;
+  gatekeeperNetwork?: StringPublicKey;
 
   constructor(args: {
     public: boolean;
@@ -542,6 +547,7 @@ export class Store {
     tokenVaultProgram: StringPublicKey;
     tokenMetadataProgram: StringPublicKey;
     tokenProgram: StringPublicKey;
+    gatekeeperNetwork?: StringPublicKey;
   }) {
     this.key = MetaplexKey.StoreV1;
     this.public = args.public;
@@ -549,6 +555,7 @@ export class Store {
     this.tokenVaultProgram = args.tokenVaultProgram;
     this.tokenMetadataProgram = args.tokenMetadataProgram;
     this.tokenProgram = args.tokenProgram;
+    this.gatekeeperNetwork = args.gatekeeperNetwork;
   }
 }
 
@@ -825,6 +832,7 @@ export const SCHEMA = new Map<any, any>([
         ['tokenVaultProgram', 'pubkeyAsString'],
         ['tokenMetadataProgram', 'pubkeyAsString'],
         ['tokenProgram', 'pubkeyAsString'],
+        ['gatekeeperNetwork', { kind: 'option', type: 'pubkeyAsString'}],
       ],
     },
   ],
@@ -1015,6 +1023,7 @@ export const SCHEMA = new Map<any, any>([
       fields: [
         ['instruction', 'u8'],
         ['public', 'u8'], //bool
+        ['gatekeeperNetwork', { kind: 'option', type: 'pubkeyAsString' }],
       ],
     },
   ],

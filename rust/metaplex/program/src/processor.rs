@@ -88,7 +88,7 @@ pub fn process_instruction<'a>(
         }
         MetaplexInstruction::SetStore(args) => {
             msg!("Instruction: Set Store");
-            process_set_store(program_id, accounts, args.public)
+            process_set_store(program_id, accounts, args.public, args.gatekeeper_network)
         }
         MetaplexInstruction::SetWhitelistedCreator(args) => {
             msg!("Instruction: Set Whitelisted Creator");

@@ -1,8 +1,7 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{
-            Key, PrintingV2CalculationCheckReturn, PrintingV2CalculationChecks, WinningConfigType,
+            PrintingV2CalculationCheckReturn, PrintingV2CalculationChecks, WinningConfigType,
             MAX_PRIZE_TRACKING_TICKET_SIZE, PREFIX,
         },
         utils::{
@@ -25,6 +24,8 @@ use {
         utils::get_supply_off_master_edition,
     },
 };
+use spl_shared_metaplex::error::MetaplexError;
+use spl_shared_metaplex::state::Key;
 
 #[allow(clippy::too_many_arguments)]
 pub fn mint_edition<'a>(

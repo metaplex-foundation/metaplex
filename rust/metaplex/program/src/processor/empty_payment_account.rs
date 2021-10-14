@@ -2,10 +2,9 @@ use solana_program::msg;
 
 use {
     crate::{
-        error::MetaplexError,
         instruction::EmptyPaymentAccountArgs,
         state::{
-            get_auction_manager, AuctionManager, Key, PayoutTicket, Store, MAX_PAYOUT_TICKET_SIZE,
+            get_auction_manager, AuctionManager, PayoutTicket, MAX_PAYOUT_TICKET_SIZE,
             PREFIX, TOTALS,
         },
         utils::{
@@ -28,6 +27,10 @@ use {
     spl_token::state::Account,
     spl_token_metadata::state::{MasterEditionV1, Metadata},
     spl_token_vault::state::SafetyDepositBox,
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{ Store, Key },
+    }
 };
 
 fn assert_destination_ownership_validity(

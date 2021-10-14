@@ -4,9 +4,8 @@ use {
             AuctionManagerSettingsV1, AuctionManagerV1, ParticipationStateV1, WinningConfigState,
             WinningConfigStateItem, MAX_AUCTION_MANAGER_V1_SIZE,
         },
-        error::MetaplexError,
         processor::init_auction_manager_v2::assert_common_checks,
-        state::{AuctionManagerStatus, Key, PREFIX},
+        state::{AuctionManagerStatus, PREFIX},
         utils::create_or_allocate_account_raw,
     },
     borsh::BorshSerialize,
@@ -15,6 +14,10 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Key},
+    }
 };
 
 pub fn process_deprecated_init_auction_manager_v1(

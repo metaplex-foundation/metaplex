@@ -22,6 +22,7 @@ use {
     },
     std::mem,
 };
+use spl_shared_metaplex::state::Store;
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq)]
@@ -52,6 +53,7 @@ struct Accounts<'a, 'b: 'a> {
     auction: &'a AccountInfo<'b>,
     auction_extended: &'a AccountInfo<'b>,
     payer: &'a AccountInfo<'b>,
+    store: &'a AccountInfo<'b>,
     rent: &'a AccountInfo<'b>,
     system: &'a AccountInfo<'b>,
 }
@@ -65,6 +67,7 @@ fn parse_accounts<'a, 'b: 'a>(
         payer: next_account_info(account_iter)?,
         auction: next_account_info(account_iter)?,
         auction_extended: next_account_info(account_iter)?,
+        store: next_account_info(account_iter)?,
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
     };
@@ -110,6 +113,17 @@ pub fn create_auction(
         if gap_tick > 100 {
             return Err(AuctionError::InvalidGapTickSizePercentage.into());
         }
+    }
+
+    // Check that the auction has the correct gatekeeper network
+    // if the store has a gatekeeper network, then it must match the auction gatekeeper network
+    // if not, then it is optional
+    let store = Store::from_account_info(accounts.store)?;
+    match store.gatekeeper_network {
+        Some(gatekeeper_network) if gatekeeper_network != args.gatekeeper_network.unwrap() => {
+            return Err(AuctionError::InvalidGatekeeperNetwork.into());
+        }
+        _ => {}
     }
 
     // Create auction account with enough space for a winner tracking.

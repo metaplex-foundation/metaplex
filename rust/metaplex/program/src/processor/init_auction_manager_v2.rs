@@ -1,8 +1,7 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{
-            AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key, Store,
+            AuctionManagerStatus, AuctionManagerV2, AuctionWinnerTokenTypeTracker,
             TupleNumericType, MAX_AUCTION_MANAGER_V2_SIZE, PREFIX, TOTALS,
         },
         utils::{
@@ -21,6 +20,8 @@ use {
     spl_token::state::Account,
     spl_token_vault::state::{Vault, VaultState},
 };
+use spl_shared_metaplex::error::MetaplexError;
+use spl_shared_metaplex::state::{Key, Store};
 
 pub fn assert_common_checks(
     program_id: &Pubkey,

@@ -3,11 +3,14 @@
 #![cfg(all(target_arch = "bpf", not(feature = "no-entrypoint")))]
 
 use {
-    crate::{error::MetaplexError, processor},
+    crate::{processor},
     solana_program::{
         account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
         program_error::PrintProgramError, pubkey::Pubkey,
     },
+    spl_shared_metaplex::{
+        error::MetaplexError,
+    }
 };
 
 entrypoint!(process_instruction);
