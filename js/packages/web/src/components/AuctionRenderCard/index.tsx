@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardProps } from 'antd';
-import { CountdownState } from '@oyster/common';
+import { BidStateType, CountdownState } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
 import { AuctionView, useArt, useCreators } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
@@ -20,20 +20,19 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
 
-  const { status, amount, ended } = useAuctionStatus(auctionView);
+  const { status, amount } = useAuctionStatus(auctionView);
 
   const card = (
     <Card hoverable={true} className={`auction-render-card`} bordered={false}>
       <div className={'card-art-info'}>
         <div className={'card-artist-info'}>
-          {creators[0] && (
-            <>
-              <MetaAvatar creators={[creators[0]]} />
-              <span className={'artist-name'}>
-                {creators[0].name || creators[0].address?.substr(0, 6)}...
-              </span>
-            </>
-          )}
+          <MetaAvatar creators={creators.length ? [creators[0]] : undefined} />
+          <span className={'artist-name'}>
+            {creators[0]?.name ||
+              creators[0]?.address?.substr(0, 6) ||
+              'Go to auction'}
+            ...
+          </span>
         </div>
         <div className={'art-content-wrapper'}>
           <ArtContent

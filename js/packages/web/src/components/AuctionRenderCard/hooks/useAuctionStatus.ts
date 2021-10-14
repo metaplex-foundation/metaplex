@@ -1,4 +1,5 @@
 import {
+  AuctionState,
   BidStateType,
   formatTokenAmount,
   fromLamports,
@@ -16,7 +17,6 @@ import { BN } from 'bn.js';
 interface AuctionStatusLabels {
   status: string;
   amount: string | number;
-  ended: boolean;
 }
 
 export const useAuctionStatus = (
@@ -42,16 +42,21 @@ export const useAuctionStatus = (
   );
 
   const countdown = auctionView.auction.info.timeToEnd();
+  const isOpen =
+    auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+
+  if (isOpen) {
+    status = 'Open Sale';
+  }
 
   const ended =
     countdown?.hours === 0 &&
     countdown?.minutes === 0 &&
-    countdown?.seconds === 0;
+    countdown?.seconds === 0 &&
+    auctionView.auction.info.state === AuctionState.Ended;
 
   if (auctionView.isInstantSale) {
     const soldOut = bids.length === auctionView.items.length;
-    const isOpen =
-      auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
 
     status = auctionView.state === AuctionViewState.Ended ? 'Ended' : 'Price';
 
@@ -66,11 +71,10 @@ export const useAuctionStatus = (
     return {
       status,
       amount,
-      ended,
     };
   }
 
-  if (bids.length > 0) {
+  if (bids.length > 0 && !isOpen) {
     amount = formatTokenAmount(winningBid.info.lastBid);
     status = 'Current Bid';
   }
@@ -80,20 +84,17 @@ export const useAuctionStatus = (
       return {
         status: 'Ended',
         amount,
-        ended,
       };
     }
 
     return {
       status: 'Winning Bid',
       amount,
-      ended,
     };
   }
 
   return {
     status,
     amount,
-    ended,
   };
 };
