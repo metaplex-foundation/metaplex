@@ -32,7 +32,7 @@ describe('MongoReader', () => {
       data: Buffer.from([]),
     },
     info: {
-      mint: new PublicKey(123),
+      mint: new PublicKey('2Hzae92ZHV3nsU5ZmakDhmCDvP3jyB43fYpRZYoFqAch'),
       amount: {
         toNumber() {
           return 10;
@@ -218,91 +218,6 @@ describe('MongoReader', () => {
     });
   });
 
-  describe('filterArtworks', () => {
-    it('storeId = missing', async () => {
-      const args = await reader.$filterArtworks({
-        storeId: '1',
-      });
-      expect(args).toBeUndefined();
-    });
-
-    it('storeId = existing creatorId = existing', async () => {
-      const creator: Object = { _id: '9', address: '123', storeIds: ['1'] };
-      await db.collection('creators').insertOne(creator);
-      const args = await reader.$filterArtworks({
-        storeId: '1',
-        creatorId: '9',
-      });
-      expect(args).toEqual({
-        data: {
-          creators: {
-            address: '9',
-          },
-        },
-      });
-    });
-
-    it('storeId = missing && ownerId == existing', async () => {
-      const args = await reader.$filterArtworks({
-        storeId: '1',
-        ownerId: '99',
-      });
-      expect(args).toEqual({
-        mint: ['111111111111111111111111111111138'],
-      });
-    });
-
-    it('storeId = existing creatorId = existing ownerId == existing', async () => {
-      const creator: Object = { _id: '9', address: '123', storeIds: ['1'] };
-      await db.collection('creators').insertOne(creator);
-      const args = await reader.$filterArtworks({
-        storeId: '1',
-        creatorId: '9',
-        ownerId: '99',
-      });
-      expect(args).toEqual({
-        $or: [
-          {
-            data: {
-              creators: {
-                address: '9',
-              },
-            },
-          },
-          {
-            mint: ['111111111111111111111111111111138'],
-          },
-        ],
-      });
-    });
-
-    it('storeId = existing creatorId = existing ownerId == existing verified=true', async () => {
-      const creator: Object = { _id: '9', address: '123', storeIds: ['1'] };
-      await db.collection('creators').insertOne(creator);
-      const args = await reader.$filterArtworks({
-        storeId: '1',
-        creatorId: '9',
-        ownerId: '99',
-        onlyVerified: true,
-      });
-      expect(args).toEqual({
-        $or: [
-          {
-            data: {
-              creators: {
-                address: '9',
-                verified: true,
-              },
-            },
-          },
-          {
-            mint: ['111111111111111111111111111111138'],
-          },
-        ],
-      });
-    });
-  });
-
   describe('Artworks', () => {
     const creator$ = new Creator({
       address: '9',
@@ -312,7 +227,7 @@ describe('MongoReader', () => {
     const metadata1 = new Metadata({
       _id: '1',
       updateAuthority: 'updateAuthority',
-      mint: '111111111111111111111111111111138',
+      mint: '2Hzae92ZHV3nsU5ZmakDhmCDvP3jyB43fYpRZYoFqAch',
       data: {
         name: 'name',
         symbol: 'symbol',
@@ -371,34 +286,126 @@ describe('MongoReader', () => {
       expect(count).toBe(3);
     });
 
-    // TODO: fix
-    it.skip('getArtworks', async () => {
-      await db.collection('metadata').insertMany(docs);
-      const creator: Object = { _id: '9', address: '123', storeIds: ['1'] };
-      await db.collection('creators').insertOne(creator);
-      const results = await reader.getArtworks({
-        storeId: '1',
-        creatorId: '9',
-        ownerId: '99',
+    describe('getArtworks', () => {
+      const m1 = new Metadata({
+        _id: 'n2dYAr87ZZNioTcjheWnFtUehh8w8PkazTV49oLAbFq',
+        data: {
+          name: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          symbol: 'AAAAAAAAAA',
+          uri: 'https://arweave.net/NV7PCBXg_3LizsPsTGXi6AVc_dP2mmabMq8IyL7ng_M',
+          sellerFeeBasisPoints: 1000,
+          creators: [
+            {
+              address: '1KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+              verified: true,
+              share: 100,
+            },
+          ],
+        },
+        edition: 'B1t1aHyzb16gaRqbzRNQeyj6NFWfqzsqAsxmxTGLqkmQ',
+        isMutable: true,
+        mint: '2Hzae92ZHV3nsU5ZmakDhmCDvP3jyB43fYpRZYoFqAch',
+        primarySaleHappened: true,
+        updateAuthority: '1KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
       });
-      expect(results.length).toBe(1);
-      const item = results[0];
-      expect(item).toBeInstanceOf(Metadata);
+      const m2 = new Metadata({
+        _id: '3E1bY7wESVRTvzeF7wPFGzdAjhYjx9Vuqwx53Nbk6x3P',
+        data: {
+          name: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          symbol: 'AAAAAAAAAA',
+          uri: 'https://arweave.net/RoenI8mRmQz5u0Aoehh7OwRgAlLVyRjXD-SWEbH6zZQ',
+          sellerFeeBasisPoints: 1000,
+          creators: [
+            {
+              address: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+              verified: false,
+              share: 100,
+            },
+          ],
+        },
+        edition: '3B8jPgzdNFptg9Qr492mGgPjjrHs4TTbVvP9ysupnMML',
+        isMutable: true,
 
-      expect(item.pubkey).toEqual(metadata1.pubkey);
-      expect(item.updateAuthority).toEqual(metadata1.updateAuthority);
-      expect(item.mint).toEqual(metadata1.mint);
-      expect(item.primarySaleHappened).toEqual(metadata1.primarySaleHappened);
-      expect(item.isMutable).toEqual(metadata1.isMutable);
-      expect(item.editionNonce).toEqual(metadata1.editionNonce);
-      expect(item.edition).toEqual(metadata1.edition);
-      const data = item.data;
-      expect(data).toBeInstanceOf(Data);
-      expect(data.name).toEqual(item.data.name);
-      expect(data.symbol).toEqual(item.data.symbol);
-      expect(data.uri).toEqual(item.data.uri);
-      expect(data.sellerFeeBasisPoints).toEqual(item.data.sellerFeeBasisPoints);
-      expect(data.creators).toEqual(item.data.creators);
+        mint: 'CgrKpxPQneqczboNJNs4GfSpSy7d76vydf2xB1nyjtYS',
+        primarySaleHappened: true,
+        updateAuthority: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+      });
+
+      const m3 = new Metadata({
+        _id: 'AaN63LeVAKr1Jth6QzyhWGLE3ZZ82kNWF6ahyVAdXv9m',
+        data: {
+          name: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          symbol: 'AAAAAAAAAA',
+          uri: 'https://arweave.net/YQb0B2lf5Yz25ZzFRo1DvT1rWnz4cEnz8O4QxOtNwnY',
+          sellerFeeBasisPoints: 1000,
+          creators: [
+            {
+              address: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+              verified: true,
+              share: 100,
+            },
+          ],
+        },
+        edition: 'BTYcQH7c3GP3AFMku7KjoZNfTRncbJREm4HA8hEou2WM',
+        isMutable: true,
+
+        mint: '9BqKsCv5sVkALuDnZx9YPa51aJqz6Ay57Ao33owWT6wr',
+        primarySaleHappened: true,
+        updateAuthority: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+      });
+
+      beforeEach(async () => {
+        await db
+          .collection('metadata')
+          .insertMany([serialize(m1), serialize(m2), serialize(m3)]);
+      });
+
+      it('empty params', async () => {
+        const res = await reader.getArtworks({});
+        expect(res.length).toBe(3);
+        expect(res[0]).toBeInstanceOf(Metadata);
+      });
+
+      it('creatorsId', async () => {
+        const res = await reader.getArtworks({
+          creatorId: '1KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+        });
+        expect(res.length).toBe(1);
+
+        const res2 = await reader.getArtworks({
+          creatorId: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+        });
+        expect(res2.length).toBe(2);
+      });
+
+      it('onlyVerified', async () => {
+        const res = await reader.getArtworks({
+          onlyVerified: true,
+        });
+        expect(res.length).toBe(2);
+      });
+      it('creatorsId && onlyVerified', async () => {
+        const res = await reader.getArtworks({
+          creatorId: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+          onlyVerified: true,
+        });
+        expect(res.length).toBe(1);
+      });
+
+      it('ownerId', async () => {
+        const res = await reader.getArtworks({
+          ownerId: '99',
+        });
+        expect(res.length).toBe(1);
+      });
+
+      it('creatorsId && ownerId', async () => {
+        const res = await reader.getArtworks({
+          creatorId: '2KW2XRd9kwqet15Aha2oK3tYvd3nWbTFH1MBiRAv1BE1',
+          ownerId: '99',
+        });
+        expect(res.length).toBe(3);
+      });
     });
 
     it('getArtwork', async () => {

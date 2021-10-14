@@ -1,5 +1,4 @@
 import type { Db } from 'mongodb';
-import set from 'lodash/set';
 import { IReader, ReaderBase } from '../../reader';
 import { Connection } from '@solana/web3.js';
 import {
@@ -91,63 +90,45 @@ export class MongoReader extends ReaderBase implements IReader {
       .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null));
   }
 
-  async $filterArtworks({
-    storeId,
+  async getArtworks({
     creatorId,
-    ownerId,
     onlyVerified,
+    ownerId,
   }: {
     creatorId?: string | null; // String
     onlyVerified?: boolean | null; // Boolean
     ownerId?: string | null; // String
-    storeId: string; // String!
   }) {
-    const userAccounts = ownerId ? await this.loadUserAccounts(ownerId) : [];
-    // filterByOwner
-    let filter2: any = undefined;
-    const mint = userAccounts
-      .filter(({ info }) => {
-        return info.amount.toNumber() > 0;
-      })
-      .map(({ info }) => info.mint.toBase58());
-    if (mint.length) {
-      filter2 = set(filter2 ?? {}, 'mint', mint);
-    }
-
-    const creator =
-      storeId && creatorId
-        ? await this.collection('creators')
-            .findOne({
-              _id: creatorId,
-              storeIds: { $in: [storeId] },
-            })
-            .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null))
-        : null;
-
-    // filterByStoreAndCreator
-    let filter1: any = undefined;
+    let filter: any = {};
+    // byCreatorId
     if (creatorId) {
-      filter1 = set(filter1 ?? {}, 'data.creators.address', creatorId);
+      filter['data.creators.address'] = creatorId;
     }
-
+    // onlyVerified
     if (onlyVerified) {
-      filter1 = set(filter1 ?? {}, 'data.creators.verified', onlyVerified);
+      filter['data.creators.verified'] = true;
     }
-    if (creatorId && !creator) {
-      return filter2;
-    }
-    return filter1 && filter2
-      ? { $or: [filter1, filter2] }
-      : filter1 ?? filter2;
-  }
 
-  async getArtworks(args: {
-    creatorId?: string | null; // String
-    onlyVerified?: boolean | null; // Boolean
-    ownerId?: string | null; // String
-    storeId: string; // String!
-  }) {
-    const filter = await this.$filterArtworks(args);
+    // ownerId
+    if (ownerId) {
+      const userAccounts = await this.loadUserAccounts(ownerId);
+      const userAccountsWithAmount = userAccounts.filter(
+        ({ info }) => info.amount.toNumber() > 0,
+      );
+      const mints = userAccountsWithAmount.map(({ info }) =>
+        info.mint.toBase58(),
+      );
+
+      const f = {
+        mint: { $in: mints },
+      };
+      if (Object.keys(filter).length) {
+        filter = { $or: [filter, f] };
+      } else {
+        filter = f;
+      }
+    }
+
     return await this.collection('metadata')
       .find(filter)
       .map(doc => deserialize(doc, Metadata))

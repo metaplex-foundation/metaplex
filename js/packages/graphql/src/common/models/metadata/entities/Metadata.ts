@@ -44,7 +44,7 @@ export class Metadata extends BaseEntity {
     data: Data;
     primarySaleHappened: boolean;
     isMutable: boolean;
-    editionNonce: number | null;
+    editionNonce?: number | null;
     edition?: StringPublicKey;
   }) {
     super(args);
