@@ -1,6 +1,6 @@
 use clap::{
-    self, crate_description, crate_name, crate_version, value_t, value_t_or_exit, App, AppSettings,
-    Arg, ArgGroup, ArgMatches, SubCommand, Values,
+    self, crate_description, crate_name, crate_version, App, AppSettings, Arg, ArgGroup,
+    ArgMatches, SubCommand, Values,
 };
 
 use solana_account_decoder::{
@@ -9,13 +9,9 @@ use solana_account_decoder::{
 };
 use solana_clap_utils::{
     fee_payer::fee_payer_arg,
-    input_parsers::{pubkey_of, pubkey_of_signer, value_of},
-    input_validators::{
-        is_parsable, is_url, is_url_or_moniker, is_valid_pubkey, is_valid_signer,
-        normalize_to_url_if_moniker,
-    },
+    input_parsers::{pubkey_of, value_of},
+    input_validators::{is_url, is_url_or_moniker, is_valid_pubkey, normalize_to_url_if_moniker},
     keypair::{signer_from_path, CliSignerInfo},
-    memo::memo_arg,
 };
 use solana_cli_output::{CliSignature, OutputFormat};
 use solana_client::{
@@ -32,10 +28,9 @@ use solana_sdk::{
     program_pack::Pack,
     pubkey::Pubkey,
     signer::{keypair::Keypair, Signer},
-    system_instruction,
     transaction::Transaction,
 };
-use spl_token::{self, instruction, state::Mint};
+use spl_token::{self, state::Mint};
 use spl_token_metadata::{
     self,
     error::MetadataError,
@@ -49,16 +44,12 @@ pub mod config;
 use crate::config::Config;
 
 pub mod output;
-use output::{println_display, CliMetadata, CliMint, CliTokenAmount, UiMetadata};
+use output::{println_display, CliMetadata, CliMint, UiMetadata};
 
 pub(crate) type Error = Box<dyn std::error::Error>;
 type CommandResult = Result<Option<(u64, Vec<Vec<Instruction>>)>, Error>;
 
 // INPUT VALIDATORS
-
-fn is_mint_decimals(string: String) -> Result<(), String> {
-    is_parsable::<u8>(string)
-}
 
 fn is_valid_basis_points<T>(basis_points: T) -> Result<(), String>
 where
@@ -195,12 +186,14 @@ fn fetch_and_parse_metadata_account(
 
 // TRANSACTION HELPERS
 
+#[allow(dead_code)]
 fn new_throwaway_signer() -> (Box<dyn Signer>, Pubkey) {
     let keypair = Keypair::new();
     let pubkey = keypair.pubkey();
     (Box::new(keypair) as Box<dyn Signer>, pubkey)
 }
 
+#[allow(dead_code)]
 fn get_signer(
     matches: &ArgMatches<'_>,
     keypair_name: &str,
@@ -519,63 +512,6 @@ fn get_app() -> App<'static, 'static> {
                         .required(true)
                         .multiple(true),
                 ),
-        )
-        .subcommand(
-            SubCommand::with_name("create-token")
-                .about("Create a new token")
-                .arg(
-                    Arg::with_name("token_keypair")
-                        .value_name("TOKEN_KEYPAIR")
-                        .validator(is_valid_signer)
-                        .takes_value(true)
-                        .index(1)
-                        .help(
-                            "Specify the token keypair. \
-                         This may be a keypair file or the ASK keyword. \
-                         [default: randomly generated keypair]",
-                        ),
-                )
-                .arg(
-                    Arg::with_name("mint_authority")
-                        .long("mint-authority")
-                        .alias("owner")
-                        .value_name("ADDRESS")
-                        .validator(is_valid_pubkey)
-                        .takes_value(true)
-                        .help(
-                            "Specify the mint authority address. \
-                         Defaults to the client keypair address.",
-                        ),
-                )
-                .arg(
-                    Arg::with_name("decimals")
-                        .long("decimals")
-                        .validator(is_mint_decimals)
-                        .value_name("DECIMALS")
-                        .takes_value(true)
-                        .default_value("9")
-                        .help("Number of base 10 digits to the right of the decimal place"),
-                )
-                .arg(
-                    Arg::with_name("enable_freeze")
-                        .long("enable-freeze")
-                        .takes_value(false)
-                        .help("Enable the mint authority to freeze associated token accounts."),
-                )
-                .arg(memo_arg()),
-        )
-        .subcommand(
-            SubCommand::with_name("supply")
-                .about("Get token supply")
-                .arg(
-                    Arg::with_name("address")
-                        .validator(is_valid_pubkey)
-                        .value_name("TOKEN_ADDRESS")
-                        .takes_value(true)
-                        .index(1)
-                        .required(true)
-                        .help("The token address"),
-                ),
         );
     app_matches
 }
@@ -713,32 +649,6 @@ fn main() {
                 seller_fee_basis_points,
                 creators,
                 primary_sale_happened,
-            )
-        }
-        ("supply", Some(arg_matches)) => {
-            let address = pubkey_of_signer(arg_matches, "address", &mut wallet_manager)
-                .unwrap()
-                .unwrap();
-            command_supply(&config, address)
-        }
-        ("create-token", Some(arg_matches)) => {
-            let decimals = value_t_or_exit!(arg_matches, "decimals", u8);
-            let mint_authority =
-                config.pubkey_or_default(arg_matches, "mint_authority", &mut wallet_manager);
-            let memo = value_t!(arg_matches, "memo", String).ok();
-
-            let (token_signer, token) =
-                get_signer(arg_matches, "token_keypair", &mut wallet_manager)
-                    .unwrap_or_else(new_throwaway_signer);
-            bulk_signers.push(token_signer);
-
-            command_create_token(
-                &config,
-                decimals,
-                token,
-                mint_authority,
-                arg_matches.is_present("enable_freeze"),
-                memo,
             )
         }
         _ => unreachable!(),
@@ -906,6 +816,13 @@ fn command_update_metadata_account(
     primary_sale_happened: Option<bool>,
 ) -> CommandResult {
     let (metadata_address, mut metadata) = fetch_and_parse_metadata_account(config, address)?;
+    println_display(
+        config,
+        format!(
+            "Updating metadata account {} for mint {}",
+            metadata_address, metadata.mint
+        ),
+    );
 
     let mut data: Option<Data> = None;
     let mut is_new_data: bool = false;
@@ -960,58 +877,6 @@ fn command_update_metadata_account(
         minimum_balance_for_rent_exemption,
         vec![instructions],
     )))
-}
-
-fn command_create_token(
-    config: &Config,
-    decimals: u8,
-    token: Pubkey,
-    authority: Pubkey,
-    enable_freeze: bool,
-    memo: Option<String>,
-) -> CommandResult {
-    println_display(config, format!("Creating token {}", token));
-
-    let minimum_balance_for_rent_exemption = config
-        .rpc_client
-        .get_minimum_balance_for_rent_exemption(Mint::LEN)?;
-
-    let freeze_authority_pubkey = if enable_freeze { Some(authority) } else { None };
-
-    let mut instructions = vec![
-        system_instruction::create_account(
-            &config.fee_payer,
-            &token,
-            minimum_balance_for_rent_exemption,
-            Mint::LEN as u64,
-            &spl_token::id(),
-        ),
-        instruction::initialize_mint(
-            &spl_token::id(),
-            &token,
-            &authority,
-            freeze_authority_pubkey.as_ref(),
-            decimals,
-        )?,
-    ];
-    if let Some(text) = memo {
-        instructions.push(spl_memo::build_memo(text.as_bytes(), &[&config.fee_payer]));
-    }
-    Ok(Some((
-        minimum_balance_for_rent_exemption,
-        vec![instructions],
-    )))
-}
-
-fn command_supply(config: &Config, address: Pubkey) -> CommandResult {
-    let supply = config.rpc_client.get_token_supply(&address)?;
-    let cli_token_amount = CliTokenAmount { amount: supply };
-    println!(
-        "{}",
-        config.output_format.formatted_string(&cli_token_amount)
-    );
-
-    Ok(None)
 }
 
 #[cfg(test)]

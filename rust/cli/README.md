@@ -8,8 +8,9 @@ This is a starting point to develop command line applications that interact with
 ### Implemented commands
 
 * `mint-info`: display information for an existing mint account.
-* `create-metadata`: create a new metadata account for an existing mint, including creators and shares.
 * `metadata-info`: dispaly information for an existing metadata account.
+* `create-metadata`: create a new metadata account for an existing mint, including creators and shares.
+* `update-metadata`: update and existing metadata account by providing either a mint or metadata account address and providing values for one or more updatable fields.
 
 ### Getting Started
 
