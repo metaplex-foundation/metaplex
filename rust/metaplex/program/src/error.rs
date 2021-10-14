@@ -466,6 +466,10 @@ pub enum MetaplexError {
     /// Cache below is older
     #[error("Cache below is older")]
     CacheBelowIsOlder,
+
+    /// Auction manager already in finished state
+    #[error("Auction manager already in finished state")]
+    AuctionManagerInFishedState,
 }
 
 impl PrintProgramError for MetaplexError {

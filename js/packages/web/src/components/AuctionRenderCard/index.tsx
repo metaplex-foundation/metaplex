@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardProps } from 'antd';
 import {
-  formatTokenAmount,
   CountdownState,
-  PriceFloorType,
-  fromLamports,
-  useMint,
 } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
 import {
@@ -19,6 +15,9 @@ import { BN } from 'bn.js';
 import { MetaAvatar } from '../MetaAvatar';
 import { AuctionCountdown } from '../AuctionNumbers';
 
+import { useAuctionStatus } from './hooks/useAuctionStatus';
+const { Meta } = Card;
+
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
 }
@@ -29,45 +28,12 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const art = useArt(id);
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
-  const [state, setState] = useState<CountdownState>();
-  const mintInfo = useMint(auctionView.auction.info.tokenMint);
+  const [_, setState] = useState<CountdownState>();
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
-  const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
-  const priceFloor =
-    auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
-      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
-      : 0;
-  const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-
-  const winningBid = auctionView.auction.info.bidState.getAmountAt(0);
-  const ended =
-    !auctionView.isInstantSale &&
-    state?.hours === 0 &&
-    state?.minutes === 0 &&
-    state?.seconds === 0;
-
-  let currentBid: number | string = 0;
-  let label = '';
-  if (isUpcoming) {
-    label = ended
-      ? 'Ended'
-      : auctionView.isInstantSale
-      ? 'Price'
-      : 'Starting bid';
-    currentBid = fromLamports(
-      participationOnly ? participationFixedPrice : priceFloor,
-      mintInfo,
-    );
-  }
-
-  if (!isUpcoming) {
-    label = ended ? 'Winning bid' : 'Current bid';
-    currentBid = winningBid ? formatTokenAmount(winningBid) : 'No Bid';
-  }
+  const { status, amount } = useAuctionStatus(auctionView);
 
   const auction = auctionView.auction.info;
+
   useEffect(() => {
     const calc = () => {
       setState(auction.timeToEnd());
@@ -107,13 +73,12 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         )}
       </div>
       <div className="card-bid-info">
-        <span className={'text-uppercase info-message'}>{label}</span>
+        <span className={'text-uppercase info-message'}>{status}</span>
         <AmountLabel
           containerStyle={{ flexDirection: 'row' }}
-          title={label}
-          amount={currentBid}
+          title={status}
+          amount={amount}
           iconSize={24}
-          ended={ended}
         />
       </div>
     </Card>

@@ -56,6 +56,9 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { useActionButtonContent } from './hooks/useActionButtonContent';
+import { endSale } from './utils/endSale';
+import { useInstantSaleState } from './hooks/useInstantSaleState';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -212,6 +215,8 @@ export const AuctionCard = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   const [showRedeemedBidModal, setShowRedeemedBidModal] =
+    useState<boolean>(false);
+  const [showEndingBidModal, setShowEndingBidModal] =
     useState<boolean>(false);
   const [showRedemptionIssue, setShowRedemptionIssue] =
     useState<boolean>(false);
@@ -390,6 +395,12 @@ export const AuctionCard = ({
     shouldHideInstantSale ||
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
+
+  const {
+    isInstantSale,
+    canEndInstantSale
+  } = useInstantSaleState(auctionView)
+  const actionButtonContent = useActionButtonContent(auctionView)
 
   if (shouldHide) {
     return <></>;
@@ -672,25 +683,21 @@ export const AuctionCard = ({
             >
               {loading ? <Spin /> : 'Start auction'}
             </Button>
-          ) : loading ? (
-            <Spin />
           ) : (
-            auctionView.isInstantSale && (
-              <Button
-                type="primary"
-                size="large"
-                className="ant-btn secondary-btn"
-                disabled={loading}
-                onClick={instantSale}
-                style={{ marginTop: 20, width: '100%' }}
-              >
-                {!isAuctionManagerAuthorityNotWalletOwner
-                  ? 'CLAIM ITEM'
-                  : auctionView.myBidderPot
-                  ? 'Claim Purchase'
-                  : 'Buy Now'}
-              </Button>
-            )
+            <Button
+              type="primary"
+              size="large"
+              className="ant-btn secondary-btn"
+              disabled={loading}
+              onClick={instantSale}
+              style={{ marginTop: 20 }}
+            >
+              {loading ? (
+                <Spin />
+              ) : (
+                actionButtonContent
+              )}
+            </Button>
           ))}
         {!hideDefaultAction && !wallet.connected && (
           <Button
@@ -749,6 +756,35 @@ export const AuctionCard = ({
           successful
         </p>
         <Button onClick={() => setShowBidPlaced(false)} className="overlay-btn">
+          Got it
+        </Button>
+      </MetaplexOverlay>
+
+      <MetaplexOverlay visible={showEndingBidModal}>
+        <Confetti />
+        <h1
+          className="title"
+          style={{
+            fontSize: '3rem',
+            marginBottom: 20,
+          }}
+        >
+          Congratulations
+        </h1>
+        <p
+          style={{
+            color: 'white',
+            textAlign: 'center',
+            fontSize: '2rem',
+          }}
+        >
+          Your sale has been ended please view your NFTs in <Link to="/artworks">My Items</Link>
+          .
+        </p>
+        <Button
+          onClick={() => setShowEndingBidModal(false)}
+          className="overlay-btn"
+        >
           Got it
         </Button>
       </MetaplexOverlay>
