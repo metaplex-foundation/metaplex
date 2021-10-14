@@ -12,7 +12,6 @@ import { merge } from 'lodash';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
-import { merge } from 'lodash';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
 import {
   pullAuctionSubaccounts,
@@ -25,10 +24,17 @@ import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
   isLoading: false,
-  // @ts-ignore
-  update: () => [AuctionData, BidderMetadata, BidderPot],
+  pullAllMetadata: () => {
+    throw new Error('must implement')
+  },
+  pullBillingPage: (_: StringPublicKey) => {
+    throw new Error('must implement')
+  },
+  pullAuctionPage: (_: StringPublicKey) => {
+    throw new Error('must implement')
+  },
   patchState: () => {
-    throw new Error('unreachable');
+    throw new Error('must implement');
   },
 });
 
@@ -288,40 +294,10 @@ export function MetaProvider({ children = null as any }) {
     return subscribeAccountsChange(connection, () => state, setState);
   }, [connection, setState, isLoading, state]);
 
-  // TODO: fetch names dynamically
-  // TODO: get names for creators
-  // useEffect(() => {
-  //   (async () => {
-  //     const twitterHandles = await connection.getProgramAccounts(NAME_PROGRAM_ID, {
-  //      filters: [
-  //        {
-  //           dataSize: TWITTER_ACCOUNT_LENGTH,
-  //        },
-  //        {
-  //          memcmp: {
-  //           offset: VERIFICATION_AUTHORITY_OFFSET,
-  //           bytes: TWITTER_VERIFICATION_AUTHORITY.toBase58()
-  //          }
-  //        }
-  //      ]
-  //     });
-
-  //     const handles = twitterHandles.map(t => {
-  //       const owner = new PublicKey(t.account.data.slice(32, 64));
-  //       const name = t.account.data.slice(96, 114).toString();
-  //     });
-
-  //     console.log(handles);
-
-  //   })();
-  // }, [whitelistedCreatorsByCreator]);
-
   return (
     <MetaContext.Provider
       value={{
         ...state,
-        // @ts-ignore
-        update,
         pullAuctionPage,
         pullAllMetadata,
         pullBillingPage,

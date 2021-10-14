@@ -22,7 +22,7 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
-  loadMultipleAccounts,
+  loadMultipleAccountsIntoMetaState,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -265,10 +265,9 @@ export const AuctionCard = ({
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
-
-  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
   const doesInstantSaleHasNoItems =
-    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+    auctionView.auction.info.bidState.max.toNumber() === bids.length;
    
   const shouldHideInstantSale =
     !isOpenEditionSale &&
@@ -595,8 +594,7 @@ export const AuctionCard = ({
                 try {
                   const instantSalePrice =
                     auctionView.auctionDataExtended?.info.instantSalePrice;
-                  const winningConfigType =
-                    auctionView.items[0][0].winningConfigType;
+                  const winningConfigType = auctionView.participationItem?.winningConfigType || auctionView.items[0][0].winningConfigType;
                   const isAuctionItemMaster =
                     winningConfigType ===
                     WinningConfigType.FullRightsTransfer ||
@@ -649,7 +647,7 @@ export const AuctionCard = ({
                             continue;
                           }
 
-                          const patch = await loadMultipleAccounts(
+                          const patch = await loadMultipleAccountsIntoMetaState(
                             connection,
                             keys.map(k => k.toBase58()),
                             'confirmed',
@@ -781,6 +779,7 @@ export const AuctionCard = ({
                         value={value}
                         style={{
                           width: '100%',
+                          background: '#393939',
                           borderRadius: 16,
                         }}
                         onChange={setValue}

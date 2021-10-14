@@ -1030,7 +1030,7 @@ export const initMetadata = async (
   }
 };
 
-export const loadMultipleAccounts = async (
+export const loadMultipleAccountsIntoMetaState = async (
   conn: Connection,
   keys: StringPublicKey[],
   commitment: string,
