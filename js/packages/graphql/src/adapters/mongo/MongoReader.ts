@@ -39,9 +39,7 @@ export class MongoReader extends ReaderBase implements IReader {
     return this.collection('creators').countDocuments();
   }
   artworksCount() {
-    return this.collection('metadata').countDocuments({
-      //$where: '???', // TODO: what is it artwork in db?
-    });
+    return this.collection('metadata').countDocuments();
   }
   auctionsCount() {
     return this.collection('auctions').countDocuments();
