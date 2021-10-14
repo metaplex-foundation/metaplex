@@ -54,9 +54,13 @@ export const ArtCard = (props: ArtCardProps) => {
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
   } else if (art.type === ArtType.Master) {
-    badge = 'NFT 0';
+    if (typeof art.maxSupply != 'undefined') {
+      badge = `Master: Max ${art.maxSupply} Prints`;
+    } else {
+      badge = `Master: ∞ Prints`;
+    }
   } else if (art.type === ArtType.Print) {
-    badge = `${art.edition} of ${art.supply}`;
+    badge = `${art.edition} of Max Supply`;
   }
 
   const card = (
@@ -79,7 +83,6 @@ export const ArtCard = (props: ArtCardProps) => {
             </Button>
           )}
           <ArtContent
-            
             pubkey={pubkey}
             uri={image}
             animationURL={animationURL}

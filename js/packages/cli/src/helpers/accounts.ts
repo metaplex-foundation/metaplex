@@ -138,6 +138,20 @@ export function loadWalletKey(keypair): Keypair {
   return loaded;
 }
 
+export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
+  // @ts-ignore
+  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
+
+  const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
+  log.debug('program id from anchor', program.programId.toBase58());
+  return program;
+}
+
 export async function loadAnchorProgram(walletKeyPair: Keypair, env: string) {
   // @ts-ignore
   const solConnection = new web3.Connection(web3.clusterApiUrl(env));
