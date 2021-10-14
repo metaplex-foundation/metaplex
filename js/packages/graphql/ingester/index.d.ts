@@ -1,9 +1,12 @@
+import type { PassThrough } from 'stream';
+
 export function findProgramAddressList(
   programId: string,
   seeds: [string, string, string[], string[]]
-): Promise<Array<[string, string]>>;
+): PassThrough;
 
 export function getWhitelistedCreatorList(
-  creators: string[],
+  creatorAddress: string[],
   stores: string[],
-): Promise<Array<[string, string]>>;
+): PassThrough;
+

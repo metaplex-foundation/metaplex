@@ -1,18 +1,24 @@
 const native = require('./index.node');
+const PassThrough = require('stream').PassThrough;
 
 function findProgramAddressList(key, seeds) {
-  return new Promise(function (resolve) {
-    native.findProgramAddressList(
-      key,
-      seeds[0],
-      seeds[1],
-      seeds[2],
-      seeds[3],
-      function (list) {
-        resolve(list);
-      },
-    );
-  });
+  const stream = new PassThrough({ objectMode: true });
+  native.findProgramAddressList(
+    key,
+    seeds[0],
+    seeds[1],
+    seeds[2],
+    seeds[3],
+    function (result) {
+      if (result !== null) {
+        const args = Array.from(arguments);
+        stream.write(args);
+      } else {
+        stream.end();
+      }
+    },
+  );
+  return stream;
 }
 module.exports.findProgramAddressList = findProgramAddressList;
 

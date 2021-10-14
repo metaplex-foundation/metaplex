@@ -30,8 +30,9 @@ fn find_program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     std::thread::spawn(move || {
         channel.send(move |mut cx| {
             let callback = cb_root.into_inner(&mut cx);
-            let result = JsArray::new(&mut cx, 0);
-            let mut index: u32 = 0;
+            let null = cx.null();
+            let block1_n = cx.string(&block1);
+            let block2_n = cx.string(&block2);
             for block3 in &blocks3 {
                 for block4 in &blocks4 {
 
@@ -44,20 +45,13 @@ fn find_program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
                     if let Some((key, _)) = address {
                         let key = key.to_string();
                         let key = cx.string(key);
-
-                        let item = JsArray::new(&mut cx, 2);
-
-                        let val = cx.string(block4);
-                        item.set(&mut cx, 0, val)?;
-                        item.set(&mut cx, 1, key)?;
-                        result.set(&mut cx, index, item)?;
-                        index += 1;
+                        let val3 = cx.string(block3);
+                        let val4 = cx.string(block4);
+                        callback.call(&mut cx, null, vec![key, block1_n, block2_n, val3, val4])?;
                     }
                 }
             }
-            let null = cx.null();
-            callback.call(&mut cx, null, vec![result])?;
-
+            callback.call(&mut cx, null, vec![null])?;
             Ok({})
         });
     });

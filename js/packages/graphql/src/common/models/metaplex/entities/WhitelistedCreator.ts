@@ -28,7 +28,7 @@ export class WhitelistedCreator extends BaseEntity {
   description?: string;
 
   @JsonProperty()
-  storeIds: StringPublicKey[] = [];
+  storeId: StringPublicKey | undefined;
 
   constructor(args?: {
     _id: StringPublicKey;
@@ -41,6 +41,5 @@ export class WhitelistedCreator extends BaseEntity {
     storeIds?: StringPublicKey[];
   }) {
     super(args);
-    this.storeIds = args?.storeIds ?? this.storeIds;
   }
 }

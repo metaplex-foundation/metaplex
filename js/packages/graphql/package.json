@@ -9,7 +9,7 @@
     "lint:format": "prettier --write 'src/**/*.{js,ts,json}'",
     "lint:eslint": "eslint 'src/**/*.ts'",
     "lint": "yarn lint:format && yarn lint:eslint --fix",
-    "build": "yarn clean && tsc",
+    "build": "yarn clean && npm run build:native && tsc",
     "build:watch": "yarn build -- --watch",
     "build:native": "cd ingester && yarn && yarn build-release",
     "start": "yarn start:memory",

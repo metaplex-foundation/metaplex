@@ -140,25 +140,28 @@ export class Loader<TW extends IWriter = IWriter> {
         p => p.address,
       );
       const storeList = Array.from(this.cache.stores.keys());
-      const metadata = await getWhitelistedCreatorList(
+      const metadataStream = getWhitelistedCreatorList(
         creatorsAddressList,
         storeList,
       );
-
-      metadata.forEach(item => {
-        const storeId = item[0];
-        const address = item[1];
-        const creator = this.cache.creators.get(address);
-        const store = this.cache.stores.get(storeId);
-        if (creator && store) {
-          if (!store.creatorIds.includes(creator.pubkey)) {
-            store.creatorIds.push(creator.pubkey);
+      await new Promise(resolve => {
+        metadataStream.on('data', chunk => {
+          const address: string = chunk[0];
+          const storeId: string = chunk[4];
+          const creator = this.cache.creators.get(address);
+          const store = this.cache.stores.get(storeId);
+          if (creator && store) {
+            if (!store.creatorIds.includes(creator.pubkey)) {
+              store.creatorIds.push(creator.pubkey);
+            }
+            if (creator.storeId) {
+              creator.storeId = storeId;
+            }
           }
-          if (!creator.storeIds.includes(store.pubkey)) {
-            creator.storeIds.push(store.pubkey);
-          }
-        }
+        });
+        metadataStream.on('end', resolve);
       });
+
       this.cache.stores.forEach((store, storeId) => {
         this.writer.persist('stores', storeId, store);
       });
