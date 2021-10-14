@@ -27,7 +27,7 @@ import {
   useConnection,
   useConnectionConfig,
   useMint,
-  useMeta,
+  useMeta, BidStateType,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
@@ -101,7 +101,7 @@ export const AuctionView = () => {
   }
   const nftCount = auction?.items.flat().length;
   const winnerCount = auction?.items.length;
-
+  const isOpen = auction?.auction.info.bidState.type === BidStateType.OpenEdition;
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
@@ -166,7 +166,7 @@ export const AuctionView = () => {
                 {winnerCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
                 ) : (
-                  winnerCount
+                  isOpen ?  "Unlimited" : winnerCount
                 )}
               </span>
             </div>
@@ -176,7 +176,7 @@ export const AuctionView = () => {
                 {nftCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
                 ) : (
-                  nftCount
+                  isOpen ?  "Open" : nftCount
                 )}
               </span>
             </div>
@@ -324,7 +324,7 @@ export const AuctionView = () => {
                     {winnerCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
                     ) : (
-                      winnerCount
+                      isOpen ? "Unlimited" : winnerCount
                     )}
                   </span>
                 </div>
@@ -334,7 +334,7 @@ export const AuctionView = () => {
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
                     ) : (
-                      nftCount
+                      isOpen ? "Open" : nftCount
                     )}
                   </span>
                 </div>
@@ -569,7 +569,6 @@ export const AuctionBids = ({
   const activeBidders = useMemo(() => {
     return new Set(activeBids.map(b => b.key));
   }, [activeBids]);
-
   const auctionState = auctionView
     ? auctionView.auction.info.state
     : AuctionState.Created;
