@@ -61,7 +61,9 @@ pub fn assert_data_valid(
 
             if creators.is_empty() {
                 return Err(MetadataError::CreatorsMustBeAtleastOne.into());
-            } else {
+            }
+
+            if !same_creators(creators, &existing_metadata.data.creators) {
                 let mut found = false;
                 let mut total: u8 = 0;
                 for i in 0..creators.len() {
@@ -130,6 +132,27 @@ pub fn assert_data_valid(
     }
 
     Ok(())
+}
+
+fn same_creators(
+    creators_1: &[crate::state::Creator],
+    creators_2: &Option<Vec<crate::state::Creator>>,
+) -> bool {
+    if let Some(creators_2) = creators_2 {
+        if creators_1.len() != creators_2.len() {
+            return false;
+        }
+        for i in 0..creators_1.len() {
+            let creator_1 = &creators_1[i];
+            let creator_2 = &creators_2[i];
+            if creator_1 != creator_2 {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    false
 }
 
 /// assert initialized account
