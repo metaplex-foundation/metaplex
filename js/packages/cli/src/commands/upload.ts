@@ -178,11 +178,11 @@ export async function upload(
               const index = keys[i];
               return cacheContent.items[index]?.onChain || false;
             });
-            const ind = keys[indexes[0]];
+            const ind = indexes[0];
 
             if (onChain.length != indexes.length) {
               log.info(
-                `Writing indices ${ind}-${keys[indexes[indexes.length - 1]]}`,
+                `Writing indices ${ind}-${indexes[indexes.length - 1]}`,
               );
               try {
                 await anchorProgram.rpc.addConfigLines(
@@ -209,7 +209,7 @@ export async function upload(
               } catch (e) {
                 log.error(
                   `saving config line ${ind}-${
-                    keys[indexes[indexes.length - 1]]
+                    indexes[indexes.length - 1]
                   } failed`,
                   e,
                 );
