@@ -639,9 +639,9 @@ fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandRes
 /// First tries to get the metadata account directly from the provided address. If unsuccessful, calculates
 /// program address assuming provided addresses is mint address and tries to retrieve again.
 fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
-    let result = config
+    let account = config
         .rpc_client
-        .get_account(&address);
+        .get_account(&address)?;
     
     fn parse_metadata_account(data: &Vec<u8>) -> Result<Metadata, ProgramError> {
         try_from_slice_checked::<Metadata>(data, Key::MetadataV1, MAX_METADATA_LEN)
@@ -654,42 +654,29 @@ fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
         }
     }
     
-    match result {
-        Ok(account) => {
+    match parse_metadata_account(&account.data) {
+        Ok(metadata) => {
+            let cli_metadata = parse_cli_metadata(address, metadata);
+            println!("{}", &config.output_format.formatted_string(&cli_metadata));
+            Ok(None)
+        }
+        Err(_) => {
+            let metadata_address = get_metadata_address(&address);
+            let account = config
+            .rpc_client
+            .get_account(&metadata_address)?;
+
+
             match parse_metadata_account(&account.data) {
                 Ok(metadata) => {
-                    let cli_metadata = parse_cli_metadata(address, metadata);
+                    let cli_metadata = parse_cli_metadata(metadata_address, metadata);
                     println!("{}", &config.output_format.formatted_string(&cli_metadata));
                     Ok(None)
                 }
-                Err(_) => {
-                    let metadata_address = get_metadata_address(&address);
-                    let result = config
-                    .rpc_client
-                    .get_account(&metadata_address);
-
-                    match result {
-                        Ok(account) => {
-                            match parse_metadata_account(&account.data) {
-                                Ok(metadata) => {
-                                    let cli_metadata = parse_cli_metadata(metadata_address, metadata);
-                                    println!("{}", &config.output_format.formatted_string(&cli_metadata));
-                                    Ok(None)
-                                }
-                                Err(error) => {
-                                    Err(Box::new(error))
-                                }
-                            }
-                        }
-                        Err(error)=> {    
-                            Err(Box::new(error))
-                        }
-                    }
+                Err(error) => {
+                    Err(Box::new(error))
                 }
             }
-        }
-        Err(error) => {
-            Err(Box::new(error))
         }
     }
 }
