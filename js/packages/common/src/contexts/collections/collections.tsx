@@ -70,7 +70,7 @@ export function CollectionsProvider({ children = null as any }) {
 
     for (const i of range(0, metadata.length)) {
       const metadataExtension = results[i];
-      if (!metadataExtension.collection) {
+      if (!metadataExtension || !metadataExtension.collection) {
         continue;
       }
 

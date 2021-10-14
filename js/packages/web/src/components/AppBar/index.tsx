@@ -208,7 +208,6 @@ export const AppBar = () => {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="m-auto">
             {MENU_ITEMS.map(({ label, href, external }) => (
-              
               <MenuItems
                 key={label}
                 label={label}
@@ -220,15 +219,12 @@ export const AppBar = () => {
             ))}
           </Nav>
           <Nav
-            className="ml-auto"
+            className="ml-auto connectNavbar"
             style={{
               position: 'relative',
             }}
           >
-            <Select
-              onSelect={setEndpoint}
-              value={endpoint}
-            >
+            <Select onSelect={setEndpoint} value={endpoint}>
               {ENDPOINTS.map(({ name, endpoint }) => (
                 <Select.Option value={endpoint} key={endpoint}>
                   {name}

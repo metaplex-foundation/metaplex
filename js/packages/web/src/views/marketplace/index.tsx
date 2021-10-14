@@ -16,7 +16,7 @@ import { LatestsaleView } from '../latestsale';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { CardLoader, ThreeDots } from '../../components/MyLoader';
 import { CustomPagination } from '../../components/Pagination/Pagination';
-import { Form } from 'react-bootstrap';
+import { Spinner } from 'react-bootstrap';
 import { Button } from 'antd';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import {
@@ -256,10 +256,14 @@ export const MarketplaceView = () => {
             </div>
           </div>
           <div className="row">
-            <div className="col-md-8">
+            <div
+              className="col-md-8"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
               <div className="row">
-                {!isLoading
-                  ? onePageItem.map((m, idx) => {
+                {
+                  !isLoading ? (
+                    onePageItem.map((m, idx) => {
                       const id = m.pubkey;
                       return (
                         <AuctionCard
@@ -269,14 +273,20 @@ export const MarketplaceView = () => {
                         />
                       );
                     })
-                  : [...Array(ITEMS_PER_PAGE)].map((_, idx) => (
-                      <CardLoader key={idx} />
-                    ))}
+                  ) : (
+                    <Spinner animation="border" role="status">
+                      <span className="visually-hidden"></span>
+                    </Spinner>
+                  )
+                  // [...Array(ITEMS_PER_PAGE)].map((_, idx) => (
+                  //     <CardLoader key={idx} />
+                  //   ))
+                }
               </div>
               <img src="/images/cubic-blur.png" className="cubic-blur2" />
 
               <div className="blur-bg2"></div>
-              <div className="row mt-5">
+              <div className="row paginateLoadBottom">
                 <div className="col-md-7">
                   <nav aria-label="..." style={{ height: '100%' }}>
                     <ul className="pagination d-flex flex-wrap">
@@ -293,9 +303,10 @@ export const MarketplaceView = () => {
             </div>
             {/* <!-- Item List starts --> */}
             <div className="col-md-4">
-              {!isLoading
-                ? onePageItem.map((item, idx) => {
-                  const id = item.pubkey
+              {
+                !isLoading ? (
+                  onePageItem.map((item, idx) => {
+                    const id = item.pubkey;
                     return (
                       <ItemList
                         key={id}
@@ -304,9 +315,15 @@ export const MarketplaceView = () => {
                       />
                     );
                   })
-                : [...Array(ITEMS_PER_PAGE)].map((_, idx) => (
-                    <ThreeDots key={idx} />
-                  ))}
+                ) : (
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden"></span>
+                  </Spinner>
+                )
+                // [...Array(ITEMS_PER_PAGE)].map((_, idx) => (
+                //     <ThreeDots key={idx} />
+                //   ))
+              }
 
               <img src="/images/cubic-blur.png" className="cubic-blur1" />
               {/* <!-- pagination starts --> */}
