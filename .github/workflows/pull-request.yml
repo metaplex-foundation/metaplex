@@ -7,7 +7,7 @@ defaults:
 on:
   pull_request:
   push:
-    branches: [master, feature/rust-cli]
+    branches: [master]
 
 jobs:
   all_github_action_checks:
