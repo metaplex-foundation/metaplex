@@ -3,7 +3,7 @@ use clap::{self,
     ArgMatches, SubCommand, Values
 };
 
-use solana_account_decoder::parse_token::{parse_token, TokenAccountType};
+use solana_account_decoder::{UiAccountEncoding, parse_token::{parse_token, TokenAccountType}};
 use solana_clap_utils::{
     fee_payer::fee_payer_arg,
     input_parsers::{pubkey_of, pubkey_of_signer, value_of},
@@ -15,22 +15,12 @@ use solana_clap_utils::{
     memo::memo_arg,
 };
 use solana_cli_output::{CliSignature, OutputFormat};
-use solana_client::rpc_client::RpcClient;
+use solana_client::{rpc_config::{RpcProgramAccountsConfig, RpcAccountInfoConfig}, rpc_client::RpcClient, rpc_filter::{RpcFilterType, MemcmpEncodedBytes, Memcmp}};
 use solana_remote_wallet::remote_wallet::RemoteWalletManager;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    instruction::Instruction,
-    message::Message,
-    native_token::lamports_to_sol,
-    program_pack::Pack,
-    pubkey::Pubkey,
-    signer::{
+use solana_sdk::{commitment_config::CommitmentConfig, instruction::Instruction, message::Message, native_token::lamports_to_sol, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey, signer::{
         keypair::{read_keypair_file, Keypair},
         Signer,
-    },
-    system_instruction,
-    transaction::Transaction,
-};
+    }, system_instruction, transaction::Transaction};
 use spl_token::{self, error::TokenError, instruction, state::Mint};
 use spl_token_metadata::{
     self,
@@ -67,9 +57,9 @@ where
             )
         })
         .and_then(|v| {
-            if v > 1000 {
+            if v > 10000 {
                 Err(format!(
-                    "Basis points must be in range of 0 to 1000, provided: {}",
+                    "Basis points must be in range of 0 to 10000, provided: {}",
                     v
                 ))
             } else {
@@ -257,25 +247,28 @@ fn get_app() -> App<'static, 'static> {
         SubCommand::with_name("metadata-info")
             .about("Query details of a Metadata account by address")
             .arg(
-                Arg::with_name("metadata_address")
-                    .long("metadata-address")
-                    .value_name("METADATA_ADDRESS")
+                Arg::with_name("address")
+                    .value_name("ADDRESS")
                     .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .required_unless("mint_address")
-                    .conflicts_with("mint_address")
-                    .help("Address of the existing metadata account."),
+                    .index(1)
+                    .help(
+                        "Address of the existing metadata account. \
+                        Can be either token 
+                        "),
             )
+    )
+    .subcommand(
+        SubCommand::with_name("filter")
             .arg(
-                Arg::with_name("mint_address")
-                    .long("mint-address")
-                    .value_name("MINT_ADDRESS")
+                Arg::with_name("address")
+                    .value_name("ADDRESS")
                     .validator(is_valid_pubkey)
-                    .takes_value(true)
-                    .required_unless("metadata_address")
-                    .conflicts_with("metadata_address")
-                    .help("Address of the existing mint account."),
-            ),
+                    .index(1)
+                    .help(
+                        "Address of the existing metadata account. \
+                        Can be either token 
+                        "),
+            )
     )
     .subcommand(
         SubCommand::with_name("create-metadata")
@@ -498,6 +491,10 @@ fn main() {
             let address = pubkey_of(arg_matches, "address").unwrap();
             command_metadata_info(&config, address)
         }
+        ("filter", Some(arg_matches)) => {
+            let address = pubkey_of(arg_matches, "address").unwrap();
+            get_filtered_program_accounts(&config, address)
+        }
         ("create-metadata", Some(arg_matches)) => {
             let mint_address = pubkey_of(arg_matches, "mint_address").unwrap();
             let update_authority =
@@ -594,9 +591,7 @@ fn main() {
 fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
     let account = config
         .rpc_client
-        .get_account(&address)
-        .map_err(|_| format!("Could not find mint account {}", address))
-        .unwrap();
+        .get_account(&address)?;
 
     match parse_token(&account.data, None)? {
         TokenAccountType::Mint(mint) => {
@@ -613,27 +608,104 @@ fn command_mint_info(config: &Config, address: Pubkey) -> CommandResult {
     Ok(None)
 }
 
-fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
-    let account = config
-        .rpc_client
-        .get_account(&address)
-        .map_err(|_| format!("Could not find metadata account {}", address))
-        .unwrap();
+// Retrieving metadata account based on calculated program account address, but 
+// leaving this here as template for filtering on bytes.
+fn get_filtered_program_accounts(config: &Config, address: Pubkey) -> CommandResult {
+    let method_config = RpcProgramAccountsConfig {
+        filters: Some(vec![
+            RpcFilterType::DataSize(MAX_METADATA_LEN as u64),
+            RpcFilterType::Memcmp(Memcmp {
+                offset: 33,
+                bytes: MemcmpEncodedBytes::Binary(address.to_string()),
+                encoding: None,
+            }),
+        ]),
+        account_config: RpcAccountInfoConfig {
+            encoding: Some(UiAccountEncoding::Base64),
+            data_slice: None,
+            commitment: Some(config.rpc_client.commitment()),
+        },
+        with_context: Some(false),
+    };
+    let accounts = config.rpc_client.get_program_accounts_with_config(
+        &spl_token_metadata::id(),
+        method_config,
+    ).map_err(|_| format!("Could not find metadata account {}", address))
+    .unwrap();
+    println!("{:?}", accounts);
+    Ok(None)
+}
 
-    match try_from_slice_checked::<Metadata>(&account.data, Key::MetadataV1, MAX_METADATA_LEN) {
-        Ok(metadata) => {
-            let cli_metadata = CliMetadata {
-                address: address.to_string(),
-                metadata: UiMetadata::from(metadata),
-            };
-            println!("{}", config.output_format.formatted_string(&cli_metadata));
-            Ok(None)
+/// First tries to get the metadata account directly from the provided address. If unsuccessful, calculates
+/// program address assuming provided addresses is mint address and tries to retrieve again.
+fn command_metadata_info(config: &Config, address: Pubkey) -> CommandResult {
+    let result = config
+        .rpc_client
+        .get_account(&address);
+    
+    fn parse_metadata_account(data: &Vec<u8>) -> Result<Metadata, ProgramError> {
+        try_from_slice_checked::<Metadata>(data, Key::MetadataV1, MAX_METADATA_LEN)
+    }
+
+    fn parse_cli_metadata(address: Pubkey, metadata: Metadata) -> CliMetadata {
+        CliMetadata {
+            address: address.to_string(),
+            metadata: UiMetadata::from(metadata),
+        }
+    }
+    
+    match result {
+        Ok(account) => {
+            match parse_metadata_account(&account.data) {
+                Ok(metadata) => {
+                    let cli_metadata = parse_cli_metadata(address, metadata);
+                    println!("{}", &config.output_format.formatted_string(&cli_metadata));
+                    Ok(None)
+                }
+                Err(_) => {
+                    let metadata_address = get_metadata_address(&address);
+                    let result = config
+                    .rpc_client
+                    .get_account(&metadata_address);
+
+                    match result {
+                        Ok(account) => {
+                            match parse_metadata_account(&account.data) {
+                                Ok(metadata) => {
+                                    let cli_metadata = parse_cli_metadata(metadata_address, metadata);
+                                    println!("{}", &config.output_format.formatted_string(&cli_metadata));
+                                    Ok(None)
+                                }
+                                Err(error) => {
+                                    Err(Box::new(error))
+                                }
+                            }
+                        }
+                        Err(error)=> {    
+                            Err(Box::new(error))
+                        }
+                    }
+                }
+            }
         }
         Err(error) => {
-            println!("{} is not a metadata account", address);
             Err(Box::new(error))
         }
     }
+}
+
+fn get_metadata_address(mint_address: &Pubkey) -> Pubkey {
+    let program_id = spl_token_metadata::id();
+
+    let metadata_seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        mint_address.as_ref(),
+    ];
+
+    let (metadata_address, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
+
+    metadata_address
 }
 
 fn command_create_metadata_account(
@@ -653,17 +725,9 @@ fn command_create_metadata_account(
         }
     }
     
-    let program_id = spl_token_metadata::id();
-
-    let metadata_seeds = &[
-        PREFIX.as_bytes(),
-        program_id.as_ref(),
-        mint_address.as_ref(),
-    ];
-
-    let (metadata_account, _) = Pubkey::find_program_address(metadata_seeds, &program_id);
-
-    if let Ok(_) = config.rpc_client.get_account(&metadata_account) {
+    let metadata_address = get_metadata_address(&mint_address);
+    
+    if let Ok(_) = config.rpc_client.get_account(&metadata_address) {
         return Err(Box::new(TokenError::AlreadyInUse))
     }
 
@@ -671,40 +735,45 @@ fn command_create_metadata_account(
         .rpc_client
         .get_minimum_balance_for_rent_exemption(MAX_METADATA_LEN)?;
 
-    let account = config
+    let result = config
         .rpc_client
-        .get_account(&mint_address)
-        .map_err(|_| format!("Could not find mint account {}", &mint_address))
-        .unwrap();
+        .get_account(&mint_address);
+    
+    match result {
+        Ok(account) => {
+            let mint = Mint::unpack(&account.data)?;
 
-    let mint = Mint::unpack(&account.data)?;
-
-    // I think this should be set to true if the update authority is different than the mint authority in which
-    // case a signature from the update authority is required.
-    let update_authority_is_signer = mint.mint_authority.unwrap() != config.fee_payer;
-
-    println_display(config, format!("Creating metadata {}", metadata_account));
-
-    let instructions = vec![create_metadata_accounts(
-        program_id,
-        metadata_account,
-        mint_address,
-        mint.mint_authority.unwrap(),
-        config.fee_payer,
-        update_authority,
-        name,
-        symbol,
-        uri,
-        creators,
-        seller_fee_basis_points,
-        update_authority_is_signer,
-        is_mutable,
-    )];
-
-    Ok(Some((
-        minimum_balance_for_rent_exemption,
-        vec![instructions],
-    )))
+            // I think this should be set to true if the update authority is different than the mint authority in which
+            // case a signature from the update authority is required.
+            let update_authority_is_signer = mint.mint_authority.unwrap() != config.fee_payer;
+        
+            println_display(config, format!("Creating metadata {}", metadata_address));
+        
+            let instructions = vec![create_metadata_accounts(
+                spl_token_metadata::id(),
+                metadata_address,
+                mint_address,
+                mint.mint_authority.unwrap(),
+                config.fee_payer,
+                update_authority,
+                name,
+                symbol,
+                uri,
+                creators,
+                seller_fee_basis_points,
+                update_authority_is_signer,
+                is_mutable,
+            )];
+        
+            Ok(Some((
+                minimum_balance_for_rent_exemption,
+                vec![instructions],
+            )))
+        }
+        Err(error) => {
+            Err(Box::new(error))
+        }
+    }
 }
 
 fn command_create_token(
@@ -764,40 +833,6 @@ mod tests {
     use clap::ErrorKind;
     use solana_sdk::{pubkey::Pubkey, signer::{Signer, keypair::Keypair}};
     use super::{get_creators_vec, validate_creator_shares, get_app};
-
-    
-    
-    #[test]
-    fn metadata_info() {
-        // It passes if either value is provided.
-
-        let test_pubkey: Pubkey = Keypair::new().pubkey();            
-        for addr in vec!["--mint-address", "--metadata-address"].iter() {
-            let m = get_app().get_matches_from(vec!["testeroni", "metadata-info", &addr, &test_pubkey.to_string()]);
-            assert_eq!(m.subcommand_name().unwrap(), "metadata-info");
-            let sub_m = m.subcommand_matches("metadata-info").unwrap();
-            assert_eq!(sub_m.value_of(&addr.replace("--", "").replace("-", "_")).unwrap(), &test_pubkey.to_string());
-        }
-
-    }
-
-    #[test]
-    fn metadata_info_both_values() {
-        // It fails if both values are provided.
-
-        let test_pubkey: Pubkey = Keypair::new().pubkey();            
-        let res = get_app().get_matches_from_safe(vec![
-            "testeroni",
-            "metadata-info",
-            "--mint-address",
-            &test_pubkey.to_string(),
-            "--metadata-address",
-            &test_pubkey.to_string(),
-        ]);
-
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().kind, ErrorKind::ArgumentConflict);
-    }
 
     #[test]
     fn create_metadata_creators() {
@@ -866,7 +901,12 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().kind, ErrorKind::ValueValidation);
 
+    }
+    
+    #[test]
+    fn create_metadata_creators_share_too_high() {        
         // It fails if share value is too high.
+        let test_pubkey: Pubkey = Keypair::new().pubkey();
         let res = get_app().get_matches_from_safe(vec![
             "testeroni",
             "create-metadata",

@@ -143,7 +143,6 @@ impl fmt::Display for UiMetadata {
         writeln!(f, "Key: {}", self.key)?;
         writeln!(f, "Update Authority: {}", self.update_authority)?;
         writeln!(f, "Mint: {}", self.mint)?;
-        writeln!(f, "{}", self.data)?;
         writeln!(f, "Primary Sale Happened: {}", self.primary_sale_happened)?;
         writeln!(f, "Is Mutable: {}", self.is_mutable)?;
         writeln_name_value(
@@ -151,6 +150,7 @@ impl fmt::Display for UiMetadata {
             "Edition Nonce:",
             &self.edition_nonce.as_ref().unwrap_or(&String::from("")),
         )?;
+        write!(f, "{}", self.data)?;
         Ok(())
     }
 }
@@ -221,8 +221,8 @@ impl From<&Creator> for UiCreator {
 impl fmt::Display for UiCreator {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Address: {}", self.address)?;
-        writeln!(f, "Verified: {}", self.verified)?;
-        writeln!(f, "Share: {}", self.share)?;
+        writeln!(f, "      Verified: {}", self.verified)?;
+        writeln!(f, "      Share: {}", self.share)?;
         Ok(())
     }
 }

@@ -1,3 +1,6 @@
+[![build status](https://github.com/CalebEverett/metaplex/actions/workflows/main.yml/badge.svg)](https://github.com/CalebEverett/metaplex/actions/workflows/rust-cli.yml)
+
+
 ## Metaplex Command Line Interface
 
 This is a starting point to develop command line applications that interact with the metaplex programs. It includes output features and cli tooling from the [Solana token program cli](https://github.com/solana-labs/solana-program-library/tree/master/token/cli/src), including the ability to produce output for display or json, either normal or compact, and use default values from solana-cli local config. Also makes use of [solana-clap-utils](https://github.com/solana-labs/solana/tree/master/clap-utils) for efficient validation and argument parsing.

@@ -1,0 +1,38 @@
+name: build status
+on:
+  push:
+    branches:
+      - master
+      - feature/rust-cli
+  pull_request:
+    branches:
+      - master
+      - feature/rust-cli
+jobs:
+  Build:
+    runs-on: ubuntu-20.04
+    steps:
+      # - name: multiple path
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.npm
+      #     key: '${{ runner.os }}-${{ hashFiles(''TODO'') }}'
+      - uses: actions/checkout@v2
+      - run: |
+          rustup install nightly
+          cargo --version
+          docker --version
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl --allow-unauthenticated
+          sudo apt-get install -y libssl-dev --allow-unauthenticated
+          sudo apt-get install -y libssl1.1 --allow-unauthenticated
+          sudo apt-get install -y libudev-dev --allow-unauthenticated
+          sh -c "$(curl -sSfL https://release.solana.com/v1.7.14/install)"
+          export PATH=~/.local/share/solana/install/active_release/bin:$PATH
+          # solana-install info
+          # solana-keygen new --no-bip39-passphrase
+          # solana-test-validator --quiet &
+          cd rust/cli
+          cargo build
+          cargo test
