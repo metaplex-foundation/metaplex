@@ -367,7 +367,6 @@ fn get_app() -> App<'static, 'static> {
                         .long("uri")
                         .value_name("URI")
                         .takes_value(true)
-                        .required(true)
                         .validator(is_url)
                         .help("Specify the URI for the mint."),
                 )
@@ -384,7 +383,6 @@ fn get_app() -> App<'static, 'static> {
                         .long("seller-fee-basis-points")
                         .value_name("SELLER_FEE_BASIS_POINTS")
                         .takes_value(true)
-                        .required(true)
                         .validator(is_valid_basis_points)
                         .help(
                             "Specify seller fee in basis points. \
@@ -606,7 +604,7 @@ fn main() {
             let symbol = arg_matches.value_of("symbol").unwrap_or(&"").to_string();
             let uri = arg_matches.value_of("uri").unwrap_or(&"").to_string();
             let seller_fee_basis_points =
-                value_of::<u16>(arg_matches, "seller_fee_basis_points").unwrap();
+                value_of::<u16>(arg_matches, "seller_fee_basis_points").unwrap_or(0);
 
             let creators = get_creators_vec(arg_matches.values_of("creators"));
 
