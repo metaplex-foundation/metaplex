@@ -3,6 +3,7 @@
 use super::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
+    borsh::try_from_slice_unchecked,
     msg,
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack, Sealed},
@@ -147,10 +148,16 @@ impl Pack for PackSet {
     }
 
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        Self::try_from_slice(src).map_err(|_| {
+        if (src[0] != AccountType::PackSet as u8 && src[0] != AccountType::Uninitialized as u8)
+            || src.len() != Self::LEN
+        {
             msg!("Failed to deserialize");
-            ProgramError::InvalidAccountData
-        })
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        let result: Self = try_from_slice_unchecked(src)?;
+
+        Ok(result)
     }
 }
 

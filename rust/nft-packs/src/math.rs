@@ -114,3 +114,35 @@ impl SafeMath<u64> for u64 {
             .ok_or_else(|| NFTPacksError::Underflow.into())
     }
 }
+
+impl SafeMath<u128> for u128 {
+    fn error_increment(self) -> Result<u128, ProgramError> {
+        self.checked_add(1)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_decrement(self) -> Result<u128, ProgramError> {
+        self.checked_sub(1)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+
+    fn error_add(self, rhs: u128) -> Result<u128, ProgramError> {
+        self.checked_add(rhs)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_sub(self, rhs: u128) -> Result<u128, ProgramError> {
+        self.checked_sub(rhs)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+
+    fn error_mul(self, rhs: u128) -> Result<u128, ProgramError> {
+        self.checked_mul(rhs)
+            .ok_or_else(|| NFTPacksError::Overflow.into())
+    }
+
+    fn error_div(self, rhs: u128) -> Result<u128, ProgramError> {
+        self.checked_div(rhs)
+            .ok_or_else(|| NFTPacksError::Underflow.into())
+    }
+}

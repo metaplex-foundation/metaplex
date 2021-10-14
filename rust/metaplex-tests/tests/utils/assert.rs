@@ -12,10 +12,10 @@ macro_rules! assert_transport_error {
 
 #[macro_export]
 macro_rules! assert_custom_error {
-    ($error:expr, $matcher:pat) => {
+    ($error:expr, $matcher:pat, $instruction:pat) => {
         match $error {
             TransportError::TransactionError(TransactionError::InstructionError(
-                0,
+                $instruction,
                 InstructionError::Custom(x),
             )) => match FromPrimitive::from_i32(x as i32) {
                 Some($matcher) => assert!(true),

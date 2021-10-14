@@ -767,6 +767,7 @@ pub fn request_card_for_redeem(
     program_id: &Pubkey,
     pack_set: &Pubkey,
     user_wallet: &Pubkey,
+    random_oracle: &Pubkey,
 ) -> Instruction {
     let (proving_process, _) =
         find_proving_process_program_address(program_id, pack_set, user_wallet);
@@ -775,7 +776,7 @@ pub fn request_card_for_redeem(
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new_readonly(*user_wallet, true),
-        AccountMeta::new_readonly(randomness_oracle_program::id(), false),
+        AccountMeta::new_readonly(*random_oracle, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
     ];
 

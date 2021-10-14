@@ -1,6 +1,6 @@
 mod utils;
 
-use metaplex_nft_packs::{error::NFTPacksError, instruction::InitPackSetArgs};
+use metaplex_nft_packs::{error::NFTPacksError, instruction::InitPackSetArgs, state::PackDistributionType};
 use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
@@ -26,8 +26,12 @@ async fn setup(
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
-                mutable: mutable,
+                uri: String::from("some link to storage"),
+                mutable,
+                distribution_type: PackDistributionType::Fixed,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -76,14 +80,14 @@ async fn success() {
     let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) =
         setup(true).await;
 
-    assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 5);
+    assert_eq!(test_pack_set.get_data(&mut context).await.name, [7; 32]);
 
     test_pack_set
-        .edit(&mut context, None, None, Some(1337))
+        .edit(&mut context, None, Some([8; 32]))
         .await
         .unwrap();
 
-    assert_eq!(test_pack_set.get_data(&mut context).await.total_packs, 1337);
+    assert_eq!(test_pack_set.get_data(&mut context).await.name, [8; 32]);
 }
 
 #[tokio::test]
@@ -92,8 +96,8 @@ async fn fail_immutable() {
         setup(false).await;
 
     let result = test_pack_set
-        .edit(&mut context, None, None, Some(1337))
+        .edit(&mut context, None, Some([8; 32]))
         .await;
 
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet);
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet, 0);
 }

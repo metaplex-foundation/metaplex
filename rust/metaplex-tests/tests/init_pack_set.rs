@@ -2,25 +2,39 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction,
-    state::{AccountType, PackSetState},
+    state::{AccountType, PackSetState, PackDistributionType},
+    error::NFTPacksError,
 };
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
 use solana_sdk::{transaction::TransactionError, transport::TransportError};
 use utils::*;
+use num_traits::FromPrimitive;
 
 #[tokio::test]
 async fn success() {
     let mut context = nft_packs_program_test().start_with_context().await;
+
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = Some(redeem_start_date.unwrap() + 100);
 
     let test_pack_set = TestPackSet::new();
     test_pack_set
         .init(
             &mut context,
             instruction::InitPackSetArgs {
-                name: [7; 32],
-                total_packs: 5,
+                name,
+                uri: uri.clone(),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -28,6 +42,8 @@ async fn success() {
 
     let pack_set = test_pack_set.get_data(&mut context).await;
 
+    assert_eq!(pack_set.name, name);
+    assert_eq!(pack_set.uri, uri);
     assert_eq!(pack_set.account_type, AccountType::PackSet);
     assert!(pack_set.mutable);
     assert_eq!(pack_set.pack_state, PackSetState::NotActivated);
@@ -36,26 +52,31 @@ async fn success() {
 }
 
 #[tokio::test]
-async fn fail_invalid_total_packs() {
+async fn fails() {
     let mut context = nft_packs_program_test().start_with_context().await;
+
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
 
     let test_pack_set = TestPackSet::new();
     let result = test_pack_set
         .init(
             &mut context,
             instruction::InitPackSetArgs {
-                name: [7; 32],
-                total_packs: 0,
+                name,
+                uri: uri.clone(),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date,
+                redeem_end_date: redeem_start_date,
             },
         )
         .await;
 
-    assert_transport_error!(
-        result.unwrap_err(),
-        TransportError::TransactionError(TransactionError::InstructionError(
-            1,
-            InstructionError::Custom(0)
-        ))
-    );
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::WrongRedeemDate, 1);
 }

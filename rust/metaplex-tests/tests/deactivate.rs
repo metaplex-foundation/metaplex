@@ -3,7 +3,7 @@ mod utils;
 use metaplex_nft_packs::{
     error::NFTPacksError,
     instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
-    state::{ActionOnProve, DistributionType, PackSetState},
+    state::{ActionOnProve, PackDistributionType, PackSetState},
 };
 use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
@@ -28,8 +28,12 @@ async fn setup() -> (
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -107,7 +111,7 @@ async fn setup() -> (
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased(1000000),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -124,7 +128,6 @@ async fn setup() -> (
             &test_metadata2,
             &user2,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 4,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -167,5 +170,5 @@ async fn fail_invalid_state() {
     context.warp_to_slot(3).unwrap();
 
     let result = test_pack_set.deactivate(&mut context).await;
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::PackAlreadyDeactivated);
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::PackAlreadyDeactivated, 0);
 }

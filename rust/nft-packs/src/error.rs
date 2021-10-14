@@ -28,6 +28,10 @@ pub enum NFTPacksError {
     #[error("Wrong card probability value")]
     WrongCardProbability,
 
+    /// Cards for this pack shouldn't have probability value
+    #[error("Cards for this pack shouldn't have probability value")]
+    CardShouldntHaveProbabilityValue,
+
     /// Proved vouchers mismatch pack vouchers
     #[error("Proved vouchers mismatch pack vouchers")]
     ProvedVouchersMismatchPackVouchers,

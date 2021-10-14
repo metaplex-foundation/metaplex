@@ -1,8 +1,8 @@
 use crate::*;
 use metaplex_nft_packs::{
     find_program_authority,
-    instruction::{self, EditPackCardArgs, EditPackSetArgs, EditPackVoucherArgs},
-    state::{ActionOnProve, DistributionType, PackSet},
+    instruction::{self, EditPackSetArgs, EditPackVoucherArgs},
+    state::{ActionOnProve, PackSet},
 };
 use solana_program::{program_pack::Pack, pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
@@ -137,73 +137,6 @@ impl TestPackSet {
         context.banks_client.process_transaction(tx).await
     }
 
-    pub async fn mint_edition_with_card(
-        &self,
-        context: &mut ProgramTestContext,
-        test_metadata: &TestMetadata,
-        test_pack_card: &TestPackCard,
-        test_new_metadata: &TestMetadata,
-        test_master_edition: &TestMasterEditionV2,
-        new_mint_authority: &Pubkey,
-        new_metadata_update_authority: &Pubkey,
-        index: u64,
-    ) -> transport::Result<()> {
-        let dummy_token_account = Keypair::new();
-
-        create_mint(context, &test_new_metadata.mint, &new_mint_authority, None)
-            .await
-            .unwrap();
-
-        create_token_account(
-            context,
-            &dummy_token_account,
-            &test_new_metadata.mint.pubkey(),
-            &context.payer.pubkey(),
-        )
-        .await
-        .unwrap();
-
-        mint_tokens(
-            context,
-            &test_new_metadata.mint.pubkey(),
-            &dummy_token_account.pubkey(),
-            1,
-            &context.payer.pubkey(),
-            None,
-        )
-        .await
-        .unwrap();
-
-        let test_new_edition = TestEdition::new(&test_new_metadata.mint.pubkey());
-        let (program_authority, _) = find_program_authority(&metaplex_nft_packs::id());
-
-        let tx = Transaction::new_signed_with_payer(
-            &[instruction::mint_new_edition_from_card(
-                &metaplex_nft_packs::id(),
-                &self.keypair.pubkey(),
-                &self.minting_authority.pubkey(),
-                &test_pack_card.pubkey,
-                &test_new_metadata.pubkey,
-                &test_new_edition.pubkey,
-                &test_master_edition.pubkey,
-                &test_new_metadata.mint.pubkey(),
-                new_mint_authority,
-                &context.payer.pubkey(),
-                &program_authority,
-                &test_pack_card.token_account.pubkey(),
-                new_metadata_update_authority,
-                &test_metadata.pubkey,
-                &test_metadata.mint.pubkey(),
-                index,
-            )],
-            Some(&context.payer.pubkey()),
-            &[&self.minting_authority, &context.payer],
-            context.last_blockhash,
-        );
-
-        context.banks_client.process_transaction(tx).await
-    }
-
     pub async fn transfer_pack_authority(
         &self,
         context: &mut ProgramTestContext,
@@ -316,7 +249,6 @@ impl TestPackSet {
         context: &mut ProgramTestContext,
         mutable: Option<bool>,
         name: Option<[u8; 32]>,
-        total_packs: Option<u32>,
     ) -> transport::Result<()> {
         let tx = Transaction::new_signed_with_payer(
             &[instruction::edit_pack(
@@ -326,33 +258,6 @@ impl TestPackSet {
                 EditPackSetArgs {
                     mutable,
                     name,
-                    total_packs,
-                },
-            )],
-            Some(&context.payer.pubkey()),
-            &[&self.authority, &context.payer],
-            context.last_blockhash,
-        );
-
-        context.banks_client.process_transaction(tx).await
-    }
-
-    pub async fn edit_card(
-        &self,
-        context: &mut ProgramTestContext,
-        test_pack_card: &TestPackCard,
-        distribution_type: Option<DistributionType>,
-        max_supply: Option<u32>,
-    ) -> transport::Result<()> {
-        let tx = Transaction::new_signed_with_payer(
-            &[instruction::edit_pack_card(
-                &metaplex_nft_packs::id(),
-                &self.keypair.pubkey(),
-                &test_pack_card.pubkey,
-                &self.authority.pubkey(),
-                EditPackCardArgs {
-                    distribution_type,
-                    max_supply,
                 },
             )],
             Some(&context.payer.pubkey()),
@@ -367,8 +272,8 @@ impl TestPackSet {
         &self,
         context: &mut ProgramTestContext,
         test_pack_voucher: &TestPackVoucher,
+        voucher_master: &Pubkey,
         action_on_prove: Option<ActionOnProve>,
-        max_supply: Option<u32>,
         number_to_open: Option<u32>,
     ) -> transport::Result<()> {
         let tx = Transaction::new_signed_with_payer(
@@ -377,9 +282,9 @@ impl TestPackSet {
                 &self.keypair.pubkey(),
                 &test_pack_voucher.pubkey,
                 &self.authority.pubkey(),
+                voucher_master,
                 EditPackVoucherArgs {
                     action_on_prove,
-                    max_supply,
                     number_to_open,
                 },
             )],
@@ -525,6 +430,29 @@ impl TestPackSet {
                 user_token_account,
                 voucher,
             )],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, user_wallet],
+            context.last_blockhash,
+        );
+
+        context.banks_client.process_transaction(tx).await
+    }
+
+    pub async fn request_card_for_redeem(
+        &self,
+        context: &mut ProgramTestContext,
+        user_wallet: &Keypair,
+        random_oracle: &Pubkey,
+    ) -> transport::Result<()> {
+        let tx = Transaction::new_signed_with_payer(
+            &[
+                instruction::request_card_for_redeem(
+                    &metaplex_nft_packs::id(),
+                    &self.keypair.pubkey(),
+                    &user_wallet.pubkey(),
+                    random_oracle,
+                )
+            ],
             Some(&context.payer.pubkey()),
             &[&context.payer, user_wallet],
             context.last_blockhash,

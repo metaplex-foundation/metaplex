@@ -2,7 +2,8 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction::{AddCardToPackArgs, InitPackSetArgs},
-    state::{AccountType, DistributionType},
+    state::{AccountType, PackDistributionType},
+    error::NFTPacksError,
 };
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
@@ -10,6 +11,7 @@ use solana_sdk::{
     signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
 };
 use utils::*;
+use num_traits::FromPrimitive;
 
 async fn setup() -> (
     ProgramTestContext,
@@ -26,8 +28,12 @@ async fn setup() -> (
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -85,7 +91,7 @@ async fn success() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased(1000000),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -111,7 +117,7 @@ async fn fail_invalid_index() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased(1000000),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -130,7 +136,7 @@ async fn fail_invalid_index() {
             &user,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased(1000000),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -143,4 +149,27 @@ async fn fail_invalid_index() {
             InstructionError::InvalidArgument
         ))
     );
+}
+
+#[tokio::test]
+async fn failed_wrong_probability() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let result = test_pack_set
+        .add_card(
+            &mut context,
+            &test_pack_card,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddCardToPackArgs {
+                max_supply: Some(5),
+                probability: Some(5000),
+                index: test_pack_card.index,
+            },
+        )
+        .await;
+    
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::CardShouldntHaveProbabilityValue, 1);
 }

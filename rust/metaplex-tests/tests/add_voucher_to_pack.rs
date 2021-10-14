@@ -2,7 +2,7 @@ mod utils;
 
 use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
-    state::{AccountType, ActionOnProve},
+    state::{AccountType, ActionOnProve, PackDistributionType},
 };
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
@@ -26,8 +26,12 @@ async fn setup() -> (
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -84,7 +88,6 @@ async fn success() {
             &test_metadata,
             &user,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 4,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -109,7 +112,6 @@ async fn fail_invalid_index() {
             &test_metadata,
             &user,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 4,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -128,7 +130,6 @@ async fn fail_invalid_index() {
             &test_metadata,
             &user,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 4,
                 action_on_prove: ActionOnProve::Burn,
             },

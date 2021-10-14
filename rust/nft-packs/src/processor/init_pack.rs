@@ -57,7 +57,7 @@ pub fn init_pack(
     }
 
     if let Some(redeem_end_date) = args.redeem_end_date {
-        if redeem_end_date < redeem_start_date {
+        if redeem_end_date <= redeem_start_date {
             return Err(NFTPacksError::WrongRedeemDate.into());
         }
     }

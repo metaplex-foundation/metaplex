@@ -65,6 +65,10 @@ pub fn add_card_to_pack(
         return Err(NFTPacksError::CardProbabilityMissing.into());
     }
 
+    if pack_set.distribution_type == PackDistributionType::MaxSupply && probability.is_some() {
+        return Err(NFTPacksError::CardShouldntHaveProbabilityValue.into());
+    }
+
     if let Some(probability_value) = probability {
         if probability_value == 0 || probability_value > MAX_PROBABILITY_VALUE {
             return Err(NFTPacksError::WrongCardProbability.into());

@@ -3,7 +3,7 @@ mod utils;
 use metaplex_nft_packs::{
     error::NFTPacksError,
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
-    state::ActionOnProve,
+    state::{ActionOnProve, PackDistributionType},
 };
 use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
@@ -31,8 +31,12 @@ async fn setup(
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 5,
-                mutable: mutable,
+                uri: String::from("some link to storage"),
+                mutable,
+                distribution_type: PackDistributionType::Fixed,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -77,7 +81,6 @@ async fn setup(
             &test_metadata,
             &user,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 4,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -102,23 +105,23 @@ async fn success() {
         test_pack_set,
         test_pack_voucher,
         _test_metadata,
-        _test_master_edition,
+        test_master_edition,
         _user,
     ) = setup(true).await;
 
     assert_eq!(
-        test_pack_voucher.get_data(&mut context).await.max_supply,
-        Some(5)
+        test_pack_voucher.get_data(&mut context).await.number_to_open,
+        4
     );
 
     test_pack_set
-        .edit_voucher(&mut context, &test_pack_voucher, None, Some(1337), None)
+        .edit_voucher(&mut context, &test_pack_voucher, &test_master_edition.pubkey, None, Some(2))
         .await
         .unwrap();
 
     assert_eq!(
-        test_pack_voucher.get_data(&mut context).await.max_supply,
-        Some(1337)
+        test_pack_voucher.get_data(&mut context).await.number_to_open,
+        2
     );
 }
 
@@ -129,13 +132,13 @@ async fn fail_immutable() {
         test_pack_set,
         test_pack_voucher,
         _test_metadata,
-        _test_master_edition,
+        test_master_edition,
         _user,
     ) = setup(false).await;
 
     let result = test_pack_set
-        .edit_voucher(&mut context, &test_pack_voucher, None, Some(1337), None)
+        .edit_voucher(&mut context, &test_pack_voucher, &test_master_edition.pubkey, None, Some(2))
         .await;
 
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet);
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet, 0);
 }

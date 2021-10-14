@@ -3,8 +3,7 @@ mod utils;
 use metaplex_nft_packs::{
     find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
     instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs, NFTPacksInstruction},
-    state::{ActionOnProve, DistributionType, ProvingProcess},
-    PRECISION,
+    state::{ActionOnProve, PackDistributionType, ProvingProcess},
 };
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -56,7 +55,7 @@ async fn create_master_edition(
 }
 
 #[tokio::test]
-async fn success() {
+async fn success_fixed_probability() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
     let test_pack_set = TestPackSet::new();
@@ -65,8 +64,12 @@ async fn success() {
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 1,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::Fixed,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -117,7 +120,7 @@ async fn success() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::FixedNumber(1),
+                probability: Some(10000),
                 index: test_pack_card.index,
             },
         )
@@ -134,7 +137,6 @@ async fn success() {
             &voucher_metadata,
             &voucher_master_token_holder,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 1,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -173,6 +175,12 @@ async fn success() {
 
     let test_randomness_oracle = TestRandomnessOracle::new();
     test_randomness_oracle.init(&mut context).await.unwrap();
+    test_randomness_oracle
+        .update(&mut context, [1u8; 32])
+        .await
+        .unwrap();
+
+    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
 
     test_pack_set
         .claim_pack(
@@ -196,12 +204,13 @@ async fn success() {
 
     let card_master_edition = card_master_edition.get_data(&mut context).await;
 
-    assert_eq!(proving_process.claimed_cards, 1);
+    assert_eq!(proving_process.cards_redeemed, 1);
+    assert_eq!(proving_process.next_card_to_redeem, 0);
     assert_eq!(card_master_edition.supply, 1);
 }
 
 #[tokio::test]
-async fn success_with_oracle() {
+async fn success_max_supply_probability() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
     let test_pack_set = TestPackSet::new();
@@ -210,8 +219,12 @@ async fn success_with_oracle() {
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 1,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -262,7 +275,7 @@ async fn success_with_oracle() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::ProbabilityBased(1 * PRECISION as u64),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -279,7 +292,6 @@ async fn success_with_oracle() {
             &voucher_metadata,
             &voucher_master_token_holder,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 1,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -325,6 +337,8 @@ async fn success_with_oracle() {
     let new_mint = Keypair::new();
     let new_mint_token_acc = Keypair::new();
 
+    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+
     test_pack_set
         .claim_pack(
             &mut context,
@@ -347,15 +361,9 @@ async fn success_with_oracle() {
 
     let card_master_edition = card_master_edition.get_data(&mut context).await;
 
-    // if user get the NFT based on set probability
-    if card_master_edition.supply == 1 {
-        assert_eq!(proving_process.claimed_card_editions, 1);
-        assert_eq!(proving_process.claimed_cards, 0);
-    } else {
-        // case when user did not get the NFT
-        assert_eq!(proving_process.claimed_cards, 1);
-        assert_eq!(proving_process.claimed_card_editions, 0);
-    }
+    assert_eq!(proving_process.cards_redeemed, 1);
+    assert_eq!(proving_process.next_card_to_redeem, 0);
+    assert_eq!(card_master_edition.supply, 1);
 }
 
 #[tokio::test]
@@ -368,8 +376,12 @@ async fn fails_wrong_user_wallet() {
             &mut context,
             InitPackSetArgs {
                 name: [7; 32],
-                total_packs: 1,
+                uri: String::from("some link to storage"),
                 mutable: true,
+                distribution_type: PackDistributionType::MaxSupply,
+                allowed_amount_to_redeem: 10,
+                redeem_start_date: None,
+                redeem_end_date: None,
             },
         )
         .await
@@ -420,7 +432,7 @@ async fn fails_wrong_user_wallet() {
             &card_master_token_holder,
             AddCardToPackArgs {
                 max_supply: Some(5),
-                probability_type: DistributionType::FixedNumber(1),
+                probability: None,
                 index: test_pack_card.index,
             },
         )
@@ -437,7 +449,6 @@ async fn fails_wrong_user_wallet() {
             &voucher_metadata,
             &voucher_master_token_holder,
             AddVoucherToPackArgs {
-                max_supply: Some(5),
                 number_to_open: 1,
                 action_on_prove: ActionOnProve::Burn,
             },
@@ -458,6 +469,15 @@ async fn fails_wrong_user_wallet() {
         )
         .await
         .unwrap();
+
+    let test_randomness_oracle = TestRandomnessOracle::new();
+    test_randomness_oracle.init(&mut context).await.unwrap();
+    test_randomness_oracle
+        .update(&mut context, [1u8; 32])
+        .await
+        .unwrap();
+
+    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
 
     let (proving_process_key, _) = find_proving_process_program_address(
         &metaplex_nft_packs::id(),
