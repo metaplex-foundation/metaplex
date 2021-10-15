@@ -58,6 +58,21 @@
             "twitterUrl": "https://twitter.com/",
             "daringDragonsUrl": "https://daringdragons.art/",
             "description": "Connect the SPL wallet of your choice by clicking the wallet icon in the top right corner."
+        },
+        {
+            "id": "5",
+            "userName": "userName4",
+            "items": 100,
+            "owner": 600,
+            "floorPrice": 300,
+            "volumeTraded": 500,
+            "collectionName": "Apeshit1",
+            "backgroundImage": "/images/apeshit.png",
+            "image": "/images/apeshitpreview.png",
+            "discordUrl": "https://discord.com/",
+            "twitterUrl": "https://twitter.com/",
+            "daringDragonsUrl": "https://daringdragons.art/",
+            "description": "Connect the SPL wallet of your choice by clicking the wallet icon in the top right corner."
         }
     ]
 }

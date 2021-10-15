@@ -6,7 +6,6 @@ export const DEFAULT_COLLECTION_FAMILY = 'Ninja';
 
 export const useCollections = () => {
   return useMemo(() => {
-    console.log(json.collections);
     const collections = json.collections;
     return { collections };
   }, []);

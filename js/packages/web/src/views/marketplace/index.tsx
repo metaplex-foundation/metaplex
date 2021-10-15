@@ -52,7 +52,7 @@ export const MarketplaceView = () => {
     const arr: any = [];
     if (collection) {
       collection.map(item => {
-        arr.push(item.ParsedAccount);
+        arr.push(item);
       });
       setOnePageItem(arr.slice(activePage * 9, activePage * 9 + 9));
       setPageLen(arr.length);
@@ -264,12 +264,14 @@ export const MarketplaceView = () => {
                 {
                   !isLoading ? (
                     onePageItem.map((m, idx) => {
-                      const id = m.pubkey;
+                      const id = m.ParsedAccount.pubkey;
                       return (
                         <AuctionCard
                           key={id}
                           pubkey={id}
-                          lamports={m.account.lamports}
+                          auction={m.Auction}
+                          price={m.Price}
+                          lamports={m.ParsedAccount.account.lamports}
                         />
                       );
                     })
@@ -306,12 +308,12 @@ export const MarketplaceView = () => {
               {
                 !isLoading ? (
                   onePageItem.map((item, idx) => {
-                    const id = item.pubkey;
+                    const id = item.ParsedAccount.pubkey;
                     return (
                       <ItemList
                         key={id}
-                        pubkey={item.pubkey}
-                        lamports={item.account.lamports}
+                        pubkey={item.ParsedAccount.pubkey}
+                        lamports={item.ParsedAccount.account.lamports}
                       />
                     );
                   })

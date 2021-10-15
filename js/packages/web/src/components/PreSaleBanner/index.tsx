@@ -3,7 +3,7 @@ import { Col, Row, Button, Skeleton } from 'antd';
 
 import { AuctionView, useArt } from '../../hooks';
 import { ArtContent } from '../ArtContent';
-import { AuctionCard } from '../AuctionCard';
+import { AuctionCard } from '../AuctionView';
 import { Link } from 'react-router-dom';
 import { useMeta } from '../../contexts';
 

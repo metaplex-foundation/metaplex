@@ -33,8 +33,8 @@ const MENU_ITEMS = [
   },
   {
     label: 'Help',
-    href: '#',
-    external: false,
+    href: 'https://docs.ninjaprotocol.io/guides',
+    external: true,
   },
 ];
 
