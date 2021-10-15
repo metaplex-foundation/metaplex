@@ -19,8 +19,8 @@ use {
         sysvar::Sysvar,
     },
     spl_token::state::Account,
-    spl_token_metadata::state::{MasterEditionV1, Metadata},
-    spl_token_vault::state::{SafetyDepositBox, Vault},
+    metaplex_token_metadata::state::{MasterEditionV1, Metadata},
+    metaplex_token_vault::state::{SafetyDepositBox, Vault},
 };
 
 pub fn process_deprecated_validate_participation(
@@ -106,10 +106,10 @@ pub fn process_deprecated_validate_participation(
         &store.token_metadata_program,
         open_master_edition_info,
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
             store.token_metadata_program.as_ref(),
             &open_edition_metadata.mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ],
     )?;
 
