@@ -509,7 +509,7 @@ const UploadStep = (props: {
         <Button
           type="primary"
           size="large"
-          disabled={disableContinue}
+          disabled={!!disableContinue}
           onClick={() => {
             props.setAttributes({
               ...props.attributes,
