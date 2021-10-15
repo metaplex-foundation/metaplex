@@ -8,9 +8,9 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use spl_token_metadata::error::MetadataError;
-use spl_token_metadata::state::Key;
-use spl_token_metadata::{id, instruction};
+use metaplex_token_metadata::error::MetadataError;
+use metaplex_token_metadata::state::Key;
+use metaplex_token_metadata::{id, instruction};
 use utils::*;
 
 #[tokio::test]

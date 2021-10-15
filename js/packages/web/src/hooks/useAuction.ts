@@ -30,6 +30,7 @@ export const useAuction = (id: StringPublicKey) => {
     metadataByMasterEdition,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
     auctionDataExtended,
+    metadataByAuction,
   } = useMeta();
 
   useEffect(() => {
@@ -52,8 +53,8 @@ export const useAuction = (id: StringPublicKey) => {
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
         cachedRedemptionKeys,
+        metadataByAuction,
         undefined,
-        existingAuctionView || undefined,
       );
 
       if (auctionView) setAuctionView(auctionView);
@@ -74,6 +75,7 @@ export const useAuction = (id: StringPublicKey) => {
     masterEditionsByOneTimeAuthMint,
     metadataByMasterEdition,
     cachedRedemptionKeys,
+    metadataByAuction,
   ]);
   return existingAuctionView;
 };

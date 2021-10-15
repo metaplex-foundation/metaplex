@@ -1037,9 +1037,9 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "arrayref",
+ "metaplex-token-metadata",
  "spl-associated-token-account",
  "spl-token",
- "spl-token-metadata",
 ]
 
 [[package]]
@@ -1749,6 +1749,120 @@ dependencies = [
 ]
 
 [[package]]
+name = "metaplex"
+version = "0.0.1"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "metaplex-auction",
+ "metaplex-token-metadata",
+ "metaplex-token-vault",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-auction"
+version = "0.0.1"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-test-client"
+version = "0.1.0"
+dependencies = [
+ "arrayref",
+ "bincode",
+ "borsh",
+ "clap",
+ "metaplex",
+ "metaplex-auction",
+ "metaplex-token-metadata",
+ "metaplex-token-vault",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "spl-token",
+]
+
+[[package]]
+name = "metaplex-token-metadata"
+version = "0.0.1"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "metaplex-token-vault",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-token-metadata-test-client"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "borsh",
+ "clap",
+ "metaplex-token-metadata",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "spl-token",
+]
+
+[[package]]
+name = "metaplex-token-vault"
+version = "0.0.1"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-token-vault-test-client"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "borsh",
+ "clap",
+ "metaplex-token-vault",
+ "solana-clap-utils",
+ "solana-cli-config",
+ "solana-client",
+ "solana-program",
+ "solana-sdk",
+ "spl-token",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1821,8 +1935,8 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "arrayref",
+ "metaplex-token-metadata",
  "spl-token",
- "spl-token-metadata",
 ]
 
 [[package]]
@@ -3522,83 +3636,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "spl-auction"
-version = "0.0.1"
-dependencies = [
- "arrayref",
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-token",
- "thiserror",
-]
-
-[[package]]
-name = "spl-auction-test-client"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "borsh",
- "clap",
- "rand 0.8.4",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "spl-auction",
- "spl-token",
-]
-
-[[package]]
 name = "spl-memo"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd0dc6f70db6bacea7ff25870b016a65ba1d1b6013536f08e4fd79a8f9005325"
 dependencies = [
  "solana-program",
-]
-
-[[package]]
-name = "spl-metaplex"
-version = "0.0.1"
-dependencies = [
- "arrayref",
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-auction",
- "spl-token",
- "spl-token-metadata",
- "spl-token-vault",
- "thiserror",
-]
-
-[[package]]
-name = "spl-metaplex-test-client"
-version = "0.1.0"
-dependencies = [
- "arrayref",
- "bincode",
- "borsh",
- "clap",
- "serde",
- "serde_derive",
- "serde_json",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "spl-auction",
- "spl-metaplex",
- "spl-token",
- "spl-token-metadata",
- "spl-token-vault",
 ]
 
 [[package]]
@@ -3613,66 +3656,6 @@ dependencies = [
  "num_enum",
  "solana-program",
  "thiserror",
-]
-
-[[package]]
-name = "spl-token-metadata"
-version = "0.0.1"
-dependencies = [
- "arrayref",
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-token",
- "spl-token-vault",
- "thiserror",
-]
-
-[[package]]
-name = "spl-token-metadata-test-client"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "borsh",
- "clap",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "spl-token",
- "spl-token-metadata",
-]
-
-[[package]]
-name = "spl-token-vault"
-version = "0.0.1"
-dependencies = [
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-token",
- "thiserror",
-]
-
-[[package]]
-name = "spl-token-vault-test-client"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "borsh",
- "clap",
- "solana-clap-utils",
- "solana-cli-config",
- "solana-client",
- "solana-program",
- "solana-sdk",
- "spl-token",
- "spl-token-vault",
 ]
 
 [[package]]

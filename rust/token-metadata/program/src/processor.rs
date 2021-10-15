@@ -34,7 +34,7 @@ use {
         pubkey::Pubkey,
     },
     spl_token::state::{Account, Mint},
-    spl_token_vault::{error::VaultError, state::VaultState},
+    metaplex_token_vault::{error::VaultError, state::VaultState},
 };
 
 pub fn process_instruction<'a>(
@@ -189,7 +189,13 @@ pub fn process_update_metadata_accounts(
 
     if let Some(data) = optional_data {
         if metadata.is_mutable {
-            assert_data_valid(&data, update_authority_info.key, &metadata, false)?;
+            assert_data_valid(
+                &data,
+                update_authority_info.key,
+                &metadata,
+                false,
+                update_authority_info.is_signer,
+            )?;
             metadata.data = data;
         } else {
             return Err(MetadataError::DataIsImmutable.into());
@@ -495,11 +501,11 @@ pub fn process_mint_new_edition_from_master_edition_via_vault_proxy<'a>(
     let safety_deposit_data = safety_deposit_info.data.borrow();
 
     // Since we're crunching out borsh for CPU units, do type checks this way
-    if vault_data[0] != spl_token_vault::state::Key::VaultV1 as u8 {
+    if vault_data[0] != metaplex_token_vault::state::Key::VaultV1 as u8 {
         return Err(VaultError::DataTypeMismatch.into());
     }
 
-    if safety_deposit_data[0] != spl_token_vault::state::Key::SafetyDepositBoxV1 as u8 {
+    if safety_deposit_data[0] != metaplex_token_vault::state::Key::SafetyDepositBoxV1 as u8 {
         return Err(VaultError::DataTypeMismatch.into());
     }
 
@@ -512,7 +518,7 @@ pub fn process_mint_new_edition_from_master_edition_via_vault_proxy<'a>(
     let owner = get_owner_from_token_account(store_info)?;
 
     let seeds = &[
-        spl_token_vault::state::PREFIX.as_bytes(),
+        metaplex_token_vault::state::PREFIX.as_bytes(),
         token_vault_program_info.key.as_ref(),
         vault_info.key.as_ref(),
     ];

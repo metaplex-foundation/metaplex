@@ -5,7 +5,7 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
 };
-use spl_token_metadata::{
+use metaplex_token_metadata::{
     id, instruction,
     state::{Creator, Data, PREFIX},
 };
@@ -36,7 +36,7 @@ impl Metadata {
     pub async fn get_data(
         &self,
         context: &mut ProgramTestContext,
-    ) -> spl_token_metadata::state::Metadata {
+    ) -> metaplex_token_metadata::state::Metadata {
         let account = get_account(context, &self.pubkey).await;
         try_from_slice_unchecked(&account.data).unwrap()
     }

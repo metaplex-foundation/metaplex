@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
+import { MetaAvatar } from '../../components/MetaAvatar';
+import { AmountLabel } from '../../components/AmountLabel';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
@@ -27,6 +29,7 @@ import {
   AuctionState,
   StringPublicKey,
   toPublicKey,
+  useMeta,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
@@ -35,8 +38,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { MetaAvatar } from '../../components/MetaAvatar';
-import { AmountLabel } from '../../components/AmountLabel';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -85,6 +87,10 @@ export const AuctionView = () => {
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
+  const { pullAuctionPage } = useMeta();
+  useEffect(() => {
+    pullAuctionPage(id);
+  }, []);
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -312,7 +318,6 @@ const BidLine = (props: {
                 alignItems: 'center',
               }}
               displaySOL={true}
-              iconSize={24}
               amount={formatTokenAmount(bid.info.lastBid, mint)}
             />
           </div>
@@ -333,17 +338,28 @@ const BidLine = (props: {
             }}
             address={bidder}
           />{' '}
-          <span style={{ opacity: 0.7 }}>
-            {bidderTwitterHandle ? (
+          {bidderTwitterHandle ? (
+            <Row className="pubkey-row">
               <a
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
               >{`@${bidderTwitterHandle}`}</a>
-            ) : (
-              shortenAddress(bidder)
-            )}
-          </span>
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
+            </Row>
+          ) : (
+            <Row className="pubkey-row">
+              {shortenAddress(bidder)}
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
+            </Row>
+          )}
+          {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
         </div>
       </Col>
     </Row>

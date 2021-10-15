@@ -5,15 +5,15 @@ use {
         state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
         utils::{assert_authority_correct, assert_owned_by},
     },
+    metaplex_auction::{
+        instruction::{end_auction_instruction, EndAuctionArgs},
+        processor::{AuctionData, AuctionDataExtended, BidState},
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         pubkey::Pubkey,
-    },
-    spl_auction::{
-        instruction::{end_auction_instruction, EndAuctionArgs},
-        processor::{AuctionData, AuctionDataExtended, BidState},
     },
 };
 
@@ -82,18 +82,14 @@ pub fn process_end_auction(
         return Err(MetaplexError::AuctionManagerAuctionProgramMismatch.into());
     }
 
-    if auction_manager.status() != AuctionManagerStatus::Validated {
-        return Err(MetaplexError::AuctionManagerMustBeValidated.into());
+    if auction_manager.status() == AuctionManagerStatus::Finished {
+        return Err(MetaplexError::AuctionManagerInFishedState.into());
     }
 
     let auction_key = auction_manager.auction();
     let seeds = &[PREFIX.as_bytes(), &auction_key.as_ref()];
     let (_, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
-    let authority_seeds = &[
-        PREFIX.as_bytes(),
-        &auction_key.as_ref(),
-        &[bump_seed],
-    ];
+    let authority_seeds = &[PREFIX.as_bytes(), &auction_key.as_ref(), &[bump_seed]];
 
     issue_end_auction(
         auction_program_info.clone(),
