@@ -42,6 +42,7 @@ import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
 import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { RcFile } from 'antd/lib/upload';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -307,6 +308,35 @@ const CategoryStep = (props: {
   );
 };
 
+interface ARValidationError {
+  violation: 'large' | 'small' | null;
+  message: string;
+}
+
+const validateARFileUpload = (file: File | RcFile): ARValidationError => {
+  const sizeKB = file.size / 1024;
+  const fileName = file.name;
+
+  if (sizeKB < 25) {
+    return {
+      violation: 'small',
+      message: `The file ${fileName} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`
+    };
+  }
+
+  if (sizeKB > 10000) {
+    return {
+      violation: 'large',
+      message: `The file ${fileName} is too large. It is ${Math.round(10 * (sizeKB / 1000) / 10)}MB but the maximum supported is 10MB.`
+    };
+  }
+
+  return {
+    violation: null,
+    message: 'The file passed all checks'
+  };
+}
+
 const UploadStep = (props: {
   attributes: IMetadataExtension;
   setAttributes: (attr: IMetadataExtension) => void;
@@ -319,8 +349,9 @@ const UploadStep = (props: {
   );
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
   const [coverArtError, setCoverArtError] = useState<string>();
+  const [mainArtError, setMainArtError] = useState<string>();
 
-  const disableContinue = !coverFile;
+  const disableContinue = !coverFile || coverArtError || mainArtError;
 
   useEffect(() => {
     props.setAttributes({
@@ -391,15 +422,16 @@ const UploadStep = (props: {
           fileList={coverFile ? [coverFile as any] : []}
           onChange={async info => {
             const file = info.file.originFileObj;
+            setCoverFile(undefined);
 
             if (!file) {
               return;
             }
 
-            const sizeKB = file.size / 1024;
+            const { violation, message } = validateARFileUpload(file);
 
-            if (sizeKB < 25) {
-              setCoverArtError(`The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`);
+            if (violation) {
+              setCoverArtError(message);
               return;
             }
 
@@ -413,11 +445,12 @@ const UploadStep = (props: {
             </h3>
           </div>
           {coverArtError ? (
-            <Text type="danger">{coverArtError}</Text>
+            <>
+              <Text type="danger">*</Text><Text italic>{coverArtError}</Text>
+            </>
           ) : (
             <p className="ant-upload-text">Drag and drop, or click to browse</p>
           )}
-
         </Dragger>
 
       </Row>
@@ -439,7 +472,21 @@ const UploadStep = (props: {
             onChange={async info => {
               const file = info.file.originFileObj;
 
-              if (file) setMainFile(file);
+              setMainFile(undefined);
+
+              if (!file) {
+                return;
+              }
+
+              const { violation, message } = validateARFileUpload(file);
+
+              if (violation) {
+                setMainArtError(message);
+                return;
+              }
+
+              setMainFile(file);
+              setMainArtError(undefined);
             }}  // TODO: enable when using payer account to avoid 2nd popup
             onRemove={() => {
               setMainFile(undefined);
@@ -448,7 +495,13 @@ const UploadStep = (props: {
             <div className="ant-upload-drag-icon">
               <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
             </div>
-            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            {mainArtError ? (
+              <>
+                <Text type="danger">*</Text><Text italic>{mainArtError}</Text>
+              </>
+            ) : (
+              <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            )}
           </Dragger>
         </Row>
       )}
