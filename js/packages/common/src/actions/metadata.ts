@@ -254,6 +254,7 @@ export class Metadata {
 
   public async init() {
     toPublicKey(programIds().metadata);
+    /*
     This nonce stuff doesnt work - we are doing something wrong here. TODO fix.
     if (this.editionNonce !== null) {
       this.edition = (
@@ -269,7 +270,6 @@ export class Metadata {
       ).toBase58();
     } else {*/
     this.edition = await getEdition(this.mint);
-    //}
     this.masterEdition = this.edition;
   }
 }
