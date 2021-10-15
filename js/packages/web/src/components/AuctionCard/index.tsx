@@ -254,7 +254,7 @@ export const AuctionCard = ({
   const gapTick = auctionExtended
     ? auctionExtended.info.gapTickSizePercentage
     : 0;
-  const tickSize = auctionExtended ? auctionExtended.info.tickSize : 0;
+  const tickSize = auctionExtended?.info?.tickSize ? auctionExtended.info.tickSize : 0;
   const tickSizeInvalid = !!(
     tickSize &&
     value &&
@@ -639,7 +639,7 @@ export const AuctionCard = ({
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                         : ''
                     }
-                    placeholder={`Bid ${minBid} SOL or more`}
+                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more` }
                   />
                 </div>
                 <div className={'bid-buttons'}>
