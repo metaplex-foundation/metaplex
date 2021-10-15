@@ -366,6 +366,7 @@ function InnerAdminView({
         </>
       )}
       <Col>
+        <p style={{'marginTop': '30px'}}>Upgrade the performance of your existing auctions.</p>
         <Row>
           <Button
             disabled={loading}
@@ -375,7 +376,7 @@ function InnerAdminView({
               setLoading(false);
             }}
           >
-            {loading ? <Spin /> : <span>Make Metaplex Great Again</span>}
+            {loading ? <Spin /> : <span>Upgrade Auction Performance</span>}
           </Button>
         </Row>
       </Col>
