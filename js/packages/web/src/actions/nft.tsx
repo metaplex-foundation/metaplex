@@ -62,8 +62,16 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
 
   const result: IArweaveResult = await resp.json();
 
-  if (result.error) {
-    return Promise.reject(new Error(result.error));
+  const errors = (result.messages || []).reduce((memo: string[], upload) => {
+    if (upload.status === "fail" && upload.error) {
+      memo = [...memo, upload.error];
+    }
+
+    return memo;
+  }, [])
+
+  if (errors.length > 0) {
+    return Promise.reject(new Error(`The file or metadata failed to upload to Arewave: ${errors.join(", ")}`));
   }
 
   return result;
@@ -188,17 +196,6 @@ export const mintNFT = async (
   );
   progressCallback(2)
 
-  // TODO: enable when using payer account to avoid 2nd popup
-  // const block = await connection.getRecentBlockhash('singleGossip');
-  // instructions.push(
-  //   SystemProgram.transfer({
-  //     fromPubkey: wallet.publicKey,
-  //     toPubkey: payerPublicKey,
-  //     lamports: 0.5 * LAMPORTS_PER_SOL // block.feeCalculator.lamportsPerSignature * 3 + mintRent, // TODO
-  //   }),
-  // );
-
-
   const { txid } = await sendTransactionWithRetry(
     connection,
     wallet,
@@ -236,10 +233,9 @@ export const mintNFT = async (
   data.append('tags', JSON.stringify(tags));
   realFiles.map(f => data.append('file[]', f));
 
-  // TODO: convert to absolute file name for image
+  progressCallback(6)
 
   const result: IArweaveResult = await uploadToArweave(data);
-  progressCallback(6)
 
   const metadataFile = result.messages?.find(
     m => m.filename === RESERVED_TXN_MANIFEST,
@@ -248,7 +244,8 @@ export const mintNFT = async (
     const updateInstructions: TransactionInstruction[] = [];
     const updateSigners: Keypair[] = [];
 
-    // TODO: connect to testnet arweave
+    progressCallback(7)
+
     const arweaveLink = `https://arweave.net/${metadataFile.transactionId}`;
     await updateMetadata(
       new Data({
@@ -277,7 +274,6 @@ export const mintNFT = async (
       ),
     );
 
-    progressCallback(7)
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
@@ -288,26 +284,6 @@ export const mintNFT = async (
       payerPublicKey,
       updateInstructions,
     );
-
-    // TODO: enable when using payer account to avoid 2nd popup
-    /*  if (maxSupply !== undefined)
-      updateInstructions.push(
-        setAuthority({
-          target: authTokenAccount,
-          currentAuthority: payerPublicKey,
-          newAuthority: wallet.publicKey,
-          authorityType: 'AccountOwner',
-        }),
-      );
-*/
-    // TODO: enable when using payer account to avoid 2nd popup
-    // Note with refactoring this needs to switch to the updateMetadataAccount command
-    // await transferUpdateAuthority(
-    //   metadataAccount,
-    //   payerPublicKey,
-    //   wallet.publicKey,
-    //   updateInstructions,
-    // );
 
     progressCallback(8)
 
