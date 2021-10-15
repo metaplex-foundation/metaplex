@@ -8,6 +8,7 @@ export async function setStore(
   isPublic: boolean,
   admin: StringPublicKey,
   payer: StringPublicKey,
+  gatekeeperNetwork: StringPublicKey | undefined,
   instructions: TransactionInstruction[],
 ) {
   const PROGRAM_IDS = programIds();
@@ -16,7 +17,10 @@ export async function setStore(
     throw new Error('Store not initialized');
   }
 
-  const value = new SetStoreArgs({ public: isPublic });
+  const value = new SetStoreArgs({
+    public: isPublic,
+    gatekeeperNetwork: gatekeeperNetwork || null
+  });
   const data = Buffer.from(serialize(SCHEMA, value));
 
   const keys = [

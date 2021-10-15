@@ -1,7 +1,6 @@
 use {
     crate::{
-        error::MetaplexError,
-        state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
+        state::{get_auction_manager, AuctionManagerStatus, PREFIX},
         utils::{
             assert_authority_correct, assert_derivation, assert_owned_by, assert_signer,
             end_auction,
@@ -15,6 +14,10 @@ use {
     },
     spl_auction::processor::AuctionData,
     spl_token_vault::{instruction::create_set_authority_instruction, state::Vault},
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 fn set_vault_authority_to_auction_manager_authority<'a>(

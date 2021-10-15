@@ -57,6 +57,7 @@ struct Accounts<'a, 'b: 'a> {
     auction: &'a AccountInfo<'b>,
     auction_extended: &'a AccountInfo<'b>,
     payer: &'a AccountInfo<'b>,
+    store: &'a AccountInfo<'b>,
     rent: &'a AccountInfo<'b>,
     system: &'a AccountInfo<'b>,
 }
@@ -70,6 +71,7 @@ fn parse_accounts<'a, 'b: 'a>(
         payer: next_account_info(account_iter)?,
         auction: next_account_info(account_iter)?,
         auction_extended: next_account_info(account_iter)?,
+        store: next_account_info(account_iter)?,
         rent: next_account_info(account_iter)?,
         system: next_account_info(account_iter)?,
     };

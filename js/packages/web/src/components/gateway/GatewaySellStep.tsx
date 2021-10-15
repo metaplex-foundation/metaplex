@@ -1,8 +1,12 @@
-import React from "react";
-import {Button, Row, Select} from "antd";
-import {gatekeeperNetworks, GatekeeperNetworkSelection} from "../../contexts/gatekeeperNetwork";
+import React, {useEffect} from "react";
+import {Button, Row} from "antd";
+import {GatekeeperNetworkSelection} from "../../contexts/gatekeeperNetwork";
 import {AuctionState} from "../../views/auctionCreate";
 import {omit} from "lodash";
+import {getGatekeeperNetworkByKey} from "./GatewayRulesetSelector";
+import {GatewayDescriptionText} from "./GatewayDescriptionText";
+import {GatewayRulesetComponent} from "./GatewayRulesetComponent";
+import {useMeta} from "@oyster/common";
 
 export const GatewaySellStep:React.FC<{
   attributes: AuctionState;
@@ -14,12 +18,14 @@ export const GatewaySellStep:React.FC<{
         confirm,
       }) => {
 
+  const { store } = useMeta();
+
   const selectGatekeeperNetwork = (gkn?:GatekeeperNetworkSelection) => {
     if (!gkn) {
       // remove the gatekeeper network from the auction properties
       setAttributes(omit(attributes, 'gatekeeperNetwork'))
     } else {
-      // set the selectedgatekeeper network on the auction properties
+      // set the selected gatekeeper network on the auction properties
       setAttributes({
         ...attributes,
         gatekeeperNetwork: gkn
@@ -27,53 +33,28 @@ export const GatewaySellStep:React.FC<{
     }
   };
 
-  const selectGatekeeperNetworkByKey = (selectedKey) => {
-    if (selectedKey === '') selectGatekeeperNetwork(undefined)
-    const foundGatekeeperNetwork = gatekeeperNetworks.find(({publicKey}) => publicKey.toBase58() === selectedKey);
-    if (foundGatekeeperNetwork) selectGatekeeperNetwork(foundGatekeeperNetwork)
-  };
-
-  const rulesets = (
-    <Select className='rulesetSelector' onSelect={selectGatekeeperNetworkByKey}>
-      <Select.Option key='none' value={''} >
-        <div>
-          <Button className="app-btn">None</Button>
-        </div>
-      </Select.Option>
-      {gatekeeperNetworks.map(gkn => (
-        <Select.Option key={gkn.publicKey.toBase58()} value={gkn.publicKey.toBase58()} >
-          <div>
-            <Button className="app-btn">{gkn.name}</Button>
-            <span>{gkn.description}</span>
-          </div>
-        </Select.Option>
-      ))
+  // if the store has a proscribed gatekeeper network, add it to the auction
+  useEffect(() => {
+    if (store) {
+      if (!store.info.gatekeeperNetwork) {
+        selectGatekeeperNetwork(undefined);
+      } else {
+        selectGatekeeperNetwork(getGatekeeperNetworkByKey(store.info.gatekeeperNetwork))
       }
-    </Select>
-  );
+    }
+  },[store])
 
   return (
     <>
-      <Row className="call-to-action" style={{ marginBottom: 20 }}>
-        <h2>Add permissions to your auction</h2>
-        <p>
-          Permissions allow you control who is allowed to bid on your NFTs, whether they need to
-          go through KYC, Bot-checks, etc.
-        </p>
-        <p>
-          Permission checks are provided by Civic Pass
-        </p>
-      </Row>
-      <Row className="content-action" style={{ marginBottom: 20 }}>
-        <label className="action-field">
-          <span className="field-title">Ruleset</span>
-          {rulesets}
-          <p>
-            The choice of ruleset determines what steps bidders need to take to
-            be permitted to bid on your auction. For more details on the options, see <a href='#'>here</a>.
-          </p>
-        </label>
-      </Row>
+      <GatewayDescriptionText/>
+      {store?.info.gatekeeperNetwork ? <Row>
+          <p>This store has been set up to use
+            {getGatekeeperNetworkByKey(store.info.gatekeeperNetwork)?.name}
+            for all auctions. For more details, see <a href='#'>here</a>.</p>
+        </Row>
+        :
+        <GatewayRulesetComponent setGatekeeperNetwork={selectGatekeeperNetwork}/>
+      }
       <Row>
         <Button
           type="primary"

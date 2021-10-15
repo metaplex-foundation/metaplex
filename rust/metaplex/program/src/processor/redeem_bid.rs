@@ -1,6 +1,5 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{CommonWinningIndexChecks, CommonWinningIndexReturn, WinningConfigType, PREFIX},
         utils::{
             assert_derivation, common_redeem_checks, common_redeem_finish,
@@ -21,6 +20,7 @@ use {
         deprecated_instruction::deprecated_set_reservation_list, state::Reservation,
     },
 };
+use spl_shared_metaplex::error::MetaplexError;
 
 fn set_reservation_list_wrapper<'a>(
     program_id: &'a Pubkey,

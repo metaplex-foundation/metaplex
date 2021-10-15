@@ -1,7 +1,6 @@
 use {
     crate::{
-        error::MetaplexError,
-        state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
+        state::{get_auction_manager, AuctionManagerStatus, PREFIX},
         utils::{assert_derivation, assert_owned_by},
     },
     solana_program::{
@@ -14,6 +13,10 @@ use {
         instruction::claim_bid_instruction,
         processor::{claim_bid::ClaimBidArgs, AuctionData, AuctionState, BidderPot, AuctionDataExtended},
     },
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 #[allow(clippy::too_many_arguments)]

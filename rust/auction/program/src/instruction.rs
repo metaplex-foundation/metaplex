@@ -90,8 +90,9 @@ pub enum AuctionInstruction {
     ///   0. `[signer]` The account creating the auction, which is authorised to make changes.
     ///   1. `[writable]` Uninitialized auction account.
     ///   2. `[writable]` Auction extended data account (pda relative to auction of ['auction', program id, vault key, 'extended']).
-    ///   3. `[]` Rent sysvar
-    ///   4. `[]` System account
+    ///   3. `[]` The store that the auction belongs to
+    ///   4. `[]` Rent sysvar
+    ///   5. `[]` System account
     CreateAuctionV2(CreateAuctionArgsV2),
 }
 
@@ -135,6 +136,7 @@ pub fn create_auction_instruction(
 pub fn create_auction_instruction_v2(
     program_id: Pubkey,
     creator_pubkey: Pubkey,
+    store: Pubkey,
     args: CreateAuctionArgsV2,
 ) -> Instruction {
     let seeds = &[
@@ -158,6 +160,7 @@ pub fn create_auction_instruction_v2(
             AccountMeta::new(creator_pubkey, true),
             AccountMeta::new(auction_pubkey, false),
             AccountMeta::new(auction_extended_pubkey, false),
+            AccountMeta::new_readonly(store, false),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
         ],

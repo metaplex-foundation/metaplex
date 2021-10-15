@@ -1,6 +1,5 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{CommonWinningIndexChecks, CommonWinningIndexReturn, WinningConfigType, PREFIX},
         utils::{
             assert_owned_by, common_redeem_checks, common_redeem_finish,
@@ -16,6 +15,8 @@ use {
     },
     spl_token_metadata::state::Metadata,
 };
+use spl_shared_metaplex::error::MetaplexError;
+
 pub fn process_full_rights_transfer_bid<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],

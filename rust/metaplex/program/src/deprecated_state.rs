@@ -1,13 +1,11 @@
 use {
     crate::{
-        error::MetaplexError,
         state::{
             AuctionManager, AuctionManagerStatus, CommonWinningIndexChecks,
-            CommonWinningIndexReturn, Key, NonWinningConstraint, ParticipationConfigV2,
+            CommonWinningIndexReturn, NonWinningConstraint, ParticipationConfigV2,
             PrintingV2CalculationCheckReturn, PrintingV2CalculationChecks, WinningConfigType,
             WinningConstraint,
         },
-        utils::try_from_slice_checked,
     },
     arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
@@ -18,7 +16,12 @@ use {
     spl_auction::processor::AuctionData,
     spl_token_metadata::state::Metadata,
     spl_token_vault::state::SafetyDepositBox,
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Key},
+    }
 };
+use spl_shared_metaplex::utils::try_from_slice_checked;
 
 pub const MAX_WINNERS: usize = 200;
 pub const MAX_WINNER_SIZE: usize = 6 * MAX_WINNERS;
@@ -46,7 +49,7 @@ pub const MAX_AUCTION_MANAGER_V1_SIZE: usize = 1 + // key
     1 + // Whether or not participation config exists
     1 + // participation winner constraint
     1 + // participation non winner constraint
-    1 + // u8 participation_config's safety deposit box index 
+    1 + // u8 participation_config's safety deposit box index
     9 + // option<u64> participation fixed price in borsh is a u8 for option and actual u64
     1 +
     AUCTION_MANAGER_PADDING; // padding;

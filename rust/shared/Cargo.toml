@@ -1,7 +1,7 @@
 [package]
-name = "spl-auction"
+name = "spl-shared-metaplex"
 version = "0.0.1"
-description = "Solana Auction Program"
+description = "Shared library for Metaplex programs"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/metaplex"
 license = "Apache-2.0"
@@ -18,13 +18,9 @@ num-derive = "0.3"
 num-traits = "0.2"
 arrayref = "0.3.6"
 solana-program = "1.7.11"
-solana-gateway = { git = "https://github.com/identity-com/on-chain-identity-gateway", branch = "develop", features = [ "no-entrypoint" ] }
-spl-shared-metaplex = { path = "../../shared" }
-spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
 
 [dev-dependencies]
-solana-gateway-program = { git = "https://github.com/identity-com/on-chain-identity-gateway", branch = "develop", features = [ "no-entrypoint" ] }
 solana-program-test = "1.7.11"
 solana-sdk = "1.7.11"
 

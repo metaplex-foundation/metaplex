@@ -1,23 +1,29 @@
 use {
+    borsh::BorshSerialize,
     crate::{
-        error::MetaplexError,
-        state::{Key, Store, MAX_STORE_SIZE, PREFIX},
+        state::{PREFIX},
         utils::{
             assert_derivation, assert_owned_by, assert_signer, create_or_allocate_account_raw,
         },
     },
-    borsh::BorshSerialize,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
+    spl_shared_metaplex::{
+        state::MAX_STORE_SIZE,
+        error::MetaplexError,
+        state::Store
+    }
 };
+use spl_shared_metaplex::state::Key;
 
 pub fn process_set_store<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
     public: bool,
+    gatekeeper_network: Option<Pubkey>
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -67,6 +73,8 @@ pub fn process_set_store<'a>(
     let mut store = Store::from_account_info(store_info)?;
     store.key = Key::StoreV1;
     store.public = public;
+    store.gatekeeper_network = gatekeeper_network;
+
     // Keys can only be set once, once set from all 0s, they are immutable.
     if store.token_program == solana_program::system_program::id() {
         store.token_program = *token_program_info.key;

@@ -1,17 +1,14 @@
 
 use {
     crate::{
-        error::MetaplexError,
         state::{
-            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket, Key,
-            OriginalAuthorityLookup, Store, WhitelistedCreator, PREFIX
+            get_auction_manager, AuctionManager, AuctionManagerStatus, BidRedemptionTicket,
+            OriginalAuthorityLookup, WhitelistedCreator, PREFIX
         },
     },
     arrayref::array_ref,
-    borsh::BorshDeserialize,
     solana_program::{
         account_info::AccountInfo,
-        borsh::try_from_slice_unchecked,
         entrypoint::ProgramResult,
         log::sol_log_compute_units,
         msg,
@@ -32,6 +29,10 @@ use {
         state::{Metadata, EDITION},
     },
     spl_token_vault::{instruction::create_withdraw_tokens_instruction, state::Vault},
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Key, Store},
+    },
     std::{convert::TryInto, str::FromStr},
 };
 
@@ -900,22 +901,6 @@ pub fn assert_derivation(
         return Err(MetaplexError::DerivedKeyInvalid.into());
     }
     Ok(bump)
-}
-
-pub fn try_from_slice_checked<T: BorshDeserialize>(
-    data: &[u8],
-    data_type: Key,
-    data_size: usize,
-) -> Result<T, ProgramError> {
-    if (data[0] != data_type as u8 && data[0] != Key::Uninitialized as u8)
-        || data.len() != data_size
-    {
-        return Err(MetaplexError::DataTypeMismatch.into());
-    }
-
-    let result: T = try_from_slice_unchecked(data)?;
-
-    Ok(result)
 }
 
 pub fn end_auction<'a: 'b, 'b>(

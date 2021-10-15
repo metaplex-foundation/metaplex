@@ -1,4 +1,4 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {Keypair, Connection, TransactionInstruction, PublicKey} from '@solana/web3.js';
 import {
   SequenceType,
   sendTransactions,
@@ -17,6 +17,7 @@ export async function saveAdmin(
   wallet: WalletSigner,
   isPublic: boolean,
   whitelistedCreators: WhitelistedCreator[],
+  gatekeeperNetwork?: PublicKey,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -30,6 +31,7 @@ export async function saveAdmin(
     isPublic,
     wallet.publicKey.toBase58(),
     wallet.publicKey.toBase58(),
+    gatekeeperNetwork?.toBase58(),
     storeInstructions,
   );
   signers.push(storeSigners);

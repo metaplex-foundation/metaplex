@@ -1,7 +1,6 @@
 use {
     crate::{
-        error::MetaplexError,
-        state::{get_auction_manager, AuctionManagerStatus, Store, PREFIX},
+        state::{get_auction_manager, AuctionManagerStatus, PREFIX},
         utils::{assert_authority_correct, assert_owned_by},
     },
     solana_program::{
@@ -14,6 +13,10 @@ use {
         instruction::{start_auction_instruction, StartAuctionArgs},
         processor::AuctionData,
     },
+    spl_shared_metaplex::{
+        error::MetaplexError,
+        state::{Store},
+    }
 };
 
 pub fn issue_start_auction<'a>(

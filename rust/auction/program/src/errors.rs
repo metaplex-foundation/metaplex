@@ -134,6 +134,10 @@ pub enum AuctionError {
     /// Gap tick size percentage must be between 0 and 100
     #[error("Gap tick size percentage must be between 0 and 100")]
     InvalidGapTickSizePercentage,
+
+    /// Auction is not using the correct gatekeeper network for the store
+    #[error("Auction is not using the correct gatekeeper network for the store")]
+    InvalidGatekeeperNetwork,
 }
 
 impl PrintProgramError for AuctionError {

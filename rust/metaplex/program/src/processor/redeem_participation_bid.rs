@@ -1,9 +1,8 @@
 use {
     crate::{
-        error::MetaplexError,
         processor::redeem_printing_v2_bid::{create_or_update_prize_tracking, mint_edition},
         state::{
-            AuctionManager, NonWinningConstraint, ParticipationConfigV2, Store, WinningConstraint,
+            AuctionManager, NonWinningConstraint, ParticipationConfigV2, WinningConstraint,
             PREFIX,
         },
         utils::{
@@ -21,6 +20,8 @@ use {
     spl_token::state::Account,
     spl_token_metadata::utils::get_supply_off_master_edition,
 };
+use spl_shared_metaplex::error::MetaplexError;
+use spl_shared_metaplex::state::Store;
 
 struct LegacyAccounts<'a> {
     pub participation_printing_holding_account_info: &'a AccountInfo<'a>,
@@ -263,7 +264,7 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
-    let auction_extended_info: Option<&AccountInfo>; 
+    let auction_extended_info: Option<&AccountInfo>;
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {

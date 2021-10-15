@@ -31,6 +31,8 @@ async fn success() {
         .await
         .unwrap();
 
+    let new_gatekeeper_network = Keypair::new().pubkey();
+
     test_metadata
         .update(
             &mut context,
@@ -39,6 +41,7 @@ async fn success() {
             "uri".to_string(),
             None,
             10,
+            Some(new_gatekeeper_network)
         )
         .await
         .unwrap();
@@ -56,6 +59,7 @@ async fn success() {
     assert_eq!(metadata.mint, test_metadata.mint.pubkey());
     assert_eq!(metadata.update_authority, context.payer.pubkey());
     assert_eq!(metadata.key, Key::MetadataV1);
+
 }
 
 #[tokio::test]
@@ -82,6 +86,7 @@ async fn fail_invalid_update_authority() {
             id(),
             test_metadata.pubkey,
             fake_update_authority.pubkey(),
+            None,
             None,
             None,
             None,
