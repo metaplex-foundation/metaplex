@@ -1,11 +1,50 @@
-import { formatTokenAmount, fromLamports, useMint, PriceFloorType } from '@oyster/common';
-import { AuctionView, AuctionViewState, useBidsForAuction, useHighestBidForAuction } from '../../../hooks';
+import {
+  formatTokenAmount,
+  fromLamports,
+  useMint,
+  PriceFloorType,
+} from '@oyster/common';
+import {
+  AuctionView,
+  AuctionViewState,
+  useBidsForAuction,
+  useHighestBidForAuction,
+} from '../../../hooks';
 import { BN } from 'bn.js';
 
+export type AuctionStatus =
+  | {
+      isInstantSale: false;
+      isLive: boolean;
+      hasBids: boolean;
+    }
+  | {
+      isInstantSale: true;
+      isLive: boolean;
+      soldOut: boolean;
+    };
+
 interface AuctionStatusLabels {
-  status: string;
+  status: AuctionStatus;
   amount: string | number;
 }
+
+export const getHumanStatus = (status: AuctionStatus): string => {
+  const { isInstantSale, isLive } = status;
+  if (isInstantSale) {
+    if (isLive) return 'Price';
+
+    return status.soldOut ? 'Sold Out' : 'Ended';
+  } else {
+    const { hasBids } = status;
+
+    if (isLive) {
+      return hasBids ? 'Current Bid' : 'Starting Bid';
+    } else {
+      return hasBids ? 'Winning Bid' : 'Ended';
+    }
+  }
+};
 
 export const useAuctionStatus = (
   auctionView: AuctionView,
@@ -22,9 +61,6 @@ export const useAuctionStatus = (
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
 
-
-  let status = 'Starting Bid';
-  
   let amount: string | number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
@@ -32,46 +68,40 @@ export const useAuctionStatus = (
 
   const countdown = auctionView.auction.info.timeToEnd();
 
-  let ended = countdown?.hours === 0 && countdown?.minutes === 0 && countdown?.seconds === 0;
+  let isLive = auctionView.state !== AuctionViewState.Ended;
 
   if (auctionView.isInstantSale) {
     const soldOut = bids.length === auctionView.items.length;
-    
-    status = auctionView.state === AuctionViewState.Ended ? 'Ended' : 'Price';
 
-    if (soldOut) {
-      status = 'Sold Out';
-    }
-
-    amount = formatTokenAmount(auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber());
+    amount = formatTokenAmount(
+      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),
+    );
 
     return {
-      status,
+      status: { isInstantSale: true, isLive, soldOut },
       amount,
-    }
+    };
   }
 
-  if (bids.length > 0) {
-    amount = formatTokenAmount(winningBid.info.lastBid);
-    status = 'Current Bid';
-  }
+  isLive =
+    isLive &&
+    !(
+      countdown?.days === 0 &&
+      countdown?.hours === 0 &&
+      countdown?.minutes === 0 &&
+      countdown?.seconds === 0
+    );
 
-  if (ended) {
-    if (bids.length === 0) {
-      return {
-        status: 'Ended',
-        amount
-      }
-    }
+  const hasBids = bids.length > 0;
 
-    return {
-      status: 'Winning Bid',
-      amount
-    }
-  }
+  if (hasBids) amount = formatTokenAmount(winningBid.info.lastBid);
 
   return {
-    status,
+    status: {
+      isInstantSale: false,
+      isLive,
+      hasBids,
+    },
     amount,
-  }
+  };
 };
