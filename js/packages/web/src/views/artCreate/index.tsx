@@ -111,6 +111,7 @@ export const ArtCreateView = () => {
     };
     setStepsVisible(false);
     setMinting(true)
+    setAlertMessage(undefined);
 
     try {
       const _nft = await mintNFT(
@@ -319,9 +320,7 @@ const UploadStep = (props: {
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
   const [coverArtError, setCoverArtError] = useState<string>();
 
-  const [customURL, setCustomURL] = useState<string>('');
-  const [customURLErr, setCustomURLErr] = useState<string>('');
-  const disableContinue = !coverFile || !!customURLErr;
+  const disableContinue = !coverFile;
 
   useEffect(() => {
     props.setAttributes({
@@ -440,12 +439,8 @@ const UploadStep = (props: {
             onChange={async info => {
               const file = info.file.originFileObj;
 
-              // Reset image URL
-              setCustomURL('');
-              setCustomURLErr('');
-
               if (file) setMainFile(file);
-            }}
+            }}  // TODO: enable when using payer account to avoid 2nd popup
             onRemove={() => {
               setMainFile(undefined);
             }}
@@ -457,43 +452,6 @@ const UploadStep = (props: {
           </Dragger>
         </Row>
       )}
-      <Form.Item
-        style={{
-          width: '100%',
-          flexDirection: 'column',
-          paddingTop: 30,
-          marginBottom: 4,
-        }}
-        label={<h3>OR use absolute URL to content</h3>}
-        labelAlign="left"
-        colon={false}
-        validateStatus={customURLErr ? 'error' : 'success'}
-        help={customURLErr}
-      >
-        <Input
-          disabled={!!mainFile}
-          placeholder="http://example.com/path/to/image"
-          value={customURL}
-          onChange={ev => setCustomURL(ev.target.value)}
-          onFocus={() => setCustomURLErr('')}
-          onBlur={() => {
-            if (!customURL) {
-              setCustomURLErr('');
-              return;
-            }
-
-            try {
-              // Validate URL and save
-              new URL(customURL);
-              setCustomURL(customURL);
-              setCustomURLErr('');
-            } catch (e) {
-              console.error(e);
-              setCustomURLErr('Please enter a valid absolute URL');
-            }
-          }}
-        />
-      </Form.Item>
       <Row>
         <Button
           type="primary"
@@ -504,14 +462,11 @@ const UploadStep = (props: {
               ...props.attributes,
               properties: {
                 ...props.attributes.properties,
-                files: [coverFile, mainFile, customURL]
+                files: [coverFile, mainFile]
                   .filter(f => f)
                   .map(f => {
-                    const uri = typeof f === 'string' ? f : f?.name || '';
-                    const type =
-                      typeof f === 'string' || !f
-                        ? 'unknown'
-                        : f.type || getLast(f.name.split('.')) || 'unknown';
+                    const uri = f?.name || '';
+                    const type = f && (f.type || getLast(f.name.split('.')) || 'unknown');
 
                     return {
                       uri,
@@ -520,14 +475,14 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
+              animation_url: mainFile && mainFile.name,
             });
             const files = [coverFile, mainFile].filter(f => f) as File[];
 
             props.setFiles(files);
             props.confirm();
           }}
-          style={{ marginTop: 24 }}
+          style={{ marginTop: 50 }}
           className="action-btn"
         >
           Continue to Mint
@@ -646,22 +601,6 @@ const InfoStep = (props: {
               }
             />
           </label>
-          {/* <label className="action-field">
-            <span className="field-title">Symbol</span>
-            <Input
-              className="input"
-              placeholder="Max 10 characters"
-              allowClear
-              value={props.attributes.symbol}
-              onChange={info =>
-                props.setAttributes({
-                  ...props.attributes,
-                  symbol: info.target.value,
-                })
-              }
-            />
-          </label> */}
-
           <label className="action-field">
             <span className="field-title">Description</span>
             <Input.TextArea
@@ -1171,13 +1110,13 @@ const WaitingStep = (props: {
         <Steps direction="vertical" current={props.step}>
           <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
           <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  /> 
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} /> 
+          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)} />
+          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
           <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
           <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
           <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
           <Step title="Updating Metadata" icon={setIconForStep(props.step, 7)} />
-          <Step title="Signing Token Transaction" description="Approve the final transaction from your wallet"  icon={setIconForStep(props.step, 8)}  />
+          <Step title="Signing Token Transaction" description="Approve the final transaction from your wallet" icon={setIconForStep(props.step, 8)} />
         </Steps>
       </Card>
     </div>
