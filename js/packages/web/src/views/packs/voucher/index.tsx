@@ -1,24 +1,11 @@
-import React, {useState} from 'react';
-import {Form, Input, Button, Select, Space} from 'antd';
+import React, { useState } from 'react';
+import { Form, Button, Space } from 'antd';
 import { Creator } from "@oyster/common";
 
 import { ArtSelector } from "../../auctionCreate/artSelector";
 import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
-import { AuctionCategory, AuctionState } from "../../auctionCreate";
 
-const { Option } = Select;
-
-function AddVoucher({ confirm, backButton }) {
-  const [attributes, setAttributes] = useState<AuctionState>({
-    reservationPrice: 0,
-    items: [],
-    category: AuctionCategory.Open,
-    auctionDurationType: 'minutes',
-    gapTimeType: 'minutes',
-    winnersCount: 1,
-    startSaleTS: undefined,
-    startListTS: undefined,
-  });
+function AddVoucher({ attributes, setAttributes, confirm, backButton }) {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
     confirm({ step: 1, values })
@@ -28,11 +15,15 @@ function AddVoucher({ confirm, backButton }) {
     console.log('Failed:', errorInfo);
   };
 
-  const onMutableChange = (value: any) => {
-    console.log('onMutableChange:', value);
-  };
+  const handleVoucherCountUpdate = (e, id) => {
+    const { value } = e.target;
+    const current = { [id]: value };
+    const listUpdated = { ...attributes.vouchersCount, ...current }
 
-  let artistFilter = (i: SafetyDepositDraft) =>
+    setAttributes({ ...attributes, vouchersCount: listUpdated });
+  }
+
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
 
   return (
@@ -46,37 +37,25 @@ function AddVoucher({ confirm, backButton }) {
         layout="vertical"
       >
         <ArtSelector
+          title="Select the NFT that you want add to Pack"
+          description="Select the NFT that you want to add"
           filter={artistFilter}
-          selected={attributes.items}
-          setSelected={items => {
-            setAttributes({ ...attributes, items });
+          selected={attributes.vouchersItems}
+          setSelected={vouchersItems => {
+            setAttributes({ ...attributes, vouchersItems });
           }}
-          allowMultiple={false}
+          setCounts={handleVoucherCountUpdate}
+          selectedCount={(id) => attributes.vouchersCount[id]}
+          allowMultiple
+          isListView
         >
           Select NFT
         </ArtSelector>
 
-        <Form.Item
-          name="action_on_prove"
-          label="Action on prove"
-          rules={[{ required: true }]}
-        >
-          <Select
-            className="select"
-            placeholder="Select a option"
-            onChange={onMutableChange}
-            bordered={false}
-            allowClear
-          >
-            <Option value="Burn">Burn</Option>
-            <Option value="NoBurn">No Burn</Option>
-          </Select>
-        </Form.Item>
-
         <Space style={{ marginTop: 30 }}>
           <Form.Item style={{ margin: 0 }}>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              Add voucher to pack
+              Next step
             </Button>
           </Form.Item>
           {backButton}

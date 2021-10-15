@@ -16,7 +16,7 @@ import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/inde
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
 
-const metadataToArt = (
+export const metadataToArt = (
   info: Metadata | undefined,
   editions: Record<string, ParsedAccount<Edition>>,
   masterEditions: Record<
