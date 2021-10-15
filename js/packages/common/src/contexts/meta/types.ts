@@ -1,4 +1,5 @@
 import { AccountInfo } from '@solana/web3.js';
+import { TokenAccount } from '../..';
 import {
   AuctionData,
   AuctionDataExtended,

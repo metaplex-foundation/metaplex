@@ -29,6 +29,7 @@ import {
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
+  AuctionCache,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 
 export enum AuctionViewState {

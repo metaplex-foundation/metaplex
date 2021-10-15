@@ -15,7 +15,7 @@ async function uploadFile(
     Bucket: awsS3Bucket,
     Key: filename,
     Body: body,
-    ACL: 'public-read',
+    ACL: "public-read",
     ContentType: contentType,
   };
 
@@ -36,7 +36,7 @@ export async function awsUpload(
   file: string,
   manifestBuffer: Buffer,
 ) {
-  const REGION = 'us-east-1'; // TODO: Parameterize this.
+  const REGION = "us-east-1"; // TODO: Parameterize this. 
   const s3Client = new S3Client({ region: REGION });
   const filename = `assets/${basename(file)}`;
   log.debug('file:', file);

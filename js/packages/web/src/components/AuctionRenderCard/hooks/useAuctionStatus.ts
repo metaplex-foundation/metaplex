@@ -33,7 +33,6 @@ export const useAuctionStatus = (
       : 0;
 
   let status = 'Starting Bid';
-
   let amount: string | number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
@@ -48,7 +47,6 @@ export const useAuctionStatus = (
 
   if (auctionView.isInstantSale) {
     const soldOut = bids.length === auctionView.items.length;
-
     status = auctionView.state === AuctionViewState.Ended ? 'Ended' : 'Price';
 
     if (soldOut) {
