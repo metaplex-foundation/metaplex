@@ -163,19 +163,10 @@ function CreatePack({ confirm } ) {
 
         <Form.Item style={{ paddingTop: 30 }}>
           <Button type="primary" htmlType="submit">
-              Create Pack
+            Next step
           </Button>
         </Form.Item>
       </Form>
-
-      {/*<Button*/}
-      {/*  type="primary"*/}
-      {/*  size="large"*/}
-      {/*  onClick={() => confirm({ step: 0 })}*/}
-      {/*  className="action-btn"*/}
-      {/*>*/}
-      {/*  Continue to Terms*/}
-      {/*</Button>*/}
     </div>
   );
 }

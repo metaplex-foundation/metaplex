@@ -1,25 +1,12 @@
-import React, {useState} from 'react';
+import React from 'react';
 import { Form, Input, Button, Space } from 'antd';
 import { ArtSelector } from "../../auctionCreate/artSelector";
-import { AuctionCategory, AuctionState } from "../../auctionCreate";
 import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
 import { Creator } from "@oyster/common";
 
 const valueU32 = 4294967295;
 
-function AddCard({ confirm, backButton }) {
-  const [distribution, setDistribution] = useState();
-  const [attributes, setAttributes] = useState<AuctionState>({
-    reservationPrice: 0,
-    items: [],
-    category: AuctionCategory.Open,
-    auctionDurationType: 'minutes',
-    gapTimeType: 'minutes',
-    winnersCount: 1,
-    startSaleTS: undefined,
-    startListTS: undefined,
-  });
-  const pack = attributes.items[0];
+function AddCard({ attributes, setAttributes, confirm, backButton, distribution }) {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
     confirm({ step: 2, values })
@@ -29,14 +16,17 @@ function AddCard({ confirm, backButton }) {
       console.log('Failed:', errorInfo);
   };
 
-  const onMutableChange = (value: any) => {
-      console.log('onMutableChange:', value);
-  };
+  const handleCardsCountUpdate = (e, id) => {
+    const { value } = e.target;
+    const current = { [id]: value };
+    const listUpdated = { ...attributes.cardsCount, ...current }
 
-  let artistFilter = (i: SafetyDepositDraft) =>
+    setAttributes({ ...attributes, cardsCount: listUpdated });
+  }
+
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
 
-  console.log('attributes', attributes)
   return (
     <div className="form-box">
       <Form
@@ -50,12 +40,17 @@ function AddCard({ confirm, backButton }) {
         layout="vertical"
       >
         <ArtSelector
+          title="Select the NFT that you want add to Pack"
+          description="Select the NFT that you want to add"
           filter={artistFilter}
-          selected={attributes.items}
-          setSelected={items => {
-            setAttributes({ ...attributes, items });
+          selected={attributes.cardsItems}
+          setSelected={cardsItems => {
+            setAttributes({ ...attributes, cardsItems });
           }}
-          allowMultiple={false}
+          setCounts={handleCardsCountUpdate}
+          selectedCount={(id) => attributes.cardsCount[id]}
+          allowMultiple
+          isListView
         >
           Select NFT
         </ArtSelector>
@@ -69,7 +64,7 @@ function AddCard({ confirm, backButton }) {
         </Form.Item>
 
         {
-          distribution === "fixed" && ( // TODO change getting distribution from PACK
+          distribution === "fixed" && (
             <Form.Item
               label="Probability"
               name="probability"
@@ -83,7 +78,7 @@ function AddCard({ confirm, backButton }) {
         <Space style={{ marginTop: 30 }}>
           <Form.Item style={{ margin: 0 }}>
             <Button type="primary" htmlType="submit" style={{ height: 50 }}>
-              Add card to pack
+              Create pack
             </Button>
           </Form.Item>
           {backButton}

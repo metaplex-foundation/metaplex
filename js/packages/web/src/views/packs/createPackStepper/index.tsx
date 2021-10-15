@@ -6,8 +6,18 @@ import CreatePack from '../createPack';
 import AddVoucher from '../voucher';
 import AddCard from '../card';
 import useWindowDimensions from "../../../utils/layout";
+import {AuctionState} from "../../auctionCreate";
 
 const { Step } = Steps;
+
+interface PackState extends AuctionState {
+  vouchersItems: [];
+  cardsItems: [];
+  vouchersCount: [];
+  cardsCount: [];
+  actionOnProve: string;
+  distribution: string;
+}
 
 function CreatePackStepper() {
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
@@ -16,13 +26,19 @@ function CreatePackStepper() {
   const history = useHistory();
   const { step_param }: { step_param: string } = useParams();
 
-  const [attributes, setAttributes] = useState({
+  const [attributes, setAttributes] = useState<PackState>({
+    category: 3,
     reservationPrice: 0,
     items: [],
+    cardsItems: [],
+    vouchersItems: [],
+    vouchersCount: [],
+    cardsCount: [],
     auctionDurationType: 'minutes',
     gapTimeType: 'minutes',
     winnersCount: 1,
-    values: {}
+    actionOnProve: 'Burn',
+    distribution: 'fixed',
   });
 
   useEffect(() => {
@@ -48,39 +64,26 @@ function CreatePackStepper() {
 
   const createPackStep = (
     <CreatePack
-      confirm={(values) => {
-        setAttributes({
-          ...attributes,
-          values
-        });
-        gotoNextStep();
-      }}
+      confirm={gotoNextStep()}
     />
   );
 
   const addVoucherStep = (
     <AddVoucher
-      confirm={(values) => {
-        setAttributes({
-          ...attributes,
-          values
-        });
-        gotoNextStep();
-      }}
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={gotoNextStep()}
       backButton={renderBackButton()}
     />
   );
 
   const addCardStep = (
     <AddCard
-      confirm={(values) => {
-        setAttributes({
-          ...attributes,
-          values
-        });
-        gotoNextStep();
-      }}
+      attributes={attributes}
+      setAttributes={setAttributes}
+      confirm={gotoNextStep()}
       backButton={renderBackButton()}
+      distribution={attributes.distribution}
     />
   );
 
