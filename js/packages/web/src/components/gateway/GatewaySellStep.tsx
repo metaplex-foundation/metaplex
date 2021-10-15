@@ -46,14 +46,17 @@ export const GatewaySellStep:React.FC<{
 
   return (
     <>
-      <GatewayDescriptionText/>
-      {store?.info.gatekeeperNetwork ? <Row>
-          <p>This store has been set up to use
-            {getGatekeeperNetworkByKey(store.info.gatekeeperNetwork)?.name}
-            for all auctions. For more details, see <a href='#'>here</a>.</p>
+      {store?.info.gatekeeperNetwork ? <Row className="call-to-action gateway-description-text" style={{ marginBottom: 20 }}>
+          <h2>Permissioned Store</h2>
+          <p>This store has been set up to use{' '}
+            <a href="#">{getGatekeeperNetworkByKey(store.info.gatekeeperNetwork)?.name}</a>{' '}
+            for all auctions.</p>
+          <p>For more details, see <a href='#'>here</a>.</p>
         </Row>
         :
-        <GatewayRulesetComponent setGatekeeperNetwork={selectGatekeeperNetwork}/>
+        <><GatewayDescriptionText/>
+          <GatewayRulesetComponent setGatekeeperNetwork={selectGatekeeperNetwork}/>
+        </>
       }
       <Row>
         <Button
