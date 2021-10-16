@@ -131,7 +131,7 @@ Creators: 2
 You don't have to provide all of the arguments for updating. You can provide as few as one up to all, but if you update the creators, you have to provide the complete set. For example if we just wanted to update the uri, we could just run.
 
 ```
-argo run -- metadata-update Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b --uri ipfs://updated_uri
+cargo run -- metadata-update Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b --uri ipfs://updated_uri
 ```
 
 and then to see that just the uri has been updated.
