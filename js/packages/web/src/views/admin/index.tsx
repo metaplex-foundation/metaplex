@@ -37,6 +37,7 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
@@ -52,7 +53,12 @@ export const AdminView = () => {
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
   useEffect(() => {
-    if (!store && !storeAddress && wallet.publicKey) {
+    if (
+      !store &&
+      !storeAddress &&
+      wallet.publicKey &&
+      !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+    ) {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
@@ -363,6 +369,21 @@ function InnerAdminView({
           </Col>{' '}
         </>
       )}
+      <Col>
+        <Row>
+          <Button
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              // TODO: figure out how to get just enough state to cache all the auctions.
+              await cacheAllAuctions(wallet, connection, state);
+              setLoading(false);
+            }}
+          >
+            {loading ? <Spin indicator={<LoadingOutlined />} /> : <span>Cache All Auctions</span>}
+          </Button>
+        </Row>
+      </Col>
     </Content>
   );
 }

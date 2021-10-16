@@ -641,6 +641,14 @@ export const makeSetter =
         state[prop] = value;
       } else if (prop === 'metadata') {
         state.metadata.push(value);
+      } else if (prop === 'storeIndexer') {
+        state.storeIndexer = state.storeIndexer.filter(
+          p => p.info.page.toNumber() != value.info.page.toNumber(),
+        );
+        state.storeIndexer.push(value);
+        state.storeIndexer = state.storeIndexer.sort((a, b) =>
+          a.info.page.sub(b.info.page).toNumber(),
+        );
       } else {
         state[prop][key] = value;
       }

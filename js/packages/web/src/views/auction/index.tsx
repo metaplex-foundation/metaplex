@@ -83,6 +83,8 @@ export const AuctionView = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
+
+  //TODO: pull auction running here. Get this working with the fetch in useAuction.
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -349,12 +351,18 @@ const BidLine = (props: {
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
               >{`@${bidderTwitterHandle}`}</a>
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           ) : (
             <Row className="pubkey-row">
               {shortenAddress(bidder)}
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}

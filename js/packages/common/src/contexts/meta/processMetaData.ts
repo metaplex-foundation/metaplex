@@ -31,7 +31,9 @@ export const processMetaData: ProcessAccountsFunc = async (
           account,
           info: metadata,
         };
+        // TODO: This is aync in the diff but the call signature isn't a promise.
         setter('metadataByMint', metadata.mint, parsedAccount);
+        setter('metadataByMetadata', pubkey, parsedAccount);
       }
     }
 
