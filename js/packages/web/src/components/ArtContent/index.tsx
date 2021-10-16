@@ -56,18 +56,33 @@ const CachedImageContent = ({
   const { cachedBlob } = useCachedImage(uri || '');
 
   return (
-    <Image
-      src={cachedBlob}
-      preview={preview}
-      wrapperClassName={className}
-      loading="lazy"
-      wrapperStyle={{ ...style }}
-      onLoad={e => {
-        setLoaded(true);
+    <div
+      style={{
+        flex: '1 1 auto',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
-      placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: 200 })}
-    />
+    >
+      <Image
+        src={cachedBlob}
+        preview={preview}
+        wrapperClassName={className}
+        loading="lazy"
+        wrapperStyle={{ ...style }}
+        onLoad={e => {
+          setLoaded(true);
+        }}
+        style={{
+          objectPosition: 'center',
+          objectFit: 'cover',
+          width: '100%',
+          height: '100%',
+        }}
+        placeholder={<ThreeDots />}
+        {...(loaded ? {} : { height: 200 })}
+      />
+    </div>
   );
 };
 
@@ -112,7 +127,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -177,11 +192,11 @@ const HTMLContent = ({
 }) => {
   if (!artView){
     return <CachedImageContent
-    uri={uri}
-    className={className}
-    preview={preview}
-    style={style}
-  />
+        uri={uri}
+        className={className}
+        preview={preview}
+        style={style}
+      />
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'

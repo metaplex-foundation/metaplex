@@ -18,10 +18,9 @@ export const AppLayout = React.memo((props: any) => {
   return (
     <>
       <Layout
-        title={LABELS.APP_TITLE}
         style={{
           padding: paddingForLayout(width),
-          maxWidth: 1000,
+          maxWidth: 1440,
         }}
       >
         <Header className="App-Bar">
