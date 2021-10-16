@@ -119,7 +119,7 @@ export function MetaProvider({ children = null as any }) {
     return nextState;
   }
 
-  async function pullAllSiteData(auctionAddress: StringPublicKey) {
+  async function pullAllSiteData() {
     if (isLoading) return state;
     if (!storeAddress) {
       if (isReady) {
@@ -137,7 +137,7 @@ export function MetaProvider({ children = null as any }) {
 
     setState(nextState);
     await updateMints(nextState.metadataByMint);
-    return nextState;
+    return;
   }
 
   async function update(
