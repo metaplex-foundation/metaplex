@@ -75,6 +75,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   fontFamily: 'inherit',
+                  color: 'inherit',
                 }}
               >
                 {name}
@@ -87,12 +88,16 @@ export const AuctionRenderCard = (props: AuctionCard) => {
                         status.isInstantSale || status.hasBids
                           ? undefined
                           : 0.6,
+                      fontFamily: 'inherit',
+                      color: 'inherit',
                     }}
                     valueStyle={{
                       marginLeft: '.2em',
                       marginRight: 0,
                       lineHeight: '1.1em',
                       fontSize: 'inherit',
+                      fontFamily: 'inherit',
+                      color: 'inherit',
                     }}
                     className="create-statistic"
                     title={humanStatus}
@@ -106,43 +111,47 @@ export const AuctionRenderCard = (props: AuctionCard) => {
           description={
             <Row className="bids">
               <Col flex="1">
-                {/* TODO: awful, horrible */}
-                {status.isLive
-                  ? status.isInstantSale
-                    ? undefined
-                    : 'Live'
-                  : status.isInstantSale
-                  ? status.soldOut
-                    ? 'Sold out'
-                    : 'Last sold'
-                  : status.hasBids
-                  ? 'Last sold'
-                  : 'Ended'}
+                <h4 style={{ margin: 0 }}>
+                  {/* TODO: awful, horrible */}
+                  {status.isLive
+                    ? status.isInstantSale
+                      ? undefined
+                      : 'Live'
+                    : status.isInstantSale
+                    ? status.soldOut
+                      ? 'Sold out'
+                      : 'Last sold'
+                    : status.hasBids
+                    ? 'Last sold'
+                    : 'Ended'}
+                </h4>
               </Col>
               <Col flex="0 1 auto">
-                {/* TODO: also awful, also horrible */}
-                {status.isLive ? (
-                  status.isInstantSale ? (
-                    'Buy now'
-                  ) : (
-                    formatCountdown(countdown)
-                  )
-                ) : status.isInstantSale || status.hasBids ? (
-                  <>
-                    {/* TODO: horrible hack because Statistic has a stupid !important style somewhere */}
-                    <span
-                      style={{
-                        position: 'relative',
-                        top: '-.1em',
-                        marginLeft: '.4em',
-                        marginRight: '.3em',
-                      }}
-                    >
-                      ◎
-                    </span>
-                    {typeof amount === 'number' ? amount.toFixed(2) : amount}
-                  </>
-                ) : undefined}
+                <h4 style={{ margin: 0 }}>
+                  {/* TODO: also awful, also horrible */}
+                  {status.isLive ? (
+                    status.isInstantSale ? (
+                      'Buy now'
+                    ) : (
+                      formatCountdown(countdown)
+                    )
+                  ) : status.isInstantSale || status.hasBids ? (
+                    <>
+                      {/* TODO: horrible hack because Statistic has a stupid !important style somewhere */}
+                      <span
+                        style={{
+                          position: 'relative',
+                          top: '-.1em',
+                          marginLeft: '.4em',
+                          marginRight: '.3em',
+                        }}
+                      >
+                        ◎
+                      </span>
+                      {typeof amount === 'number' ? amount.toFixed(2) : amount}
+                    </>
+                  ) : undefined}
+                </h4>
               </Col>
             </Row>
           }
