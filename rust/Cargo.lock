@@ -591,6 +591,7 @@ dependencies = [
  "clap",
  "console 0.14.1",
  "indicatif 0.16.2",
+ "metaplex",
  "serde",
  "serde_derive",
  "serde_json",
@@ -602,6 +603,7 @@ dependencies = [
  "solana-logger",
  "solana-remote-wallet",
  "solana-sdk",
+ "spl-associated-token-account",
  "spl-memo",
  "spl-token",
  "spl-token-metadata",
@@ -1791,6 +1793,69 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59accc507f1338036a0477ef61afdae33cde60840f4dfe481319ce3ad116ddf9"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "metaplex"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad34af843451064fcae0b5a89630158a90e54338b538de84a77fed5c1cd3a19c"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "metaplex-auction",
+ "metaplex-token-metadata",
+ "metaplex-token-vault",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-auction"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff6cc6c4c9457800e884b152ca69cacee54132651265ccfa31e2bc7c3cc59ca7"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-token-metadata"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abcc939f0afdc6db054b9998a1292d0a016244b382462e61cfc7c570624982cb"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "metaplex-token-vault",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "metaplex-token-vault"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5211991ba3273df89cd5e0f6f558bc8d7453c87c0546f915b4a319e1541df33"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
 ]
 
 [[package]]

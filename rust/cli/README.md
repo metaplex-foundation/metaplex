@@ -8,9 +8,9 @@ This is a starting point to develop command line applications that interact with
 ### Implemented commands
 
 * `mint-info`: display information for an existing mint account.
-* `metadata-info`: dispaly information for an existing metadata account.
-* `create-metadata`: create a new metadata account for an existing mint, including creators and shares.
-* `update-metadata`: update an existing metadata account by providing either a mint or metadata account address and providing values for one or more updatable fields:
+* `metadata-info`: display information for an existing metadata account.
+* `metadata-create`: create a new metadata account for an existing mint, including creators and shares.
+* `metadata-update`: update an existing metadata account by providing either a mint or metadata account address and providing values for one or more updatable fields:
     * new_update_authority
     * name
     * symbol
@@ -18,6 +18,7 @@ This is a starting point to develop command line applications that interact with
     * seller_fee_basis_points
     * creators
     * primary_sale_happened
+* `nft-create`: create a de novo nft including mint, token account, metadata account and master edition.
 
 ### Getting Started
 
