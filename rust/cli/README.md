@@ -128,6 +128,40 @@ Creators: 2
       Share: 50
 ```
 
+You don't have to provide all of the arguments for updating. You can provide as few as one up to all, but if you update the creators, you have to provide the complete set. For example if we just wanted to update the uri, we could just run.
+
+```
+argo run -- metadata-update Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b --uri ipfs://updated_uri
+```
+
+and then to see that just the uri has been updated.
+
+```
+cargo run -- metadata-info Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b
+```
+
+```
+Address: qHFGEW7vnW61Arupoo4WcV3uqoDiRRhFv3fzHGPusBt
+Key: MetadataV1
+Update Authority: 61mVTaw6hBtwWnSaGXRSJePFWEQqipeCka3evytEVNUp
+Mint: Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b
+Primary Sale Happened: false
+Is Mutable: true
+Edition Nonce: 255
+Name: My NFT
+Symbol: NFT
+Uri: ipfs://updated_uri
+Seller Fee Basis Points: 0
+Creators: 2
+  [0] Address: 61mVTaw6hBtwWnSaGXRSJePFWEQqipeCka3evytEVNUp
+      Verified: false
+      Share: 50
+
+  [1] Address: 7oHuVGKc5ZA2tdJX2xLxfUuZPf4RWMsEuNFWkByZNNs7
+      Verified: false
+      Share: 50
+```
+
 ## Todo
 1. Add individual commands for minting tokens and creating master editions
 2. Display edition info
