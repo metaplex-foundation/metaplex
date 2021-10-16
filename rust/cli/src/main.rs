@@ -44,6 +44,7 @@ use spl_token::{
 };
 use spl_token_metadata::{
     self,
+    error::MetadataError,
     instruction::{create_master_edition, create_metadata_accounts, update_metadata_accounts},
     state::{
         Creator, Data, Key, Metadata, EDITION, MAX_CREATOR_LIMIT, MAX_MASTER_EDITION_LEN,
@@ -455,7 +456,6 @@ impl MetadataArgs for App<'_, '_> {
                 .long("immutable")
                 .value_name("IMMUTABLE")
                 .takes_value(false)
-                .required(false)
                 .help("Prohibit future metadata updates"),
         )
         .arg(
@@ -768,7 +768,7 @@ fn main() {
 
             let update_authority =
                 config.pubkey_or_default(arg_matches, "update_authority", &mut wallet_manager);
-            let is_mutable = arg_matches.is_present("mutable");
+            let is_mutable = !arg_matches.is_present("immutable");
             let metadata_data = Data::from_argmatches(&arg_matches);
 
             let max_supply = value_t!(arg_matches, "max_supply", u64).ok();
@@ -798,7 +798,7 @@ fn main() {
         _ => unreachable!(),
     }
     // Note that transaction_info is expected to contain batches of instructions so that related
-    // instructions can be processed together separate transactions atomically.
+    // instructions can be processed together in separate transactions atomically.
     .and_then(|transaction_info| {
         if let Some((minimum_balance_for_rent_exemption, instruction_batches)) = transaction_info {
             let fee_payer = Some(&config.fee_payer);
@@ -959,10 +959,14 @@ fn command_metadata_update_account(
     primary_sale_happened: Option<bool>,
 ) -> CommandResult {
     let (metadata_address, mut metadata) = Metadata::fetch_and_parse(config, &address)?;
+    if !metadata.is_mutable {
+        return Err(MetadataError::DataIsImmutable.into());
+    }
+
     println_display(
         config,
         format!(
-            "Updating metadata account {} for mint {}",
+            "Updating metadata:\n  Metadata: {}\n  Mint: {}",
             metadata_address, metadata.mint
         ),
     );
