@@ -34,7 +34,7 @@ This is a starting point to develop command line applications that interact with
 cargo-run -- nft-create
 ```
 
-kicking off the process of minting a token, creating a token account, minting one token to the account, creating a metadata account and finally creating a master edition. You can add one or more values for name, symbol, uri, or creators. Creators shares have to sum to 100, values are specified in whole, integer percentages and if you provide any creators, one of them has to be the same as the update authority. The update authority defaults to the wallet address in the local Solana config, but you can provide another one by flag.
+This brief command kicks off the process of minting a token, creating a token account, minting one token to the account, creating a metadata account and finally, creating a master edition. You can add one or more values for name, symbol, uri, or creators after `nft-create`. Creator shares have to sum to 100, values are specified in whole integer percentages and if you provide any creators, one of them has to be the same as the update authority. The update authority defaults to the wallet address in the local Solana config, but you can provide another one by flag.
 
 ### View Metadata Info
 
@@ -88,7 +88,7 @@ cargo run -- metadata-info --output json Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVF
 ```
 ### Update Metadata
 
-Metadata can be updated with the `metadata-update` command, providing at least on additional flag with value to be updated. Creators are specified with an address followed by a colon and then the respective share. For example, if we wanted to update the above metadata, we could enter:
+Metadata can be updated with the `metadata-update` command, providing at least one additional flag with the value to be updated. Creators are specified with an address followed by a colon and then the respective share. For example, if we wanted to update the above metadata, we could enter:
 
 ```
 cargo run -- metadata-update qHFGEW7vnW61Arupoo4WcV3uqoDiRRhFv3fzHGPusBt \
@@ -99,7 +99,6 @@ cargo run -- metadata-update qHFGEW7vnW61Arupoo4WcV3uqoDiRRhFv3fzHGPusBt \
 
 Same as with `nft-create`, you can provide either the token mint address or the metadata account address.
 
-and then run
 
 ```
 cargo run -- metadata-info Cbg5o1tarienqQeQ8FcS6inGw2edrZ73znyYhVFtXa8b

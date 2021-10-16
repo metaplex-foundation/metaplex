@@ -36,3 +36,4 @@ jobs:
           cd rust/cli
           cargo build
           cargo test
+          
