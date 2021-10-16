@@ -40,26 +40,76 @@ export const MarketplaceView = () => {
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const [activePage, setActivPage] = useState(0);
   const [items, setItems] = useState<any>();
-  const [pageLen, setPageLen] = useState(90);
+  const [allItems, setAllItems] = useState<any>();
+  const [nftData, setNftData] = useState<any>();
+  const [floorPrice, setFloorPrice] = useState<Number>();
+  const [MaxPrice, setMaxPrice] = useState<Number>();
+  const [allOwner, setAllOwner] = useState<Number>();
+  const [searchItem, setASearchItems] = useState<String>();
+  const [pageLen, setPageLen] = useState(30);
+  const [lowToHigh, setLowToHigh] = useState(0);
   const [onePageItem, setOnePageItem] = useState<
     ParsedAccount<Metadata>[] | SafetyDepositDraft[]
   >([]);
   const { id } = useParams<{ id: string }>();
   const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
-  const optionData = ['select1', 'select2'];
+
+  const optionData = ['Price: High to low'];
+  const optionDataFilter = [];
   useEffect(() => {
-    const arr: any = [];
     if (collection) {
-      collection.map(item => {
-        arr.push(item);
-      });
-      setOnePageItem(arr.slice(activePage * 9, activePage * 9 + 9));
-      setPageLen(arr.length);
-      setItems(arr);
-    }
+      sortCollection(collection);
+    } else if (!isLoading) setPageLen(0);
   }, [collection]);
 
+  const onChangeToSort = event => {
+    if (event.target.value == 'Price: Low to High') {
+      setLowToHigh(1);
+    } else {
+      setLowToHigh(0);
+    }
+    sortCollection(collection);
+    sortCollection(collection);
+  };
+
+  const sortToPrice = (arr: any) => {
+    return arr.sort((a, b) => a.Price - b.Price);
+  };
+
+  const sortCollection = collection => {
+    let arr: any = [];
+    const nft: any = [];
+    collection.map(item => {
+      if (item['Auction']) arr.push(item);
+      else nft.push(item);
+    });
+    let max = 0;
+    let min = 0;
+    let owner: any = [];
+    arr.forEach(character => {
+      if (character.Price > max) max = character.Price;
+      if (character.Price < min) min = character.Price;
+      const includesTwenty = owner.includes(
+        character.ParsedAccount.account.owner,
+      );
+      if (!includesTwenty) owner.push(character.ParsedAccount.account.owner);
+    });
+    if (lowToHigh == 0) {
+      arr = sortToPrice(arr);
+    } else if (lowToHigh == 1) {
+      arr = sortToPrice(arr).reverse();
+    }
+
+    setAllOwner(owner.length);
+    setFloorPrice(min);
+    setMaxPrice(max);
+    setOnePageItem(arr.slice(activePage * 9, activePage * 9 + 9));
+    setPageLen(arr.length);
+    setItems(arr);
+    setAllItems(arr);
+    if (searchItem) changeSearch(searchItem);
+  };
   // const items = useMemo(() => {
   //   switch (activeKey) {
   //     case ArtworkViewState.Metaplex:
@@ -84,10 +134,22 @@ export const MarketplaceView = () => {
     setLatestsale(!latestsale);
   };
 
+  const changeSearch = event => {
+    setASearchItems(event);
+    const arr: any = [];
+    const search = event.toUpperCase();
+    allItems.map(item => {
+      const name = item.ParsedAccount.info.data.name.toUpperCase();
+      if (name.search(search) >= 0) arr.push(item);
+    });
+    const data = arr.slice(activePage * 9, activePage * 9 + 9);
+    setOnePageItem(data);
+    setItems(arr);
+  };
   return (
-    <div style={{ margin: '0px 5%' }}>
+    <div style={{ margin: '0px auto' }} className="col-md-10">
       {latestsale && <LatestsaleView handle_latest_sale={handle_latest_sale} />}
-      <section id="market-sec">
+      <section id="market-sec" className="col-md-10">
         <div className="container-fluid">
           <div className="row">
             <div className="col-2">
@@ -101,14 +163,14 @@ export const MarketplaceView = () => {
                 aria-label="Basic example"
               >
                 <button type="button" className="btn btn-secondary text-left">
-                  <strong>{collectionData?.items}</strong>
+                  <strong>{allItems?.length}</strong>
                   <br />
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     Items
                   </span>
                 </button>
                 <button type="button" className="btn btn-secondary text-left">
-                  <strong>{collectionData?.owner}</strong>
+                  <strong>{allOwner}</strong>
                   <br />
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     Owner
@@ -119,10 +181,10 @@ export const MarketplaceView = () => {
                   className="btn btn-secondary text-left d-flex align-items-center"
                 >
                   <span>
-                    <strong>{collectionData?.floorPrice}</strong>
+                    <strong>{MaxPrice}</strong>
                     <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Floor Price
+                      Max Price
                     </span>
                   </span>{' '}
                   <img
@@ -135,7 +197,7 @@ export const MarketplaceView = () => {
                   className="btn btn-secondary text-left d-flex align-items-center"
                 >
                   <span>
-                    <strong>{collectionData?.volumeTraded}</strong>
+                    <strong>{floorPrice}</strong>
                     <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       Floor Price
@@ -179,6 +241,9 @@ export const MarketplaceView = () => {
                         className="form-control"
                         type="search"
                         placeholder=""
+                        onChange={event => {
+                          changeSearch(event.target.value);
+                        }}
                       />
                     </div>
                     <div className="col-auto">
@@ -195,29 +260,27 @@ export const MarketplaceView = () => {
             </div>
             <div className="col-md-4"></div>
           </div>
-          <div className="row mt-5">
-            <div className="col-md-5">
-              <nav aria-label="..." style={{ height: '93%' }}>
-                <ul className="pagination m-0 d-flex flex-wrap">
-                  <CustomPagination
-                    len={pageLen / 9}
-                    active={activePage}
-                    changePage={event => onChange(event)}
-                  />
-                </ul>
-              </nav>
-            </div>
+          <div className="row mt-5" style={{ justifyContent: 'end' }}>
             <div className="col-md-3">
               <div className="dropdown">
                 <CustomSelect
                   option={optionData}
                   defoultParam="Price: Low to High"
+                  change={event => {
+                    onChangeToSort(event);
+                  }}
                 />
               </div>
             </div>
             <div className="col-md-2">
               <div className="dropdown">
-                <CustomSelect option={optionData} defoultParam="Filters" />
+                <CustomSelect
+                  option={optionDataFilter}
+                  defoultParam="Filters"
+                  change={event => {
+                    onChangeToSort(event);
+                  }}
+                />
               </div>
             </div>
             <div className="col-md-2">
@@ -229,7 +292,7 @@ export const MarketplaceView = () => {
               >
                 <i className="fas fa-redo-alt"></i>
               </div>
-              <a
+              {/* <a
                 href="#"
                 onClick={handle_latest_sale}
                 type="button"
@@ -237,7 +300,7 @@ export const MarketplaceView = () => {
               >
                 <img src="/images/latest_sale.svg" />
                 Latest Sales
-              </a>
+              </a> */}
             </div>
           </div>
         </div>
@@ -245,7 +308,7 @@ export const MarketplaceView = () => {
 
       <section id="body-sec">
         <div className="container-fluid">
-          <div className="row">
+          {/* <div className="row">
             <div className="col-md-8"></div>
             <div className="col-md-4">
               <div className="blur-bg1"></div>
@@ -254,11 +317,35 @@ export const MarketplaceView = () => {
                 <h3>Price</h3>
               </div>
             </div>
-          </div>
+          </div> */}
           <div className="row">
             <div
-              className="col-md-8"
-              style={{ display: 'flex', flexDirection: 'column' }}
+              className="col-md-10"
+              style={{
+                margin: '0 auto',
+              }}
+            >
+              <div className="col-md-5" style={{ padding: 0, height: '37px' }}>
+                <nav aria-label="..." style={{ height: '93%' }}>
+                  <ul className="pagination m-0 d-flex flex-wrap">
+                    <CustomPagination
+                      len={pageLen / 9}
+                      active={activePage}
+                      changePage={event => {
+                        if (!isLoading) onChange(event);
+                      }}
+                    />
+                  </ul>
+                </nav>
+              </div>
+            </div>
+            <div
+              className="col-md-10"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                margin: '0 auto',
+              }}
             >
               <div className="row">
                 {
@@ -267,7 +354,8 @@ export const MarketplaceView = () => {
                       const id = m.ParsedAccount.pubkey;
                       return (
                         <AuctionCard
-                          key={id}
+                          state={m.ParsedAccount.state}
+                          key={idx}
                           pubkey={id}
                           auction={m.Auction}
                           price={m.Price}
@@ -295,16 +383,17 @@ export const MarketplaceView = () => {
                       <CustomPagination
                         len={pageLen / 9}
                         active={activePage}
-                        changePage={event => onChange(event)}
+                        changePage={event => {
+                          if (!isLoading) onChange(event);
+                        }}
                       />
                     </ul>
                   </nav>
                 </div>
-                <div className="col-md-5"></div>
               </div>
             </div>
             {/* <!-- Item List starts --> */}
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               {
                 !isLoading ? (
                   onePageItem.map((item, idx) => {
@@ -328,17 +417,17 @@ export const MarketplaceView = () => {
               }
 
               <img src="/images/cubic-blur.png" className="cubic-blur1" />
-              {/* <!-- pagination starts --> */}
+              {/* <!-- pagination starts --> 
               <nav aria-label="..." className="mt-5" style={{ height: '40px' }}>
                 <ul className="pagination m-0 d-flex flex-wrap">
                   <CustomPagination
                     len={pageLen / 9}
                     active={activePage}
-                    changePage={event => onChange(event)}
+                    changePage={event => {if(!isLoading) onChange(event)}}
                   />
                 </ul>
               </nav>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

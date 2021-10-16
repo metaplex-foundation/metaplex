@@ -6,7 +6,12 @@ import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined, DownOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 import { Navbar, Container, Nav } from 'react-bootstrap';
-import { contexts, useWalletModal } from '@oyster/common';
+import {
+  ConnectButton,
+  contexts,
+  CurrentUserBadge,
+  useWalletModal,
+} from '@oyster/common';
 
 import 'bootstrap/dist/css/bootstrap.css';
 
@@ -52,6 +57,9 @@ const UserActions = () => {
 
   return (
     <>
+      <Link to={`/artists`}>
+        <Button className="app-btn">Creators</Button>
+      </Link>
       {store && (
         <>
           {/* <Link to={`#`}>
@@ -179,7 +187,7 @@ export const AppBar = () => {
   const { endpoint, setEndpoint } = useConnectionConfig();
 
   const handleMenuClick = menuItem => {
-    setMenuItem("NFT");
+    setMenuItem('NFT');
   };
 
   return (
@@ -225,7 +233,19 @@ export const AppBar = () => {
               position: 'relative',
             }}
           >
-            <Select onSelect={setEndpoint} value={endpoint}>
+            {connected ? (
+              <div className="app-right app-bar-box">
+                <UserActions />
+                <CurrentUserBadge
+                  showBalance={false}
+                  showAddress={false}
+                  iconSize={24}
+                />
+              </div>
+            ) : (
+              <ConnectButton type="primary" allowWalletChange />
+            )}
+            {/* <Select onSelect={setEndpoint} value={endpoint}>
               {ENDPOINTS.map(({ name, endpoint }) => (
                 <Select.Option value={endpoint} key={endpoint}>
                   {name}
@@ -246,7 +266,7 @@ export const AppBar = () => {
                 {connected ? 'Disconnect' : 'Connect'}
                 <DownOutlined />
               </button>
-            </Navbar.Text>
+            </Navbar.Text> */}
           </Nav>
         </Navbar.Collapse>
       </Container>

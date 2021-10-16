@@ -262,7 +262,12 @@ function InnerAdminView({
   ];
 
   return (
-    <Content>
+    <Content
+      className="col-md-8"
+      style={{
+        margin: '0 auto',
+      }}
+    >
       <Col style={{ marginTop: 10 }}>
         <Row>
           <Col span={21}>

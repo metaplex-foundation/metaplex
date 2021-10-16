@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { IMetadataExtension, pubkeyToString } from '@oyster/common';
-import { useExtendedArt } from '../../hooks';
+import { useAuction, useExtendedArt } from '../../hooks';
 import { ArtContent } from '../ArtContent';
 import { Link } from 'react-router-dom';
 
 export const AuctionCard = props => {
-  const { pubkey, auction, price } = props;
+  const { pubkey, auction, price, state } = props;
 
   const [cardObj, getCardObj] = useState<IMetadataExtension | undefined>();
   const id = pubkeyToString(pubkey);
@@ -13,8 +13,9 @@ export const AuctionCard = props => {
   useEffect(() => {
     getCardObj(data);
   }, [data]);
+  const auc = useAuction(auction);
   return (
-    <div id="auction-sec" className="col-md-4 mt-4" ref={ref as any}>
+    <div id="auction-sec" className="col-md-3 mt-4" ref={ref as any}>
       <div className="card p-3">
         <Link to={auction? `/auction/${auction}` : '#'}>
           <ArtContent pubkey={pubkey} preview={false} />
@@ -25,7 +26,7 @@ export const AuctionCard = props => {
         </div>
         <Link to={auction? `/auction/${auction}` : '#'}>
           <div className="card-body">
-            <div className="circle"></div>
+            <div className="circle" style={{background: auc?.state == '2'? 'red' : '#0ee9a7'}}></div>
             <h5 className="card-title m-0 text-white">{cardObj?.name}</h5>
             <p className="card-text">{cardObj?.description}</p>
             <a href="#" className="btn btn-primary">
