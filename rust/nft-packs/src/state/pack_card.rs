@@ -1,7 +1,7 @@
 //! Pack card definitions
 
 use super::*;
-use crate::{error::NFTPacksError, math::SafeMath};
+use crate::{error::NFTPacksError, math::SafeMath, MAX_PROBABILITY_VALUE};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,
@@ -43,6 +43,15 @@ impl PackCard {
         self.token_account = params.token_account;
         self.max_supply = params.max_supply;
         self.probability = params.probability;
+    }
+
+    /// Get card probability value
+    pub fn get_probability(&self) -> Result<u128, ProgramError> {
+        Ok((self
+            .probability
+            .ok_or(NFTPacksError::CardProbabilityMissing)? as u128) // it shouldn't happen because there is a check on AddCardToPack
+            .error_mul(u16::MAX as u128)?
+            .error_div(MAX_PROBABILITY_VALUE as u128)?)
     }
 }
 

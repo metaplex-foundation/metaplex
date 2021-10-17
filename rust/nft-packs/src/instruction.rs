@@ -128,7 +128,7 @@ pub enum NFTPacksInstruction {
     /// Accounts:
     /// - read, write                   pack_set
     /// - write                         pack_voucher (PDA, [pack, 'voucher', index])
-    /// - signer                        authority
+    /// - signer, write                 authority
     /// - read                          master_edition
     /// - read                          master_metadata
     /// - read                          mint
@@ -200,7 +200,7 @@ pub enum NFTPacksInstruction {
     /// MasterEdition to user account or return empty response depends successfully or not user open pack with specific MasterEdition.
     ///
     /// Accounts:
-    /// - read, write              pack_set
+    /// - read, write       pack_set
     /// - read, write       proving_process (PDA, [pack, 'proving', user_wallet])
     /// - signer            user_wallet
     /// - read, write       pack_card (PDA, [pack, 'card', index])
@@ -209,10 +209,16 @@ pub enum NFTPacksInstruction {
     /// - read              new_edition_acc
     /// - read              master_edition_acc
     /// - read              new_mint_account
-    /// - signer              new_mint_authority_acc
+    /// - signer            new_mint_authority_acc
     /// - read              metadata_acc
     /// - read              metadata_mint_acc
     /// - read              edition_acc
+    /// - read              rent program
+    /// - read              randomness oracle account
+    /// - read              spl_token_metadata program
+    /// - read              spl_token program
+    /// - read              system program
+    /// - read              clock program
     ClaimPack,
 
     /// TransferPackAuthority

@@ -100,44 +100,50 @@ async fn setup(
 
 #[tokio::test]
 async fn success() {
-    let (
-        mut context,
-        test_pack_set,
-        test_pack_voucher,
-        _test_metadata,
-        test_master_edition,
-        _user,
-    ) = setup(true).await;
+    let (mut context, test_pack_set, test_pack_voucher, _test_metadata, test_master_edition, _user) =
+        setup(true).await;
 
     assert_eq!(
-        test_pack_voucher.get_data(&mut context).await.number_to_open,
+        test_pack_voucher
+            .get_data(&mut context)
+            .await
+            .number_to_open,
         4
     );
 
     test_pack_set
-        .edit_voucher(&mut context, &test_pack_voucher, &test_master_edition.pubkey, None, Some(2))
+        .edit_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition.pubkey,
+            None,
+            Some(2),
+        )
         .await
         .unwrap();
 
     assert_eq!(
-        test_pack_voucher.get_data(&mut context).await.number_to_open,
+        test_pack_voucher
+            .get_data(&mut context)
+            .await
+            .number_to_open,
         2
     );
 }
 
 #[tokio::test]
 async fn fail_immutable() {
-    let (
-        mut context,
-        test_pack_set,
-        test_pack_voucher,
-        _test_metadata,
-        test_master_edition,
-        _user,
-    ) = setup(false).await;
+    let (mut context, test_pack_set, test_pack_voucher, _test_metadata, test_master_edition, _user) =
+        setup(false).await;
 
     let result = test_pack_set
-        .edit_voucher(&mut context, &test_pack_voucher, &test_master_edition.pubkey, None, Some(2))
+        .edit_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition.pubkey,
+            None,
+            Some(2),
+        )
         .await;
 
     assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet, 0);

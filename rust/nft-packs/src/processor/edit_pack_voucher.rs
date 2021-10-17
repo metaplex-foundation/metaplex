@@ -4,7 +4,7 @@ use crate::{
     error::NFTPacksError,
     instruction::EditPackVoucherArgs,
     math::SafeMath,
-    state::{PackSet, PackSetState, PackVoucher},
+    state::{PackSet, PackVoucher},
     utils::*,
 };
 use solana_program::{

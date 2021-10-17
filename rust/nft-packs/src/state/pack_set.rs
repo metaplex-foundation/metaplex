@@ -1,7 +1,7 @@
 //! Pack set definitions
 
 use super::*;
-use crate::error::NFTPacksError;
+use crate::{error::NFTPacksError, math::SafeMath};
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     borsh::try_from_slice_unchecked,
@@ -10,6 +10,7 @@ use solana_program::{
     program_pack::{IsInitialized, Pack, Sealed},
     pubkey::Pubkey,
 };
+use spl_token_metadata::state::{MasterEdition, MasterEditionV2};
 
 /// Pack state
 #[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
@@ -140,6 +141,49 @@ impl PackSet {
 
         if self.pack_state == PackSetState::Activated || self.pack_state == PackSetState::Ended {
             return Err(NFTPacksError::WrongPackState.into());
+        }
+
+        Ok(())
+    }
+
+    /// Add new card editions to pack
+    pub fn add_card_editions(
+        &mut self,
+        card_max_supply: &Option<u32>,
+        card_master_edition: &MasterEditionV2,
+    ) -> Result<(), ProgramError> {
+        match self.distribution_type {
+            PackDistributionType::Unlimited => {
+                if card_max_supply.is_some() {
+                    return Err(NFTPacksError::WrongMaxSupply.into());
+                }
+
+                if card_master_edition.max_supply().is_some() {
+                    return Err(NFTPacksError::WrongMasterSupply.into());
+                }
+            }
+            _ => {
+                if let Some(m_supply) = card_max_supply {
+                    if let Some(m_e_max_supply) = card_master_edition.max_supply() {
+                        if (*m_supply as u64)
+                            > m_e_max_supply.error_sub(card_master_edition.supply())?
+                        {
+                            return Err(NFTPacksError::WrongMaxSupply.into());
+                        }
+                    }
+                    if *m_supply == 0 {
+                        return Err(NFTPacksError::WrongMaxSupply.into());
+                    }
+
+                    self.total_editions = Some(
+                        self.total_editions
+                            .ok_or(NFTPacksError::MissingEditionsInPack)?
+                            .error_add(*m_supply as u64)?,
+                    );
+                } else {
+                    return Err(NFTPacksError::WrongMaxSupply.into());
+                }
+            }
         }
 
         Ok(())

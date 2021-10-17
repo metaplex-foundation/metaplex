@@ -1,7 +1,6 @@
 //! Deactivate instruction processing
 
 use crate::{
-    error::NFTPacksError,
     state::{PackSet, PackSetState},
     utils::*,
 };

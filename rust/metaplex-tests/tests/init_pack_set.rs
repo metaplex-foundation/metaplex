@@ -1,15 +1,15 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    instruction,
-    state::{AccountType, PackSetState, PackDistributionType},
     error::NFTPacksError,
+    instruction,
+    state::{AccountType, PackDistributionType, PackSetState},
 };
+use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
 use solana_sdk::{transaction::TransactionError, transport::TransportError};
 use utils::*;
-use num_traits::FromPrimitive;
 
 #[tokio::test]
 async fn success() {

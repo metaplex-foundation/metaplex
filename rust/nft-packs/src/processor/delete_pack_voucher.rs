@@ -1,10 +1,9 @@
 //! Delete pack voucher instruction processing
 
 use crate::{
-    error::NFTPacksError,
     find_pack_voucher_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackSet, PackSetState, PackVoucher, PREFIX},
+    state::{PackSet, PackVoucher, PREFIX},
     utils::*,
 };
 use solana_program::{

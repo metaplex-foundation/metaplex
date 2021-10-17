@@ -2,7 +2,9 @@ mod utils;
 
 use metaplex_nft_packs::{
     find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
-    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs, NFTPacksInstruction, claim_pack},
+    instruction::{
+        claim_pack, AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs, NFTPacksInstruction,
+    },
     state::{ActionOnProve, PackDistributionType, ProvingProcess},
 };
 use solana_program::{
@@ -180,7 +182,14 @@ async fn success_fixed_probability() {
         .await
         .unwrap();
 
-    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+    test_pack_set
+        .request_card_for_redeem(
+            &mut context,
+            &edition_authority,
+            &test_randomness_oracle.keypair.pubkey(),
+        )
+        .await
+        .unwrap();
 
     test_pack_set
         .claim_pack(
@@ -337,7 +346,14 @@ async fn success_max_supply_probability() {
     let new_mint = Keypair::new();
     let new_mint_token_acc = Keypair::new();
 
-    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+    test_pack_set
+        .request_card_for_redeem(
+            &mut context,
+            &edition_authority,
+            &test_randomness_oracle.keypair.pubkey(),
+        )
+        .await
+        .unwrap();
 
     test_pack_set
         .claim_pack(
@@ -477,7 +493,14 @@ async fn fail_wrong_user_wallet() {
         .await
         .unwrap();
 
-    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+    test_pack_set
+        .request_card_for_redeem(
+            &mut context,
+            &edition_authority,
+            &test_randomness_oracle.keypair.pubkey(),
+        )
+        .await
+        .unwrap();
 
     let (proving_process_key, _) = find_proving_process_program_address(
         &metaplex_nft_packs::id(),
@@ -748,7 +771,14 @@ async fn fail_claim_twice() {
     let new_mint = Keypair::new();
     let new_mint_token_acc = Keypair::new();
 
-    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+    test_pack_set
+        .request_card_for_redeem(
+            &mut context,
+            &edition_authority,
+            &test_randomness_oracle.keypair.pubkey(),
+        )
+        .await
+        .unwrap();
 
     test_pack_set
         .claim_pack(
@@ -810,8 +840,13 @@ async fn fail_claim_twice() {
         context.last_blockhash,
     );
 
-    let result = context.banks_client.process_transaction(tx).await.err().unwrap();
-    
+    let result = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .err()
+        .unwrap();
+
     assert_transport_error!(
         result,
         TransportError::TransactionError(TransactionError::InstructionError(

@@ -20,7 +20,7 @@ use solana_program::{
 use spl_token::state::Account;
 use spl_token_metadata::{
     error::MetadataError,
-    state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
+    state::{MasterEditionV2, Metadata, EDITION, PREFIX},
     utils::{assert_derivation, assert_initialized},
 };
 
@@ -107,39 +107,7 @@ pub fn add_card_to_pack(
     // Check for v2
     let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
 
-    // TODO: move this match to a function
-    match pack_set.distribution_type {
-        PackDistributionType::Unlimited => {
-            if max_supply.is_some() {
-                return Err(NFTPacksError::WrongMaxSupply.into());
-            }
-
-            if master_edition.max_supply().is_some() {
-                return Err(NFTPacksError::WrongMasterSupply.into());
-            }
-        }
-        _ => {
-            if let Some(m_supply) = max_supply {
-                if let Some(m_e_max_supply) = master_edition.max_supply() {
-                    if (m_supply as u64) > m_e_max_supply.error_sub(master_edition.supply())? {
-                        return Err(NFTPacksError::WrongMaxSupply.into());
-                    }
-                }
-                if m_supply == 0 {
-                    return Err(NFTPacksError::WrongMaxSupply.into());
-                }
-                // TODO: it can be a function
-                pack_set.total_editions = Some(
-                    pack_set
-                        .total_editions
-                        .ok_or(NFTPacksError::MissingEditionsInPack)?
-                        .error_add(m_supply as u64)?,
-                );
-            } else {
-                return Err(NFTPacksError::WrongMaxSupply.into());
-            }
-        }
-    }
+    pack_set.add_card_editions(&max_supply, &master_edition)?;
 
     let master_metadata = Metadata::from_account_info(master_metadata_info)?;
     assert_account_key(mint_info, &master_metadata.mint)?;

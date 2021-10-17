@@ -4,7 +4,7 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackCard, PackDistributionType, PackSet, PackSetState, ProvingProcess, PREFIX},
+    state::{PackCard, PackDistributionType, PackSet, ProvingProcess, PREFIX},
     utils::*,
     MAX_PROBABILITY_VALUE,
 };
@@ -150,7 +150,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     Ok(())
 }
 
-// TODO: make this function prettier
 fn get_card_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
@@ -159,67 +158,67 @@ fn get_card_probability(
         PackDistributionType::Fixed => {
             msg!("Fixed number distribution type");
 
-            let card_max_supply = pack_card
-                .max_supply
-                .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-            let pack_total_editions = pack_set
-                .total_editions
-                .ok_or(NFTPacksError::MissingEditionsInPack)?;
-
-            if card_max_supply == 0 {
-                return Err(NFTPacksError::CardDoesntHaveEditions.into());
-            }
-
-            let probability = (pack_card
-                .probability
-                .ok_or(NFTPacksError::CardProbabilityMissing)?
-                as u128) // it shouldn't happen because there is a check on AddCardToPack
-                .error_mul(u16::MAX as u128)?
-                .error_div(MAX_PROBABILITY_VALUE as u128)?;
-
-            pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
-
-            pack_card.max_supply = Some(card_max_supply.error_decrement()?);
-
-            Ok(probability)
+            count_fixed_probability(pack_set, pack_card)
         }
         PackDistributionType::MaxSupply => {
             msg!("Max supply distribution type");
 
-            let card_max_supply = pack_card
-                .max_supply
-                .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-            let pack_total_editions = pack_set
-                .total_editions
-                .ok_or(NFTPacksError::MissingEditionsInPack)?;
-
-            if card_max_supply == 0 {
-                return Err(NFTPacksError::CardDoesntHaveEditions.into());
-            }
-
-            let probability = ((card_max_supply as u128)
-                .error_div(pack_total_editions as u128)?
-                .error_mul(MAX_PROBABILITY_VALUE as u128)?)
-            .error_mul(u16::MAX as u128)?
-            .error_div(MAX_PROBABILITY_VALUE as u128)?;
-
-            pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
-
-            pack_card.max_supply = Some(card_max_supply.error_decrement()?);
-
-            Ok(probability)
+            count_max_supply_probability(pack_set, pack_card)
         }
         PackDistributionType::Unlimited => {
             msg!("Unlimited distribution type");
 
-            let probability = (pack_card
-                .probability
-                .ok_or(NFTPacksError::CardProbabilityMissing)?
-                as u128) // it shouldn't happen because there is a check on AddCardToPack
-                .error_mul(u16::MAX as u128)?
-                .error_div(MAX_PROBABILITY_VALUE as u128)?;
-
-            Ok(probability)
+            pack_card.get_probability()
         }
     }
+}
+
+fn count_fixed_probability(
+    pack_set: &mut PackSet,
+    pack_card: &mut PackCard,
+) -> Result<u128, ProgramError> {
+    let card_max_supply = pack_card
+        .max_supply
+        .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+    let pack_total_editions = pack_set
+        .total_editions
+        .ok_or(NFTPacksError::MissingEditionsInPack)?;
+
+    if card_max_supply == 0 {
+        return Err(NFTPacksError::CardDoesntHaveEditions.into());
+    }
+
+    pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+
+    pack_card.max_supply = Some(card_max_supply.error_decrement()?);
+
+    pack_card.get_probability()
+}
+
+fn count_max_supply_probability(
+    pack_set: &mut PackSet,
+    pack_card: &mut PackCard,
+) -> Result<u128, ProgramError> {
+    let card_max_supply = pack_card
+        .max_supply
+        .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
+    let pack_total_editions = pack_set
+        .total_editions
+        .ok_or(NFTPacksError::MissingEditionsInPack)?;
+
+    if card_max_supply == 0 {
+        return Err(NFTPacksError::CardDoesntHaveEditions.into());
+    }
+
+    let probability = ((card_max_supply as u128)
+        .error_div(pack_total_editions as u128)?
+        .error_mul(MAX_PROBABILITY_VALUE as u128)?)
+    .error_mul(u16::MAX as u128)?
+    .error_div(MAX_PROBABILITY_VALUE as u128)?;
+
+    pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+
+    pack_card.max_supply = Some(card_max_supply.error_decrement()?);
+
+    Ok(probability)
 }

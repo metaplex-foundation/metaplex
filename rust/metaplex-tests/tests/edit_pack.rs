@@ -1,6 +1,8 @@
 mod utils;
 
-use metaplex_nft_packs::{error::NFTPacksError, instruction::InitPackSetArgs, state::PackDistributionType};
+use metaplex_nft_packs::{
+    error::NFTPacksError, instruction::InitPackSetArgs, state::PackDistributionType,
+};
 use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
@@ -95,9 +97,7 @@ async fn fail_immutable() {
     let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) =
         setup(false).await;
 
-    let result = test_pack_set
-        .edit(&mut context, None, Some([8; 32]))
-        .await;
+    let result = test_pack_set.edit(&mut context, None, Some([8; 32])).await;
 
     assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet, 0);
 }

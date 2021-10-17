@@ -36,10 +36,6 @@ pub enum NFTPacksError {
     #[error("Proved vouchers mismatch pack vouchers")]
     ProvedVouchersMismatchPackVouchers,
 
-    /// Pack is already open
-    #[error("Pack is already open")]
-    PackIsAlreadyOpen,
-
     /// Pack is already ended
     #[error("Pack is already ended")]
     PackIsAlreadyEnded,
@@ -52,17 +48,9 @@ pub enum NFTPacksError {
     #[error("Can't activate NFT pack in current state")]
     CantActivatePack,
 
-    /// Can't deactivate NFT pack in current state
-    #[error("Can't deactivate NFT pack in current state")]
-    CantDeactivatePack,
-
     /// Pack set should be activated
     #[error("Pack set should be activated")]
     PackSetNotActivated,
-
-    /// Pack is in ended state can't be activated
-    #[error("Pack is in ended state can't be activated")]
-    PackInEndedState,
 
     /// Proving process for this pack is completed
     #[error("Proving process for this pack is completed")]
@@ -100,25 +88,9 @@ pub enum NFTPacksError {
     #[error("Pack set is immutable")]
     ImmutablePackSet,
 
-    /// Total packs can't be less then pack cards amount
-    #[error("Total packs can't be less then pack cards amount")]
-    SmallTotalPacksAmount,
-
     /// Can't set the same value
     #[error("Can't set the same value")]
     CantSetTheSameValue,
-
-    /// Wrong pack card received
-    #[error("Wrong pack card received")]
-    WrongPackCard,
-
-    /// Wrong pack voucher received
-    #[error("Wrong pack voucher received")]
-    WrongPackVoucher,
-
-    /// Max supply can't be less then current supply
-    #[error("Max supply can't be less then current supply")]
-    SmallMaxSupply,
 
     /// Wrong max supply value
     #[error("Wrong max supply value")]

@@ -270,10 +270,7 @@ impl TestPackSet {
                 &metaplex_nft_packs::id(),
                 &self.keypair.pubkey(),
                 &self.authority.pubkey(),
-                EditPackSetArgs {
-                    mutable,
-                    name,
-                },
+                EditPackSetArgs { mutable, name },
             )],
             Some(&context.payer.pubkey()),
             &[&self.authority, &context.payer],
@@ -460,14 +457,12 @@ impl TestPackSet {
         random_oracle: &Pubkey,
     ) -> transport::Result<()> {
         let tx = Transaction::new_signed_with_payer(
-            &[
-                instruction::request_card_for_redeem(
-                    &metaplex_nft_packs::id(),
-                    &self.keypair.pubkey(),
-                    &user_wallet.pubkey(),
-                    random_oracle,
-                )
-            ],
+            &[instruction::request_card_for_redeem(
+                &metaplex_nft_packs::id(),
+                &self.keypair.pubkey(),
+                &user_wallet.pubkey(),
+                random_oracle,
+            )],
             Some(&context.payer.pubkey()),
             &[&context.payer, user_wallet],
             context.last_blockhash,

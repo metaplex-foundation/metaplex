@@ -178,7 +178,7 @@ async fn fail_activate_after_close() {
     context.warp_to_slot(3).unwrap();
 
     test_pack_set.close(&mut context).await.unwrap();
-    
+
     context.warp_to_slot(6).unwrap();
 
     let result = test_pack_set.activate(&mut context).await;

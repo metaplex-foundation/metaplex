@@ -115,6 +115,8 @@ async fn success() {
     let pack_set = test_pack_set.get_data(&mut context).await;
     assert_eq!(pack_set.pack_cards, 1);
 
+    test_pack_set.close(&mut context).await.unwrap();
+
     test_pack_set
         .delete_card(
             &mut context,

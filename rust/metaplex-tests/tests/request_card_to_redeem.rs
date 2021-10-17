@@ -1,24 +1,13 @@
 mod utils;
 
 use metaplex_nft_packs::{
-    find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
-    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs, NFTPacksInstruction},
+    find_proving_process_program_address,
+    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
     state::{ActionOnProve, PackDistributionType, ProvingProcess},
 };
-use solana_program::{
-    instruction::{AccountMeta, Instruction},
-    program_pack::Pack,
-    pubkey::Pubkey,
-    system_instruction, system_program, sysvar,
-};
+use solana_program::{program_pack::Pack, system_instruction};
 use solana_program_test::*;
-use solana_sdk::{
-    instruction::InstructionError,
-    signature::Keypair,
-    signer::Signer,
-    transaction::{Transaction, TransactionError},
-    transport::TransportError,
-};
+use solana_sdk::{signature::Keypair, signer::Signer, transaction::Transaction};
 use utils::*;
 
 async fn create_master_edition(
@@ -177,7 +166,14 @@ async fn success() {
         .await
         .unwrap();
 
-    test_pack_set.request_card_for_redeem(&mut context, &edition_authority, &test_randomness_oracle.keypair.pubkey()).await.unwrap();
+    test_pack_set
+        .request_card_for_redeem(
+            &mut context,
+            &edition_authority,
+            &test_randomness_oracle.keypair.pubkey(),
+        )
+        .await
+        .unwrap();
 
     let proving_process_data = get_account(&mut context, &proving_process_key).await;
     let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();

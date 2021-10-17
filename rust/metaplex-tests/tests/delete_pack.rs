@@ -83,6 +83,8 @@ async fn success() {
 
     assert!(!is_empty_account(&mut context, &test_pack_set.keypair.pubkey()).await);
 
+    test_pack_set.close(&mut context).await.unwrap();
+
     test_pack_set
         .delete(&mut context, &user.pubkey())
         .await

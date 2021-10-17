@@ -3,9 +3,7 @@
 use crate::{
     error::NFTPacksError,
     math::SafeMath,
-    state::{
-        ActionOnProve, InitProvingProcessParams, PackSet, PackSetState, PackVoucher, ProvingProcess,
-    },
+    state::{ActionOnProve, InitProvingProcessParams, PackSet, PackVoucher, ProvingProcess},
     utils::*,
 };
 use solana_program::{

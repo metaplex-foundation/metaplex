@@ -1,17 +1,17 @@
 mod utils;
 
 use metaplex_nft_packs::{
+    error::NFTPacksError,
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
     state::{AccountType, ActionOnProve, PackDistributionType},
-    error::NFTPacksError,
 };
+use num_traits::FromPrimitive;
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
 use solana_sdk::{
     signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
 };
 use utils::*;
-use num_traits::FromPrimitive;
 
 async fn setup() -> (
     ProgramTestContext,
