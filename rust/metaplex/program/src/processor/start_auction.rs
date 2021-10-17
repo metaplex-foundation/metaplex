@@ -3,17 +3,17 @@ use {
         state::{get_auction_manager, AuctionManagerStatus, PREFIX},
         utils::{assert_authority_correct, assert_owned_by},
     },
+    metaplex_auction::{
+        instruction::{start_auction_instruction, StartAuctionArgs},
+        processor::AuctionData,
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         pubkey::Pubkey,
     },
-    spl_auction::{
-        instruction::{start_auction_instruction, StartAuctionArgs},
-        processor::AuctionData,
-    },
-    spl_shared_metaplex::{
+    metaplex_shared::{
         error::MetaplexError,
         state::{Store},
     }

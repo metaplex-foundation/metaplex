@@ -7,6 +7,8 @@ use {
             transfer_safety_deposit_box_items,
         },
     },
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -14,9 +16,7 @@ use {
         rent::Rent,
         sysvar::Sysvar,
     },
-    spl_auction::processor::{AuctionData, AuctionDataExtended, AuctionState},
-    spl_token_vault::state::SafetyDepositBox,
-    spl_shared_metaplex::{
+    metaplex_shared::{
         error::MetaplexError,
         state::{Store},
     }
@@ -87,10 +87,10 @@ pub fn process_withdraw_master_edition<'a>(
         &store.auction_program,
         auction_extended_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             store.auction_program.as_ref(),
             vault_info.key.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
     )?;
 

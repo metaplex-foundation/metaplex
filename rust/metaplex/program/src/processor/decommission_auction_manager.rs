@@ -6,15 +6,15 @@ use {
             end_auction,
         },
     },
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_vault::{instruction::create_set_authority_instruction, state::Vault},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         pubkey::Pubkey,
     },
-    spl_auction::processor::AuctionData,
-    spl_token_vault::{instruction::create_set_authority_instruction, state::Vault},
-    spl_shared_metaplex::{
+    metaplex_shared::{
         error::MetaplexError,
         state::{Store},
     }

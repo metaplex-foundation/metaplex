@@ -1,5 +1,5 @@
 [package]
-name = "spl-shared-metaplex"
+name = "metaplex-shared"
 version = "0.0.1"
 description = "Shared library for Metaplex programs"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]

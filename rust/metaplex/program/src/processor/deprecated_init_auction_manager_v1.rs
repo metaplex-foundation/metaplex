@@ -14,7 +14,7 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
-    spl_shared_metaplex::{
+    metaplex_shared::{
         error::MetaplexError,
         state::{Key},
     }

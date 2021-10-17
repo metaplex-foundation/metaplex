@@ -15,12 +15,12 @@ use {
         program_error::ProgramError,
         pubkey::Pubkey,
     },
-    spl_auction::processor::AuctionData,
-    spl_token_metadata::{
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::{
         deprecated_instruction::deprecated_set_reservation_list, state::Reservation,
     },
 };
-use spl_shared_metaplex::error::MetaplexError;
+use metaplex_shared::error::MetaplexError;
 
 fn set_reservation_list_wrapper<'a>(
     program_id: &'a Pubkey,

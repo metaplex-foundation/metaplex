@@ -1,15 +1,15 @@
 use {
     super::make_account_with_data,
     clap::ArgMatches,
+    metaplex::{
+        deprecated_state::AuctionManagerV1,
+        state::{AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key},
+    },
     solana_clap_utils::input_parsers::pubkey_of,
     solana_client::rpc_client::RpcClient,
     solana_program::{borsh::try_from_slice_unchecked, pubkey::Pubkey},
     solana_sdk::signature::Keypair,
-    spl_auction::processor::{AuctionData, AuctionDataExtended},
-    spl_metaplex::{
-        deprecated_state::AuctionManagerV1,
-        state::{AuctionManagerV2, AuctionWinnerTokenTypeTracker, Key},
-    },
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended},
 };
 
 pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
@@ -42,12 +42,12 @@ pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
 
     let auction_data = client.get_account(&auction_key).unwrap();
     let auction: AuctionData = try_from_slice_unchecked(&auction_data.data).unwrap();
-    let auction_program = spl_auction::id();
+    let auction_program = metaplex_auction::id();
     let seeds = &[
-        spl_auction::PREFIX.as_bytes(),
+        metaplex_auction::PREFIX.as_bytes(),
         &auction_program.as_ref(),
         vault_key.as_ref(),
-        spl_auction::EXTENDED.as_bytes(),
+        metaplex_auction::EXTENDED.as_bytes(),
     ];
     let (extended, _) = Pubkey::find_program_address(seeds, &auction_program);
     let auction_data = client.get_account(&extended).unwrap();
@@ -59,12 +59,12 @@ pub fn send_show(app_matches: &ArgMatches, _payer: Keypair, client: RpcClient) {
     } else if let Some(manager) = managerv2 {
         let (token_tracker, _) = Pubkey::find_program_address(
             &[
-                spl_metaplex::state::PREFIX.as_bytes(),
-                spl_metaplex::id().as_ref(),
+                metaplex::state::PREFIX.as_bytes(),
+                metaplex::id().as_ref(),
                 auction_manager_key.as_ref(),
-                spl_metaplex::state::TOTALS.as_bytes(),
+                metaplex::state::TOTALS.as_bytes(),
             ],
-            &spl_metaplex::id(),
+            &metaplex::id(),
         );
         let token_tracker_data = client.get_account(&token_tracker);
 

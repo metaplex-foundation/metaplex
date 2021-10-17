@@ -22,7 +22,7 @@ export const ArtworksView = () => {
   const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata, isLoading } = useMeta();
+  const { metadata, isLoading, pullAllMetadata, storeIndexer } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,
@@ -103,6 +103,9 @@ export const ArtworksView = () => {
                 </TabPane>
               )}
             </Tabs>
+            {connected && storeIndexer.length && (
+              <a onClick={() => pullAllMetadata()}>Load all metadata</a>
+            )}
           </Row>
         </Col>
       </Content>

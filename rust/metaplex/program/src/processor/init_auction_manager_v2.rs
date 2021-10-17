@@ -16,12 +16,12 @@ use {
         program_option::COption,
         pubkey::Pubkey,
     },
-    spl_auction::processor::{AuctionData, AuctionState},
+    metaplex_auction::processor::{AuctionData, AuctionState},
     spl_token::state::Account,
-    spl_token_vault::state::{Vault, VaultState},
+    metaplex_token_vault::state::{Vault, VaultState},
 };
-use spl_shared_metaplex::error::MetaplexError;
-use spl_shared_metaplex::state::{Key, Store};
+use metaplex_shared::error::MetaplexError;
+use metaplex_shared::state::{Key, Store};
 
 pub fn assert_common_checks(
     program_id: &Pubkey,
@@ -64,7 +64,7 @@ pub fn assert_common_checks(
         &store.auction_program,
         auction_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             &store.auction_program.as_ref(),
             &vault_info.key.as_ref(),
         ],

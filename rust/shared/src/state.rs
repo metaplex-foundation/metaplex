@@ -26,6 +26,8 @@ pub enum Key {
     AuctionManagerV2,
     BidRedemptionTicketV2,
     AuctionWinnerTokenTypeTrackerV1,
+    StoreIndexerV1,
+    AuctionCacheV1,
 }
 
 #[repr(C)]

@@ -12,7 +12,8 @@
     "package:linux": "pkg . --no-bytecode --targets node14-linux-x64 --output bin/linux/metaplex",
     "package:linuxb": "pkg . --targets node14-linux-x64 --output bin/linux/metaplex",
     "package:win": "pkg . --targets node14-win-x64 --output bin/win/metaplex",
-    "package:macos": "pkg . --targets node14-macos-x64 --output bin/macos/metaplex",
+    "package:macos-x64": "pkg . --targets node14-macos-x64 --output bin/macos/metaplex",
+    "package:macos-m1": "pkg . --targets node14-macos-arm64 --output bin/macos/metaplex",
     "format": "prettier --loglevel warn --write \"**/*.{ts,js,json,yaml}\"",
     "format:check": "prettier --loglevel warn --check \"**/*.{ts,js,json,yaml}\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
@@ -42,6 +43,7 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.36.0",
     "@project-serum/anchor": "^0.14.0",
     "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",

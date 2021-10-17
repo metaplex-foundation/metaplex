@@ -12,7 +12,7 @@ use {
         pubkey::Pubkey,
     },
 };
-use spl_shared_metaplex::state::Key;
+use metaplex_shared::state::Key;
 
 pub fn process_set_whitelisted_creator<'a>(
     program_id: &'a Pubkey,

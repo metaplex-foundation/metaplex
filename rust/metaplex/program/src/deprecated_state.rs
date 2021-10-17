@@ -9,19 +9,19 @@ use {
     },
     arrayref::array_ref,
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_token_metadata::state::Metadata,
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
         pubkey::Pubkey,
     },
-    spl_auction::processor::AuctionData,
-    spl_token_metadata::state::Metadata,
-    spl_token_vault::state::SafetyDepositBox,
-    spl_shared_metaplex::{
+    metaplex_auction::processor::AuctionData,
+    metaplex_shared::{
         error::MetaplexError,
         state::{Key},
+        utils::try_from_slice_checked,
     }
 };
-use spl_shared_metaplex::utils::try_from_slice_checked;
 
 pub const MAX_WINNERS: usize = 200;
 pub const MAX_WINNER_SIZE: usize = 6 * MAX_WINNERS;
