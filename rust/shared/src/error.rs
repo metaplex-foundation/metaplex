@@ -430,6 +430,46 @@ pub enum MetaplexError {
     /// Not allowed to use Master Edition V1 printing with Auction Manager v2
     #[error("Not allowed to use Master Edition V1 printing with Auction Manager v2")]
     PrintingV1NotAllowedWithAuctionManagerV2,
+
+    /// Invalid system
+    #[error("Invalid system program")]
+    InvalidSystemProgram,
+
+    /// Duplicate key detected
+    #[error("Duplicate key detected")]
+    DuplicateKeyDetected,
+
+    /// Max metadata cache size reached
+    #[error("Cant add more than 10 metadata to a cache")]
+    MaxMetadataCacheSizeReached,
+
+    /// Invalid cache offset
+    #[error("Invalid cache offset")]
+    InvalidCacheOffset,
+
+    /// You needed to provide an auction cache for the element above you but did not
+    #[error("You needed to provide an auction cache for the element above you but did not")]
+    ExpectedAboveAuctionCacheToBeProvided,
+
+    /// You needed to provide an auction cache for the element below you but did not
+    #[error("You needed to provide an auction cache for the element below you but did not")]
+    ExpectedBelowAuctionCacheToBeProvided,
+
+    /// Cache given does not match cache at this offset
+    #[error("Cache given does not match cache at this offset")]
+    CacheMismatch,
+
+    /// Cache above is newer
+    #[error("Cache above is newer")]
+    CacheAboveIsNewer,
+
+    /// Cache below is older
+    #[error("Cache below is older")]
+    CacheBelowIsOlder,
+
+    /// Auction manager already in finished state
+    #[error("Auction manager already in finished state")]
+    AuctionManagerInFishedState,
 }
 
 impl PrintProgramError for MetaplexError {

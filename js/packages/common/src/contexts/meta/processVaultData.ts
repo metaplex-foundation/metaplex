@@ -47,7 +47,7 @@ export const processVaultData: ProcessAccountsFunc = (
 };
 
 const isVaultAccount = (account: AccountInfo<Buffer>) =>
-  pubkeyToString(account.owner) === VAULT_ID;
+  account && pubkeyToString(account.owner) === VAULT_ID;
 
 const isSafetyDepositBoxV1Account = (account: AccountInfo<Buffer>) =>
   account.data[0] === VaultKey.SafetyDepositBoxV1;

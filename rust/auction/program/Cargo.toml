@@ -1,5 +1,5 @@
 [package]
-name = "spl-auction"
+name = "metaplex-auction"
 version = "0.0.1"
 description = "Solana Auction Program"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
@@ -19,7 +19,7 @@ num-traits = "0.2"
 arrayref = "0.3.6"
 solana-program = "1.7.11"
 solana-gateway = { git = "https://github.com/identity-com/on-chain-identity-gateway", branch = "develop", features = [ "no-entrypoint" ] }
-spl-shared-metaplex = { path = "../../shared" }
+metaplex-shared = { path = "../../shared" }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 thiserror = "1.0"
 

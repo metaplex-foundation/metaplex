@@ -31,15 +31,17 @@ export const SetupView = () => {
   const [gatekeeperNetwork, setGatekeeperNetwork] = useState<GatekeeperNetworkSelection|undefined>();
 
   useEffect(() => {
-    const getStore = async () => {
-      if (wallet.publicKey) {
-        const store = await setStoreForOwner(wallet.publicKey.toBase58());
-        setStoreAddress(store);
-      } else {
-        setStoreAddress(undefined);
-      }
-    };
-    getStore();
+    if (!process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS) {
+      const getStore = async () => {
+        if (wallet.publicKey) {
+          const store = await setStoreForOwner(wallet.publicKey.toBase58());
+          setStoreAddress(store);
+        } else {
+          setStoreAddress(undefined);
+        }
+      };
+      getStore();
+    }
   }, [wallet.publicKey]);
 
   const initializeStore = async () => {

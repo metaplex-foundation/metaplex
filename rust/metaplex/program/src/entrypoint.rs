@@ -8,7 +8,7 @@ use {
         account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
         program_error::PrintProgramError, pubkey::Pubkey,
     },
-    spl_shared_metaplex::{
+    metaplex_shared::{
         error::MetaplexError,
     }
 };

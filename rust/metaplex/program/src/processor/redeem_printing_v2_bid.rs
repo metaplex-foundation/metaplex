@@ -11,6 +11,11 @@ use {
         },
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::{
+        instruction::mint_edition_from_master_edition_via_vault_proxy,
+        utils::get_supply_off_master_edition,
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
@@ -18,14 +23,9 @@ use {
         program_error::ProgramError,
         pubkey::Pubkey,
     },
-    spl_auction::processor::AuctionData,
-    spl_token_metadata::{
-        instruction::mint_edition_from_master_edition_via_vault_proxy,
-        utils::get_supply_off_master_edition,
-    },
 };
-use spl_shared_metaplex::error::MetaplexError;
-use spl_shared_metaplex::state::Key;
+use metaplex_shared::error::MetaplexError;
+use metaplex_shared::state::Key;
 
 #[allow(clippy::too_many_arguments)]
 pub fn mint_edition<'a>(

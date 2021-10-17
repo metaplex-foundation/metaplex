@@ -16,12 +16,12 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
-    spl_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
     spl_token::state::Account,
-    spl_token_metadata::utils::get_supply_off_master_edition,
+    metaplex_token_metadata::utils::get_supply_off_master_edition,
 };
-use spl_shared_metaplex::error::MetaplexError;
-use spl_shared_metaplex::state::Store;
+use metaplex_shared::error::MetaplexError;
+use metaplex_shared::state::Store;
 
 struct LegacyAccounts<'a> {
     pub participation_printing_holding_account_info: &'a AccountInfo<'a>,
@@ -97,10 +97,10 @@ fn v2_validation<'a>(
         &store.auction_program,
         accounts.auction_extended_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             store.auction_program.as_ref(),
             vault_info.key.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
     )?;
 

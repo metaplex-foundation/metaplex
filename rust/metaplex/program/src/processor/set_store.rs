@@ -11,13 +11,13 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
-    spl_shared_metaplex::{
+    metaplex_shared::{
         state::MAX_STORE_SIZE,
         error::MetaplexError,
         state::Store
     }
 };
-use spl_shared_metaplex::state::Key;
+use metaplex_shared::state::Key;
 
 pub fn process_set_store<'a>(
     program_id: &'a Pubkey,

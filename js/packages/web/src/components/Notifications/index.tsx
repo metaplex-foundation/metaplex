@@ -27,7 +27,11 @@ import { settle } from '../../actions/settle';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
-import { AuctionViewState, useAuctions } from '../../hooks';
+import {
+  AuctionViewState,
+  processAccountsIntoAuctionView,
+  useAuctions,
+} from '../../hooks';
 import { useSolanaGateway as useGateway } from "@civic/solana-gateway-react";
 
 interface NotificationCard {
@@ -182,8 +186,11 @@ export function useSettlementAuctions({
 }) {
   const { accountByMint } = useUserAccounts();
   const walletPubkey = wallet?.publicKey?.toBase58();
-  const { bidderPotsByAuctionAndBidder } = useMeta();
-  const auctionsNeedingSettling = [...useAuctions(AuctionViewState.Ended), ...useAuctions(AuctionViewState.BuyNow)];
+  const { bidderPotsByAuctionAndBidder, pullAuctionPage } = useMeta();
+  const auctionsNeedingSettling = [
+    ...useAuctions(AuctionViewState.Ended),
+    ...useAuctions(AuctionViewState.BuyNow),
+  ];
   const { gatewayToken } = useGateway();
 
   const [validDiscoveredEndedAuctions, setValidDiscoveredEndedAuctions] =
@@ -191,15 +198,17 @@ export function useSettlementAuctions({
   useMemo(() => {
     const f = async () => {
       const nextBatch = auctionsNeedingSettling
-        .filter(
-          a => {
-            const isEndedInstantSale = a.isInstantSale && a.items.length === a.auction.info.bidState.bids.length;
+        .filter(a => {
+          const isEndedInstantSale =
+            a.isInstantSale &&
+            a.items.length === a.auction.info.bidState.bids.length;
 
-           return walletPubkey &&
+          return (
+            walletPubkey &&
             a.auctionManager.authority === walletPubkey &&
-             (a.auction.info.ended() || isEndedInstantSale)
-          }
-        )
+            (a.auction.info.ended() || isEndedInstantSale)
+          );
+        })
         .sort(
           (a, b) =>
             (b.auction.info.endedAt?.toNumber() || 0) -
@@ -275,19 +284,59 @@ export function useSettlementAuctions({
         ),
         action: async () => {
           try {
-            await settle(
-              connection,
-              wallet,
-              gatewayToken?.publicKey,
-              auctionView,
-              // Just claim all bidder pots
-              bidsToClaim,
-              myPayingAccount?.pubkey,
-              accountByMint,
+            // pull missing data and complete the auction view to settle.
+            const {
+              auctionDataExtended,
+              auctionManagersByAuction,
+              safetyDepositBoxesByVaultAndIndex,
+              metadataByMint,
+              bidderMetadataByAuctionAndBidder:
+                updatedBidderMetadataByAuctionAndBidder,
+              bidderPotsByAuctionAndBidder,
+              bidRedemptionV2sByAuctionManagerAndWinningIndex,
+              masterEditions,
+              vaults,
+              safetyDepositConfigsByAuctionManagerAndIndex,
+              masterEditionsByPrintingMint,
+              masterEditionsByOneTimeAuthMint,
+              metadataByMasterEdition,
+              metadataByAuction,
+            } = await pullAuctionPage(auctionView.auction.pubkey);
+            const completeAuctionView = processAccountsIntoAuctionView(
+              auctionView.auction.pubkey,
+              auctionView.auction,
+              auctionDataExtended,
+              auctionManagersByAuction,
+              safetyDepositBoxesByVaultAndIndex,
+              metadataByMint,
+              updatedBidderMetadataByAuctionAndBidder,
+              bidderPotsByAuctionAndBidder,
+              bidRedemptionV2sByAuctionManagerAndWinningIndex,
+              masterEditions,
+              vaults,
+              safetyDepositConfigsByAuctionManagerAndIndex,
+              masterEditionsByPrintingMint,
+              masterEditionsByOneTimeAuthMint,
+              metadataByMasterEdition,
+              {},
+              metadataByAuction,
+              undefined,
             );
-            if (wallet.publicKey) {
-              const ata = await getPersonalEscrowAta(wallet);
-              if (ata) await closePersonalEscrow(connection, wallet, ata);
+            if (completeAuctionView) {
+              await settle(
+                connection,
+                wallet,
+                gatewayToken?.publicKey,
+                completeAuctionView,
+                // Just claim all bidder pots
+                bidsToClaim,
+                myPayingAccount?.pubkey,
+                accountByMint,
+              );
+              if (wallet.publicKey) {
+                const ata = await getPersonalEscrowAta(wallet);
+                if (ata) await closePersonalEscrow(connection, wallet, ata);
+              }
             }
           } catch (e) {
             console.error(e);
@@ -306,6 +355,7 @@ export function Notifications() {
     store,
     vaults,
     safetyDepositBoxesByVaultAndIndex,
+    pullAllSiteData,
   } = useMeta();
   const possiblyBrokenAuctionManagerSetups = useAuctions(
     AuctionViewState.Defective,
@@ -314,15 +364,14 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
 
-  useCollapseWrappedSol({ connection, wallet: wallet as WalletSigner, notifications });
+  useCollapseWrappedSol({ connection, wallet, notifications });
 
-  useSettlementAuctions({ connection, wallet: wallet as WalletSigner, notifications });
+  useSettlementAuctions({ connection, wallet, notifications });
 
   const vaultsNeedUnwinding = useMemo(
     () =>
@@ -360,6 +409,26 @@ export function Notifications() {
         return true;
       },
     });
+  });
+
+  notifications.push({
+    id: 'none',
+    title: 'Search for other auctions.',
+    description: (
+      <span>
+        Load all auctions (including defectives) by pressing here. Then you can
+        close them.
+      </span>
+    ),
+    action: async () => {
+      try {
+        await pullAllSiteData();
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+      return true;
+    },
   });
 
   possiblyBrokenAuctionManagerSetups
@@ -505,7 +574,10 @@ export function Notifications() {
   if (notifications.length === 0) return justContent;
   else
     return (
-      <Badge count={notifications.length} style={{ backgroundColor: 'white' }}>
+      <Badge
+        count={notifications.length - 1}
+        style={{ backgroundColor: 'white' }}
+      >
         {justContent}
       </Badge>
     );

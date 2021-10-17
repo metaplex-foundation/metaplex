@@ -12,6 +12,7 @@ use crate::{
 
 use {
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_shared::state::Store,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         clock::UnixTimestamp,
@@ -22,7 +23,6 @@ use {
     },
     std::mem,
 };
-use spl_shared_metaplex::state::Store;
 
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, PartialEq)]

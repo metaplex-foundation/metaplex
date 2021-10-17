@@ -5,12 +5,20 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
   loadAccounts,
+  pullYourMetadata,
   USE_SPEED_RUN,
 } from './loadAccounts';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
+import {
+  pullAuctionSubaccounts,
+  pullPage,
+  pullPayoutTickets,
+  pullStoreMetadata,
+} from '.';
+import { StringPublicKey, TokenAccount, useUserAccounts } from '../..';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -24,6 +32,10 @@ export function MetaProvider({ children = null as any }) {
   const { isReady, storeAddress } = useStore();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
+  const [page, setPage] = useState(0);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+  const [lastLength, setLastLength] = useState(0);
+  const { userAccounts } = useUserAccounts();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,8 +57,8 @@ export function MetaProvider({ children = null as any }) {
     },
     [setState],
   );
-
-  async function update(auctionAddress?: any, bidderAddress?: any) {
+  async function pullAllMetadata() {
+    if (isLoading) return false;
     if (!storeAddress) {
       if (isReady) {
         setIsLoading(false);
@@ -55,18 +67,187 @@ export function MetaProvider({ children = null as any }) {
     } else if (!state.store) {
       setIsLoading(true);
     }
+    setIsLoading(true);
+    const nextState = await pullStoreMetadata(connection, state);
+    setIsLoading(false);
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return [];
+  }
 
-    console.log('-----> Query started');
+  async function pullBillingPage(auctionAddress: StringPublicKey) {
+    if (isLoading) return false;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    const nextState = await pullAuctionSubaccounts(
+      connection,
+      auctionAddress,
+      state,
+    );
 
-    const nextState = !USE_SPEED_RUN
-      ? await loadAccounts(connection)
-      : await limitedLoadAccounts(connection);
+    console.log('-----> Pulling all payout tickets');
+    await pullPayoutTickets(connection, nextState);
+
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return [];
+  }
+
+  async function pullAuctionPage(auctionAddress: StringPublicKey) {
+    if (isLoading) return state;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return state;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    const nextState = await pullAuctionSubaccounts(
+      connection,
+      auctionAddress,
+      state,
+    );
+    setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return nextState;
+  }
+
+  async function pullAllSiteData() {
+    if (isLoading) return state;
+    if (!storeAddress) {
+      if (isReady) {
+        setIsLoading(false);
+      }
+      return state;
+    } else if (!state.store) {
+      setIsLoading(true);
+    }
+    console.log('------->Query started');
+
+    const nextState = await loadAccounts(connection);
 
     console.log('------->Query finished');
 
     setState(nextState);
+    await updateMints(nextState.metadataByMint);
+    return;
+  }
 
-    setIsLoading(false);
+  async function update(
+    auctionAddress?: any,
+    bidderAddress?: any,
+    userTokenAccounts?: TokenAccount[],
+  ) {
+    if (!storeAddress) {
+      if (isReady) {
+        //@ts-ignore
+        window.loadingData = false;
+        setIsLoading(false);
+      }
+      return;
+    } else if (!state.store) {
+      //@ts-ignore
+      window.loadingData = true;
+      setIsLoading(true);
+    }
+
+    console.log('-----> Query started');
+
+    let nextState = await pullPage(connection, page, state);
+
+    if (nextState.storeIndexer.length) {
+      if (USE_SPEED_RUN) {
+        nextState = await limitedLoadAccounts(connection);
+
+        console.log('------->Query finished');
+
+        setState(nextState);
+
+        //@ts-ignore
+        window.loadingData = false;
+        setIsLoading(false);
+      } else {
+        console.log('------->Pagination detected, pulling page', page);
+
+        // Ensures we get the latest so beat race conditions and avoid double pulls.
+        let currMetadataLoaded = false;
+        setMetadataLoaded(loaded => {
+          currMetadataLoaded = loaded;
+          return loaded;
+        });
+        if (
+          userTokenAccounts &&
+          userTokenAccounts.length &&
+          !currMetadataLoaded
+        ) {
+          console.log('--------->User metadata loading now.');
+
+          setMetadataLoaded(true);
+          nextState = await pullYourMetadata(
+            connection,
+            userTokenAccounts,
+            nextState,
+          );
+        }
+
+        const auction = window.location.href.match(/#\/auction\/(\w+)/);
+        const billing = window.location.href.match(
+          /#\/auction\/(\w+)\/billing/,
+        );
+        if (auction && page == 0) {
+          console.log(
+            '---------->Loading auction page on initial load, pulling sub accounts',
+          );
+
+          nextState = await pullAuctionSubaccounts(
+            connection,
+            auction[1],
+            nextState,
+          );
+
+          if (billing) {
+            console.log('-----> Pulling all payout tickets');
+            await pullPayoutTickets(connection, nextState);
+          }
+        }
+
+        let currLastLength;
+        setLastLength(last => {
+          currLastLength = last;
+          return last;
+        });
+        if (nextState.storeIndexer.length != currLastLength) {
+          setPage(page => page + 1);
+        }
+        setLastLength(nextState.storeIndexer.length);
+
+        //@ts-ignore
+        window.loadingData = false;
+        setIsLoading(false);
+        setState(nextState);
+      }
+    } else {
+      console.log('------->No pagination detected');
+      nextState = !USE_SPEED_RUN
+        ? await loadAccounts(connection)
+        : await limitedLoadAccounts(connection);
+
+      console.log('------->Query finished');
+
+      setState(nextState);
+
+      //@ts-ignore
+      window.loadingData = false;
+      setIsLoading(false);
+    }
+
     console.log('------->set finished');
 
     await updateMints(nextState.metadataByMint);
@@ -82,8 +263,32 @@ export function MetaProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    update();
-  }, [connection, setState, updateMints, storeAddress, isReady]);
+    //@ts-ignore
+    if (window.loadingData) {
+      console.log('currently another update is running, so queue for 3s...');
+      const interval = setInterval(() => {
+        //@ts-ignore
+        if (window.loadingData) {
+          console.log('not running queued update right now, still loading');
+        } else {
+          console.log('running queued update');
+          update(undefined, undefined, userAccounts);
+          clearInterval(interval);
+        }
+      }, 3000);
+    } else {
+      console.log('no update is running, updating.');
+      update(undefined, undefined, userAccounts);
+    }
+  }, [
+    connection,
+    setState,
+    updateMints,
+    storeAddress,
+    isReady,
+    page,
+    userAccounts.length > 0,
+  ]);
 
   useEffect(() => {
     if (isLoading) {
@@ -91,7 +296,7 @@ export function MetaProvider({ children = null as any }) {
     }
 
     return subscribeAccountsChange(connection, () => state, setState);
-  }, [connection, setState, isLoading]);
+  }, [connection, setState, isLoading, state]);
 
   // TODO: fetch names dynamically
   // TODO: get names for creators
@@ -127,6 +332,10 @@ export function MetaProvider({ children = null as any }) {
         ...state,
         // @ts-ignore
         update,
+        pullAuctionPage,
+        pullAllMetadata,
+        pullBillingPage,
+        pullAllSiteData,
         isLoading,
       }}
     >
