@@ -36,8 +36,7 @@
     "react-masonry-css": "^1.0.16",
     "react-router-dom": "^5.2.0",
     "react-virtualized": "^9.22.3",
-    "three": "^0.128.0",
-    "use-wallet": "^0.8.1"
+    "three": "^0.128.0"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",
@@ -45,7 +44,7 @@
     "build": "next build",
     "export": "next export -o ../../build/web",
     "start:prod": "next start",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "deploy:ar": "yarn export && arweave deploy-dir  ../../build/web --key-file ",
     "deploy:gh": "yarn export && gh-pages -d ../../build/web --repo https://github.com/metaplex-foundation/metaplex -t true",
     "deploy": "cross-env ASSET_PREFIX=/metaplex/ yarn build && yarn deploy:gh",

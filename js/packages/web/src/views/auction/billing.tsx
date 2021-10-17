@@ -33,7 +33,7 @@ import {
   NonWinningConstraint,
   PayoutTicket,
   WinningConstraint,
-} from '../../models/metaplex';
+} from '@oyster/common/dist/lib/models/metaplex/index';
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
@@ -374,7 +374,10 @@ export const InnerBillingView = ({
   const art = useArt(id);
   const balance = useUserBalance(auctionView.auction.info.tokenMint);
   const [escrowBalance, setEscrowBalance] = useState<number | undefined>();
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const { whitelistedCreatorsByCreator, pullBillingPage } = useMeta();
+  useEffect(() => {
+    pullBillingPage(id);
+  }, []);
   const [escrowBalanceRefreshCounter, setEscrowBalanceRefreshCounter] =
     useState(0);
 

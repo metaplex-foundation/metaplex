@@ -12,8 +12,9 @@ export const useAuction = (id: StringPublicKey) => {
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
 
-  const [existingAuctionView, setAuctionView] =
-    useState<AuctionView | undefined>(undefined);
+  const [existingAuctionView, setAuctionView] = useState<
+    AuctionView | undefined
+  >(undefined);
   const walletPubkey = publicKey?.toBase58();
   const {
     auctions,
@@ -28,8 +29,9 @@ export const useAuction = (id: StringPublicKey) => {
     masterEditionsByOneTimeAuthMint,
     masterEditionsByPrintingMint,
     metadataByMasterEdition,
-
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
+    auctionDataExtended,
+    metadataByAuction,
   } = useMeta();
 
   useEffect(() => {
@@ -38,12 +40,12 @@ export const useAuction = (id: StringPublicKey) => {
       const auctionView = processAccountsIntoAuctionView(
         walletPubkey,
         auction,
+        auctionDataExtended,
         auctionManagersByAuction,
         safetyDepositBoxesByVaultAndIndex,
         metadataByMint,
         bidderMetadataByAuctionAndBidder,
         bidderPotsByAuctionAndBidder,
-
         bidRedemptionV2sByAuctionManagerAndWinningIndex,
         masterEditions,
         vaults,
@@ -52,9 +54,10 @@ export const useAuction = (id: StringPublicKey) => {
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
         cachedRedemptionKeys,
-        undefined,
-        existingAuctionView || undefined,
+        metadataByAuction,
+        undefined
       );
+
       if (auctionView) setAuctionView(auctionView);
     }
   }, [
@@ -73,6 +76,7 @@ export const useAuction = (id: StringPublicKey) => {
     masterEditionsByOneTimeAuthMint,
     metadataByMasterEdition,
     cachedRedemptionKeys,
+    metadataByAuction,
   ]);
   return existingAuctionView;
 };

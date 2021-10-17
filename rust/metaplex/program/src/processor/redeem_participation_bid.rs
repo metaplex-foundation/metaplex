@@ -17,9 +17,9 @@ use {
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
-    spl_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
+    metaplex_auction::processor::{AuctionData, AuctionDataExtended, BidderMetadata},
     spl_token::state::Account,
-    spl_token_metadata::utils::get_supply_off_master_edition,
+    metaplex_token_metadata::utils::get_supply_off_master_edition,
 };
 
 struct LegacyAccounts<'a> {
@@ -96,10 +96,10 @@ fn v2_validation<'a>(
         &store.auction_program,
         accounts.auction_extended_info,
         &[
-            spl_auction::PREFIX.as_bytes(),
+            metaplex_auction::PREFIX.as_bytes(),
             store.auction_program.as_ref(),
             vault_info.key.as_ref(),
-            spl_auction::EXTENDED.as_bytes(),
+            metaplex_auction::EXTENDED.as_bytes(),
         ],
     )?;
 
@@ -263,13 +263,15 @@ pub fn process_redeem_participation_bid<'a>(
     let transfer_authority_info = next_account_info(account_info_iter)?;
     let accept_payment_info = next_account_info(account_info_iter)?;
     let bidder_token_account_info = next_account_info(account_info_iter)?;
+    let auction_extended_info: Option<&AccountInfo>; 
 
     if legacy {
         legacy_accounts = Some(LegacyAccounts {
             participation_printing_holding_account_info: next_account_info(account_info_iter)?,
         });
+        auction_extended_info = None;
     } else {
-        v2_accounts = Some(V2Accounts {
+        let v2_accounts_base = V2Accounts {
             prize_tracking_ticket_info: next_account_info(account_info_iter)?,
             new_metadata_account_info: next_account_info(account_info_iter)?,
             new_edition_account_info: next_account_info(account_info_iter)?,
@@ -279,7 +281,9 @@ pub fn process_redeem_participation_bid<'a>(
             mint_authority_info: next_account_info(account_info_iter)?,
             metadata_account_info: next_account_info(account_info_iter)?,
             auction_extended_info: next_account_info(account_info_iter)?,
-        })
+        };
+        auction_extended_info = Some(v2_accounts_base.auction_extended_info);
+        v2_accounts = Some(v2_accounts_base);
     }
 
     let CommonRedeemReturn {
@@ -298,6 +302,7 @@ pub fn process_redeem_participation_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,

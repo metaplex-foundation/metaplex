@@ -23,7 +23,10 @@ export enum LiveAuctionViewState {
 
 export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
-  const auctionsEnded = useAuctions(AuctionViewState.Ended);
+  const auctionsEnded = [
+    ...useAuctions(AuctionViewState.Ended),
+    ...useAuctions(AuctionViewState.BuyNow),
+  ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();
@@ -69,19 +72,23 @@ export const AuctionListView = () => {
     )
     .filter(a => !resaleAuctions.includes(a));
 
+  const asStr = publicKey?.toBase58();
+  const participated = useMemo(
+    () =>
+      liveAuctions
+        .concat(auctionsEnded)
+        .filter((m, idx) =>
+          m.auction.info.bidState.bids.find(b => b.key == asStr),
+        ),
+    [publicKey, auctionsEnded.length],
+  );
   let items = liveAuctions;
-
   switch (activeKey) {
     case LiveAuctionViewState.All:
       items = liveAuctions;
       break;
     case LiveAuctionViewState.Participated:
-      items = liveAuctions
-        .concat(auctionsEnded)
-        .filter(
-          (m, idx) =>
-            m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
-        );
+      items = participated;
       break;
     case LiveAuctionViewState.Resale:
       items = resaleAuctions;

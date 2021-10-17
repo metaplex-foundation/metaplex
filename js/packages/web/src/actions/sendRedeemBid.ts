@@ -1,9 +1,7 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  actions,
   ParsedAccount,
   programIds,
-  models,
   TokenAccount,
   createMint,
   SafetyDepositBox,
@@ -28,8 +26,10 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { AccountLayout, MintLayout, Token } from '@solana/spl-token';
-import { AuctionView, AuctionViewItem } from '../hooks';
+import { AuctionView } from '../hooks';
 import {
+  AuctionManagerV1,
+  ParticipationStateV1,
   WinningConfigType,
   NonWinningConstraint,
   redeemBid,
@@ -41,21 +41,18 @@ import {
   PrizeTrackingTicket,
   getPrizeTrackingTicket,
   BidRedemptionTicket,
-} from '../models/metaplex';
-import { claimBid } from '../models/metaplex/claimBid';
+  AuctionViewItem,
+} from '@oyster/common/dist/lib/models/metaplex/index';
+import { claimBid } from '@oyster/common/dist/lib/models/metaplex/claimBid';
+import { approve } from '@oyster/common/dist/lib/models/account';
+import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import { setupCancelBid } from './cancelBid';
-import { deprecatedPopulateParticipationPrintingAccount } from '../models/metaplex/deprecatedPopulateParticipationPrintingAccount';
+import { deprecatedPopulateParticipationPrintingAccount } from '@oyster/common/dist/lib/models/metaplex/deprecatedPopulateParticipationPrintingAccount';
 import { setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
-import {
-  AuctionManagerV1,
-  ParticipationStateV1,
-} from '../models/metaplex/deprecatedStates';
-const { createTokenAccount } = actions;
-const { approve } = models;
 
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
@@ -126,7 +123,6 @@ export async function sendRedeemBid(
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
     );
-  console.log('Winner index', winnerIndex);
 
   if (winnerIndex !== null) {
     // items is a prebuilt array of arrays where each entry represents one

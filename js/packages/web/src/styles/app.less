@@ -90,6 +90,11 @@ code {
     height: 300px;
     object-fit: cover;
   }
+  iframe {
+    height: 300px;
+    object-fit: cover;
+    border: none;
+  }
 }
 
 .placebid {
@@ -148,6 +153,19 @@ code {
 
 .ant-avatar-group .ant-avatar-image:not(:first-child) {
   margin-left: -12px !important;
+}
+
+.pubkey-row {
+  line-height: 30px;
+}
+
+.copy-pubkey {
+  height: 100%;
+  cursor: pointer;
+  margin-left: 10px;
+  :hover {
+    color: @text-color;
+  }
 }
 
 .creator-name {
