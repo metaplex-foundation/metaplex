@@ -8,7 +8,6 @@ import {
   Input,
   Statistic,
   Slider,
-  Progress,
   Spin,
   InputNumber,
   Form,
@@ -31,7 +30,7 @@ import {
   MetaplexModal,
   MetaplexOverlay,
   MetadataFile,
-  StringPublicKey, WalletSigner,
+  StringPublicKey,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
@@ -114,7 +113,7 @@ export const ArtCreateView = () => {
     try {
       const _nft = await mintNFT(
         connection,
-        wallet as WalletSigner,
+        wallet,
         env,
         files,
         metadata,
@@ -122,7 +121,7 @@ export const ArtCreateView = () => {
       );
 
       if (_nft) setNft(_nft);
-    } catch(e: any) {
+    } catch (e: any) {
       setAlertMessage(e.message)
     } finally {
       setMinting(false);

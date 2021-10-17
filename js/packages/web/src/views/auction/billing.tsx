@@ -51,7 +51,7 @@ export const BillingView = () => {
     <InnerBillingView
       auctionView={auctionView}
       connection={connection}
-      wallet={wallet as WalletSigner}
+      wallet={wallet}
       mint={mint}
     />
   ) : (

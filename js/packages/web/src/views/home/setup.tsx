@@ -1,7 +1,7 @@
 import {
   useConnection,
   useStore,
-  useWalletModal, WalletSigner,
+  useWalletModal,
   WhitelistedCreator,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -11,10 +11,9 @@ import { useHistory } from 'react-router-dom';
 import { saveAdmin } from '../../actions/saveAdmin';
 import { useMeta } from '../../contexts';
 import { SetupVariables } from '../../components/SetupVariables';
-import {gatekeeperNetworks, GatekeeperNetworkSelection} from "../../contexts/gatekeeperNetwork";
-import {GatewayRulesetSelector} from "../../components/gateway/GatewayRulesetSelector";
-import {GatewayDescriptionText} from "../../components/gateway/GatewayDescriptionText";
-import {GatewayRulesetComponent} from "../../components/gateway/GatewayRulesetComponent";
+import { GatekeeperNetworkSelection } from "../../contexts/gatekeeperNetwork";
+import { GatewayDescriptionText } from "../../components/gateway/GatewayDescriptionText";
+import { GatewayRulesetComponent } from "../../components/gateway/GatewayRulesetComponent";
 
 export const SetupView = () => {
   const [isInitalizingStore, setIsInitalizingStore] = useState(false);
@@ -50,7 +49,7 @@ export const SetupView = () => {
 
     setIsInitalizingStore(true);
 
-    await saveAdmin(connection, wallet as WalletSigner, false, [
+    await saveAdmin(connection, wallet, false, [
         new WhitelistedCreator({
           address: wallet.publicKey.toBase58(),
           activated: true,

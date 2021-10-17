@@ -74,7 +74,7 @@ export const AdminView = () => {
             store={store}
             whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
             connection={connection}
-            wallet={wallet as WalletSigner}
+            wallet={wallet}
             connected={wallet.connected}
           />
           {!isConfigured && (

@@ -10,8 +10,8 @@ import { ConfettiProvider } from './components/Confetti';
 import { AppLayout } from './components/Layout';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
-import {GatewayProvider} from "./contexts/gateway";
-import {GatekeeperNetworkProvider} from "./contexts/gatekeeperNetwork";
+import { GatewayProvider } from "./contexts/gateway";
+import { GatekeeperNetworkProvider } from "./contexts/gatekeeperNetwork";
 
 export const Providers: FC = ({ children }) => {
   return (

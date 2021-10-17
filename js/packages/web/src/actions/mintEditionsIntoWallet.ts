@@ -6,7 +6,6 @@ import {
   SequenceType,
   StringPublicKey,
   TokenAccount,
-  WalletSigner,
 } from '@oyster/common';
 import { setupMintEditionIntoWalletInstructions } from './setupMintEditionIntoWalletInstructions';
 import { Art } from '../types';
@@ -88,7 +87,7 @@ export async function mintEditionsToWallet(
       // Pump em through!
       await sendTransactions(
         connection,
-        wallet as WalletSigner,
+        wallet,
         instructionBatch,
         signerBatch,
         SequenceType.StopOnFailure,
@@ -97,7 +96,7 @@ export async function mintEditionsToWallet(
     else
       await sendTransactionWithRetry(
         connection,
-        wallet as WalletSigner,
+        wallet,
         instructionBatch[0],
         signerBatch[0],
         'single',

@@ -32,7 +32,7 @@ import {
   MetadataKey,
   StringPublicKey, WalletSigner, useStore,
 } from '@oyster/common';
-import {Connection, LAMPORTS_PER_SOL, PublicKey} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';

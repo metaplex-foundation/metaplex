@@ -7,8 +7,8 @@ import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
 import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
-import {IdentityButton} from "@civic/solana-gateway-react";
-import {gatekeeperNetworks, useGatekeeperNetwork} from "../../contexts/gatekeeperNetwork";
+import { IdentityButton } from "@civic/solana-gateway-react";
+import { useGatekeeperNetwork } from "../../contexts/gatekeeperNetwork";
 
 const UserActions = () => {
   const { publicKey } = useWallet();

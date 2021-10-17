@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import { Col, Button, InputNumber, Spin, Tooltip } from 'antd';
+import { Col, Button, InputNumber, Spin } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
 import {
@@ -20,7 +20,7 @@ import {
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
   useWalletModal,
-  VaultState, WalletSigner,
+  VaultState,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
@@ -36,7 +36,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import BN from 'bn.js';
 import { Confetti } from '../Confetti';
 import { QUOTE_MINT } from '../../constants';
-import {Connection, LAMPORTS_PER_SOL} from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useMeta } from '../../contexts';
 import moment from 'moment';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
@@ -212,7 +212,6 @@ export const AuctionCard = ({
   const [showWarningModal, setShowWarningModal] = useState<boolean>(false);
   const [printingCost, setPrintingCost] = useState<number>();
   const [bidDisabled, setBidDisabled] = useState(false);
-  const [bidDisabledTooltip, setBidDisabledTooltip] = useState('');
 
   const { accountByMint } = useUserAccounts();
   const { gatewayToken } = useGateway();
@@ -221,16 +220,13 @@ export const AuctionCard = ({
     if (loading) {
       // disable bidding while loading
       setBidDisabled(true);
-      setBidDisabledTooltip('Loading');
     } else if (!gatewayToken) {
       if (auctionView.gatekeeperNetwork) {
         // disable bidding if the user has no gateway token and the auction needs one
         setBidDisabled(true);
-        setBidDisabledTooltip('Please verify your identity');
       }
     } else {
       setBidDisabled(false);
-      setBidDisabledTooltip('');
     }
   }, [loading, auctionView.gatekeeperNetwork?.toBase58(), gatewayToken])
 
@@ -337,7 +333,7 @@ export const AuctionCard = ({
                 if (eligibleForAnything) {
                   await sendRedeemBid(
                     connection,
-                    wallet as WalletSigner,
+                    wallet,
                     gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
@@ -349,7 +345,7 @@ export const AuctionCard = ({
                 } else {
                   await sendCancelBid(
                     connection,
-                    wallet as WalletSigner,
+                    wallet,
                     gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
@@ -397,7 +393,7 @@ export const AuctionCard = ({
             onClick={async () => {
               setLoading(true);
               try {
-                await startAuctionManually(connection, wallet as WalletSigner, auctionView);
+                await startAuctionManually(connection, wallet, auctionView);
               } catch (e) {
                 console.error(e);
               }
@@ -524,7 +520,7 @@ export const AuctionCard = ({
                 if (myPayingAccount && value) {
                   const bid = await sendPlaceBid(
                     connection,
-                    wallet as WalletSigner,
+                    wallet,
                     gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,
@@ -561,7 +557,7 @@ export const AuctionCard = ({
                   try {
                     const bid = await sendPlaceBid(
                       connection,
-                      wallet as WalletSigner,
+                      wallet,
                       gatewayToken?.publicKey,
                       myPayingAccount.pubkey,
                       auctionView,
@@ -588,7 +584,7 @@ export const AuctionCard = ({
                 try {
                   await sendRedeemBid(
                     connection,
-                    wallet as WalletSigner,
+                    wallet,
                     gatewayToken?.publicKey,
                     myPayingAccount.pubkey,
                     auctionView,

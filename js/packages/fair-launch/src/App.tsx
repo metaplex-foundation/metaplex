@@ -17,7 +17,7 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 
-import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui-starter';
+import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 import { ThemeProvider, createTheme } from '@material-ui/core';
 import { ConfettiProvider } from './confetti';
 
