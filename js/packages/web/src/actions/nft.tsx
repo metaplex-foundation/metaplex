@@ -121,13 +121,54 @@ export const mintNFT = async (
     },
   };
 
-  const realFiles: File[] = [
-    ...files,
-    new File([JSON.stringify(metadataContent)], RESERVED_METADATA),
-  ];
+  const realFiles: File[] = [...files]
+  const fileDataForm = new FormData();
 
-  const { instructions: pushInstructions, signers: pushSigners } =
-    await prepPayForFilesTxn(wallet, realFiles, metadata);
+  realFiles.map((f) => {
+    fileDataForm.append(
+      `file[${f.name}]`,
+      f,
+      f.name
+    )
+  });
+
+  const uploadResponse = await fetch(
+    "http://localhost:3001/api/ipfs/upload",
+    {
+      method: "POST",
+      body: fileDataForm,
+    })
+  const uploadedFilePins = await uploadResponse.json()
+  // add files to properties
+  // first image is added as image
+
+  let imageSet = false;
+  metadataContent.properties.files = []
+  uploadedFilePins.files.forEach((file) => {
+    if (!imageSet && /image/.test(file.type)) {
+      metadataContent.image = file.uri
+      imageSet = true;
+    }
+    metadataContent.properties.files.push({
+      uri: file.uri,
+      type: file.type
+    })
+  })
+
+  const metaData = new File([JSON.stringify(metadataContent)], RESERVED_METADATA)
+  const metaDataFileForm = new FormData()
+  metaDataFileForm.append(`file[${metaData.name}]`, metaData, metaData.name)
+
+  const metaDataUploadResponse = await fetch(
+    "http://localhost:3001/api/ipfs/upload",
+    {
+      method: "POST",
+      body: metaDataFileForm,
+    })
+  const uploadedMetaDataPinResponse = await metaDataUploadResponse.json()
+  const uploadedMetaDataPin = uploadedMetaDataPinResponse.files[0]
+
+
 
   progressCallback(1)
 
@@ -137,17 +178,10 @@ export const mintNFT = async (
   const mintRent = await connection.getMinimumBalanceForRentExemption(
     MintLayout.span,
   );
-  // const accountRent = await connection.getMinimumBalanceForRentExemption(
-  //   AccountLayout.span,
-  // );
 
-  // This owner is a temporary signer and owner of metadata we use to circumvent requesting signing
-  // twice post Arweave. We store in an account (payer) and use it post-Arweave to update MD with new link
-  // then give control back to the user.
-  // const payer = new Account();
   const payerPublicKey = wallet.publicKey.toBase58();
-  const instructions: TransactionInstruction[] = [...pushInstructions];
-  const signers: Keypair[] = [...pushSigners];
+  const instructions: TransactionInstruction[] = [];
+  const signers: Keypair[] = [];
 
   // This is only temporarily owned by wallet...transferred to program by createMasterEdition below
   const mintKey = createMint(
@@ -184,7 +218,7 @@ export const mintNFT = async (
     new Data({
       symbol: metadata.symbol,
       name: metadata.name,
-      uri: ' '.repeat(64), // size of url for arweave
+      uri: uploadedMetaDataPin.uri,
       sellerFeeBasisPoints: metadata.sellerFeeBasisPoints,
       creators: metadata.creators,
     }),
@@ -219,49 +253,14 @@ export const mintNFT = async (
   progressCallback(5)
 
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
-  const data = new FormData();
-  data.append('transaction', txid);
-  data.append('env', env);
-
-  const tags = realFiles.reduce(
-    (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
-      acc[f.name] = [{ name: 'mint', value: mintKey }];
-      return acc;
-    },
-    {},
-  );
-  data.append('tags', JSON.stringify(tags));
-  realFiles.map(f => data.append('file[]', f));
-
   progressCallback(6)
 
-  const result: IArweaveResult = await uploadToArweave(data);
-
-  const metadataFile = result.messages?.find(
-    m => m.filename === RESERVED_TXN_MANIFEST,
-  );
-  if (metadataFile?.transactionId && wallet.publicKey) {
+  if (uploadedMetaDataPin && wallet.publicKey) {
     const updateInstructions: TransactionInstruction[] = [];
     const updateSigners: Keypair[] = [];
 
     progressCallback(7)
 
-    const arweaveLink = `https://arweave.net/${metadataFile.transactionId}`;
-    await updateMetadata(
-      new Data({
-        name: metadata.name,
-        symbol: metadata.symbol,
-        uri: arweaveLink,
-        creators: metadata.creators,
-        sellerFeeBasisPoints: metadata.sellerFeeBasisPoints,
-      }),
-      undefined,
-      undefined,
-      mintKey,
-      payerPublicKey,
-      updateInstructions,
-      metadataAccount,
-    );
 
     updateInstructions.push(
       Token.createMintToInstruction(
@@ -297,21 +296,14 @@ export const mintNFT = async (
     notify({
       message: 'Art created on Solana',
       description: (
-        <a href={arweaveLink} target="_blank" rel="noopener noreferrer">
-          Arweave Link
+        <a href={uploadedMetaDataPin.uri} target="_blank" rel="noopener noreferrer">
+          Metadata Link
         </a>
       ),
       type: 'success',
     });
 
-    // TODO: refund funds
-
-    // send transfer back to user
   }
-  // TODO:
-  // 1. Jordan: --- upload file and metadata to storage API
-  // 2. pay for storage by hashing files and attaching memo for each file
-
   return { metadataAccount };
 };
 
