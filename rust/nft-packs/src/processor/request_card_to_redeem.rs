@@ -42,8 +42,11 @@ pub fn request_card_for_redeem(program_id: &Pubkey, accounts: &[AccountInfo]) ->
         return Err(NFTPacksError::ProvedVouchersMismatchPackVouchers.into());
     }
 
-    if pack_set.pack_state != PackSetState::Activated {
-        return Err(NFTPacksError::PackSetNotActivated.into());
+    pack_set.assert_activated()?;
+
+    // check if user already got index card
+    if proving_process.next_card_to_redeem != 0 {
+        return Err(NFTPacksError::AlreadySetNextCardToRedeem.into());
     }
 
     let current_timestamp = clock.unix_timestamp as u64;

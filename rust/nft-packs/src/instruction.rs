@@ -163,6 +163,16 @@ pub enum NFTPacksInstruction {
     /// - signer           authority
     Deactivate,
 
+    /// Close the pack
+    ///
+    /// Set pack state to "ended", irreversible operation
+    ///
+    /// Accounts:
+    /// - write            pack_set
+    /// - signer           authority
+    /// - read             clock
+    ClosePack,
+
     /// ProveOwnership
     ///
     /// Creates account with ProvingProcess structure if it's not created yet.
@@ -450,6 +460,17 @@ pub fn deactivate(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) ->
     ];
 
     Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::Deactivate, accounts)
+}
+
+/// Create `ClosePack` instruction
+pub fn close_pack(program_id: &Pubkey, pack_set: &Pubkey, authority: &Pubkey) -> Instruction {
+    let accounts = vec![
+        AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(sysvar::clock::id(), false),
+    ];
+
+    Instruction::new_with_borsh(*program_id, &NFTPacksInstruction::ClosePack, accounts)
 }
 
 /// Create `ProveOwnership` instruction

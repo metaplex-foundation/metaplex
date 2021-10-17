@@ -38,10 +38,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
     assert_account_key(authority_account, &pack_set.authority)?;
 
-    // Ensure that PackSet is in valid state
-    if pack_set.pack_state == PackSetState::Activated {
-        return Err(NFTPacksError::WrongPackState.into());
-    }
+    pack_set.assert_ended()?;
 
     // Ensure that provided PackVoucher is last
     let index = pack_set.pack_vouchers;

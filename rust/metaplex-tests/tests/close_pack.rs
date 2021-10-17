@@ -135,6 +135,9 @@ async fn setup() -> (
         .await
         .unwrap();
 
+    // Activate PackSet
+    test_pack_set.activate(&mut context).await.unwrap();
+
     (
         context,
         test_pack_set,
@@ -149,38 +152,12 @@ async fn success() {
     let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) = setup().await;
     assert_eq!(
         test_pack_set.get_data(&mut context).await.pack_state,
-        PackSetState::NotActivated
-    );
-
-    test_pack_set.activate(&mut context).await.unwrap();
-    assert_eq!(
-        test_pack_set.get_data(&mut context).await.pack_state,
         PackSetState::Activated
     );
-}
-
-#[tokio::test]
-async fn fail_invalid_state() {
-    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) = setup().await;
-    test_pack_set.activate(&mut context).await.unwrap();
-
-    context.warp_to_slot(3).unwrap();
-
-    let result = test_pack_set.activate(&mut context).await;
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::CantActivatePack, 0);
-}
-
-#[tokio::test]
-async fn fail_activate_after_close() {
-    let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) = setup().await;
-    test_pack_set.activate(&mut context).await.unwrap();
-
-    context.warp_to_slot(3).unwrap();
 
     test_pack_set.close(&mut context).await.unwrap();
-    
-    context.warp_to_slot(6).unwrap();
-
-    let result = test_pack_set.activate(&mut context).await;
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::CantActivatePack, 0);
+    assert_eq!(
+        test_pack_set.get_data(&mut context).await.pack_state,
+        PackSetState::Ended
+    );
 }

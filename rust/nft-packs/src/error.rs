@@ -40,17 +40,21 @@ pub enum NFTPacksError {
     #[error("Pack is already open")]
     PackIsAlreadyOpen,
 
+    /// Pack is already ended
+    #[error("Pack is already ended")]
+    PackIsAlreadyEnded,
+
     /// NFT pack set not fully configured
     #[error("NFT pack set not fully configured")]
     PackSetNotConfigured,
 
-    /// NFT pack set is already activated
-    #[error("NFT pack set already activated")]
-    PackAlreadyActivated,
+    /// Can't activate NFT pack in current state
+    #[error("Can't activate NFT pack in current state")]
+    CantActivatePack,
 
-    /// NFT pack set is already deactivated
-    #[error("NFT pack set already deactivated")]
-    PackAlreadyDeactivated,
+    /// Can't deactivate NFT pack in current state
+    #[error("Can't deactivate NFT pack in current state")]
+    CantDeactivatePack,
 
     /// Pack set should be activated
     #[error("Pack set should be activated")]
@@ -59,10 +63,6 @@ pub enum NFTPacksError {
     /// Pack is in ended state can't be activated
     #[error("Pack is in ended state can't be activated")]
     PackInEndedState,
-
-    /// Can't change pack data at current state
-    #[error("Can't change pack data at current state")]
-    WrongPackStateToChangeData,
 
     /// Proving process for this pack is completed
     #[error("Proving process for this pack is completed")]
@@ -155,6 +155,14 @@ pub enum NFTPacksError {
     /// Pack set doesn't have total editions
     #[error("Pack set doesn't have total editions")]
     MissingEditionsInPack,
+
+    /// User already got next card to redeem
+    #[error("User already got next card to redeem")]
+    AlreadySetNextCardToRedeem,
+
+    /// Can't close the pack before end date
+    #[error("Can't close the pack before end date")]
+    EndDateNotArrived,
 }
 
 impl From<NFTPacksError> for ProgramError {

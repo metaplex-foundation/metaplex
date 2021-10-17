@@ -52,7 +52,7 @@ async fn success() {
 }
 
 #[tokio::test]
-async fn fails() {
+async fn fail() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
     let name = [7; 32];

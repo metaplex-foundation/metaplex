@@ -58,13 +58,14 @@ pub fn add_card_to_pack(
     assert_account_key(authority_info, &pack_set.authority)?;
 
     if pack_set.pack_state != PackSetState::NotActivated {
-        return Err(NFTPacksError::WrongPackStateToChangeData.into());
+        return Err(NFTPacksError::WrongPackState.into());
     }
 
     if pack_set.distribution_type != PackDistributionType::MaxSupply && probability.is_none() {
         return Err(NFTPacksError::CardProbabilityMissing.into());
     }
 
+    // check if user didn't set probability value which is extra for chosen distribution type
     if pack_set.distribution_type == PackDistributionType::MaxSupply && probability.is_some() {
         return Err(NFTPacksError::CardShouldntHaveProbabilityValue.into());
     }

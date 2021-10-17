@@ -56,7 +56,7 @@ pub fn add_voucher_to_pack(
     assert_account_key(authority_info, &pack_set.authority)?;
 
     if pack_set.pack_state != PackSetState::NotActivated {
-        return Err(NFTPacksError::WrongPackStateToChangeData.into());
+        return Err(NFTPacksError::WrongPackState.into());
     }
 
     // new pack voucher index

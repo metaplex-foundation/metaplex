@@ -170,5 +170,5 @@ async fn fail_invalid_state() {
     context.warp_to_slot(3).unwrap();
 
     let result = test_pack_set.deactivate(&mut context).await;
-    assert_custom_error!(result.unwrap_err(), NFTPacksError::PackAlreadyDeactivated, 0);
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::CantDeactivatePack, 0);
 }

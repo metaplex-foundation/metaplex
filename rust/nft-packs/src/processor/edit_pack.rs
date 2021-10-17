@@ -1,11 +1,6 @@
 //! EditPack instruction processing
 
-use crate::{
-    error::NFTPacksError,
-    instruction::EditPackSetArgs,
-    state::{PackSet, PackSetState},
-    utils::*,
-};
+use crate::{error::NFTPacksError, instruction::EditPackSetArgs, state::PackSet, utils::*};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -30,14 +25,7 @@ pub fn edit_pack(
 
     assert_account_key(authority_account, &pack_set.authority)?;
 
-    if !pack_set.mutable {
-        return Err(NFTPacksError::ImmutablePackSet.into());
-    }
-
-    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended
-    {
-        return Err(NFTPacksError::WrongPackState.into());
-    }
+    pack_set.assert_able_to_edit()?;
 
     apply_changes(&mut pack_set, args)?;
 

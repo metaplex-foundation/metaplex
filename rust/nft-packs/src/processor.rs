@@ -7,6 +7,7 @@ use add_voucher_to_pack::add_voucher_to_pack;
 use borsh::BorshDeserialize;
 use change_authority::{transfer_authority, AuthorityToChange};
 use claim_pack::claim_pack;
+use close_pack::close_pack;
 use deactivate::deactivate_pack;
 use delete_pack::delete_pack;
 use delete_pack_card::delete_pack_card;
@@ -24,6 +25,7 @@ pub mod add_card_to_pack;
 pub mod add_voucher_to_pack;
 pub mod change_authority;
 pub mod claim_pack;
+pub mod close_pack;
 pub mod deactivate;
 pub mod delete_pack;
 pub mod delete_pack_card;
@@ -65,6 +67,10 @@ impl Processor {
             NFTPacksInstruction::Deactivate => {
                 msg!("Instruction: Deactivate");
                 deactivate_pack(program_id, accounts)
+            }
+            NFTPacksInstruction::ClosePack => {
+                msg!("Instruction: ClosePack");
+                close_pack(program_id, accounts)
             }
             NFTPacksInstruction::ProveOwnership => {
                 msg!("Instruction: ProveOwnership");

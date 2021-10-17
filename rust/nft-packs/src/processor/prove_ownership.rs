@@ -42,9 +42,7 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
 
-    if pack_set.pack_state != PackSetState::Activated {
-        return Err(NFTPacksError::PackSetNotActivated.into());
-    }
+    pack_set.assert_activated()?;
 
     let proving_process_seeds = &[
         ProvingProcess::PREFIX.as_bytes(),

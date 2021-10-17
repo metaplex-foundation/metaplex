@@ -3,6 +3,7 @@ mod utils;
 use metaplex_nft_packs::{
     instruction::{AddVoucherToPackArgs, InitPackSetArgs},
     state::{AccountType, ActionOnProve, PackDistributionType},
+    error::NFTPacksError,
 };
 use solana_program::instruction::InstructionError;
 use solana_program_test::*;
@@ -10,6 +11,7 @@ use solana_sdk::{
     signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
 };
 use utils::*;
+use num_traits::FromPrimitive;
 
 async fn setup() -> (
     ProgramTestContext,
@@ -143,4 +145,26 @@ async fn fail_invalid_index() {
             InstructionError::InvalidArgument
         ))
     );
+}
+
+#[tokio::test]
+async fn fail_wrong_number_to_open() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
+
+    let result = test_pack_set
+        .add_voucher(
+            &mut context,
+            &test_pack_voucher,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddVoucherToPackArgs {
+                number_to_open: 20,
+                action_on_prove: ActionOnProve::Burn,
+            },
+        )
+        .await;
+
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::WrongNumberToOpen, 1);
 }

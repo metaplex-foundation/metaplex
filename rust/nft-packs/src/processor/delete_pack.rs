@@ -25,9 +25,7 @@ pub fn delete_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramRes
 
     assert_account_key(authority_account, &pack_set.authority)?;
 
-    if pack_set.pack_state == PackSetState::Activated {
-        return Err(NFTPacksError::WrongPackState.into());
-    }
+    pack_set.assert_ended()?;
 
     if pack_set.pack_cards != 0 || pack_set.pack_vouchers != 0 {
         return Err(NFTPacksError::NotEmptyPackSet.into());

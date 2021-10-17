@@ -13,7 +13,7 @@ use solana_sdk::{
 use utils::*;
 use num_traits::FromPrimitive;
 
-async fn setup() -> (
+async fn setup(distribution_type: PackDistributionType,) -> (
     ProgramTestContext,
     TestPackSet,
     TestMetadata,
@@ -30,7 +30,7 @@ async fn setup() -> (
                 name: [7; 32],
                 uri: String::from("some link to storage"),
                 mutable: true,
-                distribution_type: PackDistributionType::MaxSupply,
+                distribution_type,
                 allowed_amount_to_redeem: 10,
                 redeem_start_date: None,
                 redeem_end_date: None,
@@ -79,7 +79,7 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn success() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup(PackDistributionType::MaxSupply,).await;
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
@@ -105,7 +105,7 @@ async fn success() {
 
 #[tokio::test]
 async fn fail_invalid_index() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup(PackDistributionType::MaxSupply,).await;
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     test_pack_set
@@ -152,8 +152,8 @@ async fn fail_invalid_index() {
 }
 
 #[tokio::test]
-async fn failed_wrong_probability() {
-    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup().await;
+async fn fail_wrong_probability() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup(PackDistributionType::MaxSupply,).await;
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
     let result = test_pack_set
@@ -172,4 +172,28 @@ async fn failed_wrong_probability() {
         .await;
     
     assert_custom_error!(result.unwrap_err(), NFTPacksError::CardShouldntHaveProbabilityValue, 1);
+}
+
+#[tokio::test]
+async fn fail_unlimited_probability() {
+    let (mut context, test_pack_set, test_metadata, test_master_edition, user) = setup(PackDistributionType::Unlimited).await;
+
+    let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+
+    let result = test_pack_set
+        .add_card(
+            &mut context,
+            &test_pack_card,
+            &test_master_edition,
+            &test_metadata,
+            &user,
+            AddCardToPackArgs {
+                max_supply: None,
+                probability: Some(5000),
+                index: test_pack_card.index,
+            },
+        )
+        .await;
+    
+    assert_custom_error!(result.unwrap_err(), NFTPacksError::WrongMasterSupply, 1);
 }

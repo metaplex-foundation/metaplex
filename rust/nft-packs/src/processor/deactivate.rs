@@ -23,15 +23,7 @@ pub fn deactivate_pack(_program_id: &Pubkey, accounts: &[AccountInfo]) -> Progra
     let mut pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
     assert_account_key(authority_account, &pack_set.authority)?;
 
-    if pack_set.pack_state == PackSetState::NotActivated
-        || pack_set.pack_state == PackSetState::Deactivated
-    {
-        return Err(NFTPacksError::PackAlreadyDeactivated.into());
-    }
-
-    if pack_set.pack_state == PackSetState::Ended {
-        return Err(NFTPacksError::PackInEndedState.into());
-    }
+    pack_set.assert_activated()?;
 
     pack_set.pack_state = PackSetState::Deactivated;
 

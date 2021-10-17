@@ -1,6 +1,7 @@
 //! Pack set definitions
 
 use super::*;
+use crate::error::NFTPacksError;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     borsh::try_from_slice_unchecked,
@@ -111,6 +112,37 @@ impl PackSet {
     /// Increase pack voucher counter
     pub fn add_pack_voucher(&mut self) {
         self.pack_vouchers += 1;
+    }
+
+    /// Check if pack is in activated state
+    pub fn assert_activated(&self) -> Result<(), ProgramError> {
+        if self.pack_state != PackSetState::Activated {
+            return Err(NFTPacksError::PackSetNotActivated.into());
+        }
+
+        Ok(())
+    }
+
+    /// Check if pack is in ended state
+    pub fn assert_ended(&self) -> Result<(), ProgramError> {
+        if self.pack_state != PackSetState::Ended {
+            return Err(NFTPacksError::WrongPackState.into());
+        }
+
+        Ok(())
+    }
+
+    /// Check if pack is mutable and in a right state to edit data
+    pub fn assert_able_to_edit(&self) -> Result<(), ProgramError> {
+        if !self.mutable {
+            return Err(NFTPacksError::ImmutablePackSet.into());
+        }
+
+        if self.pack_state == PackSetState::Activated || self.pack_state == PackSetState::Ended {
+            return Err(NFTPacksError::WrongPackState.into());
+        }
+
+        Ok(())
     }
 }
 

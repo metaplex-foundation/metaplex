@@ -36,14 +36,7 @@ pub fn edit_pack_voucher(
 
     assert_account_key(authority_account, &pack_set.authority)?;
 
-    if !pack_set.mutable {
-        return Err(NFTPacksError::ImmutablePackSet.into());
-    }
-
-    if pack_set.pack_state == PackSetState::Activated || pack_set.pack_state == PackSetState::Ended
-    {
-        return Err(NFTPacksError::WrongPackState.into());
-    }
+    pack_set.assert_able_to_edit()?;
 
     let mut pack_voucher = PackVoucher::unpack(&pack_voucher_account.data.borrow_mut())?;
 
