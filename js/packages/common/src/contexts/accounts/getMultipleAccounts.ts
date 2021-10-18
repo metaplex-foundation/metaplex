@@ -4,7 +4,7 @@ import { chunks } from '../../utils/utils';
 export const getMultipleAccounts = async (
   connection: any,
   keys: string[],
-  commitment: string,
+  commitment: string = 'single',
 ) => {
   const result = await Promise.all(
     chunks(keys, 99).map(chunk =>

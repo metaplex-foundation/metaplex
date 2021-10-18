@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardProps, Row, Col, Statistic } from 'antd';
 import { CountdownState } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
-import { AuctionView, AuctionViewState, useArt } from '../../hooks';
-import { AmountLabel } from '../AmountLabel';
+import { AuctionView, useArt } from '../../hooks';
 import { getHumanStatus, useAuctionStatus } from './hooks/useAuctionStatus';
 const { Meta } = Card;
 

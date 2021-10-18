@@ -202,8 +202,17 @@ function InnerAdminView({
       available: ParsedAccount<MasterEditionV1>[];
       unavailable: ParsedAccount<MasterEditionV1>[];
     }>();
-  const [loading, setLoading] = useState<boolean>();
-  const { metadata, masterEditions } = useMeta();
+  const [cachingAuctions, setCachingAuctions] = useState<boolean>();
+  const [convertingMasterEditions, setConvertMasterEditions] = useState<boolean>();
+  const {
+    auctionManagersByAuction,
+    auctions,
+    auctionCaches,
+    storeIndexer,
+    metadata,
+    masterEditions
+  } = useMeta();
+  const { storeAddress } = useStore();
 
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
@@ -277,6 +286,7 @@ function InnerAdminView({
     <Content>
       <Col style={{ marginTop: 10 }}>
         <Row>
+        <h2>Whitelisted Creators</h2>
           <Col span={21}>
             <ArtistModal
               setUpdatedCreators={setUpdatedCreators}
@@ -335,52 +345,63 @@ function InnerAdminView({
           ></Table>
         </Row>
       </Col>
+      <h2>Adminstrator Actions</h2>
 
       {!store.info.public && (
         <>
-          <h1>
-            You have {filteredMetadata?.available.length} MasterEditionV1s that
-            can be converted right now and{' '}
-            {filteredMetadata?.unavailable.length} still in unfinished auctions
-            that cannot be converted yet.
-          </h1>
           <Col>
             <Row>
               <Button
-                disabled={loading}
+                size="large"
+                loading={convertingMasterEditions}
                 onClick={async () => {
-                  setLoading(true);
+                  setConvertMasterEditions(true);
+
                   await convertMasterEditions(
                     connection,
                     wallet,
                     filteredMetadata?.available || [],
                     accountByMint,
                   );
-                  setLoading(false);
+
+                  setConvertMasterEditions(false);
                 }}
               >
-                {loading ? (
-                  <Spin />
-                ) : (
-                  <span>Convert Eligible Master Editions</span>
-                )}
+                Convert Eligible Master Editions
               </Button>
             </Row>
-          </Col>{' '}
+            <p>
+              You have {filteredMetadata?.available.length} MasterEditionV1s that
+              can be converted right now and{' '}
+              {filteredMetadata?.unavailable.length} still in unfinished auctions
+              that cannot be converted yet.
+            </p>
+          </Col>
         </>
-      )}
+      )
+      }
       <Col>
         <Row>
           <Button
-            disabled={loading}
+            size="large"
+            loading={cachingAuctions}
             onClick={async () => {
-              setLoading(true);
-              // TODO: figure out how to get just enough state to cache all the auctions.
-              await cacheAllAuctions(wallet, connection, state);
-              setLoading(false);
+              setCachingAuctions(true);
+
+              await cacheAllAuctions(
+                wallet,
+                connection,
+                storeAddress,
+                auctionManagersByAuction,
+                auctions,
+                auctionCaches,
+                storeIndexer,
+              );
+
+              setCachingAuctions(false);
             }}
           >
-            {loading ? <Spin indicator={<LoadingOutlined />} /> : <span>Cache All Auctions</span>}
+            Cache Auctions
           </Button>
         </Row>
       </Col>

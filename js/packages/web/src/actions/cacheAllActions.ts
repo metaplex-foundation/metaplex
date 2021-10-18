@@ -1,49 +1,50 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
 import {
+  AuctionManagerV1,
+  AuctionManagerV2,
   getAuctionCache,
-  loadAccounts,
   MetaplexKey,
-  MetaState,
   ParsedAccount,
-  programIds,
-  pullPages,
   SafetyDepositBox,
   sendTransactions,
-  sendTransactionWithRetry,
+  AuctionData,
   SequenceType,
+  StoreIndexer,
   WalletSigner,
+  AuctionCache,
+  loadSafeteyDepositBoxesForVaults,
+  useStore,
+  StringPublicKey,
 } from '@oyster/common';
 import { cacheAuctionIndexer } from './cacheAuctionIndexer';
 import { buildListWhileNonZero } from '../hooks';
 import { BN } from 'bn.js';
 
-//TODO: Refactor so it doesn't need all of meta state.
 // This command caches an auction at position 0, page 0, and moves everything up
+// Required MetaState:
+// - [param] auctionManagersByAuction
+// - [param] storeIndexer
+// - [param] auctions
+// - [param] auctionsCache
+// - [lookup] safetyDepositBoxesByVault
 export async function cacheAllAuctions(
   wallet: WalletSigner,
   connection: Connection,
-  tempCache: MetaState,
+  storeAddress: StringPublicKey | undefined,
+  auctionManagersByAuction: Record<string, ParsedAccount<AuctionManagerV1 | AuctionManagerV2>>,
+  auctions: Record<string, ParsedAccount<AuctionData>>,
+  auctionCaches: Record<string, ParsedAccount<AuctionCache>>,
+  storeIndexer: ParsedAccount<StoreIndexer>[],
 ) {
-  if (!programIds().store) {
-    return false;
-  }
-  const store = programIds().store?.toBase58();
-
-  if (tempCache.storeIndexer.length) {
-    console.log('----> Previously indexed. Pulling all.');
-    // well now we need to pull first.
-    tempCache = await loadAccounts(connection);
-  }
-
-  let auctionManagersToCache = Object.values(tempCache.auctionManagersByAuction)
-    .filter(a => a.info.store == store)
+  let auctionManagersToCache = Object.values(auctionManagersByAuction)
+    .filter(a => a.info.store == storeAddress)
     .sort((a, b) =>
       (
-        tempCache.auctions[b.info.auction].info.endedAt ||
+        auctions[b.info.auction].info.endedAt ||
         new BN(Date.now() / 1000)
       )
         .sub(
-          tempCache.auctions[a.info.auction].info.endedAt ||
+          auctions[a.info.auction].info.endedAt ||
             new BN(Date.now() / 1000),
         )
         .toNumber(),
@@ -51,11 +52,11 @@ export async function cacheAllAuctions(
 
   const indexedInStoreIndexer = {};
 
-  tempCache.storeIndexer.forEach(s => {
+  storeIndexer.forEach(s => {
     s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
   });
 
-  const alreadyIndexed = Object.values(tempCache.auctionCaches).reduce(
+  const alreadyIndexed = Object.values(auctionCaches).reduce(
     (hash, val) => {
       hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
 
@@ -73,11 +74,14 @@ export async function cacheAllAuctions(
     'auctions to cache.',
   );
 
-  let storeIndex = tempCache.storeIndexer;
+  const vaultPubKeys = auctionManagersToCache.map(auctionManager => auctionManager.info.vault);
+  const { safetyDepositBoxesByVaultAndIndex } = await loadSafeteyDepositBoxesForVaults(connection, vaultPubKeys)
+
+  let storeIndex = [...storeIndexer];
   for (let i = 0; i < auctionManagersToCache.length; i++) {
     const auctionManager = auctionManagersToCache[i];
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
-      tempCache.safetyDepositBoxesByVaultAndIndex,
+      safetyDepositBoxesByVaultAndIndex,
       auctionManager.info.vault,
     );
     if (auctionManager.info.key === MetaplexKey.AuctionManagerV2) {
@@ -88,7 +92,7 @@ export async function cacheAllAuctions(
         auctionManager.pubkey,
         boxes.map(a => a.info.tokenMint),
         storeIndex,
-        !!tempCache.auctionCaches[
+        !!auctionCaches[
           await getAuctionCache(auctionManager.info.auction)
         ],
       );
@@ -101,8 +105,6 @@ export async function cacheAllAuctions(
         SequenceType.StopOnFailure,
         'max',
       );
-
-      storeIndex = await pullPages(connection);
     }
   }
 }

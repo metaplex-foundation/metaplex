@@ -1,4 +1,4 @@
-import { uniqWith, merge } from 'lodash';
+import { uniqWith, merge, isEmpty } from 'lodash';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -30,6 +30,8 @@ import {
   getBidRedemption,
   getPrizeTrackingTicket,
   MAX_PAYOUT_TICKET_SIZE,
+  getStoreIndexer,
+  AuctionCache
 } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -47,6 +49,7 @@ import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
+import { getAccountInfo } from '../accounts/getAccountInfo';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
@@ -65,9 +68,93 @@ export const loadAccounts = async (
     return state;
   }
 
+  const loadStoreIndexers = async (): Promise<void> => {
+    let i = 0;
+
+    let pageKey = await getStoreIndexer(i);
+    let account = await getAccountInfo(connection, pageKey);
+
+    while (account) {
+      pageKey = await getStoreIndexer(i);
+      account = await getAccountInfo(connection, pageKey);
+
+      if (!account) {
+        break;
+      }
+
+      processMetaplexAccounts(
+        {
+          pubkey: pageKey,
+          account,
+        },
+        updateState,
+      );
+
+      i++;
+    }
+  }
+
+  const loadAuctionCaches = async (): Promise<ParsedAccount<AuctionCache>[]> => {
+    const auctionCacheKeys = state.storeIndexer.reduce(
+      (memo, storeIndex) => [...memo, ...storeIndex.info.auctionCaches],
+      [] as StringPublicKey[]
+    );
+
+    const auctionCacheData = await getMultipleAccounts(connection, auctionCacheKeys);
+
+    if (auctionCacheData) {
+      await Promise.all(
+        auctionCacheData.keys.map((pubkey, i) => {
+          processMetaplexAccounts(
+            {
+              pubkey,
+              account: auctionCacheData.array[i],
+            },
+            updateState,
+          );
+        }),
+      );
+    }
+
+    return Object.values(state.auctionCaches)
+  }
+
+  const loadAuctionsFromCaches = async (
+    auctionCaches: ParsedAccount<AuctionCache>[]
+  ): Promise<MetaState> => {
+    const accountPubKeys = auctionCaches.reduce((memo, { info: { auction, auctionManager, vault, metadata } }) => {
+
+      return [...memo, auction, auctionManager, vault, ...metadata]
+    }, [] as StringPublicKey[]);
+
+
+    const tempState = await loadMultipleAccounts(connection, accountPubKeys, 'single');
+
+    const readyMetadata = auctionCaches.reduce((memo, auctionCache) => {
+      const setMetadata = auctionCache.info.metadata.map( async metadataKey => {
+        const metadata = tempState.metadataByMetadata[metadataKey];
+
+        let auctionMetadata = tempState.metadataByAuction[auctionCache.info.auction]
+
+        auctionMetadata = auctionMetadata || [] as ParsedAccount<Metadata>[]
+
+        await metadata.info.init();
+        updateState('metadataByMint', metadata.info.mint, metadata);
+        updateState('metadata', '', metadata);
+
+        tempState.metadataByAuction[auctionCache.info.auction] = [...auctionMetadata, metadata];
+      })
+
+      return [memo, ...setMetadata];
+    }, [] as Promise<void>[])
+
+    await Promise.all(readyMetadata)
+
+    return tempState;
+  }
+
   const loadStorefront = async (storeAddress: StringPublicKey) => {
-    const storePubkey = new PublicKey(storeAddress);
-    const storeData = await connection.getAccountInfo(storePubkey);
+    const storeData = await getAccountInfo(connection, storeAddress);
 
     if (storeData) {
       processMetaplexAccounts(
@@ -117,7 +204,6 @@ export const loadAccounts = async (
     const auctionData = await getMultipleAccounts(
       connection,
       [...auctionIds, ...auctionExtendedKeys],
-      'single',
     );
 
     if (auctionData) {
@@ -178,17 +264,17 @@ export const loadAccounts = async (
       loadVaultsForAuctionManagers(parsedAccounts),
     ]);
   };
-  const loading = [
-    loadCreators(),
-    loadStorefront(storeAddress),
-    loadAuctionManagers(storeAddress).then(loadAuctionsAndVaults),
-  ];
 
-  await Promise.all(loading);
+  await loadCreators()
+  const auctionsState = await loadStoreIndexers()
+    .then(loadAuctionCaches)
+    .then(loadAuctionsFromCaches);
+  await loadStorefront(storeAddress);
 
-  return state;
+  return merge({}, state, auctionsState, { store: state.store });
 };
 
+<<<<<<< HEAD
 export const loadPayoutTickets = async (
   connection: Connection,
 ): Promise<MetaState> => {
@@ -209,6 +295,9 @@ export const loadPayoutTickets = async (
   return state;
 };
 
+=======
+// TODO: Load payout tickets on billing
+>>>>>>> refactor: show auction list based on auction cache when present
 export const loadPrizeTrackingTickets = async (
   connection: Connection,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
@@ -404,6 +493,39 @@ export const loadArtwork = async (
   return state;
 }
 
+export const loadSafeteyDepositBoxesForVaults = async (
+  connection: Connection,
+  vaults: StringPublicKey[],
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const response = await Promise.all(vaults.map(
+    vault => pullSafetyDepositBoxAccountsForVault(connection, vault)
+  ))
+
+  await forEachAccount(processVaultData)(response.flat())
+
+  return state;
+}
+
+const pullSafetyDepositBoxAccountsForVault = async (
+  connection: Connection,
+  vault: StringPublicKey,
+) => {
+  return getProgramAccounts(connection, VAULT_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset: 1,
+          bytes: vault,
+        },
+      },
+    ],
+  })
+}
+
 export const loadAuction = async (
   connection: Connection,
   auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
@@ -414,38 +536,30 @@ export const loadAuction = async (
 
   const rpcQueries = [
     // safety deposit box config
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 1,
-            bytes: auctionManager.pubkey,
-          },
-        },
-      ],
-    }).then(forEachAccount(processMetaplexAccounts)),
-    // safety deposit
-    getProgramAccounts(connection, VAULT_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 1,
-            bytes: auctionManager.info.vault,
-          },
-        },
-      ],
-    }).then(forEachAccount(processVaultData)),
+    // getProgramAccounts(connection, METAPLEX_ID, {
+    //   filters: [
+    //     {
+    //       memcmp: {
+    //         offset: 1,
+    //         bytes: auctionManager.pubkey,
+    //       },
+    //     },
+    //   ],
+    // }).then(forEachAccount(processMetaplexAccounts)),
+    // // safety deposit
+    // pullSafetyDepositBoxAccountsForVault(connection, auctionManager.info.vault)
+    //   .then(forEachAccount(processVaultData)),
     // bidder redemptions
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 9,
-            bytes: auctionManager.pubkey,
-          },
-        },
-      ],
-    }).then(forEachAccount(processMetaplexAccounts)),
+    // getProgramAccounts(connection, METAPLEX_ID, {
+    //   filters: [
+    //     {
+    //       memcmp: {
+    //         offset: 9,
+    //         bytes: auctionManager.pubkey,
+    //       },
+    //     },
+    //   ],
+    // }).then(forEachAccount(processMetaplexAccounts)),
     // bidder metadata
     getProgramAccounts(connection, AUCTION_ID, {
       filters: [
@@ -458,16 +572,16 @@ export const loadAuction = async (
       ],
     }).then(forEachAccount(processAuctions)),
     // bidder pot
-    getProgramAccounts(connection, AUCTION_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset: 64,
-            bytes: auctionManager.info.auction,
-          },
-        },
-      ],
-    }).then(forEachAccount(processAuctions)),
+    // getProgramAccounts(connection, AUCTION_ID, {
+    //   filters: [
+    //     {
+    //       memcmp: {
+    //         offset: 64,
+    //         bytes: auctionManager.info.auction,
+    //       },
+    //     },
+    //   ],
+    // }).then(forEachAccount(processAuctions)),
   ]
 
   await Promise.all(rpcQueries);

@@ -8,6 +8,7 @@ import {
   getAuctionCache,
   MAX_INDEXED_ELEMENTS,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { loadSafeteyDepositBoxesForVaults } from '@oyster/common';
 import { setStoreIndex } from '@oyster/common/dist/lib/models/metaplex/setStoreIndex';
 import { setAuctionCache } from '@oyster/common/dist/lib/models/metaplex/setAuctionCache';
 import BN from 'bn.js';

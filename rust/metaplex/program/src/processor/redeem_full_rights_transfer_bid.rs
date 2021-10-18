@@ -14,7 +14,7 @@ use {
         msg,
         pubkey::Pubkey,
     },
-    spl_token_metadata::state::Metadata,
+    metaplex_token_metadata::state::Metadata,
 };
 pub fn process_full_rights_transfer_bid<'a>(
     program_id: &'a Pubkey,

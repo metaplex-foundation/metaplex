@@ -270,9 +270,6 @@ export const AuctionCard = ({
   const doesInstantSaleHasNoItems =
     isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
   
-  const myBidRedemption = auctionView.myBidRedemption;
-  const myBidderMetadata = auctionView.myBidderMetadata;
-  
   const shouldHideInstantSale =
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
