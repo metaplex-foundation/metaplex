@@ -2402,9 +2402,9 @@ program
     console.log('Lottery results', sorted);
 
     await Promise.all(
-      // each 8 entries is 1 byte, we want to send up 1000 bytes at a time.
+      // each 8 entries is 1 byte, we want to send up 10 bytes at a time.
       // be specific here.
-      chunks(Array.from(Array(sorted.length).keys()), 8 * 1000).map(
+      chunks(Array.from(Array(sorted.length).keys()), 8 * 10).map(
         async allIndexesInSlice => {
           const bytes = [];
           const correspondingArrayOfBits = [];
