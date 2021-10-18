@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Row, Button, Modal, ButtonProps } from 'antd';
-import { ArtCard } from './../../components/ArtCard';
-import { useUserArts } from '../../hooks';
+import { Row, Col, Input, Button, Modal, ButtonProps, Checkbox} from 'antd';
 import Masonry from 'react-masonry-css';
+
+import { ArtCard } from '../../components/ArtCard';
+import { useUserArts } from '../../hooks';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 
 export interface ArtSelectorProps extends ButtonProps {
@@ -10,10 +11,25 @@ export interface ArtSelectorProps extends ButtonProps {
   setSelected: (selected: SafetyDepositDraft[]) => void;
   allowMultiple: boolean;
   filter?: (i: SafetyDepositDraft) => boolean;
+  renderList?: (items: any) => JSX.Element;
+  title?: string;
+  description?: string;
+  setCounts?: (e: any, id: string) => void;
+  selectedCount?: (id: string) => string;
 }
 
 export const ArtSelector = (props: ArtSelectorProps) => {
-  const { selected, setSelected, allowMultiple, ...rest } = props;
+  const {
+    selected,
+    setSelected,
+    setCounts,
+    allowMultiple,
+    renderList,
+    title,
+    description,
+    selectedCount,
+    ...rest
+  } = props;
   let items = useUserArts();
   if (props.filter) items = items.filter(props.filter);
   const selectedItems = useMemo<Set<string>>(
@@ -28,6 +44,10 @@ export const ArtSelector = (props: ArtSelectorProps) => {
 
     setVisible(true);
   };
+
+  const openList = () => {
+    setVisible(true);
+  }
 
   const close = () => {
     setVisible(false);
@@ -47,11 +67,59 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     700: 2,
     500: 1,
   };
+  const breakpointColumnsListObj = {
+    default: 1,
+  };
+
+  const renderCards = (items) => (
+    <Masonry
+      breakpointCols={breakpointColumnsObj}
+      className="my-masonry-grid"
+      columnClassName="my-masonry-grid_column"
+    >
+      {items.map(m => {
+        const id = m.metadata.pubkey;
+        const isSelected = selectedItems.has(id);
+
+        const onSelect = () => {
+          let list = [...selectedItems.keys()];
+          if (allowMultiple) {
+            list = [];
+          }
+
+          const newSet = isSelected
+            ? new Set(list.filter(item => item !== id))
+            : new Set([...list, id]);
+
+          let selected = items.filter(item =>
+            newSet.has(item.metadata.pubkey),
+          );
+          setSelected(selected);
+
+          if (!allowMultiple) {
+            confirm();
+          }
+        };
+
+        return (
+          <ArtCard
+            key={id}
+            pubkey={m.metadata.pubkey}
+            preview={false}
+            onClick={onSelect}
+            className={isSelected ? 'selected-card' : 'not-selected-card'}
+          />
+        );
+      })}
+    </Masonry>
+  )
+
+
 
   return (
     <>
       <Masonry
-        breakpointCols={breakpointColumnsObj}
+        breakpointCols={renderList ? breakpointColumnsListObj: breakpointColumnsObj}
         className="my-masonry-grid"
         columnClassName="my-masonry-grid_column"
       >
@@ -64,6 +132,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
               pubkey={m.metadata.pubkey}
               preview={false}
               onClick={open}
+              count={selectedCount && selectedCount(key)}
               close={() => {
                 setSelected(selected.filter(_ => _.metadata.pubkey !== key));
                 confirm();
@@ -75,7 +144,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           <div
             className="ant-card ant-card-bordered ant-card-hoverable art-card"
             style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={open}
+            onClick={renderList ? openList : open}
           >
             <span className="text-center">Add an NFT</span>
           </div>
@@ -90,55 +159,20 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         footer={null}
       >
         <Row className="call-to-action" style={{ marginBottom: 0 }}>
-          <h2>Select the NFT you want to sell</h2>
+          <h2>{title || 'Select the NFT you want to sell'}</h2>
           <p style={{ fontSize: '1.2rem' }}>
-            Select the NFT that you want to sell copy/copies of.
+            {description || 'Select the NFT that you want to sell copy/copies of.'}
           </p>
         </Row>
         <Row
           className="content-action"
           style={{ overflowY: 'auto', height: '50vh' }}
         >
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
-            {items.map(m => {
-              const id = m.metadata.pubkey;
-              const isSelected = selectedItems.has(id);
-
-              const onSelect = () => {
-                let list = [...selectedItems.keys()];
-                if (allowMultiple) {
-                  list = [];
-                }
-
-                const newSet = isSelected
-                  ? new Set(list.filter(item => item !== id))
-                  : new Set([...list, id]);
-
-                let selected = items.filter(item =>
-                  newSet.has(item.metadata.pubkey),
-                );
-                setSelected(selected);
-
-                if (!allowMultiple) {
-                  confirm();
-                }
-              };
-
-              return (
-                <ArtCard
-                  key={id}
-                  pubkey={m.metadata.pubkey}
-                  preview={false}
-                  onClick={onSelect}
-                  className={isSelected ? 'selected-card' : 'not-selected-card'}
-                />
-              );
-            })}
-          </Masonry>
+          {
+            renderList
+              ? renderList(items)
+              : renderCards(items)
+          }
         </Row>
         <Row>
           <Button

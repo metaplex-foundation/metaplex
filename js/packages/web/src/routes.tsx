@@ -13,6 +13,8 @@ import {
   StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
+import { AdminPacksView } from './views/packs';
+import CreatePackStepper from './views/packs/createPackStepper';
 import { BillingView } from './views/auction/billing';
 
 export function Routes() {
@@ -22,6 +24,16 @@ export function Routes() {
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
+            <Route
+              exact
+              path="/admin/packs"
+              component={() => <AdminPacksView />}
+            />
+            <Route
+              exact
+              path="/admin/pack/create/:step_param?"
+              component={() => <CreatePackStepper />}
+            />
             <Route
               exact
               path="/analytics"
@@ -40,6 +52,7 @@ export function Routes() {
             <Route exact path="/art/:id" component={() => <ArtView />} />
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
             <Route exact path="/artists" component={() => <ArtistsView />} />
+
             <Route
               exact
               path="/auction/create/:step_param?"
