@@ -9,7 +9,7 @@ const valueU32 = 4294967295;
 function AddCard({ attributes, setAttributes, confirm, backButton, distribution }) {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
-    confirm({ step: 2, values })
+    confirm(3)
   };
 
   const onSubmitFailed = (errorInfo: any) => {

@@ -350,94 +350,31 @@ export const AuctionCard = ({
                     prizeTrackingTickets,
                   );
                 }
-                try {
-                  if (eligibleForAnything) {
-                    await sendRedeemBid(
-                      connection,
-                      wallet,
-                      myPayingAccount.pubkey,
-                      auctionView,
-                      accountByMint,
-                      prizeTrackingTickets,
-                      bidRedemptions,
-                      bids,
-                    ).then(() => setShowRedeemedBidModal(true));
-                  } else {
-                    await sendCancelBid(
-                      connection,
-                      wallet,
-                      myPayingAccount.pubkey,
-                      auctionView,
-                      accountByMint,
-                      bids,
-                      bidRedemptions,
-                      prizeTrackingTickets,
-                    );
-                  }
-                } catch (e) {
-                  console.error(e);
-                  setShowRedemptionIssue(true);
-                }
-                setLoading(false);
-              }}
-              style={{ marginTop: 20 }}
-            >
-              {loading ||
-              auctionView.items.find(i => i.find(it => !it.metadata)) ||
-              !myPayingAccount ? (
-                <Spin />
-              ) : eligibleForAnything ? (
-                `Redeem bid`
-              ) : (
-                `${
-                  wallet?.publicKey &&
-                  auctionView.auctionManager.authority ===
-                    wallet.publicKey.toBase58()
-                    ? 'Reclaim Items'
-                    : 'Refund bid'
-                }`
-              )}
-            </Button>
-          )}
-
-        {!hideDefaultAction &&
-          wallet.connected &&
-          !auctionView.auction.info.ended() &&
-          (isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
-            <Button
-              type="primary"
-              size="large"
-              className="action-btn"
-              disabled={loading}
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  await startAuctionManually(connection, wallet, auctionView);
-                } catch (e) {
-                  console.error(e);
-                }
-                setLoading(false);
-              }}
-              style={{ marginTop: 20 }}
-            >
-              {loading ? <Spin /> : 'Start auction'}
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              size="large"
-              className="action-btn"
-              disabled={loading}
-              onClick={() => setShowBidModal(true)}
-              style={{ marginTop: 20 }}
-            >
-              {loading ? (
-                <Spin />
-              ) : (
-                actionButtonContent
-              )}
-            </Button>
-          ))}
+              } catch (e) {
+                console.error(e);
+                setShowRedemptionIssue(true);
+              }
+              setLoading(false);
+            }}
+            style={{ marginTop: 20 }}
+          >
+            {loading ||
+            auctionView.items.find(i => i.find(it => !it.metadata)) ||
+            !myPayingAccount ? (
+              <Spin />
+            ) : eligibleForAnything ? (
+              `Redeem bid`
+            ) : (
+              `${
+                wallet?.publicKey &&
+                auctionView.auctionManager.authority ===
+                wallet.publicKey.toBase58()
+                  ? 'Reclaim Items'
+                  : 'Refund bid'
+              }`
+            )}
+          </Button>
+        )}
 
         {!hideDefaultAction &&
         wallet.connected &&
@@ -470,7 +407,11 @@ export const AuctionCard = ({
             onClick={() => setShowBidModal(true)}
             style={{ marginTop: 20 }}
           >
-            {loading ? <Spin /> : 'Place bid'}
+            {loading ? (
+              <Spin />
+            ) : (
+              actionButtonContent
+            )}
           </Button>
         ))}
 

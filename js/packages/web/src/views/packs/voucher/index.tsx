@@ -8,7 +8,7 @@ import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
 function AddVoucher({ attributes, setAttributes, confirm, backButton }) {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
-    confirm({ step: 1, values })
+    confirm(2)
   };
 
   const onSubmitFailed = (errorInfo: any) => {

@@ -28,7 +28,7 @@ function CreatePack({ confirm } ) {
           'single',
         ).then((res) => {
           console.log('setupInitPackInstructions:', res);
-          confirm({ step: 2, values })
+          confirm(1)
         })
       })
   };

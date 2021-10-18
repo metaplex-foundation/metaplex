@@ -64,7 +64,7 @@ function CreatePackStepper() {
 
   const createPackStep = (
     <CreatePack
-      confirm={gotoNextStep()}
+      confirm={gotoNextStep}
     />
   );
 
@@ -72,7 +72,7 @@ function CreatePackStepper() {
     <AddVoucher
       attributes={attributes}
       setAttributes={setAttributes}
-      confirm={gotoNextStep()}
+      confirm={gotoNextStep}
       backButton={renderBackButton()}
     />
   );
@@ -81,7 +81,7 @@ function CreatePackStepper() {
     <AddCard
       attributes={attributes}
       setAttributes={setAttributes}
-      confirm={gotoNextStep()}
+      confirm={gotoNextStep}
       backButton={renderBackButton()}
       distribution={attributes.distribution}
     />

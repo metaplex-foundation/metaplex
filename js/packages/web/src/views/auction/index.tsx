@@ -128,7 +128,6 @@ export const AuctionView = () => {
   });
 
   return (
-    <>
       <Row justify="space-around" ref={ref}>
         <Col span={24} md={12} className="pr-4">
           <div className="auction-view" style={{ minHeight: 300 }}>
