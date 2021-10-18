@@ -19,7 +19,7 @@ function AddVoucher() {
     return (
         <div className="form-box">
             <Form
-                name="basic"
+                name="addVoucher"
                 labelCol={{ span: 8 }}
                 wrapperCol={{ span: 16 }}
                 initialValues={{ remember: true }}

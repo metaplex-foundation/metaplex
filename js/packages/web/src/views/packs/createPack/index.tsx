@@ -22,7 +22,7 @@ function CreatePack() {
     return (
         <div className="form-box">
             <Form
-                name="basic"
+                name="createPack"
                 labelCol={{ span: 8 }}
                 wrapperCol={{ span: 16 }}
                 initialValues={{ remember: true }}
@@ -76,6 +76,7 @@ function CreatePack() {
                 </Form.Item>
                 <Form.Item
                   label="Mutable"
+                  name="mutable"
                   valuePropName="mutable"
                 >
                   <Switch />

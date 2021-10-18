@@ -233,8 +233,7 @@ export const AuctionView = () => {
           {auction && <AuctionCard auctionView={auction} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
-      </Row>
-    </>
+    </Row>
   );
 };
 

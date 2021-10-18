@@ -19,6 +19,7 @@ import {
   BidderMetadata,
   MAX_METADATA_LEN,
   MAX_EDITION_LEN,
+  placeBid,
   useWalletModal,
   VaultState,
   BidStateType,
@@ -26,7 +27,6 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AuctionView, useBidsForAuction, useUserBalance } from '../../hooks';
 import { sendPlaceBid } from '../../actions/sendPlaceBid';
-// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionNumbers } from './../AuctionNumbers';
 import {
   sendRedeemBid,
@@ -45,7 +45,6 @@ import { findEligibleParticipationBidsForRedemption } from '../../actions/claimU
 import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
-  WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useActionButtonContent } from './hooks/useActionButtonContent';
 import { endSale } from './utils/endSale';
@@ -178,18 +177,17 @@ function useAuctionExtended(
   return auctionExtended;
 }
 export const AuctionCard = ({
-  auctionView,
-  style,
-  hideDefaultAction,
-  action,
-}: {
+                              auctionView,
+                              style,
+                              hideDefaultAction,
+                              action,
+                            }: {
   auctionView: AuctionView;
   style?: React.CSSProperties;
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { update } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -289,12 +287,8 @@ export const AuctionCard = ({
   return (
     <div className="auction-container" style={style}>
       <Col>
-        {!auctionView.isInstantSale && (
-          <>
-            <AuctionNumbers auctionView={auctionView} />
-            <br />
-          </>
-        )}
+        <AuctionNumbers auctionView={auctionView} />
+        <br />
         {showRedemptionIssue && (
           <span>
             There was an issue redeeming or refunding your bid. Please try
@@ -302,35 +296,59 @@ export const AuctionCard = ({
           </span>
         )}
         {!hideDefaultAction &&
-          wallet.connected &&
-          auctionView.auction.info.ended() && (
-            <Button
-              type="primary"
-              size="large"
-              className="action-btn"
-              disabled={
-                !myPayingAccount ||
-                (!auctionView.myBidderMetadata &&
-                  isAuctionManagerAuthorityNotWalletOwner) ||
-                loading ||
-                !!auctionView.items.find(i => i.find(it => !it.metadata))
+        wallet.connected &&
+        auctionView.auction.info.ended() && (
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            disabled={
+              !myPayingAccount ||
+              (!auctionView.myBidderMetadata &&
+                isAuctionManagerAuthorityNotWalletOwner) ||
+              loading ||
+              !!auctionView.items.find(i => i.find(it => !it.metadata))
+            }
+            onClick={async () => {
+              setLoading(true);
+              setShowRedemptionIssue(false);
+              if (
+                wallet?.publicKey?.toBase58() ===
+                auctionView.auctionManager.authority
+              ) {
+                const totalCost =
+                  await calculateTotalCostOfRedeemingOtherPeoplesBids(
+                    connection,
+                    auctionView,
+                    bids,
+                    bidRedemptions,
+                  );
+                setPrintingCost(totalCost);
+                setShowWarningModal(true);
               }
-              onClick={async () => {
-                setLoading(true);
-                setShowRedemptionIssue(false);
-                if (
-                  wallet?.publicKey?.toBase58() ===
-                  auctionView.auctionManager.authority
-                ) {
-                  const totalCost =
-                    await calculateTotalCostOfRedeemingOtherPeoplesBids(
-                      connection,
-                      auctionView,
-                      bids,
-                      bidRedemptions,
-                    );
-                  setPrintingCost(totalCost);
-                  setShowWarningModal(true);
+              try {
+                if (eligibleForAnything) {
+                  await sendRedeemBid(
+                    connection,
+                    wallet,
+                    myPayingAccount.pubkey,
+                    auctionView,
+                    accountByMint,
+                    prizeTrackingTickets,
+                    bidRedemptions,
+                    bids,
+                  ).then(() => setShowRedeemedBidModal(true));
+                } else {
+                  await sendCancelBid(
+                    connection,
+                    wallet,
+                    myPayingAccount.pubkey,
+                    auctionView,
+                    accountByMint,
+                    bids,
+                    bidRedemptions,
+                    prizeTrackingTickets,
+                  );
                 }
                 try {
                   if (eligibleForAnything) {
@@ -421,6 +439,41 @@ export const AuctionCard = ({
             </Button>
           ))}
 
+        {!hideDefaultAction &&
+        wallet.connected &&
+        !auctionView.auction.info.ended() &&
+        (isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner ? (
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await startAuctionManually(connection, wallet, auctionView);
+              } catch (e) {
+                console.error(e);
+              }
+              setLoading(false);
+            }}
+            style={{ marginTop: 20 }}
+          >
+            {loading ? <Spin /> : 'Start auction'}
+          </Button>
+        ) : (
+          <Button
+            type="primary"
+            size="large"
+            className="action-btn"
+            disabled={loading}
+            onClick={() => setShowBidModal(true)}
+            style={{ marginTop: 20 }}
+          >
+            {loading ? <Spin /> : 'Place bid'}
+          </Button>
+        ))}
+
         {!hideDefaultAction && !wallet.connected && (
           <Button
             type="primary"
@@ -429,8 +482,7 @@ export const AuctionCard = ({
             onClick={connect}
             style={{ marginTop: 20 }}
           >
-            Connect wallet to{' '}
-            {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+            Connect wallet to place bid
           </Button>
         )}
         {action}
@@ -509,9 +561,8 @@ export const AuctionCard = ({
             fontSize: '2rem',
           }}
         >
-          Your {auctionView.isInstantSale ? 'purchase' : 'bid'} has been
-          redeemed please view your NFTs in <Link to="/artworks">My Items</Link>
-          .
+          Your bid has been redeemed please view your NFTs in{' '}
+          <Link to="/artworks">My Items</Link>.
         </p>
         <Button
           onClick={() => setShowRedeemedBidModal(false)}
@@ -718,55 +769,44 @@ export const AuctionCard = ({
                       color: 'rgba(0, 0, 0, 0.5)',
                     }}
                   >
-                    {!auctionView.isInstantSale && (
-                      <InputNumber
-                        autoFocus
-                        className="input"
-                        value={value}
-                        style={{
-                          width: '100%',
-                          background: '#393939',
-                          borderRadius: 16,
-                        }}
-                        onChange={setValue}
-                        precision={4}
-                        formatter={value =>
-                          value
-                            ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            : ''
-                        }
-                        placeholder="Amount in SOL"
-                      />
-                    )}
-                    {!(auctionView.isInstantSale && bids.length > 0) && (
-                      <>
-                        <div
-                          style={{
-                            color: '#FFFFFF',
-                            display: 'inline-block',
-                            margin: '5px 20px',
-                            fontWeight: 700,
-                          }}
-                        >
-                          ◎ {formatAmount(balance.balance, 2)}{' '}
-                          <span
-                            style={{ color: '#717171', paddingLeft: '5px' }}
-                          >
-                            available
-                          </span>
-                        </div>
-                        <Link
-                          to="/addfunds"
-                          style={{
-                            float: 'right',
-                            margin: '5px 20px',
-                            color: '#5870EE',
-                          }}
-                        >
-                          Add funds
-                        </Link>
-                      </>
-                    )}
+                    <InputNumber
+                      autoFocus
+                      className="input"
+                      value={value}
+                      style={{
+                        width: '100%',
+                        background: '#393939',
+                        borderRadius: 16,
+                      }}
+                      onChange={setValue}
+                      precision={4}
+                      formatter={value =>
+                        value
+                          ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : ''
+                      }
+                      placeholder="Amount in SOL"
+                    />
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        margin: '5px 20px',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ◎ {formatAmount(balance.balance, 2)}{' '}
+                      <span style={{ color: '#717171' }}>available</span>
+                    </div>
+                    <Link
+                      to="/addfunds"
+                      style={{
+                        float: 'right',
+                        margin: '5px 20px',
+                        color: '#5870EE',
+                      }}
+                    >
+                      Add funds
+                    </Link>
                   </div>
 
                   <br />
@@ -779,9 +819,8 @@ export const AuctionCard = ({
                       tickSizeInvalid ||
                       gapBidInvalid ||
                       !myPayingAccount ||
-                      (!auctionView.isInstantSale &&
-                        (value === undefined ||
-                          value * LAMPORTS_PER_SOL < priceFloor)) ||
+                      value === undefined ||
+                      value * LAMPORTS_PER_SOL < priceFloor ||
                       loading ||
                       !accountByMint.get(QUOTE_MINT.toBase58())
                     }
