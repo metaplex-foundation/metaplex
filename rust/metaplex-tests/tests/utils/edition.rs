@@ -1,5 +1,5 @@
 use solana_sdk::pubkey::Pubkey;
-use spl_token_metadata::state::{EDITION, PREFIX};
+use metaplex_token_metadata::state::{EDITION, PREFIX};
 
 #[derive(Debug)]
 pub struct TestEdition {
@@ -8,7 +8,7 @@ pub struct TestEdition {
 
 impl TestEdition {
     pub fn new(mint: &Pubkey) -> Self {
-        let program_id = spl_token_metadata::id();
+        let program_id = metaplex_token_metadata::id();
 
         let (pubkey, _) = Pubkey::find_program_address(
             &[

@@ -3,6 +3,7 @@
 use super::*;
 use crate::{error::NFTPacksError, math::SafeMath};
 use borsh::{BorshDeserialize, BorshSerialize};
+use metaplex_token_metadata::state::{MasterEdition, MasterEditionV2};
 use solana_program::{
     borsh::try_from_slice_unchecked,
     msg,
@@ -10,7 +11,6 @@ use solana_program::{
     program_pack::{IsInitialized, Pack, Sealed},
     pubkey::Pubkey,
 };
-use spl_token_metadata::state::{MasterEdition, MasterEditionV2};
 
 /// Pack state
 #[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]

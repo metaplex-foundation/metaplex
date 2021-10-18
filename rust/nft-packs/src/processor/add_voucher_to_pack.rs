@@ -8,6 +8,11 @@ use crate::{
     state::{InitPackVoucherParams, PackSet, PackSetState, PackVoucher},
     utils::*,
 };
+use metaplex_token_metadata::{
+    error::MetadataError,
+    state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
+    utils::{assert_derivation, assert_initialized},
+};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -17,11 +22,6 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 use spl_token::state::Account;
-use spl_token_metadata::{
-    error::MetadataError,
-    state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
-    utils::{assert_derivation, assert_initialized},
-};
 
 /// Process AddVoucherToPack instruction
 pub fn add_voucher_to_pack(
@@ -44,8 +44,8 @@ pub fn add_voucher_to_pack(
 
     assert_signer(authority_info)?;
     assert_owned_by(pack_set_info, program_id)?;
-    assert_owned_by(master_edition_info, &spl_token_metadata::id())?;
-    assert_owned_by(master_metadata_info, &spl_token_metadata::id())?;
+    assert_owned_by(master_edition_info, &metaplex_token_metadata::id())?;
+    assert_owned_by(master_metadata_info, &metaplex_token_metadata::id())?;
 
     let AddVoucherToPackArgs {
         number_to_open,
@@ -85,7 +85,7 @@ pub fn add_voucher_to_pack(
     let mut pack_voucher = PackVoucher::unpack_unchecked(&pack_voucher_info.data.borrow_mut())?;
     assert_uninitialized(&pack_voucher)?;
 
-    let token_metadata_program_id = spl_token_metadata::id();
+    let token_metadata_program_id = metaplex_token_metadata::id();
 
     // Check for v2
     let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;

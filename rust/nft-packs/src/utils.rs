@@ -135,7 +135,7 @@ pub fn create_account<'a, S: Pack>(
     invoke_signed(&ix, &[from, to], signers_seeds)
 }
 
-/// Function wrap spl_token_metadata -> mint_new_edition_from_master_edition_via_token call.
+/// Function wrap metaplex_token_metadata -> mint_new_edition_from_master_edition_via_token call.
 #[allow(clippy::too_many_arguments)]
 pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     new_metadata_account: &AccountInfo<'a>,
@@ -155,8 +155,8 @@ pub fn spl_token_metadata_mint_new_edition_from_master_edition_via_token<'a>(
     edition: u64,
     signers_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
-    let tx = spl_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
-        spl_token_metadata::id(),
+    let tx = metaplex_token_metadata::instruction::mint_new_edition_from_master_edition_via_token(
+        metaplex_token_metadata::id(),
         *new_metadata_account.key,
         *new_edition_account.key,
         *master_edition_account.key,

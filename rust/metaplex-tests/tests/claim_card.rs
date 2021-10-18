@@ -542,24 +542,24 @@ async fn fail_wrong_user_wallet() {
     .unwrap();
 
     let mint_key = new_mint.pubkey();
-    let spl_token_metadata_key = spl_token_metadata::id();
+    let spl_token_metadata_key = metaplex_token_metadata::id();
 
     let metadata_seeds = &[
-        spl_token_metadata::state::PREFIX.as_bytes(),
+        metaplex_token_metadata::state::PREFIX.as_bytes(),
         spl_token_metadata_key.as_ref(),
         mint_key.as_ref(),
     ];
     let (new_metadata_pubkey, _) =
-        Pubkey::find_program_address(metadata_seeds, &spl_token_metadata::id());
+        Pubkey::find_program_address(metadata_seeds, &metaplex_token_metadata::id());
 
     let master_edition_seeds = &[
-        spl_token_metadata::state::PREFIX.as_bytes(),
+        metaplex_token_metadata::state::PREFIX.as_bytes(),
         spl_token_metadata_key.as_ref(),
         mint_key.as_ref(),
-        spl_token_metadata::state::EDITION.as_bytes(),
+        metaplex_token_metadata::state::EDITION.as_bytes(),
     ];
     let (new_edition_pubkey, _) =
-        Pubkey::find_program_address(master_edition_seeds, &spl_token_metadata::id());
+        Pubkey::find_program_address(master_edition_seeds, &metaplex_token_metadata::id());
 
     let index = 1;
 
@@ -576,18 +576,18 @@ async fn fail_wrong_user_wallet() {
     let (program_authority, _) = find_program_authority(&metaplex_nft_packs::id());
 
     let edition_number = (index as u64)
-        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .checked_div(metaplex_token_metadata::state::EDITION_MARKER_BIT_SIZE)
         .unwrap();
     let as_string = edition_number.to_string();
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             card_master_edition.mint_pubkey.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
             as_string.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let test_randomness_oracle = TestRandomnessOracle::new();
@@ -610,7 +610,7 @@ async fn fail_wrong_user_wallet() {
         AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(test_randomness_oracle.keypair.pubkey(), false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
@@ -800,24 +800,24 @@ async fn fail_claim_twice() {
     context.warp_to_slot(5).unwrap();
 
     let mint_key = new_mint.pubkey();
-    let spl_token_metadata_key = spl_token_metadata::id();
+    let spl_token_metadata_key = metaplex_token_metadata::id();
 
     let metadata_seeds = &[
-        spl_token_metadata::state::PREFIX.as_bytes(),
+        metaplex_token_metadata::state::PREFIX.as_bytes(),
         spl_token_metadata_key.as_ref(),
         mint_key.as_ref(),
     ];
     let (new_metadata_pubkey, _) =
-        Pubkey::find_program_address(metadata_seeds, &spl_token_metadata::id());
+        Pubkey::find_program_address(metadata_seeds, &metaplex_token_metadata::id());
 
     let master_edition_seeds = &[
-        spl_token_metadata::state::PREFIX.as_bytes(),
+        metaplex_token_metadata::state::PREFIX.as_bytes(),
         spl_token_metadata_key.as_ref(),
         mint_key.as_ref(),
-        spl_token_metadata::state::EDITION.as_bytes(),
+        metaplex_token_metadata::state::EDITION.as_bytes(),
     ];
     let (new_edition_pubkey, _) =
-        Pubkey::find_program_address(master_edition_seeds, &spl_token_metadata::id());
+        Pubkey::find_program_address(master_edition_seeds, &metaplex_token_metadata::id());
 
     let tx = Transaction::new_signed_with_payer(
         &[claim_pack(

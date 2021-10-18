@@ -6,6 +6,7 @@ use crate::{
     state::{InitPackSetParams, PackSet},
     utils::*,
 };
+use metaplex_token_metadata::state::MAX_URI_LENGTH;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -14,7 +15,6 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar::{clock::Clock, rent::Rent, Sysvar},
 };
-use spl_token_metadata::state::MAX_URI_LENGTH;
 
 /// Process InitPack instruction
 pub fn init_pack(

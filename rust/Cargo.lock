@@ -990,9 +990,9 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
 dependencies = [
- "proc-macro2 1.0.28",
+ "proc-macro2 1.0.29",
  "quote 1.0.9",
- "syn 1.0.75",
+ "syn 1.0.76",
 ]
 
 [[package]]
@@ -1780,6 +1780,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "metaplex-nft-packs"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "metaplex-token-metadata",
+ "num-derive",
+ "num-traits",
+ "num_enum",
+ "randomness-oracle-program",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
 name = "metaplex-test-client"
 version = "0.1.0"
 dependencies = [
@@ -1798,6 +1815,22 @@ dependencies = [
  "solana-cli-config",
  "solana-client",
  "solana-program",
+ "solana-sdk",
+ "spl-token",
+]
+
+[[package]]
+name = "metaplex-tests"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "metaplex-nft-packs",
+ "metaplex-token-metadata",
+ "metaplex-token-vault",
+ "num-traits",
+ "randomness-oracle-program",
+ "solana-program",
+ "solana-program-test",
  "solana-sdk",
  "spl-token",
 ]
@@ -1860,39 +1893,6 @@ dependencies = [
  "solana-program",
  "solana-sdk",
  "spl-token",
-]
-
-[[package]]
-name = "metaplex-nft-packs"
-version = "0.1.0"
-dependencies = [
- "borsh",
- "num-derive",
- "num-traits",
- "num_enum",
- "randomness-oracle-program",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-token",
- "spl-token-metadata",
- "thiserror",
-]
-
-[[package]]
-name = "metaplex-tests"
-version = "0.1.0"
-dependencies = [
- "borsh",
- "metaplex-nft-packs",
- "num-traits",
- "randomness-oracle-program",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "spl-token",
- "spl-token-metadata",
- "spl-token-vault",
 ]
 
 [[package]]
@@ -3236,7 +3236,7 @@ checksum = "a876aa31298fdee6560c8ee0695ebed313bbdbb6fbbee439ac3b9df8aebfb87c"
 dependencies = [
  "proc-macro2 1.0.29",
  "quote 1.0.9",
- "rustc_version",
+ "rustc_version 0.2.3",
  "syn 1.0.76",
 ]
 

@@ -7,6 +7,7 @@ use crate::{
     state::{PackSet, PackVoucher},
     utils::*,
 };
+use metaplex_token_metadata::state::{MasterEdition, MasterEditionV2};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -14,7 +15,6 @@ use solana_program::{
     program_pack::Pack,
     pubkey::Pubkey,
 };
-use spl_token_metadata::state::{MasterEdition, MasterEditionV2};
 
 /// Process EditPackVoucher instruction
 pub fn edit_pack_voucher(
@@ -30,7 +30,7 @@ pub fn edit_pack_voucher(
 
     assert_signer(&authority_account)?;
     assert_owned_by(pack_set_account, program_id)?;
-    assert_owned_by(voucher_master_account, &spl_token_metadata::id())?;
+    assert_owned_by(voucher_master_account, &metaplex_token_metadata::id())?;
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
 

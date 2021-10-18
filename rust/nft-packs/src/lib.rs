@@ -20,7 +20,7 @@ pub use solana_program;
 use solana_program::pubkey::Pubkey;
 use state::{PackCard, PackVoucher, ProvingProcess, PREFIX};
 
-solana_program::declare_id!("GLbAYokR3CtLsS7pMN1p9y9FbDwTkwRpiwYFpz9stqtv");
+solana_program::declare_id!("BW8ME2QqeUzFubR7oMn9mctq1VQhCEuHiAair39jUwM5");
 
 /// Default precision
 pub const PRECISION: u128 = 1000000000;

@@ -508,24 +508,24 @@ impl TestPackSet {
         .unwrap();
 
         let mint_key = new_mint.pubkey();
-        let spl_token_metadata_key = spl_token_metadata::id();
+        let spl_token_metadata_key = metaplex_token_metadata::id();
 
         let metadata_seeds = &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
             spl_token_metadata_key.as_ref(),
             mint_key.as_ref(),
         ];
         let (new_metadata_pubkey, _) =
-            Pubkey::find_program_address(metadata_seeds, &spl_token_metadata::id());
+            Pubkey::find_program_address(metadata_seeds, &metaplex_token_metadata::id());
 
         let master_edition_seeds = &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
             spl_token_metadata_key.as_ref(),
             mint_key.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
         ];
         let (new_edition_pubkey, _) =
-            Pubkey::find_program_address(master_edition_seeds, &spl_token_metadata::id());
+            Pubkey::find_program_address(master_edition_seeds, &metaplex_token_metadata::id());
 
         let tx = Transaction::new_signed_with_payer(
             &[instruction::claim_pack(

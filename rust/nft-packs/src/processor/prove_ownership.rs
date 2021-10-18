@@ -6,6 +6,10 @@ use crate::{
     state::{ActionOnProve, InitProvingProcessParams, PackSet, PackVoucher, ProvingProcess},
     utils::*,
 };
+use metaplex_token_metadata::{
+    state::{Edition, EDITION, PREFIX as EDITION_PREFIX},
+    utils::assert_derivation,
+};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -16,10 +20,6 @@ use solana_program::{
     sysvar::{rent::Rent, Sysvar},
 };
 use spl_token::state::Account;
-use spl_token_metadata::{
-    state::{Edition, EDITION, PREFIX as EDITION_PREFIX},
-    utils::assert_derivation,
-};
 
 /// Process ProveOwnership instruction
 pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -35,7 +35,7 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
     let rent = &Rent::from_account_info(rent_info)?;
 
     assert_owned_by(pack_set_account, program_id)?;
-    assert_owned_by(edition_data_account, &spl_token_metadata::id())?;
+    assert_owned_by(edition_data_account, &metaplex_token_metadata::id())?;
     assert_owned_by(voucher_account, program_id)?;
 
     let pack_set = PackSet::unpack(&pack_set_account.data.borrow_mut())?;
@@ -83,11 +83,11 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
     }
 
     assert_derivation(
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
         edition_data_account,
         &[
             EDITION_PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::id().as_ref(),
             edition_mint_account.key.as_ref(),
             EDITION.as_bytes(),
         ],

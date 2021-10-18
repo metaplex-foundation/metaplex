@@ -10,7 +10,7 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
 };
-use spl_token_metadata::{
+use metaplex_token_metadata::{
     id,
     instruction::{self, MetadataInstruction, MintNewEditionFromMasterEditionViaTokenArgs},
     state::{EDITION, EDITION_MARKER_BIT_SIZE, PREFIX},
@@ -82,7 +82,7 @@ impl TestEditionMarker {
     pub async fn get_data(
         &self,
         context: &mut ProgramTestContext,
-    ) -> spl_token_metadata::state::EditionMarker {
+    ) -> metaplex_token_metadata::state::EditionMarker {
         let account = get_account(context, &self.pubkey).await;
         try_from_slice_unchecked(&account.data).unwrap()
     }
@@ -130,7 +130,7 @@ impl TestEditionMarker {
                     context.payer.pubkey(),
                     self.metadata_pubkey,
                     spl_token::id(),
-                    spl_token_vault::id(),
+                    metaplex_token_vault::id(),
                     self.edition,
                 ),
             ],
@@ -196,7 +196,7 @@ impl TestEditionMarker {
         context: &mut ProgramTestContext,
     ) -> transport::Result<()> {
         let fake_token_program = Keypair::new();
-        let program_id = spl_token_metadata::id();
+        let program_id = metaplex_token_metadata::id();
 
         let edition_number = self.edition.checked_div(EDITION_MARKER_BIT_SIZE).unwrap();
         let as_string = edition_number.to_string();

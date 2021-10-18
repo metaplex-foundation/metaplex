@@ -215,7 +215,7 @@ pub enum NFTPacksInstruction {
     /// - read              edition_acc
     /// - read              rent program
     /// - read              randomness oracle account
-    /// - read              spl_token_metadata program
+    /// - read              metaplex_token_metadata program
     /// - read              spl_token program
     /// - read              system program
     /// - read              clock program
@@ -337,7 +337,7 @@ pub enum NFTPacksInstruction {
     /// - read                     spl_token program
     /// - read                     system_program
     /// - read                     rent
-    /// - read                     spl_token_metadata program
+    /// - read                     metaplex_token_metadata program
     MintEditionWithVoucher,
 
     /// RequestCardForRedeem
@@ -531,18 +531,18 @@ pub fn claim_pack(
     let (program_authority, _) = find_program_authority(program_id);
 
     let edition_number = (index as u64)
-        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .checked_div(metaplex_token_metadata::state::EDITION_MARKER_BIT_SIZE)
         .unwrap();
     let as_string = edition_number.to_string();
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             metadata_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
             as_string.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let accounts = vec![
@@ -562,7 +562,7 @@ pub fn claim_pack(
         AccountMeta::new(edition_mark_pda, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(*randomness_oracle, false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
@@ -744,19 +744,19 @@ pub fn mint_new_edition_from_voucher(
     index: u64,
 ) -> Instruction {
     let edition_number = index
-        .checked_div(spl_token_metadata::state::EDITION_MARKER_BIT_SIZE)
+        .checked_div(metaplex_token_metadata::state::EDITION_MARKER_BIT_SIZE)
         .unwrap();
     let as_string = edition_number.to_string();
 
     let (edition_mark_pda, _) = Pubkey::find_program_address(
         &[
-            spl_token_metadata::state::PREFIX.as_bytes(),
-            spl_token_metadata::id().as_ref(),
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
             metadata_mint.as_ref(),
-            spl_token_metadata::state::EDITION.as_bytes(),
+            metaplex_token_metadata::state::EDITION.as_bytes(),
             as_string.as_bytes(),
         ],
-        &spl_token_metadata::id(),
+        &metaplex_token_metadata::id(),
     );
 
     let accounts = vec![
@@ -778,7 +778,7 @@ pub fn mint_new_edition_from_voucher(
         AccountMeta::new_readonly(spl_token::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
-        AccountMeta::new_readonly(spl_token_metadata::id(), false),
+        AccountMeta::new_readonly(metaplex_token_metadata::id(), false),
     ];
 
     Instruction::new_with_borsh(

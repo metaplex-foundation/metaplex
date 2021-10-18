@@ -8,6 +8,7 @@ use crate::{
     utils::*,
     MAX_PROBABILITY_VALUE,
 };
+use metaplex_token_metadata::state::{MasterEditionV2, Metadata};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
@@ -18,7 +19,6 @@ use solana_program::{
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
-use spl_token_metadata::state::{MasterEditionV2, Metadata};
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
