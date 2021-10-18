@@ -1,12 +1,49 @@
+@import "~antd/lib/style/themes/default.less";
+
 * {
   font-family: 'GraphikWeb';
 }
 
 .ant-layout-content {
   overflow: auto !important;
+  @media (max-width: @screen-sm-min){
+    padding: 0 12px !important;
+  }
 }
 .section {
   padding: 1px;
+}
+
+.action-btn:disabled {
+  color: rgba(255, 255, 255, 0.5);
+  &:hover, &:focus {
+    color: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.ant-upload-list-item-info .anticon-loading .anticon, .ant-upload-list-item-info .ant-upload-text-icon .anticon {
+  color: white;
+}
+
+.ant-upload-list-item:hover {
+  .ant-upload-list-item-info .anticon-loading .anticon, .ant-upload-list-item-info .ant-upload-text-icon .anticon,
+  .ant-upload-list-item-name {
+    color: @black-100 !important;
+  }
+}
+
+.url-form-action {
+  color: #FFFFFF !important;
+  &.ant-form-item-has-error :not(.ant-input-disabled):not(.ant-input-borderless).ant-input {
+    color: red;
+  }
+  h3 {
+    font-style: normal;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+  }
 }
 
 .call-to-action {
@@ -29,6 +66,25 @@
     color: #6d6d6d;
     font-style: normal;
     font-size: 20px;
+  }
+}
+
+.content-action {
+  .ant-select {
+    color: @black-100;
+  }
+  .anticon.ant-input-clear-icon{
+    color: white;
+  }
+  .ant-input-group-addon .ant-select {
+    color: @black-100;
+  }
+  h3 {
+    font-style: normal;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
   }
 }
 
@@ -74,6 +130,8 @@
 
   background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
   border-radius: 8px;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .type-btn:hover {
@@ -120,27 +178,37 @@
 }
 
 .connector {
-  color: #000;
-  background-color: #fff;
-  border-color: #fff;
+  color: #121212;
+  border-color: #121212;
+  background: white !important;
+  box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-family: "SF Pro Text";
+  font-style: normal;
+  font-weight: 600;
+  height: fit-content;
+
+  &:hover, &:focus {
+    background: transparent;
+    border-color: #FFFFFF;
+    color: #FFFFFF;
+  }
 }
 
-.connector:hover,
-.connector:focus {
-  background: #fff;
-  border-color: #141414;
-  color: #141414;
+.phantom-button {
+  background-color: white !important;
 }
-
-.ant-badge-count {
-  color: black;
+// .ant-btn-primary:hover, .ant-btn-primary:focus {
+//   color: #5969d4;
+//   background: transparent;
+//   border-color: #5969d4;
+// }
+.ant-modal-content {
+  border-radius: 12px;
 }
-
-.ant-btn-primary:hover,
-.ant-btn-primary:focus {
-  color: #5969d4;
-  background: transparent;
-  border-color: #5969d4;
+h2 {
+  color: white;
 }
 
 .create-statistic {
@@ -149,7 +217,7 @@
   .ant-statistic-title {
     font-style: normal;
     font-weight: 400;
-    font-size: 18px;
+    font-size: 1rem;
     line-height: 28px;
     /* identical to box height, or 133% */
     letter-spacing: 0.1em;
@@ -167,7 +235,7 @@
 
     font-style: normal;
     font-weight: 600;
-    font-size: 36px;
+    font-size: 2rem;
     line-height: 44px;
     color: #ffffff;
     flex: none;
@@ -175,7 +243,6 @@
     flex-grow: 0;
   }
 
-  margin-bottom: 50px;
 }
 
 .action-field {
@@ -263,18 +330,23 @@
 
 .metaplex-button {
   display: flex;
-  justify-content: space-between;
-  height: 50px;
-  width: 460px;
+  justify-content: center;
+  height: 56px;
+  width: auto;
   max-width: 100%;
   align-items: center;
-
-  margin: 5px auto;
-  background: linear-gradient(270deg, #616774 7.29%, #403f4c 100%);
-  border-radius: 8px;
-
-  font-size: 1rem;
-  font-weight: 800;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  /* identical to box height, or 100% */
+  letter-spacing: -0.01em;
+  /* White */
+  color: #FFFFFF;
+  &.w100{
+    width: 100%;
+  }
 }
 
 .particle {
@@ -314,4 +386,13 @@
   color: dimgray;
   font-size: 0.8rem;
   margin-bottom: 10px;
+}
+
+.black-dropdown {
+  background-color: #121212;
+
+  .ant-dropdown-menu-item:hover {
+    background-color: white;
+    color: black;
+  }
 }

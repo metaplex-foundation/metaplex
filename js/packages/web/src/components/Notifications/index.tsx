@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircleTwoTone,
   LoadingOutlined,
@@ -17,7 +18,6 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
 import { Badge, Popover, List } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
@@ -320,7 +320,7 @@ export function useSettlementAuctions({
               metadataByAuction,
               undefined,
             );
-            if (completeAuctionView) {
+            if(completeAuctionView) {
               await settle(
                 connection,
                 wallet,
@@ -361,6 +361,7 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
+  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
@@ -517,7 +518,10 @@ export function Notifications() {
     });
 
   const content = notifications.length ? (
-    <div style={{ width: '300px' }}>
+    <div
+      style={{ width: '300px', color: 'white' }}
+      className={'notifications-container'}
+    >
       <List
         itemLayout="vertical"
         size="small"
@@ -558,13 +562,8 @@ export function Notifications() {
   );
 
   const justContent = (
-    <Popover
-      className="noty-popover"
-      placement="bottomLeft"
-      content={content}
-      trigger="click"
-    >
-      <h1 className="title">M</h1>
+    <Popover placement="bottomLeft" content={content} trigger="click">
+      <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
     </Popover>
   );
 
@@ -572,8 +571,8 @@ export function Notifications() {
   else
     return (
       <Badge
-        count={notifications.length - 1}
-        style={{ backgroundColor: 'white' }}
+        count={notifications.length}
+        style={{ backgroundColor: 'white', color: 'black' }}
       >
         {justContent}
       </Badge>

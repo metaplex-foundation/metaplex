@@ -28,6 +28,7 @@ $ cd metaplex
 $ cd js
 $ yarn install
 $ yarn bootstrap
+$ yarn build
 $ yarn start
 ```
 

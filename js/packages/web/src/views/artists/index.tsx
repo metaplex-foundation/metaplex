@@ -9,6 +9,7 @@ const { Content } = Layout;
 
 export const ArtistsView = () => {
   const { whitelistedCreatorsByCreator } = useMeta();
+
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -17,11 +18,10 @@ export const ArtistsView = () => {
   };
 
   const items = Object.values(whitelistedCreatorsByCreator);
-
   const artistGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
+      className="my-masonry-grid artists-masonry"
       columnClassName="my-masonry-grid_column"
     >
       {items.map((m, idx) => {
@@ -35,6 +35,7 @@ export const ArtistsView = () => {
                 name: m.info.name || '',
                 image: m.info.image || '',
                 link: m.info.twitter || '',
+                background: m.info.background || '',
               }}
             />
           </Link>
