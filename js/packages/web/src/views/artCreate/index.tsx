@@ -42,9 +42,17 @@ import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
-import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { DEFAULT_COLLECTION_FAMILY, useCollections, useCollectionTokenMetadataList } from '../../hooks/useCollections';
-import {Select} from 'antd';
+import {
+  LoadingOutlined,
+  MinusCircleOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
+import {
+  DEFAULT_COLLECTION_FAMILY,
+  useCollections,
+  useCollectionTokenMetadataList,
+} from '../../hooks/useCollections';
+import { Select } from 'antd';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -54,11 +62,11 @@ export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
   const wallet = useWallet();
-  const [alertMessage, setAlertMessage] = useState<string>()
+  const [alertMessage, setAlertMessage] = useState<string>();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
-  const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0)
+  const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0);
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
@@ -76,9 +84,9 @@ export const ArtCreateView = () => {
     attributes: undefined,
     seller_fee_basis_points: 0,
     creators: [],
-    collection : {
-      name : '',
-      family : ''
+    collection: {
+      name: '',
+      family: '',
     },
     properties: {
       files: [],
@@ -111,14 +119,14 @@ export const ArtCreateView = () => {
       animation_url: attributes.animation_url,
       attributes: attributes.attributes,
       external_url: attributes.external_url,
-      collection : attributes.collection,
+      collection: attributes.collection,
       properties: {
         files: attributes.properties.files,
         category: attributes.properties?.category,
       },
     };
     setStepsVisible(false);
-    setMinting(true)
+    setMinting(true);
 
     try {
       const _nft = await mintNFT(
@@ -133,7 +141,7 @@ export const ArtCreateView = () => {
 
       if (_nft) setNft(_nft);
     } catch (e: any) {
-      setAlertMessage(e.message)
+      setAlertMessage(e.message);
     } finally {
       setMinting(false);
     }
@@ -146,7 +154,7 @@ export const ArtCreateView = () => {
           <Col span={24} md={4}>
             <Steps
               progressDot
-              direction='vertical'
+              direction="vertical"
               current={step}
               style={{
                 width: 'fit-content',
@@ -389,7 +397,9 @@ const UploadStep = (props: {
         </p>
       </Row>
       <Row className="content-action">
-        <h3 className="container-action-title">Upload a cover image (PNG, JPG, GIF, SVG)</h3>
+        <h3 className="container-action-title">
+          Upload a cover image (PNG, JPG, GIF, SVG)
+        </h3>
         <Dragger
           accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20 }}
@@ -409,7 +419,11 @@ const UploadStep = (props: {
             const sizeKB = file.size / 1024;
 
             if (sizeKB < 25) {
-              setCoverArtError(`The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`);
+              setCoverArtError(
+                `The file ${file.name} is too small. It is ${
+                  Math.round(10 * sizeKB) / 10
+                }KB but should be at least 25KB.`,
+              );
               return;
             }
 
@@ -529,7 +543,11 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
+              animation_url:
+                props.attributes.properties?.category !==
+                  MetadataCategory.Image && customURL
+                  ? customURL
+                  : mainFile && mainFile.name,
             });
             const files = [coverFile, mainFile].filter(f => f) as File[];
 
@@ -600,10 +618,12 @@ const InfoStep = (props: {
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
-  const {collections} = useCollections();
+  const { collections } = useCollections();
   const [creators, setCreators] = useState<Array<UserValue>>([]);
   const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
-  const [selectedCollection, setSelectedCollection] = useState<string>(collections[0].collectionName);
+  const [selectedCollection, setSelectedCollection] = useState<string>(
+    collections[0].collectionName,
+  );
   const tokens = useCollectionTokenMetadataList(selectedCollection);
   console.log('HEEEY', tokens);
 
@@ -668,11 +688,8 @@ const InfoStep = (props: {
 
           <label className="action-field">
             <span className="field-title">Collection</span>
-            <Select
-              onSelect={setSelectedCollection}
-              value={selectedCollection}
-            >
-              {collections.map(({collectionName}) => (
+            <Select onSelect={setSelectedCollection} value={selectedCollection}>
+              {collections.map(({ collectionName }) => (
                 <Select.Option value={collectionName!} key={collectionName}>
                   {collectionName}
                 </Select.Option>
@@ -1189,10 +1206,10 @@ const WaitingStep = (props: {
 
   const setIconForStep = (currentStep: number, componentStep) => {
     if (currentStep === componentStep) {
-      return <LoadingOutlined />
+      return <LoadingOutlined />;
     }
     return null;
-  }
+  };
 
   return (
     <div
@@ -1206,15 +1223,43 @@ const WaitingStep = (props: {
       <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
-          <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
+          <Step
+            title="Minting"
+            description="Starting Mint Process"
+            icon={setIconForStep(props.step, 0)}
+          />
           <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  />
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} />
-          <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
-          <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
-          <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
-          <Step title="Updating Metadata" icon={setIconForStep(props.step, 7)} />
-          <Step title="Signing Token Transaction" description="Approve the final transaction from your wallet"  icon={setIconForStep(props.step, 8)}  />
+          <Step
+            title="Signing Metadata Transaction"
+            description="Approve the transaction from your wallet"
+            icon={setIconForStep(props.step, 2)}
+          />
+          <Step
+            title="Sending Transaction to Solana"
+            description="This will take a few seconds."
+            icon={setIconForStep(props.step, 3)}
+          />
+          <Step
+            title="Waiting for Initial Confirmation"
+            icon={setIconForStep(props.step, 4)}
+          />
+          <Step
+            title="Waiting for Final Confirmation"
+            icon={setIconForStep(props.step, 5)}
+          />
+          <Step
+            title="Uploading to Arweave"
+            icon={setIconForStep(props.step, 6)}
+          />
+          <Step
+            title="Updating Metadata"
+            icon={setIconForStep(props.step, 7)}
+          />
+          <Step
+            title="Signing Token Transaction"
+            description="Approve the final transaction from your wallet"
+            icon={setIconForStep(props.step, 8)}
+          />
         </Steps>
       </Card>
     </div>
@@ -1224,19 +1269,20 @@ const WaitingStep = (props: {
 const Congrats = (props: {
   nft?: {
     metadataAccount: StringPublicKey;
-  },
+  };
   alert?: string;
 }) => {
   const history = useHistory();
 
   const newTweetURL = () => {
     const params = {
-      text: "I've created a new NFT artwork on Metaplex, check it out!",
-      url: `${window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
-      hashtags: 'NFT,Crypto,Metaplex',
+      text: "I've created a new NFT artwork on Ninjaplex, check it out!",
+      url: `${
+        window.location.origin
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
+      hashtags: 'NFT,Crypto,Ninjaplex',
       // via: "Metaplex",
-      related: 'Metaplex,Solana',
+      related: 'Ninjaplex,Solana',
     };
     const queryParams = new URLSearchParams(params).toString();
     return `https://twitter.com/intent/tweet?${queryParams}`;
@@ -1248,9 +1294,11 @@ const Congrats = (props: {
       <>
         <div className="waiting-title">Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push("/art/create")}>Back to Create NFT</Button>
+        <Button onClick={_ => history.push('/art/create')}>
+          Back to Create NFT
+        </Button>
       </>
-    )
+    );
   }
 
   return (

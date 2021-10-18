@@ -79,7 +79,7 @@ export const WalletModal: FC = () => {
       <br />
       {selected || showWallets ? (
         wallets.map(wallet => {
-          return (
+          return wallet.name == 'Phantom' && (
             <Button
               key={wallet.name}
               size="large"

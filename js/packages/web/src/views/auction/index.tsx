@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Row, Col, Button, Skeleton, Carousel, List, Card } from 'antd';
-import { AuctionCard } from '../../components/AuctionCard';
+import { AuctionCard } from '../../components/AuctionView';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
@@ -225,7 +225,7 @@ export const AuctionView = () => {
           </Row>
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction} pubkey={auction?.auction.pubkey} />}
+          {auction && <AuctionCard auctionView={auction}/>}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
       </Row>

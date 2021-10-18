@@ -20,7 +20,6 @@ export const LatestsaleView = props => {
       setItems(arr);
     }
   }, [collection]);
-  console.log(items)
   return (
     <Modal
       width={1000}

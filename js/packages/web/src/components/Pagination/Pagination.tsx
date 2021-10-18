@@ -9,6 +9,17 @@ interface DataType {
 
 export const CustomPagination = ({ len, active, changePage }: DataType) => {
   return (
-      <ReactPaginate previousLabel={'<'} nextLabel={'>'} forcePage={active} pageCount={len} onPageChange={(event)=> changePage(event)} de/>
+    <>
+      {len ?
+        <ReactPaginate
+          previousLabel={'<'}
+          nextLabel={'>'}
+          disableInitialCallback={true}
+          forcePage={active}
+          pageCount={len}
+          onPageChange={event => changePage(event)}
+        />:''
+      }
+    </>
   );
 };

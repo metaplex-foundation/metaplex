@@ -5,15 +5,16 @@ import { Form } from 'react-bootstrap';
 
 
 interface Props {
-  option: any,
-  defoultParam: string,
+  option: any;
+  defoultParam: string;
+  change: (event: object) => void;
 }
 
-export const CustomSelect = ({option, defoultParam}: Props) => {
+export const CustomSelect = ({option, defoultParam, change}: Props) => {
   return (
-    <Form.Control as="select"  className="btn-secondary">
+    <Form.Control as="select" onChange={(event)=>{change(event)}}  className="btn-secondary">
       {
-        defoultParam != '' ? <option>{defoultParam}</option>: ''
+        defoultParam != '' ? <option value={defoultParam}>{defoultParam}</option>: ''
       }
       {
         option.map((item)=>{
