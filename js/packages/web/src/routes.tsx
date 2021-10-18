@@ -1,3 +1,4 @@
+import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Providers } from './providers';
 import {
@@ -13,6 +14,7 @@ import {
   StaticPageView,
 } from './views';
 import { AdminView } from './views/admin';
+import { PackCreateView } from './views/packCreate';
 import { BillingView } from './views/auction/billing';
 
 export function Routes() {
@@ -22,6 +24,11 @@ export function Routes() {
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
+            <Route
+              exact
+              path="/admin/pack/create/:stepParam?"
+              component={() => <PackCreateView />}
+            />
             <Route
               exact
               path="/analytics"
@@ -40,6 +47,7 @@ export function Routes() {
             <Route exact path="/art/:id" component={() => <ArtView />} />
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
             <Route exact path="/artists" component={() => <ArtistsView />} />
+
             <Route
               exact
               path="/auction/create/:step_param?"
