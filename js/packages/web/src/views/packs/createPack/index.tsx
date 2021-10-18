@@ -121,7 +121,7 @@ function CreatePack({ confirm } ) {
             bordered={false}
             allowClear
           >
-            <Option value="max_supply">max_supply</Option>
+            <Option value="maxSupply">maxSupply</Option>
             <Option value="fixed">fixed</Option>
           </Select>
         </Form.Item>
@@ -135,7 +135,7 @@ function CreatePack({ confirm } ) {
         </Form.Item>
 
         <Form.Item
-          label="Uri"
+          label="Poster URL"
           name="uri"
         >
           <Input />

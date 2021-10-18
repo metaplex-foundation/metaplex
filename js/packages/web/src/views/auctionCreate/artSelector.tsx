@@ -11,7 +11,7 @@ export interface ArtSelectorProps extends ButtonProps {
   setSelected: (selected: SafetyDepositDraft[]) => void;
   allowMultiple: boolean;
   filter?: (i: SafetyDepositDraft) => boolean;
-  isListView?: boolean;
+  renderList?: (items: any) => JSX.Element;
   title?: string;
   description?: string;
   setCounts?: (e: any, id: string) => void;
@@ -24,7 +24,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     setSelected,
     setCounts,
     allowMultiple,
-    isListView = false,
+    renderList,
     title,
     description,
     selectedCount,
@@ -114,100 +114,12 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     </Masonry>
   )
 
-  const renderList = (items) => (
-    <Masonry
-      breakpointCols={breakpointColumnsListObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-      style={{
-        width: '100%',
-      }}
-    >
-      <div style={{ padding: '20px 0' }}>
-        {
-          items.map(m => {
-            const id = m.metadata.pubkey;
-            const isSelected = selectedItems.has(id);
 
-            const onSelect = () => {
-              let list = [...selectedItems.keys()];
-
-              const newSet = isSelected
-                ? new Set(list.filter(item => item !== id))
-                : new Set([...list, id]);
-
-              let selected = items.filter(item =>
-                newSet.has(item.metadata.pubkey),
-              );
-
-              setSelected(selected);
-            };
-
-            const onAddCount = (e) => {
-              e.stopPropagation()
-              setCounts && setCounts(e, id)
-            }
-
-            return (
-              <div
-                key={id}
-                style={{
-                  display: 'flex',
-                  padding: '5px 0',
-                  borderBottom: '1px solid rgb(96 96 96)',
-                }}
-              >
-                <Checkbox
-                  checked={isSelected}
-                  onChange={onSelect}
-                  style={{
-                    width: 35,
-                    paddingRight: 10,
-                    alignItems: 'center',
-                    marginBottom: '0.4em',
-                  }}
-                />
-                <Row
-                  justify={'space-between'}
-                  style={{
-                    width: '100%',
-                  }}
-                >
-                  {/*// TODO add image*/}
-                  {/*<Col>*/}
-                  {/*  <MetaAvatar creators={creators} size={32} />*/}
-                  {/*</Col>*/}
-                  <Col
-                    flex="90%"
-                    style={{
-                      display: "flex",
-                      alignItems: 'center',
-                    }}
-                  >
-                    {id}
-                  </Col>
-                  <Col flex="10%">
-                    <Input
-                      onChange={(e) => onAddCount(e)}
-                      type="number"
-                      min={0}
-                      max={1000}
-                      disabled={!isSelected}
-                    />
-                  </Col>
-                </Row>
-              </div>
-            );
-          })
-        }
-      </div>
-    </Masonry>
-  )
 
   return (
     <>
       <Masonry
-        breakpointCols={isListView ? breakpointColumnsListObj: breakpointColumnsObj}
+        breakpointCols={renderList ? breakpointColumnsListObj: breakpointColumnsObj}
         className="my-masonry-grid"
         columnClassName="my-masonry-grid_column"
       >
@@ -232,7 +144,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           <div
             className="ant-card ant-card-bordered ant-card-hoverable art-card"
             style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={isListView ? openList : open}
+            onClick={renderList ? openList : open}
           >
             <span className="text-center">Add an NFT</span>
           </div>
@@ -257,7 +169,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           style={{ overflowY: 'auto', height: '50vh' }}
         >
           {
-            isListView
+            renderList
               ? renderList(items)
               : renderCards(items)
           }

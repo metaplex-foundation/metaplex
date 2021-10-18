@@ -5,7 +5,7 @@ import { Creator } from "@oyster/common";
 import { ArtSelector } from "../../auctionCreate/artSelector";
 import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
 
-function AddVoucher({ attributes, setAttributes, confirm, backButton }) {
+const AddVoucher = ({ attributes, setAttributes, confirm, backButton }) => {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
     confirm(2)
@@ -44,10 +44,8 @@ function AddVoucher({ attributes, setAttributes, confirm, backButton }) {
           setSelected={vouchersItems => {
             setAttributes({ ...attributes, vouchersItems });
           }}
-          setCounts={handleVoucherCountUpdate}
           selectedCount={(id) => attributes.vouchersCount[id]}
-          allowMultiple
-          isListView
+          allowMultiple={false}
         >
           Select NFT
         </ArtSelector>

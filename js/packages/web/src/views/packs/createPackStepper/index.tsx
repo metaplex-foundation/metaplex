@@ -5,6 +5,7 @@ import {useHistory, useParams} from "react-router-dom";
 import CreatePack from '../createPack';
 import AddVoucher from '../voucher';
 import AddCard from '../card';
+import FinalStep from '../final';
 import useWindowDimensions from "../../../utils/layout";
 import {AuctionState} from "../../auctionCreate";
 
@@ -87,10 +88,19 @@ function CreatePackStepper() {
     />
   );
 
+  const finalStep = (
+    <FinalStep
+      attributes={attributes}
+      confirm={gotoNextStep}
+      backButton={renderBackButton()}
+    />
+  );
+
   const steps = [
     ['Create Pack', createPackStep],
     ['Add Voucher', addVoucherStep],
     ['Add Card', addCardStep],
+    ['Final', finalStep],
   ]
 
   return (

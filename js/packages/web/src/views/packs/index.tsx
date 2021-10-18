@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Layout, Button, Row, Col, Typography } from 'antd';
 import { useHistory } from "react-router-dom";
 
@@ -6,7 +6,7 @@ import PacksList from './packsList';
 
 const { Content } = Layout;
 
-export const AdminPacksView = () => {
+const AdminPacksView = () => {
   const history = useHistory();
 
   return (
@@ -38,3 +38,5 @@ export const AdminPacksView = () => {
     </Content>
   );
 };
+
+export default memo(AdminPacksView)

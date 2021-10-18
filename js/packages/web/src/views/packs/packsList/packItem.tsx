@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Button, List, Divider, Space, Switch, Avatar, Typography, Form, Input } from 'antd';
 
 const { Text, Title } = Typography;
 
-function PackItem({ pack }) {
+const PackItem = ({ pack }) => {
   const [ editMode, setEditMode ] = useState(false);
   const onEdit = (id: string) => {
     setEditMode(true);
@@ -56,7 +56,7 @@ function PackItem({ pack }) {
           style={{ height: 30 }}
           danger
         >
-          Delete pack
+          Reclaim items
         </Button>
       ]}
       style={{
@@ -138,4 +138,4 @@ function PackItem({ pack }) {
   )
 };
 
-export default PackItem;
+export default memo(PackItem);

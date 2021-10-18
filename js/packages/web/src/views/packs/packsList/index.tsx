@@ -22,7 +22,7 @@ const list = [
   },
 ];
 
-function PacksList() {
+const PacksList = () => {
   const onDeleteVoucher = (id: string) => {
     console.log('onDeleteVoucher:', id);
   };
