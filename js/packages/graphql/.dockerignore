@@ -1,0 +1,5 @@
+.git
+cache
+node_modules
+ingester/node_modules/
+dist
