@@ -1,4 +1,5 @@
 import { AccountInfo } from '@solana/web3.js';
+import { TokenAccount } from '../..';
 import {
   AuctionData,
   AuctionDataExtended,
@@ -12,6 +13,7 @@ import {
   Vault,
 } from '../../actions';
 import {
+  AuctionCache,
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
@@ -20,14 +22,18 @@ import {
   PrizeTrackingTicket,
   SafetyDepositConfig,
   Store,
+  StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
-import { PublicKeyStringAndAccount } from '../../utils';
+import { PublicKeyStringAndAccount, StringPublicKey } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
   metadataByMint: Record<string, ParsedAccount<Metadata>>;
+  metadataByMetadata: Record<string, ParsedAccount<Metadata>>;
+
+  metadataByAuction: Record<string, ParsedAccount<Metadata>[]>;
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
   editions: Record<string, ParsedAccount<Edition>>;
   masterEditions: Record<
@@ -71,6 +77,8 @@ export interface MetaState {
     ParsedAccount<WhitelistedCreator>
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
+  auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
+  storeIndexer: ParsedAccount<StoreIndexer>[];
 }
 
 export interface MetaContextState extends MetaState {
@@ -83,6 +91,10 @@ export interface MetaContextState extends MetaState {
     ParsedAccount<BidderPot>,
     ParsedAccount<BidderMetadata>,
   ];
+  pullAuctionPage: (auctionAddress: StringPublicKey) => Promise<MetaState>;
+  pullBillingPage: (auctionAddress: StringPublicKey) => void;
+  pullAllSiteData: () => void;
+  pullAllMetadata: () => void;
 }
 
 export type AccountAndPubkey = {

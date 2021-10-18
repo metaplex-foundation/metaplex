@@ -23,6 +23,7 @@ export async function upload(
   totalNFTs: number,
   storage: string,
   retainAuthority: boolean,
+  mutable: boolean,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
 ): Promise<boolean> {
@@ -98,7 +99,7 @@ export async function upload(
             maxNumberOfLines: new BN(totalNFTs),
             symbol: manifest.symbol,
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: true,
+            isMutable: mutable,
             maxSupply: new BN(0),
             retainAuthority: retainAuthority,
             creators: manifest.properties.creators.map(creator => {
