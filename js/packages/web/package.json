@@ -43,7 +43,8 @@
     "react-router-dom": "^5.2.0",
     "react-virtualized": "^9.22.3",
     "three": "^0.128.0",
-    "timeago.js": "^4.0.2"
+    "timeago.js": "^4.0.2",
+    "classnames": "^2.3.1"
   },
   "scripts": {
     "prestart": "npm-link-shared ../common/node_modules/ . react",

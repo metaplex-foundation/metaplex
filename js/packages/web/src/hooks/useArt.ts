@@ -17,7 +17,7 @@ import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
 import useWindowDimensions from '../utils/layout';
 
-const metadataToArt = (
+export const metadataToArt = (
   info: Metadata | undefined,
   editions: Record<string, ParsedAccount<Edition>>,
   masterEditions: Record<
