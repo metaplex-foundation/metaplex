@@ -196,13 +196,15 @@ export const loadPayoutTickets = async (
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
 
-  getProgramAccounts(connection, METAPLEX_ID, {
+  const responses = await getProgramAccounts(connection, METAPLEX_ID, {
     filters: [
       {
         dataSize: MAX_PAYOUT_TICKET_SIZE,
       },
     ],
-  }).then(forEachAccount(processMetaplexAccounts));
+  })
+  
+  await forEachAccount(processMetaplexAccounts)(responses);
 
   return state;
 };
