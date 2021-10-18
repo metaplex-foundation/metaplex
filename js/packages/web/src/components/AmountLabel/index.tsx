@@ -9,8 +9,6 @@ interface IAmountLabel {
   displayUSD?: boolean;
   displaySOL?: boolean;
   title?: string;
-  style?: object;
-  containerStyle?: object;
   iconSize?: number;
   customPrefix?: JSX.Element;
 }
@@ -21,8 +19,6 @@ export const AmountLabel = (props: IAmountLabel) => {
     displayUSD = true,
     displaySOL = false,
     title = '',
-    style = {},
-    containerStyle = {},
     iconSize = 38,
     customPrefix,
   } = props;
@@ -39,23 +35,17 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <div style={{ display: 'flex', ...containerStyle }}>
+    <div>
       {PriceNaN === false && (
         <Statistic
-          style={style}
-          className="create-statistic"
           title={title || ''}
           value={`${amount}${displaySOL ? ' SOL' : ''}`}
           prefix={customPrefix || <SolCircle iconSize={iconSize} />}
         />
       )}
       {displayUSD && (
-        <div className="usd">
-          {PriceNaN === false ? (
-            formatUSD.format(priceUSD || 0)
-          ) : (
-            <div className="placebid">Place Bid</div>
-          )}
+        <div>
+          {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
         </div>
       )}
     </div>

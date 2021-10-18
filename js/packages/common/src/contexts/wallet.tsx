@@ -55,28 +55,16 @@ export const WalletModal: FC = () => {
 
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
-      <span
-        style={{
-          color: 'rgba(255, 255, 255, 0.75)',
-          fontSize: '14px',
-          lineHeight: '14px',
-          fontFamily: 'GraphikWeb',
-          letterSpacing: '0.02em',
-          marginBottom: 14,
-        }}
-      >
-        RECOMMENDED
-      </span>
+      <span>RECOMMENDED</span>
 
       <Button
-        className="phantom-button metaplex-button"
         onClick={() => {
           console.log(phatomWallet.name);
           select(phatomWallet.name);
           close();
         }}
       >
-        <img src={phatomWallet?.icon} style={{ width: '1.2rem' }} />
+        <img src={phatomWallet?.icon} />
         &nbsp;Connect to Phantom
       </Button>
       <Collapse
@@ -117,32 +105,13 @@ export const WalletModal: FC = () => {
           )
         }
       >
-        <Panel
-          header={
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: '16px',
-                lineHeight: '16px',
-                letterSpacing: '-0.01em',
-                color: 'rgba(255, 255, 255, 255)',
-              }}
-            >
-              Other Wallets
-            </span>
-          }
-          key="1"
-        >
+        <Panel header={<span>Other Wallets</span>} key="1">
           {wallets.map((wallet, idx) => {
             if (wallet.name === 'Phantom') return null;
 
             return (
               <Button
                 key={idx}
-                className="metaplex-button w100"
-                style={{
-                  marginBottom: 5,
-                }}
                 onClick={() => {
                   select(wallet.name);
                   close();

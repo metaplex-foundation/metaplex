@@ -11,6 +11,7 @@ export const ConfettiProvider = ({ children = null as any }) => {
   const canvasRef = useRef<HTMLCanvasElement>();
   const confettiRef = useRef<confetti.CreateTypes>();
 
+  // TODO: remove use of .style
   const dropConfetti = useMemo(
     () => () => {
       if (confettiRef.current && canvasRef.current) {

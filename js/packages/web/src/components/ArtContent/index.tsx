@@ -12,13 +12,11 @@ const MeshArtContent = ({
   uri,
   animationUrl,
   className,
-  style,
   files,
 }: {
   uri?: string;
   animationUrl?: string;
   className?: string;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
 }) => {
   const renderURL =
@@ -29,28 +27,21 @@ const MeshArtContent = ({
 
   if (isLoading) {
     return (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={false}
-        style={{ width: '100%', ...style }}
-      />
+      <CachedImageContent uri={uri} className={className} preview={false} />
     );
   }
 
-  return <MeshViewer url={renderURL} className={className} style={style} />;
+  return <MeshViewer url={renderURL} className={className} />;
 };
 
 const CachedImageContent = ({
   uri,
   className,
   preview,
-  style,
 }: {
   uri?: string;
   className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
@@ -61,7 +52,6 @@ const CachedImageContent = ({
       preview={preview}
       wrapperClassName={className}
       loading="lazy"
-      wrapperStyle={{ ...style }}
       onLoad={e => {
         setLoaded(true);
       }}
@@ -73,14 +63,12 @@ const CachedImageContent = ({
 
 const VideoArtContent = ({
   className,
-  style,
   files,
   uri,
   animationURL,
   active,
 }: {
   className?: string;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
   uri?: string;
   animationURL?: string;
@@ -137,20 +125,15 @@ const VideoArtContent = ({
         muted={true}
         controls={true}
         controlsList="nodownload"
-        style={style}
         loop={true}
         poster={uri}
       >
-        {likelyVideo && (
-          <source src={likelyVideo} type="video/mp4" style={style} />
-        )}
-        {animationURL && (
-          <source src={animationURL} type="video/mp4" style={style} />
-        )}
+        {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
+        {animationURL && <source src={animationURL} type="video/mp4" />}
         {files
           ?.filter(f => typeof f !== 'string')
           .map((f: any) => (
-            <source src={f.uri} type={f.type} style={style} />
+            <source src={f.uri} type={f.type} />
           ))}
       </video>
     );
@@ -163,7 +146,6 @@ const HTMLContent = ({
   animationUrl,
   className,
   preview,
-  style,
   files,
   artView,
 }: {
@@ -171,18 +153,12 @@ const HTMLContent = ({
   animationUrl?: string;
   className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
   if (!artView) {
     return (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={preview}
-        style={style}
-      />
+      <CachedImageContent uri={uri} className={className} preview={preview} />
     );
   }
   const htmlURL =
@@ -196,7 +172,6 @@ const HTMLContent = ({
       frameBorder="0"
       src={htmlURL}
       className={className}
-      style={style}
     ></iframe>
   );
 };
@@ -205,7 +180,6 @@ export const ArtContent = ({
   category,
   className,
   preview,
-  style,
   active,
   allowMeshRender,
   pubkey,
@@ -217,7 +191,6 @@ export const ArtContent = ({
   category?: MetadataCategory;
   className?: string;
   preview?: boolean;
-  style?: React.CSSProperties;
   width?: number;
   height?: number;
   ref?: Ref<HTMLDivElement>;
@@ -260,7 +233,6 @@ export const ArtContent = ({
         uri={uri}
         animationUrl={animationURL}
         className={className}
-        style={style}
         files={files}
       />
     );
@@ -270,7 +242,6 @@ export const ArtContent = ({
     category === 'video' ? (
       <VideoArtContent
         className={className}
-        style={style}
         files={files}
         uri={uri}
         animationURL={animationURL}
@@ -282,29 +253,12 @@ export const ArtContent = ({
         animationUrl={animationURL}
         className={className}
         preview={preview}
-        style={style}
         files={files}
         artView={artView}
       />
     ) : (
-      <CachedImageContent
-        uri={uri}
-        className={className}
-        preview={preview}
-        style={style}
-      />
+      <CachedImageContent uri={uri} className={className} preview={preview} />
     );
 
-  return (
-    <div
-      ref={ref as any}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {content}
-    </div>
-  );
+  return <div ref={ref as any}>{content}</div>;
 };

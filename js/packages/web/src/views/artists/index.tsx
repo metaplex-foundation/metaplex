@@ -21,8 +21,8 @@ export const ArtistsView = () => {
   const artistGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid artists-masonry"
-      columnClassName="my-masonry-grid_column"
+      className="metaplex-masonry"
+      columnClassName="metaplex-masonry-column"
     >
       {items.map((m, idx) => {
         const id = m.info.address;
@@ -45,9 +45,9 @@ export const ArtistsView = () => {
   );
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Col style={{ width: '100%', marginTop: 10 }}>{artistGrid}</Col>
+    <Layout>
+      <Content>
+        <Col>{artistGrid}</Col>
       </Content>
     </Layout>
   );

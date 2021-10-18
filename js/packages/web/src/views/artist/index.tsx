@@ -20,8 +20,8 @@ export const ArtistView = () => {
   const artworkGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      className="metaplex-masonry"
+      columnClassName="metaplex-masonry-column"
     >
       {artwork.length > 0
         ? artwork.map((m, idx) => {
@@ -40,19 +40,17 @@ export const ArtistView = () => {
     <>
       <Col>
         <Divider />
-        <Row
-          style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
-        >
+        <Row>
           <Col span={24}>
             <h2>
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
               {creator?.info.name || creator?.info.address}
             </h2>
             <br />
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{creator?.info.description}</div>
+            <div>ABOUT THE CREATOR</div>
+            <div>{creator?.info.description}</div>
             <br />
-            <div className="info-header">Art Created</div>
+            <div>Art Created</div>
             {artworkGrid}
           </Col>
         </Row>

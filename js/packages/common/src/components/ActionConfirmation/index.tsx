@@ -8,17 +8,9 @@ export const ActionConfirmation = (props: {
   onClose: () => void;
 }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-      }}
-    >
+    <div>
       <h2>Congratulations!</h2>
       <div>Your action has been successfully executed</div>
-      <div className="success-icon" />
       <Link to="/dashboard">
         <Button type="primary">{LABELS.DASHBOARD_ACTION}</Button>
       </Link>

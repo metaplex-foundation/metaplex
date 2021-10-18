@@ -64,7 +64,7 @@ export const SetupView = () => {
     <>
       {!wallet.connected && (
         <p>
-          <Button type="primary" className="app-btn" onClick={connect}>
+          <Button type="primary" onClick={connect}>
             Connect
           </Button>{' '}
           to configure store.
@@ -81,7 +81,6 @@ export const SetupView = () => {
 
           <p>
             <Button
-              className="app-btn"
               type="primary"
               loading={isInitalizingStore}
               onClick={initializeStore}

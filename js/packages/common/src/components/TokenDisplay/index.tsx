@@ -25,25 +25,13 @@ export const TokenDisplay = (props: {
 
   return (
     <>
-      <div
-        title={mintAddress}
-        key={mintAddress}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div title={mintAddress} key={mintAddress}>
+        <div>
           {icon || <TokenIcon mintAddress={mintAddress} />}
           {name}
         </div>
         {showBalance ? (
-          <span
-            title={balance.toString()}
-            key={mintAddress}
-            className="token-balance"
-          >
+          <span title={balance.toString()} key={mintAddress}>
             &nbsp;{' '}
             {hasBalance
               ? balance < 0.001

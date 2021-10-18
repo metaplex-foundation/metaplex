@@ -3,7 +3,7 @@ import React from 'react';
 import { LABELS } from '../../constants';
 
 interface HowAuctionsWorkModalProps {
-  buttonClassName: string;
+  buttonClassName?: string;
 }
 
 export const HowAuctionsWorkModal: React.FC<HowAuctionsWorkModalProps> = ({

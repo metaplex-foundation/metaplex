@@ -146,13 +146,15 @@ export function MetaProvider({ children = null as any }) {
       }}
     >
       {isLoading ? (
-        <div className="app--loading">
+        <div>
           <Space direction="vertical" size="middle">
-            <img src={storefront.theme.logo} className="app--loading-logo" />
+            <img src={storefront.theme.logo} />
             <Spin indicator={<LoadingOutlined />} />
           </Space>
         </div>
-      ) : children}
+      ) : (
+        children
+      )}
     </MetaContext.Provider>
   );
 }

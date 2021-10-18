@@ -143,15 +143,14 @@ export const AuctionCreateView = () => {
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
-  const [auctionObj, setAuctionObj] =
-    useState<
-      | {
-          vault: StringPublicKey;
-          auction: StringPublicKey;
-          auctionManager: StringPublicKey;
-        }
-      | undefined
-    >(undefined);
+  const [auctionObj, setAuctionObj] = useState<
+    | {
+        vault: StringPublicKey;
+        auction: StringPublicKey;
+        auctionManager: StringPublicKey;
+      }
+    | undefined
+  >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -650,19 +649,13 @@ export const AuctionCreateView = () => {
 
   return (
     <>
-      <Row className="creator-base-page" style={{ paddingTop: 50 }}>
+      <Row>
         {stepsVisible && (
           <Col span={24} md={4}>
             <Steps
               progressDot
               direction={width < 768 ? 'horizontal' : 'vertical'}
               current={step}
-              style={{
-                width: 'fit-content',
-                margin: '0 auto 30px auto',
-                overflowX: 'visible',
-                maxWidth: '100%',
-              }}
             >
               {stepsByCategory[attributes.category]
                 .filter(_ => !!_[0])
@@ -675,7 +668,7 @@ export const AuctionCreateView = () => {
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
           {stepsByCategory[attributes.category][step][1]}
           {0 < step && stepsVisible && (
-            <div style={{ margin: 'auto', width: 'fit-content' }}>
+            <div>
               <Button onClick={() => gotoNextStep(step - 1)}>Back</Button>
             </div>
           )}
@@ -691,7 +684,7 @@ const CategoryStep = (props: {
   const { width } = useWindowDimensions();
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>List an item</h2>
         <p>
           First time listing on Metaplex? <a>Read our sellers' guide.</a>
@@ -701,13 +694,12 @@ const CategoryStep = (props: {
         <Col>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.InstantSale)}
             >
               <div>
                 <div>Instant Sale</div>
-                <div className="type-btn-description">
+                <div>
                   At a fixed price, sell a single Master NFT or copies of it
                 </div>
               </div>
@@ -715,41 +707,34 @@ const CategoryStep = (props: {
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.Limited)}
             >
               <div>
                 <div>Limited Edition</div>
-                <div className="type-btn-description">
-                  Sell a limited copy or copies of a single Master NFT
-                </div>
+                <div>Sell a limited copy or copies of a single Master NFT</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.Open)}
             >
               <div>
                 <div>Open Edition</div>
-                <div className="type-btn-description">
-                  Sell unlimited copies of a single Master NFT
-                </div>
+                <div>Sell unlimited copies of a single Master NFT</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.Tiered)}
             >
               <div>
                 <div>Tiered Auction</div>
-                <div className="type-btn-description">
+                <div>
                   Participants get unique rewards based on their leaderboard
                   rank
                 </div>
@@ -758,13 +743,12 @@ const CategoryStep = (props: {
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(AuctionCategory.Single)}
             >
               <div>
                 <div>Sell an Existing Item</div>
-                <div className="type-btn-description">
+                <div>
                   Sell an existing item in your NFT collection, including Master
                   NFTs
                 </div>
@@ -802,11 +786,11 @@ const InstantSaleStep = ({
 
   return (
     <>
-      <Row className="call-to-action" style={{ marginBottom: 0 }}>
+      <Row>
         <h2>Select which item to sell:</h2>
       </Row>
 
-      <Row className="content-action">
+      <Row>
         <Col xl={24}>
           <ArtSelector
             filter={artistFilter}
@@ -820,7 +804,7 @@ const InstantSaleStep = ({
           </ArtSelector>
 
           {shouldRenderSelect && (
-            <label className="action-field">
+            <label>
               <Select
                 defaultValue={
                   attributes.instantSaleType || InstantSaleType.Single
@@ -848,12 +832,11 @@ const InstantSaleStep = ({
               </Select>
               {isLimitedEdition && (
                 <>
-                  <span className="field-info">
+                  <span>
                     Each copy will be given unique edition number e.g. 1 of 30
                   </span>
                   <Input
                     autoFocus
-                    className="input"
                     placeholder="Enter number of copies sold"
                     allowClear
                     onChange={info =>
@@ -868,16 +851,13 @@ const InstantSaleStep = ({
             </label>
           )}
 
-          <label className="action-field">
-            <span className="field-title">Price</span>
-            <span className="field-info">
-              This is the instant sale price for your item.
-            </span>
+          <label>
+            <span>Price</span>
+            <span>This is the instant sale price for your item.</span>
             <Input
               type="number"
               min={0}
               autoFocus
-              className="input"
               placeholder="Price"
               prefix="◎"
               suffix="SOL"
@@ -899,7 +879,6 @@ const InstantSaleStep = ({
           onClick={() => {
             confirm();
           }}
-          className="action-btn"
         >
           Continue
         </Button>
@@ -933,13 +912,11 @@ const CopiesStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action" style={{ marginBottom: 0 }}>
+      <Row>
         <h2>Select which item to sell</h2>
-        <p style={{ fontSize: '1.2rem' }}>
-          Select the item(s) that you want to list.
-        </p>
+        <p>Select the item(s) that you want to list.</p>
       </Row>
-      <Row className="content-action">
+      <Row>
         <Col xl={24}>
           <ArtSelector
             filter={overallFilter}
@@ -952,16 +929,13 @@ const CopiesStep = (props: {
             Select NFT
           </ArtSelector>
           {props.attributes.category === AuctionCategory.Limited && (
-            <label className="action-field">
-              <span className="field-title">
-                How many copies do you want to create?
-              </span>
-              <span className="field-info">
+            <label>
+              <span>How many copies do you want to create?</span>
+              <span>
                 Each copy will be given unique edition number e.g. 1 of 30
               </span>
               <Input
                 autoFocus
-                className="input"
                 placeholder="Enter number of copies sold"
                 allowClear
                 onChange={info =>
@@ -982,7 +956,6 @@ const CopiesStep = (props: {
           onClick={() => {
             props.confirm();
           }}
-          className="action-btn"
         >
           Continue to Terms
         </Button>
@@ -998,23 +971,18 @@ const NumberOfWinnersStep = (props: {
 }) => {
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Tiered Auction</h2>
         <p>Create a Tiered Auction</p>
       </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
-          <label className="action-field">
-            <span className="field-title">
-              How many participants can win the auction?
-            </span>
-            <span className="field-info">
-              This is the number of spots in the leaderboard.
-            </span>
+      <Row>
+        <Col xl={24}>
+          <label>
+            <span>How many participants can win the auction?</span>
+            <span>This is the number of spots in the leaderboard.</span>
             <Input
               type="number"
               autoFocus
-              className="input"
               placeholder="Number of spots in the leaderboard"
               onChange={info =>
                 props.setAttributes({
@@ -1027,12 +995,7 @@ const NumberOfWinnersStep = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue
         </Button>
       </Row>
@@ -1047,16 +1010,16 @@ const PriceAuction = (props: {
 }) => {
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Price</h2>
         <p>Set the price for your auction.</p>
       </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
+      <Row>
+        <Col xl={24}>
           {props.attributes.category === AuctionCategory.Open && (
-            <label className="action-field">
-              <span className="field-title">Price</span>
-              <span className="field-info">
+            <label>
+              <span>Price</span>
+              <span>
                 This is the fixed price that everybody will pay for your
                 Participation NFT.
               </span>
@@ -1064,7 +1027,6 @@ const PriceAuction = (props: {
                 type="number"
                 min={0}
                 autoFocus
-                className="input"
                 placeholder="Fixed Price"
                 prefix="◎"
                 suffix="SOL"
@@ -1080,16 +1042,13 @@ const PriceAuction = (props: {
             </label>
           )}
           {props.attributes.category !== AuctionCategory.Open && (
-            <label className="action-field">
-              <span className="field-title">Price Floor</span>
-              <span className="field-info">
-                This is the starting bid price for your auction.
-              </span>
+            <label>
+              <span>Price Floor</span>
+              <span>This is the starting bid price for your auction.</span>
               <Input
                 type="number"
                 min={0}
                 autoFocus
-                className="input"
                 placeholder="Price"
                 prefix="◎"
                 suffix="SOL"
@@ -1102,15 +1061,12 @@ const PriceAuction = (props: {
               />
             </label>
           )}
-          <label className="action-field">
-            <span className="field-title">Tick Size</span>
-            <span className="field-info">
-              All bids must fall within this price increment.
-            </span>
+          <label>
+            <span>Tick Size</span>
+            <span>All bids must fall within this price increment.</span>
             <Input
               type="number"
               min={0}
-              className="input"
               placeholder="Tick size in SOL"
               prefix="◎"
               suffix="SOL"
@@ -1125,12 +1081,7 @@ const PriceAuction = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue
         </Button>
       </Row>
@@ -1187,31 +1138,25 @@ const InitialPhaseStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Initial Phase</h2>
         <p>Set the terms for your auction.</p>
       </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
-          <label className="action-field">
-            <span className="field-title">
-              When do you want the auction to begin?
-            </span>
+      <Row>
+        <Col xl={24}>
+          <label>
+            <span>When do you want the auction to begin?</span>
             <Radio.Group
               defaultValue="now"
               onChange={info => setStartNow(info.target.value === 'now')}
             >
-              <Radio className="radio-field" value="now">
-                Immediately
-              </Radio>
-              <div className="radio-subtitle">
+              <Radio value="now">Immediately</Radio>
+              <div>
                 Participants can buy the NFT as soon as you finish setting up
                 the auction.
               </div>
-              <Radio className="radio-field" value="later">
-                At a specified date
-              </Radio>
-              <div className="radio-subtitle">
+              <Radio value="later">At a specified date</Radio>
+              <div>
                 Participants can start buying the NFT at a specified date.
               </div>
             </Radio.Group>
@@ -1219,8 +1164,8 @@ const InitialPhaseStep = (props: {
 
           {!startNow && (
             <>
-              <label className="action-field">
-                <span className="field-title">Auction Start Date</span>
+              <label>
+                <span>Auction Start Date</span>
                 {saleMoment && (
                   <DateTimePicker
                     momentObj={saleMoment}
@@ -1233,30 +1178,22 @@ const InitialPhaseStep = (props: {
                 )}
               </label>
 
-              <label className="action-field">
-                <span className="field-title">
-                  When do you want the listing to go live?
-                </span>
+              <label>
+                <span>When do you want the listing to go live?</span>
                 <Radio.Group
                   defaultValue="now"
                   onChange={info => setListNow(info.target.value === 'now')}
                 >
-                  <Radio
-                    className="radio-field"
-                    value="now"
-                    defaultChecked={true}
-                  >
+                  <Radio value="now" defaultChecked={true}>
                     Immediately
                   </Radio>
-                  <div className="radio-subtitle">
+                  <div>
                     Participants will be able to view the listing with a
                     countdown to the start date as soon as you finish setting up
                     the sale.
                   </div>
-                  <Radio className="radio-field" value="later">
-                    At a specified date
-                  </Radio>
-                  <div className="radio-subtitle">
+                  <Radio value="later">At a specified date</Radio>
+                  <div>
                     Participants will be able to view the listing with a
                     countdown to the start date at the specified date.
                   </div>
@@ -1264,8 +1201,8 @@ const InitialPhaseStep = (props: {
               </label>
 
               {!listNow && (
-                <label className="action-field">
-                  <span className="field-title">Preview Start Date</span>
+                <label>
+                  <span>Preview Start Date</span>
                   {listMoment && (
                     <DateTimePicker
                       momentObj={listMoment}
@@ -1286,12 +1223,7 @@ const InitialPhaseStep = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue
         </Button>
       </Row>
@@ -1306,17 +1238,15 @@ const EndingPhaseAuction = (props: {
 }) => {
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Ending Phase</h2>
         <p>Set the terms for your auction.</p>
       </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
-          <div className="action-field">
-            <span className="field-title">Auction Duration</span>
-            <span className="field-info">
-              This is how long the auction will last for.
-            </span>
+      <Row>
+        <Col xl={24}>
+          <div>
+            <span>Auction Duration</span>
+            <span>This is how long the auction will last for.</span>
             <Input
               addonAfter={
                 <Select
@@ -1335,7 +1265,6 @@ const EndingPhaseAuction = (props: {
               }
               autoFocus
               type="number"
-              className="input"
               placeholder="Set the auction duration"
               onChange={info =>
                 props.setAttributes({
@@ -1346,9 +1275,9 @@ const EndingPhaseAuction = (props: {
             />
           </div>
 
-          <div className="action-field">
-            <span className="field-title">Gap Time</span>
-            <span className="field-info">
+          <div>
+            <span>Gap Time</span>
+            <span>
               The final phase of the auction will begin when there is this much
               time left on the countdown. Any bids placed during the final phase
               will extend the end time by this same duration.
@@ -1370,7 +1299,6 @@ const EndingPhaseAuction = (props: {
                 </Select>
               }
               type="number"
-              className="input"
               placeholder="Set the gap time"
               onChange={info =>
                 props.setAttributes({
@@ -1381,16 +1309,15 @@ const EndingPhaseAuction = (props: {
             />
           </div>
 
-          <label className="action-field">
-            <span className="field-title">Tick Size for Ending Phase</span>
-            <span className="field-info">
+          <label>
+            <span>Tick Size for Ending Phase</span>
+            <span>
               In order for winners to move up in the auction, they must place a
               bid that’s at least this percentage higher than the next highest
               bid.
             </span>
             <Input
               type="number"
-              className="input"
               placeholder="Percentage"
               suffix="%"
               onChange={info =>
@@ -1404,12 +1331,7 @@ const EndingPhaseAuction = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue
         </Button>
       </Row>
@@ -1437,7 +1359,7 @@ const TierTableStep = (props: {
   }
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Add Winning Tiers and Their Prizes</h2>
         <p>
           Each row represents a tier. You can choose which winning spots get
@@ -1445,7 +1367,7 @@ const TierTableStep = (props: {
         </p>
       </Row>
       {props.attributes.tiers.map((wcg, configIndex) => (
-        <Row className="content-action" key={configIndex}>
+        <Row key={configIndex}>
           <Col xl={24}>
             <h3>Tier #{configIndex + 1} Basket</h3>
           </Col>
@@ -1465,7 +1387,7 @@ const TierTableStep = (props: {
           />
 
           {wcg.items.map((i, itemIndex) => (
-            <Col className="section" xl={8} key={itemIndex}>
+            <Col xl={8} key={itemIndex}>
               <Card>
                 <ArtSelector
                   filter={artistFilter}
@@ -1565,7 +1487,6 @@ const TierTableStep = (props: {
                   <>
                     <Select
                       defaultValue={(i as TierDummyEntry).winningConfigType}
-                      style={{ width: 120 }}
                       onChange={value => {
                         const newTiers = newImmutableTiers(
                           props.attributes.tiers,
@@ -1611,18 +1532,17 @@ const TierTableStep = (props: {
                       WinningConfigType.PrintingV1 ||
                       (i as TierDummyEntry).winningConfigType ===
                         WinningConfigType.PrintingV2) && (
-                      <label className="action-field">
-                        <span className="field-title">
+                      <label>
+                        <span>
                           How many copies do you want to create for each winner?
                           If you put 2, then each winner will get 2 copies.
                         </span>
-                        <span className="field-info">
+                        <span>
                           Each copy will be given unique edition number e.g. 1
                           of 30
                         </span>
                         <Input
                           autoFocus
-                          className="input"
                           placeholder="Enter number of copies sold"
                           allowClear
                           onChange={info => {
@@ -1659,7 +1579,6 @@ const TierTableStep = (props: {
                   tiers: newTiers,
                 });
               }}
-              className="action-btn"
             >
               <PlusCircleOutlined />
             </Button>
@@ -1679,19 +1598,13 @@ const TierTableStep = (props: {
                 tiers: newTiers,
               });
             }}
-            className="action-btn"
           >
             <PlusCircleOutlined />
           </Button>
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue to Review
         </Button>
       </Row>
@@ -1706,15 +1619,15 @@ const ParticipationStep = (props: {
 }) => {
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Participation NFT</h2>
         <p>
           Provide NFT that will be awarded as an Open Edition NFT for auction
           participation.
         </p>
       </Row>
-      <Row className="content-action">
-        <Col className="section" xl={24}>
+      <Row>
+        <Col xl={24}>
           <ArtSelector
             filter={(i: SafetyDepositDraft) =>
               !!i.masterEdition && i.masterEdition.info.maxSupply === undefined
@@ -1734,9 +1647,9 @@ const ParticipationStep = (props: {
           >
             Select Participation NFT
           </ArtSelector>
-          <label className="action-field">
-            <span className="field-title">Price</span>
-            <span className="field-info">
+          <label>
+            <span>Price</span>
+            <span>
               This is an optional fixed price that non-winners will pay for your
               Participation NFT.
             </span>
@@ -1744,7 +1657,6 @@ const ParticipationStep = (props: {
               type="number"
               min={0}
               autoFocus
-              className="input"
               placeholder="Fixed Price"
               prefix="◎"
               suffix="SOL"
@@ -1759,12 +1671,7 @@ const ParticipationStep = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Continue to Review
         </Button>
       </Row>
@@ -1792,19 +1699,18 @@ const ReviewStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Review and list</h2>
         <p>Review your listing before publishing.</p>
       </Row>
-      <Row className="content-action">
+      <Row>
         <Col xl={12}>
           {item?.metadata.info && (
             <ArtCard pubkey={item.metadata.pubkey} small={true} />
           )}
         </Col>
-        <Col className="section" xl={12}>
+        <Col xl={12}>
           <Statistic
-            className="create-statistic"
             title="Copies"
             value={
               props.attributes.editions === undefined
@@ -1819,10 +1725,9 @@ const ReviewStep = (props: {
           )}
         </Col>
       </Row>
-      <Row style={{ display: 'block' }}>
+      <Row>
         <Divider />
         <Statistic
-          className="create-statistic"
           title="Start date"
           value={
             props.attributes.startSaleTS
@@ -1835,7 +1740,6 @@ const ReviewStep = (props: {
         <br />
         {props.attributes.startListTS && (
           <Statistic
-            className="create-statistic"
             title="Listing go live date"
             value={moment
               .unix(props.attributes.startListTS as number)
@@ -1844,7 +1748,6 @@ const ReviewStep = (props: {
         )}
         <Divider />
         <Statistic
-          className="create-statistic"
           title="Sale ends"
           value={
             props.attributes.endTS
@@ -1867,7 +1770,6 @@ const ReviewStep = (props: {
             });
             props.confirm();
           }}
-          className="action-btn"
         >
           {props.attributes.category === AuctionCategory.InstantSale
             ? 'List for Sale'
@@ -1898,19 +1800,10 @@ const WaitingStep = (props: {
   }, []);
 
   return (
-    <div
-      style={{
-        marginTop: 70,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
+    <div>
       <Progress type="circle" percent={progress} />
-      <div className="waiting-title">
-        Your creation is being listed with Metaplex...
-      </div>
-      <div className="waiting-subtitle">This can take up to 30 seconds.</div>
+      <div>Your creation is being listed with Metaplex...</div>
+      <div>This can take up to 30 seconds.</div>
     </div>
   );
 };
@@ -1940,27 +1833,14 @@ const Congrats = (props: {
 
   return (
     <>
-      <div
-        style={{
-          marginTop: 70,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <div className="waiting-title">
-          Congratulations! Your auction is now live.
-        </div>
-        <div className="congrats-button-container">
-          <Button
-            className="metaplex-button"
-            onClick={_ => window.open(newTweetURL(), '_blank')}
-          >
+      <div>
+        <div>Congratulations! Your auction is now live.</div>
+        <div>
+          <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
             <span>Share it on Twitter</span>
             <span>&gt;</span>
           </Button>
           <Button
-            className="metaplex-button"
             onClick={_ =>
               history.push(`/auction/${props.auction?.auction.toString()}`)
             }

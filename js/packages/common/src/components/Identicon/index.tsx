@@ -6,11 +6,10 @@ import { PublicKey } from '@solana/web3.js';
 
 export const Identicon = (props: {
   address?: string | PublicKey;
-  style?: React.CSSProperties;
   className?: string;
   alt?: string;
 }) => {
-  const { style, className, alt } = props;
+  const { className, alt } = props;
   const address =
     typeof props.address === 'string'
       ? props.address
@@ -20,11 +19,12 @@ export const Identicon = (props: {
   useEffect(() => {
     if (address && ref.current) {
       try {
+        // TODO: ?????????
         ref.current.innerHTML = '';
         ref.current.className = className || '';
         ref.current.appendChild(
           Jazzicon(
-            style?.width || 16,
+            16,
             parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16),
           ),
         );
@@ -32,14 +32,7 @@ export const Identicon = (props: {
         // TODO
       }
     }
-  }, [address, style, className]);
+  }, [address, className]);
 
-  return (
-    <div
-      className="identicon-wrapper"
-      title={alt}
-      ref={ref as any}
-      style={props.style}
-    />
-  );
+  return <div title={alt} ref={ref as any} />;
 };

@@ -100,8 +100,8 @@ export const AuctionListView = () => {
   const liveAuctionsView = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      className="metaplex-masonry"
+      columnClassName="metaplex-masonry-column"
     >
       {!isLoading
         ? items.map((m, idx) => {
@@ -118,8 +118,8 @@ export const AuctionListView = () => {
   const endedAuctions = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      className="metaplex-masonry"
+      columnClassName="metaplex-masonry-column"
     >
       {!isLoading
         ? auctionsEnded.map((m, idx) => {
@@ -140,25 +140,18 @@ export const AuctionListView = () => {
         src={'/main-banner.svg'}
         headingText={'The amazing world of Metaplex.'}
         subHeadingText={'Buy exclusive Metaplex NFTs.'}
-        actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
+        actionComponent={<HowToBuyModal />}
         useBannerBg={true}
       />
       <Layout>
-        <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <Col style={{ width: '100%', marginTop: 32 }}>
+        <Content>
+          <Col>
             <Row>
               <Tabs
                 activeKey={activeKey}
                 onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
               >
-                <TabPane
-                  tab={
-                    <>
-                      <span className={'live'}></span> Live
-                    </>
-                  }
-                  key={LiveAuctionViewState.All}
-                >
+                <TabPane tab={'Live'} key={LiveAuctionViewState.All}>
                   {liveAuctionsView}
                 </TabPane>
                 {resaleAuctions.length > 0 && (

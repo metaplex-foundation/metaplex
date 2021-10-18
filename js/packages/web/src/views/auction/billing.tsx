@@ -407,21 +407,15 @@ export const InnerBillingView = ({
   return (
     <Content>
       <Col>
-        <Row
-          style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
-        >
+        <Row>
           <Col span={12}>
-            <ArtContent
-              pubkey={id}
-              className="artwork-image"
-              allowMeshRender={true}
-            />
+            <ArtContent pubkey={id} allowMeshRender={true} />
           </Col>
           <Col span={12}>
-            <div style={{ fontWeight: 700 }}>{art.title}</div>
+            <div>{art.title}</div>
             <br />
-            <div className="info-header">TOTAL AUCTION VALUE</div>
-            <div className="escrow">
+            <div>TOTAL AUCTION VALUE</div>
+            <div>
               ◎
               {fromLamports(
                 totalWinnerPayments + participationPossibleTotal,
@@ -429,8 +423,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className="info-header">TOTAL AUCTION REDEEMED VALUE</div>
-            <div className="escrow">
+            <div>TOTAL AUCTION REDEEMED VALUE</div>
+            <div>
               ◎
               {fromLamports(
                 totalWinnerPayments +
@@ -440,10 +434,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className="info-header">
-              TOTAL COLLECTED BY ARTISTS AND AUCTIONEER
-            </div>
-            <div className="escrow">
+            <div>TOTAL COLLECTED BY ARTISTS AND AUCTIONEER</div>
+            <div>
               ◎
               {fromLamports(
                 Object.values(payoutTickets).reduce(
@@ -454,8 +446,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className="info-header">TOTAL UNSETTLED</div>
-            <div className="escrow">
+            <div>TOTAL UNSETTLED</div>
+            <div>
               ◎
               {fromLamports(
                 bidsToClaim.reduce(
@@ -466,19 +458,15 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div className="info-header">TOTAL IN ESCROW</div>
-            <div className="escrow">
+            <div>TOTAL IN ESCROW</div>
+            <div>
               {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin />}
             </div>
             <br />
             {hasParticipation && (
               <>
-                <div className="info-header">
-                  TOTAL UNREDEEMED PARTICIPATION FEES OUTSTANDING
-                </div>
-                <div className="outstanding-open-editions">
-                  ◎{fromLamports(participationUnredeemedTotal, mint)}
-                </div>
+                <div>TOTAL UNREDEEMED PARTICIPATION FEES OUTSTANDING</div>
+                <div>◎{fromLamports(participationUnredeemedTotal, mint)}</div>
                 <br />
               </>
             )}
@@ -486,7 +474,6 @@ export const InnerBillingView = ({
             <Button
               type="primary"
               size="large"
-              className="action-btn"
               onClick={async () => {
                 await settle(
                   connection,
@@ -505,7 +492,6 @@ export const InnerBillingView = ({
         </Row>
         <Row>
           <Table
-            style={{ width: '100%' }}
             columns={[
               {
                 title: 'Name',

@@ -11,15 +11,11 @@ export const ViewOn = ({ id }: { id: string }) => {
     <>
       <Col>
         <h6>View on</h6>
-        <div style={{ display: 'flex' }}>
-          <Button
-            className="tag"
-            onClick={() => window.open(art.uri || '', '_blank')}
-          >
+        <div>
+          <Button onClick={() => window.open(art.uri || '', '_blank')}>
             Arweave
           </Button>
           <Button
-            className="tag"
             onClick={() =>
               window.open(
                 `https://explorer.solana.com/account/${art?.mint || ''}${

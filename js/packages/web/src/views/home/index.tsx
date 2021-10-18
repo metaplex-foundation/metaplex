@@ -11,9 +11,5 @@ export const HomeView = () => {
 
   const showAuctions = (store && isConfigured) || isLoading;
 
-  return (
-    <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>
-      {showAuctions ? <AuctionListView /> : <SetupView />}
-    </Layout>
-  );
+  return <Layout>{showAuctions ? <AuctionListView /> : <SetupView />}</Layout>;
 };

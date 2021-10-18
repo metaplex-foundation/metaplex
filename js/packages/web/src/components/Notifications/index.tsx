@@ -77,15 +77,11 @@ function RunAction({
   let component;
   switch (state) {
     case RunActionState.NotRunning:
-      component = (
-        <span className="hover-button" onClick={run}>
-          {icon}
-        </span>
-      );
+      component = <span onClick={run}>{icon}</span>;
       break;
     case RunActionState.Failed:
       component = (
-        <span className="hover-button" onClick={run}>
+        <span onClick={run}>
           <SyncOutlined />
         </span>
       );
@@ -455,10 +451,7 @@ export function Notifications() {
     });
 
   const content = notifications.length ? (
-    <div
-      style={{ width: '300px', color: 'white' }}
-      className={'notifications-container'}
-    >
+    <div>
       <List
         itemLayout="vertical"
         size="small"
@@ -499,24 +492,11 @@ export function Notifications() {
   );
 
   const justContent = (
-    <Popover
-      className="noty-popover"
-      placement="bottomLeft"
-      content={content}
-      trigger="click"
-    >
-      <img src={'/bell.svg'} style={{ cursor: 'pointer' }} />
+    <Popover placement="bottomLeft" content={content} trigger="click">
+      <img src={'/bell.svg'} />
     </Popover>
   );
 
   if (notifications.length === 0) return justContent;
-  else
-    return (
-      <Badge
-        count={notifications.length}
-        style={{ backgroundColor: 'white', color: 'black' }}
-      >
-        {justContent}
-      </Badge>
-    );
+  else return <Badge count={notifications.length}>{justContent}</Badge>;
 }

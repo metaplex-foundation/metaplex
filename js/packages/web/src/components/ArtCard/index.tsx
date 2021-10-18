@@ -67,7 +67,6 @@ export const ArtCard = (props: ArtCardProps) => {
         <>
           {close && (
             <Button
-              className="card-close-button"
               shape="circle"
               onClick={e => {
                 e.stopPropagation();
@@ -100,14 +99,14 @@ export const ArtCard = (props: ArtCardProps) => {
               <>
                 <br />
                 {!endAuctionAt && (
-                  <span style={{ padding: '24px' }}>
+                  <span>
                     {(art.maxSupply || 0) - (art.supply || 0)}/
                     {art.maxSupply || 0} prints remaining
                   </span>
                 )}
               </>
             )} */}
-            <div className="edition-badge">{badge}</div>
+            <div>{badge}</div>
           </>
         }
       />

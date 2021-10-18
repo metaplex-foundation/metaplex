@@ -50,31 +50,7 @@ export const AuctionItem = ({
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
-  var style: React.CSSProperties = {
-    transform:
-      index === 0
-        ? ''
-        : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-            1 - 0.2 * index,
-            0,
-          )})`,
-    transformOrigin: 'right bottom',
-    position: index !== 0 ? 'absolute' : 'static',
-    zIndex: -1 * index,
-    marginLeft: size > 1 && index === 0 ? '0px' : 'auto',
-    background: 'black',
-    boxShadow: 'rgb(0 0 0 / 10%) 12px 2px 20px 14px',
-    aspectRatio: '1/1',
-  };
-  return (
-    <ArtContent
-      pubkey={id}
-      className="artwork-image stack-item"
-      style={style}
-      active={active}
-      allowMeshRender={true}
-    />
-  );
+  return <ArtContent pubkey={id} active={active} allowMeshRender={true} />;
 };
 
 export const AuctionView = () => {
@@ -128,13 +104,9 @@ export const AuctionView = () => {
 
   if (width < 768) {
     return (
-      <Row
-        justify="center"
-        gutter={[48, 0]}
-        className="auction-mobile-container"
-      >
-        <Col span={24} className={'img-cont-500'}>
-          <div className="auction-view" style={{ minHeight: 300 }}>
+      <Row justify="center" gutter={[48, 0]}>
+        <Col span={24}>
+          <div>
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
@@ -143,20 +115,18 @@ export const AuctionView = () => {
             </Carousel>
           </div>
         </Col>
-        <Col className="auction-mobile-section">
-          <h2 className="art-title">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h2>
+        <Col>
+          <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
 
-          <div className="info-container">
-            <div className={'info-component'}>
-              <h6 className={'info-title'}>Edition</h6>
+          <div>
+            <div>
+              <h6>Edition</h6>
               <span>
                 {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
               </span>
             </div>
-            <div className={'info-component'}>
-              <h6 className={'info-title'}>Winners</h6>
+            <div>
+              <h6>Winners</h6>
               <span>
                 {winnerCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
@@ -165,8 +135,8 @@ export const AuctionView = () => {
                 )}
               </span>
             </div>
-            <div className={'info-component'}>
-              <h6 className={'info-title'}>NFTS</h6>
+            <div>
+              <h6>NFTS</h6>
               <span>
                 {nftCount === undefined ? (
                   <Skeleton paragraph={{ rows: 0 }} />
@@ -178,31 +148,26 @@ export const AuctionView = () => {
           </div>
         </Col>
 
-        <Col className="auction-mobile-section" span={24}>
+        <Col span={24}>
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && (
             <AuctionCard auctionView={auction} hideDefaultAction={false} />
           )}
         </Col>
-        <Col className="auction-mobile-section" span={24}>
-          <h6 className={'info-title'}>Details</h6>
-          <div className="description">
-            <p className={'about-nft-collection a-description'}>
+        <Col span={24}>
+          <h6>Details</h6>
+          <div>
+            <p>
               {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
               {description ||
                 (winnerCount !== undefined && (
-                  <div style={{ fontStyle: 'italic' }}>
-                    No description provided.
-                  </div>
+                  <div>No description provided.</div>
                 ))}
             </p>
           </div>
         </Col>
         {attributes && (
-          <Col
-            className="auction-mobile-section about-nft-collection a-attributes"
-            span={24}
-          >
+          <Col span={24}>
             <h6>Attributes</h6>
             <List grid={{ column: 4 }}>
               {attributes.map((attribute, index) => (
@@ -213,26 +178,22 @@ export const AuctionView = () => {
             </List>
           </Col>
         )}
-        <Col className="auction-mobile-section" span={24}>
-          <div className={'info-view'}>
-            <h6 className={'info-title'}>Artists</h6>
-            <div style={{ display: 'flex' }}>
+        <Col span={24}>
+          <div>
+            <h6>Artists</h6>
+            <div>
               <MetaAvatarDetailed creators={creators} />
             </div>
           </div>
         </Col>
-        <Col className="auction-mobile-section" span={24}>
-          <div className={'info-view'}>
-            <h6 className={'info-title'}>View on</h6>
-            <div style={{ display: 'flex' }}>
-              <Button
-                className="tag"
-                onClick={() => window.open(art.uri || '', '_blank')}
-              >
+        <Col span={24}>
+          <div>
+            <h6>View on</h6>
+            <div>
+              <Button onClick={() => window.open(art.uri || '', '_blank')}>
                 Arweave
               </Button>
               <Button
-                className="tag"
                 onClick={() =>
                   window.open(
                     `https://explorer.solana.com/account/${art?.mint || ''}${
@@ -247,7 +208,7 @@ export const AuctionView = () => {
             </div>
           </div>
         </Col>
-        <Col className="auction-mobile-section" span={24}>
+        <Col span={24}>
           <AuctionBids auctionView={auction} />
         </Col>
       </Row>
@@ -255,8 +216,8 @@ export const AuctionView = () => {
   } else {
     return (
       <Row justify="center" ref={ref} gutter={[48, 0]}>
-        <Col span={24} md={10} className={'img-cont-500'}>
-          <div className="auction-view" style={{ minHeight: 300 }}>
+        <Col span={24} md={10}>
+          <div>
             <Carousel
               autoplay={false}
               afterChange={index => setCurrentIndex(index)}
@@ -264,20 +225,16 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
-          <h6 className={'about-nft-collection'}>
-            ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}
-          </h6>
-          <p className={'about-nft-collection a-description'}>
+          <h6>ABOUT THIS {nftCount === 1 ? 'NFT' : 'COLLECTION'}</h6>
+          <p>
             {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
             {description ||
               (winnerCount !== undefined && (
-                <div style={{ fontStyle: 'italic' }}>
-                  No description provided.
-                </div>
+                <div>No description provided.</div>
               ))}
           </p>
           {attributes && (
-            <div className={'about-nft-collection a-attributes'}>
+            <div>
               <h6>Attributes</h6>
               <List grid={{ column: 4 }}>
                 {attributes.map((attribute, index) => (
@@ -297,24 +254,22 @@ export const AuctionView = () => {
         </Col>
 
         <Col span={24} md={14}>
-          <h2 className="art-title">
-            {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h2>
+          <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
           <Row gutter={[44, 0]}>
             <Col span={12} md={16}>
-              <div className={'info-container'}>
-                <div className={'info-component'}>
-                  <h6 className={'info-title'}>CREATED BY</h6>
+              <div>
+                <div>
+                  <h6>CREATED BY</h6>
                   <span>{<MetaAvatar creators={creators} />}</span>
                 </div>
-                <div className={'info-component'}>
-                  <h6 className={'info-title'}>Edition</h6>
+                <div>
+                  <h6>Edition</h6>
                   <span>
                     {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
                   </span>
                 </div>
-                <div className={'info-component'}>
-                  <h6 className={'info-title'}>Winners</h6>
+                <div>
+                  <h6>Winners</h6>
                   <span>
                     {winnerCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
@@ -323,8 +278,8 @@ export const AuctionView = () => {
                     )}
                   </span>
                 </div>
-                <div className={'info-component'}>
-                  <h6 className={'info-title'}>NFTS</h6>
+                <div>
+                  <h6>NFTS</h6>
                   <span>
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
@@ -336,32 +291,24 @@ export const AuctionView = () => {
               </div>
             </Col>
             <Col span={12} md={8}>
-              <div className={'info-view-container'}>
-                <div className={'info-view'}>
-                  <h6 className={'info-title'}>View on</h6>
-                  <div style={{ display: 'flex' }}>
-                    <Button
-                      className="tag"
-                      onClick={() => window.open(art.uri || '', '_blank')}
-                    >
-                      Arweave
-                    </Button>
-                    <Button
-                      className="tag"
-                      onClick={() =>
-                        window.open(
-                          `https://explorer.solana.com/account/${
-                            art?.mint || ''
-                          }${
-                            env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                          }`,
-                          '_blank',
-                        )
-                      }
-                    >
-                      Solana
-                    </Button>
-                  </div>
+              <div>
+                <h6>View on</h6>
+                <div>
+                  <Button onClick={() => window.open(art.uri || '', '_blank')}>
+                    Arweave
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      window.open(
+                        `https://explorer.solana.com/account/${
+                          art?.mint || ''
+                        }${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`}`,
+                        '_blank',
+                      )
+                    }
+                  >
+                    Solana
+                  </Button>
                 </div>
               </div>
             </Col>
@@ -414,18 +361,10 @@ const BidLine = (props: {
   const { width } = useWindowDimensions();
   if (width < 768) {
     return (
-      <Row className="mobile-bid-history">
-        <div className="bid-info-container">
-          <div className="bidder-info-container">
-            <Identicon
-              style={{
-                width: 24,
-                height: 24,
-                marginRight: 10,
-                marginTop: 2,
-              }}
-              address={bidder}
-            />
+      <Row>
+        <div>
+          <div>
+            <Identicon address={bidder} />
             {bidderTwitterHandle ? (
               <a
                 target="_blank"
@@ -438,7 +377,7 @@ const BidLine = (props: {
           </div>
           <div>
             {!isCancelled && (
-              <div className={'flex '}>
+              <div>
                 {isme && (
                   <>
                     <CheckOutlined />
@@ -446,11 +385,6 @@ const BidLine = (props: {
                   </>
                 )}
                 <AmountLabel
-                  style={{ marginBottom: 0, fontSize: '16px' }}
-                  containerStyle={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
                   displaySOL={true}
                   iconSize={24}
                   amount={formatTokenAmount(bid.info.lastBid, mint)}
@@ -459,30 +393,16 @@ const BidLine = (props: {
             )}
           </div>
         </div>
-        <div className="bid-info-container">
-          {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
-        </div>
+        <div>{format(bid.info.lastBidTimestamp.toNumber() * 1000)}</div>
       </Row>
     );
   } else {
     return (
-      <Row className={'bid-history'}>
-        {isCancelled && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              width: '100%',
-              height: 1,
-              background: 'grey',
-              top: 'calc(50% - 1px)',
-              zIndex: 2,
-            }}
-          />
-        )}
+      <Row>
+        {isCancelled && <div />}
         <Col span={8}>
           {!isCancelled && (
-            <div className={'flex '}>
+            <div>
               {isme && (
                 <>
                   <CheckOutlined />
@@ -490,11 +410,6 @@ const BidLine = (props: {
                 </>
               )}
               <AmountLabel
-                style={{ marginBottom: 0, fontSize: '16px' }}
-                containerStyle={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
                 displaySOL={true}
                 iconSize={24}
                 amount={formatTokenAmount(bid.info.lastBid, mint)}
@@ -502,41 +417,27 @@ const BidLine = (props: {
             </div>
           )}
         </Col>
-        <Col span={8} style={{ opacity: 0.7 }}>
+        <Col span={8}>
           {/* uses milliseconds */}
           {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
         </Col>
         <Col span={8}>
-          <div className={'flex-right'}>
-            <Identicon
-              style={{
-                width: 24,
-                height: 24,
-                marginRight: 10,
-                marginTop: 2,
-              }}
-              address={bidder}
-            />{' '}
-            <span style={{ opacity: 0.7 }}>
+          <div>
+            <Identicon address={bidder} />{' '}
+            <span>
               {bidderTwitterHandle ? (
-                <Row className="pubkey-row">
+                <Row>
                   <a
                     target="_blank"
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
                   >{`@${bidderTwitterHandle}`}</a>
-                  <ClickToCopy
-                    className="copy-pubkey"
-                    copyText={bidder as string}
-                  />
+                  <ClickToCopy copyText={bidder as string} />
                 </Row>
               ) : (
-                <Row className="pubkey-row">
+                <Row>
                   {shortenAddress(bidder)}
-                  <ClickToCopy
-                    className="copy-pubkey"
-                    copyText={bidder as string}
-                  />
+                  <ClickToCopy copyText={bidder as string} />
                 </Row>
               )}
             </span>
@@ -598,41 +499,20 @@ export const AuctionBids = ({
 
   return (
     <Row>
-      <Col className="bids-lists">
-        <h6 className={'info-title'}>Bid History</h6>
+      <Col>
+        <h6>Bid History</h6>
         {bidLines.slice(0, 10)}
         {bids.length > 10 && (
-          <div
-            className="full-history"
-            onClick={() => setShowHistoryModal(true)}
-            style={{
-              cursor: 'pointer',
-            }}
-          >
-            View full history
-          </div>
+          <div onClick={() => setShowHistoryModal(true)}>View full history</div>
         )}
         <MetaplexModal
           visible={showHistoryModal}
           onCancel={() => setShowHistoryModal(false)}
           title="Bid history"
-          bodyStyle={{
-            background: 'unset',
-            boxShadow: 'unset',
-            borderRadius: 0,
-          }}
           centered
           width={width < 768 ? width - 10 : 600}
         >
-          <div
-            style={{
-              maxHeight: 600,
-              overflowY: 'scroll',
-              width: '100%',
-            }}
-          >
-            {bidLines}
-          </div>
+          <div>{bidLines}</div>
         </MetaplexModal>
       </Col>
     </Row>

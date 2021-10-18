@@ -14,14 +14,11 @@ export const ArtistAlleyForm = () => {
   };
 
   return (
-    <div className="artist-alley-container">
-      <div className={'title'}>
-        {' '}
-        Submit your original artwork to be featured by Todd MacFarlane
-      </div>
-      <Form layout="vertical" onFinish={onFinish} className="artist-alley-form">
+    <div>
+      <div> Submit your original artwork to be featured by Todd MacFarlane</div>
+      <Form layout="vertical" onFinish={onFinish}>
         <Form.Item name="name" label="Your Name">
-          <Input placeholder="Enter your name" className="input-content" />
+          <Input placeholder="Enter your name" />
         </Form.Item>
 
         <Form.Item
@@ -34,14 +31,11 @@ export const ArtistAlleyForm = () => {
             },
           ]}
         >
-          <Input placeholder="name@email.com" className="input-content" />
+          <Input placeholder="name@email.com" />
         </Form.Item>
 
         <Form.Item name="url" label="Link to your portfolio">
-          <Input
-            placeholder="Enter a link to your portfolio"
-            className="input-content"
-          />
+          <Input placeholder="Enter a link to your portfolio" />
         </Form.Item>
 
         <Form.Item label="Upload artwork (optional)">
@@ -49,17 +43,10 @@ export const ArtistAlleyForm = () => {
             name="dragger"
             valuePropName="fileList"
             getValueFromEvent={handleFile}
-            className="dragger-container"
           >
-            <Upload.Dragger
-              name="files"
-              action="/upload.do"
-              className="dragger"
-            >
-              <p className="ant-upload-text">Upload files here</p>
-              <p className="ant-upload-hint">
-                Drag and drop, or click to browse
-              </p>
+            <Upload.Dragger name="files" action="/upload.do">
+              <p>Upload files here</p>
+              <p>Drag and drop, or click to browse</p>
             </Upload.Dragger>
           </Form.Item>
         </Form.Item>
@@ -74,15 +61,11 @@ export const ArtistAlleyForm = () => {
             },
           ]}
         >
-          <TextArea
-            rows={4}
-            placeholder="Max 500 characters"
-            className="input-content"
-          />
+          <TextArea rows={4} placeholder="Max 500 characters" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" className="form-button">
+          <Button type="primary" htmlType="submit">
             SUBMIT
           </Button>
         </Form.Item>

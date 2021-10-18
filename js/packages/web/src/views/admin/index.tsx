@@ -62,7 +62,7 @@ export const AdminView = () => {
     <>
       {!wallet.connected ? (
         <p>
-          <Button type="primary" className="app-btn" onClick={connect}>
+          <Button type="primary" onClick={connect}>
             Connect
           </Button>{' '}
           to admin store.
@@ -117,7 +117,6 @@ function ArtistModal({
   return (
     <>
       <Modal
-        className={'modal-box'}
         title="Add New Artist Address"
         visible={modalOpen}
         onOk={() => {
@@ -160,12 +159,7 @@ function ArtistModal({
           onChange={e => setModalAddress(e.target.value)}
         />
       </Modal>
-      <Button
-        className="add-creator-button"
-        onClick={() => setModalOpen(true)}
-      >
-        Add Creator
-      </Button>
+      <Button onClick={() => setModalOpen(true)}>Add Creator</Button>
     </>
   );
 }
@@ -192,11 +186,10 @@ function InnerAdminView({
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] =
-    useState<{
-      available: ParsedAccount<MasterEditionV1>[];
-      unavailable: ParsedAccount<MasterEditionV1>[];
-    }>();
+  const [filteredMetadata, setFilteredMetadata] = useState<{
+    available: ParsedAccount<MasterEditionV1>[];
+    unavailable: ParsedAccount<MasterEditionV1>[];
+  }>();
   const [loading, setLoading] = useState<boolean>();
   const { metadata, masterEditions } = useMeta();
 
@@ -269,8 +262,8 @@ function InnerAdminView({
   ];
 
   return (
-    <Content className={'admin-content'}>
-      <Col style={{ marginTop: 10 }}>
+    <Content>
+      <Col>
         <Row>
           <Col span={21}>
             <ArtistModal
@@ -316,7 +309,6 @@ function InnerAdminView({
         </Row>
         <Row>
           <Table
-            className="artist-whitelist-table"
             columns={columns}
             dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
               key,

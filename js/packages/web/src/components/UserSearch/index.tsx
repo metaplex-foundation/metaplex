@@ -68,7 +68,6 @@ export const UserSearch = (props: { setCreators: Function }) => {
 
   return (
     <DebounceSelect
-      className="user-selector"
       mode="multiple"
       size="large"
       value={value}
@@ -87,7 +86,6 @@ export const UserSearch = (props: { setCreators: Function }) => {
         props.setCreators(newValue);
         setValue(newValue);
       }}
-      style={{ width: '100%' }}
     />
   );
 };

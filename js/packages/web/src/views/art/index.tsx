@@ -60,7 +60,7 @@ export const ArtView = () => {
   const pubkey = wallet?.publicKey?.toBase58() || '';
 
   const tag = (
-    <div className="info-header">
+    <div>
       <Tag color="blue">UNVERIFIED</Tag>
     </div>
   );
@@ -68,7 +68,7 @@ export const ArtView = () => {
   const unverified = (
     <>
       {tag}
-      <div style={{ fontSize: 12 }}>
+      <div>
         <i>
           This artwork is still missing verification from{' '}
           {art.creators?.filter(c => !c.verified).length} contributors before it
@@ -83,16 +83,10 @@ export const ArtView = () => {
     <Content>
       <Col>
         <Row ref={ref}>
-          <Col
-            xs={{ span: 24 }}
-            md={{ span: 12 }}
-            style={{ paddingRight: '30px' }}
-          >
+          <Col xs={{ span: 24 }} md={{ span: 12 }}>
             <ArtContent
-              style={{ width: '100%', height: 'auto', margin: '0 auto' }}
               height={300}
               width={300}
-              className="artwork-image"
               pubkey={id}
               active={true}
               allowMeshRender={true}
@@ -100,18 +94,14 @@ export const ArtView = () => {
             />
           </Col>
           {/* <Divider /> */}
-          <Col
-            xs={{ span: 24 }}
-            md={{ span: 12 }}
-            style={{ textAlign: 'left', fontSize: '1.4rem' }}
-          >
+          <Col xs={{ span: 24 }} md={{ span: 12 }}>
             <Row>
               <h1>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h1>
             </Row>
             <Row>
               <Col span={6}>
                 <h6>Royalties</h6>
-                <div className="royalties">
+                <div>
                   {((art.seller_fee_basis_points || 0) / 100).toFixed(2)}%
                 </div>
               </Col>
@@ -121,25 +111,17 @@ export const ArtView = () => {
             </Row>
             <Row>
               <Col>
-                <h6 style={{ marginTop: 5 }}>Created By</h6>
-                <div className="creators">
+                <div>
                   {(art.creators || []).map((creator, idx) => {
                     return (
-                      <div
-                        key={idx}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          marginBottom: 5,
-                        }}
-                      >
+                      <div key={idx}>
                         <MetaAvatar creators={[creator]} size={64} />
                         <div>
-                          <span className="creator-name">
+                          <span>
                             {creator.name ||
                               shortenAddress(creator.address || '')}
                           </span>
-                          <div style={{ marginLeft: 10 }}>
+                          <div>
                             {!creator.verified &&
                               (creator.address === pubkey ? (
                                 <Button
@@ -172,15 +154,15 @@ export const ArtView = () => {
             </Row>
             <Row>
               <Col>
-                <h6 style={{ marginTop: 5 }}>Edition</h6>
-                <div className="art-edition">{badge}</div>
+                <h6>Edition</h6>
+                <div>{badge}</div>
               </Col>
             </Row>
             {art.type === ArtType.Master && (
               <Row>
                 <Col>
-                  <h6 style={{ marginTop: 5 }}>Max Supply</h6>
-                  <div className="art-edition">{maxSupply}</div>
+                  <h6>Max Supply</h6>
+                  <div>{maxSupply}</div>
                 </Col>
               </Row>
             )}
@@ -221,20 +203,20 @@ export const ArtView = () => {
             <Divider />
             {art.creators?.find(c => !c.verified) && unverified}
             <br />
-            <div className="info-header">ABOUT THE CREATION</div>
-            <div className="info-content">{description}</div>
+            <div>ABOUT THE CREATION</div>
+            <div>{description}</div>
             <br />
             {/*
               TODO: add info about artist
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{art.about}</div> */}
+            <div>ABOUT THE CREATOR</div>
+            <div>{art.about}</div> */}
           </Col>
           <Col span="12">
             {attributes && (
               <>
                 <Divider />
                 <br />
-                <div className="info-header">Attributes</div>
+                <div>Attributes</div>
                 <List size="large" grid={{ column: 4 }}>
                   {attributes.map(attribute => (
                     <List.Item key={attribute.display_type}>

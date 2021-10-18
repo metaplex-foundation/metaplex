@@ -90,37 +90,27 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
   const card = (
     <Card hoverable={true} className={`auction-render-card`} bordered={false}>
-      <div className={'card-art-info'}>
-        <div className={'card-artist-info'}>
+      <div>
+        <div>
           <MetaAvatar creators={[creators[0]]} />
-          <span className={'artist-name'}>
+          <span>
             {creators[0].name || creators[0].address?.substr(0, 6)}...
           </span>
         </div>
-        <div className={'art-content-wrapper'}>
-          <ArtContent
-            className="auction-image no-events"
-            preview={false}
-            pubkey={id}
-            allowMeshRender={false}
-          />
+        <div>
+          <ArtContent preview={false} pubkey={id} allowMeshRender={false} />
         </div>
-        <div className={'art-name'}>{name}</div>
+        <div>{name}</div>
         {!ended && (
-          <div className={'art-auction-info'}>
-            <span className={'info-message'}>ENDING IN</span>
+          <div>
+            <span>ENDING IN</span>
             <AuctionCountdown auctionView={auctionView} labels={false} />
           </div>
         )}
       </div>
-      <div className="card-bid-info">
-        <span className={'text-uppercase info-message'}>{label}</span>
-        <AmountLabel
-          containerStyle={{ flexDirection: 'row' }}
-          title={label}
-          amount={currentBid}
-          iconSize={24}
-        />
+      <div>
+        <span>{label}</span>
+        <AmountLabel title={label} amount={currentBid} iconSize={24} />
       </div>
     </Card>
   );

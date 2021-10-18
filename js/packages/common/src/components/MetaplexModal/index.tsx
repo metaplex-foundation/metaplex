@@ -1,24 +1,15 @@
-import React from 'react';
-import { Modal } from 'antd';
+import React, { ReactNode } from 'react';
+import { Modal, ModalProps } from 'antd';
 
-export const MetaplexModal = (props: any) => {
-  const { children, bodyStyle, ...rest } = props;
+export const MetaplexModal = (
+  props: Partial<ModalProps> & {
+    children: ReactNode;
+  },
+) => {
+  const { children, ...rest } = props;
 
   return (
-    <Modal
-      bodyStyle={{
-        background: '#2F2F2F',
-        boxShadow: '0px 20px 12px 8px rgba(0, 0, 0, 0.3)',
-        display: 'flex',
-        flexDirection: 'column',
-
-        ...bodyStyle,
-      }}
-      className={'modal-box small-modal'}
-      footer={null}
-      width={500}
-      {...rest}
-    >
+    <Modal footer={null} width={500} {...rest}>
       {children}
     </Modal>
   );

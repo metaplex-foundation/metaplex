@@ -4,19 +4,7 @@ import { Modal } from 'antd';
 export const MetaplexOverlay = (props: any) => {
   const { children, ...rest } = props;
 
-  const content = (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        pointerEvents: 'auto',
-        justifyContent: 'center',
-      }}
-    >
-      {children}
-    </div>
-  );
+  const content = <div>{children}</div>;
 
   return (
     <Modal

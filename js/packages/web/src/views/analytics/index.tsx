@@ -312,11 +312,10 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
 
   return (
     <Content>
-      <Col style={{ marginTop: 10 }}>
+      <Col>
         <Button
           type="primary"
           size="large"
-          className="action-btn"
           onClick={() =>
             rerun({
               auctionViews,

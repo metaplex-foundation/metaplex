@@ -21,11 +21,6 @@ import { SolCircle } from '../Custom';
 
 ('@solana/wallet-adapter-base');
 
-const btnStyle: React.CSSProperties = {
-  border: 'none',
-  height: 40,
-};
-
 const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
   const { wallet, publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
@@ -42,14 +37,13 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
     <>
       {store &&
         (props.mobile ? (
-          <div className="actions-buttons actions-user">
+          <div>
             {canCreate && (
               <Link to={`/art/create`}>
                 <Button
                   onClick={() => {
                     props.onClick ? props.onClick() : null;
                   }}
-                  className="black-btn"
                 >
                   Create
                 </Button>
@@ -60,32 +54,23 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
                 onClick={() => {
                   props.onClick ? props.onClick() : null;
                 }}
-                className="black-btn"
               >
                 Sell
               </Button>
             </Link>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-            }}
-          >
+          <div>
             {canCreate && (
               <>
-                <Link to={`/art/create`} style={{ width: '100%' }}>
-                  <Button className="metaplex-button-default" style={btnStyle}>
-                    Create
-                  </Button>
+                <Link to={`/art/create`}>
+                  <Button>Create</Button>
                 </Link>
                 &nbsp;&nbsp;
               </>
             )}
-            <Link to={`/auction/create/0`} style={{ width: '100%' }}>
-              <Button className="metaplex-button-default" style={btnStyle}>
-                Sell
-              </Button>
+            <Link to={`/auction/create/0`}>
+              <Button>Sell</Button>
             </Link>
           </div>
         ))}
@@ -104,41 +89,17 @@ const AddFundsModal = (props: {
       visible={props.showAddFundsModal}
       onCancel={() => props.setShowAddFundsModal(false)}
       title="Add Funds"
-      bodyStyle={{
-        alignItems: 'start',
-      }}
     >
-      <div style={{ maxWidth: '100%' }}>
-        <p style={{ color: 'white' }}>
+      <div>
+        <p>
           We partner with <b>FTX</b> to make it simple to start purchasing
           digital collectibles.
         </p>
-        <div
-          style={{
-            width: '100%',
-            background: '#242424',
-            borderRadius: 12,
-            marginBottom: 10,
-            height: 50,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 10px',
-            justifyContent: 'space-between',
-            fontWeight: 700,
-          }}
-        >
-          <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Balance</span>
+        <div>
+          <span>Balance</span>
           <span>
             {formatNumber.format(props.balance)}&nbsp;&nbsp;
-            <span
-              style={{
-                borderRadius: '50%',
-                background: 'black',
-                display: 'inline-block',
-                padding: '1px 4px 4px 4px',
-                lineHeight: 1,
-              }}
-            >
+            <span>
               <img src="/sol.svg" width="10" />
             </span>{' '}
             SOL
@@ -148,18 +109,7 @@ const AddFundsModal = (props: {
           If you have not used FTX Pay before, it may take a few moments to get
           set up.
         </p>
-        <Button
-          onClick={() => props.setShowAddFundsModal(false)}
-          style={{
-            background: '#454545',
-            borderRadius: 14,
-            width: '30%',
-            padding: 10,
-            height: 'auto',
-          }}
-        >
-          Close
-        </Button>
+        <Button onClick={() => props.setShowAddFundsModal(false)}>Close</Button>
         <Button
           onClick={() => {
             window.open(
@@ -168,27 +118,9 @@ const AddFundsModal = (props: {
               'resizable,width=680,height=860',
             );
           }}
-          style={{
-            background: 'black',
-            borderRadius: 14,
-            width: '68%',
-            marginLeft: '2%',
-            padding: 10,
-            height: 'auto',
-            borderColor: 'black',
-          }}
         >
-          <div
-            style={{
-              display: 'flex',
-              placeContent: 'center',
-              justifyContent: 'center',
-              alignContent: 'center',
-              alignItems: 'center',
-              fontSize: 16,
-            }}
-          >
-            <span style={{ marginRight: 5 }}>Sign with</span>
+          <div>
+            <span>Sign with</span>
             <img src="/ftxpay.png" width="80" />
           </div>
         </Button>
@@ -214,26 +146,20 @@ export const CurrentUserBadge = (props: {
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
-  const iconStyle: React.CSSProperties = {
-    display: 'flex',
-    width: props.iconSize,
-    borderRadius: 50,
-  };
-
   let name = props.showAddress ? shortenAddress(`${publicKey}`) : '';
   const unknownWallet = wallet as any;
   if (unknownWallet.name && !props.showAddress) {
     name = unknownWallet.name;
   }
 
-  let image = <Identicon address={publicKey?.toBase58()} style={iconStyle} />;
+  let image = <Identicon address={publicKey?.toBase58()} />;
 
   if (unknownWallet.image) {
-    image = <img src={unknownWallet.image} style={iconStyle} />;
+    image = <img src={unknownWallet.image} />;
   }
 
   return (
-    <div className="wallet-wrapper">
+    <div>
       {props.showBalance && (
         <span>
           {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
@@ -246,65 +172,22 @@ export const CurrentUserBadge = (props: {
         content={
           <Settings
             additionalSettings={
-              <div
-                style={{
-                  width: 250,
-                }}
-              >
-                <h5
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  BALANCE
-                </h5>
-                <div
-                  style={{
-                    marginBottom: 10,
-                  }}
-                >
+              <div>
+                <h5>BALANCE</h5>
+                <div>
                   <SolCircle />
                   &nbsp;
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: '#FFFFFF',
-                    }}
-                  >
-                    {formatNumber.format(balance)} SOL
-                  </span>
+                  <span>{formatNumber.format(balance)} SOL</span>
                   &nbsp;
-                  <span
-                    style={{
-                      color: 'rgba(255, 255, 255, 0.5)',
-                    }}
-                  >
-                    {formatUSD.format(balanceInUSD)}
-                  </span>
+                  <span>{formatUSD.format(balanceInUSD)}</span>
                   &nbsp;
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    marginBottom: 10,
-                  }}
-                >
-                  <Button
-                    className="metaplex-button-default"
-                    onClick={() => setShowAddFundsModal(true)}
-                    style={btnStyle}
-                  >
+                <div>
+                  <Button onClick={() => setShowAddFundsModal(true)}>
                     Add Funds
                   </Button>
                   &nbsp;&nbsp;
-                  <Button
-                    className="metaplex-button-default"
-                    onClick={disconnect}
-                    style={btnStyle}
-                  >
-                    Disconnect
-                  </Button>
+                  <Button onClick={disconnect}>Disconnect</Button>
                 </div>
                 <UserActions />
               </div>
@@ -312,18 +195,9 @@ export const CurrentUserBadge = (props: {
           />
         }
       >
-        <Button className="wallet-key">
+        <Button>
           {image}
-          {name && (
-            <span
-              style={{
-                marginLeft: '0.5rem',
-                fontWeight: 600,
-              }}
-            >
-              {name}
-            </span>
-          )}
+          {name && <span>{name}</span>}
         </Button>
       </Popover>
       <AddFundsModal
@@ -342,35 +216,14 @@ export const Cog = () => {
   const open = useCallback(() => setVisible(true), [setVisible]);
 
   return (
-    <div className="wallet-wrapper">
+    <div>
       <Popover
         trigger="click"
         placement="bottomRight"
         content={
-          <div
-            style={{
-              width: 250,
-            }}
-          >
-            <h5
-              style={{
-                color: 'rgba(255, 255, 255, 0.7)',
-                letterSpacing: '0.02em',
-              }}
-            >
-              NETWORK
-            </h5>
-            <Select
-              onSelect={setEndpoint}
-              value={endpoint}
-              bordered={false}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 8,
-                width: '100%',
-                marginBottom: 10,
-              }}
-            >
+          <div>
+            <h5>NETWORK</h5>
+            <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
               {ENDPOINTS.map(({ name, endpoint }) => (
                 <Select.Option value={endpoint} key={endpoint}>
                   {name}
@@ -378,17 +231,11 @@ export const Cog = () => {
               ))}
             </Select>
 
-            <Button
-              className="metaplex-button-default"
-              style={btnStyle}
-              onClick={open}
-            >
-              Change wallet
-            </Button>
+            <Button onClick={open}>Change wallet</Button>
           </div>
         }
       >
-        <Button className="wallet-key">
+        <Button>
           <img src="/cog.svg" />
         </Button>
       </Popover>
@@ -414,60 +261,36 @@ export const CurrentUserBadgeMobile = (props: {
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
   const balanceInUSD = balance * solPrice;
 
-  const iconStyle: React.CSSProperties = {
-    display: 'flex',
-    width: props.iconSize,
-    borderRadius: 50,
-  };
-
   let name = props.showAddress ? shortenAddress(`${publicKey}`) : '';
   const unknownWallet = wallet as any;
   if (unknownWallet.name && !props.showAddress) {
     name = unknownWallet.name;
   }
 
-  let image = <Identicon address={publicKey?.toBase58()} style={iconStyle} />;
+  let image = <Identicon address={publicKey?.toBase58()} />;
 
   if (unknownWallet.image) {
-    image = <img src={unknownWallet.image} style={iconStyle} />;
+    image = <img src={unknownWallet.image} />;
   }
 
   return (
-    <div className="current-user-mobile-badge">
-      <div className="mobile-badge">
+    <div>
+      <div>
         {image}
-        {name && (
-          <span
-            style={{
-              marginLeft: '0.5rem',
-              fontWeight: 600,
-            }}
-          >
-            {name}
-          </span>
-        )}
+        {name && <span>{name}</span>}
       </div>
-      <div className="balance-container">
-        <span className="balance-title">Balance</span>
+      <div>
+        <span>Balance</span>
         <span>
-          <span className="sol-img-wrapper">
+          <span>
             <img src="/sol.svg" width="10" />
           </span>{' '}
           {formatNumber.format(balance)}&nbsp;&nbsp; SOL{' '}
-          <span
-            style={{
-              marginLeft: 5,
-              fontWeight: 'normal',
-              color: 'rgba(255, 255, 255, 0.5)',
-            }}
-          >
-            {formatUSD.format(balanceInUSD)}
-          </span>
+          <span>{formatUSD.format(balanceInUSD)}</span>
         </span>
       </div>
-      <div className="actions-buttons">
+      <div>
         <Button
-          className="secondary-btn"
           onClick={() => {
             props.closeModal ? props.closeModal() : null;
             setShowAddFundsModal(true);
@@ -476,11 +299,9 @@ export const CurrentUserBadgeMobile = (props: {
           Add Funds
         </Button>
         &nbsp;&nbsp;
-        <Button className="black-btn" onClick={disconnect}>
-          Disconnect
-        </Button>
+        <Button onClick={disconnect}>Disconnect</Button>
       </div>
-      <div className="actions-buttons">
+      <div>
         <UserActions
           mobile
           onClick={() => {

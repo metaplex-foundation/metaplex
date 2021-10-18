@@ -49,8 +49,8 @@ export const ArtworksView = () => {
   const artworkGrid = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      className="metaplex-masonry"
+      columnClassName="metaplex-masonry-column"
     >
       {!isLoading
         ? items.map((m, idx) => {
@@ -72,33 +72,24 @@ export const ArtworksView = () => {
   );
 
   return (
-    <Layout style={{ margin: 0, marginTop: 30 }}>
-      <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <Col style={{ width: '100%', marginTop: 10 }}>
+    <Layout>
+      <Content>
+        <Col>
           <Row>
             <Tabs
               activeKey={activeKey}
               onTabClick={key => setActiveKey(key as ArtworkViewState)}
             >
-              <TabPane
-                tab={<span className="tab-title">All</span>}
-                key={ArtworkViewState.Metaplex}
-              >
+              <TabPane tab={'All'} key={ArtworkViewState.Metaplex}>
                 {artworkGrid}
               </TabPane>
               {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Owned</span>}
-                  key={ArtworkViewState.Owned}
-                >
+                <TabPane tab={'Owned'} key={ArtworkViewState.Owned}>
                   {artworkGrid}
                 </TabPane>
               )}
               {connected && (
-                <TabPane
-                  tab={<span className="tab-title">Created</span>}
-                  key={ArtworkViewState.Created}
-                >
+                <TabPane tab={'Created'} key={ArtworkViewState.Created}>
                   {artworkGrid}
                 </TabPane>
               )}

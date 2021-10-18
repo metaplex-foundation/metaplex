@@ -17,28 +17,17 @@ export const ContentCard = (props: {
   const {
     title = '',
     description = '',
-    endElement = <div className={'line'} />,
+    endElement = <div />,
     imgSrc = '',
   } = props;
   return (
     <Card
       cover={
-        <div className={'card-cover'}>
-          {imgSrc ? (
-            <img src={imgSrc} />
-          ) : (
-            <CreditCardOutlined
-              style={{
-                color: 'rgba(179, 136, 245, 1)',
-                fontSize: 18,
-              }}
-            />
-          )}
-        </div>
+        <div>{imgSrc ? <img src={imgSrc} /> : <CreditCardOutlined />}</div>
       }
     >
-      <div className={'body-title'}>{title}</div>
-      <div className={'body-content'}>{description}</div>
+      <div>{title}</div>
+      <div>{description}</div>
       {endElement}
     </Card>
   );
@@ -50,7 +39,7 @@ interface ModalContentProps {
 
 export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
   return (
-    <div className="site-card-wrapper">
+    <div>
       <Row gutter={16}>
         <Col span={24} xl={8}>
           {children[0]}{' '}
@@ -67,7 +56,7 @@ export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
 };
 
 interface ModalProps {
-  buttonClassName: string;
+  buttonClassName?: string;
   buttonText: string;
   modalTitle: string;
   cardProps: any[];
@@ -107,7 +96,6 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         onOk={handleOk}
         onCancel={handleCancel}
         footer={null}
-        className={'modal-box instructions-modal'}
         closeIcon={<img src={'/modals/close.svg'} />}
       >
         <ModalContent>

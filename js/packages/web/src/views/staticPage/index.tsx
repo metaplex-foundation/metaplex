@@ -5,7 +5,7 @@ import { data } from './staticData';
 
 export const StaticPageView = () => {
   return (
-    <Layout style={{ margin: 0, alignItems: 'center' }}>
+    <Layout>
       <StaticPage
         leftContent={data.leftContent}
         headContent={data.headContent}

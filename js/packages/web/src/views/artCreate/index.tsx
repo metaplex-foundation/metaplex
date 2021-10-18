@@ -64,8 +64,9 @@ export const ArtCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [isMinting, setMinting] = useState<boolean>(false);
-  const [nft, setNft] =
-    useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
+  const [nft, setNft] = useState<
+    { metadataAccount: StringPublicKey } | undefined
+  >(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
@@ -137,19 +138,13 @@ export const ArtCreateView = () => {
 
   return (
     <>
-      <Row className={'creator-base-page'} style={{ paddingTop: 50 }}>
+      <Row>
         {stepsVisible && (
           <Col span={24} md={4}>
             <Steps
               progressDot
               direction={width < 768 ? 'horizontal' : 'vertical'}
               current={step}
-              style={{
-                width: 'fit-content',
-                margin: '0 auto 30px auto',
-                overflowX: 'visible',
-                maxWidth: '100%',
-              }}
             >
               <Step title="Category" />
               <Step title="Upload" />
@@ -216,7 +211,7 @@ export const ArtCreateView = () => {
             />
           )}
           {0 < step && step < 5 && (
-            <div style={{ margin: 'auto', width: 'fit-content' }}>
+            <div>
               <Button onClick={() => gotoStep(step - 1)}>Back</Button>
             </div>
           )}
@@ -235,7 +230,7 @@ const CategoryStep = (props: {
   const { width } = useWindowDimensions();
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Create a new item</h2>
         <p>
           First time creating on Metaplex?{' '}
@@ -246,61 +241,56 @@ const CategoryStep = (props: {
         <Col>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(MetadataCategory.Image)}
             >
               <div>
                 <div>Image</div>
-                <div className="type-btn-description">JPG, PNG, GIF</div>
+                <div>JPG, PNG, GIF</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(MetadataCategory.Video)}
             >
               <div>
                 <div>Video</div>
-                <div className="type-btn-description">MP4, MOV</div>
+                <div>MP4, MOV</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(MetadataCategory.Audio)}
             >
               <div>
                 <div>Audio</div>
-                <div className="type-btn-description">MP3, WAV, FLAC</div>
+                <div>MP3, WAV, FLAC</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(MetadataCategory.VR)}
             >
               <div>
                 <div>AR/3D</div>
-                <div className="type-btn-description">GLB</div>
+                <div>GLB</div>
               </div>
             </Button>
           </Row>
           <Row>
             <Button
-              className="type-btn"
               size="large"
               onClick={() => props.confirm(MetadataCategory.HTML)}
             >
               <div>
                 <div>HTML Asset</div>
-                <div className="type-btn-description">HTML</div>
+                <div>HTML</div>
               </div>
             </Button>
           </Row>
@@ -373,9 +363,9 @@ const UploadStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Now, let's upload your creation</h2>
-        <p style={{ fontSize: '1.2rem' }}>
+        <p>
           Your file will be uploaded to the decentralized web via Arweave.
           Depending on file type, can take up to 1 minute. Arweave is a new type
           of storage that backs data with sustainable and perpetual endowments,
@@ -383,11 +373,10 @@ const UploadStep = (props: {
           very first time.
         </p>
       </Row>
-      <Row className="content-action">
+      <Row>
         <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
           accept=".png,.jpg,.gif,.mp4,.svg"
-          style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
           multiple={false}
           customRequest={info => {
             // dont upload files here, handled outside of the control
@@ -416,29 +405,21 @@ const UploadStep = (props: {
             setCoverArtError(undefined);
           }}
         >
-          <div className="ant-upload-drag-icon">
-            <h3 style={{ fontWeight: 700 }}>
-              Upload your cover image (PNG, JPG, GIF, SVG)
-            </h3>
+          <div>
+            <h3>Upload your cover image (PNG, JPG, GIF, SVG)</h3>
           </div>
           {coverArtError ? (
             <Text type="danger">{coverArtError}</Text>
           ) : (
-            <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
-              Drag and drop, or click to browse
-            </p>
+            <p>Drag and drop, or click to browse</p>
           )}
         </Dragger>
       </Row>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
-        <Row
-          className="content-action"
-          style={{ marginBottom: 5, marginTop: 30 }}
-        >
+        <Row>
           <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
           <Dragger
             accept={acceptableFiles(props.attributes.properties?.category)}
-            style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
             multiple={false}
             customRequest={info => {
               // dont upload files here, handled outside of the control
@@ -458,23 +439,14 @@ const UploadStep = (props: {
               setMainFile(undefined);
             }}
           >
-            <div className="ant-upload-drag-icon">
-              <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
+            <div>
+              <h3>Upload your creation</h3>
             </div>
-            <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
-              Drag and drop, or click to browse
-            </p>
+            <p>Drag and drop, or click to browse</p>
           </Dragger>
         </Row>
       )}
       <Form.Item
-        className={'url-form-action'}
-        style={{
-          width: '100%',
-          flexDirection: 'column',
-          paddingTop: 30,
-          marginBottom: 4,
-        }}
         label={<h3>OR use absolute URL to content</h3>}
         labelAlign="left"
         colon={false}
@@ -542,8 +514,6 @@ const UploadStep = (props: {
             props.setFiles(files);
             props.confirm();
           }}
-          style={{ marginTop: 24 }}
-          className="action-btn"
         >
           Continue to Mint
         </Button>
@@ -624,14 +594,14 @@ const InfoStep = (props: {
   }, [creators]);
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Describe your item</h2>
         <p>
           Provide detailed description of your creative process to engage with
           your audience.
         </p>
       </Row>
-      <Row className="content-action" justify="space-around">
+      <Row justify="space-around">
         <Col>
           {props.attributes.image && (
             <ArtCard
@@ -644,12 +614,11 @@ const InfoStep = (props: {
             />
           )}
         </Col>
-        <Col className="section" style={{ minWidth: 300 }}>
-          <label className="action-field">
-            <span className="field-title">Title</span>
+        <Col>
+          <label>
+            <span>Title</span>
             <Input
               autoFocus
-              className="input"
               placeholder="Max 50 characters"
               allowClear
               value={props.attributes.name}
@@ -661,10 +630,10 @@ const InfoStep = (props: {
               }
             />
           </label>
-          {/* <label className="action-field">
-            <span className="field-title">Symbol</span>
+          {/* <label>
+            <span>Symbol</span>
             <Input
-              className="input"
+             
               placeholder="Max 10 characters"
               allowClear
               value={props.attributes.symbol}
@@ -677,10 +646,9 @@ const InfoStep = (props: {
             />
           </label> */}
 
-          <label className="action-field">
-            <span className="field-title">Description</span>
+          <label>
+            <span>Description</span>
             <Input.TextArea
-              className="input textarea"
               placeholder="Max 500 characters"
               value={props.attributes.description}
               onChange={info =>
@@ -692,8 +660,8 @@ const InfoStep = (props: {
               allowClear
             />
           </label>
-          <label className="action-field">
-            <span className="field-title">Maximum Supply</span>
+          <label>
+            <span>Maximum Supply</span>
             <InputNumber
               placeholder="Quantity"
               onChange={(val: number) => {
@@ -705,11 +673,10 @@ const InfoStep = (props: {
                   },
                 });
               }}
-              className="royalties-input"
             />
           </label>
-          <label className="action-field">
-            <span className="field-title">Attributes</span>
+          <label>
+            <span>Attributes</span>
           </label>
           <Form name="dynamic_attributes" form={form} autoComplete="off">
             <Form.List name="attributes">
@@ -782,7 +749,6 @@ const InfoStep = (props: {
               props.confirm();
             });
           }}
-          className="action-btn"
         >
           Continue to royalties
         </Button>
@@ -824,14 +790,8 @@ const RoyaltiesSplitter = (props: {
 
           return (
             <Col span={24} key={idx}>
-              <Row
-                align="middle"
-                gutter={[0, 16]}
-                style={{ margin: '5px auto' }}
-              >
-                <Col span={4} style={{ padding: 10 }}>
-                  {creator.label}
-                </Col>
+              <Row align="middle" gutter={[0, 16]}>
+                <Col span={4}>{creator.label}</Col>
                 <Col span={3}>
                   <InputNumber<number>
                     min={0}
@@ -840,14 +800,13 @@ const RoyaltiesSplitter = (props: {
                     value={amt}
                     parser={value => parseInt(value?.replace('%', '') ?? '0')}
                     onChange={handleChangeShare}
-                    className="royalties-input"
                   />
                 </Col>
-                <Col span={4} style={{ paddingLeft: 12 }}>
+                <Col span={4}>
                   <Slider value={amt} onChange={handleChangeShare} />
                 </Col>
                 {props.isShowErrors && amt === 0 && (
-                  <Col style={{ paddingLeft: 12 }}>
+                  <Col>
                     <Text type="danger">
                       The split percentage for this creator cannot be 0%.
                     </Text>
@@ -909,16 +868,16 @@ const RoyaltiesStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action" style={{ marginBottom: 20 }}>
+      <Row>
         <h2>Set royalties and creator splits</h2>
         <p>
           Royalties ensure that you continue to get compensated for your work
           after its initial sale.
         </p>
       </Row>
-      <Row className="content-action" style={{ marginBottom: 20 }}>
-        <label className="action-field">
-          <span className="field-title">Royalty Percentage</span>
+      <Row>
+        <label>
+          <span>Royalty Percentage</span>
           <p>
             This is how much of each secondary sale will be paid out to the
             creators.
@@ -934,14 +893,13 @@ const RoyaltiesStep = (props: {
                 seller_fee_basis_points: val * 100,
               });
             }}
-            className="royalties-input"
           />
         </label>
       </Row>
       {[...fixedCreators, ...creators].length > 0 && (
         <Row>
-          <label className="action-field" style={{ width: '100%' }}>
-            <span className="field-title">Creators Split</span>
+          <label>
+            <span>Creators Split</span>
             <p>
               This is how much of the proceeds from the initial sale and any
               royalties will be split out amongst the creators.
@@ -956,45 +914,23 @@ const RoyaltiesStep = (props: {
         </Row>
       )}
       <Row>
-        <span
-          onClick={() => setShowCreatorsModal(true)}
-          style={{ padding: 10, marginBottom: 10 }}
-        >
-          <span
-            className="metaplex-icon-circle"
-            style={{
-              fontSize: 25,
-              padding: '0px 8px 3px 8px',
-              borderRadius: '50%',
-              marginRight: 5,
-              verticalAlign: 'middle',
-            }}
-          >
-            +
-          </span>
-          <span
-            className="metaplex-btn-label"
-            style={{
-              verticalAlign: 'middle',
-              lineHeight: 1,
-            }}
-          >
-            Add another creator
-          </span>
+        <span onClick={() => setShowCreatorsModal(true)}>
+          <span>+</span>
+          <span>Add another creator</span>
         </span>
         <MetaplexModal
           visible={showCreatorsModal}
           onCancel={() => setShowCreatorsModal(false)}
         >
-          <label className="action-field" style={{ width: '100%' }}>
-            <span className="field-title">Creators</span>
+          <label>
+            <span>Creators</span>
             <UserSearch setCreators={setCreators} />
           </label>
         </MetaplexModal>
       </Row>
       {isShowErrors && totalRoyaltyShares !== 100 && (
         <Row>
-          <Text type="danger" style={{ paddingBottom: 14 }}>
+          <Text type="danger">
             The split percentages for each creator must add up to 100%. Current
             total split percentage is {totalRoyaltyShares}%.
           </Text>
@@ -1043,7 +979,6 @@ const RoyaltiesStep = (props: {
             });
             props.confirm();
           }}
-          className="action-btn"
         >
           Continue to review
         </Button>
@@ -1095,14 +1030,14 @@ const LaunchStep = (props: {
 
   return (
     <>
-      <Row className="call-to-action">
+      <Row>
         <h2>Launch your creation</h2>
         <p>
           Provide detailed description of your creative process to engage with
           your audience.
         </p>
       </Row>
-      <Row className="content-action" justify="space-around">
+      <Row justify="space-around">
         <Col>
           {props.attributes.image && (
             <ArtCard
@@ -1115,9 +1050,8 @@ const LaunchStep = (props: {
             />
           )}
         </Col>
-        <Col className="section" style={{ minWidth: 300 }}>
+        <Col>
           <Statistic
-            className="create-statistic"
             title="Royalty Percentage"
             value={props.attributes.seller_fee_basis_points / 100}
             precision={2}
@@ -1131,20 +1065,10 @@ const LaunchStep = (props: {
         </Col>
       </Row>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button type="primary" size="large" onClick={props.confirm}>
           Pay with SOL
         </Button>
-        <Button
-          disabled={true}
-          size="large"
-          onClick={props.confirm}
-          className="action-btn"
-        >
+        <Button disabled={true} size="large" onClick={props.confirm}>
           Pay with Credit Card
         </Button>
       </Row>
@@ -1174,62 +1098,43 @@ const WaitingStep = (props: {
   };
 
   return (
-    <div
-      style={{
-        marginTop: 70,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
+    <div>
       <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
           <Step
-            className={'white-description'}
             title="Minting"
             description="Starting Mint Process"
             icon={setIconForStep(props.step, 0)}
           />
+          <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
           <Step
-            className={'white-description'}
-            title="Preparing Assets"
-            icon={setIconForStep(props.step, 1)}
-          />
-          <Step
-            className={'white-description'}
             title="Signing Metadata Transaction"
             description="Approve the transaction from your wallet"
             icon={setIconForStep(props.step, 2)}
           />
           <Step
-            className={'white-description'}
             title="Sending Transaction to Solana"
             description="This will take a few seconds."
             icon={setIconForStep(props.step, 3)}
           />
           <Step
-            className={'white-description'}
             title="Waiting for Initial Confirmation"
             icon={setIconForStep(props.step, 4)}
           />
           <Step
-            className={'white-description'}
             title="Waiting for Final Confirmation"
             icon={setIconForStep(props.step, 5)}
           />
           <Step
-            className={'white-description'}
             title="Uploading to Arweave"
             icon={setIconForStep(props.step, 6)}
           />
           <Step
-            className={'white-description'}
             title="Updating Metadata"
             icon={setIconForStep(props.step, 7)}
           />
           <Step
-            className={'white-description'}
             title="Signing Token Transaction"
             description="Approve the final transaction from your wallet"
             icon={setIconForStep(props.step, 8)}
@@ -1266,7 +1171,7 @@ const Congrats = (props: {
     // TODO  - properly reset this components state on error
     return (
       <>
-        <div className="waiting-title">Sorry, there was an error!</div>
+        <div>Sorry, there was an error!</div>
         <p>{props.alert}</p>
         <Button onClick={_ => history.push('/art/create')}>
           Back to Create NFT
@@ -1277,17 +1182,13 @@ const Congrats = (props: {
 
   return (
     <>
-      <div className="waiting-title">Congratulations, you created an NFT!</div>
-      <div className="congrats-button-container">
-        <Button
-          className="metaplex-button"
-          onClick={_ => window.open(newTweetURL(), '_blank')}
-        >
+      <div>Congratulations, you created an NFT!</div>
+      <div>
+        <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
           <span>Share it on Twitter</span>
           <span>&gt;</span>
         </Button>
         <Button
-          className="metaplex-button"
           onClick={_ =>
             history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
@@ -1295,10 +1196,7 @@ const Congrats = (props: {
           <span>See it in your collection</span>
           <span>&gt;</span>
         </Button>
-        <Button
-          className="metaplex-button"
-          onClick={_ => history.push('/auction/create')}
-        >
+        <Button onClick={_ => history.push('/auction/create')}>
           <span>Sell it via auction</span>
           <span>&gt;</span>
         </Button>

@@ -52,8 +52,8 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     <>
       <Masonry
         breakpointCols={breakpointColumnsObj}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
+        className="metaplex-masonry"
+        columnClassName="metaplex-masonry-column"
       >
         {selected.map(m => {
           let key = m?.metadata.pubkey || '';
@@ -72,13 +72,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           );
         })}
         {(allowMultiple || selectedItems.size === 0) && (
-          <div
-            className="ant-card ant-card-bordered ant-card-hoverable art-card"
-            style={{ width: 200, height: 300, display: 'flex' }}
-            onClick={open}
-          >
-            <span className="text-center">Add an NFT</span>
-          </div>
+          <div onClick={open}>Add an NFT</div>
         )}
       </Masonry>
 
@@ -89,20 +83,15 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         width={1100}
         footer={null}
       >
-        <Row className="call-to-action" style={{ marginBottom: 0 }}>
+        <Row>
           <h2>Select the NFT you want to sell</h2>
-          <p style={{ fontSize: '1.2rem' }}>
-            Select the NFT that you want to sell copy/copies of.
-          </p>
+          <p>Select the NFT that you want to sell copy/copies of.</p>
         </Row>
-        <Row
-          className="content-action"
-          style={{ overflowY: 'auto', height: '50vh' }}
-        >
+        <Row>
           <Masonry
             breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
+            className="metaplex-masonry"
+            columnClassName="metaplex-masonry-column"
           >
             {items.map(m => {
               const id = m.metadata.pubkey;
@@ -141,12 +130,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           </Masonry>
         </Row>
         <Row>
-          <Button
-            type="primary"
-            size="large"
-            onClick={confirm}
-            className="action-btn"
-          >
+          <Button type="primary" size="large" onClick={confirm}>
             Confirm
           </Button>
         </Row>

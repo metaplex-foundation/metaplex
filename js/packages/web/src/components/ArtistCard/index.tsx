@@ -12,18 +12,14 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
       hoverable={true}
       className={`artist-card`}
       cover={
-        <div className="header-container">
-          {artist.background ? <img src={artist.background} /> : null}
-        </div>
+        <div>{artist.background ? <img src={artist.background} /> : null}</div>
       }
       bordered={false}
     >
       <>
         <MetaAvatar creators={[artist]} size={64} />
-        <div className="artist-card-name">
-          {artist.name || shortenAddress(artist.address || '')}
-        </div>
-        <div className="artist-card-description">{artist.about}</div>
+        <div>{artist.name || shortenAddress(artist.address || '')}</div>
+        <div>{artist.about}</div>
       </>
     </Card>
   );
