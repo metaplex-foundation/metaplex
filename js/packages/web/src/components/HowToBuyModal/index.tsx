@@ -5,7 +5,7 @@ import { ConnectButton } from '@oyster/common';
 
 interface HowToBuyModalProps {
   buttonClassName?: string;
-  onClick?: any;
+  onClick?: () => void;
 }
 
 export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({

@@ -69,7 +69,7 @@ export const PreLaunchView = () => {
   const [loadingUser, setLoadingUser] = useState(false);
   const auth = useMagicLink();
 
-  const handleSaveWallet = async (verifiedEmail, wallet) => {
+  const handleSaveWallet = async (verifiedEmail: string, wallet: string) => {
     await saveUser(verifiedEmail, wallet, () => {
       setSentVisible(true);
       setSubmitted(true);

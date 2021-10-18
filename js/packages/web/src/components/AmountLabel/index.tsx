@@ -29,7 +29,7 @@ export const AmountLabel = (props: IAmountLabel) => {
   const [priceUSD, setPriceUSD] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    setPriceUSD(solPrice * amount);
+    if (solPrice !== undefined) setPriceUSD(solPrice * amount);
   }, [amount, solPrice]);
 
   const PriceNaN = isNaN(amount);

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { NextPageContext } from 'next';
 import Head from 'next/head';
 import { Storefront } from '@oyster/common';
 import { getStorefront } from './../actions/getStorefront';
-import Bugsnag from '@bugsnag/js'
-import BugsnagPluginReact from '@bugsnag/plugin-react'
+import Bugsnag from '@bugsnag/js';
+import BugsnagPluginReact from '@bugsnag/plugin-react';
 
 const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
   ssr: false,
@@ -18,25 +18,25 @@ interface AppProps {
 if (process.env.BUGSNAG_API_KEY) {
   Bugsnag.start({
     apiKey: process.env.BUGSNAG_API_KEY || '',
-    plugins: [new BugsnagPluginReact()]
-  })
-
+    plugins: [new BugsnagPluginReact()],
+  });
 }
-
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
-  let forwarded = headers.forwarded?.split(';').reduce((acc: any, entry) => {
-    const [key, value] = entry.split('=');
-    acc[key] = value;
+  let forwarded = headers.forwarded
+    ?.split(';')
+    .reduce((acc: Record<string, string>, entry) => {
+      const [key, value] = entry.split('=');
+      acc[key] = value;
 
-    return acc;
-  }, {});
-  const host = (forwarded?.host || headers.host) as string;
+      return acc;
+    }, {});
+  const host = (forwarded?.host || headers.host) ?? '';
   let subdomain = host.split(':')[0].split('.')[0];
 
   if (process.env.SUBDOMAIN) {
-    subdomain = process.env.SUBDOMAIN
+    subdomain = process.env.SUBDOMAIN;
   }
 
   const storefront = await getStorefront(subdomain);
@@ -61,20 +61,22 @@ function App({ storefront }: AppProps) {
     }
   }, [hasLogo, hasStylesheet]);
 
+  // TODO: refactor
   useEffect(() => {
     const head = document.head;
     const link = document.createElement('link');
 
     link.type = 'text/css';
     link.rel = 'stylesheet';
-    link.href = storefront.theme.stylesheet;
+    // link.href = storefront.theme.stylesheet;
     // link.href = 'http://localhost:3000/demo-theme.css'
 
     link.onload = () => {
       setHasStylesheet(true);
     };
 
-    head.appendChild(link);
+    setHasStylesheet(true);
+    // head.appendChild(link);
   }, []);
 
   useEffect(() => {
@@ -110,24 +112,15 @@ function App({ storefront }: AppProps) {
       </Head>
       {isMounted && <CreateReactAppEntryPoint storefront={storefront} />}
     </>
-  )
+  );
 
   if (process.env.BUGSNAG_API_KEY) {
     //@ts-ignore
-    const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary(React)
-    return (
-      <ErrorBoundary>
-        {appBody}
-      </ErrorBoundary>
-    )
+    const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary(React);
+    return <ErrorBoundary>{appBody}</ErrorBoundary>;
   }
 
-
-  return (
-    <>
-    {appBody}
-    </>
-  );
+  return <>{appBody}</>;
 }
 
 export default App;

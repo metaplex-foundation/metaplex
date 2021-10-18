@@ -12,15 +12,16 @@ export const Footer = () => {
   };
 
   const CustomForm = (props: {
-    status: any;
-    message: any;
-    onValidated: any;
+    status?: string;
+    message?: string;
+    onValidated?: (val: any) => void;
   }) => {
     let email: any;
     const submit = (values: any) => {
       email = values.user.email;
       email &&
         email.indexOf('@') > -1 &&
+        props.onValidated &&
         props.onValidated({
           EMAIL: email,
           // NAME: name.value
@@ -47,10 +48,10 @@ export const Footer = () => {
           <div>
             {props.status === 'sending' && <div>Loading...</div>}
             {props.status === 'error' && (
-              <div dangerouslySetInnerHTML={{ __html: props.message }} />
+              <div dangerouslySetInnerHTML={{ __html: props.message ?? '' }} />
             )}
             {props.status === 'success' && (
-              <div dangerouslySetInnerHTML={{ __html: props.message }} />
+              <div dangerouslySetInnerHTML={{ __html: props.message ?? '' }} />
             )}
           </div>
         ) : null}
@@ -59,7 +60,8 @@ export const Footer = () => {
   };
 
   const NewsLetterForm = () => (
-    <CustomForm status={status} message={''} onValidated={() => {}} />
+    // TODO: remove use of deprecated DOM API
+    <CustomForm status={status} />
   );
 
   return (
@@ -90,9 +92,7 @@ export const Footer = () => {
           </div>
         ) : null}
       </div>
-      <div>
-        2021 {LABELS.STORE_NAME} LLC, All rights reserved
-      </div>
+      <div>2021 {LABELS.STORE_NAME} LLC, All rights reserved</div>
     </div>
   );
 };

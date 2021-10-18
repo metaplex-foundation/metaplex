@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { queryExtendedMetadata } from './queryExtendedMetadata';
 import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
@@ -8,7 +14,7 @@ import {
   USE_SPEED_RUN,
 } from './loadAccounts';
 import { Spin, Space } from 'antd';
-import { merge } from 'lodash'
+import { merge } from 'lodash';
 import { MetaContextState, MetaState } from './types';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
@@ -25,7 +31,7 @@ const MetaContext = React.createContext<MetaContextState>({
   },
 });
 
-export function MetaProvider({ children = null as any }) {
+export function MetaProvider({ children = null }: { children: ReactNode }) {
   const connection = useConnection();
   const { isReady, storeAddress, ownerAddress, storefront } = useStore();
 
@@ -52,7 +58,7 @@ export function MetaProvider({ children = null as any }) {
     [setState],
   );
 
-  async function update(auctionAddress?: any, bidderAddress?: any) {
+  async function update(auctionAddress?: string, bidderAddress?: string) {
     if (!storeAddress) {
       if (isReady) {
         setIsLoading(false);

@@ -130,11 +130,11 @@ const VideoArtContent = ({
       >
         {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
         {animationURL && <source src={animationURL} type="video/mp4" />}
-        {files
-          ?.filter(f => typeof f !== 'string')
-          .map((f: any) => (
+        {(files?.filter(f => typeof f !== 'string') as MetadataFile[]).map(
+          (f: MetadataFile) => (
             <source src={f.uri} type={f.type} />
-          ))}
+          ),
+        )}
       </video>
     );
 
@@ -260,5 +260,5 @@ export const ArtContent = ({
       <CachedImageContent uri={uri} className={className} preview={preview} />
     );
 
-  return <div ref={ref as any}>{content}</div>;
+  return <div ref={ref}>{content}</div>;
 };

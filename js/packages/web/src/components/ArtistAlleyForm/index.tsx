@@ -4,7 +4,7 @@ import { Form, Input, Button, Upload } from 'antd';
 export const ArtistAlleyForm = () => {
   const { TextArea } = Input;
 
-  const onFinish = (values: any) => {};
+  const onFinish = (values: unknown) => {};
 
   const handleFile = (e: any) => {
     if (Array.isArray(e)) {

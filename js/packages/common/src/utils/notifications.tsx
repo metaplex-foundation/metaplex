@@ -1,14 +1,18 @@
 import React from 'react';
 import { notification } from 'antd';
-// import Link from '../components/Link';
+import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 
 export function notify({
-  message = '',
-  description = undefined as any,
-  txid = '',
   type = 'info',
+  txid = undefined,
+  message = '',
+  description = undefined,
   placement = 'bottomLeft',
-}) {
+  ...rest
+}: {
+  type?: keyof NotificationApi;
+  txid?: string;
+} & ArgsProps) {
   if (txid) {
     //   <Link
     //     external
@@ -19,8 +23,8 @@ export function notify({
 
     description = <></>;
   }
-  // TODO: what
-  (notification as any)[type]({
+  notification[type]({
+    ...rest,
     message: <span>{message}</span>,
     description: <span>{description}</span>,
     placement,

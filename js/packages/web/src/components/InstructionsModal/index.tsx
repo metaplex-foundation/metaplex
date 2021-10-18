@@ -5,15 +5,11 @@ import { CreditCardOutlined } from '@ant-design/icons';
 interface ContentCardProps {
   title: string;
   description: string;
+  endElement?: ReactNode;
   imgSrc?: string;
 }
 
-export const ContentCard = (props: {
-  title: string;
-  description: string;
-  endElement?: any;
-  imgSrc?: string;
-}) => {
+export const ContentCard = (props: ContentCardProps) => {
   const {
     title = '',
     description = '',
@@ -59,8 +55,8 @@ interface ModalProps {
   buttonClassName?: string;
   buttonText: string;
   modalTitle: string;
-  cardProps: any[];
-  onClick?: any;
+  cardProps: [ContentCardProps, ContentCardProps, ContentCardProps];
+  onClick?: () => void;
 }
 
 export const InstructionsModal: React.FC<ModalProps> = ({

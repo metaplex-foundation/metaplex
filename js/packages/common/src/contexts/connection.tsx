@@ -13,7 +13,13 @@ import {
   Blockhash,
   FeeCalculator,
 } from '@solana/web3.js';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { notify } from '../utils/notifications';
 import { ExplorerLink } from '../components/ExplorerLink';
 import { useQuerySearch } from '../hooks';
@@ -39,29 +45,29 @@ export type ENV =
   | 'localnet'
   | 'lending';
 
-export const ENDPOINTS = [
+export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
   {
-    name: 'mainnet-beta' as ENV,
+    name: 'mainnet-beta',
     endpoint: 'https://holaplex.rpcpool.com/',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Solana)' as ENV,
+    name: 'mainnet-beta (Solana)',
     endpoint: 'https://api.mainnet-beta.solana.com',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Serum)' as ENV,
+    name: 'mainnet-beta (Serum)',
     endpoint: 'https://solana-api.projectserum.com/',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'testnet' as ENV,
+    name: 'testnet',
     endpoint: clusterApiUrl('testnet'),
     ChainId: ChainId.Testnet,
   },
   {
-    name: 'devnet' as ENV,
+    name: 'devnet',
     endpoint: clusterApiUrl('devnet'),
     ChainId: ChainId.Devnet,
   },
@@ -87,7 +93,11 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({
+  children = undefined,
+}: {
+  children: ReactNode;
+}) {
   const searchParams = useQuerySearch();
   const network = searchParams.get('network');
   const queryEndpoint =
@@ -166,8 +176,8 @@ export function ConnectionProvider({ children = undefined as any }) {
   );
 }
 
-export function useConnection() {
-  return useContext(ConnectionContext).connection as Connection;
+export function useConnection(): Connection {
+  return useContext(ConnectionContext).connection;
 }
 
 export function useConnectionConfig() {
@@ -558,9 +568,9 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err: any) {
+  } catch (err) {
     console.error('Timeout Error caught', err);
-    if (err.timeout) {
+    if (typeof err === 'object' && err && 'timeout' in err) {
       throw new Error('Timed out awaiting confirmation on transaction');
     }
     let simulateResult: SimulatedTransactionResponse | null = null;
@@ -606,7 +616,7 @@ async function simulateTransaction(
   // @ts-ignore
   const wireTransaction = transaction._serialize(signData);
   const encodedTransaction = wireTransaction.toString('base64');
-  const config: any = { encoding: 'base64', commitment };
+  const config = { encoding: 'base64', commitment };
   const args = [encodedTransaction, config];
 
   // @ts-ignore

@@ -80,7 +80,7 @@ interface TierDummyEntry {
 }
 
 interface Tier {
-  items: (TierDummyEntry | {})[];
+  items: Partial<TierDummyEntry>[];
   winningSpots: number[];
 }
 interface TieredAuctionState {
@@ -279,10 +279,7 @@ export const AuctionCreateView = () => {
     } else {
       const tiers = tieredAttributes.tiers;
       tiers.forEach(
-        c =>
-          (c.items = c.items.filter(
-            i => (i as TierDummyEntry).winningConfigType !== undefined,
-          )),
+        c => (c.items = c.items.filter(i => i.winningConfigType !== undefined)),
       );
       let filteredTiers = tiers.filter(
         i => i.items.length > 0 && i.winningSpots.length > 0,
@@ -293,14 +290,16 @@ export const AuctionCreateView = () => {
         filteredTiers.forEach(tier => {
           const tierRangeLookup: Record<number, AmountRange> = {};
           const tierRanges: AmountRange[] = [];
-          const item = tier.items.find(
-            i => (i as TierDummyEntry).safetyDepositBoxIndex == index,
-          );
+          const item = tier.items.find(i => i.safetyDepositBoxIndex === index);
 
           if (item) {
-            config.winningConfigType = (
-              item as TierDummyEntry
-            ).winningConfigType;
+            if (item.winningConfigType === undefined)
+              throw new Error('Missing item.winningConfigType');
+            if (item.amount === undefined)
+              throw new Error('Missing item.amount');
+
+            config.winningConfigType = item.winningConfigType;
+            const amount = item.amount;
             const sorted = tier.winningSpots.sort();
             sorted.forEach((spot, i) => {
               if (tierRangeLookup[spot - 1]) {
@@ -310,7 +309,7 @@ export const AuctionCreateView = () => {
                 );
               } else {
                 tierRangeLookup[spot] = new AmountRange({
-                  amount: new BN((item as TierDummyEntry).amount),
+                  amount: new BN(amount),
                   length: new BN(1),
                 });
                 // If the first spot with anything is winner spot 1, you want a section of 0 covering winning
@@ -1377,7 +1376,7 @@ const TierTableStep = (props: {
             onChange={value => {
               const newTiers = newImmutableTiers(props.attributes.tiers);
               const myNewTier = newTiers[configIndex];
-              myNewTier.winningSpots = value.map(i => i.valueOf() as number);
+              myNewTier.winningSpots = value.map(i => Number(i.valueOf()));
 
               props.setAttributes({
                 ...props.attributes,
@@ -1392,12 +1391,8 @@ const TierTableStep = (props: {
                 <ArtSelector
                   filter={artistFilter}
                   selected={
-                    (i as TierDummyEntry).safetyDepositBoxIndex !== undefined
-                      ? [
-                          props.attributes.items[
-                            (i as TierDummyEntry).safetyDepositBoxIndex
-                          ],
-                        ]
+                    i.safetyDepositBoxIndex !== undefined
+                      ? [props.attributes.items[i.safetyDepositBoxIndex]]
                       : []
                   }
                   setSelected={items => {
@@ -1436,9 +1431,7 @@ const TierTableStep = (props: {
                           WinningConfigType.TokenOnlyTransfer;
                       }
                       myNewTier.amount = 1;
-                    } else if (
-                      (i as TierDummyEntry).safetyDepositBoxIndex !== undefined
-                    ) {
+                    } else if (i.safetyDepositBoxIndex !== undefined) {
                       const myNewTier = newTiers[configIndex];
                       myNewTier.items.splice(itemIndex, 1);
                       if (myNewTier.items.length === 0)
@@ -1447,14 +1440,13 @@ const TierTableStep = (props: {
                         c.items.find(
                           it =>
                             it.safetyDepositBoxIndex ===
-                            (i as TierDummyEntry).safetyDepositBoxIndex,
+                            i.safetyDepositBoxIndex,
                         ),
                       );
 
                       if (!othersWithSameItem) {
                         for (
-                          let j =
-                            (i as TierDummyEntry).safetyDepositBoxIndex + 1;
+                          let j = i.safetyDepositBoxIndex + 1;
                           j < props.attributes.items.length;
                           j++
                         ) {
@@ -1465,10 +1457,7 @@ const TierTableStep = (props: {
                             }),
                           );
                         }
-                        newItems.splice(
-                          (i as TierDummyEntry).safetyDepositBoxIndex,
-                          1,
-                        );
+                        newItems.splice(i.safetyDepositBoxIndex, 1);
                       }
                     }
 
@@ -1483,10 +1472,10 @@ const TierTableStep = (props: {
                   Select item
                 </ArtSelector>
 
-                {(i as TierDummyEntry).winningConfigType !== undefined && (
+                {i.winningConfigType !== undefined && (
                   <>
                     <Select
-                      defaultValue={(i as TierDummyEntry).winningConfigType}
+                      defaultValue={i.winningConfigType}
                       onChange={value => {
                         const newTiers = newImmutableTiers(
                           props.attributes.tiers,
@@ -1528,10 +1517,8 @@ const TierTableStep = (props: {
                       </Option>
                     </Select>
 
-                    {((i as TierDummyEntry).winningConfigType ===
-                      WinningConfigType.PrintingV1 ||
-                      (i as TierDummyEntry).winningConfigType ===
-                        WinningConfigType.PrintingV2) && (
+                    {(i.winningConfigType === WinningConfigType.PrintingV1 ||
+                      i.winningConfigType === WinningConfigType.PrintingV2) && (
                       <label>
                         <span>
                           How many copies do you want to create for each winner?
@@ -1732,7 +1719,7 @@ const ReviewStep = (props: {
           value={
             props.attributes.startSaleTS
               ? moment
-                  .unix(props.attributes.startSaleTS as number)
+                  .unix(props.attributes.startSaleTS)
                   .format('dddd, MMMM Do YYYY, h:mm a')
               : 'Right after successfully published'
           }
@@ -1742,7 +1729,7 @@ const ReviewStep = (props: {
           <Statistic
             title="Listing go live date"
             value={moment
-              .unix(props.attributes.startListTS as number)
+              .unix(props.attributes.startListTS)
               .format('dddd, MMMM Do YYYY, h:mm a')}
           />
         )}
@@ -1752,7 +1739,7 @@ const ReviewStep = (props: {
           value={
             props.attributes.endTS
               ? moment
-                  .unix(props.attributes.endTS as number)
+                  .unix(props.attributes.endTS)
                   .format('dddd, MMMM Do YYYY, h:mm a')
               : 'Until sold'
           }

@@ -14,7 +14,7 @@ export const Identicon = (props: {
     typeof props.address === 'string'
       ? props.address
       : props.address?.toBase58();
-  const ref = useRef<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (address && ref.current) {
@@ -34,5 +34,5 @@ export const Identicon = (props: {
     }
   }, [address, className]);
 
-  return <div title={alt} ref={ref as any} />;
+  return <div title={alt} ref={ref} />;
 };

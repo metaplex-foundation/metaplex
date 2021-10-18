@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { AccountLayout, MintInfo, u64 } from '@solana/spl-token';
@@ -120,7 +126,7 @@ const precacheUserTokenAccounts = async (
   });
 };
 
-export function AccountsProvider({ children = null as any }) {
+export function AccountsProvider({ children = null }: { children: ReactNode }) {
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [tokenAccounts, setTokenAccounts] = useState<TokenAccount[]>([]);
@@ -227,7 +233,7 @@ export function useMint(key?: string | PublicKey) {
 
     cache
       .query(connection, id, MintParser)
-      .then(acc => setMint(acc.info as any))
+      .then(acc => setMint(acc.info))
       .catch(err => console.log(err));
 
     const dispose = cache.emitter.onCache(e => {
@@ -235,7 +241,7 @@ export function useMint(key?: string | PublicKey) {
       if (event.id === id) {
         cache
           .query(connection, id, MintParser)
-          .then(mint => setMint(mint.info as any));
+          .then(mint => setMint(mint.info));
       }
     });
     return () => {

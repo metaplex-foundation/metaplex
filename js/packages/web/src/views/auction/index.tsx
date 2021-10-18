@@ -18,9 +18,11 @@ import { format } from 'timeago.js';
 
 import {
   AuctionState,
+  BidderMetadata,
   formatTokenAmount,
   Identicon,
   MetaplexModal,
+  ParsedAccount,
   shortenAddress,
   StringPublicKey,
   toPublicKey,
@@ -326,7 +328,7 @@ export const AuctionView = () => {
 };
 
 const BidLine = (props: {
-  bid: any;
+  bid: ParsedAccount<BidderMetadata>;
   index: number;
   mint?: MintInfo;
   isCancelled?: boolean;
@@ -432,12 +434,12 @@ const BidLine = (props: {
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
                   >{`@${bidderTwitterHandle}`}</a>
-                  <ClickToCopy copyText={bidder as string} />
+                  <ClickToCopy copyText={bidder} />
                 </Row>
               ) : (
                 <Row>
                   {shortenAddress(bidder)}
-                  <ClickToCopy copyText={bidder as string} />
+                  <ClickToCopy copyText={bidder} />
                 </Row>
               )}
             </span>

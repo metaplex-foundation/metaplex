@@ -34,9 +34,10 @@ export interface WalletModalContextState {
   setVisible: (open: boolean) => void;
 }
 
-export const WalletModalContext = createContext<WalletModalContextState>(
-  {} as WalletModalContextState,
-);
+export const WalletModalContext = createContext<WalletModalContextState>({
+  visible: false,
+  setVisible: () => {},
+});
 
 export function useWalletModal(): WalletModalContextState {
   return useContext(WalletModalContext);

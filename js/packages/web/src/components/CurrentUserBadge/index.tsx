@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import {
@@ -21,7 +21,7 @@ import { SolCircle } from '../Custom';
 
 ('@solana/wallet-adapter-base');
 
-const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
+const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   const { wallet, publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
@@ -79,8 +79,8 @@ const UserActions = (props: { mobile?: boolean; onClick?: any }) => {
 };
 
 const AddFundsModal = (props: {
-  showAddFundsModal: any;
-  setShowAddFundsModal: any;
+  showAddFundsModal: boolean;
+  setShowAddFundsModal: Dispatch<SetStateAction<boolean>>;
   balance: number;
   publicKey: PublicKey;
 }) => {
@@ -138,9 +138,9 @@ export const CurrentUserBadge = (props: {
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
 
-  const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
+  const [showAddFundsModal, setShowAddFundsModal] = useState<boolean>(false);
 
-  if (!wallet || !publicKey) {
+  if (!wallet || !publicKey || !solPrice) {
     return null;
   }
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;
@@ -247,15 +247,15 @@ export const CurrentUserBadgeMobile = (props: {
   showBalance?: boolean;
   showAddress?: boolean;
   iconSize?: number;
-  closeModal?: any;
+  closeModal?: () => void;
 }) => {
   const { wallet, publicKey, disconnect } = useWallet();
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
 
-  const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
+  const [showAddFundsModal, setShowAddFundsModal] = useState<boolean>(false);
 
-  if (!wallet || !publicKey) {
+  if (!wallet || !publicKey || !solPrice) {
     return null;
   }
   const balance = (account?.lamports || 0) / LAMPORTS_PER_SOL;

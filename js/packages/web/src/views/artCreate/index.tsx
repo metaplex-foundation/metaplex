@@ -129,8 +129,10 @@ export const ArtCreateView = () => {
       );
 
       if (_nft) setNft(_nft);
-    } catch (e: any) {
-      setAlertMessage(e.message);
+    } catch (e) {
+      if (typeof e === 'object' && e !== null && 'message' in e) {
+        setAlertMessage(e.message);
+      }
     } finally {
       setMinting(false);
     }
@@ -496,10 +498,12 @@ const UploadStep = (props: {
                         ? 'unknown'
                         : f.type || getLast(f.name.split('.')) || 'unknown';
 
-                    return {
+                    const ret: MetadataFile = {
                       uri,
                       type,
-                    } as MetadataFile;
+                    };
+                    
+                    return ret;
                   }),
               },
               image: coverFile?.name || '',
@@ -1090,7 +1094,7 @@ const WaitingStep = (props: {
     func();
   }, []);
 
-  const setIconForStep = (currentStep: number, componentStep) => {
+  const setIconForStep = (currentStep: number, componentStep: number) => {
     if (currentStep === componentStep) {
       return <LoadingOutlined />;
     }
