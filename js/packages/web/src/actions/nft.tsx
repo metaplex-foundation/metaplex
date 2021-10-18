@@ -142,6 +142,7 @@ export const mintNFT = async (
   // add files to properties
   // first image is added as image
 
+  progressCallback(1)
   let imageSet = false;
   metadataContent.properties.files = []
   uploadedFilePins.files.forEach((file) => {
@@ -168,9 +169,7 @@ export const mintNFT = async (
   const uploadedMetaDataPinResponse = await metaDataUploadResponse.json()
   const uploadedMetaDataPin = uploadedMetaDataPinResponse.files[0]
 
-
-
-  progressCallback(1)
+  progressCallback(2)
 
   const TOKEN_PROGRAM_ID = programIds().token;
 
@@ -228,38 +227,12 @@ export const mintNFT = async (
     instructions,
     wallet.publicKey.toBase58(),
   );
-  progressCallback(2)
-
-  const { txid } = await sendTransactionWithRetry(
-    connection,
-    wallet,
-    instructions,
-    signers,
-    'single',
-  );
-  progressCallback(3)
-
-  try {
-    await connection.confirmTransaction(txid, 'max');
-    progressCallback(4)
-  } catch {
-    // ignore
-  }
-
-  // Force wait for max confirmations
-  // await connection.confirmTransaction(txid, 'max');
-  await connection.getParsedConfirmedTransaction(txid, 'confirmed');
-
-  progressCallback(5)
-
-  // this means we're done getting AR txn setup. Ship it off to ARWeave!
-  progressCallback(6)
 
   if (uploadedMetaDataPin && wallet.publicKey) {
-    const updateInstructions: TransactionInstruction[] = [];
-    const updateSigners: Keypair[] = [];
+    const updateInstructions: TransactionInstruction[] = instructions;
+    const updateSigners: Keypair[] = signers;
 
-    progressCallback(7)
+    progressCallback(3)
 
 
     updateInstructions.push(
@@ -284,9 +257,9 @@ export const mintNFT = async (
       updateInstructions,
     );
 
-    progressCallback(8)
+    progressCallback(4)
 
-    const txid = await sendTransactionWithRetry(
+    await sendTransactionWithRetry(
       connection,
       wallet,
       updateInstructions,
