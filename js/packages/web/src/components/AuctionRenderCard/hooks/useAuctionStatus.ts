@@ -1,5 +1,17 @@
-import { formatTokenAmount, fromLamports, useMint, PriceFloorType } from '@oyster/common';
-import { AuctionView, AuctionViewState, useBidsForAuction, useHighestBidForAuction } from '../../../hooks';
+import {
+  AuctionState,
+  BidStateType,
+  formatTokenAmount,
+  fromLamports,
+  PriceFloorType,
+  useMint,
+} from '@oyster/common';
+import {
+  AuctionView,
+  AuctionViewState,
+  useBidsForAuction,
+  useHighestBidForAuction,
+} from '../../../hooks';
 import { BN } from 'bn.js';
 
 interface AuctionStatusLabels {
@@ -22,36 +34,47 @@ export const useAuctionStatus = (
       ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
       : 0;
 
-
   let status = 'Starting Bid';
-  
+
   let amount: string | number = fromLamports(
     participationOnly ? participationFixedPrice : priceFloor,
     mintInfo,
   );
 
   const countdown = auctionView.auction.info.timeToEnd();
+  const isOpen =
+    auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
 
-  let ended = countdown?.hours === 0 && countdown?.minutes === 0 && countdown?.seconds === 0;
+  if (isOpen) {
+    status = 'Open Sale';
+  }
+
+  const ended =
+    countdown?.hours === 0 &&
+    countdown?.minutes === 0 &&
+    countdown?.seconds === 0 &&
+    auctionView.auction.info.state === AuctionState.Ended;
 
   if (auctionView.isInstantSale) {
     const soldOut = bids.length === auctionView.items.length;
-    
+
     status = auctionView.state === AuctionViewState.Ended ? 'Ended' : 'Price';
 
-    if (soldOut) {
+    if (soldOut && !isOpen) {
       status = 'Sold Out';
     }
 
-    amount = formatTokenAmount(auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber());
+    amount = formatTokenAmount(
+      auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),
+    );
 
     return {
       status,
       amount,
-    }
+    };
   }
 
-  if (bids.length > 0) {
+  if (bids.length > 0 && !isOpen) {
     amount = formatTokenAmount(winningBid.info.lastBid);
     status = 'Current Bid';
   }
@@ -60,18 +83,18 @@ export const useAuctionStatus = (
     if (bids.length === 0) {
       return {
         status: 'Ended',
-        amount
-      }
+        amount,
+      };
     }
 
     return {
       status: 'Winning Bid',
-      amount
-    }
+      amount,
+    };
   }
 
   return {
     status,
     amount,
-  }
+  };
 };

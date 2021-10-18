@@ -1602,7 +1602,7 @@ async function getParticipationNft({
   ) {
     console.log(buyer.toBase58(), 'gets participation token.');
     const mint = anchor.web3.Keypair.generate();
-    let signers = [mint];
+    const signers = [mint];
     const tokenAccount = (
       await getParticipationToken(
         fairLaunchObj.authority,
@@ -1610,7 +1610,7 @@ async function getParticipationNft({
       )
     )[0];
     const buyerTokenNft = (await getAtaForMint(mint.publicKey, buyer))[0];
-    let instructions = [
+    const instructions = [
       anchor.web3.SystemProgram.createAccount({
         fromPubkey: payer.publicKey,
         newAccountPubkey: mint.publicKey,
@@ -1685,7 +1685,6 @@ async function punchTicket({
   fairLaunch,
   fairLaunchLotteryBitmap,
   fairLaunchObj,
-  fairLaunchTicketObj,
 }: {
   puncher: anchor.web3.PublicKey;
   anchorProgram: anchor.Program;

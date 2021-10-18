@@ -1,14 +1,17 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
-import React, { useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
+import { HowToBuyModal } from '../../components/HowToBuyModal';
+
+import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
+
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
+import { Link } from 'react-router-dom';
 import { CardLoader } from '../../components/MyLoader';
-import { PreSaleBanner } from '../../components/PreSaleBanner';
 import { useMeta } from '../../contexts';
-import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
+import { Banner } from '../../components/Banner';
 
 const { TabPane } = Tabs;
 
@@ -98,17 +101,6 @@ export const AuctionListView = () => {
       break;
   }
 
-  const heroAuction = useMemo(
-    () =>
-      auctions.filter(a => {
-        // const now = moment().unix();
-        return !a.auction.info.ended() && !resaleAuctions.includes(a);
-        // filter out auction for banner that are further than 30 days in the future
-        // return Math.floor(delta / 86400) <= 30;
-      })?.[0],
-    [auctions],
-  );
-
   const liveAuctionsView = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
@@ -117,10 +109,6 @@ export const AuctionListView = () => {
     >
       {!isLoading
         ? items.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
-
             const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
@@ -139,10 +127,6 @@ export const AuctionListView = () => {
     >
       {!isLoading
         ? auctionsEnded.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
-
             const id = m.auction.pubkey;
             return (
               <Link to={`/auction/${id}`} key={idx}>
@@ -156,54 +140,52 @@ export const AuctionListView = () => {
 
   return (
     <>
-      <PreSaleBanner auction={heroAuction} />
+      <Banner
+        src={'/main-banner.svg'}
+        headingText={'The amazing world of Metaplex.'}
+        subHeadingText={'Buy exclusive Metaplex NFTs.'}
+        actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
+        useBannerBg={true}
+      />
       <Layout>
         <Content style={{ display: 'flex', flexWrap: 'wrap' }}>
-          <Col style={{ width: '100%', marginTop: 10 }}>
-            {liveAuctions.length >= 0 && (
-              <Row>
-                <Tabs
-                  activeKey={activeKey}
-                  onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
+          <Col style={{ width: '100%', marginTop: 32 }}>
+            <Row>
+              <Tabs
+                activeKey={activeKey}
+                onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
+              >
+                <TabPane
+                  tab={
+                    <>
+                      <span className={'live'}></span> Live
+                    </>
+                  }
+                  key={LiveAuctionViewState.All}
                 >
+                  {liveAuctionsView}
+                </TabPane>
+                {resaleAuctions.length > 0 && (
                   <TabPane
-                    tab={<span className="tab-title">Live Auctions</span>}
-                    key={LiveAuctionViewState.All}
+                    tab={'Secondary Marketplace'}
+                    key={LiveAuctionViewState.Resale}
                   >
                     {liveAuctionsView}
                   </TabPane>
-                  {auctionsEnded.length > 0 && (
-                    <TabPane
-                      tab={
-                        <span className="tab-title">Secondary Marketplace</span>
-                      }
-                      key={LiveAuctionViewState.Resale}
-                    >
-                      {liveAuctionsView}
-                    </TabPane>
-                  )}
-                  {auctionsEnded.length > 0 && (
-                    <TabPane
-                      tab={<span className="tab-title">Ended Auctions</span>}
-                      key={LiveAuctionViewState.Ended}
-                    >
-                      {endedAuctions}
-                    </TabPane>
-                  )}
-                  {
-                    // Show all participated live and ended auctions except hero auction
-                  }
-                  {connected && (
-                    <TabPane
-                      tab={<span className="tab-title">Participated</span>}
-                      key={LiveAuctionViewState.Participated}
-                    >
-                      {liveAuctionsView}
-                    </TabPane>
-                  )}
-                </Tabs>
-              </Row>
-            )}
+                )}
+                <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
+                  {endedAuctions}
+                </TabPane>
+                {connected && (
+                  <TabPane
+                    tab={'Participated'}
+                    key={LiveAuctionViewState.Participated}
+                  >
+                    {liveAuctionsView}
+                  </TabPane>
+                )}
+              </Tabs>
+            </Row>
           </Col>
         </Content>
       </Layout>
