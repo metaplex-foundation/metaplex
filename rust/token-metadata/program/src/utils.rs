@@ -62,7 +62,6 @@ pub fn assert_data_valid(
             if creators.is_empty() {
                 return Err(MetadataError::CreatorsMustBeAtleastOne.into());
             } else {
-                let mut found = false;
                 let mut total: u8 = 0;
                 for i in 0..creators.len() {
                     let creator = &creators[i];
@@ -76,9 +75,6 @@ pub fn assert_data_valid(
                         .checked_add(creator.share)
                         .ok_or(MetadataError::NumericalOverflowError)?;
 
-                    if creator.address == *update_authority {
-                        found = true;
-                    }
 
                     // Dont allow metadata owner to unilaterally say a creator verified...
                     // cross check with array, only let them say verified=true here if
@@ -119,9 +115,6 @@ pub fn assert_data_valid(
                     }
                 }
 
-                if !found && !allow_direct_creator_writes {
-                    return Err(MetadataError::MustBeOneOfCreators.into());
-                }
                 if total != 100 {
                     return Err(MetadataError::ShareTotalMustBe100.into());
                 }
