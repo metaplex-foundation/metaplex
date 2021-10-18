@@ -24,6 +24,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  loadPayoutTickets
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -46,17 +47,30 @@ export const BillingView = () => {
   const auctionView = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();
+  const { patchState } = useMeta();
+  const [loadingBilling, setLoadingBilling] = useState<boolean>();
   const mint = useMint(auctionView?.auction.info.tokenMint);
 
-  return auctionView && wallet && connection && mint ? (
+  useEffect(() => {
+    (async () => {
+      const billingState = await loadPayoutTickets(connection);
+      
+      patchState(billingState);
+      setLoadingBilling(false);
+    })()
+  }, [loadingBilling]);
+
+  return loadingBilling || !auctionView || !wallet || !connection || !mint ? (
+    <div className="app-section--loading">
+      <Spin indicator={<LoadingOutlined />} />
+    </div>
+  ) : (
     <InnerBillingView
       auctionView={auctionView}
       connection={connection}
       wallet={wallet}
       mint={mint}
     />
-  ) : (
-    <Spin indicator={<LoadingOutlined />} />
   );
 };
 
