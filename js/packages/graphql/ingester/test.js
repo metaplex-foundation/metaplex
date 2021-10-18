@@ -1,4 +1,8 @@
-const { getWhitelistedCreatorList, getEditionList } = require('./index');
+const {
+  getWhitelistedCreatorList,
+  getEditionList,
+  createProgramAddressEdition,
+} = require('./index');
 
 describe('ingester', () => {
   describe('getWhitelistedCreator', () => {
@@ -83,7 +87,7 @@ describe('ingester', () => {
     });
   });
 
-  describe('getEdition', () => {
+  describe('getEditionList', () => {
     // const { getEdition } = require('../dist/common');
     const MATRIX_MAP = {
       '2Hzae92ZHV3nsU5ZmakDhmCDvP3jyB43fYpRZYoFqAch':
@@ -114,6 +118,36 @@ describe('ingester', () => {
       const [js, rust] = await testSuite(
         '2Hzae92ZHV3nsU5ZmakDhmCDvP3jyB43fYpRZYoFqAch',
       );
+      expect(rust).toBe(js);
+    });
+  });
+
+  describe.skip('createProgramAddressEdition', () => {
+    const { PublicKey } = require('@solana/web3.js');
+    it('test', async () => {
+      const mint = '9BqKsCv5sVkALuDnZx9YPa51aJqz6Ay57Ao33owWT6wr';
+      const editionNonce = 1;
+      let rust;
+      await createProgramAddressEdition([mint], [editionNonce]).toStream(it => {
+        if (rust) {
+          throw new Error('invalid size');
+        } else {
+          rust = it;
+        }
+      });
+      const metadata = new PublicKey(
+        'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+      );
+      const js = await PublicKey.createProgramAddress(
+        [
+          'metadata',
+          metadata.toBuffer(),
+          new PublicKey(mint).toBuffer(),
+          new Uint8Array([editionNonce]),
+        ],
+        metadata,
+      );
+
       expect(rust).toBe(js);
     });
   });

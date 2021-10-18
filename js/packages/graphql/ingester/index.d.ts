@@ -13,4 +13,4 @@ export function getWhitelistedCreatorList(
 
 export function getEditionList(tokenMintList: string[]): AsyncStream;
 
-export function createProgramAddressEdition(tokenMintList: string[], editionNonceList: number[]): AsyncStream;
+//export function createProgramAddressEdition(tokenMintList: string[], editionNonceList: number[]): AsyncStream;

@@ -4,6 +4,7 @@ import {
   AccountAndPubkey,
   extendBorsh,
   getProgramAccounts,
+  Metadata,
   pubkeyToString,
   PublicKeyStringAndAccount,
   Store,
@@ -27,11 +28,21 @@ export class Loader<TW extends IWriter = IWriter> {
   private readonly cache = {
     creators: new Map<string, WhitelistedCreator>(),
     stores: new Map<string, Store>(),
+    metadata: new Map<string, Metadata>(),
   } as const;
 
   private readonly writerAdapter: IWriter = {
     networkName: this.networkName,
-    flush: () => this.writer.flush(),
+    flush: async () => {
+      if (this.cache.metadata.size) {
+        await Metadata.initBatch(this.cache.metadata.values());
+        this.cache.metadata.forEach((m, key) => {
+          this.writer.persist('metadata', key, m);
+        });
+        this.cache.metadata.clear();
+      }
+      return await this.writer.flush();
+    },
     init: () => this.writer.init(),
     listenModeOn: () => this.writer.listenModeOn(),
     persist: (prop, key, value) => {
@@ -115,7 +126,7 @@ export class Loader<TW extends IWriter = IWriter> {
     accounts: AccountAndPubkey[],
   ) {
     logger.info(
-      `⛏ ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`,
+      `⛏  ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`,
     );
     await createPipelineExecutor(accounts.values(), program.process, {
       jobsCount: 2,
@@ -124,43 +135,47 @@ export class Loader<TW extends IWriter = IWriter> {
     });
 
     if (this.cache.creators.size || this.cache.stores.size) {
-      logger.info('⛏ links creators & stores');
+      logger.info('⛏  links creators & stores');
 
-      /*
-      await Promise.all([
-        this.reader
-          .getCreatorIds()
-          .then(ids => ids.forEach(id => this.cache.creators.delete(id))),
-        this.reader
-          .getStoreIds()
-          .then(ids => ids.forEach(id => this.cache.stores.delete(id))),
-      ]);
-      */
-      const creatorsAddressList = Array.from(this.cache.creators.values()).map(
-        p => p.address,
-      );
       const storeList = Array.from(this.cache.stores.keys());
-      const metadataStream = getWhitelistedCreatorList(
-        creatorsAddressList,
-        storeList,
+
+      const sequence = 100;
+      const creatorsAddressList = new Array<string>(sequence);
+      let counter = 0;
+      await createPipelineExecutor(
+        this.cache.creators.values(),
+        p => {
+          creatorsAddressList[counter] = p.address;
+          counter++;
+        },
+        {
+          jobsCount: 1,
+          sequence,
+          delay: async () => {
+            const creatorsList =
+              counter < sequence
+                ? creatorsAddressList.slice(0, counter)
+                : creatorsAddressList;
+            await getWhitelistedCreatorList(creatorsList, storeList).toStream(
+              chunk => {
+                const address: string = chunk[0];
+                const storeId: string = chunk[4];
+                const creator = this.cache.creators.get(address);
+                const store = this.cache.stores.get(storeId);
+                if (creator && store) {
+                  if (!store.creatorIds.includes(creator.pubkey)) {
+                    store.creatorIds.push(creator.pubkey);
+                  }
+                  if (creator.storeId) {
+                    creator.storeId = storeId;
+                  }
+                }
+              },
+            );
+            counter = 0;
+          },
+        },
       );
-      await new Promise(resolve => {
-        metadataStream.on('data', chunk => {
-          const address: string = chunk[0];
-          const storeId: string = chunk[4];
-          const creator = this.cache.creators.get(address);
-          const store = this.cache.stores.get(storeId);
-          if (creator && store) {
-            if (!store.creatorIds.includes(creator.pubkey)) {
-              store.creatorIds.push(creator.pubkey);
-            }
-            if (creator.storeId) {
-              creator.storeId = storeId;
-            }
-          }
-        });
-        metadataStream.on('end', resolve);
-      });
 
       this.cache.stores.forEach((store, storeId) => {
         this.writer.persist('stores', storeId, store);
@@ -177,7 +192,7 @@ export class Loader<TW extends IWriter = IWriter> {
 
     await this.writerAdapter.flush();
     logger.info(
-      `⛏ ${this.networkName} - accounts processed for ${program.pubkey}`,
+      `⛏  ${this.networkName} - accounts processed for ${program.pubkey}`,
     );
   }
 

@@ -26,11 +26,11 @@ export const processMetaData: ProcessAccountsFunc = async (
         isValidHttpUrl(metadata.data.uri) &&
         metadata.data.uri.indexOf('arweave') >= 0
       ) {
-        try {
-          await metadata.init();
-        } catch {
-          // nothing
-        }
+        //try {
+        //  await metadata.init();
+        //} catch {
+        //  // nothing
+        //}
         await setter('metadata', pubkey, metadata);
       }
     }

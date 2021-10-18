@@ -58,7 +58,7 @@ module.exports.getEditionList = function (tokenMintList) {
     'edition',
   ]);
 };
-
+/*
 module.exports.createProgramAddressEdition = function (
   tokenMintList,
   editionNonceList,
@@ -71,3 +71,4 @@ module.exports.createProgramAddressEdition = function (
     editionNonceList.map(p => `${p ?? 0}`),
   ]);
 };
+*/

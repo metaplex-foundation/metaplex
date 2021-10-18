@@ -9,11 +9,26 @@ import { Db } from 'mongodb';
 import { getEndpoints } from '../../utils/getEndpoints';
 
 export class MongoAdapter implements IDataAdapter<MongoWriter, MongoReader> {
+  private connectionString =
+    process.env.MONGO_DB ||
+    'mongodb://127.0.0.1:27017/?readPreference=primary&directConnection=true&ssl=false';
+
+  private dbName = (name: string) => `metaplex-${name}`;
+
   constructor(
     public readonly endpoints = getEndpoints(),
-    private connectionString = process.env.MONGO_DB ||
-      'mongodb://127.0.0.1:27017/?readPreference=primary&directConnection=true&ssl=false',
-  ) {}
+    options?: {
+      connectionString?: string;
+      dbName?: (val: string) => string;
+    },
+  ) {
+    if (options?.connectionString) {
+      this.connectionString = options.connectionString;
+    }
+    if (options?.dbName) {
+      this.dbName = options.dbName;
+    }
+  }
 
   private readonly container = new Map<
     string,
@@ -34,7 +49,7 @@ export class MongoAdapter implements IDataAdapter<MongoWriter, MongoReader> {
       if (db) {
         return db;
       }
-      const orm = await createOrm(this.connectionString, `metaplex-${network}`);
+      const orm = await createOrm(this.connectionString, this.dbName(network));
       db = orm.db;
       return db;
     };
