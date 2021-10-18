@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Form, Button, Space } from 'antd';
-import { Creator } from "@oyster/common";
+import { Creator } from '@oyster/common';
 
-import { ArtSelector } from "../../auctionCreate/artSelector";
-import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
+import { ArtSelector } from '../../auctionCreate/artSelector';
+import { SafetyDepositDraft } from '../../../actions/createAuctionManager';
 
 const AddVoucher = ({ attributes, setAttributes, confirm, backButton }) => {
   const onSubmit = (values: any) => {
     console.log('Success:', values);
-    confirm(2)
+    confirm(2);
   };
 
   const onSubmitFailed = (errorInfo: any) => {
@@ -18,10 +18,10 @@ const AddVoucher = ({ attributes, setAttributes, confirm, backButton }) => {
   const handleVoucherCountUpdate = (e, id) => {
     const { value } = e.target;
     const current = { [id]: value };
-    const listUpdated = { ...attributes.vouchersCount, ...current }
+    const listUpdated = { ...attributes.vouchersCount, ...current };
 
     setAttributes({ ...attributes, vouchersCount: listUpdated });
-  }
+  };
 
   const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
@@ -44,7 +44,7 @@ const AddVoucher = ({ attributes, setAttributes, confirm, backButton }) => {
           setSelected={vouchersItems => {
             setAttributes({ ...attributes, vouchersItems });
           }}
-          selectedCount={(id) => attributes.vouchersCount[id]}
+          selectedCount={id => attributes.vouchersCount[id]}
           allowMultiple={false}
         >
           Select NFT
@@ -61,6 +61,6 @@ const AddVoucher = ({ attributes, setAttributes, confirm, backButton }) => {
       </Form>
     </div>
   );
-}
+};
 
 export default AddVoucher;

@@ -111,7 +111,9 @@ export const ArtCard = (props: ArtCardProps) => {
               </>
             )} */}
             <div className="edition-badge">{badge}</div>
-            {count && <div className="edition-badge">Selected count: {count}</div>}
+            {count && (
+              <div className="edition-badge">Selected count: {count}</div>
+            )}
           </>
         }
       />

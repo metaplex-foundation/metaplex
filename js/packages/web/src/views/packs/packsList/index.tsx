@@ -1,5 +1,15 @@
 import React from 'react';
-import { Button, Typography, List, Avatar, Space, Switch, Row, Col, Divider } from 'antd';
+import {
+  Button,
+  Typography,
+  List,
+  Avatar,
+  Space,
+  Switch,
+  Row,
+  Col,
+  Divider,
+} from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 
 import PackItem from './packItem';
@@ -14,11 +24,11 @@ const list = [
   {
     name: 'Pack2',
     card: 'CardName2',
-    voucher: 'VoucherName2'
+    voucher: 'VoucherName2',
   },
   {
     name: 'Pack3',
-    voucher: 'VoucherName3'
+    voucher: 'VoucherName3',
   },
 ];
 
@@ -44,65 +54,73 @@ const PacksList = () => {
     content: () => (
       <>
         <Divider />
-        {
-          pack.voucher && (
-            <Row style={{ marginBottom: 20 }}>
-              <Col flex="150px" style={{
-                display: "flex",
+        {pack.voucher && (
+          <Row style={{ marginBottom: 20 }}>
+            <Col
+              flex="150px"
+              style={{
+                display: 'flex',
                 alignItems: 'center',
-              }}>
-                <Text>Delete voucher:</Text>
-              </Col>
-              <Col flex="auto" style={{
-                display: "flex",
+              }}
+            >
+              <Text>Delete voucher:</Text>
+            </Col>
+            <Col
+              flex="auto"
+              style={{
+                display: 'flex',
                 alignItems: 'center',
-              }}>
-                <Text>{pack.voucher}</Text>
-              </Col>
-              <Col flex="40px">
-                <Button
-                  onClick={() => onDeleteVoucher(pack.voucher)}
-                  size="small"
-                  style={{ height: 32 }}
-                  danger
-                >
-                  <DeleteOutlined />
-                </Button>
-              </Col>
-            </Row>
-          )
-        }
-        {
-          pack.card && (
-            <Row>
-              <Col flex="150px" style={{
-                display: "flex",
+              }}
+            >
+              <Text>{pack.voucher}</Text>
+            </Col>
+            <Col flex="40px">
+              <Button
+                onClick={() => onDeleteVoucher(pack.voucher)}
+                size="small"
+                style={{ height: 32 }}
+                danger
+              >
+                <DeleteOutlined />
+              </Button>
+            </Col>
+          </Row>
+        )}
+        {pack.card && (
+          <Row>
+            <Col
+              flex="150px"
+              style={{
+                display: 'flex',
                 alignItems: 'center',
-              }}>
-                <Text>Delete card:</Text>
-              </Col>
-              <Col flex="auto" style={{
-                display: "flex",
+              }}
+            >
+              <Text>Delete card:</Text>
+            </Col>
+            <Col
+              flex="auto"
+              style={{
+                display: 'flex',
                 alignItems: 'center',
-              }}>
-                <Text>{pack.card}</Text>
-              </Col>
-              <Col flex="40px">
-                <Button
-                  onClick={() => onDeleteCard(pack.card)}
-                  size="small"
-                  style={{ height: 32 }}
-                  danger
-                >
-                  <DeleteOutlined />
-                </Button>
-              </Col>
-            </Row>
-          )
-        }
+              }}
+            >
+              <Text>{pack.card}</Text>
+            </Col>
+            <Col flex="40px">
+              <Button
+                onClick={() => onDeleteCard(pack.card)}
+                size="small"
+                style={{ height: 32 }}
+                danger
+              >
+                <DeleteOutlined />
+              </Button>
+            </Col>
+          </Row>
+        )}
         <Divider />
       </>
-    )
+    ),
   }));
 
   return (
@@ -117,12 +135,10 @@ const PacksList = () => {
           pageSize: 3,
         }}
         dataSource={listData}
-        renderItem={item => (
-          <PackItem pack={item} />
-        )}
+        renderItem={item => <PackItem pack={item} />}
       />
     </div>
   );
-}
+};
 
 export default PacksList;

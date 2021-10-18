@@ -1,43 +1,41 @@
 import React from 'react';
 import { Form, Input, Button, Select, Switch, DatePicker } from 'antd';
 import { initPackSet } from '@oyster/common/dist/lib/models/metaplex/initPackSet';
-import { useWallet } from "@solana/wallet-adapter-react";
-import {Keypair, SystemProgram, TransactionInstruction} from "@solana/web3.js";
+import { useWallet } from '@solana/wallet-adapter-react';
 import {
-  sendTransactionWithRetry,
-  useConnection,
-} from '@oyster/common';
+  Keypair,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import { sendTransactionWithRetry, useConnection } from '@oyster/common';
 
 import { PACK_CREATE_ID } from '../../../utils/ids';
 
 const { Option } = Select;
 const valueU32 = 4294967295;
 
-function CreatePack({ confirm } ) {
+function CreatePack({ confirm }) {
   const wallet = useWallet();
   const connection = useConnection();
 
   const onSubmit = (values: any) => {
-    setupInitPackInstructions(values)
-      .then(({ instructions, signers }) => {
-        sendTransactionWithRetry(
-          connection,
-          wallet,
-          instructions,
-          signers,
-          'single',
-        ).then((res) => {
-          console.log('setupInitPackInstructions:', res);
-          confirm(1)
-        })
-      })
+    setupInitPackInstructions(values).then(({ instructions, signers }) => {
+      sendTransactionWithRetry(
+        connection,
+        wallet,
+        instructions,
+        signers,
+        'single',
+      ).then(res => {
+        console.log('setupInitPackInstructions:', res);
+        confirm(1);
+      });
+    });
   };
 
-  async function setupInitPackInstructions(
-    values,
-  ): Promise<{
+  async function setupInitPackInstructions(values): Promise<{
     instructions: TransactionInstruction[];
-    signers: any
+    signers: any;
   }> {
     const {
       name,
@@ -50,9 +48,8 @@ function CreatePack({ confirm } ) {
     } = values;
 
     const packSet = Keypair.generate();
-    const packSetRentExempt = await connection.getMinimumBalanceForRentExemption(
-      338,
-    );
+    const packSetRentExempt =
+      await connection.getMinimumBalanceForRentExemption(338);
     const instructions: TransactionInstruction[] = [];
     if (wallet?.publicKey) {
       instructions.push(
@@ -67,7 +64,7 @@ function CreatePack({ confirm } ) {
     }
 
     const nameArray = Array.from(String(name), Number);
-    const nameUint32 = new Uint32Array(nameArray)
+    const nameUint32 = new Uint32Array(nameArray);
 
     if (packSet.publicKey && wallet.publicKey) {
       await initPackSet(
@@ -80,19 +77,19 @@ function CreatePack({ confirm } ) {
         redeem_start_date || null,
         redeem_end_date || null,
         packSet.publicKey,
-        wallet.publicKey.toBase58()
-      )
+        wallet.publicKey.toBase58(),
+      );
     }
 
     return { instructions, signers: [packSet] };
   }
 
   const onFinishFailed = (errorInfo: any) => {
-      console.log('Failed:', errorInfo);
+    console.log('Failed:', errorInfo);
   };
 
   const onMutableChange = (value: any) => {
-      console.log('onMutableChange:', value);
+    console.log('onMutableChange:', value);
   };
 
   return (
@@ -106,14 +103,18 @@ function CreatePack({ confirm } ) {
         layout="vertical"
       >
         <Form.Item
-            label="Name"
-            name="name"
-            rules={[{ required: true, message: 'Please input pack name' }]}
+          label="Name"
+          name="name"
+          rules={[{ required: true, message: 'Please input pack name' }]}
         >
-          <Input type={"number"} min={1} />
+          <Input type={'number'} min={1} />
         </Form.Item>
 
-        <Form.Item name="distribution_type" label="Distribution type" rules={[{ required: true }]}>
+        <Form.Item
+          name="distribution_type"
+          label="Distribution type"
+          rules={[{ required: true }]}
+        >
           <Select
             className="select"
             placeholder="Select a option and change input text above"
@@ -129,35 +130,27 @@ function CreatePack({ confirm } ) {
         <Form.Item
           label="Allowed amount to redeem"
           name="allowed_amount_to_redeem"
-          rules={[{ required: true, message: 'Please input allowed amount to redeem!' }]}
+          rules={[
+            {
+              required: true,
+              message: 'Please input allowed amount to redeem!',
+            },
+          ]}
         >
-          <Input type={"number"} min={1} max={valueU32} />
+          <Input type={'number'} min={1} max={valueU32} />
         </Form.Item>
 
-        <Form.Item
-          label="Poster URL"
-          name="uri"
-        >
+        <Form.Item label="Poster URL" name="uri">
           <Input />
         </Form.Item>
 
-        <Form.Item
-          label="Redeem start date"
-          name="redeem_start_date"
-        >
-            <DatePicker className="date-picker" style={{ width: '100%' }}/>
-        </Form.Item>
-        <Form.Item
-          label="Redeem end date"
-          name="redeem_end_date"
-        >
+        <Form.Item label="Redeem start date" name="redeem_start_date">
           <DatePicker className="date-picker" style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item
-          label="Mutable"
-          name="mutable"
-          valuePropName="mutable"
-        >
+        <Form.Item label="Redeem end date" name="redeem_end_date">
+          <DatePicker className="date-picker" style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item label="Mutable" name="mutable" valuePropName="mutable">
           <Switch />
         </Form.Item>
 

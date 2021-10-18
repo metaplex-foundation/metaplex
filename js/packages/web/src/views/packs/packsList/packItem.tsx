@@ -1,10 +1,20 @@
 import React, { useState, memo } from 'react';
-import { Button, List, Divider, Space, Switch, Avatar, Typography, Form, Input } from 'antd';
+import {
+  Button,
+  List,
+  Divider,
+  Space,
+  Switch,
+  Avatar,
+  Typography,
+  Form,
+  Input,
+} from 'antd';
 
 const { Text, Title } = Typography;
 
 const PackItem = ({ pack }) => {
-  const [ editMode, setEditMode ] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const onEdit = (id: string) => {
     setEditMode(true);
     console.log('onDelete:', id);
@@ -33,14 +43,14 @@ const PackItem = ({ pack }) => {
       actions={[
         <Space
           style={{
-            display: "flex",
-            alignItems: 'center'
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Text>Activate pack:</Text>
           <Switch
             defaultChecked={pack.activate}
-            onClick={(checked) => onActivate(checked, pack.id)}
+            onClick={checked => onActivate(checked, pack.id)}
           />
         </Space>,
         <Button
@@ -57,13 +67,13 @@ const PackItem = ({ pack }) => {
           danger
         >
           Reclaim items
-        </Button>
+        </Button>,
       ]}
       style={{
         marginBottom: 30,
         paddingBottom: 40,
         borderWidth: 3,
-        borderColor: "#ccc"
+        borderColor: '#ccc',
       }}
       extra={
         <img
@@ -78,40 +88,37 @@ const PackItem = ({ pack }) => {
         title={<a href={pack.href}>{pack.title}</a>}
         description={pack.description}
       />
-      { (pack.voucherId || pack.cardId) && pack.content()}
-      {
-        editMode && (
-          <>
-            <Form
-              name="editPack"
-              labelCol={{ span: 8 }}
-              wrapperCol={{ span: 16 }}
-              initialValues={{ remember: true }}
-              onFinish={onSubmitEditPack}
-              onFinishFailed={onSubmitEditPackFailed}
-              autoComplete="off"
-              layout="vertical"
-              style={{ paddingLeft: 30 }}
+      {(pack.voucherId || pack.cardId) && pack.content()}
+      {editMode && (
+        <>
+          <Form
+            name="editPack"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 16 }}
+            initialValues={{ remember: true }}
+            onFinish={onSubmitEditPack}
+            onFinishFailed={onSubmitEditPackFailed}
+            autoComplete="off"
+            layout="vertical"
+            style={{ paddingLeft: 30 }}
+          >
+            <Form.Item
+              label="New Name"
+              name="name"
+              rules={[
+                { required: true, message: 'Please input new pack name' },
+              ]}
+              style={{ paddingTop: 10 }}
             >
-              <Form.Item
-                label="New Name"
-                name="name"
-                rules={[{ required: true, message: 'Please input new pack name' }]}
-                style={{ paddingTop: 10 }}
-              >
-                <Input />
-              </Form.Item>
+              <Input />
+            </Form.Item>
 
-              <Form.Item
-                label="Mutable"
-                name="mutable"
-                valuePropName="mutable"
-              >
-                <Switch />
-              </Form.Item>
+            <Form.Item label="Mutable" name="mutable" valuePropName="mutable">
+              <Switch />
+            </Form.Item>
 
-              <Form.Item style={{ paddingBottom: 10 }}>
-                <Space>
+            <Form.Item style={{ paddingBottom: 10 }}>
+              <Space>
                 <Button
                   type="primary"
                   htmlType="submit"
@@ -127,15 +134,14 @@ const PackItem = ({ pack }) => {
                 >
                   Cancel
                 </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-            <Divider />
-          </>
-        )
-      }
+              </Space>
+            </Form.Item>
+          </Form>
+          <Divider />
+        </>
+      )}
     </List.Item>
-  )
+  );
 };
 
 export default memo(PackItem);

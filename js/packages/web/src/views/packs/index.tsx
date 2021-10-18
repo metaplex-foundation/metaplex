@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Layout, Button, Row, Col, Typography } from 'antd';
-import { useHistory } from "react-router-dom";
+import { useHistory } from 'react-router-dom';
 
 import PacksList from './packsList';
 
@@ -16,19 +16,21 @@ const AdminPacksView = () => {
           <Typography.Title
             level={3}
             style={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
             }}
           >
             List of Packs
           </Typography.Title>
         </Col>
 
-        <Col span={4} offset={12} style={{ display: "flex", justifyContent: "end" }}>
-          <Button
-            onClick={() => history.push(`/admin/pack/create/0`)}
-          >
+        <Col
+          span={4}
+          offset={12}
+          style={{ display: 'flex', justifyContent: 'end' }}
+        >
+          <Button onClick={() => history.push(`/admin/pack/create/0`)}>
             Create Pack
           </Button>
         </Col>
@@ -39,4 +41,4 @@ const AdminPacksView = () => {
   );
 };
 
-export default memo(AdminPacksView)
+export default memo(AdminPacksView);

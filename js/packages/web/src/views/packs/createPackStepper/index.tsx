@@ -1,13 +1,13 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Row, Col, Steps, Typography } from 'antd';
-import {useHistory, useParams} from "react-router-dom";
+import { useHistory, useParams } from 'react-router-dom';
 
 import CreatePack from '../createPack';
 import AddVoucher from '../voucher';
 import AddCard from '../card';
 import FinalStep from '../final';
-import useWindowDimensions from "../../../utils/layout";
-import {AuctionState} from "../../auctionCreate";
+import useWindowDimensions from '../../../utils/layout';
+import { AuctionState } from '../../auctionCreate';
 
 const { Step } = Steps;
 
@@ -54,20 +54,13 @@ function CreatePackStepper() {
 
   const renderBackButton = () => (
     <div style={{ margin: 'auto', width: 'fit-content' }}>
-      <Button
-        onClick={() => gotoNextStep(step - 1)}
-        style={{ height: 50 }}
-      >
+      <Button onClick={() => gotoNextStep(step - 1)} style={{ height: 50 }}>
         Back
       </Button>
     </div>
   );
 
-  const createPackStep = (
-    <CreatePack
-      confirm={gotoNextStep}
-    />
-  );
+  const createPackStep = <CreatePack confirm={gotoNextStep} />;
 
   const addVoucherStep = (
     <AddVoucher
@@ -101,7 +94,7 @@ function CreatePackStepper() {
     ['Add Voucher', addVoucherStep],
     ['Add Card', addCardStep],
     ['Final', finalStep],
-  ]
+  ];
 
   return (
     <>
@@ -110,19 +103,21 @@ function CreatePackStepper() {
           <Typography.Title
             level={3}
             style={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
             }}
           >
             Create Pack
           </Typography.Title>
         </Col>
 
-        <Col span={4} offset={12} style={{ display: "flex", justifyContent: "end" }}>
-          <Button
-            onClick={() => history.push(`/admin/packs`)}
-          >
+        <Col
+          span={4}
+          offset={12}
+          style={{ display: 'flex', justifyContent: 'end' }}
+        >
+          <Button onClick={() => history.push(`/admin/packs`)}>
             List of Packs
           </Button>
         </Col>

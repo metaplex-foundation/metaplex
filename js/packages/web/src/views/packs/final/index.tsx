@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Form, Button, Space } from 'antd';
-import { Creator } from "@oyster/common";
+import { Creator } from '@oyster/common';
 
-import { ArtSelector } from "../../auctionCreate/artSelector";
-import { SafetyDepositDraft } from "../../../actions/createAuctionManager";
-import {ArtContent} from "../../../components/ArtContent";
+import { ArtSelector } from '../../auctionCreate/artSelector';
+import { ArtContent } from '../../../components/ArtContent';
 
 function FinalStep({ attributes, confirm, backButton }) {
-
+  console.log('attributes', attributes);
 
   return (
     <div className="form-box">
@@ -17,7 +16,12 @@ function FinalStep({ attributes, confirm, backButton }) {
       {/*  height={20}*/}
       {/*  width={20}*/}
       {/*/>*/}
-      {backButton}
+      <div>
+        <Button type="primary" htmlType="submit">
+          Create pack
+        </Button>
+        {backButton}
+      </div>
     </div>
   );
 }
