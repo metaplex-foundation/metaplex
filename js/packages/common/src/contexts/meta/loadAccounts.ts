@@ -29,6 +29,7 @@ import {
   AuctionManagerV2,
   getBidRedemption,
   getPrizeTrackingTicket,
+  MAX_PAYOUT_TICKET_SIZE,
 } from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
@@ -184,6 +185,26 @@ export const loadAccounts = async (
   ];
 
   await Promise.all(loading);
+
+  return state;
+};
+
+export const loadPayoutTickets = async (
+  connection: Connection,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const responses = await getProgramAccounts(connection, METAPLEX_ID, {
+    filters: [
+      {
+        dataSize: MAX_PAYOUT_TICKET_SIZE,
+      },
+    ],
+  })
+  
+  await forEachAccount(processMetaplexAccounts)(responses);
 
   return state;
 };

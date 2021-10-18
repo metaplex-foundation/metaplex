@@ -24,6 +24,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  loadPayoutTickets
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -37,7 +38,7 @@ import {
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LineOutlined, LoadingOutlined } from '@ant-design/icons';
 const { Content } = Layout;
 const { Text } = Typography;
 
@@ -46,17 +47,30 @@ export const BillingView = () => {
   const auctionView = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();
+  const { patchState } = useMeta();
+  const [loadingBilling, setLoadingBilling] = useState<boolean>(true);
   const mint = useMint(auctionView?.auction.info.tokenMint);
 
-  return auctionView && wallet && connection && mint ? (
+  useEffect(() => {
+    (async () => {
+      const billingState = await loadPayoutTickets(connection);
+
+      patchState(billingState);
+      setLoadingBilling(false);
+    })()
+  }, [loadingBilling]);
+
+  return loadingBilling || !auctionView || !wallet || !connection || !mint ? (
+    <div className="app-section--loading">
+      <Spin indicator={<LoadingOutlined />} />
+    </div>
+  ) : (
     <InnerBillingView
       auctionView={auctionView}
       connection={connection}
       wallet={wallet}
       mint={mint}
     />
-  ) : (
-    <Spin indicator={<LoadingOutlined />} />
   );
 };
 
@@ -124,76 +138,85 @@ function useWinnerPotsByBidderKey(
 
 function usePayoutTickets(
   auctionView: AuctionView,
-): Record<string, { tickets: ParsedAccount<PayoutTicket>[]; sum: number }> {
+): {
+  payoutTickets: Record<string, { tickets: ParsedAccount<PayoutTicket>[]; sum: number }>;
+  loading: boolean
+} {
   const { payoutTickets } = useMeta();
   const [foundPayoutTickets, setFoundPayoutTickets] = useState<
     Record<string, ParsedAccount<PayoutTicket>>
   >({});
 
+  const [loadingPayoutTickets, setLoadingPayoutTickets] = useState<boolean>(true);
+
   useEffect(() => {
-    if (
-      auctionView.items
-        .flat()
-        .map(i => i.metadata)
-        .filter(i => !i).length
-    ) {
-      return;
-    }
-    const currFound = { ...foundPayoutTickets };
-    // items are in exact order of winningConfigs + order of bid winners
-    // when we moved to tiered auctions items will be array of arrays, remember this...
-    // this becomes triple loop
-    const prizeArrays = [
-      ...auctionView.items,
-      ...(auctionView.participationItem
-        ? [[auctionView.participationItem]]
-        : []),
-    ];
-    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
-      [];
-    let total = 0;
-    for (let i = 0; i < prizeArrays.length; i++) {
-      const items = prizeArrays[i];
-      for (let j = 0; j < items.length; j++) {
-        const item = items[j];
-        const creators = item.metadata?.info?.data?.creators || [];
-        const recipientAddresses = creators
-          ? creators
-            .map(c => c.address)
-            .concat([auctionView.auctionManager.authority])
-          : [auctionView.auctionManager.authority];
-
-        for (let k = 0; k < recipientAddresses.length; k++) {
-          // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
-          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
-
-          if (!currFound[key]) {
-            payoutPromises.push({
-              key,
-              promise: getPayoutTicket(
-                auctionView.auctionManager.pubkey,
-                item === auctionView.participationItem ? null : i,
-                item === auctionView.participationItem ? null : j,
-                k < recipientAddresses.length - 1 ? k : null,
-                item.safetyDeposit.pubkey,
-                recipientAddresses[k],
-              ),
-            });
-            total += 1;
+    (async () => {
+      if (
+        auctionView.items
+          .flat()
+          .map(i => i.metadata)
+          .filter(i => !i).length
+      ) {
+        return;
+      }
+      const currFound = { ...foundPayoutTickets };
+      // items are in exact order of winningConfigs + order of bid winners
+      // when we moved to tiered auctions items will be array of arrays, remember this...
+      // this becomes triple loop
+      const prizeArrays = [
+        ...auctionView.items,
+        ...(auctionView.participationItem
+          ? [[auctionView.participationItem]]
+          : []),
+      ];
+      const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
+        [];
+      let total = 0;
+      for (let i = 0; i < prizeArrays.length; i++) {
+        const items = prizeArrays[i];
+        for (let j = 0; j < items.length; j++) {
+          const item = items[j];
+          const creators = item.metadata?.info?.data?.creators || [];
+          const recipientAddresses = creators
+            ? creators
+              .map(c => c.address)
+              .concat([auctionView.auctionManager.authority])
+            : [auctionView.auctionManager.authority];
+  
+          for (let k = 0; k < recipientAddresses.length; k++) {
+            // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
+            const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
+  
+            if (!currFound[key]) {
+              payoutPromises.push({
+                key,
+                promise: getPayoutTicket(
+                  auctionView.auctionManager.pubkey,
+                  item === auctionView.participationItem ? null : i,
+                  item === auctionView.participationItem ? null : j,
+                  k < recipientAddresses.length - 1 ? k : null,
+                  item.safetyDeposit.pubkey,
+                  recipientAddresses[k],
+                ),
+              });
+              total += 1;
+            }
           }
         }
       }
-    }
-    Promise.all(payoutPromises.map(p => p.promise)).then(
-      (payoutKeys: StringPublicKey[]) => {
-        payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
-          if (payoutTickets[payoutKey])
-            currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
-        });
+      await Promise.all(payoutPromises.map(p => p.promise)).then(
+        (payoutKeys: StringPublicKey[]) => {
+          payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
+            if (payoutTickets[payoutKey])
+              currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
+          });
+  
+          setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
+        },
+      );
 
-        setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
-      },
-    );
+      setLoadingPayoutTickets(false)
+    })()
   }, [
     Object.values(payoutTickets).length,
     auctionView.items
@@ -202,26 +225,29 @@ function usePayoutTickets(
       .filter(i => !!i).length,
   ]);
 
-  return Object.values(foundPayoutTickets).reduce(
-    (
-      acc: Record<
-        string,
-        { tickets: ParsedAccount<PayoutTicket>[]; sum: number }
-      >,
-      el: ParsedAccount<PayoutTicket>,
-    ) => {
-      if (!acc[el.info.recipient]) {
-        acc[el.info.recipient] = {
-          sum: 0,
-          tickets: [],
-        };
-      }
-      acc[el.info.recipient].tickets.push(el);
-      acc[el.info.recipient].sum += el.info.amountPaid.toNumber();
-      return acc;
-    },
-    {},
-  );
+  return {
+    payoutTickets: Object.values(foundPayoutTickets).reduce(
+      (
+        acc: Record<
+          string,
+          { tickets: ParsedAccount<PayoutTicket>[]; sum: number }
+        >,
+        el: ParsedAccount<PayoutTicket>,
+      ) => {
+        if (!acc[el.info.recipient]) {
+          acc[el.info.recipient] = {
+            sum: 0,
+            tickets: [],
+          };
+        }
+        acc[el.info.recipient].tickets.push(el);
+        acc[el.info.recipient].sum += el.info.amountPaid.toNumber();
+        return acc;
+      },
+      {},
+    ),
+    loading: loadingPayoutTickets,
+  };
 }
 
 export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
@@ -233,7 +259,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
 
   const bids = useBidsForAuction(auctionView.auction.pubkey);
 
-  const payoutTickets = usePayoutTickets(auctionView);
+  const { loading, payoutTickets } = usePayoutTickets(auctionView);
   const winners = [...auctionView.auction.info.bidState.bids]
     .reverse()
     .slice(0, auctionView.auctionManager.numWinners.toNumber());
@@ -358,6 +384,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     participationPossibleTotal,
     participationUnredeemedTotal,
     hasParticipation,
+    loading,
   };
 }
 
@@ -403,6 +430,7 @@ export const InnerBillingView = ({
     participationPossibleTotal,
     participationUnredeemedTotal,
     hasParticipation,
+    loading,
   } = useBillingInfo({
     auctionView,
   });
@@ -472,7 +500,7 @@ export const InnerBillingView = ({
             <br />
             <div className="info-header">TOTAL IN ESCROW</div>
             <div className="escrow">
-              {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin />}
+              {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin indicator={<LoadingOutlined />} />}
             </div>
             <br />
             {hasParticipation && (
@@ -521,6 +549,10 @@ export const InnerBillingView = ({
         <Row>
           <Col span={24}>
             <Table
+              loading={{
+                spinning: loading,
+                indicator: <LoadingOutlined />,
+              }}
               columns={[
                 {
                   title: 'Name',
