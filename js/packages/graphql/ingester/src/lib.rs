@@ -21,62 +21,84 @@ fn to_vec(cx: &mut FunctionContext, list: &Handle<JsValue>) -> NeonResult<Vec<St
     }
 }
 
-trait Finder {
-    fn try_find_address(
+trait AddressJob {
+    fn try_manipulate_with_address(
         &self,
         program_id: &Pubkey,
         a1: &String,
         a2: &String,
         a3: &String,
         a4: &String,
-    ) -> Option<(Pubkey, u8)>;
+    ) -> Option<Pubkey>;
 }
 
 struct FinderPubKey;
-impl Finder for FinderPubKey {
-    fn try_find_address(
+impl AddressJob for FinderPubKey {
+    fn try_manipulate_with_address(
         &self,
         program_id: &Pubkey,
         a1: &String,
         a2: &String,
         a3: &String,
         a4: &String,
-    ) -> Option<(Pubkey, u8)> {
-        let s2 = Pubkey::from_str(&a2[..]).unwrap();
-        let s3 = Pubkey::from_str(&a3[..]).unwrap();
-        let s4 = Pubkey::from_str(&a4[..]).unwrap();
+    ) -> Option<Pubkey> {
+        let s2 = Pubkey::from_str(&a2[..]).ok()?;
+        let s3 = Pubkey::from_str(&a3[..]).ok()?;
+        let s4 = Pubkey::from_str(&a4[..]).ok()?;
         let seeds = [a1.as_bytes(), s2.as_ref(), s3.as_ref(), s4.as_ref()];
-        Pubkey::try_find_program_address(&seeds, &program_id)
+        let (key, _) = Pubkey::try_find_program_address(&seeds, &program_id)?;
+        Some(key)
     }
 }
 
 struct FinderLastBuf;
-impl Finder for FinderLastBuf {
-    fn try_find_address(
+impl AddressJob for FinderLastBuf {
+    fn try_manipulate_with_address(
         &self,
         program_id: &Pubkey,
         a1: &String,
         a2: &String,
         a3: &String,
         a4: &String,
-    ) -> Option<(Pubkey, u8)> {
-        println!("XXX {} {} {} {}", a1, a2, a3, a4);
-        let s2 = Pubkey::from_str(&a2[..]).unwrap();
-        let s3 = Pubkey::from_str(&a3[..]).unwrap();
+    ) -> Option<Pubkey> {
+        let s2 = Pubkey::from_str(&a2[..]).ok()?;
+        let s3 = Pubkey::from_str(&a3[..]).ok()?;
         let seeds = [a1.as_bytes(), s2.as_ref(), s3.as_ref(), a4.as_bytes()];
-        Pubkey::try_find_program_address(&seeds, &program_id)
+        let (key, _) = Pubkey::try_find_program_address(&seeds, &program_id)?;
+        Some(key)
     }
 }
 
-fn get_finder(mode: &str) -> Option<Box<dyn Finder>> {
+struct CreateAddress3Pubkey;
+impl AddressJob for CreateAddress3Pubkey {
+    fn try_manipulate_with_address(
+        &self,
+        program_id: &Pubkey,
+        a1: &String,
+        a2: &String,
+        a3: &String,
+        a4: &String,
+    ) -> Option<Pubkey> {
+        let s2 = Pubkey::from_str(&a2[..]).ok()?;
+        let s3 = Pubkey::from_str(&a3[..]).ok()?;
+        let s4 = a4.parse::<u8>().ok()?;
+        let s4 = [s4];
+        let seeds = [a1.as_bytes(), s2.as_ref(), s3.as_ref(), &s4];
+        let key = Pubkey::create_program_address(&seeds, &program_id).ok()?;
+        Some(key)
+    }
+}
+
+fn get_finder(mode: &str) -> Option<Box<dyn AddressJob>> {
     match mode {
         "FinderPubKey" => Some(Box::new(FinderPubKey {})),
         "FinderLastBuf" => Some(Box::new(FinderLastBuf {})),
+        "CreateAddress3Pubkey" => Some(Box::new(CreateAddress3Pubkey {})),
         _ => None,
     }
 }
 
-fn find_program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+fn program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let mode = cx.argument::<JsString>(0)?.value(&mut cx);
 
     let program_key = cx.argument::<JsString>(1)?.value(&mut cx);
@@ -101,10 +123,15 @@ fn find_program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
             let block2_n = cx.string(&block2);
             for block3 in &blocks3 {
                 for block4 in &blocks4 {
-                    let address =
-                        finder.try_find_address(&program_id, &block1, &block2, block3, block4);
+                    let address = finder.try_manipulate_with_address(
+                        &program_id,
+                        &block1,
+                        &block2,
+                        block3,
+                        block4,
+                    );
 
-                    if let Some((key, _)) = address {
+                    if let Some(key) = address {
                         let key = key.to_string();
                         let key = cx.string(key);
                         let val3 = cx.string(block3);
@@ -123,6 +150,6 @@ fn find_program_address(mut cx: FunctionContext) -> JsResult<JsUndefined> {
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    cx.export_function("findProgramAddressList", find_program_address)?;
+    cx.export_function("programAddressList", program_address)?;
     Ok(())
 }

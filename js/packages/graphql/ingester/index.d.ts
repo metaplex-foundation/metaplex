@@ -1,13 +1,16 @@
 import type { PassThrough } from 'stream';
 
-export function findProgramAddressList(
-  programId: string,
-  seeds: [string, string, string[], string[]],
-): PassThrough;
+export interface AsyncStream {
+  stream: PassThrough;
+  exec(): void;
+  toStream(cb: (data: [string, string, string, string, string]) => void): Promise<void>;
+}
 
 export function getWhitelistedCreatorList(
   creatorAddress: string[],
   stores: string[],
-): PassThrough;
+): AsyncStream;
 
-export function getEditionList(tokenMintList: string[]): PassThrough;
+export function getEditionList(tokenMintList: string[]): AsyncStream;
+
+export function createProgramAddressEdition(tokenMintList: string[], editionNonceList: number[]): AsyncStream;

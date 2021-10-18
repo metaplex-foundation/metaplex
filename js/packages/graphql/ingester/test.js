@@ -38,16 +38,14 @@ describe('ingester', () => {
     async function testSuite(address, storeId) {
       const creatorAddress = [address];
       const store = [storeId];
-      const stream = getWhitelistedCreatorList(creatorAddress, store);
       let item;
-      stream.on('data', it => {
+      await getWhitelistedCreatorList(creatorAddress, store).toStream(it => {
         if (item) {
           throw new Error('invalid size');
         } else {
           item = it;
         }
       });
-      await new Promise(resolve => stream.on('end', resolve));
       const res = await getWhitelistedCreator(item[4], item[3]);
       return [res, item[0], item];
     }
@@ -100,16 +98,14 @@ describe('ingester', () => {
     }
 
     async function testSuite(tokenMint) {
-      const stream = getEditionList([tokenMint]);
       let item;
-      stream.on('data', it => {
+      await getEditionList([tokenMint]).toStream(it => {
         if (item) {
           throw new Error('invalid size');
         } else {
           item = it;
         }
       });
-      await new Promise(resolve => stream.on('end', resolve));
       const js = await getEdition(tokenMint);
       return [js, item[0], item];
     }
