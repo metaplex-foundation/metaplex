@@ -2,7 +2,7 @@ import path from 'path';
 import log from 'loglevel';
 import { validate } from 'jsonschema';
 
-import { EXTENSION_JSON, EXTENSION_PNG } from '../../helpers/constants';
+import { EXTENSION_JSON } from '../../helpers/constants';
 import tokenMetadataJsonSchema from './token-metadata.schema.json';
 
 type TokenMetadata = {
@@ -13,30 +13,30 @@ type TokenMetadata = {
   };
 };
 
-export const verifyAssets = ({ files, uploadElementsCount }) => {
-  const pngFileCount = files.filter(it => {
-    return it.endsWith(EXTENSION_PNG);
+export const verifyAssets = ({ files, uploadElementsCount, imageType }) => {
+  const imageFileCount = files.filter(it => {
+    return it.endsWith(`.${imageType}`);
   }).length;
   const jsonFileCount = files.filter(it => {
     return it.endsWith(EXTENSION_JSON);
   }).length;
 
   const parsedNumber = parseInt(uploadElementsCount, 10);
-  const elemCount = parsedNumber ?? pngFileCount;
+  const elemCount = parsedNumber ?? imageFileCount;
 
-  if (pngFileCount !== jsonFileCount) {
+  if (imageFileCount !== jsonFileCount) {
     throw new Error(
-      `number of png files (${pngFileCount}) is different than the number of json files (${jsonFileCount})`,
+      `number of ${imageType} files (${imageFileCount}) is different than the number of json files (${jsonFileCount})`,
     );
   }
 
-  if (elemCount < pngFileCount) {
+  if (elemCount < imageFileCount) {
     throw new Error(
-      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${pngFileCount})`,
+      `max number (${elemCount}) cannot be smaller than the number of elements in the source folder (${imageFileCount})`,
     );
   }
 
-  log.info(`Verifying token metadata for ${pngFileCount} (png+json) pairs`);
+  log.info(`Verifying token metadata for ${imageFileCount} (${imageType}+json) pairs`);
 };
 
 export const verifyAggregateShare = (
@@ -84,8 +84,8 @@ export const verifyCreatorCollation = (
   }
 };
 
-export const verifyImageURL = (image, files, manifestFile) => {
-  const expectedImagePath = `image${EXTENSION_PNG}`;
+export const verifyImageURL = (image, imageType, files, manifestFile) => {
+  const expectedImagePath = `image.${imageType}`;
   if (image !== expectedImagePath) {
     // We _could_ match against this in the JSON schema validation, but it is totally valid to have arbitrary URLs to images here.
     // The downside, though, is that those images will not get uploaded to Arweave since they're not on-disk.
@@ -95,10 +95,10 @@ If you want us to take care of getting this into Arweave, make sure to set \`ima
 The \`metaplex upload\` command will automatically substitute this URL with the Arweave URL location.
     `);
   }
-  const pngFiles = files.filter(file => file.type === 'image/png');
-  if (pngFiles.length === 0 || !pngFiles.some(file => file.uri === image)) {
+  const imageFiles = files.filter(file => file.type === `image/${imageType}`);
+  if (imageFiles.length === 0 || !imageFiles.some(file => file.uri === image)) {
     throw new Error(
-      `At least one entry with the \`image/png\` type in the \`properties.files\` array is expected to match the \`image\` property.`,
+      `At least one entry with the \`image/${imageType}\` type in the \`properties.files\` array is expected to match the \`image\` property.`,
     );
   }
 };
@@ -116,7 +116,7 @@ export const verifyConsistentShares = (collatedCreators: CollatedCreators) => {
   }
 };
 
-export const verifyMetadataManifests = ({ files }) => {
+export const verifyMetadataManifests = ({ files, imageType }) => {
   const manifestFiles = files.filter(
     file => path.extname(file) === EXTENSION_JSON,
   );
@@ -143,7 +143,7 @@ export const verifyMetadataManifests = ({ files }) => {
       image,
       properties: { files },
     } = tokenMetadata;
-    verifyImageURL(image, files, manifestFile);
+    verifyImageURL(image, imageType, files, manifestFile);
   }
 
   verifyConsistentShares(collatedCreators);
@@ -152,12 +152,13 @@ export const verifyMetadataManifests = ({ files }) => {
 export const verifyTokenMetadata = ({
   files,
   uploadElementsCount = null,
+  imageType,
 }): Boolean => {
   // Will we need to deal with the cache?
 
-  verifyAssets({ files, uploadElementsCount });
+  verifyAssets({ files, uploadElementsCount, imageType });
 
-  verifyMetadataManifests({ files });
+  verifyMetadataManifests({ files, imageType });
 
   return true;
 };

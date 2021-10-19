@@ -21,11 +21,12 @@ describe('`metaplex verify_token_metadata`', () => {
   });
 
   it('catches mismatched assets', () => {
+    const imageType = 'png';
     const mismatchedAssets = getFiles(
       path.join(__dirname, '../__fixtures__/mismatchedAssets'),
     );
     expect(() =>
-      verifyTokenMetadata({ files: mismatchedAssets }),
+      verifyTokenMetadata({ files: mismatchedAssets, imageType }),
     ).toThrowErrorMatchingInlineSnapshot(
       `"number of png files (0) is different than the number of json files (1)"`,
     );
@@ -39,6 +40,7 @@ describe('`metaplex verify_token_metadata`', () => {
       expect(() =>
         verifyTokenMetadata({
           files: [invalidSchema, invalidSchema.replace('.json', '.png')],
+          imageType: 'png',
         }),
       ).toThrowErrorMatchingSnapshot();
     });
@@ -74,6 +76,7 @@ describe('`metaplex verify_token_metadata`', () => {
   it('warns when using different image URIs', () => {
     verifyImageURL(
       'https://google.com?ext=png',
+      'png',
       [{ uri: 'https://google.com?ext=png', type: 'image/png' }],
       '0.json',
     );

@@ -6,8 +6,8 @@ import fetch from 'node-fetch';
 import { ARWEAVE_PAYMENT_WALLET } from '../constants';
 import { sendTransactionWithRetryWithKeypair } from '../transactions';
 
-async function upload(data: FormData, manifest, index) {
-  log.debug(`trying to upload ${index}.png: ${manifest.name}`);
+async function upload(data: FormData, manifest, imageType, index) {
+  log.debug(`trying to upload ${index}.${imageType}: ${manifest.name}`);
   return await (
     await fetch(
       'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
@@ -25,6 +25,7 @@ export async function arweaveUpload(
   anchorProgram,
   env,
   image,
+  imageType,
   manifestBuffer,
   manifest,
   index,
@@ -52,12 +53,12 @@ export async function arweaveUpload(
   data.append('transaction', tx['txid']);
   data.append('env', env);
   data.append('file[]', fs.createReadStream(image), {
-    filename: `image.png`,
-    contentType: 'image/png',
+    filename: `image.${imageType}`,
+    contentType: `image/${imageType}`,
   });
   data.append('file[]', manifestBuffer, 'metadata.json');
 
-  const result = await upload(data, manifest, index);
+  const result = await upload(data, manifest, imageType, index);
 
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',

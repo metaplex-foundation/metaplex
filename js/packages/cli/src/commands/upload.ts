@@ -1,4 +1,3 @@
-import { EXTENSION_PNG } from '../helpers/constants';
 import path from 'path';
 import {
   createConfig,
@@ -24,6 +23,7 @@ export async function upload(
   storage: string,
   retainAuthority: boolean,
   mutable: boolean,
+  imageType: string,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
 ): Promise<boolean> {
@@ -46,20 +46,22 @@ export async function upload(
   const seen = {};
   const newFiles = [];
 
+  const imageExtension = `.${imageType}`;
+
   files.forEach(f => {
-    if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-      seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
+    if (!seen[f.replace(imageExtension, '').split('/').pop()]) {
+      seen[f.replace(imageExtension, '').split('/').pop()] = true;
       newFiles.push(f);
     }
   });
   existingInCache.forEach(f => {
     if (!seen[f]) {
       seen[f] = true;
-      newFiles.push(f + '.png');
+      newFiles.push(f + imageExtension);
     }
   });
 
-  const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+  const images = newFiles.filter(val => path.extname(val) === imageExtension);
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
@@ -72,7 +74,7 @@ export async function upload(
   for (let i = 0; i < SIZE; i++) {
     const image = images[i];
     const imageName = path.basename(image);
-    const index = imageName.replace(EXTENSION_PNG, '');
+    const index = imageName.replace(imageExtension, '');
 
     log.debug(`Processing file: ${i}`);
     if (i % 50 === 0) {
@@ -81,12 +83,13 @@ export async function upload(
 
     let link = cacheContent?.items?.[index]?.link;
     if (!link || !cacheContent.program.uuid) {
-      const manifestPath = image.replace(EXTENSION_PNG, '.json');
+      const manifestPath = image.replace(imageExtension, '.json');
+      const imageFileName = `image${imageExtension}`;
       const manifestContent = fs
         .readFileSync(manifestPath)
         .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
+        .replace(imageName, imageFileName)
+        .replace(imageName, imageFileName);
       const manifest = JSON.parse(manifestContent);
 
       const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -133,6 +136,7 @@ export async function upload(
               anchorProgram,
               env,
               image,
+              imageType,
               manifestBuffer,
               manifest,
               index,
@@ -140,7 +144,7 @@ export async function upload(
           } else if (storage === 'ipfs') {
             link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
           } else if (storage === 'aws') {
-            link = await awsUpload(awsS3Bucket, image, manifestBuffer);
+            link = await awsUpload(awsS3Bucket, image, imageType, manifestBuffer);
           }
 
           if (link) {

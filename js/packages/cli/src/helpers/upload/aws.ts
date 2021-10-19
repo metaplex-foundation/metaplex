@@ -34,6 +34,7 @@ async function uploadFile(
 export async function awsUpload(
   awsS3Bucket: string,
   file: string,
+  fileType: string,
   manifestBuffer: Buffer,
 ) {
   const REGION = 'us-east-1'; // TODO: Parameterize this.
@@ -47,7 +48,7 @@ export async function awsUpload(
     s3Client,
     awsS3Bucket,
     filename,
-    'image/png',
+    `image/${fileType}`,
     fileStream,
   );
 
@@ -59,7 +60,8 @@ export async function awsUpload(
   });
   const updatedManifestBuffer = Buffer.from(JSON.stringify(manifestJson));
 
-  const metadataFilename = filename.replace(/.png$/, '.json');
+  const fileTypeRegex = new RegExp(`.${fileType}`);
+  const metadataFilename = filename.replace(fileTypeRegex, '.json');
   const metadataUrl = await uploadFile(
     s3Client,
     awsS3Bucket,
