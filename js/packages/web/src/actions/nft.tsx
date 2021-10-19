@@ -77,7 +77,7 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
   return result;
 };
 
-const nftStorageHolaplexEndpoint = "https://holaplex.com/api/ipfs/upload"
+const nftStorageHolaplexEndpoint = "https://www.holaplex.com/api/ipfs/upload"
 
 export const mintNFT = async (
   connection: Connection,
