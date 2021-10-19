@@ -77,6 +77,8 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
   return result;
 };
 
+const nftStorageHolaplexEndpoint = "https://holaplex.com/api/ipfs/upload"
+
 export const mintNFT = async (
   connection: Connection,
   wallet: WalletSigner | undefined,
@@ -96,6 +98,7 @@ export const mintNFT = async (
   },
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
+  coverFile?: File,
 ): Promise<{
   metadataAccount: StringPublicKey;
 } | void> => {
@@ -133,7 +136,7 @@ export const mintNFT = async (
   });
 
   const uploadResponse = await fetch(
-    "http://localhost:3001/api/ipfs/upload",
+    nftStorageHolaplexEndpoint,
     {
       method: "POST",
       body: fileDataForm,
@@ -146,7 +149,7 @@ export const mintNFT = async (
   let imageSet = false;
   metadataContent.properties.files = []
   uploadedFilePins.files.forEach((file) => {
-    if (!imageSet && /image/.test(file.type)) {
+    if (!coverFile && !imageSet && /image/.test(file.type)) {
       metadataContent.image = file.uri
       imageSet = true;
     }
@@ -156,12 +159,17 @@ export const mintNFT = async (
     })
   })
 
+  if (coverFile) {
+    const coverFileUpload = uploadedFilePins.find(file => file.name == coverFile.name)
+    metadataContent.image = coverFileUpload.uri
+  }
+
   const metaData = new File([JSON.stringify(metadataContent)], RESERVED_METADATA)
   const metaDataFileForm = new FormData()
   metaDataFileForm.append(`file[${metaData.name}]`, metaData, metaData.name)
 
   const metaDataUploadResponse = await fetch(
-    "http://localhost:3001/api/ipfs/upload",
+    nftStorageHolaplexEndpoint,
     {
       method: "POST",
       body: metaDataFileForm,

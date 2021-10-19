@@ -64,6 +64,7 @@ export const ArtCreateView = () => {
   const [nft, setNft] =
     useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
+  const [coverFile, setCoverFile] = useState<File>();
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
@@ -123,6 +124,7 @@ export const ArtCreateView = () => {
         metadata,
         setNFTcreateProgress,
         attributes.properties?.maxSupply,
+        coverFile,
       );
 
       if (_nft) setNft(_nft);
@@ -174,6 +176,7 @@ export const ArtCreateView = () => {
           )}
           {step === 1 && (
             <UploadStep
+              onSetCoverFile={setCoverFile}
               attributes={attributes}
               setAttributes={setAttributes}
               files={files}
@@ -308,41 +311,13 @@ const CategoryStep = (props: {
   );
 };
 
-interface ARValidationError {
-  violation: 'large' | 'small' | null;
-  message: string;
-}
-
-const validateARFileUpload = (file: File | RcFile): ARValidationError => {
-  const sizeKB = file.size / 1024;
-  const fileName = file.name;
-
-  if (sizeKB < 25) {
-    return {
-      violation: 'small',
-      message: `The file ${fileName} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`
-    };
-  }
-
-  if (sizeKB > 10000) {
-    return {
-      violation: 'large',
-      message: `The file ${fileName} is too large. It is ${Math.round(10 * (sizeKB / 1000) / 10)}MB but the maximum supported is 10MB.`
-    };
-  }
-
-  return {
-    violation: null,
-    message: 'The file passed all checks'
-  };
-}
-
 const UploadStep = (props: {
   attributes: IMetadataExtension;
   setAttributes: (attr: IMetadataExtension) => void;
   files: File[];
   setFiles: (files: File[]) => void;
   confirm: () => void;
+  onSetCoverFile?: (File) => void;
 }) => {
   const [coverFile, setCoverFile] = useState<File | undefined>(
     props.files?.[0],
@@ -402,11 +377,7 @@ const UploadStep = (props: {
       <Row className="call-to-action">
         <h2>Now, let's upload your creation</h2>
         <p style={{ fontSize: '1.2rem' }}>
-          Your file will be uploaded to the decentralized web via Arweave.
-          Depending on file type, can take up to 1 minute. Arweave is a new type
-          of storage that backs data with sustainable and perpetual endowments,
-          allowing users and developers to truly store data forever – for the
-          very first time.
+          Your file will be uploaded to the decentralized web via IPFS.
         </p>
       </Row>
       <Row className="content-action">
@@ -428,13 +399,7 @@ const UploadStep = (props: {
               return;
             }
 
-            const { violation, message } = validateARFileUpload(file);
-
-            if (violation) {
-              setCoverArtError(message);
-              return;
-            }
-
+            props.onSetCoverFile && props.onSetCoverFile(file)
             setCoverFile(file);
             setCoverArtError(undefined);
           }}
@@ -475,13 +440,6 @@ const UploadStep = (props: {
               setMainFile(undefined);
 
               if (!file) {
-                return;
-              }
-
-              const { violation, message } = validateARFileUpload(file);
-
-              if (violation) {
-                setMainArtError(message);
                 return;
               }
 
