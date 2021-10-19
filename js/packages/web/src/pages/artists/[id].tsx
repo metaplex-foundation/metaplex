@@ -1,12 +1,12 @@
 import dynamic from 'next/dynamic';
 
 const MainView = dynamic(
-  (() => import('../views').then(mod => mod.HomeView)) as any,
+  (() => import('../../views').then(mod => mod.ArtistView)) as any,
   { ssr: false }
 );
 
 const Providers = dynamic(
-  (() => import('../providers').then(mod => mod.Providers)) as any,
+  (() => import('../../providers').then(mod => mod.Providers)) as any,
   { ssr: false }
 );
 

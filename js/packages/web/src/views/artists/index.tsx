@@ -1,7 +1,7 @@
 import { Col, Layout } from 'antd';
 import React from 'react';
 import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
+import Link from 'next/link'
 import { ArtistCard } from '../../components/ArtistCard';
 import { useMeta } from '../../contexts';
 
@@ -26,18 +26,27 @@ export const ArtistsView = () => {
     >
       {items.map((m, idx) => {
         const id = m.info.address;
+
+        const MyArtistCard = React.forwardRef(({ onClick, href }, ref) => {
+          return (
+            <a href={href} onClick={onClick} ref={ref}>
+              <ArtistCard
+                key={id}
+                artist={{
+                  address: m.info.address,
+                  name: m.info.name || '',
+                  image: m.info.image || '',
+                  link: m.info.twitter || '',
+                  background: m.info.background || '',
+                }}
+              />
+            </a>
+          )
+        })
+
         return (
-          <Link to={`/artists/${id}`} key={idx}>
-            <ArtistCard
-              key={id}
-              artist={{
-                address: m.info.address,
-                name: m.info.name || '',
-                image: m.info.image || '',
-                link: m.info.twitter || '',
-                background: m.info.background || '',
-              }}
-            />
+          <Link href={`/artists/${id}`} key={idx} passHref>
+            <MyArtistCard />
           </Link>
         );
       })}

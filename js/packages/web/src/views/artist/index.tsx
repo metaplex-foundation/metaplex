@@ -1,13 +1,16 @@
 import { Col, Divider, Row } from 'antd';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React from 'react';
 import Masonry from 'react-masonry-css';
-import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
 import { CardLoader } from '../../components/MyLoader';
 import { useCreator, useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
-  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  console.log("router.query", router.query)
+  const id = router.query.id as string;
   const creator = useCreator(id);
   const artwork = useCreatorArts(id);
   const breakpointColumnsObj = {
@@ -27,7 +30,7 @@ export const ArtistView = () => {
         ? artwork.map((m, idx) => {
             const id = m.pubkey;
             return (
-              <Link to={`/art/${id}`} key={idx}>
+              <Link href={`/art/${id}`} key={idx}>
                 <ArtCard key={id} pubkey={m.pubkey} preview={false} />
               </Link>
             );

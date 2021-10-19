@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link'
 import { Button, Menu, Modal } from 'antd';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
@@ -15,13 +15,13 @@ import { ConnectButton } from '@oyster/common';
 
 const getDefaultLinkActions = (connected: boolean) => {
   return [
-    <Link to={`/`} key={'explore'}>
+    <Link href={`/`} key={'explore'}>
       <Button className="app-btn">Explore</Button>
     </Link>,
-    <Link to={`/artworks`} key={'artwork'}>
+    <Link href={`/artworks`} key={'artwork'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
     </Link>,
-    <Link to={`/artists`} key={'artists'}>
+    <Link href={`/artists`} key={'artists'}>
       <Button className="app-btn">Creators</Button>
     </Link>,
   ];
@@ -108,7 +108,7 @@ const MetaplexMenu = () => {
 
 export const LogoLink = () => {
   return (
-    <Link to={`/`}>
+    <Link href={`/`}>
       <img src={'/metaplex-logo.svg'} />
     </Link>
   );
