@@ -7,9 +7,12 @@
 }
 
 .auction-image {
-  margin-left: -30px;
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  aspect-ratio: 1/1;
+  height: 0;
+  padding-bottom: 100%;
+  overflow: hidden;
+  border-radius: 12px;
   @media (max-width: 1100px) {
     margin-left: 0;
   }
@@ -41,25 +44,23 @@
   display: inline-block;
 }
 
-.art-card {
+.auction-render-card {
   min-width: 200px;
   filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.1));
-  border-radius: 8px;
+  border-radius: 12px;
   // border: 0px;
   overflow: hidden;
   margin-bottom: 20px;
 
   .ant-card-body {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: flex-start;
     padding: 0;
     text-align: left;
 
-    /* gradients/metal */
-    background: #212121;
-    // box-shadow: inset 0px 4px 20px rgba(0, 0, 0, 0.3);
-    border-radius: 0px 0px 8px 8px;
+    background: #1E1E1E;
+    border-radius: 0;
   }
 
   .bids {
@@ -68,23 +69,20 @@
 
   .ant-statistic {
     margin-bottom: 0px !important;
-    font-size: 10px !important;
+    font-size: 16px !important;
   }
 
   .create-statistic .ant-statistic-content {
-    font-size: 24px !important;
-    margin-right: 8px;
+    font-size: 16px !important;
+    line-height: 16px !important;
+    margin-right: 5px;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
   }
 
   .create-statistic .ant-statistic-title {
     display: none;
-  }
-
-  .usd {
-    display: flex;
-    align-items: flex-end;
-    padding-bottom: 8px;
-    min-height: 44px;
   }
 
   .ant-card-meta-title {
@@ -94,11 +92,14 @@
     white-space: normal !important;
     min-height: 55px;
   }
-
+  .info-message {
+    opacity: 0.7;
+    font-size: 12px;
+    line-height: 12px;
+  }
   .ant-avatar.ant-avatar-circle,
   h4 {
-    margin-left: 24px;
-    margin-bottom: 8px;
+    margin-right: 8px;
   }
 
   .ant-card-meta-description {
@@ -114,6 +115,40 @@
 
   .ant-image {
     display: block;
+  }
+  .card-art-info{
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px;
+    padding: 16px;
+    width: 100%;
+    .card-artist-info{
+      margin-bottom: 16px;
+      .artist-name {
+        font-size: 14px;
+      }
+    }
+    .art-name {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      margin-top: 20px;
+      font-size: 24px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+    .art-auction-info{
+      margin-top: 32px;
+    }
+  }
+  .card-bid-info {
+    padding: 16px;
+    .usd {
+      padding-bottom: 5px;
+      opacity: 0.7;
+      font-size: 16px !important;
+      line-height: 16px !important;
+      margin-left: 0px;
+    }
   }
 }
 

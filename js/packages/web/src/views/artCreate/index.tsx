@@ -41,7 +41,11 @@ import { useHistory, useParams } from 'react-router-dom';
 import { cleanName, getLast } from '../../utils/utils';
 import { AmountLabel } from '../../components/AmountLabel';
 import useWindowDimensions from '../../utils/layout';
-import { LoadingOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  LoadingOutlined,
+  MinusCircleOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -51,11 +55,11 @@ export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
   const wallet = useWallet();
-  const [alertMessage, setAlertMessage] = useState<string>()
+  const [alertMessage, setAlertMessage] = useState<string>();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const { width } = useWindowDimensions();
-  const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0)
+  const [nftCreateProgress, setNFTcreateProgress] = useState<number>(0);
 
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
@@ -110,7 +114,7 @@ export const ArtCreateView = () => {
       },
     };
     setStepsVisible(false);
-    setMinting(true)
+    setMinting(true);
 
     try {
       const _nft = await mintNFT(
@@ -125,7 +129,7 @@ export const ArtCreateView = () => {
 
       if (_nft) setNft(_nft);
     } catch (e: any) {
-      setAlertMessage(e.message)
+      setAlertMessage(e.message);
     } finally {
       setMinting(false);
     }
@@ -133,7 +137,7 @@ export const ArtCreateView = () => {
 
   return (
     <>
-      <Row style={{ paddingTop: 50 }}>
+      <Row className={'creator-base-page'} style={{ paddingTop: 50 }}>
         {stepsVisible && (
           <Col span={24} md={4}>
             <Steps
@@ -383,7 +387,7 @@ const UploadStep = (props: {
         <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
         <Dragger
           accept=".png,.jpg,.gif,.mp4,.svg"
-          style={{ padding: 20 }}
+          style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
           multiple={false}
           customRequest={info => {
             // dont upload files here, handled outside of the control
@@ -400,7 +404,11 @@ const UploadStep = (props: {
             const sizeKB = file.size / 1024;
 
             if (sizeKB < 25) {
-              setCoverArtError(`The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10}KB but should be at least 25KB.`);
+              setCoverArtError(
+                `The file ${file.name} is too small. It is ${
+                  Math.round(10 * sizeKB) / 10
+                }KB but should be at least 25KB.`,
+              );
               return;
             }
 
@@ -416,11 +424,11 @@ const UploadStep = (props: {
           {coverArtError ? (
             <Text type="danger">{coverArtError}</Text>
           ) : (
-            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
+              Drag and drop, or click to browse
+            </p>
           )}
-
         </Dragger>
-
       </Row>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
         <Row
@@ -453,11 +461,14 @@ const UploadStep = (props: {
             <div className="ant-upload-drag-icon">
               <h3 style={{ fontWeight: 700 }}>Upload your creation</h3>
             </div>
-            <p className="ant-upload-text">Drag and drop, or click to browse</p>
+            <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
+              Drag and drop, or click to browse
+            </p>
           </Dragger>
         </Row>
       )}
       <Form.Item
+        className={'url-form-action'}
         style={{
           width: '100%',
           flexDirection: 'column',
@@ -520,7 +531,11 @@ const UploadStep = (props: {
                   }),
               },
               image: coverFile?.name || '',
-              animation_url: (props.attributes.properties?.category !== MetadataCategory.Image && customURL) ? customURL : mainFile && mainFile.name,
+              animation_url:
+                props.attributes.properties?.category !==
+                  MetadataCategory.Image && customURL
+                  ? customURL
+                  : mainFile && mainFile.name,
             });
             const files = [coverFile, mainFile].filter(f => f) as File[];
 
@@ -1154,10 +1169,10 @@ const WaitingStep = (props: {
 
   const setIconForStep = (currentStep: number, componentStep) => {
     if (currentStep === componentStep) {
-      return <LoadingOutlined />
+      return <LoadingOutlined />;
     }
     return null;
-  }
+  };
 
   return (
     <div
@@ -1171,15 +1186,55 @@ const WaitingStep = (props: {
       <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
-          <Step title="Minting" description="Starting Mint Process" icon={setIconForStep(props.step, 0)} />
-          <Step title="Preparing Assets" icon={setIconForStep(props.step, 1)} />
-          <Step title="Signing Metadata Transaction" description="Approve the transaction from your wallet" icon={setIconForStep(props.step, 2)}  /> 
-          <Step title="Sending Transaction to Solana" description="This will take a few seconds." icon={setIconForStep(props.step, 3)} /> 
-          <Step title="Waiting for Initial Confirmation" icon={setIconForStep(props.step, 4)} />
-          <Step title="Waiting for Final Confirmation" icon={setIconForStep(props.step, 5)} />
-          <Step title="Uploading to Arweave" icon={setIconForStep(props.step, 6)} />
-          <Step title="Updating Metadata" icon={setIconForStep(props.step, 7)} />
-          <Step title="Signing Token Transaction" description="Approve the final transaction from your wallet"  icon={setIconForStep(props.step, 8)}  />
+          <Step
+            className={'white-description'}
+            title="Minting"
+            description="Starting Mint Process"
+            icon={setIconForStep(props.step, 0)}
+          />
+          <Step
+            className={'white-description'}
+            title="Preparing Assets"
+            icon={setIconForStep(props.step, 1)}
+          />
+          <Step
+            className={'white-description'}
+            title="Signing Metadata Transaction"
+            description="Approve the transaction from your wallet"
+            icon={setIconForStep(props.step, 2)}
+          />
+          <Step
+            className={'white-description'}
+            title="Sending Transaction to Solana"
+            description="This will take a few seconds."
+            icon={setIconForStep(props.step, 3)}
+          />
+          <Step
+            className={'white-description'}
+            title="Waiting for Initial Confirmation"
+            icon={setIconForStep(props.step, 4)}
+          />
+          <Step
+            className={'white-description'}
+            title="Waiting for Final Confirmation"
+            icon={setIconForStep(props.step, 5)}
+          />
+          <Step
+            className={'white-description'}
+            title="Uploading to Arweave"
+            icon={setIconForStep(props.step, 6)}
+          />
+          <Step
+            className={'white-description'}
+            title="Updating Metadata"
+            icon={setIconForStep(props.step, 7)}
+          />
+          <Step
+            className={'white-description'}
+            title="Signing Token Transaction"
+            description="Approve the final transaction from your wallet"
+            icon={setIconForStep(props.step, 8)}
+          />
         </Steps>
       </Card>
     </div>
@@ -1189,7 +1244,7 @@ const WaitingStep = (props: {
 const Congrats = (props: {
   nft?: {
     metadataAccount: StringPublicKey;
-  },
+  };
   alert?: string;
 }) => {
   const history = useHistory();
@@ -1197,8 +1252,9 @@ const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
-      url: `${window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
+      url: `${
+        window.location.origin
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
@@ -1213,9 +1269,11 @@ const Congrats = (props: {
       <>
         <div className="waiting-title">Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push("/art/create")}>Back to Create NFT</Button>
+        <Button onClick={_ => history.push('/art/create')}>
+          Back to Create NFT
+        </Button>
       </>
-    )
+    );
   }
 
   return (

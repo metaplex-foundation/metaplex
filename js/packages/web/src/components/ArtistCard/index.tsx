@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from 'antd';
 
 import { Artist } from '../../types';
@@ -11,15 +11,20 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
     <Card
       hoverable={true}
       className={`artist-card`}
-      cover={<div style={{ height: 100 }} />}
+      cover={
+        <div className="header-container">
+          {artist.background ? <img src={artist.background} /> : null}
+        </div>
+      }
+      bordered={false}
     >
-      <div>
-        <MetaAvatar creators={[artist]} size={100} />
+      <>
+        <MetaAvatar creators={[artist]} size={64} />
         <div className="artist-card-name">
           {artist.name || shortenAddress(artist.address || '')}
         </div>
         <div className="artist-card-description">{artist.about}</div>
-      </div>
+      </>
     </Card>
   );
 };

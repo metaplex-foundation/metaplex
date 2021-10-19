@@ -3,7 +3,7 @@
 
 html {
   overflow-y: scroll;
-  width: 100vw;
+  width: 100%;
   overflow-x: hidden;
 }
 #root {
@@ -121,6 +121,9 @@ code {
   margin-left: auto;
   margin-right: auto;
 }
+.text-uppercase {
+  text-transform: uppercase;
+}
 
 .ant-upload.ant-upload-drag {
   border-radius: 8px;
@@ -163,8 +166,9 @@ code {
   height: 100%;
   cursor: pointer;
   margin-left: 10px;
+  color: white;
   :hover {
-    color: @text-color;
+    color: @metaplex-primary-color;
   }
 }
 
@@ -200,6 +204,79 @@ code {
   padding-top: 5px;
 }
 
+h1 {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 2rem;
+}
+.ant-btn:hover{
+  background-color: transparent !important;
+}
+.ant-steps-item-process>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
+  color: hsla(0,0%,100%,.85);
+}
+.ant-steps-item-wait>.ant-steps-item-container>.ant-steps-item-content>.ant-steps-item-title {
+  color: hsla(0,0%,100%,.45);
+}
+.ant-steps-item-wait .ant-steps-item-icon>.ant-steps-icon .ant-steps-icon-dot {
+  background: hsla(0,0%,100%,.3);
+}
+.ant-card{
+  background: #141414;
+}
+.ant-card-bordered {
+  border: 1px solid #303030;
+}
+
+.ant-card-meta-title {
+  color: rgba(255, 255, 255, 0.85);
+}
+.tab-title {
+  color: rgba(255, 255, 255, 0.45);
+}
+.ant-btn {
+  height: 56px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+  background-color: transparent !important;
+  color: white;
+  &.secondary-btn {
+    color: @black-100;
+    background: @metaplex-primary-color !important;
+    border-color: @metaplex-primary-color !important;
+    box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+    border-radius: 8px;
+    width: fit-content;
+
+    &:hover, &:focus {
+      background: transparent !important;
+      border-color: @metaplex-primary-color !important;
+      color: @metaplex-primary-color !important;
+    }
+  }
+
+  &.black-btn {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    width: fit-content;
+
+    &:hover, &:focus {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+  }
+}
+
 model-viewer {
   --poster-color: transparent;
+}
+
+.creator-base-page{
+  @media (max-width: @screen-sm-min) {
+    padding: 15px;
+  }
 }

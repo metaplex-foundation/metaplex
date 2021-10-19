@@ -1161,9 +1161,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await adjustTicket({
       amountNumber,
@@ -1602,7 +1601,7 @@ async function getParticipationNft({
   ) {
     console.log(buyer.toBase58(), 'gets participation token.');
     const mint = anchor.web3.Keypair.generate();
-    let signers = [mint];
+    const signers = [mint];
     const tokenAccount = (
       await getParticipationToken(
         fairLaunchObj.authority,
@@ -1610,7 +1609,7 @@ async function getParticipationNft({
       )
     )[0];
     const buyerTokenNft = (await getAtaForMint(mint.publicKey, buyer))[0];
-    let instructions = [
+    const instructions = [
       anchor.web3.SystemProgram.createAccount({
         fromPubkey: payer.publicKey,
         newAccountPubkey: mint.publicKey,
@@ -1685,7 +1684,6 @@ async function punchTicket({
   fairLaunch,
   fairLaunchLotteryBitmap,
   fairLaunchObj,
-  fairLaunchTicketObj,
 }: {
   puncher: anchor.web3.PublicKey;
   anchorProgram: anchor.Program;
@@ -1764,9 +1762,8 @@ program
       )
     )[0];
 
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     const ticket = await anchorProgram.account.fairLaunchTicket.fetch(
       fairLaunchTicket,
@@ -1942,9 +1939,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const fairLaunchLotteryBitmap = ( //@ts-ignore
-      await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint)
-    )[0];
+    const fairLaunchLotteryBitmap = //@ts-ignore
+    (await getFairLaunchLotteryBitmap(fairLaunchObj.tokenMint))[0];
 
     await anchorProgram.rpc.startPhaseThree({
       accounts: {
@@ -1984,9 +1980,8 @@ program
     const fairLaunchObj = await anchorProgram.account.fairLaunch.fetch(
       fairLaunchKey,
     );
-    const tokenAccount = ( //@ts-ignore
-      await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey)
-    )[0];
+    const tokenAccount = //@ts-ignore
+    (await getAtaForMint(fairLaunchObj.tokenMint, walletKeyPair.publicKey))[0];
 
     const exists = await anchorProgram.provider.connection.getAccountInfo(
       tokenAccount,

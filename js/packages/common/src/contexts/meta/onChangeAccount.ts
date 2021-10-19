@@ -9,7 +9,7 @@ export const onChangeAccount =
   ): ProgramAccountChangeCallback =>
   async info => {
     const pubkey = pubkeyToString(info.accountId);
-    const account =  info.accountInfo
+    const account = info.accountInfo;
 
     await process(
       {
@@ -17,7 +17,7 @@ export const onChangeAccount =
         account: {
           ...account,
           // to make sure these accounts get processed by processAuctions, processVaultData, etc
-          owner: account.owner.toBase58() as unknown as any
+          owner: account.owner.toBase58() as unknown as any,
         },
       },
       setter,
