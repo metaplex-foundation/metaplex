@@ -3,6 +3,7 @@ import {
   Connection,
   GetProgramAccountsConfig,
 } from '@solana/web3.js';
+import { JSONLazyResponse } from '../../utils/JSONLazyResponse';
 import { StringPublicKey } from './ids';
 import { AccountAndPubkey, AccountInfoOwnerString } from './types';
 
@@ -10,7 +11,7 @@ export async function getProgramAccounts(
   connection: Connection,
   programId: StringPublicKey,
   configOrCommitment?: GetProgramAccountsConfig | Commitment,
-): Promise<Array<AccountAndPubkey>> {
+): Promise<JSONLazyResponse<AccountAndPubkey>> {
   const extra: any = {};
   let commitment;
   let encoding;
@@ -38,11 +39,11 @@ export async function getProgramAccounts(
     encoding || 'base64',
     extra,
   );
-  const unsafeRes = await (connection as any)._rpcRequest(
-    'getProgramAccounts',
-    args,
-  );
-  return unsafeResAccounts(unsafeRes.result);
+  const unsafeRes: JSONLazyResponse<{
+    account: AccountInfoOwnerString<[string, string]>;
+    pubkey: string;
+  }> = await (connection as any)._rpcRequest('getProgramAccounts', args);
+  return unsafeRes.transform(unsafeResAccountItem);
 }
 
 export async function getTokenAccountsByOwner(
@@ -71,11 +72,11 @@ export async function getTokenAccountsByOwner(
 
   const args = connection._buildArgs(_args, commitment, 'base64');
 
-  const unsafeRes = await (connection as any)._rpcRequest(
+  const lazyResp: JSONLazyResponse<any> = await (connection as any)._rpcRequest(
     'getTokenAccountsByOwner',
     args,
   );
-
+  const unsafeRes = lazyResp.json<any>();
   return unsafeResAccounts(unsafeRes.result.value);
 }
 
@@ -86,11 +87,11 @@ export async function getAccountInfoAndContext(
 ) {
   const args = connection._buildArgs([publicKey], commitment, 'base64');
 
-  const unsafeRes = await (connection as any)._rpcRequest(
+  const lazyResp: JSONLazyResponse<any> = await (connection as any)._rpcRequest(
     'getAccountInfo',
     args,
   );
-
+  const unsafeRes = lazyResp.json<any>();
   return unsafeAccount(unsafeRes.result.value);
 }
 
@@ -105,14 +106,21 @@ export function unsafeAccount(
   };
 }
 
+export function unsafeResAccountItem(item: {
+  account: AccountInfoOwnerString<[string, string]>;
+  pubkey: string;
+}) {
+  return {
+    account: unsafeAccount(item.account),
+    pubkey: item.pubkey,
+  };
+}
+
 export function unsafeResAccounts(
   data: Array<{
     account: AccountInfoOwnerString<[string, string]>;
     pubkey: string;
   }>,
 ) {
-  return data.map(item => ({
-    account: unsafeAccount(item.account),
-    pubkey: item.pubkey,
-  }));
+  return data.map(unsafeResAccountItem);
 }

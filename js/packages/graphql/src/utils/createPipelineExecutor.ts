@@ -1,8 +1,8 @@
-import { sleep } from "./sleep";
-import logger from "../logger";
+import { sleep } from './sleep';
+import logger from '../logger';
 
 export async function createPipelineExecutor<T>(
-  data: IterableIterator<T>,
+  iter: Iterable<T>,
   executor: (d: T, index: number) => void | Promise<void>,
   {
     delay = 0,
@@ -18,10 +18,11 @@ export async function createPipelineExecutor<T>(
     sequence?: number;
     completeGroup?: number;
     log?: typeof logger;
-  }
+  },
 ) {
   let index = 0;
   let complete = 0;
+  const data = iter[Symbol.iterator]();
 
   function execute<T>(iter: IteratorResult<T, any>) {
     const numIndex = index;

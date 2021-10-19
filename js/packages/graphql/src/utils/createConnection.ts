@@ -1,28 +1,28 @@
-import { parseChunked } from "@discoveryjs/json-ext";
-import { Commitment, Connection, ConnectionConfig } from "@solana/web3.js";
-import fetch from "cross-fetch";
-import logger from "../logger";
-import { sleep } from "./sleep";
+import { Commitment, Connection, ConnectionConfig } from '@solana/web3.js';
+import fetch from 'cross-fetch';
+import logger from '../logger';
+import { sleep } from './sleep';
+import { JSONLazyResponse } from './JSONLazyResponse';
 
 // rewrite me if https://github.com/solana-labs/solana/pull/19821 or
 // https://github.com/solana-labs/solana/pull/20063 will be merged or maybe not so hucky way
 
 export function createConnection(
   endpoint: string,
-  commitmentOrConfig?: Commitment | ConnectionConfig
+  commitmentOrConfig?: Commitment | ConnectionConfig,
 ): Connection {
   const connection = new Connection(endpoint, commitmentOrConfig);
   const client = (connection as any)._rpcClient;
 
   client.callServer = async (
     request: any,
-    callback: (err?: any, data?: any) => void
+    callback: (err?: any, data?: any) => void,
   ) => {
     const options = {
-      method: "POST",
+      method: 'POST',
       body: request,
       headers: Object.assign({
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       }),
     };
     try {
@@ -40,31 +40,25 @@ export function createConnection(
           break;
         }
         logger.error(
-          `Server responded with ${res.status} ${res.statusText}.  Retrying after ${waitTime}ms delay...`
+          `Server responded with ${res.status} ${res.statusText}.  Retrying after ${waitTime}ms delay...`,
         );
         await sleep(waitTime);
         waitTime *= 2;
       }
-      const json = await parseChunked(async function* load() {
-        const buffer = await res.arrayBuffer();
-        const step = 1e8; // 100mb
-        let start = 0;
-        let end = step;
-        while (start < buffer.byteLength) {
-          const chunk = buffer.slice(start, end);
-          yield chunk as Buffer;
-          start = end;
-          end = start + step;
-        }
-      });
+      // internal API of node-fetch
+      // we can use `const arrayBuffer = await res.arrayBuffer()`
+      // but in this case we need to convert <ArrayBuffer> to <Buffer>
+      const buffer: Buffer = await (res as any).buffer();
+      const jsonRespose = JSONLazyResponse.rpcResponse(buffer);
 
-      if (!json) {
+      if (buffer.byteLength === 0) {
         throw new Error(`${res.status} ${res.statusText}: empty response`);
       }
+
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`);
       }
-      callback(null, json);
+      callback(null, jsonRespose);
     } catch (err) {
       callback(err);
     }
@@ -73,7 +67,7 @@ export function createConnection(
   client._parseResponse = (
     err: Error,
     responseObject: any,
-    callback: (err?: Error, data?: any) => void
+    callback: (err?: Error, data?: any) => void,
   ) => {
     if (err) {
       callback(err);

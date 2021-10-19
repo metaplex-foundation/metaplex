@@ -18,6 +18,7 @@ import { PROGRAMS } from './constants';
 import { ProgramParse, IWriter } from './types';
 import { Reader } from '../reader';
 import { getWhitelistedCreatorList } from '../../ingester/index';
+import { JSONLazyResponse } from '../utils/JSONLazyResponse';
 
 extendBorsh(); // it's need for proper work of decoding
 export class Loader<TW extends IWriter = IWriter> {
@@ -123,10 +124,10 @@ export class Loader<TW extends IWriter = IWriter> {
 
   private async processProgramAccounts(
     program: ProgramParse,
-    accounts: AccountAndPubkey[],
+    accounts: JSONLazyResponse<AccountAndPubkey>,
   ) {
     logger.info(
-      `⛏  ${this.networkName} - start processing ${accounts.length} accounts for ${program.pubkey}`,
+      `⛏  ${this.networkName} - start processing accounts for ${program.pubkey}`,
     );
     await createPipelineExecutor(accounts.values(), program.process, {
       jobsCount: 2,
