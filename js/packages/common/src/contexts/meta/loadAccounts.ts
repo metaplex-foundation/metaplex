@@ -387,6 +387,31 @@ export const loadAccounts = async (
   return state;
 };
 
+export const loadVaultsAndContentForAuthority = async (
+  connection: Connection,
+  walletPubkey: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const responses = await getProgramAccounts(connection, VAULT_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset: 1 + // key
+            32 + //token program
+            32, // fraction mint
+          bytes: walletPubkey,
+        }
+      },
+    ],
+  })
+
+  await forEachAccount(processVaultData)(responses);
+
+  return state;
+}
 
 export const loadPayoutTickets = async (
   connection: Connection,
