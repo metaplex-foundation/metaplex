@@ -13,9 +13,20 @@ use {
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
     },
+    solana_gateway::Gateway,
     spl_token::state::{Account, Mint},
     std::cell::Ref,
 };
+
+fn verify_gateway_token<'info>(wallet: &AccountInfo<'info>, gateway_token: &AccountInfo<'info>, gatekeeper_network: Pubkey) -> ProgramResult {
+    let gateway_verification_result = Gateway::verify_gateway_token_account_info(
+        gateway_token,
+        wallet.key,
+        &gatekeeper_network
+    )?;
+    msg!("Gateway Token validated {:?}", gateway_verification_result);
+    Ok(())
+}
 
 const PREFIX: &str = "candy_machine";
 #[program]
@@ -49,6 +60,14 @@ pub mod nft_candy_machine {
 
         if candy_machine.items_redeemed >= candy_machine.data.items_available {
             return Err(ErrorCode::CandyMachineEmpty.into());
+        }
+
+        if let Some(gatekeeper_network) = candy_machine.data.gatekeeper_network {
+            // if a gateway token is required, the last account should be a gateway token
+            assert_eq!(ctx.remaining_accounts.len() > 0, true);
+            let last_account = ctx.remaining_accounts.last().unwrap();
+            // the mint authority is the wallet that should be permissioned. Typically (but not always) the payer
+            verify_gateway_token(&ctx.accounts.mint_authority, last_account, gatekeeper_network)?;
         }
 
         if let Some(mint) = candy_machine.token_mint {
@@ -516,6 +535,7 @@ pub struct CandyMachineData {
     pub price: u64,
     pub items_available: u64,
     pub go_live_date: Option<i64>,
+    pub gatekeeper_network: Option<Pubkey>,
 }
 
 pub const CONFIG_ARRAY_START: usize = 32 + // authority

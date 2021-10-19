@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.36.0",
+    "@identity.com/solana-gateway-ts": "^0.3.3",
     "@project-serum/anchor": "^0.14.0",
     "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",

@@ -16,6 +16,7 @@ import * as anchor from '@project-serum/anchor';
 import { MintLayout, Token } from '@solana/spl-token';
 import { createAssociatedTokenAccountInstruction } from '../helpers/instructions';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
+import {findGatewayToken} from "@identity.com/solana-gateway-ts";
 
 export async function mint(
   keypair: string,
@@ -109,6 +110,16 @@ export async function mint(
   }
   const metadataAddress = await getMetadata(mint.publicKey);
   const masterEdition = await getMasterEdition(mint.publicKey);
+
+  const gatekeeperNetwork = candyMachine.data.gatekeeperNetwork;
+  const gatewayToken = gatekeeperNetwork ? await findGatewayToken(anchorProgram.provider.connection, userKeyPair.publicKey, gatekeeperNetwork) : null;
+  if (gatewayToken) {
+    remainingAccounts.push({
+      pubkey: gatewayToken.publicKey,
+      isWritable: false,
+      isSigner: false,
+    })
+  }
 
   instructions.push(
     await anchorProgram.instruction.mintNft({
