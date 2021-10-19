@@ -1,0 +1,25 @@
+[package]
+name = "stateless-asks"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[features]
+no-entrypoint = []
+test-bpf = []
+
+[dependencies]
+borsh = "0.9.1"
+solana-program = "1.7.11"
+spl-token = { version = "3.2",  features = ["no-entrypoint"] }
+spl-associated-token-account = {version = "1.0.3", features = ["no-entrypoint"]}
+metaplex-token-metadata = { path = "../../token-metadata/program", version = "0.0.1", features = ["no-entrypoint"] }
+thiserror = "1.0"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
