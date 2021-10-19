@@ -138,6 +138,7 @@ export const mintNFT = async (
   const uploadResponse = await fetch(
     nftStorageHolaplexEndpoint,
     {
+      mode: "cors",
       method: "POST",
       body: fileDataForm,
     })
@@ -171,6 +172,7 @@ export const mintNFT = async (
   const metaDataUploadResponse = await fetch(
     nftStorageHolaplexEndpoint,
     {
+      mode: "cors",
       method: "POST",
       body: metaDataFileForm,
     })
