@@ -78,6 +78,12 @@ const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
 };
 
 const nftStorageHolaplexEndpoint = "https://www.holaplex.com/api/ipfs/upload"
+export type PinFileResponse = {
+  uri?: string;
+  name?: string;
+  type?: string;
+  error?: string;
+}
 
 export const mintNFT = async (
   connection: Connection,
@@ -142,7 +148,7 @@ export const mintNFT = async (
       method: "POST",
       body: fileDataForm,
     })
-  const uploadedFilePins = await uploadResponse.json()
+  const uploadedFilePins: { files: PinFileResponse[] } = await uploadResponse.json()
   // add files to properties
   // first image is added as image
 
@@ -150,7 +156,7 @@ export const mintNFT = async (
   let imageSet = false;
   metadataContent.properties.files = []
   uploadedFilePins.files.forEach((file) => {
-    if (!coverFile && !imageSet && /image/.test(file.type)) {
+    if (!coverFile && !imageSet && /image/.test(file.type || '')) {
       metadataContent.image = file.uri
       imageSet = true;
     }
@@ -161,8 +167,10 @@ export const mintNFT = async (
   })
 
   if (coverFile) {
-    const coverFileUpload = uploadedFilePins.find(file => file.name == coverFile.name)
-    metadataContent.image = coverFileUpload.uri
+    const coverFileUpload = uploadedFilePins.files.find(file => file.name == coverFile.name)
+    if (coverFileUpload) {
+      metadataContent.image = coverFileUpload.uri
+    }
   }
 
   const metaData = new File([JSON.stringify(metadataContent)], RESERVED_METADATA)
