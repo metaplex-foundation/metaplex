@@ -18,7 +18,7 @@ export const Settings = ({
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
   const { store } = useMeta();
-
+  const wallet = useWallet();
   return (
     <>
       <div style={{ display: 'grid' }}>
@@ -36,11 +36,13 @@ export const Settings = ({
         </Select>
         {connected && (
           <>
-            {store && (
-              <Link to={`/admin`}>
-                <Button className="app-btn">Admin</Button>
-              </Link>
-            )}
+            {store &&
+              wallet.publicKey?.toBase58() ==
+                process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS && (
+                <Link to={`/admin`}>
+                  <Button className="app-btn">Admin</Button>
+                </Link>
+              )}
             <span>Wallet:</span>
             {publicKey && (
               <Button

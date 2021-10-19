@@ -1,9 +1,9 @@
 import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
-import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
+import { MetadataCategory, MetadataFile } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
-import { useCachedImage, useExtendedArt } from '../../hooks';
+import { useCachedImage } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
@@ -60,13 +60,14 @@ const CachedImageContent = ({
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}
-      loading="lazy"
+      // loading="lazy"
       wrapperStyle={{ ...style }}
-      onLoad={e => {
-        setLoaded(true);
-      }}
-      placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: 200 })}
+      // onLoad={e => {
+      //   setLoaded(true);
+      // }}
+      // placeholder={<ThreeDots />}
+      // {...(loaded ? {} : { height: 200 })}
+      {...({ height: 200 })}
     />
   );
 };
@@ -225,19 +226,6 @@ export const ArtContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
-  const id = pubkeyToString(pubkey);
-
-  const { ref, data } = useExtendedArt(id);
-
-  if (pubkey && data) {
-    uri = data.image;
-    animationURL = data.animation_url;
-  }
-
-  if (pubkey && data?.properties) {
-    files = data.properties.files;
-    category = data.properties.category;
-  }
 
   animationURL = animationURL || '';
 
@@ -293,7 +281,6 @@ export const ArtContent = ({
 
   return (
     <div
-      ref={ref as any}
       style={{
         display: 'flex',
         alignItems: 'center',
