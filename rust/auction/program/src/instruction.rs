@@ -266,7 +266,6 @@ pub fn place_bid_instruction(
         program_id,
         accounts: vec![
             AccountMeta::new(bidder_pubkey, true),
-            AccountMeta::new(bidder_gateway_token, false),
             AccountMeta::new(bidder_token_pubkey, false),
             AccountMeta::new(bidder_pot_pubkey, false),
             AccountMeta::new(bidder_pot_token_pubkey, false),
@@ -280,6 +279,7 @@ pub fn place_bid_instruction(
             AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(solana_program::system_program::id(), false),
             AccountMeta::new_readonly(spl_token::id(), false),
+            AccountMeta::new(bidder_gateway_token, false),
         ],
         data: AuctionInstruction::PlaceBid(args).try_to_vec().unwrap(),
     }

@@ -19,9 +19,11 @@ use {
     metaplex_auction::processor::{AuctionData, AuctionState},
     spl_token::state::Account,
     metaplex_token_vault::state::{Vault, VaultState},
+    metaplex_shared::{
+        error::MetaplexError,
+        state::{Key, Store}
+    }
 };
-use metaplex_shared::error::MetaplexError;
-use metaplex_shared::state::{Key, Store};
 
 pub fn assert_common_checks(
     program_id: &Pubkey,

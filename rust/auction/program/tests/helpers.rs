@@ -1,11 +1,14 @@
-use solana_program::{hash::Hash, program_pack::Pack, pubkey::Pubkey, system_instruction};
+use std::str::FromStr;
+use solana_program::{hash::Hash, program_pack::Pack, pubkey::Pubkey, system_instruction, system_program};
 use solana_program_test::*;
 use solana_sdk::{
     account::Account,
     signature::{Keypair, Signer},
     transaction::Transaction,
     transport::TransportError,
+    sysvar
 };
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use metaplex_auction::{
     instruction,
     processor::{
@@ -141,6 +144,53 @@ pub async fn get_token_supply(banks_client: &mut BanksClient, mint: &Pubkey) -> 
     account_info.supply
 }
 
+pub async fn create_store(
+    banks_client: &mut BanksClient,
+    program_id: &Pubkey,
+    metaplex_program_id: &Pubkey,
+    payer: &Keypair,
+    recent_blockhash: &Hash,
+) -> Result<Pubkey, TransportError> {
+    let (store, _)= Pubkey::find_program_address(
+        &[
+            br"metaplex",
+            &metaplex_program_id.to_bytes(),
+            &payer.pubkey().to_bytes(),
+        ],
+        metaplex_program_id,
+    );
+
+    let metaplex_token_vault_id = Keypair::new().pubkey();
+    let metaplex_token_metadata_id = Keypair::new().pubkey();
+
+    let data = [08,00,00];  // add the data manually to avoid importing metaplex
+    let keys = vec!(
+        AccountMeta::new(store, false),
+        AccountMeta::new_readonly(payer.pubkey(), true),
+        AccountMeta::new_readonly(payer.pubkey(), true),
+        AccountMeta::new_readonly(spl_token::id(), false),
+        AccountMeta::new_readonly(metaplex_token_vault_id, false),
+        AccountMeta::new_readonly(metaplex_token_metadata_id, false),
+        AccountMeta::new_readonly(*program_id, false),
+        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
+    );
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[Instruction::new_with_bytes(
+            *metaplex_program_id,
+            &data,
+            keys,
+        )],
+            Some(&payer.pubkey()),
+            &[payer],
+            *recent_blockhash
+    );
+
+    banks_client.process_transaction(transaction).await?;
+    Ok(store)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub async fn create_auction(
     banks_client: &mut BanksClient,
@@ -156,6 +206,7 @@ pub async fn create_auction(
     price_floor: PriceFloor,
     gap_tick_size_percentage: Option<u8>,
     tick_size: Option<u64>,
+    store: &Pubkey,
 ) -> Result<(), TransportError> {
     let transaction: Transaction;
     if instant_sale_price.is_some() {
@@ -163,12 +214,13 @@ pub async fn create_auction(
             &[instruction::create_auction_instruction_v2(
                 *program_id,
                 payer.pubkey(),
+                *store,
                 CreateAuctionArgsV2 {
                     authority: payer.pubkey(),
                     end_auction_at: None,
                     end_auction_gap: None,
                     resource: *resource,
-                    gatekeeper_network: *gatekeeper_network,
+                    gatekeeper_network: Some(*gatekeeper_network),
                     token_mint: *mint_keypair,
                     winners: WinnerLimit::Capped(max_winners),
                     price_floor,
@@ -192,7 +244,7 @@ pub async fn create_auction(
                     end_auction_at: None,
                     end_auction_gap: None,
                     resource: *resource,
-                    gatekeeper_network: *gatekeeper_network,
+                    gatekeeper_network: Some(*gatekeeper_network),
                     token_mint: *mint_keypair,
                     winners: WinnerLimit::Capped(max_winners),
                     price_floor,

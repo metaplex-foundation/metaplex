@@ -29,11 +29,10 @@ use metaplex_auction::{
 };
 use std::mem;
 use std::borrow::{Borrow, BorrowMut};
+use std::str::FromStr;
 
 mod helpers;
 mod gateway;
-
-
 
 /// Initialize an auction with a random resource, and generate bidders with tokens that can be used
 /// for testing.
@@ -57,9 +56,14 @@ async fn setup_auction(
 ) {
     // Create a program to attach accounts to.
     let program_id = Pubkey::new_unique();
+
+    let metaplex_program_id = Pubkey::from_str("p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98").unwrap();
+
     let mut program_test =
         ProgramTest::new("metaplex_auction", program_id, processor!(process_instruction));
+
     program_test.add_program("solana_gateway_program", gateway_program_id(), None);
+    program_test.add_program("metaplex", metaplex_program_id, None);
 
     // Start executing test.
     let mut context = program_test.start().await;
@@ -72,6 +76,11 @@ async fn setup_auction(
         payer.borrow(),
         &recent_blockhash
     ).await;
+
+    let store = helpers::create_store(
+        &mut banks_client, &program_id, &metaplex_program_id, payer.borrow(), &recent_blockhash
+    ).await
+        .unwrap();
 
     // Create a Token mint to mint some test tokens with.
     let (mint_keypair, mint_manager) =
@@ -99,6 +108,7 @@ async fn setup_auction(
         price_floor,
         gap_tick_size_percentage,
         tick_size,
+        &store,
     )
     .await
     .unwrap();

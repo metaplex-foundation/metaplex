@@ -41,7 +41,6 @@ async fn success() {
             "uri".to_string(),
             None,
             10,
-            Some(new_gatekeeper_network)
         )
         .await
         .unwrap();
@@ -86,7 +85,6 @@ async fn fail_invalid_update_authority() {
             id(),
             test_metadata.pubkey,
             fake_update_authority.pubkey(),
-            None,
             None,
             None,
             None,
