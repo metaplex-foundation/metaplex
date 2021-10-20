@@ -10,13 +10,13 @@ export const ViewOn = ({ id }: { id: string }) => {
   return (
     <>
       <Col>
-        <h6>View on</h6>
+        <h6>View</h6>
         <div style={{ display: 'flex' }}>
           <Button
             className="tag"
             onClick={() => window.open(art.uri || '', '_blank')}
           >
-            Arweave
+            Metadata
           </Button>
           <Button
             className="tag"
@@ -29,7 +29,7 @@ export const ViewOn = ({ id }: { id: string }) => {
               )
             }
           >
-            Solana
+            Transaction
           </Button>
         </div>
       </Col>

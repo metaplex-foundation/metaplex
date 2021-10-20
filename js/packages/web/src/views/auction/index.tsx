@@ -202,13 +202,13 @@ export const AuctionView = () => {
                 </Col>
 
                 <Col offset={2}>
-                  <h6>View on</h6>
+                  <h6>View</h6>
                   <Space direction="horizontal" size="small">
                     <Button
                       className="tag"
                       onClick={() => window.open(art.uri || '', '_blank')}
                     >
-                      Arweave
+                      Metadata
                     </Button>
                     <Button
                       className="tag"
@@ -220,7 +220,7 @@ export const AuctionView = () => {
                         )
                       }
                     >
-                      Solana
+                      Transaction 
                     </Button>
                   </Space>
                 </Col>
