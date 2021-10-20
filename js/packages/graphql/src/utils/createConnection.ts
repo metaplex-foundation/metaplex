@@ -45,15 +45,8 @@ export function createConnection(
         await sleep(waitTime);
         waitTime *= 2;
       }
-      // internal API of node-fetch
-      // we can use `const arrayBuffer = await res.arrayBuffer()`
-      // but in this case we need to convert <ArrayBuffer> to <Buffer>
-      const buffer: Buffer = await (res as any).buffer();
-      const jsonRespose = JSONLazyResponse.rpcResponse(buffer);
 
-      if (buffer.byteLength === 0) {
-        throw new Error(`${res.status} ${res.statusText}: empty response`);
-      }
+      const jsonRespose = JSONLazyResponse.rpcResponse(res.body as any);
 
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`);

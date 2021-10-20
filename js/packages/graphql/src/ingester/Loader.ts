@@ -129,11 +129,13 @@ export class Loader<TW extends IWriter = IWriter> {
     logger.info(
       `⛏  ${this.networkName} - start processing accounts for ${program.pubkey}`,
     );
-    await createPipelineExecutor(accounts.values(), program.process, {
-      jobsCount: 2,
-      sequence: 1000,
-      delay: () => this.writerAdapter.flush(),
-    });
+    for await (const iter of accounts) {
+      await createPipelineExecutor(iter, program.process, {
+        jobsCount: 2,
+        sequence: 1000,
+        delay: () => this.writerAdapter.flush(),
+      });
+    }
 
     if (this.cache.creators.size || this.cache.stores.size) {
       logger.info('⛏  links creators & stores');

@@ -76,7 +76,7 @@ export async function getTokenAccountsByOwner(
     'getTokenAccountsByOwner',
     args,
   );
-  const unsafeRes = lazyResp.json<any>();
+  const unsafeRes = await lazyResp.json<any>();
   return unsafeResAccounts(unsafeRes.result.value);
 }
 
@@ -91,7 +91,7 @@ export async function getAccountInfoAndContext(
     'getAccountInfo',
     args,
   );
-  const unsafeRes = lazyResp.json<any>();
+  const unsafeRes = await lazyResp.json<any>();
   return unsafeAccount(unsafeRes.result.value);
 }
 
