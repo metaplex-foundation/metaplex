@@ -101,25 +101,19 @@ const VideoArtContent = ({
   const content =
     likelyVideo &&
     likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
-      <div className={`${className} square`}>
+      <div className="metaplex-video-content">
         <Stream
           streamRef={(e: any) => playerRef(e)}
           src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
           loop={true}
-          height={600}
-          width={600}
           controls={false}
-          videoDimensions={{
-            videoHeight: 700,
-            videoWidth: 400,
-          }}
           autoplay={true}
           muted={true}
         />
       </div>
     ) : (
       <video
-        className={className}
+        className="metaplex-video-content"
         playsInline={true}
         autoPlay={true}
         muted={true}

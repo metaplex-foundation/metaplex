@@ -31,6 +31,7 @@ import {
   IPartialCreateAuctionArgs,
   MetadataKey,
   StringPublicKey,
+  MetaplexOverlay,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -590,7 +591,11 @@ export const AuctionCreateView = () => {
     <WaitingStep createAuction={createAuction} confirm={() => gotoNextStep()} />
   );
 
-  const congratsStep = <Congrats auction={auctionObj} />;
+  const congratsStep = (
+    <MetaplexOverlay visible={true}>
+      <Congrats auction={auctionObj} />
+    </MetaplexOverlay>
+  );
 
   const stepsByCategory = {
     [AuctionCategory.InstantSale]: [
@@ -1820,22 +1825,20 @@ const Congrats = (props: {
 
   return (
     <>
+      <div>Congratulations! Your auction is now live.</div>
       <div>
-        <div>Congratulations! Your auction is now live.</div>
-        <div>
-          <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
-            <span>Share it on Twitter</span>
-            <span>&gt;</span>
-          </Button>
-          <Button
-            onClick={_ =>
-              history.push(`/auction/${props.auction?.auction.toString()}`)
-            }
-          >
-            <span>See it in your auctions</span>
-            <span>&gt;</span>
-          </Button>
-        </div>
+        <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
+          <span>Share it on Twitter</span>
+          <span>&gt;</span>
+        </Button>
+        <Button
+          onClick={_ =>
+            history.push(`/auction/${props.auction?.auction.toString()}`)
+          }
+        >
+          <span>See it in your auctions</span>
+          <span>&gt;</span>
+        </Button>
       </div>
       <Confetti />
     </>

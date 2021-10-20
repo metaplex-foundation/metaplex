@@ -8,15 +8,15 @@ export const MetaplexOverlay = (
 ) => {
   const { children, ...rest } = props;
 
-  const content = <div>{children}</div>;
+  const content = <div className="metaplex-overlay-content">{children}</div>;
 
   return (
     <Modal
       {...rest}
       centered
       modalRender={() => content}
-      width={'100vw'}
       mask={false}
+      wrapClassName="metaplex-overlay-modal"
     ></Modal>
   );
 };
