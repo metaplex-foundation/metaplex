@@ -1,23 +1,102 @@
 use {
-    crate::{AcceptOffer, ErrorCode},
+    crate::{AuctionHouse, ErrorCode},
     anchor_lang::{
         prelude::*,
         solana_program::{
             program::{invoke, invoke_signed},
+            program_option::COption,
             program_pack::{IsInitialized, Pack},
             system_instruction,
         },
     },
+    anchor_spl::token::Mint,
     metaplex_token_metadata::state::Metadata,
     spl_associated_token_account::get_associated_token_address,
     spl_token,
     spl_token::state::Account,
+    std::{convert::TryInto, slice::Iter},
 };
-pub fn assert_is_ata(ata: &AccountInfo, wallet: &Pubkey, mint: &Pubkey) -> ProgramResult {
+pub fn assert_is_ata(
+    ata: &AccountInfo,
+    wallet: &Pubkey,
+    mint: &Pubkey,
+) -> Result<Account, ProgramError> {
     assert_owned_by(ata, &spl_token::id())?;
     let ata_account: Account = assert_initialized(ata)?;
     assert_keys_equal(ata_account.owner, *wallet)?;
     assert_keys_equal(get_associated_token_address(wallet, mint), *ata.key)?;
+    Ok(ata_account)
+}
+
+pub fn get_fee_payer<'a, 'b>(
+    authority: &UncheckedAccount,
+    auction_house: &anchor_lang::Account<AuctionHouse>,
+    wallet: AccountInfo<'a>,
+    auction_house_fee_account: AccountInfo<'a>,
+    auction_house_seeds: &'b [&'b [u8]],
+) -> Result<(AccountInfo<'a>, &'b [&'b [u8]]), ProgramError> {
+    let mut seeds: &[&[u8]] = &[];
+    let fee_payer: AccountInfo;
+    if authority.to_account_info().is_signer {
+        seeds = auction_house_seeds;
+        fee_payer = auction_house_fee_account;
+    } else if wallet.is_signer {
+        if auction_house.requires_sign_off {
+            return Err(ErrorCode::CannotTakeThisActionWithoutAuctionHouseSignOff.into());
+        }
+        fee_payer = wallet
+    } else {
+        return Err(ErrorCode::NoPayerPresent.into());
+    };
+
+    Ok((fee_payer, &seeds))
+}
+
+pub fn assert_valid_delegation(
+    src_account: &AccountInfo,
+    dst_account: &AccountInfo,
+    src_wallet: &AccountInfo,
+    dst_wallet: &AccountInfo,
+    transfer_authority: &AccountInfo,
+    mint: &anchor_lang::Account<Mint>,
+    paysize: u64,
+) -> ProgramResult {
+    match Account::unpack(&src_account.data.borrow()) {
+        Ok(token_account) => {
+            // Ensure that the delegated amount is exactly equal to the maker_size
+            msg!(
+                "Delegate {}",
+                token_account.delegate.unwrap_or(*src_wallet.key)
+            );
+            msg!("Delegated Amount {}", token_account.delegated_amount);
+            if token_account.delegated_amount != paysize {
+                return Err(ProgramError::InvalidAccountData);
+            }
+            // Ensure that authority is the delegate of this token account
+            msg!("Authority key matches");
+            if token_account.delegate != COption::Some(*transfer_authority.key) {
+                return Err(ProgramError::InvalidAccountData);
+            }
+
+            msg!("Delegate matches");
+            assert_is_ata(src_account, src_wallet.key, &mint.key())?;
+            assert_is_ata(dst_account, dst_wallet.key, &mint.key())?;
+            msg!("ATAs match")
+        }
+        Err(_) => {
+            if mint.key() != spl_token::native_mint::id() {
+                return Err(ErrorCode::ExpectedSolAccount.into());
+            }
+
+            if !src_wallet.is_signer {
+                return Err(ErrorCode::SOLWalletMustSign.into());
+            }
+
+            assert_keys_equal(*src_wallet.key, src_account.key())?;
+            assert_keys_equal(*dst_wallet.key, dst_account.key())?;
+        }
+    }
+
     Ok(())
 }
 
@@ -50,14 +129,13 @@ pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {
 
 #[allow(clippy::too_many_arguments)]
 pub fn pay_creator_fees<'a>(
-    ctx: &Context<'_, '_, '_, 'a, AcceptOffer<'a>>,
-    remaining_account_incr: &mut usize,
+    remaining_accounts: &mut Iter<AccountInfo<'a>>,
     metadata_info: &AccountInfo<'a>,
     src_account_info: &AccountInfo<'a>,
     src_authority_info: &AccountInfo<'a>,
     token_program_info: &AccountInfo<'a>,
-    system_program_info: Option<&AccountInfo<'a>>,
-    fee_mint: &AccountInfo<'a>,
+    system_program_info: &AccountInfo<'a>,
+    fee_mint: &anchor_lang::Account<'a, Mint>,
     size: u64,
     is_native: bool,
     seeds: &[&[u8]],
@@ -85,24 +163,21 @@ pub fn pay_creator_fees<'a>(
                 remaining_fee = remaining_fee
                     .checked_sub(creator_fee)
                     .ok_or(ErrorCode::NumericalOverflow)?;
-                let current_creator_info = &ctx.remaining_accounts[*remaining_account_incr];
-                *remaining_account_incr += 1;
+                let current_creator_info = next_account_info(remaining_accounts)?;
                 assert_keys_equal(creator.address, *current_creator_info.key)?;
                 if !is_native {
-                    let current_creator_token_account_info =
-                        &ctx.remaining_accounts[*remaining_account_incr];
-                    *remaining_account_incr += 1;
+                    let current_creator_token_account_info = next_account_info(remaining_accounts)?;
                     assert_is_ata(
                         current_creator_token_account_info,
                         current_creator_info.key,
-                        fee_mint.key,
+                        &fee_mint.key(),
                     )?;
                     if creator_fee > 0 {
                         if seeds.is_empty() {
                             invoke(
                                 &spl_token::instruction::transfer(
                                     token_program_info.key,
-                                    src_account_info.key,
+                                    &src_account_info.key,
                                     current_creator_token_account_info.key,
                                     src_authority_info.key,
                                     &[],
@@ -119,7 +194,7 @@ pub fn pay_creator_fees<'a>(
                             invoke_signed(
                                 &spl_token::instruction::transfer(
                                     token_program_info.key,
-                                    src_account_info.key,
+                                    &src_account_info.key,
                                     current_creator_token_account_info.key,
                                     src_authority_info.key,
                                     &[],
@@ -140,26 +215,18 @@ pub fn pay_creator_fees<'a>(
                         msg!("Maker cannot pay with native SOL");
                         return Err(ProgramError::InvalidAccountData);
                     }
-                    match system_program_info {
-                        Some(sys_program_info) => {
-                            invoke(
-                                &system_instruction::transfer(
-                                    src_account_info.key,
-                                    current_creator_info.key,
-                                    creator_fee,
-                                ),
-                                &[
-                                    src_account_info.clone(),
-                                    current_creator_info.clone(),
-                                    sys_program_info.clone(),
-                                ],
-                            )?;
-                        }
-                        None => {
-                            msg!("Invalid System Program Info");
-                            return Err(ProgramError::IncorrectProgramId);
-                        }
-                    }
+                    invoke(
+                        &system_instruction::transfer(
+                            &src_account_info.key,
+                            current_creator_info.key,
+                            creator_fee,
+                        ),
+                        &[
+                            src_account_info.clone(),
+                            current_creator_info.clone(),
+                            system_program_info.clone(),
+                        ],
+                    )?;
                 }
             }
         }
@@ -171,4 +238,66 @@ pub fn pay_creator_fees<'a>(
     Ok(remaining_size
         .checked_add(remaining_fee)
         .ok_or(ErrorCode::NumericalOverflow)?)
+}
+
+/// Create account almost from scratch, lifted from
+/// https://github.com/solana-labs/solana-program-library/blob/7d4873c61721aca25464d42cc5ef651a7923ca79/associated-token-account/program/src/processor.rs#L51-L98
+#[inline(always)]
+pub fn create_or_allocate_account_raw<'a>(
+    program_id: Pubkey,
+    new_account_info: &AccountInfo<'a>,
+    rent_sysvar_info: &AccountInfo<'a>,
+    system_program_info: &AccountInfo<'a>,
+    payer_info: &AccountInfo<'a>,
+    size: usize,
+    signer_seeds: &[&[u8]],
+) -> Result<(), ProgramError> {
+    let rent = &Rent::from_account_info(rent_sysvar_info)?;
+    let required_lamports = rent
+        .minimum_balance(size)
+        .max(1)
+        .saturating_sub(new_account_info.lamports());
+
+    if required_lamports > 0 {
+        msg!("Transfer {} lamports to the new account", required_lamports);
+        invoke(
+            &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
+            &[
+                payer_info.clone(),
+                new_account_info.clone(),
+                system_program_info.clone(),
+            ],
+        )?;
+    }
+
+    let accounts = &[new_account_info.clone(), system_program_info.clone()];
+
+    msg!("Allocate space for the account");
+    invoke_signed(
+        &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
+        accounts,
+        &[&signer_seeds],
+    )?;
+
+    msg!("Assign the account to the owning program");
+    invoke_signed(
+        &system_instruction::assign(new_account_info.key, &program_id),
+        accounts,
+        &[&signer_seeds],
+    )?;
+    msg!("Completed assignation!");
+
+    Ok(())
+}
+
+pub fn assert_derivation(
+    program_id: &Pubkey,
+    account: &AccountInfo,
+    path: &[&[u8]],
+) -> Result<u8, ProgramError> {
+    let (key, bump) = Pubkey::find_program_address(&path, program_id);
+    if key != *account.key {
+        return Err(ErrorCode::DerivedKeyInvalid.into());
+    }
+    Ok(bump)
 }
