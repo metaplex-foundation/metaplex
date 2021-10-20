@@ -1,9 +1,9 @@
 import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
-import { MetadataCategory, MetadataFile } from '@oyster/common';
+import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
-import { useCachedImage } from '../../hooks';
+import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
@@ -67,7 +67,7 @@ const CachedImageContent = ({
       // }}
       // placeholder={<ThreeDots />}
       // {...(loaded ? {} : { height: 200 })}
-      {...({ height: 200 })}
+      {...{ height: 200 }}
     />
   );
 };
@@ -113,7 +113,7 @@ const VideoArtContent = ({
 
   const content =
     likelyVideo &&
-      likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
+    likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
       <div className={`${className} square`}>
         <Stream
           streamRef={(e: any) => playerRef(e)}
@@ -176,27 +176,31 @@ const HTMLContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
-  if (!artView){
-    return <CachedImageContent
-    uri={uri}
-    className={className}
-    preview={preview}
-    style={style}
-  />
+  if (!artView) {
+    return (
+      <CachedImageContent
+        uri={uri}
+        className={className}
+        preview={preview}
+        style={style}
+      />
+    );
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
       ? files[0]
       : animationUrl;
   return (
-    <iframe allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+    <iframe
+      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
       sandbox="allow-scripts"
       frameBorder="0"
       src={htmlURL}
       className={className}
-      style={style}></iframe>);
+      style={style}
+    ></iframe>
+  );
 };
-
 
 export const ArtContent = ({
   category,
@@ -226,6 +230,19 @@ export const ArtContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
+  const id = pubkeyToString(pubkey);
+
+  const { data } = useExtendedArt(id);
+
+  if (pubkey && data) {
+    uri = data.image;
+    animationURL = data.animation_url;
+  }
+
+  if (pubkey && data?.properties) {
+    files = data.properties.files;
+    category = data.properties.category;
+  }
 
   animationURL = animationURL || '';
 
@@ -260,7 +277,7 @@ export const ArtContent = ({
         animationURL={animationURL}
         active={active}
       />
-    ) : (category === 'html' || animationUrlExt === 'html') ? (
+    ) : category === 'html' || animationUrlExt === 'html' ? (
       <HTMLContent
         uri={uri}
         animationUrl={animationURL}

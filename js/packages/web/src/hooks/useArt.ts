@@ -14,7 +14,6 @@ import {
 } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
-import { useInView } from 'react-intersection-observer';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -172,7 +171,6 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
-  const { ref, inView } = useInView();
   const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
@@ -183,7 +181,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   );
 
   useEffect(() => {
-    if (inView && id && !data) {
+    if (id && !data) {
       const USE_CDN = false;
       const routeCDN = (uri: string) => {
         let result = uri;
@@ -244,7 +242,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
         }
       }
     }
-  }, [inView, id, data, setData, account]);
+  }, [id, data, setData, account]);
 
-  return { ref, data };
+  return { data };
 };

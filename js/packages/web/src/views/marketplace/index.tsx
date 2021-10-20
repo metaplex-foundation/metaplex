@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
-//modules
 import { AuctionCard } from '../../components/AuctionCard';
 import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
@@ -23,6 +22,7 @@ let onePageItem: any = [];
 let pageLen = 30;
 let searchItem = '';
 let allItems: any = [];
+let allAuction = 0;
 
 export const MarketplaceView = () => {
   const [latestsale, setLatestsale] = useState(false);
@@ -53,10 +53,12 @@ export const MarketplaceView = () => {
       if (item['Auction']) arr.push(item);
       else nft.push(item);
     });
+    allAuction = arr.length;
     allItems = collection;
     let max = 0;
     let min = 0;
     let owner: any = [];
+    
     arr.forEach(character => {
       if (character.Price > max) max = character.Price;
       if (character.Price < min) min = character.Price;
@@ -87,10 +89,6 @@ export const MarketplaceView = () => {
     onePageItem = data;
   };
 
-  const handle_latest_sale = () => {
-    setLatestsale(!latestsale);
-  };
-
   const changeSearch = event => {
     const arr: any = [];
     const search = searchItem.toUpperCase();
@@ -102,7 +100,6 @@ export const MarketplaceView = () => {
   };
   return (
     <div style={{ margin: '0px auto' }} className="col-md-10">
-      {/* {latestsale && <LatestsaleView handle_latest_sale={handle_latest_sale} />} */}
       <section id="market-sec" className="col-md-10">
         <div className="container-fluid">
           <div className="row">
@@ -117,7 +114,7 @@ export const MarketplaceView = () => {
                 aria-label="Basic example"
               >
                 <button type="button" className="btn btn-secondary text-left">
-                  <strong>{allItems?.length}</strong>
+                  <strong>{allAuction}</strong>
                   <br />
                   <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                     Items
@@ -266,6 +263,7 @@ export const MarketplaceView = () => {
               <div className="row">
                 {
                   !isLoading ? (
+                    onePageItem.length > 0 ?
                     onePageItem.map((m, idx) => {
                       const id = m.ParsedAccount.pubkey;
                       return (
@@ -275,7 +273,9 @@ export const MarketplaceView = () => {
                           price={m.Price}
                         />
                       );
-                    })
+                    }):<div className="emptyMarketplace">
+                      THIS MARKETPLACE IS EMPTY
+                    </div>
                   ) : (
                     <Spinner animation="border" role="status">
                       <span className="visually-hidden"></span>
