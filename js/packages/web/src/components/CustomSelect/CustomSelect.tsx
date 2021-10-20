@@ -1,4 +1,3 @@
-import { Select } from 'antd';
 import 'antd/dist/antd.css';
 import React from 'react';
 import { Form } from 'react-bootstrap';
@@ -15,7 +14,7 @@ export const CustomSelect = ({option, defoultParam, change}: Props) => {
     <Form.Control as="select" onChange={(event)=>{change(event)}}  className="btn-secondary">
       {
         option.map((item)=>{
-          return <option value={item}>{item}</option>;
+          return <option value={item} selected={item == defoultParam}>{item}</option>;
         })
       }
     </Form.Control>
