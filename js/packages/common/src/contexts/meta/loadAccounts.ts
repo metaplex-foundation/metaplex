@@ -512,7 +512,9 @@ export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
     return nextState;
   }
 
+
   const metadata = metadataData.keys
+  // @ts-ignore
   .filter(k => !!metadataData[k])
   .map((pubkey, i) => {
     const account = metadataData.array[i];
