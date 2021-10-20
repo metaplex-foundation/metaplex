@@ -115,7 +115,7 @@ export function CollectionsProvider({ children = null as any }) {
         continue;
       }
 
-      const auctionInfo = auctionManagerMetadata.find(a => a!.Metadata.pubkey == metadata[i].pubkey);
+      const auctionInfo = auctionManagerMetadata.find(a => a!.Metadata?.pubkey == metadata[i].pubkey);
 
       const record = {
         ParsedAccount: metadata[i],
