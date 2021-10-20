@@ -44,7 +44,7 @@ interface IArweaveResult {
 
 const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
   const resp = await fetch(
-    'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+    'https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile',
     {
       method: 'POST',
       // @ts-ignore
@@ -356,8 +356,7 @@ export const prepPayForFilesTxn = async (
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
-        lamports: 2300000, // 0.0023 SOL per file (paid to arweave)
-        // await getAssetCostToStore(files),
+        lamports: await getAssetCostToStore(files),
       }),
     );
 
