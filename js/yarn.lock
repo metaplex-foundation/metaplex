@@ -15628,6 +15628,11 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
   integrity sha1-HADHQ7QzzQpOgHWPe2SldEDZ/wA=
 
+linked-list-typescript@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/linked-list-typescript/-/linked-list-typescript-1.0.15.tgz#faeed93cf9203f102e2158c29edcddda320abe82"
+  integrity sha512-RIyUu9lnJIyIaMe63O7/aFv/T2v3KsMFuXMBbUQCHX+cgtGro86ETDj5ed0a8gQL2+DFjzYYsgVG4I36/cUwgw==
+
 lint-staged@^10.5.0:
   version "10.5.4"
   resolved "https://registry.yarnpkg.com/lint-staged/-/lint-staged-10.5.4.tgz#cd153b5f0987d2371fc1d2847a409a2fe705b665"

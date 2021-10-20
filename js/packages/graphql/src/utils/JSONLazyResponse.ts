@@ -24,8 +24,8 @@ export class JSONLazyResponse<T = any>
     });
   }
 
-  private readonly sourceData: SourceData;
-  private readonly chunkedData: ChunkedData<T>;
+  private sourceData: SourceData | null = null;
+  private chunkedData: ChunkedData<T> | null = null;
 
   constructor(
     buffer: Buffer | PassThrough | SourceData,
@@ -39,12 +39,20 @@ export class JSONLazyResponse<T = any>
     this.chunkedData = new ChunkedData(this.sourceData, onValue);
   }
 
+  private clean() {
+    this.sourceData = null;
+    this.chunkedData = null;
+  }
+
   public async json<O>() {
     const p = new Parser();
     let obj: any;
     p.onValue = value => {
       obj = value;
     };
+    if (this.sourceData === null) {
+      throw new Error("Can't be used more then once");
+    }
     for await (const value of this.sourceData) {
       p.write(value);
     }
@@ -52,7 +60,12 @@ export class JSONLazyResponse<T = any>
   }
 
   public values() {
-    return this.chunkedData.values();
+    if (this.chunkedData === null) {
+      throw new Error("Can't be used more then once");
+    }
+    const ret = this.chunkedData.values();
+    this.clean();
+    return ret;
   }
 
   [Symbol.asyncIterator]() {
@@ -61,6 +74,9 @@ export class JSONLazyResponse<T = any>
 
   public transform<O>(update: (item: T) => O) {
     const onValue = this.onValue;
+    if (this.sourceData === null) {
+      throw new Error("Can't be used more then once");
+    }
     return new JSONLazyResponse<O>(
       this.sourceData,
       !onValue

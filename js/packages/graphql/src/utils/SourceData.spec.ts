@@ -53,4 +53,11 @@ describe('SourceData', () => {
     const result = buf.join('');
     expect(result).toBe(json);
   });
+
+  it('Twice usage error', async () => {
+    const buffer = Buffer.from(json, 'utf-8');
+    const source = new SourceData(buffer);
+    source.values();
+    expect(() => source.values()).toThrowError("Can't be used more then once");
+  });
 });

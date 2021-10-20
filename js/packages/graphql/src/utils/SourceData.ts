@@ -1,4 +1,5 @@
 import { PassThrough } from 'stream';
+import { LinkedList } from 'linked-list-typescript';
 
 export class SourceData implements AsyncIterable<Buffer> {
   constructor(
@@ -7,29 +8,35 @@ export class SourceData implements AsyncIterable<Buffer> {
   ) {
     if (!Buffer.isBuffer(buffer)) {
       buffer.on('data', chunk => {
-        this.container.push(chunk);
-        this.fn.forEach(fn => fn());
-        if (this.fn.length) {
-          this.fn = [];
+        this.container.append(chunk);
+        while (this.fn.length) {
+          const fn = this.fn.removeHead();
+          fn();
         }
       });
       buffer.on('end', () => {
-        this.fn.forEach(fn => fn());
-        if (this.fn.length) {
-          this.fn = [];
+        while (this.fn.length) {
+          const fn = this.fn.removeHead();
+          fn();
         }
+        buffer.removeAllListeners();
       });
     }
   }
 
-  private fn: Array<Function> = [];
-  private container: Array<Buffer> = [];
+  private fn = new LinkedList<Function>();
 
-  [Symbol.asyncIterator]() {
-    const step = this.options?.step ?? 1e6; /* 1mb */
-    let start = 0;
+  private container = new LinkedList<Buffer>();
+  private using = false;
 
+  values() {
+    if (this.using) {
+      throw new Error("Can't be used more then once");
+    }
+    this.using = true;
     if (Buffer.isBuffer(this.buffer)) {
+      let start = 0;
+      const step = this.options?.step ?? 1e6; /* 1mb */
       const buffer = this.buffer;
       const next = async function () {
         if (start < buffer.byteLength) {
@@ -55,15 +62,15 @@ export class SourceData implements AsyncIterable<Buffer> {
       const ctx = this;
       const next = async function () {
         for (;;) {
-          if (start < ctx.container.length) {
+          if (ctx.container.length) {
+            const head = ctx.container.removeHead();
             const ret: IteratorResult<Buffer, null> = {
               done: false,
-              value: ctx.container[start],
+              value: head,
             };
-            start++;
             return ret;
           } else if (!buffer.writableEnded) {
-            await new Promise(resolve => ctx.fn.push(resolve));
+            await new Promise(resolve => ctx.fn.append(resolve));
           } else {
             const ret: IteratorResult<Buffer, null> = {
               done: true,
@@ -75,5 +82,9 @@ export class SourceData implements AsyncIterable<Buffer> {
       };
       return { next };
     }
+  }
+
+  [Symbol.asyncIterator]() {
+    return this.values();
   }
 }

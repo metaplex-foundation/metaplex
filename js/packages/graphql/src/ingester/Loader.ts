@@ -130,11 +130,16 @@ export class Loader<TW extends IWriter = IWriter> {
       `⛏  ${this.networkName} - start processing accounts for ${program.pubkey}`,
     );
     for await (const iter of accounts) {
-      await createPipelineExecutor(iter, program.process, {
-        jobsCount: 2,
-        sequence: 1000,
-        delay: () => this.writerAdapter.flush(),
-      });
+      let count = 0;
+      for (const item of iter) {
+        program.process(item);
+        count++;
+        if (count >= 1000) {
+          await this.writerAdapter.flush();
+          count = 0;
+        }
+      }
+      await this.writerAdapter.flush();
     }
 
     if (this.cache.creators.size || this.cache.stores.size) {
