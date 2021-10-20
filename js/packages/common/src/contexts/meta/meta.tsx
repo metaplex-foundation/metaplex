@@ -4,6 +4,8 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   loadAccounts,
 } from './loadAccounts';
+import { ParsedAccount } from '../accounts/types';
+import { Metadata } from '../../actions';
 import { Spin, Space } from 'antd';
 import { merge, uniqWith } from 'lodash'
 import { MetaContextState, MetaState } from './types';
@@ -29,14 +31,15 @@ export function MetaProvider({ children = null as any }) {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const patchState: MetaContextState['patchState'] = temp => {
+  const patchState: MetaContextState['patchState'] = (...args: Partial<MetaState>[]) => {
     setState(current => {
-      const newState = merge({}, current, temp);
+      const newState = merge({}, current, ...args, { store: current.store });
 
-      newState.store = temp.store ?? current.store;
-  
       const currentMetdata = current.metadata ?? [];
-      const nextMetadata = temp.metadata ?? [];
+      const nextMetadata = args.reduce((memo, { metadata = [] }) => {
+        return [...memo, ...metadata]
+      }, [] as ParsedAccount<Metadata>[])
+
       newState.metadata = uniqWith(
         [...currentMetdata, ...nextMetadata],
         (a, b) => a.pubkey === b.pubkey

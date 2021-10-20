@@ -22,10 +22,8 @@ export const processMetaData: ProcessAccountsFunc = async (
   try {
     if (isMetadataV1Account(account)) {
       const metadata = decodeMetadata(account.data);
-
-      if (
-        isValidHttpUrl(metadata.data.uri)
-      ) {
+      
+      if (isValidHttpUrl(metadata.data.uri)) {
         const parsedAccount: ParsedAccount<Metadata> = {
           pubkey,
           account,

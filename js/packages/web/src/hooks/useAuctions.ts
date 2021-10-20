@@ -18,14 +18,7 @@ import {
   MetaState,
   useStore,
   loadMetadataAndEditionsBySafetyDepositBoxes,
-} from '@oyster/common';
-import { merge, take, drop } from 'lodash';
-import { Connection } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
-import BN from 'bn.js';
-import { useEffect, useMemo, useState } from 'react';
-import { useMeta } from '../contexts';
-import {
+  loadBidsForAuction,
   AuctionManager,
   AuctionManagerStatus,
   AuctionManagerV1,
@@ -37,7 +30,14 @@ import {
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+} from '@oyster/common';
+import { merge, take, drop, isNil } from 'lodash';
+import { Connection } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import BN from 'bn.js';
+import { useEffect, useMemo, useState } from 'react';
+import { useMeta } from '../contexts';
+
 
 export enum AuctionViewState {
   Live = '0',
@@ -163,17 +163,27 @@ export const useInfiniteScrollAuctions = () => {
     isLoading,
     auctionManagersByAuction,
     auctions,
+    auctionCachesByAuctionManager,
     store,
     whitelistedCreatorsByCreator,
     patchState,
     ...metaState
   } = useMeta();
 
-  const fetchAuctionsState = async (connection: Connection, auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]): Promise<MetaState> => {
+  const fetchAuctionsState = async (
+    connection: Connection,
+    auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ): Promise<MetaState> => {
     const tempCache = getEmptyMetaState();
 
     const responses = await Promise.all(
-      auctionManagers.map(auctionManager => loadAuction(connection, auctionManager))
+      auctionManagers.map(auctionManager => {
+        if(auctionCachesByAuctionManager[auctionManager.pubkey]) {
+          return loadBidsForAuction(connection, auctionManager.info.auction);
+        }
+
+        return loadAuction(connection, auctionManager);
+      })
     );
 
     const auctionsState = responses.reduce((memo, state) =>
@@ -280,7 +290,10 @@ export const useInfiniteScrollAuctions = () => {
 
       const auctionsToLoad = take(auctionManagers, 8);
 
-      const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
+      const auctionsState = await fetchAuctionsState(
+        connection,
+        auctionsToLoad
+      )
 
       const viewState = merge(
         {},

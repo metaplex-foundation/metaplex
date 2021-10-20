@@ -83,7 +83,7 @@ export const ArtCreateView = () => {
 
   const gotoStep = useCallback(
     (_step: number) => {
-      history.push(`/art/create/${_step.toString()}`);
+      history.push(`/artworks/new/${_step.toString()}`);
       if (_step === 0) setStepsVisible(true);
     },
     [history],
@@ -1157,7 +1157,7 @@ const Congrats = (props: {
       <>
         <div className="waiting-title">Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push("/art/create")}>Back to Create NFT</Button>
+        <Button onClick={_ => history.push("/artworks/new")}>Back to Create NFT</Button>
       </>
     )
   }
@@ -1176,7 +1176,7 @@ const Congrats = (props: {
         <Button
           className="metaplex-button"
           onClick={_ =>
-            history.push(`/art/${props.nft?.metadataAccount.toString()}`)
+            history.push(`/artworks/${props.nft?.metadataAccount.toString()}`)
           }
         >
           <span>See it in your collection</span>

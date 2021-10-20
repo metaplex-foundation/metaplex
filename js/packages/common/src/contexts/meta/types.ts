@@ -77,11 +77,12 @@ export interface MetaState {
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
   storeIndexer: ParsedAccount<StoreIndexer>[];
+  auctionCachesByAuctionManager: Record<string, ParsedAccount<AuctionCache>>;
 }
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
-  patchState: (state: Partial<MetaState>) => void;
+  patchState: (...args: Partial<MetaState>[]) => void;
 }
 
 export type AccountAndPubkey = {

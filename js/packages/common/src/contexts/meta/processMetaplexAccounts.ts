@@ -103,6 +103,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
         info: cache,
       };
       setter('auctionCaches', pubkey, parsedAccount);
+      setter('auctionCachesByAuctionManager', parsedAccount.info.auctionManager, parsedAccount);
     }
 
     if (isStoreIndexerV1Account(account)) {

@@ -33,15 +33,15 @@ export function Routes({ storefront }: RoutesProps) {
             /> */}
             <Route
               exact
-              path="/art/create/:step_param?"
+              path="/artworks/new/:step_param?"
               component={() => <ArtCreateView />}
             />
             <Route
               exact
-              path="/artworks/:id?"
+              path="/artworks"
               component={() => <ArtworksView />}
             />
-            <Route exact path="/art/:id" component={() => <ArtView />} />
+            <Route exact path="/artworks/:id" component={() => <ArtView />} />
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
             <Route exact path="/artists" component={() => <ArtistsView />} />
             <Route

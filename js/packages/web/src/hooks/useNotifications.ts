@@ -38,7 +38,7 @@ export const useNotifications = (
         ) {
           possiblyBroken = [...possiblyBroken, av];
         }
-
+        
         if (
           av.vault.info.authority === walletPubkey &&
           av.vault.info.state != VaultState.Deactivated &&

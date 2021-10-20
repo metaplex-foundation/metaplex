@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel, List, Space } from 'antd';
+import { Row, Col, Button, Skeleton, Carousel, List, Space, Spin } from 'antd';
 import { AuctionCard } from '../../components/AuctionCard';
 import { Connection } from '@solana/web3.js';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -31,7 +31,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { MintInfo } from '@solana/spl-token';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import useWindowDimensions from '../../utils/layout';
-import { CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
 import { ClickToCopy } from '../../components/ClickToCopy';
@@ -78,7 +78,7 @@ export const AuctionItem = ({
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
-  const auction = useAuction(id);
+  const { auction, loading } = useAuction(id);
   const wallet = useWallet()
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
@@ -124,6 +124,14 @@ export const AuctionView = () => {
       ></AuctionItem>
     );
   });
+
+  if(loading) {
+    return (
+      <div className="app-section--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -232,7 +240,7 @@ export const AuctionView = () => {
               <Col span={6}>
                 <Row justify="end">
                   <Link to={`/auction/${id}/billing`}>
-                    <Button>Billing</Button>
+                    <Button type="ghost">Billing</Button>
                   </Link>
                 </Row>
               </Col>

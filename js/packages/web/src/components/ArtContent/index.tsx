@@ -80,7 +80,7 @@ const CachedImageContent = ({
           height: '100%',
         }}
         placeholder={<ThreeDots />}
-        {...(loaded ? {} : { height: 200 })}
+        height={300}
       />
     </div>
   );

@@ -54,7 +54,7 @@ export const ArtworksView = () => {
   useEffect(() => {
     (async () => {
       const metadataState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
-
+      
       patchState(metadataState);
       setLoadingArt(false);
     })()
@@ -69,7 +69,7 @@ export const ArtworksView = () => {
       {items.map((m, idx) => {
         const id = m.pubkey;
         return (
-          <Link to={`/art/${id}`} key={idx}>
+          <Link to={`/artworks/${id}`} key={idx}>
             <ArtCard
               key={id}
               pubkey={m.pubkey}

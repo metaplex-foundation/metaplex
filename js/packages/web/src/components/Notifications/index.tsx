@@ -255,7 +255,7 @@ export function Notifications() {
       }),
     [metadata, whitelistedCreatorsByCreator, walletPubkey],
   );
-
+  
   metaNeedsApproving.forEach(m => {
     notifications.push({
       id: m.pubkey,
@@ -265,7 +265,7 @@ export function Notifications() {
           {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
             m.pubkey}{' '}
           wants you to approve that you helped create their art{' '}
-          <Link to={`/art/${m.pubkey}`}>here.</Link>
+          <Link to={`/artworks/${m.pubkey}`}>here.</Link>
         </span>
       ),
       action: async () => {

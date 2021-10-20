@@ -269,7 +269,7 @@ export const AuctionCard = ({
   const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
   const doesInstantSaleHasNoItems =
     isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
-  
+
   const shouldHideInstantSale =
     !isOpenEditionSale &&
     auctionView.isInstantSale &&
@@ -295,12 +295,7 @@ export const AuctionCard = ({
   return (
     <div className="auction-container" style={style}>
       <Col>
-        {!auctionView.isInstantSale && (
-          <>
-            <AuctionNumbers auctionView={auctionView} />
-            <br />
-          </>
-        )}
+        <AuctionNumbers auctionView={auctionView} />
         {showRedemptionIssue && (
           <span>
             There was an issue redeeming or refunding your bid. Please try
@@ -371,18 +366,17 @@ export const AuctionCard = ({
               style={{ marginTop: 20 }}
             >
               {loading ||
-              auctionView.items.find(i => i.find(it => !it.metadata)) ||
-              !myPayingAccount ? (
+                auctionView.items.find(i => i.find(it => !it.metadata)) ||
+                !myPayingAccount ? (
                 <Spin indicator={<LoadingOutlined />} />
               ) : eligibleForAnything ? (
                 `Redeem bid`
               ) : (
-                `${
-                  wallet?.publicKey &&
+                `${wallet?.publicKey &&
                   auctionView.auctionManager.authority ===
-                    wallet.publicKey.toBase58()
-                    ? 'Reclaim Items'
-                    : 'Refund bid'
+                  wallet.publicKey.toBase58()
+                  ? 'Reclaim Items'
+                  : 'Refund bid'
                 }`
               )}
             </Button>
@@ -600,7 +594,7 @@ export const AuctionCard = ({
                     auctionView.items[0][0].winningConfigType;
                   const isAuctionItemMaster =
                     winningConfigType ===
-                      WinningConfigType.FullRightsTransfer ||
+                    WinningConfigType.FullRightsTransfer ||
                     winningConfigType === WinningConfigType.TokenOnlyTransfer;
                   const allowBidToPublic =
                     myPayingAccount &&
@@ -667,11 +661,11 @@ export const AuctionCard = ({
                             auctionView.auction = patch.auctions[auctionKey];
                             auctionView.myBidderPot =
                               patch.bidderPotsByAuctionAndBidder[
-                                auctionBidderKey
+                              auctionBidderKey
                               ];
                             auctionView.myBidderMetadata =
                               patch.bidderMetadataByAuctionAndBidder[
-                                auctionBidderKey
+                              auctionBidderKey
                               ];
                           }
 

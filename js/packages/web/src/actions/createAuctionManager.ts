@@ -304,6 +304,7 @@ export async function createAuctionManager(
     lookup.deprecatedValidateParticipation?.signers || [],
     ...lookup.validateBoxes.signers,
     lookup.startAuction.signers,
+    ...lookup.cacheAuctionIndexer.signers,
   ];
   const toRemoveSigners: Record<number, boolean> = {};
   let instructions: TransactionInstruction[][] = [

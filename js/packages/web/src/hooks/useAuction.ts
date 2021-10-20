@@ -1,3 +1,4 @@
+import { Loading3QuartersOutlined } from '@ant-design/icons';
 import { StringPublicKey, loadAuction, useConnection, loadMetadataAndEditionsBySafetyDepositBoxes, loadPrizeTrackingTickets } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { merge } from 'lodash';
@@ -13,6 +14,7 @@ export const useAuction = (id: StringPublicKey) => {
   const { publicKey } = useWallet();
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const connection = useConnection();
+  const [loading, setLoading] = useState(true)
 
   const [existingAuctionView, setAuctionView] = useState<
     AuctionView | undefined
@@ -35,6 +37,7 @@ export const useAuction = (id: StringPublicKey) => {
     auctionDataExtended,
     isLoading,
     whitelistedCreatorsByCreator,
+    metadataByAuction,
     patchState,
   } = useMeta();
 
@@ -43,10 +46,11 @@ export const useAuction = (id: StringPublicKey) => {
       return
     }
 
+    setLoading(true);
+
     (async () => {
       const auctionManager = auctionManagersByAuction[id];
       const auctionState = await loadAuction(connection, auctionManager);
-
       const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
         connection,
         auctionState.safetyDepositBoxesByVaultAndIndex,
@@ -55,9 +59,8 @@ export const useAuction = (id: StringPublicKey) => {
 
       const prizeTrackingTicketState = await loadPrizeTrackingTickets(connection, auctionManager, metadataState.metadata);
 
-      const finalState = merge({}, prizeTrackingTicketState, auctionState, metadataState);
-
-      patchState(finalState);
+      patchState(prizeTrackingTicketState, auctionState, metadataState);
+      setLoading(false);
     })()
   }, [isLoading])
 
@@ -83,8 +86,8 @@ export const useAuction = (id: StringPublicKey) => {
           masterEditionsByOneTimeAuthMint,
           metadataByMasterEdition,
           cachedRedemptionKeys,
+          metadataByAuction,
           undefined,
-          existingAuctionView || undefined,
         );
 
         if (auctionView) setAuctionView(auctionView);
@@ -105,8 +108,12 @@ export const useAuction = (id: StringPublicKey) => {
     masterEditionsByPrintingMint,
     masterEditionsByOneTimeAuthMint,
     metadataByMasterEdition,
+    metadataByAuction,
     cachedRedemptionKeys,
   ]);
 
-  return existingAuctionView;
+  return {
+    loading,
+    auction: existingAuctionView,
+  };
 };

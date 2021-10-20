@@ -10,7 +10,10 @@ import {
   Button,
   Input,
   Divider,
+  Progress,
+  Space,
 } from 'antd';
+import { BN } from 'bn.js';
 import { useMeta } from '../../contexts';
 import {
   Store,
@@ -27,6 +30,9 @@ import {
   useUserAccounts,
   useWalletModal,
   WalletSigner,
+  loadCreators,
+  loadAuctionManagers,
+  loadAuctionsForAuctionManagers,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -42,9 +48,10 @@ import { LoadingOutlined } from '@ant-design/icons';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading, patchState } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
+  const [loadingAdmin, setLoadingAdmin] = useState(true);
   const { setVisible } = useWalletModal();
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
@@ -62,7 +69,33 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    (async () => {
+      const [creatorsState, auctionManagerState] = await Promise.all([
+        loadCreators(connection),
+        loadAuctionManagers(connection, storeAddress as string),
+      ])
+      const auctionsState = await loadAuctionsForAuctionManagers(
+        connection,
+        Object.values(auctionManagerState.auctionManagersByAuction),
+      )
+
+      patchState(creatorsState, auctionManagerState, auctionsState);
+      setLoadingAdmin(false);
+    })()
+  }, [loadingAdmin, isLoading, storeAddress])
+
+  if (loadingAdmin) {
+    return (
+      <div className="app-section--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -210,7 +243,7 @@ function InnerAdminView({
     auctionCaches,
     storeIndexer,
     metadata,
-    masterEditions
+    masterEditions,
   } = useMeta();
   const { storeAddress } = useStore();
 
@@ -228,6 +261,57 @@ function InnerAdminView({
     };
     fn();
   }, [connected]);
+
+  const auctionManagersToCache = useMemo(() => {
+    let auctionManagersToCache = Object.values(auctionManagersByAuction)
+      .filter(a => a.info.store == storeAddress)
+      .sort((a, b) =>
+        (
+          auctions[b.info.auction].info.endedAt ||
+          new BN(Date.now() / 1000)
+        )
+          .sub(
+            auctions[a.info.auction].info.endedAt ||
+            new BN(Date.now() / 1000),
+          )
+          .toNumber(),
+      );
+
+    const indexedInStoreIndexer = {};
+
+    storeIndexer.forEach(s => {
+      s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
+    });
+
+    const alreadyIndexed = Object.values(auctionCaches).reduce(
+      (hash, val) => {
+        hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
+
+        return hash;
+      },
+      {},
+    );
+    auctionManagersToCache = auctionManagersToCache.filter(
+      a => !alreadyIndexed[a.pubkey],
+    );
+
+    return auctionManagersToCache
+  }, [auctionManagersByAuction, auctions, auctionCaches, storeIndexer])
+
+  const auctionCacheTotal = storeIndexer.reduce((memo, storeIndexer) => {
+    let next = memo;
+    if (storeIndexer.info.store !== storeAddress) {
+      return memo;
+    }
+
+    storeIndexer.info.auctionCaches.forEach(() => {
+      next++
+    })
+
+
+    return next;
+  }, 0);
+  const auctionManagerTotal = Object.values(auctionManagersByAuction).filter(({ info: { store } }) => store === storeAddress).length;
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {
@@ -286,7 +370,7 @@ function InnerAdminView({
     <Content>
       <Col style={{ marginTop: 10 }}>
         <Row>
-        <h2>Whitelisted Creators</h2>
+          <h2>Whitelisted Creators</h2>
           <Col span={21}>
             <ArtistModal
               setUpdatedCreators={setUpdatedCreators}
@@ -346,65 +430,66 @@ function InnerAdminView({
         </Row>
       </Col>
       <h2>Adminstrator Actions</h2>
-
-      {!store.info.public && (
-        <>
-          <Col>
-            <Row>
-              <Button
-                size="large"
-                loading={convertingMasterEditions}
-                onClick={async () => {
-                  setConvertMasterEditions(true);
-
-                  await convertMasterEditions(
-                    connection,
-                    wallet,
-                    filteredMetadata?.available || [],
-                    accountByMint,
-                  );
-
-                  setConvertMasterEditions(false);
-                }}
-              >
-                Convert Eligible Master Editions
-              </Button>
-            </Row>
+      <Row>
+        {!store.info.public && (
+          <Col xs={24} md={12}>
+            <h3>Convert Master Editions</h3>
             <p>
               You have {filteredMetadata?.available.length} MasterEditionV1s that
               can be converted right now and{' '}
               {filteredMetadata?.unavailable.length} still in unfinished auctions
               that cannot be converted yet.
             </p>
+            <Button
+              size="large"
+              loading={convertingMasterEditions}
+              onClick={async () => {
+                setConvertMasterEditions(true);
+
+                await convertMasterEditions(
+                  connection,
+                  wallet,
+                  filteredMetadata?.available || [],
+                  accountByMint,
+                );
+
+                setConvertMasterEditions(false);
+              }}
+            >
+              Convert Eligible Master Editions
+            </Button>
           </Col>
-        </>
-      )
-      }
-      <Col>
-        <Row>
-          <Button
-            size="large"
-            loading={cachingAuctions}
-            onClick={async () => {
-              setCachingAuctions(true);
+        )
+        }
+        <Col span={11} offset={1}>
+          <h3>Cache Auctions</h3>
+          <p>Auctions were detected that do not have a cache account. Click "build cache" to backfill past auctions. This will reduce page load times for <Link to="/auctions">listings</Link>. Once you've started ensure you complete the migration of all accounts as the storefront will start to use them as soon as one is available. It is recommended to run the conversion when you have no active auctions.</p>
+          <Space direction="vertical" size="middle" align="center">
+            <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
+            {auctionManagersToCache.length > 0 && (
+              <Button
+                size="large"
+                loading={cachingAuctions}
+                onClick={async () => {
+                  setCachingAuctions(true);
 
-              await cacheAllAuctions(
-                wallet,
-                connection,
-                storeAddress,
-                auctionManagersByAuction,
-                auctions,
-                auctionCaches,
-                storeIndexer,
-              );
+                  await cacheAllAuctions(
+                    wallet,
+                    connection,
+                    auctionManagersToCache,
+                    auctionCaches,
+                    storeIndexer,
+                  );
 
-              setCachingAuctions(false);
-            }}
-          >
-            Cache Auctions
-          </Button>
-        </Row>
-      </Col>
+                  setCachingAuctions(false);
+                }}
+              >
+                Build Cache
+              </Button>
+            )}
+          </Space>
+        </Col>
+      </Row>
     </Content>
   );
 }
