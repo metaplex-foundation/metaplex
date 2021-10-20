@@ -535,17 +535,19 @@ export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
 
 
   const metadata = metadataData.keys
-  // @ts-ignore
-  .filter(k => !!metadataData[k])
-  .map((pubkey, i) => {
+  .reduce((memo, pubkey, i) => {
     const account = metadataData.array[i];
+    if (!account) {
+      return memo;
+    }
 
-    return {
+    const metadata = {
       pubkey,
       account,
       info: decodeMetadata(account.data),
-    } as ParsedAccount<Metadata>
-  });
+    };
+    return [...memo, metadata]
+  }, [] as ParsedAccount<Metadata>[]);
 
   const readyMetadata = metadata.map(m => initMetadata(m, whitelistedCreatorsByCreator, updateState))
 
