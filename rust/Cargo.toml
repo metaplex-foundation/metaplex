@@ -4,7 +4,7 @@ members = [
   "fair-launch/",
   "auction/program",
   "metaplex/program",
-  "stateless-asks/",
+  "auction-house/",
   "token-vault/program",
   "token-metadata/program",
   "metaplex/test",

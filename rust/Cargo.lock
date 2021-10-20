@@ -277,6 +277,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "auction-house"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "metaplex-token-metadata 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "spl-associated-token-account",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3702,18 +3714,6 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
-name = "stateless-asks"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "metaplex-token-metadata 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "spl-associated-token-account",
- "spl-token",
- "thiserror",
-]
 
 [[package]]
 name = "static_assertions"

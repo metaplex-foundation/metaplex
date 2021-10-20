@@ -9,7 +9,7 @@ use {
             system_instruction,
         },
     },
-    anchor_spl::token::Mint,
+    anchor_spl::token::{Mint, TokenAccount},
     metaplex_token_metadata::state::Metadata,
     spl_associated_token_account::get_associated_token_address,
     spl_token,
@@ -26,6 +26,26 @@ pub fn assert_is_ata(
     assert_keys_equal(ata_account.owner, *wallet)?;
     assert_keys_equal(get_associated_token_address(wallet, mint), *ata.key)?;
     Ok(ata_account)
+}
+
+pub fn assert_metadata_valid<'a>(
+    metadata: &UncheckedAccount,
+    token_account: &anchor_lang::Account<'a, TokenAccount>,
+) -> ProgramResult {
+    assert_derivation(
+        &metaplex_token_metadata::id(),
+        &metadata.to_account_info(),
+        &[
+            metaplex_token_metadata::state::PREFIX.as_bytes(),
+            metaplex_token_metadata::id().as_ref(),
+            token_account.mint.as_ref(),
+        ],
+    )?;
+
+    if metadata.data_is_empty() {
+        return Err(ErrorCode::MetadataDoesntExist.into());
+    }
+    Ok(())
 }
 
 pub fn get_fee_payer<'a, 'b>(
