@@ -14,11 +14,8 @@ export const CustomSelect = ({option, defoultParam, change}: Props) => {
   return (
     <Form.Control as="select" onChange={(event)=>{change(event)}}  className="btn-secondary">
       {
-        defoultParam != '' ? <option value={0}>{defoultParam}</option>: ''
-      }
-      {
         option.map((item)=>{
-          return <option value={1}>{item}</option>;
+          return <option value={item}>{item}</option>;
         })
       }
     </Form.Control>

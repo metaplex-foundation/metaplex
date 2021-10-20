@@ -7,6 +7,7 @@ import { notify, shortenAddress } from '../../utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useMeta } from '../../contexts';
+import { admin } from '../../hooks';
 
 export const Settings = ({
   additionalSettings,
@@ -37,8 +38,7 @@ export const Settings = ({
         {connected && (
           <>
             {store &&
-              wallet.publicKey?.toBase58() ==
-                process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS && (
+              admin() && (
                 <Link to={`/admin`}>
                   <Button className="app-btn">Admin</Button>
                 </Link>

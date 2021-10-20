@@ -43,28 +43,25 @@ export const ArtistView = () => {
         <Row
           style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
         >
-          <Col span={24}>
-            <h2 style={{ color: 'white', width: '82%', margin: '0 auto' }}>
+          <Col span={24} className="about-the-creator">
+            <h2 style={{ color: 'white'}} className="info">
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
               {creator?.info.name || creator?.info.address}
             </h2>
             <br />
             <div
-              className="info-header"
-              style={{ width: '82%', margin: '0 auto' }}
+              className="info-header info"
             >
               ABOUT THE CREATOR
             </div>
             <div
-              className="info-content"
-              style={{ width: '82%', margin: '0 auto' }}
+              className="info-content info"
             >
               {creator?.info.description}
             </div>
             <br />
             <div
-              className="info-header"
-              style={{ width: '82%', margin: '0 auto' }}
+              className="info-header info"
             >
               Art Created
             </div>

@@ -10,5 +10,5 @@ export const useCreatorArts = (id?: StringPublicKey) => {
     [metadata],
   );
 
-  return { artwork: filtered, isLoading: isLoading };
+  return { artwork: filtered, isLoading };
 };

@@ -17,9 +17,9 @@ export enum ArtworkViewState {
 let ownerLen = 0;
 let minPrice = 0;
 let maxPrice = 0;
-let lowToHigh = '0';
+let lowToHigh = 'Price: Low to High';
 let onePageItem: any = [];
-let pageLen = 30;
+let pageLen = 48;
 let searchItem = '';
 let allItems: any = [];
 let allAuction = 0;
@@ -32,7 +32,7 @@ export const MarketplaceView = () => {
   const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
 
-  const optionData = ['Price: High to low'];
+  const optionData = ['Price: Low to High', 'Price: High to Low'];
   const optionDataFilter = [];
   useEffect(() => {
     if (collection) {
@@ -66,9 +66,9 @@ export const MarketplaceView = () => {
       if (!includesTwenty) owner.push(character.ParsedAccount.info.data.creators[0].address);
     });
     if (searchItem) arr = changeSearch(searchItem);
-    if (lowToHigh == '0') {
+    if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
-    } else if (lowToHigh == '1') {
+    } else if (lowToHigh == 'Price: High to Low') {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
@@ -285,13 +285,13 @@ export const MarketplaceView = () => {
               </div>
 
               <div className="blur-bg2"></div>
-              {pageLen / 9 > 1 ? (
+              {pageLen / 16 > 1 ? (
                 <div className="row paginateLoadBottom">
                   <div className="col-md-7">
                     <nav aria-label="..." style={{ height: '100%' }}>
                       <ul className="pagination d-flex flex-wrap">
                         <CustomPagination
-                          len={pageLen / 9}
+                          len={pageLen / 16}
                           active={activePage}
                           changePage={event => {
                             if (!isLoading) {

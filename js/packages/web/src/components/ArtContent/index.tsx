@@ -60,7 +60,7 @@ const CachedImageContent = ({
       src={cachedBlob}
       preview={preview}
       wrapperClassName={className}
-      // loading="lazy"
+      loading="lazy"
       wrapperStyle={{ ...style }}
       // onLoad={e => {
       //   setLoaded(true);
