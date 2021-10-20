@@ -80,7 +80,7 @@ export const AuctionView = () => {
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
-  const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
+  const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
   const creators = useCreators(auction);
   let edition = '';
   if (art.type === ArtType.NFT) {
@@ -124,7 +124,7 @@ export const AuctionView = () => {
 
   return (
     <>
-      <Row justify="space-around" ref={ref} className="auctionComponent">
+      <Row justify="space-around" className="auctionComponent">
         <Col span={24} md={12} className="pr-4 attributes">
           <div className="auction-view" style={{ minHeight: 300 }}>
             <Carousel

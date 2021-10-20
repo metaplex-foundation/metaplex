@@ -7,6 +7,7 @@ import { notify, shortenAddress } from '../../utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useMeta } from '../../contexts';
+import { admin } from '../../hooks';
 
 export const Settings = ({
   additionalSettings,
@@ -18,7 +19,7 @@ export const Settings = ({
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
   const { store } = useMeta();
-
+  const wallet = useWallet();
   return (
     <>
       <div style={{ display: 'grid' }}>
@@ -36,11 +37,12 @@ export const Settings = ({
         </Select>
         {connected && (
           <>
-            {store && (
-              <Link to={`/admin`}>
-                <Button className="app-btn">Admin</Button>
-              </Link>
-            )}
+            {store &&
+              admin() && (
+                <Link to={`/admin`}>
+                  <Button className="app-btn">Admin</Button>
+                </Link>
+              )}
             <span>Wallet:</span>
             {publicKey && (
               <Button

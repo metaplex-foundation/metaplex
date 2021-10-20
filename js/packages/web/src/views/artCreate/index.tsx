@@ -866,7 +866,7 @@ const RoyaltiesSplitter = (props: {
                 gutter={[0, 16]}
                 style={{ margin: '5px auto' }}
               >
-                <Col span={4} style={{ padding: 10 }}>
+                <Col span={4} style={{ padding: 10, color: 'white' }}>
                   {creator.label}
                 </Col>
                 <Col span={3}>

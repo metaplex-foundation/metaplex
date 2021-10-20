@@ -381,10 +381,12 @@
 .my-masonry-grid {
   display: flex;
   column-gap: 10px;
+  justify-content: center;
   .my-masonry-grid_column {
     display: flex;
     flex-direction: column;
     row-gap: 10px;
+    width: 20% !important;
   }
   .ant-card,
   .ant-card-bordered,
@@ -395,5 +397,14 @@
       border-radius: 50%;
       margin: 0 10px 0 auto;
     }
+  }
+}
+.about-the-creator {
+  .info{
+    width: 82% !important;
+    margin: 0 auto !important;
+  }
+  .ant-image{
+    width: 100% !important;
   }
 }

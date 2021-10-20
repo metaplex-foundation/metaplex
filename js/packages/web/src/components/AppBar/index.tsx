@@ -66,11 +66,11 @@ const UserActions = () => {
             <Button className="app-btn">Bids</Button>
           </Link> */}
           {canCreate ? (
-            <Link to={`/art/create`}>
+            <Link to={'/art/create/0'}>
               <Button className="app-btn">Mint</Button>
             </Link>
           ) : null}
-          <Link to={`/auction/create/0`}>
+          <Link to={'/auction/create/0'}>
             <Button className="connector" type="primary">
               Sell
             </Button>

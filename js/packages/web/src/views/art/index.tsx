@@ -42,7 +42,7 @@ export const ArtView = () => {
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
-  const { ref, data } = useExtendedArt(id);
+  const { data } = useExtendedArt(id);
   const { collectionData } = useCollection(data?.collection?.name);
   // const { userAccounts } = useUserAccounts();
 
@@ -80,7 +80,7 @@ export const ArtView = () => {
     <div style={{ position: 'relative', zIndex: 2 }}>
       <Content className="artDetile">
         <Col>
-          <Row ref={ref}>
+          <Row>
             <Col
               xs={{ span: 24 }}
               md={{ span: 12 }}

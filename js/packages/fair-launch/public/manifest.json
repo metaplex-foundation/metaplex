@@ -2,17 +2,17 @@
     "short_name": "React App",
     "name": "Create React App Sample",
     "icons": [{
-            "src": "LOGO_SOL_NOBG.png",
+            "src": "favicon-16x16.ico",
             "sizes": "64x64 32x32 24x24 16x16",
             "type": "image/x-icon"
         },
         {
-            "src": "LOGO_SOL_NOBG.png",
+            "src": "favicon-32x32.ico.png",
             "type": "image/png",
             "sizes": "192x192"
         },
         {
-            "src": "LOGO_SOL_NOBG.png",
+            "src": "favicon-96x96.ico.png",
             "type": "image/png",
             "sizes": "512x512"
         }
