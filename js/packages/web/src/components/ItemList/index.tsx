@@ -7,12 +7,12 @@ export const ItemList = props => {
   const { pubkey } = props;
   const [cardObj, getCardObj] = useState<IMetadataExtension | undefined>();
   const id = pubkeyToString(pubkey)
-  const { ref, data } = useExtendedArt(id);
+  const { data } = useExtendedArt(id);
   useEffect(()=>{
     getCardObj(data)
   }, [data])
   return (
-    <div id="itemlist-sec" className="mt-4" ref={ref as any}>
+    <div id="itemlist-sec" className="mt-4">
       <div className="card-sec d-flex justify-content-between align-items-center mb-3">
         <div className="media d-flex align-items-center">
           <img

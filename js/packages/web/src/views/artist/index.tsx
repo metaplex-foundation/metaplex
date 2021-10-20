@@ -9,7 +9,7 @@ import { useCreator, useCreatorArts } from '../../hooks';
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
   const creator = useCreator(id);
-  const artwork = useCreatorArts(id);
+  const { artwork, isLoading } = useCreatorArts(id);
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -23,7 +23,7 @@ export const ArtistView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {artwork.length > 0
+      {!isLoading
         ? artwork.map((m, idx) => {
             const id = m.pubkey;
             return (
@@ -43,16 +43,28 @@ export const ArtistView = () => {
         <Row
           style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
         >
-          <Col span={24}>
-            <h2>
+          <Col span={24} className="about-the-creator">
+            <h2 style={{ color: 'white'}} className="info">
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
               {creator?.info.name || creator?.info.address}
             </h2>
             <br />
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{creator?.info.description}</div>
+            <div
+              className="info-header info"
+            >
+              ABOUT THE CREATOR
+            </div>
+            <div
+              className="info-content info"
+            >
+              {creator?.info.description}
+            </div>
             <br />
-            <div className="info-header">Art Created</div>
+            <div
+              className="info-header info"
+            >
+              Art Created
+            </div>
             {artworkGrid}
           </Col>
         </Row>
