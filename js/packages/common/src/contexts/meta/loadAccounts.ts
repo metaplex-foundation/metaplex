@@ -533,7 +533,9 @@ export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
     return nextState;
   }
 
-  const metadata = metadataData.keys.map((pubkey, i) => {
+  const metadata = metadataData.keys
+  .filter(k => !!k)
+  .map((pubkey, i) => {
     const account = metadataData.array[i];
 
     return {
