@@ -42,7 +42,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: 'mainnet-beta' as ENV,
-    endpoint: 'https://solana-figment-rpc-endpoint-cors-gcr-eeamqneyya-ue.a.run.app',
+    endpoint: 'http://3.22.104.109:8900',
     ChainId: ChainId.MainnetBeta,
   },
   {
