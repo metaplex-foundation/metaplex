@@ -70,7 +70,7 @@ export function useStoreAuctionsList() {
   const result = useMemo(() => {
     return Object.values(auctionManagersByAuction).map(
       manager => auctions[manager.info.auction],
-    );
+    ).filter(Boolean);
   }, [Object.keys(auctions).length, auctionManagersByAuction]);
   return result;
 }
