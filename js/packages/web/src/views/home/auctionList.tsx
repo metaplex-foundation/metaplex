@@ -2,19 +2,15 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useState } from 'react';
-import Masonry from 'react-masonry-css';
-import { HowToBuyModal } from '../../components/HowToBuyModal';
-
-import { AuctionViewState, useAuctions, AuctionView } from '../../hooks';
-
-import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Link } from 'react-router-dom';
-import { CardLoader } from '../../components/MyLoader';
-import { useMeta } from '../../contexts';
+import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { Banner } from '../../components/Banner';
+import { HowToBuyModal } from '../../components/HowToBuyModal';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useMeta } from '../../contexts';
+import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
-
 const { Content } = Layout;
 
 export enum LiveAuctionViewState {
@@ -33,12 +29,6 @@ export const AuctionListView = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   // Check if the auction is primary sale or not
   const checkPrimarySale = (auc: AuctionView) => {
@@ -98,11 +88,7 @@ export const AuctionListView = () => {
   }
 
   const liveAuctionsView = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="metaplex-masonry"
-      columnClassName="metaplex-masonry-column"
-    >
+    <MetaplexMasonry>
       {!isLoading
         ? items.map((m, idx) => {
             const id = m.auction.pubkey;
@@ -113,14 +99,10 @@ export const AuctionListView = () => {
             );
           })
         : []}
-    </Masonry>
+    </MetaplexMasonry>
   );
   const endedAuctions = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="metaplex-masonry"
-      columnClassName="metaplex-masonry-column"
-    >
+    <MetaplexMasonry>
       {!isLoading
         ? auctionsEnded.map((m, idx) => {
             const id = m.auction.pubkey;
@@ -131,7 +113,7 @@ export const AuctionListView = () => {
             );
           })
         : []}
-    </Masonry>
+    </MetaplexMasonry>
   );
 
   return (
@@ -143,41 +125,30 @@ export const AuctionListView = () => {
         actionComponent={<HowToBuyModal />}
         useBannerBg={true}
       />
-      <Layout>
-        <Content>
-          <Col>
-            <Row>
-              <Tabs
-                activeKey={activeKey}
-                onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
-              >
-                <TabPane tab={'Live'} key={LiveAuctionViewState.All}>
-                  {liveAuctionsView}
-                </TabPane>
-                {resaleAuctions.length > 0 && (
-                  <TabPane
-                    tab={'Secondary Marketplace'}
-                    key={LiveAuctionViewState.Resale}
-                  >
-                    {liveAuctionsView}
-                  </TabPane>
-                )}
-                <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
-                  {endedAuctions}
-                </TabPane>
-                {connected && (
-                  <TabPane
-                    tab={'Participated'}
-                    key={LiveAuctionViewState.Participated}
-                  >
-                    {liveAuctionsView}
-                  </TabPane>
-                )}
-              </Tabs>
-            </Row>
-          </Col>
-        </Content>
-      </Layout>
+      <Tabs
+        activeKey={activeKey}
+        onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
+      >
+        <TabPane tab={'Live'} key={LiveAuctionViewState.All}>
+          {liveAuctionsView}
+        </TabPane>
+        {resaleAuctions.length > 0 && (
+          <TabPane
+            tab={'Secondary Marketplace'}
+            key={LiveAuctionViewState.Resale}
+          >
+            {liveAuctionsView}
+          </TabPane>
+        )}
+        <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
+          {endedAuctions}
+        </TabPane>
+        {connected && (
+          <TabPane tab={'Participated'} key={LiveAuctionViewState.Participated}>
+            {liveAuctionsView}
+          </TabPane>
+        )}
+      </Tabs>
     </>
   );
 };

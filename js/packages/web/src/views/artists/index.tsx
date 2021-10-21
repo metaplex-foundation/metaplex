@@ -1,8 +1,8 @@
 import { Col, Layout } from 'antd';
 import React from 'react';
-import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useMeta } from '../../contexts';
 
 const { Content } = Layout;
@@ -10,20 +10,9 @@ const { Content } = Layout;
 export const ArtistsView = () => {
   const { whitelistedCreatorsByCreator } = useMeta();
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
-
   const items = Object.values(whitelistedCreatorsByCreator);
   const artistGrid = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="metaplex-masonry"
-      columnClassName="metaplex-masonry-column"
-    >
+    <MetaplexMasonry>
       {items.map((m, idx) => {
         const id = m.info.address;
         return (
@@ -41,7 +30,7 @@ export const ArtistsView = () => {
           </Link>
         );
       })}
-    </Masonry>
+    </MetaplexMasonry>
   );
 
   return (

@@ -1,9 +1,9 @@
+import { Button, ButtonProps, Modal, Row } from 'antd';
 import React, { useMemo, useState } from 'react';
-import { Row, Button, Modal, ButtonProps } from 'antd';
-import { ArtCard } from './../../components/ArtCard';
-import { useUserArts } from '../../hooks';
-import Masonry from 'react-masonry-css';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useUserArts } from '../../hooks';
+import { ArtCard } from './../../components/ArtCard';
 
 export interface ArtSelectorProps extends ButtonProps {
   selected: SafetyDepositDraft[];
@@ -41,20 +41,9 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     close();
   };
 
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
-
   return (
     <>
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="metaplex-masonry"
-        columnClassName="metaplex-masonry-column"
-      >
+      <MetaplexMasonry>
         {selected.map(m => {
           let key = m?.metadata.pubkey || '';
 
@@ -74,7 +63,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
         {(allowMultiple || selectedItems.size === 0) && (
           <div onClick={open}>Add an NFT</div>
         )}
-      </Masonry>
+      </MetaplexMasonry>
 
       <Modal
         visible={visible}
@@ -88,11 +77,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
           <p>Select the NFT that you want to sell copy/copies of.</p>
         </Row>
         <Row>
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="metaplex-masonry"
-            columnClassName="metaplex-masonry-column"
-          >
+          <MetaplexMasonry>
             {items.map(m => {
               const id = m.metadata.pubkey;
               const isSelected = selectedItems.has(id);
@@ -126,7 +111,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                 />
               );
             })}
-          </Masonry>
+          </MetaplexMasonry>
         </Row>
         <Row>
           <Button type="primary" size="large" onClick={confirm}>

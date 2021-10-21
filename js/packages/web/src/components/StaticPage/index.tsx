@@ -8,6 +8,7 @@ import { CardLoader } from '../MyLoader';
 import { useMeta } from '../../contexts';
 import { AuctionRenderCard } from '../AuctionRenderCard';
 import { AuctionViewState, useAuctions } from '../../hooks';
+import { MetaplexMasonry } from '../MetaplexMasonry';
 
 interface Connect {
   label: string;
@@ -92,12 +93,6 @@ export const StaticPage = (props: {
   });
   const auctions = useAuctions(AuctionViewState.Live);
   const { isLoading } = useMeta();
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   const liveAuctions = auctions.sort(
     (a, b) =>
@@ -107,11 +102,7 @@ export const StaticPage = (props: {
   );
 
   const liveAuctionsView = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="metaplex-masonry"
-      columnClassName="metaplex-masonry-column"
-    >
+    <MetaplexMasonry>
       {!isLoading
         ? liveAuctions.map((m, idx) => {
             const id = m.auction.pubkey;
@@ -122,7 +113,7 @@ export const StaticPage = (props: {
             );
           })
         : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
-    </Masonry>
+    </MetaplexMasonry>
   );
 
   // TODO: remove use of .style

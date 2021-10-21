@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import { Layout, Row, Col, Tabs } from 'antd';
-import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
-import { useCreatorArts, useUserArts } from '../../hooks';
-import { useMeta } from '../../contexts';
-import { CardLoader } from '../../components/MyLoader';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Col, Layout, Row, Tabs } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArtCard } from '../../components/ArtCard';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useMeta } from '../../contexts';
+import { useCreatorArts, useUserArts } from '../../hooks';
 
 const { TabPane } = Tabs;
 
@@ -24,12 +23,6 @@ export const ArtworksView = () => {
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const { metadata, isLoading } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   const items =
     activeKey === ArtworkViewState.Owned
@@ -47,11 +40,7 @@ export const ArtworksView = () => {
   }, [connected, setActiveKey]);
 
   const artworkGrid = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="metaplex-masonry"
-      columnClassName="metaplex-masonry-column"
-    >
+    <MetaplexMasonry>
       {!isLoading
         ? items.map((m, idx) => {
             const id = m.pubkey;
@@ -68,35 +57,27 @@ export const ArtworksView = () => {
             );
           })
         : []}
-    </Masonry>
+    </MetaplexMasonry>
   );
 
   return (
-    <Layout>
-      <Content>
-        <Col>
-          <Row>
-            <Tabs
-              activeKey={activeKey}
-              onTabClick={key => setActiveKey(key as ArtworkViewState)}
-            >
-              <TabPane tab={'All'} key={ArtworkViewState.Metaplex}>
-                {artworkGrid}
-              </TabPane>
-              {connected && (
-                <TabPane tab={'Owned'} key={ArtworkViewState.Owned}>
-                  {artworkGrid}
-                </TabPane>
-              )}
-              {connected && (
-                <TabPane tab={'Created'} key={ArtworkViewState.Created}>
-                  {artworkGrid}
-                </TabPane>
-              )}
-            </Tabs>
-          </Row>
-        </Col>
-      </Content>
-    </Layout>
+    <Tabs
+      activeKey={activeKey}
+      onTabClick={key => setActiveKey(key as ArtworkViewState)}
+    >
+      <TabPane tab={'All'} key={ArtworkViewState.Metaplex}>
+        {artworkGrid}
+      </TabPane>
+      {connected && (
+        <TabPane tab={'Owned'} key={ArtworkViewState.Owned}>
+          {artworkGrid}
+        </TabPane>
+      )}
+      {connected && (
+        <TabPane tab={'Created'} key={ArtworkViewState.Created}>
+          {artworkGrid}
+        </TabPane>
+      )}
+    </Tabs>
   );
 };
