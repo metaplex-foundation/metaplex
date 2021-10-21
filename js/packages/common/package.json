@@ -27,7 +27,7 @@
     "test": "jest test --passWithNoTests",
     "clean": "rm -rf dist",
     "prepare": "run-s clean build",
-    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
+    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|less|md)\""
   },
   "dependencies": {
     "@project-serum/serum": "^0.13.52",

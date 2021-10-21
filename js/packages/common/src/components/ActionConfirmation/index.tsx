@@ -3,9 +3,7 @@ import { Button } from 'antd';
 import { LABELS } from '../../constants';
 import { Link } from 'react-router-dom';
 
-export const ActionConfirmation = (props: {
-  onClose: () => void;
-}) => {
+export const ActionConfirmation = (props: { onClose: () => void }) => {
   return (
     <div>
       <h2>Congratulations!</h2>

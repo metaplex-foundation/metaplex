@@ -207,11 +207,7 @@ export const ArtContent = ({
       animationUrlExt === 'gltf')
   ) {
     return (
-      <MeshArtContent
-        uri={uri}
-        animationUrl={animationURL}
-        files={files}
-      />
+      <MeshArtContent uri={uri} animationUrl={animationURL} files={files} />
     );
   }
 
@@ -232,7 +228,7 @@ export const ArtContent = ({
         artView={artView}
       />
     ) : (
-      <CachedImageContent uri={uri}  preview={preview} />
+      <CachedImageContent uri={uri} preview={preview} />
     );
 
   return <div ref={ref}>{content}</div>;

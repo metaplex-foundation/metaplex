@@ -80,7 +80,7 @@ export const StoreProvider: FC<{
   storefront: Storefront;
   storeAddress?: string;
 }> = ({ children, storefront, storeAddress }) => {
-  const ownerAddress = storefront.pubkey
+  const ownerAddress = storefront.pubkey;
   const searchParams = useQuerySearch();
   const ownerAddressFromQuery = searchParams.get('store');
 
@@ -117,7 +117,15 @@ export const StoreProvider: FC<{
   }, [initOwnerAddress]);
 
   return (
-    <StoreContext.Provider value={{ ...store, setStoreForOwner, isConfigured, ownerAddress, storefront }}>
+    <StoreContext.Provider
+      value={{
+        ...store,
+        setStoreForOwner,
+        isConfigured,
+        ownerAddress,
+        storefront,
+      }}
+    >
       {children}
     </StoreContext.Provider>
   );

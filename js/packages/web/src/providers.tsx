@@ -25,7 +25,6 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
           <CoingeckoProvider>
             <StoreProvider
               storefront={storefront}
-
               storeAddress={process.env.NEXT_PUBLIC_STORE_ADDRESS}
             >
               <MetaProvider>

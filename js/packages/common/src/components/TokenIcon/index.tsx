@@ -33,10 +33,7 @@ export const TokenIcon = (props: {
   return <Identicon address={props.mintAddress} />;
 };
 
-export const PoolIcon = (props: {
-  mintA: string;
-  mintB: string;
-}) => {
+export const PoolIcon = (props: { mintA: string; mintB: string }) => {
   return (
     <div>
       <TokenIcon mintAddress={props.mintA} />

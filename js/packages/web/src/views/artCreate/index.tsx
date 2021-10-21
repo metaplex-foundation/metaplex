@@ -502,7 +502,7 @@ const UploadStep = (props: {
                       uri,
                       type,
                     };
-                    
+
                     return ret;
                   }),
               },

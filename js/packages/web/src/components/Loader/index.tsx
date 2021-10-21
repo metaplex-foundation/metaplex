@@ -6,10 +6,7 @@ export const LoaderProvider: FC = ({ children }) => {
 
   return (
     <>
-      <div
-        id="metaplex-loading"
-        className={isLoading ? 'loading' : undefined}
-      >
+      <div id="metaplex-loading" className={isLoading ? 'loading' : undefined}>
         <div id="metaplex-loading-text">loading</div>
         <Spinner />
       </div>
