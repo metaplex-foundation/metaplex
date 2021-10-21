@@ -32,7 +32,6 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
     titleText,
     descriptionText,
     extraButton,
-    className,
     ...rest
   } = props;
   const handleOnCancel = useCallback(
@@ -48,7 +47,6 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
       visible={visible}
       onCancel={e => handleOnCancel(e)}
       footer={null}
-      className={`pre-modal ${className || ''}`}
       closeIcon={<img src={'/modals/close.svg'} />}
       {...rest}
     >

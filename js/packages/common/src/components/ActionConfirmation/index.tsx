@@ -4,7 +4,6 @@ import { LABELS } from '../../constants';
 import { Link } from 'react-router-dom';
 
 export const ActionConfirmation = (props: {
-  className?: string;
   onClose: () => void;
 }) => {
   return (

@@ -23,7 +23,6 @@ export const ConfettiProvider = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const confettiRef = useRef<confetti.CreateTypes>();
 
-  // TODO: remove use of .style
   const dropConfetti = useMemo(
     () => () => {
       if (confettiRef.current && canvasRef.current) {
@@ -54,18 +53,9 @@ export const ConfettiProvider = ({
     }
   }, []);
 
-  const canvasStyle: React.CSSProperties = {
-    width: '100vw',
-    height: '100vh',
-    position: 'absolute',
-    zIndex: 1,
-    top: 0,
-    left: 0,
-  };
-
   return (
     <ConfettiContext.Provider value={{ dropConfetti }}>
-      <canvas ref={canvasRef} style={canvasStyle} />
+      <canvas ref={canvasRef} id="metaplex-confetti" />
       {children}
     </ConfettiContext.Provider>
   );

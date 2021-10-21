@@ -8,12 +8,10 @@ export interface ConnectButtonProps
   extends ButtonProps,
     React.RefAttributes<HTMLElement> {
   allowWalletChange?: boolean;
-  className?: string;
 }
 
 export const ConnectButton = (props: ConnectButtonProps) => {
-  const { onClick, children, disabled, allowWalletChange, className, ...rest } =
-    props;
+  const { onClick, children, disabled, allowWalletChange, ...rest } = props;
   const { wallet, connect, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
@@ -28,7 +26,6 @@ export const ConnectButton = (props: ConnectButtonProps) => {
   if (!wallet || !allowWalletChange) {
     return (
       <Button
-        className={className || 'connector'}
         {...rest}
         onClick={e => {
           onClick && onClick(e);
@@ -43,7 +40,6 @@ export const ConnectButton = (props: ConnectButtonProps) => {
 
   return (
     <Dropdown.Button
-      className={className || 'connector'}
       onClick={handleClick}
       disabled={connected && disabled}
       overlay={

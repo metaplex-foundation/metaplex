@@ -4,17 +4,12 @@ import { LABELS } from '../../constants';
 import { ConnectButton } from '@oyster/common';
 
 interface HowToBuyModalProps {
-  buttonClassName?: string;
   onClick?: () => void;
 }
 
-export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
-  buttonClassName,
-  onClick,
-}) => {
+export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ onClick }) => {
   return (
     <InstructionsModal
-      buttonClassName={buttonClassName}
       buttonText="How to Buy"
       modalTitle={`Buying NFTs on ${LABELS.STORE_NAME}`}
       cardProps={[

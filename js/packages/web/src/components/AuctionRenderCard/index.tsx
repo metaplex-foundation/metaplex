@@ -89,7 +89,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   }, [auction, setState]);
 
   const card = (
-    <Card hoverable={true} className={`auction-render-card`} bordered={false}>
+    <Card hoverable={true} bordered={false}>
       <div>
         <div>
           <MetaAvatar creators={[creators[0]]} />

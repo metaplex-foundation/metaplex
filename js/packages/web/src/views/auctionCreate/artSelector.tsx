@@ -123,7 +123,6 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   pubkey={m.metadata.pubkey}
                   preview={false}
                   onClick={onSelect}
-                  className={isSelected ? 'selected-card' : 'not-selected-card'}
                 />
               );
             })}

@@ -6,10 +6,9 @@ import { PublicKey } from '@solana/web3.js';
 
 export const Identicon = (props: {
   address?: string | PublicKey;
-  className?: string;
   alt?: string;
 }) => {
-  const { className, alt } = props;
+  const { alt } = props;
   const address =
     typeof props.address === 'string'
       ? props.address
@@ -21,7 +20,6 @@ export const Identicon = (props: {
       try {
         // TODO: ?????????
         ref.current.innerHTML = '';
-        ref.current.className = className || '';
         ref.current.appendChild(
           Jazzicon(
             16,
@@ -32,7 +30,7 @@ export const Identicon = (props: {
         // TODO
       }
     }
-  }, [address, className]);
+  }, [address]);
 
   return <div title={alt} ref={ref} />;
 };

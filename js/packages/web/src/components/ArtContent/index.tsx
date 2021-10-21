@@ -11,12 +11,10 @@ import { getLast } from '../../utils/utils';
 const MeshArtContent = ({
   uri,
   animationUrl,
-  className,
   files,
 }: {
   uri?: string;
   animationUrl?: string;
-  className?: string;
   files?: (MetadataFile | string)[];
 }) => {
   const renderURL =
@@ -26,21 +24,17 @@ const MeshArtContent = ({
   const { isLoading } = useCachedImage(renderURL || '', true);
 
   if (isLoading) {
-    return (
-      <CachedImageContent uri={uri} className={className} preview={false} />
-    );
+    return <CachedImageContent uri={uri} preview={false} />;
   }
 
-  return <MeshViewer url={renderURL} className={className} />;
+  return <MeshViewer url={renderURL} />;
 };
 
 const CachedImageContent = ({
   uri,
-  className,
   preview,
 }: {
   uri?: string;
-  className?: string;
   preview?: boolean;
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -50,7 +44,6 @@ const CachedImageContent = ({
     <Image
       src={cachedBlob}
       preview={preview}
-      wrapperClassName={className}
       loading="lazy"
       onLoad={e => {
         setLoaded(true);
@@ -62,13 +55,11 @@ const CachedImageContent = ({
 };
 
 const VideoArtContent = ({
-  className,
   files,
   uri,
   animationURL,
   active,
 }: {
-  className?: string;
   files?: (MetadataFile | string)[];
   uri?: string;
   animationURL?: string;
@@ -138,22 +129,18 @@ const VideoArtContent = ({
 const HTMLContent = ({
   uri,
   animationUrl,
-  className,
   preview,
   files,
   artView,
 }: {
   uri?: string;
   animationUrl?: string;
-  className?: string;
   preview?: boolean;
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
   if (!artView) {
-    return (
-      <CachedImageContent uri={uri} className={className} preview={preview} />
-    );
+    return <CachedImageContent uri={uri} preview={preview} />;
   }
   const htmlURL =
     files && files.length > 0 && typeof files[0] === 'string'
@@ -165,14 +152,12 @@ const HTMLContent = ({
       sandbox="allow-scripts"
       frameBorder="0"
       src={htmlURL}
-      className={className}
     ></iframe>
   );
 };
 
 export const ArtContent = ({
   category,
-  className,
   preview,
   active,
   allowMeshRender,
@@ -183,7 +168,6 @@ export const ArtContent = ({
   artView,
 }: {
   category?: MetadataCategory;
-  className?: string;
   preview?: boolean;
   width?: number;
   height?: number;
@@ -226,7 +210,6 @@ export const ArtContent = ({
       <MeshArtContent
         uri={uri}
         animationUrl={animationURL}
-        className={className}
         files={files}
       />
     );
@@ -235,7 +218,6 @@ export const ArtContent = ({
   const content =
     category === 'video' ? (
       <VideoArtContent
-        className={className}
         files={files}
         uri={uri}
         animationURL={animationURL}
@@ -245,13 +227,12 @@ export const ArtContent = ({
       <HTMLContent
         uri={uri}
         animationUrl={animationURL}
-        className={className}
         preview={preview}
         files={files}
         artView={artView}
       />
     ) : (
-      <CachedImageContent uri={uri} className={className} preview={preview} />
+      <CachedImageContent uri={uri}  preview={preview} />
     );
 
   return <div ref={ref}>{content}</div>;

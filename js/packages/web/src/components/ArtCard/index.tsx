@@ -31,7 +31,6 @@ export interface ArtCardProps extends CardProps {
 
 export const ArtCard = (props: ArtCardProps) => {
   let {
-    className,
     small,
     category,
     image,
@@ -62,7 +61,6 @@ export const ArtCard = (props: ArtCardProps) => {
   const card = (
     <Card
       hoverable={true}
-      className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
       cover={
         <>
           {close && (

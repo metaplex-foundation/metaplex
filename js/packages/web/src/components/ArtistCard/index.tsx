@@ -10,7 +10,6 @@ export const ArtistCard = ({ artist }: { artist: Artist }) => {
   return (
     <Card
       hoverable={true}
-      className={`artist-card`}
       cover={
         <div>{artist.background ? <img src={artist.background} /> : null}</div>
       }

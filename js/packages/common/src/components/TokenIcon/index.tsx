@@ -7,7 +7,6 @@ import { Identicon } from '../Identicon';
 export const TokenIcon = (props: {
   mintAddress?: string | PublicKey;
   size?: number;
-  className?: string;
   tokenMap?: KnownTokenMap;
 }) => {
   let icon: string | undefined = '';
@@ -24,7 +23,6 @@ export const TokenIcon = (props: {
     return (
       <img
         alt="Token icon"
-        className={props.className}
         key={icon}
         width={size.toString()}
         height={size.toString()}
@@ -38,10 +36,9 @@ export const TokenIcon = (props: {
 export const PoolIcon = (props: {
   mintA: string;
   mintB: string;
-  className?: string;
 }) => {
   return (
-    <div className={props.className}>
+    <div>
       <TokenIcon mintAddress={props.mintA} />
       <TokenIcon mintAddress={props.mintB} />
     </div>

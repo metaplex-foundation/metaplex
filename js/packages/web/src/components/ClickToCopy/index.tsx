@@ -44,13 +44,7 @@ const Checkmark = () => (
   </svg>
 );
 
-export const ClickToCopy = ({
-  copyText,
-  className,
-}: {
-  copyText: string;
-  className?: string;
-}) => {
+export const ClickToCopy = ({ copyText }: { copyText: string }) => {
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
@@ -66,7 +60,7 @@ export const ClickToCopy = ({
   };
 
   return (
-    <div className={className} onClick={onClick} title="Click to copy pubkey">
+    <div onClick={onClick} title="Click to copy pubkey">
       {clicked ? <Checkmark /> : <CopyIcon />}
     </div>
   );
