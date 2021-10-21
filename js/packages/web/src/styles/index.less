@@ -2,9 +2,13 @@
 @import '~antd/lib/style/themes/dark.less';
 
 // Ant Design config
-@layout-header-height: fit-content;
+// TODO: put Ant Design headers here
 
 // Other config
+@content-padding: 32px;
+@content-max-width: 1440px;
+@loading-background: rgba(black, 0.1);
+@overlay-filter: blur(32px);
 @masonry-gutter: 32px;
 
 // Dependency stylesheets
@@ -15,5 +19,8 @@
 @import './masonry.less';
 
 // Component styles for web
+@import '../components/AppBar/styles.less';
 @import '../components/ArtContent/styles.less';
 @import '../components/Confetti/styles.less';
+@import '../components/Layout/styles.less';
+@import '../components/Loader/styles.less';

@@ -5,16 +5,14 @@ import { AppBar } from '../AppBar';
 
 const { Header, Content } = Layout;
 
-export const AppLayout = React.memo((props: { children?: ReactNode; }) => {
+export const AppLayout = React.memo((props: { children?: ReactNode }) => {
   return (
     <>
       <Layout>
         <Header>
           <AppBar />
         </Header>
-        <Layout>
-          <Content>{props.children}</Content>
-        </Layout>
+        <Content id="metaplex-layout-content">{props.children}</Content>
       </Layout>
     </>
   );

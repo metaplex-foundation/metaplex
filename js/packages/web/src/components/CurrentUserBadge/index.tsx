@@ -1,4 +1,10 @@
-import React, { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import {
@@ -18,8 +24,6 @@ import { Button, Popover, Select } from 'antd';
 import { useMeta, useSolPrice } from '../../contexts';
 import { Link } from 'react-router-dom';
 import { SolCircle } from '../Custom';
-
-('@solana/wallet-adapter-base');
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   const { wallet, publicKey } = useWallet();
@@ -216,30 +220,28 @@ export const Cog = () => {
   const open = useCallback(() => setVisible(true), [setVisible]);
 
   return (
-    <div>
-      <Popover
-        trigger="click"
-        placement="bottomRight"
-        content={
-          <div>
-            <h5>NETWORK</h5>
-            <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
-              {ENDPOINTS.map(({ name, endpoint }) => (
-                <Select.Option value={endpoint} key={endpoint}>
-                  {name}
-                </Select.Option>
-              ))}
-            </Select>
+    <Popover
+      trigger="click"
+      placement="bottomRight"
+      content={
+        <>
+          <h5>NETWORK</h5>
+          <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
+            {ENDPOINTS.map(({ name, endpoint }) => (
+              <Select.Option value={endpoint} key={endpoint}>
+                {name}
+              </Select.Option>
+            ))}
+          </Select>
 
-            <Button onClick={open}>Change wallet</Button>
-          </div>
-        }
-      >
-        <Button>
-          <img src="/cog.svg" />
-        </Button>
-      </Popover>
-    </div>
+          <Button onClick={open}>Change wallet</Button>
+        </>
+      }
+    >
+      <Button>
+        <img src="/cog.svg" />
+      </Button>
+    </Popover>
   );
 };
 

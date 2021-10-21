@@ -1,0 +1,84 @@
+#metaplex-loading {
+  transition-property: opacity, visibility;
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in, step-end;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: @loading-background;
+  backdrop-filter: @overlay-filter;
+  pointer-events: all;
+  z-index: 9999;
+  visibility: hidden;
+  opacity: 0;
+
+  &.loading {
+    transition-timing-function: ease-out, step-start;
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+#metaplex-loading-text {
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
+}
+
+#metaplex-loading-spinner {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: stretch;
+  height: 24px;
+
+  > div {
+    flex: 0 0 2px;
+    background: @text-color;
+    animation: metaplex-loading-spinner-bar 1s infinite ease-in-out;
+
+    &:not(:first-child) {
+      margin-left: 6px;
+    }
+  }
+
+  // Spinner config
+  @bar-count: 9;
+  @per-bar-delay: 200ms;
+
+  // Helper vars
+  @max: @bar-count - 1;
+  @mid: floor((@max / 2));
+
+  .loop (@i) when (@i < @mid) {
+    @j: @max - @i;
+
+    .metaplex-loading-spinner-bar-@{i},
+    .metaplex-loading-spinner-bar-@{j} {
+      animation-delay: ((@mid - @i) * @per-bar-delay);
+    }
+
+    .loop (@i + 1);
+  }
+
+  .loop(0);
+}
+
+@keyframes metaplex-loading-spinner-bar {
+  start {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  end {
+    opacity: 1;
+  }
+}

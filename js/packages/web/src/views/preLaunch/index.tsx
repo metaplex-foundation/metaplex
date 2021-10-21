@@ -1,14 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
-
-import { Button, Input, Layout, Modal, Form, Spin } from 'antd';
-import { ModalProps } from 'antd/lib/modal';
-import { LogoLink } from '../../components/AppBar';
-import { textContent } from './textContent';
-import useMagicLink from '../../hooks/magicLink/useMagicLink';
 import { shortenAddress } from '@oyster/common';
+import { Button, Form, Input, Layout, Modal, Spin } from 'antd';
+import { ModalProps } from 'antd/lib/modal';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import useMagicLink from '../../hooks/magicLink/useMagicLink';
+import { textContent } from './textContent';
 import { getUser, getWalletAddress, saveUser } from './userInfo';
 
 const { Content } = Layout;
+
+const LogoLink = () => (
+  <Link to="/">
+    <img src="metaplex-logo.svg" />
+  </Link>
+);
 
 export interface GotEmailButtonProps
   extends ModalProps,
