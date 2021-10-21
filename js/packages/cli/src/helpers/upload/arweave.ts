@@ -29,8 +29,11 @@ export async function arweaveUpload(
   manifest,
   index,
 ) {
-  const storageCost = 2300000; // 0.0023 SOL per file (paid to arweave)
+  const ONE_MB = 1_000_000; // 1mb in bytes
+  const { size } = fs.statSync(image); // file size in bytes
 
+  const storageCostBaseCost = 230000; // 0.00023 SOL for 1 mb (paid to arweave)
+  const storageCost = Math.round(storageCostBaseCost / (size / ONE_MB));
   const instructions = [
     anchor.web3.SystemProgram.transfer({
       fromPubkey: walletKeyPair.publicKey,
