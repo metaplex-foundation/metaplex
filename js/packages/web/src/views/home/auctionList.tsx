@@ -121,7 +121,6 @@ export const AuctionListView = () => {
         headingText="The amazing world of Metaplex."
         subHeadingText="Buy exclusive Metaplex NFTs."
         actionComponent={<HowToBuyModal />}
-        useBannerBg={true}
       />
       <Tabs
         activeKey={activeKey}

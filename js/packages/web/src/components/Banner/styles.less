@@ -1,0 +1,33 @@
+#metaplex-banner {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+#metaplex-banner-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-position: center;
+  object-fit: cover;
+  filter: @overlay-filter;
+}
+
+#metaplex-banner-hero {
+  display: flex;
+  position: relative;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+#metaplex-banner-powered-by {
+  align-self: flex-end;
+  position: relative;
+}

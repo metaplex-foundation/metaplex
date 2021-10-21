@@ -1,36 +1,30 @@
 import React from 'react';
 
-export const Banner = (props: {
+export const Banner = ({
+  src,
+  headingText,
+  subHeadingText,
+  actionComponent,
+  children,
+}: {
   src: string;
-  useBannerBg: boolean;
   headingText: string;
   subHeadingText: string;
   actionComponent?: JSX.Element;
   children?: React.ReactNode;
 }) => {
   return (
-    <>
-      <div>
-        <img src={props.src} />
-        <div>
-          <div>{props.headingText}</div>
-          <div>{props.subHeadingText}</div>
-          {props.actionComponent}
-        </div>
+    <div id="metaplex-banner">
+      <img id="metaplex-banner-backdrop" src={src} />
+      <div id="metaplex-banner-hero">
+        <div>{headingText}</div>
+        <div>{subHeadingText}</div>
+        {actionComponent}
       </div>
-      <div style={{ backgroundImage: `url(${props.src})` }}>
-        <div>
-          <div>{props.headingText}</div>
-          <div>{props.subHeadingText}</div>
-          {props.actionComponent}
-        </div>
-        {props.children}
-        <div>
-          <span>
-            POWERED BY <b>METAPLEX</b>
-          </span>
-        </div>
+      {children}
+      <div id="metaplex-banner-powered-by">
+        POWERED BY <b>METAPLEX</b>
       </div>
-    </>
+    </div>
   );
 };
