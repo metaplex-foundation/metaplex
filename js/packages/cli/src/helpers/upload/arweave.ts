@@ -5,12 +5,13 @@ import log from 'loglevel';
 import fetch from 'node-fetch';
 import { ARWEAVE_PAYMENT_WALLET } from '../constants';
 import { sendTransactionWithRetryWithKeypair } from '../transactions';
+import { getAssetCostToStore, ARWEAVE_UPLOAD_ENDPOINT } from '@oyster/common';
 
 async function upload(data: FormData, manifest, index) {
   log.debug(`trying to upload ${index}.png: ${manifest.name}`);
   return await (
     await fetch(
-      'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
+      ARWEAVE_UPLOAD_ENDPOINT,
       {
         method: 'POST',
         // @ts-ignore
@@ -29,7 +30,7 @@ export async function arweaveUpload(
   manifest,
   index,
 ) {
-  const storageCost = 2300000; // 0.0023 SOL per file (paid to arweave)
+  const storageCost = await getAssetCostToStore([image])// 2300000; // 0.0023 SOL per file (paid to arweave)
 
   const instructions = [
     anchor.web3.SystemProgram.transfer({

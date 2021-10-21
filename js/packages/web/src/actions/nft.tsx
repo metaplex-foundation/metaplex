@@ -15,6 +15,8 @@ import {
   toPublicKey,
   WalletSigner,
   Attribute,
+  getAssetCostToStore,
+  ARWEAVE_UPLOAD_ENDPOINT
 } from '@oyster/common';
 import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
@@ -25,7 +27,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import crypto from 'crypto';
-import { getAssetCostToStore } from '../utils/assets';
+
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
 
@@ -44,7 +46,7 @@ interface IArweaveResult {
 
 const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
   const resp = await fetch(
-    'https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile',
+    ARWEAVE_UPLOAD_ENDPOINT,
     {
       method: 'POST',
       // @ts-ignore
