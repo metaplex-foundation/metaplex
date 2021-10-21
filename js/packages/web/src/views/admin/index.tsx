@@ -45,6 +45,8 @@ import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
 import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
+import { useNotifications } from '../../hooks';
+import { useAuctionManagersToCache } from './hooks/useAuctionManagersToCache';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -238,14 +240,12 @@ function InnerAdminView({
   const [cachingAuctions, setCachingAuctions] = useState<boolean>();
   const [convertingMasterEditions, setConvertMasterEditions] = useState<boolean>();
   const {
-    auctionManagersByAuction,
-    auctions,
     auctionCaches,
     storeIndexer,
     metadata,
     masterEditions,
   } = useMeta();
-  const { storeAddress } = useStore();
+  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache(); 
 
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
@@ -261,57 +261,6 @@ function InnerAdminView({
     };
     fn();
   }, [connected]);
-
-  const auctionManagersToCache = useMemo(() => {
-    let auctionManagersToCache = Object.values(auctionManagersByAuction)
-      .filter(a => a.info.store == storeAddress)
-      .sort((a, b) =>
-        (
-          auctions[b.info.auction].info.endedAt ||
-          new BN(Date.now() / 1000)
-        )
-          .sub(
-            auctions[a.info.auction].info.endedAt ||
-            new BN(Date.now() / 1000),
-          )
-          .toNumber(),
-      );
-
-    const indexedInStoreIndexer = {};
-
-    storeIndexer.forEach(s => {
-      s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
-    });
-
-    const alreadyIndexed = Object.values(auctionCaches).reduce(
-      (hash, val) => {
-        hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
-
-        return hash;
-      },
-      {},
-    );
-    auctionManagersToCache = auctionManagersToCache.filter(
-      a => !alreadyIndexed[a.pubkey],
-    );
-
-    return auctionManagersToCache
-  }, [auctionManagersByAuction, auctions, auctionCaches, storeIndexer])
-
-  const auctionCacheTotal = storeIndexer.reduce((memo, storeIndexer) => {
-    let next = memo;
-    if (storeIndexer.info.store !== storeAddress) {
-      return memo;
-    }
-
-    storeIndexer.info.auctionCaches.forEach(() => {
-      next++
-    })
-
-
-    return next;
-  }, 0);
-  const auctionManagerTotal = Object.values(auctionManagersByAuction).filter(({ info: { store } }) => store === storeAddress).length;
 
   const uniqueCreators = Object.values(whitelistedCreatorsByCreator).reduce(
     (acc: Record<string, WhitelistedCreator>, e) => {
