@@ -24,6 +24,213 @@ const TREASURY: &str = "treasury";
 pub mod auction_house {
     use super::*;
 
+    pub fn withdraw<'info>(
+        ctx: Context<'_, '_, '_, 'info, Withdraw<'info>>,
+        escrow_payment_bump: u8,
+        amount: u64,
+    ) -> ProgramResult {
+        let wallet = &ctx.accounts.wallet;
+        let receipt_account = &ctx.accounts.receipt_account;
+        let escrow_payment_account = &ctx.accounts.escrow_payment_account;
+        let authority = &ctx.accounts.authority;
+        let auction_house = &ctx.accounts.auction_house;
+        let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
+        let treasury_mint = &ctx.accounts.treasury_mint;
+        let system_program = &ctx.accounts.system_program;
+        let token_program = &ctx.accounts.token_program;
+        let ata_program = &ctx.accounts.ata_program;
+        let rent = &ctx.accounts.rent;
+
+        let seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+
+        let auction_house_key = auction_house.key();
+        let wallet_key = wallet.key();
+
+        if !wallet.to_account_info().is_signer && !authority.to_account_info().is_signer {
+            return Err(ErrorCode::NoValidSignerPresent.into());
+        }
+
+        let escrow_signer_seeds = [
+            PREFIX.as_bytes(),
+            auction_house_key.as_ref(),
+            wallet_key.as_ref(),
+            &[escrow_payment_bump],
+        ];
+
+        let (fee_payer, fee_seeds) = get_fee_payer(
+            authority,
+            auction_house,
+            wallet.to_account_info(),
+            auction_house_fee_account.to_account_info(),
+            &seeds,
+        )?;
+
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+
+        if !is_native {
+            if receipt_account.data_is_empty() {
+                make_ata(
+                    receipt_account.to_account_info(),
+                    wallet.to_account_info(),
+                    treasury_mint.to_account_info(),
+                    fee_payer.to_account_info(),
+                    ata_program.to_account_info(),
+                    token_program.to_account_info(),
+                    system_program.to_account_info(),
+                    rent.to_account_info(),
+                    &fee_seeds,
+                )?;
+            }
+
+            let rec_acct = assert_is_ata(
+                &receipt_account.to_account_info(),
+                &wallet.key(),
+                &treasury_mint.key(),
+            )?;
+
+            // make sure you cant get rugged
+            if rec_acct.delegate.is_some() {
+                return Err(ErrorCode::BuyerATACannotHaveDelegate.into());
+            }
+
+            assert_is_ata(receipt_account, &wallet.key(), &treasury_mint.key())?;
+            invoke_signed(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    &escrow_payment_account.key(),
+                    &receipt_account.key(),
+                    &escrow_payment_account.key(),
+                    &[],
+                    amount,
+                )?,
+                &[
+                    escrow_payment_account.to_account_info(),
+                    receipt_account.to_account_info(),
+                    token_program.to_account_info(),
+                ],
+                &[&escrow_signer_seeds],
+            )?;
+        } else {
+            assert_keys_equal(receipt_account.key(), wallet.key())?;
+            invoke_signed(
+                &system_instruction::transfer(
+                    &escrow_payment_account.key(),
+                    &receipt_account.key(),
+                    amount,
+                ),
+                &[
+                    escrow_payment_account.to_account_info(),
+                    receipt_account.to_account_info(),
+                    system_program.to_account_info(),
+                ],
+                &[],
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn deposit<'info>(
+        ctx: Context<'_, '_, '_, 'info, Deposit<'info>>,
+        escrow_payment_bump: u8,
+        amount: u64,
+    ) -> ProgramResult {
+        let wallet = &ctx.accounts.wallet;
+        let payment_account = &ctx.accounts.payment_account;
+        let transfer_authority = &ctx.accounts.transfer_authority;
+        let escrow_payment_account = &ctx.accounts.escrow_payment_account;
+        let authority = &ctx.accounts.authority;
+        let auction_house = &ctx.accounts.auction_house;
+        let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
+        let treasury_mint = &ctx.accounts.treasury_mint;
+        let system_program = &ctx.accounts.system_program;
+        let token_program = &ctx.accounts.token_program;
+        let rent = &ctx.accounts.rent;
+
+        let seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+
+        let auction_house_key = auction_house.key();
+        let wallet_key = wallet.key();
+
+        let escrow_signer_seeds = [
+            PREFIX.as_bytes(),
+            auction_house_key.as_ref(),
+            wallet_key.as_ref(),
+            &[escrow_payment_bump],
+        ];
+
+        let (fee_payer, fee_seeds) = get_fee_payer(
+            authority,
+            auction_house,
+            wallet.to_account_info(),
+            auction_house_fee_account.to_account_info(),
+            &seeds,
+        )?;
+
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+
+        create_escrow_if_not_present(
+            escrow_payment_account,
+            system_program,
+            &fee_payer,
+            token_program,
+            treasury_mint,
+            rent,
+            ctx.program_id,
+            &escrow_signer_seeds,
+            fee_seeds,
+            is_native,
+        )?;
+
+        if !is_native {
+            assert_is_ata(payment_account, &wallet.key(), &treasury_mint.key())?;
+            invoke_signed(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    &payment_account.key(),
+                    &escrow_payment_account.key(),
+                    &transfer_authority.key(),
+                    &[],
+                    amount,
+                )?,
+                &[
+                    escrow_payment_account.to_account_info(),
+                    payment_account.to_account_info(),
+                    token_program.to_account_info(),
+                    transfer_authority.to_account_info(),
+                ],
+                &[],
+            )?;
+        } else {
+            assert_keys_equal(payment_account.key(), wallet.key())?;
+            invoke_signed(
+                &system_instruction::transfer(
+                    &payment_account.key(),
+                    &escrow_payment_account.key(),
+                    amount,
+                ),
+                &[
+                    escrow_payment_account.to_account_info(),
+                    payment_account.to_account_info(),
+                    system_program.to_account_info(),
+                ],
+                &[],
+            )?;
+        }
+
+        Ok(())
+    }
+
     pub fn cancel<'info>(
         ctx: Context<'_, '_, '_, 'info, Cancel<'info>>,
         _buyer_price: u64,
@@ -39,6 +246,10 @@ pub mod auction_house {
         let system_program = &ctx.accounts.system_program;
 
         assert_keys_equal(token_mint.key(), token_account.mint)?;
+
+        if !wallet.to_account_info().is_signer && !authority.to_account_info().is_signer {
+            return Err(ErrorCode::NoValidSignerPresent.into());
+        }
 
         let seeds = [
             PREFIX.as_bytes(),
@@ -452,43 +663,18 @@ pub mod auction_house {
             &[escrow_payment_bump],
         ];
 
-        if !is_native && escrow_payment_account.data_is_empty() {
-            create_or_allocate_account_raw(
-                *ctx.program_id,
-                &escrow_payment_account.to_account_info(),
-                &rent.to_account_info(),
-                &system_program,
-                &fee_payer,
-                spl_token::state::Account::LEN,
-                fee_seeds,
-            )?;
-
-            invoke_signed(
-                &initialize_account2(
-                    &token_program.key,
-                    &escrow_payment_account.key(),
-                    &treasury_mint.key(),
-                    &escrow_payment_account.key(),
-                )
-                .unwrap(),
-                &[
-                    token_program.to_account_info(),
-                    treasury_mint.to_account_info(),
-                    escrow_payment_account.to_account_info(),
-                    rent.to_account_info(),
-                ],
-                &[&escrow_signer_seeds],
-            )?;
-        } else if is_native && escrow_payment_account.owner != ctx.program_id {
-            invoke_signed(
-                &system_instruction::assign(&escrow_payment_account.key(), &ctx.program_id),
-                &[
-                    system_program.to_account_info(),
-                    escrow_payment_account.to_account_info(),
-                ],
-                &[&escrow_signer_seeds],
-            )?;
-        }
+        create_escrow_if_not_present(
+            escrow_payment_account,
+            system_program,
+            &fee_payer,
+            token_program,
+            treasury_mint,
+            rent,
+            ctx.program_id,
+            &escrow_signer_seeds,
+            fee_seeds,
+            is_native,
+        )?;
 
         if is_native {
             assert_keys_equal(wallet.key(), payment_account.key())?;
@@ -559,22 +745,6 @@ pub mod auction_house {
 
         Ok(())
     }
-}
-#[derive(Accounts)]
-pub struct AcceptOffer<'info> {
-    maker_wallet: UncheckedAccount<'info>,
-    taker_wallet: UncheckedAccount<'info>,
-    maker_src_account: UncheckedAccount<'info>,
-    maker_dst_account: UncheckedAccount<'info>,
-    taker_src_account: UncheckedAccount<'info>,
-    taker_dst_account: UncheckedAccount<'info>,
-    maker_src_mint: Account<'info, Mint>,
-    taker_src_mint: Account<'info, Mint>,
-    transfer_authority: UncheckedAccount<'info>,
-    #[account(address = spl_token::id())]
-    token_program: UncheckedAccount<'info>,
-    #[account(address = system_program::ID)]
-    system_program: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
@@ -660,6 +830,49 @@ pub struct ExecuteSale<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(escrow_payment_bump: u8)]
+pub struct Deposit<'info> {
+    wallet: Signer<'info>,
+    payment_account: UncheckedAccount<'info>,
+    transfer_authority: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), wallet.key().as_ref()], bump=escrow_payment_bump)]
+    escrow_payment_account: UncheckedAccount<'info>,
+    treasury_mint: Account<'info, Mint>,
+    authority: UncheckedAccount<'info>,
+    #[account(seeds=[PREFIX.as_bytes(), auction_house.creator.as_ref(), auction_house.treasury_mint.as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
+    auction_house_fee_account: UncheckedAccount<'info>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+#[instruction(escrow_payment_bump: u8)]
+pub struct Withdraw<'info> {
+    wallet: UncheckedAccount<'info>,
+    receipt_account: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), wallet.key().as_ref()], bump=escrow_payment_bump)]
+    escrow_payment_account: UncheckedAccount<'info>,
+    treasury_mint: Account<'info, Mint>,
+    authority: UncheckedAccount<'info>,
+    #[account(seeds=[PREFIX.as_bytes(), auction_house.creator.as_ref(), auction_house.treasury_mint.as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
+    auction_house_fee_account: UncheckedAccount<'info>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+    #[account(address = spl_associated_token_account::id())]
+    ata_program: UncheckedAccount<'info>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
 #[instruction(buyer_price: u64, token_size: u64)]
 pub struct Cancel<'info> {
     wallet: UncheckedAccount<'info>,
@@ -670,7 +883,7 @@ pub struct Cancel<'info> {
     auction_house: Account<'info, AuctionHouse>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
     auction_house_fee_account: UncheckedAccount<'info>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[1])]
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[0])]
     trade_state: UncheckedAccount<'info>,
     #[account(address = system_program::ID)]
     system_program: UncheckedAccount<'info>,
@@ -752,4 +965,6 @@ pub enum ErrorCode {
     SellerATACannotHaveDelegate,
     #[msg("Buyer ata cannot have a delegate set")]
     BuyerATACannotHaveDelegate,
+    #[msg("No valid signer present")]
+    NoValidSignerPresent,
 }
