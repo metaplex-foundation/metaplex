@@ -23,6 +23,54 @@ const TREASURY: &str = "treasury";
 #[program]
 pub mod auction_house {
     use super::*;
+
+    pub fn cancel<'info>(
+        ctx: Context<'_, '_, '_, 'info, Cancel<'info>>,
+        _buyer_price: u64,
+        _token_size: u64,
+    ) -> ProgramResult {
+        let wallet = &ctx.accounts.wallet;
+        let token_account = &ctx.accounts.token_account;
+        let token_mint = &ctx.accounts.token_mint;
+        let authority = &ctx.accounts.authority;
+        let auction_house = &ctx.accounts.auction_house;
+        let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
+        let trade_state = &ctx.accounts.trade_state;
+        let system_program = &ctx.accounts.system_program;
+
+        assert_keys_equal(token_mint.key(), token_account.mint)?;
+
+        let seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+
+        let (fee_payer, fee_payer_seeds) = get_fee_payer(
+            authority,
+            auction_house,
+            wallet.to_account_info(),
+            auction_house_fee_account.to_account_info(),
+            &seeds,
+        )?;
+
+        invoke_signed(
+            &system_instruction::transfer(
+                &trade_state.key(),
+                fee_payer.key,
+                trade_state.lamports(),
+            ),
+            &[
+                trade_state.to_account_info(),
+                fee_payer.clone(),
+                system_program.to_account_info(),
+            ],
+            &[fee_payer_seeds],
+        )?;
+
+        Ok(())
+    }
     pub fn execute_sale<'info>(
         ctx: Context<'_, '_, '_, 'info, ExecuteSale<'info>>,
         escrow_payment_bump: u8,
@@ -612,7 +660,7 @@ pub struct ExecuteSale<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(escrow_payment_bump: u8, buyer_price: u64, token_size: u64)]
+#[instruction(buyer_price: u64, token_size: u64)]
 pub struct Cancel<'info> {
     wallet: UncheckedAccount<'info>,
     token_account: Account<'info, TokenAccount>,
@@ -620,14 +668,10 @@ pub struct Cancel<'info> {
     authority: UncheckedAccount<'info>,
     #[account(seeds=[PREFIX.as_bytes(), auction_house.creator.as_ref(), auction_house.treasury_mint.as_ref()], bump=auction_house.bump, has_one=authority)]
     auction_house: Account<'info, AuctionHouse>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), wallet.key().as_ref()], bump=escrow_payment_bump)]
-    escrow_payment_account: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
     auction_house_fee_account: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[1])]
     trade_state: UncheckedAccount<'info>,
-    #[account(address = spl_token::id())]
-    token_program: UncheckedAccount<'info>,
     #[account(address = system_program::ID)]
     system_program: UncheckedAccount<'info>,
 }
