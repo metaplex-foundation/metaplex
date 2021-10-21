@@ -32,14 +32,14 @@ export const MetaAvatar = (props: {
   size?: number;
 }) => {
   const { creators, showMultiple } = props;
-  let size = props.size || 32;
+  const size = props.size || 32;
 
   if (!creators || creators.length === 0) {
     return <Avatar size={size} src={false} />;
   }
 
-  let controls = (creators || []).map(creator => (
-    <MetaAvatarItem creator={creator} alt={creator.name} size={size} />
+  const controls = (creators || []).map((creator, i) => (
+    <MetaAvatarItem key={i} creator={creator} alt={creator.name} size={size} />
   ));
 
   if (!showMultiple) {

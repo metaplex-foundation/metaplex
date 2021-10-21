@@ -26,7 +26,7 @@ import { Link } from 'react-router-dom';
 import { SolCircle } from '../Custom';
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
-  const { wallet, publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
 
@@ -43,7 +43,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
         (props.mobile ? (
           <div>
             {canCreate && (
-              <Link to={`/art/create`}>
+              <Link to="/art/create">
                 <Button
                   onClick={() => {
                     props.onClick ? props.onClick() : null;
@@ -53,7 +53,7 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
                 </Button>
               </Link>
             )}
-            <Link to={`/auction/create/0`}>
+            <Link to="/auction/create/0">
               <Button
                 onClick={() => {
                   props.onClick ? props.onClick() : null;
@@ -67,13 +67,13 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
           <div>
             {canCreate && (
               <>
-                <Link to={`/art/create`}>
+                <Link to="/art/create">
                   <Button>Create</Button>
                 </Link>
                 &nbsp;&nbsp;
               </>
             )}
-            <Link to={`/auction/create/0`}>
+            <Link to="/auction/create/0">
               <Button>Sell</Button>
             </Link>
           </div>

@@ -1,51 +1,50 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  Steps,
-  Row,
-  Button,
-  Upload,
-  Col,
-  Input,
-  Statistic,
-  Slider,
-  Spin,
-  InputNumber,
-  Form,
-  Typography,
-  Space,
-  Card,
-} from 'antd';
-import { ArtCard } from './../../components/ArtCard';
-import { UserSearch, UserValue } from './../../components/UserSearch';
-import { Confetti } from './../../components/Confetti';
-import { mintNFT } from '../../actions';
-import {
-  MAX_METADATA_LEN,
-  useConnection,
-  IMetadataExtension,
-  Attribute,
-  MetadataCategory,
-  useConnectionConfig,
-  Creator,
-  shortenAddress,
-  MetaplexModal,
-  MetaplexOverlay,
-  MetadataFile,
-  StringPublicKey,
-} from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
-import { Connection } from '@solana/web3.js';
-import { MintLayout } from '@solana/spl-token';
-import { useHistory, useParams } from 'react-router-dom';
-import { cleanName, getLast } from '../../utils/utils';
-import { AmountLabel } from '../../components/AmountLabel';
-import useWindowDimensions from '../../utils/layout';
 import {
   LoadingOutlined,
   MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
+import {
+  Creator,
+  IMetadataExtension,
+  MAX_METADATA_LEN,
+  MetadataCategory,
+  MetadataFile,
+  MetaplexModal,
+  MetaplexOverlay,
+  shortenAddress,
+  StringPublicKey,
+  useConnection,
+  useConnectionConfig,
+} from '@oyster/common';
+import { MintLayout } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection } from '@solana/web3.js';
+import {
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Slider,
+  Space,
+  Spin,
+  Statistic,
+  Steps,
+  Typography,
+  Upload,
+} from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
+import { mintNFT } from '../../actions';
+import { AmountLabel } from '../../components/AmountLabel';
+import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
+import useWindowDimensions from '../../utils/layout';
+import { getLast } from '../../utils/utils';
+import { ArtCard } from './../../components/ArtCard';
+import { Confetti } from './../../components/Confetti';
+import { UserSearch, UserValue } from './../../components/UserSearch';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -366,7 +365,7 @@ const UploadStep = (props: {
   return (
     <>
       <Row>
-        <h2>Now, let's upload your creation</h2>
+        <h2>Now, let&apos;s upload your creation</h2>
         <p>
           Your file will be uploaded to the decentralized web via Arweave.
           Depending on file type, can take up to 1 minute. Arweave is a new type
@@ -580,22 +579,12 @@ const InfoStep = (props: {
   setAttributes: (attr: IMetadataExtension) => void;
   confirm: () => void;
 }) => {
-  const [creators, setCreators] = useState<Array<UserValue>>([]);
-  const [royalties, setRoyalties] = useState<Array<Royalty>>([]);
   const { image, animation_url } = useArtworkFiles(
     props.files,
     props.attributes,
   );
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    setRoyalties(
-      creators.map(creator => ({
-        creatorKey: creator.key,
-        amount: Math.trunc(100 / creators.length),
-      })),
-    );
-  }, [creators]);
   return (
     <>
       <Row>
@@ -1177,7 +1166,7 @@ const Congrats = (props: {
       <>
         <div>Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push('/art/create')}>
+        <Button onClick={() => history.push('/art/create')}>
           Back to Create NFT
         </Button>
       </>
@@ -1188,19 +1177,19 @@ const Congrats = (props: {
     <>
       <div>Congratulations, you created an NFT!</div>
       <div>
-        <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
+        <Button onClick={() => window.open(newTweetURL(), '_blank')}>
           <span>Share it on Twitter</span>
           <span>&gt;</span>
         </Button>
         <Button
-          onClick={_ =>
+          onClick={() =>
             history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
         >
           <span>See it in your collection</span>
           <span>&gt;</span>
         </Button>
-        <Button onClick={_ => history.push('/auction/create')}>
+        <Button onClick={() => history.push('/auction/create')}>
           <span>Sell it via auction</span>
           <span>&gt;</span>
         </Button>

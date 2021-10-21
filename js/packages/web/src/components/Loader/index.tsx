@@ -20,7 +20,9 @@ export const Spinner = () => {
     () =>
       new Array(9)
         .fill(undefined)
-        .map((_, i) => <div className={`metaplex-loading-spinner-bar-${i}`} />),
+        .map((_, i) => (
+          <div key={i} className={`metaplex-loading-spinner-bar-${i}`} />
+        )),
     [],
   );
 

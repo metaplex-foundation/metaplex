@@ -1,60 +1,56 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { LoadingOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import {
-  Divider,
-  Steps,
-  Row,
-  Button,
-  Col,
-  Input,
-  Statistic,
-  Progress,
-  Spin,
-  Radio,
-  Card,
-  Select,
-  Checkbox,
-} from 'antd';
-import { ArtCard } from './../../components/ArtCard';
-import { QUOTE_MINT } from './../../constants';
-import { Confetti } from './../../components/Confetti';
-import { ArtSelector } from './artSelector';
-import {
-  MAX_METADATA_LEN,
-  useConnection,
-  WinnerLimit,
-  WinnerLimitType,
-  toLamports,
-  useMint,
+  constants,
   Creator,
-  PriceFloor,
-  PriceFloorType,
   IPartialCreateAuctionArgs,
   MetadataKey,
-  StringPublicKey,
   MetaplexOverlay,
+  PriceFloor,
+  PriceFloorType,
+  StringPublicKey,
+  toLamports,
+  useConnection,
+  useMint,
+  WinnerLimit,
+  WinnerLimitType,
 } from '@oyster/common';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { MintLayout } from '@solana/spl-token';
-import { useHistory, useParams } from 'react-router-dom';
-import { capitalize } from 'lodash';
 import {
-  WinningConfigType,
   AmountRange,
+  WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection, LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  Divider,
+  Input,
+  Progress,
+  Radio,
+  Row,
+  Select,
+  Spin,
+  Statistic,
+  Steps,
+} from 'antd';
+import BN from 'bn.js';
 import moment from 'moment';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import {
   createAuctionManager,
   SafetyDepositDraft,
 } from '../../actions/createAuctionManager';
-import BN from 'bn.js';
-import { constants } from '@oyster/common';
-import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
+import { DateTimePicker } from '../../components/DateTimePicker';
 import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
-import { LoadingOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import { SystemProgram } from '@solana/web3.js';
+import { ArtCard } from './../../components/ArtCard';
+import { Confetti } from './../../components/Confetti';
+import { QUOTE_MINT } from './../../constants';
+import { ArtSelector } from './artSelector';
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -282,7 +278,7 @@ export const AuctionCreateView = () => {
       tiers.forEach(
         c => (c.items = c.items.filter(i => i.winningConfigType !== undefined)),
       );
-      let filteredTiers = tiers.filter(
+      const filteredTiers = tiers.filter(
         i => i.items.length > 0 && i.winningSpots.length > 0,
       );
 
@@ -330,7 +326,7 @@ export const AuctionCreateView = () => {
             });
             // Ok now we have combined ranges from this tier range. Now we merge them into the ranges
             // at the top level.
-            let oldRanges = ranges;
+            const oldRanges = ranges;
             ranges = [];
             let oldRangeCtr = 0,
               tierRangeCtr = 0;
@@ -691,7 +687,7 @@ const CategoryStep = (props: {
       <Row>
         <h2>List an item</h2>
         <p>
-          First time listing on Metaplex? <a>Read our sellers' guide.</a>
+          First time listing on Metaplex? <a>Read our sellers&apos; guide.</a>
         </p>
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>
@@ -896,10 +892,9 @@ const CopiesStep = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  let artistFilter = (i: SafetyDepositDraft) =>
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
-  let filter: (i: SafetyDepositDraft) => boolean = (i: SafetyDepositDraft) =>
-    true;
+  let filter: (i: SafetyDepositDraft) => boolean = () => true;
   if (props.attributes.category === AuctionCategory.Limited) {
     filter = (i: SafetyDepositDraft) =>
       !!i.masterEdition && !!i.masterEdition.info.maxSupply;
@@ -912,7 +907,7 @@ const CopiesStep = (props: {
       );
   }
 
-  let overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
+  const overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
 
   return (
     <>
@@ -1355,7 +1350,7 @@ const TierTableStep = (props: {
       winningSpots: [...wc.winningSpots],
     }));
   };
-  let artistFilter = (i: SafetyDepositDraft) =>
+  const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
   const options: { label: string; value: number }[] = [];
   for (let i = 0; i < props.maxWinners; i++) {
@@ -1679,15 +1674,14 @@ const ReviewStep = (props: {
 }) => {
   const [cost, setCost] = useState(0);
   useEffect(() => {
-    const rentCall = Promise.all([
-      props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
-      props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
-    ]);
-
+    // const rentCall = Promise.all([
+    //   props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
+    //   props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
+    // ]);
     // TODO: add
   }, [setCost]);
 
-  let item = props.attributes.items?.[0];
+  const item = props.attributes.items?.[0];
 
   return (
     <>
@@ -1827,12 +1821,12 @@ const Congrats = (props: {
     <>
       <div>Congratulations! Your auction is now live.</div>
       <div>
-        <Button onClick={_ => window.open(newTweetURL(), '_blank')}>
+        <Button onClick={() => window.open(newTweetURL(), '_blank')}>
           <span>Share it on Twitter</span>
           <span>&gt;</span>
         </Button>
         <Button
-          onClick={_ =>
+          onClick={() =>
             history.push(`/auction/${props.auction?.auction.toString()}`)
           }
         >

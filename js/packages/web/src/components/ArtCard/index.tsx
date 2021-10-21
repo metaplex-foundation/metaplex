@@ -1,11 +1,10 @@
-import React from 'react';
-import { Card, CardProps, Button, Badge } from 'antd';
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { ArtContent } from './../ArtContent';
+import { Badge, Button, Card, CardProps } from 'antd';
+import React from 'react';
 import { useArt } from '../../hooks';
-import { PublicKey } from '@solana/web3.js';
 import { Artist, ArtType } from '../../types';
 import { MetaAvatar } from '../MetaAvatar';
+import { ArtContent } from './../ArtContent';
 
 const { Meta } = Card;
 
@@ -30,15 +29,13 @@ export interface ArtCardProps extends CardProps {
 }
 
 export const ArtCard = (props: ArtCardProps) => {
-  let {
-    small,
+  const {
     category,
     image,
     animationURL,
-    name,
+    name: nameProp,
     preview,
-    creators,
-    description,
+    creators: creatorsProp,
     close,
     pubkey,
     height,
@@ -46,8 +43,8 @@ export const ArtCard = (props: ArtCardProps) => {
     ...rest
   } = props;
   const art = useArt(pubkey);
-  creators = art?.creators || creators || [];
-  name = art?.title || name || ' ';
+  const creators = art?.creators || creatorsProp || [];
+  const name = art?.title || nameProp || ' ';
 
   let badge = '';
   if (art.type === ArtType.NFT) {

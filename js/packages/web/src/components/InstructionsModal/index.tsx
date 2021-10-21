@@ -88,7 +88,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         onOk={handleOk}
         onCancel={handleCancel}
         footer={null}
-        closeIcon={<img src={'/modals/close.svg'} />}
+        closeIcon={<img src="/modals/close.svg" />}
       >
         <ModalContent>
           <ContentCard

@@ -1,21 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Button, Card, Carousel, Col, List, Row, Skeleton } from 'antd';
-import { AuctionCard } from '../../components/AuctionCard';
-import { Connection } from '@solana/web3.js';
-import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
-import {
-  AuctionView as Auction,
-  useArt,
-  useAuction,
-  useBidsForAuction,
-  useCreators,
-  useExtendedArt,
-} from '../../hooks';
-import { ArtContent } from '../../components/ArtContent';
-
-import { format } from 'timeago.js';
-
+import { CheckOutlined } from '@ant-design/icons';
 import {
   AuctionState,
   BidderMetadata,
@@ -30,25 +13,36 @@ import {
   useConnectionConfig,
   useMint,
 } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { MintInfo } from '@solana/spl-token';
+import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
 import { getHandleAndRegistryKey } from '@solana/spl-name-service';
-import useWindowDimensions from '../../utils/layout';
-import { CheckOutlined } from '@ant-design/icons';
-import { ArtType } from '../../types';
-import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
+import { MintInfo } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection } from '@solana/web3.js';
+import { Button, Card, Carousel, Col, List, Row, Skeleton } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { format } from 'timeago.js';
 import { AmountLabel } from '../../components/AmountLabel';
+import { ArtContent } from '../../components/ArtContent';
+import { AuctionCard } from '../../components/AuctionCard';
 import { ClickToCopy } from '../../components/ClickToCopy';
+import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
+import {
+  AuctionView as Auction,
+  useArt,
+  useAuction,
+  useBidsForAuction,
+  useCreators,
+  useExtendedArt,
+} from '../../hooks';
+import { ArtType } from '../../types';
+import useWindowDimensions from '../../utils/layout';
 
 export const AuctionItem = ({
   item,
-  index,
-  size,
   active,
 }: {
   item: AuctionViewItem;
-  index: number;
-  size: number;
   active?: boolean;
 }) => {
   const id = item.metadata.pubkey;
@@ -88,7 +82,7 @@ export const AuctionView = () => {
       }, new Map<string, AuctionViewItem>())
       .values() || []),
     auction?.participationItem,
-  ].map((item, index, arr) => {
+  ].map((item, index) => {
     if (!item || !item?.metadata || !item.metadata?.pubkey) {
       return null;
     }
@@ -97,8 +91,6 @@ export const AuctionView = () => {
       <AuctionItem
         key={item.metadata.pubkey}
         item={item}
-        index={index}
-        size={arr.length}
         active={index === currentIndex}
       />
     );
@@ -334,7 +326,7 @@ const BidLine = (props: {
   isCancelled?: boolean;
   isActive?: boolean;
 }) => {
-  const { bid, index, mint, isCancelled, isActive } = props;
+  const { bid, mint, isCancelled } = props;
   const { publicKey } = useWallet();
   const bidder = bid.info.bidderPubkey;
   const isme = publicKey?.toBase58() === bidder;
@@ -370,6 +362,7 @@ const BidLine = (props: {
             {bidderTwitterHandle ? (
               <a
                 target="_blank"
+                rel="noopener noreferrer"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
               >{`@${bidderTwitterHandle}`}</a>
@@ -388,7 +381,6 @@ const BidLine = (props: {
                 )}
                 <AmountLabel
                   displaySOL={true}
-                  iconSize={24}
                   amount={formatTokenAmount(bid.info.lastBid, mint)}
                 />
               </div>
@@ -413,7 +405,6 @@ const BidLine = (props: {
               )}
               <AmountLabel
                 displaySOL={true}
-                iconSize={24}
                 amount={formatTokenAmount(bid.info.lastBid, mint)}
               />
             </div>
@@ -431,6 +422,7 @@ const BidLine = (props: {
                 <Row>
                   <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     title={shortenAddress(bidder)}
                     href={`https://twitter.com/${bidderTwitterHandle}`}
                   >{`@${bidderTwitterHandle}`}</a>

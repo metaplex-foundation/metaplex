@@ -96,7 +96,7 @@ export const AdminView = () => {
       ) : (
         <>
           <p>Store is not initialized</p>
-          <Link to={`/`}>Go to initialize</Link>
+          <Link to="/">Go to initialize</Link>
         </>
       )}
     </>
@@ -298,7 +298,7 @@ function InnerAdminView({
               unCheckedChildren="Whitelist Only"
               checked={newStore.public}
               onChange={val => {
-                setNewStore(_ => {
+                setNewStore(() => {
                   const newS = new Store(store.info);
                   newS.public = val;
                   return newS;

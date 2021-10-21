@@ -12,10 +12,14 @@ export interface ArtSelectorProps extends ButtonProps {
   filter?: (i: SafetyDepositDraft) => boolean;
 }
 
-export const ArtSelector = (props: ArtSelectorProps) => {
-  const { selected, setSelected, allowMultiple, ...rest } = props;
+export const ArtSelector = ({
+  selected,
+  setSelected,
+  allowMultiple,
+  filter,
+}: ArtSelectorProps) => {
   let items = useUserArts();
-  if (props.filter) items = items.filter(props.filter);
+  if (filter) items = items.filter(filter);
   const selectedItems = useMemo<Set<string>>(
     () => new Set(selected.map(item => item.metadata.pubkey)),
     [selected],
@@ -45,7 +49,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
     <>
       <MetaplexMasonry>
         {selected.map(m => {
-          let key = m?.metadata.pubkey || '';
+          const key = m?.metadata.pubkey || '';
 
           return (
             <ArtCard
@@ -92,7 +96,7 @@ export const ArtSelector = (props: ArtSelectorProps) => {
                   ? new Set(list.filter(item => item !== id))
                   : new Set([...list, id]);
 
-                let selected = items.filter(item =>
+                const selected = items.filter(item =>
                   newSet.has(item.metadata.pubkey),
                 );
                 setSelected(selected);

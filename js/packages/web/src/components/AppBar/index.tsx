@@ -65,8 +65,8 @@ export const AppBar = () => {
     <>
       <Row>
         <Col flex="0 0 auto">
-          <Link to={`/`} id="metaplex-header-logo">
-            <img src={'/metaplex-logo.svg'} />
+          <Link to="/" id="metaplex-header-logo">
+            <img src="/metaplex-logo.svg" />
           </Link>
         </Col>
         <Col flex="1 0 auto">

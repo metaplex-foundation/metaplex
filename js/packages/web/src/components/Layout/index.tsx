@@ -1,11 +1,12 @@
-import React, { ReactNode } from 'react';
 import { Layout } from 'antd';
-
+import React, { ReactNode } from 'react';
 import { AppBar } from '../AppBar';
 
 const { Header, Content } = Layout;
 
-export const AppLayout = React.memo((props: { children?: ReactNode }) => {
+export const AppLayout = React.memo(function AppLayout(props: {
+  children?: ReactNode;
+}) {
   return (
     <>
       <Layout>

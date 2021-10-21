@@ -1,7 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
 import {
-  BellFilled,
-  BellOutlined,
   CheckCircleTwoTone,
   LoadingOutlined,
   PlayCircleOutlined,
@@ -19,14 +16,15 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Badge, Popover, List } from 'antd';
+import { Badge, List, Popover } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
 import { decommAuctionManagerAndReturnPrizes } from '../../actions/decommAuctionManagerAndReturnPrizes';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { unwindVault } from '../../actions/unwindVault';
 import { settle } from '../../actions/settle';
 import { startAuctionManually } from '../../actions/startAuctionManually';
+import { unwindVault } from '../../actions/unwindVault';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
@@ -135,7 +133,9 @@ export function useCollapseWrappedSol({
         if ((balance && balance.value.uiAmount) || 0 > 0) {
           setShowNotification(true);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
     setTimeout(fn, 60000);
   };
@@ -314,7 +314,6 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
@@ -493,7 +492,7 @@ export function Notifications() {
 
   const justContent = (
     <Popover placement="bottomLeft" content={content} trigger="click">
-      <img src={'/bell.svg'} />
+      <img src="/bell.svg" />
     </Popover>
   );
 

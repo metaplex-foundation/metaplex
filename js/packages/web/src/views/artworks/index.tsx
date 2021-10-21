@@ -1,5 +1,5 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
@@ -8,8 +8,6 @@ import { useMeta } from '../../contexts';
 import { useCreatorArts, useUserArts } from '../../hooks';
 
 const { TabPane } = Tabs;
-
-const { Content } = Layout;
 
 export enum ArtworkViewState {
   Metaplex = '0',
@@ -65,16 +63,16 @@ export const ArtworksView = () => {
       activeKey={activeKey}
       onTabClick={key => setActiveKey(key as ArtworkViewState)}
     >
-      <TabPane tab={'All'} key={ArtworkViewState.Metaplex}>
+      <TabPane tab="All" key={ArtworkViewState.Metaplex}>
         {artworkGrid}
       </TabPane>
       {connected && (
-        <TabPane tab={'Owned'} key={ArtworkViewState.Owned}>
+        <TabPane tab="Owned" key={ArtworkViewState.Owned}>
           {artworkGrid}
         </TabPane>
       )}
       {connected && (
-        <TabPane tab={'Created'} key={ArtworkViewState.Created}>
+        <TabPane tab="Created" key={ArtworkViewState.Created}>
           {artworkGrid}
         </TabPane>
       )}

@@ -1,3 +1,6 @@
+import { LoadingOutlined } from '@ant-design/icons';
+import { Space, Spin } from 'antd';
+import { merge } from 'lodash';
 import React, {
   ReactNode,
   useCallback,
@@ -5,21 +8,18 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { queryExtendedMetadata } from './queryExtendedMetadata';
-import { subscribeAccountsChange } from './subscribeAccountsChange';
+import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
+import { useConnection } from '../connection';
+import { useStore } from '../store';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   limitedLoadAccounts,
   loadAccounts,
   USE_SPEED_RUN,
 } from './loadAccounts';
-import { Spin, Space } from 'antd';
-import { merge } from 'lodash';
+import { queryExtendedMetadata } from './queryExtendedMetadata';
+import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { MetaContextState, MetaState } from './types';
-import { useConnection } from '../connection';
-import { useStore } from '../store';
-import { AuctionData, BidderMetadata, BidderPot } from '../../actions';
-import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -33,7 +33,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null }: { children: ReactNode }) {
   const connection = useConnection();
-  const { isReady, storeAddress, ownerAddress, storefront } = useStore();
+  const { isReady, storeAddress, storefront } = useStore();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 

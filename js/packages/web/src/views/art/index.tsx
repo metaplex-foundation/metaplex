@@ -1,26 +1,15 @@
-import React, { useState } from 'react';
-import {
-  Row,
-  Col,
-  Divider,
-  Layout,
-  Tag,
-  Button,
-  Skeleton,
-  List,
-  Card,
-} from 'antd';
-import { useParams } from 'react-router-dom';
-import { useArt, useExtendedArt } from '../../hooks';
-
-import { ArtContent } from '../../components/ArtContent';
 import { shortenAddress, useConnection } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { MetaAvatar } from '../../components/MetaAvatar';
+import { Button, Col, Divider, Layout, List, Row, Skeleton, Tag } from 'antd';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
-import { ViewOn } from '../../components/ViewOn';
-import { ArtType } from '../../types';
+import { ArtContent } from '../../components/ArtContent';
 import { ArtMinting } from '../../components/ArtMinting';
+import { MetaAvatar } from '../../components/MetaAvatar';
+import { ViewOn } from '../../components/ViewOn';
+import { useArt, useExtendedArt } from '../../hooks';
+import { ArtType } from '../../types';
 
 const { Content } = Layout;
 

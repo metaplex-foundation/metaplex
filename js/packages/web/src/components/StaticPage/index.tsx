@@ -1,14 +1,12 @@
-import React, { Fragment, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Col, Divider, Row } from 'antd';
 import BN from 'bn.js';
-
-import Masonry from 'react-masonry-css';
-import { CardLoader } from '../MyLoader';
+import React, { Fragment, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMeta } from '../../contexts';
-import { AuctionRenderCard } from '../AuctionRenderCard';
 import { AuctionViewState, useAuctions } from '../../hooks';
+import { AuctionRenderCard } from '../AuctionRenderCard';
 import { MetaplexMasonry } from '../MetaplexMasonry';
+import { CardLoader } from '../MyLoader';
 
 interface Connect {
   label: string;
@@ -200,10 +198,8 @@ export const StaticPage = (props: {
       <div>
         <p>Connect with the artist</p>
         {props.leftContent?.author.connectWith?.map((e, i) => (
-          <p>
-            <a key={i} href={e.url}>
-              {e.label}
-            </a>
+          <p key={i}>
+            <a href={e.url}>{e.label}</a>
           </p>
         ))}
       </div>
@@ -214,8 +210,8 @@ export const StaticPage = (props: {
       {props.midContent.sections.map((section, i) => (
         <div key={i}>
           {section.title && <span>{section.title}</span>}
-          {section.paragraphs?.map(paragraph => (
-            <p>{paragraph}</p>
+          {section.paragraphs?.map((paragraph, i) => (
+            <p key={i}>{paragraph}</p>
           ))}
 
           {section.image && (
@@ -230,7 +226,11 @@ export const StaticPage = (props: {
           {section.caption && (
             <p>
               {section.caption.text}
-              <a href={section.caption.linkUrl} target="_blank">
+              <a
+                href={section.caption.linkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {section.caption.linkText}
               </a>
             </p>

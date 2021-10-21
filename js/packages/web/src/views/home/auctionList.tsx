@@ -1,5 +1,5 @@
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Col, Layout, Row, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,7 +11,6 @@ import { useMeta } from '../../contexts';
 import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
-const { Content } = Layout;
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -32,7 +31,7 @@ export const AuctionListView = () => {
 
   // Check if the auction is primary sale or not
   const checkPrimarySale = (auc: AuctionView) => {
-    var flag = 0;
+    let flag = 0;
     auc.items.forEach(i => {
       i.forEach(j => {
         if (j.metadata.info.primarySaleHappened == true) {
@@ -75,8 +74,7 @@ export const AuctionListView = () => {
       items = liveAuctions
         .concat(auctionsEnded)
         .filter(
-          (m, idx) =>
-            m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
+          m => m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
         );
       break;
     case LiveAuctionViewState.Resale:
@@ -119,9 +117,9 @@ export const AuctionListView = () => {
   return (
     <>
       <Banner
-        src={'/main-banner.svg'}
-        headingText={'The amazing world of Metaplex.'}
-        subHeadingText={'Buy exclusive Metaplex NFTs.'}
+        src="/main-banner.svg"
+        headingText="The amazing world of Metaplex."
+        subHeadingText="Buy exclusive Metaplex NFTs."
         actionComponent={<HowToBuyModal />}
         useBannerBg={true}
       />
@@ -129,22 +127,22 @@ export const AuctionListView = () => {
         activeKey={activeKey}
         onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
       >
-        <TabPane tab={'Live'} key={LiveAuctionViewState.All}>
+        <TabPane tab="Live" key={LiveAuctionViewState.All}>
           {liveAuctionsView}
         </TabPane>
         {resaleAuctions.length > 0 && (
           <TabPane
-            tab={'Secondary Marketplace'}
+            tab="Secondary Marketplace"
             key={LiveAuctionViewState.Resale}
           >
             {liveAuctionsView}
           </TabPane>
         )}
-        <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
+        <TabPane tab="Ended" key={LiveAuctionViewState.Ended}>
           {endedAuctions}
         </TabPane>
         {connected && (
-          <TabPane tab={'Participated'} key={LiveAuctionViewState.Participated}>
+          <TabPane tab="Participated" key={LiveAuctionViewState.Participated}>
             {liveAuctionsView}
           </TabPane>
         )}

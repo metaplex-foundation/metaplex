@@ -9,7 +9,6 @@ interface IAmountLabel {
   displayUSD?: boolean;
   displaySOL?: boolean;
   title?: string;
-  iconSize?: number;
   customPrefix?: JSX.Element;
 }
 
@@ -19,7 +18,6 @@ export const AmountLabel = (props: IAmountLabel) => {
     displayUSD = true,
     displaySOL = false,
     title = '',
-    iconSize = 38,
     customPrefix,
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
@@ -40,7 +38,7 @@ export const AmountLabel = (props: IAmountLabel) => {
         <Statistic
           title={title || ''}
           value={`${amount}${displaySOL ? ' SOL' : ''}`}
-          prefix={customPrefix || <SolCircle iconSize={iconSize} />}
+          prefix={customPrefix || <SolCircle />}
         />
       )}
       {displayUSD && (

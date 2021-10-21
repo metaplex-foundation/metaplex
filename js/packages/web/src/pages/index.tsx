@@ -24,7 +24,7 @@ if (process.env.BUGSNAG_API_KEY) {
 
 export async function getServerSideProps(context: NextPageContext) {
   const headers = context?.req?.headers || {};
-  let forwarded = headers.forwarded
+  const forwarded = headers.forwarded
     ?.split(';')
     .reduce((acc: Record<string, string>, entry) => {
       const [key, value] = entry.split('=');
@@ -63,7 +63,7 @@ function App({ storefront }: AppProps) {
 
   // TODO: refactor
   useEffect(() => {
-    const head = document.head;
+    // const head = document.head;
     const link = document.createElement('link');
 
     link.type = 'text/css';

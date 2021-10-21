@@ -1,33 +1,32 @@
 import {
+  Attribute,
   createAssociatedTokenAccountInstruction,
-  createMint,
-  createMetadata,
-  programIds,
-  notify,
-  ENV,
-  updateMetadata,
   createMasterEdition,
-  sendTransactionWithRetry,
-  Data,
+  createMetadata,
+  createMint,
   Creator,
+  Data,
+  ENV,
   findProgramAddress,
+  notify,
+  programIds,
+  sendTransactionWithRetry,
   StringPublicKey,
   toPublicKey,
+  updateMetadata,
   WalletSigner,
-  Attribute,
 } from '@oyster/common';
-import React, { Dispatch, SetStateAction } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
 import {
-  Keypair,
   Connection,
+  Keypair,
   SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js';
-import crypto from 'crypto';
-import { getAssetCostToStore } from '../utils/assets';
-import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
+import crypto from 'crypto';
+import React, { Dispatch, SetStateAction } from 'react';
+import { AR_SOL_HOLDER_ID } from '../utils/ids';
 
 const RESERVED_TXN_MANIFEST = 'manifest.json';
 const RESERVED_METADATA = 'metadata.json';
@@ -310,7 +309,7 @@ export const mintNFT = async (
 
     progressCallback(8);
 
-    const txid = await sendTransactionWithRetry(
+    /* const txid = */ await sendTransactionWithRetry(
       connection,
       wallet,
       updateInstructions,

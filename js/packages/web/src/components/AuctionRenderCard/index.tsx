@@ -1,27 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardProps } from 'antd';
 import {
-  formatTokenAmount,
   CountdownState,
-  PriceFloorType,
+  formatTokenAmount,
   fromLamports,
+  PriceFloorType,
   useMint,
 } from '@oyster/common';
-import { ArtContent } from '../ArtContent';
+import { Card, CardProps } from 'antd';
+import { BN } from 'bn.js';
+import React, { useEffect, useState } from 'react';
 import {
   AuctionView,
   AuctionViewState,
   useArt,
   useBidsForAuction,
   useCreators,
+  useHighestBidForAuction,
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
-import { useHighestBidForAuction } from '../../hooks';
-import { BN } from 'bn.js';
-import { MetaAvatar } from '../MetaAvatar';
+import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
+import { MetaAvatar } from '../MetaAvatar';
 
-const { Meta } = Card;
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
 }
@@ -110,7 +109,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
       </div>
       <div>
         <span>{label}</span>
-        <AmountLabel title={label} amount={currentBid} iconSize={24} />
+        <AmountLabel title={label} amount={currentBid} />
       </div>
     </Card>
   );

@@ -25,8 +25,8 @@ export const ExplorerLink = (props: {
   return (
     <a
       href={`https://explorer.solana.com/${type}/${address}`}
-      // eslint-disable-next-line react/jsx-no-target-blank
       target="_blank"
+      rel="noopener noreferrer"
       title={address}
     >
       {code ? (

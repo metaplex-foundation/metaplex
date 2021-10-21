@@ -153,10 +153,9 @@ export function AccountsProvider({ children = null }: { children: ReactNode }) {
     const subs: number[] = [];
     cache.emitter.onCache(args => {
       if (args.isNew && args.isActive) {
-        let id = args.id;
-        let deserialize = args.parser;
+        const { id, parser } = args;
         connection.onAccountChange(new PublicKey(id), info => {
-          cache.add(id, info, deserialize);
+          cache.add(id, info, parser);
         });
       }
     });

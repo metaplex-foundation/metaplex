@@ -73,12 +73,12 @@ export const Footer = () => {
             <div>Powered by Metaplex and Solana</div>
           </div>
         ) : null}
-        {footerConf.components.map(component => (
-          <div>
+        {footerConf.components.map((component, i) => (
+          <div key={i}>
             <div>{component.title}</div>
-            {component.links.map(link => (
-              <div>
-                <a href={link.url} target="_blank">
+            {component.links.map((link, j) => (
+              <div key={j}>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
                   {link.label}
                 </a>
               </div>

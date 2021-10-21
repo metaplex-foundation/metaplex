@@ -1,5 +1,6 @@
-import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Storefront } from '@oyster/common';
+import React from 'react';
+import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Providers } from './providers';
 import {
   AnalyticsView,
@@ -23,7 +24,7 @@ interface RoutesProps {
 export function Routes({ storefront }: RoutesProps) {
   return (
     <>
-      <HashRouter basename={'/'}>
+      <HashRouter basename="/">
         <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />

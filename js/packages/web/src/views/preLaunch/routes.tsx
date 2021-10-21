@@ -7,7 +7,7 @@ import { Providers } from './providers';
 export function Routes({ storefront }: { storefront: Storefront }) {
   return (
     <>
-      <HashRouter basename={'/'}>
+      <HashRouter basename="/">
         <Providers storefront={storefront}>
           <Switch>
             <Route path="/" component={() => <PreLaunchView />} />

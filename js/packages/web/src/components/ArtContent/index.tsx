@@ -1,12 +1,12 @@
-import React, { Ref, useCallback, useEffect, useState } from 'react';
-import { Image } from 'antd';
+import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
+import { PublicKey } from '@solana/web3.js';
+import { Image } from 'antd';
+import React, { Ref, useCallback, useEffect, useState } from 'react';
+import { useCachedImage, useExtendedArt } from '../../hooks';
+import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
 import { ThreeDots } from '../MyLoader';
-import { useCachedImage, useExtendedArt } from '../../hooks';
-import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
-import { PublicKey } from '@solana/web3.js';
-import { getLast } from '../../utils/utils';
 
 const MeshArtContent = ({
   uri,
@@ -45,7 +45,7 @@ const CachedImageContent = ({
       src={cachedBlob}
       preview={preview}
       loading="lazy"
-      onLoad={e => {
+      onLoad={() => {
         setLoaded(true);
       }}
       placeholder={<ThreeDots />}
@@ -116,8 +116,8 @@ const VideoArtContent = ({
         {likelyVideo && <source src={likelyVideo} type="video/mp4" />}
         {animationURL && <source src={animationURL} type="video/mp4" />}
         {(files?.filter(f => typeof f !== 'string') as MetadataFile[]).map(
-          (f: MetadataFile) => (
-            <source src={f.uri} type={f.type} />
+          (f: MetadataFile, i) => (
+            <source key={i} src={f.uri} type={f.type} />
           ),
         )}
       </video>

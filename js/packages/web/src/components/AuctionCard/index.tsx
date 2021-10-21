@@ -1,63 +1,62 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Button, InputNumber, Spin } from 'antd';
-import { Link } from 'react-router-dom';
-
+import { LoadingOutlined } from '@ant-design/icons';
 import {
-  useConnection,
-  useUserAccounts,
-  MetaplexModal,
-  MetaplexOverlay,
-  formatAmount,
-  formatTokenAmount,
-  useMint,
-  PriceFloorType,
   AuctionDataExtended,
-  ParsedAccount,
-  getAuctionExtended,
-  programIds,
   AuctionState,
   BidderMetadata,
-  MAX_METADATA_LEN,
-  MAX_EDITION_LEN,
-  Identicon,
+  BidStateType,
+  formatAmount,
+  formatTokenAmount,
   fromLamports,
+  getAuctionExtended,
+  Identicon,
+  loadMultipleAccounts,
+  MAX_EDITION_LEN,
+  MAX_METADATA_LEN,
+  MetaplexModal,
+  MetaplexOverlay,
+  ParsedAccount,
+  PriceFloorType,
+  programIds,
+  useConnection,
+  useMint,
+  useUserAccounts,
   useWalletModal,
   VaultState,
-  loadMultipleAccounts,
-  BidStateType,
 } from '@oyster/common';
+import {
+  BidRedemptionTicket,
+  MAX_PRIZE_TRACKING_TICKET_SIZE,
+  WinningConfigType,
+} from '@oyster/common/dist/lib/models/metaplex/index';
+import { AccountLayout, MintLayout } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Button, InputNumber, Spin } from 'antd';
+import BN from 'bn.js';
+import moment from 'moment';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { sendCancelBid } from '../../actions/cancelBid';
+import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
+import { sendPlaceBid } from '../../actions/sendPlaceBid';
+import {
+  eligibleForParticipationPrizeGivenWinningIndex,
+  sendRedeemBid,
+} from '../../actions/sendRedeemBid';
+import { startAuctionManually } from '../../actions/startAuctionManually';
+import { QUOTE_MINT } from '../../constants';
+import { useMeta } from '../../contexts';
 import {
   AuctionView,
   AuctionViewState,
   useBidsForAuction,
   useUserBalance,
 } from '../../hooks';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { sendPlaceBid } from '../../actions/sendPlaceBid';
+import { AmountLabel } from '../AmountLabel';
 // import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
-import {
-  sendRedeemBid,
-  eligibleForParticipationPrizeGivenWinningIndex,
-} from '../../actions/sendRedeemBid';
-import { sendCancelBid } from '../../actions/cancelBid';
-import { startAuctionManually } from '../../actions/startAuctionManually';
-import BN from 'bn.js';
 import { Confetti } from '../Confetti';
-import { QUOTE_MINT } from '../../constants';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { useMeta } from '../../contexts';
-import moment from 'moment';
-import { AmountLabel } from '../AmountLabel';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
-import { AccountLayout, MintLayout } from '@solana/spl-token';
-import { findEligibleParticipationBidsForRedemption } from '../../actions/claimUnusedPrizes';
-import {
-  BidRedemptionTicket,
-  MAX_PRIZE_TRACKING_TICKET_SIZE,
-  WinningConfigType,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import { LoadingOutlined } from '@ant-design/icons';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -348,9 +347,9 @@ export const AuctionCard = ({
 
         try {
           // Attempt to load the transaction, retrying up to 5 times
-          retry: do {
+          const tryPatchMeta = async (txid: string) => {
             for (let i = 0; i < 5; ++i) {
-              const tx = await connection.getTransaction(bidTxid, {
+              const tx = await connection.getTransaction(txid, {
                 commitment: 'confirmed',
               });
 
@@ -382,12 +381,14 @@ export const AuctionCard = ({
               }
 
               // Stop retrying on success
-              break retry;
+              return;
             }
 
             // Throw an error if we retry too many times
             throw new Error("Couldn't get PlaceBid transaction");
-          } while (false);
+          };
+
+          await tryPatchMeta(bidTxid);
         } catch (e) {
           console.error('update (post-sendPlaceBid)', e);
           return;

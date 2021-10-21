@@ -25,7 +25,11 @@ export interface GotEmailButtonProps
 }
 
 const DiscordButton = () => (
-  <a target={'_blank'} href={'https://discord.com/invite/metaplex'}>
+  <a
+    target="_blank"
+    rel="noopener noreferrer"
+    href="https://discord.com/invite/metaplex"
+  >
     Join our Discord
   </a>
 );
@@ -52,7 +56,7 @@ const PreLaunchModal = (props: GotEmailButtonProps) => {
       visible={visible}
       onCancel={e => handleOnCancel(e)}
       footer={null}
-      closeIcon={<img src={'/modals/close.svg'} />}
+      closeIcon={<img src="/modals/close.svg" />}
       {...rest}
     >
       <div>{titleText}</div>
@@ -186,7 +190,7 @@ export const PreLaunchView = () => {
               <div>
                 <Input
                   value={walletAddress}
-                  placeholder={'Wallet address'}
+                  placeholder="Wallet address"
                   onChange={val => setWalletAddress(val.target.value)}
                 />
                 <Button

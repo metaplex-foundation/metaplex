@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col } from 'antd';
-
 import {
-  formatTokenAmount,
-  useMint,
-  fromLamports,
   CountdownState,
+  formatTokenAmount,
+  fromLamports,
   PriceFloorType,
+  useMint,
 } from '@oyster/common';
+import { Col, Row } from 'antd';
+import React from 'react';
 import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
-import { AmountLabel } from '../AmountLabel';
 import { useAuctionCountdown } from '../../hooks/useAuctionCountdown';
+import { AmountLabel } from '../AmountLabel';
 
 export const AuctionCountdown = (props: {
   auctionView: AuctionView;

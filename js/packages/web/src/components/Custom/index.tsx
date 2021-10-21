@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const SolCircle = (props: { iconSize?: number }) => {
+export const SolCircle = () => {
   return (
     <span>
       <img src="/sol-circle.svg" />
