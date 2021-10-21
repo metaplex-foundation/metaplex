@@ -38,6 +38,7 @@ import {
 import { keccak_256 } from "js-sha3";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
+import * as bs58 from "bs58";
 
 import "./App.css";
 import {
@@ -66,18 +67,24 @@ const randomBytes = () : Uint8Array => {
   return buf;
 }
 
+const MERKLE_DISTRIBUTOR_ID = new PublicKey("2BXKBuQPRVjV9e9qC2wAVJgFLWDH8MULRQ5W5ABmJj45");
+
+const idl = require("./utils/merkle_distributor.json");
+const coder = new Coder(idl);
+
 const Create = (
   props : CreateProps,
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
-  const [mint, setMint] = React.useState("");
-  const [text, setText] = React.useState("");
-
-  const MERKLE_DISTRIBUTOR_ID = new PublicKey("MRKGLMizK9XSTaD1d1jbVkdHZbQVCSnPpYiTw9aKQv8");
+  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
+  const [text, setText] = React.useState(localStorage.getItem("text") || "");
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
+
+    localStorage.setItem("mint", mint);
+    localStorage.setItem("text", text);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -128,7 +135,7 @@ const Create = (
       throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
     }
     const creatorTokenInfo = AccountLayout.decode(Buffer.from(creatorTokenAccount.data));
-    if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim * Math.pow(10, mintInfo.decimals)) {
+    if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
       throw new Error(`Creator token account does not have enough tokens`);
     }
 
@@ -160,7 +167,7 @@ const Create = (
     claimants.map((_, idx) => {
       const proof = tree.getProof(idx);
       const verified = tree.verifyProof(idx, proof, root);
-      console.log("Idx", idx, proof, verified);
+      console.log("Idx", idx, proof.map(b => bs58.encode(b)), verified);
     });
 
     // TODO: make the base a PDA of mintkey or a new account?
@@ -182,6 +189,21 @@ const Create = (
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
 
+
+    const createDistributorTokenAccount = new TransactionInstruction({
+        programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        keys: [
+            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
+            { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
+            { pubkey: distributor             , isSigner: false , isWritable: false } ,
+            { pubkey: mintKey                 , isSigner: false , isWritable: false } ,
+            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
+            { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
+            { pubkey: SYSVAR_RENT_PUBKEY      , isSigner: false , isWritable: false } ,
+        ],
+        data: Buffer.from([])
+    });
+
     // initial merkle-distributor state
     const initDistributor = new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
@@ -201,11 +223,23 @@ const Create = (
         ])
     })
 
+    const transferToATA = Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        creatorTokenKey,
+        distributorTokenKey,
+        wallet.publicKey,
+        [],
+        totalClaim
+      );
+
+
     await Conn.sendTransactionWithRetry(
       connection,
       wallet,
       [
+        createDistributorTokenAccount,
         initDistributor,
+        transferToATA,
       ],
       [base]
     );
