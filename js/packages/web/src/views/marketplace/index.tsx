@@ -23,17 +23,17 @@ let pageLen = 0;
 let searchItem = '';
 let allItems: any = [];
 let allAuction = 0;
+let pageSize = 16;
+let activePage = 0;
 
 export const MarketplaceView = () => {
-  const [latestsale, setLatestsale] = useState(false);
-  const [activePage, setActivPage] = useState(0);
   const [items, setItems] = useState<any>();
   const { id } = useParams<{ id: string }>();
   const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
 
   const optionData = ['Price: Low to High', 'Price: High to Low'];
-  const optionDataFilter = [];
+  const optionDataFilter = [4, 8, 16, 32, 64, 128];
   useEffect(() => {
     if (collection) {
       sortCollection(collection);
@@ -62,8 +62,11 @@ export const MarketplaceView = () => {
     arr.forEach(character => {
       if (character.Price > max) max = character.Price;
       if (character.Price < min) min = character.Price;
-      const includesTwenty = owner.includes(character.ParsedAccount.info.data.creators[0].address);
-      if (!includesTwenty) owner.push(character.ParsedAccount.info.data.creators[0].address);
+      const includesTwenty = owner.includes(
+        character.ParsedAccount.info.data.creators[0].address,
+      );
+      if (!includesTwenty)
+        owner.push(character.ParsedAccount.info.data.creators[0].address);
     });
     if (searchItem) arr = changeSearch(searchItem);
     if (lowToHigh == 'Price: Low to High') {
@@ -73,9 +76,12 @@ export const MarketplaceView = () => {
       arr = arr.reverse();
     }
 
-    const sum = arr.slice(activePage * 9, activePage * 9 + 9);
+    const sum = arr.slice(
+      activePage * pageSize,
+      activePage * pageSize + pageSize,
+    );
     onePageItem = sum;
-    ownerLen = owner.length
+    ownerLen = owner.length;
     minPrice = min;
     maxPrice = max;
     pageLen = arr.length;
@@ -83,10 +89,8 @@ export const MarketplaceView = () => {
   };
 
   const onChange = event => {
-    setActivPage(event.selected);
-    const page = event.selected;
-    const data = items.slice(page * 9, page * 9 + 9);
-    onePageItem = data;
+    activePage = event.selected;
+    update()
   };
 
   const changeSearch = event => {
@@ -192,10 +196,10 @@ export const MarketplaceView = () => {
                         className="form-control"
                         type="search"
                         placeholder=""
+                        value={searchItem}
                         onChange={event => {
-                          setActivPage(0);
-                          searchItem =  event.target.value;
-                          sortCollection(collection);
+                          activePage = 0;
+                          searchItem = event.target.value;
                           update();
                         }}
                       />
@@ -219,7 +223,6 @@ export const MarketplaceView = () => {
                   defoultParam="Price: Low to High"
                   change={event => {
                     lowToHigh = event.target.value;
-                    sortCollection(collection)
                     update();
                   }}
                 />
@@ -229,8 +232,11 @@ export const MarketplaceView = () => {
               <div className="dropdown">
                 <CustomSelect
                   option={optionDataFilter}
-                  defoultParam="Filters"
+                  defoultParam={`${pageSize}`}
                   change={event => {
+                    pageSize = parseFloat(event.target.value);
+                    activePage = 0;
+                    update();
                   }}
                 />
               </div>
@@ -261,9 +267,8 @@ export const MarketplaceView = () => {
               }}
             >
               <div className="row">
-                {
-                  !isLoading ? (
-                    onePageItem.length > 0 ?
+                {!isLoading ? (
+                  onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
                       const id = m.ParsedAccount.pubkey;
                       return (
@@ -273,25 +278,27 @@ export const MarketplaceView = () => {
                           price={m.Price}
                         />
                       );
-                    }):<div className="emptyMarketplace">
+                    })
+                  ) : (
+                    <div className="emptyMarketplace">
                       THIS MARKETPLACE IS EMPTY
                     </div>
-                  ) : (
-                    <Spinner animation="border" role="status">
-                      <span className="visually-hidden"></span>
-                    </Spinner>
                   )
-                }
+                ) : (
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden"></span>
+                  </Spinner>
+                )}
               </div>
 
               <div className="blur-bg2"></div>
-              {pageLen / 16 > 1 ? (
+              {pageLen / pageSize > 1 ? (
                 <div className="row paginateLoadBottom">
                   <div className="col-md-7">
                     <nav aria-label="..." style={{ height: '100%' }}>
                       <ul className="pagination d-flex flex-wrap">
                         <CustomPagination
-                          len={pageLen / 16}
+                          len={pageLen / pageSize}
                           active={activePage}
                           changePage={event => {
                             if (!isLoading) {

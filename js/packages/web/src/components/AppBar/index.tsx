@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Dropdown, Menu, Select } from 'antd';
 import { useWallet } from '@solana/wallet-adapter-react';
 import useWindowDimensions from '../../utils/layout';
@@ -19,6 +19,11 @@ const MENU_ITEMS = [
   {
     label: 'NFT',
     href: '/',
+    external: false,
+  },
+  {
+    label: 'Collections',
+    href: '/collections',
     external: false,
   },
   {
@@ -187,8 +192,17 @@ export const AppBar = () => {
   const { endpoint, setEndpoint } = useConnectionConfig();
 
   const handleMenuClick = menuItem => {
-    setMenuItem('NFT');
+    if(menuItem == 'NFT' || menuItem == 'Collections')
+    setMenuItem(menuItem);
   };
+  const location = useLocation();
+  useEffect(()=>{
+    if(location.pathname == '/collections')
+      handleMenuClick('Collections');
+    else if(location.pathname == '/'){
+      handleMenuClick('NFT');
+    }
+  },[location])
 
   return (
     <Navbar
