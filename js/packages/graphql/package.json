@@ -17,6 +17,7 @@
     "start:memory": "node --max-old-space-size=8192 dist/bin/memory-server-ingester.js",
     "start:mongo:ingester": "node --max-old-space-size=8192 dist/bin/mongo-ingester.js",
     "start:mongo:server": "node --max-old-space-size=8192 dist/bin/mongo-server.js",
+    "start:mongo:server:introspection": "INTROSPECTION=1 yarn start:mongo:server",
     "dev": "yarn dev:memory",
     "dev:memory": "ts-node-dev --transpile-only src/bin/memory-server-ingester.ts",
     "generate:schema": "ts-node --transpile-only src/bin/generate.ts",
@@ -63,6 +64,7 @@
     "*.{js,json}": "prettier --write"
   },
   "dependencies": {
+    "graphql-playground-middleware-express": "^1.7.22",
     "jsonparse": "^1.3.1",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.21.0",

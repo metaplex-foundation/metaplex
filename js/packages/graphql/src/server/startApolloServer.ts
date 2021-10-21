@@ -8,8 +8,12 @@ import logger from '../logger';
 import { MetaplexDataSource } from '../reader';
 import { Context } from '../types/context';
 import { context, schema } from './graphqlConfig';
+import expressPlayground from 'graphql-playground-middleware-express';
 
-export async function getServer(dataSources: MetaplexDataSource<Context>) {
+export async function getServer(
+  dataSources: MetaplexDataSource<Context>,
+  introspection = false,
+) {
   const app = express();
   const httpServer = createServer(app);
 
@@ -17,7 +21,7 @@ export async function getServer(dataSources: MetaplexDataSource<Context>) {
     schema,
     context,
     dataSources: () => ({ dataSources }),
-    introspection: true,
+    introspection,
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {
@@ -31,6 +35,16 @@ export async function getServer(dataSources: MetaplexDataSource<Context>) {
       },
     ],
   });
+
+  if (introspection) {
+    app.get(
+      '/',
+      expressPlayground({
+        endpoint: apolloServer.graphqlPath,
+        subscriptionEndpoint: apolloServer.graphqlPath,
+      }),
+    );
+  }
 
   const subscriptionServer = SubscriptionServer.create(
     {
@@ -48,17 +62,18 @@ export async function getServer(dataSources: MetaplexDataSource<Context>) {
   await apolloServer.start();
   apolloServer.applyMiddleware({
     app,
-    path: '/',
+    path: apolloServer.graphqlPath,
   });
 
-  return { app, httpServer, apolloServer };
+  return { app, httpServer: httpServer, apolloServer };
 }
 
 export async function startApolloServer(
   api: MetaplexDataSource<Context>,
   port = process.env.PORT || 4000,
+  introspection = !!process.env.INTROSPECTION,
 ) {
-  const { httpServer, apolloServer } = await getServer(api);
+  const { httpServer, apolloServer } = await getServer(api, introspection);
   await new Promise(resolve =>
     httpServer.listen({ port: port }, resolve as any),
   );
