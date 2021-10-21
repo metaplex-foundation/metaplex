@@ -1,25 +1,52 @@
 import { Connection } from '@solana/web3.js';
-import { isCreatorPartOfTheStore, WhitelistedCreator } from '../../common';
+import {
+  isCreatorPartOfTheStore,
+  loadUserTokenAccounts,
+  MetaTypes,
+  WhitelistedCreator,
+} from '../../common';
 import { NexusGenInputs } from '../../generated/typings';
-import { ReaderBase, IReader } from '../../reader';
+import { IReader, IEvent, FilterFn } from '../../reader';
 import { filterByOwner } from './filterByOwner';
 import { filterByStoreAndCreator } from './filterByStoreAndCreator';
 import { MemoryWriter } from './MemoryWriter';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
+import { PubSub, withFilter } from 'graphql-subscriptions';
 
-export class MemoryReader extends ReaderBase implements IReader {
+export class MemoryReader implements IReader {
   constructor(
     public networkName: string,
-    connection: Connection,
+    private connection: Connection,
     private writer: MemoryWriter,
-  ) {
-    super(connection);
+  ) {}
+
+  loadUserAccounts(ownerId: string) {
+    const { connection } = this;
+    return loadUserTokenAccounts(connection, ownerId);
+  }
+
+  private readonly pubsub = new PubSub();
+
+  subscribeIterator(prop: MetaTypes, key?: string | FilterFn<IEvent>) {
+    const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
+    if (key !== undefined) {
+      if (typeof key === 'string') {
+        return withFilter(iter, (payload: IEvent) => {
+          return payload.key === key;
+        });
+      }
+      return withFilter(iter, key);
+    }
+    return iter;
   }
 
   async init() {
-    this.writer.setPublishFn((prop, key) =>
-      this.pubsub.publish(prop, { prop, key }),
-    );
+    this.writer.setPublishFn((prop, key) => {
+      const ref = this.state[prop];
+      const value = ref.get(key);
+      const obj: IEvent = { prop, key, value };
+      this.pubsub.publish(prop, obj);
+    });
   }
 
   get state() {

@@ -3,6 +3,7 @@ import { nonNull, stringArg, subscriptionType } from 'nexus';
 import { NexusObjectTypeDef } from 'nexus/dist/definitions/objectType';
 import { Auction } from './auction';
 import { Creator, Store } from './store';
+import { IEvent } from '../reader';
 
 export const truths = subscriptionType({
   definition(t) {
@@ -47,7 +48,7 @@ export const truths = subscriptionType({
         subscribe(_, { id }, context) {
           return context.api.subscribeIterator(prop, id)();
         },
-        resolve(obj: any) {
+        resolve(obj: IEvent) {
           return obj.value;
         },
       });

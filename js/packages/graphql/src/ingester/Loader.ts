@@ -16,7 +16,7 @@ import { IDataAdapter } from '../adapters/IDataAdapter';
 import { createPipelineExecutor } from '../utils/createPipelineExecutor';
 import { PROGRAMS } from './constants';
 import { ProgramParse, IWriter } from './types';
-import { Reader } from '../reader';
+import type { IReader } from '../reader';
 import { getWhitelistedCreatorList } from '../../ingester/index';
 import { JSONLazyResponse } from '../utils/JSONLazyResponse';
 
@@ -58,15 +58,18 @@ export class Loader<TW extends IWriter = IWriter> {
   };
 
   private readonly writer: TW;
-  private readonly reader: Reader;
+  private readonly reader: IReader;
 
   constructor(
     public readonly networkName: string,
-    readonly adapter: IDataAdapter<TW, Reader>,
+    readonly adapter: IDataAdapter<TW, IReader>,
   ) {
-    this.connection = adapter.getConnection(networkName);
-    this.writer = adapter.getWriter(networkName);
-    this.reader = adapter.getReader(networkName);
+    this.connection = adapter.getConnection(networkName)!;
+    this.writer = adapter.getWriter(networkName)!;
+    this.reader = adapter.getReader(networkName)!;
+    if (!this.connection || !this.writer || !this.reader) {
+      throw new Error(`Can't find network ${networkName}`);
+    }
   }
 
   readonly programs: ProgramParse[] = PROGRAMS.map(({ pubkey, process }) => ({

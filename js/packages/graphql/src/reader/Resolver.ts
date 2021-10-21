@@ -1,8 +1,8 @@
 import { Metadata } from '../types/sourceTypes';
-import { Reader } from './Reader';
+import { IReader } from './Reader';
 
 export class Resolver {
-  constructor(public api: Reader) {}
+  constructor(public api: IReader) {}
 
   private async artEditions(item: Metadata) {
     const edition = item.edition

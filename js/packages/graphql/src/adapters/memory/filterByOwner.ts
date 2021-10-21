@@ -1,11 +1,11 @@
 import { NexusGenInputs } from '../../generated/typings';
 import { Metadata, TokenAccount } from '../../common';
-import type { ReaderBase } from '../../reader';
+import type { IReader } from '../../reader';
 
 // artwork
 export async function filterByOwner(
   { ownerId }: Pick<NexusGenInputs['ArtworksInput'], 'ownerId'>,
-  loadUserAccounts: InstanceType<typeof ReaderBase>['loadUserAccounts'],
+  loadUserAccounts: IReader['loadUserAccounts'],
 ) {
   let userAccounts: TokenAccount[] = [];
   if (ownerId) {

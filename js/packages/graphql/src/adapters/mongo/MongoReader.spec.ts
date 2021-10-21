@@ -17,8 +17,10 @@ import {
 } from '../../common';
 import { createOrm } from './createOrm';
 import { MongoReader } from './MongoReader';
+
 describe('MongoReader', () => {
   let mongod!: MongoMemoryServer;
+
   let reader!: MongoReader;
   let db!: Db;
   let client!: MongoClient;
@@ -46,14 +48,17 @@ describe('MongoReader', () => {
   });
 
   beforeEach(async () => {
-    reader = new MongoReader('test', null as any, async () => {
-      const orm = await createOrm(
-        mongod.getUri(),
-        `test-${new Date().valueOf()}`,
-      );
-      db = orm.db;
-      client = orm.client;
-      return db;
+    reader = new MongoReader('test', {
+      connection: null as any,
+      initOrm: async () => {
+        const orm = await createOrm(mongod.getUri(), {
+          dbName: `test-${new Date().valueOf()}`,
+          replicaSet: 'testset',
+        });
+        db = orm.db;
+        client = orm.client;
+        return db;
+      },
     });
 
     reader.loadUserAccounts = async (ownerId: string) => {

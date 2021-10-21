@@ -1,6 +1,6 @@
 import { BN } from 'bn.js';
 import { Edition, MasterEditionV2, Metadata, MetadataKey } from '../common';
-import { Reader } from './Reader';
+import { IReader } from './Reader';
 import { Resolver } from './Resolver';
 
 describe('MetaplexService', () => {
@@ -19,12 +19,12 @@ describe('MetaplexService', () => {
         maxSupply: new BN(2),
       });
     }
-    function setup(api?: Partial<Reader>) {
+    function setup(api?: Partial<IReader>) {
       return new Resolver({
         getEdition,
         getMasterEdition,
         ...api,
-      } as Reader);
+      } as IReader);
     }
     describe('artType', () => {
       it('should give 1', async () => {

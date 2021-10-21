@@ -1,27 +1,67 @@
 import type { Db } from 'mongodb';
-import { IReader, ReaderBase } from '../../reader';
+import { FilterFn, IEvent, IReader } from '../../reader';
 import { Connection } from '@solana/web3.js';
 import {
   Edition,
+  loadUserTokenAccounts,
   MasterEditionV1,
   MasterEditionV2,
   Metadata,
   MetadataKey,
   MetaMap,
+  MetaTypes,
   Store,
   WhitelistedCreator,
 } from '../../common';
 import { deserialize } from 'typescript-json-serializer';
+import { PubSub, withFilter } from 'graphql-subscriptions';
 
-export class MongoReader extends ReaderBase implements IReader {
+function tableName<T extends MetaTypes>(name: T): T {
+  return name;
+}
+
+const D = {
+  creators: (doc: any) => deserialize(doc, WhitelistedCreator),
+  stores: (doc: any) => deserialize(doc, Store),
+  metadata: (doc: any) => deserialize(doc, Metadata),
+  masterEditionsV1: (doc: any) => deserialize(doc, MasterEditionV1),
+  masterEditionsV2: (doc: any) => deserialize(doc, MasterEditionV2),
+  editions: (doc: any) => deserialize(doc, Edition),
+};
+
+export class MongoReader implements IReader {
   private db!: Db;
+  private readonly pubsub = new PubSub();
+
+  static readonly TABLES = [
+    tableName('auctions'),
+    tableName('stores'),
+    tableName('creators'),
+  ] as const;
 
   constructor(
     public networkName: string,
-    connection: Connection,
-    private initOrm: () => Promise<Db>,
-  ) {
-    super(connection);
+    private options: {
+      connection: Connection;
+      initOrm: () => Promise<Db>;
+    },
+  ) {}
+
+  loadUserAccounts(ownerId: string) {
+    return loadUserTokenAccounts(this.options.connection, ownerId);
+  }
+
+  subscribeIterator(prop: MetaTypes, key?: string | FilterFn<IEvent>) {
+    const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
+    if (key !== undefined) {
+      if (typeof key === 'string') {
+        return withFilter(iter, (payload: IEvent) => {
+          return payload.key === key;
+        });
+      }
+      return withFilter(iter, key);
+    }
+    return iter;
   }
 
   private collection<TKey extends keyof MetaMap>(name: TKey) {
@@ -29,7 +69,38 @@ export class MongoReader extends ReaderBase implements IReader {
   }
 
   async init() {
-    this.db = await this.initOrm();
+    this.db = await this.options.initOrm();
+  }
+
+  initSubscription(): boolean {
+    if (!this.db) {
+      return false;
+    }
+    try {
+      MongoReader.TABLES.forEach(table => {
+        const collection = this.db.collection(table);
+        const watch = collection.watch();
+        watch.on('change', data => {
+          const { documentKey } = data as any;
+          const key = documentKey?._id.toString() ?? '';
+          const prop = data.ns.coll as MetaTypes;
+
+          this.collection(prop)
+            .findOne<any>({ _id: key })
+            .then(doc => {
+              const value = D[prop as keyof typeof D]?.(doc);
+              if (value) {
+                const obj: IEvent = { prop, key, value };
+                this.pubsub.publish(prop, obj);
+              }
+            });
+        });
+      });
+    } catch {
+      return false;
+    }
+
+    return true;
   }
 
   storesCount() {
@@ -54,13 +125,13 @@ export class MongoReader extends ReaderBase implements IReader {
   getStores() {
     return this.collection('stores')
       .find({})
-      .map(doc => deserialize(doc, Store))
+      .map(doc => D.stores(doc)!)
       .toArray();
   }
   getStore(storeId: string) {
     return this.collection('stores')
       .findOne({ _id: storeId })
-      .then(doc => (doc ? deserialize(doc, Store) : null));
+      .then(doc => D.stores(doc));
   }
 
   getCreatorIds(): Promise<string[]> {
@@ -75,7 +146,7 @@ export class MongoReader extends ReaderBase implements IReader {
     };
     return this.collection('creators')
       .find(filter)
-      .map(doc => deserialize(doc, WhitelistedCreator))
+      .map(doc => D.creators(doc)!)
       .toArray();
   }
 
@@ -85,7 +156,7 @@ export class MongoReader extends ReaderBase implements IReader {
     };
     return this.collection('creators')
       .findOne(filter)
-      .then(doc => (doc ? deserialize(doc, WhitelistedCreator) : null));
+      .then(doc => D.creators(doc));
   }
 
   async getArtworks({
@@ -129,19 +200,19 @@ export class MongoReader extends ReaderBase implements IReader {
 
     return await this.collection('metadata')
       .find(filter)
-      .map(doc => deserialize(doc, Metadata))
+      .map(doc => D.metadata(doc)!)
       .toArray();
   }
   getArtwork(artId: string) {
     return this.collection('metadata')
       .findOne({ _id: artId })
-      .then(doc => (doc ? deserialize(doc, Metadata) : null));
+      .then(doc => D.metadata(doc));
   }
   getEdition(id?: string) {
     return id
       ? this.collection('editions')
           .findOne({ _id: id })
-          .then(doc => (doc ? deserialize(doc, Edition) : null))
+          .then(doc => D.editions(doc))
       : Promise.resolve(null);
   }
   getMasterEdition(id?: string) {
@@ -152,8 +223,8 @@ export class MongoReader extends ReaderBase implements IReader {
             !doc
               ? null
               : doc.key === MetadataKey.MasterEditionV1
-              ? deserialize(doc, MasterEditionV1)
-              : deserialize(doc, MasterEditionV2),
+              ? D.masterEditionsV1(doc)
+              : D.masterEditionsV2(doc),
           )
       : Promise.resolve(null);
   }

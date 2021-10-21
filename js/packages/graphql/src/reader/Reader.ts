@@ -1,6 +1,5 @@
-import { Connection } from '@solana/web3.js';
-import { PubSub, withFilter } from 'graphql-subscriptions';
-import {
+import type { ResolverFn } from 'graphql-subscriptions';
+import type {
   Edition,
   MasterEditionV1,
   MasterEditionV2,
@@ -8,12 +7,20 @@ import {
   MetaTypes,
   Store,
   WhitelistedCreator,
-  loadUserTokenAccounts,
+  TokenAccount,
 } from '../common';
-import { NexusGenInputs } from '../generated/typings';
-import { FilterFn, IEvent } from './types';
+import type { NexusGenInputs } from '../generated/typings';
+import type { FilterFn, IEvent } from './types';
 
 export interface IReader {
+  readonly networkName: string;
+  init(): Promise<void>;
+  subscribeIterator(
+    prop: MetaTypes,
+    key?: string | FilterFn<IEvent> | undefined,
+  ): ResolverFn;
+  loadUserAccounts(ownerId: string): Promise<TokenAccount[]>;
+
   storesCount(): Promise<number>;
   creatorsCount(): Promise<number>;
   artworksCount(): Promise<number>;
@@ -58,32 +65,3 @@ export interface IReader {
   //   manager: AuctionManager,
   // ): Promise<ParticipationConfigV1 | null>;
 }
-
-export abstract class ReaderBase {
-  protected readonly pubsub = new PubSub();
-
-  abstract networkName: string;
-  abstract init(): Promise<void>;
-
-  constructor(public connection: Connection) {}
-
-  loadUserAccounts(ownerId: string) {
-    const { connection } = this;
-    return loadUserTokenAccounts(connection, ownerId);
-  }
-
-  subscribeIterator(prop: MetaTypes, key?: string | FilterFn<IEvent>) {
-    const iter = () => this.pubsub.asyncIterator<IEvent>(prop);
-    if (key !== undefined) {
-      if (typeof key === 'string') {
-        return withFilter(iter, (payload: IEvent) => {
-          return payload.key === key;
-        });
-      }
-      return withFilter(iter, key);
-    }
-    return iter;
-  }
-}
-
-export type Reader = ReaderBase & IReader;

@@ -1,7 +1,7 @@
-import { Reader, Resolver } from '../reader';
+import { IReader, Resolver } from '../reader';
 
 export interface Context {
   network?: string;
-  api: Reader;
+  api: IReader;
   resolver: Resolver;
 }

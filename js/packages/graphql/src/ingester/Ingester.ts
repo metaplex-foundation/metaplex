@@ -1,6 +1,6 @@
 import { IDataAdapter } from '../adapters/IDataAdapter';
 import { EndpointsMap, IWriter } from '../ingester';
-import { Reader } from '../reader';
+import { IReader } from '../reader';
 import { Loader } from './Loader';
 import { wrapLoaderConnection } from './snapshot';
 
@@ -8,7 +8,7 @@ export class Ingester<T extends IWriter = IWriter> {
   private readonly entries: Loader<T>[] = [];
 
   constructor(
-    private readonly adapter: IDataAdapter<T, Reader>,
+    private readonly adapter: IDataAdapter<T, IReader>,
     private readonly endpoints: EndpointsMap,
   ) {}
 
