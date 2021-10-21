@@ -128,6 +128,7 @@ export const ArtCreateView = () => {
       );
 
       if (_nft) setNft(_nft);
+      setAlertMessage('');
     } catch (e: any) {
       setAlertMessage(e.message);
     } finally {
