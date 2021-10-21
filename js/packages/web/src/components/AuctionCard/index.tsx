@@ -7,11 +7,11 @@ export const AuctionCard = props => {
   const { pubkey, auction, price } = props;
   const id = pubkeyToString(pubkey);
 
-  const [loadImage, setLoadImage] = useState(false);
-  const [cardObj, setCardObj] = useState<IMetadataExtension | undefined>();
-
   const { data } = useExtendedArt(id);
   const auc = useAuction(auction);
+
+  const [loadImage, setLoadImage] = useState(false);
+  const [cardObj, setCardObj] = useState<IMetadataExtension | undefined>();
 
   useEffect(() => {
     setCardObj(data);
@@ -31,6 +31,7 @@ export const AuctionCard = props => {
                 objectFit: 'cover',
               }}
               src={cardObj?.image}
+              loading="eager"
               onLoad={() => {
                 setLoadImage(true);
               }}

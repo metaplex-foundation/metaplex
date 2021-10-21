@@ -77,11 +77,11 @@ export const MarketplaceView = () => {
       arr = arr.reverse();
     }
 
-    const sum = arr.slice(
+    const onePage = arr.slice(
       activePage * pageSize,
       activePage * pageSize + pageSize,
     );
-    onePageItem = sum;
+    onePageItem = onePage;
     ownerLen = owner.length;
     pageLen = arr.length;
     setMinPrice(min);
@@ -105,7 +105,7 @@ export const MarketplaceView = () => {
 
   return (
     <div style={{ margin: '0px auto' }} className="col-md-10">
-      <section id="market-sec" className="col-md-10">
+      <div id="market-sec" className="col-md-10">
         <div className="container-fluid">
           <div className="row">
             <div className="col-2">
@@ -221,9 +221,9 @@ export const MarketplaceView = () => {
               <div className="dropdown">
                 <CustomSelect
                   option={optionData}
-                  defoultParam="Price: Low to High"
-                  onChange={e => {
-                    lowToHigh = e.target.value;
+                  defaultParam="Price: Low to High"
+                  onChange={event => {
+                    lowToHigh = event.target.value;
                     update();
                   }}
                 />
@@ -233,9 +233,9 @@ export const MarketplaceView = () => {
               <div className="dropdown">
                 <CustomSelect
                   option={optionDataFilter}
-                  defoultParam={`${pageSize}`}
-                  onChange={e => {
-                    pageSize = parseFloat(e.target.value);
+                  defaultParam={`${pageSize}`}
+                  onChange={event => {
+                    pageSize = parseFloat(event.target.value);
                     activePage = 0;
                     update();
                   }}
@@ -246,7 +246,7 @@ export const MarketplaceView = () => {
               <div
                 className="refresh-button"
                 onClick={() => {
-                  update();
+                  if (!isLoading) update();
                 }}
               >
                 <i className="fas fa-redo-alt"></i>
@@ -254,9 +254,9 @@ export const MarketplaceView = () => {
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section id="body-sec">
+      <div id="body-sec">
         <div className="container-fluid">
           <div className="row">
             <div
@@ -318,7 +318,7 @@ export const MarketplaceView = () => {
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
