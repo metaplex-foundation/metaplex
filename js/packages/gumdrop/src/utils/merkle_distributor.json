@@ -79,11 +79,6 @@
           "isSigner": false
         },
         {
-          "name": "claimant",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
           "name": "payer",
           "isMut": false,
           "isSigner": true
@@ -103,6 +98,10 @@
         {
           "name": "bump",
           "type": "u8"
+        },
+        {
+          "name": "claimantAccount",
+          "type": "publicKey"
         },
         {
           "name": "index",

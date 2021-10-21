@@ -287,10 +287,240 @@ const Create = (
 const Claim = (
   props : ClaimProps,
 ) => {
+  const connection = useConnection();
+  const wallet = useWallet();
+  const [distributor, setDistributor] = React.useState(localStorage.getItem("distributor") || "");
+  const [handle, setHandle] = React.useState(localStorage.getItem("handle") || "");
+  const [amountStr, setAmount] = React.useState(localStorage.getItem("amountStr") || "");
+  const [indexStr, setIndex] = React.useState(localStorage.getItem("indexStr") || "0");
+  const [pinStr, setPin] = React.useState(localStorage.getItem("pinStr") || "");
+  const [proofStr, setProof] = React.useState(localStorage.getItem("proofStr") || "");
+
+  const submit = async (e : React.SyntheticEvent) => {
+    e.preventDefault();
+
+    localStorage.setItem("distributor", distributor);
+    localStorage.setItem("handle", handle);
+    localStorage.setItem("amountStr", amountStr);
+    localStorage.setItem("indexStr", indexStr);
+    localStorage.setItem("pinStr", pinStr);
+    localStorage.setItem("proofStr", proofStr);
+
+    if (!wallet.connected || wallet.publicKey === null) {
+      throw new Error(`Wallet not connected`);
+    }
+
+    const amount = Number(amountStr);
+    const index = Number(indexStr);
+    const pin = JSON.parse(pinStr);
+
+    if (isNaN(amount)) {
+      throw new Error(`Could not parse amount ${amountStr}`);
+    }
+    if (isNaN(index)) {
+      throw new Error(`Could not parse index ${indexStr}`);
+    }
+
+    let distributorKey : PublicKey;
+    try {
+      distributorKey = new PublicKey(distributor);
+    } catch (err) {
+      throw new Error(`Invalid distributor key ${err}`);
+    }
+    const distributorAccount = await connection.getAccountInfo(distributorKey);
+    if (distributorAccount === null) {
+      throw new Error(`Could not fetch distributor`);
+    }
+
+    const distributorInfo = coder.accounts.decode(
+      "MerkleDistributor", distributorAccount.data);
+
+    const proof = JSON.parse(proofStr).map(b => {
+      const ret = Buffer.from(bs58.decode(b))
+      if (ret.length !== 32)
+        throw new Error(`Invalid proof hash length`);
+      return ret;
+    });
+
+    console.log("Proof", proof);
+
+    console.log(distributorInfo.mint.toBase58(), handle, pin);
+
+    const [claimantPda, ] = await PublicKey.findProgramAddress(
+      [
+        distributorInfo.mint.toBuffer(),
+        Buffer.from(handle),
+        Buffer.from(pin),
+      ],
+      MERKLE_DISTRIBUTOR_ID
+    );
+
+    const leaf = Buffer.from(keccak_256.digest(
+      [...new BN(index).toArray("le", 8),
+       ...claimantPda.toBuffer(),
+       ...new BN(amount).toArray("le", 8),
+      ]
+    ));
+
+    console.log(leaf, claimantPda.toBase58(), MerkleTree.nodeHash(leaf));
+
+    const matches = MerkleTree.verifyClaim(
+      Buffer.from(keccak_256.digest(
+        [...new BN(index).toArray("le", 8),
+         ...claimantPda.toBuffer(),
+         ...new BN(amount).toArray("le", 8),
+        ]
+      )),
+      proof,
+      Buffer.from(distributorInfo.root)
+    );
+
+    if (!matches) {
+      throw new Error("Merkle proof does not match");
+    }
+
+    const [claimStatus, cbump] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("ClaimStatus"),
+        Buffer.from(new BN(index).toArray("le", 8)),
+        distributorKey.toBuffer(),
+      ],
+      MERKLE_DISTRIBUTOR_ID
+    );
+
+    const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
+      [
+        distributorKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        distributorInfo.mint.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        distributorInfo.mint.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const setup : Array<TransactionInstruction> = [];
+
+    if (await connection.getAccountInfo(walletTokenKey) === null) {
+      setup.push(new TransactionInstruction({
+          programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+          keys: [
+              { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
+              { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
+              { pubkey: wallet.publicKey        , isSigner: false , isWritable: false } ,
+              { pubkey: distributorInfo.mint    , isSigner: false , isWritable: false } ,
+              { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
+              { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
+              { pubkey: SYSVAR_RENT_PUBKEY      , isSigner: false , isWritable: false } ,
+          ],
+          data: Buffer.from([])
+      }));
+    }
+
+    const claimAirdrop = new TransactionInstruction({
+        programId: MERKLE_DISTRIBUTOR_ID,
+        keys: [
+            { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
+            { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
+            { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
+            { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
+            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,  // payer
+            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
+            { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
+        ],
+        data: Buffer.from([
+          ...Buffer.from(sha256.digest("global:claim")).slice(0, 8),
+          ...new BN(cbump).toArray("le", 1),
+          ...new BN(index).toArray("le", 8),
+          ...new BN(amount).toArray("le", 8),
+          ...claimantPda.toBuffer(),
+          ...new BN(proof.length).toArray("le", 4),
+          ...Buffer.concat(proof),
+        ])
+    })
+
+    await Conn.sendTransactionWithRetry(
+      connection,
+      wallet,
+      [
+        ...setup,
+        claimAirdrop
+      ],
+      []
+    );
+  };
+
   return (
-    <div>
-      Claim Merkle Airdrop
-    </div>
+    <Box>
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Distributor"
+        value={distributor}
+        onChange={(e) => setDistributor(e.target.value)}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Handle"
+        value={handle}
+        onChange={(e) => setHandle(e.target.value)}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Amount"
+        value={amountStr}
+        onChange={(e) => setAmount(e.target.value)}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Index"
+        value={indexStr}
+        onChange={(e) => setIndex(e.target.value)}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Pin"
+        value={pinStr}
+        onChange={(e) => setPin(e.target.value)}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Proof"
+        multiline
+        value={proofStr}
+        onChange={(e) => setProof(e.target.value)}
+      />
+      <Button
+        disabled={!wallet.connected}
+        variant="contained"
+        color="success"
+        onClick={(e) => {
+          const wrap = async () => {
+            try {
+              await submit(e);
+            } catch (err) {
+              alert(`Failed to claim merkle drop: ${err}`);
+            }
+          };
+          wrap();
+        }}
+        sx={{ marginRight: "4px" }}
+      >
+        Claim Merkle Airdrop
+      </Button>
+    </Box>
   );
 };
 
