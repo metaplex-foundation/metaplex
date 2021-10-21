@@ -13,7 +13,6 @@ use {
     },
     anchor_spl::token::{Mint, TokenAccount},
     spl_token::instruction::{approve, initialize_account2},
-    std::str::FromStr,
 };
 
 anchor_lang::declare_id!("noneAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -34,7 +33,10 @@ pub mod auction_house {
         let seller = &ctx.accounts.seller;
         let token_account = &ctx.accounts.token_account;
         let token_mint = &ctx.accounts.token_mint;
+        let metadata = &ctx.accounts.metadata;
         let treasury_mint = &ctx.accounts.treasury_mint;
+        let seller_payment_receipt_account = &ctx.accounts.seller_payment_receipt_account;
+        let buyer_receipt_token_account = &ctx.accounts.buyer_receipt_token_account;
         let escrow_payment_account = &ctx.accounts.escrow_payment_account;
         let authority = &ctx.accounts.authority;
         let auction_house = &ctx.accounts.auction_house;
@@ -44,8 +46,15 @@ pub mod auction_house {
         let seller_trade_state = &ctx.accounts.seller_trade_state;
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
+        let ata_program = &ctx.accounts.ata_program;
         let program = &ctx.accounts.program;
         let rent = &ctx.accounts.rent;
+
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+
+        if buyer_price == 0 && !authority.to_account_info().is_signer {
+            return Err(ErrorCode::CannotMatchFreeSalesWithoutAuctionHouseSignoff.into());
+        }
 
         assert_keys_equal(program.key(), *ctx.program_id)?;
         assert_keys_equal(token_mint.key(), token_account.mint)?;
@@ -63,7 +72,7 @@ pub mod auction_house {
 
         let wallet_to_use = if buyer.is_signer { buyer } else { seller };
 
-        let (fee_payer, fee_seeds) = get_fee_payer(
+        let (fee_payer, fee_payer_seeds) = get_fee_payer(
             authority,
             auction_house,
             wallet_to_use.to_account_info(),
@@ -75,6 +84,178 @@ pub mod auction_house {
             &token_account.to_account_info(),
             &seller.key(),
             &token_account.mint,
+        )?;
+
+        assert_metadata_valid(metadata, token_account)?;
+
+        let auction_house_key = auction_house.key();
+        let wallet_key = buyer.key();
+        let escrow_signer_seeds = [
+            PREFIX.as_bytes(),
+            auction_house_key.as_ref(),
+            wallet_key.as_ref(),
+            &[escrow_payment_bump],
+        ];
+
+        let buyer_leftover_after_royalties = pay_creator_fees(
+            &mut ctx.remaining_accounts.iter(),
+            &metadata.to_account_info(),
+            &escrow_payment_account.to_account_info(),
+            &fee_payer.to_account_info(),
+            treasury_mint,
+            &ata_program.to_account_info(),
+            &token_program.to_account_info(),
+            &system_program.to_account_info(),
+            &rent.to_account_info(),
+            &escrow_signer_seeds,
+            &fee_payer_seeds,
+            buyer_price,
+            is_native,
+        )?;
+
+        let auction_house_fee_paid = pay_auction_house_fees(
+            &auction_house,
+            &auction_house_treasury.to_account_info(),
+            &escrow_payment_account.to_account_info(),
+            &token_program.to_account_info(),
+            &system_program.to_account_info(),
+            &escrow_signer_seeds,
+            buyer_price,
+            is_native,
+        )?;
+
+        let buyer_leftover_after_royalties_and_house_fee = buyer_leftover_after_royalties
+            .checked_sub(auction_house_fee_paid)
+            .ok_or(ErrorCode::NumericalOverflow)?;
+
+        if !is_native {
+            if seller_payment_receipt_account.data_is_empty() {
+                make_ata(
+                    seller_payment_receipt_account.to_account_info(),
+                    seller.to_account_info(),
+                    treasury_mint.to_account_info(),
+                    fee_payer.to_account_info(),
+                    ata_program.to_account_info(),
+                    token_program.to_account_info(),
+                    system_program.to_account_info(),
+                    rent.to_account_info(),
+                    &fee_payer_seeds,
+                )?;
+            }
+
+            let seller_rec_acct = assert_is_ata(
+                &seller_payment_receipt_account.to_account_info(),
+                &seller.key(),
+                &treasury_mint.key(),
+            )?;
+
+            // make sure you cant get rugged
+            if seller_rec_acct.delegate.is_some() {
+                return Err(ErrorCode::SellerATACannotHaveDelegate.into());
+            }
+
+            invoke_signed(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    &escrow_payment_account.key(),
+                    &seller_payment_receipt_account.key(),
+                    &escrow_payment_account.key(),
+                    &[],
+                    buyer_leftover_after_royalties_and_house_fee,
+                )?,
+                &[
+                    escrow_payment_account.to_account_info(),
+                    seller_payment_receipt_account.to_account_info(),
+                    token_program.to_account_info(),
+                ],
+                &[&escrow_signer_seeds],
+            )?;
+        } else {
+            assert_keys_equal(seller_payment_receipt_account.key(), seller.key())?;
+            invoke_signed(
+                &system_instruction::transfer(
+                    &escrow_payment_account.key,
+                    seller_payment_receipt_account.key,
+                    buyer_leftover_after_royalties_and_house_fee,
+                ),
+                &[
+                    escrow_payment_account.to_account_info(),
+                    seller_payment_receipt_account.to_account_info(),
+                    system_program.to_account_info(),
+                ],
+                &[&escrow_signer_seeds],
+            )?;
+        }
+
+        if buyer_receipt_token_account.data_is_empty() {
+            make_ata(
+                buyer_receipt_token_account.to_account_info(),
+                buyer.to_account_info(),
+                token_mint.to_account_info(),
+                fee_payer.to_account_info(),
+                ata_program.to_account_info(),
+                token_program.to_account_info(),
+                system_program.to_account_info(),
+                rent.to_account_info(),
+                &fee_payer_seeds,
+            )?;
+        }
+
+        let buyer_rec_acct = assert_is_ata(
+            &buyer_receipt_token_account.to_account_info(),
+            &buyer.key(),
+            &token_mint.key(),
+        )?;
+
+        // make sure you cant get rugged
+        if buyer_rec_acct.delegate.is_some() {
+            return Err(ErrorCode::BuyerATACannotHaveDelegate.into());
+        }
+
+        invoke_signed(
+            &spl_token::instruction::transfer(
+                token_program.key,
+                &token_account.key(),
+                &buyer_receipt_token_account.key(),
+                &escrow_payment_account.key(),
+                &[],
+                token_size,
+            )?,
+            &[
+                token_account.to_account_info(),
+                buyer_receipt_token_account.to_account_info(),
+                token_program.to_account_info(),
+            ],
+            &[&escrow_signer_seeds],
+        )?;
+
+        // Now kill the offer accounts
+        invoke_signed(
+            &system_instruction::transfer(
+                &seller_trade_state.key,
+                fee_payer.key,
+                seller_trade_state.lamports(),
+            ),
+            &[
+                seller_trade_state.to_account_info(),
+                fee_payer.clone(),
+                system_program.to_account_info(),
+            ],
+            &[],
+        )?;
+
+        invoke_signed(
+            &system_instruction::transfer(
+                &buyer_trade_state.key,
+                fee_payer.key,
+                buyer_trade_state.lamports(),
+            ),
+            &[
+                buyer_trade_state.to_account_info(),
+                fee_payer.clone(),
+                system_program.to_account_info(),
+            ],
+            &[],
         )?;
         Ok(())
     }
@@ -90,12 +271,23 @@ pub mod auction_house {
         let metadata = &ctx.accounts.metadata;
         let authority = &ctx.accounts.authority;
         let seller_trade_state = &ctx.accounts.seller_trade_state;
+        let free_seller_trade_state = &ctx.accounts.free_seller_trade_state;
         let auction_house = &ctx.accounts.auction_house;
         let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let program = &ctx.accounts.program;
         let rent = &ctx.accounts.rent;
+
+        if !wallet.to_account_info().is_signer {
+            if free_seller_trade_state.data_is_empty() {
+                return Err(ErrorCode::SaleRequiresSigner.into());
+            } else if !free_seller_trade_state.data_is_empty()
+                && !authority.to_account_info().is_signer
+            {
+                return Err(ErrorCode::SaleRequiresSigner.into());
+            }
+        }
 
         assert_keys_equal(program.key(), *ctx.program_id)?;
 
@@ -319,184 +511,6 @@ pub mod auction_house {
 
         Ok(())
     }
-
-    pub fn accept_offer<'info>(
-        ctx: Context<'_, '_, '_, 'info, AcceptOffer<'info>>,
-        has_metadata: bool,
-        maker_size: u64,
-        taker_size: u64,
-        bump_seed: u8,
-    ) -> ProgramResult {
-        let maker_wallet = &ctx.accounts.maker_wallet;
-        let taker_wallet = &ctx.accounts.taker_wallet;
-        let maker_src_account = &ctx.accounts.maker_src_account;
-        let maker_dst_account = &ctx.accounts.maker_dst_account;
-        let taker_src_account = &ctx.accounts.taker_src_account;
-        let taker_dst_account = &ctx.accounts.taker_dst_account;
-        let maker_src_mint = &ctx.accounts.maker_src_mint;
-        let taker_src_mint = &ctx.accounts.taker_src_mint;
-        let transfer_authority = &ctx.accounts.transfer_authority;
-        let token_program_info = &ctx.accounts.token_program;
-        let system_program_info = &ctx.accounts.system_program;
-        let remaining_account_incr = &mut ctx.remaining_accounts.iter();
-        let is_taker_native = taker_src_mint.key() == spl_token::native_mint::id();
-        let is_maker_native = maker_src_mint.key() == spl_token::native_mint::id();
-        if is_taker_native && is_maker_native {
-            return Err(ErrorCode::CannotExchangeSOLForSol.into());
-        }
-
-        let maker_mint_key = maker_src_mint.key();
-        let taker_mint_key = taker_src_mint.key();
-
-        let seeds = &[
-            b"stateless_offer",
-            maker_wallet.key.as_ref(),
-            &maker_mint_key.as_ref(),
-            &taker_mint_key.as_ref(),
-            &maker_size.to_le_bytes(),
-            &taker_size.to_le_bytes(),
-            &[bump_seed],
-        ];
-        let (maker_pay_size, taker_pay_size) = if has_metadata {
-            let metadata_info = next_account_info(remaining_account_incr)?;
-            let (maker_metadata_key, _) = Pubkey::find_program_address(
-                &[
-                    b"metadata",
-                    metaplex_token_metadata::id().as_ref(),
-                    maker_src_mint.key().as_ref(),
-                ],
-                &metaplex_token_metadata::id(),
-            );
-            let (taker_metadata_key, _) = Pubkey::find_program_address(
-                &[
-                    b"metadata",
-                    metaplex_token_metadata::id().as_ref(),
-                    taker_src_mint.key().as_ref(),
-                ],
-                &metaplex_token_metadata::id(),
-            );
-            if *metadata_info.key == maker_metadata_key {
-                msg!("Taker pays for fees");
-                let taker_remaining_size = pay_creator_fees(
-                    remaining_account_incr,
-                    metadata_info,
-                    taker_src_account,
-                    taker_wallet,
-                    token_program_info,
-                    system_program_info,
-                    taker_src_mint,
-                    taker_size,
-                    is_taker_native,
-                    &[],
-                )?;
-                (maker_size, taker_remaining_size)
-            } else if *metadata_info.key == taker_metadata_key {
-                msg!("Maker pays for fees");
-                let maker_remaining_size = pay_creator_fees(
-                    remaining_account_incr,
-                    metadata_info,
-                    maker_src_account,
-                    transfer_authority, // Delegate signs for transfer
-                    token_program_info,
-                    system_program_info,
-                    maker_src_mint,
-                    maker_size,
-                    is_maker_native,
-                    seeds,
-                )?;
-                (maker_remaining_size, taker_size)
-            } else {
-                msg!("Neither maker nor taker metadata keys match");
-                return Err(ProgramError::InvalidAccountData);
-            }
-        } else {
-            (maker_size, taker_size)
-        };
-
-        let authority_key = Pubkey::create_program_address(seeds, ctx.program_id)?;
-        assert_keys_equal(authority_key, *transfer_authority.key)?;
-
-        // Both of these transfers will fail if the `transfer_authority` is the delegate of these ATA's
-        // One consideration is that the taker can get tricked in the case that the maker size is greater than
-        // the token amount in the maker's ATA, but these stateless offers should just be invalidated in
-        // the client.
-
-        assert_valid_delegation(
-            maker_src_account,
-            taker_dst_account,
-            maker_wallet,
-            taker_wallet,
-            transfer_authority,
-            maker_src_mint,
-            maker_pay_size,
-        )?;
-
-        assert_valid_delegation(
-            taker_src_account,
-            maker_dst_account,
-            taker_wallet,
-            maker_wallet,
-            transfer_authority,
-            taker_src_mint,
-            taker_pay_size,
-        )?;
-
-        invoke_signed(
-            &spl_token::instruction::transfer(
-                token_program_info.key,
-                &maker_src_account.key(),
-                taker_dst_account.key,
-                transfer_authority.key,
-                &[],
-                maker_pay_size,
-            )?,
-            &[
-                maker_src_account.to_account_info(),
-                taker_dst_account.to_account_info(),
-                transfer_authority.to_account_info(),
-                token_program_info.to_account_info(),
-            ],
-            &[seeds],
-        )?;
-        msg!("done tx from maker to taker {}", maker_pay_size);
-        if taker_src_mint.key() == spl_token::native_mint::id() {
-            assert_keys_equal(system_program::id(), *system_program_info.key)?;
-            invoke(
-                &system_instruction::transfer(
-                    &taker_src_account.key(),
-                    maker_dst_account.key,
-                    taker_pay_size,
-                ),
-                &[
-                    taker_src_account.to_account_info(),
-                    maker_dst_account.to_account_info(),
-                    system_program_info.to_account_info(),
-                ],
-            )?;
-        } else {
-            assert_is_ata(maker_dst_account, maker_wallet.key, &taker_src_mint.key())?;
-            assert_is_ata(taker_src_account, taker_wallet.key, &taker_src_mint.key())?;
-            invoke(
-                &spl_token::instruction::transfer(
-                    token_program_info.key,
-                    &taker_src_account.key(),
-                    maker_dst_account.key,
-                    taker_wallet.key,
-                    &[],
-                    taker_pay_size,
-                )?,
-                &[
-                    taker_src_account.to_account_info(),
-                    maker_dst_account.to_account_info(),
-                    taker_wallet.to_account_info(),
-                    token_program_info.to_account_info(),
-                ],
-            )?;
-        }
-        msg!("done tx from taker to maker {}", taker_pay_size);
-        msg!("done!");
-        Ok(())
-    }
 }
 #[derive(Accounts)]
 pub struct AcceptOffer<'info> {
@@ -516,9 +530,9 @@ pub struct AcceptOffer<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(trade_state_bump: u8, buyer_price: u64, token_size: u64)]
+#[instruction(trade_state_bump: u8, free_trade_state_bump: u8, buyer_price: u64, token_size: u64)]
 pub struct Sell<'info> {
-    wallet: Signer<'info>,
+    wallet: UncheckedAccount<'info>,
     token_account: Account<'info, TokenAccount>,
     metadata: UncheckedAccount<'info>,
     authority: UncheckedAccount<'info>,
@@ -528,6 +542,8 @@ pub struct Sell<'info> {
     auction_house_fee_account: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), wallet.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_account.mint.as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state_bump)]
     seller_trade_state: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), wallet.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_account.mint.as_ref(), &0u64.to_le_bytes(), &token_size.to_le_bytes()], bump=free_trade_state_bump)]
+    free_seller_trade_state: UncheckedAccount<'info>,
     #[account(address = spl_token::id())]
     token_program: UncheckedAccount<'info>,
     #[account(address = system_program::ID)]
@@ -568,9 +584,12 @@ pub struct ExecuteSale<'info> {
     seller: UncheckedAccount<'info>,
     token_account: Account<'info, TokenAccount>,
     token_mint: Account<'info, Mint>,
+    metadata: UncheckedAccount<'info>,
     treasury_mint: Account<'info, Mint>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), buyer.key().as_ref()], bump=escrow_payment_bump)]
     escrow_payment_account: UncheckedAccount<'info>,
+    seller_payment_receipt_account: UncheckedAccount<'info>,
+    buyer_receipt_token_account: UncheckedAccount<'info>,
     authority: UncheckedAccount<'info>,
     #[account(seeds=[PREFIX.as_bytes(), auction_house.creator.as_ref(), auction_house.treasury_mint.as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint)]
     auction_house: Account<'info, AuctionHouse>,
@@ -586,6 +605,8 @@ pub struct ExecuteSale<'info> {
     token_program: UncheckedAccount<'info>,
     #[account(address = system_program::ID)]
     system_program: UncheckedAccount<'info>,
+    #[account(address = spl_associated_token_account::id())]
+    ata_program: UncheckedAccount<'info>,
     program: UncheckedAccount<'info>,
     rent: Sysvar<'info, Rent>,
 }
@@ -636,6 +657,7 @@ pub struct AuctionHouse {
     pub fee_payer_bump: u8,
     pub seller_fee_basis_points: u16,
     pub requires_sign_off: bool,
+    pub can_change_sale_price: bool,
 }
 
 pub const TRADE_STATE_SIZE: usize = 1;
@@ -676,4 +698,14 @@ pub enum ErrorCode {
     InvalidTokenAmount,
     #[msg("Both parties need to agree to this sale")]
     BothPartiesNeedToAgreeToSale,
+    #[msg("Cannot match free sales unless the auction house signs off")]
+    CannotMatchFreeSalesWithoutAuctionHouseSignoff,
+    #[msg("This sale requires a signer")]
+    SaleRequiresSigner,
+    #[msg("Old seller not initialized")]
+    OldSellerNotInitialized,
+    #[msg("Seller ata cannot have a delegate set")]
+    SellerATACannotHaveDelegate,
+    #[msg("Buyer ata cannot have a delegate set")]
+    BuyerATACannotHaveDelegate,
 }

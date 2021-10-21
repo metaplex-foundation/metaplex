@@ -28,6 +28,39 @@ pub fn assert_is_ata(
     Ok(ata_account)
 }
 
+pub fn make_ata<'a>(
+    ata: AccountInfo<'a>,
+    wallet: AccountInfo<'a>,
+    mint: AccountInfo<'a>,
+    fee_payer: AccountInfo<'a>,
+    ata_program: AccountInfo<'a>,
+    token_program: AccountInfo<'a>,
+    system_program: AccountInfo<'a>,
+    rent: AccountInfo<'a>,
+    fee_payer_seeds: &[&[u8]],
+) -> ProgramResult {
+    invoke_signed(
+        &spl_associated_token_account::create_associated_token_account(
+            &fee_payer.key,
+            &wallet.key,
+            &mint.key,
+        ),
+        &[
+            ata,
+            wallet,
+            mint,
+            fee_payer,
+            ata_program,
+            system_program,
+            rent,
+            token_program,
+        ],
+        &[fee_payer_seeds],
+    )?;
+
+    Ok(())
+}
+
 pub fn assert_metadata_valid<'a>(
     metadata: &UncheckedAccount,
     token_account: &anchor_lang::Account<'a, TokenAccount>,
@@ -148,25 +181,80 @@ pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> ProgramResult {
 }
 
 #[allow(clippy::too_many_arguments)]
+pub fn pay_auction_house_fees<'a>(
+    auction_house: &anchor_lang::Account<'a, AuctionHouse>,
+    auction_house_treasury: &AccountInfo<'a>,
+    escrow_payment_account: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+    system_program: &AccountInfo<'a>,
+    escrow_signer_seeds: &[&[u8]],
+    size: u64,
+    is_native: bool,
+) -> Result<u64, ProgramError> {
+    let fees = auction_house.seller_fee_basis_points;
+    let total_fee = (fees as u128)
+        .checked_mul(size as u128)
+        .ok_or(ErrorCode::NumericalOverflow)?
+        .checked_div(10000)
+        .ok_or(ErrorCode::NumericalOverflow)? as u64;
+    if !is_native {
+        invoke_signed(
+            &spl_token::instruction::transfer(
+                token_program.key,
+                &escrow_payment_account.key,
+                &auction_house_treasury.key,
+                escrow_payment_account.key,
+                &[],
+                total_fee,
+            )?,
+            &[
+                escrow_payment_account.clone(),
+                auction_house_treasury.clone(),
+                token_program.clone(),
+            ],
+            &[escrow_signer_seeds],
+        )?;
+    } else {
+        invoke_signed(
+            &system_instruction::transfer(
+                &escrow_payment_account.key,
+                auction_house_treasury.key,
+                total_fee,
+            ),
+            &[
+                escrow_payment_account.clone(),
+                auction_house_treasury.clone(),
+                system_program.clone(),
+            ],
+            &[escrow_signer_seeds],
+        )?;
+    }
+    Ok(total_fee)
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn pay_creator_fees<'a>(
     remaining_accounts: &mut Iter<AccountInfo<'a>>,
     metadata_info: &AccountInfo<'a>,
-    src_account_info: &AccountInfo<'a>,
-    src_authority_info: &AccountInfo<'a>,
-    token_program_info: &AccountInfo<'a>,
-    system_program_info: &AccountInfo<'a>,
-    fee_mint: &anchor_lang::Account<'a, Mint>,
+    escrow_payment_account: &AccountInfo<'a>,
+    fee_payer: &AccountInfo<'a>,
+    treasury_mint: &anchor_lang::Account<'a, Mint>,
+    ata_program: &AccountInfo<'a>,
+    token_program: &AccountInfo<'a>,
+    system_program: &AccountInfo<'a>,
+    rent: &AccountInfo<'a>,
+    escrow_signer_seeds: &[&[u8]],
+    fee_payer_seeds: &[&[u8]],
     size: u64,
     is_native: bool,
-    seeds: &[&[u8]],
 ) -> Result<u64, ProgramError> {
     let metadata = Metadata::from_account_info(metadata_info)?;
     let fees = metadata.data.seller_fee_basis_points;
-    let total_fee = (fees as u64)
-        .checked_mul(size)
+    let total_fee = (fees as u128)
+        .checked_mul(size as u128)
         .ok_or(ErrorCode::NumericalOverflow)?
         .checked_div(10000)
-        .ok_or(ErrorCode::NumericalOverflow)?;
+        .ok_or(ErrorCode::NumericalOverflow)? as u64;
     let mut remaining_fee = total_fee;
     let remaining_size = size
         .checked_sub(total_fee)
@@ -174,12 +262,12 @@ pub fn pay_creator_fees<'a>(
     match metadata.data.creators {
         Some(creators) => {
             for creator in creators {
-                let pct = creator.share as u64;
+                let pct = creator.share as u128;
                 let creator_fee = pct
-                    .checked_mul(total_fee)
+                    .checked_mul(total_fee as u128)
                     .ok_or(ErrorCode::NumericalOverflow)?
                     .checked_div(100)
-                    .ok_or(ErrorCode::NumericalOverflow)?;
+                    .ok_or(ErrorCode::NumericalOverflow)? as u64;
                 remaining_fee = remaining_fee
                     .checked_sub(creator_fee)
                     .ok_or(ErrorCode::NumericalOverflow)?;
@@ -187,65 +275,55 @@ pub fn pay_creator_fees<'a>(
                 assert_keys_equal(creator.address, *current_creator_info.key)?;
                 if !is_native {
                     let current_creator_token_account_info = next_account_info(remaining_accounts)?;
+                    if current_creator_token_account_info.data_is_empty() {
+                        make_ata(
+                            current_creator_token_account_info.to_account_info(),
+                            current_creator_info.to_account_info(),
+                            treasury_mint.to_account_info(),
+                            fee_payer.to_account_info(),
+                            ata_program.to_account_info(),
+                            token_program.to_account_info(),
+                            system_program.to_account_info(),
+                            rent.to_account_info(),
+                            fee_payer_seeds,
+                        )?;
+                    }
                     assert_is_ata(
                         current_creator_token_account_info,
                         current_creator_info.key,
-                        &fee_mint.key(),
+                        &treasury_mint.key(),
                     )?;
                     if creator_fee > 0 {
-                        if seeds.is_empty() {
-                            invoke(
-                                &spl_token::instruction::transfer(
-                                    token_program_info.key,
-                                    &src_account_info.key,
-                                    current_creator_token_account_info.key,
-                                    src_authority_info.key,
-                                    &[],
-                                    creator_fee,
-                                )?,
-                                &[
-                                    src_account_info.clone(),
-                                    current_creator_token_account_info.clone(),
-                                    src_authority_info.clone(),
-                                    token_program_info.clone(),
-                                ],
-                            )?;
-                        } else {
-                            invoke_signed(
-                                &spl_token::instruction::transfer(
-                                    token_program_info.key,
-                                    &src_account_info.key,
-                                    current_creator_token_account_info.key,
-                                    src_authority_info.key,
-                                    &[],
-                                    creator_fee,
-                                )?,
-                                &[
-                                    src_account_info.clone(),
-                                    current_creator_token_account_info.clone(),
-                                    src_authority_info.clone(),
-                                    token_program_info.clone(),
-                                ],
-                                &[seeds],
-                            )?;
-                        }
+                        invoke_signed(
+                            &spl_token::instruction::transfer(
+                                token_program.key,
+                                &escrow_payment_account.key,
+                                current_creator_token_account_info.key,
+                                escrow_payment_account.key,
+                                &[],
+                                creator_fee,
+                            )?,
+                            &[
+                                escrow_payment_account.clone(),
+                                current_creator_token_account_info.clone(),
+                                token_program.clone(),
+                            ],
+                            &[escrow_signer_seeds],
+                        )?;
                     }
                 } else if creator_fee > 0 {
-                    if !seeds.is_empty() {
-                        msg!("Maker cannot pay with native SOL");
-                        return Err(ProgramError::InvalidAccountData);
-                    }
-                    invoke(
+                    invoke_signed(
                         &system_instruction::transfer(
-                            &src_account_info.key,
+                            &escrow_payment_account.key,
                             current_creator_info.key,
                             creator_fee,
                         ),
                         &[
-                            src_account_info.clone(),
+                            escrow_payment_account.clone(),
                             current_creator_info.clone(),
-                            system_program_info.clone(),
+                            system_program.clone(),
                         ],
+                        &[escrow_signer_seeds],
                     )?;
                 }
             }
