@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { IMetadataExtension, pubkeyToString } from '@oyster/common';
-import { useAuction, useExtendedArt } from '../../hooks';
 import { Link } from 'react-router-dom';
+import { useAuction, useExtendedArt } from '../../hooks';
+
 export const AuctionCard = props => {
   const { pubkey, auction, price } = props;
   const id = pubkeyToString(pubkey);
 
   const [loadImage, setLoadImage] = useState(false);
   const [cardObj, setCardObj] = useState<IMetadataExtension | undefined>();
+
   const { data } = useExtendedArt(id);
+  const auc = useAuction(auction);
+
   useEffect(() => {
     setCardObj(data);
   }, [data]);
-  const auc = useAuction(auction);
+
   return (
     <div id="auction-sec" className="col-md-3 mt-4">
       <Link to={auction ? `/auction/${auction}` : '#'}>
@@ -24,7 +28,7 @@ export const AuctionCard = props => {
                 height: '100%',
                 borderRadius: '5px',
                 display: loadImage ? 'block' : 'none',
-                objectFit: 'cover'
+                objectFit: 'cover',
               }}
               src={cardObj?.image}
               onLoad={() => {

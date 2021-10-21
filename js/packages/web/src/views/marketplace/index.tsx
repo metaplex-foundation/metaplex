@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
+import { CustomSelect } from '../../components/CustomSelect';
 import { AuctionCard } from '../../components/AuctionCard';
 import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
@@ -15,8 +15,6 @@ export enum ArtworkViewState {
 }
 
 let ownerLen = 0;
-let minPrice = 0;
-let maxPrice = 0;
 let lowToHigh = 'Price: Low to High';
 let onePageItem: any = [];
 let pageLen = 0;
@@ -27,13 +25,16 @@ let pageSize = 16;
 let activePage = 0;
 
 export const MarketplaceView = () => {
-  const [items, setItems] = useState<any>();
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
   const { id } = useParams<{ id: string }>();
+
   const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
 
   const optionData = ['Price: Low to High', 'Price: High to Low'];
   const optionDataFilter = [4, 8, 16, 32, 64, 128];
+
   useEffect(() => {
     if (collection) {
       sortCollection(collection);
@@ -46,29 +47,29 @@ export const MarketplaceView = () => {
     });
   };
 
-  const sortCollection = (collection) => {
+  const sortCollection = collection => {
     let arr: any = [];
     const nft: any = [];
-    collection.map(item => {
-      if (item['Auction']) arr.push(item);
-      else nft.push(item);
-    });
-    allAuction = arr.length;
-    allItems = collection;
     let max = 0;
     let min = 0;
     let owner: any = [];
-    
-    arr.forEach(character => {
-      if (character.Price > max) max = character.Price;
-      if (character.Price < min) min = character.Price;
-      const includesTwenty = owner.includes(
-        character.ParsedAccount.info.data.creators[0].address,
-      );
-      if (!includesTwenty)
-        owner.push(character.ParsedAccount.info.data.creators[0].address);
+
+    collection.map(item => {
+      if (item['Auction']) {
+        arr.push(item);
+        if (item.Price > max) max = item.Price;
+        if (item.Price < min) min = item.Price;
+        const ownerHasAddress = owner.includes(
+          item.ParsedAccount.info.data.creators[0].address,
+        );
+        if (!ownerHasAddress)
+          owner.push(item.ParsedAccount.info.data.creators[0].address);
+      } else nft.push(item);
     });
-    if (searchItem) arr = changeSearch(searchItem);
+    allAuction = arr.length;
+    allItems = collection;
+
+    if (searchItem) arr = changeSearch();
     if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
     } else if (lowToHigh == 'Price: High to Low') {
@@ -82,18 +83,17 @@ export const MarketplaceView = () => {
     );
     onePageItem = sum;
     ownerLen = owner.length;
-    minPrice = min;
-    maxPrice = max;
     pageLen = arr.length;
-    setItems(arr);
+    setMinPrice(min);
+    setMaxPrice(max);
   };
 
   const onChange = event => {
     activePage = event.selected;
-    update()
+    update();
   };
 
-  const changeSearch = event => {
+  const changeSearch = () => {
     const arr: any = [];
     const search = searchItem.toUpperCase();
     allItems.map(item => {
@@ -102,6 +102,7 @@ export const MarketplaceView = () => {
     });
     return arr;
   };
+
   return (
     <div style={{ margin: '0px auto' }} className="col-md-10">
       <section id="market-sec" className="col-md-10">
@@ -221,8 +222,8 @@ export const MarketplaceView = () => {
                 <CustomSelect
                   option={optionData}
                   defoultParam="Price: Low to High"
-                  change={event => {
-                    lowToHigh = event.target.value;
+                  onChange={e => {
+                    lowToHigh = e.target.value;
                     update();
                   }}
                 />
@@ -233,8 +234,8 @@ export const MarketplaceView = () => {
                 <CustomSelect
                   option={optionDataFilter}
                   defoultParam={`${pageSize}`}
-                  change={event => {
-                    pageSize = parseFloat(event.target.value);
+                  onChange={e => {
+                    pageSize = parseFloat(e.target.value);
                     activePage = 0;
                     update();
                   }}

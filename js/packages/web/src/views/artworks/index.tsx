@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
 import { Layout, Row, Col, Tabs } from 'antd';
-import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
-import { useCreatorArts, useUserArts } from '../../hooks';
-import { useMeta } from '../../contexts';
-import { CardLoader } from '../../components/MyLoader';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Link } from 'react-router-dom';
+import Masonry from 'react-masonry-css';
+import { useMeta } from '../../contexts';
+import { ArtCard } from '../../components/ArtCard';
+import { CardLoader } from '../../components/MyLoader';
+import { useCreatorArts, useUserArts } from '../../hooks';
 
 const { TabPane } = Tabs;
 
@@ -35,7 +35,7 @@ export const ArtworksView = () => {
     activeKey === ArtworkViewState.Owned
       ? ownedMetadata.map(m => m.metadata)
       : activeKey === ArtworkViewState.Created
-      ? createdMetadata
+      ? createdMetadata.artwork
       : metadata;
 
   useEffect(() => {

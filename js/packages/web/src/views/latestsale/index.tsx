@@ -1,12 +1,12 @@
 import { Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CustomSelect } from '../../components/CustomSelect/CustomSelect';
+import { CustomSelect } from '../../components/CustomSelect';
 import { useCollectionTokenMetadataList } from '../../hooks/useCollections';
 export const LatestsaleView = props => {
   const [pageLen, setPageLen] = useState(90);
   const [items, setItems] = useState<any>();
-  const optionData = ['last 24 hour', 'last 7 days', 'last mount']
+  const optionData = ['last 24 hour', 'last 7 days', 'last mount'];
   const { handle_latest_sale } = props;
   const { id } = useParams<{ id: string }>();
   const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
@@ -40,7 +40,11 @@ export const LatestsaleView = props => {
           <div className="row">
             <div className="col-md-3">
               <div className="dropdown mb-3">
-                <CustomSelect option={optionData} defoultParam="all time"/>
+                <CustomSelect
+                  option={optionData}
+                  defoultParam="all time"
+                  onChange={() => {}}
+                />
               </div>
             </div>
             <div className="col-md-9">

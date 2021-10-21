@@ -1,31 +1,26 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useMeta } from '..';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { MintInfo } from '@solana/spl-token';
+import { range } from 'lodash';
+import { cache, MintParser, ParsedAccount, useConnection, useMeta } from '..';
 import {
   CollectionContextState as CollectionsContextState,
   CollectionsState,
 } from './types';
 import {
-  IMetadataExtension,
-  ParsedAccount,
-  useLocalStorage,
-  Metadata,
-  StringPublicKey,
-  BidRedemptionTicketV2,
-  SafetyDepositConfig,
   AuctionManager,
-  SafetyDepositBox,
-  MetaplexKey,
-  AuctionManagerV2,
-  fromLamports,
-  cache,
-  MintParser,
-  useConnection,
   AuctionManagerV1,
-} from '@oyster/common';
-
-import { range } from 'lodash';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { MintInfo } from '@solana/spl-token';
+  AuctionManagerV2,
+  BidRedemptionTicketV2,
+  fromLamports,
+  IMetadataExtension,
+  Metadata,
+  MetaplexKey,
+  SafetyDepositBox,
+  SafetyDepositConfig,
+  StringPublicKey,
+  useLocalStorage,
+} from '../..';
 
 const CollectionsContext = React.createContext<CollectionsContextState>({
   tokenMetadataByCollection: {},
@@ -115,13 +110,15 @@ export function CollectionsProvider({ children = null as any }) {
         continue;
       }
 
-      const auctionInfo = auctionManagerMetadata.find(a => a!.Metadata?.pubkey == metadata[i].pubkey);
+      const auctionInfo = auctionManagerMetadata.find(
+        a => a!.Metadata?.pubkey == metadata[i].pubkey,
+      );
 
       const record = {
         ParsedAccount: metadata[i],
         MetadataExtension: metadataExtension,
-        Auction : auctionInfo?.Auction,
-        Price : auctionInfo?.Price
+        Auction: auctionInfo?.Auction,
+        Price: auctionInfo?.Price,
       };
 
       records[metadataExtension.collection.name] ||= [];
