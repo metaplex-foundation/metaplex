@@ -192,17 +192,15 @@ export const AppBar = () => {
   const { endpoint, setEndpoint } = useConnectionConfig();
 
   const handleMenuClick = menuItem => {
-    if(menuItem == 'NFT' || menuItem == 'Collections')
-    setMenuItem(menuItem);
+    if (menuItem == 'NFT' || menuItem == 'Collections') setMenuItem(menuItem);
   };
   const location = useLocation();
-  useEffect(()=>{
-    if(location.pathname == '/collections')
-      handleMenuClick('Collections');
-    else if(location.pathname == '/'){
+  useEffect(() => {
+    if (location.pathname == '/collections') handleMenuClick('Collections');
+    else if (location.pathname == '/') {
       handleMenuClick('NFT');
     }
-  },[location])
+  }, [location]);
 
   return (
     <Navbar
@@ -230,7 +228,6 @@ export const AppBar = () => {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="m-auto">
             {MENU_ITEMS.map(({ label, href, external }) => (
-              
               <MenuItems
                 key={label}
                 label={label}

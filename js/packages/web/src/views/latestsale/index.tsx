@@ -42,7 +42,7 @@ export const LatestsaleView = props => {
               <div className="dropdown mb-3">
                 <CustomSelect
                   option={optionData}
-                  defoultParam="all time"
+                  defaultParam="all time"
                   onChange={() => {}}
                 />
               </div>
