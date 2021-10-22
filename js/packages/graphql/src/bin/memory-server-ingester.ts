@@ -1,8 +1,11 @@
 import { config } from 'dotenv';
 import { MemoryAdapter } from '../adapters/memory';
+import { extendBorsh } from '../common';
 import { Ingester } from '../ingester';
 import { MetaplexDataSource } from '../reader';
 import { startApolloServer } from '../server';
+
+extendBorsh(); // it's need for proper work of decoding
 
 const main = async () => {
   const adapter = new MemoryAdapter();

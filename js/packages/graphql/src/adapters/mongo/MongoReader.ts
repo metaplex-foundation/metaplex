@@ -10,11 +10,15 @@ import {
   MetadataKey,
   MetaMap,
   MetaTypes,
+  pubkeyToString,
+  PublicKeyStringAndAccount,
   Store,
+  toPublicKey,
   WhitelistedCreator,
 } from '../../common';
 import { deserialize } from 'typescript-json-serializer';
 import { PubSub, withFilter } from 'graphql-subscriptions';
+import { PROGRAMS } from '../../ingester/constants';
 
 function tableName<T extends MetaTypes>(name: T): T {
   return name;
@@ -73,6 +77,7 @@ export class MongoReader implements IReader {
   }
 
   initSubscription(): boolean {
+    /*
     if (!this.db) {
       return false;
     }
@@ -99,7 +104,27 @@ export class MongoReader implements IReader {
     } catch {
       return false;
     }
-
+    */
+    PROGRAMS.forEach(program => {
+      this.options.connection.onProgramAccountChange(
+        toPublicKey(program.pubkey),
+        block => {
+          const account: PublicKeyStringAndAccount<Buffer> = {
+            pubkey: pubkeyToString(block.accountId),
+            account: {
+              ...block.accountInfo,
+              owner: pubkeyToString(block.accountInfo.owner),
+            },
+          };
+          program.process(account, (prop, key, value) => {
+            const event: IEvent = { prop, key, value };
+            console.log('Event', event);
+            this.pubsub.publish(prop, event);
+            return Promise.resolve();
+          });
+        },
+      );
+    });
     return true;
   }
 

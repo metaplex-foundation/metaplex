@@ -2,7 +2,6 @@ import { Connection } from '@solana/web3.js';
 import queue from 'queue';
 import {
   AccountAndPubkey,
-  extendBorsh,
   getProgramAccounts,
   Metadata,
   pubkeyToString,
@@ -19,8 +18,8 @@ import { ProgramParse, IWriter } from './types';
 import type { IReader } from '../reader';
 import { getWhitelistedCreatorList } from '../../ingester/index';
 import { JSONLazyResponse } from '../utils/JSONLazyResponse';
+import { LinkedList } from 'linked-list-typescript';
 
-extendBorsh(); // it's need for proper work of decoding
 export class Loader<TW extends IWriter = IWriter> {
   readonly connection: Connection;
   private defer: Promise<void> | undefined;
@@ -132,17 +131,33 @@ export class Loader<TW extends IWriter = IWriter> {
     logger.info(
       `⛏  ${this.networkName} - start processing accounts for ${program.pubkey}`,
     );
+    const flushingList = new LinkedList<Promise<void>>();
+    flushingList.append(Promise.resolve());
+
+    const flush = (): Promise<void> => {
+      const item = this.writerAdapter.flush();
+      flushingList.append(item);
+      const clean = () => {
+        flushingList.remove(item);
+      };
+      item.then(clean, clean);
+      if (flushingList.length > 10) {
+        return Promise.race(flushingList.toArray()).then(() => {});
+      }
+      return Promise.resolve();
+    };
+
     for await (const iter of accounts) {
       let count = 0;
       for (const item of iter) {
         program.process(item);
         count++;
-        if (count >= 1000) {
-          await this.writerAdapter.flush();
+        if (count >= 300) {
+          await flush();
           count = 0;
         }
       }
-      await this.writerAdapter.flush();
+      await flush();
     }
 
     if (this.cache.creators.size || this.cache.stores.size) {
@@ -192,23 +207,23 @@ export class Loader<TW extends IWriter = IWriter> {
         this.writer.persist('stores', storeId, store);
       });
       this.cache.stores.clear();
-      await this.writerAdapter.flush();
+      await flush();
 
       this.cache.creators.forEach((creator, creatorId) => {
         this.writer.persist('creators', creatorId, creator);
       });
       this.cache.creators.clear();
-      await this.writerAdapter.flush();
+      await flush();
     }
 
-    await this.writerAdapter.flush();
+    await Promise.all(flushingList.toArray());
     logger.info(
       `⛏  ${this.networkName} - accounts processed for ${program.pubkey}`,
     );
   }
 
   private subscribeOnChange(program: ProgramParse) {
-    if (process.env.DISABLE_SUBSCRIPTION)
+    if (!process.env.DISABLE_SUBSCRIPTION)
       this.connection.onProgramAccountChange(
         toPublicKey(program.pubkey),
         block => {

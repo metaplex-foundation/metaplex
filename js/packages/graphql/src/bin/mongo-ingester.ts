@@ -1,6 +1,9 @@
 import { config } from 'dotenv';
 import { MongoAdapter } from '../adapters/mongo';
+import { extendBorsh } from '../common';
 import { Ingester } from '../ingester';
+
+extendBorsh(); // it's need for proper work of decoding
 
 const main = async () => {
   // eslint-disable-next-line no-console
