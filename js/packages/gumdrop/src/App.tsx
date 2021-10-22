@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  BrowserRouter,
+  HashRouter,
   Link,
   Route,
   RouteComponentProps,
@@ -99,7 +99,7 @@ const setupMailchimp = (auth : string, source : string) => {
       from_email: source,
       subject: "Merkle Airdrop",
       text: `You received ${amount} airdropped token(s) (${mintUrl}). `
-          + `Claim them at ${window.location.origin}/claim?${query}`,
+          + `Claim them at ${window.location.origin}${window.location.pathname}#/claim?${query}`,
       to: [
         {
           email: handle,
@@ -242,7 +242,7 @@ const Create = (
         ) => {
           console.log({
             "handle": handle,
-            "claim": `${window.location.origin}/claim?${query}`
+            "claim": `${window.location.origin}${window.location.pathname}#/claim?${query}`
           });
         };
     } else {
@@ -872,13 +872,13 @@ function App() {
             alignContent: "center",
           }}
         >
-          <BrowserRouter>
+          <HashRouter>
             <Switch>
               <Route path="/create" component={Create} />
               <Route path="/claim" component={Claim} />
               <Route path="/" component={Home} />
             </Switch>
-          </BrowserRouter>
+          </HashRouter>
         </Box>
       </ThemeProvider>
     </div>
