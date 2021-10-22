@@ -47,7 +47,7 @@ export const loadCreators = async (
 
   const storeCreators = results
     .filter((res) => res)
-    .map((res) => new StoreAccountDocument(store, res?.Raw!));
+    .map((res) => new StoreAccountDocument(store, res?.Raw.pubkey!, res?.Raw.account!));
 
   storeCreators.forEach((creator) =>
     accountConverterSet.applyConversion(creator)
@@ -56,4 +56,5 @@ export const loadCreators = async (
   coll.deleteMany({});
   coll.createIndex({ store: 1 });
   await coll.insertMany(storeCreators);
+  return parsedAccounts;
 };

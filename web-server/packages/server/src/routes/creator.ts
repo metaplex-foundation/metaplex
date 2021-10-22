@@ -9,7 +9,10 @@ router.get('/:store/creators', async (req: Request, res: Response) => {
     const store = req.params.store;
     const cursor = coll.find<StoreAccountDocument>({store: store});
     const creators = await cursor.toArray();
-    res.send(creators.map(c => c.accountData));
+    res.send(creators.map(c => ({
+        pubkey: c.pubkey,
+        account: c.account
+    })));
 })
 
 export {router as creatorsRouter}

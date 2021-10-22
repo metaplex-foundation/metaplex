@@ -14,7 +14,7 @@ export class ConverterSet extends Map<string, Converter> {
 
   private applyConversionRec(obj: any, currentPath: string) {
     if (Array.isArray(obj)) {
-      for (const item in obj) {
+      for (const item of obj) {
         this.applyConversionRec(item, currentPath);
       }
       return;
@@ -41,9 +41,8 @@ export class ConverterSet extends Map<string, Converter> {
   }
 
   private revertConversionRec(obj: any, currentPath: string) {
-    console.log(currentPath);
     if (Array.isArray(obj)) {
-      for (const item in obj) {
+      for (const item of obj) {
         this.revertConversionRec(item, currentPath);
       }
       return;
@@ -58,7 +57,6 @@ export class ConverterSet extends Map<string, Converter> {
         continue;
       }
 
-      console.log(prop);
       const value = obj[prop];
       const path = currentPath.length == 0 ? prop : currentPath + "." + prop;
 

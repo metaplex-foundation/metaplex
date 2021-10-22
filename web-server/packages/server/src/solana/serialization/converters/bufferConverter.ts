@@ -1,7 +1,6 @@
 export const bufferConverter = {
     from : (obj: any) =>
     {
-        console.log('hee', obj);
         if(typeof obj === 'string' || obj instanceof String) {
             return Buffer.from(obj, 'base64')
         }
