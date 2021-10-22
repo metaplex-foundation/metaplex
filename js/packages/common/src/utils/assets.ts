@@ -3,9 +3,10 @@ import { useLocalStorage } from './useLocalStorage';
 export const LAMPORT_MULTIPLIER = 10 ** 9;
 const WINSTON_MULTIPLIER = 10 ** 12;
 
-export const ARWEAVE_UPLOAD_ENDPOINT = 'https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile';
+export const ARWEAVE_UPLOAD_ENDPOINT =
+  'https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile';
 
-export async function getAssetCostToStore(files: File[]) {
+export async function getAssetCostToStore(files: { size: number }[]) {
   const localStorage = useLocalStorage();
   const totalBytes = files.reduce((sum, f) => (sum += f.size), 0);
 
