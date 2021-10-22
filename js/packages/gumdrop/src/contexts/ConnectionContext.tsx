@@ -434,7 +434,7 @@ export const sendTransactionWithRetry = async (
   includesFeePayer: boolean = false,
   block?: BlockhashAndFeeCalculator,
   beforeSend?: () => void
-) => {
+) : Promise<string| { txid: string; slot: number }> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
   let transaction = new Transaction();
@@ -460,7 +460,7 @@ export const sendTransactionWithRetry = async (
     try {
       transaction = await wallet.signTransaction(transaction);
     } catch {
-      return false;
+      return "Failed to sign transaction";
     }
   }
 
@@ -477,6 +477,7 @@ export const sendTransactionWithRetry = async (
     return { txid, slot };
   } catch (error) {
     console.error(error);
+    return "See console logs";
   }
 };
 
@@ -596,14 +597,10 @@ async function simulateTransaction(
   return res.result;
 }
 
-async function awaitTransactionSignatureConfirmation(
+export const explorerLinkFor = (
   txid: TransactionSignature,
-  timeout: number,
-  connection: Connection,
-  commitment: Commitment = "recent",
-  queryStatus = false
-): Promise<SignatureStatus | null | void> {
-
+  connection: Connection
+) : string => {
   let endpoint = (connection as any)._rpcEndpoint;
   let env = "mainnet-beta";
   for (const cfg of ENDPOINTS) {
@@ -612,6 +609,17 @@ async function awaitTransactionSignatureConfirmation(
       break;
     }
   }
+  return `https://explorer.solana.com/tx/${txid}?cluster=${env}`;
+}
+
+async function awaitTransactionSignatureConfirmation(
+  txid: TransactionSignature,
+  timeout: number,
+  connection: Connection,
+  commitment: Commitment = "recent",
+  queryStatus = false
+): Promise<SignatureStatus | null | void> {
+
   let done = false;
   let status: SignatureStatus | null | void = {
     slot: 0,
@@ -660,7 +668,7 @@ async function awaitTransactionSignatureConfirmation(
             txid,
           ]);
           status = signatureStatuses && signatureStatuses.value[0];
-          console.log(`https://explorer.solana.com/tx/${txid}?cluster=${env}`);
+          console.log(explorerLinkFor(txid, connection));
           if (!done) {
             if (!status) {
               console.log("REST null result for", txid, status);

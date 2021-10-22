@@ -14,6 +14,7 @@ import {
   Box,
   Button,
   FormControl,
+  Link as HyperLink,
   InputLabel,
   MenuItem,
   Stack,
@@ -52,7 +53,7 @@ import {
   useColorMode,
   Connection,
 } from "./contexts";
-import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID } from "./utils";
+import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, notify } from "./utils";
 import Header from "./components/Header/Header";
 import { DragAndDrop } from "./components/DragAndDrop";
 import { MerkleTree } from "./utils/merkle-tree";
@@ -251,7 +252,7 @@ const Create = (
       );
 
 
-    await Connection.sendTransactionWithRetry(
+    const createResult = await Connection.sendTransactionWithRetry(
       connection,
       wallet,
       [
@@ -261,6 +262,23 @@ const Create = (
       ],
       [base]
     );
+
+    console.log(createResult);
+    if (typeof createResult === "string") {
+      notify({
+        message: "Create failed",
+        description: createResult,
+      });
+    } else {
+      notify({
+        message: "Create succeeded",
+        description: (
+          <HyperLink href={Connection.explorerLinkFor(createResult.txid, connection)}>
+            View transaction on explorer
+          </HyperLink>
+        ),
+      });
+    }
   };
 
   const handleFiles = (files) => {
@@ -558,7 +576,7 @@ const Claim = (
         ])
     })
 
-    await Connection.sendTransactionWithRetry(
+    const claimResult = await Connection.sendTransactionWithRetry(
       connection,
       wallet,
       [
@@ -567,6 +585,23 @@ const Claim = (
       ],
       []
     );
+
+    console.log(claimResult);
+    if (typeof claimResult === "string") {
+      notify({
+        message: "Claim failed",
+        description: claimResult,
+      });
+    } else {
+      notify({
+        message: "Claim succeeded",
+        description: (
+          <HyperLink href={Connection.explorerLinkFor(claimResult.txid, connection)}>
+            View transaction on explorer
+          </HyperLink>
+        ),
+      });
+    }
   };
 
   return (
