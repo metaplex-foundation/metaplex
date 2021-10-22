@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
+  Link,
   Route,
   RouteComponentProps,
   Switch,
@@ -12,6 +13,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import {
   Box,
   Button,
+  Stack,
   TextField,
 } from "@mui/material";
 
@@ -256,7 +258,7 @@ const Create = (
   };
 
   return (
-    <Box>
+    <Stack spacing={2}>
       <TextField
         style={{width: "60ch"}}
         id="outlined-multiline-flexible"
@@ -272,6 +274,7 @@ const Create = (
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
+      <Box />
       <Button
         disabled={!wallet.connected}
         variant="contained"
@@ -290,7 +293,7 @@ const Create = (
       >
         Create Merkle Airdrop
       </Button>
-    </Box>
+    </Stack>
   );
 };
 
@@ -463,7 +466,7 @@ const Claim = (
   };
 
   return (
-    <Box>
+    <Stack spacing={2}>
       <TextField
         style={{width: "60ch"}}
         id="outlined-multiline-flexible"
@@ -507,6 +510,7 @@ const Claim = (
         value={proofStr}
         onChange={(e) => setProof(e.target.value)}
       />
+      <Box />
       <Button
         disabled={!wallet.connected}
         variant="contained"
@@ -525,7 +529,7 @@ const Claim = (
       >
         Claim Merkle Airdrop
       </Button>
-    </Box>
+    </Stack>
   );
 };
 
@@ -533,9 +537,29 @@ const Home = (
   props : HomeProps,
 ) => {
   return (
-    <div>
-      Merkle Airdrop
-    </div>
+    <Stack
+      direction="row"
+      spacing={2}
+    >
+      <Link to="/create">
+        <Button
+          style={{width: "30ch"}}
+          variant="contained"
+          color="info"
+        >
+          Create
+        </Button>
+      </Link>
+      <Link to="/claim">
+        <Button
+          style={{width: "30ch"}}
+          variant="contained"
+          color="info"
+        >
+          claim
+        </Button>
+      </Link>
+    </Stack>
   );
 };
 
@@ -592,8 +616,9 @@ function App() {
         <Box
           sx={{
             width: 600,
+            height: "100%",
             flexGrow: 1,
-            mt: `${Math.floor(0.2 * height)}px`,
+            pt: `${Math.floor(0.2 * height)}px`,
             px: "50%",
             display: "flex",
             alignSelf: "center",
