@@ -2,7 +2,7 @@
   "name": "react-template",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://lwus.github.io/merkle-airdrop/",
   "dependencies": {
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
