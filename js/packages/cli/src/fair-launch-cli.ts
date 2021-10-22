@@ -2326,7 +2326,7 @@ program
 
     const ticketsFlattened = ticketKeys.flat();
 
-    const states: { seq: number; number: anchor.BN; eligible: boolean, whitelist: boolean }[][] =
+    const states: { seq: number; number: anchor.BN; eligible: boolean, whitelisted: boolean }[][] =
       await Promise.all(
         chunks(Array.from(Array(ticketsFlattened.length).keys()), 1000).map(
           async allIndexesInSlice => {
@@ -2360,7 +2360,7 @@ program
                         //@ts-ignore
                         fairLaunchObj.currentMedian.toNumber()
                     ),
-                    whitelist: whitelist?.includes(el.buyer.toBase58())
+                    whitelisted: whitelist?.includes(el.buyer.toBase58())
                   };
                 }),
               );
@@ -2389,7 +2389,7 @@ program
       statesFlat.filter(s => s.eligible).length,
     );
 
-    let chosen: { seq: number; eligible: boolean; chosen: boolean; whitelist: boolean }[];
+    let chosen: { seq: number; eligible: boolean; chosen: boolean; whitelisted: boolean }[];
     if (numWinnersRemaining >= statesFlat.length) {
       console.log('More or equal nfts than winners, everybody wins.');
       chosen = statesFlat.map(s => ({ ...s, chosen: true }));
@@ -2398,7 +2398,7 @@ program
 
       console.log('Starting whitelist with', numWinnersRemaining, 'winners remaining');
       for (let i = 0; i < chosen.length; i++) {
-        if (chosen[i].chosen != true && chosen[i].eligible) {
+        if (chosen[i].chosen != true && chosen[i].eligible && chosen[i].whitelisted) {
           chosen[i].chosen = true;
           numWinnersRemaining--;
         }
