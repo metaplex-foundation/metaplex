@@ -2320,7 +2320,7 @@ program
 
     const ticketsFlattened = ticketKeys.flat();
 
-    const states: { seq: number; number: anchor.BN; eligible: boolean }[][] =
+    const states: { seq: number; number: anchor.BN; eligible: boolean, whitelist: boolean }[][] =
       await Promise.all(
         chunks(Array.from(Array(ticketsFlattened.length).keys()), 1000).map(
           async allIndexesInSlice => {
@@ -2388,6 +2388,14 @@ program
       chosen = statesFlat.map(s => ({ ...s, chosen: true }));
     } else {
       chosen = statesFlat.map(s => ({ ...s, chosen: false }));
+
+      console.log('Starting whitelist with', numWinnersRemaining, 'winners remaining');
+      for (let i = 0; i < chosen.length; i++) {
+        if (chosen[i].chosen != true && chosen[i].eligible) {
+          chosen[i].chosen = true;
+          numWinnersRemaining--;
+        }
+      }
 
       console.log('Doing lottery for', numWinnersRemaining);
       while (numWinnersRemaining > 0) {
