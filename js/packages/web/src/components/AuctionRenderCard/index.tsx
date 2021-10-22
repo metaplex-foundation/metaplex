@@ -85,7 +85,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
                   <Statistic
                     style={{
                       opacity:
-                        status.isInstantSale || status.hasBids
+                        (status.isInstantSale || status.hasBids)
                           ? undefined
                           : 0.6,
                       fontFamily: 'inherit',
@@ -112,18 +112,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
             <Row className="bids">
               <Col flex="1">
                 <h4 style={{ margin: 0 }}>
-                  {/* TODO: awful, horrible */}
-                  {status.isLive
-                    ? status.isInstantSale
-                      ? undefined
-                      : 'Live'
-                    : status.isInstantSale
-                    ? status.soldOut
-                      ? 'Sold out'
-                      : 'Last sold'
-                    : status.hasBids
-                    ? 'Last sold'
-                    : 'Ended'}
+                  {humanStatus}
                 </h4>
               </Col>
               <Col flex="0 1 auto">
@@ -131,7 +120,11 @@ export const AuctionRenderCard = (props: AuctionCard) => {
                   {/* TODO: also awful, also horrible */}
                   {status.isLive ? (
                     status.isInstantSale ? (
-                      'Buy now'
+                      status.soldOut ? (
+                        undefined
+                      ) : (
+                        'Buy Now'
+                      )
                     ) : (
                       formatCountdown(countdown)
                     )

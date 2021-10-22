@@ -14,15 +14,15 @@ import { BN } from 'bn.js';
 
 export type AuctionStatus =
   | {
-      isInstantSale: false;
-      isLive: boolean;
-      hasBids: boolean;
-    }
+    isInstantSale: false;
+    isLive: boolean;
+    hasBids: boolean;
+  }
   | {
-      isInstantSale: true;
-      isLive: boolean;
-      soldOut: boolean;
-    };
+    isInstantSale: true;
+    isLive: boolean;
+    soldOut: boolean;
+  };
 
 interface AuctionStatusLabels {
   status: AuctionStatus;
@@ -32,9 +32,13 @@ interface AuctionStatusLabels {
 export const getHumanStatus = (status: AuctionStatus): string => {
   const { isInstantSale, isLive } = status;
   if (isInstantSale) {
-    if (isLive) return 'Price';
-
-    return status.soldOut ? 'Sold Out' : 'Ended';
+    if (status.soldOut) {
+      return 'Sold Out';
+    } else if (isLive) {
+      return 'Price';
+    } else {
+      return 'Ended';
+    }
   } else {
     const { hasBids } = status;
 
