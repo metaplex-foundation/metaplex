@@ -34,7 +34,8 @@ export class MerkleTree {
     first : Buffer,
     second : Buffer | undefined,
   ) : Buffer {
-    const [fst, snd] = [first, second || Buffer.from([])].sort(Buffer.compare)
+    if (!second) return first;
+    const [fst, snd] = [first, second].sort(Buffer.compare)
     return Buffer.from(
       keccak_256.digest([0x01, ...fst, ...snd])
     );
