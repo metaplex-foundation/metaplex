@@ -3,6 +3,7 @@ import FormData from 'form-data';
 import fs from 'fs';
 import log from 'loglevel';
 import fetch from 'node-fetch';
+import { stat } from 'fs/promises';
 import { ARWEAVE_PAYMENT_WALLET } from '../constants';
 import { sendTransactionWithRetryWithKeypair } from '../transactions';
 
@@ -114,8 +115,6 @@ async function getAssetCostToStore(files: { size: number }[]) {
   return LAMPORT_MULTIPLIER * totalArCost * arMultiplier * 1.1;
 }
 
-import { stat } from 'fs/promises';
-
 async function upload(data: FormData, manifest, index) {
   log.debug(`trying to upload ${index}.png: ${manifest.name}`);
   return await (
@@ -153,7 +152,7 @@ export async function arweaveUpload(
     walletKeyPair,
     instructions,
     [],
-    'single',
+    'finalized',
   );
   log.debug('transaction for arweave payment:', tx);
 
