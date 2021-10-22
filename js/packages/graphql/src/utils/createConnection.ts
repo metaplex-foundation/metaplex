@@ -46,7 +46,7 @@ export function createConnection(
         waitTime *= 2;
       }
 
-      const jsonRespose = JSONLazyResponse.rpcResponse(res.body as any);
+      const jsonRespose = JSONLazyResponse.rpcResponse(res.body as any, true);
 
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`);
