@@ -60,6 +60,24 @@ describe('`metaplex verify_token_metadata`', () => {
           { address: 'some-solana-address', share: 80 },
           {
             address: 'some-other-solana-address',
+            share: 19,
+          },
+        ],
+
+        'placeholder-manifest-file',
+      ),
+    ).toThrowErrorMatchingInlineSnapshot(
+      `"Creator share for placeholder-manifest-file does not add up to 100, got: 99."`,
+    );
+  });
+
+  it('throws on invalid share number type', () => {
+    expect(() =>
+      verifyAggregateShare(
+        [
+          { address: 'some-solana-address', share: 80 },
+          {
+            address: 'some-other-solana-address',
             share: 19.9,
           },
         ],
@@ -67,7 +85,7 @@ describe('`metaplex verify_token_metadata`', () => {
         'placeholder-manifest-file',
       ),
     ).toThrowErrorMatchingInlineSnapshot(
-      `"Creator share for placeholder-manifest-file does not add up to 100, got: 99.9."`,
+      `"Creator share for placeholder-manifest-file contains floats. Only use integers for this number."`,
     );
   });
 
