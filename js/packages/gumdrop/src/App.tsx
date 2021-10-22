@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Route,
+  RouteComponentProps,
   Switch,
 } from "react-router-dom";
+import queryString from 'query-string';
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -15,14 +17,11 @@ import {
 
 import {
   useWallet,
-  WalletProvider as BaseWalletProvider,
 } from "@solana/wallet-adapter-react";
 import {
-  Connection,
   Keypair,
   PublicKey,
   SystemProgram,
-  Transaction,
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
@@ -44,7 +43,7 @@ import "./App.css";
 import {
   useConnection,
   useColorMode,
-  Connection as Conn,
+  Connection,
 } from "./contexts";
 import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID } from "./utils";
 import Header from "./components/Header/Header";
@@ -92,8 +91,7 @@ const Create = (
 
     const claimants = JSON.parse(text);
     const totalClaim = claimants.reduce((acc, c) => acc + c.amount, 0);
-    const pins = claimants.map((_, idx) => [idx]);
-    // const pins = claimants.map(() => randomBytes());
+    const pins = claimants.map(() => randomBytes());
     console.log(claimants, pins);
 
     if (claimants.length === 0) {
@@ -163,14 +161,7 @@ const Create = (
 
     const tree = new MerkleTree(leafs);
     const root = tree.getRoot();
-    console.log("Root", root);
-    claimants.map((_, idx) => {
-      const proof = tree.getProof(idx);
-      const verified = tree.verifyProof(idx, proof, root);
-      console.log("Idx", idx, proof.map(b => bs58.encode(b)), verified);
-    });
 
-    // TODO: make the base a PDA of mintkey or a new account?
 
     const base = new Keypair();
     const [distributor, dbump] = await PublicKey.findProgramAddress(
@@ -189,6 +180,25 @@ const Create = (
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
 
+    claimants.forEach((_, idx) => {
+      const proof = tree.getProof(idx);
+      const verified = tree.verifyProof(idx, proof, root);
+
+      if (!verified) {
+        throw new Error("Merkle tree verification failed");
+      }
+
+      const claimant = claimants[idx];
+      const params = [
+        `distributor=${distributor}`,
+        `handle=${claimant.handle}`,
+        `amount=${claimant.amount}`,
+        `index=${idx}`,
+        `pin=${pins[idx]}`,
+        `proof=${proof.map(b => bs58.encode(b))}`,
+      ];
+      console.log(`Link: claim?${params.join("&")}`);
+    });
 
     const createDistributorTokenAccount = new TransactionInstruction({
         programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -233,7 +243,7 @@ const Create = (
       );
 
 
-    await Conn.sendTransactionWithRetry(
+    await Connection.sendTransactionWithRetry(
       connection,
       wallet,
       [
@@ -285,26 +295,21 @@ const Create = (
 };
 
 const Claim = (
-  props : ClaimProps,
+  props : RouteComponentProps<ClaimProps>,
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
-  const [distributor, setDistributor] = React.useState(localStorage.getItem("distributor") || "");
-  const [handle, setHandle] = React.useState(localStorage.getItem("handle") || "");
-  const [amountStr, setAmount] = React.useState(localStorage.getItem("amountStr") || "");
-  const [indexStr, setIndex] = React.useState(localStorage.getItem("indexStr") || "0");
-  const [pinStr, setPin] = React.useState(localStorage.getItem("pinStr") || "");
-  const [proofStr, setProof] = React.useState(localStorage.getItem("proofStr") || "");
+
+  let params = queryString.parse(props.location.search);
+  const [distributor, setDistributor] = React.useState(params.distributor as string);
+  const [handle, setHandle] = React.useState(params.handle as string);
+  const [amountStr, setAmount] = React.useState(params.amount as string);
+  const [indexStr, setIndex] = React.useState(params.index as string);
+  const [pinStr, setPin] = React.useState(params.pin as string);
+  const [proofStr, setProof] = React.useState(params.proof as string);
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
-
-    localStorage.setItem("distributor", distributor);
-    localStorage.setItem("handle", handle);
-    localStorage.setItem("amountStr", amountStr);
-    localStorage.setItem("indexStr", indexStr);
-    localStorage.setItem("pinStr", pinStr);
-    localStorage.setItem("proofStr", proofStr);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -312,7 +317,7 @@ const Claim = (
 
     const amount = Number(amountStr);
     const index = Number(indexStr);
-    const pin = JSON.parse(pinStr);
+    const pin = pinStr.split(",").map(Number);
 
     if (isNaN(amount)) {
       throw new Error(`Could not parse amount ${amountStr}`);
@@ -335,7 +340,7 @@ const Claim = (
     const distributorInfo = coder.accounts.decode(
       "MerkleDistributor", distributorAccount.data);
 
-    const proof = JSON.parse(proofStr).map(b => {
+    const proof = proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
       if (ret.length !== 32)
         throw new Error(`Invalid proof hash length`);
@@ -446,7 +451,7 @@ const Claim = (
         ])
     })
 
-    await Conn.sendTransactionWithRetry(
+    await Connection.sendTransactionWithRetry(
       connection,
       wallet,
       [
@@ -598,15 +603,9 @@ function App() {
         >
           <BrowserRouter>
             <Switch>
-              <Route path="/create">
-                <Create />
-              </Route>
-              <Route path="/claim">
-                <Claim />
-              </Route>
-              <Route path="/">
-                <Home />
-              </Route>
+              <Route path="/create" component={Create} />
+              <Route path="/claim" component={Claim} />
+              <Route path="/" component={Home} />
             </Switch>
           </BrowserRouter>
         </Box>
