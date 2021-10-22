@@ -16,6 +16,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
+import FilePresentIcon from '@mui/icons-material/FilePresent';
 
 import {
   useWallet,
@@ -49,6 +50,7 @@ import {
 } from "./contexts";
 import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID } from "./utils";
 import Header from "./components/Header/Header";
+import { DragAndDrop } from "./components/DragAndDrop";
 import { MerkleTree } from "./utils/merkle-tree";
 
 type CreateProps = {};
@@ -69,6 +71,7 @@ const randomBytes = () : Uint8Array => {
 }
 
 const MERKLE_DISTRIBUTOR_ID = new PublicKey("2BXKBuQPRVjV9e9qC2wAVJgFLWDH8MULRQ5W5ABmJj45");
+const WHITESPACE = "\u00A0";
 
 const idl = require("./utils/merkle_distributor.json");
 const coder = new Coder(idl);
@@ -79,13 +82,13 @@ const Create = (
   const connection = useConnection();
   const wallet = useWallet();
   const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
-  const [text, setText] = React.useState(localStorage.getItem("text") || "");
+  const [filename, setFilename] = React.useState("");
+  const [text, setText] = React.useState("");
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
     localStorage.setItem("mint", mint);
-    localStorage.setItem("text", text);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -257,6 +260,27 @@ const Create = (
     );
   };
 
+  const handleFiles = (files) => {
+    if (files.length !== 1) {
+      alert("Expecting exactly one handle-file upload");
+      return;
+    }
+
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e !== null && e.target !== null) {
+        if (typeof e.target.result === "string") {
+          setFilename(file.name);
+          setText(e.target.result);
+        } else {
+          alert(`Could not read uploaded file ${file}`);
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <Stack spacing={2}>
       <TextField
@@ -266,15 +290,60 @@ const Create = (
         value={mint}
         onChange={(e) => setMint(e.target.value)}
       />
-      <TextField
-        style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
-        label="Handles"
-        multiline
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <Box />
+      <DragAndDrop handleDrop={handleFiles} >
+        <Stack
+          direction="row"
+          style={{
+            width: "60ch",
+            height: "15ch",
+          }}
+          sx={{
+            border: '1px dashed grey',
+            justifyContent: "center",
+            alignContent: "center",
+          }}
+        >
+          <Button
+            variant="text"
+            component="label"
+            style={{
+              padding: 0,
+              // don't make the button click field too large...
+              marginTop: "5ch",
+              marginBottom: "5ch",
+            }}
+          >
+            Choose a file
+            <input
+              type="file"
+              onChange={(e) => handleFiles(e.target.files)}
+              hidden
+            />
+          </Button>
+          {WHITESPACE}
+          {/*For display alignment...*/}
+          <Button
+            variant="text"
+            component="label"
+            disabled={true}
+            style={{color: "white", padding: 0}}
+          >
+            or drag it here
+          </Button>
+        </Stack>
+      </DragAndDrop>
+      {filename !== ""
+      ? (<Box style={{
+            display: 'flex',
+            justifyContent: 'center',
+            width: "60ch",
+            color: "rgba(255,255,255,.8)",
+          }}>
+            <FilePresentIcon />
+            <span>{WHITESPACE} Uploaded {filename}</span>
+          </Box>
+        )
+      : (<Box/>)}
       <Button
         disabled={!wallet.connected}
         variant="contained"
