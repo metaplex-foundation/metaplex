@@ -1,4 +1,4 @@
-import { AccountInfo, Connection } from '@solana/web3.js';
+import { AccountInfo, Connection, GetProgramAccountsFilter } from '@solana/web3.js';
 import { StringPublicKey } from './ids';
 import { AccountAndPubkey } from './types';
 
@@ -6,30 +6,12 @@ import { AccountAndPubkey } from './types';
 export async function getProgramAccounts(
     connection: Connection,
     programId: StringPublicKey,
+    filters? : GetProgramAccountsFilter [],
     configOrCommitment?: any,
   ): Promise<Array<AccountAndPubkey>> {
-    const extra: any = {};
-    let commitment;
-    //let encoding;
+    const extra: any = {filters: filters};
 
-    if (configOrCommitment) {
-      if (typeof configOrCommitment === 'string') {
-        commitment = configOrCommitment;
-      } else {
-        commitment = configOrCommitment.commitment;
-        //encoding = configOrCommitment.encoding;
-
-        if (configOrCommitment.dataSlice) {
-          extra.dataSlice = configOrCommitment.dataSlice;
-        }
-
-        if (configOrCommitment.filters) {
-          extra.filters = configOrCommitment.filters;
-        }
-      }
-    }
-
-    const args = connection._buildArgs([programId], commitment, 'base64', extra);
+    const args = connection._buildArgs([programId], 'recent', 'base64', extra);
     const unsafeRes = await (connection as any)._rpcRequest(
       'getProgramAccounts',
       args,

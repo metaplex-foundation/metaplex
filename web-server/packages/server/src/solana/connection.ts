@@ -38,5 +38,5 @@ export const ENDPOINTS = [
 ];
 
 export const createDevNetConnection = () => {
-    return new Connection(ENDPOINTS[3].endpoint, 'recent');
+    return new Connection(ENDPOINTS[4].endpoint, 'recent');
 }

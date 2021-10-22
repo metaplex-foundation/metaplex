@@ -1,2 +1,2 @@
 export * from './serialization/borsh'
-export * from './load'
+export * from './loader/load'
