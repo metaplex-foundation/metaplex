@@ -13,7 +13,11 @@ import CssBaseline from "@mui/material/CssBaseline";
 import {
   Box,
   Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
   Stack,
+  Select,
   TextField,
 } from "@mui/material";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
@@ -82,13 +86,12 @@ const Create = (
   const connection = useConnection();
   const wallet = useWallet();
   const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
+  const [commMethod, setMethod] = React.useState(localStorage.getItem("commMethod") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
-
-    localStorage.setItem("mint", mint);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -281,15 +284,8 @@ const Create = (
     reader.readAsText(file);
   };
 
-  return (
-    <Stack spacing={2}>
-      <TextField
-        style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
-        label="Mint"
-        value={mint}
-        onChange={(e) => setMint(e.target.value)}
-      />
+  const fileUpload = (
+    <React.Fragment>
       <DragAndDrop handleDrop={handleFiles} >
         <Stack
           direction="row"
@@ -313,7 +309,7 @@ const Create = (
               marginBottom: "5ch",
             }}
           >
-            Choose a file
+            Upload a distribution list
             <input
               type="file"
               onChange={(e) => handleFiles(e.target.files)}
@@ -344,24 +340,63 @@ const Create = (
           </Box>
         )
       : (<Box/>)}
-      <Button
-        disabled={!wallet.connected}
-        variant="contained"
-        color="success"
-        onClick={(e) => {
-          const wrap = async () => {
-            try {
-              await submit(e);
-            } catch (err) {
-              alert(`Failed to create merkle drop: ${err}`);
-            }
-          };
-          wrap();
+    </React.Fragment>
+  );
+
+  const createAirdrop = (
+    <Button
+      disabled={!wallet.connected}
+      variant="contained"
+      color="success"
+      onClick={(e) => {
+        const wrap = async () => {
+          try {
+            await submit(e);
+          } catch (err) {
+            alert(`Failed to create merkle drop: ${err}`);
+          }
+        };
+        wrap();
+      }}
+      sx={{ marginRight: "4px" }}
+    >
+      Create Merkle Airdrop
+    </Button>
+  );
+
+  return (
+    <Stack spacing={2}>
+      <TextField
+        style={{width: "60ch"}}
+        id="outlined-multiline-flexible"
+        label="Mint"
+        value={mint}
+        onChange={(e) => {
+          localStorage.setItem("mint", e.target.value);
+          setMint(e.target.value);
         }}
-        sx={{ marginRight: "4px" }}
-      >
-        Create Merkle Airdrop
-      </Button>
+      />
+      <FormControl fullWidth>
+        <InputLabel id="comm-method-label">Claim Distribution Method</InputLabel>
+        <Select
+          labelId="comm-method-label"
+          id="comm-method-select"
+          value={commMethod}
+          label="Claim Distribution Method"
+          onChange={(e) => {
+            localStorage.setItem("commMethod", commMethod);
+            setMethod(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+        >
+          <MenuItem value={"discord"}>Discord</MenuItem>
+          <MenuItem value={"slack"}>Slack</MenuItem>
+          <MenuItem value={"twitter"}>Twitter</MenuItem>
+          <MenuItem value={"sms"}>SMS</MenuItem>
+        </Select>
+      </FormControl>
+      {commMethod !== "" && mint !== "" && fileUpload}
+      {filename !== "" && createAirdrop}
     </Stack>
   );
 };
