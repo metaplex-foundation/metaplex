@@ -424,6 +424,7 @@ const Claim = (
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
+  const [editable, setEditable] = React.useState(false);
 
   let params = queryString.parse(props.location.search);
   const [distributor, setDistributor] = React.useState(params.distributor as string);
@@ -612,6 +613,7 @@ const Claim = (
         label="Distributor"
         value={distributor}
         onChange={(e) => setDistributor(e.target.value)}
+        disabled={!editable}
       />
       <TextField
         style={{width: "60ch"}}
@@ -619,6 +621,7 @@ const Claim = (
         label="Handle"
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
+        disabled={!editable}
       />
       <TextField
         style={{width: "60ch"}}
@@ -626,6 +629,7 @@ const Claim = (
         label="Amount"
         value={amountStr}
         onChange={(e) => setAmount(e.target.value)}
+        disabled={!editable}
       />
       <TextField
         style={{width: "60ch"}}
@@ -633,6 +637,7 @@ const Claim = (
         label="Index"
         value={indexStr}
         onChange={(e) => setIndex(e.target.value)}
+        disabled={!editable}
       />
       <TextField
         style={{width: "60ch"}}
@@ -640,6 +645,7 @@ const Claim = (
         label="Pin"
         value={pinStr}
         onChange={(e) => setPin(e.target.value)}
+        disabled={!editable}
       />
       <TextField
         style={{width: "60ch"}}
@@ -648,26 +654,36 @@ const Claim = (
         multiline
         value={proofStr}
         onChange={(e) => setProof(e.target.value)}
+        disabled={!editable}
       />
       <Box />
-      <Button
-        disabled={!wallet.connected}
-        variant="contained"
-        color="success"
-        onClick={(e) => {
-          const wrap = async () => {
-            try {
-              await submit(e);
-            } catch (err) {
-              alert(`Failed to claim merkle drop: ${err}`);
-            }
-          };
-          wrap();
-        }}
-        sx={{ marginRight: "4px" }}
-      >
-        Claim Merkle Airdrop
-      </Button>
+      <div>
+        <Button
+          style={{width: "15ch"}}
+          color="info"
+          onClick={(e) => setEditable(!editable)}
+        >
+          {!editable ? "Edit Claim" : "Stop Editing"}
+        </Button>
+        <Button
+          style={{width: "45ch"}}
+          disabled={!wallet.connected}
+          variant="contained"
+          color="success"
+          onClick={(e) => {
+            const wrap = async () => {
+              try {
+                await submit(e);
+              } catch (err) {
+                alert(`Failed to claim merkle drop: ${err}`);
+              }
+            };
+            wrap();
+          }}
+        >
+          Claim Merkle Airdrop
+        </Button>
+      </div>
     </Stack>
   );
 };
