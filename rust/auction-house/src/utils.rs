@@ -231,22 +231,23 @@ pub fn pay_auction_house_fees<'a>(
     Ok(total_fee)
 }
 
-pub fn create_escrow_if_not_present<'a>(
-    escrow_payment_account: &UncheckedAccount<'a>,
+pub fn create_program_token_account_if_not_present<'a>(
+    payment_account: &UncheckedAccount<'a>,
     system_program: &UncheckedAccount<'a>,
     fee_payer: &AccountInfo<'a>,
     token_program: &UncheckedAccount<'a>,
     treasury_mint: &anchor_lang::Account<'a, Mint>,
+    owner: &AccountInfo<'a>,
     rent: &Sysvar<'a, Rent>,
     program_id: &Pubkey,
-    escrow_signer_seeds: &[&[u8]],
+    signer_seeds: &[&[u8]],
     fee_seeds: &[&[u8]],
     is_native: bool,
 ) -> ProgramResult {
-    if !is_native && escrow_payment_account.data_is_empty() {
+    if !is_native && payment_account.data_is_empty() {
         create_or_allocate_account_raw(
             *program_id,
-            &escrow_payment_account.to_account_info(),
+            &payment_account.to_account_info(),
             &rent.to_account_info(),
             &system_program,
             &fee_payer,
@@ -257,27 +258,29 @@ pub fn create_escrow_if_not_present<'a>(
         invoke_signed(
             &initialize_account2(
                 &token_program.key,
-                &escrow_payment_account.key(),
+                &payment_account.key(),
                 &treasury_mint.key(),
-                &escrow_payment_account.key(),
+                &owner.key(),
             )
             .unwrap(),
             &[
                 token_program.to_account_info(),
                 treasury_mint.to_account_info(),
-                escrow_payment_account.to_account_info(),
+                payment_account.to_account_info(),
                 rent.to_account_info(),
+                owner.clone(),
             ],
-            &[&escrow_signer_seeds],
+            &[&signer_seeds],
         )?;
-    } else if is_native && escrow_payment_account.owner != program_id {
+    } else if is_native && payment_account.owner != program_id {
         invoke_signed(
-            &system_instruction::assign(&escrow_payment_account.key(), program_id),
+            &system_instruction::assign(&payment_account.key(), &owner.key()),
             &[
                 system_program.to_account_info(),
-                escrow_payment_account.to_account_info(),
+                payment_account.to_account_info(),
+                owner.to_account_info(),
             ],
-            &[&escrow_signer_seeds],
+            &[&signer_seeds],
         )?;
     }
     Ok(())

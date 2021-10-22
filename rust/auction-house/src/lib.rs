@@ -6,13 +6,12 @@ use {
         prelude::*,
         solana_program::{
             program::{invoke, invoke_signed},
-            program_pack::Pack,
             system_instruction, system_program,
         },
         AnchorDeserialize, AnchorSerialize,
     },
     anchor_spl::token::{Mint, TokenAccount},
-    spl_token::instruction::{approve, initialize_account2},
+    spl_token::instruction::approve,
 };
 
 anchor_lang::declare_id!("noneAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -23,6 +22,262 @@ const TREASURY: &str = "treasury";
 #[program]
 pub mod auction_house {
     use super::*;
+    pub fn withdraw_from_fee<'info>(
+        ctx: Context<'_, '_, '_, 'info, WithdrawFromFee<'info>>,
+        amount: u64,
+    ) -> ProgramResult {
+        let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
+        let fee_withdrawal_destination = &ctx.accounts.fee_withdrawal_destination;
+        let auction_house = &ctx.accounts.auction_house;
+        let system_program = &ctx.accounts.system_program;
+
+        let auction_house_seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+
+        invoke_signed(
+            &system_instruction::transfer(
+                &auction_house_fee_account.key(),
+                &fee_withdrawal_destination.key(),
+                amount,
+            ),
+            &[
+                auction_house_fee_account.to_account_info(),
+                fee_withdrawal_destination.to_account_info(),
+                system_program.to_account_info(),
+            ],
+            &[&auction_house_seeds],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn withdraw_from_treasury<'info>(
+        ctx: Context<'_, '_, '_, 'info, WithdrawFromTreasury<'info>>,
+        amount: u64,
+    ) -> ProgramResult {
+        let treasury_mint = &ctx.accounts.treasury_mint;
+        let treasury_withdrawal_destination = &ctx.accounts.treasury_withdrawal_destination;
+        let auction_house_treasury = &ctx.accounts.auction_house_treasury;
+        let auction_house = &ctx.accounts.auction_house;
+        let token_program = &ctx.accounts.token_program;
+        let system_program = &ctx.accounts.system_program;
+
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+        let auction_house_seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+        if !is_native {
+            invoke_signed(
+                &spl_token::instruction::transfer(
+                    token_program.key,
+                    &auction_house_treasury.key(),
+                    &treasury_withdrawal_destination.key(),
+                    &auction_house.key(),
+                    &[],
+                    amount,
+                )?,
+                &[
+                    auction_house_treasury.to_account_info(),
+                    treasury_withdrawal_destination.to_account_info(),
+                    token_program.to_account_info(),
+                    auction_house.to_account_info(),
+                ],
+                &[&auction_house_seeds],
+            )?;
+        } else {
+            invoke_signed(
+                &system_instruction::transfer(
+                    &auction_house_treasury.key(),
+                    &treasury_withdrawal_destination.key(),
+                    amount,
+                ),
+                &[
+                    auction_house_treasury.to_account_info(),
+                    treasury_withdrawal_destination.to_account_info(),
+                    system_program.to_account_info(),
+                ],
+                &[&auction_house_seeds],
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn update_auction_house<'info>(
+        ctx: Context<'_, '_, '_, 'info, UpdateAuctionHouse<'info>>,
+        seller_fee_basis_points: Option<u16>,
+        requires_sign_off: Option<bool>,
+        can_change_sale_price: Option<bool>,
+    ) -> ProgramResult {
+        let treasury_mint = &ctx.accounts.treasury_mint;
+        let payer = &ctx.accounts.payer;
+        let new_authority = &ctx.accounts.new_authority;
+        let auction_house = &mut ctx.accounts.auction_house;
+        let fee_withdrawal_destination = ctx.accounts.fee_withdrawal_destination;
+        let treasury_withdrawal_destination_owner =
+            &ctx.accounts.treasury_withdrawal_destination_owner;
+        let treasury_withdrawal_destination = &ctx.accounts.treasury_withdrawal_destination;
+        let token_program = &ctx.accounts.token_program;
+        let system_program = &ctx.accounts.system_program;
+        let ata_program = &ctx.accounts.ata_program;
+        let rent = &ctx.accounts.rent;
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+
+        if let Some(sfbp) = seller_fee_basis_points {
+            if sfbp > 10000 {
+                return Err(ErrorCode::InvalidBasisPoints.into());
+            }
+
+            auction_house.seller_fee_basis_points = sfbp;
+        }
+
+        if let Some(rqf) = requires_sign_off {
+            auction_house.requires_sign_off = rqf;
+        }
+        if let Some(chsp) = can_change_sale_price {
+            auction_house.can_change_sale_price = chsp;
+        }
+        auction_house.authority = new_authority.key();
+        auction_house.treasury_withdrawal_destination = treasury_withdrawal_destination.key();
+        auction_house.fee_withdrawal_destination = fee_withdrawal_destination.key();
+
+        if !is_native {
+            if treasury_withdrawal_destination.data_is_empty() {
+                make_ata(
+                    treasury_withdrawal_destination.to_account_info(),
+                    treasury_withdrawal_destination_owner.to_account_info(),
+                    treasury_mint.to_account_info(),
+                    payer.to_account_info(),
+                    ata_program.to_account_info(),
+                    token_program.to_account_info(),
+                    system_program.to_account_info(),
+                    rent.to_account_info(),
+                    &[],
+                )?;
+            }
+
+            assert_is_ata(
+                &treasury_withdrawal_destination.to_account_info(),
+                &treasury_withdrawal_destination_owner.key(),
+                &treasury_mint.key(),
+            )?;
+        } else {
+            assert_keys_equal(
+                treasury_withdrawal_destination.key(),
+                treasury_withdrawal_destination_owner.key(),
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn create_auction_house<'info>(
+        ctx: Context<'_, '_, '_, 'info, CreateAuctionHouse<'info>>,
+        bump: u8,
+        fee_payer_bump: u8,
+        treasury_bump: u8,
+        seller_fee_basis_points: u16,
+        requires_sign_off: bool,
+        can_change_sale_price: bool,
+    ) -> ProgramResult {
+        let treasury_mint = &ctx.accounts.treasury_mint;
+        let payer = &ctx.accounts.payer;
+        let authority = &ctx.accounts.authority;
+        let auction_house = &mut ctx.accounts.auction_house;
+        let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
+        let auction_house_treasury = &ctx.accounts.auction_house_treasury;
+        let fee_withdrawal_destination = &ctx.accounts.fee_withdrawal_destination;
+        let treasury_withdrawal_destination_owner =
+            &ctx.accounts.treasury_withdrawal_destination_owner;
+        let treasury_withdrawal_destination = &ctx.accounts.treasury_withdrawal_destination;
+        let token_program = &ctx.accounts.token_program;
+        let system_program = &ctx.accounts.system_program;
+        let ata_program = &ctx.accounts.ata_program;
+        let rent = &ctx.accounts.rent;
+
+        auction_house.bump = bump;
+        auction_house.fee_payer_bump = fee_payer_bump;
+        auction_house.treasury_bump = treasury_bump;
+        if seller_fee_basis_points > 10000 {
+            return Err(ErrorCode::InvalidBasisPoints.into());
+        }
+        auction_house.seller_fee_basis_points = seller_fee_basis_points;
+        auction_house.requires_sign_off = requires_sign_off;
+        auction_house.can_change_sale_price = can_change_sale_price;
+        auction_house.creator = authority.key();
+        auction_house.authority = authority.key();
+        auction_house.treasury_withdrawal_destination = treasury_withdrawal_destination.key();
+        auction_house.fee_withdrawal_destination = fee_withdrawal_destination.key();
+
+        let is_native = treasury_mint.key() == spl_token::native_mint::id();
+
+        let auction_house_seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[bump],
+        ];
+
+        create_program_token_account_if_not_present(
+            auction_house_treasury,
+            system_program,
+            &payer,
+            token_program,
+            treasury_mint,
+            &auction_house.to_account_info(),
+            rent,
+            ctx.program_id,
+            &auction_house_seeds,
+            &[],
+            is_native,
+        )?;
+
+        invoke_signed(
+            &system_instruction::assign(&auction_house_fee_account.key(), &auction_house.key()),
+            &[
+                system_program.to_account_info(),
+                auction_house_fee_account.to_account_info(),
+                auction_house.to_account_info(),
+            ],
+            &[&auction_house_seeds],
+        )?;
+
+        if !is_native {
+            if treasury_withdrawal_destination.data_is_empty() {
+                make_ata(
+                    treasury_withdrawal_destination.to_account_info(),
+                    treasury_withdrawal_destination_owner.to_account_info(),
+                    treasury_mint.to_account_info(),
+                    payer.to_account_info(),
+                    ata_program.to_account_info(),
+                    token_program.to_account_info(),
+                    system_program.to_account_info(),
+                    rent.to_account_info(),
+                    &[],
+                )?;
+            }
+
+            assert_is_ata(
+                &treasury_withdrawal_destination.to_account_info(),
+                &treasury_withdrawal_destination_owner.key(),
+                &treasury_mint.key(),
+            )?;
+        } else {
+            assert_keys_equal(
+                treasury_withdrawal_destination.key(),
+                treasury_withdrawal_destination_owner.key(),
+            )?;
+        }
+
+        Ok(())
+    }
 
     pub fn withdraw<'info>(
         ctx: Context<'_, '_, '_, 'info, Withdraw<'info>>,
@@ -179,12 +434,13 @@ pub mod auction_house {
 
         let is_native = treasury_mint.key() == spl_token::native_mint::id();
 
-        create_escrow_if_not_present(
+        create_program_token_account_if_not_present(
             escrow_payment_account,
             system_program,
             &fee_payer,
             token_program,
             treasury_mint,
+            &escrow_payment_account.to_account_info(),
             rent,
             ctx.program_id,
             &escrow_signer_seeds,
@@ -663,12 +919,13 @@ pub mod auction_house {
             &[escrow_payment_bump],
         ];
 
-        create_escrow_if_not_present(
+        create_program_token_account_if_not_present(
             escrow_payment_account,
             system_program,
             &fee_payer,
             token_program,
             treasury_mint,
+            &escrow_payment_account.to_account_info(),
             rent,
             ctx.program_id,
             &escrow_signer_seeds,
@@ -889,9 +1146,82 @@ pub struct Cancel<'info> {
     system_program: UncheckedAccount<'info>,
 }
 
+#[derive(Accounts)]
+#[instruction(bump: u8, fee_payer_bump: u8, treasury_bump: u8)]
+pub struct CreateAuctionHouse<'info> {
+    treasury_mint: Account<'info, Mint>,
+    payer: Signer<'info>,
+    authority: UncheckedAccount<'info>,
+    fee_withdrawal_destination: UncheckedAccount<'info>,
+    treasury_withdrawal_destination: UncheckedAccount<'info>,
+    treasury_withdrawal_destination_owner: UncheckedAccount<'info>,
+    #[account(init, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=bump, space=AUCTION_HOUSE_SIZE, payer=payer)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=fee_payer_bump)]
+    auction_house_fee_account: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), TREASURY.as_bytes()], bump=treasury_bump)]
+    auction_house_treasury: UncheckedAccount<'info>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+    #[account(address = spl_associated_token_account::id())]
+    ata_program: UncheckedAccount<'info>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateAuctionHouse<'info> {
+    treasury_mint: Account<'info, Mint>,
+    payer: Signer<'info>,
+    authority: Signer<'info>,
+    new_authority: UncheckedAccount<'info>,
+    fee_withdrawal_destination: UncheckedAccount<'info>,
+    treasury_withdrawal_destination: UncheckedAccount<'info>,
+    treasury_withdrawal_destination_owner: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+    #[account(address = spl_associated_token_account::id())]
+    ata_program: UncheckedAccount<'info>,
+    rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawFromTreasury<'info> {
+    treasury_mint: Account<'info, Mint>,
+    authority: Signer<'info>,
+    treasury_withdrawal_destination: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), TREASURY.as_bytes()], bump=auction_house.treasury_bump)]
+    auction_house_treasury: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint, has_one=treasury_withdrawal_destination)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawFromFee<'info> {
+    authority: Signer<'info>,
+    fee_withdrawal_destination: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
+    auction_house_fee_account: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=fee_withdrawal_destination)]
+    auction_house: Account<'info, AuctionHouse>,
+    #[account(address = system_program::ID)]
+    system_program: UncheckedAccount<'info>,
+}
+
 pub const AUCTION_HOUSE_SIZE: usize = 8 + //key
 32 + //fee payer
 32 + //treasury
+32 + //treasury_withdrawal_destination
+32 + //fee withdrawal destination
 32 + //treasury mint
 32 + //authority
 32 + // creator
@@ -906,6 +1236,8 @@ pub const AUCTION_HOUSE_SIZE: usize = 8 + //key
 pub struct AuctionHouse {
     pub fee_payer: Pubkey,
     pub treasury: Pubkey,
+    pub treasury_withdrawal_destination: Pubkey,
+    pub fee_withdrawal_destination: Pubkey,
     pub treasury_mint: Pubkey,
     pub authority: Pubkey,
     pub creator: Pubkey,
@@ -967,4 +1299,6 @@ pub enum ErrorCode {
     BuyerATACannotHaveDelegate,
     #[msg("No valid signer present")]
     NoValidSignerPresent,
+    #[msg("BP must be less than or equal to 10000")]
+    InvalidBasisPoints,
 }
