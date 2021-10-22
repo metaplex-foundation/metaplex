@@ -260,27 +260,11 @@ export const useInfiniteScrollAuctions = () => {
       const initializedAuctions = storeAuctionManagers.map(am => auctions[am.info.auction]).filter(a => a.info.state > 0)
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
-        .sort((a, b) => {
-          if (a.info.endedAt && b.info.endedAt) {
-            return (
-              a.info.endedAt.toNumber() - b.info.endedAt.toNumber()
-            );  
-          } else {
-            return -1;
-          }
-        });
+        .sort(sortByRecentlyEnded);
 
       const endedAuctions = initializedAuctions
         .filter(a => a.info.state === 2)
-        .sort((a, b) => {
-          if (a.info.endedAt && b.info.endedAt) {
-            return (
-              b.info.endedAt.toNumber() - a.info.endedAt.toNumber()
-            );
-          } else {
-            return -1;
-          }
-        });
+        .sort(sortByRecentlyEnded);
 
       const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
 
@@ -406,7 +390,7 @@ export const useAuctions = (state?: AuctionViewState) => {
         },
         { delay: 1, sequence: 2 },
       );
-      setAuctionViews(auctionViews.sort(sortByEnded));
+      setAuctionViews(auctionViews);
     })();
   }, [
     state,
@@ -432,10 +416,10 @@ export const useAuctions = (state?: AuctionViewState) => {
   return auctionViews;
 };
 
-function sortByEnded(a: AuctionView, b: AuctionView) {
+function sortByRecentlyEnded(a: ParsedAccount<AuctionData>, b: ParsedAccount<AuctionData>) {
   return (
-    (b.auction.info.endedAt?.toNumber() || 0) -
-    (a.auction.info.endedAt?.toNumber() || 0)
+    (a.info.endedAt?.toNumber() || 0) -
+    (b.info.endedAt?.toNumber() || 0)
   );
 }
 

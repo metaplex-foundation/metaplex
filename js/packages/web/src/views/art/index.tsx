@@ -9,8 +9,9 @@ import {
   Skeleton,
   List,
   Card,
+  Space,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useArt, useExtendedArt } from '../../hooks';
 
 import { ArtContent } from '../../components/ArtContent';
@@ -32,12 +33,12 @@ export const ArtView = () => {
 
   const connection = useConnection();
   const art = useArt(id);
-  
+
   let badge = '';
   if (art.type === ArtType.NFT) {
     badge = 'Unique';
   } else if (art.type === ArtType.Master) {
-    badge = 'NFT 0';
+    badge = 'Master Edition';
   } else if (art.type === ArtType.Print) {
     badge = `${art.edition} of ${art.supply}`;
   }
@@ -50,13 +51,6 @@ export const ArtView = () => {
       patchState(artState);
     })()
   }, [connection])
-
-  // const { userAccounts } = useUserAccounts();
-
-  // const accountByMint = userAccounts.reduce((prev, acc) => {
-  //   prev.set(acc.info.mint.toBase58(), acc);
-  //   return prev;
-  // }, new Map<string, TokenAccount>());
 
   const description = data?.description;
   const attributes = data?.attributes;
@@ -86,10 +80,9 @@ export const ArtView = () => {
   return (
     <Content>
       <Col>
-        <Row ref={ref}>
-          <Col xs={{ span: 24 }} md={{ span: 12 }} style={{ padding: '30px' }}>
+        <Row ref={ref} justify="center" align="middle">
+          <Col xs={{ span: 24 }} md={{ span: 10 }}>
             <ArtContent
-              style={{ width: '300px', height: '300px', margin: '0 auto' }}
               height={300}
               width={300}
               className="artwork-image"
@@ -98,11 +91,33 @@ export const ArtView = () => {
               allowMeshRender={true}
               artView={true}
             />
+            <Divider />
+            {art.creators?.find(c => !c.verified) && unverified}
+            <br />
+            <div className="info-header">ABOUT THE CREATION</div>
+            <div className="info-content">{description}</div>
+            <br />
+            {attributes && (
+              <>
+                <Divider />
+                <br />
+                <div className="info-header">Attributes</div>
+                <List size="large" grid={{ column: 4 }}>
+                  {attributes.map(attribute => (
+                    <List.Item key={attribute.display_type}>
+                      <List.Item.Meta
+                        title={attribute.trait_type}
+                        description={attribute.value}
+                      />
+                    </List.Item>
+                  ))}
+                </List>
+              </>
+            )}
           </Col>
-          {/* <Divider /> */}
           <Col
             xs={{ span: 24 }}
-            md={{ span: 12 }}
+            md={{ span: 12, offset: 2 }}
             style={{ textAlign: 'left', fontSize: '1.4rem' }}
           >
             <Row>
@@ -210,39 +225,8 @@ export const ArtView = () => {
               onMint={async () => await setRemountArtMinting(prev => prev + 1)}
             />
           </Col>
-          <Col span="12">
-            <Divider />
-            {art.creators?.find(c => !c.verified) && unverified}
-            <br />
-            <div className="info-header">ABOUT THE CREATION</div>
-            <div className="info-content">{description}</div>
-            <br />
-            {/*
-              TODO: add info about artist
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{art.about}</div> */}
-          </Col>
-          <Col span="12">
-            {attributes && (
-              <>
-                <Divider />
-                <br />
-                <div className="info-header">Attributes</div>
-                <List size="large" grid={{ column: 4 }}>
-                  {attributes.map(attribute => (
-                    <List.Item key={attribute.display_type}>
-                      <List.Item.Meta
-                        title={attribute.trait_type}
-                        description={attribute.value}
-                      />
-                    </List.Item>
-                  ))}
-                </List>
-              </>
-            )}
-          </Col>
         </Row>
-      </Col>
-    </Content>
+      </Col >
+    </Content >
   );
 };

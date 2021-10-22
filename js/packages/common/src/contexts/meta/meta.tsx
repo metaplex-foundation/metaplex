@@ -79,36 +79,8 @@ export function MetaProvider({ children = null as any }) {
       return;
     }
 
-    return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
+    return subscribeAccountsChange(connection, patchState);
   }, [isLoading]);
-
-  // TODO: fetch names dynamically
-  // TODO: get names for creators
-  // useEffect(() => {
-  //   (async () => {
-  //     const twitterHandles = await connection.getProgramAccounts(NAME_PROGRAM_ID, {
-  //      filters: [
-  //        {
-  //           dataSize: TWITTER_ACCOUNT_LENGTH,
-  //        },
-  //        {
-  //          memcmp: {
-  //           offset: VERIFICATION_AUTHORITY_OFFSET,
-  //           bytes: TWITTER_VERIFICATION_AUTHORITY.toBase58()
-  //          }
-  //        }
-  //      ]
-  //     });
-
-  //     const handles = twitterHandles.map(t => {
-  //       const owner = new PublicKey(t.account.data.slice(32, 64));
-  //       const name = t.account.data.slice(96, 114).toString();
-  //     });
-
-  //     console.log(handles);
-
-  //   })();
-  // }, [whitelistedCreatorsByCreator]);
 
   return (
     <MetaContext.Provider
