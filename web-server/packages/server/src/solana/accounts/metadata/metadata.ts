@@ -430,3 +430,41 @@ export class MetadataAccountDocument extends StoreAccountDocument {
     this.creators = creators;
   }
 }
+
+export class MasterEditionV1AccountDocument extends StoreAccountDocument {
+  oneTimePrintingAuthorizationMint: string;
+  printingMint: string;
+  constructor(
+    store: string,
+    account: AccountInfo<Buffer>,
+    pubkey: string,
+    oneTimePrintingAuthorizationMint: string,
+    printingMint: string
+  ) {
+    super(store, pubkey, account);
+    this.oneTimePrintingAuthorizationMint = oneTimePrintingAuthorizationMint;
+    this.printingMint = printingMint;
+  }
+}
+
+export const decodeEdition = (buffer: Buffer) => {
+  return deserializeUnchecked(METADATA_SCHEMA, Edition, buffer) as Edition;
+};
+
+export const decodeMasterEdition = (
+  buffer: Buffer,
+): MasterEditionV1 | MasterEditionV2 => {
+  if (buffer[0] == MetadataKey.MasterEditionV1) {
+    return deserializeUnchecked(
+      METADATA_SCHEMA,
+      MasterEditionV1,
+      buffer,
+    ) as MasterEditionV1;
+  } else {
+    return deserializeUnchecked(
+      METADATA_SCHEMA,
+      MasterEditionV2,
+      buffer,
+    ) as MasterEditionV2;
+  }
+};

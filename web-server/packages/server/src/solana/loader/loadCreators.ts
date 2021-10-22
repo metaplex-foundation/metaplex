@@ -1,7 +1,7 @@
 import { AUCTION_ID, METAPLEX_ID, StringPublicKey } from "../ids";
 import { MongoClient } from "mongodb";
 import { createDevNetConnection } from "../connection";
-import { getProgramAccounts } from "../loadMetaplexAccounts";
+import { getProgramAccounts } from "../rpc";
 import { Connection } from "@solana/web3.js";
 import {
   isCreatorPartOfTheStore
@@ -55,6 +55,8 @@ export const loadCreators = async (
   const coll = client.db(DB).collection(CREATORS_COLLECTION);
   coll.deleteMany({});
   coll.createIndex({ store: 1 });
-  await coll.insertMany(storeCreators);
+  if(storeCreators.length > 0) {
+    await coll.insertMany(storeCreators);
+  }
   return parsedAccounts;
 };
