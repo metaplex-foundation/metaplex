@@ -120,7 +120,7 @@ pub mod auction_house {
         let payer = &ctx.accounts.payer;
         let new_authority = &ctx.accounts.new_authority;
         let auction_house = &mut ctx.accounts.auction_house;
-        let fee_withdrawal_destination = ctx.accounts.fee_withdrawal_destination;
+        let fee_withdrawal_destination = &ctx.accounts.fee_withdrawal_destination;
         let treasury_withdrawal_destination_owner =
             &ctx.accounts.treasury_withdrawal_destination_owner;
         let treasury_withdrawal_destination = &ctx.accounts.treasury_withdrawal_destination;
@@ -1194,6 +1194,7 @@ pub struct UpdateAuctionHouse<'info> {
 pub struct WithdrawFromTreasury<'info> {
     treasury_mint: Account<'info, Mint>,
     authority: Signer<'info>,
+    #[account(mut)]
     treasury_withdrawal_destination: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), TREASURY.as_bytes()], bump=auction_house.treasury_bump)]
     auction_house_treasury: UncheckedAccount<'info>,
@@ -1208,10 +1209,11 @@ pub struct WithdrawFromTreasury<'info> {
 #[derive(Accounts)]
 pub struct WithdrawFromFee<'info> {
     authority: Signer<'info>,
+    #[account(mut)]
     fee_withdrawal_destination: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
     auction_house_fee_account: UncheckedAccount<'info>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=fee_withdrawal_destination)]
+    #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), auction_house.treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=fee_withdrawal_destination)]
     auction_house: Account<'info, AuctionHouse>,
     #[account(address = system_program::ID)]
     system_program: UncheckedAccount<'info>,
