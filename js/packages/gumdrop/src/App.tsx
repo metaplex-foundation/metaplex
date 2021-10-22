@@ -47,6 +47,9 @@ import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
 
+// claim distribution
+import Mailchimp from "@mailchimp/mailchimp_transactional"
+
 import "./App.css";
 import {
   useConnection,
@@ -81,6 +84,39 @@ const WHITESPACE = "\u00A0";
 const idl = require("./utils/merkle_distributor.json");
 const coder = new Coder(idl);
 
+const setupMailchimp = (auth : string, source : string) => {
+  const mailchimp = Mailchimp(auth);
+
+  return async (
+    amount: number,
+    handle: string,
+    mintUrl: string,
+    query: string
+  ) => {
+    console.log(`Link: claim?${query}`);
+
+    const message = {
+      from_email: source,
+      subject: "Merkle Airdrop",
+      text: `You received ${amount} airdropped token(s) (${mintUrl}). `
+          + `Claim them at ${window.location.origin}/claim?${query}`,
+      to: [
+        {
+          email: handle,
+          type: "to"
+        }
+      ]
+    };
+
+    const response = await mailchimp.messages.send({ message });
+
+    console.log(response);
+    if (!response[0] || response[0].status !== "sent") {
+      throw new Error(`Mailchimp failed to send email: ${response[0].reject_reason}`);
+    }
+  };
+}
+
 const Create = (
   props : CreateProps,
 ) => {
@@ -88,6 +124,8 @@ const Create = (
   const wallet = useWallet();
   const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
   const [commMethod, setMethod] = React.useState(localStorage.getItem("commMethod") || "");
+  const [commAuth, setCommAuth] = React.useState("");
+  const [commSource, setCommSource] = React.useState("");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
 
@@ -189,7 +227,29 @@ const Create = (
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
 
-    claimants.forEach((_, idx) => {
+    const mintUrl = `https://explorer.solana.com/address/${mintKey.toBase58()}?cluster=${Connection.envFor(connection)}`;
+
+    let sender;
+    if (commMethod === "Mailchimp") {
+      sender = setupMailchimp(commAuth, commSource);
+    } else if (commMethod === "Manual") {
+      console.log(mintUrl);
+      sender = async (
+          amount: number,
+          handle: string,
+          mint: PublicKey,
+          query: string
+        ) => {
+          console.log({
+            "handle": handle,
+            "claim": `${window.location.origin}/claim?${query}`
+          });
+        };
+    } else {
+      throw new Error(`Unrecognized claim distribution method ${commMethod}`);
+    }
+
+    for (let idx = 0; idx < claimants.length; ++idx) {
       const proof = tree.getProof(idx);
       const verified = tree.verifyProof(idx, proof, root);
 
@@ -206,8 +266,10 @@ const Create = (
         `pin=${pins[idx]}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
-      console.log(`Link: claim?${params.join("&")}`);
-    });
+      const query = params.join("&");
+
+      await sender(claimant.amount, claimant.handle, mintUrl, query);
+    }
 
     const createDistributorTokenAccount = new TransactionInstruction({
         programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -302,6 +364,30 @@ const Create = (
     reader.readAsText(file);
   };
 
+  const commAuthorization = (commMethod) => {
+    if (commMethod === "Manual") {
+      return null;
+    }
+    return (
+      <React.Fragment>
+        <TextField
+          style={{width: "60ch"}}
+          id="comm-auth-field"
+          label={`${commMethod} API key`}
+          value={commAuth}
+          onChange={(e) => setCommAuth(e.target.value)}
+        />
+        <TextField
+          style={{width: "60ch"}}
+          id="comm-source-field"
+          label={`${commMethod} Source`}
+          value={commSource}
+          onChange={(e) => setCommSource(e.target.value)}
+        />
+      </React.Fragment>
+    );
+  };
+
   const fileUpload = (
     <React.Fragment>
       <DragAndDrop handleDrop={handleFiles} >
@@ -371,7 +457,10 @@ const Create = (
           try {
             await submit(e);
           } catch (err) {
-            alert(`Failed to create merkle drop: ${err}`);
+            notify({
+              message: "Create failed",
+              description: `${err}`,
+            });
           }
         };
         wrap();
@@ -386,7 +475,7 @@ const Create = (
     <Stack spacing={2}>
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="mint-text-field"
         label="Mint"
         value={mint}
         onChange={(e) => {
@@ -402,17 +491,16 @@ const Create = (
           value={commMethod}
           label="Claim Distribution Method"
           onChange={(e) => {
-            localStorage.setItem("commMethod", commMethod);
+            localStorage.setItem("commMethod", e.target.value);
             setMethod(e.target.value);
           }}
           style={{textAlign: "left"}}
         >
-          <MenuItem value={"discord"}>Discord</MenuItem>
-          <MenuItem value={"slack"}>Slack</MenuItem>
-          <MenuItem value={"twitter"}>Twitter</MenuItem>
-          <MenuItem value={"sms"}>SMS</MenuItem>
+          <MenuItem value={"Mailchimp"}>Mailchimp</MenuItem>
+          <MenuItem value={"Manual"}>Manual</MenuItem>
         </Select>
       </FormControl>
+      {commMethod !== "" && commAuthorization(commMethod)}
       {commMethod !== "" && mint !== "" && fileUpload}
       {filename !== "" && createAirdrop}
     </Stack>
@@ -466,7 +554,7 @@ const Claim = (
     const distributorInfo = coder.accounts.decode(
       "MerkleDistributor", distributorAccount.data);
 
-    const proof = proofStr.split(",").map(b => {
+    const proof = proofStr === "" ? [] : proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
       if (ret.length !== 32)
         throw new Error(`Invalid proof hash length`);
@@ -609,7 +697,7 @@ const Claim = (
     <Stack spacing={2}>
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="distributor-text-field"
         label="Distributor"
         value={distributor}
         onChange={(e) => setDistributor(e.target.value)}
@@ -617,7 +705,7 @@ const Claim = (
       />
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="handle-text-field"
         label="Handle"
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
@@ -625,7 +713,7 @@ const Claim = (
       />
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="amount-text-field"
         label="Amount"
         value={amountStr}
         onChange={(e) => setAmount(e.target.value)}
@@ -633,7 +721,7 @@ const Claim = (
       />
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="index-text-field"
         label="Index"
         value={indexStr}
         onChange={(e) => setIndex(e.target.value)}
@@ -641,7 +729,7 @@ const Claim = (
       />
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="pin-text-field"
         label="Pin"
         value={pinStr}
         onChange={(e) => setPin(e.target.value)}
@@ -649,7 +737,7 @@ const Claim = (
       />
       <TextField
         style={{width: "60ch"}}
-        id="outlined-multiline-flexible"
+        id="proof-text-field"
         label="Proof"
         multiline
         value={proofStr}
@@ -675,7 +763,10 @@ const Claim = (
               try {
                 await submit(e);
               } catch (err) {
-                alert(`Failed to claim merkle drop: ${err}`);
+                notify({
+                  message: "Claim failed",
+                  description: `${err}`,
+                });
               }
             };
             wrap();

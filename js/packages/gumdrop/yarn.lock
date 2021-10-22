@@ -1941,6 +1941,13 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.0.tgz#c012c1ecc1a0e53d50e6af381618dca5268461c1"
   integrity sha512-lLseUPEhSFUXYTKj6q7s2O3s2vW2ebgA11vMAlKodXGf5AFw4zUoEbTz9CoFOC9jS6xY4Qr8BmRnxP/odT4Uuw==
 
+"@mailchimp/mailchimp_transactional@^1.0.46":
+  version "1.0.46"
+  resolved "https://registry.yarnpkg.com/@mailchimp/mailchimp_transactional/-/mailchimp_transactional-1.0.46.tgz#ddc9efb12d0ee13e788d47d1ffeea4fe50bad3cf"
+  integrity sha512-qS+aIciHeMjeKfSsHvlF0PEp/lKiBIhrwLJLTORkNmky/4Sz2NwWnKEvME2ziZ9+2ztCH/KlanUVvMrVerc9jQ==
+  dependencies:
+    axios "^0.21.1"
+
 "@material/animation@^13.0.0":
   version "13.0.0"
   resolved "https://registry.yarnpkg.com/@material/animation/-/animation-13.0.0.tgz#42ec7aee6548ba27edb49063c7a7ae431e4ef450"
@@ -4902,7 +4909,7 @@ axios@^0.18.0:
     follow-redirects "1.5.10"
     is-buffer "^2.0.2"
 
-axios@^0.21.0:
+axios@^0.21.0, axios@^0.21.1:
   version "0.21.4"
   resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
   integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==

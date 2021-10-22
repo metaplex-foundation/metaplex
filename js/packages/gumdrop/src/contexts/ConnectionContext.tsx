@@ -597,8 +597,7 @@ async function simulateTransaction(
   return res.result;
 }
 
-export const explorerLinkFor = (
-  txid: TransactionSignature,
+export const envFor = (
   connection: Connection
 ) : string => {
   let endpoint = (connection as any)._rpcEndpoint;
@@ -609,7 +608,14 @@ export const explorerLinkFor = (
       break;
     }
   }
-  return `https://explorer.solana.com/tx/${txid}?cluster=${env}`;
+  return env;
+}
+
+export const explorerLinkFor = (
+  txid: TransactionSignature,
+  connection: Connection
+) : string => {
+  return `https://explorer.solana.com/tx/${txid}?cluster=${envFor(connection)}`;
 }
 
 async function awaitTransactionSignatureConfirmation(
