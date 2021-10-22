@@ -12,16 +12,18 @@
   right: 0;
   bottom: 0;
   background: @loading-background;
-  backdrop-filter: @overlay-filter;
-  pointer-events: all;
+  backdrop-filter: @loading-filter;
   z-index: 9999;
   visibility: hidden;
   opacity: 0;
+  // Set this without transition to make the page interactable faster
+  pointer-events: none;
 
   &.loading {
     transition-timing-function: ease-out, step-start;
     visibility: visible;
     opacity: 1;
+    pointer-events: all;
   }
 }
 
