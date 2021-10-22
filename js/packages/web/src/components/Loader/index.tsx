@@ -1,12 +1,16 @@
-import { useMeta } from '@oyster/common';
-import React, { FC, useMemo } from 'react';
+import { LoadingOutlined } from '@ant-design/icons';
+import { useMeta, useStore } from '@oyster/common';
+import { Spin } from 'antd';
+import React, { FC } from 'react';
 
 export const LoaderProvider: FC = ({ children }) => {
   const { isLoading } = useMeta();
+  const { storefront } = useStore();
 
   return (
     <>
       <div id="metaplex-loading" className={isLoading ? 'loading' : undefined}>
+        <img id="metaplex-loading-icon" src={storefront.theme.logo} />
         <div id="metaplex-loading-text">loading</div>
         <Spinner />
       </div>
@@ -16,15 +20,5 @@ export const LoaderProvider: FC = ({ children }) => {
 };
 
 export const Spinner = () => {
-  const bars = useMemo(
-    () =>
-      new Array(9)
-        .fill(undefined)
-        .map((_, i) => (
-          <div key={i} className={`metaplex-loading-spinner-bar-${i}`} />
-        )),
-    [],
-  );
-
-  return <div id="metaplex-loading-spinner">{bars}</div>;
+  return <Spin indicator={<LoadingOutlined />} />;
 };

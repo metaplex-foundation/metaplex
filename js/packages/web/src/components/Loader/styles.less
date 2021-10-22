@@ -27,60 +27,13 @@
   }
 }
 
-#metaplex-loading-text {
-  text-transform: uppercase;
+#metaplex-loading-icon {
+  height: 2em;
+  max-width: 2em;
   margin-bottom: 0.5em;
 }
 
-#metaplex-loading-spinner {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: stretch;
-  height: 24px;
-
-  > div {
-    flex: 0 0 2px;
-    background: @text-color;
-    animation: metaplex-loading-spinner-bar 1s infinite ease-in-out;
-
-    &:not(:first-child) {
-      margin-left: 6px;
-    }
-  }
-
-  // Spinner config
-  @bar-count: 9;
-  @per-bar-delay: 200ms;
-
-  // Helper vars
-  @max: @bar-count - 1;
-  @mid: floor((@max / 2));
-
-  .loop (@i) when (@i < @mid) {
-    @j: @max - @i;
-
-    .metaplex-loading-spinner-bar-@{i},
-    .metaplex-loading-spinner-bar-@{j} {
-      animation-delay: ((@mid - @i) * @per-bar-delay);
-    }
-
-    .loop (@i + 1);
-  }
-
-  .loop(0);
-}
-
-@keyframes metaplex-loading-spinner-bar {
-  start {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0;
-  }
-
-  end {
-    opacity: 1;
-  }
+#metaplex-loading-text {
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
 }

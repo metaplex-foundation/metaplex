@@ -1,5 +1,3 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Space, Spin } from 'antd';
 import { merge } from 'lodash';
 import React, {
   ReactNode,
@@ -33,7 +31,7 @@ const MetaContext = React.createContext<MetaContextState>({
 
 export function MetaProvider({ children = null }: { children: ReactNode }) {
   const connection = useConnection();
-  const { isReady, storeAddress, storefront } = useStore();
+  const { isReady, storeAddress } = useStore();
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
@@ -151,16 +149,7 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
         isLoading,
       }}
     >
-      {isLoading ? (
-        <div>
-          <Space direction="vertical" size="middle">
-            <img src={storefront.theme.logo} />
-            <Spin indicator={<LoadingOutlined />} />
-          </Space>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </MetaContext.Provider>
   );
 }
