@@ -1,7 +1,9 @@
-import { MetaplexKey, METAPLEX_PREFIX } from "../types";
-import { METAPLEX_ID, StringPublicKey, toPublicKey } from "../../ids";
-import { findProgramAddressBase58 } from "../../utils";
-import { ConverterSet } from "../../serialization/converterSet";
+import { MetaplexKey, METAPLEX_PREFIX } from "./types";
+import { METAPLEX_ID, StringPublicKey, toPublicKey } from "../ids";
+import { findProgramAddressBase58 } from "../utils";
+import { ConverterSet } from "../serialization/converterSet";
+import {deserializeUnchecked} from 'borsh';
+
 
 export class WhitelistedCreator {
     key: MetaplexKey = MetaplexKey.WhitelistedCreatorV1;
@@ -47,3 +49,27 @@ export class WhitelistedCreator {
 
       return res[0];
   }
+
+const SCHEMA = new Map<any, any>([
+    [
+        WhitelistedCreator,
+        {
+          kind: 'struct',
+          fields: [
+            ['key', 'u8'],
+            ['address', 'pubkeyAsString'],
+            ['activated', 'u8'],
+          ],
+        },
+      ]
+]);
+
+export const decodeWhitelistedCreator = (buffer: Buffer) => {
+    return deserializeUnchecked(
+      SCHEMA,
+      WhitelistedCreator,
+      buffer,
+    ) as WhitelistedCreator;
+  };
+
+

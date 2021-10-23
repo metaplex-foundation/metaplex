@@ -8,8 +8,8 @@ router.get('/:store/creators', async (req: Request, res: Response) => {
     const coll = client.db(DB).collection(CREATORS_COLLECTION);
     const store = req.params.store;
     const cursor = coll.find<StoreAccountDocument>({store: store});
-    const creators = await cursor.toArray();
-    res.send(creators.map(c => ({
+    const data = await cursor.toArray();
+    res.send(data.map(c => ({
         pubkey: c.pubkey,
         account: c.account
     })));

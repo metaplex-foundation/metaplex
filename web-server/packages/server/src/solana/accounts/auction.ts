@@ -1,6 +1,7 @@
-import { StringPublicKey } from "../../ids";
+import { StringPublicKey } from "../ids";
 import BN from 'bn.js';
 import moment from 'moment';
+import {deserializeUnchecked} from 'borsh';
 
 export class AuctionData {
   /// Pubkey of the authority with permission to modify this auction.
@@ -198,3 +199,105 @@ export interface CountdownState {
   minutes: number;
   seconds: number;
 }
+
+
+export class AuctionDataExtended {
+  /// Total uncancelled bids
+  totalUncancelledBids: BN;
+  tickSize: BN | null;
+  gapTickSizePercentage: number | null;
+  instantSalePrice: BN | null;
+  name: number[] | null;
+
+  constructor(args: {
+    totalUncancelledBids: BN;
+    tickSize: BN | null;
+    gapTickSizePercentage: number | null;
+    instantSalePrice: BN | null;
+    name: number[] | null;
+  }) {
+    this.totalUncancelledBids = args.totalUncancelledBids;
+    this.tickSize = args.tickSize;
+    this.gapTickSizePercentage = args.gapTickSizePercentage;
+    this.instantSalePrice = args.instantSalePrice;
+    this.name = args.name;
+  }
+}
+
+export const AUCTION_SCHEMA = new Map<any, any>([
+  [
+    AuctionData,
+    {
+      kind: "struct",
+      fields: [
+        ["authority", "pubkeyAsString"],
+        ["tokenMint", "pubkeyAsString"],
+        ["lastBid", { kind: "option", type: "u64" }],
+        ["endedAt", { kind: "option", type: "u64" }],
+        ["endAuctionAt", { kind: "option", type: "u64" }],
+        ["auctionGap", { kind: "option", type: "u64" }],
+        ["priceFloor", PriceFloor],
+        ["state", "u8"],
+        ["bidState", BidState],
+      ],
+    },
+  ],
+  [
+    AuctionDataExtended,
+    {
+      kind: 'struct',
+      fields: [
+        ['totalUncancelledBids', 'u64'],
+        ['tickSize', { kind: 'option', type: 'u64' }],
+        ['gapTickSizePercentage', { kind: 'option', type: 'u8' }],
+        ['instantSalePrice', { kind: 'option', type: 'u64' }],
+        ['name', { kind: 'option', type: [32] }],
+      ],
+    },
+  ],
+  [
+    PriceFloor,
+    {
+      kind: 'struct',
+      fields: [
+        ['type', 'u8'],
+        ['hash', [32]],
+      ],
+    },
+  ],
+  [
+    BidState,
+    {
+      kind: 'struct',
+      fields: [
+        ['type', 'u8'],
+        ['bids', [Bid]],
+        ['max', 'u64'],
+      ],
+    },
+  ],
+  [Bid,
+  {
+    kind: 'struct',
+    fields: [
+      ['key', 'pubkeyAsString'],
+      ['amount', 'u64'],
+    ],
+  },
+]]);
+
+export const decodeAuctionData = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    AUCTION_SCHEMA,
+    AuctionData,
+    buffer,
+  ) as AuctionData;
+};
+
+export const decodeAuctionDataExtended = (buffer: Buffer) => {
+  return deserializeUnchecked(
+    AUCTION_SCHEMA,
+    AuctionDataExtended,
+    buffer,
+  ) as AuctionDataExtended;
+};

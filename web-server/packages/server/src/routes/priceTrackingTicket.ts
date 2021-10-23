@@ -1,11 +1,11 @@
 import express, {Request, Response} from 'express';
-import { createMongoClient, CREATORS_COLLECTION, DB, EDITIONS_COLLECTION, MASTER_EDITIONS_V2_COLLECTION } from '../db/mongo-utils';
+import { createMongoClient, CREATORS_COLLECTION, DB, EDITIONS_COLLECTION, PRIZE_TRACKING_TICKETS_COLLECTION } from '../db/mongo-utils';
 import { StoreAccountDocument } from '../solana/accounts/account';
 
 const router = express.Router();
-router.get('/:store/masterEditionsV2', async (req: Request, res: Response) => {
+router.get('/:store/prizeTrackingTickets', async (req: Request, res: Response) => {
     const client = await createMongoClient();
-    const coll = client.db(DB).collection(MASTER_EDITIONS_V2_COLLECTION);
+    const coll = client.db(DB).collection(PRIZE_TRACKING_TICKETS_COLLECTION);
     const store = req.params.store;
     const filter : any = {
         store: store
@@ -22,4 +22,4 @@ router.get('/:store/masterEditionsV2', async (req: Request, res: Response) => {
     })));
 })
 
-export {router as masterEditionsV2Router}
+export {router as prizeTrackingTicketRouter}

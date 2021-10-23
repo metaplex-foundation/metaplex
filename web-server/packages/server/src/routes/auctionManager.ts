@@ -1,0 +1,29 @@
+import express, {Request, Response} from 'express';
+import { AUCTION_MANAGERS_COLLECTION, createMongoClient, CREATORS_COLLECTION, DB, EDITIONS_COLLECTION, PRIZE_TRACKING_TICKETS_COLLECTION } from '../db/mongo-utils';
+import { AuctionManagerAccountDocument } from '../solana/accounts/auctionManager';
+
+const router = express.Router();
+router.get('/:store/auctionManagers', async (req: Request, res: Response) => {
+    const client = await createMongoClient();
+    const coll = client.db(DB).collection(AUCTION_MANAGERS_COLLECTION);
+    const store = req.params.store;
+    const filter : any = {
+        store: store
+    }
+    if(req.query.pubkey) {
+        filter.pubkey = req.query.pubkey;
+    }
+
+    if(req.query.auction) {
+        filter.auction = req.query.auction
+    }
+
+    const cursor = coll.find<AuctionManagerAccountDocument>(filter);
+    const data = await cursor.toArray();
+    res.send(data.map(c => ({
+        pubkey: c.pubkey,
+        account: c.account
+    })));
+})
+
+export {router as auctionManagerRouter}

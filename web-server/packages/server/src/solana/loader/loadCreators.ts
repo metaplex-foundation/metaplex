@@ -4,12 +4,12 @@ import { createDevNetConnection } from "../connection";
 import { getProgramAccounts } from "../rpc";
 import { Connection } from "@solana/web3.js";
 import {
+  decodeWhitelistedCreator,
   isCreatorPartOfTheStore
-} from "../accounts/creator/creator";
-import { decodeWhitelistedCreator } from "../accounts/creator/schema";
+} from "../accounts/creator";
 import { AccountAndPubkey } from "../types";
 import { accountConverterSet, StoreAccountDocument } from "../accounts/account";
-import { CREATORS_COLLECTION, DB } from "../../db/mongo-utils";
+import { CREATORS_COLLECTION, DB, SAFETY_DEPOSIT_CONFIG_COLLECTION } from "../../db/mongo-utils";
 
 export const loadCreators = async (
   store: StringPublicKey,
@@ -25,7 +25,7 @@ export const loadCreators = async (
     },
   ]);
 
-  const parsedAccounts = accounts.map((acc) => {
+   const parsedAccounts = accounts.map((acc) => {
     return {
       Raw: acc,
       Parsed: decodeWhitelistedCreator(acc.account.data),
@@ -53,7 +53,7 @@ export const loadCreators = async (
     accountConverterSet.applyConversion(creator)
   );
   const coll = client.db(DB).collection(CREATORS_COLLECTION);
-  coll.deleteMany({});
+  coll.deleteMany({store : store});
   coll.createIndex({ store: 1 });
   if(storeCreators.length > 0) {
     await coll.insertMany(storeCreators);

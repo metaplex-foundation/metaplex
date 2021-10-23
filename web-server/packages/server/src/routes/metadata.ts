@@ -1,7 +1,7 @@
 import express, {Request, Response} from 'express';
 import { createMongoClient, METADATA_COLLECTION, DB } from '../db/mongo-utils';
 import { accountConverterSet, StoreAccountDocument } from '../solana/accounts/account';
-import { MetadataAccountDocument } from '../solana/accounts/metadata/metadata';
+import { decodeMetadata, MetadataAccountDocument } from '../solana/accounts/metadata';
 
 const router = express.Router();
 router.get('/:store/metadata', async (req: Request, res: Response) => {
@@ -29,10 +29,10 @@ router.get('/:store/metadata', async (req: Request, res: Response) => {
     }
 
     const cursor = coll.find<MetadataAccountDocument>(filter);
-    const creators = await cursor.toArray();
-    res.send(creators.map(c => ({
+    const data = await cursor.toArray();
+    res.send(data.map(c => ({
         pubkey: c.pubkey,
-        account: c.account
+        account: c.account,
     })));
 })
 

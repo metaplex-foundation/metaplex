@@ -15,8 +15,8 @@ router.get('/:store/editions', async (req: Request, res: Response) => {
     }
 
     const cursor = coll.find<StoreAccountDocument>(filter);
-    const creators = await cursor.toArray();
-    res.send(creators.map(c => ({
+    const data = await cursor.toArray();
+    res.send(data.map(c => ({
         pubkey: c.pubkey,
         account: c.account
     })));

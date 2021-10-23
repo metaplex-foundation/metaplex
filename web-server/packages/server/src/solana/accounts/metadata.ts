@@ -1,9 +1,9 @@
-import { METADATA_PROGRAM_ID, StringPublicKey, toPublicKey } from "../../ids";
+import { METADATA_PROGRAM_ID, StringPublicKey, toPublicKey } from "../ids";
 import BN from "bn.js";
-import { findProgramAddressBase58 } from "../../utils";
+import { findProgramAddressBase58 } from "../utils";
 import { deserializeUnchecked } from "borsh";
-import { StoreAccountDocument } from "../account";
-import { AccountAndPubkey } from "../../types";
+import { StoreAccountDocument } from "./account";
+import { AccountAndPubkey } from "../types";
 import { AccountInfo } from "@solana/web3.js";
 
 export const EDITION_MARKER_BIT_SIZE = 248;
@@ -415,6 +415,7 @@ export class MetadataAccountDocument extends StoreAccountDocument {
   mint: string;
   collection: string | undefined;
   creators: string[];
+  masterEdition : string | undefined;
 
   constructor(
     store: string,
@@ -422,12 +423,14 @@ export class MetadataAccountDocument extends StoreAccountDocument {
     pubkey: string,
     mint: string,
     collection: string | undefined,
-    creators: string[]
+    creators: string[],
+    masterEdition : string | undefined
   ) {
     super(store, pubkey, account);
     this.mint = mint;
     this.collection = collection;
     this.creators = creators;
+    this.masterEdition = masterEdition;
   }
 }
 

@@ -1,2 +1,2 @@
 export * from './serialization/borsh'
-export * from './loader/load'
+export * from './loader/loadMetaplex'

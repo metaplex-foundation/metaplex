@@ -16,7 +16,6 @@ import {
   MAX_CREATOR_LEN,
   MAX_CREATOR_LIMIT,
 } from "../accounts/constants";
-import { decodeWhitelistedCreator } from "../accounts/creator/schema";
 import { METADATA_PROGRAM_ID, StringPublicKey, toPublicKey } from "../ids";
 import { getProgramAccounts } from "../rpc";
 import { AccountAndPubkey } from "../types";
@@ -34,11 +33,12 @@ import {
   MetadataAccountDocument,
   MetadataKey,
   METADATA_PREFIX,
-} from "../accounts/metadata/metadata";
+} from "../accounts/metadata";
 
 import axios from "axios";
 import { findProgramAddressBase58 } from "../utils";
 import { getMultipleAccounts } from "../rpc";
+import { decodeWhitelistedCreator } from "../accounts/creator";
 const fetchFile = async (uri: string) => {
   try {
     const rawResponse = await axios.get<IMetadataExtension>(uri);
@@ -162,7 +162,8 @@ export const loadMetadata = async (
         m.raw.pubkey,
         m.parsed.mint,
         m.ext?.collection?.name,
-        m.parsed.data.creators?.map((c) => c.address)!
+        m.parsed.data.creators?.map((c) => c.address)!,
+        m.parsed.masterEdition
       )
   );
 
@@ -175,6 +176,7 @@ export const loadMetadata = async (
   await coll.createIndex({ collection: 1 });
   await coll.createIndex({ creators: 1 });
   await coll.createIndex({ pubkey: 1 });
+  await coll.createIndex({ masterEdition: 1 });
 
   if(metadataDocuments.length > 0) {
     await coll.insertMany(metadataDocuments);
@@ -217,7 +219,7 @@ export const loadMetadata = async (
   const masterEditionV1Coll = client.db(DB).collection(MASTER_EDITIONS_V1_COLLECTION);
   const masterEditionV2Coll = client.db(DB).collection(MASTER_EDITIONS_V2_COLLECTION);
 
-  editionColl.deleteMany({});
+  editionColl.deleteMany({store:store});
   editionColl.createIndex({store: 1, pubkey :1 });
 
   if(regularEditions.length > 0) {
@@ -233,7 +235,7 @@ export const loadMetadata = async (
     await masterEditionV1Coll.insertMany(masterEditionsV1);
   }
 
-  masterEditionV2Coll.deleteMany({});
+  masterEditionV2Coll.deleteMany({store:store});
   masterEditionV2Coll.createIndex({store: 1, pubkey :1 });
 
   if(masterEditionsV2.length >0) {
