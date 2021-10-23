@@ -48,7 +48,7 @@ pub fn delete_pack_voucher(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     // Obtain PackVoucher instance
     let pack_voucher = PackVoucher::unpack(&pack_voucher_account.data.borrow())?;
     assert_account_key(pack_set_account, &pack_voucher.pack_set)?;
-    assert_account_key(token_account, &pack_voucher.token_account)?;
+    // assert_account_key(token_account, &pack_voucher.token_account)?;
 
     // Obtain PackVoucher token account instance
     let pack_voucher_token_account =

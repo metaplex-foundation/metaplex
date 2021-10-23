@@ -78,9 +78,9 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         return Err(NFTPacksError::ProvingPackProcessCompleted.into());
     }
 
-    if proving_process.proved_voucher_editions == voucher.number_to_open {
-        return Err(NFTPacksError::ProvingVoucherProcessCompleted.into());
-    }
+    // if proving_process.proved_voucher_editions == voucher.number_to_open {
+    //     return Err(NFTPacksError::ProvingVoucherProcessCompleted.into());
+    // }
 
     assert_derivation(
         &metaplex_token_metadata::id(),
@@ -104,33 +104,33 @@ pub fn prove_ownership(program_id: &Pubkey, accounts: &[AccountInfo]) -> Program
         return Err(NFTPacksError::WrongEditionMint.into());
     }
 
-    match voucher.action_on_prove {
-        ActionOnProve::Burn => {
-            burn_tokens(
-                user_token_account.clone(),
-                edition_mint_account.clone(),
-                user_wallet_account.clone(),
-                ProvingProcess::TOKEN_AMOUNT,
-            )?;
-            close_token_account(
-                user_token_account.clone(),
-                user_wallet_account.clone(),
-                user_wallet_account.clone(),
-            )?;
-        }
-        ActionOnProve::Redeem => {
-            msg!("Redeem action is not implemented in current stage.");
-            msg!("Do nothing with token.");
-        }
-    }
+    // match voucher.action_on_prove {
+    //     ActionOnProve::Burn => {
+    //         burn_tokens(
+    //             user_token_account.clone(),
+    //             edition_mint_account.clone(),
+    //             user_wallet_account.clone(),
+    //             ProvingProcess::TOKEN_AMOUNT,
+    //         )?;
+    //         close_token_account(
+    //             user_token_account.clone(),
+    //             user_wallet_account.clone(),
+    //             user_wallet_account.clone(),
+    //         )?;
+    //     }
+    //     ActionOnProve::Redeem => {
+    //         msg!("Redeem action is not implemented in current stage.");
+    //         msg!("Do nothing with token.");
+    //     }
+    // }
 
-    if proving_process.proved_voucher_editions.error_increment()? == voucher.number_to_open {
-        proving_process.proved_voucher_editions = 0;
-        proving_process.proved_vouchers = proving_process.proved_vouchers.error_increment()?;
-    } else {
-        proving_process.proved_voucher_editions =
-            proving_process.proved_voucher_editions.error_increment()?;
-    }
+    // if proving_process.proved_voucher_editions.error_increment()? == voucher.number_to_open {
+    //     proving_process.proved_voucher_editions = 0;
+    //     proving_process.proved_vouchers = proving_process.proved_vouchers.error_increment()?;
+    // } else {
+    //     proving_process.proved_voucher_editions =
+    //         proving_process.proved_voucher_editions.error_increment()?;
+    // }
 
     ProvingProcess::pack(proving_process, *proving_process_account.data.borrow_mut())?;
 

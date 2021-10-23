@@ -3,7 +3,6 @@
 use crate::{
     error::NFTPacksError,
     find_pack_voucher_program_address, find_program_authority,
-    instruction::AddVoucherToPackArgs,
     math::SafeMath,
     state::{InitPackVoucherParams, PackSet, PackSetState, PackVoucher},
     utils::*,
@@ -27,30 +26,24 @@ use spl_token::state::Account;
 pub fn add_voucher_to_pack(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
-    args: AddVoucherToPackArgs,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_info = next_account_info(account_info_iter)?;
     let pack_voucher_info = next_account_info(account_info_iter)?;
     let authority_info = next_account_info(account_info_iter)?;
+    let voucher_owner_info = next_account_info(account_info_iter)?;
     let master_edition_info = next_account_info(account_info_iter)?;
     let master_metadata_info = next_account_info(account_info_iter)?;
     let mint_info = next_account_info(account_info_iter)?;
     let source_info = next_account_info(account_info_iter)?;
-    let token_account_info = next_account_info(account_info_iter)?;
-    let program_authority_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
     assert_signer(authority_info)?;
+    assert_signer(voucher_owner_info)?;
     assert_owned_by(pack_set_info, program_id)?;
     assert_owned_by(master_edition_info, &metaplex_token_metadata::id())?;
     assert_owned_by(master_metadata_info, &metaplex_token_metadata::id())?;
-
-    let AddVoucherToPackArgs {
-        number_to_open,
-        action_on_prove,
-    } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
@@ -90,10 +83,8 @@ pub fn add_voucher_to_pack(
     // Check for v2
     let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
 
-    if let Some(m_e_max_supply) = master_edition.max_supply() {
-        if (number_to_open as u64) > m_e_max_supply {
-            return Err(NFTPacksError::WrongNumberToOpen.into());
-        }
+    if master_edition.supply() == 0 {
+        return Err(NFTPacksError::WrongVoucherSupply.into());
     }
 
     let master_metadata = Metadata::from_account_info(master_metadata_info)?;
@@ -114,33 +105,14 @@ pub fn add_voucher_to_pack(
         return Err(MetadataError::MintMismatch.into());
     }
 
-    let (program_authority, _) = find_program_authority(program_id);
-    assert_account_key(program_authority_info, &program_authority)?;
-
-    // Initialize token account
-    spl_initialize_account(
-        token_account_info.clone(),
-        mint_info.clone(),
-        program_authority_info.clone(),
-        rent_info.clone(),
-    )?;
-
-    // Transfer from source to token account
-    spl_token_transfer(
-        source_info.clone(),
-        token_account_info.clone(),
-        authority_info.clone(),
-        1, // transfer master edition
-        &[],
-    )?;
+    if source.owner != *voucher_owner_info.key {
+        return Err(NFTPacksError::WrongVoucherOwner.into());
+    }
 
     pack_voucher.init(InitPackVoucherParams {
         pack_set: *pack_set_info.key,
         master: *master_edition_info.key,
         metadata: *master_metadata_info.key,
-        token_account: *token_account_info.key,
-        number_to_open,
-        action_on_prove,
     });
 
     pack_set.add_pack_voucher();

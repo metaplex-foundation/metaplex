@@ -83,81 +83,81 @@ pub fn mint_edition_with_voucher<'a>(
         rent_program_account: next_account_info(account_info_iter)?,
     };
 
-    let pack_voucher = PackVoucher::unpack(
-        &accounts_args
-            .master_edition_holder_account
-            .data
-            .borrow_mut(),
-    )?;
+    // let pack_voucher = PackVoucher::unpack(
+    //     &accounts_args
+    //         .master_edition_holder_account
+    //         .data
+    //         .borrow_mut(),
+    // )?;
 
-    mint_edition(program_id, &pack_voucher, &accounts_args)?;
+    // mint_edition(program_id, &pack_voucher, &accounts_args)?;
 
-    PackVoucher::pack(
-        pack_voucher,
-        *accounts_args
-            .master_edition_holder_account
-            .data
-            .borrow_mut(),
-    )?;
-
-    Ok(())
-}
-
-/// Process minting itself
-pub fn mint_edition<T: MasterEditionHolder>(
-    program_id: &Pubkey,
-    master_edition_holder: &T,
-    accounts: &MintEditionAccountsArgs,
-) -> ProgramResult {
-    let pack_set = PackSet::unpack(&accounts.pack_set_account.data.borrow_mut())?;
-
-    assert_owned_by(accounts.pack_set_account, program_id)?;
-
-    assert_signer(accounts.minting_authority_account)?;
-
-    assert_account_key(
-        accounts.minting_authority_account,
-        &pack_set.minting_authority,
-    )?;
-
-    assert_account_key(
-        accounts.pack_set_account,
-        &master_edition_holder.get_pack_set(),
-    )?;
-
-    assert_account_key(
-        accounts.token_account,
-        &master_edition_holder.get_token_account(),
-    )?;
-
-    assert_account_key(
-        accounts.master_edition_account,
-        &master_edition_holder.get_master_edition(),
-    )?;
-
-    let (program_authority, bump_seed) = find_program_authority(program_id);
-    assert_account_key(accounts.owner_account, &program_authority)?;
-
-    let master_edition = MasterEditionV2::from_account_info(accounts.master_edition_account)?;
-
-    spl_token_metadata_mint_new_edition_from_master_edition_via_token(
-        accounts.new_metadata_account,
-        accounts.new_edition_account,
-        accounts.new_mint_account,
-        accounts.new_mint_authority_account,
-        accounts.payer_account,
-        accounts.owner_account,
-        accounts.token_account,
-        accounts.master_metadata_account,
-        accounts.master_edition_account,
-        accounts.master_metadata_mint_account,
-        accounts.edition_mark_account,
-        accounts.token_program_account,
-        accounts.system_program_account,
-        accounts.rent_program_account,
-        master_edition.supply.error_increment()?,
-        &[PREFIX.as_ref(), program_id.as_ref(), &[bump_seed]],
-    )?;
+    // PackVoucher::pack(
+    //     pack_voucher,
+    //     *accounts_args
+    //         .master_edition_holder_account
+    //         .data
+    //         .borrow_mut(),
+    // )?;
 
     Ok(())
 }
+
+// Process minting itself
+// pub fn mint_edition<T: MasterEditionHolder>(
+//     program_id: &Pubkey,
+//     master_edition_holder: &T,
+//     accounts: &MintEditionAccountsArgs,
+// ) -> ProgramResult {
+//     let pack_set = PackSet::unpack(&accounts.pack_set_account.data.borrow_mut())?;
+
+//     assert_owned_by(accounts.pack_set_account, program_id)?;
+
+//     assert_signer(accounts.minting_authority_account)?;
+
+//     assert_account_key(
+//         accounts.minting_authority_account,
+//         &pack_set.minting_authority,
+//     )?;
+
+//     assert_account_key(
+//         accounts.pack_set_account,
+//         &master_edition_holder.get_pack_set(),
+//     )?;
+
+//     assert_account_key(
+//         accounts.token_account,
+//         &master_edition_holder.get_token_account(),
+//     )?;
+
+//     assert_account_key(
+//         accounts.master_edition_account,
+//         &master_edition_holder.get_master_edition(),
+//     )?;
+
+//     let (program_authority, bump_seed) = find_program_authority(program_id);
+//     assert_account_key(accounts.owner_account, &program_authority)?;
+
+//     let master_edition = MasterEditionV2::from_account_info(accounts.master_edition_account)?;
+
+//     spl_token_metadata_mint_new_edition_from_master_edition_via_token(
+//         accounts.new_metadata_account,
+//         accounts.new_edition_account,
+//         accounts.new_mint_account,
+//         accounts.new_mint_authority_account,
+//         accounts.payer_account,
+//         accounts.owner_account,
+//         accounts.token_account,
+//         accounts.master_metadata_account,
+//         accounts.master_edition_account,
+//         accounts.master_metadata_mint_account,
+//         accounts.edition_mark_account,
+//         accounts.token_program_account,
+//         accounts.system_program_account,
+//         accounts.rent_program_account,
+//         master_edition.supply.error_increment()?,
+//         &[PREFIX.as_ref(), program_id.as_ref(), &[bump_seed]],
+//     )?;
+
+//     Ok(())
+// }

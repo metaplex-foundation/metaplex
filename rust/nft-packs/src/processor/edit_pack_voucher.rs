@@ -46,39 +46,39 @@ pub fn edit_pack_voucher(
 
     assert_account_key(pack_set_account, &pack_voucher.pack_set)?;
 
-    apply_changes(&mut pack_voucher, &master_edition, args)?;
+    // apply_changes(&mut pack_voucher, &master_edition, args)?;
 
     PackVoucher::pack(pack_voucher, *pack_voucher_account.data.borrow_mut())?;
 
     Ok(())
 }
 
-fn apply_changes(
-    pack_voucher: &mut PackVoucher,
-    master_edition: &MasterEditionV2,
-    changes: EditPackVoucherArgs,
-) -> Result<(), ProgramError> {
-    if let Some(new_number_to_open) = changes.number_to_open {
-        if new_number_to_open == 0 {
-            return Err(NFTPacksError::WrongNumberToOpen.into());
-        }
-        if let Some(m_e_max_supply) = master_edition.max_supply() {
-            if (new_number_to_open as u64) > m_e_max_supply.error_add(master_edition.supply())? {
-                return Err(NFTPacksError::WrongNumberToOpen.into());
-            }
-        }
-        if new_number_to_open == pack_voucher.number_to_open {
-            return Err(NFTPacksError::CantSetTheSameValue.into());
-        }
-        pack_voucher.number_to_open = new_number_to_open;
-    }
+// fn apply_changes(
+//     pack_voucher: &mut PackVoucher,
+//     master_edition: &MasterEditionV2,
+//     changes: EditPackVoucherArgs,
+// ) -> Result<(), ProgramError> {
+//     if let Some(new_number_to_open) = changes.number_to_open {
+//         if new_number_to_open == 0 {
+//             return Err(NFTPacksError::WrongNumberToOpen.into());
+//         }
+//         if let Some(m_e_max_supply) = master_edition.max_supply() {
+//             if (new_number_to_open as u64) > m_e_max_supply.error_add(master_edition.supply())? {
+//                 return Err(NFTPacksError::WrongNumberToOpen.into());
+//             }
+//         }
+//         if new_number_to_open == pack_voucher.number_to_open {
+//             return Err(NFTPacksError::CantSetTheSameValue.into());
+//         }
+//         pack_voucher.number_to_open = new_number_to_open;
+//     }
 
-    if let Some(new_action_to_prove) = changes.action_on_prove {
-        if new_action_to_prove == pack_voucher.action_on_prove {
-            return Err(NFTPacksError::CantSetTheSameValue.into());
-        }
-        pack_voucher.action_on_prove = new_action_to_prove;
-    }
+//     if let Some(new_action_to_prove) = changes.action_on_prove {
+//         if new_action_to_prove == pack_voucher.action_on_prove {
+//             return Err(NFTPacksError::CantSetTheSameValue.into());
+//         }
+//         pack_voucher.action_on_prove = new_action_to_prove;
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }

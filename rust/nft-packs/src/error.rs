@@ -96,9 +96,9 @@ pub enum NFTPacksError {
     #[error("Wrong max supply value")]
     WrongMaxSupply,
 
-    /// Wrong amount of NFTs to open pack
-    #[error("Wrong amount of NFTs to open pack")]
-    WrongNumberToOpen,
+    /// Voucher should have supply greater then 0
+    #[error("Voucher should have supply greater then 0")]
+    WrongVoucherSupply,
 
     /// Random oracle updated long time ago
     #[error("Random oracle updated long time ago")]
@@ -135,6 +135,22 @@ pub enum NFTPacksError {
     /// Can't close the pack before end date
     #[error("Can't close the pack before end date")]
     EndDateNotArrived,
+
+    /// Pack description too long
+    #[error("Pack description too long")]
+    DescriptionTooLong,
+
+    /// Whitelisted creator inactive
+    #[error("Whitelisted creator inactive")]
+    WhitelistedCreatorInactive,
+
+    /// Wrong whitelisted creator address
+    #[error("Wrong whitelisted creator address")]
+    WrongWhitelistedCreator,
+
+    /// Voucher owner mismatch
+    #[error("Voucher owner mismatch")]
+    WrongVoucherOwner,
 }
 
 impl From<NFTPacksError> for ProgramError {

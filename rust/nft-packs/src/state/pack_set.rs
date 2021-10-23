@@ -54,12 +54,16 @@ impl Default for PackDistributionType {
 pub struct PackSet {
     /// Account type - PackSet
     pub account_type: AccountType,
-    /// Name
-    pub name: [u8; 32],
-    /// Link to pack set image
-    pub uri: String,
+    /// Store
+    pub store: Pubkey,
     /// Pack authority
     pub authority: Pubkey,
+    /// Name
+    pub name: [u8; 32],
+    /// Description
+    pub description: String,
+    /// Link to pack set image
+    pub uri: String,
     /// Authority to mint voucher editions
     pub minting_authority: Pubkey,
     /// Card masters counter
@@ -86,7 +90,9 @@ impl PackSet {
     /// Initialize a PackSet
     pub fn init(&mut self, params: InitPackSetParams) {
         self.account_type = AccountType::PackSet;
+        self.store = params.store;
         self.name = params.name;
+        self.description = params.description;
         self.uri = params.uri;
         self.authority = params.authority;
         self.minting_authority = params.minting_authority;
@@ -192,8 +198,12 @@ impl PackSet {
 
 /// Initialize a PackSet params
 pub struct InitPackSetParams {
+    /// Store
+    pub store: Pubkey,
     /// Name
     pub name: [u8; 32],
+    /// Description
+    pub description: String,
     /// URI
     pub uri: String,
     /// Pack authority
@@ -215,8 +225,8 @@ pub struct InitPackSetParams {
 impl Sealed for PackSet {}
 
 impl Pack for PackSet {
-    // 1 + 32 + 200 + 32 + 32 + 4 + 4 + 9 + 1 + 1 + 1 + 4 + 8 + 9
-    const LEN: usize = 338;
+    // 1 + 32 + 200 + 500 + 32 + 32 + 4 + 4 + 9 + 1 + 1 + 1 + 4 + 8 + 9
+    const LEN: usize = 838;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;

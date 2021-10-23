@@ -23,21 +23,14 @@ pub struct AddCardToPackArgs {
     pub index: u32,
 }
 
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct AddVoucherToPackArgs {
-    /// How many vouchers of this type is required to open a pack
-    pub number_to_open: u32,
-    /// Burn / Redeem
-    pub action_on_prove: ActionOnProve,
-}
-
 /// Initialize a PackSet arguments
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct InitPackSetArgs {
     /// Name
     pub name: [u8; 32],
+    /// Description
+    pub description: String,
     /// Pack set preview image
     pub uri: String,
     /// If true authority can make changes at deactivated phase
@@ -82,12 +75,15 @@ pub enum NFTPacksInstruction {
     /// Accounts:
     /// - write                          pack_set
     /// - signer                         authority
+    /// - read                           store
+    /// - read                           whitelisted_creator
     /// - read                           minting_authority
     /// - read                           Rent account
     /// - read                           Clock account
     ///
     /// Parameters:
     /// - name	[u8; 32]
+    /// - description String
     /// - mutable	bool
     /// - distribution_type    DistributionType
     /// - allowed_amount_to_redeem    u32
@@ -129,21 +125,15 @@ pub enum NFTPacksInstruction {
     /// - read, write                   pack_set
     /// - write                         pack_voucher (PDA, [pack, 'voucher', index])
     /// - signer, write                 authority
+    /// - signer, read                  voucher_owner
     /// - read                          master_edition
     /// - read                          master_metadata
     /// - read                          mint
     /// - write                         source
-    /// - write                         token_account (program account to hold MasterEdition token)
-    /// - read                          program_authority
     /// - read                          rent
     /// - read                          system_program
     /// - read                          spl_token program
-    ///
-    /// Parameters:
-    /// - max_supply	Option<u32>
-    /// - number_to_open	u32
-    /// - action_on_prove	enum[burn, redeem]
-    AddVoucherToPack(AddVoucherToPackArgs),
+    AddVoucherToPack,
 
     /// Activate
     ///
@@ -358,12 +348,16 @@ pub fn init_pack(
     program_id: &Pubkey,
     pack_set: &Pubkey,
     authority: &Pubkey,
+    store: &Pubkey,
+    whitelisted_creator: &Pubkey,
     minting_authority: &Pubkey,
     args: InitPackSetArgs,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new_readonly(*authority, true),
+        AccountMeta::new_readonly(*store, false),
+        AccountMeta::new_readonly(*whitelisted_creator, false),
         AccountMeta::new_readonly(*minting_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
@@ -417,25 +411,21 @@ pub fn add_voucher_to_pack(
     pack_set: &Pubkey,
     pack_voucher: &Pubkey,
     authority: &Pubkey,
+    voucher_owner: &Pubkey,
     master_edition: &Pubkey,
     master_metadata: &Pubkey,
     mint: &Pubkey,
     source: &Pubkey,
-    token_account: &Pubkey,
-    args: AddVoucherToPackArgs,
 ) -> Instruction {
-    let (program_authority, _) = find_program_authority(program_id);
-
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(*pack_voucher, false),
         AccountMeta::new(*authority, true),
+        AccountMeta::new_readonly(*voucher_owner, true),
         AccountMeta::new_readonly(*master_edition, false),
         AccountMeta::new_readonly(*master_metadata, false),
         AccountMeta::new_readonly(*mint, false),
         AccountMeta::new(*source, false),
-        AccountMeta::new(*token_account, false),
-        AccountMeta::new(program_authority, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
@@ -443,7 +433,7 @@ pub fn add_voucher_to_pack(
 
     Instruction::new_with_borsh(
         *program_id,
-        &NFTPacksInstruction::AddVoucherToPack(args),
+        &NFTPacksInstruction::AddVoucherToPack,
         accounts,
     )
 }

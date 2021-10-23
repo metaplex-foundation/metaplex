@@ -56,9 +56,9 @@ impl Processor {
                 msg!("Instruction: AddCardToPack");
                 add_card_to_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::AddVoucherToPack(args) => {
+            NFTPacksInstruction::AddVoucherToPack => {
                 msg!("Instruction: AddVoucherToPack");
-                add_voucher_to_pack(program_id, accounts, args)
+                add_voucher_to_pack(program_id, accounts)
             }
             NFTPacksInstruction::Activate => {
                 msg!("Instruction: Activate");
