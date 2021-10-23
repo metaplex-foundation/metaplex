@@ -109,7 +109,7 @@ const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'js/assets/wallets/mf-logo.svg'} />
+      <img src={'/mf-logo.svg'} />
     </Link>
   );
 };
