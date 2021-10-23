@@ -13,7 +13,6 @@ import {
   Progress,
   Space,
 } from 'antd';
-import { BN } from 'bn.js';
 import { useMeta } from '../../contexts';
 import {
   Store,
@@ -45,8 +44,7 @@ import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
 import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useNotifications } from '../../hooks';
-import { useAuctionManagersToCache } from './hooks/useAuctionManagersToCache';
+import { useAuctionManagersToCache } from '../../hooks';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -412,7 +410,7 @@ function InnerAdminView({
         }
         <Col span={11} offset={1}>
           <h3>Cache Auctions</h3>
-          <p>Auctions were detected that do not have a cache account. Click "build cache" to backfill past auctions. This will reduce page load times for <Link to="/auctions">listings</Link>. Once you've started ensure you complete the migration of all accounts as the storefront will start to use them as soon as one is available. It is recommended to run the conversion when you have no active auctions.</p>
+          <p>Auctions were detected that do not have a cache account. Click "build cache" to backfill past auctions. This will reduce page load times for <Link to="/">listings</Link>. Once you've started ensure you complete the migration of all accounts as the storefront will start to use them as soon as one is available. It is recommended to run the conversion when you have no active auctions.</p>
           <Space direction="vertical" size="middle" align="center">
             <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
             {auctionManagersToCache.length > 0 && (

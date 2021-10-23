@@ -272,8 +272,13 @@ export const loadAccounts = async (
   };
 
   const loadAuctionsAndVaults = async (
+    {
+      auctionManagersByAuction
+    }: MetaState
   ) => {
-    const auctionManagers = Object.values(state.auctionManagersByAuction)
+    const auctionManagers = Object.values(auctionManagersByAuction);
+    state.auctionManagersByAuction = auctionManagersByAuction;
+    
     await Promise.all([
       loadAuctionsFromAuctionManagers(auctionManagers),
       loadVaultsForAuctionManagers(auctionManagers),
@@ -289,7 +294,7 @@ export const loadAccounts = async (
   ])
 
 
-  if (isEmpty(state.storeIndexer)) {
+  if (isEmpty(auctionsState.storeIndexer)) {
     await loadAuctionManagers(connection, storeAddress).then(loadAuctionsAndVaults);
   }
 
