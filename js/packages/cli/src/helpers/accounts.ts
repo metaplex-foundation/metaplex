@@ -33,6 +33,19 @@ export const createConfig = async function (
   const configAccount = Keypair.generate();
   const uuid = uuidFromConfigPubkey(configAccount.publicKey);
 
+  if (!configData.creators || configData.creators.length === 0) {
+    throw new Error(`Invalid config, there must be at least one creator.`);
+  }
+
+  const totalShare = (configData.creators || []).reduce(
+    (acc, curr) => acc + curr.share,
+    0,
+  );
+
+  if (totalShare !== 100) {
+    throw new Error(`Invalid config, creators shares must add up to 100`);
+  }
+
   return {
     config: configAccount.publicKey,
     uuid,
