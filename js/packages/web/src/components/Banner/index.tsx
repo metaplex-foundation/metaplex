@@ -41,13 +41,6 @@ export const Banner = (props: {
           {props.actionComponent}
         </div>
       </div>
-      <div
-        id={'current-banner'}
-        style={{ backgroundImage: `url(${props.src})` }}
-      >
-        <span id={'gradient-banner'}></span>
-
-      </div>
     </>
   );
 };
