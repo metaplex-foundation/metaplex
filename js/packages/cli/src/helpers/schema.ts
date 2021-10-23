@@ -3,7 +3,7 @@ import base58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
 type StringPublicKey = string;
 
-import BN from 'bn.js';
+import { BN } from '@project-serum/anchor';
 
 export class Creator {
   address: StringPublicKey;

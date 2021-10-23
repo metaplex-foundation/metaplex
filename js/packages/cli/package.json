@@ -47,7 +47,6 @@
     "@project-serum/anchor": "^0.14.0",
     "@solana/spl-token": "^0.1.8",
     "arweave": "^1.10.16",
-    "bn.js": "^5.2.0",
     "borsh": "^0.4.0",
     "commander": "^8.1.0",
     "form-data": "^4.0.0",

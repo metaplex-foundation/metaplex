@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
-import BN from 'bn.js';
 import fetch from 'node-fetch';
 
 import {
@@ -324,7 +323,11 @@ programCommand('verify').action(async (directory, cmd) => {
     configAddress,
   )) as Config;
 
-  const lineCount = new BN(config.data.slice(247, 247 + 4), undefined, 'le');
+  const lineCount = new anchor.BN(
+    config.data.slice(247, 247 + 4),
+    undefined,
+    'le',
+  );
 
   log.info(
     `uploaded (${lineCount.toNumber()}) out of (${
