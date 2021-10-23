@@ -13,6 +13,7 @@ export const SAFETY_DEPOSIT_CONFIG_COLLECTION = "safetyDepositConfigs ";
 export const AUCTION_COLLECTION = "auctions";
 export const AUCTION_DATA_EXTENDED_COLLECTION = "auctionDataExtended";
 export const STORE_COLLECTIONS = "stores";
+export const BID_REDEMPTION_TICKETS_V2_COLLECTION = "bidRedemptionTicketsV2";
 
 export const createMongoClient = async () => {
     const client = new MongoClient(process.env.MONGO_DB_CONNECTION_STRING!);

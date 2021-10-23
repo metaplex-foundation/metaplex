@@ -4,15 +4,21 @@ import { publicKeyConverter } from "../serialization/converters/publicKeyConvert
 import { ConverterSet } from "../serialization/converterSet";
 import { AccountAndPubkey } from "../types";
 
-export class StoreAccountDocument {
-  store: string;
-  account: AccountInfo<Buffer>;
-  pubkey: string;
+export class AccountDocument {
+  pubkey : string;
+  account : AccountInfo<Buffer>
 
-  constructor(store: string, pubkey: string, account : AccountInfo<Buffer>) {
-    this.store = store;
+  constructor(pubkey:string, account : AccountInfo<Buffer>) {
     this.pubkey = pubkey;
     this.account = account;
+  }
+}
+export class StoreAccountDocument extends AccountDocument {
+  store: string;
+
+  constructor(store: string, pubkey: string, account : AccountInfo<Buffer>) {
+    super(pubkey, account);
+    this.store = store;
   }
 }
 

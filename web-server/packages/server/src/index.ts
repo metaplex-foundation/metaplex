@@ -14,6 +14,7 @@ import { auctionDataExtended } from "./routes/auctionDataExtended";
 import { safetyDepositBoxesRouter } from "./routes/safetyDepositBox";
 import { safetyDepositConfigsRouter } from "./routes/safetyDepositConfig";
 import { storeRouter } from "./routes/store";
+import { bidRedemptionTicketsV2Router } from "./routes/bidRedemptionTicketV2";
 
 const app = express();
 app.use(express.json());
@@ -30,6 +31,7 @@ app.use(API_BASE, auctionDataExtended);
 app.use(API_BASE, safetyDepositBoxesRouter);
 app.use(API_BASE, safetyDepositConfigsRouter);
 app.use(API_BASE, storeRouter);
+app.use(API_BASE, bidRedemptionTicketsV2Router);
 
 loadMetaplexData();
 
