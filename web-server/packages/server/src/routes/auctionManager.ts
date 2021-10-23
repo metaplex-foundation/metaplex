@@ -18,6 +18,10 @@ router.get('/:store/auctionManagers', async (req: Request, res: Response) => {
         filter.auction = req.query.auction
     }
 
+    if(req.query.collection) {
+        filter.collection = req.query.collection;
+    }
+
     const cursor = coll.find<AuctionManagerAccountDocument>(filter);
     const data = await cursor.toArray();
     res.send(data.map(c => ({
