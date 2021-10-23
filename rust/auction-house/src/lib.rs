@@ -11,7 +11,7 @@ use {
         AnchorDeserialize, AnchorSerialize,
     },
     anchor_spl::token::{Mint, TokenAccount},
-    spl_token::instruction::approve,
+    spl_token::instruction::{approve, revoke},
 };
 
 anchor_lang::declare_id!("noneAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -187,7 +187,7 @@ pub mod auction_house {
         requires_sign_off: bool,
         can_change_sale_price: bool,
     ) -> ProgramResult {
-        let treasury_mint = &ctx.accounts.treasury_mint;
+        /*let treasury_mint = &ctx.accounts.treasury_mint;
         let payer = &ctx.accounts.payer;
         let authority = &ctx.accounts.authority;
         let auction_house = &mut ctx.accounts.auction_house;
@@ -274,7 +274,7 @@ pub mod auction_house {
                 treasury_withdrawal_destination.key(),
                 treasury_withdrawal_destination_owner.key(),
             )?;
-        }
+        }*/
 
         Ok(())
     }
@@ -499,6 +499,7 @@ pub mod auction_house {
         let auction_house = &ctx.accounts.auction_house;
         let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
         let trade_state = &ctx.accounts.trade_state;
+        let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
 
         assert_keys_equal(token_mint.key(), token_account.mint)?;
@@ -535,6 +536,24 @@ pub mod auction_house {
             ],
             &[fee_payer_seeds],
         )?;
+
+        if token_account.owner == wallet.key() {
+            invoke_signed(
+                &revoke(
+                    &token_program.key(),
+                    &token_account.key(),
+                    &wallet.key(),
+                    &[],
+                )
+                .unwrap(),
+                &[
+                    token_program.to_account_info(),
+                    token_account.to_account_info(),
+                    wallet.to_account_info(),
+                ],
+                &[],
+            )?;
+        }
 
         Ok(())
     }
@@ -798,7 +817,7 @@ pub mod auction_house {
             if free_seller_trade_state.data_is_empty() {
                 return Err(ErrorCode::SaleRequiresSigner.into());
             } else if !free_seller_trade_state.data_is_empty()
-                && !authority.to_account_info().is_signer
+                && (!authority.to_account_info().is_signer || !auction_house.can_change_sale_price)
             {
                 return Err(ErrorCode::SaleRequiresSigner.into());
             }
@@ -847,7 +866,7 @@ pub mod auction_house {
                 token_program.to_account_info(),
                 token_account.to_account_info(),
                 program.to_account_info(),
-                rent.to_account_info(),
+                wallet.to_account_info(),
             ],
             &[],
         )?;
@@ -1142,6 +1161,8 @@ pub struct Cancel<'info> {
     auction_house_fee_account: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[0])]
     trade_state: UncheckedAccount<'info>,
+    #[account(address = spl_token::id())]
+    token_program: UncheckedAccount<'info>,
     #[account(address = system_program::ID)]
     system_program: UncheckedAccount<'info>,
 }
@@ -1152,7 +1173,9 @@ pub struct CreateAuctionHouse<'info> {
     treasury_mint: Account<'info, Mint>,
     payer: Signer<'info>,
     authority: UncheckedAccount<'info>,
+    #[account(mut)]
     fee_withdrawal_destination: UncheckedAccount<'info>,
+    #[account(mut)]
     treasury_withdrawal_destination: UncheckedAccount<'info>,
     treasury_withdrawal_destination_owner: UncheckedAccount<'info>,
     #[account(init, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=bump, space=AUCTION_HOUSE_SIZE, payer=payer)]
@@ -1176,7 +1199,9 @@ pub struct UpdateAuctionHouse<'info> {
     payer: Signer<'info>,
     authority: Signer<'info>,
     new_authority: UncheckedAccount<'info>,
+    #[account(mut)]
     fee_withdrawal_destination: UncheckedAccount<'info>,
+    #[account(mut)]
     treasury_withdrawal_destination: UncheckedAccount<'info>,
     treasury_withdrawal_destination_owner: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), authority.key().as_ref(), treasury_mint.key().as_ref()], bump=auction_house.bump, has_one=authority, has_one=treasury_mint)]

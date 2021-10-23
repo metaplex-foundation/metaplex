@@ -1,5 +1,5 @@
 [package]
-name = "auction-house"
+name = "metaplex-auction-house"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,7 +7,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "auction_house"
+name = "metaplex_auction_house"
 
 [features]
 no-entrypoint = []

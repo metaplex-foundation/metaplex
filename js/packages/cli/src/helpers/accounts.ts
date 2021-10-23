@@ -6,6 +6,10 @@ import {
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   FAIR_LAUNCH_PROGRAM_ID,
+  AUCTION_HOUSE_PROGRAM_ID,
+  AUCTION_HOUSE,
+  FEE_PAYER,
+  TREASURY,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
@@ -255,6 +259,51 @@ export const getEditionMarkPda = async (
   )[0];
 };
 
+export const getAuctionHouse = async (
+  creator: anchor.web3.PublicKey,
+  treasuryMint: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), creator.toBuffer(), treasuryMint.toBuffer()],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseFeeAcct = async (
+  auctionHouse: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      auctionHouse.toBuffer(),
+      Buffer.from(FEE_PAYER),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseTreasuryAcct = async (
+  auctionHouse: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      auctionHouse.toBuffer(),
+      Buffer.from(TREASURY),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseBuyerEscrow = async (
+  auctionHouse: anchor.web3.PublicKey,
+  wallet: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), auctionHouse.toBuffer(), wallet.toBuffer()],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
@@ -299,4 +348,25 @@ export async function loadFairLaunchProgram(
   const idl = await anchor.Program.fetchIdl(FAIR_LAUNCH_PROGRAM_ID, provider);
 
   return new anchor.Program(idl, FAIR_LAUNCH_PROGRAM_ID, provider);
+}
+
+export async function loadAuctionHouseProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(AUCTION_HOUSE_PROGRAM_ID, provider);
+
+  return new anchor.Program(idl, AUCTION_HOUSE_PROGRAM_ID, provider);
 }
