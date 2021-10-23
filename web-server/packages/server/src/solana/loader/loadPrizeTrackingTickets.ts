@@ -23,7 +23,8 @@ export const loadPrizeTrackingTickets = async (
     ));
 
     const collection = client.db(DB).collection(PRIZE_TRACKING_TICKETS_COLLECTION);
-    collection.createIndex({store:1, pubkey : 1});
+    await collection.deleteMany({});
+    await collection.createIndex({pubkey : 1});
 
     if(docs.length > 0) {
         accountConverterSet.applyConversion(docs);

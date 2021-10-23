@@ -25,6 +25,7 @@ router.get('/:store/auctionManagers', async (req: Request, res: Response) => {
     const cursor = coll.find<AuctionManagerAccountDocument>(filter);
     const data = await cursor.toArray();
     res.send(data.map(c => ({
+        metadata : c.metadata,
         collection : c.collection,
         price : c.price,
         pubkey: c.pubkey,

@@ -44,10 +44,10 @@ export const loadBidRedemptionTicketsV2 = async (
   const collection = client
     .db(DB)
     .collection(BID_REDEMPTION_TICKETS_V2_COLLECTION);
-  collection.deleteMany({});
-  collection.createIndex({ pubkey: 1 });
-  collection.createIndex({ auctionManager: 1 });
-  collection.createIndex({ winnerIndex: 1 });
+  await collection.deleteMany({});
+  await collection.createIndex({ pubkey: 1 });
+  await collection.createIndex({ auctionManager: 1 });
+  await collection.createIndex({ winnerIndex: 1 });
 
   if (docs.length) {
     bidRedemptionV2Converters.applyConversion(docs);

@@ -52,11 +52,17 @@ export const loadCreators = async (
   storeCreators.forEach((creator) =>
     accountConverterSet.applyConversion(creator)
   );
+
+
   const coll = client.db(DB).collection(CREATORS_COLLECTION);
-  coll.deleteMany({store : store});
-  coll.createIndex({ store: 1 });
+  await coll.deleteMany({store : store});
   if(storeCreators.length > 0) {
-    await coll.insertMany(storeCreators);
+    try {
+      await coll.insertMany(storeCreators);
+    }
+    catch(err) {
+      console.log(err);
+    }
   }
   return parsedAccounts;
 };

@@ -380,17 +380,20 @@ export class AuctionManagerAccountDocument extends StoreAccountDocument {
     auction: string;
     collection: string | undefined;
     price : number | undefined;
+    metadata : string;
     constructor(
       store: string,
       account: AccountInfo<Buffer>,
       pubkey: string,
       auction: string,
       collection: string | undefined,
-      price : number | undefined
+      price : number | undefined,
+      metadata : string
     ) {
       super(store, pubkey, account);
       this.auction = auction;
       this.collection = collection;
       this.price = price;
+      this.metadata = metadata;
     }
   }

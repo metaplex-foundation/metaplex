@@ -179,7 +179,15 @@ export const loadMetadata = async (
   await coll.createIndex({ masterEdition: 1 });
 
   if(metadataDocuments.length > 0) {
-    await coll.insertMany(metadataDocuments);
+    try {
+      await coll.insertMany(metadataDocuments);
+    }
+    catch(err) {
+      console.log(err);
+    }
+    finally {
+      const docs = await coll.find({}).toArray();
+    }
   }
 
   const editionKeys : StringPublicKey[] = parsedMetadata.map(m => m.edition!);
@@ -219,24 +227,24 @@ export const loadMetadata = async (
   const masterEditionV1Coll = client.db(DB).collection(MASTER_EDITIONS_V1_COLLECTION);
   const masterEditionV2Coll = client.db(DB).collection(MASTER_EDITIONS_V2_COLLECTION);
 
-  editionColl.deleteMany({store:store});
-  editionColl.createIndex({store: 1, pubkey :1 });
+  await editionColl.deleteMany({store:store});
+  await editionColl.createIndex({store: 1, pubkey :1 });
 
   if(regularEditions.length > 0) {
     accountConverterSet.applyConversion(regularEditions);
     await editionColl.insertMany(regularEditions);
   }
 
-  masterEditionV1Coll.deleteMany({});
-  masterEditionV1Coll.createIndex({store:1, pubkey:1, printingMint: 1, oneTimePrintingAuthorizationMint : 1});
+  await masterEditionV1Coll.deleteMany({});
+  await masterEditionV1Coll.createIndex({store:1, pubkey:1, printingMint: 1, oneTimePrintingAuthorizationMint : 1});
 
   if(masterEditionsV1.length > 0) {
     accountConverterSet.applyConversion(masterEditionsV1);
     await masterEditionV1Coll.insertMany(masterEditionsV1);
   }
 
-  masterEditionV2Coll.deleteMany({store:store});
-  masterEditionV2Coll.createIndex({store: 1, pubkey :1 });
+  await masterEditionV2Coll.deleteMany({store:store});
+  await masterEditionV2Coll.createIndex({store: 1, pubkey :1 });
 
   if(masterEditionsV2.length >0) {
     accountConverterSet.applyConversion(masterEditionsV2);
