@@ -2,6 +2,7 @@ import {
   createAssociatedTokenAccountInstruction,
   createMetadataInstruction,
   createMasterEditionInstruction,
+  createUpdateMetadataInstruction,
 } from '../helpers/instructions';
 import { sendTransactionWithRetryWithKeypair } from '../helpers/transactions';
 import {
@@ -14,6 +15,7 @@ import {
   Data,
   Creator,
   CreateMetadataArgs,
+  UpdateMetadataArgs,
   CreateMasterEditionArgs,
   METADATA_SCHEMA,
 } from '../helpers/schema';
@@ -30,20 +32,14 @@ import {
 } from '@solana/web3.js';
 import log from 'loglevel';
 
-export const mintNFT = async (
-  connection: Connection,
-  walletKeypair: Keypair,
-  metadataLink: string,
-  mutableMetadata: boolean = true,
-): Promise<{
-  metadataAccount: PublicKey;
-} | void> => {
+export const createMetadata = async (metadataLink: string): Promise<Data> => {
   // Metadata
   let metadata;
   try {
     metadata = await (await fetch(metadataLink, { method: 'GET' })).json();
   } catch (e) {
-    log.error('Could not find metadata at', metadataLink);
+    log.debug(e);
+    log.error('Invalid metadata at', metadataLink);
     return;
   }
 
@@ -67,6 +63,34 @@ export const mintNFT = async (
   ) {
     return;
   }
+
+  const creators = metaCreators.map(
+    creator =>
+      new Creator({
+        address: creator.address,
+        share: creator.share,
+        verified: 1,
+      }),
+  );
+
+  return new Data({
+    symbol: metadata.symbol,
+    name: metadata.name,
+    uri: metadataLink,
+    sellerFeeBasisPoints: metadata.seller_fee_basis_points,
+    creators: creators,
+  });
+};
+
+export const mintNFT = async (
+  connection: Connection,
+  walletKeypair: Keypair,
+  metadataLink: string,
+  mutableMetadata: boolean = true,
+): Promise<PublicKey | void> => {
+  // Retrieve metadata
+  const data = await createMetadata(metadataLink);
+  if (!data) return;
 
   // Create wallet from keypair
   const wallet = new anchor.Wallet(walletKeypair);
@@ -116,22 +140,6 @@ export const mintNFT = async (
 
   // Create metadata
   const metadataAccount = await getMetadata(mint.publicKey);
-  const creators = metaCreators.map(
-    creator =>
-      new Creator({
-        address: creator.address,
-        share: creator.share,
-        verified: 1,
-      }),
-  );
-  const data = new Data({
-    symbol: metadata.symbol,
-    name: metadata.name,
-    uri: metadataLink,
-    sellerFeeBasisPoints: metadata.seller_fee_basis_points,
-    creators: creators,
-  });
-
   let txnData = Buffer.from(
     serialize(
       METADATA_SCHEMA,
@@ -198,5 +206,43 @@ export const mintNFT = async (
   // Force wait for max confirmations
   await connection.getParsedConfirmedTransaction(res.txid, 'confirmed');
   log.info('NFT created', res.txid);
-  return { metadataAccount };
+  return metadataAccount;
+};
+
+export const updateMetadata = async (
+  mintKey: PublicKey,
+  connection: Connection,
+  walletKeypair: Keypair,
+  metadataLink: string,
+): Promise<PublicKey | void> => {
+  // Retrieve metadata
+  const data = await createMetadata(metadataLink);
+  if (!data) return;
+
+  const metadataAccount = await getMetadata(mintKey);
+  const signers: anchor.web3.Keypair[] = [];
+  const value = new UpdateMetadataArgs({
+    data,
+    updateAuthority: walletKeypair.publicKey.toBase58(),
+    primarySaleHappened: null,
+  });
+  const txnData = Buffer.from(serialize(METADATA_SCHEMA, value));
+
+  const instructions = [
+    createUpdateMetadataInstruction(
+      metadataAccount,
+      walletKeypair.publicKey,
+      txnData,
+    ),
+  ];
+
+  // Execute transaction
+  const txid = await sendTransactionWithRetryWithKeypair(
+    connection,
+    walletKeypair,
+    instructions,
+    signers,
+  );
+  console.log('Metadata updated', txid);
+  return metadataAccount;
 };
