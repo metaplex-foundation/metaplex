@@ -84,6 +84,7 @@ export const loadMetadata = async (
   connection: Connection,
   client: MongoClient
 ) => {
+  console.log('Loading metadata and editions...');
   const collection = client.db(DB).collection(CREATORS_COLLECTION);
   const creators = await collection
     .find<StoreAccountDocument>({ store: store })
@@ -250,4 +251,6 @@ export const loadMetadata = async (
     accountConverterSet.applyConversion(masterEditionsV2);
     await masterEditionV2Coll.insertMany(masterEditionsV2);
   }
+
+  console.log('Metadata and editions loaded');
 };

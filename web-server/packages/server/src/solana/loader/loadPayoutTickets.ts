@@ -9,6 +9,7 @@ export const loadPayoutTickets = async (
     connection: Connection,
     client: MongoClient
   ) => {
+      console.log('Loading payout tickets...');
       const filters = [
           {
               memcmp : {
@@ -31,4 +32,5 @@ export const loadPayoutTickets = async (
         accountConverterSet.applyConversion(docs);
         await collection.insertMany(docs);
     }
+    console.log('Payout tickets loaded');
   }

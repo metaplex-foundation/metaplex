@@ -1,0 +1,13 @@
+FROM node as base
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
+COPY . .
+
+ENV NODE_ENV=production\
+    MONGO_DB_CONNECTION_STRING="mongodb+srv://hovhannessh:Solicy\$55@ninja-marketplace.paeaj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+
+ENTRYPOINT [ "npm", "run", "cache-update" ]

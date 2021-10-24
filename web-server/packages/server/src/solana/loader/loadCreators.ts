@@ -16,6 +16,7 @@ export const loadCreators = async (
   connection: Connection,
   client: MongoClient
 ) => {
+  console.log('Loading creators...');
   const accounts = await getProgramAccounts(connection, METAPLEX_ID, [
     {
       memcmp: {
@@ -64,5 +65,7 @@ export const loadCreators = async (
       console.log(err);
     }
   }
+
+  console.log('Creators loaded');
   return parsedAccounts;
 };

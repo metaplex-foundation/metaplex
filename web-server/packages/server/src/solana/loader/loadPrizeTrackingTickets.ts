@@ -8,6 +8,7 @@ export const loadPrizeTrackingTickets = async (
     connection: Connection,
     client: MongoClient
   ) => {
+      console.log('Loading prize tracking tickets...');
       const filters = [
           {
               memcmp : {
@@ -30,4 +31,5 @@ export const loadPrizeTrackingTickets = async (
         accountConverterSet.applyConversion(docs);
         await collection.insertMany(docs);
     }
+    console.log('Prize tracking tickets loaded');
   }

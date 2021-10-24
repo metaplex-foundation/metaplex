@@ -13,6 +13,7 @@ import { Store } from "../../routes/store";
 import { loadBidRedemptionTicketsV2 } from "./loadBidRedemptionTicketsV2";
 import { loadBidRedemptionTicketsV1 } from "./loadBidRedemptionTicketsV1";
 import { loadPayoutTickets } from "./loadPayoutTickets";
+import 'log-timestamp'
 
 export const loadMetaplexData = async () => {
   const connection = createDevNetConnection();

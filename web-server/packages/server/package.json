@@ -2,11 +2,11 @@
   "name": "ninja-plex-web-server",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "ts-node-dev -r dotenv/config src/index.ts",
-    "build": "tsc -p ."
+    "prod": "ts-node src/index.ts",
+    "cache-update" : "ts-node src/cache-update.ts"
   },
   "keywords": [],
   "author": "",
@@ -30,7 +30,9 @@
     "bs58": "^4.0.1",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "ts-node": "^9.1.1",
     "lodash": "^4.17.21",
+    "log-timestamp": "^0.3.0",
     "moment": "2.29.1",
     "mongodb": "^4.1.2"
   }
