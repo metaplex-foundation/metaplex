@@ -1,7 +1,4 @@
 import React from "react"
-import {
-  Stack,
-} from "@mui/material";
 
 export const DragAndDrop = (props) => {
   const dropRef = React.useRef<HTMLDivElement>(null);
