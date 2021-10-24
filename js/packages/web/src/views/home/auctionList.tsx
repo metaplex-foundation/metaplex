@@ -24,7 +24,6 @@ export enum LiveAuctionViewState {
   Participated = '1',
   Ended = '2',
   Resale = '3',
-  notResale = '3',
 }
 
 export const AuctionListView = () => {
@@ -33,7 +32,7 @@ export const AuctionListView = () => {
     ...useAuctions(AuctionViewState.Ended),
     ...useAuctions(AuctionViewState.BuyNow),
   ];
-  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.notResale);
+  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
@@ -67,14 +66,6 @@ export const AuctionListView = () => {
           .toNumber() || 0,
     )
     .filter(m => checkPrimarySale(m) == true);
-  const notResaleAuctions = auctions
-    .sort(
-      (a, b) =>
-        a.auction.info.endedAt
-          ?.sub(b.auction.info.endedAt || new BN(0))
-          .toNumber() || 0,
-    )
-    .filter(m => checkPrimarySale(m) == false);
 
   // Removed resales from live auctions
   const liveAuctions = auctions
@@ -106,9 +97,6 @@ export const AuctionListView = () => {
       break;
     case LiveAuctionViewState.Resale:
       items = resaleAuctions;
-      break;
-    case LiveAuctionViewState.notResale:
-      items = notResaleAuctions;
       break;
     case LiveAuctionViewState.Ended:
       items = auctionsEnded;
@@ -175,22 +163,24 @@ export const AuctionListView = () => {
                 <TabPane
                   tab={
                     <>
-                      <span className={'live'}></span> OG Mints
+                      <span className={'live'}></span> Live
                     </>
                   }
-                  key={LiveAuctionViewState.notResale}
+                  key={LiveAuctionViewState.All}
                 >
                   {liveAuctionsView}
                 </TabPane>
-                {liveAuctions.length > 0 && (
+                {resaleAuctions.length > 0 && (
                   <TabPane
-                    tab={'OG & Almost OG 2ndary Marketplace'}
-                    key={LiveAuctionViewState.All}
+                    tab={'Secondary Marketplace'}
+                    key={LiveAuctionViewState.Resale}
                   >
                     {liveAuctionsView}
                   </TabPane>
                 )}
-
+                <TabPane tab={'Ended'} key={LiveAuctionViewState.Ended}>
+                  {endedAuctions}
+                </TabPane>
                 {connected && (
                   <TabPane
                     tab={'Participated'}
