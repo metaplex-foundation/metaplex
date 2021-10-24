@@ -26,7 +26,7 @@ export const FAIR_LAUNCH_PROGRAM_ID = new PublicKey(
   'faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j',
 );
 export const AUCTION_HOUSE_PROGRAM_ID = new PublicKey(
-  'BnkkHLqMQKQo87ubDvtXQRBmdhHhWtiWrXnHL2oELq2E',
+  '63i87jSLHuKNMsJsj7YWaY9jNbntpeD2GWCQ2nYn2T7M',
 );
 export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
