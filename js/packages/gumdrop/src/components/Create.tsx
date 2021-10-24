@@ -89,6 +89,26 @@ const setupMailchimp = (auth : string, source : string) => {
   };
 }
 
+export type ClaimantInfo = {
+  handle : string,
+  amount : number,
+  pin    : Uint8Array,
+  bump   : number,
+  pda    : PublicKey,
+};
+
+const parseClaimants = (
+  input : string
+) : Array<ClaimantInfo> => {
+  const json = JSON.parse(input);
+  return json.map(obj => {
+    return {
+      handle : obj.handle,
+      amount : obj.amount,
+    };
+  });
+};
+
 export type CreateProps = {};
 
 export const Create = (
@@ -110,10 +130,11 @@ export const Create = (
       throw new Error(`Wallet not connected`);
     }
 
-    const claimants = JSON.parse(text);
+    const claimants = parseClaimants(text);
     const totalClaim = claimants.reduce((acc, c) => acc + c.amount, 0);
-    const pins = claimants.map(() => randomBytes());
-    console.log(claimants, pins);
+    claimants.forEach(c => {
+      c.pin = randomBytes();
+    });
 
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
@@ -165,7 +186,7 @@ export const Create = (
       const seeds = [
         mintKey.toBuffer(),
         Buffer.from(claimant.handle),
-        Buffer.from(pins[idx]),
+        Buffer.from(claimant.pin),
       ];
       const [claimantPda, bump] = await PublicKey.findProgramAddress(seeds, MERKLE_DISTRIBUTOR_ID);
       claimant.bump = bump;
@@ -237,7 +258,7 @@ export const Create = (
         `handle=${claimant.handle}`,
         `amount=${claimant.amount}`,
         `index=${idx}`,
-        `pin=${pins[idx]}`,
+        `pin=${claimant.pin}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
       const query = params.join("&");
@@ -319,7 +340,10 @@ export const Create = (
 
   const handleFiles = (files) => {
     if (files.length !== 1) {
-      alert("Expecting exactly one handle-file upload");
+      notify({
+        message: "File upload failed",
+        description: "Expecting exactly one handle-file upload",
+      });
       return;
     }
 
@@ -328,10 +352,31 @@ export const Create = (
     reader.onload = (e) => {
       if (e !== null && e.target !== null) {
         if (typeof e.target.result === "string") {
+          try {
+            parseClaimants(e.target.result);
+          } catch {
+            notify({
+              message: `File upload failed for: ${file.name}`,
+              description: (
+                <span>
+                  Could not parse uploaded file.{WHITESPACE}
+                  <HyperLink href="#/">
+                    Does it follow the JSON scheme?
+                  </HyperLink>
+                </span>
+              ),
+            });
+            setFilename("");
+            setText("");
+            return;
+          }
           setFilename(file.name);
           setText(e.target.result);
         } else {
-          alert(`Could not read uploaded file ${file}`);
+          notify({
+            message: `File upload failed for: ${file.name}`,
+            description: "Could not read uploaded file",
+          });
         }
       }
     };
