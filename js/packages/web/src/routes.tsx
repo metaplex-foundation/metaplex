@@ -24,6 +24,12 @@ export function Routes() {
             <Route exact path="/admin" component={() => <AdminView />} />
 
             <Route
+              exact
+              path="/analytics"
+              component={() => <AnalyticsView />}
+            />
+
+            <Route
               path="/de"
               component={() => {
                 window.location.href =

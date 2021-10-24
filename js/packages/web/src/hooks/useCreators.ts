@@ -1,10 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useMeta } from '../contexts';
 import { Artist } from '../types';
 import { AuctionView } from './useAuctions';
-
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
+import { PublicKey, Connection } from '@solana/web3.js';
+import { useConnection } from '@oyster/common';
 export const useCreators = (auction?: AuctionView) => {
   const { whitelistedCreatorsByCreator } = useMeta();
+  const connection = useConnection();
+  const [bidderTwitterHandles, setBidderTwitterHandles] = useState({});
 
   const creators = useMemo(
     () =>
@@ -32,13 +36,34 @@ export const useCreators = (auction?: AuctionView) => {
           verified: true,
           // not exact share of royalties
           share: (1 / arr.length) * 100,
-          image: knownCreator?.info.image || '',
-          name: knownCreator?.info.name || '',
-          link: knownCreator?.info.twitter || '',
+          image: '',
+          name: bidderTwitterHandles[creator] || '',
+          link: `https://twitter.com/${bidderTwitterHandles[creator]}` || '',
         } as Artist;
       }),
     [auction, whitelistedCreatorsByCreator],
   );
-
+  useEffect(() => {
+    const getTwitterHandle = async (
+      connection: Connection,
+      creators: any,
+    ): Promise<any | undefined> => {
+      let toreturn = {};
+      for (var c in creators) {
+        try {
+          const [twitterHandle] = await getHandleAndRegistryKey(
+            connection,
+            new PublicKey(c),
+          );
+          toreturn[c] = twitterHandle;
+        } catch (err) {
+          console.warn(`err`);
+          toreturn[c] = '';
+        }
+      }
+      return toreturn;
+    };
+    getTwitterHandle(connection, creators);
+  }, [bidderTwitterHandles]);
   return creators;
 };
