@@ -542,6 +542,7 @@ const loadDepositSafetyConfigs = async (
     .collection<SafetyDepositConfigAccountDocument>(
       SAFETY_DEPOSIT_CONFIG_COLLECTION
     );
+
   await collection.deleteMany({ store: store });
   await collection.createIndex({ store: 1 });
   await collection.createIndex({ pubkey: 1 });

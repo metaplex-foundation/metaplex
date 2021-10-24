@@ -8,23 +8,28 @@ export const API_BASE = "/api"
 const genericStoreDocumentHandler = (collection : string) => {
     const handler = async (req: Request, res: Response) => {
         const client = await createMongoClient();
-        const coll = client.db(DB).collection(collection);
+        try {
+            const coll = client.db(DB).collection(collection);
 
-        const store = req.params.store;
-        const filter : any = {
-            store: store
+            const store = req.params.store;
+            const filter : any = {
+                store: store
+            }
+
+            if(req.query.pubkey) {
+                filter.pubkey = req.query.pubkey;
+            }
+
+            const cursor = coll.find<StoreAccountDocument>(filter);
+            const data = await cursor.toArray();
+            res.send(data.map(c => ({
+                pubkey: c.pubkey,
+                account: c.account
+            })));
         }
-
-        if(req.query.pubkey) {
-            filter.pubkey = req.query.pubkey;
+        finally {
+            client.close();
         }
-
-        const cursor = coll.find<StoreAccountDocument>(filter);
-        const data = await cursor.toArray();
-        res.send(data.map(c => ({
-            pubkey: c.pubkey,
-            account: c.account
-        })));
     }
     return handler;
 }
@@ -32,22 +37,27 @@ const genericStoreDocumentHandler = (collection : string) => {
 const genericDocumentHandler = (collection : string) => {
     const handler = async (req: Request, res: Response) => {
         const client = await createMongoClient();
-        const coll = client.db(DB).collection(collection);
+        try {
+            const coll = client.db(DB).collection(collection);
 
-        const store = req.params.store;
-        const filter : any = {
+            const store = req.params.store;
+            const filter : any = {
+            }
+
+            if(req.query.pubkey) {
+                filter.pubkey = req.query.pubkey;
+            }
+
+            const cursor = coll.find<AccountDocument>(filter);
+            const data = await cursor.toArray();
+            res.send(data.map(c => ({
+                pubkey: c.pubkey,
+                account: c.account
+            })));
         }
-
-        if(req.query.pubkey) {
-            filter.pubkey = req.query.pubkey;
+        finally {
+            client.close();
         }
-
-        const cursor = coll.find<AccountDocument>(filter);
-        const data = await cursor.toArray();
-        res.send(data.map(c => ({
-            pubkey: c.pubkey,
-            account: c.account
-        })));
     }
     return handler;
 }

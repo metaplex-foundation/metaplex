@@ -20,6 +20,7 @@ import { payoutTicketsRouter } from "./routes/payoutTicket";
 import { bidderMetadataRouter } from "./routes/bidderMetadata";
 import { bidderPotRouter } from "./routes/bidderPot";
 
+console.log('ENVIRONMENT', process.env);
 const app = express();
 app.use(express.json());
 app.use(API_BASE, creatorsRouter);
@@ -41,8 +42,10 @@ app.use(API_BASE, payoutTicketsRouter);
 app.use(API_BASE, bidderMetadataRouter);
 app.use(API_BASE, bidderPotRouter);
 
-loadMetaplexData();
+if(process.env.NODE_ENV == 'development') {
+  loadMetaplexData();
+}
 
-app.listen(3001, () => {
-  console.log("server is listening biaaatch");
+app.listen(process.env.HOST_PORT, () => {
+  console.log("server is listening at " + process.env.HOST_PORT);
 });

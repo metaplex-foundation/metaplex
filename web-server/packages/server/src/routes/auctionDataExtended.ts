@@ -1,5 +1,5 @@
 import {
-    AUCTION_COLLECTION, AUCTION_DATA_EXTENDED_COLLECTION,
+    AUCTION_DATA_EXTENDED_COLLECTION,
   } from "../db/mongo-utils";
   import { getGenericStoreCollectionRouter } from "./base";
 

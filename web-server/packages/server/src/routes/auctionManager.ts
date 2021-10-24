@@ -5,32 +5,37 @@ import { AuctionManagerAccountDocument } from '../solana/accounts/auctionManager
 const router = express.Router();
 router.get('/:store/auctionManagers', async (req: Request, res: Response) => {
     const client = await createMongoClient();
-    const coll = client.db(DB).collection(AUCTION_MANAGERS_COLLECTION);
-    const store = req.params.store;
-    const filter : any = {
-        store: store
-    }
-    if(req.query.pubkey) {
-        filter.pubkey = req.query.pubkey;
-    }
+    try {
+        const coll = client.db(DB).collection(AUCTION_MANAGERS_COLLECTION);
+        const store = req.params.store;
+        const filter : any = {
+            store: store
+        }
+        if(req.query.pubkey) {
+            filter.pubkey = req.query.pubkey;
+        }
 
-    if(req.query.auction) {
-        filter.auction = req.query.auction
-    }
+        if(req.query.auction) {
+            filter.auction = req.query.auction
+        }
 
-    if(req.query.collection) {
-        filter.collection = req.query.collection;
-    }
+        if(req.query.collection) {
+            filter.collection = req.query.collection;
+        }
 
-    const cursor = coll.find<AuctionManagerAccountDocument>(filter);
-    const data = await cursor.toArray();
-    res.send(data.map(c => ({
-        metadata : c.metadata,
-        collection : c.collection,
-        price : c.price,
-        pubkey: c.pubkey,
-        account: c.account
-    })));
+        const cursor = coll.find<AuctionManagerAccountDocument>(filter);
+        const data = await cursor.toArray();
+        res.send(data.map(c => ({
+            metadata : c.metadata,
+            collection : c.collection,
+            price : c.price,
+            pubkey: c.pubkey,
+            account: c.account
+        })));
+    }
+    finally {
+        client.close();
+    }
 })
 
 export {router as auctionManagerRouter}

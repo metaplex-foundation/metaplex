@@ -18,22 +18,31 @@ export const loadMetaplexData = async () => {
   const connection = createDevNetConnection();
   const dbClient = await createMongoClient();
 
-  const stores = await dbClient
-    .db(DB)
-    .collection<Store>(STORES_COLLECTION)
-    .find({})
-    .toArray();
+  try {
+    const stores = await dbClient
+      .db(DB)
+      .collection<Store>(STORES_COLLECTION)
+      .find({})
+      .toArray();
 
-  if(stores.length) {
-    loadBidRedemptionTicketsV2(connection, dbClient);
-    loadPrizeTrackingTickets(connection, dbClient);
-    loadBidRedemptionTicketsV1(connection, dbClient);
-    loadPayoutTickets(connection, dbClient);
+    const promises: Promise<any>[] = [];
+
+    if (stores.length) {
+      promises.push(loadBidRedemptionTicketsV2(connection, dbClient));
+      promises.push(loadPrizeTrackingTickets(connection, dbClient));
+      promises.push(loadBidRedemptionTicketsV1(connection, dbClient));
+      promises.push(loadPayoutTickets(connection, dbClient));
+    }
+
+    const storePromises = stores.map(async (store) => {
+      await loadCreators(store.address, connection, dbClient);
+      await loadMetadata(store.address, connection, dbClient);
+      await loadAuctionManagers(store.address, connection, dbClient);
+    });
+    await Promise.all(promises.concat(storePromises));
+  } catch (err) {
+    console.log(err);
+  } finally {
+    dbClient.close();
   }
-
-  stores.forEach(async (store) => {
-    await loadCreators(store.address, connection, dbClient);
-    await loadMetadata(store.address, connection, dbClient);
-    loadAuctionManagers(store.address, connection, dbClient);
-  });
 };
