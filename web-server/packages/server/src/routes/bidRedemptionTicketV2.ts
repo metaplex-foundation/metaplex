@@ -1,11 +1,6 @@
 import express, {Request, Response} from 'express';
-import { fill } from 'lodash';
-import { createMongoClient, METADATA_COLLECTION, DB, SAFETY_DEPOSIT_BOX_COLLECTION, SAFETY_DEPOSIT_CONFIG_COLLECTION, BID_REDEMPTION_TICKETS_V2_COLLECTION } from '../db/mongo-utils';
-import { accountConverterSet, StoreAccountDocument } from '../solana/accounts/account';
+import { createMongoClient, DB, BID_REDEMPTION_TICKETS_V2_COLLECTION } from '../db/mongo-utils';
 import { BidRedemptionTicketV2AccountDocument } from '../solana/accounts/bidRedemptionTicket';
-import { decodeMetadata, MetadataAccountDocument } from '../solana/accounts/metadata';
-import { SafetyDepositBoxAccountDocument } from '../solana/accounts/safetyDepositBox';
-import { SafetyDepositConfigAccountDocument } from '../solana/accounts/safetyDepositConfig';
 
 const router = express.Router();
 router.get('/bidRedemptionTicketsV2', async (req: Request, res: Response) => {

@@ -1,7 +1,7 @@
 import { AccountInfo, Connection } from "@solana/web3.js";
 import { MongoClient } from "mongodb";
 import { accountConverterSet, StoreAccountDocument } from "../accounts/account";
-import { METAPLEX_ID, toPublicKey, VAULT_ID } from "../ids";
+import { AUCTION_ID, METAPLEX_ID, toPublicKey, VAULT_ID } from "../ids";
 import { getMultipleAccounts, getProgramAccounts } from "../rpc";
 import * as mongoUtils from "../../db/mongo-utils";
 import {
@@ -18,6 +18,8 @@ import {
   AUCTION_COLLECTION,
   AUCTION_DATA_EXTENDED_COLLECTION,
   METADATA_COLLECTION,
+  BIDDER_METADATA_COLLECTION,
+  BIDDER_POT_COLLECTION,
 } from "../../db/mongo-utils";
 import { decodeVault, VaultAccountDocument } from "../accounts/vault";
 import BN from "bn.js";
@@ -48,6 +50,8 @@ import {
 import _ from "lodash";
 import { MetaplexKey } from "../accounts/types";
 import { deserializeMint, fromLamports } from "../accounts/mint";
+import { BidderMetadataStoreAccountDocument, BIDDER_METADATA_LEN, decodeBidderMetadata } from "../accounts/bidderMetadata";
+import { BidderPotStoreAccountDocument, BIDDER_POT_LEN, decodeBidderPot } from "../accounts/bidderPot";
 
 export const loadAuctionManagers = async (
   store: string,
@@ -150,6 +154,9 @@ export const loadAuctionManagers = async (
     client,
     extendedAuctionKeys
   );
+
+  await loadBidderMetadata(store, connection, client, managers.map(m => m.pubkey));
+  await loadBidderPots(store, connection, client, managers.map(m => m.pubkey));
 
   const boxesByVault = _.groupBy(boxes, (b) => b.info.vault);
   const auctionByPubkey = new Map(auctions.map((m) => [m.pubkey, m.info]));
@@ -628,3 +635,79 @@ const loadAuctionDataExtended = async (
 
   return auctions;
 };
+
+const loadBidderMetadata = async (
+    store: string,
+    connection: Connection,
+    client: MongoClient,
+    auctionManagerPubkeys: string[]
+  ) => {
+      const filters = [
+          {
+              dataSize : BIDDER_METADATA_LEN
+          }
+      ]
+
+      const rawBidderMetadata = await getProgramAccounts(connection, AUCTION_ID, filters);
+
+      const docs = rawBidderMetadata.map(rbm => {
+          const bm = decodeBidderMetadata(rbm.account.data);
+          return new BidderMetadataStoreAccountDocument(
+              store,
+              rbm.pubkey,
+              rbm.account,
+              bm.bidderPubkey,
+              bm.auctionPubkey
+          )
+      })
+
+      const collection = client.db(DB).collection(BIDDER_METADATA_COLLECTION);
+      await collection.deleteMany({store : store});
+      await collection.createIndex({store : 1});
+      await collection.createIndex({pubkey :1});
+      await collection.createIndex({bidderPubkey : 1});
+      await collection.createIndex({auctionPubkey : 1});
+
+      if(docs.length) {
+          accountConverterSet.applyConversion(docs);
+          await collection.insertMany(docs);
+      }
+  }
+
+  const loadBidderPots = async (
+    store: string,
+    connection: Connection,
+    client: MongoClient,
+    auctionManagerPubkeys: string[]
+  ) => {
+      const filters = [
+          {
+              dataSize : BIDDER_POT_LEN
+          }
+      ]
+
+      const rawBidderPots = await getProgramAccounts(connection, AUCTION_ID, filters);
+
+      const docs = rawBidderPots.map((rbp) => {
+        const bp = decodeBidderPot(rbp.account.data);
+        return new BidderPotStoreAccountDocument(
+          store,
+          rbp.pubkey,
+          rbp.account,
+          bp.bidderAct,
+          bp.auctionAct
+        );
+      });
+
+      const collection = client.db(DB).collection(BIDDER_POT_COLLECTION);
+      await collection.deleteMany({ store: store });
+      await collection.createIndex({ store: 1 });
+      await collection.createIndex({ pubkey: 1 });
+      await collection.createIndex({ bidderPubkey: 1 });
+      await collection.createIndex({ auctionPubkey: 1 });
+
+      if (docs.length) {
+        accountConverterSet.applyConversion(docs);
+        await collection.insertMany(docs);
+      }
+  }
