@@ -14,6 +14,7 @@ import {
 } from '@oyster/common';
 
 import 'bootstrap/dist/css/bootstrap.css';
+import { getCreator } from '../../hooks/getData';
 
 const MENU_ITEMS = [
   {
@@ -52,13 +53,19 @@ const UserActions = () => {
   const { publicKey } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
+  const [canCreate, setCanCreate] = useState(0)
 
-  const canCreate = useMemo(() => {
-    return (
-      store?.info?.public ||
-      whitelistedCreatorsByCreator[pubkey]?.info?.activated
-    );
-  }, [pubkey, whitelistedCreatorsByCreator, store]);
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        creators.map((item)=>{
+          if(item.info.address == pubkey){
+            setCanCreate(item.info.activated)
+          };
+        })
+      }
+    });
+  }, []);
 
   return (
     <>

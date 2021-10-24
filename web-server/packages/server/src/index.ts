@@ -16,7 +16,9 @@ import { safetyDepositConfigsRouter } from "./routes/safetyDepositConfig";
 import { storeRouter } from "./routes/store";
 import { bidRedemptionTicketsV2Router } from "./routes/bidRedemptionTicketV2";
 
+const cors = require('cors');
 const app = express();
+app.use(cors())
 app.use(express.json());
 app.use(API_BASE, creatorsRouter);
 app.use(API_BASE, metadataRouter);
@@ -33,8 +35,8 @@ app.use(API_BASE, safetyDepositConfigsRouter);
 app.use(API_BASE, storeRouter);
 app.use(API_BASE, bidRedemptionTicketsV2Router);
 
-loadMetaplexData();
-
 app.listen(3001, () => {
-  console.log("server is listening biaaatch");
+  loadMetaplexData().then(x => {
+    console.log("server is listening biaaatch, data is filled as fuck");
+  });
 });

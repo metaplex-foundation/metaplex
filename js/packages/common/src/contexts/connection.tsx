@@ -87,7 +87,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({ children = null as any }) {
   const searchParams = useQuerySearch();
   const network = searchParams.get('network');
   const queryEndpoint =

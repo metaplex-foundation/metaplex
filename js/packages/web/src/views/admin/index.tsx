@@ -18,6 +18,7 @@ import {
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import {
   MasterEditionV1,
+  MasterEditionV2,
   notify,
   ParsedAccount,
   shortenAddress,
@@ -37,10 +38,22 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { arrayToObject, getCreator, getMasterEditions, getMetdataByCreator } from '../../hooks/getData';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
+  const { store, whitelistedCreatorsByCreator, } = useMeta();
+  console.log("storestorestorestore", store)
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators)
+      }
+    });
+  }, []);
+
   const connection = useConnection();
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -55,7 +68,7 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+  console.log('@admin', wallet.connected, storeAddress, store);
 
   return (
     <>
@@ -66,13 +79,13 @@ export const AdminView = () => {
           </Button>{' '}
           to admin store.
         </p>
-      ) : !storeAddress || isLoading ? (
+      ) : !storeAddress  ? (
         <Spin />
       ) : store && wallet ? (
         <>
           <InnerAdminView
             store={store}
-            whitelistedCreatorsByCreator={whitelistedCreatorsByCreator}
+            whitelistedCreatorsByCreator={CreatorsByCreator}
             connection={connection}
             wallet={wallet}
             connected={wallet.connected}
@@ -185,21 +198,46 @@ function InnerAdminView({
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
+  const [masterEditions, setMasterEditions] = useState<
+    Record<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>
+  >({});
   const [filteredMetadata, setFilteredMetadata] =
     useState<{
       available: ParsedAccount<MasterEditionV1>[];
       unavailable: ParsedAccount<MasterEditionV1>[];
     }>();
   const [loading, setLoading] = useState<boolean>();
-  const { metadata, masterEditions } = useMeta();
+  const key = wallet.publicKey?.toBase58()
+  const [filtered, setFiltered] = useState<any>([]);
+  useEffect(() => {
+    if (!key) return;
+    getMetdataByCreator(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setFiltered(metadata);
+      }
+    });
+    getMasterEditions('masterEditionsV1').then(data => {
+      console.log(data);
+      if (data.length == 0) {
+        getMasterEditions('masterEditionsV2').then(data => {
+          const arr = arrayToObject(data, 'pubkey');
+          setMasterEditions(arr);
+        });
+      } else {
+        const arr = arrayToObject(data, 'pubkey');
+        setMasterEditions(arr);
+      }
+    });
+  }, [key]);
 
+  
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
     const fn = async () => {
       setFilteredMetadata(
         await filterMetadata(
           connection,
-          metadata,
+          filtered,
           masterEditions,
           accountByMint,
         ),

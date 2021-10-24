@@ -10,10 +10,16 @@ interface Props {
 
 export const CustomSelect = ({ option, defaultParam, onChange }: Props) => {
   return (
-    <Form.Control as="select" onChange={onChange} className="btn-secondary">
+    <Form.Control
+      as="select"
+      onChange={onChange}
+      className="btn-secondary"
+      key={defaultParam}
+      defaultValue={defaultParam}
+    >
       {option.map(item => {
         return (
-          <option value={item} selected={item == defaultParam}>
+          <option value={item}  key={item}>
             {item}
           </option>
         );

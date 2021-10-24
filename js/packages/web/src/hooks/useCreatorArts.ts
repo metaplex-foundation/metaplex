@@ -1,14 +1,20 @@
-import { useMeta } from '../contexts';
 import { StringPublicKey } from '@oyster/common';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import { getMetdataByCreator } from './getData';
+
+let loading = true;
 
 export const useCreatorArts = (id?: StringPublicKey) => {
-  const { metadata, isLoading } = useMeta();
-  const filtered = useMemo(
-    () =>
-      metadata.filter(m => m.info.data.creators?.some(c => c.address === id)),
-    [metadata],
-  );
+  const [filtered, setFiltered] = useState<any>(null);
+  useEffect(() => {
+    if (!id) return;
+    getMetdataByCreator(id).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        loading = false;
+        setFiltered(metadata);
+      }
+    });
+  }, [id]);
 
-  return { artwork: filtered, isLoading };
+  return { artwork: filtered, isLoading: loading };
 };

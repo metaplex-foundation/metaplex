@@ -54,6 +54,7 @@ import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
+import { getCreator } from '../../hooks/getData';
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -136,6 +137,15 @@ export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
   const { whitelistedCreatorsByCreator } = useMeta();
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+  
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators)
+      }
+    });
+  }, []);
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const mint = useMint(QUOTE_MINT);
@@ -490,7 +500,7 @@ export const AuctionCreateView = () => {
     const _auctionObj = await createAuctionManager(
       connection,
       wallet,
-      whitelistedCreatorsByCreator,
+      CreatorsByCreator,
       auctionSettings,
       safetyDepositDrafts,
       participationSafetyDepositDraft,

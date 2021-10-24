@@ -28,6 +28,7 @@ import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
 import { AuctionViewState, useAuctions } from '../../hooks';
+import { getCreator } from '../../hooks/getData';
 
 interface NotificationCard {
   id: string;
@@ -308,6 +309,16 @@ export function Notifications() {
     AuctionViewState.Defective,
   );
 
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators)
+      }
+    });
+  }, []);
+
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
@@ -393,7 +404,7 @@ export function Notifications() {
       metadata.filter(m => {
         return (
           m.info.data.creators &&
-          (whitelistedCreatorsByCreator[m.info.updateAuthority]?.info
+          (CreatorsByCreator[m.info.updateAuthority]?.info
             ?.activated ||
             store?.info.public) &&
           m.info.data.creators.find(
@@ -401,7 +412,7 @@ export function Notifications() {
           )
         );
       }),
-    [metadata, whitelistedCreatorsByCreator, walletPubkey],
+    [metadata, CreatorsByCreator, walletPubkey],
   );
 
   metaNeedsApproving.forEach(m => {
@@ -410,7 +421,7 @@ export function Notifications() {
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {whitelistedCreatorsByCreator[m.info.updateAuthority]?.info?.name ||
+          {CreatorsByCreator[m.info.updateAuthority]?.info?.name ||
             m.pubkey}{' '}
           wants you to approve that you helped create their art{' '}
           <Link to={`/art/${m.pubkey}`}>here.</Link>

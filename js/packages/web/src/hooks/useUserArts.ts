@@ -1,7 +1,10 @@
 import {
+  Edition,
   MasterEditionV1,
+  MasterEditionV2,
   MetadataKey,
   ParsedAccount,
+  pubkeyToString,
   TokenAccount,
   useUserAccounts,
 } from '@oyster/common';
@@ -13,18 +16,58 @@ import {
   WinningConfigType,
   WinningConstraint,
 } from '@oyster/common/dist/lib/models/metaplex/index';
-import { useMeta } from './../contexts';
+import { useEffect, useState } from 'react';
+import { getEditions, getMasterEditions, getMetdataByCreator } from './getData';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
-  const { metadata, masterEditions, editions } = useMeta();
+  const { publicKey } = useWallet();
+  const key = pubkeyToString(publicKey);
   const { userAccounts } = useUserAccounts();
+  const [masterEditions, setMasterEditions] = useState<
+    Record<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>
+  >({});
+  const [editions, setEditions] = useState<
+    Record<string, ParsedAccount<Edition>>
+  >({});
+
+  const arrayToObject = (array, keyField) =>
+    array.reduce((obj, item) => {
+      obj[item[keyField]] = item;
+      return obj;
+    }, {});
 
   const accountByMint = userAccounts.reduce((prev, acc) => {
     prev.set(acc.info.mint.toBase58(), acc);
     return prev;
   }, new Map<string, TokenAccount>());
+  const [filtered, setFiltered] = useState<any>([]);
+  useEffect(() => {
+    if (!key) return;
+    getMetdataByCreator(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setFiltered(metadata);
+      }
+    });
+    getMasterEditions('masterEditionsV1').then(data => {
+      console.log(data);
+      if (data.length == 0) {
+        getMasterEditions('masterEditionsV2').then(data => {
+          const arr = arrayToObject(data, 'pubkey');
+          setMasterEditions(arr);
+        });
+      } else {
+        const arr = arrayToObject(data, 'pubkey');
+        setMasterEditions(arr);
+      }
+    });
+    getEditions().then(data => {
+      const arr = arrayToObject(data, 'pubkey');
+      setEditions(arr);
+    });
+  }, [key]);
 
-  const ownedMetadata = metadata.filter(
+  const ownedMetadata = filtered.filter(
     m =>
       accountByMint.has(m.info.mint) &&
       (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0,
