@@ -1,5 +1,10 @@
 import React, { useCallback } from "react";
-import { Box } from "@mui/system";
+import {
+  Box,
+  Button,
+  Link,
+  Stack,
+} from "@mui/material";
 
 import ConnectButton from "../ConnectButton";
 import { ModalEnum, useModal, useWalletModal } from "../../contexts";
@@ -27,6 +32,33 @@ export const Header: React.FC = () => {
       }}
       minWidth="100%"
     >
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          display: "flex",
+          height: "62px",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          marginLeft: "36px",
+        }}
+      >
+        <Link href="#/">
+          <Button variant="outlined">
+            About
+          </Button>
+        </Link>
+        <Link href="#/create">
+          <Button variant="outlined">
+            Create
+          </Button>
+        </Link>
+        <Link href="#/claim">
+          <Button variant="outlined">
+            Claim
+          </Button>
+        </Link>
+      </Stack>
       <Box sx={{flexGrow: 1}}></Box>
       <Box
         sx={{
