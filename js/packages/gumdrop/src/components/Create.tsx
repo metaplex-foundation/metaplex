@@ -56,25 +56,30 @@ const randomBytes = () : Uint8Array => {
 const MERKLE_DISTRIBUTOR_ID = new PublicKey("2BXKBuQPRVjV9e9qC2wAVJgFLWDH8MULRQ5W5ABmJj45");
 const WHITESPACE = "\u00A0";
 
+export type ClaimantInfo = {
+  handle : string,
+  amount : number,
+  pin    : Uint8Array,
+  bump   : number,
+  pda    : PublicKey,
+  url    : string,
+};
+
 const setupMailchimp = (auth : string, source : string) => {
   const mailchimp = Mailchimp(auth);
 
   return async (
-    amount: number,
-    handle: string,
+    info : ClaimantInfo,
     mintUrl: string,
-    query: string
   ) => {
-    console.log(`Link: claim?${query}`);
-
     const message = {
       from_email: source,
       subject: "Merkle Airdrop",
-      text: `You received ${amount} airdropped token(s) (${mintUrl}). `
-          + `Claim them at ${window.location.origin}${window.location.pathname}#/claim?${query}`,
+      text: `You received ${info.amount} airdropped token(s) (${mintUrl}). `
+          + `Claim them at ${info.url}`,
       to: [
         {
-          email: handle,
+          email: info.handle,
           type: "to"
         }
       ]
@@ -88,14 +93,6 @@ const setupMailchimp = (auth : string, source : string) => {
     }
   };
 }
-
-export type ClaimantInfo = {
-  handle : string,
-  amount : number,
-  pin    : Uint8Array,
-  bump   : number,
-  pda    : PublicKey,
-};
 
 const parseClaimants = (
   input : string
@@ -122,6 +119,7 @@ export const Create = (
   const [commSource, setCommSource] = React.useState("");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
+  const [claimURLs, setClaimURLs] = React.useState<Array<string>>([]);
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -230,14 +228,14 @@ export const Create = (
     } else if (commMethod === "Manual") {
       console.log(mintUrl);
       sender = async (
-          amount: number,
-          handle: string,
-          mint: PublicKey,
-          query: string
+          info : ClaimantInfo,
+          mintUrl: string,
         ) => {
+          // TODO duplicated work since claim URLs are available for download
+          // regardless...
           console.log({
-            "handle": handle,
-            "claim": `${window.location.origin}${window.location.pathname}#/claim?${query}`
+            "handle": info.handle,
+            "claim": info.url,
           });
         };
     } else {
@@ -263,8 +261,11 @@ export const Create = (
       ];
       const query = params.join("&");
 
-      await sender(claimant.amount, claimant.handle, mintUrl, query);
+      claimant.url = `${window.location.origin}${window.location.pathname}#/claim?${query}`;
     }
+
+    // TODO: defer until success?
+    setClaimURLs(claimants.map(c => c.url));
 
     const createDistributorTokenAccount = new TransactionInstruction({
         programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -322,10 +323,7 @@ export const Create = (
 
     console.log(createResult);
     if (typeof createResult === "string") {
-      notify({
-        message: "Create failed",
-        description: createResult,
-      });
+      throw new Error(createResult);
     } else {
       notify({
         message: "Create succeeded",
@@ -335,6 +333,11 @@ export const Create = (
           </HyperLink>
         ),
       });
+    }
+
+    console.log("Distributing claim URLs");
+    for (let idx = 0; idx < claimants.length; ++idx) {
+      await sender(claimants[idx], mintUrl);
     }
   };
 
@@ -477,6 +480,7 @@ export const Create = (
           try {
             await submit(e);
           } catch (err) {
+            setClaimURLs([]);
             notify({
               message: "Create failed",
               description: `${err}`,
@@ -490,6 +494,14 @@ export const Create = (
       Create Merkle Airdrop
     </Button>
   );
+
+  const encodedClaimURLs = () => {   // TODO: less manual?
+    const encoded = claimURLs.map(url => encodeURIComponent(`"${url}"`));
+    const delim = encodeURIComponent(",");
+    const left = encodeURIComponent("[");
+    const right = encodeURIComponent("]");
+    return `data:text/plain;charset=utf-8,${left}${encoded.join(delim)}${right}`;
+  };
 
   return (
     <Stack spacing={2}>
@@ -523,6 +535,21 @@ export const Create = (
       {commMethod !== "" && commAuthorization(commMethod)}
       {commMethod !== "" && mint !== "" && fileUpload}
       {filename !== "" && createAirdrop}
+      {claimURLs.length > 0 && (
+        <HyperLink
+          href={encodedClaimURLs()}
+          download="claimURLs.json"
+          underline="none"
+          style={{width: "100%"}}
+        >
+          <Button
+            variant="contained"
+            style={{width: "100%"}}
+          >
+            Download claim URLs
+          </Button>
+        </HyperLink>
+      )}
     </Stack>
   );
 };
