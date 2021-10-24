@@ -1,12 +1,19 @@
 import { Keypair, TransactionInstruction } from '@solana/web3.js';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { ParsedAccount, StringPublicKey, WalletSigner } from '@oyster/common';
+import {
+  MetaState,
+  ParsedAccount,
+  StringPublicKey,
+  WalletSigner,
+} from '@oyster/common';
 import { getSafetyDepositBoxAddress } from '@oyster/common/dist/lib/actions/vault';
 import {
   StoreIndexer,
   getStoreIndexer,
   getAuctionCache,
   MAX_INDEXED_ELEMENTS,
+  AuctionManagerV1,
+  AuctionManagerV2,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { setStoreIndex } from '@oyster/common/dist/lib/models/metaplex/setStoreIndex';
 import { setAuctionCache } from '@oyster/common/dist/lib/models/metaplex/setAuctionCache';
@@ -17,13 +24,14 @@ export async function cacheAuctionIndexer(
   wallet: WalletSigner,
   vault: StringPublicKey,
   auction: StringPublicKey,
-  auctionManager: StringPublicKey,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
   tokenMints: StringPublicKey[],
-  storeIndexer: ParsedAccount<StoreIndexer>[],
-  skipCache?: boolean,
+  storeIndexers: ParsedAccount<StoreIndexer>[],
+  tempCache: MetaState,
 ): Promise<{
   instructions: TransactionInstruction[][];
   signers: Keypair[][];
+  updateOnSuccess: () => void;
 }> {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
   const payer = wallet.publicKey.toBase58();
@@ -38,29 +46,51 @@ export async function cacheAuctionIndexer(
     wallet,
     vault,
     auction,
-    auctionManager,
+    auctionManager.pubkey,
     tokenMints,
   );
 
-  let above =
-    storeIndexer.length == 0
-      ? undefined
-      : storeIndexer[0].info.auctionCaches[0];
-
   const storeIndexKey = await getStoreIndexer(0);
+
+  // Find where should this be inserted, because it might not be at the front
+  let offset = 0;
+  const currentAuctionCachePk = await getAuctionCache(
+    auctionManager.info.auction,
+  );
+  const currentAuctionCache = tempCache.auctionCaches[currentAuctionCachePk];
+
+  for (const auctionCachePk of storeIndexers[0].info.auctionCaches) {
+    const auctionCacheAbove = tempCache.auctionCaches[auctionCachePk];
+    // If we are newer we break to keep the current offset
+    if (currentAuctionCache.info.timestamp > auctionCacheAbove.info.timestamp) {
+      break;
+    }
+    offset++;
+  }
+  console.log('Offset:', offset);
+
+  const skipCache =
+    !!tempCache.auctionCaches[
+      await getAuctionCache(auctionManager.info.auction)
+    ];
+
+  const auctionCacheBelow =
+    offset === 0 ? undefined : storeIndexers[0].info.auctionCaches[offset - 1];
+  const auctionCacheAbove = storeIndexers[0].info.auctionCaches[offset];
+  console.log(auctionCacheBelow, auctionCacheAbove);
   await setStoreIndex(
     storeIndexKey,
     auctionCache,
     payer,
     new BN(0),
-    new BN(0),
+    new BN(offset),
     instructions,
-    undefined,
-    above,
+    auctionCacheBelow,
+    auctionCacheAbove,
   );
 
   const { instructions: propagationInstructions, signers: propagationSigners } =
-    await propagateIndex(wallet, storeIndexer);
+    await propagateIndex(wallet, storeIndexers);
 
   return {
     instructions: [
@@ -73,6 +103,14 @@ export async function cacheAuctionIndexer(
       [],
       ...propagationSigners,
     ],
+    updateOnSuccess() {
+      // Add this auction cache to the store indexer so that the next iteration is up to date
+      storeIndexers[0].info.auctionCaches.splice(
+        offset,
+        0,
+        currentAuctionCachePk,
+      );
+    },
   };
 }
 
@@ -85,8 +123,8 @@ async function propagateIndex(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let indexSigners: Keypair[] = [];
   let indexInstructions: TransactionInstruction[] = [];
@@ -163,8 +201,8 @@ async function createAuctionCache(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let cacheSigners: Keypair[] = [];
   let cacheInstructions: TransactionInstruction[] = [];

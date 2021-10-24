@@ -1,6 +1,5 @@
-import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import {
-  getAuctionCache,
   loadAccounts,
   MetaplexKey,
   MetaState,
@@ -9,7 +8,6 @@ import {
   pullPages,
   SafetyDepositBox,
   sendTransactions,
-  sendTransactionWithRetry,
   SequenceType,
   WalletSigner,
 } from '@oyster/common';
@@ -35,7 +33,9 @@ export async function cacheAllAuctions(
   }
 
   let auctionManagersToCache = Object.values(tempCache.auctionManagersByAuction)
-    .filter(a => a.info.store == store)
+    .filter(
+      a => a.info.store == store && a.info.key === MetaplexKey.AuctionManagerV2,
+    )
     .sort((a, b) =>
       (
         tempCache.auctions[b.info.auction].info.endedAt ||
@@ -71,26 +71,26 @@ export async function cacheAllAuctions(
     auctionManagersToCache.length,
     'auctions to cache.',
   );
+  console.log('auctionManagersToCache:', auctionManagersToCache);
 
-  let storeIndex = tempCache.storeIndexer;
   for (let i = 0; i < auctionManagersToCache.length; i++) {
     const auctionManager = auctionManagersToCache[i];
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       tempCache.safetyDepositBoxesByVaultAndIndex,
       auctionManager.info.vault,
     );
+
     if (auctionManager.info.key === MetaplexKey.AuctionManagerV2) {
-      const { instructions, signers } = await cacheAuctionIndexer(
-        wallet,
-        auctionManager.info.vault,
-        auctionManager.info.auction,
-        auctionManager.pubkey,
-        boxes.map(a => a.info.tokenMint),
-        storeIndex,
-        !!tempCache.auctionCaches[
-          await getAuctionCache(auctionManager.info.auction)
-        ],
-      );
+      const { instructions, signers, updateOnSuccess } =
+        await cacheAuctionIndexer(
+          wallet,
+          auctionManager.info.vault,
+          auctionManager.info.auction,
+          auctionManager,
+          boxes.map(a => a.info.tokenMint),
+          tempCache.storeIndexer,
+          tempCache,
+        );
 
       await sendTransactions(
         connection,
@@ -100,6 +100,8 @@ export async function cacheAllAuctions(
         SequenceType.StopOnFailure,
         'max',
       );
+
+      updateOnSuccess();
 
       storeIndex = await pullPages(connection);
     }
