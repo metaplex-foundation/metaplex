@@ -19,6 +19,7 @@ import { bidRedemptionTicketsV1Router } from "./routes/bidRedemptionTicketV1";
 import { payoutTicketsRouter } from "./routes/payoutTicket";
 import { bidderMetadataRouter } from "./routes/bidderMetadata";
 import { bidderPotRouter } from "./routes/bidderPot";
+import 'log-timestamp';
 
 console.log('ENVIRONMENT', process.env);
 const app = express();
