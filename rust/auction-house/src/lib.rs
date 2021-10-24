@@ -584,9 +584,19 @@ pub mod auction_house {
         let program = &ctx.accounts.program;
         let rent = &ctx.accounts.rent;
 
+        let metadata_clone = metadata.to_account_info();
+        let escrow_clone = escrow_payment_account.to_account_info();
+        let ata_clone = ata_program.to_account_info();
+        let token_clone = token_program.to_account_info();
+        let sys_clone = system_program.to_account_info();
+        let rent_clone = rent.to_account_info();
+        let treasury_clone = auction_house_treasury.to_account_info();
+        let authority_clone = authority.to_account_info();
+        let buyer_receipt_clone = buyer_receipt_token_account.to_account_info();
+
         let is_native = treasury_mint.key() == spl_token::native_mint::id();
 
-        if buyer_price == 0 && !authority.to_account_info().is_signer {
+        if buyer_price == 0 && !authority_clone.is_signer {
             return Err(ErrorCode::CannotMatchFreeSalesWithoutAuctionHouseSignoff.into());
         }
 
@@ -613,6 +623,7 @@ pub mod auction_house {
             auction_house_fee_account.to_account_info(),
             &seeds,
         )?;
+        let fee_payer_clone = fee_payer.to_account_info();
 
         assert_is_ata(
             &token_account.to_account_info(),
@@ -633,14 +644,14 @@ pub mod auction_house {
 
         let buyer_leftover_after_royalties = pay_creator_fees(
             &mut ctx.remaining_accounts.iter(),
-            &metadata.to_account_info(),
-            &escrow_payment_account.to_account_info(),
-            &fee_payer.to_account_info(),
+            &metadata_clone,
+            &escrow_clone,
+            &fee_payer_clone,
             treasury_mint,
-            &ata_program.to_account_info(),
-            &token_program.to_account_info(),
-            &system_program.to_account_info(),
-            &rent.to_account_info(),
+            &ata_clone,
+            &token_clone,
+            &sys_clone,
+            &rent_clone,
             &escrow_signer_seeds,
             &fee_payer_seeds,
             buyer_price,
@@ -649,10 +660,10 @@ pub mod auction_house {
 
         let auction_house_fee_paid = pay_auction_house_fees(
             &auction_house,
-            &auction_house_treasury.to_account_info(),
-            &escrow_payment_account.to_account_info(),
-            &token_program.to_account_info(),
-            &system_program.to_account_info(),
+            &treasury_clone,
+            &escrow_clone,
+            &token_clone,
+            &sys_clone,
             &escrow_signer_seeds,
             buyer_price,
             is_native,
@@ -735,11 +746,7 @@ pub mod auction_house {
             )?;
         }
 
-        let buyer_rec_acct = assert_is_ata(
-            &buyer_receipt_token_account.to_account_info(),
-            &buyer.key(),
-            &token_mint.key(),
-        )?;
+        let buyer_rec_acct = assert_is_ata(&buyer_receipt_clone, &buyer.key(), &token_mint.key())?;
 
         // make sure you cant get rugged
         if buyer_rec_acct.delegate.is_some() {
@@ -757,8 +764,8 @@ pub mod auction_house {
             )?,
             &[
                 token_account.to_account_info(),
-                buyer_receipt_token_account.to_account_info(),
-                token_program.to_account_info(),
+                buyer_receipt_clone,
+                token_clone,
             ],
             &[&escrow_signer_seeds],
         )?;
