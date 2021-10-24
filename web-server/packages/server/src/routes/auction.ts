@@ -1,7 +1,7 @@
 import {
   AUCTION_COLLECTION,
 } from "../db/mongo-utils";
-import { getStoreGenericRouter } from "./base";
+import { getGenericStoreCollectionRouter } from "./base";
 
-const router = getStoreGenericRouter(AUCTION_COLLECTION);
+const router = getGenericStoreCollectionRouter(AUCTION_COLLECTION);
 export { router as auctionsRouter };

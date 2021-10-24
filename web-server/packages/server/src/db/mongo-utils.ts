@@ -14,6 +14,10 @@ export const AUCTION_COLLECTION = "auctions";
 export const AUCTION_DATA_EXTENDED_COLLECTION = "auctionDataExtended";
 export const STORE_COLLECTIONS = "stores";
 export const BID_REDEMPTION_TICKETS_V2_COLLECTION = "bidRedemptionTicketsV2";
+export const BID_REDEMPTION_TICKETS_V1_COLLECTION = "bidRedemptionTicketsV1";
+export const PAYOUT_TICKETS_COLLECTION = "payoutTickets";
+export const BIDDER_METADATA_COLLECTION = "bidderMetadata";
+export const BIDDER_POT_COLLECTION = "bidderPots";
 
 export const createMongoClient = async () => {
     const client = new MongoClient(process.env.MONGO_DB_CONNECTION_STRING!);

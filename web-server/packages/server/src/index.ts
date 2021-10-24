@@ -15,6 +15,10 @@ import { safetyDepositBoxesRouter } from "./routes/safetyDepositBox";
 import { safetyDepositConfigsRouter } from "./routes/safetyDepositConfig";
 import { storeRouter } from "./routes/store";
 import { bidRedemptionTicketsV2Router } from "./routes/bidRedemptionTicketV2";
+import { bidRedemptionTicketsV1Router } from "./routes/bidRedemptionTicketV1";
+import { payoutTicketsRouter } from "./routes/payoutTicket";
+import { bidderMetadataRouter } from "./routes/bidderMetadata";
+import { bidderPotRouter } from "./routes/bidderPot";
 
 const app = express();
 app.use(express.json());
@@ -32,6 +36,10 @@ app.use(API_BASE, safetyDepositBoxesRouter);
 app.use(API_BASE, safetyDepositConfigsRouter);
 app.use(API_BASE, storeRouter);
 app.use(API_BASE, bidRedemptionTicketsV2Router);
+app.use(API_BASE, bidRedemptionTicketsV1Router);
+app.use(API_BASE, payoutTicketsRouter);
+app.use(API_BASE, bidderMetadataRouter);
+app.use(API_BASE, bidderPotRouter);
 
 loadMetaplexData();
 

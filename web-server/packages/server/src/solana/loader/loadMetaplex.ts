@@ -11,6 +11,8 @@ import { loadPrizeTrackingTickets } from "./loadPrizeTrackingTickets";
 import { loadAuctionManagers } from "./loadAuctionManagers";
 import { Store } from "../../routes/store";
 import { loadBidRedemptionTicketsV2 } from "./loadBidRedemptionTicketsV2";
+import { loadBidRedemptionTicketsV1 } from "./loadBidRedemptionTicketsV1";
+import { loadPayoutTickets } from "./loadPayoutTickets";
 
 export const loadMetaplexData = async () => {
   const connection = createDevNetConnection();
@@ -25,6 +27,8 @@ export const loadMetaplexData = async () => {
   if(stores.length) {
     loadBidRedemptionTicketsV2(connection, dbClient);
     loadPrizeTrackingTickets(connection, dbClient);
+    loadBidRedemptionTicketsV1(connection, dbClient);
+    loadPayoutTickets(connection, dbClient);
   }
 
   stores.forEach(async (store) => {

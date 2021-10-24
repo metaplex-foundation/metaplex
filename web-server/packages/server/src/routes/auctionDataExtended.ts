@@ -1,7 +1,7 @@
 import {
     AUCTION_COLLECTION, AUCTION_DATA_EXTENDED_COLLECTION,
   } from "../db/mongo-utils";
-  import { getStoreGenericRouter } from "./base";
+  import { getGenericStoreCollectionRouter } from "./base";
 
-  const router = getStoreGenericRouter(AUCTION_DATA_EXTENDED_COLLECTION);
+  const router = getGenericStoreCollectionRouter(AUCTION_DATA_EXTENDED_COLLECTION);
   export { router as auctionDataExtended };
