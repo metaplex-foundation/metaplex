@@ -6,6 +6,7 @@ import {
   SyncOutlined,
 } from '@ant-design/icons';
 import {
+  ALT_SPL_MINT,
   findProgramAddress,
   programIds,
   StringPublicKey,
@@ -367,8 +368,9 @@ export function Notifications() {
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
 
-  useCollapseWrappedSol({ connection, wallet, notifications });
-
+  if (!ALT_SPL_MINT) {
+    useCollapseWrappedSol({ connection, wallet, notifications });
+  }
   useSettlementAuctions({ connection, wallet, notifications });
 
   const vaultsNeedUnwinding = useMemo(

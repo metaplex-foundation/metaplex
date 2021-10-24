@@ -1,4 +1,9 @@
-import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
+import {
+  Keypair,
+  Connection,
+  TransactionInstruction,
+  PublicKey,
+} from '@solana/web3.js';
 import {
   sendTransactionWithRetry,
   placeBid,
@@ -8,6 +13,10 @@ import {
   ParsedAccount,
   toPublicKey,
   WalletSigner,
+  createAssociatedTokenAccountInstruction,
+  programIds,
+  pubkeyToString,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { approve } from '@oyster/common/dist/lib/models/account';
@@ -112,25 +121,64 @@ export async function setupPlaceBid(
         wallet,
         cancelSigners,
         cancelInstr,
+        connection,
       );
       signers = [...signers, ...cancelSigners[0]];
       instructions = [...cancelInstr[0], ...instructions];
     }
   }
 
-  const payingSolAccount = ensureWrappedAccount(
-    instructions,
-    cleanupInstructions,
-    tokenAccount,
-    wallet.publicKey,
-    lamports + accountRentExempt * 2,
-    signers,
-  );
+  let receivingSolAccount_or_ata = '';
+  if (auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
+    receivingSolAccount_or_ata = ensureWrappedAccount(
+      instructions,
+      cleanupInstructions,
+      tokenAccount,
+      wallet.publicKey,
+      lamports + accountRentExempt * 2,
+      signers,
+    );
+    console.log(
+      'WRAPPED SOL ACCOUNT ATA',
+      receivingSolAccount_or_ata,
+      'AUCTION PUBKEY',
+      auctionView.auction.info.tokenMint,
+    );
+  } else {
+    // if alternative currency is set, go for it
+    const PROGRAM_IDS = programIds();
+    const auctionTokenMint = new PublicKey(auctionView.auction.info.tokenMint);
+    const ata = (
+      await PublicKey.findProgramAddress(
+        [
+          wallet.publicKey.toBuffer(),
+          PROGRAM_IDS.token.toBuffer(),
+          auctionTokenMint.toBuffer(),
+        ],
+        PROGRAM_IDS.associatedToken,
+      )
+    )[0];
+    receivingSolAccount_or_ata = pubkeyToString(ata);
+    const settleInstructions: TransactionInstruction[] = [];
 
+    const existingAta = await connection.getAccountInfo(ata);
+
+    // create a new ATA if there is none
+    console.log('Looking for existing ata?', existingAta);
+    if (!existingAta) {
+      createAssociatedTokenAccountInstruction(
+        settleInstructions,
+        toPublicKey(receivingSolAccount_or_ata),
+        wallet.publicKey,
+        wallet.publicKey,
+        auctionTokenMint,
+      );
+    }
+  }
   const transferAuthority = approve(
     instructions,
     cleanupInstructions,
-    toPublicKey(payingSolAccount),
+    toPublicKey(receivingSolAccount_or_ata),
     wallet.publicKey,
     lamports - accountRentExempt,
   );
@@ -140,7 +188,7 @@ export async function setupPlaceBid(
   const bid = new BN(lamports - accountRentExempt);
   await placeBid(
     wallet.publicKey.toBase58(),
-    payingSolAccount,
+    pubkeyToString(receivingSolAccount_or_ata),
     bidderPotTokenAccount,
     auctionView.auction.info.tokenMint,
     transferAuthority.publicKey.toBase58(),

@@ -635,15 +635,17 @@ programCommand('update_candy_machine')
     log.info('update_candy_machine finished', tx);
   });
 
-programCommand('mint_one_token').action(async (directory, cmd) => {
-  const { keypair, env, cacheName } = cmd.opts();
+programCommand('mint_one_token')
+  .option('--cache-path <string>')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, cachePath } = cmd.opts();
 
-  const cacheContent = loadCache(cacheName, env);
-  const configAddress = new PublicKey(cacheContent.program.config);
-  const tx = await mint(keypair, env, configAddress);
+    const cacheContent = loadCache(cacheName, env, cachePath);
+    const configAddress = new PublicKey(cacheContent.program.config);
+    const tx = await mint(keypair, env, configAddress);
 
-  log.info('mint_one_token finished', tx);
-});
+    log.info('mint_one_token finished', tx);
+  });
 
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

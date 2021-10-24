@@ -47,6 +47,8 @@ export async function makeAuction(
     resource: vault,
   });
 
+  console.log('FULLSETTINGS', fullSettings, instructions);
+
   createAuction(fullSettings, wallet.publicKey.toBase58(), instructions);
 
   return { instructions, signers, auction: auctionKey };

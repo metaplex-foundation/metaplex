@@ -642,6 +642,8 @@ export async function createAuction(
 ) {
   const auctionProgramId = programIds().auction;
 
+  console.log('SETTINGS', settings);
+
   const data = Buffer.from(serialize(AUCTION_SCHEMA, settings));
 
   const auctionKey: StringPublicKey = (

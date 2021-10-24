@@ -12,12 +12,14 @@ import {
   useConnectionConfig,
   useNativeAccount,
   useWalletModal,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button, Popover, Select } from 'antd';
 import { useMeta, useSolPrice } from '../../contexts';
 import { Link } from 'react-router-dom';
-import { SolCircle } from '../Custom';
+import { TokenCircle } from '../Custom';
+import { useTokenList } from '../../contexts/tokenList';
 
 ('@solana/wallet-adapter-base');
 
@@ -205,7 +207,6 @@ export const CurrentUserBadge = (props: {
   const { wallet, publicKey, disconnect } = useWallet();
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
-
   const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
 
   if (!wallet || !publicKey) {
@@ -264,7 +265,7 @@ export const CurrentUserBadge = (props: {
                     marginBottom: 10,
                   }}
                 >
-                  <SolCircle />
+                  <TokenCircle/>
                   &nbsp;
                   <span
                     style={{

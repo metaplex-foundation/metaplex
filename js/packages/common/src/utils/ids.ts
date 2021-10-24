@@ -49,6 +49,10 @@ export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
 
+export const ALT_SPL_MINT = process.env.NEXT_SPL_TOKEN_MINT
+  ? new PublicKey(process.env.NEXT_SPL_TOKEN_MINT)
+  : undefined;
+
 export const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 );
