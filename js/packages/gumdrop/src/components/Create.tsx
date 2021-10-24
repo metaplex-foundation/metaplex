@@ -400,7 +400,8 @@ export const Create = (
             variant="text"
             component="label"
             disabled={true}
-            style={{color: "white", padding: 0}}
+            color="secondary"
+            style={{padding: 0}}
           >
             or drag it here
           </Button>

@@ -164,12 +164,21 @@ function App() {
 
   const theme = React.useMemo(
     () => {
-      const mode =
-        colorModeCtx.mode === "dark" || !colorModeCtx.mode ? "dark" : "light";
+      let mode, disabledColor;
+      if (colorModeCtx.mode === "dark" || !colorModeCtx.mode) {
+        mode = "dark";
+        disabledColor = "#eee";
+      } else {
+        mode = "light";
+        disabledColor = "#111";
+      }
 
       return createTheme({
         palette: {
           mode,
+          action: {
+            disabled: disabledColor,
+          },
         },
       })
     },
