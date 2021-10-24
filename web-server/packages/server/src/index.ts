@@ -22,7 +22,9 @@ import { bidderPotRouter } from "./routes/bidderPot";
 import 'log-timestamp';
 
 console.log('ENVIRONMENT', process.env);
+const cors = require('cors');
 const app = express();
+app.use(cors())
 app.use(express.json());
 app.use(API_BASE, creatorsRouter);
 app.use(API_BASE, metadataRouter);

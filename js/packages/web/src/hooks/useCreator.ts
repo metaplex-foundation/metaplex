@@ -1,11 +1,20 @@
 import { StringPublicKey, pubkeyToString } from '@oyster/common';
-import { useMeta } from '../contexts';
+import { useEffect, useState } from 'react';
+import { getCreator } from './getData';
 
 export const useCreator = (id?: StringPublicKey) => {
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const [creator, setCreator] = useState<any>({});
   const key = pubkeyToString(id);
-  const creator = Object.values(whitelistedCreatorsByCreator).find(
-    creator => creator.info.address === key,
-  );
+
+  useEffect(() => {
+    if (!key) return;
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        const creator = creators.find(creator => creator.info.address === key);
+        setCreator(creator);
+      }
+    });
+  }, [key]);
+
   return creator;
 };

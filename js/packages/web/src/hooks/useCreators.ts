@@ -1,11 +1,18 @@
-import { useMemo } from 'react';
-import { useMeta } from '../contexts';
+import { useEffect, useMemo, useState } from 'react';
 import { Artist } from '../types';
+import { getCreator } from './getData';
 import { AuctionView } from './useAuctions';
 
 export const useCreators = (auction?: AuctionView) => {
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
 
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators);
+      }
+    });
+  }, []);
   const creators = useMemo(
     () =>
       [
@@ -25,7 +32,7 @@ export const useCreators = (auction?: AuctionView) => {
           }, new Set<string>())
           .values(),
       ].map((creator, index, arr) => {
-        const knownCreator = whitelistedCreatorsByCreator[creator];
+        const knownCreator = CreatorsByCreator[creator];
 
         return {
           address: creator,
@@ -37,7 +44,7 @@ export const useCreators = (auction?: AuctionView) => {
           link: knownCreator?.info.twitter || '',
         } as Artist;
       }),
-    [auction, whitelistedCreatorsByCreator],
+    [auction, CreatorsByCreator],
   );
 
   return creators;

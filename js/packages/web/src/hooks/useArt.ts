@@ -14,6 +14,7 @@ import {
 } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
+import { getCreator, getMetdataByPubKey } from './getData';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -145,40 +146,51 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 };
 
 export const useArt = (key?: StringPublicKey) => {
-  const { metadata, editions, masterEditions, whitelistedCreatorsByCreator } =
-    useMeta();
+  const { editions, masterEditions } = useMeta();
+  const [account, setAccount] = useState<any>(null);
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
 
-  const account = useMemo(
-    () => metadata.find(a => a.pubkey === key),
-    [key, metadata],
-  );
+  useEffect(() => {
+    if (!key) return;
+    getMetdataByPubKey(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setAccount(metadata[0]);
+      }
+    });
+  }, [key]);
+
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators);
+      }
+    });
+  }, [key]);
 
   const art = useMemo(
     () =>
-      metadataToArt(
-        account?.info,
-        editions,
-        masterEditions,
-        whitelistedCreatorsByCreator,
-      ),
-    [account, editions, masterEditions, whitelistedCreatorsByCreator],
+      metadataToArt(account?.info, editions, masterEditions, CreatorsByCreator),
+    [account, editions, masterEditions, CreatorsByCreator],
   );
 
   return art;
 };
 
 export const useExtendedArt = (id?: StringPublicKey) => {
-  const { metadata } = useMeta();
-
   const [data, setData] = useState<IMetadataExtension>();
+  const [account, setAccount] = useState<any>(null);
   const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
 
-  const account = useMemo(
-    () => metadata.find(a => a.pubkey === key),
-    [key, metadata],
-  );
+  useEffect(() => {
+    if (!key) return;
+    getMetdataByPubKey(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setAccount(metadata[0]);
+      }
+    });
+  }, [key]);
 
   useEffect(() => {
     if (id && !data) {

@@ -24,7 +24,7 @@ export const ArtistView = () => {
       columnClassName="my-masonry-grid_column"
     >
       {!isLoading
-        ? artwork.map((m, idx) => {
+        ? artwork?.map((m, idx) => {
             const id = m.pubkey;
             return (
               <Link to={`/art/${id}`} key={idx}>
@@ -46,7 +46,7 @@ export const ArtistView = () => {
           <Col span={24} className="about-the-creator">
             <h2 style={{ color: 'white'}} className="info">
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
-              {creator?.info.name || creator?.info.address}
+              {creator?.info?.name || creator?.info?.address}
             </h2>
             <br />
             <div
@@ -57,7 +57,7 @@ export const ArtistView = () => {
             <div
               className="info-content info"
             >
-              {creator?.info.description}
+              {creator?.info?.description}
             </div>
             <br />
             <div

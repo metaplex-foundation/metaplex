@@ -8,6 +8,7 @@ import {
   useCollection,
   useCollectionTokenMetadataList,
 } from '../../hooks/useCollections';
+import { getCollection } from '../../hooks/getData';
 export enum ArtworkViewState {
   Metaplex = 0,
   Owned = 1,
@@ -23,27 +24,30 @@ let allItems: any = [];
 let allAuction = 0;
 let pageSize = 16;
 let activePage = 0;
+let isLoading = false;
 
 export const MarketplaceView = () => {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
   const { id } = useParams<{ id: string }>();
-
-  const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
+  const [collectionUpdate, setCollectionUpdate] = useState(0);
   const { collectionData } = useCollection(id);
 
   const optionData = ['Price: Low to High', 'Price: High to Low'];
   const optionDataFilter = [4, 8, 16, 32, 64, 128];
 
   useEffect(() => {
-    if (collection) {
-      sortCollection(collection);
-    } else if (!isLoading) pageLen = 0;
-  }, [collection, isLoading]);
+    if (!id) return;
+    getCollection(id).then(data => {
+      if (data && data.length > 0) {
+        if (data.length > 0) sortCollection(data);
+      }
+    });
+  }, [collectionUpdate]);
 
   const sortToPrice = (arr: any) => {
     return arr.sort((a, b) => {
-      return a.Price - b.Price;
+      return a.account.price - b.account.price;
     });
   };
 
@@ -55,24 +59,21 @@ export const MarketplaceView = () => {
     let owner: any = [];
 
     collection.map(item => {
-      if (item['Auction']) {
+      if (item.info.auction && !!item.account.price) {
         arr.push(item);
-        if (item.Price > max) max = item.Price;
-        if (item.Price < min) min = item.Price;
-        const ownerHasAddress = owner.includes(
-          item.ParsedAccount.info.data.creators[0].address,
-        );
-        if (!ownerHasAddress)
-          owner.push(item.ParsedAccount.info.data.creators[0].address);
+        if (item.account.price > max) max = item.account.price;
+        if (item.account.price < min) min = item.account.price;
+        const ownerHasAddress = owner.includes(item.authority);
+        if (!ownerHasAddress) owner.push(item.authority);
       } else nft.push(item);
     });
+
     allAuction = arr.length;
     allItems = collection;
-
     if (searchItem) arr = changeSearch();
     if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
-    } else if (lowToHigh == 'Price: High to Low') {
+    } else {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
@@ -90,14 +91,13 @@ export const MarketplaceView = () => {
 
   const onChange = event => {
     activePage = event.selected;
-    update();
   };
 
   const changeSearch = () => {
     const arr: any = [];
     const search = searchItem.toUpperCase();
     allItems.map(item => {
-      const name = item.ParsedAccount.info.data.name.toUpperCase();
+      const name = item.info.data.name.toUpperCase();
       if (name.search(search) >= 0) arr.push(item);
     });
     return arr;
@@ -201,7 +201,7 @@ export const MarketplaceView = () => {
                         onChange={event => {
                           activePage = 0;
                           searchItem = event.target.value;
-                          update();
+                          setCollectionUpdate(collectionUpdate + 1);
                         }}
                       />
                     </div>
@@ -224,7 +224,7 @@ export const MarketplaceView = () => {
                   defaultParam="Price: Low to High"
                   onChange={event => {
                     lowToHigh = event.target.value;
-                    update();
+                    setCollectionUpdate(collectionUpdate + 1);
                   }}
                 />
               </div>
@@ -237,7 +237,7 @@ export const MarketplaceView = () => {
                   onChange={event => {
                     pageSize = parseFloat(event.target.value);
                     activePage = 0;
-                    update();
+                    setCollectionUpdate(collectionUpdate + 1);
                   }}
                 />
               </div>
@@ -246,7 +246,7 @@ export const MarketplaceView = () => {
               <div
                 className="refresh-button"
                 onClick={() => {
-                  if (!isLoading) update();
+                  setCollectionUpdate(collectionUpdate + 1);
                 }}
               >
                 <i className="fas fa-redo-alt"></i>
@@ -271,12 +271,14 @@ export const MarketplaceView = () => {
                 {!isLoading ? (
                   onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
-                      const id = m.ParsedAccount.pubkey;
+                      const id = m.pubkey;
                       return (
                         <AuctionCard
+                          key={idx}
                           pubkey={id}
-                          auction={m.Auction}
-                          price={m.Price}
+                          auction={m.info.auction}
+                          price={m.account.price}
+                          nftPubkey={m.account.metadata}
                         />
                       );
                     })
@@ -304,7 +306,7 @@ export const MarketplaceView = () => {
                           changePage={event => {
                             if (!isLoading) {
                               onChange(event);
-                              update();
+                              setCollectionUpdate(collectionUpdate + 1);
                             }
                           }}
                         />

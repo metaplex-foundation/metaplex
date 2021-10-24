@@ -7,11 +7,14 @@ import { useMeta } from '../../contexts';
 import { ArtCard } from '../../components/ArtCard';
 import { CardLoader } from '../../components/MyLoader';
 import { useCreatorArts, useUserArts } from '../../hooks';
+import { getMetdataByCreator } from '../../hooks/getData';
+import { pubkeyToString } from '@oyster/common';
 
 const { TabPane } = Tabs;
 
 const { Content } = Layout;
 
+let loading = true;
 export enum ArtworkViewState {
   Metaplex = '0',
   Owned = '1',
@@ -22,7 +25,19 @@ export const ArtworksView = () => {
   const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata, isLoading } = useMeta();
+  const { metadata } = useMeta();
+  const key = pubkeyToString(publicKey)
+  const [filtered, setFiltered] = useState<any>([]);
+  useEffect(() => {
+    if (!key) return;
+    getMetdataByCreator(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        loading = false;
+        setFiltered(metadata);
+      }
+    });
+  }, [key]);
+  
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,
@@ -36,7 +51,7 @@ export const ArtworksView = () => {
       ? ownedMetadata.map(m => m.metadata)
       : activeKey === ArtworkViewState.Created
       ? createdMetadata.artwork
-      : metadata;
+      : filtered;
 
   useEffect(() => {
     if (connected) {
@@ -52,7 +67,7 @@ export const ArtworksView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {!isLoading
+      {!loading
         ? items.map((m, idx) => {
             const id = m.pubkey;
             return (

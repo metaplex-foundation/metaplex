@@ -37,6 +37,7 @@ import {
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
+import { getCreator } from '../../hooks/getData';
 const { Content } = Layout;
 
 export const BillingView = () => {
@@ -375,6 +376,17 @@ export const InnerBillingView = ({
   const balance = useUserBalance(auctionView.auction.info.tokenMint);
   const [escrowBalance, setEscrowBalance] = useState<number | undefined>();
   const { whitelistedCreatorsByCreator } = useMeta();
+
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators)
+      }
+    });
+  }, []);
+
   const [escrowBalanceRefreshCounter, setEscrowBalanceRefreshCounter] =
     useState(0);
 
@@ -527,7 +539,7 @@ export const InnerBillingView = ({
             ]}
             dataSource={Object.keys(payoutTickets).map(t => ({
               key: t,
-              name: whitelistedCreatorsByCreator[t]?.info?.name || 'N/A',
+              name: CreatorsByCreator[t]?.info?.name || 'N/A',
               address: t,
               amountPaid: payoutTickets[t].sum,
             }))}
