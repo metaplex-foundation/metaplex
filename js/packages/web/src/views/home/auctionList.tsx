@@ -141,9 +141,10 @@ export const AuctionListView = () => {
   return (
     <>
       <Banner
-        src={'/main-banner.svg'}
-        headingText={'The amazing world of Metaplex.'}
-        subHeadingText={'Buy exclusive Metaplex NFTs.'}
+        headingText={'This is jare.expert.'}
+        subHeadingText={
+          "A collection of cool sh#t by Jare to teach ppl when they say 'how the fuck do I do XYZ?!' - you can find the courses superpeer.com/jare/collection/nft-sales or buy the individual NFTs listed here ;) Follow @STACCArt on Twitter :) NOTE if you acquire some wealth here (not financial advice) and the wealth is an audio file, you can listen to it on other explorers - notably https://nfteyez.global/"
+        }
         actionComponent={<HowToBuyModal buttonClassName="secondary-btn" />}
         useBannerBg={true}
       />
