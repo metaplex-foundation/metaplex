@@ -22,11 +22,32 @@ export function Routes() {
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
+
             <Route
-              exact
-              path="/analytics"
-              component={() => <AnalyticsView />}
+              path="/de"
+              component={() => {
+                window.location.href =
+                  'https://digitaleyes.market/collections/Solana%20Tactical%20RPG%20STACC';
+                return null;
+              }}
             />
+
+            <Route
+              path="/linksnthat"
+              component={() => {
+                window.location.href = 'https://linktr.ee/STACCArt';
+                return null;
+              }}
+            />
+
+            <Route
+              path="/twittwat"
+              component={() => {
+                window.location.href = 'https://twitter.com/STACCArt';
+                return null;
+              }}
+            />
+
             <Route
               exact
               path="/art/create/:step_param?"

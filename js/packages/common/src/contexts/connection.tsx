@@ -42,28 +42,9 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: 'mainnet-beta' as ENV,
-    endpoint: 'https://api.metaplex.solana.com/',
+    endpoint:
+      'https://solana--mainnet.datahub.figment.io/apikey/fbb4f00427594e23bfb341c060e6348a',
     ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'mainnet-beta (Solana)' as ENV,
-    endpoint: 'https://api.mainnet-beta.solana.com',
-    ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'mainnet-beta (Serum)' as ENV,
-    endpoint: 'https://solana-api.projectserum.com/',
-    ChainId: ChainId.MainnetBeta,
-  },
-  {
-    name: 'testnet' as ENV,
-    endpoint: clusterApiUrl('testnet'),
-    ChainId: ChainId.Testnet,
-  },
-  {
-    name: 'devnet' as ENV,
-    endpoint: clusterApiUrl('devnet'),
-    ChainId: ChainId.Devnet,
   },
 ];
 

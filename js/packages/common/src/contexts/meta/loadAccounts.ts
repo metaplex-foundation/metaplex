@@ -907,7 +907,9 @@ const pullMetadataByCreators = (
 ): Promise<any> => {
   console.log('pulling optimized nfts');
 
-  const whitelistedCreators = Object.values(state.whitelistedCreatorsByCreator);
+  const whitelistedCreators = qObject.values(
+    state.whitelistedCreatorsByCreator,
+  );
 
   const setter: UpdateStateValueFunc = async (prop, key, value) => {
     if (prop === 'metadataByMint') {

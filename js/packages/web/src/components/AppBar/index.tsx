@@ -21,8 +21,15 @@ const getDefaultLinkActions = (connected: boolean) => {
     <Link to={`/artworks`} key={'artwork'}>
       <Button className="app-btn">{connected ? 'My Items' : 'Artwork'}</Button>
     </Link>,
-    <Link to={`/artists`} key={'artists'}>
-      <Button className="app-btn">Creators</Button>
+
+    <Link to={`/twittwat`} key={'twitter'}>
+      <Button className="app-btn">@STACCArt</Button>
+    </Link>,
+    <Link to={`/de`} key={'de'}>
+      <Button className="app-btn">DigitalEyes</Button>
+    </Link>,
+    <Link to={`/linksnthat`} key={'lt'}>
+      <Button className="app-btn">Links 'n' That</Button>
     </Link>,
   ];
 };
@@ -50,7 +57,7 @@ const MetaplexMenu = () => {
     return (
       <>
         <Modal
-          title={<img src={'/metaplex-logo.svg'} />}
+          title={<img src={'/twitter_header.png'} />}
           visible={isModalVisible}
           footer={null}
           className={'modal-box'}
@@ -109,7 +116,7 @@ const MetaplexMenu = () => {
 export const LogoLink = () => {
   return (
     <Link to={`/`}>
-      <img src={'/metaplex-logo.svg'} />
+      <img src={'/twitter_header.png'} />
     </Link>
   );
 };
