@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAuction, useExtendedArt } from '../../hooks';
 
 export const AuctionCard = props => {
-  const { pubkey, auction, price } = props;
-  const id = pubkeyToString(pubkey);
+  const { pubkey, auction, price, nftPubkey } = props;
+  const id = pubkeyToString(nftPubkey);
 
   const { data } = useExtendedArt(id);
   const auc = useAuction(auction);

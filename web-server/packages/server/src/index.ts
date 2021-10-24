@@ -20,7 +20,9 @@ import { payoutTicketsRouter } from "./routes/payoutTicket";
 import { bidderMetadataRouter } from "./routes/bidderMetadata";
 import { bidderPotRouter } from "./routes/bidderPot";
 
+const cors = require('cors');
 const app = express();
+app.use(cors())
 app.use(express.json());
 app.use(API_BASE, creatorsRouter);
 app.use(API_BASE, metadataRouter);
@@ -41,8 +43,8 @@ app.use(API_BASE, payoutTicketsRouter);
 app.use(API_BASE, bidderMetadataRouter);
 app.use(API_BASE, bidderPotRouter);
 
-loadMetaplexData();
-
 app.listen(3001, () => {
-  console.log("server is listening biaaatch");
+  loadMetaplexData().then(x => {
+    console.log("server is listening biaaatch, data is filled as fuck");
+  });
 });

@@ -2,8 +2,9 @@ import { shortenAddress } from '@oyster/common';
 import { Select, Spin } from 'antd';
 import { SelectProps } from 'antd/es/select';
 import debounce from 'lodash/debounce';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMeta } from '../../contexts';
+import { getCreator } from '../../hooks/getData';
 
 export interface DebounceSelectProps<ValueType = any>
   extends Omit<SelectProps<ValueType>, 'options' | 'children'> {
@@ -65,7 +66,16 @@ export interface UserValue {
 export const UserSearch = (props: { setCreators: Function }) => {
   const { whitelistedCreatorsByCreator } = useMeta();
   const [value, setValue] = React.useState<UserValue[]>([]);
-
+  const [creators, setCreator] = useState<any>([])
+  
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreator(creators)
+      }
+    });
+  }, []);
+  
   return (
     <DebounceSelect
       className="user-selector"
@@ -74,11 +84,11 @@ export const UserSearch = (props: { setCreators: Function }) => {
       value={value}
       placeholder="Select creator"
       fetchOptions={async (search: string) => {
-        const items = Object.values(whitelistedCreatorsByCreator)
-          .filter(c => c.info.activated)
+        const items = creators
+          .filter(c => c?.info?.activated)
           .map(a => ({
-            label: a.info.name || shortenAddress(a.info.address),
-            value: a.info.address,
+            label: a?.info?.name || shortenAddress(a?.info?.address),
+            value: a?.info?.address,
           }));
 
         return items;

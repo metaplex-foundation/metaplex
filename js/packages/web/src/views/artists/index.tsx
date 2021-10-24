@@ -1,14 +1,25 @@
 import { Col, Layout } from 'antd';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
 import { useMeta } from '../../contexts';
+import { getCreator } from '../../hooks/getData';
 
 const { Content } = Layout;
 
 export const ArtistsView = () => {
   const { whitelistedCreatorsByCreator } = useMeta();
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+
+  useEffect(() => {
+    getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators)
+      }
+    });
+  }, []);
+
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -16,7 +27,7 @@ export const ArtistsView = () => {
     500: 1,
   };
 
-  const items = Object.values(whitelistedCreatorsByCreator);
+  const items = CreatorsByCreator;
 
   const artistGrid = (
     <Masonry
@@ -24,7 +35,7 @@ export const ArtistsView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {items.map((m, idx) => {
+      {items?.map((m, idx) => {
         const id = m.info.address;
         return (
           <Link to={`/artists/${id}`} key={idx}>
