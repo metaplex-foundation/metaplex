@@ -24,7 +24,6 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
-  ALT_SPL_MINT,
 } from '@oyster/common';
 import {
   AuctionView,

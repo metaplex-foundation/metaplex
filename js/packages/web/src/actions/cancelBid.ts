@@ -30,7 +30,7 @@ import {
   PrizeTrackingTicket,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
-import { setupPlaceBid } from './sendPlaceBid';
+import { findAta, setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 export async function sendCancelBid(
@@ -134,9 +134,9 @@ export async function setupCancelBid(
   const mint = cache.get(auctionView.auction.info.tokenMint);
 
   if (mint && auctionView.myBidderPot) {
-    let receivingSolAccount_or_ata = '';
+    let receivingSolAccountOrAta = '';
     if (auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
-      receivingSolAccount_or_ata = ensureWrappedAccount(
+      receivingSolAccountOrAta = ensureWrappedAccount(
         cancelInstructions,
         cleanupInstructions,
         tokenAccount,
@@ -145,41 +145,12 @@ export async function setupCancelBid(
         cancelSigners,
       );
     } else {
-      // if alternative currency is set, go for it
-      const PROGRAM_IDS = programIds();
-      const auctionTokenMint = new PublicKey(
-        auctionView.auction.info.tokenMint,
-      );
-      const ata = (
-        await PublicKey.findProgramAddress(
-          [
-            wallet.publicKey.toBuffer(),
-            PROGRAM_IDS.token.toBuffer(),
-            auctionTokenMint.toBuffer(),
-          ],
-          PROGRAM_IDS.associatedToken,
-        )
-      )[0];
-      const settleInstructions: TransactionInstruction[] = [];
-      receivingSolAccount_or_ata = pubkeyToString(ata);
-      const existingAta = await connection.getAccountInfo(ata);
-
-      // create a new ATA if there is none
-      console.log('Looking for existing ata?', existingAta);
-      if (!existingAta) {
-        createAssociatedTokenAccountInstruction(
-          settleInstructions,
-          toPublicKey(receivingSolAccount_or_ata),
-          wallet.publicKey,
-          wallet.publicKey,
-          auctionTokenMint,
-        );
-      }
+      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
     }
 
     await cancelBid(
       wallet.publicKey.toBase58(),
-      pubkeyToString(receivingSolAccount_or_ata),
+      pubkeyToString(receivingSolAccountOrAta),
       auctionView.myBidderPot.info.bidderPot,
       auctionView.auction.info.tokenMint,
       auctionView.vault.pubkey,

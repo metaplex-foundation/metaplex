@@ -56,7 +56,7 @@ import { approve } from '@oyster/common/dist/lib/models/account';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
 import { setupCancelBid } from './cancelBid';
 import { deprecatedPopulateParticipationPrintingAccount } from '@oyster/common/dist/lib/models/metaplex/deprecatedPopulateParticipationPrintingAccount';
-import { setupPlaceBid } from './sendPlaceBid';
+import { findAta, setupPlaceBid } from './sendPlaceBid';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
@@ -775,9 +775,9 @@ export async function setupRedeemParticipationInstructions(
       console.log('Found token account', tokenAccount);
     }
 
-    let receivingSolAccount_or_ata = '';
+    let receivingSolAccountOrAta = '';
     if (auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
-      receivingSolAccount_or_ata = ensureWrappedAccount(
+      receivingSolAccountOrAta = ensureWrappedAccount(
         mintingInstructions,
         cleanupInstructions,
         tokenAccount,
@@ -786,37 +786,7 @@ export async function setupRedeemParticipationInstructions(
         mintingSigners,
       );
     } else {
-      // if alternative currency is set, go for it
-      const PROGRAM_IDS = programIds();
-      const auctionTokenMint = new PublicKey(
-        auctionView.auction.info.tokenMint,
-      );
-      const ata = (
-        await PublicKey.findProgramAddress(
-          [
-            wallet.publicKey.toBuffer(),
-            PROGRAM_IDS.token.toBuffer(),
-            auctionTokenMint.toBuffer(),
-          ],
-          PROGRAM_IDS.associatedToken,
-        )
-      )[0];
-      receivingSolAccount_or_ata = pubkeyToString(ata);
-      const settleInstructions: TransactionInstruction[] = [];
-
-      const existingAta = await connection.getAccountInfo(ata);
-
-      // create a new ATA if there is none
-      console.log('Looking for existing ata?', existingAta);
-      if (!existingAta) {
-        createAssociatedTokenAccountInstruction(
-          settleInstructions,
-          ata,
-          wallet.publicKey,
-          wallet.publicKey,
-          auctionTokenMint,
-        );
-      }
+      receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
     }
 
     instructions.push(mintingInstructions);
@@ -829,7 +799,7 @@ export async function setupRedeemParticipationInstructions(
     const transferAuthority = approve(
       myInstructions,
       cleanupInstructions,
-      toPublicKey(receivingSolAccount_or_ata),
+      toPublicKey(receivingSolAccountOrAta),
       wallet.publicKey,
       price,
     );
@@ -850,7 +820,7 @@ export async function setupRedeemParticipationInstructions(
       item.metadata.info.mint,
       transferAuthority.publicKey.toBase58(),
       auctionView.auctionManager.acceptPayment,
-      pubkeyToString(receivingSolAccount_or_ata),
+      pubkeyToString(receivingSolAccountOrAta),
       mint,
       me.info.supply.add(new BN(1)),
       winnerIndex != null && winnerIndex != undefined
@@ -1002,9 +972,9 @@ async function deprecatedSetupRedeemParticipationInstructions(
           ? fixedPrice.toNumber()
           : auctionView.myBidderMetadata.info.lastBid.toNumber() || 0;
 
-      let receivingSolAccount_or_ata = '';
+      let receivingSolAccountOrAta = '';
       if (auctionView.auction.info.tokenMint == WRAPPED_SOL_MINT.toBase58()) {
-        receivingSolAccount_or_ata = ensureWrappedAccount(
+        receivingSolAccountOrAta = ensureWrappedAccount(
           winningPrizeInstructions,
           cleanupInstructions,
           tokenAccount,
@@ -1013,42 +983,13 @@ async function deprecatedSetupRedeemParticipationInstructions(
           winningPrizeSigner,
         );
       } else {
-        // if alternative currency is set, go for it
-        const PROGRAM_IDS = programIds();
-        const auctionTokenMint = new PublicKey(
-          auctionView.auction.info.tokenMint,
-        );
-        const ata = (
-          await PublicKey.findProgramAddress(
-            [
-              wallet.publicKey.toBuffer(),
-              PROGRAM_IDS.token.toBuffer(),
-              auctionTokenMint.toBuffer(),
-            ],
-            PROGRAM_IDS.associatedToken,
-          )
-        )[0];
-        const settleInstructions: TransactionInstruction[] = [];
-        receivingSolAccount_or_ata = pubkeyToString(ata);
-        const existingAta = await connection.getAccountInfo(ata);
-
-        // create a new ATA if there is none
-        console.log('Looking for existing ata?', existingAta);
-        if (!existingAta) {
-          createAssociatedTokenAccountInstruction(
-            settleInstructions,
-            toPublicKey(receivingSolAccount_or_ata),
-            wallet.publicKey,
-            wallet.publicKey,
-            auctionTokenMint,
-          );
-        }
+        receivingSolAccountOrAta = await findAta(auctionView, wallet, connection)
       }
 
       const transferAuthority = approve(
         winningPrizeInstructions,
         cleanupInstructions,
-        toPublicKey(receivingSolAccount_or_ata),
+        toPublicKey(receivingSolAccountOrAta),
         wallet.publicKey,
         price,
       );
@@ -1066,7 +1007,7 @@ async function deprecatedSetupRedeemParticipationInstructions(
         participationState.printingAuthorizationTokenAccount,
         transferAuthority.publicKey.toBase58(),
         auctionView.auctionManager.acceptPayment,
-        receivingSolAccount_or_ata,
+        receivingSolAccountOrAta,
       );
       newTokenBalance = 1;
       instructions.push([...winningPrizeInstructions, ...cleanupInstructions]);

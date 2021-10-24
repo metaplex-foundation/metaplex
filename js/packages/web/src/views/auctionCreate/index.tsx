@@ -55,7 +55,7 @@ import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
-import TokenDialog, { TokenButton } from '../../components/TokenDialog/tokenDialog';
+import TokenDialog, { TokenButton } from '../../components/TokenDialog';
 import { useTokenList } from '../../contexts/tokenList';
 import { mintTo } from '@project-serum/serum/lib/token-instructions';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -195,7 +195,6 @@ export const AuctionCreateView = () => {
   const createAuction = async () => {
     let winnerLimit: WinnerLimit;
     //const mint = attributes.quoteMintInfo
-    console.log("ATTRIBUTES", attributes)
     if (
       attributes.category === AuctionCategory.InstantSale &&
       attributes.instantSaleType === InstantSaleType.Open
@@ -217,9 +216,6 @@ export const AuctionCreateView = () => {
 
       if (items.length > 0) {
         const item = items[0];
-        
-        console.log("UPDATE AUTH", item)
-
         if (!editions) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
@@ -815,9 +811,10 @@ const InstantSaleStep = ({
 
   attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
 
-  if (attributes.quoteMintAddress)
+  if (attributes.quoteMintAddress) {
     attributes.quoteMintInfo = useMint(attributes.quoteMintAddress)!
     attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(attributes.quoteMintAddress)!
+  }
 
   //console.log("OBJ MINT", mint.toBase58())
 
@@ -966,9 +963,10 @@ const CopiesStep = (props: {
 
   props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
   
-  if (props.attributes.quoteMintAddress)
+  if (props.attributes.quoteMintAddress) {
     props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
     props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+  }
 
   let artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
@@ -1508,9 +1506,10 @@ const TierTableStep = (props: {
 
   props.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
   
-  if (props.quoteMintAddress)
+  if (props.quoteMintAddress) {
     props.quoteMintInfo = useMint(props.quoteMintAddress)!
     props.quoteMintInfoExtended = useTokenList().tokenMap.get(props.quoteMintAddress)!
+  }
 
   const newImmutableTiers = (tiers: Tier[]) => {
     return tiers.map(wc => ({
@@ -1885,13 +1884,10 @@ const ReviewStep = (props: {
       props.connection.getMinimumBalanceForRentExemption(MintLayout.span),
       props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
     ]);
-    console.log("COST", rentCall, cost)
     // TODO: add
   }, [setCost]);
 
   let item = props.attributes.items?.[0];
-
-  console.log("AUCTION PROPS", props)
 
   return (
     <>

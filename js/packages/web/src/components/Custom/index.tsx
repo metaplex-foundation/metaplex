@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
-export const TokenCircle = (props: { iconSize?: number , iconFile?: string}) => {
-  const { iconSize = 24 ,iconFile=undefined} = props;
+export const TokenCircle = (props: { iconSize?: number , iconFile?: string, style?:CSSProperties}) => {
+  const { iconSize = 24 ,iconFile=undefined, style={}} = props;
   const padding = iconFile? "": `${iconSize / 4}px ${iconSize / 5}px`
   const filePath = iconFile? iconFile:"/sol-circle.svg"
-  //console.log("ICONS", iconFile, padding)
   return (
     <span
       style={{
@@ -14,7 +13,8 @@ export const TokenCircle = (props: { iconSize?: number , iconFile?: string}) => 
         height: iconSize,
         width: iconSize,
         display: 'inline-flex',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...style
       }}
     >
       <img src={filePath}/>
