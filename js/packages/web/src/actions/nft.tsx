@@ -359,7 +359,6 @@ export const mintNFT = async (
     // TODO: convert to absolute file name for image
     console.log("PREUPLOAD AR", data, txid, env)
     const result: IArweaveResult = await uploadToArweave(data);
-    progressCallback(6);
 
     const metadataFile = result.messages?.find(
       m => m.filename === RESERVED_TXN_MANIFEST,
@@ -371,6 +370,8 @@ export const mintNFT = async (
     if (!arWallet) throw new Error("Detected files with more than 10mb but no wallet provided");
     arweaveTxId = await uploadWithArWallet(filesMoreThan10mb, arWallet, metadata, mintKey)
   }
+
+  progressCallback(6);
 
   if (arweaveTxId && wallet.publicKey) {
     console.log("SET THE AR ID", arweaveTxId)
