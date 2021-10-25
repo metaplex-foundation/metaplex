@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   HashRouter,
   Link,
@@ -19,6 +19,7 @@ import "./App.css";
 import {
   useColorMode,
 } from "./contexts";
+import Centered from "./components/Centered";
 import Header from "./components/Header/Header";
 import { Claim } from "./components/Claim";
 import { Create } from "./components/Create";
@@ -138,12 +139,13 @@ const getWindowDimensions = () => {
   };
 };
 
+// eslint-disable-next-line
 const useWindowDimensions = () => {
-  const [windowDimensions, setWindowDimensions] = useState(
+  const [windowDimensions, setWindowDimensions] = React.useState(
     getWindowDimensions()
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleResize = () => {
       setWindowDimensions(getWindowDimensions());
     }
@@ -158,9 +160,7 @@ const useWindowDimensions = () => {
 function App() {
   const colorModeCtx = useColorMode();
 
-  useEffect(() => {}, [colorModeCtx.mode]);
-
-  const { height } = useWindowDimensions();
+  React.useEffect(() => {}, [colorModeCtx.mode]);
 
   const theme = React.useMemo(
     () => {
@@ -190,19 +190,8 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Header />
-        <Box
-          sx={{
-            width: 600,
-            height: "100%",
-            flexGrow: 1,
-            pt: `${Math.floor(0.2 * height)}px`,
-            px: "50%",
-            display: "flex",
-            alignSelf: "center",
-            justifyContent: "center",
-            alignContent: "center",
-          }}
-        >
+        <Centered height="100ch" width="60ch">
+          <Box sx={{height: "10ch"}} />
           <HashRouter>
             <Switch>
               <Route path="/create" component={Create} />
@@ -210,7 +199,7 @@ function App() {
               <Route path="/" component={About} />
             </Switch>
           </HashRouter>
-        </Box>
+        </Centered>
       </ThemeProvider>
     </div>
   );

@@ -43,17 +43,17 @@ export const Header: React.FC = () => {
           marginLeft: "36px",
         }}
       >
-        <Link href="#/">
+        <Link href="#/" underline="none">
           <Button variant="outlined">
             About
           </Button>
         </Link>
-        <Link href="#/create">
+        <Link href="#/create" underline="none">
           <Button variant="outlined">
             Create
           </Button>
         </Link>
-        <Link href="#/claim">
+        <Link href="#/claim" underline="none">
           <Button variant="outlined">
             Claim
           </Button>
