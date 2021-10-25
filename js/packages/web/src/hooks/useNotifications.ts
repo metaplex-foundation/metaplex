@@ -65,8 +65,8 @@ export const useNotifications = (
           const possiblyBroken = {
             auctionManagerPubkey: auctionView.auctionManager.pubkey,
             type: StorefrontNotificationType.Broken,
-            description: 'You have an NFT locked in a defective listing. Unlock it now to re-claim the NFT.',
-            callToAction: 'Reclaim NFT',
+            description: 'You have an NFT locked in a defective listing. Decommission it now to re-claim the NFT.',
+            callToAction: 'Decommission Listing',
             action: async () =>  decommAuctionManagerAndReturnPrizes(
               connection,
               wallet,
@@ -85,8 +85,8 @@ export const useNotifications = (
           const unwind = {
             auctionManagerPubkey: auctionView.auctionManager.pubkey,
             type: StorefrontNotificationType.Unwind,
-            description: 'You have an NFT locked in a defective listing. Unlock it now to re-claim the NFT.',
-            callToAction: 'Reclaim NFT',
+            description: 'You have an NFT locked in a defective vault. Unwind it now to re-claim the NFT.',
+            callToAction: 'Unwind Vault',
             action: async () => unwindVault(
               connection,
               wallet,
