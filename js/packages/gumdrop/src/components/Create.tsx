@@ -193,10 +193,14 @@ export const Create = (
   const [commSource, setCommSource] = React.useState("");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
+  const [baseKey, setBaseKey] = React.useState<Keypair | undefined>(undefined);
   const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
+
+    setBaseKey(undefined);
+    setClaimURLs([]);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -339,6 +343,7 @@ export const Create = (
 
 
     const base = new Keypair();
+    console.log(`Base ${base.publicKey.toBase58()}`);
     const [distributor, dbump] = await PublicKey.findProgramAddress(
       [
         Buffer.from("MerkleDistributor"),
@@ -458,6 +463,7 @@ export const Create = (
     }
 
     // TODO: defer until success?
+    setBaseKey(base);
     setClaimURLs(claimants);
 
     const createDistributorTokenAccount = new TransactionInstruction({
@@ -674,6 +680,7 @@ export const Create = (
           try {
             await submit(e);
           } catch (err) {
+            setBaseKey(undefined);
             setClaimURLs([]);
             notify({
               message: "Create failed",
@@ -689,8 +696,8 @@ export const Create = (
     </Button>
   );
 
-  const encodedClaimURLs = () => {
-    const encoded = encodeURIComponent(JSON.stringify(claimURLs));
+  const hyperLinkData = (data) => {
+    const encoded = encodeURIComponent(JSON.stringify(data));
     return `data:text/plain;charset=utf-8,${encoded}`;
   };
 
@@ -726,9 +733,24 @@ export const Create = (
       {commMethod !== "" && commAuthorization(commMethod)}
       {commMethod !== "" && mint !== "" && fileUpload}
       {filename !== "" && createAirdrop}
+      {baseKey !== undefined && (
+        <HyperLink
+          href={hyperLinkData(Array.from(baseKey.secretKey))}
+          download="basekey.json"
+          underline="none"
+          style={{width: "100%"}}
+        >
+          <Button
+            variant="contained"
+            style={{width: "100%"}}
+          >
+            Download Distributor Base Secret Key
+          </Button>
+        </HyperLink>
+      )}
       {claimURLs.length > 0 && (
         <HyperLink
-          href={encodedClaimURLs()}
+          href={hyperLinkData(claimURLs)}
           download="claimURLs.json"
           underline="none"
           style={{width: "100%"}}
