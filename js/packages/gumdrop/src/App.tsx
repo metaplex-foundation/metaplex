@@ -118,18 +118,24 @@ const About = (
       direction="row"
       spacing={2}
     >
-      <Link to="/create">
+      <Link
+        to="/create"
+        style={{width: "50%"}}
+      >
         <Button
-          style={{width: "30ch"}}
+          style={{width: "100%"}}
           variant="contained"
           color="info"
         >
           Create
         </Button>
       </Link>
-      <Link to="/claim">
+      <Link
+        to="/claim"
+        style={{width: "50%"}}
+      >
         <Button
-          style={{width: "30ch"}}
+          style={{width: "100%"}}
           variant="contained"
           color="info"
         >
