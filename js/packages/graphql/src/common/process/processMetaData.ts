@@ -11,45 +11,6 @@ import {
 } from '../utils';
 import { createPipeline, createProcessor } from './utils';
 
-/*
-export const processMetaData: ProcessAccountsFunc = async (
-  { account, pubkey },
-  setter,
-) => {
-  if (!isMetadataAccount(account)) return;
-
-  try {
-    if (isMetadataV1Account(account)) {
-      const metadata = decodeMetadata(account.data, pubkey);
-
-      if (
-        isValidHttpUrl(metadata.data.uri) &&
-        metadata.data.uri.indexOf('arweave') >= 0
-      ) {
-        //try {
-        //  await metadata.init();
-        //} catch {
-        //  // nothing
-        //}
-        await setter('metadata', pubkey, metadata);
-      }
-    }
-
-    if (isEditionV1Account(account)) {
-      const edition = decodeEdition(account.data, pubkey);
-      await setter('editions', pubkey, edition);
-    }
-
-    if (isMasterEditionAccount(account)) {
-      const masterEdition = decodeMasterEdition(account.data, pubkey);
-      await setter('masterEditions', pubkey, masterEdition);
-    }
-  } catch (err) {
-    logger.warn(err);
-  }
-};
-*/
-
 const isMetadataAccount = (account: AccountInfoOwnerString<Buffer>) => {
   return account.owner === METADATA_PROGRAM_ID;
 };
@@ -81,11 +42,15 @@ export const METADATA_PROCESSOR = createPipeline(
     ),
     editions: createProcessor(
       acc => isEditionV1Account(acc),
-      ({ account, pubkey }) => decodeEdition(account.data, pubkey),
+      ({ account, pubkey }) => {
+        return decodeEdition(account.data, pubkey);
+      },
     ),
     masterEditions: createProcessor(
       acc => isMasterEditionAccount(acc),
-      ({ account, pubkey }) => decodeMasterEdition(account.data, pubkey),
+      ({ account, pubkey }) => {
+        return decodeMasterEdition(account.data, pubkey);
+      },
     ),
   },
   isMetadataAccount,
