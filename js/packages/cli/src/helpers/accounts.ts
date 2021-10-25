@@ -278,9 +278,19 @@ export function loadWalletKey(keypair): Keypair {
   return loaded;
 }
 
-export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
+export async function loadCandyProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
   // @ts-ignore
-  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+
   const walletWrapper = new anchor.Wallet(walletKeyPair);
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
