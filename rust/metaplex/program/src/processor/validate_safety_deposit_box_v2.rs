@@ -14,17 +14,17 @@ use {
         },
     },
     borsh::BorshSerialize,
+    metaplex_token_metadata::{
+        state::{MasterEditionV1, MasterEditionV2, Metadata},
+        utils::assert_update_authority_is_correct,
+    },
+    metaplex_token_vault::state::{SafetyDepositBox, Vault},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         pubkey::Pubkey,
     },
     spl_token::state::{Account, Mint},
-    spl_token_metadata::{
-        state::{MasterEditionV1, MasterEditionV2, Metadata},
-        utils::assert_update_authority_is_correct,
-    },
-    spl_token_vault::state::{SafetyDepositBox, Vault},
 };
 pub fn make_safety_deposit_config<'a>(
     program_id: &Pubkey,
@@ -228,10 +228,10 @@ pub fn assert_supply_logic_check(args: SupplyLogicCheckArgs) -> ProgramResult {
     let safety_deposit_token_store: Account = assert_initialized(safety_deposit_token_store_info)?;
 
     let edition_seeds = &[
-        spl_token_metadata::state::PREFIX.as_bytes(),
+        metaplex_token_metadata::state::PREFIX.as_bytes(),
         store.token_metadata_program.as_ref(),
         &metadata.mint.as_ref(),
-        spl_token_metadata::state::EDITION.as_bytes(),
+        metaplex_token_metadata::state::EDITION.as_bytes(),
     ];
 
     let (edition_key, _) =

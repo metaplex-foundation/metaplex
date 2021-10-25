@@ -7,13 +7,13 @@ use {
         Discriminator, Key,
     },
     arrayref::array_ref,
-    spl_token::state::{Account, Mint},
-    spl_token_metadata::{
+    metaplex_token_metadata::{
         instruction::{create_master_edition, create_metadata_accounts, update_metadata_accounts},
         state::{
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
     },
+    spl_token::state::{Account, Mint},
     std::cell::Ref,
 };
 
@@ -111,15 +111,15 @@ pub mod nft_candy_machine {
             &[candy_machine.bump],
         ];
 
-        let mut creators: Vec<spl_token_metadata::state::Creator> =
-            vec![spl_token_metadata::state::Creator {
+        let mut creators: Vec<metaplex_token_metadata::state::Creator> =
+            vec![metaplex_token_metadata::state::Creator {
                 address: candy_machine.key(),
                 verified: true,
                 share: 0,
             }];
 
         for c in &config.data.creators {
-            creators.push(spl_token_metadata::state::Creator {
+            creators.push(metaplex_token_metadata::state::Creator {
                 address: c.address,
                 verified: false,
                 share: c.share,
@@ -164,7 +164,7 @@ pub mod nft_candy_machine {
                 config_line.uri,
                 Some(creators),
                 config.data.seller_fee_basis_points,
-                false,
+                true,
                 config.data.is_mutable,
             ),
             metadata_infos.as_slice(),
@@ -475,7 +475,7 @@ pub struct MintNFT<'info> {
     update_authority: AccountInfo<'info>,
     #[account(mut)]
     master_edition: AccountInfo<'info>,
-    #[account(address = spl_token_metadata::id())]
+    #[account(address = metaplex_token_metadata::id())]
     token_metadata_program: AccountInfo<'info>,
     #[account(address = spl_token::id())]
     token_program: AccountInfo<'info>,

@@ -1,0 +1,246 @@
+.instructions-modal{
+  width: 80% !important;
+}
+
+
+.modal-box {
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background-color: #2A2A2A;
+  cursor: auto;
+  padding-bottom: 0px;
+  .ant-modal-footer {
+    border-top: 0;
+  }
+  .ant-input {
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  @media (max-width: @screen-sm-min) {
+    width: 100% !important;
+    top:0 !important;
+    max-width: 100% !important;
+    .ant-modal-content{
+      min-height: 100vh;
+    }
+    .mobile-menu-modal{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 80vh;
+      .actions{
+        display: flex;
+        justify-content: space-around;
+        flex-direction: row;
+        flex-wrap: wrap;
+        .actions-buttons{
+          display: flex;
+          width: 100%;
+          button{
+            flex: auto;
+          }
+        }
+        .actions-user{
+          margin-top: 10px;
+
+          a{
+            display: flex;
+            flex: 1;
+            padding: 5px;
+          }
+        }
+        .ant-badge{
+          margin-top: 25px;
+        }
+      }
+      .ant-dropdown-menu{
+        background-color: transparent !important;
+      }
+      .app-btn{
+        background-color: transparent !important;
+      }
+      .ant-menu{
+        width: 100%;
+        background-color: transparent !important;
+        border-right: 0 !important;
+        .ant-menu-item{
+          border-bottom: 1px solid #f0f0f0 !important;
+          padding: 0;
+          .app-btn{
+            font-size: 18px;
+            font-weight: 600;
+            padding: 0 0 24px;
+          }
+        }
+      }
+      .current-user-mobile-badge{
+        width: 100%;
+        .mobile-badge{
+          display: flex;
+        }
+        .balance-container{
+          width: 100%;
+          margin-top: 10px;
+          border-radius: 12px;
+          margin-bottom: 10px;
+          height: 50px;
+          display: flex;
+          font-weight: 700;
+          flex-direction: column;
+          .balance-title{
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 14px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+          }
+          .sol-img-wrapper{
+            border-radius: 50%;
+            background: black;
+            display: inline-block;
+            padding: 1px 4px 4px 4px;
+            line-height: 1;
+          }
+        }
+      }
+    }
+  }
+
+  .ant-modal-content {
+    background: #1f1f1f;
+    border-radius: 12px;
+  }
+
+  .ant-modal-header {
+    border-bottom: 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 28px 24px 28px 24px;
+    background-color: transparent !important;
+    color: white !important;
+    .ant-modal-title {
+      color: white;
+      font-style: normal;
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 24px;
+    }
+  }
+
+  .ant-modal-close-x {
+
+    width: fit-content;
+    height: fit-content;
+    margin-right: 24px;
+    margin-top: 8px;
+  }
+
+  .ant-modal-body {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px;
+    padding: 48px;
+    @media (max-width: @screen-sm-min) {
+      padding: 30px;
+      min-height: 90vh !important;
+    }
+    .ant-card {
+      background: transparent;
+      border: 0;
+      height: 476px;
+      .ant-card-cover {
+        border-radius: 12px;
+        .card-cover {
+          //background: rgba(255, 255, 255, 0.1);
+          height: 200px;
+          border-radius: 12px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          img {
+            width: auto;
+            height: 100%;
+            border-radius: 12px;
+          }
+        }
+      }
+
+      .body-title {
+        font-style: normal;
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 20px;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        color: white;
+      }
+
+      .body-content {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 20px;
+        color: rgba(255, 255, 255, 0.7)
+      }
+
+      .ant-card-body {
+        display: flex;
+        flex-direction: column;
+
+        > :last-child {
+          &.line {
+            width: 100%;
+          }
+          position: absolute;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          bottom: 0;
+          position: absolute;
+          right: 0;
+        }
+
+        .button-container {
+          display: flex;
+          justify-content: flex-end;
+
+          .modal-button-buy {
+            position: absolute;
+            margin-top: 40px;
+            height: 48px;
+            width: 156px;
+            right: 0;
+            bottom: 8px;
+            background: #B388F5;
+            box-shadow: 0px 0px 24px rgba(26, 26, 26, 0.12);
+            border-radius: 8px;
+            font-style: normal;
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 16px
+          }
+        }
+      }
+    }
+  }
+}
+
+
+@media screen and (min-width: 800px) {
+  .modal-box {
+    max-width: 1248px !important;
+  }
+}
+
+.modal-button-default {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 19px;
+  cursor: pointer;
+  margin-right: 24px;
+  border: 0;
+}
+
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+  background-color: rgba(255, 255, 255, 0.08)
+}

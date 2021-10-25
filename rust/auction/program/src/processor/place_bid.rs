@@ -281,12 +281,21 @@ pub fn place_bid<'r, 'b: 'r>(
         .ok_or(AuctionError::NumericalOverflowError)?;
     auction_extended.serialize(&mut *accounts.auction_extended.data.borrow_mut())?;
 
+    let mut bid_price = args.amount;
+
+    if let Some(instant_sale_price) = auction_extended.instant_sale_price {
+        if args.amount > instant_sale_price {
+            msg!("Received amount is more than instant_sale_price so it was reduced to instant_sale_price - {:?}", instant_sale_price);
+            bid_price = instant_sale_price;
+        }
+    }
+
     // Confirm payers SPL token balance is enough to pay the bid.
     let account: Account = Account::unpack_from_slice(&accounts.bidder_token.data.borrow())?;
-    if account.amount.saturating_sub(args.amount) < 0 {
+    if account.amount.saturating_sub(bid_price) < 0 {
         msg!(
             "Amount is too small: {:?}, compared to account amount of {:?}",
-            args.amount,
+            bid_price,
             account.amount
         );
         return Err(AuctionError::BalanceTooLow.into());
@@ -299,16 +308,17 @@ pub fn place_bid<'r, 'b: 'r>(
         authority: accounts.transfer_authority.clone(),
         authority_signer_seeds: bump_authority_seeds,
         token_program: accounts.token_program.clone(),
-        amount: args.amount,
+        amount: bid_price,
     })?;
 
     // Serialize new Auction State
     auction.last_bid = Some(clock.unix_timestamp);
     auction.place_bid(
-        Bid(*accounts.bidder.key, args.amount),
+        Bid(*accounts.bidder.key, bid_price),
         auction_extended.tick_size,
         auction_extended.gap_tick_size_percentage,
         clock.unix_timestamp,
+        auction_extended.instant_sale_price,
     )?;
     auction.serialize(&mut *accounts.auction.data.borrow_mut())?;
 
@@ -316,7 +326,7 @@ pub fn place_bid<'r, 'b: 'r>(
     BidderMetadata {
         bidder_pubkey: *accounts.bidder.key,
         auction_pubkey: *accounts.auction.key,
-        last_bid: args.amount,
+        last_bid: bid_price,
         last_bid_timestamp: clock.unix_timestamp,
         cancelled: false,
     }

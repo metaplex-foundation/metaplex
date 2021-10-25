@@ -14,7 +14,7 @@ import {
   RedeemUnusedWinningConfigItemsAsAuctioneerArgs,
   SCHEMA,
 } from '.';
-import { VAULT_PREFIX } from '../../actions';
+import { VAULT_PREFIX, getAuctionExtended } from '../../actions';
 import {
   findProgramAddress,
   programIds,
@@ -66,6 +66,11 @@ export async function redeemFullRightsTransferBid(
     auctionManagerKey,
     safetyDeposit,
   );
+
+  const auctionExtended = await getAuctionExtended({
+    auctionProgramId: PROGRAM_IDS.auction,
+    resource: vault,
+  });
 
   const value =
     auctioneerReclaimIndex !== undefined
@@ -178,6 +183,12 @@ export async function redeemFullRightsTransferBid(
     },
     {
       pubkey: toPublicKey(safetyDepositConfig),
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: toPublicKey(auctionExtended),
       isSigner: false,
       isWritable: false,
     },

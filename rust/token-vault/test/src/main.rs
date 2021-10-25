@@ -16,7 +16,7 @@ use {
         instruction::{approve, initialize_account, initialize_mint, mint_to},
         state::{Account, Mint},
     },
-    spl_token_vault::{
+    metaplex_token_vault::{
         instruction::{
             create_activate_vault_instruction, create_add_shares_instruction,
             create_add_token_to_inactive_vault_instruction, create_combine_vault_instruction,

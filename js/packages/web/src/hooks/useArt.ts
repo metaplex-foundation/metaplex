@@ -15,6 +15,7 @@ import {
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
 import { useInView } from 'react-intersection-observer';
+import useWindowDimensions from '../utils/layout';
 
 const metadataToArt = (
   info: Metadata | undefined,
@@ -94,6 +95,7 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
     }
 
     const result = cachedImages.get(uri);
+
     if (result) {
       setCachedBlob(result);
       return;
@@ -101,11 +103,19 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 
     (async () => {
       let response: Response;
+      let blob: Blob;
       try {
         response = await fetch(uri, { cache: 'force-cache' });
+
+        blob = await response.blob();
+
+        if (blob.size === 0) {
+          throw new Error('No content');
+        }
       } catch {
         try {
           response = await fetch(uri, { cache: 'reload' });
+          blob = await response.blob();
         } catch {
           // If external URL, just use the uri
           if (uri?.startsWith('http')) {
@@ -116,7 +126,11 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
         }
       }
 
-      const blob = await response.blob();
+      if (blob.size === 0) {
+        setIsLoading(false);
+        return;
+      }
+
       if (cacheMesh) {
         // extra caching for meshviewer
         Cache.enabled = true;
@@ -159,7 +173,8 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   const { metadata } = useMeta();
 
   const [data, setData] = useState<IMetadataExtension>();
-  const { ref, inView } = useInView();
+  const { width } = useWindowDimensions();
+  const { ref, inView } = useInView({ root: null, rootMargin: '-100px 0px' });
   const localStorage = useLocalStorage();
 
   const key = pubkeyToString(id);
@@ -170,7 +185,7 @@ export const useExtendedArt = (id?: StringPublicKey) => {
   );
 
   useEffect(() => {
-    if (inView && id && !data) {
+    if ((inView || width < 768) && id && !data) {
       const USE_CDN = false;
       const routeCDN = (uri: string) => {
         let result = uri;

@@ -10,33 +10,28 @@
   position: relative;
   padding: 1rem;
   z-index: 2;
-
-  .ant-menu-horizontal {
-    border-bottom-color: transparent;
-    background-color: transparent;
-    line-height: inherit;
-    font-size: 16px;
-    margin: 0 10px;
-
-    .ant-menu-item {
-      margin: 0 10px;
-      color: lightgrey;
-      height: 35px;
-      line-height: 35px;
-      border-width: 0px !important;
-    }
-
-    .ant-menu-item:hover {
-      color: white;
-      border-width: 0px !important;
-    }
-
-    .ant-menu-item-selected {
-      font-weight: bold;
-    }
-  }
 }
-
+.App-Bar .ant-menu-horizontal {
+  border-bottom-color: transparent;
+  background-color: transparent;
+  line-height: inherit;
+  font-size: 16px;
+  margin: 0 10px;
+}
+.App-Bar .ant-menu-horizontal .ant-menu-item {
+  margin: 0 10px;
+  color: lightgrey;
+  height: 35px;
+  line-height: 35px;
+  border-width: 0px !important;
+}
+.App-Bar .ant-menu-horizontal .ant-menu-item:hover {
+  color: white;
+  border-width: 0px !important;
+}
+.App-Bar .ant-menu-horizontal .ant-menu-item-selected {
+  font-weight: bold;
+}
 .App-Bar-left {
   box-sizing: border-box;
   margin: 0px;
@@ -47,7 +42,6 @@
   align-items: center;
   width: fit-content;
 }
-
 .App-Bar-right {
   display: flex;
   flex-direction: row;

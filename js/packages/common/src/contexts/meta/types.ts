@@ -1,4 +1,5 @@
 import { AccountInfo } from '@solana/web3.js';
+import { TokenAccount } from '../..';
 import {
   AuctionData,
   AuctionDataExtended,
@@ -12,6 +13,7 @@ import {
   Vault,
 } from '../../actions';
 import {
+  AuctionCache,
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
@@ -20,14 +22,18 @@ import {
   PrizeTrackingTicket,
   SafetyDepositConfig,
   Store,
+  StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
-import { PublicKeyStringAndAccount } from '../../utils';
+import { PublicKeyStringAndAccount, StringPublicKey } from '../../utils';
 import { ParsedAccount } from '../accounts/types';
 
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
   metadataByMint: Record<string, ParsedAccount<Metadata>>;
+  metadataByMetadata: Record<string, ParsedAccount<Metadata>>;
+
+  metadataByAuction: Record<string, ParsedAccount<Metadata>[]>;
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
   editions: Record<string, ParsedAccount<Edition>>;
   masterEditions: Record<
@@ -71,12 +77,24 @@ export interface MetaState {
     ParsedAccount<WhitelistedCreator>
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
-  stores: Record<string, ParsedAccount<Store>>;
-  creators: Record<string, ParsedAccount<WhitelistedCreator>>;
+  auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
+  storeIndexer: ParsedAccount<StoreIndexer>[];
 }
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
+  update: (
+    auctionAddress?: any,
+    bidderAddress?: any,
+  ) => [
+    ParsedAccount<AuctionData>,
+    ParsedAccount<BidderPot>,
+    ParsedAccount<BidderMetadata>,
+  ];
+  pullAuctionPage: (auctionAddress: StringPublicKey) => Promise<MetaState>;
+  pullBillingPage: (auctionAddress: StringPublicKey) => void;
+  pullAllSiteData: () => void;
+  pullAllMetadata: () => void;
 }
 
 export type AccountAndPubkey = {
@@ -84,16 +102,19 @@ export type AccountAndPubkey = {
   account: AccountInfo<Buffer>;
 };
 
-export type UpdateStateValueFunc = (
+export type UpdateStateValueFunc<T = void> = (
   prop: keyof MetaState,
   key: string,
   value: ParsedAccount<any>,
-) => void;
+) => T;
 
 export type ProcessAccountsFunc = (
   account: PublicKeyStringAndAccount<Buffer>,
   setter: UpdateStateValueFunc,
-  useAll: boolean,
 ) => void;
 
 export type CheckAccountFunc = (account: AccountInfo<Buffer>) => boolean;
+
+export type UnPromise<T extends Promise<any>> = T extends Promise<infer U>
+  ? U
+  : never;

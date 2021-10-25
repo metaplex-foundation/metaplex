@@ -2,22 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { Statistic } from 'antd';
 import { useSolPrice } from '../../contexts';
 import { formatUSD } from '@oyster/common';
+import { SolCircle } from '../Custom';
 
 interface IAmountLabel {
   amount: number | string;
   displayUSD?: boolean;
+  displaySOL?: boolean;
   title?: string;
   style?: object;
   containerStyle?: object;
+  iconSize?: number;
+  customPrefix?: JSX.Element;
+  ended?: boolean;
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
   const {
     amount: _amount,
     displayUSD = true,
+    displaySOL = false,
     title = '',
     style = {},
     containerStyle = {},
+    iconSize = 38,
+    customPrefix,
+    ended,
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
@@ -38,8 +47,8 @@ export const AmountLabel = (props: IAmountLabel) => {
           style={style}
           className="create-statistic"
           title={title || ''}
-          value={amount}
-          prefix="◎"
+          value={`${amount}${displaySOL ? ' SOL' : ''}`}
+          prefix={customPrefix || <SolCircle iconSize={iconSize} />}
         />
       )}
       {displayUSD && (
@@ -47,7 +56,7 @@ export const AmountLabel = (props: IAmountLabel) => {
           {PriceNaN === false ? (
             formatUSD.format(priceUSD || 0)
           ) : (
-            <div className="placebid">Place Bid</div>
+            <div className="placebid">{ended ? 'N/A' : 'Place Bid'}</div>
           )}
         </div>
       )}

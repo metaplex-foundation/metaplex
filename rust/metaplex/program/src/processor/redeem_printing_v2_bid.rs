@@ -12,17 +12,17 @@ use {
         },
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::{
+        instruction::mint_edition_from_master_edition_via_vault_proxy,
+        utils::get_supply_off_master_edition,
+    },
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         entrypoint::ProgramResult,
         program::invoke_signed,
         program_error::ProgramError,
         pubkey::Pubkey,
-    },
-    spl_auction::processor::AuctionData,
-    spl_token_metadata::{
-        instruction::mint_edition_from_master_edition_via_vault_proxy,
-        utils::get_supply_off_master_edition,
     },
 };
 
@@ -200,6 +200,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
     let edition_marker_info = next_account_info(account_info_iter)?;
     let mint_authority_info = next_account_info(account_info_iter)?;
     let metadata_account_info = next_account_info(account_info_iter)?;
+    let auction_extended_info = next_account_info(account_info_iter).ok();
 
     let new_edition_account_amount = get_amount_from_token_account(new_edition_token_account_info)?;
 
@@ -230,6 +231,7 @@ pub fn process_redeem_printing_v2_bid<'a>(
         safety_deposit_info,
         vault_info,
         auction_info,
+        auction_extended_info,
         bidder_metadata_info,
         bidder_info,
         token_program_info,
