@@ -15,8 +15,9 @@ import {
   toPublicKey,
   WalletSigner,
   Attribute,
+  IMetadataExtension,
 } from '@oyster/common';
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import { MintLayout, Token } from '@solana/spl-token';
 import {
   Keypair,
@@ -28,6 +29,10 @@ import crypto from 'crypto';
 import { getAssetCostToStore } from '../utils/assets';
 import { AR_SOL_HOLDER_ID } from '../utils/ids';
 import BN from 'bn.js';
+import { ArweaveWallet } from '../views/artCreate';
+import Arweave from "arweave";
+
+const arweaveConnection = Arweave.init({ host: "arweave.net" });
 
 const RESERVED_TXN_MANIFEST = 'manifest.json';
 const RESERVED_METADATA = 'metadata.json';
@@ -42,7 +47,114 @@ interface IArweaveResult {
   }>;
 }
 
+const uploadWithArWallet = async(filesMoreThan10mb: File[], arWallet: ArweaveWallet, metadata, mintKey): Promise<string> => {
+
+  const arweaveUpload = async(fileToUpload: string | ArrayBuffer, arWallet, txTag?: string, mintKey?: string) => {
+
+    let transaction = await arweaveConnection.createTransaction(
+      { data: fileToUpload},
+      arWallet
+    );
+
+    if (mintKey) {
+      transaction.addTag("mint", mintKey)
+    } 
+
+    if (txTag) transaction.addTag("Content-Type", txTag);
+
+    await arweaveConnection.transactions.sign(transaction, arWallet);
+
+    let uploader = await arweaveConnection.transactions.getUploader(
+      transaction
+    );
+
+    while (!uploader.isComplete) {
+      await uploader.uploadChunk();
+      console.log(
+        `${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`
+      );
+    }
+
+    console.log("UPLOADED FILE TO", `https://arweave.net/${transaction.id}`)
+
+    return transaction.id;
+  }
+
+  var metadataContent = {
+    name: metadata.name,
+    symbol: metadata.symbol,
+    description: metadata.description,
+    seller_fee_basis_points: metadata.sellerFeeBasisPoints,
+    image: metadata.image,
+    animation_url: metadata.animation_url,
+    attributes: metadata.attributes,
+    external_url: metadata.external_url,
+    properties: {
+      ...metadata.properties,
+      creators: metadata.creators?.map(creator => {
+        return {
+          address: creator.address,
+          share: creator.share,
+        };
+      }),
+    },
+  };
+
+  console.log(
+    "FILE MORE THAN 10mb DETECTED. There are ",
+    filesMoreThan10mb.length,
+    "files."
+  );
+
+  // upload all files
+  for (var i = 0; i < filesMoreThan10mb.length; i++) {
+
+    const fileType = filesMoreThan10mb[i].type || "glb";
+
+    console.log("FILE OF TYPE", fileType);
+
+    const arweaveTransacionId = await arweaveUpload(await filesMoreThan10mb[i].arrayBuffer(), arWallet, fileType)
+
+    //! ARWEAVE
+
+    console.log("Uploading", filesMoreThan10mb[i].name)
+
+    if (fileType == "image/jpeg") {
+      metadataContent.image = `https://arweave.net/${arweaveTransacionId}`;
+    } else {
+      metadataContent.animation_url = `https://arweave.net/${arweaveTransacionId}`; // if filetype not image, add amination URL to it
+    }
+
+    //! ARWEAVE
+    for (var j = 0; j < metadataContent.properties.files!.length; j++) {
+      console.log(
+        "Looking for file of type",
+        fileType,
+        "and this file has",
+        metadataContent.properties.files[j].type
+      );
+      if (metadataContent.properties.files[j].type == fileType)
+        metadataContent.properties.files[j] = {
+                "uri": `https://arweave.net/${arweaveTransacionId}`,
+                "type": fileType,
+                "cdn": true
+              };
+    }
+
+    console.log("SET FILES", metadataContent.properties.files)
+
+    //! ARWEAVE UPLOADER
+  }
+
+  // upload manifest file
+  console.log("FINISHED METADATA", metadataContent)
+  const manifestTxId = await arweaveUpload(JSON.stringify(metadataContent), arWallet, "application/json", mintKey)
+
+  return manifestTxId
+}
+
 const uploadToArweave = async (data: FormData): Promise<IArweaveResult> => {
+  console.log("ARWEAVEDATA", data)
   const resp = await fetch(
     'https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4',
     {
@@ -88,6 +200,7 @@ export const mintNFT = async (
   },
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
+  arWallet?: ArweaveWallet,
 ): Promise<{
   metadataAccount: StringPublicKey;
 } | void> => {
@@ -113,8 +226,18 @@ export const mintNFT = async (
     },
   };
 
+
+  //! UPLOADER
+
+  const filesLessThan10mb = files.filter((m) => m.size < 10_000_000);
+  const filesMoreThan10mb = files.filter((m) => m.size >= 10_000_000);
+
+
+
+  console.log("METADATCONTENT", metadataContent)
+
   const realFiles: File[] = [
-    ...files,
+    ...filesLessThan10mb,
     new File([JSON.stringify(metadataContent)], RESERVED_METADATA),
   ];
 
@@ -220,35 +343,46 @@ export const mintNFT = async (
 
   progressCallback(5);
 
-  // this means we're done getting AR txn setup. Ship it off to ARWeave!
-  const data = new FormData();
-  data.append('transaction', txid);
-  data.append('env', env);
+  let arweaveTxId = ''
+  if (filesMoreThan10mb.length == 0) {
+    console.log("ENTERED CLOUDFUNC")
+    // this means we're done getting AR txn setup. Ship it off to ARWeave!
+    const data = new FormData();
+    data.append('transaction', txid);
+    data.append('env', env);
 
-  const tags = realFiles.reduce(
-    (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
-      acc[f.name] = [{ name: 'mint', value: mintKey }];
-      return acc;
-    },
-    {},
-  );
-  data.append('tags', JSON.stringify(tags));
-  realFiles.map(f => data.append('file[]', f));
+    const tags = realFiles.reduce(
+      (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
+        acc[f.name] = [{ name: 'mint', value: mintKey }];
+        return acc;
+      },
+      {},
+    );
+    data.append('tags', JSON.stringify(tags));
+    realFiles.map(f => data.append('file[]', f));
 
-  // TODO: convert to absolute file name for image
+    // TODO: convert to absolute file name for image
+    console.log("PREUPLOAD AR", data, txid, env)
+    const result: IArweaveResult = await uploadToArweave(data);
+    progressCallback(6);
 
-  const result: IArweaveResult = await uploadToArweave(data);
-  progressCallback(6);
+    const metadataFile = result.messages?.find(
+      m => m.filename === RESERVED_TXN_MANIFEST,
+    );
 
-  const metadataFile = result.messages?.find(
-    m => m.filename === RESERVED_TXN_MANIFEST,
-  );
-  if (metadataFile?.transactionId && wallet.publicKey) {
+  } else {
+    if (!arWallet) throw new Error("Detected files with more than 10mb but no wallet provided");
+    arweaveTxId = await uploadWithArWallet(filesMoreThan10mb, arWallet, metadata, mintKey)
+  }
+
+  if (arweaveTxId && wallet.publicKey) {
+    console.log("SET THE AR ID", arweaveTxId)
+
     const updateInstructions: TransactionInstruction[] = [];
     const updateSigners: Keypair[] = [];
 
     // TODO: connect to testnet arweave
-    const arweaveLink = `https://arweave.net/${metadataFile.transactionId}`;
+    const arweaveLink = `https://arweave.net/${arweaveTxId}`;
     await updateMetadata(
       new Data({
         name: metadata.name,

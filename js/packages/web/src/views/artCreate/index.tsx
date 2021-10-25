@@ -51,6 +51,18 @@ const { Step } = Steps;
 const { Dragger } = Upload;
 const { Text } = Typography;
 
+export interface ArweaveWallet {
+  kty: string;
+  e: string;
+  n: string;
+  d: string;
+  p: string;
+  q: string;
+  dp: string;
+  dq: string;
+  qi: string;
+};
+
 export const ArtCreateView = () => {
   const connection = useConnection();
   const { env } = useConnectionConfig();
@@ -67,6 +79,17 @@ export const ArtCreateView = () => {
   const [nft, setNft] =
     useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
+  const [arWallet, setArWallet] = useState<ArweaveWallet>({
+    kty: '',
+    e: '', 
+    n: '', 
+    d: '', 
+    p: '', 
+    q: '', 
+    dp: '', 
+    dq: '', 
+    qi: ''
+  })
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
@@ -125,6 +148,7 @@ export const ArtCreateView = () => {
         metadata,
         setNFTcreateProgress,
         attributes.properties?.maxSupply,
+        arWallet
       );
 
       if (_nft) setNft(_nft);
@@ -179,6 +203,8 @@ export const ArtCreateView = () => {
             <UploadStep
               attributes={attributes}
               setAttributes={setAttributes}
+              arWallet={arWallet}
+              setArWallet={setArWallet}
               files={files}
               setFiles={setFiles}
               confirm={() => gotoStep(2)}
@@ -311,9 +337,13 @@ const CategoryStep = (props: {
   );
 };
 
+
+
 const UploadStep = (props: {
   attributes: IMetadataExtension;
   setAttributes: (attr: IMetadataExtension) => void;
+  arWallet: ArweaveWallet;
+  setArWallet: (arWallet: ArweaveWallet) => void;
   files: File[];
   setFiles: (files: File[]) => void;
   confirm: () => void;
@@ -323,10 +353,16 @@ const UploadStep = (props: {
   );
   const [mainFile, setMainFile] = useState<File | undefined>(props.files?.[1]);
   const [coverArtError, setCoverArtError] = useState<string>();
+  
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [arWallet, setArWallet] = useState<ArweaveWallet>()
+  const [isGoodArWallet, setIsGoodArWallet] = useState(true)
 
   const [customURL, setCustomURL] = useState<string>('');
   const [customURLErr, setCustomURLErr] = useState<string>('');
   const disableContinue = !coverFile || !!customURLErr;
+
+  console.log("PROPS", props.arWallet)
 
   useEffect(() => {
     props.setAttributes({
@@ -372,6 +408,72 @@ const UploadStep = (props: {
     }
   };
 
+  class UploadButton extends React.Component {
+
+    render() {
+      return (
+          <Button
+          type="primary"
+          size="large"
+          disabled={disableContinue}
+          onClick={() => {
+            setIsModalVisible(false)
+            props.setAttributes({
+              ...props.attributes,
+              properties: {
+                ...props.attributes.properties,
+                files: [coverFile, mainFile, customURL]
+                  .filter(f => f)
+                  .map(f => {
+                    const uri = typeof f === 'string' ? f : f?.name || '';
+                    const type =
+                      typeof f === 'string' || !f
+                        ? 'unknown'
+                        : f.type || getLast(f.name.split('.')) || 'unknown';
+
+                    return {
+                      uri,
+                      type,
+                    } as MetadataFile;
+                  }),
+              },
+              image: coverFile?.name || '',
+              animation_url:
+                props.attributes.properties?.category !==
+                  MetadataCategory.Image && customURL
+                  ? customURL
+                  : mainFile && mainFile.name,
+            });
+            const files = [coverFile, mainFile].filter(f => f) as File[];
+
+            const mblimit = 10_000_000 // 10 MB limit
+
+            let filesOver10mb = false
+            for (let i=0; i<files.length; i++){
+              if (files[i].size > mblimit) {
+                filesOver10mb = true
+              }
+            }
+
+            props.setFiles(files);
+            
+            if (filesOver10mb && !arWallet) {
+              setIsModalVisible(true);
+              console.log("File over 10mb detected", files);
+              return
+            }
+
+            console.log("MODAL?", isModalVisible)
+            props.confirm();
+          }}
+          style={{ marginTop: 24 }}
+          className="action-btn"
+        >
+          Continue to Mint
+        </Button>
+      )
+    }
+  }
   return (
     <>
       <Row className="call-to-action">
@@ -403,6 +505,7 @@ const UploadStep = (props: {
             }
 
             const sizeKB = file.size / 1024;
+            
 
             if (sizeKB < 25) {
               setCoverArtError(
@@ -507,47 +610,77 @@ const UploadStep = (props: {
         />
       </Form.Item>
       <Row>
-        <Button
-          type="primary"
-          size="large"
-          disabled={disableContinue}
-          onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-              properties: {
-                ...props.attributes.properties,
-                files: [coverFile, mainFile, customURL]
-                  .filter(f => f)
-                  .map(f => {
-                    const uri = typeof f === 'string' ? f : f?.name || '';
-                    const type =
-                      typeof f === 'string' || !f
-                        ? 'unknown'
-                        : f.type || getLast(f.name.split('.')) || 'unknown';
-
-                    return {
-                      uri,
-                      type,
-                    } as MetadataFile;
-                  }),
-              },
-              image: coverFile?.name || '',
-              animation_url:
-                props.attributes.properties?.category !==
-                  MetadataCategory.Image && customURL
-                  ? customURL
-                  : mainFile && mainFile.name,
-            });
-            const files = [coverFile, mainFile].filter(f => f) as File[];
-
-            props.setFiles(files);
-            props.confirm();
-          }}
-          style={{ marginTop: 24 }}
-          className="action-btn"
+        <UploadButton/>
+        <MetaplexModal
+          visible={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
         >
-          Continue to Mint
-        </Button>
+          <Col className={'dialog-header'}>
+            <Typography style={{ paddingBottom: "16px", textAlign: 'center', textTransform: 'uppercase', fontWeight: 600 }}>
+            We've noticed you are trying to upload a large file
+            </Typography>
+            <div style={{textAlign: 'center'}}>Please set your arweave wallet for us to upload it!</div>
+              <Row
+                className="content-action"
+                style={{ marginBottom: 5, marginTop: 30 }}
+              >
+                <h3>{"Upload your Arweave wallet"}</h3>
+                <Dragger
+                  accept={".json"}
+                  style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
+                  multiple={false}
+                  customRequest={info => {
+                    // dont upload files here, handled outside of the control
+                    info?.onSuccess?.({}, null as any);
+                  }}
+                  fileList={arWallet ? [arWallet as any] : []}
+                  onChange={async info => {
+                    
+                    const arFile = info.file.originFileObj;
+
+                    // Reset image URL
+                    setCustomURL('');
+                    setCustomURLErr('');
+
+                    if (arFile){
+                      // read wallet input
+                      const reader = new FileReader();
+                      reader.onload = function (event) {
+                        const parsedArWallet = JSON.parse(event.target?.result as string) as ArweaveWallet
+
+                        const arKeys = ["kty", "e", "n", "d", "p", "q", "dp", "dq", "qi"]
+                        
+                        // validate the red json file is a valid Arweave wallet
+                        if (arKeys.every(key => parsedArWallet[key] !== "")) {
+                          console.log("KEYS", parsedArWallet["kty"])
+                          props.setArWallet(parsedArWallet)
+                          setArWallet(parsedArWallet)
+                          setIsGoodArWallet(true)
+                        } else (
+                          setIsGoodArWallet(false)
+                        )
+                      };
+                      reader.readAsText(arFile)
+                    }
+                  }}
+                  onRemove={() => {
+                    setMainFile(undefined);
+                  }}
+                >
+                  {!arWallet && isGoodArWallet && <p className="ant-upload-text" style={{ color: '#6d6d6d' }}>
+                    Drag and drop, or click to browse
+                  </p>}
+                  {!arWallet && !isGoodArWallet && <p className="ant-upload-text" style={{ color: 'red' }}>
+                    Parsed wallet is not correct. Please input a valid Arweave wallet
+                  </p>}
+                  {arWallet && <p className="ant-upload-text" style={{ color: '#a8e4a0' }}>
+                    Wallet ok, you can proceed to minting!
+                  </p>}
+                </Dragger>
+              </Row>
+            <UploadButton/>
+          </Col>
+        </MetaplexModal>
       </Row>
     </>
   );
