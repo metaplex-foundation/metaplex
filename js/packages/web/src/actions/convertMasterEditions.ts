@@ -6,7 +6,6 @@ import {
   sendTransactionWithRetry,
   Metadata,
   MasterEditionV1,
-  MasterEditionV2,
   MetadataKey,
   convertMasterEditionV1ToV2,
   TokenAccount,
@@ -16,6 +15,7 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
+import { getMasterEditionsbyKey } from '../hooks/getData';
 
 const BATCH_SIZE = 10;
 const CONVERT_TRANSACTION_SIZE = 10;
@@ -23,10 +23,6 @@ const CONVERT_TRANSACTION_SIZE = 10;
 export async function filterMetadata(
   connection: Connection,
   metadata: ParsedAccount<Metadata>[],
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
   accountsByMint: Map<string, TokenAccount>,
 ): Promise<{
   available: ParsedAccount<MasterEditionV1>[];
@@ -38,9 +34,19 @@ export async function filterMetadata(
 
   for (let i = 0; i < metadata.length; i++) {
     const md = metadata[i];
-    const masterEdition = masterEditions[
-      md.info.masterEdition || ''
-    ] as ParsedAccount<MasterEditionV1>;
+
+    let res = await getMasterEditionsbyKey(
+      'masterEditionsV1',
+      md.info.masterEdition || '',
+    );
+
+    if (!res || res.length == 0) {
+      res = await getMasterEditionsbyKey(
+        'masterEditionsV2',
+        md.info.masterEdition || '',
+      );
+    }
+    const masterEdition = res as ParsedAccount<MasterEditionV1>;
     if (
       masterEdition &&
       masterEdition?.info.key == MetadataKey.MasterEditionV1

@@ -25,8 +25,8 @@ export const ArtworksView = () => {
   const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata } = useMeta();
-  const key = pubkeyToString(publicKey)
+
+  const key = pubkeyToString(publicKey);
   const [filtered, setFiltered] = useState<any>([]);
   useEffect(() => {
     if (!key) return;
@@ -37,7 +37,7 @@ export const ArtworksView = () => {
       }
     });
   }, [key]);
-  
+
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,

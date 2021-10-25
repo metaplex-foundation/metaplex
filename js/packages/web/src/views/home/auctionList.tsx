@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { CardLoader } from '../../components/MyLoader';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
-import { useMeta } from '../../contexts';
 import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
@@ -25,10 +24,9 @@ export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [
     ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow)
+    ...useAuctions(AuctionViewState.BuyNow),
   ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-  const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
@@ -111,7 +109,7 @@ export const AuctionListView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {!isLoading
+      {!false
         ? items.map((m, idx) => {
             if (m === heroAuction) {
               return;
@@ -133,7 +131,7 @@ export const AuctionListView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {!isLoading
+      {!false
         ? auctionsEnded.map((m, idx) => {
             if (m === heroAuction) {
               return;

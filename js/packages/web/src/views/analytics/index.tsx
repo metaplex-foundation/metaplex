@@ -1,14 +1,9 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
-import {
-  AuctionManagerV1,
-  AuctionManagerV2,
-  WinningConfigType,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Pie, Bar } from 'react-chartjs-2';
 import {
-  AuctionDataExtended,
   BidderPot,
   fromLamports,
   getAuctionExtended,
@@ -20,6 +15,12 @@ import {
 import { AuctionView, useAuctions } from '../../hooks';
 import { QUOTE_MINT } from '../../constants';
 import { MintInfo } from '@solana/spl-token';
+import {
+  getAuctionDataExtendedByKey,
+  getauctionManagersByKey,
+  getBidderMetadata,
+  getBidderMetadataByAuctionAndBidder,
+} from '../../hooks/getData';
 
 const { Content } = Layout;
 export const AnalyticsView = () => {
@@ -38,10 +39,7 @@ const LOOKUP: Record<string, string> = {};
 
 const rerun = async ({
   auctionViews,
-  auctionManagersByAuction,
   usersEngaged,
-  auctionDataExtended,
-  bidderPotsByAuctionAndBidder,
   metadata,
   setByType,
   setAverageBids,
@@ -54,13 +52,7 @@ const rerun = async ({
   setUsersEngaged,
 }: {
   auctionViews: AuctionView[];
-  auctionManagersByAuction: Record<
-    string,
-    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
-  >;
   usersEngaged: Record<string, boolean>;
-  auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>;
-  bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>;
   metadata: ParsedAccount<Metadata>[];
   setByType: (rec: Record<AuctionType, number>) => void;
   setAverageBids: (num: number) => void;
@@ -102,7 +94,9 @@ const rerun = async ({
           resource: auction.vault.pubkey,
         });
       }
-      const extended = auctionDataExtended[LOOKUP[auction.auction.pubkey]];
+      const extended = await getAuctionDataExtendedByKey(
+        LOOKUP[auction.auction.pubkey],
+      );
       if (extended && extended.info.totalUncancelledBids.toNumber() > 0) {
         totalAuctions++;
         averageBidders += extended.info.totalUncancelledBids.toNumber();
@@ -139,13 +133,15 @@ const rerun = async ({
   }
 
   const newUsersBid: Record<string, boolean> = {};
-  Object.values(bidderPotsByAuctionAndBidder).forEach(acct => {
-    if (auctionManagersByAuction[acct.info.auctionAct]) {
+  const bidderPotsByAuctionAndBidder = await getBidderMetadata();
+  for (let i = 0; i < bidderPotsByAuctionAndBidder.length; i++) {
+    const acct = bidderPotsByAuctionAndBidder[i];
+    const flag = await getauctionManagersByKey(acct.info.auctionAct);
+    if (flag) {
       newUsersBid[acct.info.bidderAct] = true;
       existingUsersEngaged[acct.info.bidderAct] = true;
     }
-  });
-
+  }
   const newBuild: Record<string, boolean> = {};
   metadata.forEach(acct => {
     newBuild[acct.info.updateAuthority] = true;
@@ -312,9 +308,6 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const {
     metadata,
     // stores,
-    auctionManagersByAuction,
-    bidderPotsByAuctionAndBidder,
-    auctionDataExtended,
   } = useMeta();
 
   const totalNFTs = metadata.length;
@@ -332,10 +325,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
           onClick={() =>
             rerun({
               auctionViews,
-              auctionManagersByAuction,
               usersEngaged,
-              auctionDataExtended,
-              bidderPotsByAuctionAndBidder,
               metadata,
               setByType,
               setAverageBids,

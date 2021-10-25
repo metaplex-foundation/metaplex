@@ -17,6 +17,7 @@ import {
 import BN from 'bn.js';
 import { closeVault } from './closeVault';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import { getSafetyDepositBoxesByVaultAndIndexby } from '../hooks/getData';
 
 const BATCH_SIZE = 1;
 
@@ -25,10 +26,6 @@ export async function unwindVault(
   connection: Connection,
   wallet: WalletSigner,
   vault: ParsedAccount<Vault>,
-  safetyDepositBoxesByVaultAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -68,12 +65,15 @@ export async function unwindVault(
   const vaultKey = vault.pubkey;
   const boxes: ParsedAccount<SafetyDepositBox>[] = [];
 
-  let box = safetyDepositBoxesByVaultAndIndex[vaultKey + '-0'];
+  let box = await getSafetyDepositBoxesByVaultAndIndexby(vaultKey, '0');
   if (box) {
     boxes.push(box);
     let i = 1;
     while (box) {
-      box = safetyDepositBoxesByVaultAndIndex[vaultKey + '-' + i.toString()];
+      box = await getSafetyDepositBoxesByVaultAndIndexby(
+        vaultKey,
+        i.toString(),
+      );
       if (box) boxes.push(box);
       i++;
     }

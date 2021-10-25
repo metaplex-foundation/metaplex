@@ -9,7 +9,6 @@ import {
   useArt,
   useAuction,
   useBidsForAuction,
-  useCreators,
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
@@ -74,14 +73,17 @@ export const AuctionItem = ({
   );
 };
 
+let art: any = {}
+
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
-  const creators = useCreators(auction);
+
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';

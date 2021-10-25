@@ -1,7 +1,5 @@
 import {
-  Edition,
   MasterEditionV1,
-  MasterEditionV2,
   MetadataKey,
   ParsedAccount,
   pubkeyToString,
@@ -17,25 +15,17 @@ import {
   WinningConstraint,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useEffect, useState } from 'react';
-import { getEditions, getMasterEditions, getMetdataByCreator } from './getData';
+import {
+  getEditionsKey,
+  getMasterEditionsbyKey,
+  getMetdataByCreator,
+} from './getData';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 export const useUserArts = (): SafetyDepositDraft[] => {
   const { publicKey } = useWallet();
   const key = pubkeyToString(publicKey);
   const { userAccounts } = useUserAccounts();
-  const [masterEditions, setMasterEditions] = useState<
-    Record<string, ParsedAccount<MasterEditionV1 | MasterEditionV2>>
-  >({});
-  const [editions, setEditions] = useState<
-    Record<string, ParsedAccount<Edition>>
-  >({});
-
-  const arrayToObject = (array, keyField) =>
-    array.reduce((obj, item) => {
-      obj[item[keyField]] = item;
-      return obj;
-    }, {});
 
   const accountByMint = userAccounts.reduce((prev, acc) => {
     prev.set(acc.info.mint.toBase58(), acc);
@@ -43,28 +33,14 @@ export const useUserArts = (): SafetyDepositDraft[] => {
   }, new Map<string, TokenAccount>());
   const [filtered, setFiltered] = useState<any>([]);
   useEffect(() => {
-    if (!key) return;
-    getMetdataByCreator(key).then(metadata => {
-      if (metadata && metadata.length > 0) {
-        setFiltered(metadata);
-      }
-    });
-    getMasterEditions('masterEditionsV1').then(data => {
-      console.log(data);
-      if (data.length == 0) {
-        getMasterEditions('masterEditionsV2').then(data => {
-          const arr = arrayToObject(data, 'pubkey');
-          setMasterEditions(arr);
-        });
-      } else {
-        const arr = arrayToObject(data, 'pubkey');
-        setMasterEditions(arr);
-      }
-    });
-    getEditions().then(data => {
-      const arr = arrayToObject(data, 'pubkey');
-      setEditions(arr);
-    });
+    (async () => {
+      if (!key) return;
+      await getMetdataByCreator(key).then(metadata => {
+        if (metadata && metadata.length > 0) {
+          setFiltered(metadata);
+        }
+      });
+    })();
   }, [key]);
 
   const ownedMetadata = filtered.filter(
@@ -73,13 +49,38 @@ export const useUserArts = (): SafetyDepositDraft[] => {
       (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0,
   );
 
-  const possibleEditions = ownedMetadata.map(m =>
-    m.info.edition ? editions[m.info.edition] : undefined,
-  );
+  const possibleEditions: any[] = [];
+  useEffect(() => {
+    (async () => {
+      for (let i = 0; i < ownedMetadata.length; i++) {
+        const m = ownedMetadata[i];
+        m.info.edition
+          ? possibleEditions.push(await getEditionsKey(m.info.edition))
+          : possibleEditions.push(undefined);
+      }
+    })();
+  }, [key]);
 
-  const possibleMasterEditions = ownedMetadata.map(m =>
-    m.info.masterEdition ? masterEditions[m.info.masterEdition] : undefined,
-  );
+  const possibleMasterEditions: any[] = [];
+
+  useEffect(() => {
+    (async () => {
+      for (let i = 0; i < ownedMetadata.length; i++) {
+        const m = ownedMetadata[i];
+        let res = await getMasterEditionsbyKey(
+          'masterEditionsV1',
+          m.info.masterEdition,
+        );
+        if (!res || res.length == 0) {
+          res = await getMasterEditionsbyKey(
+            'masterEditionsV2',
+            m.info.masterEdition,
+          );
+        }
+        possibleMasterEditions.push(m.info.masterEdition ? res : undefined);
+      }
+    })();
+  }, [key]);
 
   const safetyDeposits: SafetyDepositDraft[] = [];
   let i = 0;

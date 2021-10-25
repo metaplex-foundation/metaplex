@@ -6,7 +6,6 @@ import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
 import {
   useCollection,
-  useCollectionTokenMetadataList,
 } from '../../hooks/useCollections';
 import { getCollection } from '../../hooks/getData';
 export enum ArtworkViewState {
@@ -16,19 +15,19 @@ export enum ArtworkViewState {
 }
 
 let ownerLen = 0;
-let lowToHigh = 'Price: Low to High';
-let onePageItem: any = [];
-let pageLen = 0;
 let searchItem = '';
-let allItems: any = [];
 let allAuction = 0;
 let pageSize = 16;
 let activePage = 0;
 let isLoading = false;
-
+let minPrice = 0;
+let maxPrice = 0;
+let pageLen = 0;
+let lowToHigh = 'Price: Low to High';
 export const MarketplaceView = () => {
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(0);
+  const [onePageItem, setOnePageItem] = useState<any>([])
+  const [allItems, setAllItems] = useState<any>([]);
+
   const { id } = useParams<{ id: string }>();
   const [collectionUpdate, setCollectionUpdate] = useState(0);
   const { collectionData } = useCollection(id);
@@ -39,12 +38,9 @@ export const MarketplaceView = () => {
   useEffect(() => {
     if (!id) return;
     getCollection(id).then(data => {
-      if (data && data.length > 0) {
-        if (data.length > 0) sortCollection(data);
-      }
+      sortCollection(data);
     });
-  }, [collectionUpdate]);
-
+  }, [lowToHigh, id, collectionUpdate]);
   const sortToPrice = (arr: any) => {
     return arr.sort((a, b) => {
       return a.account.price - b.account.price;
@@ -69,24 +65,23 @@ export const MarketplaceView = () => {
     });
 
     allAuction = arr.length;
-    allItems = collection;
-    if (searchItem) arr = changeSearch();
-    if (lowToHigh == 'Price: Low to High') {
+    setAllItems(collection);
+    if (lowToHigh == 'Price: High to Low') {
       arr = sortToPrice(arr);
-    } else {
+    } else if (lowToHigh == 'Price: Low to High'){
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
-
     const onePage = arr.slice(
       activePage * pageSize,
       activePage * pageSize + pageSize,
     );
-    onePageItem = onePage;
+    maxPrice = max;
     ownerLen = owner.length;
     pageLen = arr.length;
-    setMinPrice(min);
-    setMaxPrice(max);
+    minPrice = min;
+    setOnePageItem([]);
+    setOnePageItem(onePage);
   };
 
   const onChange = event => {
@@ -201,7 +196,7 @@ export const MarketplaceView = () => {
                         onChange={event => {
                           activePage = 0;
                           searchItem = event.target.value;
-                          setCollectionUpdate(collectionUpdate + 1);
+                          sortCollection(allItems);
                         }}
                       />
                     </div>
@@ -224,7 +219,7 @@ export const MarketplaceView = () => {
                   defaultParam="Price: Low to High"
                   onChange={event => {
                     lowToHigh = event.target.value;
-                    setCollectionUpdate(collectionUpdate + 1);
+                    sortCollection(allItems);
                   }}
                 />
               </div>
@@ -237,7 +232,7 @@ export const MarketplaceView = () => {
                   onChange={event => {
                     pageSize = parseFloat(event.target.value);
                     activePage = 0;
-                    setCollectionUpdate(collectionUpdate + 1);
+                    sortCollection(allItems);
                   }}
                 />
               </div>
@@ -272,6 +267,7 @@ export const MarketplaceView = () => {
                   onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
                       const id = m.pubkey;
+                      
                       return (
                         <AuctionCard
                           key={idx}
@@ -306,7 +302,7 @@ export const MarketplaceView = () => {
                           changePage={event => {
                             if (!isLoading) {
                               onChange(event);
-                              setCollectionUpdate(collectionUpdate + 1);
+                              sortCollection(collectionUpdate + 1);
                             }
                           }}
                         />

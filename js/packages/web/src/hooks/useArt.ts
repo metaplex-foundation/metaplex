@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useMeta } from '../contexts';
+import { useEffect, useState } from 'react';
 import { Art, Artist, ArtType } from '../types';
 import {
-  Edition,
   IMetadataExtension,
-  MasterEditionV1,
-  MasterEditionV2,
   Metadata,
   ParsedAccount,
   StringPublicKey,
@@ -14,15 +10,16 @@ import {
 } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
-import { getCreator, getMetdataByPubKey } from './getData';
+import {
+  getCreator,
+  getEditionsbyKey,
+  getMasterEditionsbyKey,
+  getMetdataByPubKey,
+} from './getData';
+import _ from 'lodash';
 
-const metadataToArt = (
+const metadataToArt = async (
   info: Metadata | undefined,
-  editions: Record<string, ParsedAccount<Edition>>,
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -34,10 +31,26 @@ const metadataToArt = (
   let supply: number | undefined = undefined;
 
   if (info) {
-    const masterEdition = masterEditions[info.masterEdition || ''];
-    const edition = editions[info.edition || ''];
+    const a = await getMasterEditionsbyKey(
+      'masterEditionsV1',
+      info.masterEdition || '',
+    );
+    const b = await getMasterEditionsbyKey(
+      'masterEditionsV2',
+      info.masterEdition || '',
+    );
+    const masterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+    const edition = await getEditionsbyKey(info.edition || '');
     if (edition) {
-      const myMasterEdition = masterEditions[edition.info.parent || ''];
+      const a = await getMasterEditionsbyKey(
+        'masterEditionsV1',
+        edition.info.parent || '',
+      );
+      const b = await getMasterEditionsbyKey(
+        'masterEditionsV2',
+        edition.info.parent || '',
+      );
+      const myMasterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
       if (myMasterEdition) {
         type = ArtType.Print;
         editionNumber = edition.info.edition.toNumber();
@@ -146,33 +159,31 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 };
 
 export const useArt = (key?: StringPublicKey) => {
-  const { editions, masterEditions } = useMeta();
   const [account, setAccount] = useState<any>(null);
   const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
+  const [art, setArt] = useState<any>({});
 
   useEffect(() => {
-    if (!key) return;
-    getMetdataByPubKey(key).then(metadata => {
-      if (metadata && metadata.length > 0) {
-        setAccount(metadata[0]);
-      }
-    });
+    (async () => {
+      if (!key) return;
+      await getMetdataByPubKey(key).then(metadata => {
+        if (metadata && metadata.length > 0) {
+          setAccount(metadata[0]);
+        }
+      });
+      await getCreator().then(creators => {
+        if (creators && creators.length > 0) {
+          setCreatorsByCreator(creators);
+        }
+      });
+    })();
   }, [key]);
 
   useEffect(() => {
-    getCreator().then(creators => {
-      if (creators && creators.length > 0) {
-        setCreatorsByCreator(creators);
-      }
-    });
-  }, [key]);
-
-  const art = useMemo(
-    () =>
-      metadataToArt(account?.info, editions, masterEditions, CreatorsByCreator),
-    [account, editions, masterEditions, CreatorsByCreator],
-  );
-
+    metadataToArt(account?.info, CreatorsByCreator).then(value =>
+      setArt(value),
+    );
+  }, [account, CreatorsByCreator]);
   return art;
 };
 

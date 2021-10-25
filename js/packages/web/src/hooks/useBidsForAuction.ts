@@ -5,9 +5,9 @@ import {
   cache,
   ParsedAccount,
   StringPublicKey,
-  useMeta,
   USE_SPEED_RUN,
 } from '@oyster/common';
+import { getBidderMetadataByAuctionAndBidder } from './getData';
 
 export const useHighestBidForAuction = (
   auctionPubkey: StringPublicKey | string,
@@ -30,19 +30,16 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
         : auctionPubkey,
     [auctionPubkey],
   );
-  const { bidderMetadataByAuctionAndBidder } = useMeta();
 
   const [bids, setBids] = useState<ParsedAccount<BidderMetadata>[]>([]);
 
   useEffect(() => {
     const dispose = cache.emitter.onCache(args => {
       if (args.parser === BidderMetadataParser) {
-        setBids(getBids(bidderMetadataByAuctionAndBidder, id));
+        getBids(id).then(value => setBids(value));
       }
     });
-
-    setBids(getBids(bidderMetadataByAuctionAndBidder, id));
-
+    getBids(id).then(value => setBids(value));
     return () => {
       dispose();
     };
@@ -51,21 +48,13 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
   return bids;
 };
 
-const getBids = (
-  bidderMetadataByAuctionAndBidder: Record<
-    string,
-    ParsedAccount<BidderMetadata>
-  >,
-  id?: StringPublicKey,
-) => {
+const getBids = async (id?: StringPublicKey) => {
   // I have no idea why, but cache doesnt work with speed run and i couldnt figure it out for the life of me,
   // because that file is so confusing I have no idea how it works.
   // so we use the tempCache for pulling bids. B come save me.- J
   let bids;
   if (USE_SPEED_RUN) {
-    bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
-      b => b.info.auctionPubkey === id,
-    );
+    bids = await getBidderMetadataByAuctionAndBidder(id || '', '');
   } else {
     bids = cache
       .byParser(BidderMetadataParser)

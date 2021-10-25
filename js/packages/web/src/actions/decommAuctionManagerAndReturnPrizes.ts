@@ -1,7 +1,5 @@
 import { Keypair, Connection, TransactionInstruction } from '@solana/web3.js';
 import {
-  ParsedAccount,
-  SafetyDepositBox,
   sendTransactionsWithManualRetry,
   setAuctionAuthority,
   setVaultAuthority,
@@ -17,10 +15,6 @@ export async function decommAuctionManagerAndReturnPrizes(
   connection: Connection,
   wallet: WalletSigner,
   auctionView: AuctionView,
-  safetyDepositBoxesByVaultAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -67,10 +61,5 @@ export async function decommAuctionManagerAndReturnPrizes(
 
   // now that is rightfully decommed, we have authority back properly to the vault,
   // and the auction manager is in disbursing, so we can unwind the vault.
-  await unwindVault(
-    connection,
-    wallet,
-    auctionView.vault,
-    safetyDepositBoxesByVaultAndIndex,
-  );
+  await unwindVault(connection, wallet, auctionView.vault);
 }

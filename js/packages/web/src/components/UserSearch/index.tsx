@@ -3,7 +3,6 @@ import { Select, Spin } from 'antd';
 import { SelectProps } from 'antd/es/select';
 import debounce from 'lodash/debounce';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useMeta } from '../../contexts';
 import { getCreator } from '../../hooks/getData';
 
 export interface DebounceSelectProps<ValueType = any>
@@ -64,18 +63,17 @@ export interface UserValue {
 }
 
 export const UserSearch = (props: { setCreators: Function }) => {
-  const { whitelistedCreatorsByCreator } = useMeta();
   const [value, setValue] = React.useState<UserValue[]>([]);
-  const [creators, setCreator] = useState<any>([])
-  
+  const [creators, setCreator] = useState<any>([]);
+
   useEffect(() => {
     getCreator().then(creators => {
       if (creators && creators.length > 0) {
-        setCreator(creators)
+        setCreator(creators);
       }
     });
   }, []);
-  
+
   return (
     <DebounceSelect
       className="user-selector"

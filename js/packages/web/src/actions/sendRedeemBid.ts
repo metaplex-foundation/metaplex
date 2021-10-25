@@ -38,7 +38,6 @@ import {
   redeemParticipationBidV3,
   WinningConstraint,
   redeemPrintingV2Bid,
-  PrizeTrackingTicket,
   getPrizeTrackingTicket,
   BidRedemptionTicket,
   AuctionViewItem,
@@ -53,6 +52,7 @@ import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { createMintAndAccountWithOne } from './createMintAndAccountWithOne';
 import { BN } from 'bn.js';
 import { QUOTE_MINT } from '../constants';
+import { getPrizeTrackingTicketsbyKey } from '../hooks/getData';
 
 export function eligibleForParticipationPrizeGivenWinningIndex(
   winnerIndex: number | null,
@@ -85,8 +85,6 @@ export async function sendRedeemBid(
   payingAccount: StringPublicKey,
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
   bids: ParsedAccount<BidderMetadata>[],
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -162,7 +160,6 @@ export async function sendRedeemBid(
             signers,
             instructions,
             winnerIndex,
-            prizeTrackingTickets,
           );
           break;
         case WinningConfigType.FullRightsTransfer:
@@ -273,8 +270,6 @@ export async function sendRedeemBid(
       auctionView,
       accountsByMint,
       bids,
-      bidRedemptions,
-      prizeTrackingTickets,
       signers,
       instructions,
     );
@@ -418,7 +413,6 @@ export async function setupRedeemPrintingV2Instructions(
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
   winningIndex: number,
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -433,7 +427,9 @@ export async function setupRedeemPrintingV2Instructions(
     item.metadata.info.mint,
   );
 
-  const myPrizeTrackingTicket = prizeTrackingTickets[myPrizeTrackingTicketKey];
+  const myPrizeTrackingTicket = await getPrizeTrackingTicketsbyKey(
+    myPrizeTrackingTicketKey,
+  );
   // We are not entirely guaranteed this is right. Someone could be clicking at the same time. Contract will throw error if this
   // is the case and they'll need to refresh to get tracking ticket which may not have existed when they first clicked.
   const editionBase = myPrizeTrackingTicket

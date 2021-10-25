@@ -31,10 +31,6 @@ const CollectionsContext = React.createContext<CollectionsContextState>({
 export function CollectionsProvider({ children = null as any }) {
   const {
     metadata,
-    metadataByMint,
-    masterEditionsByPrintingMint,
-    metadataByMasterEdition,
-    masterEditions,
     auctions,
     auctionManagersByAuction,
     vaults,
@@ -163,13 +159,7 @@ export function CollectionsProvider({ children = null as any }) {
       manager.info.vault,
     );
 
-    const items = auctionManager.getItemsFromSafetyDepositBoxes(
-      metadataByMint,
-      masterEditionsByPrintingMint,
-      metadataByMasterEdition,
-      masterEditions,
-      boxes,
-    );
+    const items = await auctionManager.getItemsFromSafetyDepositBoxes(boxes);
 
     const auctionDataExtendedKey =
       manager.info.key == MetaplexKey.AuctionManagerV2

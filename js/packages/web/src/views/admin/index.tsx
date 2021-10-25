@@ -38,18 +38,17 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
-import { arrayToObject, getCreator, getMasterEditions, getMetdataByCreator } from '../../hooks/getData';
+import { getCreator, getMetdataByCreator } from '../../hooks/getData';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, } = useMeta();
-  console.log("storestorestorestore", store)
-  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+  const { store } = useMeta();
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
 
   useEffect(() => {
     getCreator().then(creators => {
       if (creators && creators.length > 0) {
-        setCreatorsByCreator(creators)
+        setCreatorsByCreator(creators);
       }
     });
   }, []);
@@ -68,7 +67,6 @@ export const AdminView = () => {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, store);
 
   return (
     <>
@@ -79,7 +77,7 @@ export const AdminView = () => {
           </Button>{' '}
           to admin store.
         </p>
-      ) : !storeAddress  ? (
+      ) : !storeAddress ? (
         <Spin />
       ) : store && wallet ? (
         <>
@@ -207,7 +205,7 @@ function InnerAdminView({
       unavailable: ParsedAccount<MasterEditionV1>[];
     }>();
   const [loading, setLoading] = useState<boolean>();
-  const key = wallet.publicKey?.toBase58()
+  const key = wallet.publicKey?.toBase58();
   const [filtered, setFiltered] = useState<any>([]);
   useEffect(() => {
     if (!key) return;
@@ -216,31 +214,13 @@ function InnerAdminView({
         setFiltered(metadata);
       }
     });
-    getMasterEditions('masterEditionsV1').then(data => {
-      console.log(data);
-      if (data.length == 0) {
-        getMasterEditions('masterEditionsV2').then(data => {
-          const arr = arrayToObject(data, 'pubkey');
-          setMasterEditions(arr);
-        });
-      } else {
-        const arr = arrayToObject(data, 'pubkey');
-        setMasterEditions(arr);
-      }
-    });
   }, [key]);
 
-  
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
     const fn = async () => {
       setFilteredMetadata(
-        await filterMetadata(
-          connection,
-          filtered,
-          masterEditions,
-          accountByMint,
-        ),
+        await filterMetadata(connection, filtered, accountByMint),
       );
     };
     fn();
