@@ -5,7 +5,7 @@ import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { useMeta } from '../../contexts';
-import { loadMetaDataAndEditionsForCreators, useConnection } from '@oyster/common';
+import { loadMetadataForUsers, useUserAccounts, useConnection, loadMetaDataAndEditionsForCreators } from '@oyster/common';
 import { CardLoader } from '../../components/MyLoader';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -28,6 +28,8 @@ export const ArtworksView = () => {
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
   const { metadata, whitelistedCreatorsByCreator, patchState } = useMeta();
   const connection = useConnection();
+  const wallet = useWallet();
+  const { userAccounts } = useUserAccounts();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,
@@ -53,12 +55,13 @@ export const ArtworksView = () => {
 
   useEffect(() => {
     (async () => {
-      const metadataState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
-      
+      setLoadingArt(true);
+      const metadataState = await loadMetadataForUsers(connection, userAccounts, whitelistedCreatorsByCreator);      // const completeMetaState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
+
       patchState(metadataState);
       setLoadingArt(false);
     })()
-  }, [connection])
+  }, [connection, wallet.connected])
 
   const artworkGrid = (
     <Masonry
@@ -99,11 +102,13 @@ export const ArtworksView = () => {
                   onTabClick={key => setActiveKey(key as ArtworkViewState)}
                   tabBarExtraContent={{
                     right: (
-                      <Link to={`/auction/create/0`}>
-                        <Button className="connector" size="large" type="primary">
-                          Sell
-                        </Button>
-                      </Link>
+                      wallet.connected && (
+                        <Link to={`/auction/create/0`}>
+                          <Button className="connector" size="large" type="primary">
+                            Sell
+                          </Button>
+                        </Link>
+                      )
                     )
                   }}
                 >
