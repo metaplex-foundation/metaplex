@@ -362,8 +362,6 @@ const UploadStep = (props: {
   const [customURLErr, setCustomURLErr] = useState<string>('');
   const disableContinue = !coverFile || !!customURLErr;
 
-  console.log("PROPS", props.arWallet)
-
   useEffect(() => {
     props.setAttributes({
       ...props.attributes,
@@ -459,11 +457,9 @@ const UploadStep = (props: {
             
             if (filesOver10mb && !arWallet) {
               setIsModalVisible(true);
-              console.log("File over 10mb detected", files);
               return
             }
 
-            console.log("MODAL?", isModalVisible)
             props.confirm();
           }}
           style={{ marginTop: 24 }}
@@ -652,7 +648,6 @@ const UploadStep = (props: {
                         
                         // validate the red json file is a valid Arweave wallet
                         if (arKeys.every(key => parsedArWallet[key] !== "")) {
-                          console.log("KEYS", parsedArWallet["kty"])
                           props.setArWallet(parsedArWallet)
                           setArWallet(parsedArWallet)
                           setIsGoodArWallet(true)

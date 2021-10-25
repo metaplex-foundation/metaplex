@@ -111,13 +111,11 @@ const uploadWithArWallet = async(filesMoreThan10mb: File[], arWallet: ArweaveWal
 
     const fileType = filesMoreThan10mb[i].type || "glb";
 
-    console.log("FILE OF TYPE", fileType);
+    console.log("Uploading", filesMoreThan10mb[i].name)
 
     const arweaveTransacionId = await arweaveUpload(await filesMoreThan10mb[i].arrayBuffer(), arWallet, fileType)
 
     //! ARWEAVE
-
-    console.log("Uploading", filesMoreThan10mb[i].name)
 
     if (fileType == "image/jpeg") {
       metadataContent.image = `https://arweave.net/${arweaveTransacionId}`;
@@ -127,27 +125,24 @@ const uploadWithArWallet = async(filesMoreThan10mb: File[], arWallet: ArweaveWal
 
     //! ARWEAVE
     for (var j = 0; j < metadataContent.properties.files!.length; j++) {
-      console.log(
+/*       console.log(
         "Looking for file of type",
         fileType,
         "and this file has",
         metadataContent.properties.files[j].type
-      );
+      ); */
       if (metadataContent.properties.files[j].type == fileType)
         metadataContent.properties.files[j] = {
                 "uri": `https://arweave.net/${arweaveTransacionId}`,
-                "type": fileType,
-                "cdn": true
+                "type": fileType
               };
     }
 
-    console.log("SET FILES", metadataContent.properties.files)
 
     //! ARWEAVE UPLOADER
   }
 
   // upload manifest file
-  console.log("FINISHED METADATA", metadataContent)
   const manifestTxId = await arweaveUpload(JSON.stringify(metadataContent), arWallet, "application/json", mintKey)
 
   return manifestTxId
@@ -369,6 +364,8 @@ export const mintNFT = async (
     const metadataFile = result.messages?.find(
       m => m.filename === RESERVED_TXN_MANIFEST,
     );
+    
+    arweaveTxId = metadataFile?.transactionId!
 
   } else {
     if (!arWallet) throw new Error("Detected files with more than 10mb but no wallet provided");
