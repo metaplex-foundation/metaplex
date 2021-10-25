@@ -6,9 +6,11 @@ export function decodeEntity<T>(
   type: { new (args: any): T },
   schema: Map<any, any>,
 ) {
-  return (buffer: Buffer, pubkey: string): T => {
+  return (buffer: Buffer, pubkey?: string): T => {
     const entry = deserializeUnchecked(schema, type, buffer);
-    entry.pubkey = pubkey;
+    if (pubkey) {
+      entry.pubkey = pubkey;
+    }
     return entry;
   };
 }

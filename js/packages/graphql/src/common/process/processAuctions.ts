@@ -8,48 +8,8 @@ import {
   MAX_AUCTION_DATA_EXTENDED_SIZE,
 } from '../models/auctions';
 import { AUCTION_ID } from '../utils';
-import { CheckAccountFunc, ProcessAccountsFunc } from './types';
-
-export const processAuctions: ProcessAccountsFunc = async (
-  { account, pubkey },
-  setter,
-) => {
-  if (!isAuctionAccount(account)) return;
-
-  try {
-    const auction = decodeAuction(account.data, pubkey);
-    await setter('auctions', pubkey, auction);
-  } catch {
-    // ignore errors
-  }
-
-  try {
-    if (isExtendedAuctionAccount(account)) {
-      const extendedAuction = decodeAuctionDataExtended(account.data, pubkey);
-      await setter('auctionsDataExtended', pubkey, extendedAuction);
-    }
-  } catch {
-    // ignore errors
-  }
-
-  try {
-    if (isBidderMetadataAccount(account)) {
-      const bidderMetadata = decodeBidderMetadata(account.data, pubkey);
-      await setter('bidderMetadatas', pubkey, bidderMetadata);
-    }
-  } catch {
-    // ignore errors
-  }
-
-  try {
-    if (isBidderPotAccount(account)) {
-      const bidderPot = decodeBidderPot(account.data, pubkey);
-      await setter('bidderPots', pubkey, bidderPot);
-    }
-  } catch (err) {
-    // ignore errors
-  }
-};
+import { CheckAccountFunc } from './types';
+import { createPipeline, createProcessor } from './utils';
 
 const isAuctionAccount: CheckAccountFunc = account =>
   account.owner === AUCTION_ID;
@@ -62,3 +22,25 @@ const isBidderMetadataAccount: CheckAccountFunc = account =>
 
 const isBidderPotAccount: CheckAccountFunc = account =>
   account.data.length === BIDDER_POT_LEN;
+
+export const AUCTION_PROCESSOR = createPipeline(
+  {
+    auctions: createProcessor(
+      () => true,
+      ({ account, pubkey }) => decodeAuction(account.data, pubkey),
+    ),
+    auctionsDataExtended: createProcessor(
+      acc => isExtendedAuctionAccount(acc),
+      ({ account, pubkey }) => decodeAuctionDataExtended(account.data, pubkey),
+    ),
+    bidderMetadatas: createProcessor(
+      acc => isBidderMetadataAccount(acc),
+      ({ account, pubkey }) => decodeBidderMetadata(account.data, pubkey),
+    ),
+    bidderPots: createProcessor(
+      acc => isBidderPotAccount(acc),
+      ({ account, pubkey }) => decodeBidderPot(account.data, pubkey),
+    ),
+  },
+  isAuctionAccount,
+);

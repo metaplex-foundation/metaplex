@@ -1,5 +1,7 @@
 import {
+  AccountInfoOwnerString,
   ProcessAccountsFunc,
+  PublicKeyStringAndAccount,
   StringPublicKey,
   UpdateStateValueFunc,
 } from '../common';
@@ -9,10 +11,19 @@ export type EndpointsMap = {
   endpoint: string;
 }[];
 
-export type ProgramParserMap = {
+export interface IProcessor<T> {
+  is: (acc: AccountInfoOwnerString<Buffer>) => boolean;
+  process(acc: PublicKeyStringAndAccount<Buffer>): T | undefined;
+}
+
+export interface IProgramParser {
   pubkey: StringPublicKey;
   process: ProcessAccountsFunc;
-}[];
+  processors: Record<string, IProcessor<any>>;
+  isProcessor: (acc: AccountInfoOwnerString<Buffer>) => boolean;
+}
+
+export type ProgramParserMap = IProgramParser[];
 
 export type ProgramParse = {
   pubkey: StringPublicKey;

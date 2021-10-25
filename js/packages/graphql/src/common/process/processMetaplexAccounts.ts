@@ -8,10 +8,10 @@ import {
   decodeWhitelistedCreator,
   MetaplexKey,
 } from '../models/metaplex';
-import logger from '../../logger';
-import { ProcessAccountsFunc } from './types';
 import { METAPLEX_ID, AccountInfoOwnerString } from '../utils';
+import { createProcessor, createPipeline } from './utils';
 
+/*
 export const processMetaplexAccounts: ProcessAccountsFunc = async (
   { account, pubkey },
   setter,
@@ -63,6 +63,7 @@ export const processMetaplexAccounts: ProcessAccountsFunc = async (
     logger.warn(err);
   }
 };
+*/
 
 const isMetaplexAccount = (account: AccountInfoOwnerString<Buffer>) =>
   account.owner === METAPLEX_ID;
@@ -98,3 +99,43 @@ const isSafetyDepositConfigV1Account = (
 const isWhitelistedCreatorV1Account = (
   account: AccountInfoOwnerString<Buffer>,
 ) => account.data[0] === MetaplexKey.WhitelistedCreatorV1;
+
+export const METAPLEX_ACCOUNTS_PROCESSOR = createPipeline(
+  {
+    auctionManagers: createProcessor(
+      acc => isAuctionManagerV1Account(acc) || isAuctionManagerV2Account(acc),
+      ({ account, pubkey }) => decodeAuctionManager(account.data, pubkey),
+    ),
+    bidRedemptions: createProcessor(
+      acc =>
+        isBidRedemptionTicketV1Account(acc) ||
+        isBidRedemptionTicketV2Account(acc),
+      ({ account, pubkey }) => decodeBidRedemptionTicket(account.data, pubkey),
+    ),
+
+    payoutTickets: createProcessor(
+      acc => isPayoutTicketV1Account(acc),
+      ({ account, pubkey }) => decodePayoutTicket(account.data, pubkey),
+    ),
+
+    prizeTrackingTickets: createProcessor(
+      acc => isPrizeTrackingTicketV1Account(acc),
+      ({ account, pubkey }) => decodePrizeTrackingTicket(account.data, pubkey),
+    ),
+
+    safetyDepositConfigs: createProcessor(
+      acc => isSafetyDepositConfigV1Account(acc),
+      ({ account, pubkey }) => decodeSafetyDepositConfig(account.data, pubkey),
+    ),
+
+    stores: createProcessor(
+      acc => isStoreV1Account(acc),
+      ({ account, pubkey }) => decodeStore(account.data, pubkey),
+    ),
+    creators: createProcessor(
+      acc => isWhitelistedCreatorV1Account(acc),
+      ({ account, pubkey }) => decodeWhitelistedCreator(account.data, pubkey),
+    ),
+  },
+  isMetaplexAccount,
+);

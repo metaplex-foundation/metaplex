@@ -1,27 +1,6 @@
-import logger from '../../logger';
 import { decodeSafetyDeposit, decodeVault, VaultKey } from '../models/vaults';
 import { VAULT_ID, AccountInfoOwnerString } from '../utils';
-import { ProcessAccountsFunc } from './types';
-
-export const processVaultData: ProcessAccountsFunc = async (
-  { account, pubkey },
-  setter,
-) => {
-  if (!isVaultAccount(account)) return;
-
-  try {
-    if (isSafetyDepositBoxV1Account(account)) {
-      const safetyDeposit = decodeSafetyDeposit(account.data, pubkey);
-      await setter('safetyDepositBoxes', pubkey, safetyDeposit);
-    }
-    if (isVaultV1Account(account)) {
-      const vault = decodeVault(account.data, pubkey);
-      await setter('vaults', pubkey, vault);
-    }
-  } catch (err) {
-    logger.warn(err);
-  }
-};
+import { createPipeline, createProcessor } from './utils';
 
 const isVaultAccount = (account: AccountInfoOwnerString<Buffer>) =>
   account.owner === VAULT_ID;
@@ -31,3 +10,17 @@ const isSafetyDepositBoxV1Account = (account: AccountInfoOwnerString<Buffer>) =>
 
 const isVaultV1Account = (account: AccountInfoOwnerString<Buffer>) =>
   account.data[0] === VaultKey.VaultV1;
+
+export const VAULT_PROCESSOR = createPipeline(
+  {
+    safetyDepositBoxes: createProcessor(
+      acc => isSafetyDepositBoxV1Account(acc),
+      acc => decodeSafetyDeposit(acc.account.data, acc.pubkey),
+    ),
+    vaults: createProcessor(
+      acc => isVaultV1Account(acc),
+      acc => decodeVault(acc.account.data, acc.pubkey),
+    ),
+  },
+  isVaultAccount,
+);

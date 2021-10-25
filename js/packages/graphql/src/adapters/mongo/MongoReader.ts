@@ -19,6 +19,7 @@ import {
 import { deserialize } from 'typescript-json-serializer';
 import { PubSub, withFilter } from 'graphql-subscriptions';
 import { PROGRAMS } from '../../ingester/constants';
+import { IProgramParser } from '../../ingester';
 
 function tableName<T extends MetaTypes>(name: T): T {
   return name;
@@ -32,6 +33,26 @@ const D = {
   masterEditionsV2: (doc: any) => deserialize(doc, MasterEditionV2),
   editions: (doc: any) => deserialize(doc, Edition),
 };
+
+class LazyEvent implements IEvent {
+  constructor(
+    readonly prop: keyof MetaMap,
+    private account: PublicKeyStringAndAccount<Buffer>,
+    private program: Pick<IProgramParser, 'processors'>,
+  ) {}
+
+  public readonly key = this.account.pubkey;
+  // we process value if only somebody will demand it
+  private _value: any;
+  get value() {
+    if (this._value) {
+      return this._value;
+    }
+    const processor = this.program.processors[this.prop];
+    this._value = processor.process(this.account);
+    return this._value;
+  }
+}
 
 export class MongoReader implements IReader {
   private db!: Db;
@@ -116,12 +137,19 @@ export class MongoReader implements IReader {
               owner: pubkeyToString(block.accountInfo.owner),
             },
           };
-          program.process(account, (prop, key, value) => {
-            const event: IEvent = { prop, key, value };
-            console.log('Event', event);
-            this.pubsub.publish(prop, event);
-            return Promise.resolve();
-          });
+          if (program.isProcessor(account.account)) {
+            for (const [prop, proc] of Object.entries(program.processors)) {
+              if (proc.is(account.account)) {
+                const event = new LazyEvent(
+                  prop as keyof MetaMap,
+                  account,
+                  program,
+                );
+                this.pubsub.publish(prop, event);
+                break;
+              }
+            }
+          }
         },
       );
     });
