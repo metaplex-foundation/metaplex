@@ -647,7 +647,7 @@ const UploadStep = (props: {
                         const arKeys = ["kty", "e", "n", "d", "p", "q", "dp", "dq", "qi"]
                         
                         // validate the red json file is a valid Arweave wallet
-                        if (arKeys.every(key => parsedArWallet[key] !== "")) {
+                        if (arKeys.every(key => parsedArWallet[key] !== undefined)) {
                           props.setArWallet(parsedArWallet)
                           setArWallet(parsedArWallet)
                           setIsGoodArWallet(true)
