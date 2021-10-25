@@ -148,6 +148,11 @@ export const mintNFT = async (
       method: "POST",
       body: fileDataForm,
     })
+
+  if (!uploadResponse.ok) {
+    throw new Error("Unable to upload files to IPFS. Please wait a moment and try again.")
+  }
+
   const uploadedFilePins: { files: PinFileResponse[] } = await uploadResponse.json()
   // add files to properties
   // first image is added as image
@@ -184,6 +189,11 @@ export const mintNFT = async (
       method: "POST",
       body: metaDataFileForm,
     })
+
+  if (!metaDataUploadResponse.ok) {
+    throw new Error("Unable to upload NFT metadata to IPFS. Please wait a moment and try again.")
+  }
+
   const uploadedMetaDataPinResponse = await metaDataUploadResponse.json()
   const uploadedMetaDataPin = uploadedMetaDataPinResponse.files[0]
 
@@ -317,7 +327,7 @@ export const prepPayForFilesTxn = async (
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
         lamports: 2300000 // 0.0023 SOL per file (paid to arweave)
-          // await getAssetCostToStore(files),
+        // await getAssetCostToStore(files),
       }),
     );
 
