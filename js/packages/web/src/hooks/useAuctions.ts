@@ -181,7 +181,7 @@ export const useInfiniteScrollAuctions = () => {
         if(auctionCachesByAuctionManager[auctionManager.pubkey]) {
           return loadBidsForAuction(connection, auctionManager.info.auction);
         }
-
+        
         return loadAuction(connection, auctionManager);
       })
     );

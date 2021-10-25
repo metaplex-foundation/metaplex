@@ -54,10 +54,9 @@ import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
 
-
-const queryStoreIndexersIntoState = async (
-  connection:Connection,
-  updateState: UpdateStateValueFunc
+const queryStoreIndexer = async (
+  connection: Connection,
+  updateState: UpdateStateValueFunc,
 ): Promise<void> => {
   let i = 0;
 
@@ -86,11 +85,11 @@ const queryStoreIndexersIntoState = async (
 
 export const loadStoreIndexers = async (
   connection: Connection,
-):Promise<MetaState> => {
+): Promise<MetaState> => {
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
 
-  await queryStoreIndexersIntoState(connection, updateState);
+  await queryStoreIndexer(connection, updateState);
 
   return state;
 }
@@ -108,33 +107,7 @@ export const loadAccounts = async (
     return state;
   }
 
-  const loadStoreIndexers = async (): Promise<void> => {
-    let i = 0;
-
-    let pageKey = await getStoreIndexer(i);
-    let account = await getAccountInfo(connection, pageKey);
-
-    while (account) {
-      pageKey = await getStoreIndexer(i);
-      account = await getAccountInfo(connection, pageKey);
-
-      if (!account) {
-        break;
-      }
-
-      processMetaplexAccounts(
-        {
-          pubkey: pageKey,
-          account,
-        },
-        updateState,
-      );
-
-      i++;
-    }
-  }
-
-  const loadAuctionCaches = async () => {
+  const queryAuctionCaches = async () => {
     const auctionCacheKeys = state.storeIndexer.reduce(
       (memo, storeIndex) => [...memo, ...storeIndex.info.auctionCaches],
       [] as StringPublicKey[]
@@ -157,7 +130,7 @@ export const loadAccounts = async (
     }
   }
 
-  const loadAuctionsFromCaches = async () => {
+  const queryAuctionsFromCache = async () => {
     const auctionCaches = Object.values(state.auctionCaches);
     let accountPubKeys = [] as StringPublicKey[]
     
@@ -191,7 +164,7 @@ export const loadAccounts = async (
     await Promise.all(readyMetadata)
   }
 
-  const loadStorefront = async (storeAddress: StringPublicKey) => {
+  const queryStorefront = async (storeAddress: StringPublicKey) => {
     const storeData = await getAccountInfo(connection, storeAddress);
 
     if (storeData) {
@@ -205,7 +178,7 @@ export const loadAccounts = async (
     }
   };
 
-  const loadAuctionsFromAuctionManagers = async (
+  const queryAuctionsFromAuctionManagers = async (
     parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
   ) => {
     const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction);
@@ -239,7 +212,7 @@ export const loadAccounts = async (
     }
   };
 
-  const loadVaultsForAuctionManagers = async (
+  const queryVaultsForAuctionManagers = async (
     auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
   ) => {
     const vaultKeys = auctionManagers.map(({ info: { vault } }) => vault);
@@ -264,26 +237,23 @@ export const loadAccounts = async (
     }
   };
 
-  const loadAuctionsAndVaults = async () => {
+  const queryAuctionsAndVaults = async () => {
     const auctionManagers = Object.values(state.auctionManagersByAuction);
     
     await Promise.all([
-      loadAuctionsFromAuctionManagers(auctionManagers),
-      loadVaultsForAuctionManagers(auctionManagers),
+      queryAuctionsFromAuctionManagers(auctionManagers),
+      queryVaultsForAuctionManagers(auctionManagers),
     ]);
   };
 
   await Promise.all([
     queryCreators(connection, updateState),
-    loadStoreIndexers()
-      .then(loadAuctionCaches)
-      .then(loadAuctionsFromCaches),
-    loadStorefront(storeAddress),
-  ])
-
-  if (isEmpty(state.storeIndexer)) {
-    await queryAuctionManagers(connection, updateState, storeAddress).then(loadAuctionsAndVaults);
-  }
+    queryStoreIndexer(connection, updateState)
+      .then(queryAuctionCaches)
+      .then(queryAuctionsFromCache),
+    queryStorefront(storeAddress),
+    queryAuctionManagers(connection, updateState, storeAddress).then(queryAuctionsAndVaults)
+  ]);
 
   return state;
 };
