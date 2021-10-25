@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDOM from "react-dom";
 
 import {
   Box,
@@ -9,6 +10,12 @@ import {
   MenuItem,
   Stack,
   Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
 } from "@mui/material";
 import FilePresentIcon from '@mui/icons-material/FilePresent';
@@ -41,9 +48,14 @@ import {
   useConnection,
   Connection,
 } from "../contexts";
-import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, notify } from "../utils";
+import {
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  notify,
+  shortenAddress,
+} from "../utils";
 import { MerkleTree } from "../utils/merkle-tree";
 import { DragAndDrop } from "./DragAndDrop";
+import { DefaultModal } from "./DefaultModal";
 
 // NB: assumes no overflow
 const randomBytes = () : Uint8Array => {
@@ -138,6 +150,36 @@ const parseClaimants = (
   });
 };
 
+const reactModal = (renderModal) => {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+
+  const displayModal = ({ onSubmit, onDismiss }) => {
+    ReactDOM.render(renderModal({ onSubmit, onDismiss, show: true }), container);
+  };
+
+  const hideModal = ({ onSubmit, onDismiss }, callback) => {
+    ReactDOM.render(renderModal({ onSubmit, onDismiss, show: false }), container, callback);
+  };
+
+  const destroyModal = () => {
+    ReactDOM.unmountComponentAtNode(container);
+    document.body.removeChild(container);
+  };
+
+  const confirmation = new Promise((resolve) => {
+    const onSubmit = (value) => resolve(value);
+    const onDismiss = () => resolve(undefined);
+    displayModal({ onSubmit, onDismiss });
+  });
+
+  return confirmation.finally(() => {
+    const onSubmit = () => {};
+    const onDismiss = () => {};
+    hideModal({ onSubmit, onDismiss }, destroyModal);
+  });
+};
+
 export type CreateProps = {};
 
 export const Create = (
@@ -176,7 +218,11 @@ export const Create = (
     if (mintAccount.data.length !== MintLayout.span) {
       throw new Error(`Invalid mint size ${mintAccount.data.length}`);
     }
-    // const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
+    const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
+    const displayMintTokens = (amount : number) : string => {
+      // TODO: better decimal rounding
+      return (amount / Math.pow(10, mintInfo.decimals)).toString();
+    };
 
     const mintUrl = `https://explorer.solana.com/address/${mintKey.toBase58()}?cluster=${Connection.envFor(connection)}`;
     console.log(mintUrl);
@@ -195,16 +241,50 @@ export const Create = (
       // TODO: more validation of URLs? The creator is using they're own
       // credentials to re-send so if they're malicious it's not that bad
       // right?...
-      const resendOnly = window.confirm("Uploaded distribution list has URLs "
-          + "for all claimants. Skip creation of airdrop and only re-send links?");
-      if (resendOnly) {
+      const resendOnly = await reactModal(({ show, onSubmit, onDismiss }) => {
+        const options = [
+          { click: () => onSubmit("create"), name: "Create and Send" },
+          { click: () => onSubmit("send")  , name: "Send only"       },
+        ];
+        return (
+          <DefaultModal visible={show} onCancel={onDismiss}>
+            <p style={{ color: "white", fontSize: 14 }}>
+              Uploaded distribution list has URLs for all claimants.
+              Skip creation of airdrop and only re-send links?
+            </p>
+            <br />
+            {options.map((opt) => {
+              return (
+                <Button
+                  key={opt.name}
+                  style={{
+                    width: "100%",
+                    color: "white",
+                    marginBottom: 8,
+                  }}
+                  variant="outlined"
+                  onClick={opt.click}
+                >
+                  {opt.name}
+                </Button>
+              );
+            })}
+          </DefaultModal>
+        );
+      }) as string | undefined;
+      console.log(resendOnly);
+      if (resendOnly === "send") {
+        setClaimURLs(claimants);
         const sender = setupSender(commMethod, commAuth, commSource);
         for (let idx = 0; idx < claimants.length; ++idx) {
           await sender(claimants[idx], mintUrl);
         }
         return;
+      } else if (resendOnly === "create") {
+        // fallthrough to full create
       } else {
-        // Bail? another confirm to continue with creation?
+        // dismissed. don't use exceptions for control flow?
+        throw new Error("Dismissed");
       }
     }
     const totalClaim = claimants.reduce((acc, c) => acc + c.amount, 0);
@@ -297,6 +377,86 @@ export const Create = (
       claimant.url = `${window.location.origin}${window.location.pathname}#/claim?${query}`;
     }
 
+    const shouldSend = await reactModal(({ show, onSubmit, onDismiss }) => {
+      const options = [
+        { click: () => onSubmit(true) , name: "Approve" },
+        { click: () => onSubmit(false), name: "Cancel"  },
+      ];
+      return (
+        <DefaultModal visible={show} onCancel={onDismiss}>
+          <h2
+            style={{
+              color: "white",
+              fontWeight: "bold",
+              fontSize: 20,
+            }}
+          >
+            Claim Distribution Preview
+          </h2>
+          <p style={{ color: "white", fontSize: 14 }}>
+            Distributing a total of {displayMintTokens(totalClaim)}{WHITESPACE}
+            <HyperLink href={mintUrl}>
+              {shortenAddress(mintKey.toBase58())}
+            </HyperLink>
+            {WHITESPACE}token(s)
+          </p>
+          <TableContainer
+            sx={{
+              "td, th": { color: "white" },
+              backgroundColor: "#444444",
+              borderRadius: "5px",
+              maxHeight: "30ch",
+            }}
+          >
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Handle</TableCell>
+                  <TableCell>Tokens</TableCell>
+                  <TableCell>Pin</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {claimants.map((c) => (
+                  <TableRow
+                    key={c.pda.toBase58()}
+                    sx={{ 'td, th': { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">{c.handle} </TableCell>
+                    <TableCell>{displayMintTokens(c.amount)}</TableCell>
+                    <TableCell>{c.pin.join(",")}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <br />
+          {options.map((opt) => {
+            return (
+              <Button
+                key={opt.name}
+                style={{
+                  width: "100%",
+                  color: "white",
+                  marginBottom: 8,
+                }}
+                variant="outlined"
+                onClick={opt.click}
+              >
+                {opt.name}
+              </Button>
+            );
+          })}
+        </DefaultModal>
+      );
+    }) as boolean | undefined;
+    console.log(shouldSend);
+    if (shouldSend === true) {
+    } else {
+      // dismissed. don't use exceptions for control flow?
+      throw new Error("Claim distribution preview not approved");
+    }
+
     // TODO: defer until success?
     setClaimURLs(claimants);
 
@@ -379,7 +539,7 @@ export const Create = (
     if (files.length !== 1) {
       notify({
         message: "File upload failed",
-        description: "Expecting exactly one handle-file upload",
+        description: `Received ${files.length} files`,
       });
       return;
     }
@@ -514,7 +674,7 @@ export const Create = (
           try {
             await submit(e);
           } catch (err) {
-            // setClaimURLs([]);
+            setClaimURLs([]);
             notify({
               message: "Create failed",
               description: `${err}`,
