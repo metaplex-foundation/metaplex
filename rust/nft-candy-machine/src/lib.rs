@@ -4,7 +4,7 @@ use {
     crate::utils::{assert_initialized, assert_owned_by, spl_token_transfer, TokenTransferParams},
     anchor_lang::{
         prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize,
-        Discriminator, Key, UncheckedAccount,
+        Discriminator, Key,
     },
     arrayref::array_ref,
     metaplex_token_metadata::{

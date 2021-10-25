@@ -9,7 +9,8 @@ use {
             system_instruction,
         },
     },
-    anchor_spl::token::{Mint, TokenAccount},
+    anchor_spl::token::{Mint, Token, TokenAccount},
+    arrayref::array_ref,
     metaplex_token_metadata::state::Metadata,
     spl_associated_token_account::get_associated_token_address,
     spl_token::{instruction::initialize_account2, state::Account},
@@ -233,9 +234,9 @@ pub fn pay_auction_house_fees<'a>(
 
 pub fn create_program_token_account_if_not_present<'a>(
     payment_account: &UncheckedAccount<'a>,
-    system_program: &UncheckedAccount<'a>,
+    system_program: &Program<'a, System>,
     fee_payer: &AccountInfo<'a>,
-    token_program: &UncheckedAccount<'a>,
+    token_program: &Program<'a, Token>,
     treasury_mint: &anchor_lang::Account<'a, Mint>,
     owner: &AccountInfo<'a>,
     rent: &Sysvar<'a, Rent>,
@@ -390,6 +391,16 @@ pub fn pay_creator_fees<'a>(
     Ok(remaining_size
         .checked_add(remaining_fee)
         .ok_or(ErrorCode::NumericalOverflow)?)
+}
+
+/// Cheap method to just grab mint Pubkey from token account, instead of deserializing entire thing
+pub fn get_mint_from_token_account(
+    token_account_info: &AccountInfo,
+) -> Result<Pubkey, ProgramError> {
+    // TokeAccount layout:   mint(32), owner(32), ...
+    let data = token_account_info.try_borrow_data()?;
+    let mint_data = array_ref![data, 0, 32];
+    Ok(Pubkey::new_from_array(*mint_data))
 }
 
 /// Create account almost from scratch, lifted from
