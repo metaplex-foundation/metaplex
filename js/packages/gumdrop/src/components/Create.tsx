@@ -49,6 +49,7 @@ import {
   Connection,
 } from "../contexts";
 import {
+  MERKLE_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
   shortenAddress,
@@ -65,7 +66,6 @@ const randomBytes = () : Uint8Array => {
   return buf;
 }
 
-const MERKLE_DISTRIBUTOR_ID = new PublicKey("2BXKBuQPRVjV9e9qC2wAVJgFLWDH8MULRQ5W5ABmJj45");
 const WHITESPACE = "\u00A0";
 
 export type ClaimantInfo = {

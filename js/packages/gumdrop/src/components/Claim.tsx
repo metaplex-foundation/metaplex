@@ -34,10 +34,12 @@ import {
   useConnection,
   Connection,
 } from "../contexts";
-import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, notify } from "../utils";
+import {
+  MERKLE_DISTRIBUTOR_ID,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  notify,
+} from "../utils";
 import { MerkleTree } from "../utils/merkle-tree";
-
-const MERKLE_DISTRIBUTOR_ID = new PublicKey("2BXKBuQPRVjV9e9qC2wAVJgFLWDH8MULRQ5W5ABmJj45");
 
 const idl = require("../utils/merkle_distributor.json");
 const coder = new Coder(idl);
