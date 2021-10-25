@@ -39,12 +39,7 @@ export type ENV =
   | 'localnet'
   | 'lending';
 
-export const ENDPOINTS = [
-  {
-    name: 'devnet' as ENV,
-    endpoint: clusterApiUrl('devnet'),
-    ChainId: ChainId.Devnet,
-  },
+export const ENDPOINTS = [  
   {
     name: 'mainnet-beta' as ENV,
     endpoint: 'https://api.metaplex.solana.com/',
@@ -64,6 +59,11 @@ export const ENDPOINTS = [
     name: 'testnet' as ENV,
     endpoint: clusterApiUrl('testnet'),
     ChainId: ChainId.Testnet,
+  },
+  {
+    name: 'devnet' as ENV,
+    endpoint: clusterApiUrl('devnet'),
+    ChainId: ChainId.Devnet,
   },
 ];
 
