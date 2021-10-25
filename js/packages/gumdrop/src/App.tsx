@@ -89,7 +89,16 @@ const About = (
       This website exposes a web-friendly way to access the on-chain
       distributor. Creation is done by choosing a Mint, an off-chain
       notification method, and supplying a list of recipients and balances with
-      the following JSON schema.
+      the following JSON schema{WHITESPACE}
+
+      <HyperLink
+        href={`data:text/plain;charset=utf-8,${JSON.stringify(require("./example.json"))}`}
+        download="example.json"
+        underline="none"
+      >
+      (Click here for an example)
+      </HyperLink>
+
       <pre>{`
 [
   {
@@ -99,6 +108,7 @@ const About = (
   ...
 ]
       `}</pre>
+
       Claims are redeemed through a URL with query parameters holding
       claim-specific keys. These should be kept secret! Anyone can redeem a
       claim once they have the URL.
