@@ -39,7 +39,7 @@ const About = (
       spacing={1}
     >
       <div>
-      Merkle Airdrop leverages the Solana blackhain and merkle trees to
+      Merkle Airdrop leverages the Solana blockchain and merkle trees to
       facilitate airdrops by removing the prohibitive costs to the creators.
       </div>
 
@@ -99,7 +99,7 @@ const About = (
   ...
 ]
       `}</pre>
-      Claims are redeemed through a URL with query params holding
+      Claims are redeemed through a URL with query parameters holding
       claim-specific keys. These should be kept secret! Anyone can redeem a
       claim once they have the URL.
       </div>
