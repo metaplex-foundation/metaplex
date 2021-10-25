@@ -519,42 +519,6 @@ programCommand('create_candy_machine')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
-  .option(
-    '-st1, --sol-treasury-account1 <string>',
-    '1st SOL account that receives mint payments.',
-  )
-  .option(
-    '-s1, --split1 <string>',
-    'the percent of the mint price that the sol-treasury-account1 receives.',
-    '100',
-  )
-  .option(
-    '-st2, --sol-treasury-account2 <string>',
-    '2nd SOL account that receives mint payments.',
-  )
-  .option(
-    '-s2, --split2 <string>',
-    'the percent of the mint price that the sol-treasury-account2 receives.',
-    '0',
-  )
-  .option(
-    '-st3, --sol-treasury-account3 <string>',
-    '3rd SOL account that receives mint payments.',
-  )
-  .option(
-    '-s3, --split3 <string>',
-    'the percent of the mint price that the sol-treasury-account3 receives.',
-    '0',
-  )
-  .option(
-    '-st4, --sol-treasury-account4 <string>',
-    '4th SOL account that receives mint payments.',
-  )
-  .option(
-    '-s4, --split4 <string>',
-    'the percent of the mint price that the sol-treasury-account4 receives.',
-    '0',
-  )
   .action(async (directory, cmd) => {
     const {
       keypair,
