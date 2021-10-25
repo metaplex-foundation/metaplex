@@ -31,7 +31,7 @@ import {
   WinningConfigType,
   AuctionViewItem,
 } from '@oyster/common';
-import { merge, take, drop, isNil } from 'lodash';
+import { merge, take, drop } from 'lodash';
 import { Connection } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
@@ -181,6 +181,7 @@ export const useInfiniteScrollAuctions = () => {
         if(auctionCachesByAuctionManager[auctionManager.pubkey]) {
           return loadBidsForAuction(connection, auctionManager.info.auction);
         }
+
         return loadAuction(connection, auctionManager);
       })
     );

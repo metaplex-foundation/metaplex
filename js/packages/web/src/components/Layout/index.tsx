@@ -1,10 +1,9 @@
 import React from 'react';
 import { Layout, Alert, Button } from 'antd';
 import { Link, useLocation } from 'react-router-dom'
-import { LABELS } from '../../constants';
 import { AppBar } from '../AppBar';
 import useWindowDimensions from '../../utils/layout';
-import { useMeta, useStore } from '@oyster/common';
+import { useStore } from '@oyster/common';
 import { useAuctionManagersToCache } from '../../hooks';
 import { useWallet } from '@solana/wallet-adapter-react';
 const { Header, Content } = Layout;

@@ -134,7 +134,7 @@ export const loadAccounts = async (
     }
   }
 
-  const loadAuctionCaches = async (): Promise<ParsedAccount<AuctionCache>[]> => {
+  const loadAuctionCaches = async () => {
     const auctionCacheKeys = state.storeIndexer.reduce(
       (memo, storeIndex) => [...memo, ...storeIndex.info.auctionCaches],
       [] as StringPublicKey[]
@@ -155,14 +155,10 @@ export const loadAccounts = async (
         }),
       );
     }
-
-    return Object.values(state.auctionCaches)
   }
 
-  const loadAuctionsFromCaches = async (
-    auctionCaches: ParsedAccount<AuctionCache>[]
-  ): Promise<MetaState> => {
-
+  const loadAuctionsFromCaches = async () => {
+    const auctionCaches = Object.values(state.auctionCaches);
     let accountPubKeys = [] as StringPublicKey[]
     
     for (const auctionCache of auctionCaches) {
@@ -172,13 +168,13 @@ export const loadAccounts = async (
       accountPubKeys = [...accountPubKeys, auction, auctionManager, vault, auctionExtended, ...metadata]
     }
 
-    const tempState = await loadMultipleAccounts(connection, accountPubKeys, 'single');
+    await queryMultipleAccountsIntoState(connection, updateState, accountPubKeys, 'single');
 
     const readyMetadata = auctionCaches.reduce((memo, auctionCache) => {
       const setMetadata = auctionCache.info.metadata.map(async metadataKey => {
-        const metadata = tempState.metadataByMetadata[metadataKey];
+        const metadata = state.metadataByMetadata[metadataKey];
 
-        let auctionMetadata = tempState.metadataByAuction[auctionCache.info.auction]
+        let auctionMetadata = state.metadataByAuction[auctionCache.info.auction]
 
         auctionMetadata = auctionMetadata || [] as ParsedAccount<Metadata>[]
 
@@ -186,15 +182,13 @@ export const loadAccounts = async (
         updateState('metadataByMint', metadata.info.mint, metadata);
         updateState('metadata', '', metadata);
 
-        tempState.metadataByAuction[auctionCache.info.auction] = [...auctionMetadata, metadata];
+        state.metadataByAuction[auctionCache.info.auction] = [...auctionMetadata, metadata];
       })
 
       return [...memo, ...setMetadata];
     }, [] as Promise<void>[])
 
     await Promise.all(readyMetadata)
-
-    return tempState;
   }
 
   const loadStorefront = async (storeAddress: StringPublicKey) => {
@@ -210,7 +204,6 @@ export const loadAccounts = async (
       );
     }
   };
-
 
   const loadAuctionsFromAuctionManagers = async (
     parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
@@ -271,13 +264,8 @@ export const loadAccounts = async (
     }
   };
 
-  const loadAuctionsAndVaults = async (
-    {
-      auctionManagersByAuction
-    }: MetaState
-  ) => {
-    const auctionManagers = Object.values(auctionManagersByAuction);
-    state.auctionManagersByAuction = auctionManagersByAuction;
+  const loadAuctionsAndVaults = async () => {
+    const auctionManagers = Object.values(state.auctionManagersByAuction);
     
     await Promise.all([
       loadAuctionsFromAuctionManagers(auctionManagers),
@@ -285,21 +273,19 @@ export const loadAccounts = async (
     ]);
   };
 
-  const [auctionsState, creatorsState] = await Promise.all([
+  await Promise.all([
+    queryCreators(connection, updateState),
     loadStoreIndexers()
       .then(loadAuctionCaches)
       .then(loadAuctionsFromCaches),
-    loadCreators(connection),
     loadStorefront(storeAddress),
   ])
 
-
-  if (isEmpty(auctionsState.storeIndexer)) {
-    await loadAuctionManagers(connection, storeAddress).then(loadAuctionsAndVaults);
+  if (isEmpty(state.storeIndexer)) {
+    await queryAuctionManagers(connection, updateState, storeAddress).then(loadAuctionsAndVaults);
   }
 
-
-  return merge({}, state, auctionsState, creatorsState, { store: state.store });
+  return state;
 };
 
 
@@ -323,11 +309,10 @@ export const loadPayoutTickets = async (
   return state;
 };
 
-export const loadCreators = async (
+const queryCreators = async (
   connection: Connection,
-): Promise<MetaState> => {
-  const state: MetaState = getEmptyMetaState();
-  const updateState = makeSetter(state);
+  updateState: UpdateStateValueFunc
+) => {
   const forEachAccount = processingAccounts(updateState);
   const response = await getProgramAccounts(connection, METAPLEX_ID, {
     filters: [
@@ -338,16 +323,24 @@ export const loadCreators = async (
   })
 
   await forEachAccount(processMetaplexAccounts)(response);
+}
+
+export const loadCreators = async (
+  connection: Connection,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+
+  await queryCreators(connection, updateState);
 
   return state;
 }
 
-export const loadAuctionManagers = async (
+const queryAuctionManagers = async (
   connection: Connection,
+  updateState: UpdateStateValueFunc,
   storeAddress: StringPublicKey
-): Promise<MetaState> => {
-  const state: MetaState = getEmptyMetaState();
-  const updateState = makeSetter(state);
+) => {
   const forEachAccount = processingAccounts(updateState);
 
   const response = await getProgramAccounts(connection, METAPLEX_ID, {
@@ -363,6 +356,16 @@ export const loadAuctionManagers = async (
   });
 
   await forEachAccount(processMetaplexAccounts)(response);
+}
+
+export const loadAuctionManagers = async (
+  connection: Connection,
+  storeAddress: StringPublicKey
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+
+  await queryAuctionManagers(connection, updateState, storeAddress);
 
   return state;
 }
@@ -974,13 +977,12 @@ export const initMetadata = async (
   }
 };
 
-export const loadMultipleAccounts = async (
+const queryMultipleAccountsIntoState = async (
   conn: Connection,
+  updateState: UpdateStateValueFunc,
   keys: StringPublicKey[],
   commitment: string,
-): Promise<MetaState> => {
-  const tempCache: MetaState = getEmptyMetaState();
-  const updateTemp = makeSetter(tempCache);
+) => {
   const { array } = await getMultipleAccounts(conn, keys, commitment);
 
   await Promise.all(
@@ -1005,16 +1007,16 @@ export const loadMultipleAccounts = async (
 
       switch (owner) {
         case PROGRAM_IDS.metadata:
-          await processMetaData(pair, updateTemp);
+          await processMetaData(pair, updateState);
           break;
         case PROGRAM_IDS.vault:
-          await processVaultData(pair, updateTemp);
+          await processVaultData(pair, updateState);
           break;
         case PROGRAM_IDS.auction:
-          await processAuctions(pair, updateTemp);
+          await processAuctions(pair, updateState);
           break;
         case PROGRAM_IDS.metaplex:
-          await processMetaplexAccounts(pair, updateTemp);
+          await processMetaplexAccounts(pair, updateState);
           break;
         default:
           // console.warn(
@@ -1024,6 +1026,17 @@ export const loadMultipleAccounts = async (
       }
     }),
   );
+}
+
+export const loadMultipleAccounts = async (
+  conn: Connection,
+  keys: StringPublicKey[],
+  commitment: string,
+): Promise<MetaState> => {
+  const tempCache: MetaState = getEmptyMetaState();
+  const updateTemp = makeSetter(tempCache);
+  
+  await queryMultipleAccountsIntoState(conn, updateTemp, keys, commitment);
 
   return tempCache;
 };

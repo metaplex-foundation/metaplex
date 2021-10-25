@@ -27,7 +27,6 @@ import { settle } from '../../actions/settle';
 import { startAuctionManually } from '../../actions/startAuctionManually';
 import { QUOTE_MINT } from '../../constants';
 import { useMeta } from '../../contexts';
-import { useNotifications } from '../../hooks';
 
 interface NotificationCard {
   id: string;
@@ -182,63 +181,7 @@ export function Notifications() {
 
   const walletPubkey = wallet.publicKey?.toBase58() || '';
 
-  const { upcomingAuctions, vaultsNeedUnwinding, possiblyBrokenAuctions } = useNotifications(walletPubkey)
-
   useCollapseWrappedSol({ connection, wallet, notifications });
-
-
-  vaultsNeedUnwinding.forEach(av => {
-    notifications.push({
-      id: av.vault.pubkey,
-      title: 'You have items locked in a defective auction!',
-      description: (
-        <span>
-          During an auction creation process that probably had some issues, you
-          lost an item. Reclaim it now.
-        </span>
-      ),
-      action: async () => {
-        try {
-          await unwindVault(
-            connection,
-            wallet,
-            av.vault,
-          );
-        } catch (e) {
-          console.error(e);
-          return false;
-        }
-        return true;
-      },
-    });
-  });
-
-  possiblyBrokenAuctions
-    .forEach(av => {
-      notifications.push({
-        id: av.auctionManager.pubkey,
-        title: 'You have items locked in a defective auction!',
-        description: (
-          <span>
-            During an auction creation process that probably had some issues,
-            you lost an item. Reclaim it now.
-          </span>
-        ),
-        action: async () => {
-          try {
-            await decommAuctionManagerAndReturnPrizes(
-              connection,
-              wallet,
-              av,
-            );
-          } catch (e) {
-            console.error(e);
-            return false;
-          }
-          return true;
-        },
-      });
-    });
 
   const metaNeedsApproving = useMemo(
     () =>
@@ -279,24 +222,6 @@ export function Notifications() {
       },
     });
   });
-
-  upcomingAuctions
-    .forEach(v => {
-      notifications.push({
-        id: v.auctionManager.pubkey,
-        title: 'You have an auction which is not started yet!',
-        description: <span>You can activate it now if you wish.</span>,
-        action: async () => {
-          try {
-            await startAuctionManually(connection, wallet, v.auctionManager);
-          } catch (e) {
-            console.error(e);
-            return false;
-          }
-          return true;
-        },
-      });
-    });
 
   const content = notifications.length ? (
     <div style={{ width: '300px' }}>

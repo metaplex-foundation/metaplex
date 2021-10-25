@@ -44,7 +44,8 @@ import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
 import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useAuctionManagersToCache } from '../../hooks';
+import { useAuctionManagersToCache, useNotifications } from '../../hooks';
+import Bugsnag from '@bugsnag/browser';
 
 const { Content } = Layout;
 export const AdminView = () => {
@@ -208,6 +209,13 @@ function ArtistModal({
   );
 }
 
+enum ListingNotificationStatus {
+  Ready,
+  Submitting,
+  Complete,
+  Error,
+}
+
 function InnerAdminView({
   store,
   whitelistedCreatorsByCreator,
@@ -227,6 +235,7 @@ function InnerAdminView({
   const [newStore, setNewStore] = useState(
     store && store.info && new Store(store.info),
   );
+  const { storefront } = useStore()
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
@@ -243,7 +252,8 @@ function InnerAdminView({
     metadata,
     masterEditions,
   } = useMeta();
-  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache(); 
+  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache();
+  const notifications = useNotifications(wallet);
 
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
@@ -315,7 +325,7 @@ function InnerAdminView({
 
   return (
     <Content>
-      <Col style={{ marginTop: 10 }}>
+      <Col>
         <Row>
           <h2>Whitelisted Creators</h2>
           <Col span={21}>
@@ -359,8 +369,6 @@ function InnerAdminView({
               }}
             />
           </Col>
-        </Row>
-        <Row>
           <Table
             className="artist-whitelist-table"
             columns={columns}
@@ -373,9 +381,57 @@ function InnerAdminView({
                 shortenAddress(uniqueCreatorsWithUpdates[key].address),
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
-          ></Table>
+          />
         </Row>
       </Col>
+      <h2>Listing Notifications</h2>
+      <Table
+        columns={[
+          {
+            key: 'auctinManagerPubkey',
+            title: 'Listing',
+            dataIndex: 'auctionManagerPubkey'
+          },
+          {
+            key: 'description',
+            title: 'Notification',
+            dataIndex: "description"
+          },
+          {
+            key: 'action',
+            title: 'Action',
+            render: ({ action, callToAction }) => {
+              const [status, setStatus] = useState<ListingNotificationStatus>(ListingNotificationStatus.Ready);
+
+              const onSubmit = async () => {
+                try {
+                  setStatus(ListingNotificationStatus.Submitting);
+                  await action();
+                  setStatus(ListingNotificationStatus.Complete);
+                } catch (e: any) {
+                  Bugsnag.notify(e);
+                  setStatus(ListingNotificationStatus.Error)
+                }
+              }
+              const isComplete = status === ListingNotificationStatus.Complete;
+
+              const label = isComplete ? 'Done' : callToAction
+              return (
+                <Button
+                  loading={status === ListingNotificationStatus.Submitting}
+                  disabled={isComplete}
+                  onClick={onSubmit}
+                >
+                  {label}
+                </Button>
+              )
+            }
+          }
+        ]}
+        dataSource={notifications}
+      />
+      <Row>
+      </Row>
       <h2>Adminstrator Actions</h2>
       <Row>
         {!store.info.public && (
@@ -410,7 +466,7 @@ function InnerAdminView({
         }
         <Col span={11} offset={1}>
           <h3>Cache Auctions</h3>
-          <p>Auctions were detected that do not have a cache account. Click "build cache" to backfill past auctions. This will reduce page load times for <Link to="/">listings</Link>. Once you've started ensure you complete the migration of all accounts as the storefront will start to use them as soon as one is available. It is recommended to run the conversion when you have no active auctions.</p>
+          <p>Activate your storefront listing caches by pressing "build cache". This will reduce page load times for your listings. Your storefront will start looking up listing using the cache on October 29th. To preview the speed improvement visit the Holaplex <a rel="noopener noreferrer" target="_blank" href={`https://${storefront.subdomain}.holaxplex.dev`}> staging environment</a> for your storefront.</p>
           <Space direction="vertical" size="middle" align="center">
             <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
             {auctionManagersToCache.length > 0 && (
