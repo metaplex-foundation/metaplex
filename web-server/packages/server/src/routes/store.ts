@@ -1,27 +1,33 @@
-import e from 'express';
-import express, {Request, Response} from 'express';
-import { createMongoClient, METADATA_COLLECTION, DB, STORE_COLLECTIONS as STORE_COLLECTION } from '../db/mongo-utils';
+import express, { Request, Response } from "express";
+import {
+  createMongoClient,
+  DB,
+  STORE_COLLECTIONS as STORE_COLLECTION,
+} from "../db/mongo-utils";
 
 export type Store = {
-    address : string
-}
+  address: string;
+};
 
 const router = express.Router();
-router.post('/store', async (req: Request, res: Response) => {
-    const client = await createMongoClient();
+router.post("/store", async (req: Request, res: Response) => {
+  const client = await createMongoClient();
+  try {
     const coll = client.db(DB).collection<Store>(STORE_COLLECTION);
 
-    if(req.body.address) {
-        const store : Store = {
-            address : req.body.address,
-        }
+    if (req.body.address) {
+      const store: Store = {
+        address: req.body.address,
+      };
 
-        const result = await coll.insertOne(store);
-        res.send(result.insertedId);
+      const result = await coll.insertOne(store);
+      res.send(result.insertedId);
+    } else {
+      res.sendStatus(400);
     }
-    else {
-        res.sendStatus(400);
-    }
-})
+  } finally {
+    client.close();
+  }
+});
 
-export {router as storeRouter}
+export { router as storeRouter };

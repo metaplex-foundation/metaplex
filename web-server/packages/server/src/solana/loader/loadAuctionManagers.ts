@@ -58,6 +58,7 @@ export const loadAuctionManagers = async (
   connection: Connection,
   client: MongoClient
 ) => {
+  console.log('Loading auction data...');
   const v1Filters = [
     {
       memcmp: {
@@ -339,6 +340,8 @@ export const loadAuctionManagers = async (
   if (docs.length) {
     await auctionManagerCollection.insertMany(docs);
   }
+
+  console.log('Auction data loaded');
 };
 
 const loadVaults = async (
@@ -542,6 +545,7 @@ const loadDepositSafetyConfigs = async (
     .collection<SafetyDepositConfigAccountDocument>(
       SAFETY_DEPOSIT_CONFIG_COLLECTION
     );
+
   await collection.deleteMany({ store: store });
   await collection.createIndex({ store: 1 });
   await collection.createIndex({ pubkey: 1 });

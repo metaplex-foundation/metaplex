@@ -19,7 +19,9 @@ import { bidRedemptionTicketsV1Router } from "./routes/bidRedemptionTicketV1";
 import { payoutTicketsRouter } from "./routes/payoutTicket";
 import { bidderMetadataRouter } from "./routes/bidderMetadata";
 import { bidderPotRouter } from "./routes/bidderPot";
+import 'log-timestamp';
 
+console.log('ENVIRONMENT', process.env);
 const cors = require('cors');
 const app = express();
 app.use(cors())
@@ -43,8 +45,10 @@ app.use(API_BASE, payoutTicketsRouter);
 app.use(API_BASE, bidderMetadataRouter);
 app.use(API_BASE, bidderPotRouter);
 
-app.listen(3001, () => {
-  loadMetaplexData().then(x => {
-    console.log("server is listening biaaatch, data is filled as fuck");
-  });
+if(process.env.NODE_ENV == 'development') {
+  loadMetaplexData();
+}
+
+app.listen(process.env.HOST_PORT, () => {
+  console.log("server is listening at " + process.env.HOST_PORT);
 });

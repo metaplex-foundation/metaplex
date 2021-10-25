@@ -1,4 +1,4 @@
-import {MongoClient} from 'mongodb';
+import { MongoClient, ServerApiVersion } from "mongodb";
 export const DB = "metaplex";
 export const CREATORS_COLLECTION = "whiteListedCreators";
 export const METADATA_COLLECTION = "metadata";
@@ -20,7 +20,17 @@ export const BIDDER_METADATA_COLLECTION = "bidderMetadata";
 export const BIDDER_POT_COLLECTION = "bidderPots";
 
 export const createMongoClient = async () => {
-    const client = new MongoClient(process.env.MONGO_DB_CONNECTION_STRING!);
+  const client = new MongoClient(process.env.MONGO_DB_CONNECTION_STRING!, {
+    monitorCommands: true
+  });
+
+  client.on("commandFailed", (event) => console.log(event));
+
+  try {
     await client.connect();
-    return client;
-}
+  } catch (err) {
+    console.log(err);
+  }
+
+  return client;
+};

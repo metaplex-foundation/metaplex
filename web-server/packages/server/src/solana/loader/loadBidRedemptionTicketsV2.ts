@@ -18,6 +18,7 @@ export const loadBidRedemptionTicketsV2 = async (
   connection: Connection,
   client: MongoClient
 ) => {
+  console.log('Loading bid redemption tickets V2...');
   const filters = [
     {
       memcmp: {
@@ -53,4 +54,6 @@ export const loadBidRedemptionTicketsV2 = async (
     bidRedemptionV2Converters.applyConversion(docs);
     await collection.insertMany(docs);
   }
+
+  console.log('Bid redemption tickets V2 loaded');
 };
