@@ -49,15 +49,24 @@ export const Claim = (
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
-  const [editable, setEditable] = React.useState(false);
 
   let params = queryString.parse(props.location.search);
-  const [distributor, setDistributor] = React.useState(params.distributor as string);
-  const [handle, setHandle] = React.useState(params.handle as string);
-  const [amountStr, setAmount] = React.useState(params.amount as string);
-  const [indexStr, setIndex] = React.useState(params.index as string);
-  const [pinStr, setPin] = React.useState(params.pin as string);
-  const [proofStr, setProof] = React.useState(params.proof as string);
+  const [distributor, setDistributor] = React.useState(params.distributor as string || "");
+  const [handle, setHandle] = React.useState(params.handle as string || "");
+  const [amountStr, setAmount] = React.useState(params.amount as string || "");
+  const [indexStr, setIndex] = React.useState(params.index as string || "");
+  const [pinStr, setPin] = React.useState(params.pin as string || "");
+  const [proofStr, setProof] = React.useState(params.proof as string || "");
+
+  const allFieldsPopulated =
+    distributor.length > 0
+    && handle.length > 0
+    && amountStr.length > 0
+    && indexStr.length > 0
+    && pinStr.length > 0;
+    // NB: proof can be empty!
+
+  const [editable, setEditable] = React.useState(!allFieldsPopulated);
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -232,6 +241,12 @@ export const Claim = (
 
   return (
     <Stack spacing={2}>
+      <Button
+        color="info"
+        onClick={(e) => setEditable(!editable)}
+      >
+        {!editable ? "Edit Claim" : "Stop Editing"}
+      </Button>
       <TextField
         style={{width: "60ch"}}
         id="distributor-text-field"
@@ -282,36 +297,26 @@ export const Claim = (
         disabled={!editable}
       />
       <Box />
-      <div>
-        <Button
-          style={{width: "15ch"}}
-          color="info"
-          onClick={(e) => setEditable(!editable)}
-        >
-          {!editable ? "Edit Claim" : "Stop Editing"}
-        </Button>
-        <Button
-          style={{width: "45ch"}}
-          disabled={!wallet.connected}
-          variant="contained"
-          color="success"
-          onClick={(e) => {
-            const wrap = async () => {
-              try {
-                await submit(e);
-              } catch (err) {
-                notify({
-                  message: "Claim failed",
-                  description: `${err}`,
-                });
-              }
-            };
-            wrap();
-          }}
-        >
-          Claim Merkle Airdrop
-        </Button>
-      </div>
+      <Button
+        disabled={!wallet.connected || !allFieldsPopulated}
+        variant="contained"
+        color="success"
+        onClick={(e) => {
+          const wrap = async () => {
+            try {
+              await submit(e);
+            } catch (err) {
+              notify({
+                message: "Claim failed",
+                description: `${err}`,
+              });
+            }
+          };
+          wrap();
+        }}
+      >
+        Claim Merkle Airdrop
+      </Button>
     </Stack>
   );
 };
