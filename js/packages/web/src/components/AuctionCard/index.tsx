@@ -470,13 +470,7 @@ export const AuctionCard = ({
 
       <MetaplexOverlay visible={showEndingBidModal}>
         <Confetti />
-        <h1
-          className="title"
-          style={{
-            fontSize: '3rem',
-            marginBottom: 20,
-          }}
-        >
+        <h1>
           Congratulations
         </h1>
         <p
