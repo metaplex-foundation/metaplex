@@ -28,7 +28,6 @@ import {
   PublicKey,
   SystemProgram,
   TransactionInstruction,
-  SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import {
   AccountLayout,
@@ -466,20 +465,6 @@ export const Create = (
     setBaseKey(base);
     setClaimURLs(claimants);
 
-    const createDistributorTokenAccount = new TransactionInstruction({
-        programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-        keys: [
-            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
-            { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
-            { pubkey: distributor             , isSigner: false , isWritable: false } ,
-            { pubkey: mintKey                 , isSigner: false , isWritable: false } ,
-            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-            { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
-            { pubkey: SYSVAR_RENT_PUBKEY      , isSigner: false , isWritable: false } ,
-        ],
-        data: Buffer.from([])
-    });
-
     // initial merkle-distributor state
     const initDistributor = new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
@@ -499,6 +484,15 @@ export const Create = (
         ])
     })
 
+    const createDistributorTokenAccount = Token.createAssociatedTokenAccountInstruction(
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mintKey,
+        distributorTokenKey,
+        distributor,
+        wallet.publicKey
+      );
+
     const transferToATA = Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
         creatorTokenKey,
@@ -508,13 +502,12 @@ export const Create = (
         totalClaim
       );
 
-
     const createResult = await Connection.sendTransactionWithRetry(
       connection,
       wallet,
       [
-        createDistributorTokenAccount,
         initDistributor,
+        createDistributorTokenAccount,
         transferToATA,
       ],
       [base]
