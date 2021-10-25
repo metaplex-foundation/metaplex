@@ -340,7 +340,6 @@ export const mintNFT = async (
 
   let arweaveTxId = ''
   if (filesMoreThan10mb.length == 0) {
-    console.log("ENTERED CLOUDFUNC")
     // this means we're done getting AR txn setup. Ship it off to ARWeave!
     const data = new FormData();
     data.append('transaction', txid);
