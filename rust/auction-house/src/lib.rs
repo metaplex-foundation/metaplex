@@ -835,6 +835,7 @@ pub mod auction_house {
     pub fn sell<'info>(
         ctx: Context<'_, '_, '_, 'info, Sell<'info>>,
         trade_state_bump: u8,
+        _free_trade_state_bump: u8,
         buyer_price: u64,
         token_size: u64,
     ) -> ProgramResult {
@@ -862,12 +863,13 @@ pub mod auction_house {
         }
 
         assert_keys_equal(program.key(), *ctx.program_id)?;
+        let auction_house_key = auction_house.key();
 
         let seeds = [
             PREFIX.as_bytes(),
-            auction_house.creator.as_ref(),
-            auction_house.treasury_mint.as_ref(),
-            &[auction_house.bump],
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
         ];
 
         let (fee_payer, fee_seeds) = get_fee_payer(
@@ -911,13 +913,12 @@ pub mod auction_house {
 
         let ts_info = seller_trade_state.to_account_info();
         if ts_info.data_is_empty() {
-            let ah_key = auction_house.key();
             let token_account_key = token_account.key();
             let wallet_key = wallet.key();
             let ts_seeds = [
                 PREFIX.as_bytes(),
                 wallet_key.as_ref(),
-                ah_key.as_ref(),
+                auction_house_key.as_ref(),
                 token_account_key.as_ref(),
                 auction_house.treasury_mint.as_ref(),
                 token_account.mint.as_ref(),
@@ -1061,13 +1062,12 @@ pub mod auction_house {
 
         let ts_info = buyer_trade_state.to_account_info();
         if ts_info.data_is_empty() {
-            let ah_key = auction_house.key();
             let token_account_key = token_account.key();
             let wallet_key = wallet.key();
             let ts_seeds = [
                 PREFIX.as_bytes(),
                 wallet_key.as_ref(),
-                ah_key.as_ref(),
+                auction_house_key.as_ref(),
                 token_account_key.as_ref(),
                 auction_house.treasury_mint.as_ref(),
                 token_account.mint.as_ref(),
@@ -1082,7 +1082,7 @@ pub mod auction_house {
                 &system_program,
                 &fee_payer,
                 TRADE_STATE_SIZE,
-                &fee_seeds,
+                fee_seeds,
                 &ts_seeds,
             )?;
         }
@@ -1097,6 +1097,7 @@ pub mod auction_house {
 #[instruction(trade_state_bump: u8, free_trade_state_bump: u8, buyer_price: u64, token_size: u64)]
 pub struct Sell<'info> {
     wallet: UncheckedAccount<'info>,
+    #[account(mut)]
     token_account: Account<'info, TokenAccount>,
     metadata: UncheckedAccount<'info>,
     authority: UncheckedAccount<'info>,

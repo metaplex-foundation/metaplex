@@ -193,6 +193,159 @@ programCommand('withdraw')
       currBal - amountAdjusted,
     );
   });
+
+programCommand('sell')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-ak, --auction-house-keypair <string>',
+    'If this auction house requires sign off, pass in keypair for it',
+  )
+  .option(
+    '-aks, --auction-house-signs <string>',
+    'If you want to simulate the auction house changing the price without your sign off',
+  )
+  .option('-b, --buy-price <string>', 'Price you wish to sell for')
+  .option('-m, --mint <string>', 'Mint of the token to purchase')
+  .option('-t, --token-size <string>', 'Amount of tokens you want to sell')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const {
+      keypair,
+      env,
+      auctionHouse,
+      auctionHouseKeypair,
+      buyPrice,
+      mint,
+      tokenSize,
+      auctionHouseSigns,
+    } = cmd.opts();
+
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const mintKey = new web3.PublicKey(mint);
+
+    const auctionHouseKeypairLoaded = auctionHouseKeypair
+      ? loadWalletKey(auctionHouseKeypair)
+      : null;
+    const anchorProgram = await loadAuctionHouseProgram(
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
+      env,
+    );
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+
+    const buyPriceAdjusted = new BN(
+      await getPriceWithMantissa(
+        buyPrice,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair,
+        anchorProgram,
+      ),
+      undefined,
+      'le',
+    );
+
+    const tokenSizeAdjusted = new BN(
+      await getPriceWithMantissa(
+        tokenSize,
+        mintKey,
+        walletKeyPair,
+        anchorProgram,
+      ),
+      undefined,
+      'le',
+    );
+
+    const tokenAccountKey = (
+      await getAtaForMint(mintKey, walletKeyPair.publicKey)
+    )[0];
+
+    const [tradeState, tradeBump] = await getAuctionHouseTradeState(
+      auctionHouseKey,
+      walletKeyPair.publicKey,
+      tokenAccountKey,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+      mintKey,
+      tokenSizeAdjusted,
+      buyPriceAdjusted,
+    );
+
+    const [freeTradeState, freeTradeBump] = await getAuctionHouseTradeState(
+      auctionHouseKey,
+      walletKeyPair.publicKey,
+      tokenAccountKey,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+      mintKey,
+      tokenSizeAdjusted,
+      new BN(0),
+    );
+
+    const signers = [];
+
+    const instruction = await anchorProgram.instruction.sell(
+      tradeBump,
+      freeTradeBump,
+      buyPriceAdjusted,
+      tokenSizeAdjusted,
+      {
+        accounts: {
+          wallet: walletKeyPair.publicKey,
+          metadata: await getMetadata(mintKey),
+          tokenAccount: tokenAccountKey,
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          auctionHouse: auctionHouseKey,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          sellerTradeState: tradeState,
+          freeSellerTradeState: freeTradeState,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: web3.SystemProgram.programId,
+          program: AUCTION_HOUSE_PROGRAM_ID,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers,
+      },
+    );
+
+    if (auctionHouseKeypairLoaded) {
+      signers.push(auctionHouseKeypairLoaded);
+
+      instruction.keys
+        .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    if (!auctionHouseSigns) {
+      instruction.keys
+        .filter(k => k.pubkey.equals(walletKeyPair.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Set',
+      tokenSize,
+      mint,
+      'for sale for',
+      buyPrice,
+      'from your account with Auction House',
+      auctionHouse,
+    );
+  });
+
 programCommand('buy')
   .option('-ah, --auction-house <string>', 'Specific auction house')
   .option(
