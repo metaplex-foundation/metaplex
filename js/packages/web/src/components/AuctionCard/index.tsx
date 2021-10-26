@@ -544,18 +544,16 @@ export const AuctionCard = ({
               </Button>
             )}
           {showPlaceBid ? (
-            <div>
-              <AmountLabel
-                title="in your wallet"
-                displaySOL={true}
-                amount={formatAmount(balance.balance, 2)}
-                customPrefix={
-                  <Identicon address={wallet?.publicKey?.toBase58()} />
-                }
-              />
-            </div>
+            <AmountLabel
+              title="in your wallet"
+              displaySOL={true}
+              amount={formatAmount(balance.balance, 2)}
+              customPrefix={
+                <Identicon size={24} address={wallet?.publicKey?.toBase58()} />
+              }
+            />
           ) : (
-            <div>
+            <>
               <HowAuctionsWorkModal />
               {!hideDefaultAction &&
                 !auctionView.auction.info.ended() &&
@@ -590,7 +588,7 @@ export const AuctionCard = ({
                     Place Bid
                   </Button>
                 ))}
-            </div>
+            </>
           )}
         </div>
         {showPlaceBid &&

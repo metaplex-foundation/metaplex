@@ -1,12 +1,3 @@
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
-
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import {
   ENDPOINTS,
   formatNumber,
@@ -20,9 +11,17 @@ import {
   useWalletModal,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Popover, Select } from 'antd';
-import { useMeta, useSolPrice } from '../../contexts';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Button, Popover, Select, Space } from 'antd';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { Link } from 'react-router-dom';
+import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
@@ -156,52 +155,53 @@ export const CurrentUserBadge = (props: {
     name = unknownWallet.name;
   }
 
-  let image = <Identicon address={publicKey?.toBase58()} />;
-
-  if (unknownWallet.image) {
-    image = <img src={unknownWallet.image} />;
-  }
+  const image = unknownWallet.image ? (
+    <img src={unknownWallet.image} />
+  ) : (
+    <Identicon address={publicKey?.toBase58()} size={22} />
+  );
 
   return (
-    <div>
-      {props.showBalance && (
-        <span>
-          {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
-        </span>
-      )}
-
+    <>
       <Popover
         trigger="click"
         placement="bottomRight"
         content={
           <Settings
             additionalSettings={
-              <div>
+              <Space direction="vertical">
                 <h5>BALANCE</h5>
-                <div>
+                <Space direction="horizontal">
                   <SolCircle />
-                  &nbsp;
                   <span>{formatNumber.format(balance)} SOL</span>
-                  &nbsp;
                   <span>{formatUSD.format(balanceInUSD)}</span>
-                  &nbsp;
-                </div>
-                <div>
+                </Space>
+                <Space direction="horizontal">
                   <Button onClick={() => setShowAddFundsModal(true)}>
                     Add Funds
                   </Button>
-                  &nbsp;&nbsp;
                   <Button onClick={disconnect}>Disconnect</Button>
-                </div>
+                </Space>
                 <UserActions />
-              </div>
+              </Space>
             }
           />
         }
       >
-        <Button>
-          {image}
-          {name && <span>{name}</span>}
+        {/* display: block fixes a strange layout quirk */}
+        <Button style={{ display: 'block' }}>
+          <Space direction="horizontal">
+            {props.showBalance && (
+              <span>
+                {formatNumber.format(
+                  (account?.lamports || 0) / LAMPORTS_PER_SOL,
+                )}{' '}
+                SOL
+              </span>
+            )}
+            {image}
+            {name && <span>{name}</span>}
+          </Space>
         </Button>
       </Popover>
       <AddFundsModal
@@ -210,7 +210,7 @@ export const CurrentUserBadge = (props: {
         publicKey={publicKey}
         balance={balance}
       />
-    </div>
+    </>
   );
 };
 
@@ -224,7 +224,7 @@ export const Cog = () => {
       trigger="click"
       placement="bottomRight"
       content={
-        <>
+        <Space direction="vertical">
           <h5>NETWORK</h5>
           <Select onSelect={setEndpoint} value={endpoint} bordered={false}>
             {ENDPOINTS.map(({ name, endpoint }) => (
@@ -235,7 +235,7 @@ export const Cog = () => {
           </Select>
 
           <Button onClick={open}>Change wallet</Button>
-        </>
+        </Space>
       }
     >
       <Button>

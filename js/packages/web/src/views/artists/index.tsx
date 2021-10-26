@@ -1,17 +1,15 @@
-import { Col, Layout } from 'antd';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useMeta } from '../../contexts';
 
-const { Content } = Layout;
-
 export const ArtistsView = () => {
   const { whitelistedCreatorsByCreator } = useMeta();
 
   const items = Object.values(whitelistedCreatorsByCreator);
-  const artistGrid = (
+
+  return (
     <MetaplexMasonry>
       {items.map((m, idx) => {
         const id = m.info.address;
@@ -24,6 +22,8 @@ export const ArtistsView = () => {
                 name: m.info.name || '',
                 image: m.info.image || '',
                 link: m.info.twitter || '',
+                // TODO: what should the about field be?
+                // about: m.info.description || '',
                 background: m.info.background || '',
               }}
             />
@@ -31,13 +31,5 @@ export const ArtistsView = () => {
         );
       })}
     </MetaplexMasonry>
-  );
-
-  return (
-    <Layout>
-      <Content>
-        <Col>{artistGrid}</Col>
-      </Content>
-    </Layout>
   );
 };

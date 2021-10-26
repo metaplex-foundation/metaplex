@@ -63,23 +63,22 @@ export const AppBar = () => {
 
   return (
     <>
-      <Row>
+      <Row wrap={false}>
         <Col flex="0 0 auto">
           <Link to="/" id="metaplex-header-logo">
             <img src="/metaplex-logo.svg" />
           </Link>
         </Col>
-        <Col flex="1 0 auto">
+        <Col flex="1 0 0" style={{overflow: 'hidden'}}>
           <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
             {menuItems}
           </Menu>
         </Col>
-        <Col flex="1" />
         <Col flex="0 1 auto">
           <Space align="center">
             {connected ? (
               <>
-                <CurrentUserBadge />
+                <CurrentUserBadge showAddress={true} />
                 <Notifications />
                 <Cog />
               </>
