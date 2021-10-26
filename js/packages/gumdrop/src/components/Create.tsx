@@ -53,7 +53,7 @@ import {
   notify,
   shortenAddress,
 } from "../utils";
-import { MerkleTree } from "../utils/merkle-tree";
+import { MerkleTree } from "../utils/merkleTree";
 import { DragAndDrop } from "./DragAndDrop";
 import { DefaultModal } from "./DefaultModal";
 

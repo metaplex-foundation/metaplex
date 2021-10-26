@@ -22,9 +22,6 @@ import {
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import {
-  Coder,
-} from "@project-serum/anchor"
 import { keccak_256 } from "js-sha3";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
@@ -39,10 +36,8 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
 } from "../utils";
-import { MerkleTree } from "../utils/merkle-tree";
-
-const idl = require("../utils/merkle_distributor.json");
-const coder = new Coder(idl);
+import { MerkleTree } from "../utils/merkleTree";
+import { coder } from "../utils/merkleDistributor";
 
 export type ClaimProps = {};
 

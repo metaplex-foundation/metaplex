@@ -19,9 +19,6 @@ import {
 import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import {
-  Coder,
-} from "@project-serum/anchor"
 import BN from 'bn.js';
 import { sha256 } from "js-sha256";
 
@@ -34,9 +31,7 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
 } from "../utils";
-
-const idl = require("../utils/merkle_distributor.json");
-const coder = new Coder(idl);
+import { coder } from "../utils/merkleDistributor";
 
 export const Close = () => {
   const connection = useConnection();

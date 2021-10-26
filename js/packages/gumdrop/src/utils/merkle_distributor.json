@@ -56,6 +56,52 @@
       ]
     },
     {
+      "name": "closeDistributor",
+      "accounts": [
+        {
+          "name": "base",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "distributor",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "receiver",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
       "name": "claim",
       "accounts": [
         {
@@ -100,16 +146,16 @@
           "type": "u8"
         },
         {
-          "name": "claimantAccount",
-          "type": "publicKey"
-        },
-        {
           "name": "index",
           "type": "u64"
         },
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "claimantAccount",
+          "type": "publicKey"
         },
         {
           "name": "proof",
