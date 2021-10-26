@@ -5,6 +5,7 @@ import {
   Link,
   Stack,
 } from "@mui/material";
+import HomeIcon from '@mui/icons-material/Home';
 
 import ConnectButton from "../ConnectButton";
 import { ModalEnum, useModal, useWalletModal } from "../../contexts";
@@ -45,7 +46,7 @@ export const Header: React.FC = () => {
       >
         <Link href="#/" underline="none">
           <Button variant="outlined">
-            About
+            <HomeIcon />
           </Button>
         </Link>
         <Link href="#/create" underline="none">
@@ -56,6 +57,11 @@ export const Header: React.FC = () => {
         <Link href="#/claim" underline="none">
           <Button variant="outlined">
             Claim
+          </Button>
+        </Link>
+        <Link href="#/close" underline="none">
+          <Button variant="outlined">
+            Close
           </Button>
         </Link>
       </Stack>

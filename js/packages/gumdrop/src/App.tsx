@@ -10,7 +10,6 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import {
   Box,
-  Button,
   Link as HyperLink,
   Stack,
 } from "@mui/material";
@@ -22,6 +21,7 @@ import {
 import Centered from "./components/Centered";
 import Header from "./components/Header/Header";
 import { Claim } from "./components/Claim";
+import { Close } from "./components/Close";
 import { Create } from "./components/Create";
 
 const WHITESPACE = "\u00A0";
@@ -32,7 +32,6 @@ const About = (
   props : AboutProps,
 ) => {
   return (
-    <Stack spacing={3}>
     <Stack
       alignContent="left"
       textAlign="left"
@@ -87,7 +86,14 @@ const About = (
 
       <div>
       This website exposes a web-friendly way to access the on-chain
-      distributor. Creation is done by choosing a Mint, an off-chain
+      distributor.
+      </div>
+
+      <div>
+      <Link to="/create">
+        CREATION
+      </Link>
+      {WHITESPACE}is done by choosing a Mint, an off-chain
       notification method, and supplying a list of recipients and balances with
       the following JSON schema{WHITESPACE}
 
@@ -99,50 +105,33 @@ const About = (
       (Click here for an example)
       </HyperLink>
 
-      <pre>{`
+      <pre style={{ fontSize: 14 }}>{`
 [
   {
     "handle": "<DISTRIBUTION-SPECIFIC-HANDLE>"
     "amount": <#-TOKENS>
   },
   ...
-]
-      `}</pre>
+]`}</pre>
+      </div>
 
-      Claims are redeemed through a URL with query parameters holding
+      <div>
+      <Link to="/claim">
+        CLAIMS
+      </Link>
+      {WHITESPACE}are redeemed through a URL with query parameters holding
       claim-specific keys. These should be kept secret! Anyone can redeem a
       claim once they have the URL.
       </div>
-    </Stack>
-    <Stack
-      direction="row"
-      spacing={2}
-    >
-      <Link
-        to="/create"
-        style={{width: "50%"}}
-      >
-        <Button
-          style={{width: "100%"}}
-          variant="contained"
-          color="info"
-        >
-          Create
-        </Button>
+
+      <div>
+      <Link to="/close">
+        CLOSING
       </Link>
-      <Link
-        to="/claim"
-        style={{width: "50%"}}
-      >
-        <Button
-          style={{width: "100%"}}
-          variant="contained"
-          color="info"
-        >
-          claim
-        </Button>
-      </Link>
-    </Stack>
+      {WHITESPACE}the Merkle Distributor accounts cleans up the on-chain state
+      and allows creators to recycle any remaining tokens and lamports held for
+      rent-exemption after the airdrop is complete.
+      </div>
     </Stack>
   );
 };
@@ -212,6 +201,7 @@ function App() {
             <Switch>
               <Route path="/create" component={Create} />
               <Route path="/claim" component={Claim} />
+              <Route path="/close" component={Close} />
               <Route path="/" component={About} />
             </Switch>
           </HashRouter>
