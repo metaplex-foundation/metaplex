@@ -10,6 +10,7 @@ import {
   AUCTION_HOUSE,
   FEE_PAYER,
   TREASURY,
+  WRAPPED_SOL_MINT,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
@@ -405,4 +406,20 @@ export async function loadAuctionHouseProgram(
   const idl = await anchor.Program.fetchIdl(AUCTION_HOUSE_PROGRAM_ID, provider);
 
   return new anchor.Program(idl, AUCTION_HOUSE_PROGRAM_ID, provider);
+}
+
+export async function getTokenAmount(
+  anchorProgram: anchor.Program,
+  account: anchor.web3.PublicKey,
+  mint: anchor.web3.PublicKey,
+): Promise<number> {
+  let amount = 0;
+  if (!mint.equals(WRAPPED_SOL_MINT)) {
+    const token =
+      await anchorProgram.provider.connection.getTokenAccountBalance(account);
+    amount = token.value.uiAmount;
+  } else {
+    amount = await anchorProgram.provider.connection.getBalance(account);
+  }
+  return amount;
 }

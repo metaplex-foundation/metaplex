@@ -273,16 +273,6 @@ pub fn create_program_token_account_if_not_present<'a>(
             ],
             &[&signer_seeds],
         )?;
-    } else if is_native && payment_account.owner != program_id {
-        invoke_signed(
-            &system_instruction::assign(&payment_account.key(), &owner.key()),
-            &[
-                system_program.to_account_info(),
-                payment_account.to_account_info(),
-                owner.to_account_info(),
-            ],
-            &[&signer_seeds],
-        )?;
     }
     Ok(())
 }

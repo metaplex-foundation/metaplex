@@ -388,6 +388,7 @@ pub mod auction_house {
             )?;
         } else {
             assert_keys_equal(receipt_account.key(), wallet.key())?;
+            msg!("Here {}", escrow_payment_account.to_account_info().owner);
             invoke_signed(
                 &system_instruction::transfer(
                     &escrow_payment_account.key(),
@@ -399,8 +400,9 @@ pub mod auction_house {
                     receipt_account.to_account_info(),
                     system_program.to_account_info(),
                 ],
-                &[],
+                &[&escrow_signer_seeds],
             )?;
+            msg!("Done");
         }
 
         Ok(())
@@ -456,7 +458,7 @@ pub mod auction_house {
             &fee_payer,
             token_program,
             treasury_mint,
-            &escrow_payment_account.to_account_info(),
+            &auction_house.to_account_info(),
             rent,
             ctx.program_id,
             &escrow_signer_seeds,
@@ -980,7 +982,7 @@ pub mod auction_house {
             &fee_payer,
             token_program,
             treasury_mint,
-            &escrow_payment_account.to_account_info(),
+            &auction_house.to_account_info(),
             rent,
             ctx.program_id,
             &escrow_signer_seeds,
@@ -1139,6 +1141,7 @@ pub struct ExecuteSale<'info> {
 #[instruction(escrow_payment_bump: u8)]
 pub struct Deposit<'info> {
     wallet: Signer<'info>,
+    #[account(mut)]
     payment_account: UncheckedAccount<'info>,
     transfer_authority: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), wallet.key().as_ref()], bump=escrow_payment_bump)]
@@ -1158,6 +1161,7 @@ pub struct Deposit<'info> {
 #[instruction(escrow_payment_bump: u8)]
 pub struct Withdraw<'info> {
     wallet: UncheckedAccount<'info>,
+    #[account(mut)]
     receipt_account: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), wallet.key().as_ref()], bump=escrow_payment_bump)]
     escrow_payment_account: UncheckedAccount<'info>,

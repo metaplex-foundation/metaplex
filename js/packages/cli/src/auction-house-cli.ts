@@ -4,14 +4,22 @@ import {
   deserializeAccount,
   getAtaForMint,
   getAuctionHouse,
+  getAuctionHouseBuyerEscrow,
   getAuctionHouseFeeAcct,
   getAuctionHouseTreasuryAcct,
+  getTokenAmount,
   loadAuctionHouseProgram,
   loadWalletKey,
 } from './helpers/accounts';
-import { web3 } from '@project-serum/anchor';
-import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from './helpers/constants';
-import { ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { BN, web3 } from '@project-serum/anchor';
+import {
+  AUCTION_HOUSE_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  WRAPPED_SOL_MINT,
+} from './helpers/constants';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { getPriceWithMantissa } from './helpers/various';
+import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
 
 program.version('0.0.1');
 log.setLevel('info');
@@ -34,6 +42,284 @@ export async function getAuctionHouseFromOpts(
   }
   return auctionHouseKey;
 }
+
+programCommand('show_escrow')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-w, --wallet <string>',
+    'Specific wallet owner of escrow. If not present, we use your keypair.',
+  )
+  .action(async (directory, cmd) => {
+    const { keypair, env, auctionHouse, wallet } = cmd.opts();
+
+    const otherWallet = wallet ? new web3.PublicKey(wallet) : null;
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadAuctionHouseProgram(walletKeyPair, env);
+
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+
+    if (!otherWallet) {
+      log.info('No --wallet passed in, defaulting to keypair');
+    }
+    const escrow = (
+      await getAuctionHouseBuyerEscrow(
+        auctionHouseKey,
+        otherWallet || walletKeyPair.publicKey,
+      )
+    )[0];
+
+    const amount = await getTokenAmount(
+      anchorProgram,
+      escrow,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+    );
+
+    log.info(
+      otherWallet.toBase58() || walletKeyPair.publicKey.toBase58(),
+      'Balance:',
+      amount,
+    );
+  });
+
+programCommand('withdraw')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-ak, --auction-house-keypair <string>',
+    'If this auction house requires sign off, pass in keypair for it',
+  )
+  .option('-a, --amount <string>', 'Amount to withdraw')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, amount, auctionHouse, auctionHouseKeypair } =
+      cmd.opts();
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const auctionHouseKeypairLoaded = auctionHouseKeypair
+      ? loadWalletKey(auctionHouseKeypair)
+      : null;
+    const anchorProgram = await loadAuctionHouseProgram(walletKeyPair, env);
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+    const amountAdjusted = await getPriceWithMantissa(
+      amount,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+      walletKeyPair,
+      anchorProgram,
+    );
+
+    const [escrowPaymentAccount, bump] = await getAuctionHouseBuyerEscrow(
+      auctionHouseKey,
+      walletKeyPair.publicKey,
+    );
+
+    //@ts-ignore
+    const isNative = auctionHouseObj.treasuryMint.equals(WRAPPED_SOL_MINT);
+
+    const ata = (
+      await getAtaForMint(
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+    const signers = [];
+
+    const currBal = await getTokenAmount(
+      anchorProgram,
+      escrowPaymentAccount,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+    );
+
+    const instruction = await anchorProgram.instruction.withdraw(
+      bump,
+      new BN(amountAdjusted),
+      {
+        accounts: {
+          wallet: walletKeyPair.publicKey,
+          receiptAccount: isNative ? walletKeyPair.publicKey : ata,
+          escrowPaymentAccount,
+          //@ts-ignore
+          treasuryMint: auctionHouseObj.treasuryMint,
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          auctionHouse: auctionHouseKey,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: web3.SystemProgram.programId,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+          ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        },
+        signers,
+      },
+    );
+
+    if (auctionHouseKeypairLoaded) {
+      signers.push(auctionHouseKeypairLoaded);
+
+      instruction.keys
+        .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    instruction.keys
+      .filter(k => k.pubkey.equals(walletKeyPair.publicKey))
+      .map(k => (k.isSigner = true));
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Withdrew',
+      amountAdjusted,
+      'from your account with Auction House',
+      auctionHouse,
+      '. New Balance:',
+      currBal - amountAdjusted,
+    );
+  });
+
+programCommand('deposit')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-ak, --auction-house-keypair <string>',
+    'If this auction house requires sign off, pass in keypair for it',
+  )
+  .option('-a, --amount <string>', 'Amount to deposit')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, amount, auctionHouse, auctionHouseKeypair } =
+      cmd.opts();
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const auctionHouseKeypairLoaded = auctionHouseKeypair
+      ? loadWalletKey(auctionHouseKeypair)
+      : null;
+    const anchorProgram = await loadAuctionHouseProgram(walletKeyPair, env);
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+    const amountAdjusted = await getPriceWithMantissa(
+      amount,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+      walletKeyPair,
+      anchorProgram,
+    );
+    const [escrowPaymentAccount, bump] = await getAuctionHouseBuyerEscrow(
+      auctionHouseKey,
+      walletKeyPair.publicKey,
+    );
+
+    //@ts-ignore
+    const isNative = auctionHouseObj.treasuryMint.equals(WRAPPED_SOL_MINT);
+
+    const ata = (
+      await getAtaForMint(
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair.publicKey,
+      )
+    )[0];
+    const transferAuthority = web3.Keypair.generate();
+    const signers = isNative ? [] : [transferAuthority];
+    const instruction = await anchorProgram.instruction.deposit(
+      bump,
+      new BN(amountAdjusted),
+      {
+        accounts: {
+          wallet: walletKeyPair.publicKey,
+          paymentAccount: isNative ? walletKeyPair.publicKey : ata,
+          transferAuthority: isNative
+            ? web3.SystemProgram.programId
+            : transferAuthority.publicKey,
+          escrowPaymentAccount,
+          //@ts-ignore
+          treasuryMint: auctionHouseObj.treasuryMint,
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          auctionHouse: auctionHouseKey,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: web3.SystemProgram.programId,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+      },
+    );
+
+    if (auctionHouseKeypairLoaded) {
+      signers.push(auctionHouseKeypairLoaded);
+
+      instruction.keys
+        .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    const currBal = await getTokenAmount(
+      anchorProgram,
+      escrowPaymentAccount,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+    );
+
+    const instructions = [
+      ...(isNative
+        ? []
+        : [
+            Token.createApproveInstruction(
+              TOKEN_PROGRAM_ID,
+              ata,
+              transferAuthority.publicKey,
+              walletKeyPair.publicKey,
+              [],
+              amountAdjusted,
+            ),
+          ]),
+
+      instruction,
+      ...(isNative
+        ? []
+        : [
+            Token.createRevokeInstruction(
+              TOKEN_PROGRAM_ID,
+              ata,
+              walletKeyPair.publicKey,
+              [],
+            ),
+          ]),
+    ];
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      instructions,
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Deposited ',
+      amountAdjusted,
+      'to your account with Auction House',
+      auctionHouse,
+      '. New Balance:',
+      currBal + amountAdjusted,
+    );
+  });
 
 programCommand('show')
   .option(
@@ -67,49 +353,58 @@ programCommand('show')
       auctionHouseKey,
     );
 
-    let treasuryAmount = 0;
-    if (!auctionHouseObj.treasuryMint.equals(WRAPPED_SOL_MINT)) {
-      const token =
-        await anchorProgram.provider.connection.getTokenAccountBalance(
-          auctionHouseObj.auctionHouseTreasury,
-        );
-      treasuryAmount = token.value.uiAmount;
-    } else {
-      treasuryAmount = await anchorProgram.provider.connection.getBalance(
-        auctionHouseObj.auctionHouseTreasury,
-      );
-    }
+    const treasuryAmount = await getTokenAmount(
+      anchorProgram,
+      //@ts-ignore
+      auctionHouseObj.auctionHouseTreasury,
+      //@ts-ignore
+      auctionHouseObj.treasuryMint,
+    );
 
     const feeAmount = await anchorProgram.provider.connection.getBalance(
+      //@ts-ignore
       auctionHouseObj.auctionHouseFeeAccount,
     );
 
     log.info('-----');
     log.info('Auction House:', auctionHouseKey.toBase58());
+    //@ts-ignore
     log.info('Mint:', auctionHouseObj.treasuryMint.toBase58());
+    //@ts-ignore
     log.info('Authority:', auctionHouseObj.authority.toBase58());
+    //@ts-ignore
     log.info('Creator:', auctionHouseObj.creator.toBase58());
     log.info(
       'Fee Payer Acct:',
+      //@ts-ignore
       auctionHouseObj.auctionHouseFeeAccount.toBase58(),
     );
+    //@ts-ignore
     log.info('Treasury Acct:', auctionHouseObj.auctionHouseTreasury.toBase58());
     log.info(
       'Fee Payer Withdrawal Acct:',
+      //@ts-ignore
       auctionHouseObj.feeWithdrawalDestination.toBase58(),
     );
     log.info(
       'Treasury Withdrawal Acct:',
+      //@ts-ignore
       auctionHouseObj.treasuryWithdrawalDestination.toBase58(),
     );
 
     log.info('Fee Payer Bal:', feeAmount);
     log.info('Treasury Bal:', treasuryAmount);
+    //@ts-ignore
     log.info('Seller Fee Basis Points:', auctionHouseObj.sellerFeeBasisPoints);
+    //@ts-ignore
     log.info('Requires Sign Off:', auctionHouseObj.requiresSignOff);
+    //@ts-ignore
     log.info('Can Change Sale Price:', auctionHouseObj.canChangeSalePrice);
+    //@ts-ignore
     log.info('AH Bump:', auctionHouseObj.bump);
+    //@ts-ignore
     log.info('AH Fee Bump:', auctionHouseObj.feePayerBump);
+    //@ts-ignore
     log.info('AH Treasury Bump:', auctionHouseObj.treasuryBump);
   });
 
@@ -287,17 +582,20 @@ programCommand('update_auction_house')
     const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
       auctionHouseKey,
     );
+    //@ts-ignore
     tMintKey = auctionHouseObj.treasuryMint;
 
     let twdKey: web3.PublicKey, fwdKey: web3.PublicKey;
     if (!treasuryWithdrawalDestination) {
       log.info('No treasury withdrawal dest detected, using original value');
       twdKey = tMintKey.equals(WRAPPED_SOL_MINT)
-        ? auctionHouseObj.treasuryWithdrawalDestination
+        ? //@ts-ignore
+          auctionHouseObj.treasuryWithdrawalDestination
         : deserializeAccount(
             Buffer.from(
               (
                 await anchorProgram.provider.connection.getAccountInfo(
+                  //@ts-ignore
                   auctionHouseObj.treasuryWithdrawalDestination,
                 )
               ).data,
@@ -308,6 +606,7 @@ programCommand('update_auction_house')
     }
     if (!feeWithdrawalDestination) {
       log.info('No fee withdrawal dest detected, using original value');
+      //@ts-ignore
       fwdKey = auctionHouseObj.feeWithdrawalDestination;
     } else {
       fwdKey = new web3.PublicKey(feeWithdrawalDestination);
@@ -321,6 +620,7 @@ programCommand('update_auction_house')
       sfbp = parseInt(sellerFeeBasisPoints);
     } else {
       log.info('No sfbp passed in, using original value');
+      //@ts-ignore
       sfbp = auctionHouseObj.sellerFeeBasisPoints;
     }
 
@@ -334,6 +634,7 @@ programCommand('update_auction_house')
       newAuth = newAuthority;
     } else {
       log.info('No authority passed in, using original value');
+      //@ts-ignore
       newAuth = auctionHouseObj.authority;
     }
 
@@ -342,6 +643,7 @@ programCommand('update_auction_house')
       ccsp = canChangeSalePrice == 'true';
     } else {
       log.info('No can change sale price passed in, using original value');
+      //@ts-ignore
       ccsp = auctionHouseObj.canChangeSalePrice;
     }
 
@@ -350,6 +652,7 @@ programCommand('update_auction_house')
       rso = requiresSignOff == 'true';
     } else {
       log.info('No requires sign off passed in, using original value');
+      //@ts-ignore
       rso = auctionHouseObj.requiresSignOff;
     }
     await anchorProgram.rpc.updateAuctionHouse(sfbp, rso, ccsp, {
@@ -358,12 +661,15 @@ programCommand('update_auction_house')
         payer: walletKeyPair.publicKey,
         authority: walletKeyPair.publicKey,
         // extra safety here even though newAuth should be right
+        //@ts-ignore
         newAuthority: force ? newAuth : auctionHouseObj.authority,
         feeWithdrawalDestination: fwdKey,
         treasuryWithdrawalDestination: twdAta,
         treasuryWithdrawalDestinationOwner: twdKey,
         auctionHouse: auctionHouseKey,
+        //@ts-ignore
         auctionHouseFeeAccount: auctionHouseObj.feePayer,
+        //@ts-ignore
         auctionHouseTreasury: auctionHouseObj.treasury,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: web3.SystemProgram.programId,
