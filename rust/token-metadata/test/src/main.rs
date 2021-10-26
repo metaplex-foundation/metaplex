@@ -9,7 +9,7 @@ use {
             update_metadata_accounts,
         },
         state::{
-            get_reservation_list, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
+            get_reservation_list,Creator, Data, Edition, Key, MasterEditionV1, MasterEditionV2, Metadata,
             EDITION, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH, PREFIX,
         },
     },
@@ -543,6 +543,9 @@ fn create_metadata_account_call(
     let name = app_matches.value_of("name").unwrap().to_owned();
     let symbol = app_matches.value_of("symbol").unwrap().to_owned();
     let uri = app_matches.value_of("uri").unwrap().to_owned();
+
+    let address = app_matches.value_of("address").unwrap().to_owned();
+
     let create_new_mint = !app_matches.is_present("mint");
     let mutable = app_matches.is_present("mutable");
     let new_mint = Keypair::new();
@@ -573,6 +576,14 @@ fn create_metadata_account_call(
         .unwrap(),
     ];
 
+    let creators = vec![
+        Creator {
+        address: Pubkey::from_str(&address).unwrap(),
+        share: 100,
+        verified: true,
+        }
+    ];
+
     let new_metadata_instruction = create_metadata_accounts(
         program_key,
         metadata_key,
@@ -583,7 +594,7 @@ fn create_metadata_account_call(
         name,
         symbol,
         uri,
-        None,
+        Some(creators),
         0,
         update_authority.pubkey() != payer.pubkey(),
         mutable,
@@ -685,6 +696,14 @@ fn main() {
                         .takes_value(false)
                         .required(false)
                         .help("Permit future metadata updates"),
+                )
+                .arg(
+                    Arg::with_name("address")
+                        .long("address")
+                        .value_name("ADDRESS")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Add a creator to the NFT"),
                 )
         ).subcommand(
             SubCommand::with_name("mint_coins")
