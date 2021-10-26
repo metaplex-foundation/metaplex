@@ -84,18 +84,17 @@ type CachedRedemptionKeys = Record<
 export function useStoreAuctionsList() {
   const [result, setResult] = useState<any[]>([]);
   const arr: any[] = [];
+
   useEffect(() => {
-    getCollections().then(data => {
-      data.map(manager =>
-        getAuction(manager.info.auction)
-          .then(value => {
-            arr.push(value);
-          })
-          .then(() => {
-            setResult(arr);
-          }),
-      );
-    });
+    (async () => {
+      const data = await getCollections();
+      for (let i = 0; i < data.length; i++) {
+        const manager = data[i];
+        const m = await getAuction(manager.info.auction);
+        arr.push(m);
+      }
+      if (arr.length > 0) setResult(arr);
+    })();
   }, []);
 
   return result;
@@ -103,6 +102,7 @@ export function useStoreAuctionsList() {
 
 export function useCachedRedemptionKeysByWallet() {
   const auctions = useStoreAuctionsList();
+
   const { publicKey } = useWallet();
   const [cachedRedemptionKeys, setCachedRedemptionKeys] =
     useState<CachedRedemptionKeys>({});

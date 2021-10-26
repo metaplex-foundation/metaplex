@@ -5,9 +5,6 @@ import { Slider } from '../../components/Slider';
 import { HowTo } from '../../components/HowTo';
 import { RecentSale } from '../../components/RecentSale';
 export const HomeView = () => {
-  const { isLoading, store } = useMeta();
-  const { isConfigured } = useStore();
-
   return (
     <>
       {/* <Layout style={{ margin: 0, marginTop: 30, alignItems: 'center' }}>

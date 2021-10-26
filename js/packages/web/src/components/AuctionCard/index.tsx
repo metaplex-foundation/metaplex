@@ -4,10 +4,12 @@ import { Link } from 'react-router-dom';
 import { useAuction, useExtendedArt } from '../../hooks';
 
 export const AuctionCard = props => {
-  const { auction, price, nftPubkey} = props;
+  const { auction, price, nftPubkey, keys } = props;
   const id = pubkeyToString(nftPubkey);
+
   const { data } = useExtendedArt(id);
   const auc = useAuction(auction);
+
   const [loadImage, setLoadImage] = useState(false);
   const [cardObj, setCardObj] = useState<IMetadataExtension | undefined>();
 
@@ -15,9 +17,8 @@ export const AuctionCard = props => {
     setCardObj(data);
   }, [data]);
 
-  
   return (
-    <div id="auction-sec" className="col-md-3 mt-4">
+    <div id="auction-sec" className="col-md-3 mt-4" key={keys}>
       <Link to={auction ? `/auction/${auction}` : '#'}>
         <div className="card p-3" style={{ height: '100%' }}>
           <div style={{ width: '100%', height: '59%' }}>
@@ -63,5 +64,5 @@ export const AuctionCard = props => {
         </div>
       </Link>
     </div>
-  )
+  );
 };

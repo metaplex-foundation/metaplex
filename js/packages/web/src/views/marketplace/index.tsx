@@ -4,10 +4,9 @@ import { CustomSelect } from '../../components/CustomSelect';
 import { AuctionCard } from '../../components/AuctionCard';
 import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
-import {
-  useCollection,
-} from '../../hooks/useCollections';
+import { useCollection } from '../../hooks/useCollections';
 import { getCollection } from '../../hooks/getData';
+
 export enum ArtworkViewState {
   Metaplex = 0,
   Owned = 1,
@@ -25,7 +24,7 @@ let maxPrice = 0;
 let pageLen = 0;
 let lowToHigh = 'Price: Low to High';
 export const MarketplaceView = () => {
-  const [onePageItem, setOnePageItem] = useState<any>([])
+  const [onePageItem, setOnePageItem] = useState<any>([]);
   const [allItems, setAllItems] = useState<any>([]);
 
   const { id } = useParams<{ id: string }>();
@@ -41,6 +40,7 @@ export const MarketplaceView = () => {
       sortCollection(data);
     });
   }, [lowToHigh, id, collectionUpdate]);
+
   const sortToPrice = (arr: any) => {
     return arr.sort((a, b) => {
       return a.account.price - b.account.price;
@@ -68,7 +68,7 @@ export const MarketplaceView = () => {
     setAllItems(collection);
     if (lowToHigh == 'Price: High to Low') {
       arr = sortToPrice(arr);
-    } else if (lowToHigh == 'Price: Low to High'){
+    } else if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
@@ -267,11 +267,10 @@ export const MarketplaceView = () => {
                   onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
                       const id = m.pubkey;
-                      
+
                       return (
                         <AuctionCard
-                          key={idx}
-                          pubkey={id}
+                          keys={idx || 9000}
                           auction={m.info.auction}
                           price={m.account.price}
                           nftPubkey={m.account.metadata}

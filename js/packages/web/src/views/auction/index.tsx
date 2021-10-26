@@ -33,7 +33,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { ClickToCopy  } from '../../components/ClickToCopy';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -73,7 +73,7 @@ export const AuctionItem = ({
   );
 };
 
-let art: any = {}
+let art: any = {};
 
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
@@ -227,7 +227,7 @@ export const AuctionView = () => {
           </Row>
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction}/>}
+          {auction && <AuctionCard auctionView={auction} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
         </Col>
       </Row>
@@ -333,18 +333,24 @@ const BidLine = (props: {
             address={bidder}
           />{' '}
           {bidderTwitterHandle ? (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               <a
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
               >{`@${bidderTwitterHandle}`}</a>
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           ) : (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               {shortenAddress(bidder)}
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
@@ -409,7 +415,7 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Col style={{ width: '100%'}}>
+    <Col style={{ width: '100%' }}>
       <h6>Bid History</h6>
       {bidLines.slice(0, 10)}
       {bids.length > 10 && (

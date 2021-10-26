@@ -15,6 +15,7 @@ export const useAuction = (id: StringPublicKey) => {
   const [existingAuctionView, setAuctionView] =
     useState<AuctionView | undefined>(undefined);
   const walletPubkey = publicKey?.toBase58();
+
   useEffect(() => {
     (async () => {
       const auction = await getAuction(id);
@@ -25,9 +26,9 @@ export const useAuction = (id: StringPublicKey) => {
         undefined,
         existingAuctionView || undefined,
       );
-
       if (auctionView) setAuctionView(auctionView);
     })();
   }, [walletPubkey, cachedRedemptionKeys]);
+
   return existingAuctionView;
 };

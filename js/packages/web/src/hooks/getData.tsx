@@ -139,7 +139,7 @@ export const getMetdataByCreator = async (creator: string) => {
 export const getMasterEditionsbyKey = async (edition: string, key: string) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/${edition}?bubkey=${key}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/${edition}?pubkey=${key}`,
     );
 
     let arr: any = [];
@@ -168,6 +168,7 @@ export const getMasterEditionsbyKey = async (edition: string, key: string) => {
 
 export const getMasterEditionsbyMint = async (edition: string, key: string) => {
   try {
+    if (key == undefined || key == '') return [];
     const response: any = await axios.get(
       `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/${edition}?mint=${key}`,
     );

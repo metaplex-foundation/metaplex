@@ -21,6 +21,17 @@ import {
   StringPublicKey,
   useLocalStorage,
 } from '../..';
+import {
+  getAuction,
+  getAuctionDataExtended,
+  getAuctionDataExtendedByKey,
+  getBidRedemptionV2sByAuctionManagerAndWinningIndexby,
+  getCollections,
+  getMetadata,
+  getSafetyDepositBoxesByVaultAndIndexby,
+  getSafetyDepositConfigsByAuctionManagerAndIndexby,
+  getVault,
+} from '../../hooks/getData';
 
 const CollectionsContext = React.createContext<CollectionsContextState>({
   tokenMetadataByCollection: {},
@@ -29,16 +40,14 @@ const CollectionsContext = React.createContext<CollectionsContextState>({
 });
 
 export function CollectionsProvider({ children = null as any }) {
-  const {
-    metadata,
-    auctions,
-    auctionManagersByAuction,
-    vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    safetyDepositBoxesByVaultAndIndex,
-    auctionDataExtended,
-  } = useMeta();
+  const [metadata, setMetadata] = useState<ParsedAccount<Metadata>[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const metadata = await getMetadata();
+      setMetadata(metadata);
+    })();
+  }, []);
 
   const connection = useConnection();
 
@@ -80,7 +89,9 @@ export function CollectionsProvider({ children = null as any }) {
   async function update() {
     setIsLoadingCollections(true);
 
-    const promises = metadata.map(m => loadFileFromUri(m.info.data.uri));
+    const promises = Object.values(metadata).map(m => {
+      return loadFileFromUri(m.info.data.uri);
+    });
     const results: Array<IMetadataExtension> = await Promise.all(promises);
     const records: Record<
       string,
@@ -92,15 +103,16 @@ export function CollectionsProvider({ children = null as any }) {
       }>
     > = {};
 
+    const auctionManagersByAuction = await getCollections();
     const auctionManagerMetadata = (
       await Promise.all(
-        Object.values(auctionManagersByAuction).map(m =>
+        Object.values(auctionManagersByAuction).map((m: any) =>
           getAuctionManagerMetadata(m),
         ),
       )
     ).filter(m => m);
 
-    for (const i of range(0, metadata.length)) {
+    for (const i of range(0, metadata?.length)) {
       const metadataExtension = results[i];
       if (!metadataExtension || !metadataExtension.collection) {
         continue;
@@ -126,38 +138,33 @@ export function CollectionsProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    if (metadata.length > 0) update();
+    if (metadata?.length > 0 || metadata.length == undefined) {
+      update();
+    }
   }, [metadata]);
 
   async function getAuctionManagerMetadata(
     manager: ParsedAccount<AuctionManagerV2 | AuctionManagerV1>,
   ) {
-    const vault = vaults[manager.info.vault];
+    const vault = await getVault(manager.info.vault);
 
     const safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
-      buildListWhileNonZero(
-        safetyDepositConfigsByAuctionManagerAndIndex,
-        manager.pubkey,
-      );
+      await buildListWhileNonZero('safety', manager.pubkey);
 
     const bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
-      buildListWhileNonZero(
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
-        manager.pubkey,
-      );
+      await buildListWhileNonZero('bidRed', manager.pubkey);
 
+    const auc = await getAuction(manager.info.auction);
     const auctionManager = new AuctionManager({
       instance: manager,
-      auction: auctions[manager.info.auction],
+      auction: auc,
       vault,
       safetyDepositConfigs,
       bidRedemptions,
     });
 
-    const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
-      safetyDepositBoxesByVaultAndIndex,
-      manager.info.vault,
-    );
+    const boxes: ParsedAccount<SafetyDepositBox>[] =
+      await buildListWhileNonZero('vault', manager.info.vault);
 
     const items = await auctionManager.getItemsFromSafetyDepositBoxes(boxes);
 
@@ -167,17 +174,17 @@ export function CollectionsProvider({ children = null as any }) {
         : null;
 
     const auctionDataExt = auctionDataExtendedKey
-      ? auctionDataExtended[auctionDataExtendedKey]
+      ? await getAuctionDataExtendedByKey(auctionDataExtendedKey)
       : null;
 
     const item = ((items || [])[0] || [])[0];
 
     const salePrice = auctionDataExt?.info?.instantSalePrice ?? 0;
-    const auction = auctions[manager.info.auction];
+    const auction = await getAuction(manager.info.auction);
     const auctionMint = await getMint(connection, auction.info.tokenMint);
     const number = fromLamports(salePrice!, auctionMint);
 
-    return item && auctionDataExtended
+    return item && (await getAuctionDataExtended())
       ? {
           Metadata: item.metadata,
           Auction: manager.info.auction,
@@ -209,17 +216,18 @@ export const useCollectionsContext = () => {
   return context;
 };
 
-function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
+async function buildListWhileNonZero<T>(hash: string, key: string) {
   const list: T[] = [];
-  let ticket = hash[key + '-0'];
-  if (ticket) {
-    list.push(ticket);
-    let i = 1;
-    while (ticket) {
-      ticket = hash[key + '-' + i.toString()];
-      if (ticket) list.push(ticket);
-      i++;
-    }
+  let ticket;
+  if (hash == 'vault')
+    ticket = await getSafetyDepositBoxesByVaultAndIndexby(key, '0');
+  else if (hash == 'safety')
+    ticket = await getSafetyDepositConfigsByAuctionManagerAndIndexby(key, '0');
+  else if (hash == 'bidRed') {
+    ticket = await getBidRedemptionV2sByAuctionManagerAndWinningIndexby(
+      key,
+      '0',
+    );
   }
   return list;
 }
