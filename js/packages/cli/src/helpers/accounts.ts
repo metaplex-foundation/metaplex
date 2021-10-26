@@ -341,6 +341,31 @@ export const getAuctionHouseBuyerEscrow = async (
     AUCTION_HOUSE_PROGRAM_ID,
   );
 };
+
+export const getAuctionHouseTradeState = async (
+  auctionHouse: anchor.web3.PublicKey,
+  wallet: anchor.web3.PublicKey,
+  tokenAccount: anchor.web3.PublicKey,
+  treasuryMint: anchor.web3.PublicKey,
+  tokenMint: anchor.web3.PublicKey,
+  tokenSize: anchor.BN,
+  buyPrice: anchor.BN,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      wallet.toBuffer(),
+      auctionHouse.toBuffer(),
+      tokenAccount.toBuffer(),
+      treasuryMint.toBuffer(),
+      tokenMint.toBuffer(),
+      buyPrice.toBuffer('le', 8),
+      tokenSize.toBuffer('le', 8),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');

@@ -3,7 +3,7 @@ use {
     anchor_lang::{
         prelude::*,
         solana_program::{
-            program::{invoke, invoke_signed},
+            program::invoke_signed,
             program_option::COption,
             program_pack::{IsInitialized, Pack},
             system_instruction,
@@ -254,6 +254,7 @@ pub fn create_program_token_account_if_not_present<'a>(
             &fee_payer,
             spl_token::state::Account::LEN,
             fee_seeds,
+            &[],
         )?;
 
         invoke_signed(
@@ -404,6 +405,7 @@ pub fn create_or_allocate_account_raw<'a>(
     payer_info: &AccountInfo<'a>,
     size: usize,
     signer_seeds: &[&[u8]],
+    new_acct_seeds: &[&[u8]],
 ) -> Result<(), ProgramError> {
     let rent = &Rent::from_account_info(rent_sysvar_info)?;
     let required_lamports = rent
@@ -413,30 +415,31 @@ pub fn create_or_allocate_account_raw<'a>(
 
     if required_lamports > 0 {
         msg!("Transfer {} lamports to the new account", required_lamports);
-        invoke(
+        invoke_signed(
             &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
             &[
                 payer_info.clone(),
                 new_account_info.clone(),
                 system_program_info.clone(),
             ],
+            &[&signer_seeds],
         )?;
     }
 
     let accounts = &[new_account_info.clone(), system_program_info.clone()];
 
-    msg!("Allocate space for the account");
+    msg!("Allocate space for the account {}", new_account_info.key);
     invoke_signed(
         &system_instruction::allocate(new_account_info.key, size.try_into().unwrap()),
         accounts,
-        &[&signer_seeds],
+        &[&new_acct_seeds],
     )?;
 
     msg!("Assign the account to the owning program");
     invoke_signed(
         &system_instruction::assign(new_account_info.key, &program_id),
         accounts,
-        &[&signer_seeds],
+        &[&new_acct_seeds],
     )?;
     msg!("Completed assignation!");
 

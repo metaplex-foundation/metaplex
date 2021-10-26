@@ -835,7 +835,7 @@ pub mod auction_house {
     pub fn sell<'info>(
         ctx: Context<'_, '_, '_, 'info, Sell<'info>>,
         trade_state_bump: u8,
-        _buyer_price: u64,
+        buyer_price: u64,
         token_size: u64,
     ) -> ProgramResult {
         let wallet = &ctx.accounts.wallet;
@@ -911,6 +911,20 @@ pub mod auction_house {
 
         let ts_info = seller_trade_state.to_account_info();
         if ts_info.data_is_empty() {
+            let ah_key = auction_house.key();
+            let token_account_key = token_account.key();
+            let wallet_key = wallet.key();
+            let ts_seeds = [
+                PREFIX.as_bytes(),
+                wallet_key.as_ref(),
+                ah_key.as_ref(),
+                token_account_key.as_ref(),
+                auction_house.treasury_mint.as_ref(),
+                token_account.mint.as_ref(),
+                &buyer_price.to_le_bytes(),
+                &token_size.to_le_bytes(),
+                &[trade_state_bump],
+            ];
             create_or_allocate_account_raw(
                 *ctx.program_id,
                 &ts_info,
@@ -919,6 +933,7 @@ pub mod auction_house {
                 &fee_payer,
                 TRADE_STATE_SIZE,
                 fee_seeds,
+                &ts_seeds,
             )?;
         }
 
@@ -933,7 +948,7 @@ pub mod auction_house {
         trade_state_bump: u8,
         escrow_payment_bump: u8,
         buyer_price: u64,
-        _token_size: u64,
+        token_size: u64,
     ) -> ProgramResult {
         let wallet = &ctx.accounts.wallet;
         let payment_account = &ctx.accounts.payment_account;
@@ -950,11 +965,12 @@ pub mod auction_house {
         let system_program = &ctx.accounts.system_program;
         let rent = &ctx.accounts.rent;
 
+        let auction_house_key = auction_house.key();
         let seeds = [
             PREFIX.as_bytes(),
-            auction_house.creator.as_ref(),
-            auction_house.treasury_mint.as_ref(),
-            &[auction_house.bump],
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
         ];
 
         let (fee_payer, fee_seeds) = get_fee_payer(
@@ -997,7 +1013,7 @@ pub mod auction_house {
                 let diff = buyer_price
                     .checked_sub(escrow_payment_account.lamports())
                     .ok_or(ErrorCode::NumericalOverflow)?;
-                invoke(
+                invoke_signed(
                     &system_instruction::transfer(
                         &payment_account.key(),
                         &escrow_payment_account.key(),
@@ -1008,6 +1024,7 @@ pub mod auction_house {
                         escrow_payment_account.to_account_info(),
                         system_program.to_account_info(),
                     ],
+                    &[],
                 )?;
             }
         } else {
@@ -1044,6 +1061,20 @@ pub mod auction_house {
 
         let ts_info = buyer_trade_state.to_account_info();
         if ts_info.data_is_empty() {
+            let ah_key = auction_house.key();
+            let token_account_key = token_account.key();
+            let wallet_key = wallet.key();
+            let ts_seeds = [
+                PREFIX.as_bytes(),
+                wallet_key.as_ref(),
+                ah_key.as_ref(),
+                token_account_key.as_ref(),
+                auction_house.treasury_mint.as_ref(),
+                token_account.mint.as_ref(),
+                &buyer_price.to_le_bytes(),
+                &token_size.to_le_bytes(),
+                &[trade_state_bump],
+            ];
             create_or_allocate_account_raw(
                 *ctx.program_id,
                 &ts_info,
@@ -1051,7 +1082,8 @@ pub mod auction_house {
                 &system_program,
                 &fee_payer,
                 TRADE_STATE_SIZE,
-                fee_seeds,
+                &fee_seeds,
+                &ts_seeds,
             )?;
         }
         let data = &mut ts_info.data.borrow_mut();
@@ -1086,8 +1118,9 @@ pub struct Sell<'info> {
 #[instruction(trade_state_bump: u8, escrow_payment_bump: u8, buyer_price: u64, token_size: u64)]
 pub struct Buy<'info> {
     wallet: Signer<'info>,
+    #[account(mut)]
     payment_account: UncheckedAccount<'info>,
-    transfer_authority: Signer<'info>,
+    transfer_authority: UncheckedAccount<'info>,
     treasury_mint: Account<'info, Mint>,
     token_account: Account<'info, TokenAccount>,
     metadata: UncheckedAccount<'info>,
@@ -1188,7 +1221,7 @@ pub struct Cancel<'info> {
     auction_house: Account<'info, AuctionHouse>,
     #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), FEE_PAYER.as_bytes()], bump=auction_house.fee_payer_bump)]
     auction_house_fee_account: UncheckedAccount<'info>,
-    #[account(mut, seeds=[PREFIX.as_bytes(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[0])]
+    #[account(mut, seeds=[PREFIX.as_bytes(), wallet.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[0])]
     trade_state: UncheckedAccount<'info>,
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
