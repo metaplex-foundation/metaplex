@@ -20,18 +20,18 @@ export const useCreators = (auction?: AuctionView) => {
         )
           .filter(creator => creator.verified)
           .reduce((agg, item) => {
-            agg.add(item.address);
+            agg.add([item.address, item.share]);
             return agg;
-          }, new Set<string>())
+          }, new Set<[string, number]>())
           .values(),
-      ].map((creator, index, arr) => {
+      ].map(creatorArray => {
+        const [creator, share] = creatorArray;
         const knownCreator = whitelistedCreatorsByCreator[creator];
 
         return {
           address: creator,
           verified: true,
-          // not exact share of royalties
-          share: (1 / arr.length) * 100,
+          share: share,
           image: knownCreator?.info.image || '',
           name: knownCreator?.info.name || '',
           link: knownCreator?.info.twitter || '',
