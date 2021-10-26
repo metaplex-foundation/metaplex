@@ -27,14 +27,13 @@ export async function  cacheAllAuctions(
 ):Promise<void> {
   const vaultPubKeys = auctionManagers.map(auctionManager => auctionManager.info.vault);
   const { safetyDepositBoxesByVaultAndIndex } = await loadSafeteyDepositBoxesForVaults(connection, vaultPubKeys)
-  
   let storeIndex = [...storeIndexer];
   for (const auctionManager of auctionManagers) {
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       auctionManager.info.vault,
-    );
-
+      );
+      
     if (auctionManager.info.key !== MetaplexKey.AuctionManagerV2) {
       return;
     }

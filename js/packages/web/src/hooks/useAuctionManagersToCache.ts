@@ -4,6 +4,7 @@ import {
 import {
   AuctionManagerV1,
   AuctionManagerV2,
+  MetaplexKey,
   ParsedAccount,
   useMeta,
   useStore,
@@ -28,7 +29,7 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
 
   const auctionManagersToCache = useMemo(() => {
     let auctionManagersToCache = Object.values(auctionManagersByAuction)
-      .filter(a => a.info.store == storeAddress)
+      .filter(a => a.info.store == storeAddress && a.info.key === MetaplexKey.AuctionManagerV2)
       .sort((a, b) =>
         (
           auctions[b.info.auction].info.endedAt ||
@@ -73,16 +74,17 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
         next++
       })
 
-
       return next;
     }, 0);
   }, [storeIndexer, storeAddress]);
 
 
-
   const auctionManagerTotal = useMemo(() => {
-    return Object.values(auctionManagersByAuction).filter(({ info: { store } }) => store === storeAddress).length;
-  }, [auctionManagersByAuction, storeAddress])
+    return Object
+      .values(auctionManagersByAuction)
+      .filter(({ info: { store, key } }) => store === storeAddress && key === MetaplexKey.AuctionManagerV2)
+      .length;
+  }, [auctionManagersToCache, storeAddress])
 
 
   return {
