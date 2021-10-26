@@ -43,3 +43,4 @@ it will start GraphQL at `http://localhost:4000/` which will read data from Mong
 - GraphQL subscribe mechanizm need to be reviewed
 - Simplify the internal data structure and their relationship
 
+
