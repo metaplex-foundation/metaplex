@@ -1,6 +1,7 @@
 @import '~antd/es/style/themes/dark.less';
 @import '~antd/dist/antd.dark.less';
 
+
 html {
   overflow-y: scroll;
   overflow-x: hidden;
@@ -67,6 +68,19 @@ body {
   }
   &-alert-banner {
     margin: 15px 0;
+    &.ant-alert-with-description {
+      .ant-alert-message {
+        color: inherit;
+      }
+    }
+    &.ant-alert-info {
+      background: inherit;
+      color: inherit;
+      border: none;
+      a:visited {
+        color: inherit;
+      }
+    }
   }
   &--loading {
     &-logo {
