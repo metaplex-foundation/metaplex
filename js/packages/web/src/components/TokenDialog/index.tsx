@@ -30,7 +30,7 @@ export function TokenButton({
     <Row onClick={onClick} className={'token-button'} justify='space-between'>
       <Col>
         <Row>
-          <TokenCircle iconSize={40} iconFile={tokenInfo.logoURI} style={{ marginTop: 2.5 }} />
+          <TokenCircle iconSize={40} iconFile={tokenInfo?.logoURI} style={{ marginTop: 2.5 }} />
           <TokenName mint={mint} style={{ fontSize: 14, fontWeight: 700 }} />
         </Row>
       </Col>
