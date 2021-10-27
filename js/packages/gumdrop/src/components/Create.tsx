@@ -25,6 +25,7 @@ import {
   useWallet,
 } from "@solana/wallet-adapter-react";
 import {
+  Connection as RPCConnection,
   Keypair,
   PublicKey,
   SystemProgram,
@@ -32,11 +33,11 @@ import {
 } from "@solana/web3.js";
 import {
   AccountLayout,
+  MintInfo,
   MintLayout,
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { keccak_256 } from "js-sha3";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
@@ -73,10 +74,15 @@ const WHITESPACE = "\u00A0";
 export type ClaimantInfo = {
   handle : string,
   amount : number,
+  mint   : string,
+
   pin    : Uint8Array,
   bump   : number,
-  pda    : PublicKey,
   url    : string,
+
+  mintKey : PublicKey,
+  source : PublicKey,
+  pda    : PublicKey,
 };
 
 const setupMailchimp = (auth : string, source : string) => {
@@ -199,9 +205,7 @@ const parseClaimants = (
     return {
       handle : obj.handle,
       amount : obj.amount,
-      pin    : obj.pin,
-      bump   : obj.bump,
-      pda    : obj.pda,
+      mint   : obj.mint,
       url    : obj.url,
     };
   });
@@ -237,6 +241,61 @@ const reactModal = (renderModal) => {
   });
 };
 
+const getMintInfo = async (
+  connection : RPCConnection,
+  mint : string
+) : Promise<{ key: PublicKey, info: MintInfo }> => {
+  let mintKey : PublicKey;
+  try {
+    mintKey = new PublicKey(mint);
+  } catch (err) {
+    throw new Error(`Invalid mint key ${err}`);
+  }
+  const mintAccount = await connection.getAccountInfo(mintKey);
+  if (mintAccount === null) {
+    throw new Error(`Could not fetch mint`);
+  }
+  if (!mintAccount.owner.equals(TOKEN_PROGRAM_ID)) {
+    throw new Error(`Invalid mint owner ${mintAccount.owner.toBase58()}`);
+  }
+  if (mintAccount.data.length !== MintLayout.span) {
+    throw new Error(`Invalid mint size ${mintAccount.data.length}`);
+  }
+  const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
+  return {
+    key: mintKey,
+    info: mintInfo,
+  };
+};
+
+const getCreatorTokenAccount = async (
+  walletKey : PublicKey,
+  connection : RPCConnection,
+  mintKey : PublicKey,
+  totalClaim : number,
+) => {
+  const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      mintKey.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+  const creatorTokenAccount = await connection.getAccountInfo(creatorTokenKey);
+  if (creatorTokenAccount === null) {
+    throw new Error(`Could not fetch creator token account`);
+  }
+  if (creatorTokenAccount.data.length !== AccountLayout.span) {
+    throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
+  }
+  const creatorTokenInfo = AccountLayout.decode(Buffer.from(creatorTokenAccount.data));
+  if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
+    throw new Error(`Creator token account does not have enough tokens`);
+  }
+  return creatorTokenKey;
+}
+
 export type CreateProps = {};
 
 export const Create = (
@@ -244,7 +303,6 @@ export const Create = (
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
-  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
   const [commMethod, setMethod] = React.useState(localStorage.getItem("commMethod") || "");
   const [commAuth, setCommAuth] = React.useState("");
   const [commSource, setCommSource] = React.useState("");
@@ -252,6 +310,10 @@ export const Create = (
   const [text, setText] = React.useState("");
   const [baseKey, setBaseKey] = React.useState<Keypair | undefined>(undefined);
   const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
+
+  const mintUrlFor = (mintKey : PublicKey) => {
+    return `https://explorer.solana.com/address/${mintKey.toBase58()}?cluster=${Connection.envFor(connection)}`;
+  }
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -263,36 +325,21 @@ export const Create = (
       throw new Error(`Wallet not connected`);
     }
 
-    let mintKey : PublicKey;
-    try {
-      mintKey = new PublicKey(mint);
-    } catch (err) {
-      throw new Error(`Invalid mint key ${err}`);
-    }
-    const mintAccount = await connection.getAccountInfo(mintKey);
-    if (mintAccount === null) {
-      throw new Error(`Could not fetch mint`);
-    }
-    if (!mintAccount.owner.equals(TOKEN_PROGRAM_ID)) {
-      throw new Error(`Invalid mint owner ${mintAccount.owner.toBase58()}`);
-    }
-    if (mintAccount.data.length !== MintLayout.span) {
-      throw new Error(`Invalid mint size ${mintAccount.data.length}`);
-    }
-    const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
-    const displayMintTokens = (amount : number) : string => {
+    const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
       // TODO: better decimal rounding
       return (amount / Math.pow(10, mintInfo.decimals)).toString();
     };
-
-    const mintUrl = `https://explorer.solana.com/address/${mintKey.toBase58()}?cluster=${Connection.envFor(connection)}`;
-    console.log(mintUrl);
-
 
     const claimants = parseClaimants(text);
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
     }
+
+    claimants.forEach((c, idx) => {
+      if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
+      if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
+      if (!c.mint)   throw new Error(`Claimant ${idx} doesn't have mint`);
+    });
 
     const mightHaveExisting = (info : ClaimantInfo) => {
       // TODO: others?
@@ -344,8 +391,8 @@ export const Create = (
       if (resendOnly === "send") {
         setClaimURLs(claimants);
         const sender = setupSender(commMethod, commAuth, commSource);
-        for (let idx = 0; idx < claimants.length; ++idx) {
-          await sender(claimants[idx], mintUrl);
+        for (const c of claimants) {
+          await sender(c, mintUrlFor(c.mintKey));
         }
         return;
       } else if (resendOnly === "create") {
@@ -355,50 +402,51 @@ export const Create = (
         throw new Error("Dismissed");
       }
     }
-    const totalClaim = claimants.reduce((acc, c) => acc + c.amount, 0);
+
+    const totalClaims = {};
+    claimants.forEach(c => {
+      if (!(c.mint in totalClaims)) {
+        totalClaims[c.mint] = { total: 0 };
+      }
+      totalClaims[c.mint].total += c.amount;
+    }, {});
+    console.log(totalClaims);
+
+    for (const mint of Object.keys(totalClaims)) {
+      const mc = totalClaims[mint];
+      mc.mint = await getMintInfo(connection, mint);
+      mc.source = await getCreatorTokenAccount(
+        wallet.publicKey,
+        connection,
+        mc.mint.key,
+        mc.total
+      );
+    }
+
     claimants.forEach(c => {
       c.pin = randomBytes();
+      c.mintKey = totalClaims[c.mint].mint.key;
+      c.source = totalClaims[c.mint].source;
     });
-
-    const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mintKey.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-    const creatorTokenAccount = await connection.getAccountInfo(creatorTokenKey);
-    if (creatorTokenAccount === null) {
-      throw new Error(`Could not fetch creator token account`);
-    }
-    if (creatorTokenAccount.data.length !== AccountLayout.span) {
-      throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
-    }
-    const creatorTokenInfo = AccountLayout.decode(Buffer.from(creatorTokenAccount.data));
-    if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
-      throw new Error(`Creator token account does not have enough tokens`);
-    }
-
 
     const leafs : Array<Buffer> = [];
     for (let idx = 0; idx < claimants.length; ++idx ) {
       const claimant = claimants[idx];
       const seeds = [
-        mintKey.toBuffer(),
+        claimant.mintKey.toBuffer(),
         Buffer.from(claimant.handle),
         Buffer.from(claimant.pin),
       ];
-      const [claimantPda, bump] = await PublicKey.findProgramAddress(seeds, MERKLE_DISTRIBUTOR_ID);
+      const [claimantPda, bump] = await PublicKey.findProgramAddress(
+          seeds, MERKLE_DISTRIBUTOR_ID);
       claimant.bump = bump;
       claimant.pda = claimantPda;
       leafs.push(Buffer.from(
-        keccak_256.digest(
-          [...new BN(idx).toArray("le", 8),
-           ...claimantPda.toBuffer(),
-           ...new BN(claimant.amount).toArray("le", 8),
-          ]
-        )
+        [...new BN(idx).toArray("le", 8),
+         ...claimantPda.toBuffer(),
+         ...claimant.mintKey.toBuffer(),
+         ...new BN(claimant.amount).toArray("le", 8),
+        ]
       ));
     }
 
@@ -415,15 +463,6 @@ export const Create = (
       ],
       MERKLE_DISTRIBUTOR_ID);
 
-    const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        distributor.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mintKey.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
     for (let idx = 0; idx < claimants.length; ++idx) {
       const proof = tree.getProof(idx);
       const verified = tree.verifyProof(idx, proof, root);
@@ -435,6 +474,7 @@ export const Create = (
       const claimant = claimants[idx];
       const params = [
         `distributor=${distributor}`,
+        `tokenAcc=${claimant.source}`,
         `handle=${claimant.handle}`,
         `amount=${claimant.amount}`,
         `index=${idx}`,
@@ -462,13 +502,6 @@ export const Create = (
           >
             Claim Distribution Preview
           </h2>
-          <p style={{ color: "white", fontSize: 14 }}>
-            Distributing a total of {displayMintTokens(totalClaim)}{WHITESPACE}
-            <HyperLink href={mintUrl}>
-              {shortenAddress(mintKey.toBase58())}
-            </HyperLink>
-            {WHITESPACE}token(s)
-          </p>
           <TableContainer
             sx={{
               "td, th": { color: "white" },
@@ -481,6 +514,7 @@ export const Create = (
               <TableHead>
                 <TableRow>
                   <TableCell>Handle</TableCell>
+                  <TableCell>Mint</TableCell>
                   <TableCell>Tokens</TableCell>
                   <TableCell>Pin</TableCell>
                 </TableRow>
@@ -492,7 +526,12 @@ export const Create = (
                     sx={{ 'td, th': { border: 0 } }}
                   >
                     <TableCell component="th" scope="row">{c.handle} </TableCell>
-                    <TableCell>{displayMintTokens(c.amount)}</TableCell>
+                    <TableCell>
+                      <HyperLink href={mintUrlFor(c.mintKey)} underline="none">
+                        {shortenAddress(c.mintKey.toBase58())}
+                      </HyperLink>
+                    </TableCell>
+                    <TableCell>{displayMintTokens(c.amount, totalClaims[c.mint].mint.info)}</TableCell>
                     <TableCell>{c.pin.join(",")}</TableCell>
                   </TableRow>
                 ))}
@@ -533,12 +572,12 @@ export const Create = (
     setClaimURLs(claimants);
 
     // initial merkle-distributor state
-    const initDistributor = new TransactionInstruction({
+    const instructions = Array<TransactionInstruction>();
+    instructions.push(new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
         keys: [
             { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
             { pubkey: distributor             , isSigner: false , isWritable: true  } ,
-            { pubkey: mintKey                 , isSigner: false , isWritable: false } ,
             { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,
             { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
         ],
@@ -546,38 +585,27 @@ export const Create = (
           ...Buffer.from(sha256.digest("global:new_distributor")).slice(0, 8),
           ...new BN(dbump).toArray("le", 1),
           ...root,
-          ...new BN(totalClaim).toArray("le", 8),
-          ...new BN(claimants.length).toArray("le", 8),
           ...MERKLE_TEMPORAL_SIGNER.toBuffer(),
         ])
-    })
+    }));
 
-    const createDistributorTokenAccount = Token.createAssociatedTokenAccountInstruction(
-        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    // TODO: split up when too many?
+    for (const mint of Object.keys(totalClaims)) {
+      const mc = totalClaims[mint];
+      instructions.push(Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
-        mintKey,
-        distributorTokenKey,
+        mc.source,
         distributor,
-        wallet.publicKey
-      );
-
-    const transferToATA = Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        creatorTokenKey,
-        distributorTokenKey,
         wallet.publicKey,
         [],
-        totalClaim
-      );
+        mc.total
+      ));
+    }
 
     const createResult = await Connection.sendTransactionWithRetry(
       connection,
       wallet,
-      [
-        initDistributor,
-        createDistributorTokenAccount,
-        transferToATA,
-      ],
+      instructions,
       [base]
     );
 
@@ -597,8 +625,8 @@ export const Create = (
 
     console.log("Distributing claim URLs");
     const sender = setupSender(commMethod, commAuth, commSource);
-    for (let idx = 0; idx < claimants.length; ++idx) {
-      await sender(claimants[idx], mintUrl);
+    for (const c of claimants) {
+      await sender(c, mintUrlFor(c.mintKey));
     }
   };
 
@@ -781,16 +809,6 @@ export const Create = (
 
   return (
     <Stack spacing={2}>
-      <TextField
-        style={{width: "60ch"}}
-        id="mint-text-field"
-        label="Mint"
-        value={mint}
-        onChange={(e) => {
-          localStorage.setItem("mint", e.target.value);
-          setMint(e.target.value);
-        }}
-      />
       <FormControl fullWidth>
         <InputLabel id="comm-method-label">Claim Distribution Method</InputLabel>
         <Select
@@ -810,7 +828,7 @@ export const Create = (
         </Select>
       </FormControl>
       {commMethod !== "" && commAuthorization(commMethod)}
-      {commMethod !== "" && mint !== "" && fileUpload}
+      {commMethod !== "" && fileUpload}
       {filename !== "" && createAirdrop}
       {baseKey !== undefined && (
         <HyperLink

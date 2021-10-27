@@ -53,6 +53,6 @@ export const MEMO_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcH
 
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');
 
-export const MERKLE_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
+export const MERKLE_DISTRIBUTOR_ID = new PublicKey("SNTgKsRZxQZRVXjtr7UvzTDAg2TKStYVgojUf9GyapQ");
 
 export const MERKLE_TEMPORAL_SIGNER = new PublicKey("MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV");

@@ -28,10 +28,8 @@ import {
 } from "../contexts";
 import {
   MERKLE_DISTRIBUTOR_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
 } from "../utils";
-import { coder } from "../utils/merkleDistributor";
 
 export const Close = () => {
   const connection = useConnection();
@@ -56,39 +54,11 @@ export const Close = () => {
       ],
       MERKLE_DISTRIBUTOR_ID);
 
-    const distributorAccount = await connection.getAccountInfo(distributorKey);
-    if (distributorAccount === null) {
-      throw new Error(`Could not fetch distributor`);
-    }
-
-    const distributorInfo = coder.accounts.decode(
-      "MerkleDistributor", distributorAccount.data);
-
-    const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        distributorKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        distributorInfo.mint.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
-    const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        distributorInfo.mint.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
     const closeDistributor = new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
         keys: [
             { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
             { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
-            { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
-            { pubkey: creatorTokenKey         , isSigner: false , isWritable: true  } ,
             { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
             { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
             { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,

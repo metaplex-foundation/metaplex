@@ -24,10 +24,10 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
+  AccountLayout,
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { keccak_256 } from "js-sha3";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
@@ -58,6 +58,7 @@ export const Claim = (
 
   let params = queryString.parse(props.location.search);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
+  const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
   const [amountStr, setAmount] = React.useState(params.amount as string || "");
   const [indexStr, setIndex] = React.useState(params.index as string || "");
@@ -66,6 +67,7 @@ export const Claim = (
 
   const allFieldsPopulated =
     distributor.length > 0
+    && tokenAcc.length > 0
     && handle.length > 0
     && amountStr.length > 0
     && indexStr.length > 0
@@ -120,6 +122,24 @@ export const Claim = (
     const distributorInfo = coder.accounts.decode(
       "MerkleDistributor", distributorAccount.data);
 
+    console.log(distributorInfo.temporal.toBase58());
+
+    let tokenAccKey: PublicKey;
+    try {
+      tokenAccKey = new PublicKey(tokenAcc);
+    } catch (err) {
+      throw new Error(`Invalid tokenAcc key ${err}`);
+    }
+    const distTokenAccount = await connection.getAccountInfo(tokenAccKey);
+    if (distTokenAccount === null) {
+      throw new Error(`Could not fetch distributor token account`);
+    }
+
+    const tokenAccountInfo = AccountLayout.decode(distTokenAccount.data);
+    const mint = new PublicKey(tokenAccountInfo.mint);
+
+    console.log(mint.toBase58());
+
     const proof = proofStr === "" ? [] : proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
       if (ret.length !== 32)
@@ -128,7 +148,7 @@ export const Claim = (
     });
 
     const pdaSeeds = [
-      distributorInfo.mint.toBuffer(),
+      mint.toBuffer(),
       Buffer.from(handle),
       Buffer.from(pin),
     ];
@@ -138,12 +158,14 @@ export const Claim = (
       MERKLE_DISTRIBUTOR_ID
     );
 
-    const leaf = Buffer.from(keccak_256.digest(
+    // TODO: since it's in the PDA do we need it to be in the leaf?
+    const leaf = Buffer.from(
       [...new BN(index).toArray("le", 8),
        ...claimantPda.toBuffer(),
+       ...mint.toBuffer(),
        ...new BN(amount).toArray("le", 8),
       ]
-    ));
+    );
 
     const matches = MerkleTree.verifyClaim(
       leaf, proof, Buffer.from(distributorInfo.root)
@@ -162,20 +184,11 @@ export const Claim = (
       MERKLE_DISTRIBUTOR_ID
     );
 
-    const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        distributorKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        distributorInfo.mint.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
     const [walletTokenKey, ] = await PublicKey.findProgramAddress(
       [
         wallet.publicKey.toBuffer(),
         TOKEN_PROGRAM_ID.toBuffer(),
-        distributorInfo.mint.toBuffer(),
+        mint.toBuffer(),
       ],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
@@ -186,7 +199,7 @@ export const Claim = (
       setup.push(Token.createAssociatedTokenAccountInstruction(
           SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
-          distributorInfo.mint,
+          mint,
           walletTokenKey,
           wallet.publicKey,
           wallet.publicKey
@@ -198,7 +211,7 @@ export const Claim = (
         keys: [
             { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
             { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
-            { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
+            { pubkey: tokenAccKey             , isSigner: false , isWritable: true  } ,
             { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
             { pubkey: MERKLE_TEMPORAL_SIGNER  , isSigner: true , isWritable: false } ,
             { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,  // payer
@@ -245,6 +258,21 @@ export const Claim = (
 
       if (res.StatusCode !== 200) {
         throw new Error(`Failed to send AWS OTP. ${JSON.stringify(res)}`);
+      }
+
+      if (res.Payload === undefined) {
+        throw new Error("No response payload");
+      }
+
+      let resp;
+      try {
+        resp = JSON.parse(Buffer.from(res.Payload).toString());
+      } catch {
+        throw new Error(`Could not parse response ${res.Payload}`);
+      }
+
+      if (!resp.MessageId) {
+        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
       }
     }
 
@@ -392,6 +420,14 @@ export const Claim = (
         label="Distributor"
         value={distributor}
         onChange={(e) => setDistributor(e.target.value)}
+        disabled={!editable}
+      />
+      <TextField
+        style={{width: "60ch"}}
+        id="token-acc-text-field"
+        label="Source Token Account"
+        value={tokenAcc}
+        onChange={(e) => setTokenAcc(e.target.value)}
         disabled={!editable}
       />
       <TextField

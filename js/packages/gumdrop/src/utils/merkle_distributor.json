@@ -16,11 +16,6 @@
           "isSigner": false
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "payer",
           "isMut": false,
           "isSigner": true
@@ -46,12 +41,8 @@
           }
         },
         {
-          "name": "maxTotalClaim",
-          "type": "u64"
-        },
-        {
-          "name": "maxNumNodes",
-          "type": "u64"
+          "name": "temporal",
+          "type": "publicKey"
         }
       ]
     },
@@ -65,16 +56,6 @@
         },
         {
           "name": "distributor",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "from",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "to",
           "isMut": true,
           "isSigner": false
         },
@@ -123,6 +104,11 @@
           "name": "to",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "temporal",
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "payer",
@@ -195,24 +181,8 @@
             }
           },
           {
-            "name": "mint",
+            "name": "temporal",
             "type": "publicKey"
-          },
-          {
-            "name": "maxTotalClaim",
-            "type": "u64"
-          },
-          {
-            "name": "maxNumNodes",
-            "type": "u64"
-          },
-          {
-            "name": "totalAmountClaimed",
-            "type": "u64"
-          },
-          {
-            "name": "numNodesClaimed",
-            "type": "u64"
           }
         ]
       }
@@ -277,23 +247,18 @@
     },
     {
       "code": 302,
-      "name": "ExceededMaxClaim",
-      "msg": "Exceeded maximum claim amount."
-    },
-    {
-      "code": 303,
-      "name": "ExceededMaxNumNodes",
-      "msg": "Exceeded maximum number of claimed nodes."
-    },
-    {
-      "code": 304,
       "name": "Unauthorized",
       "msg": "Account is not authorized to execute this instruction"
     },
     {
-      "code": 305,
+      "code": 303,
       "name": "OwnerMismatch",
       "msg": "Token account owner did not match intended owner"
+    },
+    {
+      "code": 304,
+      "name": "TemporalMismatch",
+      "msg": "Temporal signer did not match distributor"
     }
   ]
 }
