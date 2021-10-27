@@ -2,9 +2,7 @@ import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Storefront } from '@oyster/common';
 import { Providers } from './providers';
 import {
-  AnalyticsView,
   ArtCreateView,
-  ArtistsView,
   ArtistView,
   ArtView,
   ArtworksView,
@@ -26,11 +24,6 @@ export function Routes({ storefront }: RoutesProps) {
         <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
-            {/* <Route
-              exact
-              path="/analytics"
-              component={() => <AnalyticsView />}
-            /> */}
             <Route
               exact
               path="/artworks/new/:step_param?"
@@ -38,12 +31,11 @@ export function Routes({ storefront }: RoutesProps) {
             />
             <Route
               exact
-              path="/artworks"
+              path="/owned"
               component={() => <ArtworksView />}
             />
             <Route exact path="/artworks/:id" component={() => <ArtView />} />
-            <Route exact path="/artists/:id" component={() => <ArtistView />} />
-            <Route exact path="/artists" component={() => <ArtistsView />} />
+            <Route path="/artists/:id" component={() => <ArtistView />} />
             <Route
               exact
               path="/auction/create/:step_param?"
