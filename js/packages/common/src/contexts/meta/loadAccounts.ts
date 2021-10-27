@@ -211,7 +211,6 @@ export const loadMetadataForUsers = async (
   console.log('-------->User metadata processing complete.');
   return state;
 };
-}
 
 export const loadStoreIndexers = async (
   connection: Connection,
@@ -382,11 +381,8 @@ export const loadAccounts = async (
       .then(queryAuctionCaches)
       .then(queryAuctionsFromCache),
     queryStorefront(storeAddress),
+    queryAuctionManagers(connection, updateState, storeAddress).then(queryAuctionsAndVaults)
   ]);
-
-  if (isEmpty(state.storeIndexer)) {
-    await queryAuctionManagers(connection, updateState, storeAddress).then(queryAuctionsAndVaults)
-  }
 
   return state;
 };
@@ -964,25 +960,25 @@ export const loadMetadataForCreator = async (
   })
 
   const metadata = response.reduce((memo, { account, pubkey }) => {
-      if (!account) {
-        return memo;
-      }
+    if (!account) {
+      return memo;
+    }
 
-      const metadata =  {
-        pubkey,
-        account,
-        info: decodeMetadata(account.data),
-      };
+    const metadata = {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    };
 
-      return [...memo, metadata]
-    }, [] as ParsedAccount<Metadata>[]);
+    return [...memo, metadata]
+  }, [] as ParsedAccount<Metadata>[]);
 
   const readyMetadata = metadata.map(m => initMetadata(m, { [creator.info.address]: creator }, updateState))
 
   await Promise.all(readyMetadata)
 
   await pullEditions(connection, state);
-  
+
   return state;
 }
 
