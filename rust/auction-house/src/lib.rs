@@ -599,7 +599,6 @@ pub mod auction_house {
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let ata_program = &ctx.accounts.ata_program;
-        let program = &ctx.accounts.program;
         let rent = &ctx.accounts.rent;
 
         let metadata_clone = metadata.to_account_info();
@@ -619,7 +618,6 @@ pub mod auction_house {
         }
         let token_account_mint = get_mint_from_token_account(&token_account.to_account_info())?;
 
-        assert_keys_equal(program.key(), *ctx.program_id)?;
         assert_keys_equal(token_mint.key(), token_account_mint)?;
 
         if buyer_trade_state.data_is_empty() || seller_trade_state.data_is_empty() {
@@ -853,12 +851,17 @@ pub mod auction_house {
         let rent = &ctx.accounts.rent;
 
         if !wallet.to_account_info().is_signer {
-            if free_seller_trade_state.data_is_empty() {
+            if buyer_price == 0 {
                 return Err(ErrorCode::SaleRequiresSigner.into());
-            } else if !free_seller_trade_state.data_is_empty()
-                && (!authority.to_account_info().is_signer || !auction_house.can_change_sale_price)
-            {
-                return Err(ErrorCode::SaleRequiresSigner.into());
+            } else {
+                if free_seller_trade_state.data_is_empty() {
+                    return Err(ErrorCode::SaleRequiresSigner.into());
+                } else if !free_seller_trade_state.data_is_empty()
+                    && (!authority.to_account_info().is_signer
+                        || !auction_house.can_change_sale_price)
+                {
+                    return Err(ErrorCode::SaleRequiresSigner.into());
+                }
             }
         }
 
@@ -1167,7 +1170,6 @@ pub struct ExecuteSale<'info> {
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
     ata_program: Program<'info, AssociatedToken>,
-    program: UncheckedAccount<'info>,
     rent: Sysvar<'info, Rent>,
 }
 

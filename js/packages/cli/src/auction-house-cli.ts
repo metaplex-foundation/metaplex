@@ -22,6 +22,7 @@ import {
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 import { getPriceWithMantissa } from './helpers/various';
 import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
+import { decodeMetadata, Metadata } from './helpers/schema';
 
 program.version('0.0.1');
 log.setLevel('info');
@@ -201,7 +202,7 @@ programCommand('sell')
     'If this auction house requires sign off, pass in keypair for it',
   )
   .option(
-    '-aks, --auction-house-signs <string>',
+    '-aks, --auction-house-signs',
     'If you want to simulate the auction house changing the price without your sign off',
   )
   .option('-b, --buy-price <string>', 'Price you wish to sell for')
@@ -329,7 +330,7 @@ programCommand('sell')
 
     await sendTransactionWithRetryWithKeypair(
       anchorProgram.provider.connection,
-      walletKeyPair,
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
       [instruction],
       signers,
       'max',
@@ -340,6 +341,222 @@ programCommand('sell')
       tokenSize,
       mint,
       'for sale for',
+      buyPrice,
+      'from your account with Auction House',
+      auctionHouse,
+    );
+  });
+
+programCommand('execute_sale')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-ak, --auction-house-keypair <string>',
+    'If this auction house requires sign off, pass in keypair for it',
+  )
+  .option(
+    '-aks, --auction-house-signs',
+    'If you want to simulate the auction house executing the sale without another signer',
+  )
+  .option('-b, --buy-price <string>', 'Price you wish to sell for')
+  .option('-m, --mint <string>', 'Mint of the token to purchase')
+  .option('-t, --token-size <string>', 'Amount of tokens you want to sell')
+  .option('-bw, --buyer-wallet <string>', 'Buyer wallet')
+  .option('-sw, --seller-wallet <string>', 'Buyer wallet')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const {
+      keypair,
+      env,
+      auctionHouse,
+      auctionHouseKeypair,
+      buyPrice,
+      mint,
+      tokenSize,
+      auctionHouseSigns,
+      buyerWallet,
+      sellerWallet,
+    } = cmd.opts();
+
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const mintKey = new web3.PublicKey(mint);
+
+    const auctionHouseKeypairLoaded = auctionHouseKeypair
+      ? loadWalletKey(auctionHouseKeypair)
+      : null;
+    const anchorProgram = await loadAuctionHouseProgram(
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
+      env,
+    );
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+    const buyerWalletKey = new web3.PublicKey(buyerWallet);
+    const sellerWalletKey = new web3.PublicKey(sellerWallet);
+
+    //@ts-ignore
+    const isNative = auctionHouseObj.treasuryMint.equals(WRAPPED_SOL_MINT);
+
+    const buyPriceAdjusted = new BN(
+      await getPriceWithMantissa(
+        buyPrice,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair,
+        anchorProgram,
+      ),
+      undefined,
+      'le',
+    );
+
+    const tokenSizeAdjusted = new BN(
+      await getPriceWithMantissa(
+        tokenSize,
+        mintKey,
+        walletKeyPair,
+        anchorProgram,
+      ),
+      undefined,
+      'le',
+    );
+
+    const tokenAccountKey = (await getAtaForMint(mintKey, sellerWalletKey))[0];
+
+    const buyerTradeState = (
+      await getAuctionHouseTradeState(
+        auctionHouseKey,
+        buyerWalletKey,
+        tokenAccountKey,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        mintKey,
+        tokenSizeAdjusted,
+        buyPriceAdjusted,
+      )
+    )[0];
+
+    const sellerTradeState = (
+      await getAuctionHouseTradeState(
+        auctionHouseKey,
+        sellerWalletKey,
+        tokenAccountKey,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        mintKey,
+        tokenSizeAdjusted,
+        buyPriceAdjusted,
+      )
+    )[0];
+
+    const [escrowPaymentAccount, bump] = await getAuctionHouseBuyerEscrow(
+      auctionHouseKey,
+      buyerWalletKey,
+    );
+    const metadata = await getMetadata(mintKey);
+
+    const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
+      metadata,
+    );
+    const metadataDecoded: Metadata = decodeMetadata(
+      Buffer.from(metadataObj.data),
+    );
+
+    const remainingAccounts = [];
+    for (let i = 0; i < metadataDecoded.data.creators.length; i++) {
+      remainingAccounts.push({
+        pubkey: new web3.PublicKey(metadataDecoded.data.creators[i].address),
+        isWritable: true,
+        isSigner: false,
+      });
+      remainingAccounts.push({
+        pubkey: (
+          await getAtaForMint(
+            mintKey,
+            remainingAccounts[remainingAccounts.length - 1].pubkey,
+          )
+        )[0],
+        isWritable: true,
+        isSigner: false,
+      });
+    }
+    const signers = [];
+    //@ts-ignore
+    const tMint: web3.PublicKey = auctionHouseObj.treasuryMint;
+
+    const instruction = await anchorProgram.instruction.executeSale(
+      bump,
+      buyPriceAdjusted,
+      tokenSizeAdjusted,
+      {
+        accounts: {
+          buyer: buyerWalletKey,
+          seller: sellerWalletKey,
+          metadata,
+          tokenAccount: tokenAccountKey,
+          tokenMint: mintKey,
+          escrowPaymentAccount,
+          treasuryMint: tMint,
+          sellerPaymentReceiptAccount: isNative
+            ? sellerWalletKey
+            : (
+                await getAtaForMint(tMint, sellerWalletKey)
+              )[0],
+          buyerReceiptTokenAccount: (
+            await getAtaForMint(mintKey, buyerWalletKey)
+          )[0],
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          auctionHouse: auctionHouseKey,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          //@ts-ignore
+          auctionHouseTreasury: auctionHouseObj.auctionHouseTreasury,
+          sellerTradeState,
+          buyerTradeState,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: web3.SystemProgram.programId,
+          ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+        remainingAccounts,
+        signers,
+      },
+    );
+
+    console.log('instruction', instruction);
+
+    if (auctionHouseKeypairLoaded) {
+      signers.push(auctionHouseKeypairLoaded);
+
+      instruction.keys
+        .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    if (!auctionHouseSigns) {
+      instruction.keys
+        .filter(k => k.pubkey.equals(walletKeyPair.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Accepted',
+      tokenSize,
+      mint,
+      'sale from wallet',
+      sellerWalletKey.toBase58(),
+      'to',
+      buyerWalletKey.toBase58(),
+      'for',
       buyPrice,
       'from your account with Auction House',
       auctionHouse,
