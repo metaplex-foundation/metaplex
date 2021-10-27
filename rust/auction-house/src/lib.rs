@@ -615,8 +615,8 @@ pub mod auction_house {
 
         let is_native = treasury_mint.key() == spl_token::native_mint::id();
 
-        if buyer_price == 0 && !authority_clone.is_signer {
-            return Err(ErrorCode::CannotMatchFreeSalesWithoutAuctionHouseSignoff.into());
+        if buyer_price == 0 && !authority_clone.is_signer && !seller.is_signer {
+            return Err(ErrorCode::CannotMatchFreeSalesWithoutAuctionHouseOrSellerSignoff.into());
         }
 
         let token_account_mint = get_mint_from_token_account(&token_account_clone)?;
@@ -1380,8 +1380,8 @@ pub enum ErrorCode {
     InvalidTokenAmount,
     #[msg("Both parties need to agree to this sale")]
     BothPartiesNeedToAgreeToSale,
-    #[msg("Cannot match free sales unless the auction house signs off")]
-    CannotMatchFreeSalesWithoutAuctionHouseSignoff,
+    #[msg("Cannot match free sales unless the auction house or seller signs off")]
+    CannotMatchFreeSalesWithoutAuctionHouseOrSellerSignoff,
     #[msg("This sale requires a signer")]
     SaleRequiresSigner,
     #[msg("Old seller not initialized")]
