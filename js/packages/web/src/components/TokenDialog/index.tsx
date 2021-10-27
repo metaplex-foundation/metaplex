@@ -5,8 +5,9 @@ import { Row, Col, Typography, Modal, Tabs, Input, List } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenCircle } from "../Custom";
-import { MetaplexModal } from "@oyster/common";
+import { MetaplexModal, shortenAddress, toPublicKey } from "@oyster/common";
 
+const { Search } = Input;
 
 const { TabPane } = Tabs;
 
@@ -69,12 +70,24 @@ export default function TokenDialog({
           t.name.toLowerCase().startsWith(filter) ||
           t.address.toLowerCase().startsWith(filter)
       );
+
+  const validateTokenMint = (quoteMintAddress: string) => {
+
+    if (toPublicKey(quoteMintAddress).toBuffer().length) {
+        console.log("MINT OK")
+        setMint(toPublicKey(quoteMintAddress))
+        onClose()
+    }
+
+  }
+
   return (
     <MetaplexModal
       visible={open}
       onCancel={onClose}
       bodyStyle={{ padding: '25px 0 0 0' }}
     >
+
       <Col className={'dialog-header'}>
         <Typography style={{ paddingBottom: "16px", textAlign: 'center', textTransform: 'uppercase', fontWeight: 600 }}>
           Select a token as your auction mint
@@ -102,6 +115,15 @@ export default function TokenDialog({
             />
           ))}
         </List>
+        <Search
+          enterButton="Go!"
+          style={{}}
+          className="input search-text-field"
+          placeholder="Can't find your token? set it here!"
+          allowClear
+          size="large"
+          onSearch={(e) => validateTokenMint(e)}
+        />
       </div>
 
       <Tabs
@@ -171,17 +193,19 @@ export function TokenIcon({ mint, style }: { mint: PublicKey; style: any }) {
   );
 }
 
-function TokenName({ mint, style }: { mint: PublicKey; style?: any }) {
+function TokenName({ mint, style }: { mint: PublicKey; style?: any}) {
   const tokenMap = useTokenList().tokenMap;
   let tokenInfo = tokenMap.get(mint.toString());
+  let tokenSymbol = tokenInfo? tokenInfo.symbol: "CUSTOM"
+  let tokenName = tokenInfo? tokenInfo.name: "Custom Token"
 
   return (
     <div style={{ marginLeft: "16px", overflow: 'hidden' }}>
       <div style={{ fontWeight: 500, color: 'white', }}>
-        {tokenInfo?.symbol}
+        {tokenInfo? tokenName:`${shortenAddress(mint.toBase58())}`}
       </div>
       <div color="textSecondary" style={{ fontSize: "14px", color: '#797A8C', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', }}>
-        {tokenInfo?.name}
+        {tokenName}
       </div>
     </div>
   );

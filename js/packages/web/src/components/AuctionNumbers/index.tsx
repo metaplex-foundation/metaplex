@@ -62,7 +62,7 @@ export const AuctionNumbers = (props: {
         <>
           {(isUpcoming || bids.length === 0 || auctionView.isInstantSale) && (
             <AmountLabel
-              displaySymbol={tokenInfo.symbol}
+              displaySymbol={tokenInfo?.symbol || "CUSTOM"}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
               title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
               tokenInfo = {tokenInfo}
@@ -74,7 +74,7 @@ export const AuctionNumbers = (props: {
           )}
           {!auctionView.isInstantSale && isStarted && bids.length > 0 && (
             <AmountLabel
-            displaySymbol={tokenInfo.symbol}
+            displaySymbol={tokenInfo?.symbol || "CUSTOM"}
               style={{ marginBottom: props.showAsRow ? 0 : 10 }}
               containerStyle={{
                 flexDirection: props.showAsRow ? ' row' : 'column',

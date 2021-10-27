@@ -349,11 +349,11 @@ export const AuctionView = () => {
                     {nftCount === undefined ? (
                       <Skeleton paragraph={{ rows: 0 }} />
                     ) : (
-                      `${tokenInfo?.name} ($${tokenInfo?.symbol})`
+                      `${tokenInfo?.name||"Custom Token"} ($${tokenInfo?.symbol|| "CUSTOM"})`
                     )}
                     <ClickToCopy
                       className="copy-pubkey"
-                      copyText={tokenInfo?.address}
+                      copyText={tokenInfo? tokenInfo?.address: auction?.auction.info.tokenMint || ""}
                     />
                   </span>
                 </div>
@@ -477,7 +477,7 @@ const BidLine = (props: {
                     flexDirection: 'row',
                     alignItems: 'center',
                   }}
-                  displaySymbol={tokenInfo.symbol}
+                  displaySymbol={tokenInfo?.symbol || "CUSTOM"}
                   iconSize={24}
                   amount={formatTokenAmount(bid.info.lastBid, mint)}
                 />
@@ -521,7 +521,7 @@ const BidLine = (props: {
                   flexDirection: 'row',
                   alignItems: 'center',
                 }}
-                displaySymbol={tokenInfo.symbol}
+                displaySymbol={tokenInfo?.symbol || "CUSTOM"}
                 tokenInfo={tokenInfo}
                 iconSize={24}
                 amount={formatTokenAmount(bid.info.lastBid, mint)}

@@ -536,7 +536,7 @@ export const AuctionCard = ({
             <div className="show-place-bid">
               <AmountLabel
                 title="in your wallet"
-                displaySymbol={tokenInfo.symbol}
+                displaySymbol={tokenInfo?.symbol || "CUSTOM"}
                 style={{ marginBottom: 0 }}
                 amount={balance.balance}
                 tokenInfo={tokenInfo}
