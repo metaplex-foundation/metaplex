@@ -169,6 +169,8 @@ function getPhase(
   const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
   const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
 
+  if (!fairLaunch) return Phase.Phase4;
+
   if (phaseOne && curr < phaseOne) {
     return Phase.Phase0;
   } else if (phaseOneEnd && curr <= phaseOneEnd) {
@@ -192,7 +194,7 @@ function getPhase(
 
 export interface HomeProps {
   candyMachineId?: anchor.web3.PublicKey;
-  fairLaunchId: anchor.web3.PublicKey;
+  fairLaunchId?: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
   txTimeout: number;
@@ -208,6 +210,7 @@ const isWinner = (
   fairLaunch: FairLaunchAccount | undefined,
   fairLaunchBalance: number,
 ): boolean => {
+  if (!fairLaunch) return true;
   if (fairLaunchBalance > 0) return true;
   if (
     !fairLaunch?.lottery.data ||
@@ -345,40 +348,41 @@ const Home = (props: HomeProps) => {
           anchorWallet.publicKey,
         );
         setYourSOLBalance(balance);
+        if (props.fairLaunchId) {
+          const state = await getFairLaunchState(
+            anchorWallet,
+            props.fairLaunchId,
+            props.connection,
+          );
 
-        const state = await getFairLaunchState(
-          anchorWallet,
-          props.fairLaunchId,
-          props.connection,
-        );
+          setFairLaunch(state);
 
-        setFairLaunch(state);
+          try {
+            if (state.state.tokenMint) {
+              const fairLaunchBalance =
+                await props.connection.getTokenAccountBalance(
+                  (
+                    await getAtaForMint(
+                      state.state.tokenMint,
+                      anchorWallet.publicKey,
+                    )
+                  )[0],
+                );
 
-        try {
-          if (state.state.tokenMint) {
-            const fairLaunchBalance =
-              await props.connection.getTokenAccountBalance(
-                (
-                  await getAtaForMint(
-                    state.state.tokenMint,
-                    anchorWallet.publicKey,
-                  )
-                )[0],
-              );
-
-            if (fairLaunchBalance.value) {
-              setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
+              if (fairLaunchBalance.value) {
+                setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
+              }
             }
+          } catch (e) {
+            console.log('Problem getting fair launch token balance');
+            console.log(e);
           }
-        } catch (e) {
-          console.log('Problem getting fair launch token balance');
-          console.log(e);
+          setContributed(
+            (
+              state.state.currentMedian || state.state.data.priceRangeStart
+            ).toNumber() / LAMPORTS_PER_SOL,
+          );
         }
-        setContributed(
-          (
-            state.state.currentMedian || state.state.data.priceRangeStart
-          ).toNumber() / LAMPORTS_PER_SOL,
-        );
       } catch (e) {
         console.log('Problem getting fair launch state');
         console.log(e);
