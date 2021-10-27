@@ -31,6 +31,7 @@ import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
 import { loadCache, saveCache } from './helpers/cache';
 import { mint } from './commands/mint';
+import { withdraw } from './commands/withdraw';
 import { signMetadata } from './commands/sign';
 import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
@@ -633,6 +634,16 @@ programCommand('update_candy_machine')
     if (lamports)
       log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
     log.info('update_candy_machine finished', tx);
+  });
+
+programCommand('withdraw')
+  .option('-c, --configAddy <string>', 'Which config?')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, configAddy } = cmd.opts();
+    console.log(configAddy);
+    const tx = await withdraw(keypair, env, new PublicKey(configAddy));
+
+    log.info('withdrawn. Now you rich again gib STACC some.', tx);
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {
