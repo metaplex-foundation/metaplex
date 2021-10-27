@@ -50,6 +50,7 @@ import {
 } from "../contexts";
 import {
   MERKLE_DISTRIBUTOR_ID,
+  MERKLE_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
   shortenAddress,
@@ -537,6 +538,7 @@ export const Create = (
           ...root,
           ...new BN(totalClaim).toArray("le", 8),
           ...new BN(claimants.length).toArray("le", 8),
+          ...MERKLE_TEMPORAL_SIGNER.toBuffer(),
         ])
     })
 

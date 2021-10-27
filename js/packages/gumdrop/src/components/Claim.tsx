@@ -16,6 +16,7 @@ import {
 import {
   PublicKey,
   SystemProgram,
+  Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
@@ -27,12 +28,16 @@ import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
 
+// temporal signing
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda"
+
 import {
   useConnection,
   Connection,
 } from "../contexts";
 import {
   MERKLE_DISTRIBUTOR_ID,
+  MERKLE_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
 } from "../utils";
@@ -65,7 +70,19 @@ export const Claim = (
 
   const [editable, setEditable] = React.useState(!allFieldsPopulated);
 
-  const submit = async (e : React.SyntheticEvent) => {
+  // temporal verification
+  const [transaction, setTransaction] = React.useState<Transaction | null>(null);
+  const [OTPStr, setOTPStr] = React.useState("");
+
+  const client = new LambdaClient({
+    region: "us-east-2",
+    credentials: {
+      accessKeyId: "AKIAUX7VGBD25I3UONGI",
+      secretAccessKey: "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",
+    },
+  });
+
+  const sendOTP = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!wallet.connected || wallet.publicKey === null) {
@@ -104,16 +121,14 @@ export const Claim = (
       return ret;
     });
 
-    console.log("Proof", proof);
-
-    console.log(distributorInfo.mint.toBase58(), handle, pin);
+    const pdaSeeds = [
+      distributorInfo.mint.toBuffer(),
+      Buffer.from(handle),
+      Buffer.from(pin),
+    ];
 
     const [claimantPda, ] = await PublicKey.findProgramAddress(
-      [
-        distributorInfo.mint.toBuffer(),
-        Buffer.from(handle),
-        Buffer.from(pin),
-      ],
+      pdaSeeds,
       MERKLE_DISTRIBUTOR_ID
     );
 
@@ -124,17 +139,8 @@ export const Claim = (
       ]
     ));
 
-    console.log(leaf, claimantPda.toBase58(), MerkleTree.nodeHash(leaf));
-
     const matches = MerkleTree.verifyClaim(
-      Buffer.from(keccak_256.digest(
-        [...new BN(index).toArray("le", 8),
-         ...claimantPda.toBuffer(),
-         ...new BN(amount).toArray("le", 8),
-        ]
-      )),
-      proof,
-      Buffer.from(distributorInfo.root)
+      leaf, proof, Buffer.from(distributorInfo.root)
     );
 
     if (!matches) {
@@ -188,6 +194,7 @@ export const Claim = (
             { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
             { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
             { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
+            { pubkey: MERKLE_TEMPORAL_SIGNER  , isSigner: true , isWritable: false } ,
             { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,  // payer
             { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
             { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
@@ -203,34 +210,142 @@ export const Claim = (
         ])
     })
 
-    const claimResult = await Connection.sendTransactionWithRetry(
-      connection,
-      wallet,
-      [
-        ...setup,
-        claimAirdrop
-      ],
-      []
+    const instructions = [...setup, claimAirdrop];
+
+    let transaction = new Transaction();
+    instructions.forEach((instruction) => transaction.add(instruction));
+    transaction.recentBlockhash = (
+      await connection.getRecentBlockhash("singleGossip")
+    ).blockhash;
+
+    transaction.setSigners(
+      // fee payed by the wallet owner
+      wallet.publicKey,
+      MERKLE_TEMPORAL_SIGNER
     );
 
-    console.log(claimResult);
-    if (typeof claimResult === "string") {
-      notify({
-        message: "Claim failed",
-        description: claimResult,
-      });
-    } else {
-      notify({
-        message: "Claim succeeded",
-        description: (
-          <HyperLink href={Connection.explorerLinkFor(claimResult.txid, connection)}>
-            View transaction on explorer
-          </HyperLink>
-        ),
-      });
+    {
+      const params = {
+        FunctionName: "send-OTP",
+        LogType: "Tail",
+        Payload: new Uint8Array(Buffer.from(JSON.stringify({
+          transaction: bs58.encode(transaction.serializeMessage()),
+          seeds: pdaSeeds,
+        }))),
+      };
+
+      const res = await client.send(new InvokeCommand(params));
+      console.log(res);
+      if (!res.Payload) throw new Error("F"); // TODO
+
+      const resp = JSON.parse(Buffer.from(res.Payload).toString());
+      if (resp.statusCode !== 200) {
+        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
+      }
     }
+
+    setTransaction(transaction);
   };
 
+  const verifyOTP = async (e : React.SyntheticEvent) => {
+    e.preventDefault();
+
+    if (!transaction) {
+      throw new Error(`Transaction not available for OTP verification`);
+    }
+
+    if (!wallet.connected || wallet.publicKey === null) {
+      throw new Error(`Wallet not connected`);
+    }
+
+    const OTP = Number(OTPStr);
+    if (isNaN(OTP) || OTPStr.length === 0) {
+      throw new Error(`Could not parse OTP ${OTPStr}`);
+    }
+
+    {
+      const params = {
+        FunctionName: "verify-OTP",
+        LogType: "Tail",
+        Payload: new Uint8Array(Buffer.from(JSON.stringify({
+          otp: OTP,
+          handle: handle,  // TODO?
+        }))),
+      };
+
+      const res = await client.send(new InvokeCommand(params));
+      console.log(res);
+      if (!res.Payload) throw new Error("F"); // TODO
+
+      const resp = JSON.parse(Buffer.from(res.Payload).toString());
+      if (resp.statusCode !== 200) {
+        throw new Error(`Failed to verify AWS OTP. ${JSON.stringify(resp)}`);
+      }
+
+      const sig = resp.body;
+      console.log("Sig", JSON.parse(sig), bs58.decode(JSON.parse(sig)));
+      transaction.addSignature(
+        MERKLE_TEMPORAL_SIGNER,
+        bs58.decode(JSON.parse(sig)));
+    }
+
+    const fullySigned = await wallet.signTransaction(transaction);
+
+    const claimResult = await Connection.sendSignedTransaction({
+      connection,
+      signedTransaction: fullySigned,
+    });
+
+    console.log(claimResult);
+    notify({
+      message: "Claim succeeded",
+      description: (
+        <HyperLink href={Connection.explorerLinkFor(claimResult.txid, connection)}>
+          View transaction on explorer
+        </HyperLink>
+      ),
+    });
+    setTransaction(null);
+  };
+
+  // TODO: nice stepper
+  if (transaction) {
+    return (
+      <Stack spacing={2}>
+        <TextField
+          style={{width: "60ch"}}
+          id="otp-text-field"
+          label="OTP"
+          value={OTPStr}
+          onChange={(e) => setOTPStr(e.target.value)}
+        />
+        <Box />
+        <Button
+          disabled={!wallet.connected || !OTPStr}
+          variant="contained"
+          color="success"
+          onClick={(e) => {
+            const wrap = async () => {
+              try {
+                await verifyOTP(e);
+              } catch (err) {
+                setTransaction(null);
+                notify({
+                  message: "Claim failed",
+                  description: `${err}`,
+                });
+              }
+            };
+            wrap();
+          }}
+        >
+          Claim Merkle Airdrop
+        </Button>
+      </Stack>
+    );
+  }
+
+  // TODO: rename
   return (
     <Stack spacing={2}>
       <Button
@@ -296,7 +411,7 @@ export const Claim = (
         onClick={(e) => {
           const wrap = async () => {
             try {
-              await submit(e);
+              await sendOTP(e);
             } catch (err) {
               notify({
                 message: "Claim failed",
