@@ -11,6 +11,7 @@ interface Props {
 export const CustomSelect = ({ option, defaultParam, onChange }: Props) => {
   return (
     <Form.Control
+      style={{ backgroundColor: "#2B3A6A" }}
       as="select"
       onChange={onChange}
       className="btn-secondary"
@@ -19,7 +20,7 @@ export const CustomSelect = ({ option, defaultParam, onChange }: Props) => {
     >
       {option.map(item => {
         return (
-          <option value={item}  key={item}>
+          <option value={item} key={item}>
             {item}
           </option>
         );
