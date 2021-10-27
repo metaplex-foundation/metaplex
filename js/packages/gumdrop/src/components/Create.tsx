@@ -42,6 +42,7 @@ import * as bs58 from "bs58";
 
 // claim distribution
 import Mailchimp from "@mailchimp/mailchimp_transactional"
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 
 import {
   useConnection,
@@ -85,9 +86,11 @@ const setupMailchimp = (auth : string, source : string) => {
   ) => {
     const message = {
       from_email: source,
-      subject: "Merkle Airdrop",
-      text: `You received ${info.amount} airdropped token(s) (${mintUrl}). `
-          + `Claim them at ${info.url}`,
+      // TODO: add to web front-end
+      subject: "Token Drop",
+      text: `You received ${info.amount} token(s) `
+          + `(click <a href="${mintUrl}">here</a> to view the mint on explorer). `
+          + `<a href="${info.url}">Click here to claim them!</a>`,
       to: [
         {
           email: info.handle,
@@ -101,6 +104,57 @@ const setupMailchimp = (auth : string, source : string) => {
     console.log(response);
     if (!response[0] || response[0].status !== "sent") {
       throw new Error(`Mailchimp failed to send email: ${response[0].reject_reason}`);
+    }
+  };
+}
+
+const setupSes = (authStr : string, source : string) => {
+  const auth = JSON.parse(authStr);
+  console.log(`SES auth ${auth}`);
+  const client = new SESClient({
+    region: "us-east-2",
+    credentials: {
+      accessKeyId: auth.accessKeyId,
+      secretAccessKey: auth.secretAccessKey,
+    },
+  });
+
+  return async (
+    info : ClaimantInfo,
+    mintUrl: string,
+  ) => {
+    const message = {
+      Destination: {
+        ToAddresses: [
+          info.handle,
+        ]
+      },
+      Message: {
+        Subject: {
+          Data: "Token Drop",
+          Charset: "utf-8",
+        },
+        Body: {
+          Html: {
+            Data: `You received ${info.amount} token(s) `
+                + `(click <a href="${mintUrl}">here</a> to view the mint on explorer). `
+                + `<a href="${info.url}">Click here to claim them!</a>`,
+            Charset: "utf-8",
+          },
+        },
+      },
+      Source: source,
+    };
+    console.log(message);
+
+    try {
+      const response = await client.send(new SendEmailCommand(message));
+      console.log(response);
+      if (response.$metadata.httpStatusCode !== 200) {
+      //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 }
@@ -126,6 +180,8 @@ const setupSender = (
 ) => {
   if (method === "Mailchimp") {
     return setupMailchimp(auth, source);
+  } else if (method === "AWS SES") {
+    return setupSes(auth, source);
   } else if (method === "Manual") {
     return setupManual(auth, source);
   } else {
@@ -518,7 +574,7 @@ export const Create = (
       throw new Error(createResult);
     } else {
       notify({
-        message: "Create succeeded",
+        message: "Distributor creation succeeded",
         description: (
           <HyperLink href={Connection.explorerLinkFor(createResult.txid, connection)}>
             View transaction on explorer
@@ -673,8 +729,6 @@ export const Create = (
           try {
             await submit(e);
           } catch (err) {
-            setBaseKey(undefined);
-            setClaimURLs([]);
             notify({
               message: "Create failed",
               description: `${err}`,
@@ -720,6 +774,7 @@ export const Create = (
           style={{textAlign: "left"}}
         >
           <MenuItem value={"Mailchimp"}>Mailchimp</MenuItem>
+          <MenuItem value={"AWS SES"}>AWS SES</MenuItem>
           <MenuItem value={"Manual"}>Manual</MenuItem>
         </Select>
       </FormControl>

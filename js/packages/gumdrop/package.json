@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://lwus.github.io/merkle-airdrop/",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.38.0",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@fontsource/open-sans": "^4.5.0",
