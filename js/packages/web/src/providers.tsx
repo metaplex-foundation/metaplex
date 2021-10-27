@@ -4,7 +4,7 @@ import {
   StoreProvider,
   WalletProvider,
   MetaProvider,
-  CollectionsProvider
+  CollectionsProvider,
 } from '@oyster/common';
 import React, { FC } from 'react';
 import { ConfettiProvider } from './components/Confetti';

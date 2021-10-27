@@ -228,6 +228,38 @@ export const getAuction = async (id: string) => {
   }
 };
 
+
+export const getAuctions = async () => {
+  try {
+    const response: any = await axios.get(
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/auctions`,
+    );
+
+    let arr: any = [];
+    response.data.map(item => {
+      const account = {
+        data: Buffer.from(item.account.data, 'base64'),
+        executable: item.account.executable,
+        lamports: item.account.lamports,
+        owner: item.account.owner,
+        rentEpoch: item.account.owner,
+      };
+
+      const obj = {
+        account: account,
+        pubkey: item.pubkey,
+      };
+      const buffer = AuctionParser(obj.pubkey, obj.account);
+      arr.push(buffer);
+    });
+
+    return arr;
+  } catch (err) {
+    console.log('getAuction');
+    console.log(err);
+  }
+};
+
 export const getCreator = async () => {
   try {
     const response: any = await axios.get(

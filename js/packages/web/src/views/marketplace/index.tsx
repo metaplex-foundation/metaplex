@@ -54,7 +54,7 @@ export const MarketplaceView = () => {
     let min = 0;
     let owner: any = [];
 
-    collection.map(item => {
+    collection?.map(item => {
       if (item.info.auction && !!item.account.price) {
         arr.push(item);
         if (item.account.price > max) max = item.account.price;
