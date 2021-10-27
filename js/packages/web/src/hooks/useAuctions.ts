@@ -36,7 +36,7 @@ import {
   getBidderMetadataByAuctionAndBidder,
   getBidderPotsByAuctionAndBidder,
   getBidRedemptionV2sByAuctionManagerAndWinningIndexby,
-  getGidRedemptionV2sByAuctionManagerAndWinningIndex,
+  getGidRedemptionsByAuctionManagerAndWinningIndex,
   getMasterEditionsbyKey,
   getMasterEditionsbyMint,
   getMetadataByMasterEdition,
@@ -83,11 +83,13 @@ type CachedRedemptionKeys = Record<
 export function useStoreAuctionsList() {
   const [result, setResult] = useState<any[]>([]);
 
+  const getResultAsync = async () => {
+    const arr = await getAuctions();
+    if (arr.length > 0) setResult(arr);
+  };
+
   useEffect(() => {
-    (async () => {
-      const arr = await getAuctions();
-      if (arr.length > 0) setResult(arr);
-    })();
+    getResultAsync();
   }, []);
 
   return result;
@@ -100,49 +102,53 @@ export function useCachedRedemptionKeysByWallet() {
   const [cachedRedemptionKeys, setCachedRedemptionKeys] =
     useState<CachedRedemptionKeys>({});
 
-  useEffect(() => {
-    if (!publicKey) return;
-    (async () => {
-      const temp: CachedRedemptionKeys = {};
-      await createPipelineExecutor(
-        auctions.values(),
-        async auction => {
-          if (!cachedRedemptionKeys[auction.pubkey]) {
-            const key = await getBidderKeys(auction.pubkey, publicKey.toBase58());
-            let res = await getGidRedemptionV2sByAuctionManagerAndWinningIndex(
-              'bidRedemptionTicketsV1',
+  const getGidRedemptions = async () => {
+    const temp: CachedRedemptionKeys = {};
+    await createPipelineExecutor(
+      auctions.values(),
+      async auction => {
+        if (!cachedRedemptionKeys[auction.pubkey]) {
+          const key = await getBidderKeys(
+            auction.pubkey,
+            publicKey!.toBase58(),
+          );
+          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+            'bidRedemptionTicketsV1',
+            key.bidRedemption,
+          );
+          if (_.isEmpty(res)) {
+            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+              'bidRedemptionTicketsV2',
               key.bidRedemption,
             );
-            if (!res || res.length == 0) {
-              res = await getGidRedemptionV2sByAuctionManagerAndWinningIndex(
-                'bidRedemptionTicketsV2',
-                key.bidRedemption,
-              );
-            }
-            if (_.isEmpty(res)) res = false;
-            temp[auction.pubkey] = res
-              ? res
-              : { pubkey: key.bidRedemption, info: null };
-          } else if (!cachedRedemptionKeys[auction.pubkey].info) {
-            let req = await getGidRedemptionV2sByAuctionManagerAndWinningIndex(
-              'bidRedemptionTicketsV1',
+          }
+          if (_.isEmpty(res))
+            temp[auction.pubkey] = { pubkey: key.bidRedemption, info: null };
+          else temp[auction.pubkey] = res;
+        } else if (!cachedRedemptionKeys[auction.pubkey].info) {
+          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+            'bidRedemptionTicketsV1',
+            cachedRedemptionKeys[auction.pubkey].pubkey,
+          );
+          if (_.isEmpty(res)) {
+            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+              'bidRedemptionTicketsV2',
               cachedRedemptionKeys[auction.pubkey].pubkey,
             );
-            if (!req || req.length == 0) {
-              req = await getGidRedemptionV2sByAuctionManagerAndWinningIndex(
-                'bidRedemptionTicketsV2',
-                cachedRedemptionKeys[auction.pubkey].pubkey,
-              );
-            }
-            if (_.isEmpty(req)) req = false;
-            temp[auction.pubkey] = req || cachedRedemptionKeys[auction.pubkey];
           }
-        },
-        { delay: 1, sequence: 2 },
-      );
+          if (_.isEmpty(res))
+            temp[auction.pubkey] = cachedRedemptionKeys[auction.pubkey];
+          else temp[auction.pubkey] = res;
+        }
+      },
+      { delay: 0, sequence: 2 },
+    );
+    setCachedRedemptionKeys(temp);
+  };
 
-      setCachedRedemptionKeys(temp);
-    })();
+  useEffect(() => {
+    if (!publicKey) return;
+    getGidRedemptions();
   }, [auctions, publicKey]);
 
   return cachedRedemptionKeys;
@@ -154,27 +160,29 @@ export const useAuctions = (state?: AuctionViewState) => {
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const auctions = useStoreAuctionsList();
 
-  useEffect(() => {
-    (async () => {
-      const auctionViews: AuctionView[] = [];
+  const getAuctionViewsAsync = async () => {
+    const auctionViews: AuctionView[] = [];
 
-      await createPipelineExecutor(
-        auctions.values(),
-        async auction => {
-          const auctionView = await processAccountsIntoAuctionView(
-            publicKey?.toBase58(),
-            auction,
-            cachedRedemptionKeys,
-            state,
-          );
-          if (auctionView) {
-            auctionViews.push(auctionView);
-          }
-        },
-        { delay: 1, sequence: 2 },
-      );
-      setAuctionViews(auctionViews.sort(sortByEnded));
-    })();
+    await createPipelineExecutor(
+      auctions.values(),
+      async auction => {
+        const auctionView = await processAccountsIntoAuctionView(
+          publicKey?.toBase58(),
+          auction,
+          cachedRedemptionKeys,
+          state,
+        );
+        if (auctionView) {
+          auctionViews.push(auctionView);
+        }
+      },
+      { delay: 1, sequence: 2 },
+    );
+    setAuctionViews(auctionViews.sort(sortByEnded));
+  };
+
+  useEffect(() => {
+    getAuctionViewsAsync();
   }, [state, auctions, publicKey, cachedRedemptionKeys, setAuctionViews]);
 
   return auctionViews;

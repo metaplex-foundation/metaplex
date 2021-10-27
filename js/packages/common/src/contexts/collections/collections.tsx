@@ -42,11 +42,13 @@ const CollectionsContext = React.createContext<CollectionsContextState>({
 export function CollectionsProvider({ children = null as any }) {
   const [metadata, setMetadata] = useState<ParsedAccount<Metadata>[]>([]);
 
+  const getMetadataAsync = async () => {
+    const metadata = await getMetadata();
+    setMetadata(metadata);
+  };
+
   useEffect(() => {
-    (async () => {
-      const metadata = await getMetadata();
-      setMetadata(metadata);
-    })();
+    getMetadataAsync();
   }, []);
 
   const connection = useConnection();

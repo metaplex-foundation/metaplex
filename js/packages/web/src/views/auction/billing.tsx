@@ -95,32 +95,33 @@ function useWinnerPotsByBidderKey(
     return [...winners].reverse().slice(0, winnersLength);
   }, [winners, winnersLength]);
 
+  const getPotsAsync = async () => {
+    const promises: Promise<{ winner: Bid; key: StringPublicKey }>[] =
+      truWinners.map(winner =>
+        getBidderPotKey({
+          auctionProgramId: PROGRAM_IDS.auction,
+          auctionKey: auction.pubkey,
+          bidderPubkey: winner.key,
+        }).then(key => ({
+          key,
+          winner,
+        })),
+      );
+    const values = await Promise.all(promises);
+
+    const newPots = values.reduce((agg, value) => {
+      const el = cache.get(value.key) as ParsedAccount<BidderPot>;
+      if (el) {
+        agg[value.winner.key] = el;
+      }
+
+      return agg;
+    }, {} as Record<string, ParsedAccount<BidderPot>>);
+
+    setPots(newPots);
+  };
   useEffect(() => {
-    (async () => {
-      const promises: Promise<{ winner: Bid; key: StringPublicKey }>[] =
-        truWinners.map(winner =>
-          getBidderPotKey({
-            auctionProgramId: PROGRAM_IDS.auction,
-            auctionKey: auction.pubkey,
-            bidderPubkey: winner.key,
-          }).then(key => ({
-            key,
-            winner,
-          })),
-        );
-      const values = await Promise.all(promises);
-
-      const newPots = values.reduce((agg, value) => {
-        const el = cache.get(value.key) as ParsedAccount<BidderPot>;
-        if (el) {
-          agg[value.winner.key] = el;
-        }
-
-        return agg;
-      }, {} as Record<string, ParsedAccount<BidderPot>>);
-
-      setPots(newPots);
-    })();
+    getPotsAsync();
   }, [truWinners, setPots]);
   return pots;
 }
@@ -227,7 +228,7 @@ function usePayoutTickets(
 
 export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   const { bidRedemptions } = useMeta();
-  
+
   const auctionKey = auctionView.auction.pubkey;
 
   const [participationBidRedemptionKeys, setParticipationBidRedemptionKeys] =
@@ -244,16 +245,16 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
 
   // Uncancelled bids or bids that were cancelled for refunds but only after redeemed
   // for participation
-  const usableBids = bids.filter(
-    b =>{
-    return(
+  const usableBids = bids.filter(b => {
+    return (
       !b.info.cancelled ||
       bidRedemptions[
         participationBidRedemptionKeys[b.pubkey]
       ]?.info.getBidRedeemed(
         auctionView.participationItem?.safetyDeposit.info.order || 0,
-      ))}
-  );
+      )
+    );
+  });
 
   let hasParticipation =
     auctionView.auctionManager.participationConfig !== undefined &&
@@ -344,20 +345,22 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
   );
 
   const arr: any[] = [];
-  
+
   useEffect(() => {
     const a = async () => {
       for (let i = 0; i < winnersThatCanBeEmptied.length; i++) {
         const pot = winnersThatCanBeEmptied[i];
-        await getBidderMetadataByAuctionAndBidder(auctionKey, pot.info.bidderAct).then(
-          value =>
-            arr.push({
-              metadata: value,
-              pot,
-            }),
+        await getBidderMetadataByAuctionAndBidder(
+          auctionKey,
+          pot.info.bidderAct,
+        ).then(value =>
+          arr.push({
+            metadata: value,
+            pot,
+          }),
         );
       }
-    }
+    };
     a();
   }, []);
   const bidsToClaim: {

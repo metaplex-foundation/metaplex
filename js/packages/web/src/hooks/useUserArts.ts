@@ -32,15 +32,17 @@ export const useUserArts = (): SafetyDepositDraft[] => {
     return prev;
   }, new Map<string, TokenAccount>());
   const [filtered, setFiltered] = useState<any>([]);
+
+  const getMetdataByCreatorAsync = async () => {
+    if (!key) return;
+    await getMetdataByCreator(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setFiltered(metadata);
+      }
+    });
+  };
   useEffect(() => {
-    (async () => {
-      if (!key) return;
-      await getMetdataByCreator(key).then(metadata => {
-        if (metadata && metadata.length > 0) {
-          setFiltered(metadata);
-        }
-      });
-    })();
+    getMetdataByCreatorAsync();
   }, [key]);
 
   const ownedMetadata = filtered.filter(
@@ -49,37 +51,41 @@ export const useUserArts = (): SafetyDepositDraft[] => {
       (accountByMint?.get(m.info.mint)?.info?.amount?.toNumber() || 0) > 0,
   );
 
+  const getEditionsKeyAsync = async () => {
+    for (let i = 0; i < ownedMetadata.length; i++) {
+      const m = ownedMetadata[i];
+      m.info.edition
+        ? possibleEditions.push(await getEditionsKey(m.info.edition))
+        : possibleEditions.push(undefined);
+    }
+  };
+
   const possibleEditions: any[] = [];
   useEffect(() => {
-    (async () => {
-      for (let i = 0; i < ownedMetadata.length; i++) {
-        const m = ownedMetadata[i];
-        m.info.edition
-          ? possibleEditions.push(await getEditionsKey(m.info.edition))
-          : possibleEditions.push(undefined);
-      }
-    })();
+    getEditionsKeyAsync();
   }, [key]);
 
   const possibleMasterEditions: any[] = [];
 
-  useEffect(() => {
-    (async () => {
-      for (let i = 0; i < ownedMetadata.length; i++) {
-        const m = ownedMetadata[i];
-        let res = await getMasterEditionsbyKey(
-          'masterEditionsV1',
+  const getMasterEditionsAsync = async () => {
+    for (let i = 0; i < ownedMetadata.length; i++) {
+      const m = ownedMetadata[i];
+      let res = await getMasterEditionsbyKey(
+        'masterEditionsV1',
+        m.info.masterEdition,
+      );
+      if (!res || res.length == 0) {
+        res = await getMasterEditionsbyKey(
+          'masterEditionsV2',
           m.info.masterEdition,
         );
-        if (!res || res.length == 0) {
-          res = await getMasterEditionsbyKey(
-            'masterEditionsV2',
-            m.info.masterEdition,
-          );
-        }
-        possibleMasterEditions.push(m.info.masterEdition ? res : undefined);
       }
-    })();
+      possibleMasterEditions.push(m.info.masterEdition ? res : undefined);
+    }
+  };
+
+  useEffect(() => {
+    getMasterEditionsAsync();
   }, [key]);
 
   const safetyDeposits: SafetyDepositDraft[] = [];

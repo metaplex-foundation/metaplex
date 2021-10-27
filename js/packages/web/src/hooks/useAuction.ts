@@ -16,19 +16,20 @@ export const useAuction = (id: StringPublicKey) => {
     useState<AuctionView | undefined>(undefined);
   const walletPubkey = publicKey?.toBase58();
 
-  useEffect(() => {
-    (async () => {
-      const auction = await getAuction(id);
-      const auctionView = await processAccountsIntoAuctionView(
-        walletPubkey,
-        auction,
-        cachedRedemptionKeys,
-        undefined,
-        existingAuctionView || undefined,
-      );
-      if (auctionView) setAuctionView(auctionView);
-    })();
-  }, [walletPubkey, cachedRedemptionKeys]);
+  const getAuctionAsync = async () => {
+    const auction = await getAuction(id);
+    const auctionView = await processAccountsIntoAuctionView(
+      walletPubkey,
+      auction,
+      cachedRedemptionKeys,
+      undefined,
+      existingAuctionView || undefined,
+    );
+    if (auctionView) setAuctionView(auctionView);
+  };
 
+  useEffect(() => {
+    getAuctionAsync();
+  }, [walletPubkey, cachedRedemptionKeys]);
   return existingAuctionView;
 };

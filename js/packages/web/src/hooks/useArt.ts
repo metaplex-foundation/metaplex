@@ -31,26 +31,33 @@ const metadataToArt = async (
   let supply: number | undefined = undefined;
 
   if (info) {
-    const a = await getMasterEditionsbyKey(
-      'masterEditionsV1',
-      info.masterEdition || '',
-    );
-    const b = await getMasterEditionsbyKey(
-      'masterEditionsV2',
-      info.masterEdition || '',
-    );
-    const masterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
-    const edition = await getEditionsbyKey(info.edition || '');
-    if (edition) {
+    let masterEdition;
+    if (info.masterEdition) {
       const a = await getMasterEditionsbyKey(
         'masterEditionsV1',
-        edition.info.parent || '',
+        info.masterEdition,
       );
       const b = await getMasterEditionsbyKey(
         'masterEditionsV2',
-        edition.info.parent || '',
+        info.masterEdition,
       );
-      const myMasterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+      masterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+    }
+    let edition;
+    if (info.edition) edition = await getEditionsbyKey(info.edition);
+    if (edition) {
+      let myMasterEdition;
+      if (edition.info.parent) {
+        const a = await getMasterEditionsbyKey(
+          'masterEditionsV1',
+          edition.info.parent || '',
+        );
+        const b = await getMasterEditionsbyKey(
+          'masterEditionsV2',
+          edition.info.parent || '',
+        );
+        myMasterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+      }
       if (myMasterEdition) {
         type = ArtType.Print;
         editionNumber = edition.info.edition.toNumber();
@@ -101,58 +108,59 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
   const [cachedBlob, setCachedBlob] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const getImageBlobAsync = async () => {
+    let response: Response;
+    let blob: Blob;
+    try {
+      response = await fetch(uri, { cache: 'force-cache' });
+
+      blob = await response.blob();
+
+      if (blob.size === 0) {
+        throw new Error('No content');
+      }
+    } catch {
+      try {
+        response = await fetch(uri, { cache: 'reload' });
+        blob = await response.blob();
+      } catch {
+        // If external URL, just use the uri
+        if (uri?.startsWith('http')) {
+          setCachedBlob(uri);
+        }
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (blob.size === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (cacheMesh) {
+      // extra caching for meshviewer
+      Cache.enabled = true;
+      Cache.add(uri, await blob.arrayBuffer());
+    }
+    const blobURI = URL.createObjectURL(blob);
+    cachedImages.set(uri, blobURI);
+    setCachedBlob(blobURI);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     if (!uri) {
       return;
     }
 
     const result = cachedImages.get(uri);
-
     if (result) {
       setCachedBlob(result);
       return;
     }
 
-    (async () => {
-      let response: Response;
-      let blob: Blob;
-      try {
-        response = await fetch(uri, { cache: 'force-cache' });
-
-        blob = await response.blob();
-
-        if (blob.size === 0) {
-          throw new Error('No content');
-        }
-      } catch {
-        try {
-          response = await fetch(uri, { cache: 'reload' });
-          blob = await response.blob();
-        } catch {
-          // If external URL, just use the uri
-          if (uri?.startsWith('http')) {
-            setCachedBlob(uri);
-          }
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (blob.size === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (cacheMesh) {
-        // extra caching for meshviewer
-        Cache.enabled = true;
-        Cache.add(uri, await blob.arrayBuffer());
-      }
-      const blobURI = URL.createObjectURL(blob);
-      cachedImages.set(uri, blobURI);
-      setCachedBlob(blobURI);
-      setIsLoading(false);
-    })();
+    getImageBlobAsync();
   }, [uri, setCachedBlob, setIsLoading]);
 
   return { cachedBlob, isLoading };
@@ -163,20 +171,22 @@ export const useArt = (key?: StringPublicKey) => {
   const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
   const [art, setArt] = useState<any>({});
 
+  const getMetdataByPubKeyAsync = async () => {
+    if (!key) return;
+    await getMetdataByPubKey(key).then(metadata => {
+      if (metadata && metadata.length > 0) {
+        setAccount(metadata[0]);
+      }
+    });
+    await getCreator().then(creators => {
+      if (creators && creators.length > 0) {
+        setCreatorsByCreator(creators);
+      }
+    });
+  };
+
   useEffect(() => {
-    (async () => {
-      if (!key) return;
-      await getMetdataByPubKey(key).then(metadata => {
-        if (metadata && metadata.length > 0) {
-          setAccount(metadata[0]);
-        }
-      });
-      await getCreator().then(creators => {
-        if (creators && creators.length > 0) {
-          setCreatorsByCreator(creators);
-        }
-      });
-    })();
+    getMetdataByPubKeyAsync();
   }, [key]);
 
   useEffect(() => {

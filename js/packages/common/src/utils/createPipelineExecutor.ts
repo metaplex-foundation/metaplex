@@ -46,9 +46,11 @@ export async function createPipelineExecutor<T>(
     }
     await next();
   }
+
   const result = new Array<Promise<void>>(jobsCount);
   for (let i = 0; i < jobsCount; i++) {
     result[i] = next();
   }
+
   await Promise.all(result);
 }

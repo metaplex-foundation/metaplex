@@ -572,8 +572,8 @@ export const AuctionCard = ({
                     auctionView,
                     accountByMint,
                     bids,
-                  ).then(async () => {
-                    await update();
+                  ).then(() => {
+                    update();
                     setShowBidModal(false);
                     setShowRedeemedBidModal(true);
                   });

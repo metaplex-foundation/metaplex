@@ -228,7 +228,6 @@ export const getAuction = async (id: string) => {
   }
 };
 
-
 export const getAuctions = async () => {
   try {
     const response: any = await axios.get(
@@ -550,7 +549,7 @@ export const getVault = async (key: string) => {
   }
 };
 
-export const getGidRedemptionV2sByAuctionManagerAndWinningIndex = async (
+export const getGidRedemptionsByAuctionManagerAndWinningIndex = async (
   name: string,
   key: string,
 ) => {

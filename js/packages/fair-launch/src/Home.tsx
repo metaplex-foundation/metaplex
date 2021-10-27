@@ -334,71 +334,71 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      if (!anchorWallet) {
-        return;
-      }
+  const prepareHomePageAsync = async () => {
+    if (!anchorWallet) {
+      return;
+    }
+
+    try {
+      const balance = await props.connection.getBalance(anchorWallet.publicKey);
+      setYourSOLBalance(balance);
+
+      const state = await getFairLaunchState(
+        anchorWallet,
+        props.fairLaunchId,
+        props.connection,
+      );
+
+      setFairLaunch(state);
 
       try {
-        const balance = await props.connection.getBalance(
-          anchorWallet.publicKey,
-        );
-        setYourSOLBalance(balance);
+        if (state.state.tokenMint) {
+          const fairLaunchBalance =
+            await props.connection.getTokenAccountBalance(
+              (
+                await getAtaForMint(
+                  state.state.tokenMint,
+                  anchorWallet.publicKey,
+                )
+              )[0],
+            );
 
-        const state = await getFairLaunchState(
-          anchorWallet,
-          props.fairLaunchId,
-          props.connection,
-        );
-
-        setFairLaunch(state);
-
-        try {
-          if (state.state.tokenMint) {
-            const fairLaunchBalance =
-              await props.connection.getTokenAccountBalance(
-                (
-                  await getAtaForMint(
-                    state.state.tokenMint,
-                    anchorWallet.publicKey,
-                  )
-                )[0],
-              );
-
-            if (fairLaunchBalance.value) {
-              setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
-            }
+          if (fairLaunchBalance.value) {
+            setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
           }
-        } catch (e) {
-          console.log('Problem getting fair launch token balance');
-          console.log(e);
         }
-        setContributed(
-          (
-            state.state.currentMedian || state.state.data.priceRangeStart
-          ).toNumber() / LAMPORTS_PER_SOL,
-        );
       } catch (e) {
-        console.log('Problem getting fair launch state');
+        console.log('Problem getting fair launch token balance');
         console.log(e);
       }
-      if (props.candyMachineId) {
-        try {
-          const cndy = await getCandyMachineState(
-            anchorWallet,
-            props.candyMachineId,
-            props.connection,
-          );
-          setCandyMachine(cndy);
-        } catch (e) {
-          console.log('Problem getting candy machine state');
-          console.log(e);
-        }
-      } else {
-        console.log('No candy machine detected in configuration.');
+      setContributed(
+        (
+          state.state.currentMedian || state.state.data.priceRangeStart
+        ).toNumber() / LAMPORTS_PER_SOL,
+      );
+    } catch (e) {
+      console.log('Problem getting fair launch state');
+      console.log(e);
+    }
+    if (props.candyMachineId) {
+      try {
+        const cndy = await getCandyMachineState(
+          anchorWallet,
+          props.candyMachineId,
+          props.connection,
+        );
+        setCandyMachine(cndy);
+      } catch (e) {
+        console.log('Problem getting candy machine state');
+        console.log(e);
       }
-    })();
+    } else {
+      console.log('No candy machine detected in configuration.');
+    }
+  };
+
+  useEffect(() => {
+    prepareHomePageAsync();
   }, [
     anchorWallet,
     props.candyMachineId,

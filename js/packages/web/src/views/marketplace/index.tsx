@@ -72,10 +72,12 @@ export const MarketplaceView = () => {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
+
     const onePage = arr.slice(
       activePage * pageSize,
       activePage * pageSize + pageSize,
     );
+
     maxPrice = max;
     ownerLen = owner.length;
     pageLen = arr.length;
