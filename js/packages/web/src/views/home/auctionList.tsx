@@ -54,7 +54,7 @@ export const AuctionListView = () => {
             className="app-alert-banner"
             description={(
               <p>
-                Make your storefront faster by enabling listing caches. {auctionCacheTotal}/{auctionManagerTotal} of your listing have a cache account. Watch this <a rel="noopener noreferrer" target="_blank" href="https://www.loom.com/share/5a207f835d35463cbb546ca48031d355">video</a> for more details and a walkthrough. On November 3rd storefronts will start reading from the cache for listings. All new listing are generating a cache account.
+                Make your storefront faster by enabling listing caches. {auctionCacheTotal}/{auctionManagerTotal} of your listing have a cache account. Watch this <a rel="noopener noreferrer" target="_blank" href="https://youtu.be/02V7F07DFbk">video</a> for more details and a walkthrough. On November 3rd storefronts will start reading from the cache for listings. All new listing are generating a cache account.
               </p>
             )}
             type="info"

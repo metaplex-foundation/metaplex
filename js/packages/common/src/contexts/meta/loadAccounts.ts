@@ -383,7 +383,7 @@ export const loadAccounts = async (
     queryStorefront(storeAddress),
     queryAuctionManagers(connection, updateState, storeAddress).then(queryAuctionsAndVaults)
   ]);
-
+  
   return state;
 };
 

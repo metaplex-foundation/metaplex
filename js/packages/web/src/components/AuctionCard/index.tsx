@@ -266,9 +266,9 @@ export const AuctionCard = ({
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
-  const isBidderPotEmpty = Boolean(auctionView.myBidderPot?.info.emptied);
+  const isBidderPotEmpty = auctionView.myBidderPot ? Boolean(auctionView.myBidderPot?.info.emptied) : true;
   const doesInstantSaleHasNoItems =
-    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+    isBidderPotEmpty && auctionView.auctionManager.numWinners.toNumber() === bids.length;
 
   const shouldHideInstantSale =
     !isOpenEditionSale &&
@@ -284,7 +284,7 @@ export const AuctionCard = ({
 
   const {
     isInstantSale,
-    canEndInstantSale
+    canEndInstantSale,
   } = useInstantSaleState(auctionView)
   const actionButtonContent = useActionButtonContent(auctionView)
 
