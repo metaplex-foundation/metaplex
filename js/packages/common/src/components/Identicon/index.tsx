@@ -33,6 +33,8 @@ export const Identicon = ({
   }, [pubkey]);
 
   useEffect(() => {
+    // TODO: the current TSC toolchain does not have a correct definition for replaceChildren
+    // @ts-ignore
     if (el && ref.current) ref.current.replaceChildren(el);
   }, [el, ref.current]);
 
