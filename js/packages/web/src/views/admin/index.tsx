@@ -466,7 +466,7 @@ function InnerAdminView({
         }
         <Col span={11} offset={1}>
           <h3>Cache Auctions</h3>
-          <p>Activate your storefront listing caches by pressing "build cache". This will reduce page load times for your listings. Your storefront will start looking up listing using the cache on October 29th. To preview the speed improvement visit the Holaplex <a rel="noopener noreferrer" target="_blank" href={`https://${storefront.subdomain}.holaxplex.dev`}> staging environment</a> for your storefront.</p>
+          <p>Activate your storefront listing caches by pressing "build cache". This will reduce page load times for your listings. Your storefront will start looking up listing using the cache on November 3rd. To preview the speed improvement visit the Holaplex <a rel="noopener noreferrer" target="_blank" href={`https://${storefront.subdomain}.holaxplex.dev`}> staging environment</a> for your storefront.</p>
           <Space direction="vertical" size="middle" align="center">
             <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
             {auctionManagersToCache.length > 0 && (
