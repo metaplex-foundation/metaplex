@@ -39,6 +39,15 @@ pub fn make_ata<'a>(
     rent: AccountInfo<'a>,
     fee_payer_seeds: &[&[u8]],
 ) -> ProgramResult {
+    let seeds: &[&[&[u8]]];
+    let as_arr = [fee_payer_seeds];
+
+    if fee_payer_seeds.len() > 0 {
+        seeds = &as_arr;
+    } else {
+        seeds = &[];
+    }
+
     invoke_signed(
         &spl_associated_token_account::create_associated_token_account(
             &fee_payer.key,
@@ -55,7 +64,7 @@ pub fn make_ata<'a>(
             rent,
             token_program,
         ],
-        &[fee_payer_seeds],
+        seeds,
     )?;
 
     Ok(())
@@ -430,35 +439,23 @@ pub fn create_or_allocate_account_raw<'a>(
 
     if required_lamports > 0 {
         msg!("Transfer {} lamports to the new account", required_lamports);
-        if signer_seeds.len() == 0 {
-            invoke_signed(
-                &system_instruction::transfer(
-                    &payer_info.key,
-                    new_account_info.key,
-                    required_lamports,
-                ),
-                &[
-                    payer_info.clone(),
-                    new_account_info.clone(),
-                    system_program_info.clone(),
-                ],
-                &[],
-            )?;
+        let seeds: &[&[&[u8]]];
+        let as_arr = [signer_seeds];
+
+        if signer_seeds.len() > 0 {
+            seeds = &as_arr;
         } else {
-            invoke_signed(
-                &system_instruction::transfer(
-                    &payer_info.key,
-                    new_account_info.key,
-                    required_lamports,
-                ),
-                &[
-                    payer_info.clone(),
-                    new_account_info.clone(),
-                    system_program_info.clone(),
-                ],
-                &[&signer_seeds],
-            )?;
+            seeds = &[];
         }
+        invoke_signed(
+            &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
+            &[
+                payer_info.clone(),
+                new_account_info.clone(),
+                system_program_info.clone(),
+            ],
+            seeds,
+        )?;
     }
 
     let accounts = &[new_account_info.clone(), system_program_info.clone()];

@@ -577,6 +577,7 @@ pub mod auction_house {
     pub fn execute_sale<'info>(
         ctx: Context<'_, '_, '_, 'info, ExecuteSale<'info>>,
         escrow_payment_bump: u8,
+        _free_trade_state_bump: u8,
         program_as_signer_bump: u8,
         buyer_price: u64,
         token_size: u64,
@@ -596,6 +597,7 @@ pub mod auction_house {
         let auction_house_treasury = &ctx.accounts.auction_house_treasury;
         let buyer_trade_state = &ctx.accounts.buyer_trade_state;
         let seller_trade_state = &ctx.accounts.seller_trade_state;
+        let free_trade_state = &ctx.accounts.free_trade_state;
         let token_program = &ctx.accounts.token_program;
         let system_program = &ctx.accounts.system_program;
         let ata_program = &ctx.accounts.ata_program;
@@ -798,6 +800,7 @@ pub mod auction_house {
             SIGNER.as_bytes(),
             &[program_as_signer_bump],
         ];
+
         invoke_signed(
             &spl_token::instruction::transfer(
                 token_program.key,
@@ -832,6 +835,15 @@ pub mod auction_house {
             .checked_add(curr_buyer_lamp)
             .ok_or(ErrorCode::NumericalOverflow)?;
 
+        if free_trade_state.lamports() > 0 {
+            let curr_buyer_lamp = free_trade_state.lamports();
+            **free_trade_state.lamports.borrow_mut() = 0;
+
+            **fee_payer.lamports.borrow_mut() = fee_payer
+                .lamports()
+                .checked_add(curr_buyer_lamp)
+                .ok_or(ErrorCode::NumericalOverflow)?;
+        }
         Ok(())
     }
 
@@ -900,24 +912,26 @@ pub mod auction_house {
             return Err(ErrorCode::InvalidTokenAmount.into());
         }
 
-        invoke_signed(
-            &approve(
-                &token_program.key(),
-                &token_account.key(),
-                &program_as_signer.key(),
-                &wallet.key(),
+        if wallet.is_signer {
+            invoke_signed(
+                &approve(
+                    &token_program.key(),
+                    &token_account.key(),
+                    &program_as_signer.key(),
+                    &wallet.key(),
+                    &[],
+                    token_size,
+                )
+                .unwrap(),
+                &[
+                    token_program.to_account_info(),
+                    token_account.to_account_info(),
+                    program_as_signer.to_account_info(),
+                    wallet.to_account_info(),
+                ],
                 &[],
-                token_size,
-            )
-            .unwrap(),
-            &[
-                token_program.to_account_info(),
-                token_account.to_account_info(),
-                program_as_signer.to_account_info(),
-                wallet.to_account_info(),
-            ],
-            &[],
-        )?;
+            )?;
+        }
 
         let ts_info = seller_trade_state.to_account_info();
         if ts_info.data_is_empty() {
@@ -1149,7 +1163,7 @@ pub struct Buy<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(escrow_payment_bump: u8, program_as_signer_bump: u8, buyer_price: u64, token_size: u64)]
+#[instruction(escrow_payment_bump: u8, free_trade_state_bump: u8, program_as_signer_bump: u8, buyer_price: u64, token_size: u64)]
 pub struct ExecuteSale<'info> {
     buyer: UncheckedAccount<'info>,
     seller: UncheckedAccount<'info>,
@@ -1177,6 +1191,8 @@ pub struct ExecuteSale<'info> {
     buyer_trade_state: UncheckedAccount<'info>,
     #[account(mut, seeds=[PREFIX.as_bytes(), seller.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=seller_trade_state.to_account_info().data.borrow()[0])]
     seller_trade_state: UncheckedAccount<'info>,
+    #[account(mut, seeds=[PREFIX.as_bytes(), seller.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &0u64.to_le_bytes(), &token_size.to_le_bytes()], bump=free_trade_state_bump)]
+    free_trade_state: UncheckedAccount<'info>,
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
     ata_program: Program<'info, AssociatedToken>,

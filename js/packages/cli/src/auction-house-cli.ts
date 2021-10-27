@@ -446,6 +446,17 @@ programCommand('execute_sale')
       )
     )[0];
 
+    const [freeTradeState, freeTradeStateBump] =
+      await getAuctionHouseTradeState(
+        auctionHouseKey,
+        sellerWalletKey,
+        tokenAccountKey,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        mintKey,
+        tokenSizeAdjusted,
+        new BN(0),
+      );
     const [escrowPaymentAccount, bump] = await getAuctionHouseBuyerEscrow(
       auctionHouseKey,
       buyerWalletKey,
@@ -488,6 +499,7 @@ programCommand('execute_sale')
 
     const instruction = await anchorProgram.instruction.executeSale(
       bump,
+      freeTradeStateBump,
       programAsSignerBump,
       buyPriceAdjusted,
       tokenSizeAdjusted,
@@ -522,6 +534,7 @@ programCommand('execute_sale')
           ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           programAsSigner,
           rent: web3.SYSVAR_RENT_PUBKEY,
+          freeTradeState,
         },
         remainingAccounts,
         signers,
