@@ -32,6 +32,7 @@ import {
   MetadataKey,
   StringPublicKey,
   WRAPPED_SOL_MINT,
+  shortenAddress,
 } from '@oyster/common';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -1115,15 +1116,18 @@ const PriceAuction = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
+  console.log(props.attributes)
+  const quoteMintName = props.attributes?.quoteMintInfoExtended?.name || "Custom Token"
+  const quoteMintExt = props.attributes?.quoteMintInfoExtended?.symbol || shortenAddress(props.attributes.quoteMintAddress)
   return (
     <>
       <Row className="call-to-action">
         <h2>Price</h2>
         <p>
           Set the price for your auction. 
-          {props.attributes?.quoteMintInfoExtended && props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && ` Warning! the auction quote mint is `}
-          {props.attributes?.quoteMintInfoExtended && <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && 
-            `${props.attributes?.quoteMintInfoExtended.name} (${props.attributes?.quoteMintInfoExtended.symbol})`} 
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && ` Warning! the auction quote mint is `}
+          {props.attributes.quoteMintAddress != WRAPPED_SOL_MINT.toBase58()&& <a href={`https://explorer.solana.com/address/${props.attributes?.quoteMintAddress}`} target="_blank"> {props.attributes?.quoteMintAddress != WRAPPED_SOL_MINT.toBase58() && 
+            `${quoteMintName} (${quoteMintExt})`} 
           </a>}
         </p>
       </Row>
