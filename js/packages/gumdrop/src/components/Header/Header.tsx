@@ -25,7 +25,7 @@ export const Header: React.FC = () => {
     setVisible(true);
   }, [setModal, setVisible]);
   return (
-    <AppBar color="transparent">
+    <AppBar color="default">
     <Box
       sx={{
         display: "flex",
