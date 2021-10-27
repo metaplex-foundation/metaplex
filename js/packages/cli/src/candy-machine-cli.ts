@@ -846,6 +846,32 @@ programCommand('mint_tokens')
     log.info(`minted ${parsedNumber} tokens`);
   });
 
+programCommand('mint_multiple_tokens')
+  .option('-n, --number <string>', 'Number of tokens')
+  .action(async (directory, cmd) => {
+    const { keypair, env, cacheName, number } = cmd.opts();
+
+    const NUMBER_OF_NFTS_TO_MINT = parseInt(number, 10);
+    const cacheContent = loadCache(cacheName, env);
+    const configAddress = new PublicKey(cacheContent.program.config);
+
+    log.info(`Minting ${NUMBER_OF_NFTS_TO_MINT} tokens...`);
+
+    const mintToken = async index => {
+      const tx = await mint(keypair, env, configAddress);
+      log.info(`transaction ${index} complete`, tx);
+
+      if (index < NUMBER_OF_NFTS_TO_MINT - 1) {
+        log.info('minting another token...');
+        await mintToken(index + 1);
+      }
+    };
+
+    await mintToken(0);
+
+    log.info('mint_multiple_tokens finished');
+  });
+
 programCommand('sign')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .option('-m, --metadata <string>', 'base58 metadata account id')

@@ -230,6 +230,13 @@ metaplex mint_one_token -k ~/.config/solana/id.json
 ts-node cli mint_one_token -k ~/.config/solana/id.json
 ```
 
+6. Test mint multiple tokens 
+
+```
+metaplex mint_multiple_tokens -k ~/.config/solana/id.json -n 100
+ts-node cli mint_multiple_tokens -k ~/.config/solana/id.json -n 100
+```
+
 6. Check if you received any tokens.
 
 ```
