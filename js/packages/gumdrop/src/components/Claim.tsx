@@ -242,11 +242,9 @@ export const Claim = (
 
       const res = await client.send(new InvokeCommand(params));
       console.log(res);
-      if (!res.Payload) throw new Error("F"); // TODO
 
-      const resp = JSON.parse(Buffer.from(res.Payload).toString());
-      if (resp.statusCode !== 200) {
-        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
+      if (res.StatusCode !== 200) {
+        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(res)}`);
       }
     }
 
@@ -286,18 +284,29 @@ export const Claim = (
 
       const res = await client.send(new InvokeCommand(params));
       console.log(res);
-      if (!res.Payload) throw new Error("F"); // TODO
 
-      const resp = JSON.parse(Buffer.from(res.Payload).toString());
-      if (resp.statusCode !== 200) {
-        throw new Error(`Failed to verify AWS OTP. ${JSON.stringify(resp)}`);
+      if (res.StatusCode !== 200) {
+        throw new Error(`Failed to verify AWS OTP. ${JSON.stringify(res)}`);
       }
 
-      const sig = resp.body;
-      console.log("Sig", JSON.parse(sig), bs58.decode(JSON.parse(sig)));
-      transaction.addSignature(
-        MERKLE_TEMPORAL_SIGNER,
-        bs58.decode(JSON.parse(sig)));
+      if (res.Payload === undefined) {
+        throw new Error("No response payload");
+      }
+
+      let resp, sig;
+      try {
+        resp = JSON.parse(Buffer.from(res.Payload).toString());
+      } catch {
+        throw new Error(`Could not parse response ${res.Payload}`);
+      }
+
+      try {
+        sig = bs58.decode(JSON.parse(resp.body));
+      } catch {
+        throw new Error(`Could not decode transaction signature ${resp.body}`);
+      }
+
+      transaction.addSignature(MERKLE_TEMPORAL_SIGNER, sig);
     }
 
     const fullySigned = await wallet.signTransaction(transaction);
@@ -358,7 +367,6 @@ export const Claim = (
               setLoading(false);
               onClick();
             } catch (err) {
-              setTransaction(null);
               notify({
                 message: "Claim failed",
                 description: `${err}`,
