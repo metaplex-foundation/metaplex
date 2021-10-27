@@ -73,7 +73,7 @@ export default function TokenDialog({
 
   const validateTokenMint = (quoteMintAddress: string) => {
 
-    if (toPublicKey(quoteMintAddress).toBuffer().length > 32) {
+    if (toPublicKey(quoteMintAddress).toBuffer().length >= 32) {
         console.log("MINT OK")
         setMint(toPublicKey(quoteMintAddress))
         onClose()
