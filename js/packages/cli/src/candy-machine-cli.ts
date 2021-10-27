@@ -192,11 +192,11 @@ programCommand('verify_token_metadata')
   });
 
 programCommand('verify').action(async (directory, cmd) => {
-  const { env, keypair, cacheName } = cmd.opts();
+  const { env, rpcUrl, keypair, cacheName } = cmd.opts();
 
   const cacheContent = loadCache(cacheName, env);
   const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
   const configAddress = new PublicKey(cacheContent.program.config);
   const config = await anchorProgram.provider.connection.getAccountInfo(
@@ -351,7 +351,7 @@ programCommand('verify_price')
   .option('-p, --price <string>')
   .option('--cache-path <string>')
   .action(async (directory, cmd) => {
-    const { keypair, env, price, cacheName, cachePath } = cmd.opts();
+    const { keypair, env, rpcUrl, price, cacheName, cachePath } = cmd.opts();
     const lamports = parsePrice(price);
 
     if (isNaN(lamports)) {
@@ -369,7 +369,7 @@ programCommand('verify_price')
     }
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
 
@@ -392,7 +392,7 @@ programCommand('verify_price')
 programCommand('show')
   .option('--cache-path <string>')
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, cachePath } = cmd.opts();
+    const { keypair, env, rpcUrl, cacheName, cachePath } = cmd.opts();
 
     const cacheContent = loadCache(cacheName, env, cachePath);
 
@@ -403,7 +403,7 @@ programCommand('show')
     }
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     const [candyMachine] = await getCandyMachineAddress(
       new PublicKey(cacheContent.program.config),
@@ -494,6 +494,7 @@ programCommand('create_candy_machine')
     const {
       keypair,
       env,
+      rpcUrl,
       price,
       cacheName,
       splToken,
@@ -505,7 +506,7 @@ programCommand('create_candy_machine')
     const cacheContent = loadCache(cacheName, env);
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     let wallet = walletKeyPair.publicKey;
     const remainingAccounts = [];
@@ -603,14 +604,14 @@ programCommand('update_candy_machine')
   )
   .option('-p, --price <string>', 'SOL price')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, price, cacheName } = cmd.opts();
+    const { keypair, env, rpcUrl, date, price, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = date ? parseDate(date) : null;
     const lamports = price ? parsePrice(price) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
     const tx = await anchorProgram.rpc.updateCandyMachine(
@@ -658,10 +659,10 @@ programCommand('sign_all')
   .option('-b, --batch-size <string>', 'Batch size', '10')
   .option('-d, --daemon', 'Run signing continuously', false)
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, batchSize, daemon } = cmd.opts();
+    const { keypair, env, rpcUrl, cacheName, batchSize, daemon } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
     const walletKeyPair = loadWalletKey(keypair);
-    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
     const candyAddress = cacheContent.candyMachineAddress;
 
     const batchSizeParsed = parseInt(batchSize);
@@ -739,6 +740,11 @@ function programCommand(name: string) {
       '-e, --env <string>',
       'Solana cluster env name',
       'devnet', //mainnet-beta, testnet, devnet
+    )
+    .option(
+      '-r, --rpc-url <string>',
+      'RPC endpoint URL',
+      'https://api.devnet.solana.com',
     )
     .option(
       '-k, --keypair <path>',
