@@ -93,11 +93,9 @@ const sendOTP = async (event) => {
   // OTP shouldn't be returned as part of response... don't log here?
   const time = Date.now();
   const otp = generateTOTP(OTP_SECRET, time, 8);
-  console.log(handle, time, otp);
 
   const previous = await queryDB(handle);
   if (previous) {
-    console.log(previous, previous.OTP);
     if (previous.OTP === otp) {
       throw new Error("Wait for new OTP cycle");
     }
@@ -121,14 +119,7 @@ const sendOTP = async (event) => {
     Source: "santa@aws.metaplex.com",
   };
 
-  const emailRes = await ses.sendEmail(params).promise();
-  console.log(emailRes);
-
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify('Hello from Lambda'),
-  };
-  return response;
+  return ses.sendEmail(params).promise();
 };
 
 const verifyOTP = async (event) => {
@@ -148,7 +139,6 @@ const verifyOTP = async (event) => {
   const expectedOTP = generateTOTP(OTP_SECRET, time, 8);
   const delayedOTP  = generateTOTP(OTP_SECRET, time - OTP_X, 8);
 
-  console.log(event.otp, expectedOTP, delayedOTP);
   if (event.otp !== expectedOTP && event.otp !== delayedOTP) {
     throw new Error("OTP does not match expected");
   }

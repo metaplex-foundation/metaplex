@@ -233,7 +233,6 @@ export const Claim = (
     if (!skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
-        LogType: "Tail",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
           method: "send",
           transaction: bs58.encode(transaction.serializeMessage()),
@@ -278,7 +277,6 @@ export const Claim = (
     if (!skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
-        LogType: "Tail",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
           method: "verify",
           otp: OTP,
