@@ -450,6 +450,9 @@ export const AuctionCreateView = () => {
       attributes.instantSalePrice &&
       attributes.priceFloor === attributes.instantSalePrice;
 
+    const LAMPORTS_PER_TOKEN = attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? LAMPORTS_PER_SOL
+      : Math.pow(10, attributes.quoteMintInfo.decimals || 0)
+
     const auctionSettings: IPartialCreateAuctionArgs = {
       winners: winnerLimit,
       endAuctionAt: isInstantSale
@@ -476,7 +479,7 @@ export const AuctionCreateView = () => {
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
           : PriceFloorType.None,
-        minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_SOL),
+        minPrice: new BN((attributes.priceFloor || 0) * LAMPORTS_PER_TOKEN),
       }),
       tokenMint: attributes.quoteMintAddress,
       gapTickSizePercentage: attributes.tickSizeEndingPhase || null,
@@ -484,7 +487,7 @@ export const AuctionCreateView = () => {
         ? new BN(attributes.priceTick * LAMPORTS_PER_SOL)
         : null,
       instantSalePrice: attributes.instantSalePrice
-        ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_SOL)
+        ? new BN((attributes.instantSalePrice || 0) * LAMPORTS_PER_TOKEN)
         : null,
       name: null,
     };
