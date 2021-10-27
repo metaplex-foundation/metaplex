@@ -40,4 +40,27 @@ router.get('/:store/metadata', async (req: Request, res: Response) => {
     }
 })
 
+router.get('/:store/metadata/total', async (req: Request, res: Response) => {
+    const client = await createMongoClient();
+    try {
+        const coll = client.db(DB).collection(METADATA_COLLECTION);
+        const store = req.params.store;
+        const results = await coll.aggregate(  [
+            {
+              $match: {
+                store: store
+              }
+            },
+            {
+              $count: "nftCount"
+            }
+          ]).toArray();
+
+          res.send(results[0])
+    }
+    finally {
+        client.close();
+    }
+});
+
 export {router as metadataRouter}
