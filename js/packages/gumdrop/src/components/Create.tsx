@@ -724,7 +724,7 @@ export const Create = (
               marginBottom: "5ch",
             }}
           >
-            Upload a distribution list
+            Upload a {filename === "" ? "distribution" : "different"} list
             <input
               type="file"
               onChange={(e) => handleFiles(e.target.files)}
@@ -737,7 +737,6 @@ export const Create = (
             variant="text"
             component="label"
             disabled={true}
-            color="secondary"
             style={{padding: 0}}
           >
             or drag it here
@@ -745,15 +744,18 @@ export const Create = (
         </Stack>
       </DragAndDrop>
       {filename !== ""
-      ? (<Box style={{
-            display: 'flex',
-            justifyContent: 'center',
-            width: "60ch",
-            color: "rgba(255,255,255,.8)",
-          }}>
+      ? (<Button
+            variant="text"
+            component="label"
+            disabled={true}
+            style={{
+              padding: 0,
+              // textTransform: 'none',
+            }}
+          >
             <FilePresentIcon />
             <span>{WHITESPACE} Uploaded {filename}</span>
-          </Box>
+          </Button>
         )
       : (<Box/>)}
     </React.Fragment>
@@ -775,9 +777,8 @@ export const Create = (
   const createAirdrop = (
     <Box sx={{ position: "relative" }}>
     <Button
-      disabled={!wallet.connected || loading}
+      disabled={!wallet.connected || !filename || loading || claimURLs.length > 0}
       variant="contained"
-      color="success"
       style={{ width: "100%" }}
       onClick={(e) => {
         setLoading(true);
@@ -829,7 +830,7 @@ export const Create = (
       </FormControl>
       {commMethod !== "" && commAuthorization(commMethod)}
       {commMethod !== "" && fileUpload}
-      {filename !== "" && createAirdrop}
+      {commMethod !== "" && createAirdrop}
       {baseKey !== undefined && (
         <HyperLink
           href={hyperLinkData(Array.from(baseKey.secretKey))}

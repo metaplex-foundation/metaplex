@@ -106,9 +106,8 @@ export const Close = () => {
         onChange={(e) => setBaseKey(e.target.value)}
       />
       <Button
-        disabled={!wallet.connected}
+        disabled={!wallet.connected || !baseKey}
         variant="contained"
-        color="success"
         onClick={(e) => {
           const wrap = async () => {
             try {

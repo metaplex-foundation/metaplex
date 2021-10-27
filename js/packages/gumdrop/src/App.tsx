@@ -94,8 +94,8 @@ const About = (
         CREATION
       </Link>
       {WHITESPACE}is done by choosing a Mint, an off-chain
-      notification method, and supplying a list of recipients and balances with
-      the following JSON schema{WHITESPACE}
+      notification method, and supplying a list of recipients, mints, and
+      balances with the following JSON schema{WHITESPACE}
 
       <HyperLink
         href={`data:text/plain;charset=utf-8,${JSON.stringify(require("./example.json"))}`}
@@ -109,6 +109,7 @@ const About = (
 [
   {
     "handle": "<DISTRIBUTION-SPECIFIC-HANDLE>"
+    "mint": "<BASE58-TOKEN-MINT>"
     "amount": <#-TOKENS>
   },
   ...
@@ -120,8 +121,8 @@ const About = (
         CLAIMS
       </Link>
       {WHITESPACE}are redeemed through a URL with query parameters holding
-      claim-specific keys. These should be kept secret! Anyone can redeem a
-      claim once they have the URL.
+      claim-specific keys. Claimants will need to verify ownership of the
+      specified handle by answering a OTP challenge.
       </div>
 
       <div>
@@ -129,8 +130,8 @@ const About = (
         CLOSING
       </Link>
       {WHITESPACE}the Merkle Distributor accounts cleans up the on-chain state
-      and allows creators to recycle any remaining tokens and lamports held for
-      rent-exemption after the airdrop is complete.
+      and allows creators to recycle any lamports held for rent-exemption after
+      the airdrop is complete.
       </div>
     </Stack>
   );
