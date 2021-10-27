@@ -306,6 +306,15 @@ export const getAuctionHouse = async (
   );
 };
 
+export const getAuctionHouseProgramAsSigner = async (): Promise<
+  [PublicKey, number]
+> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), Buffer.from('signer')],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
 export const getAuctionHouseFeeAcct = async (
   auctionHouse: anchor.web3.PublicKey,
 ): Promise<[PublicKey, number]> => {

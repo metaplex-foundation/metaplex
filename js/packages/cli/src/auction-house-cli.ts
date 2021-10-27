@@ -6,6 +6,7 @@ import {
   getAuctionHouse,
   getAuctionHouseBuyerEscrow,
   getAuctionHouseFeeAcct,
+  getAuctionHouseProgramAsSigner,
   getAuctionHouseTradeState,
   getAuctionHouseTreasuryAcct,
   getMetadata,
@@ -245,8 +246,6 @@ programCommand('sell')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const tokenSizeAdjusted = new BN(
@@ -256,13 +255,15 @@ programCommand('sell')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const tokenAccountKey = (
       await getAtaForMint(mintKey, walletKeyPair.publicKey)
     )[0];
+
+    const [programAsSigner, programAsSignerBump] =
+      await getAuctionHouseProgramAsSigner();
+    const metadata = await getMetadata(mintKey);
 
     const [tradeState, tradeBump] = await getAuctionHouseTradeState(
       auctionHouseKey,
@@ -291,6 +292,7 @@ programCommand('sell')
     const instruction = await anchorProgram.instruction.sell(
       tradeBump,
       freeTradeBump,
+      programAsSignerBump,
       buyPriceAdjusted,
       tokenSizeAdjusted,
       {
@@ -307,7 +309,7 @@ programCommand('sell')
           freeSellerTradeState: freeTradeState,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: web3.SystemProgram.programId,
-          program: AUCTION_HOUSE_PROGRAM_ID,
+          programAsSigner,
           rent: web3.SYSVAR_RENT_PUBKEY,
         },
         signers,
@@ -397,7 +399,6 @@ programCommand('execute_sale')
 
     //@ts-ignore
     const isNative = auctionHouseObj.treasuryMint.equals(WRAPPED_SOL_MINT);
-
     const buyPriceAdjusted = new BN(
       await getPriceWithMantissa(
         buyPrice,
@@ -406,8 +407,6 @@ programCommand('execute_sale')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const tokenSizeAdjusted = new BN(
@@ -417,8 +416,6 @@ programCommand('execute_sale')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const tokenAccountKey = (await getAtaForMint(mintKey, sellerWalletKey))[0];
@@ -453,6 +450,8 @@ programCommand('execute_sale')
       auctionHouseKey,
       buyerWalletKey,
     );
+    const [programAsSigner, programAsSignerBump] =
+      await getAuctionHouseProgramAsSigner();
     const metadata = await getMetadata(mintKey);
 
     const metadataObj = await anchorProgram.provider.connection.getAccountInfo(
@@ -463,22 +462,25 @@ programCommand('execute_sale')
     );
 
     const remainingAccounts = [];
+
     for (let i = 0; i < metadataDecoded.data.creators.length; i++) {
       remainingAccounts.push({
         pubkey: new web3.PublicKey(metadataDecoded.data.creators[i].address),
         isWritable: true,
         isSigner: false,
       });
-      remainingAccounts.push({
-        pubkey: (
-          await getAtaForMint(
-            mintKey,
-            remainingAccounts[remainingAccounts.length - 1].pubkey,
-          )
-        )[0],
-        isWritable: true,
-        isSigner: false,
-      });
+      if (!isNative) {
+        remainingAccounts.push({
+          pubkey: (
+            await getAtaForMint(
+              mintKey,
+              remainingAccounts[remainingAccounts.length - 1].pubkey,
+            )
+          )[0],
+          isWritable: true,
+          isSigner: false,
+        });
+      }
     }
     const signers = [];
     //@ts-ignore
@@ -486,6 +488,7 @@ programCommand('execute_sale')
 
     const instruction = await anchorProgram.instruction.executeSale(
       bump,
+      programAsSignerBump,
       buyPriceAdjusted,
       tokenSizeAdjusted,
       {
@@ -517,14 +520,13 @@ programCommand('execute_sale')
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: web3.SystemProgram.programId,
           ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          programAsSigner,
           rent: web3.SYSVAR_RENT_PUBKEY,
         },
         remainingAccounts,
         signers,
       },
     );
-
-    console.log('instruction', instruction);
 
     if (auctionHouseKeypairLoaded) {
       signers.push(auctionHouseKeypairLoaded);
@@ -610,8 +612,6 @@ programCommand('buy')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const tokenSizeAdjusted = new BN(
@@ -621,8 +621,6 @@ programCommand('buy')
         walletKeyPair,
         anchorProgram,
       ),
-      undefined,
-      'le',
     );
 
     const [escrowPaymentAccount, escrowBump] = await getAuctionHouseBuyerEscrow(

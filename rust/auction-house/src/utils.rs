@@ -284,7 +284,7 @@ pub fn pay_creator_fees<'a>(
     metadata_info: &AccountInfo<'a>,
     escrow_payment_account: &AccountInfo<'a>,
     fee_payer: &AccountInfo<'a>,
-    treasury_mint: &anchor_lang::Account<'a, Mint>,
+    treasury_mint: &AccountInfo<'a>,
     ata_program: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
     system_program: &AccountInfo<'a>,
@@ -392,6 +392,21 @@ pub fn get_mint_from_token_account(
     let data = token_account_info.try_borrow_data()?;
     let mint_data = array_ref![data, 0, 32];
     Ok(Pubkey::new_from_array(*mint_data))
+}
+
+/// Cheap method to just grab delegate Pubkey from token account, instead of deserializing entire thing
+pub fn get_delegate_from_token_account(
+    token_account_info: &AccountInfo,
+) -> Result<Option<Pubkey>, ProgramError> {
+    // TokeAccount layout:   mint(32), owner(32), ...
+    let data = token_account_info.try_borrow_data()?;
+    let key_data = array_ref![data, 76, 32];
+    let coption_data = u32::from_le_bytes(*array_ref![data, 72, 4]);
+    if coption_data == 0 {
+        Ok(None)
+    } else {
+        Ok(Some(Pubkey::new_from_array(*key_data)))
+    }
 }
 
 /// Create account almost from scratch, lifted from
