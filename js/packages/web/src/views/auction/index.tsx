@@ -340,7 +340,7 @@ export const AuctionView = () => {
                 </div>
               </div>
             </Col>
-            <Col span={12} md={8}>
+            <Col span={12} md={8} className="view-on-container">
               <div className={'info-view-container'}>
                 <div className={'info-view'}>
                   <h6 className={'info-title'}>View on</h6>
