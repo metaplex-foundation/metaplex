@@ -102,7 +102,7 @@ export async function sendSignedTransaction({
       txid,
       timeout,
       connection,
-      'finalized',
+      'confirmed',
       true,
     );
 
