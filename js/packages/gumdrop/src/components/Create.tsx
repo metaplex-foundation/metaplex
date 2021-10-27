@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 import {
   Box,
   Button,
+  CircularProgress,
   FormControl,
   Link as HyperLink,
   InputLabel,
@@ -491,7 +492,7 @@ export const Create = (
               </TableBody>
             </Table>
           </TableContainer>
-          <br />
+          <Box style={{ height: 10 }} />
           {options.map((opt) => {
             return (
               <Button
@@ -721,28 +722,47 @@ export const Create = (
     </React.Fragment>
   );
 
+  const [loading, setLoading] = React.useState(false);
+  const loadingProgress = () => (
+    <CircularProgress
+      size={24}
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginTop: '-12px',
+        marginLeft: '-12px',
+      }}
+    />
+  );
   const createAirdrop = (
+    <Box sx={{ position: "relative" }}>
     <Button
-      disabled={!wallet.connected}
+      disabled={!wallet.connected || loading}
       variant="contained"
       color="success"
+      style={{ width: "100%" }}
       onClick={(e) => {
+        setLoading(true);
         const wrap = async () => {
           try {
             await submit(e);
+            setLoading(false);
           } catch (err) {
             notify({
               message: "Create failed",
               description: `${err}`,
             });
+            setLoading(false);
           }
         };
         wrap();
       }}
-      sx={{ marginRight: "4px" }}
     >
       Create Merkle Airdrop
     </Button>
+    {loading && loadingProgress()}
+    </Box>
   );
 
   const hyperLinkData = (data) => {

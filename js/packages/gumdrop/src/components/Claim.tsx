@@ -5,6 +5,7 @@ import queryString from 'query-string';
 import {
   Box,
   Button,
+  CircularProgress,
   Link as HyperLink,
   Stack,
   Step,
@@ -318,6 +319,20 @@ export const Claim = (
     setTransaction(null);
   };
 
+  const [loading, setLoading] = React.useState(false);
+  const loadingProgress = () => (
+    <CircularProgress
+      size={24}
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginTop: '-12px',
+        marginLeft: '-12px',
+      }}
+    />
+  );
+
   const verifyOTPC = (onClick) => (
     <React.Fragment>
       <TextField
@@ -328,14 +343,19 @@ export const Claim = (
         onChange={(e) => setOTPStr(e.target.value)}
       />
       <Box />
+
+      <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !OTPStr}
+        disabled={!wallet.connected || !OTPStr || loading}
         variant="contained"
         color="success"
+        style={{ width: "100%" }}
         onClick={(e) => {
+          setLoading(true);
           const wrap = async () => {
             try {
               await verifyOTP(e);
+              setLoading(false);
               onClick();
             } catch (err) {
               setTransaction(null);
@@ -343,6 +363,7 @@ export const Claim = (
                 message: "Claim failed",
                 description: `${err}`,
               });
+              setLoading(false);
             }
           };
           wrap();
@@ -350,6 +371,8 @@ export const Claim = (
       >
         Claim Airdrop
       </Button>
+      {loading && loadingProgress()}
+      </Box>
     </React.Fragment>
   );
 
@@ -411,20 +434,25 @@ export const Claim = (
         {!editable ? "Edit Claim" : "Stop Editing"}
       </Button>
       <Box />
+
+      <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !allFieldsPopulated}
+        disabled={!wallet.connected || !allFieldsPopulated || loading}
         variant="contained"
-        color="success"
+        style={{ width: "100%" }}
         onClick={(e) => {
+          setLoading(true);
           const wrap = async () => {
             try {
               await sendOTP(e);
+              setLoading(false);
               onClick();
             } catch (err) {
               notify({
                 message: "Claim failed",
                 description: `${err}`,
               });
+              setLoading(false);
             }
           };
           wrap();
@@ -432,6 +460,8 @@ export const Claim = (
       >
         Next
       </Button>
+      {loading && loadingProgress()}
+      </Box>
     </React.Fragment>
   );
 
