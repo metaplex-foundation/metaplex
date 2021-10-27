@@ -13,7 +13,7 @@ const OTP_TABLE_NAME = process.env.MA_OTP_TABLE_NAME;
 
 const AWS = require("aws-sdk");
 const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: 'us-east-2' });
-// const ses = new AWS.SES({ region: "us-east-2" });
+const ses = new AWS.SES({ region: "us-east-2" });
 
 // time in MS (normally Date.now())
 const OTP_X = Number(process.env.MA_OTP_X);
@@ -89,19 +89,6 @@ const sendOTP = async (event) => {
   }
 
   const handle = Buffer.from(event.seeds[1].data).toString();
-  const params = {
-    Destination: {
-      ToAddresses: [handle],
-    },
-    Message: {
-      Body: {
-        Text: { Data: "Test" },
-      },
-
-      Subject: { Data: "Test Email" },
-    },
-    Source: "larry.wu@solana.com",
-  };
 
   // OTP shouldn't be returned as part of response... don't log here?
   const time = Date.now();
@@ -120,8 +107,22 @@ const sendOTP = async (event) => {
   // should actually help in this case?
   await logDB(handle, time, serializedBuffer);
 
-  // const emailRes = await ses.sendEmail(params).promise();
-  // console.log(emailRes);
+  const params = {
+    Destination: {
+      ToAddresses: [handle],
+    },
+    Message: {
+      Body: {
+        Text: { Data: `Your airdrop OTP is ${String(otp).padStart(8, "0")}` },
+      },
+
+      Subject: { Data: "Token Drop" },
+    },
+    Source: "santa@aws.metaplex.com",
+  };
+
+  const emailRes = await ses.sendEmail(params).promise();
+  console.log(emailRes);
 
   const response = {
     statusCode: 200,
