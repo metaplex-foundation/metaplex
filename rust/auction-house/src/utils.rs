@@ -430,15 +430,35 @@ pub fn create_or_allocate_account_raw<'a>(
 
     if required_lamports > 0 {
         msg!("Transfer {} lamports to the new account", required_lamports);
-        invoke_signed(
-            &system_instruction::transfer(&payer_info.key, new_account_info.key, required_lamports),
-            &[
-                payer_info.clone(),
-                new_account_info.clone(),
-                system_program_info.clone(),
-            ],
-            &[&signer_seeds],
-        )?;
+        if signer_seeds.len() == 0 {
+            invoke_signed(
+                &system_instruction::transfer(
+                    &payer_info.key,
+                    new_account_info.key,
+                    required_lamports,
+                ),
+                &[
+                    payer_info.clone(),
+                    new_account_info.clone(),
+                    system_program_info.clone(),
+                ],
+                &[],
+            )?;
+        } else {
+            invoke_signed(
+                &system_instruction::transfer(
+                    &payer_info.key,
+                    new_account_info.key,
+                    required_lamports,
+                ),
+                &[
+                    payer_info.clone(),
+                    new_account_info.clone(),
+                    system_program_info.clone(),
+                ],
+                &[&signer_seeds],
+            )?;
+        }
     }
 
     let accounts = &[new_account_info.clone(), system_program_info.clone()];
