@@ -29,11 +29,12 @@ RUN set -eux; \
 WORKDIR /app
 
 # copy files
-COPY package.json /app
-COPY tsconfig.json /app
+COPY packages/graphql/package.json /app
+COPY packages/graphql/tsconfig.json /app
+COPY yarn.lock /app
 
-COPY src /app/src
-COPY ingester /app/ingester
+COPY packages/graphql/src /app/src
+COPY packages/graphql/ingester /app/ingester
 
 # install
 RUN yarn
@@ -43,11 +44,15 @@ RUN npm install -g rimraf
 RUN yarn build:ts
 RUN yarn build:native
 
-FROM node:14-alpine
+# final image
+FROM node:14
 ENV NODE_ENV=production
 WORKDIR /app
+COPY packages/graphql/package.json /app
+COPY yarn.lock /app
 COPY --from=builder /app/ingester/index.node /app/ingester/index.node
 COPY --from=builder /app/ingester/index.js /app/ingester/index.js
-
+COPY --from=builder /app/ingester/target /app/ingester/target
 COPY --from=builder /app/dist /app/dist
 RUN yarn --prod
+CMD ["node", "/app/dist/bin/metaplex.js"]

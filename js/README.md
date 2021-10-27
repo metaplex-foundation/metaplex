@@ -29,3 +29,15 @@ Then, test that css transpiling is working:
 
 Any content produced by Solana, or developer resources that Solana provides, are for educational and inspiration purposes only. Solana does not encourage, induce or sanction the deployment of any such applications in violation of applicable laws or regulations.
 
+## Run graphql service in docker
+```
+docker-compose -f docker-compose.yml up -d
+```
+It will start 3 services
+- mongo
+- ingester
+- server
+
+mongo: instance of mongodb for caching layer
+ingester: process which fill db layer
+server: graphql server which is available at http://localhost:4000/

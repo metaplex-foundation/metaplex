@@ -23,8 +23,7 @@
     "generate:schema": "ts-node --transpile-only src/bin/generate.ts",
     "dev:mongo:ingester": "ts-node-dev --transpile-only src/bin/mongo-ingester.ts",
     "dev:mongo:server": "ts-node-dev --transpile-only src/bin/mongo-server.ts",
-    "tscCheck": "tsc --noEmit",
-    "postinstall": "yarn build:ts"
+    "tscCheck": "tsc --noEmit"
   },
   "license": "MIT",
   "devDependencies": {
