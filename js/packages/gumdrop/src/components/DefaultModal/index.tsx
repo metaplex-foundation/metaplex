@@ -4,7 +4,7 @@ import { Modal } from "antd";
 import "./index.css";
 
 export const DefaultModal = (props: any) => {
-  const { children, closeIcon, bodyStyle, style, ...rest } = props;
+  const { children, closeIcon, bodyStyle, width, style, ...rest } = props;
 
   return (
     <Modal
@@ -17,7 +17,9 @@ export const DefaultModal = (props: any) => {
         ...bodyStyle,
       }}
       footer={null}
-      width={400}
+      width={
+        width || 400
+      }
       {...rest}
     >
       {children}

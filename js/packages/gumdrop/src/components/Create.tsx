@@ -308,18 +308,24 @@ export const Create = (
           { click: () => onSubmit("send")  , name: "Send only"       },
         ];
         return (
-          <DefaultModal visible={show} onCancel={onDismiss}>
-            <p style={{ color: "white", fontSize: 14 }}>
+          <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
+            <p style={{
+              color: "white",
+              fontSize: "1rem",
+              width: "50ch",
+              marginTop: 8,
+            }}>
               Uploaded distribution list has URLs for all claimants.
               Skip creation of airdrop and only re-send links?
             </p>
             <br />
+            <Stack direction="row" spacing={2}>
             {options.map((opt) => {
               return (
                 <Button
                   key={opt.name}
                   style={{
-                    width: "100%",
+                    width: "30ch",
                     color: "white",
                     marginBottom: 8,
                   }}
@@ -330,6 +336,7 @@ export const Create = (
                 </Button>
               );
             })}
+            </Stack>
           </DefaultModal>
         );
       }) as string | undefined;
@@ -441,11 +448,11 @@ export const Create = (
 
     const shouldSend = await reactModal(({ show, onSubmit, onDismiss }) => {
       const options = [
-        { click: () => onSubmit(true) , name: "Approve" },
         { click: () => onSubmit(false), name: "Cancel"  },
+        { click: () => onSubmit(true) , name: "Approve" },
       ];
       return (
-        <DefaultModal visible={show} onCancel={onDismiss}>
+        <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
           <h2
             style={{
               color: "white",
@@ -493,12 +500,13 @@ export const Create = (
             </Table>
           </TableContainer>
           <Box style={{ height: 10 }} />
+          <Stack direction="row" spacing={2}>
           {options.map((opt) => {
             return (
               <Button
                 key={opt.name}
                 style={{
-                  width: "100%",
+                  width: "30ch",
                   color: "white",
                   marginBottom: 8,
                 }}
@@ -509,6 +517,7 @@ export const Create = (
               </Button>
             );
           })}
+          </Stack>
         </DefaultModal>
       );
     }) as boolean | undefined;
@@ -759,7 +768,7 @@ export const Create = (
         wrap();
       }}
     >
-      Create Merkle Airdrop
+      Create Airdrop
     </Button>
     {loading && loadingProgress()}
     </Box>
