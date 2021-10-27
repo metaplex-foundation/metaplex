@@ -74,9 +74,10 @@ export async function upload(
     const imageName = path.basename(image);
     const index = imageName.replace(EXTENSION_PNG, '');
 
-    log.debug(`Processing file: ${i}`);
     if (i % 50 === 0) {
       log.info(`Processing file: ${i}`);
+    } else {
+      log.debug(`Processing file: ${i}`);
     }
 
     let link = cacheContent?.items?.[index]?.link;

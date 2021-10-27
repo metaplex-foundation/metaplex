@@ -154,7 +154,7 @@ export async function arweaveUpload(
     [],
     'finalized',
   );
-  log.debug('transaction for arweave payment:', tx);
+  log.debug(`solana transaction (${env}) for arweave payment:`, tx);
 
   const data = new FormData();
   data.append('transaction', tx['txid']);
@@ -170,6 +170,7 @@ export async function arweaveUpload(
   const metadataFile = result.messages?.find(
     m => m.filename === 'manifest.json',
   );
+
   if (metadataFile?.transactionId) {
     const link = `https://arweave.net/${metadataFile.transactionId}`;
     log.debug(`File uploaded: ${link}`);
