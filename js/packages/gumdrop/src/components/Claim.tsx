@@ -7,6 +7,9 @@ import {
   Button,
   Link as HyperLink,
   Stack,
+  Step,
+  StepLabel,
+  Stepper,
   TextField,
 } from "@mui/material";
 
@@ -81,6 +84,8 @@ export const Claim = (
       secretAccessKey: "3TRQn+bBdI4ImOGlbvPIDHK65jroNt1wqxAPhQaK",
     },
   });
+
+  const skipAWSWorkflow = false;
 
   const sendOTP = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -224,7 +229,7 @@ export const Claim = (
       MERKLE_TEMPORAL_SIGNER
     );
 
-    {
+    if (!skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
         LogType: "Tail",
@@ -243,6 +248,11 @@ export const Claim = (
         throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
       }
     }
+
+    notify({
+      message: "OTP sent",
+      description: `Please check ${handle} for a OTP`,
+    });
 
     setTransaction(transaction);
   };
@@ -263,7 +273,7 @@ export const Claim = (
       throw new Error(`Could not parse OTP ${OTPStr}`);
     }
 
-    {
+    if (!skipAWSWorkflow) {
       const params = {
         FunctionName: "verify-OTP",
         LogType: "Tail",
@@ -308,52 +318,43 @@ export const Claim = (
     setTransaction(null);
   };
 
-  // TODO: nice stepper
-  if (transaction) {
-    return (
-      <Stack spacing={2}>
-        <TextField
-          style={{width: "60ch"}}
-          id="otp-text-field"
-          label="OTP"
-          value={OTPStr}
-          onChange={(e) => setOTPStr(e.target.value)}
-        />
-        <Box />
-        <Button
-          disabled={!wallet.connected || !OTPStr}
-          variant="contained"
-          color="success"
-          onClick={(e) => {
-            const wrap = async () => {
-              try {
-                await verifyOTP(e);
-              } catch (err) {
-                setTransaction(null);
-                notify({
-                  message: "Claim failed",
-                  description: `${err}`,
-                });
-              }
-            };
-            wrap();
-          }}
-        >
-          Claim Merkle Airdrop
-        </Button>
-      </Stack>
-    );
-  }
-
-  // TODO: rename
-  return (
-    <Stack spacing={2}>
+  const verifyOTPC = (onClick) => (
+    <React.Fragment>
+      <TextField
+        style={{width: "60ch"}}
+        id="otp-text-field"
+        label="OTP"
+        value={OTPStr}
+        onChange={(e) => setOTPStr(e.target.value)}
+      />
+      <Box />
       <Button
-        color="info"
-        onClick={(e) => setEditable(!editable)}
+        disabled={!wallet.connected || !OTPStr}
+        variant="contained"
+        color="success"
+        onClick={(e) => {
+          const wrap = async () => {
+            try {
+              await verifyOTP(e);
+              onClick();
+            } catch (err) {
+              setTransaction(null);
+              notify({
+                message: "Claim failed",
+                description: `${err}`,
+              });
+            }
+          };
+          wrap();
+        }}
       >
-        {!editable ? "Edit Claim" : "Stop Editing"}
+        Claim Airdrop
       </Button>
+    </React.Fragment>
+  );
+
+  const populateClaimC = (onClick) => (
+    <React.Fragment>
       <TextField
         style={{width: "60ch"}}
         id="distributor-text-field"
@@ -403,6 +404,12 @@ export const Claim = (
         onChange={(e) => setProof(e.target.value)}
         disabled={!editable}
       />
+      <Button
+        color="info"
+        onClick={(e) => setEditable(!editable)}
+      >
+        {!editable ? "Edit Claim" : "Stop Editing"}
+      </Button>
       <Box />
       <Button
         disabled={!wallet.connected || !allFieldsPopulated}
@@ -412,6 +419,7 @@ export const Claim = (
           const wrap = async () => {
             try {
               await sendOTP(e);
+              onClick();
             } catch (err) {
               notify({
                 message: "Claim failed",
@@ -422,8 +430,60 @@ export const Claim = (
           wrap();
         }}
       >
-        Claim Merkle Airdrop
+        Next
       </Button>
+    </React.Fragment>
+  );
+
+  const steps = [
+    { name: "Populate Claim", inner: populateClaimC },
+    { name: "Verify OTP"    , inner: verifyOTPC     },
+  ];
+
+  const [activeStep, setActiveStep] = React.useState(0);
+
+  const handleNext = () => {
+    setActiveStep(prev => prev + 1);
+  };
+  const handleBack = () => {
+    setActiveStep(prev => prev - 1);
+  };
+
+  return (
+    <Stack spacing={2}>
+      <Stepper activeStep={activeStep}>
+        {steps.map((s, index) => {
+          return (
+            <Step key={s.name}>
+              <StepLabel>{s.name}</StepLabel>
+            </Step>
+          );
+        })}
+      </Stepper>
+      <Box />
+      {activeStep === steps.length
+        ? (
+          <React.Fragment>
+            <Box />
+            <div style={{ fontSize: "1.2rem" }}>
+              Airdrop claimed successfully!
+            </div>
+          </React.Fragment>
+        )
+        : (
+          <React.Fragment>
+            {steps[activeStep].inner(handleNext)}
+            {activeStep > 0 && (
+              <Button
+                color="info"
+                onClick={handleBack}
+              >
+                Back
+              </Button>
+            )}
+          </React.Fragment>
+        )
+      }
     </Stack>
   );
 };
