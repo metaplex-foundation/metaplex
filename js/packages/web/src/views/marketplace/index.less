@@ -1,7 +1,7 @@
 /* top sec starts */
 
 #market-sec {
-  margin: 40px auto;
+  margin: 0px auto;
   padding: 0;
 }
 .btn:focus {
@@ -16,8 +16,6 @@
   line-height: 48px;
   letter-spacing: -0.017em;
   color: #fff;
-  margin-top: 40px;
-  margin-bottom: 20px;
 }
 
 #market-sec .btn-group .btn-secondary {
@@ -32,7 +30,7 @@
 
 #market-sec .card .fa-search {
   font-size: 20px;
-  padding: 15px;
+  padding: 5px;
   color: #cccccc;
 }
 
@@ -40,6 +38,8 @@
   background: #282f3f;
   border: 0px solid red;
   color: white;
+  background-color: #2B3A6A !important;
+  box-shadow: none;
 }
 .container-fluid {
   .container-img {
@@ -48,15 +48,11 @@
   }
 }
 .refresh-button {
-  // position: absolute !important;
-  // bottom: 100% !important;
   font-size: 25px;
   padding: 0px 10px;
   color: #ffffff;
-  // right: 16px;
-  border: 2px solid #ffffff;
   border-radius: 5px;
-  margin-bottom: 5px;
+  background-color: #2B3A6A;
   cursor: pointer;
   width: 50px;
   margin: 0 0 0 auto;
@@ -210,4 +206,79 @@
   font-weight: 600;
   font-size: 40px;
   color: #851cef;
+}
+
+.profile_img{
+  display: flex;
+  justify-content: center;
+}
+
+.data_decription{
+  display: flex;
+  justify-content: center;
+}
+.descrition_buttons button  strong{
+color:white,
+}
+.descrition_buttons{
+  max-width:600px;
+  margin-bottom: 4px !important;
+}
+.name{
+  margin-bottom: 0 !important;
+}
+.data_description_buttons{
+  background: linear-gradient(90deg, rgba(133, 28, 239, 0.38), rgba(55, 105, 93, 0.63));
+  border-radius: 10px;
+}
+
+#market-sec  .container-fluid {
+  display: flex;
+  flex-direction: column;
+  row-gap: 50px;
+  margin-top: 60px;
+}
+#market-sec  .container-fluid .account_detials{
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  justify-content: center;
+  position: relative;
+  
+}
+.row form{
+  background-color: #2B3A6A !important;
+}
+.general_section{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cover_img_size{
+  width: 100%;
+}
+
+.nft_account{
+  transform: translateY(-120px) !important;
+}
+
+// @media only screen and (max-width: 1110px) {
+//  .fillter_buttons{
+// max-width: 600px;
+// display: flex;
+// row-gap: 20px;
+//  }
+ 
+// }
+
+@media screen {
+  @media (max-width: 1110px) {
+    .fillter_buttons{
+      max-width: 500px;
+      display: flex;
+      row-gap: 20px;
+     justify-content: center;
+       }
+  }
 }

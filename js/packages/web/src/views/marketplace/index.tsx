@@ -8,7 +8,7 @@ import {
   useCollection,
   useCollectionTokenMetadataList,
 } from '../../hooks/useCollections';
-import { getCollection } from '../../hooks/getData';
+
 export enum ArtworkViewState {
   Metaplex = 0,
   Owned = 1,
@@ -24,30 +24,27 @@ let allItems: any = [];
 let allAuction = 0;
 let pageSize = 16;
 let activePage = 0;
-let isLoading = false;
 
 export const MarketplaceView = () => {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
+
   const { id } = useParams<{ id: string }>();
-  const [collectionUpdate, setCollectionUpdate] = useState(0);
+  const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
   const { collectionData } = useCollection(id);
 
   const optionData = ['Price: Low to High', 'Price: High to Low'];
   const optionDataFilter = [4, 8, 16, 32, 64, 128];
 
   useEffect(() => {
-    if (!id) return;
-    getCollection(id).then(data => {
-      if (data && data.length > 0) {
-        if (data.length > 0) sortCollection(data);
-      }
-    });
-  }, [collectionUpdate]);
+    if (collection) {
+      sortCollection(collection);
+    } else if (!isLoading) pageLen = 0;
+  }, [collection, isLoading]);
 
   const sortToPrice = (arr: any) => {
     return arr.sort((a, b) => {
-      return a.account.price - b.account.price;
+      return a.Price - b.Price;
     });
   };
 
@@ -59,21 +56,23 @@ export const MarketplaceView = () => {
     let owner: any = [];
 
     collection.map(item => {
-      if (item.info.auction && !!item.account.price) {
+      if (item['Auction']) {
         arr.push(item);
-        if (item.account.price > max) max = item.account.price;
-        if (item.account.price < min) min = item.account.price;
-        const ownerHasAddress = owner.includes(item.authority);
-        if (!ownerHasAddress) owner.push(item.authority);
+        if (item.Price > max) max = item.Price;
+        if (item.Price < min) min = item.Price;
+        const ownerHasAddress = owner.includes(
+          item.ParsedAccount.info.data.creators[0].address,
+        );
+        if (!ownerHasAddress)
+          owner.push(item.ParsedAccount.info.data.creators[0].address);
       } else nft.push(item);
     });
-
     allAuction = arr.length;
     allItems = collection;
     if (searchItem) arr = changeSearch();
     if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
-    } else {
+    } else if (lowToHigh == 'Price: High to Low') {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
@@ -91,132 +90,131 @@ export const MarketplaceView = () => {
 
   const onChange = event => {
     activePage = event.selected;
+    update();
   };
 
   const changeSearch = () => {
     const arr: any = [];
     const search = searchItem.toUpperCase();
     allItems.map(item => {
-      const name = item.info.data.name.toUpperCase();
+      const name = item.ParsedAccount.info.data.name.toUpperCase();
       if (name.search(search) >= 0) arr.push(item);
     });
     return arr;
   };
 
-  return (
-    <div style={{ margin: '0px auto' }} className="col-md-10">
+  return (<div className="general_section">
+    <div className="cover_img">
+      <img src="/PNG.png" className="cover_img_size" />
+    </div>
+    <div style={{ margin: '0px auto' }} className="col-md-10 nft_account">
+
       <div id="market-sec" className="col-md-10">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-2">
-              <img src={collectionData?.image} className="mt-4 container-img" />
+        <div className="container-fluid ">
+          <div className="account_detials">
+            <div className="profile_img">
+              <img src={collectionData?.image} className="container-img" style={{ width: "100px" }} />
             </div>
-            <div className="col-md-6">
-              <h1 className="mt-0">{collectionData?.collectionName}</h1>
-              <div
-                className="btn-group mb-3"
-                role="group"
-                aria-label="Basic example"
-              >
-                <button type="button" className="btn btn-secondary text-left">
-                  <strong>{allAuction}</strong>
-                  <br />
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    Items
-                  </span>
-                </button>
-                <button type="button" className="btn btn-secondary text-left">
-                  <strong>{ownerLen}</strong>
-                  <br />
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    Owner
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary text-left d-flex align-items-center"
-                >
-                  <span>
-                    <strong>{maxPrice}</strong>
-                    <br />
-                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Max Price
-                    </span>
-                  </span>{' '}
-                  <img
-                    src="/images/exchange-white.png"
-                    className="ml-3 exchange-white"
-                  />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary text-left d-flex align-items-center"
-                >
-                  <span>
-                    <strong>{minPrice}</strong>
-                    <br />
-                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Floor Price
-                    </span>
-                  </span>{' '}
-                  <img
-                    src="/images/exchange-white.png"
-                    className="ml-3 exchange-white"
-                  />
-                </button>
-              </div>
-              <div className="bottom-sec d-flex">
+
+            <h1 className="mt-0 text-center mb-0">{collectionData?.collectionName}</h1>
+            <div
+              className=" row justify-content-center rounded"
+              role="group"
+              aria-label="Basic example"
+            >
+              <button type="button" className="btn ">
+                <a href={collectionData?.twitterUrl} target="_blank">
+                  <img src="/images/twit1.png" />
+                </a>
+              </button>
+              <button type="button" className="btn ">
+                <a href={collectionData?.discordUrl} target="_blank">
+                  <img src="/images/twit3.png" />
+                </a>
+              </button>
+              <button type="button" className="btn ">
+                <a href={collectionData?.daringDragonsUrl} target="_blank">
+                  <img src="/images/twit2.png" />
+                </a>
+              </button>
+            </div>
+            <div className="data_decription">
+              <div className="data_description_buttons">
                 <div
-                  className="btn-group"
+                  className="btn-group mt-2  descrition_buttons"
                   role="group"
                   aria-label="Basic example"
                 >
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.twitterUrl} target="_blank">
-                      <img src="/images/twit1.png" />
-                    </a>
+                  <button type="button" className="btn border-right text-center">
+                    <strong>{allAuction}</strong>
+                    <br />
+                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Items
+                    </span>
                   </button>
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.discordUrl} target="_blank">
-                      <img src="/images/twit3.png" />
-                    </a>
+                  <button type="button" className="btn border-right text-center">
+                    <strong>{ownerLen}</strong>
+                    <br />
+                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Owner
+                    </span>
                   </button>
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.daringDragonsUrl} target="_blank">
-                      <img src="/images/twit2.png" />
-                    </a>
+                  <button
+                    type="button"
+                    className="btn border-right text-center d-flex align-items-center"
+                  >
+                    <span>
+                      <strong>{maxPrice}</strong>
+                      <br />
+                      <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                        Max Price
+                      </span>
+                    </span>{' '}
+
+                  </button>
+                  <button
+                    type="button"
+                    className="btn  text-center d-flex align-items-center"
+                  >
+                    <span>
+                      <strong>{minPrice}</strong>
+                      <br />
+                      <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                        Floor Price
+                      </span>
+                    </span>{' '}
+
                   </button>
                 </div>
-                <form className="card card-sm ml-4">
-                  <div className="card-body row no-gutters align-items-center p-0">
-                    <div className="col-auto">
-                      <i className="fa fa-search" aria-hidden="true"></i>
-                    </div>
-                    <div className="col">
-                      <input
-                        className="form-control"
-                        type="search"
-                        placeholder=""
-                        value={searchItem}
-                        onChange={event => {
-                          activePage = 0;
-                          searchItem = event.target.value;
-                          setCollectionUpdate(collectionUpdate + 1);
-                        }}
-                      />
-                    </div>
-                    <div className="col-auto">
-                      <div className="btn btn-secondary bg-transparent border-0">
-                        <img src="/images/bar.png" />
-                      </div>
-                    </div>
-                  </div>
-                </form>
               </div>
             </div>
-            <div className="col-md-4"></div>
           </div>
-          <div className="row mt-5" style={{ justifyContent: 'end' }}>
+          <div className="row fillter_buttons" style={{ justifyContent: 'space-evenly' }}>
+            <form className="card card-sm ">
+              <div className="card-body row no-gutters align-items-center p-0">
+                <div className="col-auto">
+                  <i className="fa fa-search" aria-hidden="true"></i>
+                </div>
+                <div className="col">
+                  <input
+                    className="form-control "
+                    type="search"
+                    placeholder=""
+                    value={searchItem}
+                    onChange={event => {
+                      activePage = 0;
+                      searchItem = event.target.value;
+                      update();
+                    }}
+                  />
+                </div>
+                <div className="col-auto">
+                  <div className="btn btn-secondary bg-transparent border-0">
+                    <img src="/images/bar.png" />
+                  </div>
+                </div>
+              </div>
+            </form>
             <div className="col-md-3">
               <div className="dropdown">
                 <CustomSelect
@@ -224,7 +222,7 @@ export const MarketplaceView = () => {
                   defaultParam="Price: Low to High"
                   onChange={event => {
                     lowToHigh = event.target.value;
-                    setCollectionUpdate(collectionUpdate + 1);
+                    update();
                   }}
                 />
               </div>
@@ -237,7 +235,7 @@ export const MarketplaceView = () => {
                   onChange={event => {
                     pageSize = parseFloat(event.target.value);
                     activePage = 0;
-                    setCollectionUpdate(collectionUpdate + 1);
+                    update();
                   }}
                 />
               </div>
@@ -246,7 +244,7 @@ export const MarketplaceView = () => {
               <div
                 className="refresh-button"
                 onClick={() => {
-                  setCollectionUpdate(collectionUpdate + 1);
+                  if (!isLoading) update();
                 }}
               >
                 <i className="fas fa-redo-alt"></i>
@@ -271,14 +269,12 @@ export const MarketplaceView = () => {
                 {!isLoading ? (
                   onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
-                      const id = m.pubkey;
+                      const id = m.ParsedAccount.pubkey;
                       return (
                         <AuctionCard
-                          key={idx}
                           pubkey={id}
-                          auction={m.info.auction}
-                          price={m.account.price}
-                          nftPubkey={m.account.metadata}
+                          auction={m.Auction}
+                          price={m.Price}
                         />
                       );
                     })
@@ -306,7 +302,7 @@ export const MarketplaceView = () => {
                           changePage={event => {
                             if (!isLoading) {
                               onChange(event);
-                              setCollectionUpdate(collectionUpdate + 1);
+                              update();
                             }
                           }}
                         />
@@ -322,5 +318,6 @@ export const MarketplaceView = () => {
         </div>
       </div>
     </div>
+  </div>
   );
 };
