@@ -188,7 +188,7 @@ export const useAuctions = (state?: AuctionViewState) => {
       );
       setAuctionViews(auctionViews.sort(sortByEnded));
     })();
-  }, [state, auctions, publicKey, cachedRedemptionKeys, setAuctionViews]);
+  }, [state, auctions, publicKey, cachedRedemptionKeys]);
 
   return auctionViews;
 };

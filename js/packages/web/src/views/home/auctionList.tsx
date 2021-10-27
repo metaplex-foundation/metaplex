@@ -2,6 +2,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
+import { Spinner } from 'react-bootstrap';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
@@ -107,44 +108,52 @@ export const AuctionListView = () => {
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!false
-        ? items.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+      {!false ? (
+        items.map((m, idx) => {
+          if (m === heroAuction) {
+            return;
+          }
 
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+          const id = m.auction.pubkey;
+          return (
+            <Link to={`/auction/${id}`} key={idx}>
+              <AuctionRenderCard key={id} auctionView={m} />
+            </Link>
+          );
+        })
+      ) : (
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden"></span>
+        </Spinner>
+      )}
     </Masonry>
   );
   const endedAuctions = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!false
-        ? auctionsEnded.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+      {!false ? (
+        auctionsEnded.map((m, idx) => {
+          if (m === heroAuction) {
+            return;
+          }
 
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+          const id = m.auction.pubkey;
+          return (
+            <Link to={`/auction/${id}`} key={idx}>
+              <AuctionRenderCard key={id} auctionView={m} />
+            </Link>
+          );
+        })
+      ) : (
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden"></span>
+        </Spinner>
+      )}
     </Masonry>
   );
 
