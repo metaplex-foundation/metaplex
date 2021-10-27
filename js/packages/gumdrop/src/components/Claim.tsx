@@ -81,8 +81,8 @@ export const Claim = (
   const client = new LambdaClient({
     region: "us-east-2",
     credentials: {
-      accessKeyId: "AKIAUX7VGBD25I3UONGI",
-      secretAccessKey: "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",
+      accessKeyId: "AKIA4UZOKPKEBSISSXIX",
+      secretAccessKey: "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",
     },
   });
 
@@ -235,6 +235,7 @@ export const Claim = (
         FunctionName: "send-OTP",
         LogType: "Tail",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
+          method: "send",
           transaction: bs58.encode(transaction.serializeMessage()),
           seeds: pdaSeeds,
         }))),
@@ -276,9 +277,10 @@ export const Claim = (
 
     if (!skipAWSWorkflow) {
       const params = {
-        FunctionName: "verify-OTP",
+        FunctionName: "send-OTP",
         LogType: "Tail",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
+          method: "verify",
           otp: OTP,
           handle: handle,  // TODO?
         }))),
