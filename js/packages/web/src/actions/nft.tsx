@@ -105,6 +105,7 @@ export const mintNFT = async (
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
   coverFile?: File,
+  mainFile?: File,
 ): Promise<{
   metadataAccount: StringPublicKey;
 } | void> => {
@@ -175,6 +176,13 @@ export const mintNFT = async (
     const coverFileUpload = uploadedFilePins.files.find(file => file.name == coverFile.name)
     if (coverFileUpload) {
       metadataContent.image = coverFileUpload.uri
+    }
+  }
+  
+  if (mainFile) {
+    const mainFileUpload = uploadedFilePins.files.find(file => file.name == mainFile.name)
+    if (mainFileUpload) {
+      metadataContent.animation_url = mainFileUpload.uri
     }
   }
 

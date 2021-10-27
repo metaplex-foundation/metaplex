@@ -65,6 +65,7 @@ export const ArtCreateView = () => {
     useState<{ metadataAccount: StringPublicKey } | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File>();
+  const [mainFile, setMainFile] = useState<File>();
   const [attributes, setAttributes] = useState<IMetadataExtension>({
     name: '',
     symbol: '',
@@ -125,6 +126,7 @@ export const ArtCreateView = () => {
         setNFTcreateProgress,
         attributes.properties?.maxSupply,
         coverFile,
+        mainFile,
       );
 
       if (_nft) setNft(_nft);
@@ -177,6 +179,7 @@ export const ArtCreateView = () => {
           {step === 1 && (
             <UploadStep
               onSetCoverFile={setCoverFile}
+              onSetMainFile={setMainFile}
               attributes={attributes}
               setAttributes={setAttributes}
               files={files}
@@ -318,6 +321,7 @@ const UploadStep = (props: {
   setFiles: (files: File[]) => void;
   confirm: () => void;
   onSetCoverFile?: (File) => void;
+  onSetMainFile?: (File) => void;
 }) => {
   const [coverFile, setCoverFile] = useState<File | undefined>(
     props.files?.[0],
@@ -444,6 +448,7 @@ const UploadStep = (props: {
               }
 
               setMainFile(file);
+              props.onSetMainFile && props.onSetMainFile(file)
               setMainArtError(undefined);
             }}  // TODO: enable when using payer account to avoid 2nd popup
             onRemove={() => {
