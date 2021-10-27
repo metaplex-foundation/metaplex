@@ -18,7 +18,7 @@ import { getHandleAndRegistryKey } from '@solana/spl-name-service';
 import { MintInfo } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Button, Card, Carousel, Col, List, Row, Skeleton } from 'antd';
+import { Button, Card, Carousel, Col, List, Row, Skeleton, Space } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'timeago.js';
@@ -238,52 +238,44 @@ const BidLine = (props: {
   }, [bidderTwitterHandle]);
 
   return (
-    <Row wrap={false}>
-      {isCancelled ? (
-        <Col flex="0 0 auto">
+    <Row wrap={false} align="middle" className="metaplex-fullwidth">
+      <Col span={9}>
+        {isCancelled ? (
           <div />
-        </Col>
-      ) : (
-        <>
-          <Col flex="0 0 auto">
-            {isme && (
-              <>
-                <CheckOutlined />
-                &nbsp;
-              </>
-            )}
-          </Col>
-          <Col flex="0 0 auto">
+        ) : (
+          <Space direction="horizontal">
+            {isme && <CheckOutlined />}
             <AmountLabel
               displaySOL={true}
               amount={formatTokenAmount(bid.info.lastBid, mint)}
             />
-          </Col>
-        </>
-      )}
+          </Space>
+        )}
+      </Col>
 
-      <Col flex="0 0 auto">
+      <Col span={6}>
         {/* uses milliseconds */}
         {format(bid.info.lastBidTimestamp.toNumber() * 1000)}
       </Col>
-      <Col flex="1 0 0 " />
-      <Col flex="0 0 auto">
-        <Identicon size={24} address={bidder} />{' '}
-      </Col>
-      <Col flex="0 0 auto">
-        {bidderTwitterHandle ? (
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            title={shortenAddress(bidder)}
-            href={`https://twitter.com/${bidderTwitterHandle}`}
-          >{`@${bidderTwitterHandle}`}</a>
-        ) : (
-          shortenAddress(bidder)
-        )}
-      </Col>
-      <Col flex="0 0 auto">
-        <ClickToCopy copyText={bidder} />
+      <Col span={9}>
+        <Space
+          direction="horizontal"
+          align="center"
+          className="metaplex-fullwidth metaplex-space-justify-end"
+        >
+          <Identicon size={24} address={bidder} />
+          {bidderTwitterHandle ? (
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              title={shortenAddress(bidder)}
+              href={`https://twitter.com/${bidderTwitterHandle}`}
+            >{`@${bidderTwitterHandle}`}</a>
+          ) : (
+            shortenAddress(bidder)
+          )}
+          <ClickToCopy copyText={bidder} />
+        </Space>
       </Col>
     </Row>
   );
@@ -339,23 +331,23 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Row>
-      <Col>
-        <h6>Bid History</h6>
-        {bidLines.slice(0, 10)}
-        {bids.length > 10 && (
-          <div onClick={() => setShowHistoryModal(true)}>View full history</div>
-        )}
-        <MetaplexModal
-          visible={showHistoryModal}
-          onCancel={() => setShowHistoryModal(false)}
-          title="Bid history"
-          centered
-          width={width < 768 ? width - 10 : 600}
-        >
-          <div>{bidLines}</div>
-        </MetaplexModal>
-      </Col>
-    </Row>
+    <Space direction="vertical" className="metaplex-fullwidth">
+      <h6>Bid History</h6>
+      <div>{bidLines.slice(0, 10)}</div>
+      {bids.length > 10 && (
+        <Button onClick={() => setShowHistoryModal(true)}>
+          View full history
+        </Button>
+      )}
+      <MetaplexModal
+        visible={showHistoryModal}
+        onCancel={() => setShowHistoryModal(false)}
+        title="Bid history"
+        centered
+        width={width < 768 ? width - 10 : 600}
+      >
+        {bidLines}
+      </MetaplexModal>
+    </Space>
   );
 };

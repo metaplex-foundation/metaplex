@@ -69,7 +69,7 @@ export const AppBar = () => {
             <img src="/metaplex-logo.svg" />
           </Link>
         </Col>
-        <Col flex="1 0 0" style={{overflow: 'hidden'}}>
+        <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
           <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
             {menuItems}
           </Menu>

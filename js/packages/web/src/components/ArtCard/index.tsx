@@ -1,5 +1,5 @@
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { Badge, Button, Card, CardProps } from 'antd';
+import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
 import React from 'react';
 import { useArt } from '../../hooks';
 import { Artist, ArtType } from '../../types';
@@ -88,7 +88,7 @@ export const ArtCard = (props: ArtCardProps) => {
       <Meta
         title={`${name}`}
         description={
-          <>
+          <Space direction="horizontal">
             <MetaAvatar creators={creators} size={32} />
             {/* {art.type === ArtType.Master && (
               <>
@@ -101,8 +101,8 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            <div>{badge}</div>
-          </>
+            {badge && <Tag>{badge}</Tag>}
+          </Space>
         }
       />
     </Card>
