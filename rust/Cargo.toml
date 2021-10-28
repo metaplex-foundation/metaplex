@@ -9,6 +9,7 @@ members = [
   "metaplex/test",
   "token-vault/test",
   "token-metadata/test",
+  "allow-list/"
 ]
 exclude = [
 ]

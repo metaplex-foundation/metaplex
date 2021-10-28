@@ -55,6 +55,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b2d54853319fd101b8dd81de382bcbf3e03410a64d8928bbee85a3e7dcde483"
 
 [[package]]
+name = "allow-list"
+version = "0.0.1"
+
+[[package]]
 name = "anchor-attribute-access-control"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
