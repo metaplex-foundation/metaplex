@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ninja-marketplace-cache-updater
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cache-updater
+            image: registry.digitalocean.com/ninja-marketplace/cache-updater
+            imagePullPolicy: Always
+            command:
+            - npm
+            - run
+            - cache-update
+          restartPolicy: OnFailure
+  concurrencyPolicy: Forbid

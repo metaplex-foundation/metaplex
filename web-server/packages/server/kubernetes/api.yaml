@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ninja-marketplace-api
+  labels:
+    app: ninja-marketplace-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ninja-marketplace-api
+  template:
+    metadata:
+      labels:
+        app: ninja-marketplace-api
+    spec:
+      containers:
+      - name: ninja-marketplace-api
+        image: registry.digitalocean.com/ninja-marketplace/ninja-marketplace-service
+        ports:
+        - containerPort: 3001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ninja-marketplace-api-service
+spec:
+  selector:
+    app: ninja-marketplace-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3001
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-myservicea
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ninja-marketplace-api-service
+            port:
+              number: 80
+  ingressClassName: nginx
