@@ -449,9 +449,18 @@ export async function getTokenAmount(
 ): Promise<number> {
   let amount = 0;
   if (!mint.equals(WRAPPED_SOL_MINT)) {
-    const token =
-      await anchorProgram.provider.connection.getTokenAccountBalance(account);
-    amount = token.value.uiAmount;
+    try {
+      const token =
+        await anchorProgram.provider.connection.getTokenAccountBalance(account);
+      amount = token.value.uiAmount * Math.pow(10, token.value.decimals);
+    } catch (e) {
+      log.error(e);
+      log.info(
+        'Account ',
+        account.toBase58(),
+        'didnt return value. Assuming 0 tokens.',
+      );
+    }
   } else {
     amount = await anchorProgram.provider.connection.getBalance(account);
   }

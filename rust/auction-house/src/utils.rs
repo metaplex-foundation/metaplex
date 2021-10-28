@@ -196,7 +196,7 @@ pub fn pay_auction_house_fees<'a>(
     escrow_payment_account: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
     system_program: &AccountInfo<'a>,
-    escrow_signer_seeds: &[&[u8]],
+    signer_seeds: &[&[u8]],
     size: u64,
     is_native: bool,
 ) -> Result<u64, ProgramError> {
@@ -212,7 +212,7 @@ pub fn pay_auction_house_fees<'a>(
                 token_program.key,
                 &escrow_payment_account.key,
                 &auction_house_treasury.key,
-                escrow_payment_account.key,
+                &auction_house.key(),
                 &[],
                 total_fee,
             )?,
@@ -220,8 +220,9 @@ pub fn pay_auction_house_fees<'a>(
                 escrow_payment_account.clone(),
                 auction_house_treasury.clone(),
                 token_program.clone(),
+                auction_house.to_account_info(),
             ],
-            &[escrow_signer_seeds],
+            &[signer_seeds],
         )?;
     } else {
         invoke_signed(
@@ -235,7 +236,7 @@ pub fn pay_auction_house_fees<'a>(
                 auction_house_treasury.clone(),
                 system_program.clone(),
             ],
-            &[escrow_signer_seeds],
+            &[signer_seeds],
         )?;
     }
     Ok(total_fee)
@@ -292,13 +293,14 @@ pub fn pay_creator_fees<'a>(
     remaining_accounts: &mut Iter<AccountInfo<'a>>,
     metadata_info: &AccountInfo<'a>,
     escrow_payment_account: &AccountInfo<'a>,
+    payment_account_owner: &AccountInfo<'a>,
     fee_payer: &AccountInfo<'a>,
     treasury_mint: &AccountInfo<'a>,
     ata_program: &AccountInfo<'a>,
     token_program: &AccountInfo<'a>,
     system_program: &AccountInfo<'a>,
     rent: &AccountInfo<'a>,
-    escrow_signer_seeds: &[&[u8]],
+    signer_seeds: &[&[u8]],
     fee_payer_seeds: &[&[u8]],
     size: u64,
     is_native: bool,
@@ -354,7 +356,7 @@ pub fn pay_creator_fees<'a>(
                                 token_program.key,
                                 &escrow_payment_account.key,
                                 current_creator_token_account_info.key,
-                                escrow_payment_account.key,
+                                payment_account_owner.key,
                                 &[],
                                 creator_fee,
                             )?,
@@ -362,8 +364,9 @@ pub fn pay_creator_fees<'a>(
                                 escrow_payment_account.clone(),
                                 current_creator_token_account_info.clone(),
                                 token_program.clone(),
+                                payment_account_owner.clone(),
                             ],
-                            &[escrow_signer_seeds],
+                            &[signer_seeds],
                         )?;
                     }
                 } else if creator_fee > 0 {
@@ -378,7 +381,7 @@ pub fn pay_creator_fees<'a>(
                             current_creator_info.clone(),
                             system_program.clone(),
                         ],
-                        &[escrow_signer_seeds],
+                        &[signer_seeds],
                     )?;
                 }
             }

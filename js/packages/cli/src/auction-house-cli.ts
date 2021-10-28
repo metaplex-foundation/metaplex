@@ -484,7 +484,8 @@ programCommand('execute_sale')
         remainingAccounts.push({
           pubkey: (
             await getAtaForMint(
-              mintKey,
+              //@ts-ignore
+              auctionHouseObj.treasuryMint,
               remainingAccounts[remainingAccounts.length - 1].pubkey,
             )
           )[0],
@@ -709,6 +710,12 @@ programCommand('buy')
         .map(k => (k.isSigner = true));
     }
 
+    if (!isNative) {
+      instruction.keys
+        .filter(k => k.pubkey.equals(transferAuthority.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
     const instructions = [
       ...(isNative
         ? []
@@ -719,7 +726,7 @@ programCommand('buy')
               transferAuthority.publicKey,
               walletKeyPair.publicKey,
               [],
-              buyPriceAdjusted,
+              buyPriceAdjusted.toNumber(),
             ),
           ]),
 
@@ -821,6 +828,12 @@ programCommand('deposit')
 
       instruction.keys
         .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    if (!isNative) {
+      instruction.keys
+        .filter(k => k.pubkey.equals(transferAuthority.publicKey))
         .map(k => (k.isSigner = true));
     }
 

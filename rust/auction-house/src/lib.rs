@@ -35,11 +35,12 @@ pub mod auction_house {
         let auction_house = &ctx.accounts.auction_house;
         let system_program = &ctx.accounts.system_program;
 
-        let auction_house_seeds = [
+        let auction_house_key = auction_house.key();
+        let seeds = [
             PREFIX.as_bytes(),
-            auction_house.creator.as_ref(),
-            auction_house.treasury_mint.as_ref(),
-            &[auction_house.bump],
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
         ];
 
         invoke_signed(
@@ -53,7 +54,7 @@ pub mod auction_house {
                 fee_withdrawal_destination.to_account_info(),
                 system_program.to_account_info(),
             ],
-            &[&auction_house_seeds],
+            &[&seeds],
         )?;
 
         Ok(())
@@ -77,6 +78,7 @@ pub mod auction_house {
             auction_house.treasury_mint.as_ref(),
             &[auction_house.bump],
         ];
+
         if !is_native {
             invoke_signed(
                 &spl_token::instruction::transfer(
@@ -295,7 +297,15 @@ pub mod auction_house {
         let ata_program = &ctx.accounts.ata_program;
         let rent = &ctx.accounts.rent;
 
+        let auction_house_key = auction_house.key();
         let seeds = [
+            PREFIX.as_bytes(),
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
+        ];
+
+        let ah_seeds = [
             PREFIX.as_bytes(),
             auction_house.creator.as_ref(),
             auction_house.treasury_mint.as_ref(),
@@ -358,7 +368,7 @@ pub mod auction_house {
                     token_program.key,
                     &escrow_payment_account.key(),
                     &receipt_account.key(),
-                    &escrow_payment_account.key(),
+                    &auction_house.key(),
                     &[],
                     amount,
                 )?,
@@ -366,8 +376,9 @@ pub mod auction_house {
                     escrow_payment_account.to_account_info(),
                     receipt_account.to_account_info(),
                     token_program.to_account_info(),
+                    auction_house.to_account_info(),
                 ],
-                &[&escrow_signer_seeds],
+                &[&ah_seeds],
             )?;
         } else {
             assert_keys_equal(receipt_account.key(), wallet.key())?;
@@ -406,13 +417,13 @@ pub mod auction_house {
         let token_program = &ctx.accounts.token_program;
         let rent = &ctx.accounts.rent;
 
+        let auction_house_key = auction_house.key();
         let seeds = [
             PREFIX.as_bytes(),
-            auction_house.creator.as_ref(),
-            auction_house.treasury_mint.as_ref(),
-            &[auction_house.bump],
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
         ];
-
         let auction_house_key = auction_house.key();
         let wallet_key = wallet.key();
 
@@ -506,11 +517,12 @@ pub mod auction_house {
             return Err(ErrorCode::NoValidSignerPresent.into());
         }
 
+        let auction_house_key = auction_house.key();
         let seeds = [
             PREFIX.as_bytes(),
-            auction_house.creator.as_ref(),
-            auction_house.treasury_mint.as_ref(),
-            &[auction_house.bump],
+            auction_house_key.as_ref(),
+            FEE_PAYER.as_bytes(),
+            &[auction_house.fee_payer_bump],
         ];
 
         let (fee_payer, fee_payer_seeds) = get_fee_payer(
@@ -587,6 +599,7 @@ pub mod auction_house {
 
         let metadata_clone = metadata.to_account_info();
         let escrow_clone = escrow_payment_account.to_account_info();
+        let auction_house_clone = auction_house.to_account_info();
         let ata_clone = ata_program.to_account_info();
         let token_clone = token_program.to_account_info();
         let sys_clone = system_program.to_account_info();
@@ -665,17 +678,33 @@ pub mod auction_house {
             &[escrow_payment_bump],
         ];
 
+        let ah_seeds = [
+            PREFIX.as_bytes(),
+            auction_house.creator.as_ref(),
+            auction_house.treasury_mint.as_ref(),
+            &[auction_house.bump],
+        ];
+
+        // with the native account, the escrow is it's own owner,
+        // whereas with token, it is the auction house that is owner.
+        let signer_seeds_for_royalties = if is_native {
+            escrow_signer_seeds
+        } else {
+            ah_seeds
+        };
+
         let buyer_leftover_after_royalties = pay_creator_fees(
             &mut ctx.remaining_accounts.iter(),
             &metadata_clone,
             &escrow_clone,
+            &auction_house_clone,
             &fee_payer_clone,
             treasury_mint,
             &ata_clone,
             &token_clone,
             &sys_clone,
             &rent_clone,
-            &escrow_signer_seeds,
+            &signer_seeds_for_royalties,
             &fee_payer_seeds,
             buyer_price,
             is_native,
@@ -687,7 +716,7 @@ pub mod auction_house {
             &escrow_clone,
             &token_clone,
             &sys_clone,
-            &escrow_signer_seeds,
+            &signer_seeds_for_royalties,
             buyer_price,
             is_native,
         )?;
@@ -727,7 +756,7 @@ pub mod auction_house {
                     token_program.key,
                     &escrow_payment_account.key(),
                     &seller_payment_receipt_account.key(),
-                    &escrow_payment_account.key(),
+                    &auction_house.key(),
                     &[],
                     buyer_leftover_after_royalties_and_house_fee,
                 )?,
@@ -735,8 +764,9 @@ pub mod auction_house {
                     escrow_payment_account.to_account_info(),
                     seller_payment_receipt_account.to_account_info(),
                     token_program.to_account_info(),
+                    auction_house.to_account_info(),
                 ],
-                &[&escrow_signer_seeds],
+                &[&ah_seeds],
             )?;
         } else {
             assert_keys_equal(seller_payment_receipt_account.key(), seller.key())?;
@@ -1031,11 +1061,8 @@ pub mod auction_house {
                 )?;
             }
         } else {
-            let escrow_payment_loaded = assert_is_ata(
-                &payment_account.to_account_info(),
-                &wallet.key(),
-                &treasury_mint.key(),
-            )?;
+            let escrow_payment_loaded: spl_token::state::Account =
+                assert_initialized(escrow_payment_account)?;
 
             if escrow_payment_loaded.amount < buyer_price {
                 let diff = buyer_price
