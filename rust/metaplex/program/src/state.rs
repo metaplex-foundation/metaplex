@@ -1,3 +1,4 @@
+use solana_program::msg;
 
 use {
     crate::{
@@ -5,19 +6,38 @@ use {
     },
     arrayref::{array_mut_ref, array_ref, mut_array_refs},
     borsh::{BorshDeserialize, BorshSerialize},
+    metaplex_auction::processor::AuctionData,
+    metaplex_token_metadata::state::Metadata,
+    metaplex_token_vault::state::SafetyDepositBox,
     solana_program::{
         account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
         pubkey::Pubkey,
     },
-    spl_auction::processor::AuctionData,
-    spl_token_metadata::state::Metadata,
-    spl_token_vault::state::SafetyDepositBox,
     std::cell::{Ref, RefMut},
 };
 /// prefix used for PDAs to avoid certain collision attacks (https://en.wikipedia.org/wiki/Collision_attack#Chosen-prefix_collision_attack)
 pub const PREFIX: &str = "metaplex";
 pub const TOTALS: &str = "totals";
+pub const INDEX: &str = "index";
+pub const CACHE: &str = "cache";
 pub const BASE_TRACKER_SIZE: usize = 1 + 1 + 1 + 4;
+
+pub const MAX_INDEXED_ELEMENTS: usize = 100;
+pub const MAX_STORE_INDEXER_SIZE: usize = 1 + //key
+32 + //store
+8 + //page
+4 + // how many elements are in the vec
+32*MAX_INDEXED_ELEMENTS; // size of indexed auction keys
+
+pub const MAX_METADATA_PER_CACHE: usize = 10;
+pub const MAX_AUCTION_CACHE_SIZE: usize = 1 + //key
+32 + //store
+8 + // timestamp
+4 + // metadata count
+32*MAX_METADATA_PER_CACHE + //metadata
+32 + // auction
+32 + // vault
+32; // auction manager
 
 pub const MAX_AUCTION_MANAGER_V2_SIZE: usize = 1 + //key
 32 + // store
@@ -66,6 +86,8 @@ pub enum Key {
     AuctionManagerV2,
     BidRedemptionTicketV2,
     AuctionWinnerTokenTypeTrackerV1,
+    StoreIndexerV1,
+    AuctionCacheV1,
 }
 
 pub struct CommonWinningIndexChecks<'a> {
@@ -647,6 +669,50 @@ impl PayoutTicket {
     }
 }
 
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize)]
+pub struct StoreIndexer {
+    pub key: Key,
+    pub store: Pubkey,
+    pub page: u64,
+    pub auction_caches: Vec<Pubkey>,
+}
+
+impl StoreIndexer {
+    pub fn from_account_info(a: &AccountInfo) -> Result<StoreIndexer, ProgramError> {
+        let store: StoreIndexer = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::StoreIndexerV1,
+            MAX_STORE_INDEXER_SIZE,
+        )?;
+
+        Ok(store)
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, BorshSerialize, BorshDeserialize)]
+pub struct AuctionCache {
+    pub key: Key,
+    pub store: Pubkey,
+    pub timestamp: i64,
+    pub metadata: Vec<Pubkey>,
+    pub auction: Pubkey,
+    pub vault: Pubkey,
+    pub auction_manager: Pubkey,
+}
+
+impl AuctionCache {
+    pub fn from_account_info(a: &AccountInfo) -> Result<AuctionCache, ProgramError> {
+        let store: AuctionCache = try_from_slice_checked(
+            &a.data.borrow_mut(),
+            Key::AuctionCacheV1,
+            MAX_AUCTION_CACHE_SIZE,
+        )?;
+
+        Ok(store)
+    }
+}
 #[repr(C)]
 #[derive(Clone, BorshSerialize, BorshDeserialize, Copy)]
 pub struct Store {

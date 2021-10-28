@@ -254,22 +254,7 @@ export class Metadata {
   }
 
   public async init() {
-    const metadata = toPublicKey(programIds().metadata);
-    if (this.editionNonce !== null) {
-      this.edition = (
-        await PublicKey.createProgramAddress(
-          [
-            Buffer.from(METADATA_PREFIX),
-            metadata.toBuffer(),
-            toPublicKey(this.mint).toBuffer(),
-            new Uint8Array([this.editionNonce || 0]),
-          ],
-          metadata,
-        )
-      ).toBase58();
-    } else {
-      this.edition = await getEdition(this.mint);
-    }
+    this.edition = await getEdition(this.mint);
     this.masterEdition = this.edition;
   }
 }
@@ -339,6 +324,7 @@ export const METADATA_SCHEMA = new Map<any, any>([
         ['data', { kind: 'option', type: Data }],
         ['updateAuthority', { kind: 'option', type: 'pubkeyAsString' }],
         ['primarySaleHappened', { kind: 'option', type: 'u8' }],
+        ['editionNonce', { kind: 'option', type: 'u8' }],
       ],
     },
   ],

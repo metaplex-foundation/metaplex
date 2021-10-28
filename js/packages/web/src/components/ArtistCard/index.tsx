@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Card } from 'antd';
+import { useParams } from 'react-router';
+import cx from 'classnames';
 
 import { Artist } from '../../types';
 
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
 
-export const ArtistCard = ({ artist }: { artist: Artist }) => {
+export const ArtistCard = ({ artist, active }: { artist: Artist, active: boolean }) => {
   return (
     <Card
-      hoverable={true}
-      className={`artist-card`}
+      className={cx("artist-card", { "active": active })}
       cover={<div style={{ height: 100 }} />}
     >
       <div>

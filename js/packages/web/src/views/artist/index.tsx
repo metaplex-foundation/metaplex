@@ -7,14 +7,16 @@ import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
 import { useCreator, useCreatorArts } from '../../hooks';
 import { LoadingOutlined } from '@ant-design/icons';
+import { ArtistCard } from '../../components/ArtistCard';
+
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
   const { whitelistedCreatorsByCreator, patchState } = useMeta()
   const [loadingArt, setLoadingArt] = useState(true)
-  const creator = useCreator(id);
   const artwork = useCreatorArts(id);
   const connection = useConnection();
+  const creators = Object.values(whitelistedCreatorsByCreator);
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -28,6 +30,7 @@ export const ArtistView = () => {
     }
 
     (async () => {
+      setLoadingArt(true);
       const artistMetadataState = await loadMetadataForCreator(connection, whitelistedCreatorsByCreator[id]);
 
       patchState(artistMetadataState);
@@ -35,53 +38,58 @@ export const ArtistView = () => {
     })()
   }, [connection, id])
 
-  const artworkGrid = (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
-    >
-      {artwork.map((m, idx) => {
-        const id = m.pubkey;
-        return (
-          <Link to={`/art/${id}`} key={idx}>
-            <ArtCard key={id} pubkey={m.pubkey} preview={false} />
-          </Link>
-        );
-      })
-      }
-    </Masonry>
-  );
-
   return (
-    <>
-      <Col>
-        <Divider />
-        <Row
-          style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
+    <Row>
+      <Col span={24}>
+        <h2>Artists</h2>
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="my-masonry-grid"
+          columnClassName="my-masonry-grid_column"
         >
-          <Col span={24}>
-            <h2>
-              {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
-              {creator?.info.name || creator?.info.address}
-            </h2>
-            <br />
-            <div className="info-header">ABOUT THE CREATOR</div>
-            <div className="info-content">{creator?.info.description}</div>
-            <br />
-            {loadingArt ? (
-              <div className="app-section--loading">
-                <Spin indicator={<LoadingOutlined />} />
-              </div>
-            ) : (
-              <>
-                <div className="info-header">Art Created</div>
-                {artworkGrid}
-              </>
-            )}
-          </Col>
-        </Row>
-      </Col >
-    </>
+          {creators.map((m, idx) => {
+            const address = m.info.address;
+            return (
+              <Link to={`/artists/${address}`} key={idx}>
+                <ArtistCard
+                  key={address}
+                  active={address === id}
+                  artist={{
+                    address,
+                    name: m.info.name || '',
+                    image: m.info.image || '',
+                    link: m.info.twitter || '',
+                  }}
+                />
+              </Link>
+            );
+          })}
+        </Masonry>
+      </Col>
+      <Col span={24}>
+        <Divider />
+        {loadingArt ? (
+          <div className="app-section--loading">
+            <Spin indicator={<LoadingOutlined />} />
+          </div>
+        ) : (
+          <Masonry
+            breakpointCols={breakpointColumnsObj}
+            className="my-masonry-grid"
+            columnClassName="my-masonry-grid_column"
+          >
+            {artwork.map((m, idx) => {
+              const id = m.pubkey;
+              return (
+                <Link to={`/artworks/${id}`} key={idx}>
+                  <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+                </Link>
+              );
+            })
+            }
+          </Masonry>
+        )}
+      </Col>
+    </Row>
   );
 };

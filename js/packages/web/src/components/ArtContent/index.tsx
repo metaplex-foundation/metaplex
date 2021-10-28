@@ -56,14 +56,6 @@ const CachedImageContent = ({
   const { cachedBlob } = useCachedImage(uri || '');
 
   return (
-    <div
-      style={{
-        flex: '1 1 auto',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
       <Image
         src={cachedBlob}
         preview={preview}
@@ -73,16 +65,9 @@ const CachedImageContent = ({
         onLoad={e => {
           setLoaded(true);
         }}
-        style={{
-          objectPosition: 'center',
-          objectFit: 'cover',
-          width: '100%',
-          height: '100%',
-        }}
+        width="100%"
         placeholder={<ThreeDots />}
-        {...(loaded ? {} : { height: 200 })}
       />
-    </div>
   );
 };
 
@@ -307,15 +292,10 @@ export const ArtContent = ({
     );
 
   return (
-    <div
+    <span
       ref={ref as any}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
     >
       {content}
-    </div>
+    </span>
   );
 };

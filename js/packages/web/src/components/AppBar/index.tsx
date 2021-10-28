@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge } from '@oyster/common';
+import { ConnectButton, CurrentUserBadge, useStore, Wallet } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
@@ -9,7 +9,7 @@ import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 
 const UserActions = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
 
@@ -25,11 +25,11 @@ const UserActions = () => {
       {store && (
         <>
           {/* <Link to={`#`}>
-            <Button className="app-btn">Bids</Button>
+            <Button>Bids</Button>
           </Link> */}
           {canCreate ? (
-            <Link to={`/art/create`}>
-              <Button className="app-btn">Create</Button>
+            <Link to={`/artworks/new`}>
+              <Button>Create</Button>
             </Link>
           ) : null}
         </>
@@ -38,8 +38,13 @@ const UserActions = () => {
   );
 };
 
-const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
-  const { connected } = useWallet();
+const DefaultActions = ({ 
+  vertical = false,
+  isStoreOwner,
+  pathname,
+  connected,
+  ownerAddress
+}: { vertical?: boolean, isStoreOwner: boolean, pathname: string, connected: boolean, ownerAddress?: string }) => {
   return (
     <div
       style={{
@@ -47,24 +52,43 @@ const DefaultActions = ({ vertical = false }: { vertical?: boolean }) => {
         flexDirection: vertical ? 'column' : 'row',
       }}
     >
-      <Link to={`/`}>
-        <Button className="app-btn">Listings</Button>
+      <Link to="/">
+        <Button type={pathname === "/" || pathname.includes('auction') ? "primary" : undefined}>Listings</Button>
       </Link>
-      <Link to={`/artworks`}>
-        <Button className="app-btn">
-          Artworks
-        </Button>
+      <Link
+        to={`/artists/${ownerAddress}`}
+      >
+        <Button
+          type={pathname.includes('artists') ? "primary" : undefined}
+        >Artists</Button>
       </Link>
-      <Link to={`/artists`}>
-        <Button className="app-btn">Creators</Button>
-      </Link>
+      {connected && (
+        <Link
+          to="/owned">
+          <Button
+            type={pathname === "/owned" ? "primary" : undefined}
+          >
+            Owned
+          </Button>
+        </Link>
+      )}
+      {isStoreOwner && (
+        <Link to="/admin">
+          <Button
+            type={pathname === "/admin" ? "primary" : undefined}
+          >Admin</Button>
+        </Link>
+      )}
     </div>
   );
 };
 
-const MetaplexMenu = () => {
+const MetaplexMenu = ({ connected }: { connected: boolean }) => {
   const { width } = useWindowDimensions();
-  const { connected } = useWallet();
+  const { ownerAddress } = useStore()
+  const wallet = useWallet();
+  const isStoreOwner = ownerAddress == wallet.publicKey?.toBase58();
+  const { pathname } = useLocation();
 
   if (width < 768)
     return (
@@ -74,24 +98,44 @@ const MetaplexMenu = () => {
           placement="bottomLeft"
           trigger={['click']}
           overlay={
-            <Menu>
+            <Menu activeKey="admin">
               <Menu.Item>
-                <Link to={`/`}>
-                  <Button className="app-btn">Explore</Button>
+                <Link
+                  type={pathname === "/" ? "primary" : undefined}
+                  to={`/`}
+                >
+                  <Button>Listings</Button>
                 </Link>
               </Menu.Item>
               <Menu.Item>
-                <Link to={`/artworks`}>
-                  <Button className="app-btn">
-                    {connected ? 'My Items' : 'Artworks'}
+                <Link
+                  type={pathname.includes('artists') ? "primary" : undefined}
+                  to={`/artists/${ownerAddress}`}
+                >
+                  <Button>Creators</Button>
+                </Link>
+              </Menu.Item>
+              <Menu.Item>
+                <Link
+                  type={pathname === "/owned" ? "primary" : undefined}
+                  to="/owned"
+                >
+                  <Button>
+                    Owned
                   </Button>
                 </Link>
               </Menu.Item>
-              <Menu.Item>
-                <Link to={`/artists`}>
-                  <Button className="app-btn">Creators</Button>
-                </Link>
-              </Menu.Item>
+              {isStoreOwner && (
+                <Menu.Item
+                  key="admin"
+                >
+                  <Link
+                    to="/admin"
+                  >
+                    <Button >Admin</Button>
+                  </Link>
+                </Menu.Item>
+              )}
             </Menu>
           }
         >
@@ -100,7 +144,14 @@ const MetaplexMenu = () => {
       </>
     );
 
-  return <DefaultActions />;
+  return (
+    <DefaultActions
+      isStoreOwner={isStoreOwner}
+      pathname={pathname}
+      connected={connected}
+      ownerAddress={ownerAddress}
+    />
+  );
 };
 
 export const AppBar = () => {
@@ -109,9 +160,9 @@ export const AppBar = () => {
   return (
     <>
       <div className="app-left app-bar-box">
-        {window.location.hash !== '#/analytics' && <Notifications />}
+        <Notifications />
         <div className="divider" />
-        <MetaplexMenu />
+        <MetaplexMenu connected={connected} />
       </div>
       {connected ? (
         <div className="app-right app-bar-box">

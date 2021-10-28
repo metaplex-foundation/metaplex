@@ -19,14 +19,13 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
-  whitelistedCreators: Record<string, ParsedAccount<WhitelistedCreator>>,
   patchState: (state: Partial<MetaState>) => void,
 ) => {
   const subscriptions: number[] = [];
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
     const state = getEmptyMetaState();
-    
+
     makeSetter(state)(prop, key, value);
 
     patchState(state);
@@ -50,35 +49,6 @@ export const subscribeAccountsChange = (
     connection.onProgramAccountChange(
       toPublicKey(METAPLEX_ID),
       onChangeAccount(processMetaplexAccounts, updateStateValue),
-    ),
-  );
-
-  subscriptions.push(
-    connection.onProgramAccountChange(
-      toPublicKey(METADATA_PROGRAM_ID),
-      onChangeAccount(processMetaData, async (prop, key, value) => {
-        const state = getEmptyMetaState();
-        const setter = makeSetter(state);
-        let hasChanges = false;
-        const updater: UpdateStateValueFunc = (...args) => {
-          hasChanges = true;
-          setter(...args);
-        };
-
-        if (prop === 'metadataByMint') {
-          await initMetadata(
-            value,
-            whitelistedCreators,
-            updater,
-          );
-        } else {
-          updater(prop, key, value);
-        }
-
-        if (hasChanges) {
-          patchState(state);
-        }
-      }),
     ),
   );
 

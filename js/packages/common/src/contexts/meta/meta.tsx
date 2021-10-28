@@ -4,6 +4,8 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   loadAccounts,
 } from './loadAccounts';
+import { ParsedAccount } from '../accounts/types';
+import { Metadata } from '../../actions';
 import { Spin, Space } from 'antd';
 import { merge, uniqWith } from 'lodash'
 import { MetaContextState, MetaState } from './types';
@@ -29,14 +31,15 @@ export function MetaProvider({ children = null as any }) {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const patchState: MetaContextState['patchState'] = temp => {
+  const patchState: MetaContextState['patchState'] = (...args: Partial<MetaState>[]) => {
     setState(current => {
-      const newState = merge({}, current, temp);
+      const newState = merge({}, current, ...args, { store: current.store });
 
-      newState.store = temp.store ?? current.store;
-  
       const currentMetdata = current.metadata ?? [];
-      const nextMetadata = temp.metadata ?? [];
+      const nextMetadata = args.reduce((memo, { metadata = [] }) => {
+        return [...memo, ...metadata]
+      }, [] as ParsedAccount<Metadata>[])
+
       newState.metadata = uniqWith(
         [...currentMetdata, ...nextMetadata],
         (a, b) => a.pubkey === b.pubkey
@@ -76,36 +79,8 @@ export function MetaProvider({ children = null as any }) {
       return;
     }
 
-    return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
+    return subscribeAccountsChange(connection, patchState);
   }, [isLoading]);
-
-  // TODO: fetch names dynamically
-  // TODO: get names for creators
-  // useEffect(() => {
-  //   (async () => {
-  //     const twitterHandles = await connection.getProgramAccounts(NAME_PROGRAM_ID, {
-  //      filters: [
-  //        {
-  //           dataSize: TWITTER_ACCOUNT_LENGTH,
-  //        },
-  //        {
-  //          memcmp: {
-  //           offset: VERIFICATION_AUTHORITY_OFFSET,
-  //           bytes: TWITTER_VERIFICATION_AUTHORITY.toBase58()
-  //          }
-  //        }
-  //      ]
-  //     });
-
-  //     const handles = twitterHandles.map(t => {
-  //       const owner = new PublicKey(t.account.data.slice(32, 64));
-  //       const name = t.account.data.slice(96, 114).toString();
-  //     });
-
-  //     console.log(handles);
-
-  //   })();
-  // }, [whitelistedCreatorsByCreator]);
 
   return (
     <MetaContext.Provider
