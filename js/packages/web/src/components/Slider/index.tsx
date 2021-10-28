@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Card } from 'react-bootstrap';
 import SwiperCore, { Autoplay, Pagination, Navigation } from 'swiper';
@@ -16,16 +16,33 @@ import 'swiper/css/navigation';
 
 //constant
 
+function getSlideWidth(width) {
+  let slide = 3;
+  if (width < 850) {
+    slide = 1;
+  } else if (width < 1140) {
+    slide = 2;
+  }
+  return slide;
+}
 
 export const Slider = () => {
 
   SwiperCore.use([Autoplay, Pagination, Navigation]);
   const { width } = useWindowDimensions();
   const { collections } = useCollections();
+  const [slideWidth, setSlideWidth] = useState(width);
+
+  useEffect(() => {
+    if (!width) return;
+    setSlideWidth(getSlideWidth(width));
+  }, [width]);
+
+ 
 
   return (
     <Swiper
-      slidesPerView={width < 850 ? 1 : width < 1140 ? 2 : 3}
+      slidesPerView={slideWidth}
       spaceBetween={40}
       autoplay={{ delay: 10000, disableOnInteraction: false, }}
       slidesPerGroup={1}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect,  useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Card } from 'react-bootstrap';
 import SwiperCore, { Autoplay, Pagination, Navigation } from 'swiper';
@@ -34,8 +34,23 @@ const IMAGES = [
   },
 ];
 
+function getSlideWidth(width) {
+  let slide = 3;
+  if (width < 850) {
+    slide = 1;
+  } else if (width < 1140) {
+    slide = 2;
+  }
+  return slide;
+}
+
 export const RecentSale = () => {
   const { width } = useWindowDimensions();
+  const [slidWidth , setSlidWidth] = useState(width)
+  useEffect(() => {
+    if (!width) return;
+    setSlidWidth(getSlideWidth(width));
+  }, [width]);
   SwiperCore.use([Autoplay, Pagination, Navigation]);
   return (
     <section id="recent-sales">
@@ -49,7 +64,7 @@ export const RecentSale = () => {
         </div>
         <div id="recentcarousel" className="row mt-4">
           <Swiper
-            slidesPerView={width < 850 ? 1 : width < 1140 ? 2 : 3}
+            slidesPerView={slidWidth}
             spaceBetween={100}
             autoplay={{ delay: 3000 }}
             slidesPerGroup={3}
@@ -61,7 +76,7 @@ export const RecentSale = () => {
             {IMAGES.map((item, i) => (
               <SwiperSlide key={i} className="r-next ">
                 <Card className="text-center">
-                  <div className="img_card">
+                  <div className="img-card">
                     <img src={item.src} className="card-img-top" alt="logo" /></div>
                   <div className="card-body">
                     <h5 className="card-title text-white mt-10">
