@@ -46,34 +46,30 @@ The server can fill all memory of nodejs process, and it's recommended to increa
 
 To run in `memory` mode:
 ```sh
-ENTRY=memory-server-ingester node --max-old-space-size=8192 dist/bin/metaplex.js
-```
-or
-```sh
-node --max-old-space-size=8192 dist/bin/memory-server-ingester.js
+yarn start:memory
 ```
 
 To run in `mongo` mode:
+┌──────────┐    ┌─────────┐    ┌────────────────┐
+│ ingester │--->│ MongoDB │<---│ GraphQL server │
+└──────────┘    └─────────┘    └────────────────┘
+     │        ┌───────────────────────┐     │
+     └────────│ Metaplex/Solana data  │─────┘
+              │ over http / websocket │
+              └───────────────────────┘
+
 You have to start mongo instance. For local development to run this command will be enough.
 ```sh
 mongod
 ```
 Also we need to start the process that fill the database with data.
 ```sh
-ENTRY=mongo-ingester --max-old-space-size=8192 node dist/bin/metaplex.js
-```
-or
-```sh
-node --max-old-space-size=8192 dist/bin/mongo-ingester.js
+yarn start:mongo:ingester
 ```
 
 And our graphql-server is started with
 ```sh
-ENTRY=mongo-server --max-old-space-size=8192 node dist/bin/metaplex.js
-```
-or
-```sh
-node --max-old-space-size=8192 dist/bin/mongo-server.js
+yarn start:mongo:server
 ```
 
 Environmental variables
