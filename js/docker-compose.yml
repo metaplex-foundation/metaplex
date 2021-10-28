@@ -5,8 +5,6 @@ x-metaplex: &metaplex
     context: './'
     dockerfile: metaplex-graphql.dockerfile
   image: metaplex-graphql:0.1-dev
-  networks:
-    - backend
 
 services:
   ingester:
@@ -30,12 +28,8 @@ services:
   mongo:
     image: mongo
     restart: always
+    ports:
+      - 27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-    networks:
-      - backend
-
-networks:
-  backend:
-    driver: bridge
