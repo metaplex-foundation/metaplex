@@ -4,10 +4,8 @@ import { CustomSelect } from '../../components/CustomSelect';
 import { AuctionCard } from '../../components/AuctionCard';
 import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
-import {
-  useCollection,
-  useCollectionTokenMetadataList,
-} from '../../hooks/useCollections';
+import { useCollection } from '../../hooks/useCollections';
+import { getCollection, getMetadataTotal } from '../../hooks/getData';
 
 export enum ArtworkViewState {
   Metaplex = 0,
@@ -16,35 +14,36 @@ export enum ArtworkViewState {
 }
 
 let ownerLen = 0;
-let lowToHigh = 'Price: Low to High';
-let onePageItem: any = [];
-let pageLen = 0;
 let searchItem = '';
-let allItems: any = [];
 let allAuction = 0;
 let pageSize = 16;
 let activePage = 0;
-
+let isLoading = false;
+let minPrice = 0;
+let maxPrice = 0;
+let pageLen = 0;
+let lowToHigh = 'Price: Low to High';
 export const MarketplaceView = () => {
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(0);
+  const [onePageItem, setOnePageItem] = useState<any>([]);
+  const [allItems, setAllItems] = useState<any>([]);
 
   const { id } = useParams<{ id: string }>();
-  const { isLoading, collection, update } = useCollectionTokenMetadataList(id);
+  const [collectionUpdate, setCollectionUpdate] = useState(0);
   const { collectionData } = useCollection(id);
 
   const optionData = ['Price: Low to High', 'Price: High to Low'];
   const optionDataFilter = [4, 8, 16, 32, 64, 128];
 
   useEffect(() => {
-    if (collection) {
-      sortCollection(collection);
-    } else if (!isLoading) pageLen = 0;
-  }, [collection, isLoading]);
+    if (!id) return;
+    getCollection(id).then(data => {
+      sortCollection(data);
+    });
+  }, [lowToHigh, id, collectionUpdate]);
 
   const sortToPrice = (arr: any) => {
     return arr.sort((a, b) => {
-      return a.Price - b.Price;
+      return a.account.price - b.account.price;
     });
   };
 
@@ -55,24 +54,21 @@ export const MarketplaceView = () => {
     let min = 0;
     let owner: any = [];
 
-    collection.map(item => {
-      if (item['Auction']) {
+    collection?.map(item => {
+      if (item.info.auction && !!item.account.price) {
         arr.push(item);
-        if (item.Price > max) max = item.Price;
-        if (item.Price < min) min = item.Price;
-        const ownerHasAddress = owner.includes(
-          item.ParsedAccount.info.data.creators[0].address,
-        );
-        if (!ownerHasAddress)
-          owner.push(item.ParsedAccount.info.data.creators[0].address);
+        if (item.account.price > max) max = item.account.price;
+        if (item.account.price < min) min = item.account.price;
+        const ownerHasAddress = owner.includes(item.authority);
+        if (!ownerHasAddress) owner.push(item.authority);
       } else nft.push(item);
     });
+
     allAuction = arr.length;
-    allItems = collection;
-    if (searchItem) arr = changeSearch();
-    if (lowToHigh == 'Price: Low to High') {
+    setAllItems(collection);
+    if (lowToHigh == 'Price: High to Low') {
       arr = sortToPrice(arr);
-    } else if (lowToHigh == 'Price: High to Low') {
+    } else if (lowToHigh == 'Price: Low to High') {
       arr = sortToPrice(arr);
       arr = arr.reverse();
     }
@@ -81,38 +77,39 @@ export const MarketplaceView = () => {
       activePage * pageSize,
       activePage * pageSize + pageSize,
     );
-    onePageItem = onePage;
+
+    maxPrice = max;
     ownerLen = owner.length;
     pageLen = arr.length;
-    setMinPrice(min);
-    setMaxPrice(max);
+    minPrice = min;
+    setOnePageItem([]);
+    setOnePageItem(onePage);
   };
 
   const onChange = event => {
     activePage = event.selected;
-    update();
   };
 
   const changeSearch = () => {
     const arr: any = [];
     const search = searchItem.toUpperCase();
     allItems.map(item => {
-      const name = item.ParsedAccount.info.data.name.toUpperCase();
+      const name = item.info.data.name.toUpperCase();
       if (name.search(search) >= 0) arr.push(item);
     });
     return arr;
   };
 
-  return (<div className="general_section">
+  return (<div className="general-section">
     <div className="cover_img">
-      <img src="/PNG.png" className="cover_img_size" />
+      <img src="/PNG.png" className="cover-img-size" />
     </div>
-    <div style={{ margin: '0px auto' }} className="col-md-10 nft_account">
+    <div  className="col-md-10 nft-account">
 
       <div id="market-sec" className="col-md-10">
         <div className="container-fluid ">
-          <div className="account_detials">
-            <div className="profile_img">
+          <div className="account-detials">
+            <div className="profile-img">
               <img src={collectionData?.image} className="container-img" style={{ width: "100px" }} />
             </div>
 
@@ -161,7 +158,7 @@ export const MarketplaceView = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn border-right text-center d-flex align-items-center"
+                    className="btn border-right text-center d-flex align-items-center justify-content-center"
                   >
                     <span>
                       <strong>{maxPrice}</strong>
@@ -174,7 +171,7 @@ export const MarketplaceView = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn  text-center d-flex align-items-center"
+                    className="btn  text-center d-flex align-items-center justify-content-center"
                   >
                     <span>
                       <strong>{minPrice}</strong>
@@ -204,7 +201,7 @@ export const MarketplaceView = () => {
                     onChange={event => {
                       activePage = 0;
                       searchItem = event.target.value;
-                      update();
+                      sortCollection(allItems);
                     }}
                   />
                 </div>
@@ -222,7 +219,7 @@ export const MarketplaceView = () => {
                   defaultParam="Price: Low to High"
                   onChange={event => {
                     lowToHigh = event.target.value;
-                    update();
+                    sortCollection(allItems);
                   }}
                 />
               </div>
@@ -235,7 +232,7 @@ export const MarketplaceView = () => {
                   onChange={event => {
                     pageSize = parseFloat(event.target.value);
                     activePage = 0;
-                    update();
+                    sortCollection(allItems);
                   }}
                 />
               </div>
@@ -244,7 +241,7 @@ export const MarketplaceView = () => {
               <div
                 className="refresh-button"
                 onClick={() => {
-                  if (!isLoading) update();
+                  setCollectionUpdate(collectionUpdate + 1);
                 }}
               >
                 <i className="fas fa-redo-alt"></i>
@@ -269,12 +266,14 @@ export const MarketplaceView = () => {
                 {!isLoading ? (
                   onePageItem.length > 0 ? (
                     onePageItem.map((m, idx) => {
-                      const id = m.ParsedAccount.pubkey;
+                      const id = m.pubkey;
+
                       return (
                         <AuctionCard
-                          pubkey={id}
-                          auction={m.Auction}
-                          price={m.Price}
+                        keys={idx || 9000}
+                          auction={m.info.auction}
+                          price={m.account.price}
+                          nftPubkey={m.account.metadata}
                         />
                       );
                     })
@@ -302,7 +301,7 @@ export const MarketplaceView = () => {
                           changePage={event => {
                             if (!isLoading) {
                               onChange(event);
-                              update();
+                              sortCollection(collectionUpdate + 1);
                             }
                           }}
                         />

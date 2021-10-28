@@ -3,19 +3,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { ArtistCard } from '../../components/ArtistCard';
-import { useMeta } from '../../contexts';
 import { getCreator } from '../../hooks/getData';
 
 const { Content } = Layout;
 
 export const ArtistsView = () => {
-  const { whitelistedCreatorsByCreator } = useMeta();
-  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
 
   useEffect(() => {
     getCreator().then(creators => {
       if (creators && creators.length > 0) {
-        setCreatorsByCreator(creators)
+        setCreatorsByCreator(creators);
       }
     });
   }, []);

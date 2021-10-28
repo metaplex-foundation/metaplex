@@ -12,15 +12,14 @@ import {
   StringPublicKey,
   AuctionDataExtended,
   createPipelineExecutor,
+  pubkeyToString,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import BN from 'bn.js';
-import { useEffect, useMemo, useState } from 'react';
-import { useMeta } from '../contexts';
+import { useEffect, useState } from 'react';
 import {
   AuctionManager,
   AuctionManagerStatus,
-  AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
   BidRedemptionTicketV2,
@@ -29,7 +28,24 @@ import {
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+} from '@oyster/common';
+import {
+  getAuctionDataExtendedByKey,
+  getauctionManagersByKey,
+  getAuctions,
+  getBidderMetadataByAuctionAndBidder,
+  getBidderPotsByAuctionAndBidder,
+  getBidRedemptionV2sByAuctionManagerAndWinningIndexby,
+  getGidRedemptionsByAuctionManagerAndWinningIndex,
+  getMasterEditionsbyKey,
+  getMasterEditionsbyMint,
+  getMetadataByMasterEdition,
+  getMetadatabyMint,
+  getSafetyDepositBoxesByVaultAndIndexby,
+  getSafetyDepositConfigsByAuctionManagerAndIndexby,
+  getVault,
+} from './getData';
+import _ from 'lodash';
 
 export enum AuctionViewState {
   Live = '0',
@@ -65,50 +81,75 @@ type CachedRedemptionKeys = Record<
 >;
 
 export function useStoreAuctionsList() {
-  const { auctions, auctionManagersByAuction } = useMeta();
-  const result = useMemo(() => {
-    return Object.values(auctionManagersByAuction).map(
-      manager => auctions[manager.info.auction],
-    );
-  }, [auctions, auctionManagersByAuction]);
+  const [result, setResult] = useState<any[]>([]);
+
+  const getResultAsync = async () => {
+    const arr = await getAuctions();
+    if (arr.length > 0) setResult(arr);
+  };
+
+  useEffect(() => {
+    getResultAsync();
+  }, []);
+
   return result;
 }
 
 export function useCachedRedemptionKeysByWallet() {
-  const { bidRedemptions } = useMeta();
   const auctions = useStoreAuctionsList();
-  const { publicKey } = useWallet();
 
+  const { publicKey } = useWallet();
   const [cachedRedemptionKeys, setCachedRedemptionKeys] =
     useState<CachedRedemptionKeys>({});
 
+  const getGidRedemptions = async () => {
+    const temp: CachedRedemptionKeys = {};
+    await createPipelineExecutor(
+      auctions.values(),
+      async auction => {
+        if (!cachedRedemptionKeys[auction.pubkey]) {
+          const key = await getBidderKeys(
+            auction.pubkey,
+            publicKey!.toBase58(),
+          );
+          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+            'bidRedemptionTicketsV1',
+            key.bidRedemption,
+          );
+          if (_.isEmpty(res)) {
+            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+              'bidRedemptionTicketsV2',
+              key.bidRedemption,
+            );
+          }
+          if (_.isEmpty(res))
+            temp[auction.pubkey] = { pubkey: key.bidRedemption, info: null };
+          else temp[auction.pubkey] = res;
+        } else if (!cachedRedemptionKeys[auction.pubkey].info) {
+          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+            'bidRedemptionTicketsV1',
+            cachedRedemptionKeys[auction.pubkey].pubkey,
+          );
+          if (_.isEmpty(res)) {
+            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
+              'bidRedemptionTicketsV2',
+              cachedRedemptionKeys[auction.pubkey].pubkey,
+            );
+          }
+          if (_.isEmpty(res))
+            temp[auction.pubkey] = cachedRedemptionKeys[auction.pubkey];
+          else temp[auction.pubkey] = res;
+        }
+      },
+      { delay: 0, sequence: 2 },
+    );
+    setCachedRedemptionKeys(temp);
+  };
+
   useEffect(() => {
     if (!publicKey) return;
-    (async () => {
-      const temp: CachedRedemptionKeys = {};
-      await createPipelineExecutor(
-        auctions.values(),
-        async auction => {
-          if (!cachedRedemptionKeys[auction.pubkey]) {
-            await getBidderKeys(auction.pubkey, publicKey.toBase58()).then(
-              key => {
-                temp[auction.pubkey] = bidRedemptions[key.bidRedemption]
-                  ? bidRedemptions[key.bidRedemption]
-                  : { pubkey: key.bidRedemption, info: null };
-              },
-            );
-          } else if (!cachedRedemptionKeys[auction.pubkey].info) {
-            temp[auction.pubkey] =
-              bidRedemptions[cachedRedemptionKeys[auction.pubkey].pubkey] ||
-              cachedRedemptionKeys[auction.pubkey];
-          }
-        },
-        { delay: 1, sequence: 2 },
-      );
-
-      setCachedRedemptionKeys(temp);
-    })();
-  }, [auctions, bidRedemptions, publicKey]);
+    getGidRedemptions();
+  }, [auctions, publicKey]);
 
   return cachedRedemptionKeys;
 }
@@ -119,76 +160,30 @@ export const useAuctions = (state?: AuctionViewState) => {
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const auctions = useStoreAuctionsList();
 
-  const {
-    auctionManagersByAuction,
-    safetyDepositBoxesByVaultAndIndex,
-    metadataByMint,
-    bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
-    vaults,
-    masterEditions,
-    masterEditionsByPrintingMint,
-    masterEditionsByOneTimeAuthMint,
-    metadataByMasterEdition,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    auctionDataExtended,
-  } = useMeta();
+  const getAuctionViewsAsync = async () => {
+    const auctionViews: AuctionView[] = [];
+
+    await createPipelineExecutor(
+      auctions.values(),
+      async auction => {
+        const auctionView = await processAccountsIntoAuctionView(
+          publicKey?.toBase58(),
+          auction,
+          cachedRedemptionKeys,
+          state,
+        );
+        if (auctionView) {
+          auctionViews.push(auctionView);
+        }
+      },
+      { delay: 1, sequence: 2 },
+    );
+    setAuctionViews(auctionViews.sort(sortByEnded));
+  };
 
   useEffect(() => {
-    (async () => {
-      const auctionViews: AuctionView[] = [];
-
-      await createPipelineExecutor(
-        auctions.values(),
-        auction => {
-          const auctionView = processAccountsIntoAuctionView(
-            publicKey?.toBase58(),
-            auction,
-            auctionDataExtended,
-            auctionManagersByAuction,
-            safetyDepositBoxesByVaultAndIndex,
-            metadataByMint,
-            bidderMetadataByAuctionAndBidder,
-            bidderPotsByAuctionAndBidder,
-            bidRedemptionV2sByAuctionManagerAndWinningIndex,
-            masterEditions,
-            vaults,
-            safetyDepositConfigsByAuctionManagerAndIndex,
-            masterEditionsByPrintingMint,
-            masterEditionsByOneTimeAuthMint,
-            metadataByMasterEdition,
-            cachedRedemptionKeys,
-            state,
-          );
-          if (auctionView) {
-            auctionViews.push(auctionView);
-          }
-        },
-        { delay: 1, sequence: 2 },
-      );
-      setAuctionViews(auctionViews.sort(sortByEnded));
-    })();
-  }, [
-    state,
-    auctions,
-    auctionDataExtended,
-    auctionManagersByAuction,
-    safetyDepositBoxesByVaultAndIndex,
-    metadataByMint,
-    bidderMetadataByAuctionAndBidder,
-    bidderPotsByAuctionAndBidder,
-    bidRedemptionV2sByAuctionManagerAndWinningIndex,
-    vaults,
-    safetyDepositConfigsByAuctionManagerAndIndex,
-    masterEditions,
-    masterEditionsByPrintingMint,
-    masterEditionsByOneTimeAuthMint,
-    metadataByMasterEdition,
-    publicKey,
-    cachedRedemptionKeys,
-    setAuctionViews,
-  ]);
+    getAuctionViewsAsync();
+  }, [state, auctions, publicKey, cachedRedemptionKeys, setAuctionViews]);
 
   return auctionViews;
 };
@@ -211,14 +206,39 @@ function isInstantSale(
   );
 }
 
-function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
+async function buildListWhileNonZero<T>(hash: string, key: string) {
   const list: T[] = [];
-  let ticket = hash[key + '-0'];
+  let ticket;
+  if (hash == 'vault')
+    ticket = await getSafetyDepositBoxesByVaultAndIndexby(key, '0');
+  else if (hash == 'safety')
+    ticket = await getSafetyDepositConfigsByAuctionManagerAndIndexby(key, '0');
+  else if (hash == 'bidRed') {
+    ticket = await getBidRedemptionV2sByAuctionManagerAndWinningIndexby(
+      key,
+      '0',
+    );
+  }
   if (ticket) {
     list.push(ticket);
     let i = 1;
-    while (ticket) {
-      ticket = hash[key + '-' + i.toString()];
+    while (ticket && ticket.length > 0) {
+      if (hash == 'vault')
+        ticket = await getSafetyDepositBoxesByVaultAndIndexby(
+          key,
+          i.toString(),
+        );
+      else if (hash == 'safety')
+        ticket = await getSafetyDepositConfigsByAuctionManagerAndIndexby(
+          key,
+          i.toString(),
+        );
+      else if (hash == 'bidRed') {
+        ticket = await getBidRedemptionV2sByAuctionManagerAndWinningIndexby(
+          key,
+          i.toString(),
+        );
+      }
       if (ticket) list.push(ticket);
       i++;
     }
@@ -226,50 +246,16 @@ function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   return list;
 }
 
-export function processAccountsIntoAuctionView(
+export async function processAccountsIntoAuctionView(
   walletPubkey: StringPublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
-  auctionDataExtended: Record<string, ParsedAccount<AuctionDataExtended>>,
-  auctionManagersByAuction: Record<
-    string,
-    ParsedAccount<AuctionManagerV1 | AuctionManagerV2>
-  >,
-  safetyDepositBoxesByVaultAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositBox>
-  >,
-  metadataByMint: Record<string, ParsedAccount<Metadata>>,
-  bidderMetadataByAuctionAndBidder: Record<
-    string,
-    ParsedAccount<BidderMetadata>
-  >,
-  bidderPotsByAuctionAndBidder: Record<string, ParsedAccount<BidderPot>>,
-  bidRedemptionV2sByAuctionManagerAndWinningIndex: Record<
-    string,
-    ParsedAccount<BidRedemptionTicketV2>
-  >,
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
-  vaults: Record<string, ParsedAccount<Vault>>,
-  safetyDepositConfigsByAuctionManagerAndIndex: Record<
-    string,
-    ParsedAccount<SafetyDepositConfig>
-  >,
-  masterEditionsByPrintingMint: Record<string, ParsedAccount<MasterEditionV1>>,
-  masterEditionsByOneTimeAuthMint: Record<
-    string,
-    ParsedAccount<MasterEditionV1>
-  >,
-  metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>,
   cachedRedemptionKeysByWallet: Record<
     string,
     ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
   >,
   desiredState: AuctionViewState | undefined,
   existingAuctionView?: AuctionView,
-): AuctionView | undefined {
+): Promise<AuctionView | undefined> {
   let state: AuctionViewState;
   if (auction.info.ended()) {
     state = AuctionViewState.Ended;
@@ -281,8 +267,9 @@ export function processAccountsIntoAuctionView(
     state = AuctionViewState.BuyNow;
   }
 
-  const auctionManagerInstance = auctionManagersByAuction[auction.pubkey || ''];
-
+  const auctionManagerInstance = await getauctionManagersByKey(
+    auction.pubkey || '',
+  );
   // The defective auction view state really applies to auction managers, not auctions, so we ignore it here
   if (
     desiredState &&
@@ -307,20 +294,14 @@ export function processAccountsIntoAuctionView(
     )
       return undefined;
 
-    const vault = vaults[auctionManagerInstance.info.vault];
+    const vault = await getVault(auctionManagerInstance.info.vault);
     const auctionManagerKey = auctionManagerInstance.pubkey;
 
     const safetyDepositConfigs: ParsedAccount<SafetyDepositConfig>[] =
-      buildListWhileNonZero(
-        safetyDepositConfigsByAuctionManagerAndIndex,
-        auctionManagerKey,
-      );
+      await buildListWhileNonZero('safety', auctionManagerKey);
 
     const bidRedemptions: ParsedAccount<BidRedemptionTicketV2>[] =
-      buildListWhileNonZero(
-        bidRedemptionV2sByAuctionManagerAndWinningIndex,
-        auctionManagerKey,
-      );
+      await buildListWhileNonZero('bidRed', auctionManagerKey);
     const auctionManager = new AuctionManager({
       instance: auctionManagerInstance,
       auction,
@@ -335,7 +316,7 @@ export function processAccountsIntoAuctionView(
             .auctionDataExtended
         : null;
     const auctionDataExt = auctionDataExtendedKey
-      ? auctionDataExtended[auctionDataExtendedKey]
+      ? await getAuctionDataExtendedByKey(auctionDataExtendedKey)
       : null;
 
     const boxesExpected = auctionManager.safetyDepositBoxesExpected.toNumber();
@@ -347,10 +328,14 @@ export function processAccountsIntoAuctionView(
           ] as ParsedAccount<BidRedemptionTicket>)
         : undefined;
 
-    const bidderMetadata =
-      bidderMetadataByAuctionAndBidder[auction.pubkey + '-' + walletPubkey];
-    const bidderPot =
-      bidderPotsByAuctionAndBidder[auction.pubkey + '-' + walletPubkey];
+    const bidderMetadata = await getBidderMetadataByAuctionAndBidder(
+      auction.pubkey,
+      pubkeyToString(walletPubkey),
+    );
+    const bidderPot = await getBidderPotsByAuctionAndBidder(
+      auction.pubkey,
+      pubkeyToString(walletPubkey),
+    );
 
     if (existingAuctionView && existingAuctionView.totallyComplete) {
       // If totally complete, we know we arent updating anythign else, let's speed things up
@@ -370,14 +355,19 @@ export function processAccountsIntoAuctionView(
         for (let j = 0; j < winningSet.length; j++) {
           const curr = winningSet[j];
           if (!curr.metadata) {
-            let foundMetadata =
-              metadataByMint[curr.safetyDeposit.info.tokenMint];
+            let foundMetadata = await getMetadatabyMint(
+              curr.safetyDeposit.info.tokenMint,
+            );
             if (!foundMetadata) {
               // Means is a limited edition, so the tokenMint is the printingMint
-              const masterEdition =
-                masterEditionsByPrintingMint[curr.safetyDeposit.info.tokenMint];
+              const masterEdition = await getMasterEditionsbyMint(
+                'masterEditionsV1',
+                curr.safetyDeposit.info.tokenMint,
+              );
               if (masterEdition) {
-                foundMetadata = metadataByMasterEdition[masterEdition.pubkey];
+                foundMetadata = await getMetadataByMasterEdition(
+                  masterEdition.pubkey,
+                );
               }
             }
             curr.metadata = foundMetadata;
@@ -386,10 +376,21 @@ export function processAccountsIntoAuctionView(
           if (
             curr.metadata &&
             !curr.masterEdition &&
-            curr.metadata.info.masterEdition
+            curr.metadata?.info?.masterEdition
           ) {
-            const foundMaster =
-              masterEditions[curr.metadata.info.masterEdition];
+            const V1 = await getMasterEditionsbyKey(
+              'masterEditionsV1',
+              curr.metadata?.info?.masterEdition,
+            );
+            const V2 = await getMasterEditionsbyKey(
+              'masterEditionsV2',
+              curr.metadata?.info?.masterEdition,
+            );
+            const foundMaster = !_.isEmpty(V1)
+              ? V1
+              : !_.isEmpty(V2)
+              ? V2
+              : undefined;
 
             curr.masterEdition = foundMaster;
           }
@@ -400,10 +401,8 @@ export function processAccountsIntoAuctionView(
     }
 
     const vaultKey = auctionManager.vault;
-    const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
-      safetyDepositBoxesByVaultAndIndex,
-      vaultKey,
-    );
+    const boxes: ParsedAccount<SafetyDepositBox>[] =
+      await buildListWhileNonZero('vault', vaultKey);
     if (boxes.length > 0) {
       let participationMetadata: ParsedAccount<Metadata> | undefined =
         undefined;
@@ -421,18 +420,52 @@ export function processAccountsIntoAuctionView(
         // Cover case of V1 master edition (where we're using one time auth mint in storage)
         // and case of v2 master edition where the edition itself is stored
         participationMetadata =
-          metadataByMasterEdition[
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-              ?.pubkey
-          ] || metadataByMint[participationBox.info.tokenMint];
+          (await getMetadataByMasterEdition(
+            (
+              await getMasterEditionsbyMint(
+                'masterEditionsV1',
+                participationBox.info.tokenMint,
+              )
+            )?.pubkey,
+          )) || (await getMetadatabyMint(participationBox.info.tokenMint));
         if (participationMetadata) {
+          let res;
+          if (participationMetadata.info.masterEdition) {
+            res = await await getMasterEditionsbyKey(
+              'masterEditionsV2',
+              participationMetadata.info.masterEdition,
+            );
+            if (_.isEmpty(res)) {
+              res = await getMasterEditionsbyKey(
+                'masterEditionsV1',
+                participationMetadata.info.masterEdition,
+              );
+            }
+          }
+
+          let req;
+          if (participationBox.info.tokenMint) {
+            req = await getMasterEditionsbyMint(
+              'masterEditionsV2',
+              participationBox.info.tokenMint,
+            );
+            if (_.isEmpty(res)) {
+              req = await getMasterEditionsbyMint(
+                'masterEditionsV1',
+                participationBox.info.tokenMint,
+              );
+            }
+          }
+
           participationMaster =
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint] ||
+            (!_.isEmpty(req) ? req : undefined) ||
             (participationMetadata.info.masterEdition &&
-              masterEditions[participationMetadata.info.masterEdition]);
+              (!_.isEmpty(res) ? res : undefined));
         }
       }
-
+      const itemner = await auctionManager.getItemsFromSafetyDepositBoxes(
+        boxes,
+      );
       const view: Partial<AuctionView> = {
         auction,
         auctionManager,
@@ -440,13 +473,7 @@ export function processAccountsIntoAuctionView(
         vault,
         auctionDataExtended: auctionDataExt || undefined,
         safetyDepositBoxes: boxes,
-        items: auctionManager.getItemsFromSafetyDepositBoxes(
-          metadataByMint,
-          masterEditionsByPrintingMint,
-          metadataByMasterEdition,
-          masterEditions,
-          boxes,
-        ),
+        items: itemner,
         participationItem:
           participationMetadata && participationBox
             ? {

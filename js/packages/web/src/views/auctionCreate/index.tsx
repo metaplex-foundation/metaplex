@@ -36,7 +36,6 @@ import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { MintLayout } from '@solana/spl-token';
 import { useHistory, useParams } from 'react-router-dom';
-import { capitalize } from 'lodash';
 import {
   WinningConfigType,
   AmountRange,
@@ -50,7 +49,6 @@ import BN from 'bn.js';
 import { constants } from '@oyster/common';
 import { DateTimePicker } from '../../components/DateTimePicker';
 import { AmountLabel } from '../../components/AmountLabel';
-import { useMeta } from '../../contexts';
 import useWindowDimensions from '../../utils/layout';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { SystemProgram } from '@solana/web3.js';
@@ -136,13 +134,12 @@ export interface AuctionState {
 export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
-  const { whitelistedCreatorsByCreator } = useMeta();
-  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
-  
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
+
   useEffect(() => {
     getCreator().then(creators => {
       if (creators && creators.length > 0) {
-        setCreatorsByCreator(creators)
+        setCreatorsByCreator(creators);
       }
     });
   }, []);
@@ -185,7 +182,7 @@ export const AuctionCreateView = () => {
 
   const gotoNextStep = (_step?: number) => {
     const nextStep = _step === undefined ? step + 1 : _step;
-    history.push(`/auction/create/${nextStep.toString()}`);
+    history.push('/auction/create/' + nextStep.toString());
   };
 
   const createAuction = async () => {

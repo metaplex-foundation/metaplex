@@ -6,7 +6,6 @@ import {
   sendTransactionWithRetry,
   Metadata,
   MasterEditionV1,
-  MasterEditionV2,
   MetadataKey,
   convertMasterEditionV1ToV2,
   TokenAccount,
@@ -16,6 +15,7 @@ import {
 } from '@oyster/common';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 import { Token } from '@solana/spl-token';
+import { getMasterEditionsbyKey } from '../hooks/getData';
 
 const BATCH_SIZE = 10;
 const CONVERT_TRANSACTION_SIZE = 10;
@@ -23,10 +23,6 @@ const CONVERT_TRANSACTION_SIZE = 10;
 export async function filterMetadata(
   connection: Connection,
   metadata: ParsedAccount<Metadata>[],
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
   accountsByMint: Map<string, TokenAccount>,
 ): Promise<{
   available: ParsedAccount<MasterEditionV1>[];
@@ -38,86 +34,99 @@ export async function filterMetadata(
 
   for (let i = 0; i < metadata.length; i++) {
     const md = metadata[i];
-    const masterEdition = masterEditions[
-      md.info.masterEdition || ''
-    ] as ParsedAccount<MasterEditionV1>;
-    if (
-      masterEdition &&
-      masterEdition?.info.key == MetadataKey.MasterEditionV1
-    ) {
-      if (batchWaitCounter == 10) {
-        console.log('Waiting 10s before continuing to avoid rate limits');
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        batchWaitCounter = 0;
-      }
-      console.log('Reviewing', masterEdition.pubkey);
-      let printingBal = 0;
-      try {
-        const printingBalResp = await connection.getTokenSupply(
-          toPublicKey(masterEdition.info.printingMint),
+
+    if (md.info.masterEdition) {
+      let res = await getMasterEditionsbyKey(
+        'masterEditionsV1',
+        md.info.masterEdition,
+      );
+
+      if (!res || res.length == 0) {
+        res = await getMasterEditionsbyKey(
+          'masterEditionsV2',
+          md.info.masterEdition,
         );
-        printingBal = printingBalResp.value.uiAmount || 0;
-      } catch (e) {
-        console.error(e);
       }
 
-      const myAcct = accountsByMint.get(masterEdition.info.printingMint);
-      if (myAcct) {
-        console.log(
-          'Existing print account subtracts',
-          myAcct.info.amount.toNumber(),
-          'from',
-          printingBal,
-        );
-        printingBal -= myAcct.info.amount.toNumber();
-      }
-
-      if (printingBal > 0) {
-        console.log(
-          'Reject',
-          masterEdition.pubkey,
-          'due to printing bal of',
-          printingBal,
-        );
-        unavailable.push(masterEdition);
-      } else {
-        let oneTimeBal = 0;
+      const masterEdition = res as ParsedAccount<MasterEditionV1>;
+      if (
+        masterEdition &&
+        masterEdition?.info.key == MetadataKey.MasterEditionV1
+      ) {
+        if (batchWaitCounter == 10) {
+          console.log('Waiting 10s before continuing to avoid rate limits');
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          batchWaitCounter = 0;
+        }
+        console.log('Reviewing', masterEdition.pubkey);
+        let printingBal = 0;
         try {
-          const oneTimeBalResp = await connection.getTokenSupply(
-            toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
+          const printingBalResp = await connection.getTokenSupply(
+            toPublicKey(masterEdition.info.printingMint),
           );
-          oneTimeBal = oneTimeBalResp.value.uiAmount || 0;
+          printingBal = printingBalResp.value.uiAmount || 0;
         } catch (e) {
           console.error(e);
         }
 
-        const myAcct = accountsByMint.get(
-          masterEdition.info.oneTimePrintingAuthorizationMint,
-        );
+        const myAcct = accountsByMint.get(masterEdition.info.printingMint);
         if (myAcct) {
           console.log(
-            'Existing one time account subtracts',
+            'Existing print account subtracts',
             myAcct.info.amount.toNumber(),
             'from',
-            oneTimeBal,
+            printingBal,
           );
-          oneTimeBal -= myAcct.info.amount.toNumber();
+          printingBal -= myAcct.info.amount.toNumber();
         }
 
-        if (oneTimeBal > 0) {
+        if (printingBal > 0) {
           console.log(
             'Reject',
             masterEdition.pubkey,
-            'due to one time auth bal of',
-            oneTimeBal,
+            'due to printing bal of',
+            printingBal,
           );
           unavailable.push(masterEdition);
         } else {
-          available.push(masterEdition);
-        }
-      }
+          let oneTimeBal = 0;
+          try {
+            const oneTimeBalResp = await connection.getTokenSupply(
+              toPublicKey(masterEdition.info.oneTimePrintingAuthorizationMint),
+            );
+            oneTimeBal = oneTimeBalResp.value.uiAmount || 0;
+          } catch (e) {
+            console.error(e);
+          }
 
-      batchWaitCounter++;
+          const myAcct = accountsByMint.get(
+            masterEdition.info.oneTimePrintingAuthorizationMint,
+          );
+          if (myAcct) {
+            console.log(
+              'Existing one time account subtracts',
+              myAcct.info.amount.toNumber(),
+              'from',
+              oneTimeBal,
+            );
+            oneTimeBal -= myAcct.info.amount.toNumber();
+          }
+
+          if (oneTimeBal > 0) {
+            console.log(
+              'Reject',
+              masterEdition.pubkey,
+              'due to one time auth bal of',
+              oneTimeBal,
+            );
+            unavailable.push(masterEdition);
+          } else {
+            available.push(masterEdition);
+          }
+        }
+
+        batchWaitCounter++;
+      }
     }
   }
 

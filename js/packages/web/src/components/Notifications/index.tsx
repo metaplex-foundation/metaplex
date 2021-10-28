@@ -183,22 +183,27 @@ export function useSettlementAuctions({
   const { accountByMint } = useUserAccounts();
   const walletPubkey = wallet?.publicKey?.toBase58();
   const { bidderPotsByAuctionAndBidder } = useMeta();
-  const auctionsNeedingSettling = [...useAuctions(AuctionViewState.Ended), ...useAuctions(AuctionViewState.BuyNow)];
+  const auctionsNeedingSettling = [
+    ...useAuctions(AuctionViewState.Ended),
+    ...useAuctions(AuctionViewState.BuyNow),
+  ];
 
   const [validDiscoveredEndedAuctions, setValidDiscoveredEndedAuctions] =
     useState<Record<string, number>>({});
   useMemo(() => {
     const f = async () => {
       const nextBatch = auctionsNeedingSettling
-        .filter(
-          a => {
-            const isEndedInstantSale = a.isInstantSale && a.items.length === a.auction.info.bidState.bids.length;
+        .filter(a => {
+          const isEndedInstantSale =
+            a.isInstantSale &&
+            a.items.length === a.auction.info.bidState.bids.length;
 
-           return walletPubkey &&
+          return (
+            walletPubkey &&
             a.auctionManager.authority === walletPubkey &&
-             (a.auction.info.ended() || isEndedInstantSale)
-          }
-        )
+            (a.auction.info.ended() || isEndedInstantSale)
+          );
+        })
         .sort(
           (a, b) =>
             (b.auction.info.endedAt?.toNumber() || 0) -
@@ -298,23 +303,17 @@ export function useSettlementAuctions({
 }
 
 export function Notifications() {
-  const {
-    metadata,
-    whitelistedCreatorsByCreator,
-    store,
-    vaults,
-    safetyDepositBoxesByVaultAndIndex,
-  } = useMeta();
+  const { metadata, store, vaults } = useMeta();
   const possiblyBrokenAuctionManagerSetups = useAuctions(
     AuctionViewState.Defective,
   );
 
-  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([])
+  const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
 
   useEffect(() => {
     getCreator().then(creators => {
       if (creators && creators.length > 0) {
-        setCreatorsByCreator(creators)
+        setCreatorsByCreator(creators);
       }
     });
   }, []);
@@ -322,7 +321,6 @@ export function Notifications() {
   const upcomingAuctions = useAuctions(AuctionViewState.Upcoming);
   const connection = useConnection();
   const wallet = useWallet();
-  const { accountByMint } = useUserAccounts();
 
   const notifications: NotificationCard[] = [];
 
@@ -355,12 +353,7 @@ export function Notifications() {
       ),
       action: async () => {
         try {
-          await unwindVault(
-            connection,
-            wallet,
-            v,
-            safetyDepositBoxesByVaultAndIndex,
-          );
+          await unwindVault(connection, wallet, v);
         } catch (e) {
           console.error(e);
           return false;
@@ -384,12 +377,7 @@ export function Notifications() {
         ),
         action: async () => {
           try {
-            await decommAuctionManagerAndReturnPrizes(
-              connection,
-              wallet,
-              v,
-              safetyDepositBoxesByVaultAndIndex,
-            );
+            await decommAuctionManagerAndReturnPrizes(connection, wallet, v);
           } catch (e) {
             console.error(e);
             return false;
@@ -404,8 +392,7 @@ export function Notifications() {
       metadata.filter(m => {
         return (
           m.info.data.creators &&
-          (CreatorsByCreator[m.info.updateAuthority]?.info
-            ?.activated ||
+          (CreatorsByCreator[m.info.updateAuthority]?.info?.activated ||
             store?.info.public) &&
           m.info.data.creators.find(
             c => c.address === walletPubkey && !c.verified,
@@ -421,8 +408,7 @@ export function Notifications() {
       title: 'You have a new artwork to approve!',
       description: (
         <span>
-          {CreatorsByCreator[m.info.updateAuthority]?.info?.name ||
-            m.pubkey}{' '}
+          {CreatorsByCreator[m.info.updateAuthority]?.info?.name || m.pubkey}{' '}
           wants you to approve that you helped create their art{' '}
           <Link to={`/art/${m.pubkey}`}>here.</Link>
         </span>

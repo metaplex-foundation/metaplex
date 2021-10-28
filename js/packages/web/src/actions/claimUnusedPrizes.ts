@@ -23,7 +23,6 @@ import {
   withdrawMasterEdition,
   BidRedemptionTicket,
   getBidRedemption,
-  PrizeTrackingTicket,
   AuctionViewItem,
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { createTokenAccount } from '@oyster/common/dist/lib/actions/account';
@@ -32,11 +31,11 @@ import {
   setupRedeemParticipationInstructions,
   setupRedeemPrintingV2Instructions,
 } from './sendRedeemBid';
+import { getGidRedemptionV2sbyKey } from '../hooks/getData';
 
 export async function findEligibleParticipationBidsForRedemption(
   auctionView: AuctionView,
   bids: ParsedAccount<BidderMetadata>[],
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
 ): Promise<
   {
     bid: ParsedAccount<BidderMetadata>;
@@ -53,10 +52,15 @@ export async function findEligibleParticipationBidsForRedemption(
       const winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
         bid.info.bidderPubkey,
       );
-      const bidRedemption =
-        bidRedemptions[
-          await getBidRedemption(auctionView.auction.pubkey, bid.pubkey)
-        ];
+      const a = await getGidRedemptionV2sbyKey(
+        'bidRedemptionTicketsV2',
+        await getBidRedemption(auctionView.auction.pubkey, bid.pubkey),
+      );
+      const b = await getGidRedemptionV2sbyKey(
+        'bidRedemptionTicketsV1',
+        await getBidRedemption(auctionView.auction.pubkey, bid.pubkey),
+      );
+      const bidRedemption = b.length > 0 ? b : a;
       const eligible = eligibleForParticipationPrizeGivenWinningIndex(
         winnerIndex,
         auctionView,
@@ -78,8 +82,6 @@ export async function claimUnusedPrizes(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
   signers: Array<Keypair[]>,
   instructions: Array<TransactionInstruction[]>,
 ) {
@@ -103,11 +105,7 @@ export async function claimUnusedPrizes(
       // before we can redeem, check if we need to print other people's stuff.
 
       const unredeemedParticipations =
-        await findEligibleParticipationBidsForRedemption(
-          auctionView,
-          bids,
-          bidRedemptions,
-        );
+        await findEligibleParticipationBidsForRedemption(auctionView, bids);
 
       await Promise.all(
         unredeemedParticipations.map(
@@ -208,7 +206,6 @@ export async function claimUnusedPrizes(
                 signers,
                 instructions,
                 winnerIndex,
-                prizeTrackingTickets,
               );
             }
           }

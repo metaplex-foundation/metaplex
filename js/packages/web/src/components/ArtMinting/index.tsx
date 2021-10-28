@@ -75,30 +75,32 @@ export const ArtMinting = ({ id, onMint }: ArtMintingProps) => {
     [],
   );
 
+  const getMinimumBalance = async () => {
+    const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
+      MintLayout.span,
+    );
+    const accountRentExempt =
+      await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
+    const metadataRentExempt =
+      await connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN);
+    const editionRentExempt =
+      await connection.getMinimumBalanceForRentExemption(MAX_EDITION_LEN);
+
+    const cost =
+      ((mintRentExempt +
+        accountRentExempt +
+        metadataRentExempt +
+        editionRentExempt) *
+        editions) /
+      LAMPORTS_PER_SOL;
+
+    setTotalCost(cost);
+  };
+
   useEffect(() => {
     if (editions < 1) return;
 
-    (async () => {
-      const mintRentExempt = await connection.getMinimumBalanceForRentExemption(
-        MintLayout.span,
-      );
-      const accountRentExempt =
-        await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
-      const metadataRentExempt =
-        await connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN);
-      const editionRentExempt =
-        await connection.getMinimumBalanceForRentExemption(MAX_EDITION_LEN);
-
-      const cost =
-        ((mintRentExempt +
-          accountRentExempt +
-          metadataRentExempt +
-          editionRentExempt) *
-          editions) /
-        LAMPORTS_PER_SOL;
-
-      setTotalCost(cost);
-    })();
+    getMinimumBalance();
   }, [connection, editions]);
 
   useEffect(() => {

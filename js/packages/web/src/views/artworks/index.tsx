@@ -9,6 +9,7 @@ import { CardLoader } from '../../components/MyLoader';
 import { useCreatorArts, useUserArts } from '../../hooks';
 import { getMetdataByCreator } from '../../hooks/getData';
 import { pubkeyToString } from '@oyster/common';
+import { Spinner } from 'react-bootstrap';
 
 const { TabPane } = Tabs;
 
@@ -25,8 +26,8 @@ export const ArtworksView = () => {
   const { connected, publicKey } = useWallet();
   const ownedMetadata = useUserArts();
   const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata } = useMeta();
-  const key = pubkeyToString(publicKey)
+
+  const key = pubkeyToString(publicKey);
   const [filtered, setFiltered] = useState<any>([]);
   useEffect(() => {
     if (!key) return;
@@ -37,7 +38,7 @@ export const ArtworksView = () => {
       }
     });
   }, [key]);
-  
+
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
   const breakpointColumnsObj = {
     default: 4,
@@ -65,7 +66,7 @@ export const ArtworksView = () => {
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
       {!loading
         ? items.map((m, idx) => {
@@ -82,7 +83,11 @@ export const ArtworksView = () => {
               </Link>
             );
           })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        :(
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden"></span>
+          </Spinner>
+      )}
     </Masonry>
   );
 

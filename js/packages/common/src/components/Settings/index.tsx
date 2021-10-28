@@ -19,7 +19,7 @@ export const Settings = ({
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
   const { store } = useMeta();
-  const wallet = useWallet();
+
   return (
     <>
       <div style={{ display: 'grid' }}>
@@ -37,12 +37,11 @@ export const Settings = ({
         </Select>
         {connected && (
           <>
-            {store &&
-              admin() && (
-                <Link to={`/admin`}>
-                  <Button className="app-btn">Admin</Button>
-                </Link>
-              )}
+            {store && admin() && (
+              <Link to={`/admin`}>
+                <Button className="app-btn">Admin</Button>
+              </Link>
+            )}
             <span>Wallet:</span>
             {publicKey && (
               <Button

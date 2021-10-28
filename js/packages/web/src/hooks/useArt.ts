@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useMeta } from '../contexts';
+import { useEffect, useState } from 'react';
 import { Art, Artist, ArtType } from '../types';
 import {
-  Edition,
   IMetadataExtension,
-  MasterEditionV1,
-  MasterEditionV2,
   Metadata,
   ParsedAccount,
   StringPublicKey,
@@ -14,15 +10,16 @@ import {
 } from '@oyster/common';
 import { WhitelistedCreator } from '@oyster/common/dist/lib/models/metaplex/index';
 import { Cache } from 'three';
-import { getCreator, getMetdataByPubKey } from './getData';
+import {
+  getCreator,
+  getEditionsbyKey,
+  getMasterEditionsbyKey,
+  getMetdataByPubKey,
+} from './getData';
+import _ from 'lodash';
 
-const metadataToArt = (
+const metadataToArt = async (
   info: Metadata | undefined,
-  editions: Record<string, ParsedAccount<Edition>>,
-  masterEditions: Record<
-    string,
-    ParsedAccount<MasterEditionV1 | MasterEditionV2>
-  >,
   whitelistedCreatorsByCreator: Record<
     string,
     ParsedAccount<WhitelistedCreator>
@@ -34,10 +31,39 @@ const metadataToArt = (
   let supply: number | undefined = undefined;
 
   if (info) {
-    const masterEdition = masterEditions[info.masterEdition || ''];
-    const edition = editions[info.edition || ''];
+    let masterEdition;
+    if (info.masterEdition) {
+      let res = await getMasterEditionsbyKey(
+        'masterEditionsV2',
+        info.masterEdition,
+      );
+      if (_.isEmpty(res)) {
+        res = await getMasterEditionsbyKey(
+          'masterEditionsV1',
+          info.masterEdition,
+        );
+      }
+
+      masterEdition = !_.isEmpty(res) ? res : undefined;
+    }
+    let edition;
+    if (info.edition) edition = await getEditionsbyKey(info.edition);
     if (edition) {
-      const myMasterEdition = masterEditions[edition.info.parent || ''];
+      let myMasterEdition;
+      if (edition.info.parent) {
+        let res = await getMasterEditionsbyKey(
+          'masterEditionsV2',
+          edition.info.parent,
+        );
+        if (_.isEmpty(res)) {
+          res = await getMasterEditionsbyKey(
+            'masterEditionsV1',
+            edition.info.parent,
+          );
+        }
+
+        myMasterEdition = !_.isEmpty(res) ? res : undefined;
+      }
       if (myMasterEdition) {
         type = ArtType.Print;
         editionNumber = edition.info.edition.toNumber();
@@ -88,91 +114,92 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
   const [cachedBlob, setCachedBlob] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const getImageBlobAsync = async () => {
+    let response: Response;
+    let blob: Blob;
+    try {
+      response = await fetch(uri, { cache: 'force-cache' });
+
+      blob = await response.blob();
+
+      if (blob.size === 0) {
+        throw new Error('No content');
+      }
+    } catch {
+      try {
+        response = await fetch(uri, { cache: 'reload' });
+        blob = await response.blob();
+      } catch {
+        // If external URL, just use the uri
+        if (uri?.startsWith('http')) {
+          setCachedBlob(uri);
+        }
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (blob.size === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (cacheMesh) {
+      // extra caching for meshviewer
+      Cache.enabled = true;
+      Cache.add(uri, await blob.arrayBuffer());
+    }
+    const blobURI = URL.createObjectURL(blob);
+    cachedImages.set(uri, blobURI);
+    setCachedBlob(blobURI);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     if (!uri) {
       return;
     }
 
     const result = cachedImages.get(uri);
-
     if (result) {
       setCachedBlob(result);
       return;
     }
 
-    (async () => {
-      let response: Response;
-      let blob: Blob;
-      try {
-        response = await fetch(uri, { cache: 'force-cache' });
-
-        blob = await response.blob();
-
-        if (blob.size === 0) {
-          throw new Error('No content');
-        }
-      } catch {
-        try {
-          response = await fetch(uri, { cache: 'reload' });
-          blob = await response.blob();
-        } catch {
-          // If external URL, just use the uri
-          if (uri?.startsWith('http')) {
-            setCachedBlob(uri);
-          }
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (blob.size === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (cacheMesh) {
-        // extra caching for meshviewer
-        Cache.enabled = true;
-        Cache.add(uri, await blob.arrayBuffer());
-      }
-      const blobURI = URL.createObjectURL(blob);
-      cachedImages.set(uri, blobURI);
-      setCachedBlob(blobURI);
-      setIsLoading(false);
-    })();
+    getImageBlobAsync();
   }, [uri, setCachedBlob, setIsLoading]);
 
   return { cachedBlob, isLoading };
 };
 
 export const useArt = (key?: StringPublicKey) => {
-  const { editions, masterEditions } = useMeta();
   const [account, setAccount] = useState<any>(null);
   const [CreatorsByCreator, setCreatorsByCreator] = useState<any>([]);
+  const [art, setArt] = useState<any>({});
 
-  useEffect(() => {
+  const getMetdataByPubKeyAsync = async () => {
     if (!key) return;
-    getMetdataByPubKey(key).then(metadata => {
+    await getMetdataByPubKey(key).then(metadata => {
       if (metadata && metadata.length > 0) {
         setAccount(metadata[0]);
       }
     });
-  }, [key]);
-
-  useEffect(() => {
-    getCreator().then(creators => {
+    await getCreator().then(creators => {
       if (creators && creators.length > 0) {
         setCreatorsByCreator(creators);
       }
     });
+  };
+
+  useEffect(() => {
+    getMetdataByPubKeyAsync();
   }, [key]);
 
-  const art = useMemo(
-    () =>
-      metadataToArt(account?.info, editions, masterEditions, CreatorsByCreator),
-    [account, editions, masterEditions, CreatorsByCreator],
-  );
-
+  useEffect(() => {
+    metadataToArt(account?.info, CreatorsByCreator).then(value =>
+      setArt(value),
+    );
+  }, [account, CreatorsByCreator]);
   return art;
 };
 

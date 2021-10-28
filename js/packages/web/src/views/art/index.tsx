@@ -16,14 +16,11 @@ import { useArt, useExtendedArt } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
 import { shortenAddress, useConnection } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { MetaAvatar } from '../../components/MetaAvatar';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
 import { ViewOn } from '../../components/ViewOn';
 import { ArtType } from '../../types';
 import { ArtMinting } from '../../components/ArtMinting';
 import { useCollection } from '../../hooks/useCollections';
-import { HowTo } from '../../components/HowTo';
-import { relative } from 'path/posix';
 
 const { Content } = Layout;
 

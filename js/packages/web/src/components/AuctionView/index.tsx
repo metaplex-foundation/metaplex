@@ -47,12 +47,12 @@ import {
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
 } from '@oyster/common/dist/lib/models/metaplex/index';
+import { getAuctionDataExtendedByKey } from '../../hooks/getData';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
   auctionView: AuctionView,
   bids: ParsedAccount<BidderMetadata>[],
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
 ): Promise<number> {
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(
     AccountLayout.span,
@@ -72,11 +72,7 @@ async function calculateTotalCostOfRedeemingOtherPeoplesBids(
     );
 
   const eligibleParticipations =
-    await findEligibleParticipationBidsForRedemption(
-      auctionView,
-      bids,
-      bidRedemptions,
-    );
+    await findEligibleParticipationBidsForRedemption(auctionView, bids);
   const max = auctionView.auction.info.bidState.max.toNumber();
   let totalWinnerItems = 0;
   for (let i = 0; i < max; i++) {
@@ -155,7 +151,6 @@ function useAuctionExtended(
 ): ParsedAccount<AuctionDataExtended> | undefined {
   const [auctionExtended, setAuctionExtended] =
     useState<ParsedAccount<AuctionDataExtended>>();
-  const { auctionDataExtended } = useMeta();
 
   useMemo(() => {
     const fn = async () => {
@@ -165,12 +160,12 @@ function useAuctionExtended(
           auctionProgramId: PROGRAM_IDS.auction,
           resource: auctionView.vault.pubkey,
         });
-        const extendedValue = auctionDataExtended[extendedKey];
+        const extendedValue = await getAuctionDataExtendedByKey(extendedKey);
         if (extendedValue) setAuctionExtended(extendedValue);
       }
     };
     fn();
-  }, [auctionDataExtended, auctionExtended, setAuctionExtended]);
+  }, [auctionExtended, setAuctionExtended]);
 
   return auctionExtended;
 }
@@ -196,7 +191,6 @@ export const AuctionCard = ({
   );
 
   const mintInfo = useMint(auctionView.auction.info.tokenMint);
-  const { prizeTrackingTickets, bidRedemptions } = useMeta();
   const bids = useBidsForAuction(auctionView.auction.pubkey);
 
   const [value, setValue] = useState<number>();
@@ -258,7 +252,7 @@ export const AuctionCard = ({
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
   const doesInstantSaleHasNoItems =
-    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
+    Number(auctionView.myBidderPot?.info?.emptied) !== 0 &&
     auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
   const shouldHideInstantSale =
@@ -316,7 +310,6 @@ export const AuctionCard = ({
                       connection,
                       auctionView,
                       bids,
-                      bidRedemptions,
                     );
                   setPrintingCost(totalCost);
                   setShowWarningModal(true);
@@ -329,8 +322,6 @@ export const AuctionCard = ({
                       myPayingAccount.pubkey,
                       auctionView,
                       accountByMint,
-                      prizeTrackingTickets,
-                      bidRedemptions,
                       bids,
                     ).then(() => setShowRedeemedBidModal(true));
                   } else {
@@ -341,8 +332,6 @@ export const AuctionCard = ({
                       auctionView,
                       accountByMint,
                       bids,
-                      bidRedemptions,
-                      prizeTrackingTickets,
                     );
                   }
                 } catch (e) {
@@ -582,11 +571,9 @@ export const AuctionCard = ({
                     myPayingAccount.pubkey,
                     auctionView,
                     accountByMint,
-                    prizeTrackingTickets,
-                    bidRedemptions,
                     bids,
-                  ).then(async () => {
-                    await update();
+                  ).then(() => {
+                    update();
                     setShowBidModal(false);
                     setShowRedeemedBidModal(true);
                   });

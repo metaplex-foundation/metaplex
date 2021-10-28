@@ -1,5 +1,6 @@
 import { Col, Divider, Row } from 'antd';
 import React from 'react';
+import { Spinner } from 'react-bootstrap';
 import Masonry from 'react-masonry-css';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
@@ -21,18 +22,22 @@ export const ArtistView = () => {
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!isLoading
-        ? artwork?.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard key={id} pubkey={m.pubkey} preview={false} />
-              </Link>
-            );
-          })
-        : [...Array(6)].map((_, idx) => <CardLoader key={idx} />)}
+      {!isLoading ? (
+        artwork?.map((m, idx) => {
+          const id = m.pubkey;
+          return (
+            <Link to={`/art/${id}`} key={idx}>
+              <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+            </Link>
+          );
+        })
+      ) : (
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden"></span>
+        </Spinner>
+      )}
     </Masonry>
   );
 
@@ -44,27 +49,17 @@ export const ArtistView = () => {
           style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
         >
           <Col span={24} className="about-the-creator">
-            <h2 style={{ color: 'white'}} className="info">
+            <h2 style={{ color: 'white' }} className="info">
               {/* <MetaAvatar creators={creator ? [creator] : []} size={100} /> */}
               {creator?.info?.name || creator?.info?.address}
             </h2>
             <br />
-            <div
-              className="info-header info"
-            >
-              ABOUT THE CREATOR
-            </div>
-            <div
-              className="info-content info"
-            >
+            <div className="info-header info">ABOUT THE CREATOR</div>
+            <div className="info-content info">
               {creator?.info?.description}
             </div>
             <br />
-            <div
-              className="info-header info"
-            >
-              Art Created
-            </div>
+            <div className="info-header info">Art Created</div>
             {artworkGrid}
           </Col>
         </Row>

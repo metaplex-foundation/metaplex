@@ -9,7 +9,6 @@ import {
   useArt,
   useAuction,
   useBidsForAuction,
-  useCreators,
   useExtendedArt,
 } from '../../hooks';
 import { ArtContent } from '../../components/ArtContent';
@@ -34,7 +33,7 @@ import useWindowDimensions from '../../utils/layout';
 import { CheckOutlined } from '@ant-design/icons';
 import { useMemo } from 'react';
 import { ArtType } from '../../types';
-import { ClickToCopy  } from '../../components/ClickToCopy';
+import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -74,14 +73,17 @@ export const AuctionItem = ({
   );
 };
 
+let art: any = {};
+
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
   const auction = useAuction(id);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
-  const creators = useCreators(auction);
+
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -134,32 +136,6 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
-          <h6>Number Of Winners</h6>
-          <h1>
-            {winnerCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              winnerCount
-            )}
-          </h1>
-          <h6>Number Of NFTs</h6>
-          <h1>
-            {nftCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              nftCount
-            )}
-          </h1>
-          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
-          <div className="auction-paragraph">
-            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description ||
-              (winnerCount !== undefined && (
-                <div style={{ fontStyle: 'italic' }}>
-                  No description provided.
-                </div>
-              ))}
-          </div>
 
           {attributes && (
             <>
@@ -173,12 +149,6 @@ export const AuctionView = () => {
               </List>
             </>
           )}
-          {/* {auctionData[id] && (
-            <>
-              <h6>About this Auction</h6>
-              <p>{auctionData[id].description.split('\n').map((t: string) => <div>{t}</div>)}</p>
-            </>
-          )} */}
         </Col>
 
         <Col span={24} md={12}>
@@ -225,8 +195,34 @@ export const AuctionView = () => {
           </Row>
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction}/>}
+          {auction && <AuctionCard auctionView={auction} />}
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
+          <h6>Number Of Winners</h6>
+          <h1>
+            {winnerCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              winnerCount
+            )}
+          </h1>
+          <h6>Number Of NFTs</h6>
+          <h1>
+            {nftCount === undefined ? (
+              <Skeleton paragraph={{ rows: 0 }} />
+            ) : (
+              nftCount
+            )}
+          </h1>
+          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
+          <div className="auction-paragraph">
+            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+            {description ||
+              (winnerCount !== undefined && (
+                <div style={{ fontStyle: 'italic' }}>
+                  No description provided.
+                </div>
+              ))}
+          </div>
         </Col>
       </Row>
     </>
@@ -331,18 +327,24 @@ const BidLine = (props: {
             address={bidder}
           />{' '}
           {bidderTwitterHandle ? (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               <a
                 target="_blank"
                 title={shortenAddress(bidder)}
                 href={`https://twitter.com/${bidderTwitterHandle}`}
               >{`@${bidderTwitterHandle}`}</a>
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           ) : (
-            <Row className="pubkey-row"> 
+            <Row className="pubkey-row">
               {shortenAddress(bidder)}
-              <ClickToCopy className="copy-pubkey" copyText={bidder as string} />
+              <ClickToCopy
+                className="copy-pubkey"
+                copyText={bidder as string}
+              />
             </Row>
           )}
           {isme && <span style={{ color: '#6479f6' }}>&nbsp;(you)</span>}
@@ -407,7 +409,7 @@ export const AuctionBids = ({
   if (!auctionView || bids.length < 1) return null;
 
   return (
-    <Col style={{ width: '100%'}}>
+    <Col style={{ width: '100%' }}>
       <h6>Bid History</h6>
       {bidLines.slice(0, 10)}
       {bids.length > 10 && (

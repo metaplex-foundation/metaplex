@@ -1,40 +1,17 @@
+import { AccountInfo } from '@solana/web3.js';
 import {
   AccountParser,
+  decodeAuction,
+  decodeAuctionDataExtended,
   decodeAuctionManager,
-  decodeBidderPot,
   decodeBidRedemptionTicket,
-  decodeEdition,
   decodeMasterEdition,
   decodeMetadata,
-  decodePayoutTicket,
   decodeSafetyDeposit,
   decodeSafetyDepositConfig,
   decodeVault,
-  decodeWhitelistedCreator,
   StringPublicKey,
-} from '@oyster/common';
-import { PublicKey } from '@solana/web3.js';
-
-export type AccountAndPubkey = {
-  pubkey: string;
-  account: AccountInfo<Buffer>;
-};
-
-export type AccountInfo<T> = {
-  executable: boolean;
-  owner: PublicKey;
-  lamports: number;
-  data: T;
-};
-
-export const WhitelistedCreatorParser: AccountParser = (
-  pubkey: StringPublicKey,
-  account: AccountInfo<Buffer>,
-) => ({
-  pubkey,
-  account,
-  info: decodeWhitelistedCreator(account.data),
-});
+} from '..';
 
 export const WhitelistedMetadataParser: AccountParser = (
   pubkey: StringPublicKey,
@@ -54,13 +31,31 @@ export const WhitelistedMasterEditionVParser: AccountParser = (
   info: decodeMasterEdition(account.data),
 });
 
-export const WhitelistedAuctionManagerParser: AccountParser = (
+export const AuctionDataExtendedParser: AccountParser = (
   pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,
 ) => ({
   pubkey,
   account,
-  info: decodeAuctionManager(account.data),
+  info: decodeAuctionDataExtended(account.data),
+});
+
+export const AuctionParser: AccountParser = (
+  pubkey: StringPublicKey,
+  account: AccountInfo<Buffer>,
+) => ({
+  pubkey,
+  account,
+  info: decodeAuction(account.data),
+});
+
+export const WhitelistedVaultParser: AccountParser = (
+  pubkey: StringPublicKey,
+  account: AccountInfo<Buffer>,
+) => ({
+  pubkey,
+  account,
+  info: decodeVault(account.data),
 });
 
 export const WhitelistedBidRedemptionTicketParser: AccountParser = (
@@ -81,24 +76,6 @@ export const WhitelistedSafetyDepositConfigParser: AccountParser = (
   info: decodeSafetyDepositConfig(account.data),
 });
 
-export const WhitelistedEditionParser: AccountParser = (
-  pubkey: StringPublicKey,
-  account: AccountInfo<Buffer>,
-) => ({
-  pubkey,
-  account,
-  info: decodeEdition(account.data),
-});
-
-export const WhitelistedVaultParser: AccountParser = (
-  pubkey: StringPublicKey,
-  account: AccountInfo<Buffer>,
-) => ({
-  pubkey,
-  account,
-  info: decodeVault(account.data),
-});
-
 export const WhitelistedSafetyDepositParser: AccountParser = (
   pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,
@@ -108,20 +85,11 @@ export const WhitelistedSafetyDepositParser: AccountParser = (
   info: decodeSafetyDeposit(account.data),
 });
 
-export const BidderPotParser: AccountParser = (
+export const WhitelistedAuctionManagerParser: AccountParser = (
   pubkey: StringPublicKey,
   account: AccountInfo<Buffer>,
 ) => ({
   pubkey,
   account,
-  info: decodeBidderPot(account.data),
-});
-
-export const PayoutTicket: AccountParser = (
-  pubkey: StringPublicKey,
-  account: AccountInfo<Buffer>,
-) => ({
-  pubkey,
-  account,
-  info: decodePayoutTicket(account.data),
+  info: decodeAuctionManager(account.data),
 });

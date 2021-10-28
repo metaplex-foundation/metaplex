@@ -25,7 +25,6 @@ router.get('/:store/safetyDepositBoxes', async (req: Request, res: Response) => 
             filter.order = parseInt(req.query.index as string)
         }
 
-        console.log(filter)
         const cursor = coll.find<SafetyDepositBoxAccountDocument>(filter);
         const data = await cursor.toArray();
         res.send(data.map(c => ({

@@ -6,15 +6,19 @@ export const useCreator = (id?: StringPublicKey) => {
   const [creator, setCreator] = useState<any>({});
   const key = pubkeyToString(id);
 
-  useEffect(() => {
-    if (!key) return;
-    getCreator().then(creators => {
+  const getCreatorsAsync = async () => {
+    await getCreator().then(creators => {
       if (creators && creators.length > 0) {
         const creator = creators.find(creator => creator.info.address === key);
         setCreator(creator);
       }
     });
-  }, [key]);
+  };
+
+  useEffect(() => {
+    if (!key) return;
+    getCreatorsAsync();
+  }, [id]);
 
   return creator;
 };

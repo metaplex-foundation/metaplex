@@ -16,10 +16,6 @@ import {
 import { AccountLayout } from '@solana/spl-token';
 import { TransactionInstruction, Keypair, Connection } from '@solana/web3.js';
 import { AuctionView } from '../hooks';
-import {
-  BidRedemptionTicket,
-  PrizeTrackingTicket,
-} from '@oyster/common/dist/lib/models/metaplex/index';
 import { claimUnusedPrizes } from './claimUnusedPrizes';
 import { setupPlaceBid } from './sendPlaceBid';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
@@ -31,8 +27,6 @@ export async function sendCancelBid(
   auctionView: AuctionView,
   accountsByMint: Map<string, TokenAccount>,
   bids: ParsedAccount<BidderMetadata>[],
-  bidRedemptions: Record<string, ParsedAccount<BidRedemptionTicket>>,
-  prizeTrackingTickets: Record<string, ParsedAccount<PrizeTrackingTicket>>,
 ) {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
@@ -80,8 +74,6 @@ export async function sendCancelBid(
       auctionView,
       accountsByMint,
       bids,
-      bidRedemptions,
-      prizeTrackingTickets,
       signers,
       instructions,
     );

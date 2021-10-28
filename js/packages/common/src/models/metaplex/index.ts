@@ -26,6 +26,12 @@ import {
   DEPRECATED_SCHEMA,
   ParticipationConfigV1,
 } from './deprecatedStates';
+import {
+  getMasterEditionsbyKey,
+  getMasterEditionsbyMint,
+  getMetadataByMasterEdition,
+  getMetadatabyMint,
+} from '../../hooks/getData';
 
 export * from './deprecatedInitAuctionManagerV1';
 export * from './redeemBid';
@@ -185,68 +191,90 @@ export class AuctionManager {
     }
   }
 
-  getItemsFromSafetyDepositBoxes(
-    metadataByMint: Record<string, ParsedAccount<Metadata>>,
-    masterEditionsByPrintingMint: Record<
-      string,
-      ParsedAccount<MasterEditionV1>
-    >,
-    metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>,
-    masterEditions: Record<
-      string,
-      ParsedAccount<MasterEditionV1 | MasterEditionV2>
-    >,
+  async getItemsFromSafetyDepositBoxes(
     boxes: ParsedAccount<SafetyDepositBox>[],
-  ): AuctionViewItem[][] {
+  ): Promise<AuctionViewItem[][]> {
     if (this.instance.info.key == MetaplexKey.AuctionManagerV1) {
-      return (
-        this.instance.info as AuctionManagerV1
-      ).settings.winningConfigs.map(w => {
-        return w.items.map(it => {
-          let metadata =
-            metadataByMint[boxes[it.safetyDepositBoxIndex]?.info.tokenMint];
+      const winningConf = (this.instance.info as AuctionManagerV1).settings
+        .winningConfigs;
+      const winRes: any[] = [];
+      for (let j = 0; j < winningConf.length; j++) {
+        const w = winningConf[j];
+        const result: any[] = [];
+        for (let i = 0; i < w.items.length; i++) {
+          const it = w.items[i];
+          let metadata = await getMetadatabyMint(
+            boxes[it.safetyDepositBoxIndex]?.info.tokenMint,
+          );
           if (!metadata) {
             // Means is a limited edition v1, so the tokenMint is the printingMint
-            const masterEdition =
-              masterEditionsByPrintingMint[
-                boxes[it.safetyDepositBoxIndex]?.info.tokenMint
-              ];
+            const masterEdition = await getMasterEditionsbyMint(
+              'masterEditionsV1',
+              boxes[it.safetyDepositBoxIndex]?.info.tokenMint,
+            );
             if (masterEdition) {
-              metadata = metadataByMasterEdition[masterEdition.pubkey];
+              metadata = await getMetadataByMasterEdition(masterEdition.pubkey);
             }
           }
-          return {
+
+          let res = await getMasterEditionsbyKey(
+            'masterEditionsV1',
+            metadata?.info.masterEdition,
+          );
+
+          if (!res || res.length == 0) {
+            res = await getMasterEditionsbyKey(
+              'masterEditionsV2',
+              metadata?.info.masterEdition,
+            );
+          }
+
+          result.push({
             metadata,
             winningConfigType: it.winningConfigType,
             safetyDeposit: boxes[it.safetyDepositBoxIndex],
             amount: new BN(it.amount),
-            masterEdition: metadata?.info?.masterEdition
-              ? masterEditions[metadata.info.masterEdition]
-              : undefined,
-          };
-        });
-      });
+            masterEdition: metadata?.info?.masterEdition ? res : undefined,
+          });
+        }
+        winRes.push(result);
+      }
+      return winRes;
     } else {
       const items: AuctionViewItem[][] = [];
       for (let i = 0; i < this.numWinners.toNumber(); i++) {
         const newWinnerArr: AuctionViewItem[] = [];
         items.push(newWinnerArr);
-        this.safetyDepositConfigs?.forEach(s => {
+        for (let j = 0; j < this.safetyDepositConfigs.length; j++) {
+          const s = this.safetyDepositConfigs[j];
           const amount = s.info.getAmountForWinner(new BN(i));
           if (amount.gt(new BN(0))) {
             const safetyDeposit = boxes[s.info.order.toNumber()];
-            const metadata = metadataByMint[safetyDeposit.info.tokenMint];
+            const metadata = await getMetadatabyMint(
+              safetyDeposit?.info.tokenMint,
+            );
+
+            let res = await getMasterEditionsbyKey(
+              'masterEditionsV1',
+              metadata?.info.masterEdition,
+            );
+
+            if (!res || res.length == 0) {
+              res = await getMasterEditionsbyKey(
+                'masterEditionsV2',
+                metadata?.info.masterEdition,
+              );
+            }
+
             newWinnerArr.push({
               metadata,
               winningConfigType: s.info.winningConfigType,
               safetyDeposit,
               amount,
-              masterEdition: metadata?.info?.masterEdition
-                ? masterEditions[metadata.info.masterEdition]
-                : undefined,
+              masterEdition: metadata?.info?.masterEdition ? res : undefined,
             });
           }
-        });
+        }
       }
       return items;
     }

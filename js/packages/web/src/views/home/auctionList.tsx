@@ -2,12 +2,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import BN from 'bn.js';
 import React, { useMemo, useState } from 'react';
+import { Spinner } from 'react-bootstrap';
 import Masonry from 'react-masonry-css';
 import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
 import { CardLoader } from '../../components/MyLoader';
 import { PreSaleBanner } from '../../components/PreSaleBanner';
-import { useMeta } from '../../contexts';
 import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
 
 const { TabPane } = Tabs;
@@ -25,10 +25,9 @@ export const AuctionListView = () => {
   const auctions = useAuctions(AuctionViewState.Live);
   const auctionsEnded = [
     ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow)
+    ...useAuctions(AuctionViewState.BuyNow),
   ];
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-  const { isLoading } = useMeta();
   const { connected, publicKey } = useWallet();
   const breakpointColumnsObj = {
     default: 4,
@@ -109,44 +108,39 @@ export const AuctionListView = () => {
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!isLoading
-        ? items.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
-
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {items.map((m, idx) => {
+        if (m === heroAuction) {
+          return;
+        }
+        const id = m.auction.pubkey;
+        return (
+          <Link to={`/auction/${id}`} key={idx}>
+            <AuctionRenderCard key={id} auctionView={m} />
+          </Link>
+        );
+      })}
     </Masonry>
   );
   const endedAuctions = (
     <Masonry
       breakpointCols={breakpointColumnsObj}
       className="my-masonry-grid"
-      columnClassName="my-masonry-grid_column"
+      columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!isLoading
-        ? auctionsEnded.map((m, idx) => {
-            if (m === heroAuction) {
-              return;
-            }
+      {auctionsEnded.map((m, idx) => {
+        if (m === heroAuction) {
+          return;
+        }
 
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+        const id = m.auction.pubkey;
+        return (
+          <Link to={`/auction/${id}`} key={idx}>
+            <AuctionRenderCard key={id} auctionView={m} />
+          </Link>
+        );
+      })}
     </Masonry>
   );
 

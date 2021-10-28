@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ts-node-dev -r dotenv/config src/index.ts",
     "prod": "ts-node src/index.ts",
-    "cache-update" : "ts-node src/cache-update.ts"
+    "cache-update": "ts-node src/cache-update.ts"
   },
   "keywords": [],
   "author": "",
