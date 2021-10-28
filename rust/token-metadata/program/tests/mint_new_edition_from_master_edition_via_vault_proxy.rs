@@ -9,16 +9,16 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use spl_token_metadata::error::MetadataError;
-use spl_token_metadata::state::Key;
-use spl_token_metadata::{id, instruction};
-use spl_token_vault::state::PREFIX;
+use metaplex_token_metadata::error::MetadataError;
+use metaplex_token_metadata::state::Key;
+use metaplex_token_metadata::{id, instruction};
+use metaplex_token_vault::state::PREFIX;
 use utils::*;
 
 #[tokio::test]
 async fn success() {
     let mut program_test = program_test();
-    program_test.add_program("spl_token_vault", spl_token_vault::id(), None);
+    program_test.add_program("metaplex_token_vault", metaplex_token_vault::id(), None);
     let mut context = program_test.start_with_context().await;
 
     let test_metadata = Metadata::new();
@@ -87,7 +87,7 @@ async fn success() {
 #[tokio::test]
 async fn fail_invalid_store_owner_pda() {
     let mut program_test = program_test();
-    program_test.add_program("spl_token_vault", spl_token_vault::id(), None);
+    program_test.add_program("metaplex_token_vault", metaplex_token_vault::id(), None);
     let mut context = program_test.start_with_context().await;
 
     let test_metadata = Metadata::new();
@@ -170,7 +170,7 @@ async fn fail_invalid_store_owner_pda() {
                 context.payer.pubkey(),
                 test_edition_marker.metadata_pubkey,
                 spl_token::id(),
-                spl_token_vault::id(),
+                metaplex_token_vault::id(),
                 test_edition_marker.edition,
             ),
         ],
@@ -191,7 +191,7 @@ async fn fail_invalid_store_owner_pda() {
 #[tokio::test]
 async fn fail_invalid_vault_authority() {
     let mut program_test = program_test();
-    program_test.add_program("spl_token_vault", spl_token_vault::id(), None);
+    program_test.add_program("metaplex_token_vault", metaplex_token_vault::id(), None);
     let mut context = program_test.start_with_context().await;
 
     let test_metadata = Metadata::new();
@@ -265,7 +265,7 @@ async fn fail_invalid_vault_authority() {
                 context.payer.pubkey(),
                 test_edition_marker.metadata_pubkey,
                 spl_token::id(),
-                spl_token_vault::id(),
+                metaplex_token_vault::id(),
                 test_edition_marker.edition,
             ),
         ],
@@ -282,14 +282,14 @@ async fn fail_invalid_vault_authority() {
 
     assert_custom_error!(
         result,
-        spl_token_vault::error::VaultError::AuthorityDoesNotMatch
+        metaplex_token_vault::error::VaultError::AuthorityDoesNotMatch
     );
 }
 
 #[tokio::test]
 async fn fail_store_account_mismatch() {
     let mut program_test = program_test();
-    program_test.add_program("spl_token_vault", spl_token_vault::id(), None);
+    program_test.add_program("metaplex_token_vault", metaplex_token_vault::id(), None);
     let mut context = program_test.start_with_context().await;
 
     let test_metadata = Metadata::new();
@@ -349,7 +349,7 @@ async fn fail_store_account_mismatch() {
     // Generate fake store
     let store = Keypair::new();
     let token_mint_pubkey = test_metadata.mint.pubkey();
-    let spl_token_vault_id = spl_token_vault::id();
+    let metaplex_token_vault_id = metaplex_token_vault::id();
     let vault_pubkey = test_vault.keypair.pubkey();
 
     let seeds = &[
@@ -357,13 +357,13 @@ async fn fail_store_account_mismatch() {
         &vault_pubkey.as_ref(),
         &token_mint_pubkey.as_ref(),
     ];
-    let (_, _) = Pubkey::find_program_address(seeds, &spl_token_vault_id);
+    let (_, _) = Pubkey::find_program_address(seeds, &metaplex_token_vault_id);
     let seeds = &[
         PREFIX.as_bytes(),
-        &spl_token_vault_id.as_ref(),
+        &metaplex_token_vault_id.as_ref(),
         &vault_pubkey.as_ref(),
     ];
-    let (authority, _) = Pubkey::find_program_address(seeds, &spl_token_vault_id);
+    let (authority, _) = Pubkey::find_program_address(seeds, &metaplex_token_vault_id);
     create_token_account(&mut context, &store, &token_mint_pubkey, &authority)
         .await
         .unwrap();
@@ -386,7 +386,7 @@ async fn fail_store_account_mismatch() {
                 context.payer.pubkey(),
                 test_edition_marker.metadata_pubkey,
                 spl_token::id(),
-                spl_token_vault::id(),
+                metaplex_token_vault::id(),
                 test_edition_marker.edition,
             ),
         ],
@@ -403,6 +403,6 @@ async fn fail_store_account_mismatch() {
 
     assert_custom_error!(
         result,
-        spl_token_vault::error::VaultError::StoreDoesNotMatchSafetyDepositBox
+        metaplex_token_vault::error::VaultError::StoreDoesNotMatchSafetyDepositBox
     );
 }

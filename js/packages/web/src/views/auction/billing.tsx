@@ -44,12 +44,12 @@ const { Text } = Typography;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
-  const auctionView = useAuction(id);
+  const { auction, loading } = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();
   const { patchState } = useMeta();
   const [loadingBilling, setLoadingBilling] = useState<boolean>(true);
-  const mint = useMint(auctionView?.auction.info.tokenMint);
+  const mint = useMint(auction?.auction.info.tokenMint);
 
   useEffect(() => {
     (async () => {
@@ -60,13 +60,13 @@ export const BillingView = () => {
     })()
   }, [loadingBilling]);
 
-  return loadingBilling || !auctionView || !wallet || !connection || !mint ? (
+  return loading || loadingBilling || !auction || !wallet || !connection || !mint ? (
     <div className="app-section--loading">
       <Spin indicator={<LoadingOutlined />} />
     </div>
   ) : (
     <InnerBillingView
-      auctionView={auctionView}
+      auctionView={auction}
       connection={connection}
       wallet={wallet}
       mint={mint}

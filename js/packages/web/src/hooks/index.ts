@@ -7,3 +7,4 @@ export * from './useUserBalance';
 export * from './useCreator';
 export * from './useCreatorArts';
 export * from './useNotifications';
+export * from './useAuctionManagersToCache';
