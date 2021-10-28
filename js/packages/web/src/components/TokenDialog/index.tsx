@@ -73,10 +73,18 @@ export default function TokenDialog({
 
   const validateTokenMint = (quoteMintAddress: string) => {
 
-    if (toPublicKey(quoteMintAddress).toBuffer().length >= 32) {
-        console.log("MINT OK")
-        setMint(toPublicKey(quoteMintAddress))
-        onClose()
+    // try to convert to publicKey and check if it is on curve
+    let quoteMintAddressOnCurve = false
+    try {
+      quoteMintAddressOnCurve = PublicKey.isOnCurve(toPublicKey(quoteMintAddress).toBuffer().slice(0, 32))
+    } catch {
+      console.log("Not an ed25519 curve pubkey")
+    }
+
+    if (quoteMintAddressOnCurve) {
+      console.log("MINT OK")
+      setMint(toPublicKey(quoteMintAddress))
+      onClose()
     }
 
   }
@@ -117,7 +125,6 @@ export default function TokenDialog({
         </List>
         <Search
           enterButton="Go!"
-          style={{}}
           className="input search-text-field"
           placeholder="Can't find your token? set it here!"
           allowClear
