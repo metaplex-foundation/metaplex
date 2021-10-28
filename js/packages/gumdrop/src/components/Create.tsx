@@ -43,7 +43,6 @@ import BN from 'bn.js';
 import * as bs58 from "bs58";
 
 // claim distribution
-import Mailchimp from "@mailchimp/mailchimp_transactional"
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 
 import {
@@ -51,11 +50,11 @@ import {
   Connection,
 } from "../contexts";
 import {
+  CANDY_MACHINE_ID,
   MERKLE_DISTRIBUTOR_ID,
   MERKLE_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
-  shortenAddress,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
 import { DragAndDrop } from "./DragAndDrop";
@@ -74,50 +73,41 @@ const WHITESPACE = "\u00A0";
 export type ClaimantInfo = {
   handle : string,
   amount : number,
-  mint   : string,
 
   pin    : Uint8Array,
   bump   : number,
   url    : string,
 
-  mintKey : PublicKey,
-  source : PublicKey,
+  seed   : PublicKey,
   pda    : PublicKey,
 };
 
-const setupMailchimp = (auth : string, source : string) => {
-  const mailchimp = Mailchimp(auth);
+export type AuthKeys = { [key: string] : string }
 
-  return async (
-    info : ClaimantInfo,
-    mintUrl: string,
-  ) => {
-    const message = {
-      from_email: source,
-      // TODO: add to web front-end
+type DropInfo = {
+  type : string,
+  meta : string,
+};
+
+const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
+  if (drop.type === "Token") {
+    return {
       subject: "Token Drop",
-      text: `You received ${info.amount} token(s) `
-          + `(click <a href="${mintUrl}">here</a> to view the mint on explorer). `
-          + `<a href="${info.url}">Click here to claim them!</a>`,
-      to: [
-        {
-          email: info.handle,
-          type: "to"
-        }
-      ]
+      message: `You received ${info.amount} token(s) `
+             + `(click <a href="${drop.meta}">here</a> to view the mint on explorer). `
+             + `<a href="${info.url}">Click here to claim them!</a>`,
     };
+  } else {
+    return {
+      subject: "NFT Drop",
+      message: `You received a Candy Machine pre-sale crank `
+             + `(click <a href="${drop.meta}">here</a> to view the config on explorer). `
+             + `<a href="${info.url}">Click here to claim it!</a>`,
+    };
+  }
+};
 
-    const response = await mailchimp.messages.send({ message });
-
-    console.log(response);
-    if (!response[0] || response[0].status !== "sent") {
-      throw new Error(`Mailchimp failed to send email: ${response[0].reject_reason}`);
-    }
-  };
-}
-
-const setupSes = (authStr : string, source : string) => {
-  const auth = JSON.parse(authStr);
+const setupSes = (auth : AuthKeys, source : string) => {
   console.log(`SES auth ${auth}`);
   const client = new SESClient({
     region: "us-east-2",
@@ -129,8 +119,9 @@ const setupSes = (authStr : string, source : string) => {
 
   return async (
     info : ClaimantInfo,
-    mintUrl: string,
+    drop : DropInfo,
   ) => {
+    const formatted = formatDropMessage(info, drop);
     const message = {
       Destination: {
         ToAddresses: [
@@ -139,14 +130,12 @@ const setupSes = (authStr : string, source : string) => {
       },
       Message: {
         Subject: {
-          Data: "Token Drop",
+          Data: formatted.subject,
           Charset: "utf-8",
         },
         Body: {
           Html: {
-            Data: `You received ${info.amount} token(s) `
-                + `(click <a href="${mintUrl}">here</a> to view the mint on explorer). `
-                + `<a href="${info.url}">Click here to claim them!</a>`,
+            Data: formatted.message,
             Charset: "utf-8",
           },
         },
@@ -167,7 +156,7 @@ const setupSes = (authStr : string, source : string) => {
   };
 }
 
-const setupManual = (auth : string, source : string) => {
+const setupManual = (auth : AuthKeys, source : string) => {
   return async (
     info : ClaimantInfo,
     mintUrl: string,
@@ -183,12 +172,10 @@ const setupManual = (auth : string, source : string) => {
 
 const setupSender = (
   method : string,
-  auth : string,
+  auth : AuthKeys,
   source : string,
 ) => {
-  if (method === "Mailchimp") {
-    return setupMailchimp(auth, source);
-  } else if (method === "AWS SES") {
+  if (method === "AWS SES") {
     return setupSes(auth, source);
   } else if (method === "Manual") {
     return setupManual(auth, source);
@@ -205,7 +192,6 @@ const parseClaimants = (
     return {
       handle : obj.handle,
       amount : obj.amount,
-      mint   : obj.mint,
       url    : obj.url,
     };
   });
@@ -296,6 +282,26 @@ const getCreatorTokenAccount = async (
   return creatorTokenKey;
 }
 
+const getCandyConfig = async (
+  connection : RPCConnection,
+  config : string
+) : Promise<PublicKey> => {
+  let configKey : PublicKey;
+  try {
+    configKey = new PublicKey(config);
+  } catch (err) {
+    throw new Error(`Invalid config key ${err}`);
+  }
+  const configAccount = await connection.getAccountInfo(configKey);
+  if (configAccount === null) {
+    throw new Error(`Could not fetch config`);
+  }
+  if (!configAccount.owner.equals(CANDY_MACHINE_ID)) {
+    throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
+  }
+  return configKey;
+};
+
 export type CreateProps = {};
 
 export const Create = (
@@ -303,16 +309,27 @@ export const Create = (
 ) => {
   const connection = useConnection();
   const wallet = useWallet();
-  const [commMethod, setMethod] = React.useState(localStorage.getItem("commMethod") || "");
-  const [commAuth, setCommAuth] = React.useState("");
-  const [commSource, setCommSource] = React.useState("");
+
+  // claim state
+  const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "");
+  const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
+  const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
+  const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
   const [baseKey, setBaseKey] = React.useState<Keypair | undefined>(undefined);
   const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
 
-  const mintUrlFor = (mintKey : PublicKey) => {
-    return `https://explorer.solana.com/address/${mintKey.toBase58()}?cluster=${Connection.envFor(connection)}`;
+  // auth state
+  const [commMethod, setCommMethod] = React.useState(localStorage.getItem("commMethod") || "");
+  const [commAuth, setCommAuth] = React.useState<AuthKeys>({});
+  const [commSource, setCommSource] = React.useState(localStorage.getItem("commSource") || "");
+  const [awsAccessKeyId, setAwsAccessKeyId] = React.useState("");
+  const [awsSecretKey, setAwsSecretKey] = React.useState("");
+  const [mailcAPIKey, setMailcAPIKey] = React.useState("");
+
+  const explorerUrlFor = (key : PublicKey) => {
+    return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${Connection.envFor(connection)}`;
   }
 
   const submit = async (e : React.SyntheticEvent) => {
@@ -337,9 +354,34 @@ export const Create = (
 
     claimants.forEach((c, idx) => {
       if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
-      if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
-      if (!c.mint)   throw new Error(`Claimant ${idx} doesn't have mint`);
     });
+
+    const claimInfo : any = {};
+    let isTokenAirdrop : boolean;
+    if (claimMethod === "transfer") {
+      isTokenAirdrop = true;
+      claimants.forEach((c, idx) => {
+        if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
+      });
+      claimInfo.total = claimants.reduce((acc, c) => acc + c.amount, 0);
+      claimInfo.mint = await getMintInfo(connection, mint);
+      claimInfo.source = await getCreatorTokenAccount(
+        wallet.publicKey,
+        connection,
+        claimInfo.mint.key,
+        claimInfo.total
+      );
+      claimInfo.info = { type: "Token", meta: explorerUrlFor(claimInfo.mint.key) };
+    } else if (claimMethod === "candy") {
+      // TODO: verify exactly one?
+      isTokenAirdrop = false;
+      claimInfo.config = await getCandyConfig(connection, candyConfig);
+      claimInfo.info = { type: "Candy", meta: explorerUrlFor(claimInfo.config) };
+    } else {
+      throw new Error(`Unknown claim method ${claimMethod}`);
+    }
+    console.log(claimInfo);
+
 
     const mightHaveExisting = (info : ClaimantInfo) => {
       // TODO: others?
@@ -392,7 +434,7 @@ export const Create = (
         setClaimURLs(claimants);
         const sender = setupSender(commMethod, commAuth, commSource);
         for (const c of claimants) {
-          await sender(c, mintUrlFor(c.mintKey));
+          await sender(c, claimInfo.info);
         }
         return;
       } else if (resendOnly === "create") {
@@ -403,37 +445,16 @@ export const Create = (
       }
     }
 
-    const totalClaims = {};
-    claimants.forEach(c => {
-      if (!(c.mint in totalClaims)) {
-        totalClaims[c.mint] = { total: 0 };
-      }
-      totalClaims[c.mint].total += c.amount;
-    }, {});
-    console.log(totalClaims);
-
-    for (const mint of Object.keys(totalClaims)) {
-      const mc = totalClaims[mint];
-      mc.mint = await getMintInfo(connection, mint);
-      mc.source = await getCreatorTokenAccount(
-        wallet.publicKey,
-        connection,
-        mc.mint.key,
-        mc.total
-      );
-    }
-
     claimants.forEach(c => {
       c.pin = randomBytes();
-      c.mintKey = totalClaims[c.mint].mint.key;
-      c.source = totalClaims[c.mint].source;
+      c.seed = isTokenAirdrop ? claimInfo.mint.key : claimInfo.config;
     });
 
     const leafs : Array<Buffer> = [];
     for (let idx = 0; idx < claimants.length; ++idx ) {
       const claimant = claimants[idx];
       const seeds = [
-        claimant.mintKey.toBuffer(),
+        claimant.seed.toBuffer(),
         Buffer.from(claimant.handle),
         Buffer.from(claimant.pin),
       ];
@@ -444,7 +465,7 @@ export const Create = (
       leafs.push(Buffer.from(
         [...new BN(idx).toArray("le", 8),
          ...claimantPda.toBuffer(),
-         ...claimant.mintKey.toBuffer(),
+         ...claimant.seed.toBuffer(),
          ...new BN(claimant.amount).toArray("le", 8),
         ]
       ));
@@ -474,13 +495,18 @@ export const Create = (
       const claimant = claimants[idx];
       const params = [
         `distributor=${distributor}`,
-        `tokenAcc=${claimant.source}`,
         `handle=${claimant.handle}`,
         `amount=${claimant.amount}`,
         `index=${idx}`,
         `pin=${claimant.pin}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
+      if (isTokenAirdrop) {
+        params.push(`tokenAcc=${claimInfo.source}`);
+      } else {
+        params.push(`config=${candyConfig}`);
+        params.push(`uuid=${candyUUID}`);
+      }
       const query = params.join("&");
 
       claimant.url = `${window.location.origin}${window.location.pathname}#/claim?${query}`;
@@ -514,8 +540,7 @@ export const Create = (
               <TableHead>
                 <TableRow>
                   <TableCell>Handle</TableCell>
-                  <TableCell>Mint</TableCell>
-                  <TableCell>Tokens</TableCell>
+                  {isTokenAirdrop && <TableCell>Tokens</TableCell>}
                   <TableCell>Pin</TableCell>
                 </TableRow>
               </TableHead>
@@ -526,12 +551,11 @@ export const Create = (
                     sx={{ 'td, th': { border: 0 } }}
                   >
                     <TableCell component="th" scope="row">{c.handle} </TableCell>
-                    <TableCell>
-                      <HyperLink href={mintUrlFor(c.mintKey)} underline="none">
-                        {shortenAddress(c.mintKey.toBase58())}
-                      </HyperLink>
-                    </TableCell>
-                    <TableCell>{displayMintTokens(c.amount, totalClaims[c.mint].mint.info)}</TableCell>
+                    {isTokenAirdrop &&
+                      <TableCell>
+                        {displayMintTokens(c.amount, claimInfo.mint.info)}
+                      </TableCell>
+                    }
                     <TableCell>{c.pin.join(",")}</TableCell>
                   </TableRow>
                 ))}
@@ -589,16 +613,14 @@ export const Create = (
         ])
     }));
 
-    // TODO: split up when too many?
-    for (const mint of Object.keys(totalClaims)) {
-      const mc = totalClaims[mint];
+    if (isTokenAirdrop) {
       instructions.push(Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
-        mc.source,
+        claimInfo.source,
         distributor,
         wallet.publicKey,
         [],
-        mc.total
+        claimInfo.total
       ));
     }
 
@@ -626,7 +648,7 @@ export const Create = (
     console.log("Distributing claim URLs");
     const sender = setupSender(commMethod, commAuth, commSource);
     for (const c of claimants) {
-      await sender(c, mintUrlFor(c.mintKey));
+      await sender(c, claimInfo.info);
     }
   };
 
@@ -675,25 +697,111 @@ export const Create = (
     reader.readAsText(file);
   };
 
+  const claimData = (claimMethod) => {
+    if (claimMethod === "candy") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="config-text-field"
+            label="Candy Config"
+            value={candyConfig}
+            onChange={e => {
+              setCandyConfig(e.target.value);
+              localStorage.setItem("candyConfig", e.target.value);
+            }}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="config-uuid-text-field"
+            label="Candy UUID"
+            value={candyUUID}
+            onChange={e => {
+              setCandyUUID(e.target.value);
+              localStorage.setItem("candyUUID", e.target.value);
+            }}
+          />
+        </React.Fragment>
+      );
+    } else if (claimMethod === "transfer") {
+      return (
+        <TextField
+          style={{width: "60ch"}}
+          id="mint-text-field"
+          label="Mint"
+          value={mint}
+          onChange={(e) => {
+            localStorage.setItem("mint", e.target.value);
+            setMint(e.target.value);
+          }}
+        />
+      );
+    }
+  };
+
   const commAuthorization = (commMethod) => {
     if (commMethod === "Manual") {
       return null;
     }
+
+    if (commMethod === "AWS SES") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="comm-access-key-id-field"
+            label={`${commMethod} Access Key Id`}
+            value={awsAccessKeyId}
+            onChange={(e) => {
+              setCommAuth(prev => ({...prev, accessKeyId: e.target.value}));
+              setAwsAccessKeyId(e.target.value)
+            }}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="comm-secret-access-key-field"
+            label={`${commMethod} Secret Access Key`}
+            value={awsSecretKey}
+            onChange={(e) => {
+              setCommAuth(prev => ({...prev, secretAccessKey: e.target.value}));
+              setAwsSecretKey(e.target.value)
+            }}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="comm-source-field"
+            label={`${commMethod} Source`}
+            value={commSource}
+            onChange={(e) => {
+              localStorage.setItem("commSource", e.target.value);
+              setCommSource(e.target.value)
+            }}
+          />
+        </React.Fragment>
+      );
+    }
+
     return (
       <React.Fragment>
         <TextField
           style={{width: "60ch"}}
           id="comm-auth-field"
           label={`${commMethod} API key`}
-          value={commAuth}
-          onChange={(e) => setCommAuth(e.target.value)}
+          value={mailcAPIKey}
+          onChange={(e) => {
+            setCommAuth(prev => ({...prev, apiKey: e.target.value}));
+            setMailcAPIKey(e.target.value)
+          }}
         />
         <TextField
           style={{width: "60ch"}}
           id="comm-source-field"
           label={`${commMethod} Source`}
           value={commSource}
-          onChange={(e) => setCommSource(e.target.value)}
+          onChange={(e) => {
+            localStorage.setItem("commSource", e.target.value);
+            setCommSource(e.target.value)
+          }}
         />
       </React.Fragment>
     );
@@ -811,19 +919,36 @@ export const Create = (
   return (
     <Stack spacing={2}>
       <FormControl fullWidth>
-        <InputLabel id="comm-method-label">Claim Distribution Method</InputLabel>
+        <InputLabel id="claim-method-label">Claim Method</InputLabel>
+        <Select
+          labelId="claim-method-label"
+          id="claim-method-select"
+          value={claimMethod}
+          label="Claim Method"
+          onChange={(e) => {
+            localStorage.setItem("claimMethod", e.target.value);
+            setClaimMethod(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+        >
+          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
+          <MenuItem value={"candy"}>Candy Machine</MenuItem>
+        </Select>
+      </FormControl>
+      {claimMethod !== "" && claimData(claimMethod)}
+      <FormControl fullWidth>
+        <InputLabel id="comm-method-label">Distribution Method</InputLabel>
         <Select
           labelId="comm-method-label"
           id="comm-method-select"
           value={commMethod}
-          label="Claim Distribution Method"
+          label="Distribution Method"
           onChange={(e) => {
             localStorage.setItem("commMethod", e.target.value);
-            setMethod(e.target.value);
+            setCommMethod(e.target.value);
           }}
           style={{textAlign: "left"}}
         >
-          <MenuItem value={"Mailchimp"}>Mailchimp</MenuItem>
           <MenuItem value={"AWS SES"}>AWS SES</MenuItem>
           <MenuItem value={"Manual"}>Manual</MenuItem>
         </Select>
