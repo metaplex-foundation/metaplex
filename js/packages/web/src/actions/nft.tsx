@@ -105,6 +105,7 @@ export const mintNFT = async (
   progressCallback: Dispatch<SetStateAction<number>>,
   maxSupply?: number,
   coverFile?: File,
+  mainFile?: File,
 ): Promise<{
   metadataAccount: StringPublicKey;
 } | void> => {
@@ -148,6 +149,11 @@ export const mintNFT = async (
       method: "POST",
       body: fileDataForm,
     })
+
+  if (!uploadResponse.ok) {
+    throw new Error("Unable to upload files to IPFS. Please wait a moment and try again.")
+  }
+
   const uploadedFilePins: { files: PinFileResponse[] } = await uploadResponse.json()
   // add files to properties
   // first image is added as image
@@ -172,6 +178,13 @@ export const mintNFT = async (
       metadataContent.image = coverFileUpload.uri
     }
   }
+  
+  if (mainFile) {
+    const mainFileUpload = uploadedFilePins.files.find(file => file.name == mainFile.name)
+    if (mainFileUpload) {
+      metadataContent.animation_url = mainFileUpload.uri
+    }
+  }
 
   const metaData = new File([JSON.stringify(metadataContent)], RESERVED_METADATA)
   const metaDataFileForm = new FormData()
@@ -184,6 +197,11 @@ export const mintNFT = async (
       method: "POST",
       body: metaDataFileForm,
     })
+
+  if (!metaDataUploadResponse.ok) {
+    throw new Error("Unable to upload NFT metadata to IPFS. Please wait a moment and try again.")
+  }
+
   const uploadedMetaDataPinResponse = await metaDataUploadResponse.json()
   const uploadedMetaDataPin = uploadedMetaDataPinResponse.files[0]
 
@@ -317,7 +335,7 @@ export const prepPayForFilesTxn = async (
         fromPubkey: wallet.publicKey,
         toPubkey: AR_SOL_HOLDER_ID,
         lamports: 2300000 // 0.0023 SOL per file (paid to arweave)
-          // await getAssetCostToStore(files),
+        // await getAssetCostToStore(files),
       }),
     );
 

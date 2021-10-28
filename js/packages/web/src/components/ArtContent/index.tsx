@@ -263,7 +263,7 @@ export const ArtContent = ({
   }
 
   const content =
-    category === 'video' ? (
+    (category === 'video' || category === 'audio') ? (
       <VideoArtContent
         className={className}
         style={style}

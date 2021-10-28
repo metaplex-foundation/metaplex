@@ -67,7 +67,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
               <AmountLabel
                 style={{ marginBottom: 10 }}
                 containerStyle={{ flexDirection: 'column' }}
-                title={auctionView.isInstantSale ? 'Price' : 'Highest Bid'}
+                title={auctionView.isInstantSale ? 'Price' : 'Highest bid'}
                 amount={formatTokenAmount(bids[0].info.lastBid, mintInfo)}
               />
             )}
