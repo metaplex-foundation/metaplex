@@ -50,6 +50,7 @@ yarn start:memory
 ```
 
 To run in `mongo` mode:
+```
 ┌──────────┐    ┌─────────┐    ┌────────────────┐
 │ ingester │--->│ MongoDB │<---│ GraphQL server │
 └──────────┘    └─────────┘    └────────────────┘
@@ -57,6 +58,7 @@ To run in `mongo` mode:
      └────────│ Metaplex/Solana data  │─────┘
               │ over http / websocket │
               └───────────────────────┘
+```
 
 You have to start mongo instance. For local development to run this command will be enough.
 ```sh
