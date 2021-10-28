@@ -1,0 +1,20 @@
+{
+  "name": "Holaplex",
+  "repository": "https://github.com/holaplex/metaplex",
+  "env": {
+    "APP_BASE": {
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/lstoll/heroku-buildpack-monorepo"
+    },
+    {
+      "url": "heroku-community/nginx"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
