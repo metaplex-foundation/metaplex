@@ -37,10 +37,56 @@ yarn start:mongo:server
 
 it will start GraphQL at `http://localhost:4000/` which will read data from MongoDB
 
-## Roadmap
+## Overview
+There are two modes of using GraphQL Caching Server.
+- with memory adapter
+- with MongoDB adapter
 
-- Currently, it uses memory to store all the data, but we working to migrate storing into MongoDB
-- GraphQL subscribe mechanizm need to be reviewed
-- Simplify the internal data structure and their relationship
+The server can fill all memory of nodejs process, and it's recommended to increase heap memory with `--max-old-space-size=8192` flag.
 
+To run in `memory` mode:
+```sh
+ENTRY=memory-server-ingester node --max-old-space-size=8192 dist/bin/metaplex.js
+```
+or
+```sh
+node --max-old-space-size=8192 dist/bin/memory-server-ingester.js
+```
 
+To run in `mongo` mode:
+You have to start mongo instance. For local development to run this command will be enough.
+```sh
+mongod
+```
+Also we need to start the process that fill the database with data.
+```sh
+ENTRY=mongo-ingester --max-old-space-size=8192 node dist/bin/metaplex.js
+```
+or
+```sh
+node --max-old-space-size=8192 dist/bin/mongo-ingester.js
+```
+
+And our graphql-server is started with
+```sh
+ENTRY=mongo-server --max-old-space-size=8192 node dist/bin/metaplex.js
+```
+or
+```sh
+node --max-old-space-size=8192 dist/bin/mongo-server.js
+```
+
+Environmental variables
+- ENTRY - (`mongo-server`, `mongo-ingester`, `memory-server-ingester`, `generate`) starting the application with different roles using one entry point
+- PORT - (default: `4000`) - port for graphql server
+- MONGO_DB - using only for `mongo` mode. The connection string to MongoDB
+- NETWORK - (`devnet`, `testnet`, `mainnet-beta`) by default app caches all networks, but we can specify one of them to use.
+
+### Run graphql service in docker in mongo 'mode'
+```
+docker-compose -f docker-compose.yml up -d
+```
+It will start 3 services
+- mongo: the instance of MongoDB for caching layer
+- ingester: the process which fills Database layer
+- server: graphql server, which is available at http://localhost:4000/
