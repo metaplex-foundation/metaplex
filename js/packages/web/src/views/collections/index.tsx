@@ -9,12 +9,12 @@ export const Collections = () => {
     <>
       <div className="allCollections">
         <h1 className="collectionHeader">ALL COLLECTIONS</h1>
-        <div className="card_section ">
+        <div className="card-section row">
           {collections.map((element, i) => (
             <div className="col-md-4 col-lg-3 col-sm-6 mt-4 collectionCard">
               <Link to={'/marketplace/' + element.collectionName}>
                 <Card className="text-center card-container">
-                  <div className="img_div">
+                  <div className="img-div">
                     <img
                       src={element.backgroundImage}
                       className="card-img-top"

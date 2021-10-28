@@ -100,16 +100,16 @@ export const MarketplaceView = () => {
     return arr;
   };
 
-  return (<div className="general_section">
+  return (<div className="general-section">
     <div className="cover_img">
-      <img src="/PNG.png" className="cover_img_size" />
+      <img src="/PNG.png" className="cover-img-size" />
     </div>
-    <div style={{ margin: '0px auto' }} className="col-md-10 nft_account">
+    <div  className="col-md-10 nft-account">
 
       <div id="market-sec" className="col-md-10">
         <div className="container-fluid ">
-          <div className="account_detials">
-            <div className="profile_img">
+          <div className="account-detials">
+            <div className="profile-img">
               <img src={collectionData?.image} className="container-img" style={{ width: "100px" }} />
             </div>
 
@@ -158,7 +158,7 @@ export const MarketplaceView = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn border-right text-center d-flex align-items-center"
+                    className="btn border-right text-center d-flex align-items-center justify-content-center"
                   >
                     <span>
                       <strong>{maxPrice}</strong>
@@ -171,7 +171,7 @@ export const MarketplaceView = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn  text-center d-flex align-items-center"
+                    className="btn  text-center d-flex align-items-center justify-content-center"
                   >
                     <span>
                       <strong>{minPrice}</strong>
