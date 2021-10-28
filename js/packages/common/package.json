@@ -30,6 +30,7 @@
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "dependencies": {
+    "@metaplex/arweave-cost": "^1.0.4",
     "@project-serum/serum": "^0.13.52",
     "@solana/spl-token": "0.1.6",
     "@solana/spl-token-registry": "0.2.202",
