@@ -2,6 +2,7 @@ import { loadMetaplexData } from "./solana";
 import 'log-timestamp';
 
 try {
+    console.log(process.env);
     console.log('Starting cache update');
     loadMetaplexData()
     .then(() => {

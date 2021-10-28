@@ -3,6 +3,8 @@ import { METAPLEX_ID, StringPublicKey, toPublicKey } from "../ids";
 import { findProgramAddressBase58 } from "../utils";
 import { ConverterSet } from "../serialization/converterSet";
 import {deserializeUnchecked} from 'borsh';
+import { StoreAccountDocument } from "./account";
+import { AccountInfo } from "@solana/web3.js";
 
 
 export class WhitelistedCreator {
@@ -72,4 +74,18 @@ export const decodeWhitelistedCreator = (buffer: Buffer) => {
     ) as WhitelistedCreator;
   };
 
-
+  export class CreatorAccountDocument extends StoreAccountDocument {
+    activated: boolean;
+    walletAddress : string;
+    constructor(
+      store: string,
+      pubkey: string,
+      account: AccountInfo<Buffer>,
+      activated: boolean,
+      walletAddress : string,
+    ) {
+      super(store, pubkey, account);
+      this.activated = activated;
+      this.walletAddress = walletAddress;
+    }
+  }

@@ -429,21 +429,38 @@ export async function processAccountsIntoAuctionView(
             )?.pubkey,
           )) || (await getMetadatabyMint(participationBox.info.tokenMint));
         if (participationMetadata) {
-          const V1 = await getMasterEditionsbyKey(
-            'masterEditionsV1',
-            participationMetadata.info.masterEdition || '',
-          );
-          const V2 = await getMasterEditionsbyKey(
-            'masterEditionsV2',
-            participationMetadata.info.masterEdition || '',
-          );
-          participationMaster =
-            (await getMasterEditionsbyMint(
-              'masterEditionsV1',
+          let res;
+          if (participationMetadata.info.masterEdition) {
+            res = await await getMasterEditionsbyKey(
+              'masterEditionsV2',
+              participationMetadata.info.masterEdition,
+            );
+            if (_.isEmpty(res)) {
+              res = await getMasterEditionsbyKey(
+                'masterEditionsV1',
+                participationMetadata.info.masterEdition,
+              );
+            }
+          }
+
+          let req;
+          if (participationBox.info.tokenMint) {
+            req = await getMasterEditionsbyMint(
+              'masterEditionsV2',
               participationBox.info.tokenMint,
-            )) ||
+            );
+            if (_.isEmpty(res)) {
+              req = await getMasterEditionsbyMint(
+                'masterEditionsV1',
+                participationBox.info.tokenMint,
+              );
+            }
+          }
+
+          participationMaster =
+            (!_.isEmpty(req) ? req : undefined) ||
             (participationMetadata.info.masterEdition &&
-              (!_.isEmpty(V1) ? V1 : !_.isEmpty(V2) ? V2 : undefined));
+              (!_.isEmpty(res) ? res : undefined));
         }
       }
       const itemner = await auctionManager.getItemsFromSafetyDepositBoxes(

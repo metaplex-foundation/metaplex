@@ -49,15 +49,18 @@ export const decodeBidderPot = (buffer: Buffer) => {
 export class BidderPotStoreAccountDocument extends StoreAccountDocument {
   bidderPubkey: string;
   auctionPubkey: string;
+  isPotEmpty : boolean;
   constructor(
     store: string,
     pubkey: string,
     account: AccountInfo<Buffer>,
     bidderPubkey: string,
-    auctionPubkey: string
+    auctionPubkey: string,
+    isPotEmpty: boolean
   ) {
     super(store, pubkey, account);
     this.bidderPubkey = bidderPubkey;
     this.auctionPubkey = auctionPubkey;
+    this.isPotEmpty = isPotEmpty;
   }
 }

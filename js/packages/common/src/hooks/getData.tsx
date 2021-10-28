@@ -11,12 +11,13 @@ import {
   WhitelistedVaultParser,
 } from '../models/types';
 
-const API_URL = process.env.NEXT_PUBLIC_HOST_ADDRESS + '/api/';
+const API_URL = process.env.NEXT_PUBLIC_API_ADDRESS + '/api/';
+const STORE = process.env.NEXT_PUBLIC_STORE_ADDRESS;
 
 export const getMetadatabyMint = async (mint: string) => {
   try {
     const response: any = await axios.get(
-      `${API_URL}${process.env.NEXT_PUBLIC_STORE_ADDRESS}/metadata?mint=${mint}`,
+      `${API_URL}${STORE}/metadata?mint=${mint}`,
     );
 
     let arr: any = [];
@@ -45,7 +46,7 @@ export const getMetadatabyMint = async (mint: string) => {
 export const getMetadataByMasterEdition = async (masterEdition: string) => {
   try {
     const response: any = await axios.get(
-      `${API_URL}${process.env.NEXT_PUBLIC_STORE_ADDRESS}/metadata?masterEdition=${masterEdition}`,
+      `${API_URL}${STORE}/metadata?masterEdition=${masterEdition}`,
     );
 
     let arr: any = [];
@@ -75,7 +76,7 @@ export const getMasterEditionsbyKey = async (edition: string, key: string) => {
   try {
     if (key == undefined || key == '') return [];
     const response: any = await axios.get(
-      `${API_URL}${process.env.NEXT_PUBLIC_STORE_ADDRESS}/${edition}?pubkey=${key}`,
+      `${API_URL}${STORE}/${edition}?pubkey=${key}`,
     );
 
     let arr: any = [];
@@ -105,7 +106,7 @@ export const getMasterEditionsbyKey = async (edition: string, key: string) => {
 export const getAuctionDataExtendedByKey = async (key: string) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/auctionDataExtended?pubkey=${key}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/auctionDataExtended?pubkey=${key}`,
     );
 
     let arr: any = [];
@@ -135,7 +136,7 @@ export const getAuctionDataExtendedByKey = async (key: string) => {
 export const getAuction = async (id: string) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/auctions?pubkey=${id}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/auctions?pubkey=${id}`,
     );
 
     let arr: any = [];
@@ -165,7 +166,7 @@ export const getAuction = async (id: string) => {
 export const getVault = async (key: string) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/vaults?pubkey=${key}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/vaults?pubkey=${key}`,
     );
 
     let arr: any = [];
@@ -201,7 +202,7 @@ export const arrayToObject = (array: any, keyField: string) =>
 export const getAuctionDataExtended = async () => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/auctionDataExtended`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/auctionDataExtended`,
     );
 
     let arr: any = [];
@@ -231,7 +232,7 @@ export const getAuctionDataExtended = async () => {
 export const getMasterEditionsbyMint = async (edition: string, key: string) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/${edition}?mint=${key}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/${edition}?mint=${key}`,
     );
 
     let arr: any = [];
@@ -261,7 +262,7 @@ export const getMasterEditionsbyMint = async (edition: string, key: string) => {
 export const getMetadata = async () => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/metadata`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/metadata`,
     );
 
     let arr: any = [];
@@ -293,7 +294,7 @@ export const getSafetyDepositBoxesByVaultAndIndexby = async (
 ) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/safetyDepositBoxes?vault=${vault}&index=${index}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/safetyDepositBoxes?vault=${vault}&index=${index}`,
     );
 
     let arr: any = [];
@@ -327,7 +328,7 @@ export const getSafetyDepositConfigsByAuctionManagerAndIndexby = async (
 ) => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/safetyDepositConfigs?auctionManager=${auctionManager}&index=${index}`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/safetyDepositConfigs?auctionManager=${auctionManager}&index=${index}`,
     );
 
     let arr: any = [];
@@ -398,7 +399,7 @@ export const getBidRedemptionV2sByAuctionManagerAndWinningIndexby = async (
 export const getCollections = async () => {
   try {
     const response: any = await axios.get(
-      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${process.env.NEXT_PUBLIC_STORE_ADDRESS}/auctionManagers`,
+      `${process.env.NEXT_PUBLIC_HOST_ADDRESS}/api/${STORE}/auctionManagers`,
     );
 
     let arr: any = [];

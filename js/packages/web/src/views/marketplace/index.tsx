@@ -5,7 +5,7 @@ import { AuctionCard } from '../../components/AuctionCard';
 import { CustomPagination } from '../../components/Pagination/Pagination';
 import { Spinner } from 'react-bootstrap';
 import { useCollection } from '../../hooks/useCollections';
-import { getCollection } from '../../hooks/getData';
+import { getCollection, getMetadataTotal } from '../../hooks/getData';
 
 export enum ArtworkViewState {
   Metaplex = 0,
@@ -100,120 +100,118 @@ export const MarketplaceView = () => {
     return arr;
   };
 
-  return (
-    <div style={{ margin: '0px auto' }} className="col-md-10">
+  return (<div className="general_section">
+    <div className="cover_img">
+      <img src="/PNG.png" className="cover_img_size" />
+    </div>
+    <div style={{ margin: '0px auto' }} className="col-md-10 nft_account">
+
       <div id="market-sec" className="col-md-10">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-2">
-              <img src={collectionData?.image} className="mt-4 container-img" />
+        <div className="container-fluid ">
+          <div className="account_detials">
+            <div className="profile_img">
+              <img src={collectionData?.image} className="container-img" style={{ width: "100px" }} />
             </div>
-            <div className="col-md-6">
-              <h1 className="mt-0">{collectionData?.collectionName}</h1>
-              <div
-                className="btn-group mb-3"
-                role="group"
-                aria-label="Basic example"
-              >
-                <button type="button" className="btn btn-secondary text-left">
-                  <strong>{allAuction}</strong>
-                  <br />
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    Items
-                  </span>
-                </button>
-                <button type="button" className="btn btn-secondary text-left">
-                  <strong>{ownerLen}</strong>
-                  <br />
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    Owner
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary text-left d-flex align-items-center"
-                >
-                  <span>
-                    <strong>{maxPrice}</strong>
-                    <br />
-                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Max Price
-                    </span>
-                  </span>{' '}
-                  <img
-                    src="/images/exchange-white.png"
-                    className="ml-3 exchange-white"
-                  />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary text-left d-flex align-items-center"
-                >
-                  <span>
-                    <strong>{minPrice}</strong>
-                    <br />
-                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Floor Price
-                    </span>
-                  </span>{' '}
-                  <img
-                    src="/images/exchange-white.png"
-                    className="ml-3 exchange-white"
-                  />
-                </button>
-              </div>
-              <div className="bottom-sec d-flex">
+
+            <h1 className="mt-0 text-center mb-0">{collectionData?.collectionName}</h1>
+            <div
+              className=" row justify-content-center rounded"
+              role="group"
+              aria-label="Basic example"
+            >
+              <button type="button" className="btn ">
+                <a href={collectionData?.twitterUrl} target="_blank">
+                  <img src="/images/twit1.png" />
+                </a>
+              </button>
+              <button type="button" className="btn ">
+                <a href={collectionData?.discordUrl} target="_blank">
+                  <img src="/images/twit3.png" />
+                </a>
+              </button>
+              <button type="button" className="btn ">
+                <a href={collectionData?.daringDragonsUrl} target="_blank">
+                  <img src="/images/twit2.png" />
+                </a>
+              </button>
+            </div>
+            <div className="data_decription">
+              <div className="data_description_buttons">
                 <div
-                  className="btn-group"
+                  className="btn-group mt-2  descrition_buttons"
                   role="group"
                   aria-label="Basic example"
                 >
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.twitterUrl} target="_blank">
-                      <img src="/images/twit1.png" />
-                    </a>
+                  <button type="button" className="btn border-right text-center">
+                    <strong>{allAuction}</strong>
+                    <br />
+                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Items
+                    </span>
                   </button>
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.discordUrl} target="_blank">
-                      <img src="/images/twit3.png" />
-                    </a>
+                  <button type="button" className="btn border-right text-center">
+                    <strong>{ownerLen}</strong>
+                    <br />
+                    <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Owner
+                    </span>
                   </button>
-                  <button type="button" className="btn btn-secondary">
-                    <a href={collectionData?.daringDragonsUrl} target="_blank">
-                      <img src="/images/twit2.png" />
-                    </a>
+                  <button
+                    type="button"
+                    className="btn border-right text-center d-flex align-items-center"
+                  >
+                    <span>
+                      <strong>{maxPrice}</strong>
+                      <br />
+                      <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                        Max Price
+                      </span>
+                    </span>{' '}
+
+                  </button>
+                  <button
+                    type="button"
+                    className="btn  text-center d-flex align-items-center"
+                  >
+                    <span>
+                      <strong>{minPrice}</strong>
+                      <br />
+                      <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                        Floor Price
+                      </span>
+                    </span>{' '}
+
                   </button>
                 </div>
-                <form className="card card-sm ml-4">
-                  <div className="card-body row no-gutters align-items-center p-0">
-                    <div className="col-auto">
-                      <i className="fa fa-search" aria-hidden="true"></i>
-                    </div>
-                    <div className="col">
-                      <input
-                        className="form-control"
-                        type="search"
-                        placeholder=""
-                        value={searchItem}
-                        onChange={event => {
-                          activePage = 0;
-                          searchItem = event.target.value;
-                          sortCollection(allItems);
-                        }}
-                      />
-                    </div>
-                    <div className="col-auto">
-                      <div className="btn btn-secondary bg-transparent border-0">
-                        <img src="/images/bar.png" />
-                      </div>
-                    </div>
-                  </div>
-                </form>
               </div>
             </div>
-            <div className="col-md-4"></div>
           </div>
-          <div className="row mt-5" style={{ justifyContent: 'end' }}>
+          <div className="row fillter_buttons" style={{ justifyContent: 'space-evenly' }}>
+            <form className="card card-sm ">
+              <div className="card-body row no-gutters align-items-center p-0">
+                <div className="col-auto">
+                  <i className="fa fa-search" aria-hidden="true"></i>
+                </div>
+                <div className="col">
+                  <input
+                    className="form-control "
+                    type="search"
+                    placeholder=""
+                    value={searchItem}
+                    onChange={event => {
+                      activePage = 0;
+                      searchItem = event.target.value;
+                      sortCollection(allItems);
+                    }}
+                  />
+                </div>
+                <div className="col-auto">
+                  <div className="btn btn-secondary bg-transparent border-0">
+                    <img src="/images/bar.png" />
+                  </div>
+                </div>
+              </div>
+            </form>
             <div className="col-md-3">
               <div className="dropdown">
                 <CustomSelect
@@ -272,7 +270,7 @@ export const MarketplaceView = () => {
 
                       return (
                         <AuctionCard
-                          keys={idx || 9000}
+                        keys={idx || 9000}
                           auction={m.info.auction}
                           price={m.account.price}
                           nftPubkey={m.account.metadata}
@@ -319,5 +317,6 @@ export const MarketplaceView = () => {
         </div>
       </div>
     </div>
+  </div>
   );
 };

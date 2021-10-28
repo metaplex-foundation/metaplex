@@ -110,24 +110,17 @@ export const AuctionListView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!false ? (
-        items.map((m, idx) => {
-          if (m === heroAuction) {
-            return;
-          }
-
-          const id = m.auction.pubkey;
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
-      ) : (
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden"></span>
-        </Spinner>
-      )}
+      {items.map((m, idx) => {
+        if (m === heroAuction) {
+          return;
+        }
+        const id = m.auction.pubkey;
+        return (
+          <Link to={`/auction/${id}`} key={idx}>
+            <AuctionRenderCard key={id} auctionView={m} />
+          </Link>
+        );
+      })}
     </Masonry>
   );
   const endedAuctions = (
@@ -136,24 +129,18 @@ export const AuctionListView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column Spinner-item"
     >
-      {!false ? (
-        auctionsEnded.map((m, idx) => {
-          if (m === heroAuction) {
-            return;
-          }
+      {auctionsEnded.map((m, idx) => {
+        if (m === heroAuction) {
+          return;
+        }
 
-          const id = m.auction.pubkey;
-          return (
-            <Link to={`/auction/${id}`} key={idx}>
-              <AuctionRenderCard key={id} auctionView={m} />
-            </Link>
-          );
-        })
-      ) : (
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden"></span>
-        </Spinner>
-      )}
+        const id = m.auction.pubkey;
+        return (
+          <Link to={`/auction/${id}`} key={idx}>
+            <AuctionRenderCard key={id} auctionView={m} />
+          </Link>
+        );
+      })}
     </Masonry>
   );
 

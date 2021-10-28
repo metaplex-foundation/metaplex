@@ -140,7 +140,7 @@ export function CollectionsProvider({ children = null as any }) {
   }
 
   useEffect(() => {
-    if (metadata?.length > 0 || metadata.length == undefined) {
+    if (metadata?.length > 0) {
       update();
     }
   }, [metadata]);
@@ -186,7 +186,10 @@ export function CollectionsProvider({ children = null as any }) {
     const auctionMint = await getMint(connection, auction.info.tokenMint);
     const number = fromLamports(salePrice!, auctionMint);
 
-    return item && (await getAuctionDataExtended())
+    let getAuctionData = undefined;
+    if (item) getAuctionData = await getAuctionDataExtended();
+
+    return getAuctionData
       ? {
           Metadata: item.metadata,
           Auction: manager.info.auction,

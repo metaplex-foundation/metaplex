@@ -49,21 +49,22 @@ export const RecentSale = () => {
         </div>
         <div id="recentcarousel" className="row mt-4">
           <Swiper
-            slidesPerView={width < 768 ? 1 : 3}
+            slidesPerView={width < 850 ? 1 : width < 1140 ? 2 : 3}
             spaceBetween={100}
             autoplay={{ delay: 3000 }}
             slidesPerGroup={3}
             loop={true}
             loopFillGroupWithBlank={true}
             navigation
-            className="r-mySwiper"
+            className="r-mySwiper "
           >
             {IMAGES.map((item, i) => (
-              <SwiperSlide key={i} className="r-next">
+              <SwiperSlide key={i} className="r-next ">
                 <Card className="text-center">
-                  <img src={item.src} className="card-img-top" alt="logo" />
+                  <div className="img_card">
+                    <img src={item.src} className="card-img-top" alt="logo" /></div>
                   <div className="card-body">
-                    <h5 className="card-title text-white">
+                    <h5 className="card-title text-white mt-10">
                       Begginer’s guide to creating and selling NFT
                     </h5>
                     <p className="card-text">

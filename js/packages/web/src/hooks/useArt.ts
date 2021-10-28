@@ -33,30 +33,36 @@ const metadataToArt = async (
   if (info) {
     let masterEdition;
     if (info.masterEdition) {
-      const a = await getMasterEditionsbyKey(
-        'masterEditionsV1',
-        info.masterEdition,
-      );
-      const b = await getMasterEditionsbyKey(
+      let res = await getMasterEditionsbyKey(
         'masterEditionsV2',
         info.masterEdition,
       );
-      masterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+      if (_.isEmpty(res)) {
+        res = await getMasterEditionsbyKey(
+          'masterEditionsV1',
+          info.masterEdition,
+        );
+      }
+
+      masterEdition = !_.isEmpty(res) ? res : undefined;
     }
     let edition;
     if (info.edition) edition = await getEditionsbyKey(info.edition);
     if (edition) {
       let myMasterEdition;
       if (edition.info.parent) {
-        const a = await getMasterEditionsbyKey(
-          'masterEditionsV1',
-          edition.info.parent || '',
-        );
-        const b = await getMasterEditionsbyKey(
+        let res = await getMasterEditionsbyKey(
           'masterEditionsV2',
-          edition.info.parent || '',
+          edition.info.parent,
         );
-        myMasterEdition = !_.isEmpty(a) ? a : !_.isEmpty(b) ? b : undefined;
+        if (_.isEmpty(res)) {
+          res = await getMasterEditionsbyKey(
+            'masterEditionsV1',
+            edition.info.parent,
+          );
+        }
+
+        myMasterEdition = !_.isEmpty(res) ? res : undefined;
       }
       if (myMasterEdition) {
         type = ArtType.Print;

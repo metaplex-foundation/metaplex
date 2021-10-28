@@ -410,12 +410,12 @@ export const decodeMetadata = (buffer: Buffer): Metadata => {
   metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, "");
   return metadata;
 };
-
 export class MetadataAccountDocument extends StoreAccountDocument {
   mint: string;
   collection: string | undefined;
-  creators: string[];
+  creators: Creator[];
   masterEdition : string | undefined;
+  updateAuthority : string;
 
   constructor(
     store: string,
@@ -423,14 +423,16 @@ export class MetadataAccountDocument extends StoreAccountDocument {
     pubkey: string,
     mint: string,
     collection: string | undefined,
-    creators: string[],
-    masterEdition : string | undefined
+    creators: Creator[],
+    masterEdition : string | undefined,
+    updateAuthority : string
   ) {
     super(store, pubkey, account);
     this.mint = mint;
     this.collection = collection;
     this.creators = creators;
     this.masterEdition = masterEdition;
+    this.updateAuthority = updateAuthority;
   }
 }
 

@@ -346,22 +346,23 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
 
   const arr: any[] = [];
 
+  const getBidderMetadataAsync = async () => {
+    for (let i = 0; i < winnersThatCanBeEmptied.length; i++) {
+      const pot = winnersThatCanBeEmptied[i];
+      await getBidderMetadataByAuctionAndBidder(
+        auctionKey,
+        pot.info.bidderAct,
+      ).then(value =>
+        arr.push({
+          metadata: value,
+          pot,
+        }),
+      );
+    }
+  }
+
   useEffect(() => {
-    const a = async () => {
-      for (let i = 0; i < winnersThatCanBeEmptied.length; i++) {
-        const pot = winnersThatCanBeEmptied[i];
-        await getBidderMetadataByAuctionAndBidder(
-          auctionKey,
-          pot.info.bidderAct,
-        ).then(value =>
-          arr.push({
-            metadata: value,
-            pot,
-          }),
-        );
-      }
-    };
-    a();
+    getBidderMetadataAsync();
   }, []);
   const bidsToClaim: {
     metadata: ParsedAccount<BidderMetadata>;

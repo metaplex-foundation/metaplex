@@ -37,11 +37,56 @@ router.get("/:store/bidderPots", async (req: Request, res: Response) => {
         auction: c.auctionPubkey,
         pubkey: c.pubkey,
         account: c.account,
+        isPotEmpty : c.isPotEmpty
       }))
     );
   }
   finally {
       client.close();
+  }
+});
+
+router.post("/:store/winnerBidderPots", async (req: Request, res: Response) => {
+  if(!req.body.winners) {
+    res.sendStatus(400);
+    return;
+  }
+
+  if(!req.body.auction) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const winnerList = req.body.winners as string[];
+
+  const filter = {
+    bidderPubkey : {
+      $in : winnerList,
+    },
+    auctionPubkey : req.body.auction,
+    isPotEmpty : 0
+  }
+
+  console.log(filter);
+  const client = await createMongoClient();
+  try {
+    const coll = client.db(DB).collection(BIDDER_POT_COLLECTION);
+    const results = await coll
+      .find<BidderPotStoreAccountDocument>(filter)
+      .toArray();
+
+    res.send(
+      results.map((c) => ({
+        bidder: c.bidderPubkey,
+        auction: c.auctionPubkey,
+        pubkey: c.pubkey,
+        account: c.account,
+        isPotEmpty : c.isPotEmpty
+      }))
+    );
+  }
+  finally {
+    client.close();
   }
 });
 

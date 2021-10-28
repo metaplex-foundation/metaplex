@@ -3,15 +3,28 @@
   max-width: 1500px;
   margin: 0 auto;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
 .collectionHeader{
     color: white;
     text-align: center;
     margin: 30px auto;
     width: 100%;
+    
 }
   .card-img-top{
-      height: 50%;
+    max-height: 230px !important;
+      
+  }
+  .card_section{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    row-gap: 20px;
+  }
+  .img_div{
+    width: 95%;
+    margin: 8px auto 0
   }
   img{
       object-fit: cover;
@@ -28,21 +41,32 @@
 
   .card-body {
     position: relative;
-    background-color: #1f2331;
+    display: flex;
+    flex-direction: column;
+    row-gap: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
   }
 
   .card-body .user {
     position: absolute;
-    top: -20px;
+    top: -40px;
     left: 50%;
     transform: translate(-50%, 0);
     border: 2px solid #18a0fb;
     border-radius: 50%;
     width: 50px;
+
   }
   .card-container{
+    background: linear-gradient(90deg, #2a1d33 5%, #0f282f 50%, #033143 100%);
       max-width: 500px;
       width: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      -webkit-box-shadow: 0px 0px 10px #b4b4b4 !important;
+      box-shadow: 0px 0px 10px #a485c3 !important;
       .below-heading-text{
           margin: 10px auto !important;
       }
@@ -51,6 +75,16 @@
     height: 100%;
   }
   .collectionCard{
-    max-height: 400px;
+    height: max-content !important;
+    
+  }
+}
+
+.card-container .btn {
+  background:linear-gradient(90deg, #851CEF 3%, #24DDAF 100%) !important;
+}
+@media only screen and (max-width: 992px) {
+  .card-container{
+    min-height: 499px;
   }
 }

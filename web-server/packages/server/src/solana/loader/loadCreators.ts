@@ -4,6 +4,7 @@ import { createDevNetConnection } from "../connection";
 import { getProgramAccounts } from "../rpc";
 import { Connection } from "@solana/web3.js";
 import {
+  CreatorAccountDocument,
   decodeWhitelistedCreator,
   isCreatorPartOfTheStore
 } from "../accounts/creator";
@@ -48,7 +49,16 @@ export const loadCreators = async (
 
   const storeCreators = results
     .filter((res) => res)
-    .map((res) => new StoreAccountDocument(store, res?.Raw.pubkey!, res?.Raw.account!));
+    .map(
+      (res) =>
+        new CreatorAccountDocument(
+          store,
+          res?.Raw.pubkey!,
+          res?.Raw.account!,
+          res?.Parsed.activated!,
+          res?.Parsed.address!
+        )
+    );
 
   storeCreators.forEach((creator) =>
     accountConverterSet.applyConversion(creator)
