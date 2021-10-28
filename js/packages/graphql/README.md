@@ -88,3 +88,15 @@ It will start 3 services
 - mongo: the instance of MongoDB for caching layer
 - ingester: the process which fills Database layer
 - server: graphql server, which is available at http://localhost:4000/
+
+### Add other adapters
+For creating new adapter you need only implement interface
+```
+IDataAdapter<
+  TWriter extends IWriter,
+  TReader extends IReader,
+>
+```
+
+Where `IDataAdapter` initializes and add access to `TWriter` which implements `IWriter` and `TReader` which imlements `IReader`.
+For inspiration see `js/packages/graphql/src/adapters/mongo` folder.
