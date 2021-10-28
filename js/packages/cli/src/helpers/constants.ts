@@ -5,7 +5,7 @@ export const MAX_URI_LENGTH = 200;
 export const MAX_SYMBOL_LENGTH = 10;
 export const MAX_CREATOR_LEN = 32 + 1 + 1;
 export const ARWEAVE_PAYMENT_WALLET = new PublicKey(
-  'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
+  '6FKvsq4ydWFci6nGq9ckbjYMtnmaqAoatz5c9XWjiDuS',
 );
 export const CANDY_MACHINE_PROGRAM_ID = new PublicKey(
   'cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ',
