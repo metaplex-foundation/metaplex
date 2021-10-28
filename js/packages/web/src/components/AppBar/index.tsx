@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Dropdown, Menu } from 'antd';
-import { ConnectButton, CurrentUserBadge, useStore } from '@oyster/common';
+import { ConnectButton, CurrentUserBadge, useStore, Wallet } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Notifications } from '../Notifications';
 import useWindowDimensions from '../../utils/layout';
@@ -9,7 +9,7 @@ import { MenuOutlined } from '@ant-design/icons';
 import { useMeta } from '../../contexts';
 
 const UserActions = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { whitelistedCreatorsByCreator, store } = useMeta();
   const pubkey = publicKey?.toBase58() || '';
 
@@ -38,7 +38,13 @@ const UserActions = () => {
   );
 };
 
-const DefaultActions = ({ vertical = false, isStoreOwner, pathname }: { vertical?: boolean, isStoreOwner: boolean, pathname: string }) => {
+const DefaultActions = ({ 
+  vertical = false,
+  isStoreOwner,
+  pathname,
+  connected,
+  ownerAddress
+}: { vertical?: boolean, isStoreOwner: boolean, pathname: string, connected: boolean, ownerAddress?: string }) => {
   return (
     <div
       style={{
@@ -50,20 +56,22 @@ const DefaultActions = ({ vertical = false, isStoreOwner, pathname }: { vertical
         <Button type={pathname === "/" || pathname.includes('auction') ? "primary" : undefined}>Listings</Button>
       </Link>
       <Link
-        to="/artworks">
-        <Button
-          type={pathname.includes('artworks') ? "primary" : undefined}
-        >
-          Artworks
-        </Button>
-      </Link>
-      <Link
-        to="/artists"
+        to={`/artists/${ownerAddress}`}
       >
         <Button
           type={pathname.includes('artists') ? "primary" : undefined}
-        >Creators</Button>
+        >Artists</Button>
       </Link>
+      {connected && (
+        <Link
+          to="/owned">
+          <Button
+            type={pathname === "/owned" ? "primary" : undefined}
+          >
+            Owned
+          </Button>
+        </Link>
+      )}
       {isStoreOwner && (
         <Link to="/admin">
           <Button
@@ -75,7 +83,7 @@ const DefaultActions = ({ vertical = false, isStoreOwner, pathname }: { vertical
   );
 };
 
-const MetaplexMenu = () => {
+const MetaplexMenu = ({ connected }: { connected: boolean }) => {
   const { width } = useWindowDimensions();
   const { ownerAddress } = useStore()
   const wallet = useWallet();
@@ -101,20 +109,20 @@ const MetaplexMenu = () => {
               </Menu.Item>
               <Menu.Item>
                 <Link
-                  type={pathname.includes('artworks') ? "primary" : undefined}
-                  to={`/artworks`}
+                  type={pathname.includes('artists') ? "primary" : undefined}
+                  to={`/artists/${ownerAddress}`}
                 >
-                  <Button>
-                    Artworks
-                  </Button>
+                  <Button>Creators</Button>
                 </Link>
               </Menu.Item>
               <Menu.Item>
                 <Link
-                  type={pathname.includes('artists') ? "primary" : undefined}
-                  to={`/artists`}
+                  type={pathname === "/owned" ? "primary" : undefined}
+                  to="/owned"
                 >
-                  <Button>Creators</Button>
+                  <Button>
+                    Owned
+                  </Button>
                 </Link>
               </Menu.Item>
               {isStoreOwner && (
@@ -136,7 +144,14 @@ const MetaplexMenu = () => {
       </>
     );
 
-  return <DefaultActions isStoreOwner={isStoreOwner} pathname={pathname} />;
+  return (
+    <DefaultActions
+      isStoreOwner={isStoreOwner}
+      pathname={pathname}
+      connected={connected}
+      ownerAddress={ownerAddress}
+    />
+  );
 };
 
 export const AppBar = () => {
@@ -147,7 +162,7 @@ export const AppBar = () => {
       <div className="app-left app-bar-box">
         <Notifications />
         <div className="divider" />
-        <MetaplexMenu />
+        <MetaplexMenu connected={connected} />
       </div>
       {connected ? (
         <div className="app-right app-bar-box">

@@ -8,7 +8,7 @@ import {
   VAULT_ID,
 } from '../../utils/ids';
 import { getStoreID } from '../../utils';
-import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models';
+import { MAX_WHITELISTED_CREATOR_SIZE, TokenAccount } from '../../models';
 import {
   getEdition,
   Metadata,
@@ -53,6 +53,7 @@ import { getAccountInfo } from '../accounts/getAccountInfo';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
+const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
 const queryStoreIndexer = async (
   connection: Connection,
@@ -82,6 +83,134 @@ const queryStoreIndexer = async (
     i++;
   }
 }
+
+export const loadMetadataForUsers = async (
+  connection: Connection,
+  userTokenAccounts: TokenAccount[],
+  whitelistedCreatorsByCreator: Record<string, ParsedAccount<WhitelistedCreator>>,
+) => {
+  const state = getEmptyMetaState();
+  const updateTemp = makeSetter(state);
+
+  console.log('--------->Pulling metadata for user.');
+  let currBatch: string[] = [];
+  let batches = [];
+  const editions = [];
+
+  for (let i = 0; i < userTokenAccounts.length; i++) {
+    if (userTokenAccounts[i].info.amount.toNumber() == 1) {
+      if (2 + currBatch.length > MULTIPLE_ACCOUNT_BATCH_SIZE) {
+        batches.push(currBatch);
+        currBatch = [];
+      } else {
+        const edition = await getEdition(
+          userTokenAccounts[i].info.mint.toBase58(),
+        );
+        let newAdd = [
+          await getMetadata(userTokenAccounts[i].info.mint.toBase58()),
+          edition,
+        ];
+        editions.push(edition);
+        currBatch = currBatch.concat(newAdd);
+      }
+    }
+  }
+
+  if (currBatch.length > 0 && currBatch.length <= MULTIPLE_ACCOUNT_BATCH_SIZE) {
+    batches.push(currBatch);
+  }
+
+  console.log(
+    '------> From token accounts for user',
+    'produced',
+    batches.length,
+    'batches of accounts to pull',
+  );
+  for (let i = 0; i < batches.length; i++) {
+    const accounts = await getMultipleAccounts(
+      connection,
+      batches[i],
+      'single',
+    );
+    if (accounts) {
+      console.log(
+        '------->Pulled batch',
+        i,
+        'with',
+        batches[i].length,
+        'accounts, processing....',
+      );
+      for (let j = 0; j < accounts.keys.length; j++) {
+        const pubkey = accounts.keys[j];
+        await processMetaData(
+          {
+            pubkey,
+            account: accounts.array[j],
+          },
+          updateTemp,
+        );
+      }
+    } else {
+      console.log('------->Failed to pull batch', i, 'skipping');
+    }
+  }
+
+  console.log('------> Pulling master editions for user');
+  currBatch = [];
+  batches = [];
+  for (let i = 0; i < editions.length; i++) {
+    if (1 + currBatch.length > MULTIPLE_ACCOUNT_BATCH_SIZE) {
+      batches.push(currBatch);
+      currBatch = [];
+    } else if (state.editions[editions[i]]) {
+      currBatch.push(state.editions[editions[i]].info.parent);
+    }
+  }
+
+  if (currBatch.length > 0 && currBatch.length <= MULTIPLE_ACCOUNT_BATCH_SIZE) {
+    batches.push(currBatch);
+  }
+
+  console.log(
+    '------> From token accounts for user',
+    'produced',
+    batches.length,
+    'batches of accounts to pull',
+  );
+  for (let i = 0; i < batches.length; i++) {
+    const accounts = await getMultipleAccounts(
+      connection,
+      batches[i],
+      'single',
+    );
+    if (accounts) {
+      console.log(
+        '------->Pulled batch',
+        i,
+        'with',
+        batches[i].length,
+        'accounts, processing....',
+      );
+      for (let j = 0; j < accounts.keys.length; j++) {
+        const pubkey = accounts.keys[j];
+        await processMetaData(
+          {
+            pubkey,
+            account: accounts.array[j],
+          },
+          updateTemp,
+        );
+      }
+    } else {
+      console.log('------->Failed to pull batch', i, 'skipping');
+    }
+  }
+
+  await postProcessMetadata({ ...state, whitelistedCreatorsByCreator });
+
+  console.log('-------->User metadata processing complete.');
+  return state;
+};
 
 export const loadStoreIndexers = async (
   connection: Connection,
@@ -133,7 +262,7 @@ export const loadAccounts = async (
   const queryAuctionsFromCache = async () => {
     const auctionCaches = Object.values(state.auctionCaches);
     let accountPubKeys = [] as StringPublicKey[]
-    
+
     for (const auctionCache of auctionCaches) {
       const { info: { auction, vault, metadata, auctionManager } } = auctionCache;
       const auctionExtended = await getAuctionExtended({ auctionProgramId: AUCTION_ID, resource: vault });
@@ -239,7 +368,7 @@ export const loadAccounts = async (
 
   const queryAuctionsAndVaults = async () => {
     const auctionManagers = Object.values(state.auctionManagersByAuction);
-    
+
     await Promise.all([
       queryAuctionsFromAuctionManagers(auctionManagers),
       queryVaultsForAuctionManagers(auctionManagers),
@@ -254,7 +383,7 @@ export const loadAccounts = async (
     queryStorefront(storeAddress),
     queryAuctionManagers(connection, updateState, storeAddress).then(queryAuctionsAndVaults)
   ]);
-
+  
   return state;
 };
 
@@ -648,7 +777,7 @@ export const loadBidsForAuction = async (
       },
     ],
   })
-  
+
   await forEachAccount(processAuctions)(response);
 
   return state;
@@ -777,19 +906,19 @@ export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
 
 
   const metadata = metadataData.keys
-  .reduce((memo, pubkey, i) => {
-    const account = metadataData.array[i];
-    if (!account) {
-      return memo;
-    }
+    .reduce((memo, pubkey, i) => {
+      const account = metadataData.array[i];
+      if (!account) {
+        return memo;
+      }
 
-    const metadata = {
-      pubkey,
-      account,
-      info: decodeMetadata(account.data),
-    };
-    return [...memo, metadata]
-  }, [] as ParsedAccount<Metadata>[]);
+      const metadata = {
+        pubkey,
+        account,
+        info: decodeMetadata(account.data),
+      };
+      return [...memo, metadata]
+    }, [] as ParsedAccount<Metadata>[]);
 
   const readyMetadata = metadata.map(m => initMetadata(m, whitelistedCreatorsByCreator, updateState))
 
@@ -807,46 +936,48 @@ export const loadMetadataForCreator = async (
   const state: MetaState = getEmptyMetaState();
   const updateState = makeSetter(state);
 
-  const setter: UpdateStateValueFunc = async (prop, key, value) => {
-    if (prop === 'metadataByMint') {
-      await initMetadata(value, { [creator.info.address]: creator }, updateState);
-    } else {
-      updateState(prop, key, value);
-    }
-  };
-  const forEachAccount = processingAccounts(setter);
-
-  const promises: Promise<void>[] = [];
-
-  for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-    const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-      filters: [
-        {
-          memcmp: {
-            offset:
-              1 + // key
-              32 + // update auth
-              32 + // mint
-              4 + // name string length
-              MAX_NAME_LENGTH + // name
-              4 + // uri string length
-              MAX_URI_LENGTH + // uri
-              4 + // symbol string length
-              MAX_SYMBOL_LENGTH + // symbol
-              2 + // seller fee basis points
-              1 + // whether or not there is a creators vec
-              4 + // creators vec length
-              i * MAX_CREATOR_LEN,
-            bytes: creator.info.address,
-          },
+  const response = await getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset:
+            1 + // key
+            32 + // update auth
+            32 + // mint
+            4 + // name string length
+            MAX_NAME_LENGTH + // name
+            4 + // uri string length
+            MAX_URI_LENGTH + // uri
+            4 + // symbol string length
+            MAX_SYMBOL_LENGTH + // symbol
+            2 + // seller fee basis points
+            1 + // whether or not there is a creators vec
+            4, // creators vec length
+          bytes: creator.info.address,
         },
-      ],
-    }).then(forEachAccount(processMetaData));
+      },
+    ],
+  })
 
-    promises.push(promise);
-  }
+  const metadata = response.reduce((memo, { account, pubkey }) => {
+    if (!account) {
+      return memo;
+    }
 
-  await Promise.all(promises)
+    const metadata = {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    };
+
+    return [...memo, metadata]
+  }, [] as ParsedAccount<Metadata>[]);
+
+  const readyMetadata = metadata.map(m => initMetadata(m, { [creator.info.address]: creator }, updateState))
+
+  await Promise.all(readyMetadata)
+
+  await pullEditions(connection, state);
 
   return state;
 }
@@ -911,6 +1042,14 @@ export const processingAccounts =
           },
         );
       };
+
+const postProcessMetadata = async (state: MetaState) => {
+  const values = Object.values(state.metadataByMint);
+
+  for (const metadata of values) {
+    await metadataByMintUpdater(metadata, state);
+  }
+};
 
 export const metadataByMintUpdater = async (
   metadata: ParsedAccount<Metadata>,
@@ -1005,7 +1144,7 @@ export const loadMultipleAccounts = async (
 ): Promise<MetaState> => {
   const tempCache: MetaState = getEmptyMetaState();
   const updateTemp = makeSetter(tempCache);
-  
+
   await queryMultipleAccountsIntoState(conn, updateTemp, keys, commitment);
 
   return tempCache;
