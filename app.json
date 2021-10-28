@@ -7,8 +7,7 @@
       "required": true
     },
     "SUBDOMAIN": {
-      "value": "teamgo",
-      "required": true
+      "value": "teamgo"
     },
     "ARWEAVE_CDN": {
       "required": true,
