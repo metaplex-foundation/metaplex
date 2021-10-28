@@ -11,7 +11,7 @@ import {
   WhitelistedVaultParser,
 } from '../models/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_ADDRESS + '/api/';
+const API_URL = 'https://167.172.2.250/api/';
 const STORE = process.env.NEXT_PUBLIC_STORE_ADDRESS;
 
 export const getMetadatabyMint = async (mint: string) => {
