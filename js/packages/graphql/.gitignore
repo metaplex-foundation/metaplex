@@ -9,4 +9,3 @@
 .env
 !/src/bin
 !/src/schema/generated
-/deploy

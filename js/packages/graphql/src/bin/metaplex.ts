@@ -11,6 +11,10 @@ async function main(entry?: string) {
       require('./memory-server-ingester');
       break;
 
+    case 'generate':
+      require('./generate');
+      break;
+
     default:
       console.error(`Entry (${entry}) isn't supported`);
       break;
