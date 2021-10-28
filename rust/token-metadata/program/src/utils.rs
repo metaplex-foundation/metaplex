@@ -792,6 +792,10 @@ pub struct CreateMetadataAccountsLogicArgs<'a> {
 
 // This equals the upgrade authority of the metadata program:
 // AqH29mZfQFgRpfwaPoTMWSKJ5kqauoc1FwVBRksZyQrt
+// IMPORTANT NOTE 
+// This allows the upgrade authority of the Token Metadata program to create metadata for SPL tokens.
+// This only allows the upgrade authority to do create general metadata for the SPL token, it does not 
+// allow the upgrade authority to add or change creators.
 const SEED_AUTHORITY: Pubkey = Pubkey::new_from_array([
     0x92, 0x17, 0x2c, 0xc4, 0x72, 0x5d, 0xc0, 0x41, 0xf9, 0xdd, 0x8c, 0x51, 0x52, 0x60, 0x04, 0x26,
     0x00, 0x93, 0xa3, 0x0b, 0x02, 0x73, 0xdc, 0xfa, 0x74, 0x92, 0x17, 0xfc, 0x94, 0xa2, 0x40, 0x49,
