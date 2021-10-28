@@ -1,6 +1,8 @@
 import express, {Request, Response} from 'express';
-import { createMongoClient, METADATA_COLLECTION, DB } from '../db/mongo-utils';
+import { createSolutionBuilderWithWatch } from 'typescript';
+import { createMongoClient, METADATA_COLLECTION, DB, STORE_COLLECTIONS } from '../db/mongo-utils';
 import { MetadataAccountDocument } from '../solana/accounts/metadata';
+import { MetaplexStoreAccountDocument } from '../solana/accounts/store';
 
 const router = express.Router();
 router.get('/:store/metadata', async (req: Request, res: Response) => {
@@ -25,7 +27,7 @@ router.get('/:store/metadata', async (req: Request, res: Response) => {
         }
 
         if(req.query.creator) {
-            filter.creators = req.query.creator;
+            filter["creators.address"] = req.query.creator;
         }
 
         const cursor = coll.find<MetadataAccountDocument>(filter);
@@ -57,6 +59,59 @@ router.get('/:store/metadata/total', async (req: Request, res: Response) => {
           ]).toArray();
 
           res.send(results[0])
+    }
+    finally {
+        client.close();
+    }
+});
+
+router.get('/:store/:creatorWalletPubKey/metadataNeedingApproval', async (req: Request, res: Response) => {
+    const client = await createMongoClient();
+    try {
+        const coll = client.db(DB).collection(METADATA_COLLECTION);
+        const store = req.params.store;
+        const creatorWalletPubKey = req.params.creatorWalletPubKey;
+
+        const nonPublicStores = await client
+          .db(DB)
+          .collection(STORE_COLLECTIONS)
+          .find({ store: store, isPublic: 0 })
+          .toArray();
+
+        const aggr : any = [
+            {
+                $unwind : "$creators"
+            },
+            {
+                $match : {
+                    "creators.address" : creatorWalletPubKey,
+                    "creators.verified" : 0
+                }
+            },
+            {
+                $lookup: {
+                    from: "whiteListedCreators",
+                    localField: "updateAuthority",
+                    foreignField: "walletAddress",
+                    as: "updateAuthorityFull",
+                  }
+            }
+        ];
+
+        if(nonPublicStores.length) {
+            aggr.push({
+                $match : {
+                    "updateAuthorityFull.activated" : 1
+                }
+            })
+        }
+
+        const results = await coll.aggregate(aggr).toArray();
+
+        res.send(results.map(r => ({
+            pubkey : r.pubkey,
+            account: r.account
+        })));
     }
     finally {
         client.close();

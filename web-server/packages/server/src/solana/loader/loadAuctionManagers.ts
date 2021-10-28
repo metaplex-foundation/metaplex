@@ -288,7 +288,7 @@ export const loadAuctionManagers = async (
       const auction = auctionByPubkey.get(auctionPubkey);
 
       const numberOfWinners = auction!.bidState.max.toNumber();
-      const configs = configsByAuctionManager[mgr.pubkey].map(
+      const configs = (configsByAuctionManager[mgr.pubkey] ?? []).map(
         (cfg) => cfg.info
       );
       const boxes = boxesByVault[mgr.decoded.vault].map((b) => b.info);
@@ -331,7 +331,7 @@ export const loadAuctionManagers = async (
     .db(DB)
     .collection(AUCTION_MANAGERS_COLLECTION);
 
-  await auctionManagerCollection.deleteMany({});
+  await auctionManagerCollection.deleteMany({store : store});
   await auctionManagerCollection.createIndex({ store: 1 });
   await auctionManagerCollection.createIndex({ pubkey: 1 });
   await auctionManagerCollection.createIndex({ auction: 1 });
@@ -485,7 +485,7 @@ const loadSafetyDepositBoxes = async (
   );
   const collection = client.db(DB).collection(SAFETY_DEPOSIT_BOX_COLLECTION);
 
-  await collection.deleteMany({});
+  await collection.deleteMany({store : store});
   await collection.createIndex({ store: 1 });
   await collection.createIndex({ pubkey: 1 });
   await collection.createIndex({ vault: 1 });
@@ -588,7 +588,7 @@ const loadAuctions = async (
     .db(DB)
     .collection<StoreAccountDocument>(AUCTION_COLLECTION);
 
-  await collection.deleteMany({});
+  await collection.deleteMany({store : store});
   await collection.createIndex({ store: 1 });
   await collection.createIndex({ pubkey: 1 });
 
@@ -699,7 +699,8 @@ const loadBidderMetadata = async (
           rbp.pubkey,
           rbp.account,
           bp.bidderAct,
-          bp.auctionAct
+          bp.auctionAct,
+          bp.emptied
         );
       });
 
@@ -709,6 +710,7 @@ const loadBidderMetadata = async (
       await collection.createIndex({ pubkey: 1 });
       await collection.createIndex({ bidderPubkey: 1 });
       await collection.createIndex({ auctionPubkey: 1 });
+      await collection.createIndex({ isPotEmpty : 1});
 
       if (docs.length) {
         accountConverterSet.applyConversion(docs);

@@ -9,11 +9,11 @@ import { toPublicKey } from "../ids";
 import { loadMetadata } from "./loadMetadata";
 import { loadPrizeTrackingTickets } from "./loadPrizeTrackingTickets";
 import { loadAuctionManagers } from "./loadAuctionManagers";
-import { Store } from "../../routes/store";
 import { loadBidRedemptionTicketsV2 } from "./loadBidRedemptionTicketsV2";
 import { loadBidRedemptionTicketsV1 } from "./loadBidRedemptionTicketsV1";
 import { loadPayoutTickets } from "./loadPayoutTickets";
 import 'log-timestamp'
+import { MetaplexStoreAccountDocument } from "../accounts/store";
 
 export const loadMetaplexData = async () => {
   const connection = createDevNetConnection();
@@ -22,7 +22,7 @@ export const loadMetaplexData = async () => {
   try {
     const stores = await dbClient
       .db(DB)
-      .collection<Store>(STORES_COLLECTION)
+      .collection<MetaplexStoreAccountDocument>(STORES_COLLECTION)
       .find({})
       .toArray();
 
@@ -36,9 +36,9 @@ export const loadMetaplexData = async () => {
     }
 
     const storePromises = stores.map(async (store) => {
-      await loadCreators(store.address, connection, dbClient);
-      await loadMetadata(store.address, connection, dbClient);
-      await loadAuctionManagers(store.address, connection, dbClient);
+      await loadCreators(store.store, connection, dbClient);
+      await loadMetadata(store.store, connection, dbClient);
+      await loadAuctionManagers(store.store, connection, dbClient);
     });
     await Promise.all(promises.concat(storePromises));
   } catch (err) {

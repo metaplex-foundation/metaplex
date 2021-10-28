@@ -163,21 +163,24 @@ export const loadMetadata = async (
         m.raw.pubkey,
         m.parsed.mint,
         m.ext?.collection?.name,
-        m.parsed.data.creators?.map((c) => c.address)!,
-        m.parsed.masterEdition
+        m.parsed.data.creators ?? [],
+        m.parsed.masterEdition,
+        m.parsed.updateAuthority
       )
   );
 
   accountConverterSet.applyConversion(metadataDocuments);
   const coll = client.db(DB).collection(METADATA_COLLECTION);
 
-  await coll.deleteMany({});
+  await coll.deleteMany({store : store});
   await coll.createIndex({ store: 1 });
   await coll.createIndex({ mint: 1 });
   await coll.createIndex({ collection: 1 });
-  await coll.createIndex({ creators: 1 });
+  await coll.createIndex({ "creators.address" : 1 });
+  await coll.createIndex({ "creators.verified" : 1 });
   await coll.createIndex({ pubkey: 1 });
   await coll.createIndex({ masterEdition: 1 });
+  await coll.createIndex({ updateAuthority  :1 });
 
   if(metadataDocuments.length > 0) {
     try {
@@ -236,7 +239,7 @@ export const loadMetadata = async (
     await editionColl.insertMany(regularEditions);
   }
 
-  await masterEditionV1Coll.deleteMany({});
+  await masterEditionV1Coll.deleteMany({store : store});
   await masterEditionV1Coll.createIndex({store:1, pubkey:1, printingMint: 1, oneTimePrintingAuthorizationMint : 1});
 
   if(masterEditionsV1.length > 0) {
