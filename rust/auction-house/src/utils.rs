@@ -249,23 +249,22 @@ pub fn create_program_token_account_if_not_present<'a>(
     treasury_mint: &anchor_lang::Account<'a, Mint>,
     owner: &AccountInfo<'a>,
     rent: &Sysvar<'a, Rent>,
-    program_id: &Pubkey,
     signer_seeds: &[&[u8]],
     fee_seeds: &[&[u8]],
     is_native: bool,
 ) -> ProgramResult {
     if !is_native && payment_account.data_is_empty() {
         create_or_allocate_account_raw(
-            *program_id,
+            *token_program.key,
             &payment_account.to_account_info(),
             &rent.to_account_info(),
             &system_program,
             &fee_payer,
             spl_token::state::Account::LEN,
             fee_seeds,
-            &[],
+            signer_seeds,
         )?;
-
+        msg!("This.");
         invoke_signed(
             &initialize_account2(
                 &token_program.key,
@@ -283,6 +282,7 @@ pub fn create_program_token_account_if_not_present<'a>(
             ],
             &[&signer_seeds],
         )?;
+        msg!("Passes");
     }
     Ok(())
 }

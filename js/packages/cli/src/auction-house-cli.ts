@@ -1028,7 +1028,7 @@ programCommand('create_auction_house')
     }
     const twdAta = tMintKey.equals(WRAPPED_SOL_MINT)
       ? twdKey
-      : await getAtaForMint(tMintKey, twdKey)[0];
+      : (await getAtaForMint(tMintKey, twdKey))[0];
 
     const [auctionHouse, bump] = await getAuctionHouse(
       walletKeyPair.publicKey,
@@ -1167,7 +1167,7 @@ programCommand('update_auction_house')
     }
     const twdAta = tMintKey.equals(WRAPPED_SOL_MINT)
       ? twdKey
-      : await getAtaForMint(tMintKey, twdKey)[0];
+      : (await getAtaForMint(tMintKey, twdKey))[0];
 
     let sfbp;
     if (sellerFeeBasisPoints != undefined && sellerFeeBasisPoints != null) {

@@ -228,13 +228,6 @@ pub mod auction_house {
 
         let ah_key = auction_house.key();
 
-        let auction_house_fee_seeds = [
-            PREFIX.as_bytes(),
-            ah_key.as_ref(),
-            FEE_PAYER.as_bytes(),
-            &[fee_payer_bump],
-        ];
-
         let auction_house_treasury_seeds = [
             PREFIX.as_bytes(),
             ah_key.as_ref(),
@@ -250,20 +243,9 @@ pub mod auction_house {
             treasury_mint,
             &auction_house.to_account_info(),
             rent,
-            ctx.program_id,
             &auction_house_treasury_seeds,
             &[],
             is_native,
-        )?;
-
-        invoke_signed(
-            &system_instruction::assign(&auction_house_fee_account.key(), &auction_house.key()),
-            &[
-                system_program.to_account_info(),
-                auction_house_fee_account.to_account_info(),
-                auction_house.to_account_info(),
-            ],
-            &[&auction_house_fee_seeds],
         )?;
 
         if !is_native {
@@ -459,7 +441,6 @@ pub mod auction_house {
             treasury_mint,
             &auction_house.to_account_info(),
             rent,
-            ctx.program_id,
             &escrow_signer_seeds,
             fee_seeds,
             is_native,
@@ -1023,7 +1004,6 @@ pub mod auction_house {
             treasury_mint,
             &auction_house.to_account_info(),
             rent,
-            ctx.program_id,
             &escrow_signer_seeds,
             fee_seeds,
             is_native,
