@@ -2,10 +2,6 @@
   "name": "Holaplex",
   "repository": "https://github.com/holaplex/metaplex",
   "env": {
-    "APP_BASE": {
-      "required": true,
-      "value": "js"
-    },
     "ARWEAVE_CDN": {
       "required": true,
       "value": "https://arweave.cache.holaplex.dev"
