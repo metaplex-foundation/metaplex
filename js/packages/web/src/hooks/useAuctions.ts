@@ -38,7 +38,6 @@ import BN from 'bn.js';
 import { useEffect, useMemo, useState } from 'react';
 import { useMeta } from '../contexts';
 
-
 export enum AuctionViewState {
   Live = '0',
   Upcoming = '1',
@@ -96,14 +95,11 @@ export function useCompactAuctions(): AuctionViewCompact[] {
 
 export function useStoreAuctionsList() {
   const { auctions, auctionManagersByAuction } = useMeta();
-  const { storeAddress } = useStore()
+  const { storeAddress } = useStore();
   const result = useMemo(() => {
-    return Object
-      .values(auctionManagersByAuction)
+    return Object.values(auctionManagersByAuction)
       .filter(am => am.info.store === storeAddress)
-      .map(
-      manager => auctions[manager.info.auction],
-    );
+      .map(manager => auctions[manager.info.auction]);
   }, [auctions, auctionManagersByAuction]);
   return result;
 }
@@ -151,13 +147,13 @@ export const useInfiniteScrollAuctions = () => {
   const connection = useConnection();
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
-  const [initLoading, setInitLoading] = useState(true)
+  const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const [auctionManagersToQuery, setAuctionManagersToQuery] = useState<
     ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]
   >([]);
-  const { storeAddress } = useStore()
+  const { storeAddress } = useStore();
 
   const {
     isLoading,
@@ -178,29 +174,29 @@ export const useInfiniteScrollAuctions = () => {
 
     const responses = await Promise.all(
       auctionManagers.map(auctionManager => {
-        if(auctionCachesByAuctionManager[auctionManager.pubkey]) {
+        if (auctionCachesByAuctionManager[auctionManager.pubkey]) {
           return loadBidsForAuction(connection, auctionManager.info.auction);
         }
-        
+
         return loadAuction(connection, auctionManager);
-      })
+      }),
     );
 
-    const auctionsState = responses.reduce((memo, state) =>
-      merge(memo, state),
-      tempCache
+    const auctionsState = responses.reduce(
+      (memo, state) => merge(memo, state),
+      tempCache,
     );
-  
+
     const metadataState = await loadMetadataAndEditionsBySafetyDepositBoxes(
       connection,
       auctionsState.safetyDepositBoxesByVaultAndIndex,
-      whitelistedCreatorsByCreator
+      whitelistedCreatorsByCreator,
     );
 
     const finalState = merge({}, auctionsState, metadataState);
 
     return finalState;
-  }
+  };
 
   const gatherAuctionViews = (
     auctionManagers: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
@@ -217,10 +213,11 @@ export const useInfiniteScrollAuctions = () => {
       masterEditionsByPrintingMint,
       masterEditionsByOneTimeAuthMint,
       metadataByMasterEdition,
-      metadataByAuction
-    }: MetaState) => {
+      metadataByAuction,
+    }: MetaState,
+  ) => {
     return auctionManagers.reduce((memo: AuctionView[], auctionManager) => {
-      const auction = auctions[auctionManager.info.auction]
+      const auction = auctions[auctionManager.info.auction];
       const nextAuctionView = processAccountsIntoAuctionView(
         publicKey?.toBase58(),
         auction,
@@ -248,19 +245,23 @@ export const useInfiniteScrollAuctions = () => {
 
       return memo;
     }, []);
-  }
+  };
 
   useEffect(() => {
     if (isLoading) {
-      return
+      return;
     }
 
     (async () => {
-      const storeAuctionManagers = Object.values(auctionManagersByAuction).filter(am => am.info.store ===  storeAddress)
-      const initializedAuctions = storeAuctionManagers.map(am => auctions[am.info.auction]).filter(a => a.info.state > 0)
+      const storeAuctionManagers = Object.values(
+        auctionManagersByAuction,
+      ).filter(am => am.info.store === storeAddress);
+      const initializedAuctions = storeAuctionManagers
+        .map(am => auctions[am.info.auction])
+        .filter(a => a.info.state > 0);
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
-        .sort(sortByRecentlyEnded);
+        .sort(sortByEndingSoon);
 
       const endedAuctions = initializedAuctions
         .filter(a => a.info.state === 2)
@@ -276,27 +277,19 @@ export const useInfiniteScrollAuctions = () => {
 
       const auctionsState = await fetchAuctionsState(
         connection,
-        auctionsToLoad
-      )
-
-      const viewState = merge(
-        {},
-        metaState,
-        auctionsState,
-      )
-
-      const views = gatherAuctionViews(
         auctionsToLoad,
-        viewState,
-      )
+      );
 
-      patchState(auctionsState)
-      setAuctionManagersToQuery(drop(auctionManagers, 8))
-      setAuctionViews(views)
-      setInitLoading(false)
-    })()
+      const viewState = merge({}, metaState, auctionsState);
+
+      const views = gatherAuctionViews(auctionsToLoad, viewState);
+
+      patchState(auctionsState);
+      setAuctionManagersToQuery(drop(auctionManagers, 8));
+      setAuctionViews(views);
+      setInitLoading(false);
+    })();
   }, [isLoading]);
-
 
   const loadMoreAuctions = () => {
     const needLoading = [...auctionManagersToQuery];
@@ -306,23 +299,19 @@ export const useInfiniteScrollAuctions = () => {
     const auctionsToLoad = take(needLoading, 4);
 
     (async () => {
-      const auctionsState = await fetchAuctionsState(connection, auctionsToLoad)
-      const viewState = merge(
-        {},
-        metaState,
-        auctionsState,
-      )
-      
-      const views = gatherAuctionViews(
+      const auctionsState = await fetchAuctionsState(
+        connection,
         auctionsToLoad,
-        viewState,
-      )
+      );
+      const viewState = merge({}, metaState, auctionsState);
 
-      patchState(auctionsState)
+      const views = gatherAuctionViews(auctionsToLoad, viewState);
+
+      patchState(auctionsState);
       setAuctionManagersToQuery(drop(needLoading, 4));
       setAuctionViews([...loaded, ...views]);
       setLoading(false);
-    })()
+    })();
   };
 
   return {
@@ -354,7 +343,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     safetyDepositConfigsByAuctionManagerAndIndex,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
     auctionDataExtended,
-    metadataByAuction
+    metadataByAuction,
   } = useMeta();
 
   useEffect(() => {
@@ -416,11 +405,18 @@ export const useAuctions = (state?: AuctionViewState) => {
   return auctionViews;
 };
 
-function sortByRecentlyEnded(a: ParsedAccount<AuctionData>, b: ParsedAccount<AuctionData>) {
-  return (
-    (a.info.endedAt?.toNumber() || 0) -
-    (b.info.endedAt?.toNumber() || 0)
-  );
+function sortByEndingSoon(
+  a: ParsedAccount<AuctionData>,
+  b: ParsedAccount<AuctionData>,
+) {
+  return (a.info.endedAt?.toNumber() || 0) - (b.info.endedAt?.toNumber() || 0);
+}
+
+function sortByRecentlyEnded(
+  a: ParsedAccount<AuctionData>,
+  b: ParsedAccount<AuctionData>,
+) {
+  return (b.info.endedAt?.toNumber() || 0) - (a.info.endedAt?.toNumber() || 0);
 }
 
 function isInstantSale(
