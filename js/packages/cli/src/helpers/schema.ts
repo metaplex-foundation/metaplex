@@ -1,10 +1,18 @@
-import { BinaryReader, BinaryWriter } from 'borsh';
+import { BinaryReader, BinaryWriter, deserializeUnchecked } from 'borsh';
 import base58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
 type StringPublicKey = string;
 
 import { BN } from '@project-serum/anchor';
 
+export enum MetadataKey {
+  Uninitialized = 0,
+  MetadataV1 = 4,
+  EditionV1 = 1,
+  MasterEditionV1 = 2,
+  MasterEditionV2 = 6,
+  EditionMarker = 7,
+}
 export class Creator {
   address: StringPublicKey;
   verified: number;
@@ -78,6 +86,37 @@ export class CreateMasterEditionArgs {
   }
 }
 
+export class Metadata {
+  key: MetadataKey;
+  updateAuthority: StringPublicKey;
+  mint: StringPublicKey;
+  data: Data;
+  primarySaleHappened: boolean;
+  isMutable: boolean;
+  editionNonce: number | null;
+
+  // set lazy
+  masterEdition?: StringPublicKey;
+  edition?: StringPublicKey;
+
+  constructor(args: {
+    updateAuthority: StringPublicKey;
+    mint: StringPublicKey;
+    data: Data;
+    primarySaleHappened: boolean;
+    isMutable: boolean;
+    editionNonce: number | null;
+  }) {
+    this.key = MetadataKey.MetadataV1;
+    this.updateAuthority = args.updateAuthority;
+    this.mint = args.mint;
+    this.data = args.data;
+    this.primarySaleHappened = args.primarySaleHappened;
+    this.isMutable = args.isMutable;
+    this.editionNonce = args.editionNonce ?? null;
+  }
+}
+
 export const METADATA_SCHEMA = new Map<any, any>([
   [
     CreateMetadataArgs,
@@ -136,7 +175,37 @@ export const METADATA_SCHEMA = new Map<any, any>([
       ],
     },
   ],
+  [
+    Metadata,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['updateAuthority', 'pubkeyAsString'],
+        ['mint', 'pubkeyAsString'],
+        ['data', Data],
+        ['primarySaleHappened', 'u8'], // bool
+        ['isMutable', 'u8'], // bool
+        ['editionNonce', { kind: 'option', type: 'u8' }],
+      ],
+    },
+  ],
 ]);
+
+// eslint-disable-next-line no-control-regex
+const METADATA_REPLACE = new RegExp('\u0000', 'g');
+
+export const decodeMetadata = (buffer: Buffer): Metadata => {
+  const metadata = deserializeUnchecked(
+    METADATA_SCHEMA,
+    Metadata,
+    buffer,
+  ) as Metadata;
+  metadata.data.name = metadata.data.name.replace(METADATA_REPLACE, '');
+  metadata.data.uri = metadata.data.uri.replace(METADATA_REPLACE, '');
+  metadata.data.symbol = metadata.data.symbol.replace(METADATA_REPLACE, '');
+  return metadata;
+};
 
 export const extendBorsh = () => {
   (BinaryReader.prototype as any).readPubkey = function () {

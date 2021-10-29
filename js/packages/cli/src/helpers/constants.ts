@@ -1,5 +1,8 @@
 import { PublicKey } from '@solana/web3.js';
 export const CANDY_MACHINE = 'candy_machine';
+export const AUCTION_HOUSE = 'auction_house';
+export const FEE_PAYER = 'fee_payer';
+export const TREASURY = 'treasury';
 export const MAX_NAME_LENGTH = 32;
 export const MAX_URI_LENGTH = 200;
 export const MAX_SYMBOL_LENGTH = 10;
@@ -22,6 +25,13 @@ export const TOKEN_PROGRAM_ID = new PublicKey(
 export const FAIR_LAUNCH_PROGRAM_ID = new PublicKey(
   'faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j',
 );
+export const AUCTION_HOUSE_PROGRAM_ID = new PublicKey(
+  'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk',
+);
+export const WRAPPED_SOL_MINT = new PublicKey(
+  'So11111111111111111111111111111111111111112',
+);
+
 export const CONFIG_ARRAY_START =
   32 + // authority
   4 +
