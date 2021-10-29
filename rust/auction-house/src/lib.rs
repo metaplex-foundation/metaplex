@@ -17,7 +17,7 @@ use {
     spl_token::instruction::{approve, revoke},
 };
 
-anchor_lang::declare_id!("63i87jSLHuKNMsJsj7YWaY9jNbntpeD2GWCQ2nYn2T7M");
+anchor_lang::declare_id!("hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk");
 
 const PREFIX: &str = "auction_house";
 const FEE_PAYER: &str = "fee_payer";
