@@ -43,7 +43,7 @@ export async function ipfsUpload(
   const manifestJson = JSON.parse(manifestBuffer.toString('utf8'));
   manifestJson.image = mediaUrl;
   manifestJson.properties.files = manifestJson.properties.files.map(f => {
-    return { ...f, uri: mediaUrl };
+    return { ...f, src: mediaUrl };
   });
 
   const manifestHash = await uploadToIpfs(
@@ -61,7 +61,7 @@ export async function ipfsUpload(
 
   await sleep(500);
   const link = `https://ipfs.io/ipfs/${manifestHash}`;
-  log.info('uploaded manifest: ', link);
+  console.log('uploaded manifest: ', link);
 
   return link;
 }
