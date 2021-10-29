@@ -136,7 +136,7 @@ export const AuctionView = () => {
         <h2>{art.title || <Skeleton paragraph={{ rows: 0 }} />}</h2>
         <Row gutter={[44, 0]}>
           <Col span={12} md={16}>
-            <div>
+            <Space direction="horizontal" align="start">
               <div>
                 <h6>CREATED BY</h6>
                 <span>{<MetaAvatar creators={creators} />}</span>
@@ -167,7 +167,7 @@ export const AuctionView = () => {
                   )}
                 </span>
               </div>
-            </div>
+            </Space>
           </Col>
           <Col span={12} md={8}>
             <div>
