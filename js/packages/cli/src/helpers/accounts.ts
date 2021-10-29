@@ -14,7 +14,6 @@ import {
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from 'bn.js';
 import { createConfigAccount } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
@@ -59,11 +58,11 @@ export const createConfig = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
   configData: {
-    maxNumberOfLines: BN;
+    maxNumberOfLines: anchor.BN;
     symbol: string;
     sellerFeeBasisPoints: number;
     isMutable: boolean;
-    maxSupply: BN;
+    maxSupply: anchor.BN;
     retainAuthority: boolean;
     creators: {
       address: PublicKey;
@@ -74,6 +73,19 @@ export const createConfig = async function (
 ) {
   const configAccount = Keypair.generate();
   const uuid = uuidFromConfigPubkey(configAccount.publicKey);
+
+  if (!configData.creators || configData.creators.length === 0) {
+    throw new Error(`Invalid config, there must be at least one creator.`);
+  }
+
+  const totalShare = (configData.creators || []).reduce(
+    (acc, curr) => acc + curr.share,
+    0,
+  );
+
+  if (totalShare !== 100) {
+    throw new Error(`Invalid config, creators shares must add up to 100`);
+  }
 
   return {
     config: configAccount.publicKey,
@@ -386,9 +398,19 @@ export function loadWalletKey(keypair): Keypair {
   return loaded;
 }
 
-export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
+export async function loadCandyProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
   // @ts-ignore
-  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+
   const walletWrapper = new anchor.Wallet(walletKeyPair);
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',

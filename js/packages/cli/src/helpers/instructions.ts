@@ -126,7 +126,7 @@ export function createMasterEditionInstruction(
   updateAuthority: PublicKey,
   txnData: Buffer,
 ) {
-
+  
   const keys = [
     {
       pubkey: editionAccount,
@@ -171,6 +171,30 @@ export function createMasterEditionInstruction(
     {
       pubkey: SYSVAR_RENT_PUBKEY,
       isSigner: false,
+      isWritable: false,
+    },
+  ];
+  return new TransactionInstruction({
+    keys,
+    programId: TOKEN_METADATA_PROGRAM_ID,
+    data: txnData,
+  });
+}
+
+export function createUpdateMetadataInstruction(
+  metadataAccount: PublicKey,
+  payer: PublicKey,
+  txnData: Buffer,
+) {
+  const keys = [
+    {
+      pubkey: metadataAccount,
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: payer,
+      isSigner: true,
       isWritable: false,
     },
   ];
