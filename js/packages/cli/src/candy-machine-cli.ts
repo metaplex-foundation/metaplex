@@ -43,6 +43,8 @@ import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
 import { withdraw } from './commands/withdraw';
+import { StorageType } from './helpers/storage-type';
+
 program.version('0.0.2');
 
 if (!fs.existsSync(CACHE_PATH)) {
@@ -60,7 +62,7 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .option(
     '-s, --storage <string>',
-    'Database to use for storage (arweave, ipfs, aws)',
+    `Database to use for storage (${Object.values(StorageType).join(', ')})`,
     'arweave',
   )
   .option(
@@ -74,6 +76,10 @@ programCommand('upload')
   .option(
     '--aws-s3-bucket <string>',
     '(existing) AWS S3 Bucket name (required if using aws)',
+  )
+  .option(
+    '-jwk, --jwk <string>',
+    'Path to Arweave wallet file (required if using Arweave Native)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .option('--no-mutable', 'Metadata will not be editable')
@@ -94,21 +100,34 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      jwk,
     } = cmd.opts();
 
-    if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
+    if (storage === StorageType.ArweaveNative && !jwk) {
+      throw new Error(
+        'Path to Arweave JWK wallet file must be provided when using arweave-native',
+      );
+    }
+
+    if (
+      storage === StorageType.Ipfs &&
+      (!ipfsInfuraProjectId || !ipfsInfuraSecret)
+    ) {
       throw new Error(
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (storage === 'aws' && !awsS3Bucket) {
+    if (storage === StorageType.Aws && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
       );
     }
-    if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
+
+    if (!Object.values(StorageType).includes(storage)) {
       throw new Error(
-        "Storage option must either be 'arweave', 'ipfs', or 'aws'.",
+        `Storage option must either be ${Object.values(StorageType).join(
+          ', ',
+        )}. Got: ${storage}`,
       );
     }
     const ipfsCredentials = {
@@ -142,38 +161,30 @@ programCommand('upload')
 
     const startMs = Date.now();
     log.info('started at: ' + startMs.toString());
-    let warn = false;
-    for (;;) {
-      const successful = await upload(
+    try {
+      await upload({
         files,
         cacheName,
         env,
         keypair,
-        elemCount,
+        totalNFTs: elemCount,
         storage,
         retainAuthority,
         mutable,
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
-      );
-
-      if (successful) {
-        warn = false;
-        break;
-      } else {
-        warn = true;
-        log.warn('upload was not successful, rerunning');
-      }
+        jwk,
+      });
+    } catch (err) {
+      log.warn('upload was not successful, please re-run.', err);
     }
+
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
       `ended at: ${new Date(endMs).toISOString()}. time taken: ${timeTaken}`,
     );
-    if (warn) {
-      log.info('not all images have been uploaded, rerun this step.');
-    }
   });
 
 programCommand('withdraw')
@@ -324,8 +335,8 @@ programCommand('verify')
             const thisSlice = config.data.slice(
               CONFIG_ARRAY_START + 4 + CONFIG_LINE_SIZE * allIndexesInSlice[i],
               CONFIG_ARRAY_START +
-                4 +
-                CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
+              4 +
+              CONFIG_LINE_SIZE * (allIndexesInSlice[i] + 1),
             );
             const name = fromUTF8Array([...thisSlice.slice(4, 36)]);
             const uri = fromUTF8Array([...thisSlice.slice(40, 240)]);
@@ -455,14 +466,12 @@ programCommand('verify')
     );
 
     log.info(
-      `uploaded (${lineCount.toNumber()}) out of (${
-        configData.data.maxNumberOfLines
+      `uploaded (${lineCount.toNumber()}) out of (${configData.data.maxNumberOfLines
       })`,
     );
     if (configData.data.maxNumberOfLines > lineCount.toNumber()) {
       throw new Error(
-        `predefined number of NFTs (${
-          configData.data.maxNumberOfLines
+        `predefined number of NFTs (${configData.data.maxNumberOfLines
         }) is smaller than the uploaded one (${lineCount.toNumber()})`,
       );
     } else {
@@ -574,7 +583,7 @@ programCommand('show')
         //@ts-ignore
         machine.data.goLiveDate
           ? //@ts-ignore
-            new Date(machine.data.goLiveDate * 1000)
+          new Date(machine.data.goLiveDate * 1000)
           : 'N/A',
       );
     } catch (e) {

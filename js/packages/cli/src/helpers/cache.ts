@@ -1,13 +1,13 @@
+import fs from 'fs';
 import path from 'path';
 import { CACHE_PATH } from './constants';
-import fs from 'fs';
 
 export function cachePath(
   env: string,
   cacheName: string,
   cPath: string = CACHE_PATH,
 ) {
-  return path.join(cPath, `${env}-${cacheName}`);
+  return path.join(cPath, `${env}-${cacheName}.json`);
 }
 
 export function loadCache(

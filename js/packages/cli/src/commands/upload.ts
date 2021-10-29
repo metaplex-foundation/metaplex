@@ -1,175 +1,161 @@
-import { EXTENSION_JSON, EXTENSION_PNG } from '../helpers/constants';
+import fs from 'fs';
+import { readFile } from 'fs/promises';
 import path from 'path';
+
+import { PublicKey } from '@solana/web3.js';
+import { BN } from '@project-serum/anchor';
+
+import log from 'loglevel';
+
 import {
   createConfig,
   loadCandyProgram,
   loadWalletKey,
 } from '../helpers/accounts';
-import { PublicKey } from '@solana/web3.js';
-import fs from 'fs';
-import { BN } from '@project-serum/anchor';
 import { loadCache, saveCache } from '../helpers/cache';
-import log from 'loglevel';
-import { awsUpload } from '../helpers/upload/aws';
+import { EXTENSION_PNG, EXTENSION_JSON } from '../helpers/constants';
 import { arweaveUpload } from '../helpers/upload/arweave';
+import { makeArweaveBundleUploadGenerator } from '../helpers/upload/arweave-bundle';
+import { awsUpload } from '../helpers/upload/aws';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
+import { StorageType } from '../helpers/storage-type';
 import { chunks } from '../helpers/various';
 
-export async function upload(
+/**
+ * The Cache object, represented in its minimal form.
+ */
+type Cache = {
+  program: {
+    config?: string;
+  };
+  items: {
+    [key: string]: any;
+  };
+};
+
+/**
+ * The Manifest object for a given asset.
+ * This object holds the contents of the asset's JSON file.
+ * Represented here in its minimal form.
+ */
+type Manifest = {
+  image: string;
+  name: string;
+  symbol: string;
+  seller_fee_basis_points: number;
+  properties: {
+    files: Array<{ type: string; uri: string }>;
+    creators: Array<{
+      address: string;
+      share: number;
+    }>;
+  };
+};
+
+/**
+ * From the Cache object & a list of file paths, return a list of asset keys
+ * (filenames without extension nor path) that should be uploaded, sorted numerically in ascending order.
+ * Assets which should be uploaded either are not present in the Cache object,
+ * or do not truthy value for the `link` property.
+ */
+function getAssetKeysNeedingUpload(
+  items: Cache['items'],
   files: string[],
-  cacheName: string,
-  env: string,
-  keypair: string,
-  totalNFTs: number,
-  storage: string,
-  retainAuthority: boolean,
-  mutable: boolean,
-  rpcUrl: string,
-  ipfsCredentials: ipfsCreds,
-  awsS3Bucket: string,
-): Promise<boolean> {
-  let uploadSuccessful = true;
+): string[] {
+  const all = [
+    ...new Set([
+      ...Object.keys(items),
+      ...files.map(filePath => path.basename(filePath, path.extname(filePath))),
+    ]),
+  ];
 
-  const savedContent = loadCache(cacheName, env);
-  const cacheContent = savedContent || {};
-
-  if (!cacheContent.program) {
-    cacheContent.program = {};
-  }
-
-  let existingInCache = [];
-  if (!cacheContent.items) {
-    cacheContent.items = {};
-  } else {
-    existingInCache = Object.keys(cacheContent.items);
-  }
-
-  const seen = {};
-  const newFiles = [];
-
-  files.forEach(f => {
-    if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
-      seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
-      newFiles.push(f);
-    }
-  });
-  existingInCache.forEach(f => {
-    if (!seen[f]) {
-      seen[f] = true;
-      newFiles.push(f + '.png');
-    }
-  });
-
-  const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
-  const SIZE = images.length;
-
-  const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-
-  let config = cacheContent.program.config
-    ? new PublicKey(cacheContent.program.config)
-    : undefined;
-
-  const tick = SIZE / 100; //print every one percent
-  let lastPrinted = 0;
-  for (let i = 0; i < SIZE; i++) {
-    const image = images[i];
-    const imageName = path.basename(image);
-    const index = imageName.replace(EXTENSION_PNG, '');
-
-      log.debug(`Processing file: ${i}`);
-
-    let link = cacheContent?.items?.[index]?.link;
-    let imageLink = cacheContent?.items?.[index]?.imageLink;
-    if (!link || !cacheContent.program.uuid) {
-      if (i >= lastPrinted + tick || i === 0) {
-        lastPrinted = i;
-        log.info(`Processing file: ${i}, ${imageName}`);
-      }
-      const manifestPath = image.replace(EXTENSION_PNG, EXTENSION_JSON);
-      const manifestContent = fs
-        .readFileSync(manifestPath)
-        .toString()
-        .replace(imageName, 'image.png')
-        .replace(imageName, 'image.png');
-      const manifest = JSON.parse(manifestContent);
-
-      const manifestBuffer = Buffer.from(JSON.stringify(manifest));
-
-      if (i === 0 && !cacheContent.program.uuid) {
-        // initialize config
-        log.info(`initializing config`);
-        try {
-          const res = await createConfig(anchorProgram, walletKeyPair, {
-            maxNumberOfLines: new BN(totalNFTs),
-            symbol: manifest.symbol,
-            sellerFeeBasisPoints: manifest.seller_fee_basis_points,
-            isMutable: mutable,
-            maxSupply: new BN(0),
-            retainAuthority: retainAuthority,
-            creators: manifest.properties.creators.map(creator => {
-              return {
-                address: new PublicKey(creator.address),
-                verified: true,
-                share: creator.share,
-              };
-            }),
-          });
-          cacheContent.program.uuid = res.uuid;
-          cacheContent.program.config = res.config.toBase58();
-          config = res.config;
-
-          log.info(
-            `initialized config for a candy machine with publickey: ${res.config.toBase58()}`,
-          );
-
-          saveCache(cacheName, env, cacheContent);
-        } catch (exx) {
-          log.error('Error deploying config to Solana network.', exx);
-          throw exx;
-        }
+  return all
+    .reduce((acc, assetKey) => {
+      if (!items[assetKey]?.link) {
+        acc.push(assetKey);
       }
 
-      if (!link) {
-        try {
-          if (storage === 'arweave') {
-            [link, imageLink] = await arweaveUpload(
-              walletKeyPair,
-              anchorProgram,
-              env,
-              image,
-              manifestBuffer,
-              manifest,
-              index,
-            );
-          } else if (storage === 'ipfs') {
-            [link, imageLink] = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
-          } else if (storage === 'aws') {
-            [link, imageLink] = await awsUpload(awsS3Bucket, image, manifestBuffer);
-          }
+      return acc;
+    }, [])
+    .sort((a, b) => Number.parseInt(a) - Number.parseInt(b));
+}
 
-          if (link && imageLink) {
-            log.debug('setting cache for ', index);
-            cacheContent.items[index] = {
-              link,
-              imageLink,
-              name: manifest.name,
-              onChain: false,
-            };
-            cacheContent.authority = walletKeyPair.publicKey.toBase58();
-            saveCache(cacheName, env, cacheContent);
-          }
-        } catch (er) {
-          uploadSuccessful = false;
-          log.error(`Error uploading file ${index}`, er);
-        }
-      }
-    } else {
-      log.debug(`file ${index} already has a link`);
-    }
+/**
+ * From the Cache object & a list of file paths, return a list of asset keys
+ * (filenames without extension nor path) that should be uploaded.
+ * Assets which should be uploaded either are not present in the Cache object,
+ * or do not truthy value for the `link` property.
+ */
+function getAssetManifest(dirname: string, assetKey: string): Manifest {
+  const manifestPath = path.join(dirname, `${assetKey}.json`);
+  return JSON.parse(fs.readFileSync(manifestPath).toString());
+}
+
+/**
+ * Initialize & deploy the Candy Machine Custom Program's configuration,
+ * then save a reference to this config in the Cache object.
+ */
+async function initConfig(
+  anchorProgram,
+  walletKeyPair,
+  {
+    totalNFTs,
+    mutable,
+    symbol,
+    retainAuthority,
+    sellerFeeBasisPoints,
+    creators,
+    env,
+    cache,
+    cacheName,
+  },
+) {
+  log.info('Initializing program config');
+  try {
+    const res = await createConfig(anchorProgram, walletKeyPair, {
+      maxNumberOfLines: new BN(totalNFTs),
+      symbol,
+      sellerFeeBasisPoints,
+      isMutable: mutable,
+      maxSupply: new BN(0),
+      retainAuthority: retainAuthority,
+      creators: creators.map(creator => ({
+        address: new PublicKey(creator.address),
+        verified: true,
+        share: creator.share,
+      })),
+    });
+    cache.program.uuid = res.uuid;
+    cache.program.config = res.config.toBase58();
+    const config = res.config;
+
+    log.info(
+      `Initialized config for a candy machine with publickey: ${config.toBase58()}`,
+    );
+
+    saveCache(cacheName, env, cache);
+    return config;
+  } catch (err) {
+    log.error('Error deploying config to Solana network.', err);
+    throw err;
   }
+}
 
-  const keys = Object.keys(cacheContent.items);
+/**
+ * For each asset present in the Cache object, write to the deployed
+ * configuration an additional line with the name of the asset and the link
+ * to its manifest, if the asset was not already written according to the
+ * value of `onChain` property in the Cache object, for said asset.
+ */
+async function writeIndices({
+  anchorProgram,
+  cache,
+  cacheName,
+  env,
+  config,
+  walletKeyPair,
+}) {
+  const keys = Object.keys(cache.items);
   try {
     await Promise.all(
       chunks(Array.from(Array(keys.length).keys()), 1000).map(
@@ -182,7 +168,7 @@ export async function upload(
             const indexes = allIndexesInSlice.slice(offset, offset + 10);
             const onChain = indexes.filter(i => {
               const index = keys[i];
-              return cacheContent.items[index]?.onChain || false;
+              return cache.items[index]?.onChain || false;
             });
             const ind = keys[indexes[0]];
 
@@ -194,8 +180,8 @@ export async function upload(
                 await anchorProgram.rpc.addConfigLines(
                   ind,
                   indexes.map(i => ({
-                    uri: cacheContent.items[keys[i]].link,
-                    name: cacheContent.items[keys[i]].name,
+                    uri: cache.items[keys[i]].link,
+                    name: cache.items[keys[i]].name,
                   })),
                   {
                     accounts: {
@@ -206,20 +192,19 @@ export async function upload(
                   },
                 );
                 indexes.forEach(i => {
-                  cacheContent.items[keys[i]] = {
-                    ...cacheContent.items[keys[i]],
+                  cache.items[keys[i]] = {
+                    ...cache.items[keys[i]],
                     onChain: true,
                   };
                 });
-                saveCache(cacheName, env, cacheContent);
-              } catch (e) {
+                saveCache(cacheName, env, cache);
+              } catch (err) {
                 log.error(
-                  `saving config line ${ind}-${
+                  `Saving config line ${ind}-${
                     keys[indexes[indexes.length - 1]]
                   } failed`,
-                  e,
+                  err,
                 );
-                uploadSuccessful = false;
               }
             }
           }
@@ -229,8 +214,211 @@ export async function upload(
   } catch (e) {
     log.error(e);
   } finally {
-    saveCache(cacheName, env, cacheContent);
+    saveCache(cacheName, env, cache);
   }
-  console.log(`Done. Successful = ${uploadSuccessful}.`);
-  return uploadSuccessful;
+}
+
+/**
+ * Save the Candy Machine's authority (public key) to the Cache object / file.
+ */
+function setAuthority(publicKey, cache, cacheName, env) {
+  cache.authority = publicKey.toBase58();
+  saveCache(cacheName, env, cache);
+}
+
+/**
+ * Update the Cache object for assets that were uploaded with their matching
+ * Manifest link. Also set the `onChain` property to `false` so we know this
+ * asset should later be appended to the deployed Candy Machine program's
+ * configuration on chain.
+ */
+function updateCacheAfterUpload(
+  cache: Cache,
+  cacheKeys: Array<keyof Cache['items']>,
+  links: string[],
+  manifests: Manifest[],
+) {
+  cacheKeys.forEach((cacheKey, idx) => {
+    cache.items[cacheKey] = {
+      link: links[idx],
+      name: manifests[idx].name,
+      onChain: false,
+    };
+  });
+}
+
+type UploadParams = {
+  files: string[];
+  cacheName: string;
+  env: string;
+  keypair: string;
+  totalNFTs: number;
+  storage: string;
+  retainAuthority: boolean;
+  mutable: boolean;
+  rpcUrl: string;
+  ipfsCredentials: ipfsCreds;
+  awsS3Bucket: string;
+  jwk: string;
+};
+export async function upload({
+  files,
+  cacheName,
+  env,
+  keypair,
+  totalNFTs,
+  storage,
+  retainAuthority,
+  mutable,
+  rpcUrl,
+  ipfsCredentials,
+  awsS3Bucket,
+  jwk,
+}: UploadParams): Promise<void> {
+  // Read the content of the Cache file into the Cache object, initialize it
+  // otherwise.
+  const cache: Cache = loadCache(cacheName, env) || {
+    program: {},
+    items: {},
+  };
+
+  // Normalize the Cache object in case the Cache file was incomplete.
+  cache.program = cache.program || {};
+  cache.items = cache.items || {};
+
+  // Retrieve the directory path where the assets are located.
+  const dirname = path.dirname(files[0]);
+  // Compile a sorted list of assets which need to be uploaded.
+  const dedupedAssetKeys = getAssetKeysNeedingUpload(cache.items, files);
+
+  // Initialize variables that might be needed for uploded depending on storage
+  // type.
+  // These will be needed anyway either to initialize the
+  // Candy Machine Custom Program configuration, or to write the assets
+  // to the deployed configuration on chain.
+  let walletKeyPair;
+  let anchorProgram;
+
+  // Some assets need to be uploaded.
+  if (dedupedAssetKeys.length) {
+    // Arweave Native storage leverages Arweave Bundles.
+    // It allows to ncapsulate multiple independent data transactions
+    // into a single top level transaction,
+    // which pays the reward for all bundled data.
+    // https://github.com/Bundlr-Network/arbundles
+    // Each bundle consists of one or multiple asset filepair (PNG + JSON).
+    if (storage === StorageType.ArweaveNative) {
+      // Initialize the Arweave Bundle Upload Generator.
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator
+      const arweaveBundleUploadGenerator = makeArweaveBundleUploadGenerator(
+        dirname,
+        dedupedAssetKeys,
+        JSON.parse((await readFile(jwk)).toString()),
+      );
+
+      let result = arweaveBundleUploadGenerator.next();
+      // Loop over every uploaded bundle of asset filepairs (PNG + JSON)
+      // and save the results to the Cache object, persist it to the Cache file.
+      while (!result.done) {
+        const { cacheKeys, manifestLinks, updatedManifests } =
+          await result.value;
+        updateCacheAfterUpload(
+          cache,
+          cacheKeys,
+          manifestLinks,
+          updatedManifests,
+        );
+        saveCache(cacheName, env, cache);
+        log.info('Saved bundle upload result to cache.');
+        result = arweaveBundleUploadGenerator.next();
+      }
+      log.info('Upload done.');
+    } else {
+      // For other storage methods, we upload the files individually.
+      for (let i = 0; i < dedupedAssetKeys.length; i++) {
+        const assetKey = dedupedAssetKeys[i];
+        const image = path.join(dirname, `${assetKey}${EXTENSION_PNG}`);
+        const manifest = getAssetManifest(dirname, assetKey);
+        const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
+        log.debug(`Processing asset: ${assetKey}`);
+
+        let link, imageLink;
+        try {
+          switch (storage) {
+            case StorageType.Ipfs:
+              [link, imageLink] = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
+              break;
+            case StorageType.Aws:
+              [link, imageLink] = await awsUpload(awsS3Bucket, image, manifestBuffer);
+              break;
+            case StorageType.Arweave:
+            default:
+              walletKeyPair = loadWalletKey(keypair);
+              anchorProgram = await loadCandyProgram(
+                walletKeyPair,
+                env,
+                rpcUrl,
+              );
+              [link, imageLink] = await arweaveUpload(
+                walletKeyPair,
+                anchorProgram,
+                env,
+                image,
+                manifestBuffer,
+                manifest,
+                i,
+              );
+          }
+          if (link && imageLink) {
+            log.debug('Updating cache for ', assetKey);
+            cache.items[assetKey] = {
+              link,
+              imageLink,
+              name: manifest.name,
+              onChain: false,
+            };
+            saveCache(cacheName, env, cache);
+          }
+        } catch (err) {
+          log.error(`Error uploading file ${assetKey}`, err);
+          throw err;
+        }
+      }
+    }
+  }
+
+  const {
+    properties: { creators },
+    seller_fee_basis_points: sellerFeeBasisPoints,
+    symbol,
+  } = getAssetManifest(dirname, '0');
+
+  walletKeyPair = loadWalletKey(keypair);
+  anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+
+  const config = cache.program.config
+    ? new PublicKey(cache.program.config)
+    : await initConfig(anchorProgram, walletKeyPair, {
+        totalNFTs,
+        mutable,
+        retainAuthority,
+        sellerFeeBasisPoints,
+        symbol,
+        creators,
+        env,
+        cache,
+        cacheName,
+      });
+
+  setAuthority(walletKeyPair.publicKey, cache, cacheName, env);
+
+  return writeIndices({
+    anchorProgram,
+    cache,
+    cacheName,
+    env,
+    config,
+    walletKeyPair,
+  });
 }
