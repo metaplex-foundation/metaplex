@@ -47,6 +47,8 @@ import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
 import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
+import { getPackSets } from '../../models/packs/accounts/PackSet';
+import { processPackSets } from './processPackSets';
 const MULTIPLE_ACCOUNT_BATCH_SIZE = 100;
 
 export const USE_SPEED_RUN = false;
@@ -775,6 +777,8 @@ export const loadAccounts = async (connection: Connection) => {
   const updateState = makeSetter(state);
   const forEachAccount = processingAccounts(updateState);
 
+  const STORE_ID = programIds().store;
+
   const forEach =
     (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
       for (const account of accounts) {
@@ -806,12 +810,17 @@ export const loadAccounts = async (connection: Connection) => {
     pullMetadataByCreators(connection, state, updateState);
   const loadEditions = () =>
     pullEditions(connection, updateState, state, state.metadata);
+  const loadPacks = () =>
+    getPackSets({ connection, storeId: STORE_ID }).then(
+      forEachAccount(processPackSets),
+    );
 
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
     loadVaults(),
     loadAuctions(),
     loadMetaplex(),
+    loadPacks(),
   ];
 
   await Promise.all(loading);
