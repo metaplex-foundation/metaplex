@@ -186,9 +186,10 @@ const setupSender = (
   }
 }
 
+type Claimants = Array<ClaimantInfo>;
 const parseClaimants = (
   input : string
-) : Array<ClaimantInfo> => {
+) : Claimants => {
   const json = JSON.parse(input);
   return json.map(obj => {
     return {
@@ -244,7 +245,8 @@ const getMintInfo = async (
     throw new Error(`Could not fetch mint`);
   }
   if (!mintAccount.owner.equals(TOKEN_PROGRAM_ID)) {
-    throw new Error(`Invalid mint owner ${mintAccount.owner.toBase58()}`);
+    const mintOwner = mintAccount.owner.toBase58();
+    throw new Error(`Invalid mint owner ${mintOwner}`);
   }
   if (mintAccount.data.length !== MintLayout.span) {
     throw new Error(`Invalid mint size ${mintAccount.data.length}`);

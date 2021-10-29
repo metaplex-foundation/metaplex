@@ -31,72 +31,74 @@ type AboutProps = {};
 const About = (
   props : AboutProps,
 ) => {
-  return (
-    <Stack
-      alignContent="left"
-      textAlign="left"
-      spacing={1}
-    >
+  const summary = (
+    <Stack spacing={1}>
       <div>
       Merkle Airdrop leverages the Solana blockchain and merkle trees to
-      facilitate airdrops by removing the prohibitive costs to the creators.
+      facilitate airdrops to a large number of whitelisted users at a low cost
+      to creators.
       </div>
 
-
       <div>
-      In the Solana ecosystem, the cost to creators for airdropped tokens is
-      currently largely due to rent costs being{WHITESPACE}
+      In the Solana ecosystem, the cost of token airdrops is currently largely
+      due to rent costs being{WHITESPACE}
       <HyperLink
         href="https://docs.solana.com/implemented-proposals/rent"
         underline="none"
       >
         "fixed at the genesis"
       </HyperLink>
-      {WHITESPACE}(although there is a{WHITESPACE}
-      <HyperLink
-        href="https://forums.solana.com/t/proposal-for-a-temporary-one-off-code-change-to-reduce-the-skyrocketing-costs-of-rent/1572"
-        underline="none"
-      >
-        proposal
-      </HyperLink>
-      {WHITESPACE}to temporarily reduce these costs until a dynamic solution is
-      built). With the large increase in SOLUSD since genesis, rent costs have
-      duly skyrocketed.
+      . With the large increase in SOLUSD since genesis, rent costs when
+      creating accounts for thousands of users have duly skyrocketed.
       </div>
 
+      <div>
+      Simultaneously, NFT projects often have a presale to early project
+      followers and contributors. However, the candy-machine doesn't have the
+      ability to grant early minting to a whitelisted subset of wallets while
+      also using the same asset configuration for open launch.
+      </div>
 
       <div>
-      The merkle distributor, pioneered by{WHITESPACE}
+      The Merkle Airdrop (originally pioneered for token airdrops by{" "}
       <HyperLink
         href="https://github.com/Uniswap/merkle-distributor"
         underline="none"
       >
         Uniswap
       </HyperLink>
-      {WHITESPACE}and ported to Solana by{WHITESPACE}
+      {" "}and ported to Solana by{WHITESPACE}
       <HyperLink
         href="https://github.com/saber-hq/merkle-distributor"
         underline="none"
       >
         Saber
-      </HyperLink>, solves this issue by building a 256-bit "root hash" from a
-      list of recipients and balances. This moves the rent costs and (nominal)
-      transaction fee to the claimer if they so choose to redeem the airdrop.
+      </HyperLink>) solves both these issues by building a space-efficient hash
+      structure (the merkle tree) such that an on-chain program can validate
+      whether the user is part of a whitelist. Moreover, the Merkle Airdrop
+      allows creators to directly send whitelisted users an airdrop reclamation
+      link by building the tree with off-chain handles (e.g email, twitter,
+      etc) and allowing the user to redeem into any wallet.
       </div>
+    </Stack>
+  );
 
-      <div>
-      This website exposes a web-friendly way to access the on-chain
-      distributor.
-      </div>
-
-      <div>
+  const create= (
+    <Stack spacing={1}>
       <Link to="/create">
         CREATION
       </Link>
-      {WHITESPACE}is done by choosing a Mint, an off-chain
-      notification method, and supplying a list of recipients, mints, and
-      balances with the following JSON schema{WHITESPACE}
 
+      <div>
+      Creation builds a whitelist of users that can claim either existing
+      fungible tokens or directly mint from a pre-sale candy-machine.
+      </div>
+
+      <div>
+      Creators must choose a mint or a candy-machine config and UUID, an
+      off-chain notification method (based on the handles supplied below, e.g
+      email, twitter, etc), and supply a list of recipients and balances with
+      the following JSON schema{WHITESPACE}
       <HyperLink
         href={`data:text/plain;charset=utf-8,${JSON.stringify(require("./example.json"))}`}
         download="example.json"
@@ -104,35 +106,72 @@ const About = (
       >
       (Click here for an example)
       </HyperLink>
+      </div>
 
       <pre style={{ fontSize: 14 }}>{`
 [
   {
     "handle": "<DISTRIBUTION-SPECIFIC-HANDLE>"
-    "mint": "<BASE58-TOKEN-MINT>"
-    "amount": <#-TOKENS>
+    "amount": <#-TOKENS-OR-CANDY-MINTS>
   },
   ...
 ]`}</pre>
-      </div>
 
       <div>
+      NB: When a candy-machine is supplied, update authority for the
+      candy-machine will be transferred to the Merkle Airdrop state. This can
+      be reclaimed by closing the Merkle Airdrop.
+      </div>
+    </Stack>
+  );
+
+  const claim = (
+    <Stack spacing={1}>
       <Link to="/claim">
         CLAIMS
       </Link>
-      {WHITESPACE}are redeemed through a URL with query parameters holding
-      claim-specific keys. Claimants will need to verify ownership of the
-      specified handle by answering a OTP challenge.
-      </div>
 
       <div>
+      Claims are redeemed through a URL with query parameters holding
+      claim-specific keys. Claimants will need to verify ownership of the
+      specified handle by answering a OTP challenge and pay the rent and
+      minting fees if applicable.
+      </div>
+    </Stack>
+  );
+
+  const close = (
+    <Stack spacing={1}>
       <Link to="/close">
         CLOSING
       </Link>
-      {WHITESPACE}the Merkle Distributor accounts cleans up the on-chain state
-      and allows creators to recycle any lamports held for rent-exemption after
-      the airdrop is complete.
+
+      <div>
+      Closing the Merkle Airdrop cleans up the on-chain state and allows
+      creators to recycle any lamports held for rent-exemption after the
+      airdrop is complete.
       </div>
+
+      <div>
+      When closing a candy-machine-integrated distributor, update authority
+      will be transferred back to the wallet owner.
+      </div>
+    </Stack>
+  );
+
+  const steps = [
+    { name: "summary" , inner: summary } ,
+    { name: "create"  , inner: create  } ,
+    { name: "claim"   , inner: claim   } ,
+    { name: "close"   , inner: close   } ,
+  ];
+  return (
+    <Stack
+      alignContent="left"
+      textAlign="left"
+      spacing={2}
+    >
+      {steps.map(s => s.inner)}
     </Stack>
   );
 };
@@ -191,13 +230,15 @@ function App() {
     [colorModeCtx.mode]
   );
 
+  const { height } = useWindowDimensions();
+
   return (
     <div className="App" style={{ backgroundColor: "transparent" }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Header />
-        <Centered height="100ch" width="60ch">
-          <Box sx={{height: "10ch"}} />
+        <Centered height={ `${height * 0.8}px` } width="60ch">
+          <Box height="60px" />
           <HashRouter>
             <Switch>
               <Route path="/create" component={Create} />
@@ -206,6 +247,7 @@ function App() {
               <Route path="/" component={About} />
             </Switch>
           </HashRouter>
+          <Box height="80px" />
         </Centered>
       </ThemeProvider>
     </div>
