@@ -636,37 +636,59 @@ programCommand('update_candy_machine')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option('--new-authority <Pubkey>', 'New Authority. Base58-encoded')
   .action(async (directory, cmd) => {
-    const { keypair, env, date, rpcUrl, price, cacheName } = cmd.opts();
+    const { keypair, env, date, rpcUrl, price, newAuthority, cacheName } = cmd.opts();
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = date ? parseDate(date) : null;
     const lamports = price ? parsePrice(price) : null;
+    const newAuthorityKey = newAuthority ? new PublicKey(newAuthority) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
-    const tx = await anchorProgram.rpc.updateCandyMachine(
-      lamports ? new anchor.BN(lamports) : null,
-      secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
-      {
-        accounts: {
-          candyMachine,
-          authority: walletKeyPair.publicKey,
-        },
-      },
-    );
 
-    cacheContent.startDate = secondsSinceEpoch;
-    saveCache(cacheName, env, cacheContent);
-    if (date)
-      log.info(
-        ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
+    if (lamports || secondsSinceEpoch) {
+      const tx = await anchorProgram.rpc.updateCandyMachine(
+        lamports ? new anchor.BN(lamports) : null,
+        secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
+        {
+          accounts: {
+            candyMachine,
+            authority: walletKeyPair.publicKey,
+          },
+        },
       );
-    if (lamports)
-      log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
-    log.info('update_candy_machine finished', tx);
+
+      cacheContent.startDate = secondsSinceEpoch;
+      if (date)
+        log.info(
+          ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
+        );
+      if (lamports)
+        log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
+      log.info('update_candy_machine finished', tx);
+    }
+
+    if (newAuthorityKey) {
+      const tx = await anchorProgram.rpc.updateAuthority(
+        newAuthorityKey,
+        {
+          accounts: {
+            candyMachine,
+            authority: walletKeyPair.publicKey,
+          },
+        },
+      );
+
+      cacheContent.authority = newAuthorityKey.toBase58();
+      log.info(` - updated authority: ${newAuthorityKey.toBase58()}`);
+      log.info('update_authority finished', tx);
+    }
+
+    saveCache(cacheName, env, cacheContent);
   });
 
 programCommand('mint_one_token')
