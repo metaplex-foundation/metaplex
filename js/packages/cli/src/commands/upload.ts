@@ -14,6 +14,7 @@ import { awsUpload } from '../helpers/upload/aws';
 import { arweaveUpload } from '../helpers/upload/arweave';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { chunks } from '../helpers/various';
+import { nativeArweaveUpload } from '../helpers/upload/arweave-native';
 
 export async function upload(
   files: string[],
@@ -26,6 +27,7 @@ export async function upload(
   mutable: boolean,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
+  jwk: string,
 ): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -55,7 +57,7 @@ export async function upload(
   existingInCache.forEach(f => {
     if (!seen[f]) {
       seen[f] = true;
-      newFiles.push(f + '.png');
+      newFiles.push(f + EXTENSION_PNG);
     }
   });
 
@@ -127,6 +129,15 @@ export async function upload(
 
       if (!link) {
         try {
+          if (storage === 'arweave-native') {
+            const arweaveKey = JSON.parse(fs.readFileSync(jwk).toString());
+            link = await nativeArweaveUpload(
+              walletKeyPair,
+              anchorProgram,
+              arweaveKey,
+            );
+          }
+
           if (storage === 'arweave') {
             link = await arweaveUpload(
               walletKeyPair,

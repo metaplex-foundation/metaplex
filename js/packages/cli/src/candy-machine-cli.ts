@@ -56,7 +56,7 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .option(
     '-s, --storage <string>',
-    'Database to use for storage (arweave, ipfs, aws)',
+    'Database to use for storage (arweave, arweave-native ipfs, aws)',
     'arweave',
   )
   .option(
@@ -70,6 +70,10 @@ programCommand('upload')
   .option(
     '--aws-s3-bucket <string>',
     '(existing) AWS S3 Bucket name (required if using aws)',
+  )
+  .option(
+    '--jwk <string>',
+    'Path to Arweave wallet file (required if using Arweave Native)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
   .option('--no-mutable', 'Metadata will not be editable')
@@ -85,7 +89,14 @@ programCommand('upload')
       awsS3Bucket,
       retainAuthority,
       mutable,
+      jwk,
     } = cmd.opts();
+
+    if (storage === 'arweave-native' && !jwk) {
+      throw new Error(
+        'Path to Arweave JWK wallet file must be provided when using arweave-native',
+      );
+    }
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
       throw new Error(
@@ -146,6 +157,7 @@ programCommand('upload')
         mutable,
         ipfsCredentials,
         awsS3Bucket,
+        jwk,
       );
 
       if (successful) {
