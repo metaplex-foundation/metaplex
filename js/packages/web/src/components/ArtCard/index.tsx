@@ -62,6 +62,7 @@ export const ArtCard = (props: ArtCardProps) => {
         <>
           {close && (
             <Button
+              className="metaplex-square-w"
               shape="circle"
               onClick={e => {
                 e.stopPropagation();

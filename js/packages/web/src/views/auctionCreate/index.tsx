@@ -17,7 +17,7 @@ import {
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
-import { Button, Col, Row, Steps } from 'antd';
+import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -654,12 +654,14 @@ export const AuctionCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          {stepsByCategory[attributes.category][step][1]}
-          {0 < step && stepsVisible && (
-            <div>
-              <Button onClick={() => gotoNextStep(step - 1)}>Back</Button>
-            </div>
-          )}
+          <Space className="metaplex-fullwidth metaplex-space-align-stretch" direction="vertical">
+            {stepsByCategory[attributes.category][step][1]}
+            {0 < step && stepsVisible && (
+              <Row justify="center">
+                <Button onClick={() => gotoNextStep(step - 1)}>Back</Button>
+              </Row>
+            )}
+          </Space>
         </Col>
       </Row>
     </>

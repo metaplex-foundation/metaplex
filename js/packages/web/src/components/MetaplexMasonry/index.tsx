@@ -9,14 +9,17 @@ const COL_BREAKPOINTS = {
   500: 1,
 };
 
-export const MetaplexMasonry = (
-  props: Omit<
-    MasonryProps & HTMLProps<HTMLElement>,
-    'ref' | 'className' | 'columnClassName'
-  >,
-) => (
+const CLASS_NAME = 'metaplex-masonry';
+
+export const MetaplexMasonry = ({
+  className,
+  ...props
+}: Omit<
+  MasonryProps & HTMLProps<HTMLElement>,
+  'ref' | 'className' | 'columnClassName'
+> & { className?: string }) => (
   <Masonry
-    className="metaplex-masonry"
+    className={className ? `${CLASS_NAME} ${className}` : CLASS_NAME}
     columnClassName="metaplex-masonry-column"
     breakpointCols={props.breakpointCols ?? COL_BREAKPOINTS}
     {...props}

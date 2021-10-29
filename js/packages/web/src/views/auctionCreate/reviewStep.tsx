@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Connection } from '@solana/web3.js';
-import { Button, Col, Divider, Row, Spin, Statistic } from 'antd';
+import { Button, Col, Divider, Row, Space, Spin, Statistic } from 'antd';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { AuctionCategory, AuctionState } from '.';
@@ -20,16 +20,15 @@ export const ReviewStep = (props: {
     //   props.connection.getMinimumBalanceForRentExemption(MAX_METADATA_LEN),
     // ]);
     // TODO: add
+    // TODO: ^ what does that mean
   }, [setCost]);
 
   const item = props.attributes.items?.[0];
 
   return (
-    <>
-      <Row>
-        <h2>Review and list</h2>
-        <p>Review your listing before publishing.</p>
-      </Row>
+    <Space className="metaplex-fullwidth" direction="vertical">
+      <h2>Review and list</h2>
+      <p>Review your listing before publishing.</p>
       <Row>
         <Col xl={12}>
           {item?.metadata.info && (
@@ -52,7 +51,7 @@ export const ReviewStep = (props: {
           )}
         </Col>
       </Row>
-      <Row>
+      <div>
         <Divider />
         <Statistic
           title="Start date"
@@ -84,25 +83,24 @@ export const ReviewStep = (props: {
               : 'Until sold'
           }
         />
-      </Row>
-      <Row>
-        <Button
-          type="primary"
-          size="large"
-          onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-              startListTS: props.attributes.startListTS || moment().unix(),
-              startSaleTS: props.attributes.startSaleTS || moment().unix(),
-            });
-            props.confirm();
-          }}
-        >
-          {props.attributes.category === AuctionCategory.InstantSale
-            ? 'List for Sale'
-            : 'Publish Auction'}
-        </Button>
-      </Row>
-    </>
+      </div>
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        onClick={() => {
+          props.setAttributes({
+            ...props.attributes,
+            startListTS: props.attributes.startListTS || moment().unix(),
+            startSaleTS: props.attributes.startSaleTS || moment().unix(),
+          });
+          props.confirm();
+        }}
+      >
+        {props.attributes.category === AuctionCategory.InstantSale
+          ? 'List for Sale'
+          : 'Publish Auction'}
+      </Button>
+    </Space>
   );
 };
