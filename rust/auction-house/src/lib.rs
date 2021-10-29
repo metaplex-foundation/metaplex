@@ -79,6 +79,13 @@ pub mod auction_house {
             &[auction_house.bump],
         ];
 
+        let ah_key = auction_house.key();
+        let auction_house_treasury_seeds = [
+            PREFIX.as_bytes(),
+            ah_key.as_ref(),
+            TREASURY.as_bytes(),
+            &[auction_house.treasury_bump],
+        ];
         if !is_native {
             invoke_signed(
                 &spl_token::instruction::transfer(
@@ -109,7 +116,7 @@ pub mod auction_house {
                     treasury_withdrawal_destination.to_account_info(),
                     system_program.to_account_info(),
                 ],
-                &[&auction_house_seeds],
+                &[&auction_house_treasury_seeds],
             )?;
         }
 
@@ -509,7 +516,6 @@ pub mod auction_house {
         let auction_house_fee_account = &ctx.accounts.auction_house_fee_account;
         let trade_state = &ctx.accounts.trade_state;
         let token_program = &ctx.accounts.token_program;
-        let system_program = &ctx.accounts.system_program;
 
         assert_keys_equal(token_mint.key(), token_account.mint)?;
 
@@ -525,7 +531,7 @@ pub mod auction_house {
             &[auction_house.fee_payer_bump],
         ];
 
-        let (fee_payer, fee_payer_seeds) = get_fee_payer(
+        let (fee_payer, _) = get_fee_payer(
             authority,
             auction_house,
             wallet.to_account_info(),
@@ -533,21 +539,15 @@ pub mod auction_house {
             &seeds,
         )?;
 
-        invoke_signed(
-            &system_instruction::transfer(
-                &trade_state.key(),
-                fee_payer.key,
-                trade_state.lamports(),
-            ),
-            &[
-                trade_state.to_account_info(),
-                fee_payer.clone(),
-                system_program.to_account_info(),
-            ],
-            &[fee_payer_seeds],
-        )?;
+        let curr_lamp = trade_state.lamports();
+        **trade_state.lamports.borrow_mut() = 0;
 
-        if token_account.owner == wallet.key() {
+        **fee_payer.lamports.borrow_mut() = fee_payer
+            .lamports()
+            .checked_add(curr_lamp)
+            .ok_or(ErrorCode::NumericalOverflow)?;
+
+        if token_account.owner == wallet.key() && wallet.is_signer {
             invoke_signed(
                 &revoke(
                     &token_program.key(),
@@ -567,6 +567,7 @@ pub mod auction_house {
 
         Ok(())
     }
+
     pub fn execute_sale<'info>(
         ctx: Context<'_, '_, '_, 'info, ExecuteSale<'info>>,
         escrow_payment_bump: u8,
@@ -1172,7 +1173,9 @@ pub struct Buy<'info> {
 #[derive(Accounts)]
 #[instruction(escrow_payment_bump: u8, free_trade_state_bump: u8, program_as_signer_bump: u8, buyer_price: u64, token_size: u64)]
 pub struct ExecuteSale<'info> {
+    #[account(mut)]
     buyer: UncheckedAccount<'info>,
+    #[account(mut)]
     seller: UncheckedAccount<'info>,
     // cannot mark these as real Accounts or else we blow stack size limit
     #[account(mut)]
@@ -1251,7 +1254,9 @@ pub struct Withdraw<'info> {
 #[derive(Accounts)]
 #[instruction(buyer_price: u64, token_size: u64)]
 pub struct Cancel<'info> {
+    #[account(mut)]
     wallet: UncheckedAccount<'info>,
+    #[account(mut)]
     token_account: Account<'info, TokenAccount>,
     token_mint: Account<'info, Mint>,
     authority: UncheckedAccount<'info>,
@@ -1262,7 +1267,6 @@ pub struct Cancel<'info> {
     #[account(mut, seeds=[PREFIX.as_bytes(), wallet.key().as_ref(), auction_house.key().as_ref(), token_account.key().as_ref(), auction_house.treasury_mint.as_ref(), token_mint.key().as_ref(), &buyer_price.to_le_bytes(), &token_size.to_le_bytes()], bump=trade_state.to_account_info().data.borrow()[0])]
     trade_state: UncheckedAccount<'info>,
     token_program: Program<'info, Token>,
-    system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

@@ -349,6 +349,304 @@ programCommand('sell')
     );
   });
 
+programCommand('withdraw_from_treasury')
+  .option(
+    '-tm, --treasury-mint <string>',
+    'Optional. Mint address of treasury. If not used, default to SOL. Ignored if providing -ah arg',
+  )
+  .option(
+    '-ah, --auction-house <string>',
+    'Specific auction house(if not provided, we assume you are asking for your own)',
+  )
+  .option('-a, --amount <string>', 'Amount to withdraw')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, auctionHouse, treasuryMint, amount } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const anchorProgram = await loadAuctionHouseProgram(walletKeyPair, env);
+
+    let tMintKey;
+    if (!treasuryMint) {
+      log.info('No treasury mint detected, using SOL.');
+      tMintKey = WRAPPED_SOL_MINT;
+    } else {
+      tMintKey = new web3.PublicKey(treasuryMint);
+    }
+
+    const auctionHouseKey = await getAuctionHouseFromOpts(
+      auctionHouse,
+      walletKeyPair,
+      tMintKey,
+    );
+
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+
+    const amountAdjusted = new BN(
+      await getPriceWithMantissa(
+        amount,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair,
+        anchorProgram,
+      ),
+    );
+    const signers = [];
+
+    const instruction = await anchorProgram.instruction.withdrawFromTreasury(
+      amountAdjusted,
+      {
+        accounts: {
+          //@ts-ignore
+          treasuryMint: auctionHouseObj.treasuryMint,
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          treasuryWithdrawalDestination:
+            //@ts-ignore
+            auctionHouseObj.treasuryWithdrawalDestination,
+          //@ts-ignore
+          auctionHouseTreasury: auctionHouseObj.auctionHouseTreasury,
+          auctionHouse: auctionHouseKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: web3.SystemProgram.programId,
+        },
+        signers,
+      },
+    );
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Withdrew',
+      amountAdjusted.toNumber(),
+      'from your account with Auction House',
+      auctionHouse,
+    );
+  });
+
+programCommand('withdraw_from_fees')
+  .option(
+    '-tm, --treasury-mint <string>',
+    'Optional. Mint address of treasury. If not used, default to SOL. Ignored if providing -ah arg',
+  )
+  .option(
+    '-ah, --auction-house <string>',
+    'Specific auction house(if not provided, we assume you are asking for your own)',
+  )
+  .option('-a, --amount <string>', 'Amount to withdraw')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const { keypair, env, auctionHouse, treasuryMint, amount } = cmd.opts();
+
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const anchorProgram = await loadAuctionHouseProgram(walletKeyPair, env);
+
+    let tMintKey;
+    if (!treasuryMint) {
+      log.info('No treasury mint detected, using SOL.');
+      tMintKey = WRAPPED_SOL_MINT;
+    } else {
+      tMintKey = new web3.PublicKey(treasuryMint);
+    }
+
+    const auctionHouseKey = await getAuctionHouseFromOpts(
+      auctionHouse,
+      walletKeyPair,
+      tMintKey,
+    );
+
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+
+    const amountAdjusted = new BN(
+      await getPriceWithMantissa(
+        amount,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair,
+        anchorProgram,
+      ),
+    );
+    const signers = [];
+
+    const instruction = await anchorProgram.instruction.withdrawFromFee(
+      amountAdjusted,
+      {
+        accounts: {
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          feeWithdrawalDestination:
+            //@ts-ignore
+            auctionHouseObj.feeWithdrawalDestination,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          auctionHouse: auctionHouseKey,
+          systemProgram: web3.SystemProgram.programId,
+        },
+        signers,
+      },
+    );
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Withdrew',
+      amountAdjusted.toNumber(),
+      'from your account with Auction House',
+      auctionHouse,
+    );
+  });
+
+programCommand('cancel')
+  .option('-ah, --auction-house <string>', 'Specific auction house')
+  .option(
+    '-ak, --auction-house-keypair <string>',
+    'If this auction house requires sign off, pass in keypair for it',
+  )
+  .option(
+    '-aks, --auction-house-signs',
+    'If you want to simulate the auction house changing the price without your sign off',
+  )
+  .option('-b, --buy-price <string>', 'Price you wish to sell for')
+  .option('-m, --mint <string>', 'Mint of the token to purchase')
+  .option('-t, --token-size <string>', 'Amount of tokens you want to sell')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .action(async (directory, cmd) => {
+    const {
+      keypair,
+      env,
+      auctionHouse,
+      auctionHouseKeypair,
+      buyPrice,
+      mint,
+      tokenSize,
+      auctionHouseSigns,
+    } = cmd.opts();
+
+    const auctionHouseKey = new web3.PublicKey(auctionHouse);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const mintKey = new web3.PublicKey(mint);
+
+    const auctionHouseKeypairLoaded = auctionHouseKeypair
+      ? loadWalletKey(auctionHouseKeypair)
+      : null;
+    const anchorProgram = await loadAuctionHouseProgram(
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
+      env,
+    );
+    const auctionHouseObj = await anchorProgram.account.auctionHouse.fetch(
+      auctionHouseKey,
+    );
+
+    const buyPriceAdjusted = new BN(
+      await getPriceWithMantissa(
+        buyPrice,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        walletKeyPair,
+        anchorProgram,
+      ),
+    );
+
+    const tokenSizeAdjusted = new BN(
+      await getPriceWithMantissa(
+        tokenSize,
+        mintKey,
+        walletKeyPair,
+        anchorProgram,
+      ),
+    );
+
+    const tokenAccountKey = (
+      await getAtaForMint(mintKey, walletKeyPair.publicKey)
+    )[0];
+
+    const tradeState = (
+      await getAuctionHouseTradeState(
+        auctionHouseKey,
+        walletKeyPair.publicKey,
+        tokenAccountKey,
+        //@ts-ignore
+        auctionHouseObj.treasuryMint,
+        mintKey,
+        tokenSizeAdjusted,
+        buyPriceAdjusted,
+      )
+    )[0];
+
+    const signers = [];
+
+    const instruction = await anchorProgram.instruction.cancel(
+      buyPriceAdjusted,
+      tokenSizeAdjusted,
+      {
+        accounts: {
+          wallet: walletKeyPair.publicKey,
+          tokenAccount: tokenAccountKey,
+          tokenMint: mintKey,
+          //@ts-ignore
+          authority: auctionHouseObj.authority,
+          auctionHouse: auctionHouseKey,
+          //@ts-ignore
+          auctionHouseFeeAccount: auctionHouseObj.auctionHouseFeeAccount,
+          tradeState,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        },
+        signers,
+      },
+    );
+
+    if (auctionHouseKeypairLoaded) {
+      signers.push(auctionHouseKeypairLoaded);
+
+      instruction.keys
+        .filter(k => k.pubkey.equals(auctionHouseKeypairLoaded.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    if (!auctionHouseSigns) {
+      instruction.keys
+        .filter(k => k.pubkey.equals(walletKeyPair.publicKey))
+        .map(k => (k.isSigner = true));
+    }
+
+    await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      auctionHouseSigns ? auctionHouseKeypairLoaded : walletKeyPair,
+      [instruction],
+      signers,
+      'max',
+    );
+
+    log.info(
+      'Cancelled buy or sale of',
+      tokenSize,
+      mint,
+      'for',
+      buyPrice,
+      'from your account with Auction House',
+      auctionHouse,
+    );
+  });
+
 programCommand('execute_sale')
   .option('-ah, --auction-house <string>', 'Specific auction house')
   .option(
