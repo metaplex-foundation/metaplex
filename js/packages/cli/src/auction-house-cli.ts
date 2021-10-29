@@ -16,7 +16,6 @@ import {
 } from './helpers/accounts';
 import { BN, web3 } from '@project-serum/anchor';
 import {
-  AUCTION_HOUSE_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   WRAPPED_SOL_MINT,
 } from './helpers/constants';
@@ -263,7 +262,7 @@ programCommand('sell')
 
     const [programAsSigner, programAsSignerBump] =
       await getAuctionHouseProgramAsSigner();
-    const metadata = await getMetadata(mintKey);
+    // const metadata = await getMetadata(mintKey);
 
     const [tradeState, tradeBump] = await getAuctionHouseTradeState(
       auctionHouseKey,
