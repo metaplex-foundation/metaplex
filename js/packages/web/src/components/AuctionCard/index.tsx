@@ -24,6 +24,7 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -232,6 +233,8 @@ export const AuctionCard = ({
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
   const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == mintKey)[0]
+  const symbol = tokenInfo? tokenInfo.symbol: mintKey == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"
+
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
@@ -642,7 +645,7 @@ export const AuctionCard = ({
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                         : ''
                     }
-                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more` }
+                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} ${symbol} or more` }
                   />
                 </div>
                 <div className={'bid-buttons'}>

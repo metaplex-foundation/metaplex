@@ -927,7 +927,7 @@ const InstantSaleStep = ({
               className="input"
               placeholder="Price"
               prefix="◎"
-              suffix={mintInfo?.symbol}
+              suffix={mintInfo?.symbol || "CUSTOM"}
               onChange={info =>
                 setAttributes({
                   ...attributes,
@@ -1147,7 +1147,8 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Fixed Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol: "SOL"}
+                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
+                    : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1172,7 +1173,8 @@ const PriceAuction = (props: {
                 className="input"
                 placeholder="Price"
                 prefix="◎"
-                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol: "SOL"}
+                suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
+                  : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
                 onChange={info =>
                   props.setAttributes({
                     ...props.attributes,
@@ -1191,9 +1193,11 @@ const PriceAuction = (props: {
               type="number"
               min={0}
               className="input"
-              placeholder={`Tick size in ${props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol: "SOL"}`}
+              placeholder={`Tick size in ${props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
+                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "your custom currency"}`}
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol: "SOL"}
+              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
+                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
@@ -1854,7 +1858,8 @@ const ParticipationStep = (props: {
               className="input"
               placeholder="Fixed Price"
               prefix="◎"
-              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol: "SOL"}
+              suffix={props.attributes.quoteMintInfoExtended? props.attributes.quoteMintInfoExtended.symbol
+                : props.attributes.quoteMintAddress == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"}
               onChange={info =>
                 props.setAttributes({
                   ...props.attributes,
