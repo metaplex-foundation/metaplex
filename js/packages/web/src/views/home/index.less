@@ -29,38 +29,40 @@ a:active {
   color: #b480eb;
 }
 
-.my-masonry-grid {
-  display: -webkit-box; /* Not needed if autoprefixing */
-  display: -ms-flexbox; /* Not needed if autoprefixing */
+.masonry-grid {
   display: flex;
-  width: auto;
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
   margin-left: -32px !important;
 }
 
-.my-masonry-grid_column {
+.masonry-grid_column {
   padding-left: 32px !important; /* gutter size */
   background-clip: padding-box;
 }
 
-.my-masonry-grid_column > div {
+.masonry-grid_column > div {
   /* change div to reference your elements you put in <Masonry> */
   margin-bottom: 30px;
 }
 .ant-tabs-ink-bar {
   display: none;
 }
-.ant-tabs-top > .ant-tabs-nav::before, .ant-tabs-top > div > .ant-tabs-nav::before {
-    display: none;
+.ant-tabs-top > .ant-tabs-nav::before,
+.ant-tabs-top > div > .ant-tabs-nav::before {
+  display: none;
 }
-.ant-tabs-top > .ant-tabs-nav, .ant-tabs-bottom > .ant-tabs-nav, .ant-tabs-top > div > .ant-tabs-nav, .ant-tabs-bottom > div > .ant-tabs-nav {
+.ant-tabs-top > .ant-tabs-nav,
+.ant-tabs-bottom > .ant-tabs-nav,
+.ant-tabs-top > div > .ant-tabs-nav,
+.ant-tabs-bottom > div > .ant-tabs-nav {
   margin-bottom: 24px;
 }
 .ant-tabs-tab + .ant-tabs-tab {
   margin-left: 8px;
 }
-.ant-tabs-tab{
+.ant-tabs-tab {
   /* Auto Layout */
   display: flex;
   flex-direction: row;
@@ -72,7 +74,7 @@ a:active {
   font-weight: 600;
   height: 40px;
   opacity: 0.8;
-  &.ant-tabs-tab-active{
+  &.ant-tabs-tab-active {
     background: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 24px rgba(26, 26, 26, 0.12);
     border-radius: 8px;
@@ -100,21 +102,19 @@ a:active {
     flex: none;
     order: 0;
     flex-grow: 0;
-    margin-right:12px;
-
+    margin-right: 12px;
   }
-
 }
 
 /* Optional, different gutter size on mobile */
 @media (max-width: 800px) {
-  .my-masonry-grid {
+  .masonry-grid {
     margin-left: -15px; /* gutter size offset */
   }
-  .my-masonry-grid_column {
+  .masonry-grid_column {
     padding-left: 15px; /* gutter size offset */
   }
-  .my-masonry-grid_column > div {
+  .masonry-grid_column > div {
     margin-bottom: 15px; /* space between items */
   }
 }
