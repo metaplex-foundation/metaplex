@@ -480,7 +480,7 @@ export const InnerBillingView = ({
                   TOTAL UNREDEEMED PARTICIPATION FEES OUTSTANDING
                 </div>
                 <div className="outstanding-open-editions">
-                  ◎{fromLamports(participationUnredeemedTotal, mint)}
+                {auctionView.auctionManager.acceptPayment == WRAPPED_SOL_MINT.toBase58()? "◎": ""}{fromLamports(participationUnredeemedTotal, mint)}
                 </div>
                 <br />
               </>
