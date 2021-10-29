@@ -1,4 +1,5 @@
-import { PublicKey, AccountInfo } from '@solana/web3.js';
+import * as anchor from '@project-serum/anchor';
+import { Connection, PublicKey, AccountInfo } from '@solana/web3.js';
 
 export type StringPublicKey = string;
 
@@ -53,6 +54,18 @@ export const MEMO_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcH
 
 export const SYSTEM = new PublicKey('11111111111111111111111111111111');
 
-export const MERKLE_DISTRIBUTOR_ID = new PublicKey("SNTgKsRZxQZRVXjtr7UvzTDAg2TKStYVgojUf9GyapQ");
+export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+
+export const CANDY_MACHINE_ID = new PublicKey('DDnmBpiGYyeoPGqfjxEoANTP5x3WXzU4NYv8tdHmGyPi');
+
+export const MERKLE_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
 
 export const MERKLE_TEMPORAL_SIGNER = new PublicKey("MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV");
+
+export const fetchCoder = async (
+  address : anchor.Address,
+  connection : Connection,
+) : Promise<anchor.Coder | null> => {
+  return new anchor.Coder(await anchor.Program.fetchIdl(
+      address, { connection: connection } as anchor.Provider));
+}

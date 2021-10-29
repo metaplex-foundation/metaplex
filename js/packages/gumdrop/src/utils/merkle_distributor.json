@@ -60,6 +60,11 @@
           "isSigner": false
         },
         {
+          "name": "distributorWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "receiver",
           "isMut": false,
           "isSigner": true
@@ -78,6 +83,10 @@
       "args": [
         {
           "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "walletBump",
           "type": "u8"
         }
       ]
@@ -129,6 +138,129 @@
       "args": [
         {
           "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "index",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "claimantAccount",
+          "type": "publicKey"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "claimCandy",
+      "accounts": [
+        {
+          "name": "distributor",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "distributorWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "claimStatus",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "temporal",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "payer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "candyMachineConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachine",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachineWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachineMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachineMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachineMasterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "candyMachineProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "walletBump",
+          "type": "u8"
+        },
+        {
+          "name": "claimBump",
           "type": "u8"
         },
         {
@@ -260,5 +392,8 @@
       "name": "TemporalMismatch",
       "msg": "Temporal signer did not match distributor"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG"
+  }
 }

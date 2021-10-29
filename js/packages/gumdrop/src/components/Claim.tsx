@@ -6,7 +6,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
   Link as HyperLink,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Step,
   StepLabel,
@@ -18,13 +22,19 @@ import {
   useWallet,
 } from "@solana/wallet-adapter-react";
 import {
+  Connection as RPCConnection,
+  Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  SYSVAR_CLOCK_PUBKEY,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
   AccountLayout,
+  MintLayout,
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -40,13 +50,349 @@ import {
   Connection,
 } from "../contexts";
 import {
+  CANDY_MACHINE_ID,
   MERKLE_DISTRIBUTOR_ID,
   MERKLE_TEMPORAL_SIGNER,
+  TOKEN_METADATA_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  fetchCoder,
   notify,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
 import { coder } from "../utils/merkleDistributor";
+
+const buildMintClaim = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  distributorKey : PublicKey,
+  distributorInfo : any,
+  tokenAcc : string,
+  proof : Array<Buffer>,
+  handle : string,
+  amount : number,
+  index : number,
+  pin : Array<number>,
+) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+  let tokenAccKey: PublicKey;
+  try {
+    tokenAccKey = new PublicKey(tokenAcc);
+  } catch (err) {
+    throw new Error(`Invalid tokenAcc key ${err}`);
+  }
+  const distTokenAccount = await connection.getAccountInfo(tokenAccKey);
+  if (distTokenAccount === null) {
+    throw new Error(`Could not fetch distributor token account`);
+  }
+
+  const tokenAccountInfo = AccountLayout.decode(distTokenAccount.data);
+  const mint = new PublicKey(tokenAccountInfo.mint);
+
+  console.log(mint.toBase58());
+
+  const pdaSeeds = [
+    mint.toBuffer(),
+    Buffer.from(handle),
+    Buffer.from(pin),
+  ];
+
+  const [claimantPda, ] = await PublicKey.findProgramAddress(
+    pdaSeeds,
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  // TODO: since it's in the PDA do we need it to be in the leaf?
+  const leaf = Buffer.from(
+    [...new BN(index).toArray("le", 8),
+     ...claimantPda.toBuffer(),
+     ...mint.toBuffer(),
+     ...new BN(amount).toArray("le", 8),
+    ]
+  );
+
+  const matches = MerkleTree.verifyClaim(
+    leaf, proof, Buffer.from(distributorInfo.root)
+  );
+
+  if (!matches) {
+    throw new Error("Merkle proof does not match");
+  }
+
+  const [claimStatus, cbump] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("ClaimStatus"),
+      Buffer.from(new BN(index).toArray("le", 8)),
+      distributorKey.toBuffer(),
+    ],
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  const setup : Array<TransactionInstruction> = [];
+
+  if (await connection.getAccountInfo(walletTokenKey) === null) {
+    setup.push(Token.createAssociatedTokenAccountInstruction(
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        walletTokenKey,
+        walletKey,
+        walletKey
+      ));
+  }
+
+  const claimAirdrop = new TransactionInstruction({
+      programId: MERKLE_DISTRIBUTOR_ID,
+      keys: [
+          { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
+          { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
+          { pubkey: tokenAccKey             , isSigner: false , isWritable: true  } ,
+          { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
+          { pubkey: MERKLE_TEMPORAL_SIGNER  , isSigner: true  , isWritable: false } ,
+          { pubkey: walletKey               , isSigner: true  , isWritable: false } ,  // payer
+          { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
+          { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
+      ],
+      data: Buffer.from([
+        ...Buffer.from(sha256.digest("global:claim")).slice(0, 8),
+        ...new BN(cbump).toArray("le", 1),
+        ...new BN(index).toArray("le", 8),
+        ...new BN(amount).toArray("le", 8),
+        ...claimantPda.toBuffer(),
+        ...new BN(proof.length).toArray("le", 4),
+        ...Buffer.concat(proof),
+      ])
+  })
+
+  return [[...setup, claimAirdrop], pdaSeeds, []];
+}
+
+const getCandyMachineAddress = async (
+  config: PublicKey,
+  uuid: string,
+) => {
+  return await PublicKey.findProgramAddress(
+    [Buffer.from("candy_machine"), config.toBuffer(), Buffer.from(uuid)],
+    CANDY_MACHINE_ID,
+  );
+};
+
+const getMetadata = async (
+  mint: PublicKey,
+): Promise<PublicKey> => {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+
+const getMasterEdition = async (
+  mint: PublicKey,
+): Promise<PublicKey> => {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from('edition'),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+
+
+const buildCandyClaim = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  distributorKey : PublicKey,
+  distributorInfo : any,
+  candyConfig : string,
+  candyUUID : string,
+  proof : Array<Buffer>,
+  handle : string,
+  index : number,
+  pin : Array<number>,
+) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+
+  let configKey : PublicKey;
+  try {
+    configKey = new PublicKey(candyConfig);
+  } catch (err) {
+    throw new Error(`Invalid candy config key ${err}`);
+  }
+
+  const pdaSeeds = [
+    configKey.toBuffer(),
+    Buffer.from(handle),
+    Buffer.from(pin),
+  ];
+
+  const [claimantPda, ] = await PublicKey.findProgramAddress(
+    pdaSeeds,
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  // TODO: since it's in the PDA do we need it to be in the leaf?
+  const leaf = Buffer.from(
+    [...new BN(index).toArray("le", 8),
+     ...claimantPda.toBuffer(),
+     ...configKey.toBuffer(),
+     ...new BN(1).toArray("le", 8),
+    ]
+  );
+
+  const matches = MerkleTree.verifyClaim(
+    leaf, proof, Buffer.from(distributorInfo.root)
+  );
+
+  if (!matches) {
+    throw new Error("Merkle proof does not match");
+  }
+
+  const [claimStatus, cbump] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("ClaimStatus"),
+      Buffer.from(new BN(index).toArray("le", 8)),
+      distributorKey.toBuffer(),
+    ],
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  const setup : Array<TransactionInstruction> = [];
+
+  const candyMachineMint = Keypair.generate();
+  const [candyMachineKey, ] = await getCandyMachineAddress(configKey, candyUUID);
+
+  console.log(candyMachineKey.toBase58(), configKey.toBase58());
+
+  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
+  if (candyMachineCoder === null) {
+    throw new Error(`Could not fetch candy machine IDL`);
+  }
+  const candyMachineAccount = await connection.getAccountInfo(candyMachineKey);
+  if (candyMachineAccount === null) {
+    throw new Error(`Could not fetch candy machine`);
+  }
+  const candyMachine = candyMachineCoder.accounts.decode(
+      "CandyMachine", candyMachineAccount.data);
+  console.log(candyMachine);
+
+  const candyMachineMetadata = await getMetadata(candyMachineMint.publicKey);
+  const candyMachineMaster = await getMasterEdition(candyMachineMint.publicKey);
+
+  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      candyMachineMint.publicKey.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("Wallet"),
+      distributorKey.toBuffer(),
+    ],
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  console.log(candyMachine.data.price, LAMPORTS_PER_SOL);
+  setup.push(SystemProgram.transfer({
+    fromPubkey: walletKey,
+    toPubkey: distributorWalletKey,
+    lamports: new BN(candyMachine.data.price).add(new BN(LAMPORTS_PER_SOL)).toNumber(),
+  }));
+
+  setup.push(SystemProgram.createAccount({
+    fromPubkey: walletKey,
+    newAccountPubkey: candyMachineMint.publicKey,
+    space: MintLayout.span,
+    lamports:
+      await connection.getMinimumBalanceForRentExemption(
+        MintLayout.span,
+      ),
+    programId: TOKEN_PROGRAM_ID,
+  }));
+
+  setup.push(Token.createInitMintInstruction(
+    TOKEN_PROGRAM_ID,
+    candyMachineMint.publicKey,
+    0,
+    walletKey,
+    walletKey,
+  ));
+
+  setup.push(Token.createAssociatedTokenAccountInstruction(
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    candyMachineMint.publicKey,
+    walletTokenKey,
+    walletKey,
+    walletKey
+  ));
+
+  setup.push(Token.createMintToInstruction(
+    TOKEN_PROGRAM_ID,
+    candyMachineMint.publicKey,
+    walletTokenKey,
+    walletKey,
+    [],
+    1,
+  ));
+
+  const claimAirdrop = new TransactionInstruction({
+      programId: MERKLE_DISTRIBUTOR_ID,
+      keys: [
+          { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
+          { pubkey: distributorWalletKey      , isSigner: false , isWritable: true  } ,
+          { pubkey: claimStatus               , isSigner: false , isWritable: true  } ,
+          { pubkey: MERKLE_TEMPORAL_SIGNER    , isSigner: true  , isWritable: false } ,
+          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
+
+          { pubkey: configKey                 , isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachineKey           , isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachine.wallet       , isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachineMint.publicKey, isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachineMetadata      , isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachineMaster        , isSigner: false , isWritable: true  } ,
+
+          { pubkey: SystemProgram.programId   , isSigner: false , isWritable: false } ,
+          { pubkey: TOKEN_PROGRAM_ID          , isSigner: false , isWritable: false } ,
+          { pubkey: TOKEN_METADATA_PROGRAM_ID , isSigner: false , isWritable: false } ,
+          { pubkey: CANDY_MACHINE_ID          , isSigner: false , isWritable: false } ,
+          { pubkey: SYSVAR_RENT_PUBKEY        , isSigner: false , isWritable: false } ,
+          { pubkey: SYSVAR_CLOCK_PUBKEY       , isSigner: false , isWritable: false } ,
+      ],
+      data: Buffer.from([
+        ...Buffer.from(sha256.digest("global:claim_candy")).slice(0, 8),
+        ...new BN(wbump).toArray("le", 1),
+        ...new BN(cbump).toArray("le", 1),
+        ...new BN(index).toArray("le", 8),
+        ...new BN(1).toArray("le", 8),
+        ...claimantPda.toBuffer(),
+        ...new BN(proof.length).toArray("le", 4),
+        ...Buffer.concat(proof),
+      ])
+  })
+
+  return [[...setup, claimAirdrop], pdaSeeds, [candyMachineMint]];
+};
 
 export type ClaimProps = {};
 
@@ -58,7 +404,10 @@ export const Claim = (
 
   let params = queryString.parse(props.location.search);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
+  const [claimMethod, setClaimMethod] = React.useState(params.tokenAcc ? "transfer" : "candy");
   const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
+  const [candyConfig, setCandyConfig] = React.useState(params.config as string || "");
+  const [candyUUID, setCandyUUID] = React.useState(params.uuid as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
   const [amountStr, setAmount] = React.useState(params.amount as string || "");
   const [indexStr, setIndex] = React.useState(params.index as string || "");
@@ -67,9 +416,11 @@ export const Claim = (
 
   const allFieldsPopulated =
     distributor.length > 0
-    && tokenAcc.length > 0
+    && ( params.tokenAcc
+       ? tokenAcc.length > 0 && amountStr.length > 0
+       : candyConfig.length > 0 && candyUUID.length > 0
+       )
     && handle.length > 0
-    && amountStr.length > 0
     && indexStr.length > 0
     && pinStr.length > 0;
     // NB: proof can be empty!
@@ -97,13 +448,9 @@ export const Claim = (
       throw new Error(`Wallet not connected`);
     }
 
-    const amount = Number(amountStr);
     const index = Number(indexStr);
     const pin = pinStr.split(",").map(Number);
 
-    if (isNaN(amount)) {
-      throw new Error(`Could not parse amount ${amountStr}`);
-    }
     if (isNaN(index)) {
       throw new Error(`Could not parse index ${indexStr}`);
     }
@@ -124,22 +471,6 @@ export const Claim = (
 
     console.log(distributorInfo.temporal.toBase58());
 
-    let tokenAccKey: PublicKey;
-    try {
-      tokenAccKey = new PublicKey(tokenAcc);
-    } catch (err) {
-      throw new Error(`Invalid tokenAcc key ${err}`);
-    }
-    const distTokenAccount = await connection.getAccountInfo(tokenAccKey);
-    if (distTokenAccount === null) {
-      throw new Error(`Could not fetch distributor token account`);
-    }
-
-    const tokenAccountInfo = AccountLayout.decode(distTokenAccount.data);
-    const mint = new PublicKey(tokenAccountInfo.mint);
-
-    console.log(mint.toBase58());
-
     const proof = proofStr === "" ? [] : proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
       if (ret.length !== 32)
@@ -147,89 +478,27 @@ export const Claim = (
       return ret;
     });
 
-    const pdaSeeds = [
-      mint.toBuffer(),
-      Buffer.from(handle),
-      Buffer.from(pin),
-    ];
-
-    const [claimantPda, ] = await PublicKey.findProgramAddress(
-      pdaSeeds,
-      MERKLE_DISTRIBUTOR_ID
-    );
-
-    // TODO: since it's in the PDA do we need it to be in the leaf?
-    const leaf = Buffer.from(
-      [...new BN(index).toArray("le", 8),
-       ...claimantPda.toBuffer(),
-       ...mint.toBuffer(),
-       ...new BN(amount).toArray("le", 8),
-      ]
-    );
-
-    const matches = MerkleTree.verifyClaim(
-      leaf, proof, Buffer.from(distributorInfo.root)
-    );
-
-    if (!matches) {
-      throw new Error("Merkle proof does not match");
+    let instructions, pdaSeeds, extraSigners;
+    if (claimMethod === "candy") {
+      console.log("Building candy claim");
+      [instructions, pdaSeeds, extraSigners] = await buildCandyClaim(
+        connection, wallet.publicKey, distributorKey, distributorInfo,
+        candyConfig, candyUUID,
+        proof, handle, index, pin
+      );
+    } else if (claimMethod === "transfer") {
+      const amount = Number(amountStr);
+      if (isNaN(amount)) {
+        throw new Error(`Could not parse amount ${amountStr}`);
+      }
+      [instructions, pdaSeeds, extraSigners] = await buildMintClaim(
+        connection, wallet.publicKey, distributorKey, distributorInfo,
+        tokenAcc,
+        proof, handle, amount, index, pin
+      );
+    } else {
+      throw new Error(`Unknown claim method ${claimMethod}`);
     }
-
-    const [claimStatus, cbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("ClaimStatus"),
-        Buffer.from(new BN(index).toArray("le", 8)),
-        distributorKey.toBuffer(),
-      ],
-      MERKLE_DISTRIBUTOR_ID
-    );
-
-    const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
-    const setup : Array<TransactionInstruction> = [];
-
-    if (await connection.getAccountInfo(walletTokenKey) === null) {
-      setup.push(Token.createAssociatedTokenAccountInstruction(
-          SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          mint,
-          walletTokenKey,
-          wallet.publicKey,
-          wallet.publicKey
-        ));
-    }
-
-    const claimAirdrop = new TransactionInstruction({
-        programId: MERKLE_DISTRIBUTOR_ID,
-        keys: [
-            { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
-            { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
-            { pubkey: tokenAccKey             , isSigner: false , isWritable: true  } ,
-            { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
-            { pubkey: MERKLE_TEMPORAL_SIGNER  , isSigner: true , isWritable: false } ,
-            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,  // payer
-            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-            { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest("global:claim")).slice(0, 8),
-          ...new BN(cbump).toArray("le", 1),
-          ...new BN(index).toArray("le", 8),
-          ...new BN(amount).toArray("le", 8),
-          ...claimantPda.toBuffer(),
-          ...new BN(proof.length).toArray("le", 4),
-          ...Buffer.concat(proof),
-        ])
-    })
-
-    const instructions = [...setup, claimAirdrop];
 
     let transaction = new Transaction();
     instructions.forEach((instruction) => transaction.add(instruction));
@@ -240,8 +509,13 @@ export const Claim = (
     transaction.setSigners(
       // fee payed by the wallet owner
       wallet.publicKey,
-      MERKLE_TEMPORAL_SIGNER
+      MERKLE_TEMPORAL_SIGNER,
+      ...extraSigners.map(s => s.publicKey)
     );
+
+    if (extraSigners.length > 0) {
+      transaction.partialSign(...extraSigners);
+    }
 
     if (!skipAWSWorkflow) {
       const params = {
@@ -295,6 +569,8 @@ export const Claim = (
       throw new Error(`Wallet not connected`);
     }
 
+    // TODO: distinguish between OTP failure and transaction-error. We can try
+    // again on the former but not the latter
     const OTP = Number(OTPStr);
     if (isNaN(OTP) || OTPStr.length === 0) {
       throw new Error(`Could not parse OTP ${OTPStr}`);
@@ -314,7 +590,8 @@ export const Claim = (
       console.log(res);
 
       if (res.StatusCode !== 200) {
-        throw new Error(`Failed to verify AWS OTP. ${JSON.stringify(res)}`);
+        const blob = JSON.stringify(res);
+        throw new Error(`Failed to verify AWS OTP. ${blob}`);
       }
 
       if (res.Payload === undefined) {
@@ -412,6 +689,52 @@ export const Claim = (
     </React.Fragment>
   );
 
+  const claimData = (claimMethod) => {
+    if (claimMethod === "candy") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="config-text-field"
+            label="Candy Config"
+            value={candyConfig}
+            onChange={e => setCandyConfig(e.target.value)}
+            disabled={!editable}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="config-uuid-text-field"
+            label="Candy UUID"
+            value={candyUUID}
+            onChange={e => setCandyUUID(e.target.value)}
+            disabled={!editable}
+          />
+        </React.Fragment>
+      );
+    } else if (claimMethod === "transfer") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="token-acc-text-field"
+            label="Source Token Account"
+            value={tokenAcc}
+            onChange={(e) => setTokenAcc(e.target.value)}
+            disabled={!editable}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="amount-text-field"
+            label="Amount"
+            value={amountStr}
+            onChange={(e) => setAmount(e.target.value)}
+            disabled={!editable}
+          />
+        </React.Fragment>
+      );
+    }
+  };
+
   const populateClaimC = (onClick) => (
     <React.Fragment>
       <TextField
@@ -422,28 +745,31 @@ export const Claim = (
         onChange={(e) => setDistributor(e.target.value)}
         disabled={!editable}
       />
-      <TextField
-        style={{width: "60ch"}}
-        id="token-acc-text-field"
-        label="Source Token Account"
-        value={tokenAcc}
-        onChange={(e) => setTokenAcc(e.target.value)}
-        disabled={!editable}
-      />
+      <FormControl fullWidth>
+        <InputLabel id="claim-method-label">Claim Method</InputLabel>
+        <Select
+          labelId="claim-method-label"
+          id="claim-method-select"
+          value={claimMethod}
+          label="Claim Method"
+          onChange={(e) => {
+            localStorage.setItem("claimMethod", e.target.value);
+            setClaimMethod(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+          disabled={!editable}
+        >
+          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
+          <MenuItem value={"candy"}>Candy Machine</MenuItem>
+        </Select>
+      </FormControl>
+      {claimMethod !== "" && claimData(claimMethod)}
       <TextField
         style={{width: "60ch"}}
         id="handle-text-field"
         label="Handle"
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
-        disabled={!editable}
-      />
-      <TextField
-        style={{width: "60ch"}}
-        id="amount-text-field"
-        label="Amount"
-        value={amountStr}
-        onChange={(e) => setAmount(e.target.value)}
         disabled={!editable}
       />
       <TextField

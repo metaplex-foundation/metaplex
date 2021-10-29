@@ -54,11 +54,20 @@ export const Close = () => {
       ],
       MERKLE_DISTRIBUTOR_ID);
 
+    const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("Wallet"),
+        distributorKey.toBuffer(),
+      ],
+      MERKLE_DISTRIBUTOR_ID
+    );
+
     const closeDistributor = new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
         keys: [
             { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
             { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
+            { pubkey: distributorWalletKey    , isSigner: false , isWritable: true  } ,
             { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
             { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
             { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
@@ -66,6 +75,7 @@ export const Close = () => {
         data: Buffer.from([
           ...Buffer.from(sha256.digest("global:close_distributor")).slice(0, 8),
           ...new BN(dbump).toArray("le", 1),
+          ...new BN(wbump).toArray("le", 1),
         ])
     })
 

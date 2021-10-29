@@ -466,7 +466,7 @@ export const Create = (
         [...new BN(idx).toArray("le", 8),
          ...claimantPda.toBuffer(),
          ...claimant.seed.toBuffer(),
-         ...new BN(claimant.amount).toArray("le", 8),
+         ...new BN(isTokenAirdrop ? claimant.amount : 1).toArray("le", 8),
         ]
       ));
     }
@@ -475,7 +475,7 @@ export const Create = (
     const root = tree.getRoot();
 
 
-    const base = new Keypair();
+    const base = Keypair.generate();
     console.log(`Base ${base.publicKey.toBase58()}`);
     const [distributor, dbump] = await PublicKey.findProgramAddress(
       [
@@ -496,13 +496,13 @@ export const Create = (
       const params = [
         `distributor=${distributor}`,
         `handle=${claimant.handle}`,
-        `amount=${claimant.amount}`,
         `index=${idx}`,
         `pin=${claimant.pin}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
       if (isTokenAirdrop) {
         params.push(`tokenAcc=${claimInfo.source}`);
+        params.push(`amount=${claimant.amount}`);
       } else {
         params.push(`config=${candyConfig}`);
         params.push(`uuid=${candyUUID}`);
