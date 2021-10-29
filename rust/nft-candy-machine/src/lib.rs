@@ -422,6 +422,12 @@ pub mod nft_candy_machine {
 
         Ok(())
     }
+
+    pub fn close_candy_config(
+        _ctx: Context<CloseCandyConfig>,
+    ) -> ProgramResult {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -510,6 +516,27 @@ pub struct UpdateCandyMachine<'info> {
     candy_machine: ProgramAccount<'info, CandyMachine>,
     #[account(signer)]
     authority: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CloseCandyConfig<'info> {
+    #[account(
+        mut,
+        close = receiver
+    )]
+    config: ProgramAccount<'info, Config>,
+    #[account(
+        mut,
+        has_one = config,
+        has_one = authority,
+        seeds = [PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
+        bump = candy_machine.bump,
+    )]
+    candy_machine: ProgramAccount<'info, CandyMachine>,
+    #[account(signer)]
+    authority: AccountInfo<'info>,
+    #[account(mut)]
+    receiver: AccountInfo<'info>,
 }
 
 #[account]

@@ -25,6 +25,7 @@ import {
   loadCandyProgram,
   loadWalletKey,
 } from './helpers/accounts';
+import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
 import { Config } from './types';
 import { upload } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
@@ -689,6 +690,82 @@ programCommand('update_candy_machine')
     }
 
     saveCache(cacheName, env, cacheContent);
+  });
+
+programCommand('close_candy_config')
+  .option('--cache-path <string>')
+  .option('--charity', 'Donate 10% to charity')
+  .action(async (directory, cmd) => {
+    const { keypair, env, charity, cacheName, cachePath } = cmd.opts();
+
+    const cacheContent = loadCache(cacheName, env, cachePath);
+
+    const charityKey = charity
+      ? new PublicKey('DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q')
+      : null;
+
+    if (!cacheContent) {
+      return log.error(
+        `No cache found, can't continue. Make sure you are in the correct directory where the assets are located or use the --cache-path option.`,
+      );
+    }
+
+    const walletKeyPair = loadWalletKey(keypair);
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+
+    const candyAddress = new PublicKey(cacheContent.candyMachineAddress);
+
+    const machine = await anchorProgram.account.candyMachine.fetch(
+      candyAddress,
+    ) as any;
+
+    const beforeLamports = await anchorProgram.provider.connection.getBalance(
+      walletKeyPair.publicKey);
+
+    const tx = await anchorProgram.rpc.closeCandyConfig(
+      {
+        accounts: {
+          config: machine.config,
+          candyMachine: candyAddress,
+          authority: walletKeyPair.publicKey,
+          receiver: walletKeyPair.publicKey,
+        },
+      },
+    );
+
+    if (charityKey) {
+      const afterLamports = await anchorProgram.provider.connection.getBalance(
+        walletKeyPair.publicKey);
+
+      const lamportsReclaimed =
+             new anchor.BN(afterLamports)
+        .sub(new anchor.BN(beforeLamports))
+
+      const lamportsToCharity =
+            lamportsReclaimed
+        .div(new anchor.BN(10))
+        .toNumber();
+
+      console.log(`Sending ${lamportsToCharity} / ${lamportsReclaimed.toNumber()} lamports to charity`);
+
+      const tx = await sendTransactionWithRetryWithKeypair(
+        anchorProgram.provider.connection,
+        walletKeyPair,
+        [
+          await anchor.web3.SystemProgram.transfer({
+            fromPubkey: walletKeyPair.publicKey,
+            toPubkey: charityKey,
+            lamports: lamportsToCharity
+          })
+        ],
+        []
+      );
+
+      log.info('send_to_charity finished', tx);
+    }
+
+    log.info('close_candy_config finished', tx);
+    // TODO: remove cache?
   });
 
 programCommand('mint_one_token')
