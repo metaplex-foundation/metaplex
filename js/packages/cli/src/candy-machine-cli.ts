@@ -57,7 +57,7 @@ programCommand('upload')
   .option('-n, --number <number>', 'Number of images to upload')
   .option(
     '-s, --storage <string>',
-    'Database to use for storage (arweave, arweave-native ipfs, aws)',
+    `Database to use for storage (${Object.values(StorageType).join(', ')})`,
     'arweave',
   )
   .option(
