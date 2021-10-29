@@ -24,7 +24,6 @@ import {
 import {
   Connection as RPCConnection,
   Keypair,
-  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -302,13 +301,6 @@ const buildCandyClaim = async (
     ],
     MERKLE_DISTRIBUTOR_ID
   );
-
-  console.log(candyMachine.data.price, LAMPORTS_PER_SOL);
-  setup.push(SystemProgram.transfer({
-    fromPubkey: walletKey,
-    toPubkey: distributorWalletKey,
-    lamports: new BN(candyMachine.data.price).add(new BN(LAMPORTS_PER_SOL)).toNumber(),
-  }));
 
   setup.push(SystemProgram.createAccount({
     fromPubkey: walletKey,
