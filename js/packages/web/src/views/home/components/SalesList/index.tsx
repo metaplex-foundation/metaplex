@@ -2,15 +2,14 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Layout, Row, Tabs } from 'antd';
 import React, { useState } from 'react';
 import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
 
-import { useMeta } from '../../contexts';
-import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import { CardLoader } from '../../components/MyLoader';
-import { Banner } from '../../components/Banner';
-import { HowToBuyModal } from '../../components/HowToBuyModal';
+import { useMeta } from '../../../../contexts';
+import { CardLoader } from '../../../../components/MyLoader';
+import { Banner } from '../../../../components/Banner';
+import { HowToBuyModal } from '../../../../components/HowToBuyModal';
 
-import { useAuctionsList } from './hooks/useAuctionsList';
+import { useSales } from './hooks/useSales';
+import SaleCard from './components/SaleCard';
 
 const { TabPane } = Tabs;
 const { Content } = Layout;
@@ -29,11 +28,11 @@ const breakpointColumnsObj = {
   500: 1,
 };
 
-export const AuctionListView = () => {
+export const SalesListView = () => {
   const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
   const { isLoading } = useMeta();
   const { connected } = useWallet();
-  const { auctions, hasResaleAuctions } = useAuctionsList(activeKey);
+  const { sales, hasResaleAuctions } = useSales(activeKey);
 
   return (
     <>
@@ -84,14 +83,7 @@ export const AuctionListView = () => {
                 {isLoading &&
                   [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
                 {!isLoading &&
-                  auctions.map((m, idx) => (
-                    <Link to={`/auction/${m.auction.pubkey}`} key={idx}>
-                      <AuctionRenderCard
-                        key={m.auction.pubkey}
-                        auctionView={m}
-                      />
-                    </Link>
-                  ))}
+                  sales.map((sale, idx) => <SaleCard sale={sale} key={idx} />)}
               </Masonry>
             </Row>
           </Col>

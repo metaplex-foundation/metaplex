@@ -17,7 +17,7 @@ export class PackSet {
   authority: StringPublicKey;
   description: string;
   uri: string;
-  name: Uint8Array;
+  name: string;
   packCards: number;
   packVouchers: number;
   totalEditions?: BN;
@@ -37,7 +37,7 @@ export class PackSet {
     packCards: number;
     packVouchers: number;
     totalEditions?: BN;
-    mutable: boolean;
+    mutable: number;
     packState: PackSetState;
     distributionType: PackDistributionType;
     redeemStartDate: BN;
@@ -48,11 +48,11 @@ export class PackSet {
     this.authority = args.authority;
     this.description = args.description;
     this.uri = args.uri;
-    this.name = args.name;
+    this.name = new TextDecoder().decode(args.name);
     this.packCards = args.packCards;
     this.packVouchers = args.packVouchers;
     this.totalEditions = args.totalEditions;
-    this.mutable = args.mutable;
+    this.mutable = !!args.mutable;
     this.packState = args.packState;
     this.distributionType = args.distributionType;
     this.redeemStartDate = args.redeemStartDate;

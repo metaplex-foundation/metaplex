@@ -535,6 +535,13 @@ export const pullPage = async (
       }
     }
 
+    const store = programIds().store;
+    if (store) {
+      await getPackSets({ connection, storeId: store }).then(
+        forEach(processPackSets),
+      );
+    }
+
     if (page == 0) {
       console.log('-------->Page 0, pulling creators and store');
       await getProgramAccounts(connection, METAPLEX_ID, {
@@ -544,7 +551,7 @@ export const pullPage = async (
           },
         ],
       }).then(forEach(processMetaplexAccounts));
-      const store = programIds().store;
+
       if (store) {
         const storeAcc = await connection.getAccountInfo(store);
         if (storeAcc) {
@@ -824,6 +831,8 @@ export const loadAccounts = async (connection: Connection) => {
   ];
 
   await Promise.all(loading);
+
+  console.log(state);
 
   state.metadata = uniqWith(
     state.metadata,

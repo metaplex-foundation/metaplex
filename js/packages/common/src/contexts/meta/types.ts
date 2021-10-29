@@ -79,7 +79,7 @@ export interface MetaState {
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
   auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
   storeIndexer: ParsedAccount<StoreIndexer>[];
-  packs: ParsedAccount<PackSet>[];
+  packs: Record<string, ParsedAccount<PackSet>>;
 }
 
 export interface MetaContextState extends MetaState {
