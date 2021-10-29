@@ -1,5 +1,6 @@
 import fs from 'fs';
 import Arweave from 'arweave';
+import log from 'loglevel';
 
 // Get instance as function to make bootup time shorter and to provide singleton
 let _ARInstace;
@@ -19,7 +20,7 @@ export const uploadToArweave = async transaction => {
   const uploader = await arweave.transactions.getUploader(transaction);
   while (!uploader.isComplete) {
     await uploader.uploadChunk();
-    console.log(
+    log.debug(
       `${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`,
     );
   }
@@ -46,6 +47,6 @@ export async function nativeArweaveUpload(image, manifest, jwk) {
   await uploadToArweave(metaTx);
 
   const link = `https://arweave.net/${metaTx.id}`;
-  console.log(`Uploded file ${image} as ${link}`);
+  log.debug(`Uploded file ${image} as ${link}`);
   return link;
 }
