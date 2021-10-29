@@ -36,6 +36,7 @@ import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
+import { StorageType } from './helpers/storage-type';
 
 program.version('0.0.2');
 
@@ -72,7 +73,7 @@ programCommand('upload')
     '(existing) AWS S3 Bucket name (required if using aws)',
   )
   .option(
-    '--jwk <string>',
+    '-jwk, --jwk <string>',
     'Path to Arweave wallet file (required if using Arweave Native)',
   )
   .option('--no-retain-authority', 'Do not retain authority to update metadata')
@@ -92,25 +93,31 @@ programCommand('upload')
       jwk,
     } = cmd.opts();
 
-    if (storage === 'arweave-native' && !jwk) {
+    if (storage === StorageType.ArweaveNative && !jwk) {
       throw new Error(
         'Path to Arweave JWK wallet file must be provided when using arweave-native',
       );
     }
 
-    if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
+    if (
+      storage === StorageType.Ipfs &&
+      (!ipfsInfuraProjectId || !ipfsInfuraSecret)
+    ) {
       throw new Error(
         'IPFS selected as storage option but Infura project id or secret key were not provided.',
       );
     }
-    if (storage === 'aws' && !awsS3Bucket) {
+    if (storage === StorageType.Aws && !awsS3Bucket) {
       throw new Error(
         'aws selected as storage option but existing bucket name (--aws-s3-bucket) not provided.',
       );
     }
-    if (!(storage === 'arweave' || storage === 'ipfs' || storage === 'aws')) {
+
+    if (!Object.values(StorageType).includes(storage)) {
       throw new Error(
-        "Storage option must either be 'arweave', 'ipfs', or 'aws'.",
+        `Storage option must either be ${Object.values(StorageType).join(
+          ', ',
+        )}. Got: ${storage}`,
       );
     }
     const ipfsCredentials = {

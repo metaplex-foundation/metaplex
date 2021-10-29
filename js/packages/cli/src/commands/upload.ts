@@ -15,6 +15,7 @@ import { arweaveUpload } from '../helpers/upload/arweave';
 import { ipfsCreds, ipfsUpload } from '../helpers/upload/ipfs';
 import { chunks } from '../helpers/various';
 import { nativeArweaveUpload } from '../helpers/upload/arweave-native';
+import { StorageType } from '../helpers/storage-type';
 
 export async function upload(
   files: string[],
@@ -129,16 +130,12 @@ export async function upload(
 
       if (!link) {
         try {
-          if (storage === 'arweave-native') {
+          if (storage === StorageType.ArweaveNative) {
             const arweaveKey = JSON.parse(fs.readFileSync(jwk).toString());
-            link = await nativeArweaveUpload(
-              walletKeyPair,
-              anchorProgram,
-              arweaveKey,
-            );
+            link = await nativeArweaveUpload(image, manifest, arweaveKey);
           }
 
-          if (storage === 'arweave') {
+          if (storage === StorageType.Arweave) {
             link = await arweaveUpload(
               walletKeyPair,
               anchorProgram,
@@ -148,9 +145,9 @@ export async function upload(
               manifest,
               index,
             );
-          } else if (storage === 'ipfs') {
+          } else if (storage === StorageType.Ipfs) {
             link = await ipfsUpload(ipfsCredentials, image, manifestBuffer);
-          } else if (storage === 'aws') {
+          } else if (storage === StorageType.Aws) {
             link = await awsUpload(awsS3Bucket, image, manifestBuffer);
           }
 
