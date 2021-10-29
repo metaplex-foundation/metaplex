@@ -24,6 +24,7 @@ export async function upload(
   storage: string,
   retainAuthority: boolean,
   mutable: boolean,
+  rpcUrl: string,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
 ): Promise<boolean> {
@@ -63,7 +64,7 @@ export async function upload(
   const SIZE = images.length;
 
   const walletKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(walletKeyPair, env);
+  const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
 
   let config = cacheContent.program.config
     ? new PublicKey(cacheContent.program.config)
