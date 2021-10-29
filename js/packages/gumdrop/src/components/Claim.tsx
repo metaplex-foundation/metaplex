@@ -56,6 +56,7 @@ import {
   TOKEN_METADATA_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   fetchCoder,
+  getCandyMachineAddress,
   notify,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
@@ -173,16 +174,6 @@ const buildMintClaim = async (
 
   return [[...setup, claimAirdrop], pdaSeeds, []];
 }
-
-const getCandyMachineAddress = async (
-  config: PublicKey,
-  uuid: string,
-) => {
-  return await PublicKey.findProgramAddress(
-    [Buffer.from("candy_machine"), config.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_ID,
-  );
-};
 
 const getMetadata = async (
   mint: PublicKey,

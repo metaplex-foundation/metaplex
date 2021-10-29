@@ -54,6 +54,8 @@ import {
   MERKLE_DISTRIBUTOR_ID,
   MERKLE_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  getCandyConfig,
+  getCandyMachineAddress,
   notify,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
@@ -281,26 +283,6 @@ const getCreatorTokenAccount = async (
   }
   return creatorTokenKey;
 }
-
-const getCandyConfig = async (
-  connection : RPCConnection,
-  config : string
-) : Promise<PublicKey> => {
-  let configKey : PublicKey;
-  try {
-    configKey = new PublicKey(config);
-  } catch (err) {
-    throw new Error(`Invalid config key ${err}`);
-  }
-  const configAccount = await connection.getAccountInfo(configKey);
-  if (configAccount === null) {
-    throw new Error(`Could not fetch config`);
-  }
-  if (!configAccount.owner.equals(CANDY_MACHINE_ID)) {
-    throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
-  }
-  return configKey;
-};
 
 export type CreateProps = {};
 
@@ -622,6 +604,29 @@ export const Create = (
         [],
         claimInfo.total
       ));
+    } else {
+      const [distributorWalletKey, ] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("Wallet"),
+          distributor.toBuffer(),
+        ],
+        MERKLE_DISTRIBUTOR_ID
+      );
+
+      const [candyMachineKey, ] = await getCandyMachineAddress(
+        claimInfo.config, candyUUID);
+      instructions.push(new TransactionInstruction({
+          programId: CANDY_MACHINE_ID,
+          keys: [
+              { pubkey: candyMachineKey         , isSigner: false , isWritable: true  } ,
+              { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,
+          ],
+          data: Buffer.from([
+            ...Buffer.from(sha256.digest("global:update_authority")).slice(0, 8),
+            ...new BN(1).toArray("le", 1),  // optional exists...
+            ...distributorWalletKey.toBuffer(),
+          ])
+      }));
     }
 
     const createResult = await Connection.sendTransactionWithRetry(

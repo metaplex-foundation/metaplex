@@ -69,3 +69,33 @@ export const fetchCoder = async (
   return new anchor.Coder(await anchor.Program.fetchIdl(
       address, { connection: connection } as anchor.Provider));
 }
+
+export const getCandyConfig = async (
+  connection : Connection,
+  config : string
+) : Promise<PublicKey> => {
+  let configKey : PublicKey;
+  try {
+    configKey = new PublicKey(config);
+  } catch (err) {
+    throw new Error(`Invalid config key ${err}`);
+  }
+  const configAccount = await connection.getAccountInfo(configKey);
+  if (configAccount === null) {
+    throw new Error(`Could not fetch config`);
+  }
+  if (!configAccount.owner.equals(CANDY_MACHINE_ID)) {
+    throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
+  }
+  return configKey;
+};
+
+export const getCandyMachineAddress = async (
+  config: PublicKey,
+  uuid: string,
+) => {
+  return await PublicKey.findProgramAddress(
+    [Buffer.from("candy_machine"), config.toBuffer(), Buffer.from(uuid)],
+    CANDY_MACHINE_ID,
+  );
+};
