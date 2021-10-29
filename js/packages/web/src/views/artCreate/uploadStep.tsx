@@ -3,7 +3,7 @@ import {
   MetadataCategory,
   MetadataFile,
 } from '@oyster/common';
-import { Button, Form, Input, Row, Typography, Upload } from 'antd';
+import { Button, Form, Input, Space, Typography, Upload } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { getLast } from '../../utils/utils';
 
@@ -72,61 +72,57 @@ export const UploadStep = (props: {
   };
 
   return (
-    <>
-      <Row>
-        <h2>Now, let&apos;s upload your creation</h2>
-        <p>
-          Your file will be uploaded to the decentralized web via Arweave.
-          Depending on file type, can take up to 1 minute. Arweave is a new type
-          of storage that backs data with sustainable and perpetual endowments,
-          allowing users and developers to truly store data forever – for the
-          very first time.
-        </p>
-      </Row>
-      <Row>
-        <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
-        <Dragger
-          accept=".png,.jpg,.gif,.mp4,.svg"
-          multiple={false}
-          customRequest={info => {
-            // dont upload files here, handled outside of the control
-            info?.onSuccess?.({}, null as any);
-          }}
-          fileList={coverFile ? [coverFile as any] : []}
-          onChange={async info => {
-            const file = info.file.originFileObj;
+    <Space direction="vertical">
+      <h2>Now, let&apos;s upload your creation</h2>
+      <p>
+        Your file will be uploaded to the decentralized web via Arweave.
+        Depending on file type, can take up to 1 minute. Arweave is a new type
+        of storage that backs data with sustainable and perpetual endowments,
+        allowing users and developers to truly store data forever – for the very
+        first time.
+      </p>
+      <h3>Upload a cover image (PNG, JPG, GIF, SVG)</h3>
+      <Dragger
+        accept=".png,.jpg,.gif,.mp4,.svg"
+        multiple={false}
+        customRequest={info => {
+          // dont upload files here, handled outside of the control
+          info?.onSuccess?.({}, null as any);
+        }}
+        fileList={coverFile ? [coverFile as any] : []}
+        onChange={async info => {
+          const file = info.file.originFileObj;
 
-            if (!file) {
-              return;
-            }
+          if (!file) {
+            return;
+          }
 
-            const sizeKB = file.size / 1024;
+          const sizeKB = file.size / 1024;
 
-            if (sizeKB < 25) {
-              setCoverArtError(
-                `The file ${file.name} is too small. It is ${
-                  Math.round(10 * sizeKB) / 10
-                }KB but should be at least 25KB.`,
-              );
-              return;
-            }
+          if (sizeKB < 25) {
+            setCoverArtError(
+              `The file ${file.name} is too small. It is ${
+                Math.round(10 * sizeKB) / 10
+              }KB but should be at least 25KB.`,
+            );
+            return;
+          }
 
-            setCoverFile(file);
-            setCoverArtError(undefined);
-          }}
-        >
-          <div>
-            <h3>Upload your cover image (PNG, JPG, GIF, SVG)</h3>
-          </div>
-          {coverArtError ? (
-            <Text type="danger">{coverArtError}</Text>
-          ) : (
-            <p>Drag and drop, or click to browse</p>
-          )}
-        </Dragger>
-      </Row>
+          setCoverFile(file);
+          setCoverArtError(undefined);
+        }}
+      >
+        <div>
+          <h3>Upload your cover image (PNG, JPG, GIF, SVG)</h3>
+        </div>
+        {coverArtError ? (
+          <Text type="danger">{coverArtError}</Text>
+        ) : (
+          <p>Drag and drop, or click to browse</p>
+        )}
+      </Dragger>
       {props.attributes.properties?.category !== MetadataCategory.Image && (
-        <Row>
+        <>
           <h3>{uploadMsg(props.attributes.properties?.category)}</h3>
           <Dragger
             accept={acceptableFiles(props.attributes.properties?.category)}
@@ -154,7 +150,7 @@ export const UploadStep = (props: {
             </div>
             <p>Drag and drop, or click to browse</p>
           </Dragger>
-        </Row>
+        </>
       )}
       <Form.Item
         label={<h3>OR use absolute URL to content</h3>}
@@ -187,49 +183,48 @@ export const UploadStep = (props: {
           }}
         />
       </Form.Item>
-      <Row>
-        <Button
-          type="primary"
-          size="large"
-          disabled={disableContinue}
-          onClick={() => {
-            props.setAttributes({
-              ...props.attributes,
-              properties: {
-                ...props.attributes.properties,
-                files: [coverFile, mainFile, customURL]
-                  .filter(f => f)
-                  .map(f => {
-                    const uri = typeof f === 'string' ? f : f?.name || '';
-                    const type =
-                      typeof f === 'string' || !f
-                        ? 'unknown'
-                        : f.type || getLast(f.name.split('.')) || 'unknown';
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        disabled={disableContinue}
+        onClick={() => {
+          props.setAttributes({
+            ...props.attributes,
+            properties: {
+              ...props.attributes.properties,
+              files: [coverFile, mainFile, customURL]
+                .filter(f => f)
+                .map(f => {
+                  const uri = typeof f === 'string' ? f : f?.name || '';
+                  const type =
+                    typeof f === 'string' || !f
+                      ? 'unknown'
+                      : f.type || getLast(f.name.split('.')) || 'unknown';
 
-                    const ret: MetadataFile = {
-                      uri,
-                      type,
-                    };
+                  const ret: MetadataFile = {
+                    uri,
+                    type,
+                  };
 
-                    return ret;
-                  }),
-              },
-              image: coverFile?.name || '',
-              animation_url:
-                props.attributes.properties?.category !==
-                  MetadataCategory.Image && customURL
-                  ? customURL
-                  : mainFile && mainFile.name,
-            });
-            const files = [coverFile, mainFile].filter(f => f) as File[];
+                  return ret;
+                }),
+            },
+            image: coverFile?.name || '',
+            animation_url:
+              props.attributes.properties?.category !==
+                MetadataCategory.Image && customURL
+                ? customURL
+                : mainFile && mainFile.name,
+          });
+          const files = [coverFile, mainFile].filter(f => f) as File[];
 
-            props.setFiles(files);
-            props.confirm();
-          }}
-        >
-          Continue to Mint
-        </Button>
-      </Row>
-    </>
+          props.setFiles(files);
+          props.confirm();
+        }}
+      >
+        Continue to Mint
+      </Button>
+    </Space>
   );
 };

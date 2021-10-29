@@ -1,5 +1,5 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { Card, Spin, Steps } from 'antd';
+import { Card, Spin, Steps, Space } from 'antd';
 import React, { useEffect } from 'react';
 
 const { Step } = Steps;
@@ -26,7 +26,7 @@ export const WaitingStep = (props: {
   };
 
   return (
-    <div>
+    <Space className="metaplex-fullwidth" direction="vertical" align="center">
       <Spin size="large" />
       <Card>
         <Steps direction="vertical" current={props.step}>
@@ -69,6 +69,6 @@ export const WaitingStep = (props: {
           />
         </Steps>
       </Card>
-    </div>
+    </Space>
   );
 };
