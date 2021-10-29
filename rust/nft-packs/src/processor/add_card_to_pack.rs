@@ -86,7 +86,7 @@ pub fn add_card_to_pack(
     let signers_seeds = &[
         PackCard::PREFIX.as_bytes(),
         &pack_set_info.key.to_bytes()[..32],
-        &index.to_be_bytes(),
+        &index.to_le_bytes(),
         &[bump_seed],
     ];
 

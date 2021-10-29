@@ -47,7 +47,7 @@ pub fn find_pack_card_program_address(
         &[
             PackCard::PREFIX.as_bytes(),
             &pack.to_bytes(),
-            &index.to_be_bytes(),
+            &index.to_le_bytes(),
         ],
         program_id,
     )
@@ -63,7 +63,7 @@ pub fn find_pack_voucher_program_address(
         &[
             PackVoucher::PREFIX.as_bytes(),
             &pack.to_bytes(),
-            &index.to_be_bytes(),
+            &index.to_le_bytes(),
         ],
         program_id,
     )

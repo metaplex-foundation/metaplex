@@ -1,6 +1,6 @@
 //! EditPack instruction processing
 
-use crate::{error::NFTPacksError, instruction::EditPackSetArgs, state::PackSet, utils::*};
+use crate::{error::NFTPacksError, instruction::EditPackSetArgs, state::{PackSet, MAX_URI_LENGTH, MAX_DESCRIPTION_LEN}, utils::*};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -29,6 +29,8 @@ pub fn edit_pack(
 
     apply_changes(&mut pack_set, args)?;
 
+    pack_set.puff_out_data_fields();
+
     PackSet::pack(pack_set, *pack_set_account.data.borrow_mut())?;
 
     Ok(())
@@ -40,6 +42,26 @@ fn apply_changes(pack_set: &mut PackSet, changes: EditPackSetArgs) -> Result<(),
             return Err(NFTPacksError::CantSetTheSameValue.into());
         }
         pack_set.name = new_name;
+    }
+
+    if let Some(description) = changes.description {
+        if description == pack_set.description {
+            return Err(NFTPacksError::CantSetTheSameValue.into());
+        }
+        if description.len() > MAX_DESCRIPTION_LEN {
+            return Err(NFTPacksError::DescriptionTooLong.into());
+        }
+        pack_set.description = description;
+    }
+
+    if let Some(uri) = changes.uri {
+        if uri == pack_set.uri {
+            return Err(NFTPacksError::CantSetTheSameValue.into());
+        }
+        if uri.len() > MAX_URI_LENGTH {
+            return Err(NFTPacksError::UriTooLong.into());
+        }
+        pack_set.uri = uri;
     }
 
     if let Some(new_mutable_value) = changes.mutable {

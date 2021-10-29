@@ -1,7 +1,7 @@
 //! Pack set definitions
 
 use super::*;
-use crate::{error::NFTPacksError, math::SafeMath};
+use crate::{error::NFTPacksError, math::SafeMath, state::{MAX_URI_LENGTH, MAX_DESCRIPTION_LEN},};
 use borsh::{BorshDeserialize, BorshSerialize};
 use metaplex_token_metadata::state::{MasterEdition, MasterEditionV2};
 use solana_program::{
@@ -58,14 +58,12 @@ pub struct PackSet {
     pub store: Pubkey,
     /// Pack authority
     pub authority: Pubkey,
-    /// Name
-    pub name: [u8; 32],
     /// Description
     pub description: String,
     /// Link to pack set image
     pub uri: String,
-    /// Authority to mint voucher editions
-    pub minting_authority: Pubkey,
+    /// Name
+    pub name: [u8; 32],
     /// Card masters counter
     pub pack_cards: u32,
     /// Pack voucher counter
@@ -95,7 +93,6 @@ impl PackSet {
         self.description = params.description;
         self.uri = params.uri;
         self.authority = params.authority;
-        self.minting_authority = params.minting_authority;
         self.total_editions = if params.distribution_type == PackDistributionType::Unlimited {
             None
         } else {
@@ -194,6 +191,24 @@ impl PackSet {
 
         Ok(())
     }
+
+    /// fill unused bytes with zeroes
+    pub fn puff_out_data_fields(&mut self) {
+        let mut array_of_zeroes = vec![];
+        while array_of_zeroes.len() < MAX_URI_LENGTH - self.uri.len() {
+            array_of_zeroes.push(0u8);
+        }
+        self.uri =
+            self.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+        
+        let mut array_of_zeroes = vec![];
+
+        while array_of_zeroes.len() < MAX_DESCRIPTION_LEN - self.description.len() {
+            array_of_zeroes.push(0u8);
+        }
+        self.description =
+            self.description.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+    }
 }
 
 /// Initialize a PackSet params
@@ -208,8 +223,6 @@ pub struct InitPackSetParams {
     pub uri: String,
     /// Pack authority
     pub authority: Pubkey,
-    /// Authority to mint voucher editions
-    pub minting_authority: Pubkey,
     /// If true authority can make changes at deactivated phase
     pub mutable: bool,
     /// Distribution type
@@ -225,11 +238,11 @@ pub struct InitPackSetParams {
 impl Sealed for PackSet {}
 
 impl Pack for PackSet {
-    // 1 + 32 + 200 + 500 + 32 + 32 + 4 + 4 + 9 + 1 + 1 + 1 + 4 + 8 + 9
-    const LEN: usize = 838;
+    const LEN: usize = 846;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
+        msg!("LEN: {:?}", slice.len());
         self.serialize(&mut slice).unwrap()
     }
 

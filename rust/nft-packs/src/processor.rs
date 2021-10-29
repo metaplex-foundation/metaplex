@@ -5,7 +5,7 @@ use activate::activate_pack;
 use add_card_to_pack::add_card_to_pack;
 use add_voucher_to_pack::add_voucher_to_pack;
 use borsh::BorshDeserialize;
-use change_authority::{transfer_authority, AuthorityToChange};
+use change_authority::transfer_authority;
 use claim_pack::claim_pack;
 use close_pack::close_pack;
 use deactivate::deactivate_pack;
@@ -13,10 +13,7 @@ use delete_pack::delete_pack;
 use delete_pack_card::delete_pack_card;
 use delete_pack_voucher::delete_pack_voucher;
 use edit_pack::edit_pack;
-use edit_pack_voucher::edit_pack_voucher;
 use init_pack::init_pack;
-use mint_edition::mint_edition_with_voucher;
-use prove_ownership::prove_ownership;
 use request_card_to_redeem::request_card_for_redeem;
 use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
@@ -31,9 +28,7 @@ pub mod delete_pack;
 pub mod delete_pack_card;
 pub mod delete_pack_voucher;
 pub mod edit_pack;
-pub mod edit_pack_voucher;
 pub mod init_pack;
-pub mod mint_edition;
 pub mod prove_ownership;
 pub mod request_card_to_redeem;
 
@@ -72,21 +67,13 @@ impl Processor {
                 msg!("Instruction: ClosePack");
                 close_pack(program_id, accounts)
             }
-            NFTPacksInstruction::ProveOwnership => {
-                msg!("Instruction: ProveOwnership");
-                prove_ownership(program_id, accounts)
-            }
             NFTPacksInstruction::ClaimPack => {
                 msg!("Instruction: ClaimPack");
                 claim_pack(program_id, accounts)
             }
             NFTPacksInstruction::TransferPackAuthority => {
                 msg!("Instruction: TransferPackAuthority");
-                transfer_authority(program_id, accounts, AuthorityToChange::PackAuthority)
-            }
-            NFTPacksInstruction::TransferMintingAuthority => {
-                msg!("Instruction: TransferMintingAuthority");
-                transfer_authority(program_id, accounts, AuthorityToChange::MintingAuthority)
+                transfer_authority(program_id, accounts)
             }
             NFTPacksInstruction::DeletePack => {
                 msg!("Instruction: DeletePack");
@@ -103,14 +90,6 @@ impl Processor {
             NFTPacksInstruction::EditPack(args) => {
                 msg!("Instruction: EditPack");
                 edit_pack(program_id, accounts, args)
-            }
-            NFTPacksInstruction::EditPackVoucher(args) => {
-                msg!("Instruction: EditPackVoucher");
-                edit_pack_voucher(program_id, accounts, args)
-            }
-            NFTPacksInstruction::MintEditionWithVoucher => {
-                msg!("Instruction: MintEditionWithVoucher");
-                mint_edition_with_voucher(program_id, accounts)
             }
             NFTPacksInstruction::RequestCardForRedeem => {
                 msg!("Instruction: RequestCardForRedeem");

@@ -2,7 +2,7 @@
 
 use crate::{
     error::NFTPacksError,
-    find_pack_voucher_program_address, find_program_authority,
+    find_pack_voucher_program_address,
     math::SafeMath,
     state::{InitPackVoucherParams, PackSet, PackSetState, PackVoucher},
     utils::*,
@@ -62,7 +62,7 @@ pub fn add_voucher_to_pack(
     let signers_seeds = &[
         PackVoucher::PREFIX.as_bytes(),
         &pack_set_info.key.to_bytes()[..32],
-        &index.to_be_bytes(),
+        &index.to_le_bytes(),
         &[bump_seed],
     ];
 

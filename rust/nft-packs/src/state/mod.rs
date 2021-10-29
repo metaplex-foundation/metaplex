@@ -18,6 +18,9 @@ pub const PREFIX: &str = "packs";
 /// Max count of slots for lag
 pub const MAX_LAG_SLOTS: u64 = 5;
 
+/// Max len of pack URI
+pub const MAX_URI_LENGTH: usize = 200;
+
 /// Max len of pack description string
 pub const MAX_DESCRIPTION_LEN: usize = 500;
 
