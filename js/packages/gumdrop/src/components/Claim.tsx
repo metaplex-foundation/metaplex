@@ -275,21 +275,9 @@ const buildCandyClaim = async (
 
   const setup : Array<TransactionInstruction> = [];
 
-  // TODO: from IDL
-  const CLAIM_COUNT_SIZE = 16;
   const claimCountAccount = await connection.getAccountInfo(claimCount);
   let nftsAlreadyMinted = 0;
   if (claimCountAccount === null) {
-    setup.push(SystemProgram.createAccount({
-      fromPubkey: walletKey,
-      newAccountPubkey: claimCount,
-      space: CLAIM_COUNT_SIZE,
-      lamports:
-        await connection.getMinimumBalanceForRentExemption(
-          CLAIM_COUNT_SIZE,
-        ),
-      programId: MERKLE_DISTRIBUTOR_ID,
-    }));
   } else {
     // TODO: subtract already minted?...
     const claimAccountInfo = coder.accounts.decode(
