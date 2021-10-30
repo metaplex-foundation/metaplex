@@ -4,10 +4,18 @@ import { Row, Col } from 'antd';
 import Card from './components/Card';
 import RedeemModal from './components/RedeemModal';
 import PackSidebar from './components/PackSidebar';
+import { useMeta } from '@oyster/common';
+import { useParams } from 'react-router';
 
 export const PackView = () => {
   const [openModal, setOpenModal] = useState(false);
-  const mockBlocks = Array.from({ length: 10 }, (v, i) => i);
+  const { id }: { id: string } = useParams();
+
+  const { packs } = useMeta();
+  const pack = packs[id];
+
+  const total = pack?.info?.allowedAmountToRedeem || 0;
+  const mockBlocks = Array.from({ length: total }, (v, i) => i);
 
   return (
     <div className="pack-view">
@@ -15,12 +23,12 @@ export const PackView = () => {
         <Col md={16}>
           <div className="pack-view__list">
             {mockBlocks.map((block, i) => (
-              <Card value={i} onOpen={setOpenModal} />
+              <Card key={i} value={i} />
             ))}
           </div>
         </Col>
         <Col md={8}>
-          <PackSidebar />
+          <PackSidebar pack={pack} />
         </Col>
       </Row>
 

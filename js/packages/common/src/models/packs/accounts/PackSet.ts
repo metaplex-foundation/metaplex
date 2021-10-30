@@ -24,6 +24,7 @@ export class PackSet {
   mutable: boolean;
   packState: PackSetState;
   distributionType: PackDistributionType;
+  allowedAmountToRedeem: number;
   redeemStartDate: BN;
   redeemEndDate?: BN;
 
@@ -40,6 +41,7 @@ export class PackSet {
     mutable: number;
     packState: PackSetState;
     distributionType: PackDistributionType;
+    allowedAmountToRedeem: number;
     redeemStartDate: BN;
     redeemEndDate?: BN;
   }) {
@@ -54,6 +56,7 @@ export class PackSet {
     this.totalEditions = args.totalEditions;
     this.mutable = !!args.mutable;
     this.packState = args.packState;
+    this.allowedAmountToRedeem = args.allowedAmountToRedeem;
     this.distributionType = args.distributionType;
     this.redeemStartDate = args.redeemStartDate;
     this.redeemEndDate = args.redeemEndDate;
