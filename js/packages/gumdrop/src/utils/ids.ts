@@ -99,3 +99,19 @@ export const getCandyMachineAddress = async (
     CANDY_MACHINE_ID,
   );
 };
+
+export const getCandyMachine = async (
+  connection : Connection,
+  candyMachineKey : PublicKey,
+) => {
+  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
+  if (candyMachineCoder === null) {
+    throw new Error(`Could not fetch candy machine IDL`);
+  }
+  const candyMachineAccount = await connection.getAccountInfo(candyMachineKey);
+  if (candyMachineAccount === null) {
+    throw new Error(`Could not fetch candy machine`);
+  }
+  return candyMachineCoder.accounts.decode(
+      "CandyMachine", candyMachineAccount.data);
+}

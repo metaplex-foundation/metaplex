@@ -54,7 +54,7 @@ import {
   MERKLE_TEMPORAL_SIGNER,
   TOKEN_METADATA_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  fetchCoder,
+  getCandyMachine,
   getCandyMachineAddress,
   notify,
 } from "../utils";
@@ -215,8 +215,10 @@ const buildCandyClaim = async (
   candyUUID : string,
   proof : Array<Buffer>,
   handle : string,
+  amount : number,
   index : number,
   pin : Array<number>,
+  nftsToMint : number,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
 
   let configKey : PublicKey;
@@ -242,7 +244,7 @@ const buildCandyClaim = async (
     [...new BN(index).toArray("le", 8),
      ...claimantPda.toBuffer(),
      ...configKey.toBuffer(),
-     ...new BN(1).toArray("le", 8),
+     ...new BN(amount).toArray("le", 8),
     ]
   );
 
@@ -254,10 +256,18 @@ const buildCandyClaim = async (
     throw new Error("Merkle proof does not match");
   }
 
-  const [claimStatus, cbump] = await PublicKey.findProgramAddress(
+  const [claimCount, cbump] = await PublicKey.findProgramAddress(
     [
-      Buffer.from("ClaimStatus"),
+      Buffer.from("ClaimCount"),
       Buffer.from(new BN(index).toArray("le", 8)),
+      distributorKey.toBuffer(),
+    ],
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("Wallet"),
       distributorKey.toBuffer(),
     ],
     MERKLE_DISTRIBUTOR_ID
@@ -265,23 +275,80 @@ const buildCandyClaim = async (
 
   const setup : Array<TransactionInstruction> = [];
 
-  const candyMachineMint = Keypair.generate();
+  // TODO: from IDL
+  const CLAIM_COUNT_SIZE = 16;
+  const claimCountAccount = await connection.getAccountInfo(claimCount);
+  let nftsAlreadyMinted = 0;
+  if (claimCountAccount === null) {
+    setup.push(SystemProgram.createAccount({
+      fromPubkey: walletKey,
+      newAccountPubkey: claimCount,
+      space: CLAIM_COUNT_SIZE,
+      lamports:
+        await connection.getMinimumBalanceForRentExemption(
+          CLAIM_COUNT_SIZE,
+        ),
+      programId: MERKLE_DISTRIBUTOR_ID,
+    }));
+  } else {
+    // TODO: subtract already minted?...
+    const claimAccountInfo = coder.accounts.decode(
+      "ClaimCount", claimCountAccount.data);
+    nftsAlreadyMinted = claimAccountInfo.count;
+  }
+
+  const nftsAvailable = amount;
+  if (nftsToMint > nftsAvailable - nftsAlreadyMinted) {
+    throw new Error(`Cannot mint ${nftsToMint} NFTs. ${nftsAvailable} were originally allocated`
+      + (nftsAlreadyMinted > 0 ? ` and ${nftsAlreadyMinted} were already minted` : ""));
+  }
+
+
   const [candyMachineKey, ] = await getCandyMachineAddress(configKey, candyUUID);
-
-  console.log(candyMachineKey.toBase58(), configKey.toBase58());
-
-  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
-  if (candyMachineCoder === null) {
-    throw new Error(`Could not fetch candy machine IDL`);
-  }
-  const candyMachineAccount = await connection.getAccountInfo(candyMachineKey);
-  if (candyMachineAccount === null) {
-    throw new Error(`Could not fetch candy machine`);
-  }
-  const candyMachine = candyMachineCoder.accounts.decode(
-      "CandyMachine", candyMachineAccount.data);
+  const candyMachine = await getCandyMachine(connection, candyMachineKey);
   console.log(candyMachine);
 
+  const candyMachineMints : Array<Keypair> = [];
+
+  for (let i = 0; i < nftsToMint; ++i) {
+    const [instrs, mint] = await buildSingleCandyMint(
+      connection,
+      walletKey,
+      distributorKey,
+      distributorWalletKey,
+      claimCount,
+      configKey,
+      candyMachineKey,
+      candyMachine.wallet,
+      Buffer.from([
+        ...new BN(wbump).toArray("le", 1),
+        ...new BN(cbump).toArray("le", 1),
+        ...new BN(index).toArray("le", 8),
+        ...new BN(amount).toArray("le", 8),
+        ...claimantPda.toBuffer(),
+        ...new BN(proof.length).toArray("le", 4),
+        ...Buffer.concat(proof),
+      ]),
+    );
+    candyMachineMints.push(mint);
+    setup.push(...instrs);
+  }
+
+  return [setup, pdaSeeds, candyMachineMints];
+}
+
+const buildSingleCandyMint = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  distributorKey : PublicKey,
+  distributorWalletKey : PublicKey,
+  claimCount : PublicKey,
+  configKey : PublicKey,
+  candyMachineKey : PublicKey,
+  candyMachineWallet : PublicKey,
+  data : Buffer,
+) : Promise<[Array<TransactionInstruction>, Keypair]> => {
+  const candyMachineMint = Keypair.generate();
   const candyMachineMetadata = await getMetadata(candyMachineMint.publicKey);
   const candyMachineMaster = await getMasterEdition(candyMachineMint.publicKey);
 
@@ -294,14 +361,7 @@ const buildCandyClaim = async (
     SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
   );
 
-  const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
-    [
-      Buffer.from("Wallet"),
-      distributorKey.toBuffer(),
-    ],
-    MERKLE_DISTRIBUTOR_ID
-  );
-
+  const setup : Array<TransactionInstruction> = [];
   setup.push(SystemProgram.createAccount({
     fromPubkey: walletKey,
     newAccountPubkey: candyMachineMint.publicKey,
@@ -339,18 +399,18 @@ const buildCandyClaim = async (
     1,
   ));
 
-  const claimAirdrop = new TransactionInstruction({
+  setup.push(new TransactionInstruction({
       programId: MERKLE_DISTRIBUTOR_ID,
       keys: [
           { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
           { pubkey: distributorWalletKey      , isSigner: false , isWritable: true  } ,
-          { pubkey: claimStatus               , isSigner: false , isWritable: true  } ,
+          { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
           { pubkey: MERKLE_TEMPORAL_SIGNER    , isSigner: true  , isWritable: false } ,
           { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
 
           { pubkey: configKey                 , isSigner: false , isWritable: true  } ,
           { pubkey: candyMachineKey           , isSigner: false , isWritable: true  } ,
-          { pubkey: candyMachine.wallet       , isSigner: false , isWritable: true  } ,
+          { pubkey: candyMachineWallet        , isSigner: false , isWritable: true  } ,
           { pubkey: candyMachineMint.publicKey, isSigner: false , isWritable: true  } ,
           { pubkey: candyMachineMetadata      , isSigner: false , isWritable: true  } ,
           { pubkey: candyMachineMaster        , isSigner: false , isWritable: true  } ,
@@ -364,18 +424,12 @@ const buildCandyClaim = async (
       ],
       data: Buffer.from([
         ...Buffer.from(sha256.digest("global:claim_candy")).slice(0, 8),
-        ...new BN(wbump).toArray("le", 1),
-        ...new BN(cbump).toArray("le", 1),
-        ...new BN(index).toArray("le", 8),
-        ...new BN(1).toArray("le", 8),
-        ...claimantPda.toBuffer(),
-        ...new BN(proof.length).toArray("le", 4),
-        ...Buffer.concat(proof),
+        ...data,
       ])
-  })
+  }));
 
-  return [[...setup, claimAirdrop], pdaSeeds, [candyMachineMint]];
-};
+  return [setup, candyMachineMint];
+}
 
 export type ClaimProps = {};
 
@@ -391,6 +445,7 @@ export const Claim = (
   const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
   const [candyConfig, setCandyConfig] = React.useState(params.config as string || "");
   const [candyUUID, setCandyUUID] = React.useState(params.uuid as string || "");
+  const [nftsToMintStr, setNftsToMint] = React.useState(params.amount as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
   const [amountStr, setAmount] = React.useState(params.amount as string || "");
   const [indexStr, setIndex] = React.useState(params.index as string || "");
@@ -400,10 +455,11 @@ export const Claim = (
   const allFieldsPopulated =
     distributor.length > 0
     && ( params.tokenAcc
-       ? tokenAcc.length > 0 && amountStr.length > 0
+       ? tokenAcc.length > 0
        : candyConfig.length > 0 && candyUUID.length > 0
        )
     && handle.length > 0
+    && amountStr.length > 0
     && indexStr.length > 0
     && pinStr.length > 0;
     // NB: proof can be empty!
@@ -432,8 +488,12 @@ export const Claim = (
     }
 
     const index = Number(indexStr);
+    const amount = Number(amountStr);
     const pin = pinStr.split(",").map(Number);
 
+    if (isNaN(amount)) {
+      throw new Error(`Could not parse amount ${amountStr}`);
+    }
     if (isNaN(index)) {
       throw new Error(`Could not parse index ${indexStr}`);
     }
@@ -463,17 +523,17 @@ export const Claim = (
 
     let instructions, pdaSeeds, extraSigners;
     if (claimMethod === "candy") {
+      const nftsToMint = Number(nftsToMintStr);
+      if (isNaN(nftsToMint)) {
+        throw new Error(`Could not parse NFTs to mint ${nftsToMint}`);
+      }
       console.log("Building candy claim");
       [instructions, pdaSeeds, extraSigners] = await buildCandyClaim(
         connection, wallet.publicKey, distributorKey, distributorInfo,
         candyConfig, candyUUID,
-        proof, handle, index, pin
+        proof, handle, amount, index, pin, nftsToMint
       );
     } else if (claimMethod === "transfer") {
-      const amount = Number(amountStr);
-      if (isNaN(amount)) {
-        throw new Error(`Could not parse amount ${amountStr}`);
-      }
       [instructions, pdaSeeds, extraSigners] = await buildMintClaim(
         connection, wallet.publicKey, distributorKey, distributorInfo,
         tokenAcc,
@@ -692,6 +752,13 @@ export const Claim = (
             onChange={e => setCandyUUID(e.target.value)}
             disabled={!editable}
           />
+          <TextField
+            style={{width: "60ch"}}
+            id="nfts-to-mint-text-field"
+            label="NFTs To Mint"
+            value={nftsToMintStr}
+            onChange={e => setNftsToMint(e.target.value)}
+          />
         </React.Fragment>
       );
     } else if (claimMethod === "transfer") {
@@ -703,14 +770,6 @@ export const Claim = (
             label="Source Token Account"
             value={tokenAcc}
             onChange={(e) => setTokenAcc(e.target.value)}
-            disabled={!editable}
-          />
-          <TextField
-            style={{width: "60ch"}}
-            id="amount-text-field"
-            label="Amount"
-            value={amountStr}
-            onChange={(e) => setAmount(e.target.value)}
             disabled={!editable}
           />
         </React.Fragment>
@@ -747,6 +806,14 @@ export const Claim = (
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}
+      <TextField
+        style={{width: "60ch"}}
+        id="amount-text-field"
+        label="Amount"
+        value={amountStr}
+        onChange={(e) => setAmount(e.target.value)}
+        disabled={!editable}
+      />
       <TextField
         style={{width: "60ch"}}
         id="handle-text-field"

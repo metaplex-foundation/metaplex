@@ -55,6 +55,7 @@ import {
   MERKLE_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyConfig,
+  getCandyMachine,
   getCandyMachineAddress,
   notify,
 } from "../utils";
@@ -328,7 +329,7 @@ export const Create = (
 
     const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
       // TODO: better decimal rounding
-      return (amount / Math.pow(10, mintInfo.decimals)).toString();
+      return String(amount / Math.pow(10, mintInfo.decimals));
     };
 
     const claimants = parseClaimants(text);
@@ -338,16 +339,15 @@ export const Create = (
 
     claimants.forEach((c, idx) => {
       if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
+      if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
+      if (c.amount === 0) throw new Error(`Claimant ${idx} amount is 0`);
     });
 
     const claimInfo : any = {};
+    claimInfo.total = claimants.reduce((acc, c) => acc + c.amount, 0);
     let isTokenAirdrop : boolean;
     if (claimMethod === "transfer") {
       isTokenAirdrop = true;
-      claimants.forEach((c, idx) => {
-        if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
-      });
-      claimInfo.total = claimants.reduce((acc, c) => acc + c.amount, 0);
       claimInfo.mint = await getMintInfo(connection, mint);
       claimInfo.source = await getCreatorTokenAccount(
         wallet.publicKey,
@@ -357,10 +357,24 @@ export const Create = (
       );
       claimInfo.info = { type: "Token", meta: explorerUrlFor(claimInfo.mint.key) };
     } else if (claimMethod === "candy") {
-      // TODO: verify exactly one?
       isTokenAirdrop = false;
       claimInfo.config = await getCandyConfig(connection, candyConfig);
       claimInfo.info = { type: "Candy", meta: explorerUrlFor(claimInfo.config) };
+
+      const [candyMachineKey, ] = await getCandyMachineAddress(
+        claimInfo.config, candyUUID);
+      claimInfo.candyMachineKey = candyMachineKey;
+      const candyMachine = await getCandyMachine(connection, candyMachineKey);
+      console.log(candyMachine);
+
+      const remaining = candyMachine.data.itemsAvailable.toNumber() - candyMachine.itemsRedeemed.toNumber();
+      if (isNaN(remaining)) {
+        // TODO: should this have an override?
+        throw new Error(`Could not calculae how many candy machine items are remaining`);
+      }
+      if (remaining < claimInfo.total) {
+        throw new Error(`Distributor is allocated more mints than the candy machine has remaining`);
+      }
     } else {
       throw new Error(`Unknown claim method ${claimMethod}`);
     }
@@ -450,7 +464,7 @@ export const Create = (
         [...new BN(idx).toArray("le", 8),
          ...claimantPda.toBuffer(),
          ...claimant.seed.toBuffer(),
-         ...new BN(isTokenAirdrop ? claimant.amount : 1).toArray("le", 8),
+         ...new BN(claimant.amount).toArray("le", 8),
         ]
       ));
     }
@@ -480,13 +494,13 @@ export const Create = (
       const params = [
         `distributor=${distributor}`,
         `handle=${claimant.handle}`,
+        `amount=${claimant.amount}`,
         `index=${idx}`,
         `pin=${claimant.pin}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
       if (isTokenAirdrop) {
         params.push(`tokenAcc=${claimInfo.source}`);
-        params.push(`amount=${claimant.amount}`);
       } else {
         params.push(`config=${candyConfig}`);
         params.push(`uuid=${candyUUID}`);
@@ -524,7 +538,7 @@ export const Create = (
               <TableHead>
                 <TableRow>
                   <TableCell>Handle</TableCell>
-                  {isTokenAirdrop && <TableCell>Tokens</TableCell>}
+                  <TableCell>Tokens</TableCell>
                   <TableCell>Pin</TableCell>
                 </TableRow>
               </TableHead>
@@ -535,11 +549,12 @@ export const Create = (
                     sx={{ 'td, th': { border: 0 } }}
                   >
                     <TableCell component="th" scope="row">{c.handle} </TableCell>
-                    {isTokenAirdrop &&
-                      <TableCell>
-                        {displayMintTokens(c.amount, claimInfo.mint.info)}
-                      </TableCell>
-                    }
+                    <TableCell>
+                      {isTokenAirdrop
+                        ? displayMintTokens(c.amount, claimInfo.mint.info)
+                        : c.amount
+                      }
+                    </TableCell>
                     <TableCell>{c.pin.join(",")}</TableCell>
                   </TableRow>
                 ))}
@@ -568,7 +583,6 @@ export const Create = (
         </DefaultModal>
       );
     }) as boolean | undefined;
-    console.log(shouldSend);
     if (shouldSend === true) {
     } else {
       // dismissed. don't use exceptions for control flow?
@@ -615,12 +629,10 @@ export const Create = (
         MERKLE_DISTRIBUTOR_ID
       );
 
-      const [candyMachineKey, ] = await getCandyMachineAddress(
-        claimInfo.config, candyUUID);
       instructions.push(new TransactionInstruction({
           programId: CANDY_MACHINE_ID,
           keys: [
-              { pubkey: candyMachineKey         , isSigner: false , isWritable: true  } ,
+              { pubkey: claimInfo.candyMachineKey,isSigner: false , isWritable: true  } ,
               { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,
           ],
           data: Buffer.from([

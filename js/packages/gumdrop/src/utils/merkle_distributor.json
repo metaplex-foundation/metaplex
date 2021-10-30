@@ -179,7 +179,7 @@
           "isSigner": false
         },
         {
-          "name": "claimStatus",
+          "name": "claimCount",
           "isMut": true,
           "isSigner": false
         },
@@ -342,6 +342,86 @@
           }
         ]
       }
+    },
+    {
+      "name": "ClaimCount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "count",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CandyMachine",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "wallet",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenMint",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "config",
+            "type": "publicKey"
+          },
+          {
+            "name": "data",
+            "type": {
+              "defined": "CandyMachineData"
+            }
+          },
+          {
+            "name": "itemsRedeemed",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CandyMachineData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "uuid",
+            "type": "string"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "itemsAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "goLiveDate",
+            "type": {
+              "option": "i64"
+            }
+          }
+        ]
+      }
     }
   ],
   "events": [
@@ -392,8 +472,5 @@
       "name": "TemporalMismatch",
       "msg": "Temporal signer did not match distributor"
     }
-  ],
-  "metadata": {
-    "address": "561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG"
-  }
+  ]
 }
