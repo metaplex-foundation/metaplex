@@ -71,7 +71,7 @@ const buildMintClaim = async (
   handle : string,
   amount : number,
   index : number,
-  pin : Array<number>,
+  pin : BN,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
   let tokenAccKey: PublicKey;
   try {
@@ -92,7 +92,7 @@ const buildMintClaim = async (
   const pdaSeeds = [
     mint.toBuffer(),
     Buffer.from(handle),
-    Buffer.from(pin),
+    Buffer.from(pin.toArray("le", 4)),
   ];
 
   const [claimantPda, ] = await PublicKey.findProgramAddress(
@@ -217,7 +217,7 @@ const buildCandyClaim = async (
   handle : string,
   amount : number,
   index : number,
-  pin : Array<number>,
+  pin : BN,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
 
   let configKey : PublicKey;
@@ -230,7 +230,7 @@ const buildCandyClaim = async (
   const pdaSeeds = [
     configKey.toBuffer(),
     Buffer.from(handle),
-    Buffer.from(pin),
+    Buffer.from(pin.toArray("le", 4)),
   ];
 
   const [claimantPda, ] = await PublicKey.findProgramAddress(
@@ -484,13 +484,18 @@ export const Claim = (
 
     const index = Number(indexStr);
     const amount = Number(amountStr);
-    const pin = pinStr.split(",").map(Number);
+    let pin;
 
     if (isNaN(amount)) {
       throw new Error(`Could not parse amount ${amountStr}`);
     }
     if (isNaN(index)) {
       throw new Error(`Could not parse index ${indexStr}`);
+    }
+    try {
+      pin = new BN(pinStr);
+    } catch (err) {
+      throw new Error(`Could not parse pin ${pinStr}: ${err}`);
     }
 
     let distributorKey : PublicKey;

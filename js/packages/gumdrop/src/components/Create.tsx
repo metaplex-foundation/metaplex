@@ -77,7 +77,7 @@ export type ClaimantInfo = {
   handle : string,
   amount : number,
 
-  pin    : Uint8Array,
+  pin    : BN,
   bump   : number,
   url    : string,
 
@@ -444,7 +444,7 @@ export const Create = (
     }
 
     claimants.forEach(c => {
-      c.pin = randomBytes();
+      c.pin = new BN(randomBytes());
       c.seed = isTokenAirdrop ? claimInfo.mint.key : claimInfo.config;
     });
 
@@ -454,7 +454,7 @@ export const Create = (
       const seeds = [
         claimant.seed.toBuffer(),
         Buffer.from(claimant.handle),
-        Buffer.from(claimant.pin),
+        Buffer.from(claimant.pin.toArray("le", 4)),
       ];
       const [claimantPda, bump] = await PublicKey.findProgramAddress(
           seeds, MERKLE_DISTRIBUTOR_ID);
@@ -496,7 +496,7 @@ export const Create = (
         `handle=${claimant.handle}`,
         `amount=${claimant.amount}`,
         `index=${idx}`,
-        `pin=${claimant.pin}`,
+        `pin=${claimant.pin.toNumber()}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
       if (isTokenAirdrop) {
@@ -555,7 +555,7 @@ export const Create = (
                         : c.amount
                       }
                     </TableCell>
-                    <TableCell>{c.pin.join(",")}</TableCell>
+                    <TableCell>{c.pin.toNumber()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
