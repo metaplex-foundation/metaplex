@@ -17,8 +17,6 @@ import { useMeta } from '../../contexts';
 import {
   Store,
   WhitelistedCreator,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import {
   MasterEditionV1,
   notify,
   ParsedAccount,
@@ -32,6 +30,7 @@ import {
   loadCreators,
   loadAuctionManagers,
   loadAuctionsForAuctionManagers,
+  loadVaultsAndContentForAuthority,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -83,9 +82,10 @@ export const AdminView = () => {
       const auctionsState = await loadAuctionsForAuctionManagers(
         connection,
         Object.values(auctionManagerState.auctionManagersByAuction),
-      )
-
-      patchState(creatorsState, auctionManagerState, auctionsState);
+      );
+      const vaultState = await loadVaultsAndContentForAuthority(connection, wallet.publicKey?.toBase58() as string);
+      
+      patchState(creatorsState, auctionManagerState, auctionsState, vaultState);
       setLoadingAdmin(false);
     })()
   }, [loadingAdmin, isLoading, storeAddress])
@@ -388,9 +388,9 @@ function InnerAdminView({
       <Table
         columns={[
           {
-            key: 'auctinManagerPubkey',
+            key: 'accountPubkey',
             title: 'Listing',
-            dataIndex: 'auctionManagerPubkey'
+            dataIndex: 'accountPubkey'
           },
           {
             key: 'description',
