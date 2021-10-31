@@ -25,6 +25,7 @@ export async function createMetadataFiles(
 
   const {
     breakdown,
+    exclusions,
     name,
     symbol,
     creators,
@@ -34,7 +35,7 @@ export async function createMetadataFiles(
   } = await readJsonFile(configLocation);
 
   while (numberOfFilesCreated < parseInt(numberOfImages, 10)) {
-    const randomizedSet = generateRandomSet(breakdown);
+    const randomizedSet = generateRandomSet(breakdown, exclusions);
 
     if (!_.some(randomizedSets, randomizedSet)) {
       randomizedSets.push(randomizedSet);

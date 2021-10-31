@@ -12,11 +12,21 @@ export async function readJsonFile(fileName: string) {
   return JSON.parse(file);
 }
 
-export const generateRandomSet = breakdown => {
+export const generateRandomSet = (breakdown, exclusions) => {
   const tmp = {};
+  const skip = {};
   Object.keys(breakdown).forEach(attr => {
-    const randomSelection = weighted.select(breakdown[attr]);
-    tmp[attr] = randomSelection;
+    if (!skip[attr]) {
+      const randomSelection = weighted.select(breakdown[attr]);
+      tmp[attr] = randomSelection;
+      if (tmp[attr] !== 'NOTHING' && !!exclusions) {
+        exclusions[attr].forEach(e => {
+          skip[e] = true;
+        });
+      }
+    } else {
+      tmp[attr] = 'NOTHING';
+    }
   });
 
   return tmp;

@@ -4,6 +4,7 @@
   "description": "",
   "creators": [],
   "collection": {},
+  "exclusions": {},
   "breakdown": {
     "background": {
       "blue.png": 0.04,
@@ -19,7 +20,8 @@
       "pink.png": 0.02,
       "purple.png": 0.03,
       "red.png": 0.05,
-      "yellow.png": 0.43
+      "yellow.png": 0.43,
+      "NOTHING": 0.1
     },
     "eyes": {
       "egg-eyes.png": 0.3,

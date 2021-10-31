@@ -3,7 +3,7 @@ import log from 'loglevel';
 
 import { generateRandoms } from '../helpers/various';
 
-const { readdir, writeFile } = fs.promises;
+const { readdir, writeFile, stat } = fs.promises;
 
 export async function generateConfigurations(
   traits: string[],
@@ -24,15 +24,19 @@ export async function generateConfigurations(
   try {
     await Promise.all(
       traits.map(async trait => {
-        const attributes = await readdir(`./traits/${trait}`);
-        const randoms = generateRandoms(attributes.length - 1);
-        const tmp = {};
+        const path = `./traits/${trait}`;
+        const stats = await stat(path);
+        if (stats.isDirectory()) {
+          const attributes = await readdir(`./traits/${trait}`);
+          const randoms = generateRandoms(attributes.length - 1);
+          const tmp = {};
 
-        attributes.forEach((attr, i) => {
-          tmp[attr] = randoms[i] / 100;
-        });
+          attributes.forEach((attr, i) => {
+            tmp[attr] = randoms[i] / 100;
+          });
 
-        configs['breakdown'][trait] = tmp;
+          configs['breakdown'][trait] = tmp;
+        }
       }),
     );
   } catch (err) {

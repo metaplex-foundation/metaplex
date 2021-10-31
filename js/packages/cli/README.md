@@ -21,6 +21,9 @@ The following file will be generated (based off of `example-traits`):
   "description": "",
   "creators": [],
   "collection": {},
+  "exclusions": { // For collections with mutually exclusive attributes you can create exclusions where if a layer does not have nothing, the excluded layers will have nothing.
+      "face": ["mouth"] // Just an example, you probbably want a mouth
+  },
   "breakdown": {
     "background": {
       "blue.png": 0.04,
@@ -36,7 +39,8 @@ The following file will be generated (based off of `example-traits`):
       "pink.png": 0.02,
       "purple.png": 0.03,
       "red.png": 0.05,
-      "yellow.png": 0.43
+      "yellow.png": 0.43,
+      "NOTHING": 0.1 // You can tell the generator to skip this layer at a certain weighted average.
     },
     "eyes": {
       "egg-eyes.png": 0.3,

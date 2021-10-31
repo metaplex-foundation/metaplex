@@ -15,11 +15,13 @@ const createImage = async (order = [], image, width, height) => {
   const ID = parseInt(image.id, 10) - 1;
   await Promise.all(
     order.map(async cur => {
-      const imageLocation = `${TRAITS_DIRECTORY}/${cur}/${image[cur]}`;
-      const loadedImage = await loadImage(imageLocation);
-      context.patternQuality = 'best';
-      context.quality = 'best';
-      context.drawImage(loadedImage, 0, 0, width, height);
+      if (image[cur] !== 'NOTHING') {
+        const imageLocation = `${TRAITS_DIRECTORY}/${cur}/${image[cur]}`;
+        const loadedImage = await loadImage(imageLocation);
+        context.patternQuality = 'best';
+        context.quality = 'best';
+        context.drawImage(loadedImage, 0, 0, width, height);
+      }
     }),
   );
   const buffer = canvas.toBuffer('image/png');
@@ -46,6 +48,7 @@ export async function createGenerativeArt(
     // generate images for the portion
     await Promise.all(
       slice.map(async image => {
+        console.log('image');
         await createImage(order, image, width, height);
       }),
     );
