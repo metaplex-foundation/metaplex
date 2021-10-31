@@ -416,6 +416,9 @@ export class MetadataAccountDocument extends StoreAccountDocument {
   creators: Creator[];
   masterEdition : string | undefined;
   updateAuthority : string;
+  name : string;
+  description : string;
+  imageUrl : string;
 
   constructor(
     store: string,
@@ -425,7 +428,10 @@ export class MetadataAccountDocument extends StoreAccountDocument {
     collection: string | undefined,
     creators: Creator[],
     masterEdition : string | undefined,
-    updateAuthority : string
+    updateAuthority : string,
+    name : string,
+    description : string,
+    imageUrl : string,
   ) {
     super(store, pubkey, account);
     this.mint = mint;
@@ -433,6 +439,9 @@ export class MetadataAccountDocument extends StoreAccountDocument {
     this.creators = creators;
     this.masterEdition = masterEdition;
     this.updateAuthority = updateAuthority;
+    this.name = name;
+    this.description = description;
+    this.imageUrl = imageUrl;
   }
 }
 

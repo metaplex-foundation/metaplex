@@ -165,7 +165,10 @@ export const loadMetadata = async (
         m.ext?.collection?.name,
         m.parsed.data.creators ?? [],
         m.parsed.masterEdition,
-        m.parsed.updateAuthority
+        m.parsed.updateAuthority,
+        m.ext?.name!,
+        m.ext?.description!,
+        m.ext?.image!
       )
   );
 

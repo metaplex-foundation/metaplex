@@ -114,12 +114,20 @@ export const loadAuctionManagers = async (
     collection: string | undefined;
     metadataPubkey?: string;
     price: number | undefined;
+    nftName: string | undefined;
+    nftDescription: string | undefined;
+    nftImageUrl: string | undefined;
+    auctionState : number | undefined;
   }[] = decodedManagers.map((dm, i) => ({
     account: rawManagers[i].account,
     pubkey: rawManagers[i].pubkey,
     decoded: dm,
     collection: undefined,
     price: undefined,
+    nftName : undefined,
+    nftDescription : undefined,
+    nftImageUrl : undefined,
+    auctionState : undefined
   }));
 
   const vaults = decodedManagers.map((mgr) => mgr.vault);
@@ -156,8 +164,8 @@ export const loadAuctionManagers = async (
     extendedAuctionKeys
   );
 
-  await loadBidderMetadata(store, connection, client, managers.map(m => m.pubkey));
-  await loadBidderPots(store, connection, client, managers.map(m => m.pubkey));
+  await loadBidderMetadata(store, connection, client, managers.map(m => m.decoded.auction));
+  await loadBidderPots(store, connection, client, managers.map(m => m.decoded.auction));
 
   const boxesByVault = _.groupBy(boxes, (b) => b.info.vault);
   const auctionByPubkey = new Map(auctions.map((m) => [m.pubkey, m.info]));
@@ -182,7 +190,7 @@ export const loadAuctionManagers = async (
     }
 
     return res
-      ? { pubkey: res.pubkey, metadata: decodeMetadata(res.account.data) }
+      ? { pubkey: res.pubkey, metadata: decodeMetadata(res.account.data), metadataDoc : res }
       : undefined;
   };
 
@@ -206,7 +214,7 @@ export const loadAuctionManagers = async (
       accountConverterSet.revertConversion(res);
     }
     return res
-      ? { pubkey: res.pubkey, metadata: decodeMetadata(res.account.data) }
+      ? { pubkey: res.pubkey, metadata: decodeMetadata(res.account.data), metadataDoc : res}
       : undefined;
   };
 
@@ -268,20 +276,24 @@ export const loadAuctionManagers = async (
         mdByMasterEdLookup
       );
       if (metadataCollection.length) {
-        const metadata = metadataCollection[0];
+        const md = metadataCollection[0];
         const auctionPubkey = mgr.decoded.auction;
         const auction = auctionByPubkey.get(auctionPubkey);
 
         const { collection, price } =
           await extractCollectionAndTokenPriceFromMetadata(
-            metadata.metadata,
+            md.metadata,
             auction!.auctionDataExtended!,
             auction!.tokenMint
           );
 
         mgr.collection = collection;
         mgr.price = price;
-        mgr.metadataPubkey = metadata.pubkey;
+        mgr.metadataPubkey = md.pubkey;
+        mgr.nftName = md.metadataDoc.name;
+        mgr.nftDescription = md.metadataDoc.description;
+        mgr.nftImageUrl = md.metadataDoc.imageUrl;
+        mgr.auctionState = auction?.state;
       }
     } else {
       const auctionPubkey = mgr.decoded.auction;
@@ -307,9 +319,16 @@ export const loadAuctionManagers = async (
             (mgr.decoded as AuctionManagerV2).auctionDataExtended,
             auction!.tokenMint
           );
+
+        const md = metadataCollection[0];
+
         mgr.collection = collection;
         mgr.price = price;
-        mgr.metadataPubkey = metadataCollection[0].pubkey;
+        mgr.metadataPubkey = md.pubkey;
+        mgr.nftName = md.metadataDoc.name;
+        mgr.nftDescription = md.metadataDoc.description;
+        mgr.nftImageUrl = md.metadataDoc.imageUrl;
+        mgr.auctionState = auction?.state;
       }
     }
   }
@@ -323,7 +342,11 @@ export const loadAuctionManagers = async (
         mgr.decoded.auction,
         mgr.collection,
         mgr.price,
-        mgr.metadataPubkey!
+        mgr.metadataPubkey!,
+        mgr.nftName!,
+        mgr.nftDescription!,
+        mgr.nftImageUrl!,
+        mgr.auctionState!
       )
   );
 
@@ -338,6 +361,7 @@ export const loadAuctionManagers = async (
   await auctionManagerCollection.createIndex({ collection: 1 });
 
   if (docs.length) {
+    accountConverterSet.applyConversion(docs);
     await auctionManagerCollection.insertMany(docs);
   }
 
@@ -377,7 +401,7 @@ const loadVaults = async (
 
 type mdLookup = (
   mint: string
-) => Promise<{ pubkey: string; metadata: Metadata } | undefined>;
+) => Promise<{ pubkey: string; metadata: Metadata; metadataDoc : MetadataAccountDocument} | undefined>;
 type masterEdByPrintingMintLookup = (
   mint: string
 ) => Promise<{ pubkey: string; edition: MasterEditionV1 } | undefined>;
@@ -389,7 +413,7 @@ const getMetadataFromAuctionV1 = async (
   masterEdByPrintMint: masterEdByPrintingMintLookup,
   mdByMasterEdLookup: mdLookup
 ) => {
-  const items: { pubkey: string; metadata: Metadata }[] = [];
+  const items: { pubkey: string; metadata: Metadata; metadataDoc : MetadataAccountDocument }[] = [];
 
   for (const config of mgr.settings.winningConfigs) {
     for (const item of config.items) {
@@ -420,7 +444,7 @@ const getMetadataFromAuctionV2 = async (
   boxes: SafetyDepositBox[],
   mdByMint: mdLookup
 ) => {
-  const items: { pubkey: string; metadata: Metadata }[] = [];
+  const items: { pubkey: string; metadata: Metadata; metadataDoc : MetadataAccountDocument }[] = [];
 
   for (let i = 0; i < numberOfWinners; i++) {
     for (const config of safetyDepositConfigs) {
@@ -644,7 +668,7 @@ const loadBidderMetadata = async (
     store: string,
     connection: Connection,
     client: MongoClient,
-    auctionManagerPubkeys: string[]
+    auctionPubKeys: string[]
   ) => {
       const filters = [
           {
@@ -654,7 +678,7 @@ const loadBidderMetadata = async (
 
       const rawBidderMetadata = await getProgramAccounts(connection, AUCTION_ID, filters);
 
-      const docs = rawBidderMetadata.map(rbm => {
+      let docs = rawBidderMetadata.map(rbm => {
           const bm = decodeBidderMetadata(rbm.account.data);
           return new BidderMetadataStoreAccountDocument(
               store,
@@ -664,6 +688,8 @@ const loadBidderMetadata = async (
               bm.auctionPubkey
           )
       })
+
+      docs = docs.filter(d => auctionPubKeys.indexOf(d.auctionPubkey) != - 1);
 
       const collection = client.db(DB).collection(BIDDER_METADATA_COLLECTION);
       await collection.deleteMany({store : store});
@@ -682,7 +708,7 @@ const loadBidderMetadata = async (
     store: string,
     connection: Connection,
     client: MongoClient,
-    auctionManagerPubkeys: string[]
+    auctionPubKeys: string[]
   ) => {
       const filters = [
           {
@@ -692,7 +718,7 @@ const loadBidderMetadata = async (
 
       const rawBidderPots = await getProgramAccounts(connection, AUCTION_ID, filters);
 
-      const docs = rawBidderPots.map((rbp) => {
+      let docs = rawBidderPots.map((rbp) => {
         const bp = decodeBidderPot(rbp.account.data);
         return new BidderPotStoreAccountDocument(
           store,
@@ -703,6 +729,8 @@ const loadBidderMetadata = async (
           bp.emptied
         );
       });
+
+      docs = docs.filter(d => auctionPubKeys.indexOf(d.auctionPubkey) != - 1);
 
       const collection = client.db(DB).collection(BIDDER_POT_COLLECTION);
       await collection.deleteMany({ store: store });

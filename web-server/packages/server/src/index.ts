@@ -20,6 +20,7 @@ import { payoutTicketsRouter } from "./routes/payoutTicket";
 import { bidderMetadataRouter } from "./routes/bidderMetadata";
 import { bidderPotRouter } from "./routes/bidderPot";
 import 'log-timestamp';
+import { bidRedemptionRouter } from "./routes/bidRedemption";
 
 console.log('ENVIRONMENT', process.env);
 const cors = require('cors');
@@ -44,6 +45,7 @@ app.use(API_BASE, bidRedemptionTicketsV1Router);
 app.use(API_BASE, payoutTicketsRouter);
 app.use(API_BASE, bidderMetadataRouter);
 app.use(API_BASE, bidderPotRouter);
+app.use(API_BASE, bidRedemptionRouter);
 
 if(process.env.NODE_ENV == 'development') {
   loadMetaplexData();

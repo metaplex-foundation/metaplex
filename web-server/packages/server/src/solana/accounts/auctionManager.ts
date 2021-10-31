@@ -7,7 +7,8 @@ import { findProgramAddressBase58 } from "../utils";
 import { StoreAccountDocument } from "./account";
 import { MetaplexKey } from "./types";
 
-const AUCTION_PREFIX = "auction";
+export const AUCTION_PREFIX = "auction";
+export const METADATA = 'metadata';
 const EXTENDED = "extended";
 
 export class AuctionManagerV1 {
@@ -381,6 +382,10 @@ export class AuctionManagerAccountDocument extends StoreAccountDocument {
     collection: string | undefined;
     price : number | undefined;
     metadata : string;
+    nftName : string;
+    nftDescription : string;
+    nftImageUrl : string;
+    auctionState : number;
     constructor(
       store: string,
       account: AccountInfo<Buffer>,
@@ -388,12 +393,20 @@ export class AuctionManagerAccountDocument extends StoreAccountDocument {
       auction: string,
       collection: string | undefined,
       price : number | undefined,
-      metadata : string
+      metadata : string,
+      nftName : string,
+      nftDescription : string,
+      nftImageUrl : string,
+      auctionState : number
     ) {
       super(store, pubkey, account);
       this.auction = auction;
       this.collection = collection;
       this.price = price;
       this.metadata = metadata;
+      this.nftName = nftName;
+      this.nftDescription = nftDescription;
+      this.nftImageUrl = nftImageUrl;
+      this.auctionState = auctionState;
     }
   }
