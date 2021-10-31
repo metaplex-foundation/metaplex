@@ -37,20 +37,6 @@ export async function withdraw(
         config: configAddress,
         authority: userKeyPair.publicKey,
       },
-      remainingAccounts: [
-        {
-          //@ts-ignore
-          pubkey: userKeyPair.publicKey,
-          isWritable: true,
-          isSigner: true,
-        },
-        {
-          //@ts-ignore
-          pubkey: configAddress,
-          isWritable: true,
-          isSigner: false,
-        },
-      ],
     }),
   ];
   return (
