@@ -29,10 +29,10 @@ pub mod nft_candy_machine {
     pub fn withdraw_funds<'info>(
         ctx: Context<'_, '_, '_, 'info, WithdrawFunds<'info>>,
     ) -> ProgramResult {
-        let authority = &ctx.remaining_accounts[0];
-        let pay = &ctx.remaining_accounts[1];
-        let snapshot: u64 = pay.to_account_info().lamports();
-        **pay.to_account_info().lamports.borrow_mut() = 0;
+        let authority = &ctx.accounts.authority;
+        let pay = &ctx.accouts.config;
+        let snapshot: u64 = pay.lamports();
+        **pay.lamports.borrow_mut() = 0;
 
         **authority.lamports.borrow_mut() = authority
             .lamports()
@@ -467,7 +467,7 @@ pub struct WithdrawFunds<'info> {
         mut,
         has_one = authority
     )]
-    config: ProgramAccount<'info, Config>,
+    config: Account<'info, Config>,
 
     #[account(signer, address = config.authority)]
     authority: AccountInfo<'info>,
