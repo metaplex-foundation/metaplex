@@ -11,6 +11,11 @@ import {
   FEE_PAYER,
   TREASURY,
   WRAPPED_SOL_MINT,
+  TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  TOKEN_ENTANGLER,
+  ESCROW,
+  B,
+  A,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
@@ -387,6 +392,44 @@ export const getAuctionHouseTradeState = async (
   );
 };
 
+export const getTokenEntanglement = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  );
+};
+
+export const getTokenEntanglementEscrows = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number, PublicKey, number]> => {
+  return [
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(A),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(B),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+  ];
+};
+
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
@@ -462,6 +505,30 @@ export async function loadAuctionHouseProgram(
   const idl = await anchor.Program.fetchIdl(AUCTION_HOUSE_PROGRAM_ID, provider);
 
   return new anchor.Program(idl, AUCTION_HOUSE_PROGRAM_ID, provider);
+}
+
+export async function loadTokenEntanglementProgream(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    provider,
+  );
+
+  return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
 export async function getTokenAmount(
