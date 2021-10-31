@@ -369,7 +369,7 @@ export const mintNFT = async (
   } else {
     if (!arWallet) throw new Error("Detected files with more than 10mb but no wallet provided");
     progressCallback(6);
-    arweaveTxId = await uploadWithArWallet(filesMoreThan10mb, arWallet, metadata, mintKey)
+    arweaveTxId = await uploadWithArWallet(files, arWallet, metadata, mintKey)
   }
 
   if (arweaveTxId && wallet.publicKey) {
