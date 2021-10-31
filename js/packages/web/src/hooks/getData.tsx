@@ -400,6 +400,10 @@ export const getCollection = async (name: string) => {
         price: item.price,
         collection: item.collection,
         metadata: item.metadata,
+        state: item.auctionState,
+        name: item.nftName,
+        description: item.nftDescription,
+        image: item.nftImageUrl,
       };
 
       const obj = {
@@ -581,6 +585,44 @@ export const getGidRedemptionsByAuctionManagerAndWinningIndex = async (
     });
 
     return arrayToObject(arr, 'pubkey');
+  } catch (err) {
+    console.log('getGidRedemptionV2sByAuctionManagerAndWinningIndex');
+    console.log(err);
+  }
+};
+
+
+export const getCachedRedemptionKeys = async (
+  wallet: string,
+  auction: string,
+) => {
+  try {
+    const response: any = await axios.get(
+      `${API_URL}/api/wallet/${wallet}/auction/${auction}/bidRedemption`,
+    );
+
+    let arr: any = [];
+    console.log(response.data)
+    response.data.map(item => {
+      const account = {
+        data: Buffer.from(item.account.data, 'base64'),
+        executable: item.account.executable,
+        lamports: item.account.lamports,
+        owner: item.account.owner,
+      };
+
+      const obj = {
+        account: account,
+        pubkey: item.pubkey,
+      };
+      const buffer = WhitelistedBidRedemptionTicketParser(
+        obj.pubkey,
+        obj.account,
+      );
+      arr = buffer;
+    });
+
+    return arr;
   } catch (err) {
     console.log('getGidRedemptionV2sByAuctionManagerAndWinningIndex');
     console.log(err);
@@ -866,7 +908,6 @@ export const getMetadataTotal = async () => {
   const response: any = await axios.get(
     `${API_URL}/api/${STORE}/metadata/total`,
   );
-  console.log('>>>>>>>>>>>>>>>')
 
-  console.log(response);
+  return response.data.nftCount;
 }

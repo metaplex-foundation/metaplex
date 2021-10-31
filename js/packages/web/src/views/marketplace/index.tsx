@@ -271,9 +271,7 @@ export const MarketplaceView = () => {
                       return (
                         <AuctionCard
                         keys={idx || 9000}
-                          auction={m.info.auction}
-                          price={m.account.price}
-                          nftPubkey={m.account.metadata}
+                        auction={m}
                         />
                       );
                     })

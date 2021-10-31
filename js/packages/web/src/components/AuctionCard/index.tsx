@@ -4,22 +4,14 @@ import { Link } from 'react-router-dom';
 import { useAuction, useExtendedArt } from '../../hooks';
 
 export const AuctionCard = props => {
-  const { auction, price, nftPubkey, keys } = props;
-  const id = pubkeyToString(nftPubkey);
-
-  const { data } = useExtendedArt(id);
-  const auc = useAuction(auction);
+  const { auction, keys } = props;
+  const price = auction.account.price
 
   const [loadImage, setLoadImage] = useState(false);
-  const [cardObj, setCardObj] = useState<IMetadataExtension | undefined>();
-
-  useEffect(() => {
-    setCardObj(data);
-  }, [data]);
 
   return (
     <div id="auction-sec" className="col-md-3 mt-4" key={keys}>
-      <Link to={auction ? `/auction/${auction}` : '#'}>
+      <Link to={auction.info.auction ? `/auction/${auction.info.auction}` : '#'}>
         <div className="card p-3" style={{ height: '100%' }}>
           <div style={{ width: '100%', height: '59%' }}>
             <img
@@ -30,7 +22,7 @@ export const AuctionCard = props => {
                 display: loadImage ? 'block' : 'none',
                 objectFit: 'cover',
               }}
-              src={cardObj?.image}
+              src={auction.account?.image}
               loading="eager"
               onLoad={() => {
                 setLoadImage(true);
@@ -51,11 +43,11 @@ export const AuctionCard = props => {
               className="circle"
               style={{
                 background:
-                  auc?.state == '2' || auc?.state == '3' ? 'red' : '#0ee9a7',
+                auction.account?.state == '2' || auction.account?.state == '3' ? 'red' : '#0ee9a7',
               }}
             ></div>
-            <h5 className="card-title m-0 text-white">{cardObj?.name}</h5>
-            <p className="card-text">{cardObj?.description}</p>
+            <h5 className="card-title m-0 text-white">{auction.account?.name}</h5>
+            <p className="card-text">{auction.account?.description}</p>
             <div className="btn btn-primary">
               <img src="/images/exchange-white.png" />
               {price} SOL

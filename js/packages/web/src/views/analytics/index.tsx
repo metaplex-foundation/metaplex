@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Layout, Button, Col, Spin } from 'antd';
 import { useMeta } from '../../contexts';
 import { WinningConfigType } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -19,7 +19,7 @@ import {
   getAuctionDataExtendedByKey,
   getauctionManagersByKey,
   getBidderMetadata,
-  getBidderMetadataByAuctionAndBidder,
+  getMetadataTotal,
 } from '../../hooks/getData';
 
 const { Content } = Layout;
@@ -303,6 +303,7 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
   const [averageBids, setAverageBids] = useState<number>(0);
   const [averageSale, setAverageSale] = useState<number>(0);
   const [highestSale, setHighestSale] = useState<number>(0);
+  const [totalNFTs, setTotalNFTs] = useState<number>(0);
 
   const [sortedSales, setSortedSales] = useState<number[]>([]);
   const {
@@ -310,8 +311,14 @@ function InnerAnalytics({ mint }: { mint: MintInfo }) {
     // stores,
   } = useMeta();
 
-  const totalNFTs = metadata.length;
-  // const totalMarketplaces = Object.values(stores).length;
+  const getMetadataLen = async () => {
+    const len = await getMetadataTotal();
+    setTotalNFTs(len);
+  };
+
+  useEffect(() => {
+    getMetadataLen();
+  }, []);
 
   const auctionViews = useAuctions();
 

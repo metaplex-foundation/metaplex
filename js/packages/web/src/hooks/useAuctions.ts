@@ -23,7 +23,6 @@ import {
   AuctionManagerV2,
   BidRedemptionTicket,
   BidRedemptionTicketV2,
-  getBidderKeys,
   MetaplexKey,
   SafetyDepositConfig,
   WinningConfigType,
@@ -36,7 +35,7 @@ import {
   getBidderMetadataByAuctionAndBidder,
   getBidderPotsByAuctionAndBidder,
   getBidRedemptionV2sByAuctionManagerAndWinningIndexby,
-  getGidRedemptionsByAuctionManagerAndWinningIndex,
+  getCachedRedemptionKeys,
   getMasterEditionsbyKey,
   getMasterEditionsbyMint,
   getMetadataByMasterEdition,
@@ -75,11 +74,6 @@ export interface AuctionView {
   isInstantSale: boolean;
 }
 
-type CachedRedemptionKeys = Record<
-  string,
-  ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
->;
-
 export function useStoreAuctionsList() {
   const [result, setResult] = useState<any[]>([]);
 
@@ -95,69 +89,9 @@ export function useStoreAuctionsList() {
   return result;
 }
 
-export function useCachedRedemptionKeysByWallet() {
-  const auctions = useStoreAuctionsList();
-
-  const { publicKey } = useWallet();
-  const [cachedRedemptionKeys, setCachedRedemptionKeys] =
-    useState<CachedRedemptionKeys>({});
-
-  const getGidRedemptions = async () => {
-    const temp: CachedRedemptionKeys = {};
-    await createPipelineExecutor(
-      auctions.values(),
-      async auction => {
-        if (!cachedRedemptionKeys[auction.pubkey]) {
-          const key = await getBidderKeys(
-            auction.pubkey,
-            publicKey!.toBase58(),
-          );
-          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
-            'bidRedemptionTicketsV1',
-            key.bidRedemption,
-          );
-          if (_.isEmpty(res)) {
-            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
-              'bidRedemptionTicketsV2',
-              key.bidRedemption,
-            );
-          }
-          if (_.isEmpty(res))
-            temp[auction.pubkey] = { pubkey: key.bidRedemption, info: null };
-          else temp[auction.pubkey] = res;
-        } else if (!cachedRedemptionKeys[auction.pubkey].info) {
-          let res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
-            'bidRedemptionTicketsV1',
-            cachedRedemptionKeys[auction.pubkey].pubkey,
-          );
-          if (_.isEmpty(res)) {
-            res = await getGidRedemptionsByAuctionManagerAndWinningIndex(
-              'bidRedemptionTicketsV2',
-              cachedRedemptionKeys[auction.pubkey].pubkey,
-            );
-          }
-          if (_.isEmpty(res))
-            temp[auction.pubkey] = cachedRedemptionKeys[auction.pubkey];
-          else temp[auction.pubkey] = res;
-        }
-      },
-      { delay: 0, sequence: 2 },
-    );
-    setCachedRedemptionKeys(temp);
-  };
-
-  useEffect(() => {
-    if (!publicKey) return;
-    getGidRedemptions();
-  }, [auctions, publicKey]);
-
-  return cachedRedemptionKeys;
-}
-
 export const useAuctions = (state?: AuctionViewState) => {
   const [auctionViews, setAuctionViews] = useState<AuctionView[]>([]);
   const { publicKey } = useWallet();
-  const cachedRedemptionKeys = useCachedRedemptionKeysByWallet();
   const auctions = useStoreAuctionsList();
 
   const getAuctionViewsAsync = async () => {
@@ -169,7 +103,6 @@ export const useAuctions = (state?: AuctionViewState) => {
         const auctionView = await processAccountsIntoAuctionView(
           publicKey?.toBase58(),
           auction,
-          cachedRedemptionKeys,
           state,
         );
         if (auctionView) {
@@ -183,7 +116,7 @@ export const useAuctions = (state?: AuctionViewState) => {
 
   useEffect(() => {
     getAuctionViewsAsync();
-  }, [state, auctions, publicKey, cachedRedemptionKeys, setAuctionViews]);
+  }, [state, auctions, publicKey, setAuctionViews]);
 
   return auctionViews;
 };
@@ -249,10 +182,6 @@ async function buildListWhileNonZero<T>(hash: string, key: string) {
 export async function processAccountsIntoAuctionView(
   walletPubkey: StringPublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
-  cachedRedemptionKeysByWallet: Record<
-    string,
-    ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
-  >,
   desiredState: AuctionViewState | undefined,
   existingAuctionView?: AuctionView,
 ): Promise<AuctionView | undefined> {
@@ -321,12 +250,13 @@ export async function processAccountsIntoAuctionView(
 
     const boxesExpected = auctionManager.safetyDepositBoxesExpected.toNumber();
 
+    const cachedRedemptionKeysByWallet = await getCachedRedemptionKeys(
+      pubkeyToString(walletPubkey),
+      auction.pubkey,
+    );
+
     const bidRedemption: ParsedAccount<BidRedemptionTicket> | undefined =
-      cachedRedemptionKeysByWallet[auction.pubkey]?.info
-        ? (cachedRedemptionKeysByWallet[
-            auction.pubkey
-          ] as ParsedAccount<BidRedemptionTicket>)
-        : undefined;
+      cachedRedemptionKeysByWallet;
 
     const bidderMetadata = await getBidderMetadataByAuctionAndBidder(
       auction.pubkey,
