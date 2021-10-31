@@ -469,8 +469,8 @@ pub struct WithdrawFunds<'info> {
     )]
     config: Account<'info, Config>,
 
-    #[account(signer, address = config.authority)]
-    authority: AccountInfo<'info>,
+    #[account(mut, address = config.authority)]
+    authority: Signer<'info>,
 }
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
