@@ -9,21 +9,6 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-/// Action on prove
-#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
-pub enum ActionOnProve {
-    /// Burn
-    Burn,
-    /// Redeem
-    Redeem,
-}
-
-impl Default for ActionOnProve {
-    fn default() -> Self {
-        Self::Burn
-    }
-}
-
 /// Pack voucher
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, Default)]

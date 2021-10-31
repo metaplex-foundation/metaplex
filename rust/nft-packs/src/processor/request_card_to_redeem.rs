@@ -1,28 +1,35 @@
 //! Request card to redeem instruction processing
 
 use crate::{
-    instruction::RequestCardToRedeemArgs,
     error::NFTPacksError,
+    instruction::RequestCardToRedeemArgs,
     math::SafeMath,
-    state::{PackSet, PackVoucher, ProvingProcess, InitProvingProcessParams},
+    state::{InitProvingProcessParams, PackSet, PackVoucher, ProvingProcess},
     utils::*,
 };
 use metaplex::state::Store;
-use metaplex_token_metadata::{utils::assert_derivation, state::{Edition, EDITION, PREFIX as EDITION_PREFIX},};
+use metaplex_token_metadata::{
+    state::{Edition, EDITION, PREFIX as EDITION_PREFIX},
+    utils::assert_derivation,
+};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
     entrypoint::ProgramResult,
     program_error::ProgramError,
-    program_pack::Pack,
     program_option::COption,
+    program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
 use spl_token::state::Account;
 
 /// Process ClaimPack instruction
-pub fn request_card_for_redeem(program_id: &Pubkey, accounts: &[AccountInfo], args: RequestCardToRedeemArgs) -> ProgramResult {
+pub fn request_card_for_redeem(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    args: RequestCardToRedeemArgs,
+) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let store_account = next_account_info(account_info_iter)?;
@@ -78,7 +85,7 @@ pub fn request_card_for_redeem(program_id: &Pubkey, accounts: &[AccountInfo], ar
         &[
             PackVoucher::PREFIX.as_bytes(),
             pack_set_account.key.as_ref(),
-            &args.index.to_be_bytes(),
+            &args.index.to_le_bytes(),
         ],
     )?;
 

@@ -2,14 +2,17 @@ mod utils;
 
 use metaplex_nft_packs::{
     error::NFTPacksError,
-    instruction::{AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs},
-    state::{ActionOnProve, PackDistributionType},
+    instruction::{AddCardToPackArgs, InitPackSetArgs},
+    state::PackDistributionType,
 };
 use num_traits::FromPrimitive;
-use solana_program::instruction::InstructionError;
+use solana_program::{instruction::InstructionError, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
-    signature::Keypair, signer::Signer, transaction::TransactionError, transport::TransportError,
+    signature::Keypair,
+    signer::Signer,
+    transaction::{Transaction, TransactionError},
+    transport::TransportError,
 };
 use utils::*;
 
@@ -23,18 +26,33 @@ async fn setup() -> (
 ) {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = None;
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type: PackDistributionType::Fixed,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -69,6 +87,35 @@ async fn setup() -> (
         .await
         .unwrap();
 
+    let voucher_edition = TestEditionMarker::new(&test_metadata, &test_master_edition, 1);
+
+    let edition_authority = Keypair::new();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[system_instruction::create_account(
+            &context.payer.pubkey(),
+            &edition_authority.pubkey(),
+            100000000000000,
+            0,
+            &solana_program::system_program::id(),
+        )],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &edition_authority],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    voucher_edition
+        .create(
+            &mut context,
+            &edition_authority,
+            &test_pack_set.authority,
+            &user_token_acc.pubkey(),
+        )
+        .await
+        .unwrap();
+
     // Add pack card
     let test_pack_voucher = TestPackVoucher::new(&test_pack_set, 1);
     test_pack_set
@@ -78,10 +125,6 @@ async fn setup() -> (
             &test_master_edition,
             &test_metadata,
             &user,
-            AddVoucherToPackArgs {
-                number_to_open: 4,
-                action_on_prove: ActionOnProve::Burn,
-            },
         )
         .await
         .unwrap();
@@ -117,12 +160,7 @@ async fn success() {
     test_pack_set.close(&mut context).await.unwrap();
 
     test_pack_set
-        .delete_voucher(
-            &mut context,
-            &test_pack_voucher,
-            &user.pubkey(),
-            &new_token_owner_acc.pubkey(),
-        )
+        .delete_voucher(&mut context, &test_pack_voucher, &user.pubkey())
         .await
         .unwrap();
 
@@ -144,7 +182,6 @@ async fn fail_invalid_state() {
     let test_metadata2 = TestMetadata::new();
     let test_master_edition2 = TestMasterEditionV2::new(&test_metadata2);
 
-    let fake_keypair = Keypair::new();
     let payer_pubkey = context.payer.pubkey();
 
     let user_token_acc2 = Keypair::new();
@@ -184,8 +221,8 @@ async fn fail_invalid_state() {
             &test_metadata2,
             &user2,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: Some(5000),
+                max_supply: 5,
+                weight: 100,
                 index: test_pack_card.index,
             },
         )
@@ -197,12 +234,7 @@ async fn fail_invalid_state() {
     context.warp_to_slot(3).unwrap();
 
     let result = test_pack_set
-        .delete_voucher(
-            &mut context,
-            &test_pack_voucher,
-            &payer_pubkey,
-            &fake_keypair.pubkey(),
-        )
+        .delete_voucher(&mut context, &test_pack_voucher, &payer_pubkey)
         .await;
 
     assert_custom_error!(result.unwrap_err(), NFTPacksError::WrongPackState, 0);

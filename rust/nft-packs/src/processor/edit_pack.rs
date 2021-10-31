@@ -1,6 +1,11 @@
 //! EditPack instruction processing
 
-use crate::{error::NFTPacksError, instruction::EditPackSetArgs, state::{PackSet, MAX_URI_LENGTH, MAX_DESCRIPTION_LEN}, utils::*};
+use crate::{
+    error::NFTPacksError,
+    instruction::EditPackSetArgs,
+    state::{PackSet, MAX_DESCRIPTION_LEN, MAX_URI_LENGTH},
+    utils::*,
+};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,

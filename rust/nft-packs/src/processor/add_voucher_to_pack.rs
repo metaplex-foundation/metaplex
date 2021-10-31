@@ -7,12 +7,12 @@ use crate::{
     state::{InitPackVoucherParams, PackSet, PackSetState, PackVoucher},
     utils::*,
 };
+use metaplex::state::Store;
 use metaplex_token_metadata::{
     error::MetadataError,
     state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
     utils::{assert_derivation, assert_initialized},
 };
-use metaplex::state::Store;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -24,10 +24,7 @@ use solana_program::{
 use spl_token::state::Account;
 
 /// Process AddVoucherToPack instruction
-pub fn add_voucher_to_pack(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-) -> ProgramResult {
+pub fn add_voucher_to_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_info = next_account_info(account_info_iter)?;
     let pack_voucher_info = next_account_info(account_info_iter)?;

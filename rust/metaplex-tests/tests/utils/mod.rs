@@ -34,7 +34,12 @@ use spl_token::state::Mint;
 
 pub fn nft_packs_program_test<'a>() -> ProgramTest {
     let mut program = ProgramTest::new("metaplex_nft_packs", metaplex_nft_packs::id(), None);
-    program.add_program("metaplex_token_metadata", metaplex_token_metadata::id(), None);
+    program.add_program("metaplex", metaplex::id(), None);
+    program.add_program(
+        "metaplex_token_metadata",
+        metaplex_token_metadata::id(),
+        None,
+    );
     program.add_program(
         "randomness_oracle_program",
         randomness_oracle_program::id(),
@@ -203,4 +208,37 @@ pub async fn create_mint(
     );
 
     context.banks_client.process_transaction(tx).await
+}
+
+pub async fn create_store(
+    context: &mut ProgramTestContext,
+    admin: &Keypair,
+    public: bool,
+) -> transport::Result<Pubkey> {
+    let metaplex_key = metaplex::id();
+    let admin_key = admin.pubkey();
+
+    let store_path = &[
+        metaplex::state::PREFIX.as_bytes(),
+        metaplex_key.as_ref(),
+        admin_key.as_ref(),
+    ];
+    let (store_key, _) = Pubkey::find_program_address(store_path, &metaplex::id());
+
+    let tx = Transaction::new_signed_with_payer(
+        &[metaplex::instruction::create_set_store_instruction(
+            metaplex::id(),
+            store_key,
+            admin_key,
+            context.payer.pubkey(),
+            public,
+        )],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, admin],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    Ok(store_key)
 }

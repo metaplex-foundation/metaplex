@@ -2,8 +2,8 @@
 #![allow(missing_docs)]
 
 use crate::{
-    find_pack_card_program_address, find_program_authority, find_proving_process_program_address, find_pack_voucher_program_address,
-    state::PackDistributionType,
+    find_pack_card_program_address, find_pack_voucher_program_address, find_program_authority,
+    find_proving_process_program_address, state::PackDistributionType,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -275,7 +275,8 @@ pub enum NFTPacksInstruction {
     /// - read                     randomness_oracle
     /// - read                     clock
     /// - read                     rent
-    /// 
+    /// - read                     system_program
+    ///
     /// Parameters:
     /// - index    u32
     RequestCardForRedeem(RequestCardToRedeemArgs),
@@ -589,7 +590,7 @@ pub fn request_card_for_redeem(
     index: u32,
 ) -> Instruction {
     let (proving_process, _) =
-        find_proving_process_program_address(program_id, pack_set, user_wallet);
+        find_proving_process_program_address(program_id, pack_set, edition_mint);
 
     let (pack_voucher, _) = find_pack_voucher_program_address(program_id, pack_set, index);
 
@@ -600,16 +601,17 @@ pub fn request_card_for_redeem(
         AccountMeta::new_readonly(*edition_mint, false),
         AccountMeta::new_readonly(pack_voucher, false),
         AccountMeta::new(proving_process, false),
-        AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new(*user_wallet, true),
         AccountMeta::new_readonly(*user_token_acc, false),
         AccountMeta::new_readonly(*random_oracle, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
+        AccountMeta::new_readonly(system_program::id(), false),
     ];
 
     Instruction::new_with_borsh(
         *program_id,
-        &NFTPacksInstruction::RequestCardForRedeem(RequestCardToRedeemArgs{index}),
+        &NFTPacksInstruction::RequestCardForRedeem(RequestCardToRedeemArgs { index }),
         accounts,
     )
 }

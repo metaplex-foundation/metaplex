@@ -10,6 +10,7 @@ test-bpf = []
 solana-program = "1.7.11"
 borsh = "0.9.1"
 spl-token = { version="3.2.0", features = [ "no-entrypoint" ] }
+metaplex = { path = "../metaplex/program", features = ["no-entrypoint"] }
 metaplex-token-vault = { path = "../token-vault/program", features = [ "no-entrypoint" ] }
 metaplex-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
 randomness-oracle-program = { git = "https://github.com/atticwip/randomness-oracle", features = [ "no-entrypoint" ] }

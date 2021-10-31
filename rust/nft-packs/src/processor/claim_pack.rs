@@ -4,7 +4,7 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackCard, PackDistributionType, PackSet, ProvingProcess, PREFIX, MasterEditionHolder},
+    state::{MasterEditionHolder, PackCard, PackDistributionType, PackSet, ProvingProcess, PREFIX},
     utils::*,
 };
 use metaplex_token_metadata::state::{MasterEditionV2, Metadata};
@@ -14,8 +14,8 @@ use solana_program::{
     entrypoint::ProgramResult,
     msg,
     program_error::ProgramError,
-    program_pack::Pack,
     program_option::COption,
+    program_pack::Pack,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
@@ -186,7 +186,9 @@ fn count_fixed_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
 ) -> Result<u128, ProgramError> {
-    let probability = (pack_card.weight as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_weight as u128)?;
+    let probability = (pack_card.weight as u128)
+        .error_mul(u16::MAX as u128)?
+        .error_div(pack_set.total_weight as u128)?;
 
     pack_set.decrement_supply()?;
 
@@ -199,7 +201,9 @@ fn count_max_supply_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
 ) -> Result<u128, ProgramError> {
-    let probability = (pack_card.max_supply as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_editions as u128)?;
+    let probability = (pack_card.max_supply as u128)
+        .error_mul(u16::MAX as u128)?
+        .error_div(pack_set.total_editions as u128)?;
 
     pack_set.decrement_supply()?;
 
@@ -212,7 +216,9 @@ fn count_unlimited_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
 ) -> Result<u128, ProgramError> {
-    let probability = (pack_card.weight as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_weight as u128)?;
+    let probability = (pack_card.weight as u128)
+        .error_mul(u16::MAX as u128)?
+        .error_div(pack_set.total_weight as u128)?;
 
     Ok(probability)
 }

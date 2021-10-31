@@ -22,18 +22,33 @@ async fn setup(
 ) {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = None;
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable,
                 distribution_type: PackDistributionType::Fixed,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -85,7 +100,7 @@ async fn success() {
     assert_eq!(test_pack_set.get_data(&mut context).await.name, [7; 32]);
 
     test_pack_set
-        .edit(&mut context, None, Some([8; 32]))
+        .edit(&mut context, None, Some([8; 32]), None, None)
         .await
         .unwrap();
 
@@ -97,7 +112,9 @@ async fn fail_immutable() {
     let (mut context, test_pack_set, _test_metadata, _test_master_edition, _user) =
         setup(false).await;
 
-    let result = test_pack_set.edit(&mut context, None, Some([8; 32])).await;
+    let result = test_pack_set
+        .edit(&mut context, None, Some([8; 32]), None, None)
+        .await;
 
     assert_custom_error!(result.unwrap_err(), NFTPacksError::ImmutablePackSet, 0);
 }

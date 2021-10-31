@@ -1,5 +1,5 @@
-use solana_sdk::pubkey::Pubkey;
 use metaplex_token_metadata::state::{EDITION, PREFIX};
+use solana_sdk::pubkey::Pubkey;
 
 #[derive(Debug)]
 pub struct TestEdition {

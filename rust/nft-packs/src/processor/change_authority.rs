@@ -13,10 +13,7 @@ use solana_program::{
 };
 
 /// Process TransferAuthority instruction
-pub fn transfer_authority(
-    _program_id: &Pubkey,
-    accounts: &[AccountInfo],
-) -> ProgramResult {
+pub fn transfer_authority(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let pack_set_account = next_account_info(account_info_iter)?;
     let authority_account = next_account_info(account_info_iter)?;

@@ -24,13 +24,23 @@ async fn setup(
 ) {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type,
                 allowed_amount_to_redeem: 10,
@@ -93,8 +103,8 @@ async fn success() {
             &test_metadata,
             &user,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: 5,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -120,8 +130,8 @@ async fn fail_invalid_index() {
             &test_metadata,
             &user,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: 5,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -139,8 +149,8 @@ async fn fail_invalid_index() {
             &test_metadata,
             &user,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: 5,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -169,8 +179,8 @@ async fn fail_wrong_probability() {
             &test_metadata,
             &user,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: Some(5000),
+                max_supply: 5,
+                weight: 100,
                 index: test_pack_card.index,
             },
         )
@@ -198,8 +208,8 @@ async fn fail_unlimited_probability() {
             &test_metadata,
             &user,
             AddCardToPackArgs {
-                max_supply: None,
-                probability: Some(5000),
+                max_supply: 0,
+                weight: 100,
                 index: test_pack_card.index,
             },
         )

@@ -1,5 +1,10 @@
 use crate::*;
 use borsh::ser::BorshSerialize;
+use metaplex_token_metadata::{
+    id,
+    instruction::{self, CreateMasterEditionArgs, MetadataInstruction},
+    state::{EDITION, PREFIX},
+};
 use solana_program::borsh::try_from_slice_unchecked;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -8,11 +13,6 @@ use solana_program::{
 use solana_program_test::*;
 use solana_sdk::signature::Keypair;
 use solana_sdk::{pubkey::Pubkey, signature::Signer, transaction::Transaction, transport};
-use metaplex_token_metadata::{
-    id,
-    instruction::{self, CreateMasterEditionArgs, MetadataInstruction},
-    state::{EDITION, PREFIX},
-};
 
 #[derive(Debug)]
 pub struct TestMasterEditionV2 {

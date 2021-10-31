@@ -1,7 +1,12 @@
 //! Pack set definitions
 
 use super::*;
-use crate::{error::NFTPacksError, math::SafeMath, state::{MAX_URI_LENGTH, MAX_DESCRIPTION_LEN}, MAX_WEIGHT_VALUE,};
+use crate::{
+    error::NFTPacksError,
+    math::SafeMath,
+    state::{MAX_DESCRIPTION_LEN, MAX_URI_LENGTH},
+    MAX_WEIGHT_VALUE,
+};
 use borsh::{BorshDeserialize, BorshSerialize};
 use metaplex_token_metadata::state::{MasterEdition, MasterEditionV2};
 use solana_program::{
@@ -182,7 +187,10 @@ impl PackSet {
 
             PackDistributionType::MaxSupply => {
                 if let Some(m_e_max_supply) = card_master_edition.max_supply() {
-                    if (card_supply as u64) > m_e_max_supply.error_sub(card_master_edition.supply())? || card_supply == 0 {
+                    if (card_supply as u64)
+                        > m_e_max_supply.error_sub(card_master_edition.supply())?
+                        || card_supply == 0
+                    {
                         return Err(NFTPacksError::WrongMaxSupply.into());
                     }
                 }
@@ -196,7 +204,10 @@ impl PackSet {
 
             PackDistributionType::Fixed => {
                 if let Some(m_e_max_supply) = card_master_edition.max_supply() {
-                    if (card_supply as u64) > m_e_max_supply.error_sub(card_master_edition.supply())? || card_supply == 0 {
+                    if (card_supply as u64)
+                        > m_e_max_supply.error_sub(card_master_edition.supply())?
+                        || card_supply == 0
+                    {
                         return Err(NFTPacksError::WrongMaxSupply.into());
                     }
                 }
@@ -219,9 +230,8 @@ impl PackSet {
         while array_of_zeroes.len() < MAX_URI_LENGTH - self.uri.len() {
             array_of_zeroes.push(0u8);
         }
-        self.uri =
-            self.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-        
+        self.uri = self.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+
         let mut array_of_zeroes = vec![];
 
         while array_of_zeroes.len() < MAX_DESCRIPTION_LEN - self.description.len() {

@@ -1,12 +1,12 @@
 mod utils;
 
 use metaplex_nft_packs::{
+    error::NFTPacksError,
     find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
-    instruction::{
-        claim_pack, AddCardToPackArgs, AddVoucherToPackArgs, InitPackSetArgs, NFTPacksInstruction,
-    },
-    state::{ActionOnProve, PackDistributionType, ProvingProcess},
+    instruction::{claim_pack, AddCardToPackArgs, InitPackSetArgs, NFTPacksInstruction},
+    state::{PackDistributionType, ProvingProcess},
 };
+use num_traits::FromPrimitive;
 use solana_program::{
     instruction::{AccountMeta, Instruction},
     program_pack::Pack,
@@ -60,18 +60,33 @@ async fn create_master_edition(
 async fn success_fixed_probability() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = Some(redeem_start_date.unwrap() + 100);
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type: PackDistributionType::Fixed,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -113,6 +128,8 @@ async fn success_fixed_probability() {
         .unwrap();
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let card_max_supply = 5;
+    let card_weight = 100;
     test_pack_set
         .add_card(
             &mut context,
@@ -121,8 +138,8 @@ async fn success_fixed_probability() {
             &card_metadata,
             &card_master_token_holder,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: Some(10000),
+                max_supply: card_max_supply,
+                weight: card_weight,
                 index: test_pack_card.index,
             },
         )
@@ -138,39 +155,11 @@ async fn success_fixed_probability() {
             &voucher_master_edition,
             &voucher_metadata,
             &voucher_master_token_holder,
-            AddVoucherToPackArgs {
-                number_to_open: 1,
-                action_on_prove: ActionOnProve::Burn,
-            },
         )
         .await
         .unwrap();
 
     test_pack_set.activate(&mut context).await.unwrap();
-
-    test_pack_set
-        .prove_voucher_ownership(
-            &mut context,
-            &voucher_edition.new_edition_pubkey,
-            &voucher_edition.mint.pubkey(),
-            &edition_authority,
-            &voucher_edition.token.pubkey(),
-            &test_pack_voucher.pubkey,
-        )
-        .await
-        .unwrap();
-
-    let (proving_process_key, _) = find_proving_process_program_address(
-        &metaplex_nft_packs::id(),
-        &test_pack_set.keypair.pubkey(),
-        &edition_authority.pubkey(),
-    );
-    let proving_process_data = get_account(&mut context, &proving_process_key).await;
-    let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
-
-    assert_eq!(proving_process.pack_set, test_pack_set.keypair.pubkey());
-    assert_eq!(proving_process.proved_vouchers, 1);
-    assert_eq!(proving_process.proved_voucher_editions, 0);
 
     let new_mint = Keypair::new();
     let new_mint_token_acc = Keypair::new();
@@ -185,8 +174,13 @@ async fn success_fixed_probability() {
     test_pack_set
         .request_card_for_redeem(
             &mut context,
+            &store_key,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
             &edition_authority,
+            &voucher_edition.token.pubkey(),
             &test_randomness_oracle.keypair.pubkey(),
+            1,
         )
         .await
         .unwrap();
@@ -195,6 +189,8 @@ async fn success_fixed_probability() {
         .claim_pack(
             &mut context,
             &edition_authority,
+            &voucher_edition.token.pubkey(),
+            &voucher_edition.mint.pubkey(),
             &test_pack_card.token_account.pubkey(),
             &card_master_edition.pubkey,
             &new_mint,
@@ -208,6 +204,12 @@ async fn success_fixed_probability() {
         .await
         .unwrap();
 
+    let (proving_process_key, _) = find_proving_process_program_address(
+        &metaplex_nft_packs::id(),
+        &test_pack_set.keypair.pubkey(),
+        &voucher_edition.mint.pubkey(),
+    );
+
     let proving_process_data = get_account(&mut context, &proving_process_key).await;
     let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
 
@@ -216,24 +218,43 @@ async fn success_fixed_probability() {
     assert_eq!(proving_process.cards_redeemed, 1);
     assert_eq!(proving_process.next_card_to_redeem, 0);
     assert_eq!(card_master_edition.supply, 1);
+
+    let pack_set = test_pack_set.get_data(&mut context).await;
+
+    assert_eq!(pack_set.total_editions, (card_max_supply - 1) as u64);
 }
 
 #[tokio::test]
 async fn success_max_supply_probability() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = Some(redeem_start_date.unwrap() + 100);
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type: PackDistributionType::MaxSupply,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -275,6 +296,7 @@ async fn success_max_supply_probability() {
         .unwrap();
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let card_max_supply = 5;
     test_pack_set
         .add_card(
             &mut context,
@@ -283,8 +305,8 @@ async fn success_max_supply_probability() {
             &card_metadata,
             &card_master_token_holder,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: card_max_supply,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -300,39 +322,11 @@ async fn success_max_supply_probability() {
             &voucher_master_edition,
             &voucher_metadata,
             &voucher_master_token_holder,
-            AddVoucherToPackArgs {
-                number_to_open: 1,
-                action_on_prove: ActionOnProve::Burn,
-            },
         )
         .await
         .unwrap();
 
     test_pack_set.activate(&mut context).await.unwrap();
-
-    test_pack_set
-        .prove_voucher_ownership(
-            &mut context,
-            &voucher_edition.new_edition_pubkey,
-            &voucher_edition.mint.pubkey(),
-            &edition_authority,
-            &voucher_edition.token.pubkey(),
-            &test_pack_voucher.pubkey,
-        )
-        .await
-        .unwrap();
-
-    let (proving_process_key, _) = find_proving_process_program_address(
-        &metaplex_nft_packs::id(),
-        &test_pack_set.keypair.pubkey(),
-        &edition_authority.pubkey(),
-    );
-    let proving_process_data = get_account(&mut context, &proving_process_key).await;
-    let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
-
-    assert_eq!(proving_process.pack_set, test_pack_set.keypair.pubkey());
-    assert_eq!(proving_process.proved_vouchers, 1);
-    assert_eq!(proving_process.proved_voucher_editions, 0);
 
     let test_randomness_oracle = TestRandomnessOracle::new();
     test_randomness_oracle.init(&mut context).await.unwrap();
@@ -349,8 +343,13 @@ async fn success_max_supply_probability() {
     test_pack_set
         .request_card_for_redeem(
             &mut context,
+            &store_key,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
             &edition_authority,
+            &voucher_edition.token.pubkey(),
             &test_randomness_oracle.keypair.pubkey(),
+            1,
         )
         .await
         .unwrap();
@@ -359,6 +358,8 @@ async fn success_max_supply_probability() {
         .claim_pack(
             &mut context,
             &edition_authority,
+            &voucher_edition.token.pubkey(),
+            &voucher_edition.mint.pubkey(),
             &test_pack_card.token_account.pubkey(),
             &card_master_edition.pubkey,
             &new_mint,
@@ -371,6 +372,12 @@ async fn success_max_supply_probability() {
         )
         .await
         .unwrap();
+
+    let (proving_process_key, _) = find_proving_process_program_address(
+        &metaplex_nft_packs::id(),
+        &test_pack_set.keypair.pubkey(),
+        &voucher_edition.mint.pubkey(),
+    );
 
     let proving_process_data = get_account(&mut context, &proving_process_key).await;
     let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
@@ -386,18 +393,33 @@ async fn success_max_supply_probability() {
 async fn fail_wrong_user_wallet() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = Some(redeem_start_date.unwrap() + 100);
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type: PackDistributionType::MaxSupply,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -439,6 +461,7 @@ async fn fail_wrong_user_wallet() {
         .unwrap();
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let card_max_supply = 5;
     test_pack_set
         .add_card(
             &mut context,
@@ -447,8 +470,8 @@ async fn fail_wrong_user_wallet() {
             &card_metadata,
             &card_master_token_holder,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: card_max_supply,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -464,27 +487,11 @@ async fn fail_wrong_user_wallet() {
             &voucher_master_edition,
             &voucher_metadata,
             &voucher_master_token_holder,
-            AddVoucherToPackArgs {
-                number_to_open: 1,
-                action_on_prove: ActionOnProve::Burn,
-            },
         )
         .await
         .unwrap();
 
     test_pack_set.activate(&mut context).await.unwrap();
-
-    test_pack_set
-        .prove_voucher_ownership(
-            &mut context,
-            &voucher_edition.new_edition_pubkey,
-            &voucher_edition.mint.pubkey(),
-            &edition_authority,
-            &voucher_edition.token.pubkey(),
-            &test_pack_voucher.pubkey,
-        )
-        .await
-        .unwrap();
 
     let test_randomness_oracle = TestRandomnessOracle::new();
     test_randomness_oracle.init(&mut context).await.unwrap();
@@ -496,23 +503,16 @@ async fn fail_wrong_user_wallet() {
     test_pack_set
         .request_card_for_redeem(
             &mut context,
+            &store_key,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
             &edition_authority,
+            &voucher_edition.token.pubkey(),
             &test_randomness_oracle.keypair.pubkey(),
+            1,
         )
         .await
         .unwrap();
-
-    let (proving_process_key, _) = find_proving_process_program_address(
-        &metaplex_nft_packs::id(),
-        &test_pack_set.keypair.pubkey(),
-        &edition_authority.pubkey(),
-    );
-    let proving_process_data = get_account(&mut context, &proving_process_key).await;
-    let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
-
-    assert_eq!(proving_process.pack_set, test_pack_set.keypair.pubkey());
-    assert_eq!(proving_process.proved_vouchers, 1);
-    assert_eq!(proving_process.proved_voucher_editions, 0);
 
     let new_mint = Keypair::new();
     let new_mint_token_acc = Keypair::new();
@@ -566,7 +566,7 @@ async fn fail_wrong_user_wallet() {
     let (proving_process, _) = find_proving_process_program_address(
         &metaplex_nft_packs::id(),
         &test_pack_set.keypair.pubkey(),
-        &edition_authority.pubkey(),
+        &voucher_edition.mint.pubkey(),
     );
     let (pack_card, _) = find_pack_card_program_address(
         &metaplex_nft_packs::id(),
@@ -597,6 +597,7 @@ async fn fail_wrong_user_wallet() {
         AccountMeta::new_readonly(test_pack_set.keypair.pubkey(), false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new(malicious_user.pubkey(), true),
+        AccountMeta::new_readonly(voucher_edition.token.pubkey(), false),
         AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new(pack_card, false),
         AccountMeta::new(test_pack_card.token_account.pubkey(), false),
@@ -627,38 +628,42 @@ async fn fail_wrong_user_wallet() {
         context.last_blockhash,
     );
 
-    let tx_result = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .err()
-        .unwrap();
+    let tx_result = context.banks_client.process_transaction(tx).await;
 
-    assert_transport_error!(
-        tx_result,
-        TransportError::TransactionError(TransactionError::InstructionError(
-            0,
-            InstructionError::InvalidArgument
-        ))
-    );
+    assert_custom_error!(tx_result.unwrap_err(), NFTPacksError::WrongVoucherOwner, 0);
 }
 
 #[tokio::test]
 async fn fail_claim_twice() {
     let mut context = nft_packs_program_test().start_with_context().await;
 
-    let test_pack_set = TestPackSet::new();
+    let name = [7; 32];
+    let uri = String::from("some link to storage");
+    let description = String::from("Pack description");
+
+    let clock = context.banks_client.get_clock().await.unwrap();
+
+    let redeem_start_date = Some(clock.unix_timestamp as u64);
+    let redeem_end_date = Some(redeem_start_date.unwrap() + 100);
+
+    let store_admin = Keypair::new();
+    let store_key = create_store(&mut context, &store_admin, true)
+        .await
+        .unwrap();
+
+    let test_pack_set = TestPackSet::new(store_key);
     test_pack_set
         .init(
             &mut context,
             InitPackSetArgs {
-                name: [7; 32],
-                uri: String::from("some link to storage"),
+                name,
+                uri: uri.clone(),
+                description: description.clone(),
                 mutable: true,
                 distribution_type: PackDistributionType::MaxSupply,
                 allowed_amount_to_redeem: 10,
-                redeem_start_date: None,
-                redeem_end_date: None,
+                redeem_start_date,
+                redeem_end_date,
             },
         )
         .await
@@ -700,6 +705,7 @@ async fn fail_claim_twice() {
         .unwrap();
 
     let test_pack_card = TestPackCard::new(&test_pack_set, 1);
+    let card_max_supply = 5;
     test_pack_set
         .add_card(
             &mut context,
@@ -708,8 +714,8 @@ async fn fail_claim_twice() {
             &card_metadata,
             &card_master_token_holder,
             AddCardToPackArgs {
-                max_supply: Some(5),
-                probability: None,
+                max_supply: card_max_supply,
+                weight: 0,
                 index: test_pack_card.index,
             },
         )
@@ -725,39 +731,11 @@ async fn fail_claim_twice() {
             &voucher_master_edition,
             &voucher_metadata,
             &voucher_master_token_holder,
-            AddVoucherToPackArgs {
-                number_to_open: 1,
-                action_on_prove: ActionOnProve::Burn,
-            },
         )
         .await
         .unwrap();
 
     test_pack_set.activate(&mut context).await.unwrap();
-
-    test_pack_set
-        .prove_voucher_ownership(
-            &mut context,
-            &voucher_edition.new_edition_pubkey,
-            &voucher_edition.mint.pubkey(),
-            &edition_authority,
-            &voucher_edition.token.pubkey(),
-            &test_pack_voucher.pubkey,
-        )
-        .await
-        .unwrap();
-
-    let (proving_process_key, _) = find_proving_process_program_address(
-        &metaplex_nft_packs::id(),
-        &test_pack_set.keypair.pubkey(),
-        &edition_authority.pubkey(),
-    );
-    let proving_process_data = get_account(&mut context, &proving_process_key).await;
-    let proving_process = ProvingProcess::unpack_from_slice(&proving_process_data.data).unwrap();
-
-    assert_eq!(proving_process.pack_set, test_pack_set.keypair.pubkey());
-    assert_eq!(proving_process.proved_vouchers, 1);
-    assert_eq!(proving_process.proved_voucher_editions, 0);
 
     let test_randomness_oracle = TestRandomnessOracle::new();
     test_randomness_oracle.init(&mut context).await.unwrap();
@@ -774,8 +752,13 @@ async fn fail_claim_twice() {
     test_pack_set
         .request_card_for_redeem(
             &mut context,
+            &store_key,
+            &voucher_edition.new_edition_pubkey,
+            &voucher_edition.mint.pubkey(),
             &edition_authority,
+            &voucher_edition.token.pubkey(),
             &test_randomness_oracle.keypair.pubkey(),
+            1,
         )
         .await
         .unwrap();
@@ -784,6 +767,8 @@ async fn fail_claim_twice() {
         .claim_pack(
             &mut context,
             &edition_authority,
+            &voucher_edition.token.pubkey(),
+            &voucher_edition.mint.pubkey(),
             &test_pack_card.token_account.pubkey(),
             &card_master_edition.pubkey,
             &new_mint,
@@ -824,6 +809,8 @@ async fn fail_claim_twice() {
             &metaplex_nft_packs::id(),
             &test_pack_set.keypair.pubkey(),
             &edition_authority.pubkey(),
+            &voucher_edition.token.pubkey(),
+            &voucher_edition.mint.pubkey(),
             &test_pack_card.token_account.pubkey(),
             &new_metadata_pubkey,
             &new_edition_pubkey,

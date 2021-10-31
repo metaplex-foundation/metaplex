@@ -3,7 +3,7 @@
 use crate::{
     error::NFTPacksError,
     instruction::InitPackSetArgs,
-    state::{InitPackSetParams, PackSet, MAX_URI_LENGTH, MAX_DESCRIPTION_LEN},
+    state::{InitPackSetParams, PackSet, MAX_DESCRIPTION_LEN, MAX_URI_LENGTH},
     utils::*,
 };
 use metaplex::state::{Store, WhitelistedCreator, PREFIX};
@@ -31,11 +31,15 @@ pub fn init_pack(
     let clock_info = next_account_info(account_info_iter)?;
     let clock = &Clock::from_account_info(clock_info)?;
     let whitelisted_creator_account = next_account_info(account_info_iter).ok();
-    
+
     assert_rent_exempt(rent, pack_set_account)?;
     assert_signer(authority_account)?;
     assert_owned_by(store_account, &metaplex::id())?;
-    assert_admin_whitelisted(store_account, whitelisted_creator_account, authority_account)?;
+    assert_admin_whitelisted(
+        store_account,
+        whitelisted_creator_account,
+        authority_account,
+    )?;
 
     let mut pack_set = PackSet::unpack_unchecked(&pack_set_account.data.borrow_mut())?;
 
@@ -89,7 +93,11 @@ pub fn init_pack(
     Ok(())
 }
 
-fn assert_admin_whitelisted(store_account: &AccountInfo, whitelisted_creator_account: Option<&AccountInfo>, authority_account: &AccountInfo) -> Result<(), ProgramError> {
+fn assert_admin_whitelisted(
+    store_account: &AccountInfo,
+    whitelisted_creator_account: Option<&AccountInfo>,
+    authority_account: &AccountInfo,
+) -> Result<(), ProgramError> {
     let store = Store::from_account_info(store_account)?;
     if store.public {
         return Ok(());
@@ -118,7 +126,9 @@ fn assert_admin_whitelisted(store_account: &AccountInfo, whitelisted_creator_acc
         &metaplex::id(),
     );
 
-    if key != *whitelisted_creator_account.key || whitelisted_creator.address != *authority_account.key {
+    if key != *whitelisted_creator_account.key
+        || whitelisted_creator.address != *authority_account.key
+    {
         return Err(NFTPacksError::WrongWhitelistedCreator.into());
     }
 
