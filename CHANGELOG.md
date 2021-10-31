@@ -13,7 +13,7 @@ incremented for features.
 
 ### Features
 
-- N/A
+- Added Token Entangler smart contract and CLI
 
 ### Fixes
 
