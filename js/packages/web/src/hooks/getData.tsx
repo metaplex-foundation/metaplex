@@ -601,8 +601,8 @@ export const getCachedRedemptionKeys = async (
       `${API_URL}/api/wallet/${wallet}/auction/${auction}/bidRedemption`,
     );
 
-    let arr: any = [];
-    console.log(response.data)
+    let arr: any;
+
     response.data.map(item => {
       const account = {
         data: Buffer.from(item.account.data, 'base64'),
