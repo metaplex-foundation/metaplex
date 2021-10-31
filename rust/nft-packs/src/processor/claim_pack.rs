@@ -4,9 +4,8 @@ use crate::{
     error::NFTPacksError,
     find_pack_card_program_address, find_program_authority,
     math::SafeMath,
-    state::{PackCard, PackDistributionType, PackSet, ProvingProcess, PREFIX},
+    state::{PackCard, PackDistributionType, PackSet, ProvingProcess, PREFIX, MasterEditionHolder},
     utils::*,
-    MAX_PROBABILITY_VALUE,
 };
 use metaplex_token_metadata::state::{MasterEditionV2, Metadata};
 use solana_program::{
@@ -16,9 +15,11 @@ use solana_program::{
     msg,
     program_error::ProgramError,
     program_pack::Pack,
+    program_option::COption,
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
 };
+use spl_token::state::Account;
 
 /// Process ClaimPack instruction
 pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -26,6 +27,7 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let pack_set_account = next_account_info(account_info_iter)?;
     let proving_process_account = next_account_info(account_info_iter)?;
     let user_wallet_account = next_account_info(account_info_iter)?;
+    let user_voucher_token_account = next_account_info(account_info_iter)?;
     let program_authority_account = next_account_info(account_info_iter)?;
     let pack_card_account = next_account_info(account_info_iter)?;
     let user_token_account = next_account_info(account_info_iter)?;
@@ -56,7 +58,20 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
     let index = proving_process.next_card_to_redeem;
 
     assert_account_key(pack_set_account, &proving_process.pack_set)?;
-    assert_account_key(user_wallet_account, &proving_process.user_wallet)?;
+
+    let user_token_acc = Account::unpack(&user_voucher_token_account.data.borrow_mut())?;
+    if user_token_acc.mint != proving_process.voucher_mint {
+        return Err(NFTPacksError::WrongEditionMint.into());
+    }
+    if user_token_acc.owner != *user_wallet_account.key {
+        if let COption::Some(delegated) = user_token_acc.delegate {
+            if user_token_acc.delegated_amount == 0 || delegated != *user_wallet_account.key {
+                return Err(NFTPacksError::WrongVoucherOwner.into());
+            }
+        } else {
+            return Err(NFTPacksError::WrongVoucherOwner.into());
+        }
+    }
 
     // Validate PackCard
     let (valid_pack_card, _) =
@@ -65,11 +80,6 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     let mut pack_card = PackCard::unpack(&pack_card_account.data.borrow())?;
     assert_account_key(pack_set_account, &pack_card.pack_set)?;
-
-    // Check if user have enough proves
-    if pack_set.pack_vouchers != proving_process.proved_vouchers {
-        return Err(NFTPacksError::ProvedVouchersMismatchPackVouchers.into());
-    }
 
     // Obtain master metadata instance
     let master_metadata = Metadata::from_account_info(metadata_account)?;
@@ -98,12 +108,16 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
 
     if proving_process.cards_redeemed == pack_set.allowed_amount_to_redeem {
         return Err(NFTPacksError::UserRedeemedAllCards.into());
-    } else {
-        proving_process.cards_redeemed = proving_process.cards_redeemed.error_increment()?;
     }
 
     // set value to 0 so user can't redeem same card twice and can't redeem any card
     proving_process.next_card_to_redeem = 0;
+
+    if pack_set.distribution_type != PackDistributionType::Unlimited && pack_card.max_supply == 0 {
+        msg!("This card ran out of editions. Please try the different one.");
+        ProvingProcess::pack(proving_process, *proving_process_account.data.borrow_mut())?;
+        return Ok(());
+    }
 
     let probability = get_card_probability(&mut pack_set, &mut pack_card)?;
 
@@ -131,15 +145,10 @@ pub fn claim_pack(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResul
             master_edition.supply.error_increment()?,
             &[PREFIX.as_bytes(), program_id.as_ref(), &[bump_seed]],
         )?;
+
+        proving_process.cards_redeemed = proving_process.cards_redeemed.error_increment()?;
     } else {
         msg!("User does not get NFT");
-    }
-
-    // reset proving process values if it was last redeemed card
-    if proving_process.cards_redeemed == pack_set.allowed_amount_to_redeem {
-        proving_process.proved_vouchers = 0;
-        proving_process.proved_voucher_editions = 0;
-        proving_process.cards_redeemed = 0;
     }
 
     // Update state
@@ -168,7 +177,7 @@ fn get_card_probability(
         PackDistributionType::Unlimited => {
             msg!("Unlimited distribution type");
 
-            pack_card.get_probability()
+            count_unlimited_probability(pack_set, pack_card)
         }
     }
 }
@@ -177,48 +186,33 @@ fn count_fixed_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
 ) -> Result<u128, ProgramError> {
-    let card_max_supply = pack_card
-        .max_supply
-        .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-    let pack_total_editions = pack_set
-        .total_editions
-        .ok_or(NFTPacksError::MissingEditionsInPack)?;
+    let probability = (pack_card.weight as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_weight as u128)?;
 
-    if card_max_supply == 0 {
-        return Err(NFTPacksError::CardDoesntHaveEditions.into());
-    }
+    pack_set.decrement_supply()?;
 
-    pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+    pack_card.decrement_supply()?;
 
-    pack_card.max_supply = Some(card_max_supply.error_decrement()?);
-
-    pack_card.get_probability()
+    Ok(probability)
 }
 
 fn count_max_supply_probability(
     pack_set: &mut PackSet,
     pack_card: &mut PackCard,
 ) -> Result<u128, ProgramError> {
-    let card_max_supply = pack_card
-        .max_supply
-        .ok_or(NFTPacksError::CardDoesntHaveMaxSupply)?;
-    let pack_total_editions = pack_set
-        .total_editions
-        .ok_or(NFTPacksError::MissingEditionsInPack)?;
+    let probability = (pack_card.max_supply as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_editions as u128)?;
 
-    if card_max_supply == 0 {
-        return Err(NFTPacksError::CardDoesntHaveEditions.into());
-    }
+    pack_set.decrement_supply()?;
 
-    let probability = ((card_max_supply as u128)
-        .error_div(pack_total_editions as u128)?
-        .error_mul(MAX_PROBABILITY_VALUE as u128)?)
-    .error_mul(u16::MAX as u128)?
-    .error_div(MAX_PROBABILITY_VALUE as u128)?;
+    pack_card.decrement_supply()?;
 
-    pack_set.total_editions = Some(pack_total_editions.error_decrement()?);
+    Ok(probability)
+}
 
-    pack_card.max_supply = Some(card_max_supply.error_decrement()?);
+fn count_unlimited_probability(
+    pack_set: &mut PackSet,
+    pack_card: &mut PackCard,
+) -> Result<u128, ProgramError> {
+    let probability = (pack_card.weight as u128).error_mul(u16::MAX as u128)?.error_div(pack_set.total_weight as u128)?;
 
     Ok(probability)
 }

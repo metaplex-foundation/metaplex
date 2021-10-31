@@ -29,7 +29,6 @@ pub mod delete_pack_card;
 pub mod delete_pack_voucher;
 pub mod edit_pack;
 pub mod init_pack;
-pub mod prove_ownership;
 pub mod request_card_to_redeem;
 
 /// Program state handler.
@@ -91,9 +90,9 @@ impl Processor {
                 msg!("Instruction: EditPack");
                 edit_pack(program_id, accounts, args)
             }
-            NFTPacksInstruction::RequestCardForRedeem => {
+            NFTPacksInstruction::RequestCardForRedeem(args) => {
                 msg!("Instruction: RequestCardForRedeem");
-                request_card_for_redeem(program_id, accounts)
+                request_card_for_redeem(program_id, accounts, args)
             }
         }
     }

@@ -2,8 +2,8 @@
 #![allow(missing_docs)]
 
 use crate::{
-    find_pack_card_program_address, find_program_authority, find_proving_process_program_address,
-    state::{ActionOnProve, PackDistributionType},
+    find_pack_card_program_address, find_program_authority, find_proving_process_program_address, find_pack_voucher_program_address,
+    state::PackDistributionType,
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
@@ -16,9 +16,9 @@ use solana_program::{
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct AddCardToPackArgs {
     /// How many editions of this card will exists in pack
-    pub max_supply: Option<u32>,
+    pub max_supply: u32,
     /// Probability value, required only if PackSet distribution type == Fixed
-    pub probability: Option<u16>,
+    pub weight: u16,
     /// Index
     pub index: u32,
 }
@@ -59,14 +59,12 @@ pub struct EditPackSetArgs {
     pub mutable: Option<bool>,
 }
 
-/// Edit a PackVoucher arguments
+/// Request card to redeem arguments
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct EditPackVoucherArgs {
-    /// How many vouchers of this type is required to open a pack
-    pub number_to_open: Option<u32>,
-    /// Burn / redeem
-    pub action_on_prove: Option<ActionOnProve>,
+pub struct RequestCardToRedeemArgs {
+    /// Voucher index
+    pub index: u32,
 }
 
 /// Instruction definition
@@ -82,11 +80,12 @@ pub enum NFTPacksInstruction {
     /// - read                           store
     /// - read                           Rent account
     /// - read                           Clock account
-    /// - read                           whitelisted_creator
+    /// - read                           whitelisted_creator. Optional key
     ///
     /// Parameters:
     /// - name	[u8; 32]
     /// - description String
+    /// - URI String
     /// - mutable	bool
     /// - distribution_type    DistributionType
     /// - allowed_amount_to_redeem    u32
@@ -109,6 +108,7 @@ pub enum NFTPacksInstruction {
     /// - write                         source
     /// - write                         token_account (program account to hold MasterEdition token)
     /// - read                          program_authority
+    /// - read                          store
     /// - read                          rent
     /// - read                          system_program
     /// - read                          spl_token program
@@ -133,6 +133,7 @@ pub enum NFTPacksInstruction {
     /// - read                          master_metadata
     /// - read                          mint
     /// - write                         source
+    /// - read                          store
     /// - read                          rent
     /// - read                          system_program
     /// - read                          spl_token program
@@ -175,6 +176,7 @@ pub enum NFTPacksInstruction {
     /// - read, write       pack_set
     /// - read, write       proving_process (PDA, ['proving', pack, user_wallet])
     /// - signer            user_wallet
+    /// - read              user_voucher_token
     /// - read, write       pack_card (PDA, ['card', pack, index])
     /// - write             user_token_acc (user token account ot hold new minted edition)
     /// - read              new_metadata_acc
@@ -252,7 +254,8 @@ pub enum NFTPacksInstruction {
     ///
     /// Parameters:
     /// - name Option<[u8; 32]>
-    /// - total_packs Option<u32>
+    /// - description Option<String>
+    /// - URI Option<String>
     /// - mutable	Option<bool> (only can be changed from true to false)
     EditPack(EditPackSetArgs),
 
@@ -262,11 +265,20 @@ pub enum NFTPacksInstruction {
     ///
     /// Accounts:
     /// - read                     pack_set
+    /// - read                     store
+    /// - read                     edition
+    /// - read                     edition_mint
+    /// - read                     pack_voucher
     /// - read, write              proving_process (PDA, ['proving', pack, user_wallet])
     /// - signer                   user_wallet
+    /// - read                     user_token_account
     /// - read                     randomness_oracle
     /// - read                     clock
-    RequestCardForRedeem,
+    /// - read                     rent
+    /// 
+    /// Parameters:
+    /// - index    u32
+    RequestCardForRedeem(RequestCardToRedeemArgs),
 }
 
 /// Create `InitPack` instruction
@@ -301,6 +313,7 @@ pub fn add_card_to_pack(
     mint: &Pubkey,
     source: &Pubkey,
     token_account: &Pubkey,
+    store: &Pubkey,
     args: AddCardToPackArgs,
 ) -> Instruction {
     let (program_authority, _) = find_program_authority(program_id);
@@ -316,6 +329,7 @@ pub fn add_card_to_pack(
         AccountMeta::new(*source, false),
         AccountMeta::new(*token_account, false),
         AccountMeta::new(program_authority, false),
+        AccountMeta::new_readonly(*store, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
@@ -340,6 +354,7 @@ pub fn add_voucher_to_pack(
     master_metadata: &Pubkey,
     mint: &Pubkey,
     source: &Pubkey,
+    store: &Pubkey,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
@@ -350,6 +365,7 @@ pub fn add_voucher_to_pack(
         AccountMeta::new_readonly(*master_metadata, false),
         AccountMeta::new_readonly(*mint, false),
         AccountMeta::new(*source, false),
+        AccountMeta::new_readonly(*store, false),
         AccountMeta::new_readonly(sysvar::rent::id(), false),
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(spl_token::id(), false),
@@ -399,6 +415,8 @@ pub fn claim_pack(
     program_id: &Pubkey,
     pack_set: &Pubkey,
     user_wallet: &Pubkey,
+    user_voucher_token: &Pubkey,
+    voucher_mint: &Pubkey,
     user_token: &Pubkey,
     new_metadata: &Pubkey,
     new_edition: &Pubkey,
@@ -411,7 +429,7 @@ pub fn claim_pack(
     index: u32,
 ) -> Instruction {
     let (proving_process, _) =
-        find_proving_process_program_address(program_id, pack_set, user_wallet);
+        find_proving_process_program_address(program_id, pack_set, voucher_mint);
     let (pack_card, _) = find_pack_card_program_address(program_id, pack_set, index);
     let (program_authority, _) = find_program_authority(program_id);
 
@@ -434,6 +452,7 @@ pub fn claim_pack(
         AccountMeta::new(*pack_set, false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new(*user_wallet, true),
+        AccountMeta::new_readonly(*user_voucher_token, false),
         AccountMeta::new_readonly(program_authority, false),
         AccountMeta::new(pack_card, false),
         AccountMeta::new(*user_token, false),
@@ -561,23 +580,36 @@ pub fn edit_pack(
 pub fn request_card_for_redeem(
     program_id: &Pubkey,
     pack_set: &Pubkey,
+    store: &Pubkey,
+    edition: &Pubkey,
+    edition_mint: &Pubkey,
     user_wallet: &Pubkey,
+    user_token_acc: &Pubkey,
     random_oracle: &Pubkey,
+    index: u32,
 ) -> Instruction {
     let (proving_process, _) =
         find_proving_process_program_address(program_id, pack_set, user_wallet);
 
+    let (pack_voucher, _) = find_pack_voucher_program_address(program_id, pack_set, index);
+
     let accounts = vec![
         AccountMeta::new(*pack_set, false),
+        AccountMeta::new_readonly(*store, false),
+        AccountMeta::new_readonly(*edition, false),
+        AccountMeta::new_readonly(*edition_mint, false),
+        AccountMeta::new_readonly(pack_voucher, false),
         AccountMeta::new(proving_process, false),
         AccountMeta::new_readonly(*user_wallet, true),
+        AccountMeta::new_readonly(*user_token_acc, false),
         AccountMeta::new_readonly(*random_oracle, false),
         AccountMeta::new_readonly(sysvar::clock::id(), false),
+        AccountMeta::new_readonly(sysvar::rent::id(), false),
     ];
 
     Instruction::new_with_borsh(
         *program_id,
-        &NFTPacksInstruction::RequestCardForRedeem,
+        &NFTPacksInstruction::RequestCardForRedeem(RequestCardToRedeemArgs{index}),
         accounts,
     )
 }

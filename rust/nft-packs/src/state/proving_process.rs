@@ -15,14 +15,10 @@ use solana_program::{
 pub struct ProvingProcess {
     /// Account type - ProvingProcess
     pub account_type: AccountType,
-    /// User wallet
-    pub user_wallet: Pubkey,
+    /// Voucher mint
+    pub voucher_mint: Pubkey,
     /// Pack set
     pub pack_set: Pubkey,
-    /// Counter of proved vouchers
-    pub proved_vouchers: u32,
-    /// Counter of proved editions of each voucher master
-    pub proved_voucher_editions: u32,
     /// Index of next card to redeem
     pub next_card_to_redeem: u32,
     /// How many cards user already redeemed
@@ -39,10 +35,8 @@ impl ProvingProcess {
     /// Initialize a ProvingProcess
     pub fn init(&mut self, params: InitProvingProcessParams) {
         self.account_type = AccountType::ProvingProcess;
-        self.user_wallet = params.user_wallet;
+        self.voucher_mint = params.voucher_mint;
         self.pack_set = params.pack_set;
-        self.proved_vouchers = 0;
-        self.proved_voucher_editions = 0;
         self.next_card_to_redeem = 0;
         self.cards_redeemed = 0;
     }
@@ -50,8 +44,8 @@ impl ProvingProcess {
 
 /// Initialize a ProvingProcess params
 pub struct InitProvingProcessParams {
-    /// User wallet
-    pub user_wallet: Pubkey,
+    /// Voucher mint
+    pub voucher_mint: Pubkey,
     /// Pack set
     pub pack_set: Pubkey,
 }
@@ -59,8 +53,8 @@ pub struct InitProvingProcessParams {
 impl Sealed for ProvingProcess {}
 
 impl Pack for ProvingProcess {
-    // 1 + 32 + 32 + 4 + 4 + 4 + 4
-    const LEN: usize = 81;
+    // 1 + 32 + 32 + 4 + 4
+    const LEN: usize = 73;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;

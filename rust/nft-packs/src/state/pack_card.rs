@@ -1,7 +1,7 @@
 //! Pack card definitions
 
 use super::*;
-use crate::{error::NFTPacksError, math::SafeMath, MAX_PROBABILITY_VALUE};
+use crate::math::SafeMath;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
     msg,
@@ -25,9 +25,9 @@ pub struct PackCard {
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
     /// How many instances(editions) of this card exists in this pack
-    pub max_supply: Option<u32>,
+    pub max_supply: u32,
     /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
-    pub probability: Option<u16>,
+    pub weight: u16,
 }
 
 impl PackCard {
@@ -42,16 +42,7 @@ impl PackCard {
         self.metadata = params.metadata;
         self.token_account = params.token_account;
         self.max_supply = params.max_supply;
-        self.probability = params.probability;
-    }
-
-    /// Get card probability value
-    pub fn get_probability(&self) -> Result<u128, ProgramError> {
-        Ok((self
-            .probability
-            .ok_or(NFTPacksError::CardProbabilityMissing)? as u128) // it shouldn't happen because there is a check on AddCardToPack
-            .error_mul(u16::MAX as u128)?
-            .error_div(MAX_PROBABILITY_VALUE as u128)?)
+        self.weight = params.weight;
     }
 }
 
@@ -66,16 +57,15 @@ pub struct InitPackCardParams {
     /// Program token account which holds MasterEdition token
     pub token_account: Pubkey,
     /// How many instances of this card will exists in a packs
-    pub max_supply: Option<u32>,
+    pub max_supply: u32,
     /// Fixed probability, should be filled if PackSet distribution_type is "fixed"
-    pub probability: Option<u16>,
+    pub weight: u16,
 }
 
 impl Sealed for PackCard {}
 
 impl Pack for PackCard {
-    // 1 + 32 + 32 + 32 + 32 + 9 + 9
-    const LEN: usize = 147;
+    const LEN: usize = 145;
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
         let mut slice = dst;
@@ -116,12 +106,7 @@ impl MasterEditionHolder for PackCard {
     }
 
     fn decrement_supply(&mut self) -> Result<(), ProgramError> {
-        if let Some(max_supply) = self.max_supply {
-            self.max_supply = Some(max_supply.error_decrement()?);
-        } else {
-            return Err(NFTPacksError::CardDoesntHaveMaxSupply.into());
-        }
-
+        self.max_supply = self.max_supply.error_decrement()?;
         Ok(())
     }
 }

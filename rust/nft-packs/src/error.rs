@@ -151,6 +151,10 @@ pub enum NFTPacksError {
     /// Voucher owner mismatch
     #[error("Voucher owner mismatch")]
     WrongVoucherOwner,
+
+    /// Cards for this pack shouldn't have supply value
+    #[error("Cards for this pack shouldn't have supply value")]
+    CardShouldntHaveSupplyValue,
 }
 
 impl From<NFTPacksError> for ProgramError {

@@ -5,10 +5,10 @@ use crate::{
     find_pack_card_program_address, find_program_authority,
     instruction::AddCardToPackArgs,
     math::SafeMath,
-    state::{InitPackCardParams, PackCard, PackDistributionType, PackSet, PackSetState},
+    state::{InitPackCardParams, PackCard, PackSet, PackSetState},
     utils::*,
-    MAX_PROBABILITY_VALUE,
 };
+use metaplex::state::Store;
 use metaplex_token_metadata::{
     error::MetadataError,
     state::{MasterEditionV2, Metadata, EDITION, PREFIX},
@@ -40,40 +40,31 @@ pub fn add_card_to_pack(
     let source_info = next_account_info(account_info_iter)?;
     let token_account_info = next_account_info(account_info_iter)?;
     let program_authority_info = next_account_info(account_info_iter)?;
+    let store_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
     assert_signer(authority_info)?;
     assert_owned_by(pack_set_info, program_id)?;
-    assert_owned_by(master_edition_info, &metaplex_token_metadata::id())?;
-    assert_owned_by(master_metadata_info, &metaplex_token_metadata::id())?;
+    assert_owned_by(store_info, &metaplex::id())?;
+
+    let store = Store::from_account_info(store_info)?;
+
+    assert_owned_by(master_edition_info, &store.token_metadata_program)?;
+    assert_owned_by(master_metadata_info, &store.token_metadata_program)?;
 
     let AddCardToPackArgs {
         max_supply,
-        probability,
+        weight,
         index: _,
     } = args;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
+    assert_account_key(store_info, &pack_set.store)?;
 
     if pack_set.pack_state != PackSetState::NotActivated {
         return Err(NFTPacksError::WrongPackState.into());
-    }
-
-    if pack_set.distribution_type != PackDistributionType::MaxSupply && probability.is_none() {
-        return Err(NFTPacksError::CardProbabilityMissing.into());
-    }
-
-    // check if user didn't set probability value which is extra for chosen distribution type
-    if pack_set.distribution_type == PackDistributionType::MaxSupply && probability.is_some() {
-        return Err(NFTPacksError::CardShouldntHaveProbabilityValue.into());
-    }
-
-    if let Some(probability_value) = probability {
-        if probability_value == 0 || probability_value > MAX_PROBABILITY_VALUE {
-            return Err(NFTPacksError::WrongCardProbability.into());
-        }
     }
 
     // new pack card index
@@ -107,7 +98,7 @@ pub fn add_card_to_pack(
     // Check for v2
     let master_edition = MasterEditionV2::from_account_info(master_edition_info)?;
 
-    pack_set.add_card_editions(&max_supply, &master_edition)?;
+    pack_set.add_card_volume(weight.into(), max_supply, &master_edition)?;
 
     let master_metadata = Metadata::from_account_info(master_metadata_info)?;
     assert_account_key(mint_info, &master_metadata.mint)?;
@@ -153,10 +144,10 @@ pub fn add_card_to_pack(
         metadata: *master_metadata_info.key,
         token_account: *token_account_info.key,
         max_supply,
-        probability,
+        weight,
     });
 
-    pack_set.add_pack_card();
+    pack_set.add_pack_card()?;
 
     PackCard::pack(pack_card, *pack_card_info.data.borrow_mut())?;
     PackSet::pack(pack_set, *pack_set_info.data.borrow_mut())?;

@@ -12,6 +12,7 @@ use metaplex_token_metadata::{
     state::{MasterEdition, MasterEditionV2, Metadata, EDITION, PREFIX},
     utils::{assert_derivation, assert_initialized},
 };
+use metaplex::state::Store;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -36,17 +37,23 @@ pub fn add_voucher_to_pack(
     let master_metadata_info = next_account_info(account_info_iter)?;
     let mint_info = next_account_info(account_info_iter)?;
     let source_info = next_account_info(account_info_iter)?;
+    let store_info = next_account_info(account_info_iter)?;
     let rent_info = next_account_info(account_info_iter)?;
     let rent = &Rent::from_account_info(rent_info)?;
 
     assert_signer(authority_info)?;
     assert_signer(voucher_owner_info)?;
     assert_owned_by(pack_set_info, program_id)?;
-    assert_owned_by(master_edition_info, &metaplex_token_metadata::id())?;
-    assert_owned_by(master_metadata_info, &metaplex_token_metadata::id())?;
+    assert_owned_by(store_info, &metaplex::id())?;
+
+    let store = Store::from_account_info(store_info)?;
+
+    assert_owned_by(master_edition_info, &store.token_metadata_program)?;
+    assert_owned_by(master_metadata_info, &store.token_metadata_program)?;
 
     let mut pack_set = PackSet::unpack(&pack_set_info.data.borrow_mut())?;
     assert_account_key(authority_info, &pack_set.authority)?;
+    assert_account_key(store_info, &pack_set.store)?;
 
     if pack_set.pack_state != PackSetState::NotActivated {
         return Err(NFTPacksError::WrongPackState.into());
@@ -115,7 +122,7 @@ pub fn add_voucher_to_pack(
         metadata: *master_metadata_info.key,
     });
 
-    pack_set.add_pack_voucher();
+    pack_set.add_pack_voucher()?;
 
     PackVoucher::pack(pack_voucher, *pack_voucher_info.data.borrow_mut())?;
     PackSet::pack(pack_set, *pack_set_info.data.borrow_mut())?;
