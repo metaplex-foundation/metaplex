@@ -1,4 +1,7 @@
 import React from "react"
+import {
+  useColorMode,
+} from "../contexts/ColorModeContext";
 
 export const DragAndDrop = (props) => {
   const dropRef = React.useRef<HTMLDivElement>(null);
@@ -59,10 +62,13 @@ export const DragAndDrop = (props) => {
     };
   });
 
+  const colorModeCtx = useColorMode();
+  const shade = colorModeCtx.mode === 'dark' ? "rgba(255,255,255,.1)" : "rgba(0, 0, 0,.1)";
+
   return (
     <div
       ref={dropRef}
-      style={dragging ? { backgroundColor: "rgba(255,255,255,.3)"} : {}}
+      style={dragging ? { backgroundColor: shade} : {}}
     >
       {props.children}
     </div>

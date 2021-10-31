@@ -854,7 +854,11 @@ export const Create = (
             Upload a {filename === "" ? "distribution" : "different"} list
             <input
               type="file"
-              onChange={(e) => handleFiles(e.target.files)}
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                // re-parse every time...
+                e.target.value = '';
+              }}
               hidden
             />
           </Button>
