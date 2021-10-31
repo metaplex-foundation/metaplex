@@ -1351,7 +1351,7 @@ pub const AUCTION_HOUSE_SIZE: usize = 8 + //key
 2 + // seller fee basis points
 1 + // requires sign off
 1 + // can change sale price
-200; //padding
+221; //padding
 
 #[account]
 pub struct AuctionHouse {
