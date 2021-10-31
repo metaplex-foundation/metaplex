@@ -110,7 +110,7 @@ export const getMetdataByPubKey = async (pubKey: string) => {
 };
 
 export const getMetdataByCreator = async (creator: string) => {
-try {
+  try {
     const response: any = await axios.get(
       `${API_URL}/api/${STORE}/metadata?creator=${creator}`,
     );
