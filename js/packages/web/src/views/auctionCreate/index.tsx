@@ -15,6 +15,7 @@ import {
   Checkbox,
   Typography
 } from 'antd';
+import { isNil } from 'lodash';
 import { ArtCard } from './../../components/ArtCard';
 import { QUOTE_MINT } from './../../constants';
 import { Confetti } from './../../components/Confetti';
@@ -147,13 +148,13 @@ export const AuctionCreateView = () => {
   const [step, setStep] = useState<number>(0);
   const [stepsVisible, setStepsVisible] = useState<boolean>(true);
   const [auctionObj, setAuctionObj] = useState<
-      | {
-        vault: StringPublicKey;
-        auction: StringPublicKey;
-        auctionManager: StringPublicKey;
-      }
-      | undefined
-    >(undefined);
+    | {
+      vault: StringPublicKey;
+      auction: StringPublicKey;
+      auctionManager: StringPublicKey;
+    }
+    | undefined
+  >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
     reservationPrice: 0,
     items: [],
@@ -777,18 +778,29 @@ const InstantSaleStep = ({
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  const copiesEnabled = useMemo(
-    () => !!attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
-    [attributes?.items?.[0]],
+  const [editionError, setEditionError] = useState<string>();
+  const nft = attributes?.items[0];
+  const isEdition = useMemo(
+    () => !!nft?.edition,
+    [nft]
+  );
+  const masterEdition = useMemo(
+    () => nft?.masterEdition,
+    [nft],
+  );
+  const availableSupply = useMemo(
+    () => isEdition ? 0 : masterEdition?.info?.supply.toNumber() as number,
+    [masterEdition, isEdition],
+  );
+  const hasUlimatedPrints = useMemo(
+    () => !isEdition && isNil(masterEdition?.info?.maxSupply),
+    [masterEdition, isEdition],
   );
   const artistFilter = useCallback(
     (i: SafetyDepositDraft) =>
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
     [],
   );
-
-  const isLimitedEdition =
-    attributes.instantSaleType === InstantSaleType.Limited;
   const shouldRenderSelect = attributes.items.length > 0;
 
   return (
@@ -816,28 +828,29 @@ const InstantSaleStep = ({
                 defaultValue={
                   attributes.instantSaleType || InstantSaleType.Single
                 }
-                onChange={value =>
+                onChange={value => {
+                  setEditionError(undefined);
                   setAttributes({
                     ...attributes,
                     instantSaleType: value,
                   })
-                }
+                }}
               >
                 <Option value={InstantSaleType.Single}>
                   Sell unique token
                 </Option>
-                {copiesEnabled && (
+                {availableSupply > 0 && (
                   <Option value={InstantSaleType.Limited}>
                     Sell limited number of copies
                   </Option>
                 )}
-                {!copiesEnabled && (
+                {hasUlimatedPrints && (
                   <Option value={InstantSaleType.Open}>
                     Sell unlimited number of copies
                   </Option>
                 )}
               </Select>
-              {isLimitedEdition && (
+              {availableSupply > 0 && (
                 <>
                   <span className="field-info">
                     Each copy will be given unique edition number e.g. 1 of 30.
@@ -848,7 +861,13 @@ const InstantSaleStep = ({
                     placeholder="Enter number of copies sold"
                     allowClear
                     onChange={info => {
+                      setEditionError(undefined);
                       const editions = parseInt(info.target.value);
+
+                      if (editions > availableSupply) {
+                        setEditionError(`The NFT can only generate ${availableSupply} more editions. Please lower the copy count.`)
+                        return;
+                      }
 
                       setAttributes({
                         ...attributes,
@@ -859,6 +878,11 @@ const InstantSaleStep = ({
                 </>
               )}
             </label>
+          )}
+          {editionError && (
+            <Row>
+              <span className="ant-typography ant-typography-danger">*</span> {editionError}
+            </Row>
           )}
 
           <label className="action-field">
@@ -889,6 +913,7 @@ const InstantSaleStep = ({
         <Button
           type="primary"
           size="large"
+          disabled={!!editionError}
           onClick={() => {
             confirm();
           }}
@@ -925,16 +950,15 @@ const CopiesStep = (props: {
 
   let overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
 
-  const masterEdition = props.attributes.items[0].masterEdition;
+  const masterEdition = props.attributes.items[0]?.masterEdition;
 
   let maxSupply = 0;
-  let supply = 0;
+  let availableSupply = 0;
 
-  if (masterEdition !== undefined) {
+  if (masterEdition) {
     maxSupply = masterEdition.info.maxSupply?.toNumber() as number;
-    supply = masterEdition.info.supply?.toNumber() as number;
+    availableSupply = maxSupply - masterEdition.info.supply?.toNumber() as number;
   }
-
 
   return (
     <>
@@ -972,10 +996,14 @@ const CopiesStep = (props: {
                 onChange={info => {
                   const editions = parseInt(info.target.value);
                   setEditionsError(undefined);
-                  console.log(props.attributes);
 
                   if (editions > MAX_EDITIONS_ALLOWED) {
-                    setEditionsError(`${editions} is greater than the max of ${MAX_EDITIONS_ALLOWED}. Please lower the edition supply.`)
+                    setEditionsError(`The onchain program can only auction off ${MAX_EDITIONS_ALLOWED} NFTs at a time. Please lower the edition supply.`)
+                    return;
+                  }
+
+                  if (editions > availableSupply) {
+                    setEditionsError(`${editions} is greater than the available supply of ${availableSupply} on the NFT. Please lower the edition supply.`)
                     return;
                   }
 
@@ -998,7 +1026,7 @@ const CopiesStep = (props: {
         <Button
           type="primary"
           size="large"
-          disabled={editionsError}
+          disabled={!!editionsError}
           onClick={() => {
             props.confirm();
           }}
