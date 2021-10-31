@@ -218,7 +218,6 @@ const buildCandyClaim = async (
   amount : number,
   index : number,
   pin : Array<number>,
-  nftsToMint : number,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
 
   let configKey : PublicKey;
@@ -276,18 +275,27 @@ const buildCandyClaim = async (
   const setup : Array<TransactionInstruction> = [];
 
   const claimCountAccount = await connection.getAccountInfo(claimCount);
-  let nftsAlreadyMinted = 0;
+  let nftsAlreadyMinted = 0, temporalSigner = MERKLE_TEMPORAL_SIGNER;
   if (claimCountAccount === null) {
   } else {
     // TODO: subtract already minted?...
     const claimAccountInfo = coder.accounts.decode(
       "ClaimCount", claimCountAccount.data);
     nftsAlreadyMinted = claimAccountInfo.count;
+    if (claimAccountInfo.claimant.equals(walletKey)) {
+      // we already proved this claim and verified the OTP once, contract knows
+      // that this wallet is OK
+      temporalSigner = walletKey;
+    } else {
+      // need to claim with the first wallet...
+      const claimantStr = claimAccountInfo.claimant.toBase58();
+      throw new Error(`This wallet does not match existing claimant ${claimantStr}`);
+    }
   }
 
   const nftsAvailable = amount;
-  if (nftsToMint > nftsAvailable - nftsAlreadyMinted) {
-    throw new Error(`Cannot mint ${nftsToMint} NFTs. ${nftsAvailable} were originally allocated`
+  if (nftsAlreadyMinted >= nftsAvailable) {
+    throw new Error(`Cannot mint another NFT. ${nftsAvailable} were originally allocated`
       + (nftsAlreadyMinted > 0 ? ` and ${nftsAlreadyMinted} were already minted` : ""));
   }
 
@@ -298,29 +306,28 @@ const buildCandyClaim = async (
 
   const candyMachineMints : Array<Keypair> = [];
 
-  for (let i = 0; i < nftsToMint; ++i) {
-    const [instrs, mint] = await buildSingleCandyMint(
-      connection,
-      walletKey,
-      distributorKey,
-      distributorWalletKey,
-      claimCount,
-      configKey,
-      candyMachineKey,
-      candyMachine.wallet,
-      Buffer.from([
-        ...new BN(wbump).toArray("le", 1),
-        ...new BN(cbump).toArray("le", 1),
-        ...new BN(index).toArray("le", 8),
-        ...new BN(amount).toArray("le", 8),
-        ...claimantPda.toBuffer(),
-        ...new BN(proof.length).toArray("le", 4),
-        ...Buffer.concat(proof),
-      ]),
-    );
-    candyMachineMints.push(mint);
-    setup.push(...instrs);
-  }
+  const [instrs, mint] = await buildSingleCandyMint(
+    connection,
+    walletKey,
+    distributorKey,
+    distributorWalletKey,
+    claimCount,
+    temporalSigner,
+    configKey,
+    candyMachineKey,
+    candyMachine.wallet,
+    Buffer.from([
+      ...new BN(wbump).toArray("le", 1),
+      ...new BN(cbump).toArray("le", 1),
+      ...new BN(index).toArray("le", 8),
+      ...new BN(amount).toArray("le", 8),
+      ...claimantPda.toBuffer(),
+      ...new BN(proof.length).toArray("le", 4),
+      ...Buffer.concat(proof),
+    ]),
+  );
+  candyMachineMints.push(mint);
+  setup.push(...instrs);
 
   return [setup, pdaSeeds, candyMachineMints];
 }
@@ -331,6 +338,7 @@ const buildSingleCandyMint = async (
   distributorKey : PublicKey,
   distributorWalletKey : PublicKey,
   claimCount : PublicKey,
+  temporalSigner : PublicKey,
   configKey : PublicKey,
   candyMachineKey : PublicKey,
   candyMachineWallet : PublicKey,
@@ -393,7 +401,7 @@ const buildSingleCandyMint = async (
           { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
           { pubkey: distributorWalletKey      , isSigner: false , isWritable: true  } ,
           { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
-          { pubkey: MERKLE_TEMPORAL_SIGNER    , isSigner: true  , isWritable: false } ,
+          { pubkey: temporalSigner            , isSigner: true  , isWritable: false } ,
           { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
 
           { pubkey: configKey                 , isSigner: false , isWritable: true  } ,
@@ -433,7 +441,6 @@ export const Claim = (
   const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
   const [candyConfig, setCandyConfig] = React.useState(params.config as string || "");
   const [candyUUID, setCandyUUID] = React.useState(params.uuid as string || "");
-  const [nftsToMintStr, setNftsToMint] = React.useState(params.amount as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
   const [amountStr, setAmount] = React.useState(params.amount as string || "");
   const [indexStr, setIndex] = React.useState(params.index as string || "");
@@ -511,15 +518,11 @@ export const Claim = (
 
     let instructions, pdaSeeds, extraSigners;
     if (claimMethod === "candy") {
-      const nftsToMint = Number(nftsToMintStr);
-      if (isNaN(nftsToMint)) {
-        throw new Error(`Could not parse NFTs to mint ${nftsToMint}`);
-      }
       console.log("Building candy claim");
       [instructions, pdaSeeds, extraSigners] = await buildCandyClaim(
         connection, wallet.publicKey, distributorKey, distributorInfo,
         candyConfig, candyUUID,
-        proof, handle, amount, index, pin, nftsToMint
+        proof, handle, amount, index, pin
       );
     } else if (claimMethod === "transfer") {
       [instructions, pdaSeeds, extraSigners] = await buildMintClaim(
@@ -531,24 +534,26 @@ export const Claim = (
       throw new Error(`Unknown claim method ${claimMethod}`);
     }
 
-    let transaction = new Transaction();
-    instructions.forEach((instruction) => transaction.add(instruction));
-    transaction.recentBlockhash = (
-      await connection.getRecentBlockhash("singleGossip")
-    ).blockhash;
+    let transaction = new Transaction({
+      feePayer: wallet.publicKey,
+      recentBlockhash: (await connection.getRecentBlockhash("singleGossip")).blockhash,
+    });
 
-    transaction.setSigners(
-      // fee payed by the wallet owner
-      wallet.publicKey,
-      MERKLE_TEMPORAL_SIGNER,
-      ...extraSigners.map(s => s.publicKey)
-    );
+    const signers = new Set<PublicKey>();
+    for (const instr of instructions) {
+      transaction.add(instr);
+      for (const key of instr.keys)
+        if (key.isSigner)
+          signers.add(key.pubkey);
+    }
+    console.log(`Expecting the following signers: ${[...signers].map(s => s.toBase58())}`);
+    transaction.setSigners(...signers);
 
     if (extraSigners.length > 0) {
       transaction.partialSign(...extraSigners);
     }
 
-    if (!skipAWSWorkflow) {
+    if (signers.has(MERKLE_TEMPORAL_SIGNER) && !skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
@@ -579,15 +584,18 @@ export const Claim = (
       if (!resp.MessageId) {
         throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
       }
-    }
 
-    notify({
-      message: "OTP sent",
-      description: `Please check ${handle} for a OTP`,
-    });
+      notify({
+        message: "OTP sent",
+        description: `Please check ${handle} for a OTP`,
+      });
+    }
 
     setTransaction(transaction);
   };
+
+  const needsTemporalSigner = transaction !== null
+    && transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
 
   const verifyOTP = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -600,14 +608,14 @@ export const Claim = (
       throw new Error(`Wallet not connected`);
     }
 
-    // TODO: distinguish between OTP failure and transaction-error. We can try
-    // again on the former but not the latter
-    const OTP = Number(OTPStr);
-    if (isNaN(OTP) || OTPStr.length === 0) {
-      throw new Error(`Could not parse OTP ${OTPStr}`);
-    }
+    if (needsTemporalSigner && !skipAWSWorkflow) {
+      // TODO: distinguish between OTP failure and transaction-error. We can try
+      // again on the former but not the latter
+      const OTP = Number(OTPStr);
+      if (isNaN(OTP) || OTPStr.length === 0) {
+        throw new Error(`Could not parse OTP ${OTPStr}`);
+      }
 
-    if (!skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
@@ -645,7 +653,12 @@ export const Claim = (
       transaction.addSignature(MERKLE_TEMPORAL_SIGNER, sig);
     }
 
-    const fullySigned = await wallet.signTransaction(transaction);
+    let fullySigned;
+    try {
+      fullySigned = await wallet.signTransaction(transaction);
+    } catch {
+      throw new Error("Failed to sign transaction");
+    }
 
     const claimResult = await Connection.sendSignedTransaction({
       connection,
@@ -680,18 +693,26 @@ export const Claim = (
 
   const verifyOTPC = (onClick) => (
     <React.Fragment>
-      <TextField
-        style={{width: "60ch"}}
-        id="otp-text-field"
-        label="OTP"
-        value={OTPStr}
-        onChange={(e) => setOTPStr(e.target.value)}
-      />
+      {needsTemporalSigner
+      ? (<TextField
+          style={{width: "60ch"}}
+          id="otp-text-field"
+          label="OTP"
+          value={OTPStr}
+          onChange={(e) => setOTPStr(e.target.value)}
+        />)
+      : (<React.Fragment>
+          <Box />
+          <div style={{ fontSize: "1.1rem" }}>
+            The OTP is already verified for this account
+          </div>
+        </React.Fragment>)
+      }
       <Box />
 
       <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || !OTPStr || loading}
+        disabled={!wallet.connected || (needsTemporalSigner && !OTPStr) || loading}
         variant="contained"
         color="success"
         style={{ width: "100%" }}
@@ -739,13 +760,6 @@ export const Claim = (
             value={candyUUID}
             onChange={e => setCandyUUID(e.target.value)}
             disabled={!editable}
-          />
-          <TextField
-            style={{width: "60ch"}}
-            id="nfts-to-mint-text-field"
-            label="NFTs To Mint"
-            value={nftsToMintStr}
-            onChange={e => setNftsToMint(e.target.value)}
           />
         </React.Fragment>
       );
@@ -903,9 +917,15 @@ export const Claim = (
         ? (
           <React.Fragment>
             <Box />
-            <div style={{ fontSize: "1.2rem" }}>
+            <div style={{ fontSize: "1.1rem" }}>
               Airdrop claimed successfully!
             </div>
+            <Button
+              color="info"
+              onClick={() => { setActiveStep(0); }}
+            >
+              Reset
+            </Button>
           </React.Fragment>
         )
         : (

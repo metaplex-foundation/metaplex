@@ -149,7 +149,7 @@
           "type": "u64"
         },
         {
-          "name": "claimantAccount",
+          "name": "claimantSecret",
           "type": "publicKey"
         },
         {
@@ -272,7 +272,7 @@
           "type": "u64"
         },
         {
-          "name": "claimantAccount",
+          "name": "claimantSecret",
           "type": "publicKey"
         },
         {
@@ -351,6 +351,10 @@
           {
             "name": "count",
             "type": "u64"
+          },
+          {
+            "name": "claimant",
+            "type": "publicKey"
           }
         ]
       }
