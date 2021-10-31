@@ -2,6 +2,7 @@
 members = [
   "nft-candy-machine/",
   "fair-launch/",
+  "token-entangler/",
   "auction/program",
   "metaplex/program",
   "auction-house/",
