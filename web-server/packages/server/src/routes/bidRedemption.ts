@@ -1,18 +1,11 @@
-import { PublicKey } from "@solana/web3.js";
 import express, { Request, Response } from "express";
 import {
   createMongoClient,
   DB,
-  BIDDER_POT_COLLECTION,
   BID_REDEMPTION_TICKETS_V1_COLLECTION,
   BID_REDEMPTION_TICKETS_V2_COLLECTION,
-  AUCTION_COLLECTION,
-  AUCTION_MANAGERS_COLLECTION,
-  BIDDER_METADATA_COLLECTION,
 } from "../db/mongo-utils";
-import { accountConverterSet, AccountDocument } from "../solana/accounts/account";
-import { AuctionManagerAccountDocument, AUCTION_PREFIX, decodeAuctionManager, METADATA } from "../solana/accounts/auctionManager";
-import { BidderPotStoreAccountDocument } from "../solana/accounts/bidderPot";
+import { AUCTION_PREFIX, METADATA } from "../solana/accounts/auctionManager";
 import { METAPLEX_PREFIX } from "../solana/accounts/types";
 import { AUCTION_ID, METAPLEX_ID, StringPublicKey, toPublicKey } from "../solana/ids";
 import { findProgramAddressBase58 } from "../solana/utils";
