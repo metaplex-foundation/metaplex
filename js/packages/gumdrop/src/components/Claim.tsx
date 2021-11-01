@@ -622,7 +622,9 @@ export const Claim = (
       transaction.partialSign(...extraSigners);
     }
 
-    if (signers.has(MERKLE_TEMPORAL_SIGNER) && !skipAWSWorkflow) {
+    const txnNeedsTemporalSigner =
+        transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
+    if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       const params = {
         FunctionName: "send-OTP",
         Payload: new Uint8Array(Buffer.from(JSON.stringify({
