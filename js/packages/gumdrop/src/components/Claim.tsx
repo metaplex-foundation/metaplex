@@ -61,6 +61,38 @@ import {
 import { MerkleTree } from "../utils/merkleTree";
 import { coder } from "../utils/merkleDistributor";
 
+const walletKeyOrPda = async (
+  walletKey : PublicKey,
+  handle : string,
+  pin : BN | null,
+  seed : PublicKey,
+) : Promise<[PublicKey, Array<Buffer>]> => {
+  if (pin === null) {
+    try {
+      const key = new PublicKey(handle);
+      if (!key.equals(walletKey)) {
+        throw new Error("Claimant wallet handle does not match connected wallet");
+      }
+      return [key, []];
+    } catch (err) {
+      throw new Error(`Invalid claimant wallet handle ${err}`);
+    }
+  } else {
+    const pdaSeeds = [
+      seed.toBuffer(),
+      Buffer.from(handle),
+      Buffer.from(pin.toArray("le", 4)),
+    ];
+
+    const [claimantPda, ] = await PublicKey.findProgramAddress(
+      pdaSeeds,
+      MERKLE_DISTRIBUTOR_ID
+    );
+    return [claimantPda, pdaSeeds];
+  }
+}
+
+
 const buildMintClaim = async (
   connection : RPCConnection,
   walletKey : PublicKey,
@@ -71,7 +103,7 @@ const buildMintClaim = async (
   handle : string,
   amount : number,
   index : number,
-  pin : BN,
+  pin : BN | null,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
   let tokenAccKey: PublicKey;
   try {
@@ -89,21 +121,12 @@ const buildMintClaim = async (
 
   console.log(mint.toBase58());
 
-  const pdaSeeds = [
-    mint.toBuffer(),
-    Buffer.from(handle),
-    Buffer.from(pin.toArray("le", 4)),
-  ];
-
-  const [claimantPda, ] = await PublicKey.findProgramAddress(
-    pdaSeeds,
-    MERKLE_DISTRIBUTOR_ID
-  );
+  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, mint);
 
   // TODO: since it's in the PDA do we need it to be in the leaf?
   const leaf = Buffer.from(
     [...new BN(index).toArray("le", 8),
-     ...claimantPda.toBuffer(),
+     ...secret.toBuffer(),
      ...mint.toBuffer(),
      ...new BN(amount).toArray("le", 8),
     ]
@@ -148,6 +171,9 @@ const buildMintClaim = async (
       ));
   }
 
+  const temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
+      ? walletKey : distributorInfo.temporal;
+
   const claimAirdrop = new TransactionInstruction({
       programId: MERKLE_DISTRIBUTOR_ID,
       keys: [
@@ -155,7 +181,7 @@ const buildMintClaim = async (
           { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
           { pubkey: tokenAccKey             , isSigner: false , isWritable: true  } ,
           { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
-          { pubkey: MERKLE_TEMPORAL_SIGNER  , isSigner: true  , isWritable: false } ,
+          { pubkey: temporalSigner          , isSigner: true  , isWritable: false } ,
           { pubkey: walletKey               , isSigner: true  , isWritable: false } ,  // payer
           { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
           { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
@@ -165,7 +191,7 @@ const buildMintClaim = async (
         ...new BN(cbump).toArray("le", 1),
         ...new BN(index).toArray("le", 8),
         ...new BN(amount).toArray("le", 8),
-        ...claimantPda.toBuffer(),
+        ...secret.toBuffer(),
         ...new BN(proof.length).toArray("le", 4),
         ...Buffer.concat(proof),
       ])
@@ -217,7 +243,7 @@ const buildCandyClaim = async (
   handle : string,
   amount : number,
   index : number,
-  pin : BN,
+  pin : BN | null,
 ) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
 
   let configKey : PublicKey;
@@ -227,21 +253,12 @@ const buildCandyClaim = async (
     throw new Error(`Invalid candy config key ${err}`);
   }
 
-  const pdaSeeds = [
-    configKey.toBuffer(),
-    Buffer.from(handle),
-    Buffer.from(pin.toArray("le", 4)),
-  ];
-
-  const [claimantPda, ] = await PublicKey.findProgramAddress(
-    pdaSeeds,
-    MERKLE_DISTRIBUTOR_ID
-  );
+  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, configKey);
 
   // TODO: since it's in the PDA do we need it to be in the leaf?
   const leaf = Buffer.from(
     [...new BN(index).toArray("le", 8),
-     ...claimantPda.toBuffer(),
+     ...secret.toBuffer(),
      ...configKey.toBuffer(),
      ...new BN(amount).toArray("le", 8),
     ]
@@ -275,7 +292,7 @@ const buildCandyClaim = async (
   // atm the contract has a special case for when the temporal key is defaulted
   // (aka always passes temporal check)
   // TODO: more flexible
-  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default)
+  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
       ? walletKey : distributorInfo.temporal;
 
   const setup : Array<TransactionInstruction> = [];
@@ -327,7 +344,7 @@ const buildCandyClaim = async (
       ...new BN(cbump).toArray("le", 1),
       ...new BN(index).toArray("le", 8),
       ...new BN(amount).toArray("le", 8),
-      ...claimantPda.toBuffer(),
+      ...secret.toBuffer(),
       ...new BN(proof.length).toArray("le", 4),
       ...Buffer.concat(proof),
     ]),
@@ -463,7 +480,7 @@ const fetchNeedsTemporalSigner = async (
 ) => {
   const [key, info] = await fetchDistributor(connection, distributorStr);
   if (!info.temporal.equals(MERKLE_TEMPORAL_SIGNER)) {
-    // default pubkey
+    // default pubkey or program itself (distribution through wallets)
     return false;
   } else if (claimMethod === "candy") {
     const [claimCount, ] = await PublicKey.findProgramAddress(
@@ -514,8 +531,8 @@ export const Claim = (
        )
     && handle.length > 0
     && amountStr.length > 0
-    && indexStr.length > 0
-    && pinStr.length > 0;
+    && indexStr.length > 0;
+    // NB: pin can be empty if handle is a public-key and we are claiming through wallets
     // NB: proof can be empty!
 
   const [editable, setEditable] = React.useState(!allFieldsPopulated);
@@ -558,7 +575,7 @@ export const Claim = (
 
     const index = Number(indexStr);
     const amount = Number(amountStr);
-    let pin;
+    let pin : BN | null = null;
 
     if (isNaN(amount)) {
       throw new Error(`Could not parse amount ${amountStr}`);
@@ -566,10 +583,12 @@ export const Claim = (
     if (isNaN(index)) {
       throw new Error(`Could not parse index ${indexStr}`);
     }
-    try {
-      pin = new BN(pinStr);
-    } catch (err) {
-      throw new Error(`Could not parse pin ${pinStr}: ${err}`);
+    if (pinStr.length > 0) {
+      try {
+        pin = new BN(pinStr);
+      } catch (err) {
+        throw new Error(`Could not parse pin ${pinStr}: ${err}`);
+      }
     }
 
     // TODO: use cached?
@@ -601,6 +620,12 @@ export const Claim = (
       );
     } else {
       throw new Error(`Unknown claim method ${claimMethod}`);
+    }
+
+    // NB: if we're claiming through wallets then pdaSeeds should be empty
+    // since the secret is the wallet key (which is also a signer)
+    if (pin === null && pdaSeeds.length > 0) {
+      throw new Error(`Internal error: PDA generated when distributing to wallet directly`);
     }
 
     let transaction = new Transaction({

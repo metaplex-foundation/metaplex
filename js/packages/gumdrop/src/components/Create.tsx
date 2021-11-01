@@ -79,11 +79,10 @@ export type ClaimantInfo = {
   amount : number,
 
   pin    : BN,
-  bump   : number,
   url    : string,
 
   seed   : PublicKey,
-  pda    : PublicKey,
+  secret : PublicKey,
 };
 
 export type AuthKeys = { [key: string] : string }
@@ -174,6 +173,19 @@ const setupManual = (auth : AuthKeys, source : string) => {
   };
 }
 
+const setupWalletListUpload = (auth : AuthKeys, source : string) => {
+  const toUpload = Array<{ [key: string] : string }>();
+  return async (
+    info : ClaimantInfo,
+    mintUrl: string,
+  ) => {
+    toUpload.push({
+      "handle": info.handle,
+      "url": info.url,
+    });
+  };
+}
+
 const setupSender = (
   method : string,
   auth : AuthKeys,
@@ -183,6 +195,8 @@ const setupSender = (
     return setupSes(auth, source);
   } else if (method === "Manual") {
     return setupManual(auth, source);
+  } else if (method === "Wallets") {
+    return setupWalletListUpload(auth, source);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
@@ -372,10 +386,14 @@ export const Create = (
       const remaining = candyMachine.data.itemsAvailable.toNumber() - candyMachine.itemsRedeemed.toNumber();
       if (isNaN(remaining)) {
         // TODO: should this have an override?
-        throw new Error(`Could not calculae how many candy machine items are remaining`);
+        throw new Error(`Could not calculate how many candy machine items are remaining`);
       }
       if (remaining < claimInfo.total) {
-        throw new Error(`Distributor is allocated more mints than the candy machine has remaining`);
+        throw new Error(`Distributor is allocated more mints (${claimInfo.total}) `
+                      + `than the candy machine has remaining (${remaining})`);
+      }
+      if (!candyMachine.authority.equals(wallet.publicKey)) {
+        throw new Error(`Candy machine authority does not match wallet public key`);
       }
     } else {
       throw new Error(`Unknown claim method ${claimMethod}`);
@@ -451,20 +469,29 @@ export const Create = (
     });
 
     const leafs : Array<Buffer> = [];
+    let needsPin = true;
     for (let idx = 0; idx < claimants.length; ++idx ) {
       const claimant = claimants[idx];
-      const seeds = [
-        claimant.seed.toBuffer(),
-        Buffer.from(claimant.handle),
-        Buffer.from(claimant.pin.toArray("le", 4)),
-      ];
-      const [claimantPda, bump] = await PublicKey.findProgramAddress(
-          seeds, MERKLE_DISTRIBUTOR_ID);
-      claimant.bump = bump;
-      claimant.pda = claimantPda;
+      if (commMethod === "Wallets") {
+        needsPin = false;
+        try {
+          claimant.secret = new PublicKey(claimant.handle);
+        } catch (err) {
+          throw new Error(`Invalid claimant wallet handle ${err}`);
+        }
+      } else {
+        const seeds = [
+          claimant.seed.toBuffer(),
+          Buffer.from(claimant.handle),
+          Buffer.from(claimant.pin.toArray("le", 4)),
+        ];
+        const [claimantPda, ] = await PublicKey.findProgramAddress(
+            seeds, MERKLE_DISTRIBUTOR_ID);
+        claimant.secret = claimantPda;
+      }
       leafs.push(Buffer.from(
         [...new BN(idx).toArray("le", 8),
-         ...claimantPda.toBuffer(),
+         ...claimant.secret.toBuffer(),
          ...claimant.seed.toBuffer(),
          ...new BN(claimant.amount).toArray("le", 8),
         ]
@@ -498,9 +525,11 @@ export const Create = (
         `handle=${claimant.handle}`,
         `amount=${claimant.amount}`,
         `index=${idx}`,
-        `pin=${claimant.pin.toNumber()}`,
         `proof=${proof.map(b => bs58.encode(b))}`,
       ];
+      if (needsPin) {
+        params.push(`pin=${claimant.pin.toNumber()}`);
+      }
       if (isTokenAirdrop) {
         params.push(`tokenAcc=${claimInfo.source}`);
       } else {
@@ -541,13 +570,13 @@ export const Create = (
                 <TableRow>
                   <TableCell>Handle</TableCell>
                   <TableCell>Tokens</TableCell>
-                  <TableCell>Pin</TableCell>
+                  {needsPin && <TableCell>Pin</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {claimants.map((c) => (
                   <TableRow
-                    key={c.pda.toBase58()}
+                    key={c.secret.toBase58()}
                     sx={{ 'td, th': { border: 0 } }}
                   >
                     <TableCell component="th" scope="row">{c.handle} </TableCell>
@@ -557,7 +586,7 @@ export const Create = (
                         : c.amount
                       }
                     </TableCell>
-                    <TableCell>{c.pin.toNumber()}</TableCell>
+                    {needsPin && <TableCell>{c.pin.toNumber()}</TableCell>}
                   </TableRow>
                 ))}
               </TableBody>
@@ -597,13 +626,22 @@ export const Create = (
 
     // temporal auth is the AWS signer by 'default' and a no-op key otherwise
     let temporalSigner;
-    if (otpAuth === "default") {
+    if (commMethod === "Wallets") {
+      // TODO: this is a bit jank. There should be no form option to set the
+      // OTP auth if we are using a wallet but there's still a defaulted value
+      // atm...
+      // NB: We also need this to not be 'none' since there is a special check
+      // for claimant_secret==accounts.temporal
+      temporalSigner = MERKLE_DISTRIBUTOR_ID;
+    } else if (otpAuth === "default") {
       temporalSigner = MERKLE_TEMPORAL_SIGNER;
     } else if (otpAuth === "none") {
       temporalSigner = PublicKey.default;
     } else {
       throw new Error(`Unknown OTP authorization type ${otpAuth}`);
     }
+
+    console.log(`Temporal signer: ${temporalSigner.toBase58()}`);
 
     // initial merkle-distributor state
     const instructions = Array<TransactionInstruction>();
@@ -771,7 +809,7 @@ export const Create = (
   };
 
   const commAuthorization = (commMethod) => {
-    if (commMethod === "Manual") {
+    if (commMethod === "Manual" || commMethod === "Wallets") {
       return null;
     }
 
@@ -920,7 +958,7 @@ export const Create = (
   const createAirdrop = (
     <Box sx={{ position: "relative" }}>
     <Button
-      disabled={!wallet.connected || !filename || loading || claimURLs.length > 0}
+      disabled={!wallet.connected || !commMethod || !filename || loading || claimURLs.length > 0}
       variant="contained"
       style={{ width: "100%" }}
       onClick={(e) => {
@@ -951,26 +989,8 @@ export const Create = (
     return `data:text/plain;charset=utf-8,${encoded}`;
   };
 
-  return (
-    <Stack spacing={2}>
-      <FormControl fullWidth>
-        <InputLabel id="claim-method-label">Claim Method</InputLabel>
-        <Select
-          labelId="claim-method-label"
-          id="claim-method-select"
-          value={claimMethod}
-          label="Claim Method"
-          onChange={(e) => {
-            localStorage.setItem("claimMethod", e.target.value);
-            setClaimMethod(e.target.value);
-          }}
-          style={{textAlign: "left"}}
-        >
-          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
-          <MenuItem value={"candy"}>Candy Machine</MenuItem>
-        </Select>
-      </FormControl>
-      {claimMethod !== "" && claimData(claimMethod)}
+  const otpAuthC = (
+    <React.Fragment>
       <FormControl fullWidth>
         <InputLabel id="otp-auth-label">OTP Authorization</InputLabel>
         <Select
@@ -997,6 +1017,29 @@ export const Create = (
           <MenuItem value={"none"}>None</MenuItem>
         </Select>
       </FormControl>
+    </React.Fragment>
+  );
+
+  return (
+    <Stack spacing={2}>
+      <FormControl fullWidth>
+        <InputLabel id="claim-method-label">Claim Method</InputLabel>
+        <Select
+          labelId="claim-method-label"
+          id="claim-method-select"
+          value={claimMethod}
+          label="Claim Method"
+          onChange={(e) => {
+            localStorage.setItem("claimMethod", e.target.value);
+            setClaimMethod(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+        >
+          <MenuItem value={"transfer"}>Token Transfer</MenuItem>
+          <MenuItem value={"candy"}>Candy Machine</MenuItem>
+        </Select>
+      </FormControl>
+      {claimMethod !== "" && claimData(claimMethod)}
       <FormControl fullWidth>
         <InputLabel id="comm-method-label">Distribution Method</InputLabel>
         <Select
@@ -1012,11 +1055,13 @@ export const Create = (
         >
           <MenuItem value={"AWS SES"}>AWS SES</MenuItem>
           <MenuItem value={"Manual"}>Manual</MenuItem>
+          <MenuItem value={"Wallets"}>Wallets</MenuItem>
         </Select>
       </FormControl>
       {commMethod !== "" && commAuthorization(commMethod)}
-      {commMethod !== "" && fileUpload}
-      {commMethod !== "" && createAirdrop}
+      {commMethod !== "" && commMethod !== "Wallets" && otpAuthC}
+      {fileUpload}
+      {createAirdrop}
       {baseKey !== undefined && (
         <HyperLink
           href={hyperLinkData(Array.from(baseKey.secretKey))}
