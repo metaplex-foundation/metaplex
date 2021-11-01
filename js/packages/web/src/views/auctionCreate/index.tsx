@@ -654,7 +654,10 @@ export const AuctionCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          <Space className="metaplex-fullwidth metaplex-space-align-stretch" direction="vertical">
+          <Space
+            className="metaplex-fullwidth metaplex-space-align-stretch"
+            direction="vertical"
+          >
             {stepsByCategory[attributes.category][step][1]}
             {0 < step && stepsVisible && (
               <Row justify="center">

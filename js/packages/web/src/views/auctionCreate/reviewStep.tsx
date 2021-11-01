@@ -29,13 +29,17 @@ export const ReviewStep = (props: {
     <Space className="metaplex-fullwidth" direction="vertical">
       <h2>Review and list</h2>
       <p>Review your listing before publishing.</p>
-      <Row>
-        <Col xl={12}>
+      <Row justify="space-around">
+        <Col span={6}>
           {item?.metadata.info && (
-            <ArtCard pubkey={item.metadata.pubkey} small={true} />
+            <ArtCard
+              pubkey={item.metadata.pubkey}
+              small={true}
+              hoverable={false}
+            />
           )}
         </Col>
-        <Col xl={12}>
+        <Col span={8}>
           <Statistic
             title="Copies"
             value={

@@ -22,26 +22,27 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[];
   preview?: boolean;
   small?: boolean;
+  hoverable?: boolean;
   close?: () => void;
 
   height?: number;
   width?: number;
 }
 
-export const ArtCard = (props: ArtCardProps) => {
-  const {
-    category,
-    image,
-    animationURL,
-    name: nameProp,
-    preview,
-    creators: creatorsProp,
-    close,
-    pubkey,
-    height,
-    width,
-    ...rest
-  } = props;
+export const ArtCard = ({
+  category,
+  image,
+  animationURL,
+  name: nameProp,
+  preview,
+  creators: creatorsProp,
+  hoverable = true,
+  close,
+  pubkey,
+  height,
+  width,
+  ...rest
+}: ArtCardProps) => {
   const art = useArt(pubkey);
   const creators = art?.creators || creatorsProp || [];
   const name = art?.title || nameProp || ' ';
@@ -57,7 +58,7 @@ export const ArtCard = (props: ArtCardProps) => {
 
   const card = (
     <Card
-      hoverable={true}
+      hoverable={hoverable}
       cover={
         <>
           {close && (
