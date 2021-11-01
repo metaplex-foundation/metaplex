@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Col, Button, InputNumber, Spin } from 'antd';
+import { Col, Button, InputNumber, Spin, Skeleton } from 'antd';
 import { MemoryRouter, Route, Redirect, Link } from 'react-router-dom';
 
 import {
@@ -180,6 +180,8 @@ export const AuctionCard = ({
   hideDefaultAction?: boolean;
   action?: JSX.Element;
 }) => {
+  const nftCount = auctionView?.items.flat().length;
+  const winnerCount = auctionView?.items.length;
   const connection = useConnection();
   const { update } = useMeta();
 
@@ -266,18 +268,70 @@ export const AuctionCard = ({
     auctionView.vault.info.state === VaultState.Deactivated;
 
   if (shouldHide) {
-    return <></>;
+    return <>
+      <div className="auction-container" style={style}>
+        <Col>
+          <div className="auction-detials" style={{ marginTop: 20 }}>
+            <div className="auction-detials-top">
+              <div >
+                <h6>Number Of Winners</h6>
+                <h1>
+                  {winnerCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    winnerCount
+                  )}
+                </h1>
+              </div>
+              <div>
+                <h6>Number Of NFTs</h6>
+                <h1>
+                  {nftCount === undefined ? (
+                    <Skeleton paragraph={{ rows: 0 }} />
+                  ) : (
+                    nftCount
+                  )}
+                </h1>
+              </div>
+            </div>
+          </div>
+        </Col>
+      </div>
+    </>;
   }
-
   return (
     <div className="auction-container" style={style}>
       <Col>
-        {!auctionView.isInstantSale && (
+        {auctionView.isInstantSale && (
           <>
             <AuctionNumbers auctionView={auctionView} />
             <br />
           </>
         )}
+        <div className="auction-detials" >
+          <div className="auction-detials-top">
+            <div >
+              <h6>Number Of Winners</h6>
+              <h1>
+                {winnerCount === undefined ? (
+                  <Skeleton paragraph={{ rows: 0 }} />
+                ) : (
+                  winnerCount
+                )}
+              </h1>
+            </div>
+            <div>
+              <h6>Number Of NFTs</h6>
+              <h1>
+                {nftCount === undefined ? (
+                  <Skeleton paragraph={{ rows: 0 }} />
+                ) : (
+                  nftCount
+                )}
+              </h1>
+            </div>
+          </div>
+        </div>
         {showRedemptionIssue && (
           <span>
             There was an issue redeeming or refunding your bid. Please try
@@ -343,18 +397,17 @@ export const AuctionCard = ({
               style={{ marginTop: 20 }}
             >
               {loading ||
-              auctionView.items.find(i => i.find(it => !it.metadata)) ||
-              !myPayingAccount ? (
+                auctionView.items.find(i => i.find(it => !it.metadata)) ||
+                !myPayingAccount ? (
                 <Spin />
               ) : eligibleForAnything ? (
                 `Redeem bid`
               ) : (
-                `${
-                  wallet?.publicKey &&
+                `${wallet?.publicKey &&
                   auctionView.auctionManager.authority ===
-                    wallet.publicKey.toBase58()
-                    ? 'Reclaim Items'
-                    : 'Refund bid'
+                  wallet.publicKey.toBase58()
+                  ? 'Reclaim Items'
+                  : 'Refund bid'
                 }`
               )}
             </Button>
@@ -386,7 +439,7 @@ export const AuctionCard = ({
             <Button
               type="primary"
               size="large"
-              className="action-btn"
+              className="action-btn connect-wallet-button"
               disabled={loading}
               onClick={() => setShowBidModal(true)}
               style={{ marginTop: 20 }}
@@ -411,9 +464,8 @@ export const AuctionCard = ({
           <Button
             type="primary"
             size="large"
-            className="action-btn"
+            className="action-btn connect-wallet-button"
             onClick={connect}
-            style={{ marginTop: 20 }}
           >
             Connect wallet to{' '}
             {auctionView.isInstantSale ? 'purchase' : 'place bid'}
@@ -481,9 +533,6 @@ export const AuctionCard = ({
       <MetaplexModal
         visible={showBidModal}
         onCancel={() => setShowBidModal(false)}
-        bodyStyle={{
-          alignItems: 'start',
-        }}
         afterClose={() => modalHistory.replace('/placebid')}
       >
         <MemoryRouter>
@@ -584,7 +633,6 @@ export const AuctionCard = ({
 
                 setLoading(false);
               };
-
               return (
                 <>
                   <h2 className="modal-title">
@@ -628,9 +676,9 @@ export const AuctionCard = ({
 
                   <div
                     style={{
-                      width: '100%',
+                      width: '90%',
                       background: '#242424',
-                      borderRadius: 14,
+                      borderRadius: 4,
                       color: 'rgba(0, 0, 0, 0.5)',
                     }}
                   >
@@ -689,7 +737,7 @@ export const AuctionCard = ({
                   <Button
                     type="primary"
                     size="large"
-                    className="action-btn"
+                    className="action-btn confirm-purchase-button"
                     onClick={() =>
                       auctionView.isInstantSale ? instantSale() : placeBid()
                     }
@@ -708,7 +756,7 @@ export const AuctionCard = ({
                       <Spin />
                     ) : auctionView.isInstantSale ? (
                       auctionView.myBidderPot ||
-                      !isAuctionManagerAuthorityNotWalletOwner ? (
+                        !isAuctionManagerAuthorityNotWalletOwner ? (
                         'Claim'
                       ) : (
                         'Purchase'

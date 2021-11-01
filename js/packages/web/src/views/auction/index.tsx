@@ -52,9 +52,9 @@ export const AuctionItem = ({
       index === 0
         ? ''
         : `translate(${index * 15}px, ${-40 * index}px) scale(${Math.max(
-            1 - 0.2 * index,
-            0,
-          )})`,
+          1 - 0.2 * index,
+          0,
+        )})`,
     transformOrigin: 'right bottom',
     position: index !== 0 ? 'absolute' : 'static',
     zIndex: -1 * index,
@@ -127,7 +127,7 @@ export const AuctionView = () => {
   return (
     <>
       <Row justify="space-around" className="auctionComponent">
-        <Col span={24} md={12} className="pr-4 attributes">
+        <Col span={24} md={9} className="pr-4 attributes">
           <div className="auction-view" style={{ minHeight: 300 }}>
             <Carousel
               autoplay={false}
@@ -136,7 +136,18 @@ export const AuctionView = () => {
               {items}
             </Carousel>
           </div>
-
+          <div className="auction-about">
+            <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
+            <div className="auction-paragraph">
+              {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
+              {description ||
+                (winnerCount !== undefined && (
+                  <div >
+                    No description provided.
+                  </div>
+                ))}
+            </div>
+          </div>
           {attributes && (
             <>
               <h6>Attributes</h6>
@@ -152,11 +163,11 @@ export const AuctionView = () => {
         </Col>
 
         <Col span={24} md={12}>
-          <h2 className="art-title">
+          <h3 className="art-title">
             {art.title || <Skeleton paragraph={{ rows: 0 }} />}
-          </h2>
+          </h3>
           <Row gutter={[50, 0]} style={{ marginRight: 'unset' }}>
-            <Col>
+            {/* <Col>
               <h6>Edition</h6>
               {!auction && (
                 <Skeleton title={{ width: '100%' }} paragraph={{ rows: 0 }} />
@@ -166,11 +177,11 @@ export const AuctionView = () => {
                   {(auction?.items.length || 0) > 1 ? 'Multiple' : edition}
                 </p>
               )}
-            </Col>
+            </Col> */}
 
             <Col className="viewOn">
               <h6>View on</h6>
-              <div style={{ display: 'flex' }}>
+              <div >
                 <Button
                   className="tag"
                   onClick={() => window.open(art.uri || '', '_blank')}
@@ -181,8 +192,7 @@ export const AuctionView = () => {
                   className="tag"
                   onClick={() =>
                     window.open(
-                      `https://explorer.solana.com/account/${art?.mint || ''}${
-                        env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
+                      `https://explorer.solana.com/account/${art?.mint || ''}${env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
                       }`,
                       '_blank',
                     )
@@ -195,34 +205,12 @@ export const AuctionView = () => {
           </Row>
 
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
-          {auction && <AuctionCard auctionView={auction} />}
+          
+          {auction && <AuctionCard auctionView={auction} /> }
+          
           {!auction?.isInstantSale && <AuctionBids auctionView={auction} />}
-          <h6>Number Of Winners</h6>
-          <h1>
-            {winnerCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              winnerCount
-            )}
-          </h1>
-          <h6>Number Of NFTs</h6>
-          <h1>
-            {nftCount === undefined ? (
-              <Skeleton paragraph={{ rows: 0 }} />
-            ) : (
-              nftCount
-            )}
-          </h1>
-          <h6>About this {nftCount === 1 ? 'NFT' : 'Collection'}</h6>
-          <div className="auction-paragraph">
-            {hasDescription && <Skeleton paragraph={{ rows: 3 }} />}
-            {description ||
-              (winnerCount !== undefined && (
-                <div style={{ fontStyle: 'italic' }}>
-                  No description provided.
-                </div>
-              ))}
-          </div>
+          
+
         </Col>
       </Row>
     </>
@@ -273,8 +261,8 @@ const BidLine = (props: {
         opacity: isActive ? undefined : 0.5,
         ...(isme
           ? {
-              backgroundColor: '#ffffff21',
-            }
+            backgroundColor: '#ffffff21',
+          }
           : {}),
       }}
     >

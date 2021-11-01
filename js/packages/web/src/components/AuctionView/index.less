@@ -1,36 +1,42 @@
-
-.auction-container {
-  padding: 10px 20px;
-  background: #282828;
-  border-radius: 24px;
-  margin: 30px 0;
-  max-width: 100%;
+.ant-modal-body {
+  background: #2b355a !important;
+  max-width: 600px !important;
 }
 
-.ant-modal-body {
-  background: #212121 !important;
+.ant-modal-content {
+  width: 450px;
+  margin: 0 auto;
 }
 
 .ant-card-body {
   padding: 12px;
 }
-.action-btn:hover{
-  background-color: #851cef !important;
-  border: none !important;
+
+.connect-wallet-button {
+  margin-top: 20;
+  background: linear-gradient(90deg, #851CEF 5.96%, #24DDAF 100%) !important;
+  font-weight: 500 !important;
+
 }
+
+.confirm-purchase-button {
+  background: linear-gradient(90deg, #851CEF 5.96%, #24DDAF 100%) !important;
+  font-weight: 500 !important;
+  width: 90%;
+}
+
 .cd-number {
   font-style: normal;
   font-weight: 600;
   font-size: 36px;
   color: #FFFFFF;
   line-height: 44px;
-  // letter-spacing: 3px;
 }
 
 .cd-label {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 44px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.788);
+  margin-left: 5px;
 }
 
 .modal-title {
@@ -60,4 +66,87 @@
     max-width: 100%;
     margin: 10px 0;
   }
+}
+
+
+.auction-detials {
+  display: flex;
+  flex-direction: column;
+  column-gap: 30px;
+  row-gap: 30px;
+
+  h1 {
+    display: flex;
+    justify-content: center;
+    border: 2px solid #B265FF;
+    width: 55px;
+    border-radius: 5px;
+    margin-top: 15px;
+  }
+
+  h6 {
+    color: #CFCDCD;
+  }
+}
+
+.auction-detials-top,
+.auction-detials-bottom {
+  display: flex;
+  flex-direction: row;
+  column-gap: 30px;
+  row-gap: 20px;
+}
+
+.auction-detials-bottom {
+  column-gap: 70px !important;
+}
+
+.highest-bid,
+.time-left {
+  display: flex;
+  flex-direction: column;
+  row-gap: 15px;
+}
+
+.large-circle {
+  border: 2px solid white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.small-circle {
+  border: 2px solid white;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.highest-bid-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  min-width: 120px;
+
+  span {
+    font-weight: 900;
+    font-size: 24px;
+    margin-top: -8px;
+  }
+
+}
+
+.time-details {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 12px;
+  min-width: 100px;
+}
+
+.auction-about {
+  margin-left: 15px;
 }

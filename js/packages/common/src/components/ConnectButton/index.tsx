@@ -6,7 +6,7 @@ import { useWalletModal } from '../../contexts';
 
 export interface ConnectButtonProps
   extends ButtonProps,
-    React.RefAttributes<HTMLElement> {
+  React.RefAttributes<HTMLElement> {
   allowWalletChange?: boolean;
 }
 
@@ -18,7 +18,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
   const open = useCallback(() => setVisible(true), [setVisible]);
 
   const handleClick = useCallback(
-    () => (wallet ? connect().catch(() => {}) : open()),
+    () => (wallet ? connect().catch(() => { }) : open()),
     [wallet, connect, open],
   );
 
@@ -26,14 +26,15 @@ export const ConnectButton = (props: ConnectButtonProps) => {
 
   if (!wallet || !allowWalletChange) {
     return (
-      <Button {...rest} onClick={handleClick} disabled={connected && disabled}>
-        {connected ? props.children : 'Connect'}
+      <Button {...rest} onClick={handleClick} disabled={connected && disabled} className="connect-button">
+        <img src="/images/wallet.svg" />  <span> {connected ? props.children : 'Connect'}</span>
       </Button>
     );
   }
 
   return (
     <Dropdown.Button
+      className="connect-button"
       onClick={handleClick}
       disabled={connected && disabled}
       overlay={
@@ -41,8 +42,8 @@ export const ConnectButton = (props: ConnectButtonProps) => {
           <Menu.Item onClick={open}>Change Wallet</Menu.Item>
         </Menu>
       }
-    >
-      Connect
+    ><img src="/images/wallet.svg" />
+      <span>  Connect</span>
     </Dropdown.Button>
   );
 };

@@ -53,11 +53,9 @@ export const WalletModal: FC = () => {
     <MetaplexModal visible={visible} onCancel={close}>
       <div
         style={{
-          background:
-            'linear-gradient(180deg, #D329FC 0%, #8F6DDE 49.48%, #19E6AD 100%)',
-          borderRadius: 36,
-          width: 50,
-          height: 50,
+          borderRadius: 72,
+          width: 100,
+          height: 100,
           textAlign: 'center',
           verticalAlign: 'middle',
           fontWeight: 700,
@@ -66,16 +64,15 @@ export const WalletModal: FC = () => {
           marginBottom: 10,
         }}
       >
-        M
+        <img src='https://pbs.twimg.com/profile_images/1407897404142231554/ALsIjIq__400x400.jpg' />
       </div>
 
-      <h2>{selected ? 'Change provider' : 'Welcome to Metaplex'}</h2>
-      <p>
+      <h2 className="modal-name">{selected ? 'Change provider' : 'Welcome to NINJA  Marketplace '}</h2>
+      <p >
         {selected
           ? 'Feel free to switch wallet provider'
           : 'You must be signed in to place a bid'}
       </p>
-
       <br />
       {selected || showWallets ? (
         wallets.map(wallet => {
@@ -112,10 +109,6 @@ export const WalletModal: FC = () => {
         <>
           <Button
             className="metaplex-button"
-            style={{
-              width: '80%',
-              fontWeight: 'unset',
-            }}
             onClick={() => {
               select(WalletName.Phantom);
               close();
@@ -125,17 +118,13 @@ export const WalletModal: FC = () => {
               <img
                 src="https://www.phantom.app/img/logo.png"
                 style={{ width: '1.2rem' }}
-              />
+              /> </span>
+            <span>
               &nbsp;Sign in with Phantom
             </span>
-            <span>&gt;</span>
+            <span>{" "}&gt;</span>
           </Button>
-          <p
-            onClick={() => setShowWallets(true)}
-            style={{ cursor: 'pointer', marginTop: 10 }}
-          >
-            Select a different Solana wallet
-          </p>
+
         </>
       )}
     </MetaplexModal>
@@ -155,9 +144,9 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const keyToDisplay =
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
-              base58.length - 7,
-              base58.length,
-            )}`
+            base58.length - 7,
+            base58.length,
+          )}`
           : base58;
 
       notify({

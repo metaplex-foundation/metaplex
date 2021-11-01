@@ -13,7 +13,7 @@ export const HowTo = () => {
           </div>
           <div className="row mt-4 items-rows">
             <div className="col-md-3 text-center ">
-              <img src="/images/nft-icon1.png" className="img-fluid" />
+              <img src="/images/Frame.svg" className="img-fluid" />
               <h5>Setup Your Wallet</h5>
               <p className="m-0">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
@@ -22,7 +22,7 @@ export const HowTo = () => {
               </p>
             </div>
             <div className="col-md-3 text-center ">
-              <img src="/images/nft-icon2.png" className="img-fluid" />
+              <embed src="/images/Frame0.svg" className="img-fluid" />
               <h5>Setup Your Wallet</h5>
               <p className="m-0">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
@@ -31,7 +31,7 @@ export const HowTo = () => {
               </p>
             </div>
             <div className="col-md-3 text-center ">
-              <img src="/images/nft-icon3.png" className="img-fluid" />
+              <embed src="/images/Frame2.svg" className="img-fluid" />
               <h5>Our Fee</h5>
               <p className="m-0">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
@@ -40,7 +40,7 @@ export const HowTo = () => {
               </p>
             </div>
             <div className="col-md-3 text-center ">
-              <img src="/images/nft-icon4.png" className="img-fluid" />
+              <embed src="/images/Frame3.svg" className="img-fluid" />
               <h5>How Does it work?</h5>
               <p className="m-0">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do

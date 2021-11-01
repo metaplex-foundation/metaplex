@@ -153,10 +153,10 @@ export const AuctionCreateView = () => {
   const [auctionObj, setAuctionObj] =
     useState<
       | {
-          vault: StringPublicKey;
-          auction: StringPublicKey;
-          auctionManager: StringPublicKey;
-        }
+        vault: StringPublicKey;
+        auction: StringPublicKey;
+        auctionManager: StringPublicKey;
+      }
       | undefined
     >(undefined);
   const [attributes, setAttributes] = useState<AuctionState>({
@@ -212,7 +212,7 @@ export const AuctionCreateView = () => {
         if (!editions) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -254,7 +254,7 @@ export const AuctionCreateView = () => {
         ) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -288,9 +288,9 @@ export const AuctionCreateView = () => {
       const tiers = tieredAttributes.tiers;
       tiers.forEach(
         c =>
-          (c.items = c.items.filter(
-            i => (i as TierDummyEntry).winningConfigType !== undefined,
-          )),
+        (c.items = c.items.filter(
+          i => (i as TierDummyEntry).winningConfigType !== undefined,
+        )),
       );
       let filteredTiers = tiers.filter(
         i => i.items.length > 0 && i.winningSpots.length > 0,
@@ -448,23 +448,23 @@ export const AuctionCreateView = () => {
       endAuctionAt: isInstantSale
         ? null
         : new BN(
-            (attributes.auctionDuration || 0) *
-              (attributes.auctionDurationType == 'days'
-                ? 60 * 60 * 24 // 1 day in seconds
-                : attributes.auctionDurationType == 'hours'
-                ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
-          ), // endAuctionAt is actually auction duration, poorly named, in seconds
+          (attributes.auctionDuration || 0) *
+          (attributes.auctionDurationType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.auctionDurationType == 'hours'
+              ? 60 * 60 // 1 hour in seconds
+              : 60), // 1 minute in seconds
+        ), // endAuctionAt is actually auction duration, poorly named, in seconds
       auctionGap: isInstantSale
         ? null
         : new BN(
-            (attributes.gapTime || 0) *
-              (attributes.gapTimeType == 'days'
-                ? 60 * 60 * 24 // 1 day in seconds
-                : attributes.gapTimeType == 'hours'
-                ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
-          ),
+          (attributes.gapTime || 0) *
+          (attributes.gapTimeType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.gapTimeType == 'hours'
+              ? 60 * 60 // 1 hour in seconds
+              : 60), // 1 minute in seconds
+        ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -488,8 +488,8 @@ export const AuctionCreateView = () => {
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
-      ? attributes.items
-      : tieredAttributes.items;
+        ? attributes.items
+        : tieredAttributes.items;
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
@@ -659,14 +659,13 @@ export const AuctionCreateView = () => {
     <>
       <Row style={{ paddingTop: 50 }}>
         {stepsVisible && (
-          <Col span={24} md={4}>
+          <Col span={24} md={9}>
             <Steps
               progressDot
               direction={width < 768 ? 'horizontal' : 'vertical'}
               current={step}
               style={{
-                width: 'fit-content',
-                margin: '0 auto 30px auto',
+                margin: '110px 0 0 56%',
                 overflowX: 'auto',
                 maxWidth: '100%',
               }}
@@ -679,7 +678,7 @@ export const AuctionCreateView = () => {
             </Steps>
           </Col>
         )}
-        <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
+        <Col span={24} {...(stepsVisible ? { md: 15 } : { md: 18 })}>
           {stepsByCategory[attributes.category][step][1]}
           {0 < step && stepsVisible && (
             <div style={{ margin: 'auto', width: 'fit-content' }}>
@@ -700,13 +699,18 @@ const CategoryStep = (props: {
     <>
       <Row className="call-to-action">
         <h2>List an item</h2>
-        <p>
-          First time listing on Ninjaplex? <a>Read our sellers' guide.</a>
-        </p>
+        <div className="about-ninja">
+          <p>
+            First time listing on Ninjaplex?
+          </p>
+          <a>
+            Read our sellers' guide.
+          </a>
+        </div>
       </Row>
       <Row justify={width < 768 ? 'center' : 'start'}>
         <Col>
-          <Row>
+          <Row className="buttonsCollection">
             <Button
               className="type-btn"
               size="large"
@@ -727,7 +731,7 @@ const CategoryStep = (props: {
               onClick={() => props.confirm(AuctionCategory.Limited)}
             >
               <div>
-                <div>Limited Edition</div>
+                <div >Limited Edition</div>
                 <div className="type-btn-description">
                   Sell a limited copy or copies of a single Master NFT
                 </div>
@@ -1479,10 +1483,10 @@ const TierTableStep = (props: {
                   selected={
                     (i as TierDummyEntry).safetyDepositBoxIndex !== undefined
                       ? [
-                          props.attributes.items[
-                            (i as TierDummyEntry).safetyDepositBoxIndex
-                          ],
-                        ]
+                        props.attributes.items[
+                        (i as TierDummyEntry).safetyDepositBoxIndex
+                        ],
+                      ]
                       : []
                   }
                   setSelected={items => {
@@ -1505,14 +1509,14 @@ const TierTableStep = (props: {
                       if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV1
+                        MetadataKey.MasterEditionV1
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV1;
                       } else if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV2
+                        MetadataKey.MasterEditionV2
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV2;
@@ -1588,7 +1592,7 @@ const TierTableStep = (props: {
                           props.attributes.items[
                             myNewTier.safetyDepositBoxIndex
                           ].masterEdition?.info.key ==
-                            MetadataKey.MasterEditionV1
+                          MetadataKey.MasterEditionV1
                         ) {
                           value = WinningConfigType.PrintingV1;
                         }
@@ -1617,37 +1621,37 @@ const TierTableStep = (props: {
                     {((i as TierDummyEntry).winningConfigType ===
                       WinningConfigType.PrintingV1 ||
                       (i as TierDummyEntry).winningConfigType ===
-                        WinningConfigType.PrintingV2) && (
-                      <label className="action-field">
-                        <span className="field-title">
-                          How many copies do you want to create for each winner?
-                          If you put 2, then each winner will get 2 copies.
-                        </span>
-                        <span className="field-info">
-                          Each copy will be given unique edition number e.g. 1
-                          of 30
-                        </span>
-                        <Input
-                          autoFocus
-                          className="input"
-                          placeholder="Enter number of copies sold"
-                          allowClear
-                          onChange={info => {
-                            const newTiers = newImmutableTiers(
-                              props.attributes.tiers,
-                            );
+                      WinningConfigType.PrintingV2) && (
+                        <label className="action-field">
+                          <span className="field-title">
+                            How many copies do you want to create for each winner?
+                            If you put 2, then each winner will get 2 copies.
+                          </span>
+                          <span className="field-info">
+                            Each copy will be given unique edition number e.g. 1
+                            of 30
+                          </span>
+                          <Input
+                            autoFocus
+                            className="input"
+                            placeholder="Enter number of copies sold"
+                            allowClear
+                            onChange={info => {
+                              const newTiers = newImmutableTiers(
+                                props.attributes.tiers,
+                              );
 
-                            const myNewTier =
-                              newTiers[configIndex].items[itemIndex];
-                            myNewTier.amount = parseInt(info.target.value);
-                            props.setAttributes({
-                              ...props.attributes,
-                              tiers: newTiers,
-                            });
-                          }}
-                        />
-                      </label>
-                    )}
+                              const myNewTier =
+                                newTiers[configIndex].items[itemIndex];
+                              myNewTier.amount = parseInt(info.target.value);
+                              props.setAttributes({
+                                ...props.attributes,
+                                tiers: newTiers,
+                              });
+                            }}
+                          />
+                        </label>
+                      )}
                   </>
                 )}
               </Card>
@@ -1803,15 +1807,15 @@ const ReviewStep = (props: {
         <h2>Review and list</h2>
         <p>Review your listing before publishing.</p>
       </Row>
-      <Row className="content-action">
-        <Col xl={12}>
+      <Row className="content-action" >
+        <Col xl={7} className="review-page-nft">
           {item?.metadata.info && (
             <ArtCard pubkey={item.metadata.pubkey} small={true} />
           )}
         </Col>
         <Col className="section" xl={12}>
           <Statistic
-            className="create-statistic"
+            className="sell-review"
             title="Copies"
             value={
               props.attributes.editions === undefined
@@ -1824,45 +1828,47 @@ const ReviewStep = (props: {
           ) : (
             <Spin />
           )}
-        </Col>
-      </Row>
-      <Row style={{ display: 'block' }}>
-        <Divider />
-        <Statistic
-          className="create-statistic"
-          title="Start date"
-          value={
-            props.attributes.startSaleTS
-              ? moment
+
+
+          <Divider />
+          <Statistic
+            className="sell-review"
+            title="Start date"
+            value={
+              props.attributes.startSaleTS
+                ? moment
                   .unix(props.attributes.startSaleTS as number)
                   .format('dddd, MMMM Do YYYY, h:mm a')
-              : 'Right after successfully published'
-          }
-        />
-        <br />
-        {props.attributes.startListTS && (
-          <Statistic
-            className="create-statistic"
-            title="Listing go live date"
-            value={moment
-              .unix(props.attributes.startListTS as number)
-              .format('dddd, MMMM Do YYYY, h:mm a')}
+                : 'Right after successfully published'
+            }
           />
-        )}
-        <Divider />
-        <Statistic
-          className="create-statistic"
-          title="Sale ends"
-          value={
-            props.attributes.endTS
-              ? moment
+          <br />
+          {props.attributes.startListTS && (
+            <Statistic
+              className="sell-review"
+              title="Listing go live date"
+              value={moment
+                .unix(props.attributes.startListTS as number)
+                .format('dddd, MMMM Do YYYY, h:mm a')}
+            />
+          )}
+          <Divider />
+          <Statistic
+            className="sell-review"
+            title="Sale ends"
+            value={
+              props.attributes.endTS
+                ? moment
                   .unix(props.attributes.endTS as number)
                   .format('dddd, MMMM Do YYYY, h:mm a')
-              : 'Until sold'
-          }
-        />
+                : 'Until sold'
+            }
+          />
+
+        </Col>
       </Row>
-      <Row>
+
+      <Row className="publish-sale-row">
         <Button
           type="primary"
           size="large"
@@ -1874,7 +1880,7 @@ const ReviewStep = (props: {
             });
             props.confirm();
           }}
-          className="action-btn"
+          className="action-btn  publish-sale"
         >
           {props.attributes.category === AuctionCategory.InstantSale
             ? 'List for Sale'
@@ -1934,9 +1940,8 @@ const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT auction on Ninjaplex, check it out!",
-      url: `${
-        window.location.origin
-      }/#/auction/${props.auction?.auction.toString()}`,
+      url: `${window.location.origin
+        }/#/auction/${props.auction?.auction.toString()}`,
       hashtags: 'NFT,Crypto,Ninjaplex',
       // via: "Ninjaplex",
       related: 'Ninjaplex,Solana',

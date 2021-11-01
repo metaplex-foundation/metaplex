@@ -6,6 +6,7 @@ html {
   width: 100vw;
   overflow-x: hidden;
 }
+
 #root {
   height: 100%;
   min-height: 100vh;
@@ -56,6 +57,7 @@ img:not([src]) {
   pointer-events: none;
   width: 100%;
 }
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -90,11 +92,13 @@ code {
 .ant-card-cover {
   position: relative;
   overflow: hidden;
+
   .ant-image-img,
   video {
     height: 300px;
     object-fit: cover;
   }
+
   iframe {
     height: 300px;
     object-fit: cover;
@@ -132,7 +136,8 @@ code {
   border-color: transparent;
   border: 2px solid #851cef !important;
 }
-.ant-form-item-control-input{
+
+.ant-form-item-control-input {
   border: 1px solid #851cef !important;
 }
 
@@ -173,6 +178,7 @@ code {
 }
 
 .creators {
+
   // display: flex;
   @media (max-width: 475px) {
     flex-wrap: wrap;
@@ -198,4 +204,17 @@ code {
 
 model-viewer {
   --poster-color: transparent;
+}
+
+
+.cd-label {
+  opacity: 0.5;
+}
+
+.connect-wallet-button {
+  margin-top: 20 !important;
+  background: linear-gradient(90deg, #851CEF 5.96%, #24DDAF 100%) !important;
+  max-width: fit-content;
+  min-width: 200px;
+  ;
 }

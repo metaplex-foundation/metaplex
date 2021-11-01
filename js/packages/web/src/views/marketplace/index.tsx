@@ -104,8 +104,7 @@ export const MarketplaceView = () => {
     <div className="cover_img">
       <img src="/PNG.png" className="cover-img-size" />
     </div>
-    <div  className="col-md-10 nft-account">
-
+    <div className="col-md-10 nft-account">
       <div id="market-sec" className="col-md-10">
         <div className="container-fluid ">
           <div className="account-detials">
@@ -119,19 +118,19 @@ export const MarketplaceView = () => {
               role="group"
               aria-label="Basic example"
             >
-              <button type="button" className="btn ">
+              <button type="button" className="btn">
                 <a href={collectionData?.twitterUrl} target="_blank">
-                  <img src="/images/twit1.png" />
+                  <img src="/images/Vector1.svg" />
                 </a>
               </button>
               <button type="button" className="btn ">
                 <a href={collectionData?.discordUrl} target="_blank">
-                  <img src="/images/twit3.png" />
+                  <img src="/images/Vector.svg" />
                 </a>
               </button>
               <button type="button" className="btn ">
                 <a href={collectionData?.daringDragonsUrl} target="_blank">
-                  <img src="/images/twit2.png" />
+                  <img src="/images/twitch.svg" />
                 </a>
               </button>
             </div>
@@ -186,7 +185,7 @@ export const MarketplaceView = () => {
               </div>
             </div>
           </div>
-          <div className="row fillter_buttons" style={{ justifyContent: 'space-evenly' }}>
+          <div className="row fillter-buttons" >
             <form className="card card-sm ">
               <div className="card-body row no-gutters align-items-center p-0">
                 <div className="col-auto">
@@ -270,14 +269,14 @@ export const MarketplaceView = () => {
 
                       return (
                         <AuctionCard
-                        keys={idx || 9000}
-                        auction={m}
+                          keys={idx || 9000}
+                          auction={m}
                         />
                       );
                     })
                   ) : (
                     <div className="emptyMarketplace">
-                      THIS MARKETPLACE IS EMPTY
+                      This Collection is Empty
                     </div>
                   )
                 ) : (

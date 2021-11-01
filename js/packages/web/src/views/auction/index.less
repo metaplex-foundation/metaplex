@@ -159,33 +159,36 @@
   margin-top: 0px;
   margin-bottom: 20px;
 }
+
 #auctionview-sec {
   margin-bottom: 13%;
 }
 
 .auctionComponent {
-  max-width: 940px !important;
+  max-width: 1100px !important;
   margin: 0 auto;
   color: white !important;
   width: 100% !important;
-  -webkit-box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
-  box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
-  margin-top: 35px;
+  margin-top: 50px;
   border-radius: 10px;
   padding: 20px;
+
   h6 {
     color: white !important;
-    opacity: 0.5 !important;
+    opacity: 0.7 !important;
     font-weight: 600 !important;
   }
+
   h1,
-  h2 {
+  h3 {
     color: white !important;
     font-weight: 600 !important;
   }
-  .auction-paragraph{
+
+  .auction-paragraph {
     margin-bottom: 20px;
   }
+
   .viewOn {
     button {
       display: flex;
@@ -193,44 +196,59 @@
       justify-content: center;
       align-items: center;
       padding: 6px 10px;
-      background: #212121;
-      border-radius: 20px;
+      background: #6124c4;
+      border-radius: 5px;
       margin: 0 5px;
       border-color: transparent;
       color: white;
-      -webkit-box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
-      box-shadow: rgb(133 28 239 / 50%) 0px 1px 3px 0px;
+      width: 114px;
     }
+
     button:hover {
       color: #851cef;
       border-color: #851cef;
       background: transparent;
     }
+
+    div {
+      display: flex !important;
+      margin-left: -5px !important;
+    }
   }
+
   .attributes {
     padding: 0 20px;
+
     .auction-sec {
       max-width: initial;
     }
+
     .auction-view {
       margin-bottom: 20px;
+      padding: 10px;
+      border: 2px solid rgb(201, 195, 195);
+      border-radius: 5px;
     }
+
     .ant-card-head-title {
       padding: 10px 0;
       color: white !important;
       margin-bottom: 10px;
     }
+
     .ant-card-body {
       border-radius: 0 0 5px 5px;
       border: 2px ridge #851cef;
       color: white !important;
       padding: 8px 12px;
     }
+
     .ant-card-head {
       border-radius: 5px 5px 0 0;
       border: 2px ridge #851cef;
       padding: 0 24px;
     }
+
     .ant-card-bordered {
       border: none;
       -webkit-box-shadow: #18a0fb 0px 1px 5px 0px;
@@ -238,25 +256,29 @@
     }
   }
 }
+
 .ant-modal-centered {
   text-align: center;
   background-color: #0000008f;
-  .ant-modal{
-      max-width: 900px;
-      background: #12151d;
-      -webkit-box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
-      box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
-      margin-top: 35px;
-      border-radius: 10px;
-      margin-right: 16px;
+
+  .ant-modal {
+    max-width: 900px;
+    background: #12151d;
+    -webkit-box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
+    box-shadow: rgb(133 28 239 / 50%) 0px 5px 15px 0px;
+    margin-top: 35px;
+    border-radius: 10px;
+    margin-right: 16px;
   }
-  .title{
+
+  .title {
     color: white;
   }
-  button{
+
+  button {
     font-weight: 600;
     font-size: 12.64px;
-    background: #282f3f;
+    background: #851CEF;
     border: 1.5px solid #851cef;
     border-radius: 4px;
     height: 40px;
@@ -264,22 +286,29 @@
     justify-content: center;
     align-items: center;
     color: white;
-    &:hover{
+
+    &:hover {
       background-color: #851cef !important;
       border: none !important;
     }
   }
-  p{
+
+  p {
     margin: 0;
-    a{
+
+    a {
       color: #851cef;
     }
   }
 }
-.ant-image, .artwork-image, .stack-item{
+
+.ant-image,
+.artwork-image,
+.stack-item {
   min-height: 200px !important;
   height: auto !important;
 }
+
 @media screen and (min-width: 1600px) {
   #auctionview-sec {
     margin-bottom: 16%;

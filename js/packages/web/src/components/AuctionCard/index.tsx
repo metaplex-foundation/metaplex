@@ -10,10 +10,10 @@ export const AuctionCard = props => {
   const [loadImage, setLoadImage] = useState(false);
 
   return (
-    <div id="auction-sec" className="col-md-3 mt-4" key={keys}>
+    <div id="auction-sec" className="col-md-6 col-lg-4 col-sm-6 mt-4" key={keys}>
       <Link to={auction.info.auction ? `/auction/${auction.info.auction}` : '#'}>
-        <div className="card p-3" style={{ height: '100%' }}>
-          <div style={{ width: '100%', height: '59%' }}>
+        <div className="card p-3 ">
+          <div className="nft-img">
             <img
               style={{
                 width: '100%',
@@ -43,18 +43,18 @@ export const AuctionCard = props => {
               className="circle"
               style={{
                 background:
-                auction.account?.state == '2' || auction.account?.state == '3' ? 'red' : '#0ee9a7',
+                  auction.account?.state == '2' || auction.account?.state == '3' ? 'red' : '#0ee9a7',
               }}
             ></div>
             <h5 className="card-title m-0 text-white">{auction.account?.name}</h5>
             <p className="card-text">{auction.account?.description}</p>
-            <div className="btn btn-primary">
-              <img src="/images/exchange-white.png" />
-              {price} SOL
+            <div className="btn btn-primary ">
+              <img src="/images/Vector.svg" style={{ backgroundColor: "blue", borderRadius: "50%", }} />
+              {price} Ninjia
             </div>
           </div>
-        </div>
-      </Link>
-    </div>
+        </div >
+      </Link >
+    </div >
   );
 };

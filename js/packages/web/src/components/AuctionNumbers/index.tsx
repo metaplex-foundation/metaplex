@@ -55,7 +55,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
             {(isUpcoming || bids.length === 0) && (
               <AmountLabel
                 style={{ marginBottom: 10 }}
-                containerStyle={{ flexDirection: 'column' }}
+                containerStyle={{ flexDirection: 'row' }}
                 title={auctionView.isInstantSale ? 'Price' : 'Starting bid'}
                 amount={fromLamports(
                   participationOnly ? participationFixedPrice : priceFloor,
@@ -75,7 +75,7 @@ export const AuctionNumbers = (props: { auctionView: AuctionView }) => {
         )}
 
         {!ended && <Col span={ended ? 24 : 12}>
-          <Countdown state={state}/>
+          <Countdown state={state} />
         </Col>}
       </Row>
     </div>
@@ -118,7 +118,7 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
                       {state.days}
                       <span style={{ opacity: 0.2 }}>:</span>
                     </div>
-                    <div className="cd-label">days</div>
+                    <div className="cd-label" >days</div>
                   </Col>
                 )}
                 <Col>

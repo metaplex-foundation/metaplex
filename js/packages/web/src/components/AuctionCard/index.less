@@ -1,7 +1,10 @@
 #auction-sec .card {
-  background: #282f3f;
-  border: 2px solid #18a0fb;
+  background: linear-gradient(180deg, rgba(133, 28, 239, 0.16) 0%, rgba(2, 183, 255, 0.2) 100%);
+  border: 2px solid #a3a3a3;
   box-shadow: rgba(133, 28, 239, 0.5) 0px 5px 15px 0px;
+  border-radius: 5px !important;
+  width: 100% !important;
+  height: 100%;
 }
 
 #auction-sec .card .wish-count {
@@ -32,13 +35,16 @@
 }
 
 #auction-sec .card .card-body .btn-primary {
+  min-width: 65%;
   font-size: 14px;
-  background: #3d4967;
+  background: #567B91;
   border-color: #3d4967;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  img{
+  padding: 5px;
+
+  img {
     width: 25px;
     margin-right: 10px;
   }
@@ -52,7 +58,21 @@
   left: 50%;
   z-index: 999;
   background: #0ee9a7;
-  border: 3px solid #282f3f;
   top: 0%;
   transform: translate(-50%, -50%);
+}
+
+#auction-sec .card .card-body .btn-primary img {
+  height: 25px;
+  width: 27px;
+  margin-right: 10px;
+  background-color: #534BB1 !important;
+  border-radius: 50%;
+  padding: 2px;
+  opacity: 1;
+}
+
+.nft-img {
+  width: 100% !important;
+  height: 59% !important;
 }
