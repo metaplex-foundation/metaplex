@@ -34,11 +34,13 @@ import {
   Spin,
   Statistic,
   Steps,
+  Typography,
 } from 'antd';
 import BN from 'bn.js';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
+import { isNil } from 'lodash';
 import {
   createAuctionManager,
   SafetyDepositDraft,
@@ -52,9 +54,11 @@ import { Confetti } from './../../components/Confetti';
 import { QUOTE_MINT } from './../../constants';
 import { ArtSelector } from './artSelector';
 
+const MAX_EDITIONS_ALLOWED = 100;
 const { Option } = Select;
 const { Step } = Steps;
 const { ZERO } = constants;
+const { Text } = Typography;
 
 export enum AuctionCategory {
   InstantSale,
@@ -132,7 +136,7 @@ export interface AuctionState {
 export const AuctionCreateView = () => {
   const connection = useConnection();
   const wallet = useWallet();
-  const { whitelistedCreatorsByCreator } = useMeta();
+  const { whitelistedCreatorsByCreator, storeIndexer } = useMeta();
   const { step_param }: { step_param: string } = useParams();
   const history = useHistory();
   const mint = useMint(QUOTE_MINT);
@@ -201,7 +205,7 @@ export const AuctionCreateView = () => {
         if (!editions) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -243,7 +247,7 @@ export const AuctionCreateView = () => {
         ) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-            (wallet?.publicKey || SystemProgram.programId).toBase58()
+              (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -436,23 +440,23 @@ export const AuctionCreateView = () => {
       endAuctionAt: isInstantSale
         ? null
         : new BN(
-            (attributes.auctionDuration || 0) *
-              (attributes.auctionDurationType == 'days'
-                ? 60 * 60 * 24 // 1 day in seconds
-                : attributes.auctionDurationType == 'hours'
-                ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
-          ), // endAuctionAt is actually auction duration, poorly named, in seconds
+          (attributes.auctionDuration || 0) *
+          (attributes.auctionDurationType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.auctionDurationType == 'hours'
+              ? 60 * 60 // 1 hour in seconds
+              : 60), // 1 minute in seconds
+        ), // endAuctionAt is actually auction duration, poorly named, in seconds
       auctionGap: isInstantSale
         ? null
         : new BN(
-            (attributes.gapTime || 0) *
-              (attributes.gapTimeType == 'days'
-                ? 60 * 60 * 24 // 1 day in seconds
-                : attributes.gapTimeType == 'hours'
-                ? 60 * 60 // 1 hour in seconds
-                : 60), // 1 minute in seconds
-          ),
+          (attributes.gapTime || 0) *
+          (attributes.gapTimeType == 'days'
+            ? 60 * 60 * 24 // 1 day in seconds
+            : attributes.gapTimeType == 'hours'
+              ? 60 * 60 // 1 hour in seconds
+              : 60), // 1 minute in seconds
+        ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -476,8 +480,8 @@ export const AuctionCreateView = () => {
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
-      ? attributes.items
-      : tieredAttributes.items;
+        ? attributes.items
+        : tieredAttributes.items;
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
@@ -490,6 +494,7 @@ export const AuctionCreateView = () => {
       safetyDepositDrafts,
       participationSafetyDepositDraft,
       QUOTE_MINT.toBase58(),
+      storeIndexer,
     );
     setAuctionObj(_auctionObj);
   };
@@ -758,18 +763,29 @@ const InstantSaleStep = ({
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
-  const copiesEnabled = useMemo(
-    () => !!attributes?.items?.[0]?.masterEdition?.info?.maxSupply,
-    [attributes?.items?.[0]],
+  const [editionError, setEditionError] = useState<string>();
+  const nft = attributes?.items[0];
+  const isEdition = useMemo(
+    () => !!nft?.edition,
+    [nft]
+  );
+  const masterEdition = useMemo(
+    () => nft?.masterEdition,
+    [nft],
+  );
+  const availableSupply = useMemo(
+    () => isEdition ? 0 : masterEdition?.info?.supply.toNumber() as number,
+    [masterEdition, isEdition],
+  );
+  const hasUlimatedPrints = useMemo(
+    () => !isEdition && isNil(masterEdition?.info?.maxSupply),
+    [masterEdition, isEdition],
   );
   const artistFilter = useCallback(
     (i: SafetyDepositDraft) =>
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
     [],
   );
-
-  const isLimitedEdition =
-    attributes.instantSaleType === InstantSaleType.Limited;
   const shouldRenderSelect = attributes.items.length > 0;
 
   return (
@@ -797,46 +813,60 @@ const InstantSaleStep = ({
                 defaultValue={
                   attributes.instantSaleType || InstantSaleType.Single
                 }
-                onChange={value =>
+                onChange={value => {
+                  setEditionError(undefined);
                   setAttributes({
                     ...attributes,
                     instantSaleType: value,
                   })
-                }
+                }}
               >
                 <Option value={InstantSaleType.Single}>
                   Sell unique token
                 </Option>
-                {copiesEnabled && (
+                {availableSupply > 0 && (
                   <Option value={InstantSaleType.Limited}>
                     Sell limited number of copies
                   </Option>
                 )}
-                {!copiesEnabled && (
+                {hasUlimatedPrints && (
                   <Option value={InstantSaleType.Open}>
                     Sell unlimited number of copies
                   </Option>
                 )}
               </Select>
-              {isLimitedEdition && (
+              {availableSupply > 0 && (
                 <>
                   <span>
-                    Each copy will be given unique edition number e.g. 1 of 30
+                    Each copy will be given unique edition number e.g. 1 of 30.
                   </span>
                   <Input
                     autoFocus
                     placeholder="Enter number of copies sold"
                     allowClear
-                    onChange={info =>
+                    onChange={info => {
+                      setEditionError(undefined);
+                      const editions = parseInt(info.target.value);
+
+                      if (editions > availableSupply) {
+                        setEditionError(`The NFT can only generate ${availableSupply} more editions. Please lower the copy count.`)
+                        return;
+                      }
+
                       setAttributes({
                         ...attributes,
-                        editions: parseInt(info.target.value),
+                        editions,
                       })
-                    }
+                    }}
                   />
                 </>
               )}
             </label>
+          )}
+          {editionError && (
+            <Row>
+              <span className="ant-typography ant-typography-danger">*</span> {editionError}
+            </Row>
           )}
 
           <label>
@@ -864,6 +894,7 @@ const InstantSaleStep = ({
         <Button
           type="primary"
           size="large"
+          disabled={!!editionError}
           onClick={() => {
             confirm();
           }}
@@ -880,6 +911,7 @@ const CopiesStep = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
+  const [editionsError, setEditionsError] = useState<string>()
   const artistFilter = (i: SafetyDepositDraft) =>
     !(i.metadata.info.data.creators || []).find((c: Creator) => !c.verified);
   let filter: (i: SafetyDepositDraft) => boolean = () => true;
@@ -896,6 +928,16 @@ const CopiesStep = (props: {
   }
 
   const overallFilter = (i: SafetyDepositDraft) => filter(i) && artistFilter(i);
+
+  const masterEdition = props.attributes.items[0]?.masterEdition;
+
+  let maxSupply = 0;
+  let availableSupply = 0;
+
+  if (masterEdition) {
+    maxSupply = masterEdition.info.maxSupply?.toNumber() as number;
+    availableSupply = maxSupply - masterEdition.info.supply?.toNumber() as number;
+  }
 
   return (
     <>
@@ -919,19 +961,37 @@ const CopiesStep = (props: {
             <label>
               <span>How many copies do you want to create?</span>
               <span>
-                Each copy will be given unique edition number e.g. 1 of 30
+                Each copy will be given unique edition number e.g. 1 of 30. Maximum: {MAX_EDITIONS_ALLOWED}
               </span>
               <Input
                 autoFocus
                 placeholder="Enter number of copies sold"
                 allowClear
-                onChange={info =>
+                onChange={info => {
+                  const editions = parseInt(info.target.value);
+                  setEditionsError(undefined);
+
+                  if (editions > MAX_EDITIONS_ALLOWED) {
+                    setEditionsError(`The onchain program can only auction off ${MAX_EDITIONS_ALLOWED} NFTs at a time. Please lower the edition supply.`)
+                    return;
+                  }
+
+                  if (editions > availableSupply) {
+                    setEditionsError(`${editions} is greater than the available supply of ${availableSupply} on the NFT. Please lower the edition supply.`)
+                    return;
+                  }
+
                   props.setAttributes({
                     ...props.attributes,
-                    editions: parseInt(info.target.value),
-                  })
-                }
+                    editions,
+                  });
+                }}
               />
+              {editionsError && (
+                <Row>
+                  <span className="ant-typography ant-typography-danger">*</span> {editionsError}
+                </Row>
+              )}
             </label>
           )}
         </Col>
@@ -940,6 +1000,7 @@ const CopiesStep = (props: {
         <Button
           type="primary"
           size="large"
+          disabled={!!editionsError}
           onClick={() => {
             props.confirm();
           }}
@@ -1403,14 +1464,14 @@ const TierTableStep = (props: {
                       if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV1
+                        MetadataKey.MasterEditionV1
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV1;
                       } else if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                          MetadataKey.MasterEditionV2
+                        MetadataKey.MasterEditionV2
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV2;
@@ -1479,7 +1540,7 @@ const TierTableStep = (props: {
                           props.attributes.items[
                             myNewTier.safetyDepositBoxIndex
                           ].masterEdition?.info.key ==
-                            MetadataKey.MasterEditionV1
+                          MetadataKey.MasterEditionV1
                         ) {
                           value = WinningConfigType.PrintingV1;
                         }
@@ -1794,9 +1855,8 @@ const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT auction on Metaplex, check it out!",
-      url: `${
-        window.location.origin
-      }/#/auction/${props.auction?.auction.toString()}`,
+      url: `${window.location.origin
+        }/#/auction/${props.auction?.auction.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',

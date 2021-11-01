@@ -29,7 +29,9 @@ export const processMetaData: ProcessAccountsFunc = async (
           account,
           info: metadata,
         };
+
         setter('metadataByMint', metadata.mint, parsedAccount);
+        setter('metadataByMetadata', pubkey, parsedAccount);
       }
     }
 

@@ -5,16 +5,18 @@ import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
-import { useCreator, useCreatorArts } from '../../hooks';
+import { useCreators, useCreatorArts } from '../../hooks';
 import { LoadingOutlined } from '@ant-design/icons';
+import { ArtistCard } from '../../components/ArtistCard';
+
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
   const { whitelistedCreatorsByCreator, patchState } = useMeta()
   const [loadingArt, setLoadingArt] = useState(true)
-  const creator = useCreator(id);
   const artwork = useCreatorArts(id);
   const connection = useConnection();
+  const creators = Object.values(whitelistedCreatorsByCreator);
 
   useEffect(() => {
     if (!id) {
@@ -22,54 +24,60 @@ export const ArtistView = () => {
     }
 
     (async () => {
-      const artistMetadataState = await loadMetadataForCreator(connection, whitelistedCreatorsByCreator[id]);
+      setLoadingArt(true);
+      const creator = whitelistedCreatorsByCreator[id];
+      
+      const artistMetadataState = await loadMetadataForCreator(connection, creator);
 
       patchState(artistMetadataState);
       setLoadingArt(false);
     })()
   }, [connection, id])
 
-  const artworkGrid = (
-    <MetaplexMasonry>
-      {artwork.length > 0
-        ? artwork.map((m, idx) => {
-            const id = m.pubkey;
+  return (
+    <Row>
+      <Col span={24}>
+        <h2>Artists</h2>
+        <MetaplexMasonry>
+          {creators.map((m, idx) => {
+            const address = m.info.address;
             return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+              <Link to={`/artists/${address}`} key={idx}>
+                <ArtistCard
+                  key={address}
+                  active={address === id}
+                  artist={{
+                    address,
+                    name: m.info.name || '',
+                    image: m.info.image || '',
+                    link: m.info.twitter || '',
+                  }}
+                />
               </Link>
             );
-          })
-        : []}
-    </MetaplexMasonry>
-  );
-
-  return (
-    <>
-      <Col>
+          })}
+        </MetaplexMasonry>
+      </Col>
+      <Col span={24}>
         <Divider />
-        <Row>
-          <Col span={24}>
-            <h2>
-              {creator?.info.name || creator?.info.address}
-            </h2>
-            <br />
-            <div>ABOUT THE CREATOR</div>
-            <div>{creator?.info.description}</div>
-            <br />
-            {loadingArt ? (
-              <div className="app-section--loading">
-                <Spin indicator={<LoadingOutlined />} />
-              </div>
-            ) : (
-              <>
-                <div className="info-header">Art Created</div>
-                {artworkGrid}
-              </>
-            )}
-          </Col>
-        </Row>
-      </Col >
-    </>
+        {loadingArt ? (
+          <div className="app-section--loading">
+            <Spin indicator={<LoadingOutlined />} />
+          </div>
+        ) : (
+          <MetaplexMasonry>
+            {artwork.map((m, idx) => {
+              const id = m.pubkey;
+              return (
+                <Link to={`/artworks/${id}`} key={idx}>
+                  <ArtCard key={id} pubkey={m.pubkey} preview={false} />
+                </Link>
+              );
+            })
+            }
+          </MetaplexMasonry>
+        )}
+      </Col>
+    </Row>
   );
 };

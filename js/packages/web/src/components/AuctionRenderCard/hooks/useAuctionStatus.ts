@@ -35,10 +35,10 @@ export const getHumanStatus = (status: AuctionStatus): string => {
     if (status.soldOut) {
       return 'Sold Out';
     } else if (isLive) {
-      return 'Price';
-    } else {
-      return 'Ended';
+      return '';
     }
+
+    return 'Ended';
   } else {
     const { hasBids } = status;
 
@@ -75,7 +75,8 @@ export const useAuctionStatus = (
   let isLive = auctionView.state !== AuctionViewState.Ended;
 
   if (auctionView.isInstantSale) {
-    const soldOut = bids.length === auctionView.items.length;
+    const soldOut =
+      bids.length === auctionView.auctionManager.numWinners.toNumber();
 
     amount = formatTokenAmount(
       auctionView.auctionDataExtended?.info.instantSalePrice?.toNumber(),

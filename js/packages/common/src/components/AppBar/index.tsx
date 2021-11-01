@@ -13,7 +13,7 @@ export const AppBar = (props: {
   useWalletBadge?: boolean;
   additionalSettings?: JSX.Element;
 }) => {
-  const { connected } = useWallet();
+  const { connected, wallet } = useWallet();
 
   const TopBar = (
     <div>

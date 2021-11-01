@@ -12,8 +12,9 @@ import { getEmptyMetaState } from './getEmptyMetaState';
 import {
   loadAccounts,
 } from './loadAccounts';
+import { ParsedAccount } from '../accounts/types';
+import { Metadata } from '../../actions';
 import { MetaContextState, MetaState } from './types';
-import { LoadingOutlined } from '@ant-design/icons';
 
 const MetaContext = React.createContext<MetaContextState>({
   ...getEmptyMetaState(),
@@ -29,18 +30,17 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
 
   const [state, setState] = useState<MetaState>(getEmptyMetaState());
 
-  const { whitelistedCreatorsByCreator } = state;
-
   const [isLoading, setIsLoading] = useState(true);
 
-  const patchState: MetaContextState['patchState'] = temp => {
+  const patchState: MetaContextState['patchState'] = (...args: Partial<MetaState>[]) => {
     setState(current => {
-      const newState = merge({}, current, temp);
+      const newState = merge({}, current, ...args, { store: current.store });
 
-      newState.store = temp.store ?? current.store;
-  
       const currentMetdata = current.metadata ?? [];
-      const nextMetadata = temp.metadata ?? [];
+      const nextMetadata = args.reduce((memo, { metadata = [] }) => {
+        return [...memo, ...metadata]
+      }, [] as ParsedAccount<Metadata>[])
+
       newState.metadata = uniqWith(
         [...currentMetdata, ...nextMetadata],
         (a, b) => a.pubkey === b.pubkey
@@ -74,7 +74,7 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
       return;
     }
 
-    return subscribeAccountsChange(connection, whitelistedCreatorsByCreator, patchState);
+    return subscribeAccountsChange(connection, patchState);
   }, [isLoading]);
 
 

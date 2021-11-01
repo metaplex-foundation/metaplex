@@ -39,11 +39,15 @@ export * from './withdrawMasterEdition';
 export * from './deprecatedStates';
 
 export const METAPLEX_PREFIX = 'metaplex';
+export const INDEX = 'index';
+export const CACHE = 'cache';
 export const TOTALS = 'totals';
+export const MAX_INDEXED_ELEMENTS = 100;
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
 export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export const MAX_WHITELISTED_CREATOR_SIZE = 2 + 32 + 10;
 export const MAX_PAYOUT_TICKET_SIZE = 1 + 32 + 8;
+
 export enum MetaplexKey {
   Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
@@ -58,6 +62,8 @@ export enum MetaplexKey {
   AuctionManagerV2 = 10,
   BidRedemptionTicketV2 = 11,
   AuctionWinnerTokenTypeTrackerV1 = 12,
+  StoreIndexerV1 = 13,
+  AuctionCacheV1 = 14,
 }
 export class PrizeTrackingTicket {
   key: MetaplexKey = MetaplexKey.PrizeTrackingTicketV1;
@@ -88,6 +94,51 @@ export class PayoutTicket {
     this.key = MetaplexKey.PayoutTicketV1;
     this.recipient = args.recipient;
     this.amountPaid = args.amountPaid;
+  }
+}
+
+export class StoreIndexer {
+  key: MetaplexKey = MetaplexKey.StoreIndexerV1;
+  store: StringPublicKey;
+  page: BN;
+  auctionCaches: StringPublicKey[];
+
+  constructor(args: {
+    store: StringPublicKey;
+    page: BN;
+    auctionCaches: StringPublicKey[];
+  }) {
+    this.key = MetaplexKey.StoreIndexerV1;
+    this.store = args.store;
+    this.page = args.page;
+    this.auctionCaches = args.auctionCaches;
+  }
+}
+
+export class AuctionCache {
+  key: MetaplexKey = MetaplexKey.AuctionCacheV1;
+  store: StringPublicKey;
+  timestamp: BN;
+  metadata: StringPublicKey[];
+  auction: StringPublicKey;
+  vault: StringPublicKey;
+  auctionManager: StringPublicKey;
+
+  constructor(args: {
+    store: StringPublicKey;
+    timestamp: BN;
+    metadata: StringPublicKey[];
+    auction: StringPublicKey;
+    vault: StringPublicKey;
+    auctionManager: StringPublicKey;
+  }) {
+    this.key = MetaplexKey.AuctionCacheV1;
+    this.store = args.store;
+    this.timestamp = args.timestamp;
+    this.metadata = args.metadata;
+    this.auction = args.auction;
+    this.vault = args.vault;
+    this.auctionManager = args.auctionManager;
   }
 }
 
@@ -408,6 +459,20 @@ export class RedeemPrintingV2BidArgs {
 export class WithdrawMasterEditionArgs {
   instruction = 15;
 }
+export class SetStoreIndexArgs {
+  instruction = 21;
+  page: BN;
+  offset: BN;
+  constructor(args: { page: BN; offset: BN }) {
+    this.page = args.page;
+    this.offset = args.offset;
+  }
+}
+
+export class SetAuctionCacheArgs {
+  instruction = 22;
+}
+
 export class RedeemParticipationBidV3Args {
   instruction = 19;
   winIndex: BN | null;
@@ -431,7 +496,7 @@ export enum WinningConfigType {
   /// You may be selling your one-of-a-kind NFT for the first time, but not it's accompanying Metadata,
   /// of which you would like to retain ownership. You get 100% of the payment the first sale, then
   /// royalties forever after.
-  ///
+  ///WinningConstraint
   /// You may be re-selling something like a Limited/Open Edition print from another auction,
   /// a master edition record token by itself (Without accompanying metadata/printing ownership), etc.
   /// This means artists will get royalty fees according to the top level royalty % on the metadata
@@ -453,6 +518,14 @@ export enum WinningConfigType {
   /// Means you are using a MasterEditionV2 as a participation prize.
   Participation,
 }
+
+export const decodeStoreIndexer = (buffer: Buffer) => {
+  return deserializeUnchecked(SCHEMA, StoreIndexer, buffer) as StoreIndexer;
+};
+
+export const decodeAuctionCache = (buffer: Buffer) => {
+  return deserializeUnchecked(SCHEMA, AuctionCache, buffer) as AuctionCache;
+};
 
 export const decodePrizeTrackingTicket = (buffer: Buffer) => {
   return deserializeUnchecked(
@@ -766,6 +839,33 @@ export class ValidateSafetyDepositBoxV2Args {
 export const SCHEMA = new Map<any, any>([
   ...DEPRECATED_SCHEMA,
   [
+    StoreIndexer,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['store', 'pubkeyAsString'],
+        ['page', 'u64'],
+        ['auctionCaches', ['pubkeyAsString']],
+      ],
+    },
+  ],
+  [
+    AuctionCache,
+    {
+      kind: 'struct',
+      fields: [
+        ['key', 'u8'],
+        ['store', 'pubkeyAsString'],
+        ['timestamp', 'u64'],
+        ['metadata', ['pubkeyAsString']],
+        ['auction', 'pubkeyAsString'],
+        ['vault', 'pubkeyAsString'],
+        ['auctionManager', 'pubkeyAsString'],
+      ],
+    },
+  ],
+  [
     PrizeTrackingTicket,
     {
       kind: 'struct',
@@ -999,6 +1099,24 @@ export const SCHEMA = new Map<any, any>([
     },
   ],
   [
+    SetAuctionCacheArgs,
+    {
+      kind: 'struct',
+      fields: [['instruction', 'u8']],
+    },
+  ],
+  [
+    SetStoreIndexArgs,
+    {
+      kind: 'struct',
+      fields: [
+        ['instruction', 'u8'],
+        ['page', 'u64'],
+        ['offset', 'u64'],
+      ],
+    },
+  ],
+  [
     EmptyPaymentAccountArgs,
     {
       kind: 'struct',
@@ -1220,6 +1338,48 @@ export async function getSafetyDepositConfig(
         toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
         toPublicKey(auctionManager).toBuffer(),
         toPublicKey(safetyDeposit).toBuffer(),
+      ],
+      toPublicKey(PROGRAM_IDS.metaplex),
+    )
+  )[0];
+}
+
+export async function getStoreIndexer(page: number) {
+  const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
+
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
+        toPublicKey(store).toBuffer(),
+        Buffer.from(INDEX),
+        Buffer.from(page.toString()),
+      ],
+      toPublicKey(PROGRAM_IDS.metaplex),
+    )
+  )[0];
+}
+
+export async function getAuctionCache(auction: StringPublicKey) {
+  const PROGRAM_IDS = programIds();
+  const store = PROGRAM_IDS.store;
+  if (!store) {
+    throw new Error('Store not initialized');
+  }
+  console.log('Auction', auction);
+  return (
+    await findProgramAddress(
+      [
+        Buffer.from(METAPLEX_PREFIX),
+        toPublicKey(PROGRAM_IDS.metaplex).toBuffer(),
+        toPublicKey(store).toBuffer(),
+        toPublicKey(auction).toBuffer(),
+        Buffer.from(CACHE),
       ],
       toPublicKey(PROGRAM_IDS.metaplex),
     )

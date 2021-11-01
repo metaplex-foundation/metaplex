@@ -92,7 +92,7 @@ export const processAuctions: ProcessAccountsFunc = async (
 };
 
 const isAuctionAccount: CheckAccountFunc = account =>
-  pubkeyToString(account.owner) === AUCTION_ID;
+  pubkeyToString(account?.owner) === AUCTION_ID;
 
 const isExtendedAuctionAccount: CheckAccountFunc = account =>
   account.data.length === MAX_AUCTION_DATA_EXTENDED_SIZE;

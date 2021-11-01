@@ -8,14 +8,16 @@ use {
     deprecated_validate_participation::process_deprecated_validate_participation,
     deprecated_validate_safety_deposit_box_v1::process_deprecated_validate_safety_deposit_box_v1,
     empty_payment_account::process_empty_payment_account,
-    init_auction_manager_v2::process_init_auction_manager_v2,
     end_auction::process_end_auction,
+    init_auction_manager_v2::process_init_auction_manager_v2,
     redeem_bid::process_redeem_bid,
     redeem_full_rights_transfer_bid::process_full_rights_transfer_bid,
     redeem_participation_bid::process_redeem_participation_bid,
     redeem_printing_v2_bid::process_redeem_printing_v2_bid,
     redeem_unused_winning_config_items_as_auctioneer::process_redeem_unused_winning_config_items_as_auctioneer,
+    set_auction_cache::process_set_auction_cache,
     set_store::process_set_store,
+    set_store_index::process_set_store_index,
     set_whitelisted_creator::process_set_whitelisted_creator,
     solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey},
     start_auction::process_start_auction,
@@ -30,14 +32,16 @@ pub mod deprecated_populate_participation_printing_account;
 pub mod deprecated_validate_participation;
 pub mod deprecated_validate_safety_deposit_box_v1;
 pub mod empty_payment_account;
-pub mod init_auction_manager_v2;
 pub mod end_auction;
+pub mod init_auction_manager_v2;
 pub mod redeem_bid;
 pub mod redeem_full_rights_transfer_bid;
 pub mod redeem_participation_bid;
 pub mod redeem_printing_v2_bid;
 pub mod redeem_unused_winning_config_items_as_auctioneer;
+pub mod set_auction_cache;
 pub mod set_store;
+pub mod set_store_index;
 pub mod set_whitelisted_creator;
 pub mod start_auction;
 pub mod validate_safety_deposit_box_v2;
@@ -148,6 +152,14 @@ pub fn process_instruction<'a>(
         MetaplexInstruction::EndAuction(args) => {
             msg!("Instruction: End auction");
             process_end_auction(program_id, accounts, args)
+        }
+        MetaplexInstruction::SetStoreIndex(args) => {
+            msg!("Instruction: Set Store Index");
+            process_set_store_index(program_id, accounts, args)
+        }
+        MetaplexInstruction::SetAuctionCache => {
+            msg!("Instruction: Set Auction Cache");
+            process_set_auction_cache(program_id, accounts)
         }
     }
 }

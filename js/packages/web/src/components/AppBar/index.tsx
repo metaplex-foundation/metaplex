@@ -20,9 +20,9 @@ export const AppBar = () => {
         {
           key: 'listings',
           link: '/',
-          alt: [{ path: '/auction', exact: false }],
+          alt: [{ path: '/', exact: true }],
           title: 'Listings',
-          exact: false,
+          exact: true,
         },
         {
           key: 'artists',

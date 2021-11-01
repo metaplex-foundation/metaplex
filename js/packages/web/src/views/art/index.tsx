@@ -9,8 +9,9 @@ import {
   Skeleton,
   List,
 } from 'antd';
-import { useParams } from 'react-router-dom';
 import { sendSignMetadata } from '../../actions/sendSignMetadata';
+import { useParams, Link } from 'react-router-dom';
+
 import { ArtContent } from '../../components/ArtContent';
 import { ArtMinting } from '../../components/ArtMinting';
 import { shortenAddress, useConnection, loadArtwork, useMeta } from '@oyster/common';
@@ -30,7 +31,7 @@ export const ArtView = () => {
 
   const connection = useConnection();
   const art = useArt(id);
-  
+
   let badge = '';
   let maxSupply = '';
   if (art.type === ArtType.NFT) {
@@ -54,13 +55,6 @@ export const ArtView = () => {
       patchState(artState);
     })()
   }, [connection])
-
-  // const { userAccounts } = useUserAccounts();
-
-  // const accountByMint = userAccounts.reduce((prev, acc) => {
-  //   prev.set(acc.info.mint.toBase58(), acc);
-  //   return prev;
-  // }, new Map<string, TokenAccount>());
 
   const description = data?.description;
   const attributes = data?.attributes;
@@ -100,6 +94,29 @@ export const ArtView = () => {
               allowMeshRender={true}
               artView={true}
             />
+            <Divider />
+            {art.creators?.find(c => !c.verified) && unverified}
+            <br />
+            <div className="info-header">ABOUT THE CREATION</div>
+            <div className="info-content">{description}</div>
+            <br />
+            {attributes && (
+              <>
+                <Divider />
+                <br />
+                <div className="info-header">Attributes</div>
+                <List size="large" grid={{ column: 4 }}>
+                  {attributes.map(attribute => (
+                    <List.Item key={attribute.display_type}>
+                      <List.Item.Meta
+                        title={attribute.trait_type}
+                        description={attribute.value}
+                      />
+                    </List.Item>
+                  ))}
+                </List>
+              </>
+            )}
           </Col>
           {/* <Divider /> */}
           <Col xs={{ span: 24 }} md={{ span: 12 }}>
@@ -174,33 +191,6 @@ export const ArtView = () => {
                 </Col>
               </Row>
             )}
-            {/* <Button
-                  onClick={async () => {
-                    if(!art.mint) {
-                      return;
-                    }
-                    const mint = new PublicKey(art.mint);
-
-                    const account = accountByMint.get(art.mint);
-                    if(!account) {
-                      return;
-                    }
-
-                    const owner = wallet.publicKey;
-
-                    if(!owner) {
-                      return;
-                    }
-                    const instructions: any[] = [];
-                    await updateMetadata(undefined, undefined, true, mint, owner, instructions)
-
-                    sendTransaction(connection, wallet, instructions, [], true);
-                  }}
-                >
-                  Mark as Sold
-                </Button> */}
-
-            {/* TODO: Add conversion of MasterEditionV1 to MasterEditionV2 */}
             <ArtMinting
               id={id}
               key={remountArtMinting}
@@ -239,7 +229,7 @@ export const ArtView = () => {
             )}
           </Col>
         </Row>
-      </Col>
-    </Content>
+      </Col >
+    </Content >
   );
 };

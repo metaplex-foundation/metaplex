@@ -18,14 +18,7 @@ import {
   MetaState,
   useStore,
   loadMetadataAndEditionsBySafetyDepositBoxes,
-} from '@oyster/common';
-import { merge, take, drop } from 'lodash';
-import { Connection } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
-import BN from 'bn.js';
-import { useEffect, useMemo, useState } from 'react';
-import { useMeta } from '../contexts';
-import {
+  loadBidsForAuction,
   AuctionManager,
   AuctionManagerStatus,
   AuctionManagerV1,
@@ -37,7 +30,13 @@ import {
   SafetyDepositConfig,
   WinningConfigType,
   AuctionViewItem,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+} from '@oyster/common';
+import { merge, take, drop } from 'lodash';
+import { Connection } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import BN from 'bn.js';
+import { useEffect, useMemo, useState } from 'react';
+import { useMeta } from '../contexts';
 
 export enum AuctionViewState {
   Live = '0',
@@ -160,6 +159,7 @@ export const useInfiniteScrollAuctions = () => {
     isLoading,
     auctionManagersByAuction,
     auctions,
+    auctionCachesByAuctionManager,
     whitelistedCreatorsByCreator,
     patchState,
     ...metaState
@@ -172,9 +172,13 @@ export const useInfiniteScrollAuctions = () => {
     const tempCache = getEmptyMetaState();
 
     const responses = await Promise.all(
-      auctionManagers.map(auctionManager =>
-        loadAuction(connection, auctionManager),
-      ),
+      auctionManagers.map(auctionManager => {
+        if (auctionCachesByAuctionManager[auctionManager.pubkey]) {
+          return loadBidsForAuction(connection, auctionManager.info.auction);
+        }
+
+        return loadAuction(connection, auctionManager);
+      }),
     );
 
     const auctionsState = responses.reduce(
@@ -208,6 +212,7 @@ export const useInfiniteScrollAuctions = () => {
       masterEditionsByPrintingMint,
       masterEditionsByOneTimeAuthMint,
       metadataByMasterEdition,
+      metadataByAuction,
     }: MetaState,
   ) => {
     return auctionManagers.reduce((memo: AuctionView[], auctionManager) => {
@@ -229,6 +234,7 @@ export const useInfiniteScrollAuctions = () => {
         masterEditionsByOneTimeAuthMint,
         metadataByMasterEdition,
         cachedRedemptionKeys,
+        metadataByAuction,
         undefined,
       );
 
@@ -254,11 +260,11 @@ export const useInfiniteScrollAuctions = () => {
         .filter(a => a.info.state > 0);
       const startedAuctions = initializedAuctions
         .filter(a => a.info.state === 1)
-        .sort(sortByEndedAt);
+        .sort(sortByEndingSoon);
 
       const endedAuctions = initializedAuctions
         .filter(a => a.info.state === 2)
-        .sort(sortByEndedAt);
+        .sort(sortByRecentlyEnded);
 
       const auctionDisplayOrder = [...startedAuctions, ...endedAuctions];
 
@@ -336,6 +342,7 @@ export const useAuctions = (state?: AuctionViewState) => {
     safetyDepositConfigsByAuctionManagerAndIndex,
     bidRedemptionV2sByAuctionManagerAndWinningIndex,
     auctionDataExtended,
+    metadataByAuction,
   } = useMeta();
 
   useEffect(() => {
@@ -362,6 +369,7 @@ export const useAuctions = (state?: AuctionViewState) => {
             masterEditionsByOneTimeAuthMint,
             metadataByMasterEdition,
             cachedRedemptionKeys,
+            metadataByAuction,
             state,
           );
           if (auctionView) {
@@ -396,11 +404,18 @@ export const useAuctions = (state?: AuctionViewState) => {
   return auctionViews;
 };
 
-function sortByEndedAt(
+function sortByEndingSoon(
   a: ParsedAccount<AuctionData>,
   b: ParsedAccount<AuctionData>,
 ) {
   return (a.info.endedAt?.toNumber() || 0) - (b.info.endedAt?.toNumber() || 0);
+}
+
+function sortByRecentlyEnded(
+  a: ParsedAccount<AuctionData>,
+  b: ParsedAccount<AuctionData>,
+) {
+  return (b.info.endedAt?.toNumber() || 0) - (a.info.endedAt?.toNumber() || 0);
 }
 
 function isInstantSale(
@@ -414,7 +429,7 @@ function isInstantSale(
   );
 }
 
-function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
+export function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   const list: T[] = [];
   let ticket = hash[key + '-0'];
   if (ticket) {
@@ -428,7 +443,6 @@ function buildListWhileNonZero<T>(hash: Record<string, T>, key: string) {
   }
   return list;
 }
-
 export function processAccountsIntoAuctionView(
   walletPubkey: StringPublicKey | null | undefined,
   auction: ParsedAccount<AuctionData>,
@@ -470,8 +484,8 @@ export function processAccountsIntoAuctionView(
     string,
     ParsedAccount<BidRedemptionTicket> | { pubkey: StringPublicKey; info: null }
   >,
+  metadataByAuction: Record<string, ParsedAccount<Metadata>[]>,
   desiredState: AuctionViewState | undefined,
-  existingAuctionView?: AuctionView,
 ): AuctionView | undefined {
   let state: AuctionViewState;
   if (auction.info.ended()) {
@@ -555,143 +569,98 @@ export function processAccountsIntoAuctionView(
     const bidderPot =
       bidderPotsByAuctionAndBidder[auction.pubkey + '-' + walletPubkey];
 
-    if (existingAuctionView && existingAuctionView.totallyComplete) {
-      // If totally complete, we know we arent updating anythign else, let's speed things up
-      // and only update the two things that could possibly change
-      existingAuctionView.auction = auction;
-      existingAuctionView.myBidderPot = bidderPot;
-      existingAuctionView.myBidderMetadata = bidderMetadata;
-      existingAuctionView.myBidRedemption = bidRedemption;
-      existingAuctionView.auctionDataExtended = auctionDataExt || undefined;
-      existingAuctionView.vault = vault;
-      existingAuctionView.isInstantSale = isInstantSale(
-        auctionDataExt,
-        auction,
-      );
-      for (let i = 0; i < existingAuctionView.items.length; i++) {
-        const winningSet = existingAuctionView.items[i];
-        for (let j = 0; j < winningSet.length; j++) {
-          const curr = winningSet[j];
-          if (!curr.metadata) {
-            let foundMetadata =
-              metadataByMint[curr.safetyDeposit.info.tokenMint];
-            if (!foundMetadata) {
-              // Means is a limited edition, so the tokenMint is the printingMint
-              const masterEdition =
-                masterEditionsByPrintingMint[curr.safetyDeposit.info.tokenMint];
-              if (masterEdition) {
-                foundMetadata = metadataByMasterEdition[masterEdition.pubkey];
-              }
-            }
-            curr.metadata = foundMetadata;
-          }
-
-          if (
-            curr.metadata &&
-            !curr.masterEdition &&
-            curr.metadata.info.masterEdition
-          ) {
-            const foundMaster =
-              masterEditions[curr.metadata.info.masterEdition];
-
-            curr.masterEdition = foundMaster;
-          }
-        }
-      }
-
-      return existingAuctionView;
-    }
-
     const vaultKey = auctionManager.vault;
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       vaultKey,
     );
-    if (boxes.length > 0) {
-      let participationMetadata: ParsedAccount<Metadata> | undefined =
-        undefined;
-      let participationBox: ParsedAccount<SafetyDepositBox> | undefined =
-        undefined;
-      let participationMaster:
-        | ParsedAccount<MasterEditionV1 | MasterEditionV2>
-        | undefined = undefined;
-      if (
-        auctionManager.participationConfig !== null &&
-        auctionManager.participationConfig !== undefined
-      ) {
-        participationBox =
-          boxes[auctionManager.participationConfig?.safetyDepositBoxIndex];
-        // Cover case of V1 master edition (where we're using one time auth mint in storage)
-        // and case of v2 master edition where the edition itself is stored
-        participationMetadata =
-          metadataByMasterEdition[
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
-              ?.pubkey
-          ] || metadataByMint[participationBox.info.tokenMint];
-        if (participationMetadata) {
-          participationMaster =
-            masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint] ||
-            (participationMetadata.info.masterEdition &&
-              masterEditions[participationMetadata.info.masterEdition]);
-        }
+    let participationMetadata: ParsedAccount<Metadata> | undefined = undefined;
+    let participationBox: ParsedAccount<SafetyDepositBox> | undefined =
+      undefined;
+    let participationMaster:
+      | ParsedAccount<MasterEditionV1 | MasterEditionV2>
+      | undefined = undefined;
+    if (
+      auctionManager.participationConfig !== null &&
+      auctionManager.participationConfig !== undefined &&
+      boxes.length > 0
+    ) {
+      participationBox =
+        boxes[auctionManager.participationConfig?.safetyDepositBoxIndex];
+      // Cover case of V1 master edition (where we're using one time auth mint in storage)
+      // and case of v2 master edition where the edition itself is stored
+      participationMetadata =
+        metadataByMasterEdition[
+          masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint]
+            ?.pubkey
+        ] || metadataByMint[participationBox.info.tokenMint];
+      if (participationMetadata) {
+        participationMaster =
+          masterEditionsByOneTimeAuthMint[participationBox.info.tokenMint] ||
+          (participationMetadata.info.masterEdition &&
+            masterEditions[participationMetadata.info.masterEdition]);
       }
-
-      const view: Partial<AuctionView> = {
-        auction,
-        auctionManager,
-        state,
-        vault,
-        auctionDataExtended: auctionDataExt || undefined,
-        safetyDepositBoxes: boxes,
-        items: auctionManager.getItemsFromSafetyDepositBoxes(
-          metadataByMint,
-          masterEditionsByPrintingMint,
-          metadataByMasterEdition,
-          masterEditions,
-          boxes,
-        ),
-        participationItem:
-          participationMetadata && participationBox
-            ? {
-                metadata: participationMetadata,
-                safetyDeposit: participationBox,
-                masterEdition: participationMaster,
-                amount: new BN(1),
-                winningConfigType: WinningConfigType.Participation,
-              }
-            : undefined,
-        myBidderMetadata: bidderMetadata,
-        myBidderPot: bidderPot,
-        myBidRedemption: bidRedemption,
-      };
-
-      view.thumbnail =
-        ((view.items || [])[0] || [])[0] || view.participationItem;
-
-      view.isInstantSale = isInstantSale(auctionDataExt, auction);
-
-      view.totallyComplete = !!(
-        view.thumbnail &&
-        boxesExpected ===
-          (view.items || []).length +
-            (auctionManager.participationConfig === null ||
-            auctionManager.participationConfig === undefined
-              ? 0
-              : 1) &&
-        (auctionManager.participationConfig === null ||
-          auctionManager.participationConfig === undefined ||
-          (auctionManager.participationConfig !== null &&
-            view.participationItem)) &&
-        view.vault
-      );
-      if (
-        (!view.thumbnail || !view.thumbnail.metadata) &&
-        desiredState != AuctionViewState.Defective
-      )
-        return undefined;
-
-      return view as AuctionView;
     }
+
+    const view: Partial<AuctionView> = {
+      auction,
+      auctionManager,
+      state,
+      vault,
+      auctionDataExtended: auctionDataExt || undefined,
+      safetyDepositBoxes: boxes,
+      items: auctionManager.getItemsFromSafetyDepositBoxes(
+        metadataByMint,
+        masterEditionsByPrintingMint,
+        metadataByMasterEdition,
+        masterEditions,
+        boxes,
+      ),
+      participationItem:
+        participationMetadata && participationBox
+          ? {
+              metadata: participationMetadata,
+              safetyDeposit: participationBox,
+              masterEdition: participationMaster,
+              amount: new BN(1),
+              winningConfigType: WinningConfigType.Participation,
+            }
+          : undefined,
+      myBidderMetadata: bidderMetadata,
+      myBidderPot: bidderPot,
+      myBidRedemption: bidRedemption,
+    };
+    view.thumbnail =
+      ((view.items || [])[0] || [])[0] ||
+      view.participationItem ||
+      (metadataByAuction[auction.pubkey]
+        ? {
+            metadata: metadataByAuction[auction.pubkey][0],
+          }
+        : null);
+    view.isInstantSale = isInstantSale(auctionDataExt, auction);
+
+    view.totallyComplete = !!(
+      view.thumbnail &&
+      boxesExpected ===
+        (view.items || []).length +
+          (auctionManager.participationConfig === null ||
+          auctionManager.participationConfig === undefined
+            ? 0
+            : 1) &&
+      (auctionManager.participationConfig === null ||
+        auctionManager.participationConfig === undefined ||
+        (auctionManager.participationConfig !== null &&
+          view.participationItem)) &&
+      view.vault
+    );
+    if (
+      (!view.thumbnail || !view.thumbnail.metadata) &&
+      desiredState != AuctionViewState.Defective
+    )
+      return undefined;
+
+    return view as AuctionView;
   }
 
   return undefined;

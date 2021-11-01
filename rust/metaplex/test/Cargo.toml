@@ -1,5 +1,5 @@
 [package]
-name = "spl-metaplex-test-client"
+name = "metaplex-test-client"
 version = "0.1.0"
 description = "Metaplex Library Metaplex Test Client"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
@@ -21,8 +21,8 @@ serde = { version = "1.0.100", default-features = false }
 clap = "2.33.3"
 solana-clap-utils = "1.6"
 solana-cli-config = "1.6"
-spl-auction = { path = "../../auction/program", features = [ "no-entrypoint" ] }
-spl-token-metadata = { path = "../../token-metadata/program", features = [ "no-entrypoint" ] }
-spl-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
-spl-metaplex = { path = "../program", features = [ "no-entrypoint" ] }
+metaplex-auction = { path = "../../auction/program", features = [ "no-entrypoint" ] }
+metaplex-token-metadata = { path = "../../token-metadata/program", features = [ "no-entrypoint" ] }
+metaplex-token-vault = { path = "../../token-vault/program", features = [ "no-entrypoint" ] }
+metaplex = { path = "../program", features = [ "no-entrypoint" ] }
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }

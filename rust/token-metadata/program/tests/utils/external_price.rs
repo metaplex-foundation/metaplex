@@ -5,7 +5,7 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Signer, signer::keypair::Keypair, transaction::Transaction,
     transport,
 };
-use spl_token_vault::instruction;
+use metaplex_token_vault::instruction;
 
 #[derive(Debug)]
 pub struct ExternalPrice {
@@ -24,7 +24,7 @@ impl ExternalPrice {
     pub async fn get_data(
         &self,
         context: &mut ProgramTestContext,
-    ) -> spl_token_vault::state::ExternalPriceAccount {
+    ) -> metaplex_token_vault::state::ExternalPriceAccount {
         let account = get_account(context, &self.keypair.pubkey()).await;
         try_from_slice_unchecked(&account.data).unwrap()
     }
@@ -39,7 +39,7 @@ impl ExternalPrice {
         let tx = Transaction::new_signed_with_payer(
             &[
                 instruction::create_update_external_price_account_instruction(
-                    spl_token_vault::id(),
+                    metaplex_token_vault::id(),
                     self.keypair.pubkey(),
                     price_per_share,
                     *price_mint,
@@ -68,9 +68,9 @@ impl ExternalPrice {
             &[system_instruction::create_account(
                 &context.payer.pubkey(),
                 &self.keypair.pubkey(),
-                rent.minimum_balance(spl_token_vault::state::MAX_EXTERNAL_ACCOUNT_SIZE),
-                spl_token_vault::state::MAX_EXTERNAL_ACCOUNT_SIZE as u64,
-                &spl_token_vault::id(),
+                rent.minimum_balance(metaplex_token_vault::state::MAX_EXTERNAL_ACCOUNT_SIZE),
+                metaplex_token_vault::state::MAX_EXTERNAL_ACCOUNT_SIZE as u64,
+                &metaplex_token_vault::id(),
             )],
             Some(&context.payer.pubkey()),
             &[&context.payer, &self.keypair],

@@ -423,7 +423,7 @@ export const AuctionCard = ({
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
   const isBidderPotEmpty = auctionView.myBidderPot ? Boolean(auctionView.myBidderPot?.info.emptied) : true;
   const doesInstantSaleHasNoItems =
-    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
+    isBidderPotEmpty && auctionView.auctionManager.numWinners.toNumber() === bids.length;
 
   const shouldHideInstantSale =
     !isOpenEditionSale &&
@@ -436,6 +436,7 @@ export const AuctionCard = ({
       auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty
     );
+
 
   if (shouldHide) {
     return <></>;
@@ -731,12 +732,7 @@ export const AuctionCard = ({
 
       <MetaplexOverlay visible={showEndingBidModal}>
         <Confetti />
-        <h1
-          style={{
-            fontSize: '3rem',
-            marginBottom: 20,
-          }}
-        >
+        <h1>
           Congratulations
         </h1>
         <p

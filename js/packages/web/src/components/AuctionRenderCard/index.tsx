@@ -52,12 +52,12 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   }, [auction, setCountdown]);
 
   const card = (
-    <Card hoverable={true} bordered={false}>
+    <Card hoverable bordered={false}>
       <div>
-        <div>
+      <div>
           <MetaAvatar creators={[creators[0]]} />
           <span>
-            {creators[0].name || creators[0].address?.substr(0, 6)}...
+            {creators[0]?.name || creators[0]?.address?.substr(0, 6)}...
           </span>
         </div>
         <div>

@@ -6,10 +6,10 @@ import { Artist } from '../../types';
 import { shortenAddress } from '@oyster/common';
 import { MetaAvatar } from '../MetaAvatar';
 
-export const ArtistCard = ({ artist }: { artist: Artist }) => {
+export const ArtistCard = ({ artist, active }: { artist: Artist, active: boolean }) => {
   return (
     <Card
-      hoverable={true}
+      hoverable
       cover={
         <div>{artist.background ? <img src={artist.background} /> : null}</div>
       }

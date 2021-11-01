@@ -12,6 +12,7 @@ import {
   Vault,
 } from '../../actions';
 import {
+  AuctionCache,
   AuctionManagerV1,
   AuctionManagerV2,
   BidRedemptionTicket,
@@ -20,6 +21,7 @@ import {
   PrizeTrackingTicket,
   SafetyDepositConfig,
   Store,
+  StoreIndexer,
   WhitelistedCreator,
 } from '../../models/metaplex';
 import { PublicKeyStringAndAccount } from '../../utils';
@@ -28,6 +30,8 @@ import { ParsedAccount } from '../accounts/types';
 export interface MetaState {
   metadata: ParsedAccount<Metadata>[];
   metadataByMint: Record<string, ParsedAccount<Metadata>>;
+  metadataByMetadata: Record<string, ParsedAccount<Metadata>>;
+  metadataByAuction: Record<string, ParsedAccount<Metadata>[]>;
   metadataByMasterEdition: Record<string, ParsedAccount<Metadata>>;
   editions: Record<string, ParsedAccount<Edition>>;
   masterEditions: Record<
@@ -71,11 +75,14 @@ export interface MetaState {
     ParsedAccount<WhitelistedCreator>
   >;
   payoutTickets: Record<string, ParsedAccount<PayoutTicket>>;
+  auctionCaches: Record<string, ParsedAccount<AuctionCache>>;
+  storeIndexer: ParsedAccount<StoreIndexer>[];
+  auctionCachesByAuctionManager: Record<string, ParsedAccount<AuctionCache>>;
 }
 
 export interface MetaContextState extends MetaState {
   isLoading: boolean;
-  patchState: (state: Partial<MetaState>) => void;
+  patchState: (...args: Partial<MetaState>[]) => void;
 }
 
 export type AccountAndPubkey = {

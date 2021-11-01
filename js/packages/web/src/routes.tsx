@@ -3,9 +3,7 @@ import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
 import { Providers } from './providers';
 import {
-  AnalyticsView,
   ArtCreateView,
-  ArtistsView,
   ArtistView,
   ArtView,
   ArtworksView,
@@ -28,24 +26,18 @@ export function Routes({ storefront }: RoutesProps) {
         <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
-            {/* <Route
-              exact
-              path="/analytics"
-              component={() => <AnalyticsView />}
-            /> */}
             <Route
               exact
-              path="/art/create/:step_param?"
+              path="/artworks/new/:step_param?"
               component={() => <ArtCreateView />}
             />
             <Route
               exact
-              path="/artworks/:id?"
+              path="/owned"
               component={() => <ArtworksView />}
             />
-            <Route exact path="/art/:id" component={() => <ArtView />} />
-            <Route exact path="/artists/:id" component={() => <ArtistView />} />
-            <Route exact path="/artists" component={() => <ArtistsView />} />
+            <Route exact path="/artworks/:id" component={() => <ArtView />} />
+            <Route path="/artists/:id" component={() => <ArtistView />} />
             <Route
               exact
               path="/auction/create/:step_param?"

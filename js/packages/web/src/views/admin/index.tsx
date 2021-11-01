@@ -10,13 +10,13 @@ import {
   Button,
   Input,
   Divider,
+  Progress,
+  Space,
 } from 'antd';
 import { useMeta } from '../../contexts';
 import {
   Store,
   WhitelistedCreator,
-} from '@oyster/common/dist/lib/models/metaplex/index';
-import {
   MasterEditionV1,
   notify,
   ParsedAccount,
@@ -27,6 +27,10 @@ import {
   useUserAccounts,
   useWalletModal,
   WalletSigner,
+  loadCreators,
+  loadAuctionManagers,
+  loadAuctionsForAuctionManagers,
+  loadVaultsAndContentForAuthority,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
@@ -37,13 +41,17 @@ import {
 } from '../../actions/convertMasterEditions';
 import { Link } from 'react-router-dom';
 import { SetupVariables } from '../../components/SetupVariables';
+import { cacheAllAuctions } from '../../actions';
 import { LoadingOutlined } from '@ant-design/icons';
+import { useAuctionManagersToCache, useNotifications } from '../../hooks';
+import Bugsnag from '@bugsnag/browser';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading } = useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading, patchState } = useMeta();
   const connection = useConnection();
   const wallet = useWallet();
+  const [loadingAdmin, setLoadingAdmin] = useState(true);
   const { setVisible } = useWalletModal();
   const connect = useCallback(
     () => (wallet.wallet ? wallet.connect().catch() : setVisible(true)),
@@ -52,11 +60,43 @@ export const AdminView = () => {
   const { storeAddress, setStoreForOwner, isConfigured } = useStore();
 
   useEffect(() => {
-    if (!store && !storeAddress && wallet.publicKey) {
+    if (
+      !store &&
+      !storeAddress &&
+      wallet.publicKey &&
+      !process.env.NEXT_PUBLIC_STORE_OWNER_ADDRESS
+    ) {
       setStoreForOwner(wallet.publicKey.toBase58());
     }
   }, [store, storeAddress, wallet.publicKey]);
-  console.log('@admin', wallet.connected, storeAddress, isLoading, store);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    (async () => {
+      const [creatorsState, auctionManagerState] = await Promise.all([
+        loadCreators(connection),
+        loadAuctionManagers(connection, storeAddress as string),
+      ])
+      const auctionsState = await loadAuctionsForAuctionManagers(
+        connection,
+        Object.values(auctionManagerState.auctionManagersByAuction),
+      );
+      const vaultState = await loadVaultsAndContentForAuthority(connection, wallet.publicKey?.toBase58() as string);
+      
+      patchState(creatorsState, auctionManagerState, auctionsState, vaultState);
+      setLoadingAdmin(false);
+    })()
+  }, [loadingAdmin, isLoading, storeAddress])
+
+  if (loadingAdmin) {
+    return (
+      <div className="app-section--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -164,6 +204,13 @@ function ArtistModal({
   );
 }
 
+enum ListingNotificationStatus {
+  Ready,
+  Submitting,
+  Complete,
+  Error,
+}
+
 function InnerAdminView({
   store,
   whitelistedCreatorsByCreator,
@@ -183,15 +230,25 @@ function InnerAdminView({
   const [newStore, setNewStore] = useState(
     store && store.info && new Store(store.info),
   );
+  const { storefront } = useStore()
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] = useState<{
-    available: ParsedAccount<MasterEditionV1>[];
-    unavailable: ParsedAccount<MasterEditionV1>[];
-  }>();
-  const [loading, setLoading] = useState<boolean>();
-  const { metadata, masterEditions } = useMeta();
+  const [filteredMetadata, setFilteredMetadata] =
+    useState<{
+      available: ParsedAccount<MasterEditionV1>[];
+      unavailable: ParsedAccount<MasterEditionV1>[];
+    }>();
+  const [cachingAuctions, setCachingAuctions] = useState<boolean>();
+  const [convertingMasterEditions, setConvertMasterEditions] = useState<boolean>();
+  const {
+    auctionCaches,
+    storeIndexer,
+    metadata,
+    masterEditions,
+  } = useMeta();
+  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache();
+  const notifications = useNotifications(wallet);
 
   const { accountByMint } = useUserAccounts();
   useMemo(() => {
@@ -265,6 +322,7 @@ function InnerAdminView({
     <Content>
       <Col>
         <Row>
+          <h2>Whitelisted Creators</h2>
           <Col span={21}>
             <ArtistModal
               setUpdatedCreators={setUpdatedCreators}
@@ -306,8 +364,6 @@ function InnerAdminView({
               }}
             />
           </Col>
-        </Row>
-        <Row>
           <Table
             columns={columns}
             dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
@@ -319,43 +375,118 @@ function InnerAdminView({
                 shortenAddress(uniqueCreatorsWithUpdates[key].address),
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
-          ></Table>
+          />
         </Row>
       </Col>
+      <h2>Listing Notifications</h2>
+      <Table
+        columns={[
+          {
+            key: 'accountPubkey',
+            title: 'Listing',
+            dataIndex: 'accountPubkey'
+          },
+          {
+            key: 'description',
+            title: 'Notification',
+            dataIndex: "description"
+          },
+          {
+            key: 'action',
+            title: 'Action',
+            render: ({ action, callToAction }) => {
+              const [status, setStatus] = useState<ListingNotificationStatus>(ListingNotificationStatus.Ready);
 
-      {!store.info.public && (
-        <>
-          <h1>
-            You have {filteredMetadata?.available.length} MasterEditionV1s that
-            can be converted right now and{' '}
-            {filteredMetadata?.unavailable.length} still in unfinished auctions
-            that cannot be converted yet.
-          </h1>
-          <Col>
-            <Row>
+              const onSubmit = async () => {
+                try {
+                  setStatus(ListingNotificationStatus.Submitting);
+                  await action();
+                  setStatus(ListingNotificationStatus.Complete);
+                } catch (e: any) {
+                  Bugsnag.notify(e);
+                  setStatus(ListingNotificationStatus.Error)
+                }
+              }
+              const isComplete = status === ListingNotificationStatus.Complete;
+
+              const label = isComplete ? 'Done' : callToAction
+              return (
+                <Button
+                  loading={status === ListingNotificationStatus.Submitting}
+                  disabled={isComplete}
+                  onClick={onSubmit}
+                >
+                  {label}
+                </Button>
+              )
+            }
+          }
+        ]}
+        dataSource={notifications}
+      />
+      <Row>
+      </Row>
+      <h2>Adminstrator Actions</h2>
+      <Row>
+        {!store.info.public && (
+          <Col xs={24} md={12}>
+            <h3>Convert Master Editions</h3>
+            <p>
+              You have {filteredMetadata?.available.length} MasterEditionV1s that
+              can be converted right now and{' '}
+              {filteredMetadata?.unavailable.length} still in unfinished auctions
+              that cannot be converted yet.
+            </p>
+            <Button
+              size="large"
+              loading={convertingMasterEditions}
+              onClick={async () => {
+                setConvertMasterEditions(true);
+
+                await convertMasterEditions(
+                  connection,
+                  wallet,
+                  filteredMetadata?.available || [],
+                  accountByMint,
+                );
+
+                setConvertMasterEditions(false);
+              }}
+            >
+              Convert Eligible Master Editions
+            </Button>
+          </Col>
+        )
+        }
+        <Col span={11} offset={1}>
+          <h3>Cache Auctions</h3>
+          <p>Activate your storefront listing caches by pressing "build cache". This will reduce page load times for your listings. Your storefront will start looking up listing using the cache on November 3rd. To preview the speed improvement visit the Holaplex <a rel="noopener noreferrer" target="_blank" href={`https://${storefront.subdomain}.holaxplex.dev`}> staging environment</a> for your storefront.</p>
+          <Space direction="vertical" size="middle" align="center">
+            <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
+            {auctionManagersToCache.length > 0 && (
               <Button
-                disabled={loading}
+                size="large"
+                loading={cachingAuctions}
                 onClick={async () => {
-                  setLoading(true);
-                  await convertMasterEditions(
-                    connection,
+                  setCachingAuctions(true);
+
+                  await cacheAllAuctions(
                     wallet,
-                    filteredMetadata?.available || [],
-                    accountByMint,
+                    connection,
+                    auctionManagersToCache,
+                    auctionCaches,
+                    storeIndexer,
                   );
-                  setLoading(false);
+
+                  setCachingAuctions(false);
                 }}
               >
-                {loading ? (
-                  <Spin />
-                ) : (
-                  <span>Convert Eligible Master Editions</span>
-                )}
+                Build Cache
               </Button>
-            </Row>
-          </Col>{' '}
-        </>
-      )}
+            )}
+          </Space>
+        </Col>
+      </Row>
     </Content>
   );
 }

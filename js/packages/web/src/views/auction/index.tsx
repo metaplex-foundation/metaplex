@@ -1,9 +1,5 @@
 import { CheckOutlined } from '@ant-design/icons';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { Row, Col, Button, Skeleton, Carousel, List, Space, Card } from 'antd';
-import { Connection } from '@solana/web3.js';
-import { Link } from 'react-router-dom';
+import { LoadingOutlined } from '@ant-design/icons';
 import {
   AuctionState,
   BidderMetadata,
@@ -18,26 +14,30 @@ import {
   useConnectionConfig,
   useMint,
 } from '@oyster/common';
+import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
+import { getHandleAndRegistryKey } from '@solana/spl-name-service';
+import { MintInfo } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection } from '@solana/web3.js';
+import { Button, Card, Carousel, Col, List, Row, Skeleton, Spin } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { format } from 'timeago.js';
+import { AmountLabel } from '../../components/AmountLabel';
+import { ArtContent } from '../../components/ArtContent';
+import { AuctionCard } from '../../components/AuctionCard';
+import { ClickToCopy } from '../../components/ClickToCopy';
+import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import {
   AuctionView as Auction,
   useArt,
   useAuction,
   useBidsForAuction,
+  useCreators,
   useExtendedArt,
-  useCreators
 } from '../../hooks';
-import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
-import { getHandleAndRegistryKey } from '@solana/spl-name-service';
-import { MintInfo } from '@solana/spl-token';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { format } from 'timeago.js';
-import { AmountLabel } from '../../components/AmountLabel';
-import { ArtContent } from '../../components/ArtContent';
-import { AuctionCard } from '../../components/AuctionCard';
-import { MetaAvatar, MetaAvatarDetailed } from '../../components/MetaAvatar';
 import { ArtType } from '../../types';
 import useWindowDimensions from '../../utils/layout';
-import { ClickToCopy } from '../../components/ClickToCopy';
 
 export const AuctionItem = ({
   item,
@@ -54,12 +54,11 @@ export const AuctionView = () => {
   const { width } = useWindowDimensions();
   const { id } = useParams<{ id: string }>();
   const { env } = useConnectionConfig();
-  const auction = useAuction(id);
-  const wallet = useWallet()
-  const creators = useCreators();
+  const { loading, auction } = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
   const { ref, data } = useExtendedArt(auction?.thumbnail.metadata.pubkey);
+  const creators = useCreators(auction);
   let edition = '';
   if (art.type === ArtType.NFT) {
     edition = 'Unique';
@@ -74,6 +73,14 @@ export const AuctionView = () => {
   const hasDescription = data === undefined || data.description === undefined;
   const description = data?.description;
   const attributes = data?.attributes;
+
+  if(loading) {
+    return (
+      <div className="app-section--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    )
+  }
 
   const items = [
     ...(auction?.items
@@ -233,9 +240,9 @@ export const AuctionView = () => {
             <div>
               <h6>Attributes</h6>
               <List grid={{ column: 4 }}>
-                {attributes.map(attribute => (
-                  <List.Item key={attribute.trait_type}>
-                    <List.Item.Meta title={attribute.trait_type} description={attribute.value} />
+                {attributes.map((attribute, index) => (
+                  <List.Item key={`${attribute.value}-${index}`}>
+                    <Card title={attribute.trait_type}>{attribute.value}</Card>
                   </List.Item>
                 ))}
               </List>
@@ -291,7 +298,7 @@ export const AuctionView = () => {
                 <h6>View on</h6>
                 <div>
                   <Button onClick={() => window.open(art.uri || '', '_blank')}>
-                    Metadata
+                    Arweave
                   </Button>
                   <Button
                     onClick={() =>
@@ -308,16 +315,8 @@ export const AuctionView = () => {
                 </div>
               </div>
             </Col>
-            {auction?.auctionManager.authority === wallet?.publicKey?.toBase58() && (
-              <Col span={6}>
-                <Row justify="end">
-                  <Link to={`/auction/${id}/billing`}>
-                    <Button>Billing</Button>
-                  </Link>
-                </Row>
-              </Col>
-            )}
           </Row>
+
           {!auction && <Skeleton paragraph={{ rows: 6 }} />}
           {auction && (
             <AuctionCard auctionView={auction} hideDefaultAction={false} />

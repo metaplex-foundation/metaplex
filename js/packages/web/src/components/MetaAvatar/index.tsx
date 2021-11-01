@@ -11,13 +11,13 @@ const MetaAvatarItem = (props: {
 }) => {
   const { creator, size, alt } = props;
   const [noImage, setNoImage] = useState(false);
-  const image = creator.image || '';
+  const image = creator?.image || '';
 
   return (
     <Avatar
       alt={alt}
       size={size}
-      src={noImage ? <Identicon alt={alt} address={creator.address} /> : image}
+      src={noImage ? <Identicon alt={alt} address={creator?.address} /> : image}
       onError={() => {
         setNoImage(true);
         return false;
@@ -39,7 +39,7 @@ export const MetaAvatar = (props: {
   }
 
   const controls = (creators || []).map((creator, i) => (
-    <MetaAvatarItem key={i} creator={creator} alt={creator.name} size={size} />
+    <MetaAvatarItem key={i} creator={creator} alt={creator?.name} size={size} />
   ));
 
   if (!showMultiple) {
@@ -62,7 +62,7 @@ export const MetaAvatarDetailed = (props: {
     <div>
       {(creators || []).map((creator, _idx) => (
         <div key={_idx}>
-          <MetaAvatarItem creator={creator} alt={creator.name} size={size} />
+          <MetaAvatarItem creator={creator} alt={creator?.name} size={size} />
           <p>{creator.name ? creator.name : 'No name provided.'}</p>
         </div>
       ))}

@@ -14,7 +14,7 @@ export const LoaderProvider: FC = ({ children }) => {
         <div id="metaplex-loading-text">loading</div>
         <Spinner />
       </div>
-      {children}
+      {!isLoading &&  children}
     </>
   );
 };

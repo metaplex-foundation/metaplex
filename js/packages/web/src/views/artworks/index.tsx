@@ -20,7 +20,7 @@ export const ArtworksView = () => {
   useEffect(() => {
     (async () => {
       setLoadingArt(true);
-      const metadataState = await loadMetadataForUsers(connection, userAccounts, whitelistedCreatorsByCreator);      // const completeMetaState = await loadMetaDataAndEditionsForCreators(connection, whitelistedCreatorsByCreator);
+      const metadataState = await loadMetadataForUsers(connection, userAccounts, whitelistedCreatorsByCreator);
 
       patchState(metadataState);
       setLoadingArt(false);
