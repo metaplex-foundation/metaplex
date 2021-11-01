@@ -6,6 +6,7 @@ const nacl = require("tweetnacl");
 
 const MERKLE_DISTRIBUTOR_ID = new PublicKey(process.env.MA_DISTRIBUTOR_ID);
 const CLAIM_INSTR = Buffer.from(sha256.digest("global:claim")).slice(0, 8);
+const CANDY_INSTR = Buffer.from(sha256.digest("global:claim_candy")).slice(0, 8);
 const SIGNER = Keypair.fromSecretKey(Buffer.from(JSON.parse(process.env.MA_SIGNER)));
 
 const OTP_SECRET = Buffer.from(JSON.parse(process.env.MA_OTP_SECRET));
@@ -74,7 +75,14 @@ const sendOTP = async (event) => {
   if (!claim.programId.equals(MERKLE_DISTRIBUTOR_ID)) {
     throw new Error("Claim programId does not match");
   }
-  if (Buffer.from(claim.data.slice(0, 8)) === CLAIM_INSTR) {
+  console.log(claim.data.slice(0, 8));
+
+  let pda;
+  if (Buffer.from(claim.data.slice(0, 8)).equals(CLAIM_INSTR)) {
+    pda = claim.data.slice(25, 25 + 32);
+  } else if (Buffer.from(claim.data.slice(0, 8)).equals(CANDY_INSTR)) {
+    pda = claim.data.slice(26, 26 + 32);
+  } else {
     throw new Error("Claim instruction does not match");
   }
 
@@ -83,7 +91,6 @@ const sendOTP = async (event) => {
     MERKLE_DISTRIBUTOR_ID
   );
 
-  const pda = claim.data.slice(25, 25 + 32);
   if (!claimantPda.toBuffer().equals(Buffer.from(pda))) {
     throw new Error("Claim PDA does not match provided seeds");
   }
@@ -111,10 +118,10 @@ const sendOTP = async (event) => {
     },
     Message: {
       Body: {
-        Text: { Data: `Your airdrop OTP is ${String(otp).padStart(8, "0")}` },
+        Text: { Data: `Your gumdrop OTP is ${String(otp).padStart(8, "0")}` },
       },
 
-      Subject: { Data: "Token Drop" },
+      Subject: { Data: "Gumdrop OTP" },
     },
     Source: "santa@aws.metaplex.com",
   };

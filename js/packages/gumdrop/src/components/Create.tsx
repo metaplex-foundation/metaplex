@@ -96,14 +96,14 @@ type DropInfo = {
 const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
   if (drop.type === "Token") {
     return {
-      subject: "Token Drop",
+      subject: "Gumdrop Token Drop",
       message: `You received ${info.amount} token(s) `
              + `(click <a href="${drop.meta}">here</a> to view the mint on explorer). `
              + `<a href="${info.url}">Click here to claim them!</a>`,
     };
   } else {
     return {
-      subject: "NFT Drop",
+      subject: "Gumdrop NFT Drop",
       message: `You received a Candy Machine pre-sale crank `
              + `(click <a href="${drop.meta}">here</a> to view the config on explorer). `
              + `<a href="${info.url}">Click here to claim it!</a>`,
