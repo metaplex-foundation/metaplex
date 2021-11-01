@@ -78,14 +78,14 @@ export const AppBar = () => {
           <Space align="center">
             {connected ? (
               <>
-                <CurrentUserBadge showAddress={true} />
-                <Notifications />
-                <Cog />
+                <CurrentUserBadge showAddress={true} buttonType="text" />
+                <Notifications buttonType="text" />
+                <Cog buttonType="text" />
               </>
             ) : (
               <>
-                <HowToBuyModal />
-                <ConnectButton allowWalletChange />
+                <HowToBuyModal buttonType="text" />
+                <ConnectButton type="text" allowWalletChange />
               </>
             )}
           </Space>

@@ -1,6 +1,6 @@
-import React, { useState, ReactNode } from 'react';
-import { Card, Modal, Button, Col, Row } from 'antd';
 import { CreditCardOutlined } from '@ant-design/icons';
+import { Button, ButtonProps, Card, Col, Modal, Row } from 'antd';
+import React, { ReactNode, useState } from 'react';
 
 interface ContentCardProps {
   title: string;
@@ -29,29 +29,8 @@ export const ContentCard = (props: ContentCardProps) => {
   );
 };
 
-interface ModalContentProps {
-  children: ReactNode[];
-}
-
-export const ModalContent: React.FC<ModalContentProps> = ({ children }) => {
-  return (
-    <div>
-      <Row gutter={16}>
-        <Col span={24} xl={8}>
-          {children[0]}{' '}
-        </Col>
-        <Col span={24} xl={8}>
-          {children[1]}
-        </Col>
-        <Col span={24} xl={8}>
-          {children[2]}
-        </Col>
-      </Row>
-    </div>
-  );
-};
-
 interface ModalProps {
+  buttonType?: ButtonProps['type'];
   buttonText: string;
   modalTitle: string;
   cardProps: [ContentCardProps, ContentCardProps, ContentCardProps];
@@ -59,6 +38,7 @@ interface ModalProps {
 }
 
 export const InstructionsModal: React.FC<ModalProps> = ({
+  buttonType,
   buttonText,
   modalTitle,
   cardProps,
@@ -81,8 +61,11 @@ export const InstructionsModal: React.FC<ModalProps> = ({
 
   return (
     <>
-      <Button onClick={showModal}>{buttonText}</Button>
+      <Button type={buttonType} onClick={showModal}>
+        {buttonText}
+      </Button>
       <Modal
+        className="metaplex-instructions-modal"
         title={modalTitle}
         visible={isModalVisible}
         onOk={handleOk}
@@ -90,26 +73,13 @@ export const InstructionsModal: React.FC<ModalProps> = ({
         footer={null}
         closeIcon={<img src="/modals/close.svg" />}
       >
-        <ModalContent>
-          <ContentCard
-            title={cardProps[0].title}
-            description={cardProps[0].description}
-            imgSrc={cardProps[0].imgSrc}
-            endElement={cardProps[0].endElement}
-          />
-          <ContentCard
-            title={cardProps[1].title}
-            description={cardProps[1].description}
-            imgSrc={cardProps[1].imgSrc}
-            endElement={cardProps[1].endElement}
-          />
-          <ContentCard
-            title={cardProps[2].title}
-            description={cardProps[2].description}
-            imgSrc={cardProps[2].imgSrc}
-            endElement={cardProps[2].endElement}
-          />
-        </ModalContent>
+        <Row gutter={16}>
+          {cardProps.map((props, i) => (
+            <Col key={i} span={24} xl={8}>
+              <ContentCard {...props} />
+            </Col>
+          ))}
+        </Row>
       </Modal>
     </>
   );

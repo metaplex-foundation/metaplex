@@ -120,7 +120,7 @@ export const AuctionListView = () => {
         src="/main-banner.svg"
         headingText="The amazing world of Metaplex."
         subHeadingText="Buy exclusive Metaplex NFTs."
-        actionComponent={<HowToBuyModal />}
+        actionComponent={<HowToBuyModal buttonType="primary" />}
       />
       <Tabs
         activeKey={activeKey}

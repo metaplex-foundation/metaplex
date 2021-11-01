@@ -12,7 +12,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { Button, Popover, Select, Space } from 'antd';
+import { Button, ButtonProps, Popover, Select, Space } from 'antd';
 import React, {
   Dispatch,
   SetStateAction,
@@ -133,6 +133,7 @@ const AddFundsModal = (props: {
 };
 
 export const CurrentUserBadge = (props: {
+  buttonType?: ButtonProps['type'];
   showBalance?: boolean;
   showAddress?: boolean;
   iconSize?: number;
@@ -189,7 +190,7 @@ export const CurrentUserBadge = (props: {
         }
       >
         {/* display: block fixes a strange layout quirk */}
-        <Button style={{ display: 'block' }}>
+        <Button type={props.buttonType} style={{ display: 'block' }}>
           <Space direction="horizontal">
             {props.showBalance && (
               <span>
@@ -214,7 +215,7 @@ export const CurrentUserBadge = (props: {
   );
 };
 
-export const Cog = () => {
+export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
   const { endpoint, setEndpoint } = useConnectionConfig();
   const { setVisible } = useWalletModal();
   const open = useCallback(() => setVisible(true), [setVisible]);
@@ -238,7 +239,7 @@ export const Cog = () => {
         </Space>
       }
     >
-      <Button>
+      <Button type={buttonType}>
         <img src="/cog.svg" />
       </Button>
     </Popover>

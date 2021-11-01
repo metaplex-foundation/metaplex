@@ -16,7 +16,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Badge, Button, List, Popover } from 'antd';
+import { Badge, Button, ButtonProps, List, Popover } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
@@ -299,7 +299,11 @@ export function useSettlementAuctions({
   });
 }
 
-export function Notifications() {
+export function Notifications({
+  buttonType,
+}: {
+  buttonType?: ButtonProps['type'];
+}) {
   const {
     metadata,
     whitelistedCreatorsByCreator,
@@ -492,7 +496,7 @@ export function Notifications() {
 
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
-      <Button>
+      <Button type={buttonType}>
         <img src="/bell.svg" />
       </Button>
     </Popover>
