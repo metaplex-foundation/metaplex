@@ -489,7 +489,7 @@ export const Create = (
       const verified = tree.verifyProof(idx, proof, root);
 
       if (!verified) {
-        throw new Error("Merkle tree verification failed");
+        throw new Error("Gumdrop merkle tree verification failed");
       }
 
       const claimant = claimants[idx];

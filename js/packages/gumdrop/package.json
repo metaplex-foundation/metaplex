@@ -2,7 +2,7 @@
   "name": "react-template",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://lwus.github.io/merkle-airdrop/",
+  "homepage": "https://lwus.github.io/gumdrop/",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.38.0",
     "@aws-sdk/client-ses": "^3.38.0",

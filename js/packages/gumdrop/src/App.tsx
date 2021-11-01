@@ -34,7 +34,7 @@ const About = (
   const summary = (
     <Stack spacing={1}>
       <div>
-      Merkle Airdrop leverages the Solana blockchain and merkle trees to
+      The Gumdrop program leverages the Solana blockchain and merkle trees to
       facilitate airdrops to a large number of whitelisted users at a low cost
       to creators.
       </div>
@@ -60,7 +60,7 @@ const About = (
       </div>
 
       <div>
-      The Merkle Airdrop (originally pioneered for token airdrops by{" "}
+      Gumpdrop (originally pioneered for token airdrops by{" "}
       <HyperLink
         href="https://github.com/Uniswap/merkle-distributor"
         underline="none"
@@ -75,7 +75,7 @@ const About = (
         Saber
       </HyperLink>) solves both these issues by building a space-efficient hash
       structure (the merkle tree) such that an on-chain program can validate
-      whether the user is part of a whitelist. Moreover, the Merkle Airdrop
+      whether the user is part of a whitelist. Moreover, Gumdrop
       allows creators to directly send whitelisted users an airdrop reclamation
       link by building the tree with off-chain handles (e.g email, twitter,
       etc) and allowing the user to redeem into any wallet.
@@ -119,8 +119,8 @@ const About = (
 
       <div>
       NB: When a candy-machine is supplied, update authority for the
-      candy-machine will be transferred to the Merkle Airdrop state. This can
-      be reclaimed by closing the Merkle Airdrop.
+      candy-machine will be transferred to the Gumdrop state. This can
+      be reclaimed by closing the Gumdrop.
       </div>
     </Stack>
   );
@@ -147,7 +147,7 @@ const About = (
       </Link>
 
       <div>
-      Closing the Merkle Airdrop cleans up the on-chain state and allows
+      Closing the Gumdrop cleans up the on-chain state and allows
       creators to recycle any lamports held for rent-exemption after the
       airdrop is complete.
       </div>

@@ -114,7 +114,7 @@ const buildMintClaim = async (
   );
 
   if (!matches) {
-    throw new Error("Merkle proof does not match");
+    throw new Error("Gumdrop merkle proof does not match");
   }
 
   const [claimStatus, cbump] = await PublicKey.findProgramAddress(
@@ -252,7 +252,7 @@ const buildCandyClaim = async (
   );
 
   if (!matches) {
-    throw new Error("Merkle proof does not match");
+    throw new Error("Gumdrop merkle proof does not match");
   }
 
   const [claimCount, cbump] = await PublicKey.findProgramAddress(
