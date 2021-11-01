@@ -49,7 +49,7 @@ export const ArtCard = (props: ArtCardProps) => {
   const art = useArt(pubkey);
   creators = art?.creators || creators || [];
   name = art?.title || name || ' ';
-
+  
   let badge = '';
   if (art.type === ArtType.NFT) {
     badge = 'Unique';

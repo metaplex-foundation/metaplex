@@ -1,0 +1,46 @@
+{
+  "name": "Holaplex",
+  "repository": "https://github.com/holaplex/metaplex",
+  "env": {
+    "APP_BASE": {
+      "value": "js",
+      "required": true
+    },
+    "SUBDOMAIN": {
+      "value": "teamgo"
+    },
+    "ARWEAVE_CDN": {
+      "required": true,
+      "value": "https://arweave.cache.holaplex.dev"
+    },
+    "NEXT_PUBLIC_ARWEAVE_URL": {
+      "value": "https://arweave.net"
+    },
+    "NEXT_PUBLIC_HOLAPLEX_HOLDER_PUBKEY": {
+      "value": "tsU33UT3K2JTfLgHUo7hdzRhRe4wth885cqVbM8WLiq"
+    },
+    "NEXT_PUBLIC_HOLAPLEX_HOLDER_SIGN_META_URL": {
+      "value": "https://www.holaplex.dev/api/sign-meta"
+    },
+    "NEXT_PUBLIC_HOLAPLEX_HOLDER_SPLIT": {
+      "value": 3
+    },
+    "NODE_MODULES_CACHE": {
+      "value": true
+    },
+    "USE_YARN_CACHE": {
+      "value": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/lstoll/heroku-buildpack-monorepo"
+    },
+    {
+      "url": "heroku-community/nginx"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

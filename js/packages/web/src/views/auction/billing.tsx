@@ -24,7 +24,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
-  loadPayoutTickets
+  loadPayoutTickets,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -54,7 +54,7 @@ export const BillingView = () => {
   useEffect(() => {
     (async () => {
       const billingState = await loadPayoutTickets(connection);
-
+      
       patchState(billingState);
       setLoadingBilling(false);
     })()
