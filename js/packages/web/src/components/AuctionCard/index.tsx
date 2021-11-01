@@ -10,7 +10,7 @@ export const AuctionCard = props => {
   const [loadImage, setLoadImage] = useState(false);
 
   return (
-    <div id="auction-sec" className="col-md-6 col-lg-4 col-sm-6 mt-4" key={keys}>
+    <div id="auction-sec" className="col-md-6 col-lg-3 col-sm-6 mt-4" key={keys}>
       <Link to={auction.info.auction ? `/auction/${auction.info.auction}` : '#'}>
         <div className="card p-3 ">
           <div className="nft-img">
