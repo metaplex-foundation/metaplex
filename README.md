@@ -12,6 +12,13 @@ Metaplex is a protocol built on top of Solana that allows:
 
 Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web3 application.
 
+## Important NOTE
+
+Metaplex now follows a release versioning process called semantic versioning. If you are make a new market place, launching a candy machine or any live project that will handle real money we reccomend using a release tag. Using a release tag will ensure that new changes dont break your UI.
+
+https://github.com/metaplex-foundation/metaplex/releases
+
+
 ## In Depth Developer's Guide
 
 If you want to deep dive on the Architecture, you can do so here:
