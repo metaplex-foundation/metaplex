@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Layout, Spin, Button, Table } from 'antd';
+import { Row, Col, Layout, Spin, Button, Table, Typography, Space } from 'antd';
 import {
   useArt,
   useAuction,
@@ -24,6 +24,7 @@ import {
   StringPublicKey,
   toPublicKey,
   WalletSigner,
+  loadPayoutTickets,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useMeta } from '../../contexts';
@@ -37,25 +38,39 @@ import {
 import { Connection } from '@solana/web3.js';
 import { settle } from '../../actions/settle';
 import { MintInfo } from '@solana/spl-token';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LineOutlined, LoadingOutlined } from '@ant-design/icons';
 const { Content } = Layout;
+const { Text } = Typography;
 
 export const BillingView = () => {
   const { id } = useParams<{ id: string }>();
-  const auctionView = useAuction(id);
+  const { auction, loading } = useAuction(id);
   const connection = useConnection();
   const wallet = useWallet();
-  const mint = useMint(auctionView?.auction.info.tokenMint);
+  const { patchState } = useMeta();
+  const [loadingBilling, setLoadingBilling] = useState<boolean>(true);
+  const mint = useMint(auction?.auction.info.tokenMint);
 
-  return auctionView && wallet && connection && mint ? (
+  useEffect(() => {
+    (async () => {
+      const billingState = await loadPayoutTickets(connection);
+      
+      patchState(billingState);
+      setLoadingBilling(false);
+    })()
+  }, [loadingBilling]);
+
+  return loading || loadingBilling || !auction || !wallet || !connection || !mint ? (
+    <div className="app-section--loading">
+      <Spin indicator={<LoadingOutlined />} />
+    </div>
+  ) : (
     <InnerBillingView
-      auctionView={auctionView}
+      auctionView={auction}
       connection={connection}
       wallet={wallet}
       mint={mint}
     />
-  ) : (
-    <Spin indicator={<LoadingOutlined />} />
   );
 };
 
@@ -123,74 +138,85 @@ function useWinnerPotsByBidderKey(
 
 function usePayoutTickets(
   auctionView: AuctionView,
-): Record<string, { tickets: ParsedAccount<PayoutTicket>[]; sum: number }> {
+): {
+  payoutTickets: Record<string, { tickets: ParsedAccount<PayoutTicket>[]; sum: number }>;
+  loading: boolean
+} {
   const { payoutTickets } = useMeta();
   const [foundPayoutTickets, setFoundPayoutTickets] = useState<
     Record<string, ParsedAccount<PayoutTicket>>
   >({});
 
+  const [loadingPayoutTickets, setLoadingPayoutTickets] = useState<boolean>(true);
+
   useEffect(() => {
-    if (
-      auctionView.items
-        .flat()
-        .map(i => i.metadata)
-        .filter(i => !i).length
-    ) {
-      return;
-    }
-    const currFound = { ...foundPayoutTickets };
-    // items are in exact order of winningConfigs + order of bid winners
-    // when we moved to tiered auctions items will be array of arrays, remember this...
-    // this becomes triple loop
-    const prizeArrays = [
-      ...auctionView.items,
-      ...(auctionView.participationItem
-        ? [[auctionView.participationItem]]
-        : []),
-    ];
-    const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
-      [];
-    for (let i = 0; i < prizeArrays.length; i++) {
-      const items = prizeArrays[i];
-      for (let j = 0; j < items.length; j++) {
-        const item = items[j];
-        const creators = item.metadata?.info?.data?.creators || [];
-        const recipientAddresses = creators
-          ? creators
+    (async () => {
+      if (
+        auctionView.items
+          .flat()
+          .map(i => i.metadata)
+          .filter(i => !i).length
+      ) {
+        return;
+      }
+      const currFound = { ...foundPayoutTickets };
+      // items are in exact order of winningConfigs + order of bid winners
+      // when we moved to tiered auctions items will be array of arrays, remember this...
+      // this becomes triple loop
+      const prizeArrays = [
+        ...auctionView.items,
+        ...(auctionView.participationItem
+          ? [[auctionView.participationItem]]
+          : []),
+      ];
+      const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
+        [];
+      let total = 0;
+      for (let i = 0; i < prizeArrays.length; i++) {
+        const items = prizeArrays[i];
+        for (let j = 0; j < items.length; j++) {
+          const item = items[j];
+          const creators = item.metadata?.info?.data?.creators || [];
+          const recipientAddresses = creators
+            ? creators
               .map(c => c.address)
               .concat([auctionView.auctionManager.authority])
-          : [auctionView.auctionManager.authority];
-
-        for (let k = 0; k < recipientAddresses.length; k++) {
-          // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
-          const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
-
-          if (!currFound[key]) {
-            payoutPromises.push({
-              key,
-              promise: getPayoutTicket(
-                auctionView.auctionManager.pubkey,
-                item === auctionView.participationItem ? null : i,
-                item === auctionView.participationItem ? null : j,
-                k < recipientAddresses.length - 1 ? k : null,
-                item.safetyDeposit.pubkey,
-                recipientAddresses[k],
-              ),
-            });
+            : [auctionView.auctionManager.authority];
+  
+          for (let k = 0; k < recipientAddresses.length; k++) {
+            // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
+            const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
+  
+            if (!currFound[key]) {
+              payoutPromises.push({
+                key,
+                promise: getPayoutTicket(
+                  auctionView.auctionManager.pubkey,
+                  item === auctionView.participationItem ? null : i,
+                  item === auctionView.participationItem ? null : j,
+                  k < recipientAddresses.length - 1 ? k : null,
+                  item.safetyDeposit.pubkey,
+                  recipientAddresses[k],
+                ),
+              });
+              total += 1;
+            }
           }
         }
       }
-    }
-    Promise.all(payoutPromises.map(p => p.promise)).then(
-      (payoutKeys: StringPublicKey[]) => {
-        payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
-          if (payoutTickets[payoutKey])
-            currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
-        });
+      await Promise.all(payoutPromises.map(p => p.promise)).then(
+        (payoutKeys: StringPublicKey[]) => {
+          payoutKeys.forEach((payoutKey: StringPublicKey, i: number) => {
+            if (payoutTickets[payoutKey])
+              currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
+          });
+  
+          setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
+        },
+      );
 
-        setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
-      },
-    );
+      setLoadingPayoutTickets(false)
+    })()
   }, [
     Object.values(payoutTickets).length,
     auctionView.items
@@ -199,26 +225,29 @@ function usePayoutTickets(
       .filter(i => !!i).length,
   ]);
 
-  return Object.values(foundPayoutTickets).reduce(
-    (
-      acc: Record<
-        string,
-        { tickets: ParsedAccount<PayoutTicket>[]; sum: number }
-      >,
-      el: ParsedAccount<PayoutTicket>,
-    ) => {
-      if (!acc[el.info.recipient]) {
-        acc[el.info.recipient] = {
-          sum: 0,
-          tickets: [],
-        };
-      }
-      acc[el.info.recipient].tickets.push(el);
-      acc[el.info.recipient].sum += el.info.amountPaid.toNumber();
-      return acc;
-    },
-    {},
-  );
+  return {
+    payoutTickets: Object.values(foundPayoutTickets).reduce(
+      (
+        acc: Record<
+          string,
+          { tickets: ParsedAccount<PayoutTicket>[]; sum: number }
+        >,
+        el: ParsedAccount<PayoutTicket>,
+      ) => {
+        if (!acc[el.info.recipient]) {
+          acc[el.info.recipient] = {
+            sum: 0,
+            tickets: [],
+          };
+        }
+        acc[el.info.recipient].tickets.push(el);
+        acc[el.info.recipient].sum += el.info.amountPaid.toNumber();
+        return acc;
+      },
+      {},
+    ),
+    loading: loadingPayoutTickets,
+  };
 }
 
 export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
@@ -230,7 +259,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
 
   const bids = useBidsForAuction(auctionView.auction.pubkey);
 
-  const payoutTickets = usePayoutTickets(auctionView);
+  const { loading, payoutTickets } = usePayoutTickets(auctionView);
   const winners = [...auctionView.auction.info.bidState.bids]
     .reverse()
     .slice(0, auctionView.auctionManager.numWinners.toNumber());
@@ -248,7 +277,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
       ),
   );
 
-  const hasParticipation =
+  let hasParticipation =
     auctionView.auctionManager.participationConfig !== undefined &&
     auctionView.auctionManager.participationConfig !== null;
   let participationEligible = hasParticipation ? usableBids : [];
@@ -340,12 +369,12 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     metadata: ParsedAccount<BidderMetadata>;
     pot: ParsedAccount<BidderPot>;
   }[] = [
-    ...winnersThatCanBeEmptied.map(pot => ({
-      metadata:
-        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
-      pot,
-    })),
-  ];
+      ...winnersThatCanBeEmptied.map(pot => ({
+        metadata:
+          bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
+        pot,
+      })),
+    ];
 
   return {
     bidsToClaim,
@@ -355,6 +384,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     participationPossibleTotal,
     participationUnredeemedTotal,
     hasParticipation,
+    loading,
   };
 }
 
@@ -371,6 +401,7 @@ export const InnerBillingView = ({
 }) => {
   const id = auctionView.thumbnail.metadata.pubkey;
   const art = useArt(id);
+  const [settleErrorMessage, setSettleErrorMessage] = useState<string>();
   const balance = useUserBalance(auctionView.auction.info.tokenMint);
   const [escrowBalance, setEscrowBalance] = useState<number | undefined>();
   const { whitelistedCreatorsByCreator } = useMeta();
@@ -399,21 +430,30 @@ export const InnerBillingView = ({
     participationPossibleTotal,
     participationUnredeemedTotal,
     hasParticipation,
+    loading,
   } = useBillingInfo({
     auctionView,
   });
   return (
     <Content>
       <Col>
-        <Row>
+        <Row
+          style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
+        >
           <Col span={12}>
-            <ArtContent pubkey={id} allowMeshRender={true} />
+            <ArtContent
+              pubkey={id}
+              className="artwork-image"
+              allowMeshRender={true}
+            />
           </Col>
           <Col span={12}>
-            <div>{art.title}</div>
+            <h1>
+              {art.title}
+            </h1>
             <br />
-            <div>TOTAL AUCTION VALUE</div>
-            <div>
+            <div className="info-header">TOTAL AUCTION VALUE</div>
+            <div className="escrow">
               ◎
               {fromLamports(
                 totalWinnerPayments + participationPossibleTotal,
@@ -421,19 +461,21 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div>TOTAL AUCTION REDEEMED VALUE</div>
-            <div>
+            <div className="info-header">TOTAL AUCTION REDEEMED VALUE</div>
+            <div className="escrow">
               ◎
               {fromLamports(
                 totalWinnerPayments +
-                  participationPossibleTotal -
-                  participationUnredeemedTotal,
+                participationPossibleTotal -
+                participationUnredeemedTotal,
                 mint,
               )}
             </div>
             <br />
-            <div>TOTAL COLLECTED BY ARTISTS AND AUCTIONEER</div>
-            <div>
+            <div className="info-header">
+              TOTAL COLLECTED BY ARTISTS AND AUCTIONEER
+            </div>
+            <div className="escrow">
               ◎
               {fromLamports(
                 Object.values(payoutTickets).reduce(
@@ -444,8 +486,8 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div>TOTAL UNSETTLED</div>
-            <div>
+            <div className="info-header">TOTAL UNSETTLED</div>
+            <div className="escrow">
               ◎
               {fromLamports(
                 bidsToClaim.reduce(
@@ -456,15 +498,19 @@ export const InnerBillingView = ({
               )}
             </div>
             <br />
-            <div>TOTAL IN ESCROW</div>
-            <div>
-              {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin />}
+            <div className="info-header">TOTAL IN ESCROW</div>
+            <div className="escrow">
+              {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin indicator={<LoadingOutlined />} />}
             </div>
             <br />
             {hasParticipation && (
               <>
-                <div>TOTAL UNREDEEMED PARTICIPATION FEES OUTSTANDING</div>
-                <div>◎{fromLamports(participationUnredeemedTotal, mint)}</div>
+                <div className="info-header">
+                  TOTAL UNREDEEMED PARTICIPATION FEES OUTSTANDING
+                </div>
+                <div className="outstanding-open-editions">
+                  ◎{fromLamports(participationUnredeemedTotal, mint)}
+                </div>
                 <br />
               </>
             )}
@@ -472,51 +518,69 @@ export const InnerBillingView = ({
             <Button
               type="primary"
               size="large"
+              className="action-btn"
               onClick={async () => {
-                await settle(
-                  connection,
-                  wallet,
-                  auctionView,
-                  bidsToClaim.map(b => b.pot),
-                  myPayingAccount.pubkey,
-                  accountByMint,
-                );
-                setEscrowBalanceRefreshCounter(ctr => ctr + 1);
+                try {
+                  await settle(
+                    connection,
+                    wallet,
+                    auctionView,
+                    bidsToClaim.map(b => b.pot),
+                    myPayingAccount.pubkey,
+                    accountByMint,
+                  );
+                  setEscrowBalanceRefreshCounter(ctr => ctr + 1);
+                  setSettleErrorMessage(undefined);
+                } catch (e: any) {
+                  setSettleErrorMessage(e.message)
+                }
               }}
             >
               SETTLE OUTSTANDING
             </Button>
+            {settleErrorMessage && (
+              <Space direction="horizontal" size="small">
+                <Text type="danger">***</Text>
+                <Text>{settleErrorMessage}</Text>
+              </Space>
+            )}
           </Col>
         </Row>
         <Row>
-          <Table
-            columns={[
-              {
-                title: 'Name',
-                dataIndex: 'name',
-                key: 'name',
-              },
-              {
-                title: 'Address',
-                dataIndex: 'address',
-                key: 'address',
-              },
-              {
-                title: 'Amount Paid',
-                dataIndex: 'amountPaid',
-                render: (val: number) => (
-                  <span>◎{fromLamports(val, mint)}</span>
-                ),
-                key: 'amountPaid',
-              },
-            ]}
-            dataSource={Object.keys(payoutTickets).map(t => ({
-              key: t,
-              name: whitelistedCreatorsByCreator[t]?.info?.name || 'N/A',
-              address: t,
-              amountPaid: payoutTickets[t].sum,
-            }))}
-          />
+          <Col span={24}>
+            <Table
+              loading={{
+                spinning: loading,
+                indicator: <LoadingOutlined />,
+              }}
+              columns={[
+                {
+                  title: 'Name',
+                  dataIndex: 'name',
+                  key: 'name',
+                },
+                {
+                  title: 'Address',
+                  dataIndex: 'address',
+                  key: 'address',
+                },
+                {
+                  title: 'Amount Paid',
+                  dataIndex: 'amountPaid',
+                  render: (val: number) => (
+                    <span>◎{fromLamports(val, mint)}</span>
+                  ),
+                  key: 'amountPaid',
+                },
+              ]}
+              dataSource={Object.keys(payoutTickets).map(t => ({
+                key: t,
+                name: whitelistedCreatorsByCreator[t]?.info?.name || 'N/A',
+                address: t,
+                amountPaid: payoutTickets[t].sum,
+              }))}
+            />
+          </Col>
         </Row>
       </Col>
     </Content>

@@ -1,20 +1,24 @@
 import { Connection, Keypair, TransactionInstruction } from '@solana/web3.js';
-import { startAuction } from '@oyster/common/dist/lib/models/metaplex/index';
+import {
+  startAuction,
+  ParsedAccount,
+  AuctionManagerV1,
+  AuctionManagerV2,
+} from '@oyster/common';
 import { notify, sendTransactionWithRetry, WalletSigner } from '@oyster/common';
-import { AuctionView } from '../hooks';
 
 export async function startAuctionManually(
   connection: Connection,
   wallet: WalletSigner,
-  auctionView: AuctionView,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
 ) {
   try {
     const signers: Keypair[] = [];
     const instructions: TransactionInstruction[] = [];
 
     await startAuction(
-      auctionView.vault.pubkey,
-      auctionView.auctionManager.authority,
+      auctionManager.info.vault,
+      auctionManager.info.authority,
       instructions,
     );
 

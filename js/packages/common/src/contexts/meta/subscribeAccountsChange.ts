@@ -1,4 +1,6 @@
 import { Connection } from '@solana/web3.js';
+import { getEmptyMetaState } from '.';
+import { WhitelistedCreator, ParsedAccount } from '../..';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -16,15 +18,17 @@ import { MetaState, UpdateStateValueFunc } from './types';
 
 export const subscribeAccountsChange = (
   connection: Connection,
-  getState: () => MetaState,
-  setState: (v: MetaState) => void,
+  whitelistedCreators: Record<string, ParsedAccount<WhitelistedCreator>>,
+  patchState: (state: Partial<MetaState>) => void,
 ) => {
   const subscriptions: number[] = [];
 
   const updateStateValue: UpdateStateValueFunc = (prop, key, value) => {
-    const state = getState();
-    const nextState = makeSetter({ ...state })(prop, key, value);
-    setState(nextState);
+    const state = getEmptyMetaState();
+
+    makeSetter(state)(prop, key, value);
+
+    patchState(state);
   };
 
   subscriptions.push(
@@ -52,7 +56,7 @@ export const subscribeAccountsChange = (
     connection.onProgramAccountChange(
       toPublicKey(METADATA_PROGRAM_ID),
       onChangeAccount(processMetaData, async (prop, key, value) => {
-        const state = { ...getState() };
+        const state = getEmptyMetaState();
         const setter = makeSetter(state);
         let hasChanges = false;
         const updater: UpdateStateValueFunc = (...args) => {
@@ -61,16 +65,13 @@ export const subscribeAccountsChange = (
         };
 
         if (prop === 'metadataByMint') {
-          await initMetadata(
-            value,
-            state.whitelistedCreatorsByCreator,
-            updater,
-          );
+          await initMetadata(value, whitelistedCreators, updater);
         } else {
           updater(prop, key, value);
         }
+
         if (hasChanges) {
-          setState(state);
+          patchState(state);
         }
       }),
     ),

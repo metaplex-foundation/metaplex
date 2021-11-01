@@ -1,16 +1,11 @@
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Tabs } from 'antd';
-import BN from 'bn.js';
-import React, { useState } from 'react';
+import { Spin } from 'antd';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { AuctionRenderCard } from '../../components/AuctionRenderCard';
-import { Banner } from '../../components/Banner';
-import { HowToBuyModal } from '../../components/HowToBuyModal';
+import useInfiniteScroll from 'react-infinite-scroll-hook';
+import { LoadingOutlined } from '@ant-design/icons';
+import { useInfiniteScrollAuctions } from '../../hooks';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
-import { useMeta } from '../../contexts';
-import { AuctionView, AuctionViewState, useAuctions } from '../../hooks';
-
-const { TabPane } = Tabs;
 
 export enum LiveAuctionViewState {
   All = '0',
@@ -20,132 +15,38 @@ export enum LiveAuctionViewState {
 }
 
 export const AuctionListView = () => {
-  const auctions = useAuctions(AuctionViewState.Live);
-  const auctionsEnded = [
-    ...useAuctions(AuctionViewState.Ended),
-    ...useAuctions(AuctionViewState.BuyNow),
-  ];
-  const [activeKey, setActiveKey] = useState(LiveAuctionViewState.All);
-  const { isLoading } = useMeta();
-  const { connected, publicKey } = useWallet();
+  const { auctions, loading, initLoading, hasNextPage, loadMore } = useInfiniteScrollAuctions();
 
-  // Check if the auction is primary sale or not
-  const checkPrimarySale = (auc: AuctionView) => {
-    let flag = 0;
-    auc.items.forEach(i => {
-      i.forEach(j => {
-        if (j.metadata.info.primarySaleHappened == true) {
-          flag = 1;
-          return true;
-        }
-      });
-      if (flag == 1) return true;
-    });
-    if (flag == 1) return true;
-    else return false;
-  };
-
-  const resaleAuctions = auctions
-    .sort(
-      (a, b) =>
-        a.auction.info.endedAt
-          ?.sub(b.auction.info.endedAt || new BN(0))
-          .toNumber() || 0,
-    )
-    .filter(m => checkPrimarySale(m) == true);
-
-  // Removed resales from live auctions
-  const liveAuctions = auctions
-    .sort(
-      (a, b) =>
-        a.auction.info.endedAt
-          ?.sub(b.auction.info.endedAt || new BN(0))
-          .toNumber() || 0,
-    )
-    .filter(a => !resaleAuctions.includes(a));
-
-  let items = liveAuctions;
-
-  switch (activeKey) {
-    case LiveAuctionViewState.All:
-      items = liveAuctions;
-      break;
-    case LiveAuctionViewState.Participated:
-      items = liveAuctions
-        .concat(auctionsEnded)
-        .filter(
-          m => m.myBidderMetadata?.info.bidderPubkey == publicKey?.toBase58(),
-        );
-      break;
-    case LiveAuctionViewState.Resale:
-      items = resaleAuctions;
-      break;
-    case LiveAuctionViewState.Ended:
-      items = auctionsEnded;
-      break;
-  }
-
-  const liveAuctionsView = (
-    <MetaplexMasonry>
-      {!isLoading
-        ? items.map((m, idx) => {
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : []}
-    </MetaplexMasonry>
-  );
-  const endedAuctions = (
-    <MetaplexMasonry>
-      {!isLoading
-        ? auctionsEnded.map((m, idx) => {
-            const id = m.auction.pubkey;
-            return (
-              <Link to={`/auction/${id}`} key={idx}>
-                <AuctionRenderCard key={id} auctionView={m} />
-              </Link>
-            );
-          })
-        : []}
-    </MetaplexMasonry>
-  );
+  const [sentryRef] = useInfiniteScroll({
+    loading,
+    hasNextPage,
+    onLoadMore: loadMore,
+    rootMargin: '0px 0px 200px 0px',
+  });
 
   return (
-    <>
-      <Banner
-        src="/main-banner.svg"
-        headingText="The amazing world of Metaplex."
-        subHeadingText="Buy exclusive Metaplex NFTs."
-        actionComponent={<HowToBuyModal />}
-      />
-      <Tabs
-        activeKey={activeKey}
-        onTabClick={key => setActiveKey(key as LiveAuctionViewState)}
-      >
-        <TabPane tab="Live" key={LiveAuctionViewState.All}>
-          {liveAuctionsView}
-        </TabPane>
-        {resaleAuctions.length > 0 && (
-          <TabPane
-            tab="Secondary Marketplace"
-            key={LiveAuctionViewState.Resale}
-          >
-            {liveAuctionsView}
-          </TabPane>
-        )}
-        <TabPane tab="Ended" key={LiveAuctionViewState.Ended}>
-          {endedAuctions}
-        </TabPane>
-        {connected && (
-          <TabPane tab="Participated" key={LiveAuctionViewState.Participated}>
-            {liveAuctionsView}
-          </TabPane>
-        )}
-      </Tabs>
-    </>
+    initLoading ? (
+      <div className="app-section--loading">
+        <Spin indicator={<LoadingOutlined />} />
+      </div>
+    ) : (
+      <>
+        <MetaplexMasonry>
+          {auctions.map((m, idx) => {
+            const id = m.auction.pubkey;
+            return (
+              <Link to={`/auction/${id}`} key={idx}>
+                <AuctionRenderCard key={id} auctionView={m} />
+              </Link>
+            );
+          })}
+        </MetaplexMasonry>
+        {hasNextPage && (
+          <div className="app-section--loading" ref={sentryRef}>
+            <Spin indicator={<LoadingOutlined />} />
+          </div>)
+        }
+      </>
+    )
   );
 };

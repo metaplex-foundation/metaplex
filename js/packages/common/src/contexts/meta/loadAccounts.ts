@@ -1,3 +1,4 @@
+import { uniqWith, merge } from 'lodash';
 import {
   AUCTION_ID,
   METADATA_PROGRAM_ID,
@@ -6,6 +7,7 @@ import {
   toPublicKey,
   VAULT_ID,
 } from '../../utils/ids';
+import { getStoreID } from '../../utils';
 import { MAX_WHITELISTED_CREATOR_SIZE } from '../../models';
 import {
   getEdition,
@@ -18,9 +20,17 @@ import {
   METADATA_PREFIX,
   decodeMetadata,
   getAuctionExtended,
+  getMetadata,
+  SafetyDepositBox,
 } from '../../actions';
-import { uniqWith } from 'lodash';
-import { WhitelistedCreator } from '../../models/metaplex';
+import {
+  WhitelistedCreator,
+  AuctionManagerV1,
+  AuctionManagerV2,
+  getBidRedemption,
+  getPrizeTrackingTicket,
+  MAX_PAYOUT_TICKET_SIZE,
+} from '../../models/metaplex';
 import { Connection, PublicKey } from '@solana/web3.js';
 import {
   AccountAndPubkey,
@@ -41,257 +51,115 @@ import { getProgramAccounts } from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
 
-export const USE_SPEED_RUN = false;
-const WHITELISTED_METADATA = ['98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte'];
-const WHITELISTED_AUCTION = ['D8wMB5iLZnsV7XQjpwqXaDynUtFuDs7cRXvEGNj1NF1e'];
-const AUCTION_TO_METADATA: Record<string, string[]> = {
-  D8wMB5iLZnsV7XQjpwqXaDynUtFuDs7cRXvEGNj1NF1e: [
-    '98vYFjBYS9TguUMWQRPjy2SZuxKuUMcqR4vnQiLjZbte',
-  ],
-};
-const AUCTION_TO_VAULT: Record<string, string> = {
-  D8wMB5iLZnsV7XQjpwqXaDynUtFuDs7cRXvEGNj1NF1e:
-    '3wHCBd3fYRPWjd5GqzrXanLJUKRyU3nECKbTPKfVwcFX',
-};
-const WHITELISTED_AUCTION_MANAGER = [
-  '3HD2C8oCL8dpqbXo8hq3CMw6tRSZDZJGajLxnrZ3ZkYx',
-];
-const WHITELISTED_VAULT = ['3wHCBd3fYRPWjd5GqzrXanLJUKRyU3nECKbTPKfVwcFX'];
+export const loadAccounts = async (
+  connection: Connection,
+  ownerAddress: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+  const storeAddress = await getStoreID(ownerAddress);
 
-export const limitedLoadAccounts = async (connection: Connection) => {
-  const tempCache: MetaState = getEmptyMetaState();
-  const updateTemp = makeSetter(tempCache);
+  if (!storeAddress) {
+    console.error('no store address. unable to lookup store account.');
+    return state;
+  }
 
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateTemp);
-      }
-    };
+  const loadStorefront = async (storeAddress: StringPublicKey) => {
+    const storePubkey = new PublicKey(storeAddress);
+    const storeData = await connection.getAccountInfo(storePubkey);
 
-  const pullMetadata = async (metadata: string) => {
-    const mdKey = new PublicKey(metadata);
-    const md = await connection.getAccountInfo(mdKey);
-    const mdObject = decodeMetadata(
-      Buffer.from(md?.data || new Uint8Array([])),
-    );
-    const editionKey = await getEdition(mdObject.mint);
-    const editionData = await connection.getAccountInfo(
-      new PublicKey(editionKey),
-    );
-    if (md) {
-      //@ts-ignore
-      md.owner = md.owner.toBase58();
-      processMetaData(
+    if (storeData) {
+      processMetaplexAccounts(
         {
-          pubkey: metadata,
-          account: md,
+          pubkey: storeAddress,
+          account: storeData,
         },
-        updateTemp,
+        updateState,
       );
-      if (editionData) {
-        //@ts-ignore
-        editionData.owner = editionData.owner.toBase58();
-        processMetaData(
-          {
-            pubkey: editionKey,
-            account: editionData,
-          },
-          updateTemp,
-        );
-      }
     }
   };
 
-  const pullAuction = async (auction: string) => {
-    const auctionExtendedKey = await getAuctionExtended({
-      auctionProgramId: AUCTION_ID,
-      resource: AUCTION_TO_VAULT[auction],
+  const loadAuctionManagers = async (
+    storeAddress: StringPublicKey,
+  ): Promise<ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[]> => {
+    const response = await getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 1, // key
+            bytes: storeAddress,
+          },
+        },
+      ],
     });
+
+    await forEachAccount(processMetaplexAccounts)(response);
+
+    return Object.values(state.auctionManagersByAuction);
+  };
+
+  const loadAuctionsFromAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const auctionIds = parsedAccounts.map(({ info: { auction } }) => auction);
+
+    const auctionExtendedKeys = await Promise.all(
+      parsedAccounts.map(account =>
+        getAuctionExtended({
+          auctionProgramId: AUCTION_ID,
+          resource: account.info.vault,
+        }),
+      ),
+    );
 
     const auctionData = await getMultipleAccounts(
       connection,
-      [auction, auctionExtendedKey],
+      [...auctionIds, ...auctionExtendedKeys],
       'single',
     );
 
     if (auctionData) {
-      auctionData.keys.map((pubkey, i) => {
-        processAuctions(
-          {
-            pubkey,
-            account: auctionData.array[i],
-          },
-          updateTemp,
-        );
-      });
-    }
-  };
-
-  const pullAuctionManager = async (auctionManager: string) => {
-    const auctionManagerKey = new PublicKey(auctionManager);
-    const auctionManagerData = await connection.getAccountInfo(
-      auctionManagerKey,
-    );
-    if (auctionManagerData) {
-      //@ts-ignore
-      auctionManagerData.owner = auctionManagerData.owner.toBase58();
-      processMetaplexAccounts(
-        {
-          pubkey: auctionManager,
-          account: auctionManagerData,
-        },
-        updateTemp,
+      await Promise.all(
+        auctionData.keys.map((pubkey, i) => {
+          processAuctions(
+            {
+              pubkey,
+              account: auctionData.array[i],
+            },
+            updateState,
+          );
+        }),
       );
     }
   };
 
-  const pullVault = async (vault: string) => {
-    const vaultKey = new PublicKey(vault);
-    const vaultData = await connection.getAccountInfo(vaultKey);
+  const loadVaultsForAuctionManagers = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    const vaultKeys = parsedAccounts.map(({ info: { vault } }) => vault);
+
+    const vaultData = await getMultipleAccounts(
+      connection,
+      vaultKeys,
+      'single',
+    );
+
     if (vaultData) {
-      //@ts-ignore
-      vaultData.owner = vaultData.owner.toBase58();
-      processVaultData(
-        {
-          pubkey: vault,
-          account: vaultData,
-        },
-        updateTemp,
+      await Promise.all(
+        vaultData.keys.map((pubkey, i) => {
+          processVaultData(
+            {
+              pubkey,
+              account: vaultData.array[i],
+            },
+            updateState,
+          );
+        }),
       );
     }
   };
 
-  const promises = [
-    ...WHITELISTED_METADATA.map(md => pullMetadata(md)),
-    ...WHITELISTED_AUCTION.map(a => pullAuction(a)),
-    ...WHITELISTED_AUCTION_MANAGER.map(a => pullAuctionManager(a)),
-    ...WHITELISTED_VAULT.map(a => pullVault(a)),
-    // bidder metadata pull
-    ...WHITELISTED_AUCTION.map(a =>
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 32,
-              bytes: a,
-            },
-          },
-        ],
-      }).then(forEach(processAuctions)),
-    ),
-    // bidder pot pull
-    ...WHITELISTED_AUCTION.map(a =>
-      getProgramAccounts(connection, AUCTION_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 64,
-              bytes: a,
-            },
-          },
-        ],
-      }).then(forEach(processAuctions)),
-    ),
-    // safety deposit pull
-    ...WHITELISTED_VAULT.map(v =>
-      getProgramAccounts(connection, VAULT_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 1,
-              bytes: v,
-            },
-          },
-        ],
-      }).then(forEach(processVaultData)),
-    ),
-    // bid redemptions
-    ...WHITELISTED_AUCTION_MANAGER.map(a =>
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 9,
-              bytes: a,
-            },
-          },
-        ],
-      }).then(forEach(processMetaplexAccounts)),
-    ),
-    // safety deposit configs
-    ...WHITELISTED_AUCTION_MANAGER.map(a =>
-      getProgramAccounts(connection, METAPLEX_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset: 1,
-              bytes: a,
-            },
-          },
-        ],
-      }).then(forEach(processMetaplexAccounts)),
-    ),
-    // prize tracking tickets
-    ...Object.keys(AUCTION_TO_METADATA)
-      .map(key =>
-        AUCTION_TO_METADATA[key]
-          .map(md =>
-            getProgramAccounts(connection, METAPLEX_ID, {
-              filters: [
-                {
-                  memcmp: {
-                    offset: 1,
-                    bytes: md,
-                  },
-                },
-              ],
-            }).then(forEach(processMetaplexAccounts)),
-          )
-          .flat(),
-      )
-      .flat(),
-    // whitelisted creators
-    getProgramAccounts(connection, METAPLEX_ID, {
-      filters: [
-        {
-          dataSize: MAX_WHITELISTED_CREATOR_SIZE,
-        },
-      ],
-    }).then(forEach(processMetaplexAccounts)),
-  ];
-
-  await Promise.all(promises);
-
-  await postProcessMetadata(tempCache);
-
-  return tempCache;
-};
-
-export const loadAccounts = async (connection: Connection) => {
-  const state: MetaState = getEmptyMetaState();
-  const updateState = makeSetter(state);
-  const forEachAccount = processingAccounts(updateState);
-
-  const forEach =
-    (fn: ProcessAccountsFunc) => async (accounts: AccountAndPubkey[]) => {
-      for (const account of accounts) {
-        await fn(account, updateState);
-      }
-    };
-
-  const loadVaults = () =>
-    getProgramAccounts(connection, VAULT_ID).then(
-      forEachAccount(processVaultData),
-    );
-  const loadAuctions = () =>
-    getProgramAccounts(connection, AUCTION_ID).then(
-      forEachAccount(processAuctions),
-    );
-  const loadMetaplex = () =>
-    getProgramAccounts(connection, METAPLEX_ID).then(
-      forEachAccount(processMetaplexAccounts),
-    );
   const loadCreators = () =>
     getProgramAccounts(connection, METAPLEX_ID, {
       filters: [
@@ -299,34 +167,140 @@ export const loadAccounts = async (connection: Connection) => {
           dataSize: MAX_WHITELISTED_CREATOR_SIZE,
         },
       ],
-    }).then(forEach(processMetaplexAccounts));
-  const loadMetadata = () =>
-    pullMetadataByCreators(connection, state, updateState);
-  const loadEditions = () => pullEditions(connection, updateState, state);
+    }).then(forEachAccount(processMetaplexAccounts));
 
+  const loadAuctionsAndVaults = async (
+    parsedAccounts: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[],
+  ) => {
+    await Promise.all([
+      loadAuctionsFromAuctionManagers(parsedAccounts),
+      loadVaultsForAuctionManagers(parsedAccounts),
+    ]);
+  };
   const loading = [
-    loadCreators().then(loadMetadata).then(loadEditions),
-    loadVaults(),
-    loadAuctions(),
-    loadMetaplex(),
+    loadCreators(),
+    loadStorefront(storeAddress),
+    loadAuctionManagers(storeAddress).then(loadAuctionsAndVaults),
   ];
 
   await Promise.all(loading);
 
-  state.metadata = uniqWith(
-    state.metadata,
-    (a: ParsedAccount<Metadata>, b: ParsedAccount<Metadata>) =>
-      a.pubkey === b.pubkey,
+  return state;
+};
+
+export const loadPayoutTickets = async (
+  connection: Connection,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const responses = await getProgramAccounts(connection, METAPLEX_ID, {
+    filters: [
+      {
+        dataSize: MAX_PAYOUT_TICKET_SIZE,
+      },
+    ],
+  });
+
+  await forEachAccount(processMetaplexAccounts)(responses);
+
+  return state;
+};
+
+export const loadPrizeTrackingTickets = async (
+  connection: Connection,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
+  metadata: ParsedAccount<Metadata>[],
+): Promise<MetaState> => {
+  const state = getEmptyMetaState();
+  const updateState = makeSetter(state);
+
+  const prizeTrackingKeys = await Promise.all(
+    metadata.map(m =>
+      getPrizeTrackingTicket(auctionManager.pubkey, m.info.mint),
+    ),
   );
+
+  const prizeTrackingTicketsResponse = await getMultipleAccounts(
+    connection,
+    prizeTrackingKeys,
+    'single',
+  );
+
+  if (!prizeTrackingTicketsResponse) {
+    console.error(
+      `no prize tracking ticket response for auction manager ${auctionManager.pubkey}`,
+    );
+    return state;
+  }
+
+  await Promise.all(
+    prizeTrackingTicketsResponse.keys.map((pubkey, i) => {
+      const account = prizeTrackingTicketsResponse.array[i];
+
+      if (!account) {
+        return;
+      }
+
+      return processMetaplexAccounts(
+        {
+          pubkey,
+          account,
+        },
+        updateState,
+      );
+    }),
+  );
+
+  return state;
+};
+
+export const loadMetaDataAndEditionsForCreators = async (
+  connection: Connection,
+  whitelistedCreatorsByCreator: Record<
+    string,
+    ParsedAccount<WhitelistedCreator>
+  >,
+): Promise<MetaState> => {
+  const loadMetadata = () =>
+    pullMetadataByCreators(connection, whitelistedCreatorsByCreator);
+  const loadEditions = (state: MetaState) => pullEditions(connection, state);
+
+  const state = await loadMetadata().then(loadEditions);
+
+  return state;
+};
+
+export const querySafetyDepositBoxByVault = async (
+  connection: Connection,
+  vaultPublicKey: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const response = await getProgramAccounts(connection, VAULT_ID, {
+    filters: [
+      {
+        memcmp: {
+          offset: 1,
+          bytes: vaultPublicKey,
+        },
+      },
+    ],
+  });
+
+  await forEachAccount(processVaultData)(response);
 
   return state;
 };
 
 const pullEditions = async (
   connection: Connection,
-  updater: UpdateStateValueFunc,
   state: MetaState,
-) => {
+): Promise<MetaState> => {
+  const updateState = makeSetter(state);
   console.log('Pulling editions for optimized metadata');
 
   type MultipleAccounts = UnPromise<ReturnType<typeof getMultipleAccounts>>;
@@ -351,7 +325,7 @@ const pullEditions = async (
           pubkey: returnedAccounts.keys[j],
           account: returnedAccounts.array[j],
         },
-        updater,
+        updateState,
       );
     }
   };
@@ -392,57 +366,301 @@ const pullEditions = async (
     Object.keys(state.editions).length,
     Object.keys(state.masterEditions).length,
   );
+
+  return state;
 };
 
-const pullMetadataByCreators = (
+export const loadArtwork = async (
   connection: Connection,
-  state: MetaState,
-  updater: UpdateStateValueFunc,
-): Promise<any> => {
-  console.log('pulling optimized nfts');
+  whitelistedCreatorsByCreator: Record<
+    string,
+    ParsedAccount<WhitelistedCreator>
+  >,
+  key: StringPublicKey,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const metaResponse = await getMultipleAccounts(connection, [key], 'single');
 
-  const whitelistedCreators = Object.values(state.whitelistedCreatorsByCreator);
+  if (!metaResponse) {
+    console.error('No meta response');
+
+    return state;
+  }
+
+  const [metadataAccount] = metaResponse.keys.map((pubkey, i) => {
+    const account = metaResponse.array[i];
+
+    if (!account) {
+      return;
+    }
+
+    return {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    } as ParsedAccount<Metadata>;
+  });
+
+  if (!metadataAccount) {
+    return state;
+  }
+
+  await initMetadata(
+    metadataAccount,
+    whitelistedCreatorsByCreator,
+    updateState,
+  );
+
+  await pullEditions(connection, state);
+
+  return state;
+};
+
+export const loadAuction = async (
+  connection: Connection,
+  auctionManager: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
+  const forEachAccount = processingAccounts(updateState);
+
+  const rpcQueries = [
+    // safety deposit box config
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 1,
+            bytes: auctionManager.pubkey,
+          },
+        },
+      ],
+    }).then(forEachAccount(processMetaplexAccounts)),
+    // safety deposit
+    getProgramAccounts(connection, VAULT_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 1,
+            bytes: auctionManager.info.vault,
+          },
+        },
+      ],
+    }).then(forEachAccount(processVaultData)),
+    // bidder redemptions
+    getProgramAccounts(connection, METAPLEX_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 9,
+            bytes: auctionManager.pubkey,
+          },
+        },
+      ],
+    }).then(forEachAccount(processMetaplexAccounts)),
+    // bidder metadata
+    getProgramAccounts(connection, AUCTION_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 32,
+            bytes: auctionManager.info.auction,
+          },
+        },
+      ],
+    }).then(forEachAccount(processAuctions)),
+    // bidder pot
+    getProgramAccounts(connection, AUCTION_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset: 64,
+            bytes: auctionManager.info.auction,
+          },
+        },
+      ],
+    }).then(forEachAccount(processAuctions)),
+  ];
+
+  await Promise.all(rpcQueries);
+
+  const bidderRedemptionIds = await Promise.all(
+    Object.values(state.bidderMetadataByAuctionAndBidder).map(bm =>
+      getBidRedemption(auctionManager.info.auction, bm.pubkey),
+    ),
+  );
+
+  const bidRedemptionData = await getMultipleAccounts(
+    connection,
+    bidderRedemptionIds,
+    'single',
+  );
+
+  if (bidRedemptionData) {
+    await Promise.all(
+      bidRedemptionData.keys.map((pubkey, i) => {
+        const account = bidRedemptionData.array[i];
+
+        if (!account) {
+          return;
+        }
+
+        return processMetaplexAccounts(
+          {
+            pubkey,
+            account,
+          },
+          updateState,
+        );
+      }),
+    );
+  }
+
+  return state;
+};
+
+export const loadMetadataAndEditionsBySafetyDepositBoxes = async (
+  connection: Connection,
+  safetyDepositBoxesByVaultAndIndex: Record<
+    string,
+    ParsedAccount<SafetyDepositBox>
+  >,
+  whitelistedCreatorsByCreator: Record<
+    string,
+    ParsedAccount<WhitelistedCreator>
+  >,
+): Promise<MetaState> => {
+  const nextState: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(nextState);
+
+  const metadataKeys = await Promise.all(
+    Object.values(safetyDepositBoxesByVaultAndIndex).map(
+      ({ info: { tokenMint } }) => getMetadata(tokenMint),
+    ),
+  );
+
+  const metadataData = await getMultipleAccounts(
+    connection,
+    metadataKeys,
+    'single',
+  );
+
+  if (!metadataData) {
+    console.error('No response from metadata query by mint');
+
+    return nextState;
+  }
+
+  const metadata = metadataData.keys.reduce((memo, pubkey, i) => {
+    const account = metadataData.array[i];
+    if (!account) {
+      return memo;
+    }
+
+    const metadata = {
+      pubkey,
+      account,
+      info: decodeMetadata(account.data),
+    };
+    return [...memo, metadata];
+  }, [] as ParsedAccount<Metadata>[]);
+
+  const readyMetadata = metadata.map(m =>
+    initMetadata(m, whitelistedCreatorsByCreator, updateState),
+  );
+
+  await Promise.all(readyMetadata);
+
+  await pullEditions(connection, nextState);
+
+  return nextState;
+};
+
+export const loadMetadataForCreator = async (
+  connection: Connection,
+  creator: ParsedAccount<WhitelistedCreator>,
+): Promise<MetaState> => {
+  const state: MetaState = getEmptyMetaState();
+  const updateState = makeSetter(state);
 
   const setter: UpdateStateValueFunc = async (prop, key, value) => {
     if (prop === 'metadataByMint') {
-      await initMetadata(value, state.whitelistedCreatorsByCreator, updater);
+      await initMetadata(
+        value,
+        { [creator.info.address]: creator },
+        updateState,
+      );
     } else {
-      updater(prop, key, value);
+      updateState(prop, key, value);
     }
   };
   const forEachAccount = processingAccounts(setter);
 
-  const additionalPromises: Promise<void>[] = [];
-  for (const creator of whitelistedCreators) {
-    for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-      const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset:
-                1 + // key
-                32 + // update auth
-                32 + // mint
-                4 + // name string length
-                MAX_NAME_LENGTH + // name
-                4 + // uri string length
-                MAX_URI_LENGTH + // uri
-                4 + // symbol string length
-                MAX_SYMBOL_LENGTH + // symbol
-                2 + // seller fee basis points
-                1 + // whether or not there is a creators vec
-                4 + // creators vec length
-                i * MAX_CREATOR_LEN,
-              bytes: creator.info.address,
-            },
+  const promises: Promise<void>[] = [];
+
+  for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
+    const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
+      filters: [
+        {
+          memcmp: {
+            offset:
+              1 + // key
+              32 + // update auth
+              32 + // mint
+              4 + // name string length
+              MAX_NAME_LENGTH + // name
+              4 + // uri string length
+              MAX_URI_LENGTH + // uri
+              4 + // symbol string length
+              MAX_SYMBOL_LENGTH + // symbol
+              2 + // seller fee basis points
+              1 + // whether or not there is a creators vec
+              4 + // creators vec length
+              i * MAX_CREATOR_LEN,
+            bytes: creator.info.address,
           },
-        ],
-      }).then(forEachAccount(processMetaData));
-      additionalPromises.push(promise);
-    }
+        },
+      ],
+    }).then(forEachAccount(processMetaData));
+
+    promises.push(promise);
   }
 
-  return Promise.all(additionalPromises);
+  await Promise.all(promises);
+
+  return state;
+};
+
+const pullMetadataByCreators = async (
+  connection: Connection,
+  whitelistedCreatorsByCreator: Record<
+    string,
+    ParsedAccount<WhitelistedCreator>
+  >,
+): Promise<MetaState> => {
+  console.log('pulling optimized nfts');
+
+  const whitelistedCreators = Object.values(whitelistedCreatorsByCreator);
+
+  const additionalPromises: Promise<MetaState>[] = [];
+  for (const creator of whitelistedCreators) {
+    additionalPromises.push(loadMetadataForCreator(connection, creator));
+  }
+
+  const responses = await Promise.all(additionalPromises);
+
+  return responses.reduce((memo, state) => {
+    const next = merge({}, memo, state);
+    const currentMetadata = memo.metadata ?? [];
+    const metadata = state.metadata ?? [];
+    next.metadata = uniqWith(
+      [...currentMetadata, ...metadata],
+      (a, b) => a.pubkey === b.pubkey,
+    );
+
+    return next;
+  }, getEmptyMetaState());
 };
 
 export const makeSetter =
@@ -472,14 +690,6 @@ export const processingAccounts =
       },
     );
   };
-
-const postProcessMetadata = async (state: MetaState) => {
-  const values = Object.values(state.metadataByMint);
-
-  for (const metadata of values) {
-    await metadataByMintUpdater(metadata, state);
-  }
-};
 
 export const metadataByMintUpdater = async (
   metadata: ParsedAccount<Metadata>,

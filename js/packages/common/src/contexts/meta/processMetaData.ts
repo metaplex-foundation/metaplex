@@ -23,16 +23,13 @@ export const processMetaData: ProcessAccountsFunc = async (
     if (isMetadataV1Account(account)) {
       const metadata = decodeMetadata(account.data);
 
-      if (
-        isValidHttpUrl(metadata.data.uri) &&
-        metadata.data.uri.indexOf('arweave') >= 0
-      ) {
+      if (isValidHttpUrl(metadata.data.uri)) {
         const parsedAccount: ParsedAccount<Metadata> = {
           pubkey,
           account,
           info: metadata,
         };
-        await setter('metadataByMint', metadata.mint, parsedAccount);
+        setter('metadataByMint', metadata.mint, parsedAccount);
       }
     }
 

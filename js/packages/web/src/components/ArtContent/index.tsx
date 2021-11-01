@@ -48,8 +48,6 @@ const CachedImageContent = ({
       onLoad={() => {
         setLoaded(true);
       }}
-      placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: 200 })}
     />
   );
 };
@@ -212,7 +210,7 @@ export const ArtContent = ({
   }
 
   const content =
-    category === 'video' ? (
+    (category === 'video' || category === 'audio') ? (
       <VideoArtContent
         files={files}
         uri={uri}

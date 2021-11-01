@@ -28,11 +28,11 @@ export function Routes({ storefront }: RoutesProps) {
         <Providers storefront={storefront}>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
-            <Route
+            {/* <Route
               exact
               path="/analytics"
               component={() => <AnalyticsView />}
-            />
+            /> */}
             <Route
               exact
               path="/art/create/:step_param?"

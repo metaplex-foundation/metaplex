@@ -11,6 +11,7 @@ const plugins = [
         lessOptions: {
           modifyVars: {
             '@assetPrefix': assetPrefix || "''",
+            '@background-color-secondary': 'rgba(255, 255, 255)',
           },
           javascriptEnabled: true,
         },
@@ -27,6 +28,7 @@ module.exports = withPlugins(plugins, {
   },
   productionBrowserSourceMaps: true,
   env: {
+    NEXT_PUBLIC_BUGSNAG_API_KEY: process.env.BUGSNAG_API_KEY,
     NEXT_PUBLIC_ARWEAVE_CDN: process.env.ARWEAVE_CDN,
     NEXT_PUBLIC_STORE_OWNER_ADDRESS:
       process.env.STORE_OWNER_ADDRESS ||

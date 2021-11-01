@@ -25,7 +25,7 @@ export const ViewOn = ({ id }: { id: string }) => {
               )
             }
           >
-            Solana
+            Transaction
           </Button>
         </div>
       </Col>

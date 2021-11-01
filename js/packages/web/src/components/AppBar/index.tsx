@@ -1,4 +1,4 @@
-import { ConnectButton } from '@oyster/common';
+import { ConnectButton, useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Menu, Row, Space } from 'antd';
 import React, { useMemo } from 'react';
@@ -8,34 +8,59 @@ import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
 
 export const AppBar = () => {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const location = useLocation();
   const locationPath = location.pathname.toLowerCase();
+  const { ownerAddress } = useStore();
+
 
   const menuInfo = useMemo(
-    () => [
-      {
-        key: 'explore',
-        link: '/',
-        alt: [{ path: '/auction', exact: false }],
-        title: 'Explore',
-        exact: true,
-      },
-      {
-        key: 'art',
-        link: '/artworks',
-        alt: [{ path: '/art', exact: false }],
-        title: connected ? 'My Items' : 'Artworks',
-        exact: false,
-      },
-      {
-        key: 'artists',
-        link: '/artists',
-        alt: [],
-        title: 'Artists',
-        exact: false,
-      },
-    ],
+    () => {
+      let menu = [
+        {
+          key: 'listings',
+          link: '/',
+          alt: [{ path: '/auction', exact: false }],
+          title: 'Listings',
+          exact: false,
+        },
+        {
+          key: 'artists',
+          link: `/artists/${ownerAddress}`,
+          alt: [{ path:'/artists', exact: false }],
+          title: 'Artists',
+          exact: false,
+        },
+      ]
+
+      if (connected) {
+        menu = [
+          ...menu,
+          {
+            key: 'owned',
+            link: '/owned',
+            alt: [{ path: '/owned', exact: true }],
+            title: 'Owned',
+            exact: true,
+          },
+        ]
+      }
+
+      if (publicKey?.toBase58() === ownerAddress) {
+        menu = [
+          ...menu,
+          {
+            key: 'admin',
+            link: '/admin',
+            alt: [{ path: '/admin', exact: true }],
+            title: 'Admin',
+            exact: true,
+          },
+        ]
+      }
+
+      return menu;
+    },
     [connected],
   );
 

@@ -24,7 +24,6 @@ import React, {
 } from 'react';
 import { MetaplexModal } from '../components';
 import { notify } from '../utils';
-
 const { Panel } = Collapse;
 
 export interface WalletModalContextState {
@@ -41,7 +40,7 @@ export function useWalletModal(): WalletModalContextState {
   return useContext(WalletModalContext);
 }
 
-export const WalletModal: FC = () => {
+export const WalletModal = () => {
   const { wallets, select } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const close = useCallback(() => {
@@ -137,9 +136,9 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const keyToDisplay =
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
-              base58.length - 7,
-              base58.length,
-            )}`
+            base58.length - 7,
+            base58.length,
+          )}`
           : base58;
 
       notify({
@@ -177,13 +176,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => [
       getPhantomWallet(),
       getSolflareWallet(),
-      // getTorusWallet({
-      //   options: {
-      //     // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
-      //     clientId:
-      //       'BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ',
-      //   },
-      // }),
       getLedgerWallet(),
       getSolongWallet(),
       getMathWallet(),

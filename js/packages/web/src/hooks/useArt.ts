@@ -109,7 +109,7 @@ export const useCachedImage = (uri: string, cacheMesh?: boolean) => {
 
         blob = await response.blob();
 
-        if (blob.size === 0) {
+        if (blob.size === 0 || !response.ok) {
           throw new Error('No content');
         }
       } catch {

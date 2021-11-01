@@ -22,12 +22,10 @@ import {
   useUserAccounts,
   useWalletModal,
   VaultState,
-} from '@oyster/common';
-import {
   BidRedemptionTicket,
   MAX_PRIZE_TRACKING_TICKET_SIZE,
   WinningConfigType,
-} from '@oyster/common/dist/lib/models/metaplex/index';
+} from '@oyster/common';
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -53,7 +51,6 @@ import {
   useUserBalance,
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
-// import { bidAndClaimInstantSale } from '../../actions/bidAndClaimInstantSale';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { Confetti } from '../Confetti';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
@@ -194,7 +191,7 @@ export const AuctionCard = ({
   action?: JSX.Element;
 }) => {
   const connection = useConnection();
-  const { patchState, update } = useMeta();
+  const { patchState } = useMeta();
 
   const wallet = useWallet();
   const { setVisible } = useWalletModal();
@@ -212,6 +209,8 @@ export const AuctionCard = ({
 
   const [showRedeemedBidModal, setShowRedeemedBidModal] =
     useState<boolean>(false);
+  const [showEndingBidModal, setShowEndingBidModal] =
+    useState<boolean>(false);
   const [showRedemptionIssue, setShowRedemptionIssue] =
     useState<boolean>(false);
   const [showBidPlaced, setShowBidPlaced] = useState<boolean>(false);
@@ -225,6 +224,8 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
+
+  const walletPublickKey = wallet?.publicKey?.toBase58();
 
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
@@ -259,7 +260,7 @@ export const AuctionCard = ({
   const gapBidInvalid = useGapTickCheck(value, gapTick, gapTime, auctionView);
 
   const isAuctionManagerAuthorityNotWalletOwner =
-    auctionView.auctionManager.authority !== wallet?.publicKey?.toBase58();
+    auctionView.auctionManager.authority !== walletPublickKey;
 
   const isAuctionNotStarted =
     auctionView.auction.info.state === AuctionState.Created;
@@ -275,13 +276,13 @@ export const AuctionCard = ({
     tickSize &&
     (isUpcoming || bids.length === 0
       ? fromLamports(
-          participationOnly ? participationFixedPrice : priceFloor,
-          mintInfo,
-        )
+        participationOnly ? participationFixedPrice : priceFloor,
+        mintInfo,
+      )
       : isStarted && bids.length > 0
-      ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
-      : 9999999) +
-      tickSize.toNumber() / LAMPORTS_PER_SOL;
+        ? parseFloat(formatTokenAmount(bids[0].info.lastBid, mintInfo))
+        : 9999999) +
+    tickSize.toNumber() / LAMPORTS_PER_SOL;
 
   const invalidBid =
     tickSizeInvalid ||
@@ -366,18 +367,17 @@ export const AuctionCard = ({
                 'confirmed',
               );
 
-              const newState = patchState(patch);
-              setLoading(true);
+              patchState(patch);
 
               {
                 const auctionKey = auctionView.auction.pubkey;
                 const auctionBidderKey = `${auctionKey}-${wallet.publicKey}`;
 
-                auctionView.auction = newState.auctions[auctionKey];
+                auctionView.auction = patch.auctions[auctionKey];
                 auctionView.myBidderPot =
-                  newState.bidderPotsByAuctionAndBidder[auctionBidderKey];
+                  patch.bidderPotsByAuctionAndBidder[auctionBidderKey];
                 auctionView.myBidderMetadata =
-                  newState.bidderMetadataByAuctionAndBidder[auctionBidderKey];
+                  patch.bidderMetadataByAuctionAndBidder[auctionBidderKey];
               }
 
               // Stop retrying on success
@@ -413,13 +413,6 @@ export const AuctionCard = ({
         return;
       }
 
-      try {
-        await update();
-      } catch (e) {
-        console.error('update (post-sendRedeemBid)', e);
-        return;
-      }
-
       setShowRedeemedBidModal(true);
     } finally {
       setLoading(false);
@@ -428,9 +421,9 @@ export const AuctionCard = ({
 
   const isOpenEditionSale =
     auctionView.auction.info.bidState.type === BidStateType.OpenEdition;
+  const isBidderPotEmpty = auctionView.myBidderPot ? Boolean(auctionView.myBidderPot?.info.emptied) : true;
   const doesInstantSaleHasNoItems =
-    Number(auctionView.myBidderPot?.info.emptied) !== 0 &&
-    auctionView.auction.info.bidState.max.toNumber() === bids.length;
+    isBidderPotEmpty && auctionView.auction.info.bidState.max.toNumber() === bids.length;
 
   const shouldHideInstantSale =
     !isOpenEditionSale &&
@@ -438,9 +431,11 @@ export const AuctionCard = ({
     isAuctionManagerAuthorityNotWalletOwner &&
     doesInstantSaleHasNoItems;
 
-  const shouldHide =
-    shouldHideInstantSale ||
-    auctionView.vault.info.state === VaultState.Deactivated;
+  const shouldHide = shouldHideInstantSale ||
+    (
+      auctionView.vault.info.state === VaultState.Deactivated &&
+      isBidderPotEmpty
+    );
 
   if (shouldHide) {
     return <></>;
@@ -462,9 +457,9 @@ export const AuctionCard = ({
         <div>
           <AuctionNumbers
             auctionView={auctionView}
-            showAsRow={true}
-            hideCountdown={true}
-            displaySOL={true}
+            showAsRow
+            hideCountdown
+            displaySOL
           />
           {showPlaceBid &&
             !hideDefaultAction &&
@@ -527,18 +522,17 @@ export const AuctionCard = ({
                 }}
               >
                 {loading ||
-                auctionView.items.find(i => i.find(it => !it.metadata)) ||
-                !myPayingAccount ? (
+                  auctionView.items.find(i => i.find(it => !it.metadata)) ||
+                  !myPayingAccount ? (
                   <Spin />
                 ) : eligibleForAnything ? (
                   `Redeem bid`
                 ) : (
-                  `${
-                    wallet?.publicKey &&
+                  `${wallet?.publicKey &&
                     auctionView.auctionManager.authority ===
-                      wallet.publicKey.toBase58()
-                      ? 'Reclaim Items'
-                      : 'Refund bid'
+                    wallet.publicKey.toBase58()
+                    ? 'Reclaim Items'
+                    : 'Refund bid'
                   }`
                 )}
               </Button>
@@ -560,8 +554,8 @@ export const AuctionCard = ({
               {!hideDefaultAction &&
                 !auctionView.auction.info.ended() &&
                 (wallet.connected &&
-                isAuctionNotStarted &&
-                !isAuctionManagerAuthorityNotWalletOwner ? (
+                  isAuctionNotStarted &&
+                  !isAuctionManagerAuthorityNotWalletOwner ? (
                   <Button
                     disabled={loading}
                     onClick={async () => {
@@ -570,7 +564,7 @@ export const AuctionCard = ({
                         await startAuctionManually(
                           connection,
                           wallet,
-                          auctionView,
+                          auctionView.auctionManager.instance,
                         );
                       } catch (e) {
                         console.error(e);
@@ -663,7 +657,11 @@ export const AuctionCard = ({
               onClick={async () => {
                 setLoading(true);
                 try {
-                  await startAuctionManually(connection, wallet, auctionView);
+                  await startAuctionManually(
+                    connection,
+                    wallet,
+                    auctionView.auctionManager.instance,
+                  );
                 } catch (e) {
                   console.error(e);
                 }
@@ -689,8 +687,8 @@ export const AuctionCard = ({
                 {!isAuctionManagerAuthorityNotWalletOwner
                   ? 'CLAIM ITEM'
                   : auctionView.myBidderPot
-                  ? 'Claim Purchase'
-                  : 'Buy Now'}
+                    ? 'Claim Purchase'
+                    : 'Buy Now'}
               </Button>
             )
           ))}
@@ -729,6 +727,34 @@ export const AuctionCard = ({
           successful
         </p>
         <Button onClick={() => setShowBidPlaced(false)}>Got it</Button>
+      </MetaplexOverlay>
+
+      <MetaplexOverlay visible={showEndingBidModal}>
+        <Confetti />
+        <h1
+          style={{
+            fontSize: '3rem',
+            marginBottom: 20,
+          }}
+        >
+          Congratulations
+        </h1>
+        <p
+          style={{
+            color: 'white',
+            textAlign: 'center',
+            fontSize: '2rem',
+          }}
+        >
+          Your sale has been ended please view your NFTs in <Link to="/artworks">My Items</Link>
+          .
+        </p>
+        <Button
+          onClick={() => setShowEndingBidModal(false)}
+          className="overlay-btn"
+        >
+          Got it
+        </Button>
       </MetaplexOverlay>
 
       <MetaplexOverlay visible={showRedeemedBidModal}>

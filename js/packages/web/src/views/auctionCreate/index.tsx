@@ -538,14 +538,6 @@ export const AuctionCreateView = () => {
     />
   );
 
-  const initialStep = (
-    <InitialPhaseStep
-      attributes={attributes}
-      setAttributes={setAttributes}
-      confirm={() => gotoNextStep()}
-    />
-  );
-
   const endingStep = (
     <EndingPhaseAuction
       attributes={attributes}
@@ -605,7 +597,6 @@ export const AuctionCreateView = () => {
       ['Category', categoryStep],
       ['Copies', copiesStep],
       ['Price', priceAuction],
-      ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
       ['Review', reviewStep],
@@ -616,7 +607,6 @@ export const AuctionCreateView = () => {
       ['Category', categoryStep],
       ['Copies', copiesStep],
       ['Price', priceAuction],
-      ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
       ['Review', reviewStep],
@@ -627,7 +617,6 @@ export const AuctionCreateView = () => {
       ['Category', categoryStep],
       ['Copies', copiesStep],
       ['Price', priceAuction],
-      ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Review', reviewStep],
       ['Publish', waitStep],
@@ -638,7 +627,6 @@ export const AuctionCreateView = () => {
       ['Winners', winnersStep],
       ['Tiers', tierTableStep],
       ['Price', priceAuction],
-      ['Initial Phase', initialStep],
       ['Ending Phase', endingStep],
       ['Participation NFT', participationStep],
       ['Review', reviewStep],

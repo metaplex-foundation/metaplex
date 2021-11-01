@@ -43,6 +43,7 @@ export const TOTALS = 'totals';
 export const ORIGINAL_AUTHORITY_LOOKUP_SIZE = 33;
 export const MAX_PRIZE_TRACKING_TICKET_SIZE = 1 + 32 + 8 + 8 + 8 + 50;
 export const MAX_WHITELISTED_CREATOR_SIZE = 2 + 32 + 10;
+export const MAX_PAYOUT_TICKET_SIZE = 1 + 32 + 8;
 export enum MetaplexKey {
   Uninitialized = 0,
   OriginalAuthorityLookupV1 = 1,
@@ -331,7 +332,7 @@ export class StartAuctionArgs {
 }
 
 export class EndAuctionArgs {
-  instruction = 21;
+  instruction = 20;
   reveal: BN[] | null;
   constructor(args: { reveal: BN[] | null }) {
     this.reveal = args.reveal;

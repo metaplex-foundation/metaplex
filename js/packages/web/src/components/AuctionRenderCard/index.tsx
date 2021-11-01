@@ -1,25 +1,18 @@
 import {
   CountdownState,
-  formatTokenAmount,
-  fromLamports,
-  PriceFloorType,
-  useMint,
 } from '@oyster/common';
 import { Card, CardProps } from 'antd';
-import { BN } from 'bn.js';
 import React, { useEffect, useState } from 'react';
 import {
   AuctionView,
-  AuctionViewState,
   useArt,
-  useBidsForAuction,
   useCreators,
-  useHighestBidForAuction,
 } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
 import { MetaAvatar } from '../MetaAvatar';
+import { getHumanStatus, useAuctionStatus } from './hooks/useAuctionStatus';
 
 export interface AuctionCard extends CardProps {
   auctionView: AuctionView;
@@ -32,51 +25,22 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
   const [state, setState] = useState<CountdownState>();
-  const bids = useBidsForAuction(auctionView.auction.pubkey);
-  const mintInfo = useMint(auctionView.auction.info.tokenMint);
 
-  const participationFixedPrice =
-    auctionView.auctionManager.participationConfig?.fixedPrice || 0;
-  const participationOnly = auctionView.auctionManager.numWinners.eq(new BN(0));
-  const priceFloor =
-    auctionView.auction.info.priceFloor.type === PriceFloorType.Minimum
-      ? auctionView.auction.info.priceFloor.minPrice?.toNumber() || 0
-      : 0;
-  const isUpcoming = auctionView.state === AuctionViewState.Upcoming;
-
-  const winningBid = useHighestBidForAuction(auctionView.auction.pubkey);
   const ended =
     !auctionView.isInstantSale &&
     state?.hours === 0 &&
     state?.minutes === 0 &&
     state?.seconds === 0;
+  const [countdown, setCountdown] = useState<CountdownState>();
 
-  let currentBid: number | string = 0;
-  let label = '';
-  if (isUpcoming || bids) {
-    label = ended
-      ? 'Ended'
-      : auctionView.isInstantSale
-      ? 'Price'
-      : 'Starting bid';
-    currentBid = fromLamports(
-      participationOnly ? participationFixedPrice : priceFloor,
-      mintInfo,
-    );
-  }
-
-  if (!isUpcoming && bids.length > 0) {
-    label = ended ? 'Winning bid' : 'Current bid';
-    currentBid =
-      winningBid && Number.isFinite(winningBid.info.lastBid?.toNumber())
-        ? formatTokenAmount(winningBid.info.lastBid)
-        : 'No Bid';
-  }
+  const { status, amount } = useAuctionStatus(auctionView);
+  const humanStatus = getHumanStatus(status);
 
   const auction = auctionView.auction.info;
+
   useEffect(() => {
     const calc = () => {
-      setState(auction.timeToEnd());
+      setCountdown(auction.timeToEnd());
     };
 
     const interval = setInterval(() => {
@@ -85,7 +49,7 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
     calc();
     return () => clearInterval(interval);
-  }, [auction, setState]);
+  }, [auction, setCountdown]);
 
   const card = (
     <Card hoverable={true} bordered={false}>
@@ -108,8 +72,8 @@ export const AuctionRenderCard = (props: AuctionCard) => {
         )}
       </div>
       <div>
-        <span>{label}</span>
-        <AmountLabel title={label} amount={currentBid} />
+        <span>{humanStatus}</span>
+        <AmountLabel title={humanStatus} amount={amount} />
       </div>
     </Card>
   );
