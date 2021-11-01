@@ -67,7 +67,7 @@ export const ArtView = () => {
   );
 
   return (
-    <Row ref={ref}>
+    <Row ref={ref} gutter={32}>
       <Col xs={{ span: 24 }} md={{ span: 12 }}>
         <ArtContent
           height={300}

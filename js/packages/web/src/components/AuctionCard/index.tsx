@@ -30,7 +30,16 @@ import {
 import { AccountLayout, MintLayout } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Button, InputNumber, Space, Spin } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  InputNumber,
+  Row,
+  Space,
+  Spin,
+  Typography,
+} from 'antd';
 import BN from 'bn.js';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -56,6 +65,8 @@ import { AmountLabel } from '../AmountLabel';
 import { AuctionCountdown, AuctionNumbers } from '../AuctionNumbers';
 import { Confetti } from '../Confetti';
 import { HowAuctionsWorkModal } from '../HowAuctionsWorkModal';
+
+const { Text } = Typography;
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -455,6 +466,7 @@ export const AuctionCard = ({
   // Refund, reclaim, or redeem a bid
   const redeemReclaimRefundBtn = (
     <Button
+      className="metaplex-fullwidth"
       type="primary"
       size="large"
       disabled={
@@ -535,9 +547,15 @@ export const AuctionCard = ({
   const showStartAuctionBtn =
     isAuctionNotStarted && !isAuctionManagerAuthorityNotWalletOwner;
 
+  // If the user can start this auction, or a bid can be placed on it
+  const showStartOrPlaceBidBtns =
+    showDefaultNonEndedAction &&
+    (showStartAuctionBtn || !auctionView.isInstantSale);
+
   // Start the auction
   const startAuctionBtn = (
     <Button
+      className="metaplex-fullwidth"
       type="primary"
       size="large"
       disabled={loading}
@@ -558,6 +576,7 @@ export const AuctionCard = ({
   // Show the place-bid UI
   const placeBidBtn = (
     <Button
+      className="metaplex-fullwidth"
       type="primary"
       size="large"
       onClick={() => {
@@ -572,6 +591,7 @@ export const AuctionCard = ({
   // Conduct an instant sale
   const instantSaleBtn = (
     <Button
+      className="metaplex-fullwidth"
       type="primary"
       size="large"
       disabled={loading}
@@ -587,11 +607,15 @@ export const AuctionCard = ({
 
   // Components for inputting bid amount and placing a bid
   const placeBidUI = (
-    <div>
-      <div>your bid</div>
-      <div>
-        <div>
+    <Space
+      className="metaplex-fullwidth metaplex-space-align-stretch"
+      direction="vertical"
+    >
+      <h5>your bid</h5>
+      <Row gutter={8} align="middle">
+        <Col flex="1 0 auto">
           <InputNumber
+            className="metaplex-fullwidth"
             autoFocus
             value={value}
             onChange={setValue}
@@ -601,11 +625,13 @@ export const AuctionCard = ({
             }
             placeholder={`Bid ${minBid} SOL or more`}
           />
-        </div>
-        <div>
+        </Col>
+        <Col flex="0 0 auto">
           <Button disabled={loading} onClick={() => setShowPlaceBidUI(false)}>
             Cancel
           </Button>
+        </Col>
+        <Col flex="0 0 auto">
           <Button
             disabled={invalidBid}
             onClick={async () => {
@@ -632,88 +658,116 @@ export const AuctionCard = ({
               'Bid now'
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </Col>
+      </Row>
+    </Space>
   );
 
   return (
     <div>
-      {!auctionView.isInstantSale && (
-        <div>
-          <span>Auction ends in</span>
-          <div>
-            <AuctionCountdown auctionView={auctionView} labels={false} />
-          </div>
-        </div>
-      )}
-      <Space direction="vertical">
-        <Space direction="horizontal">
-          <AuctionNumbers
-            auctionView={auctionView}
-            showAsRow={true}
-            hideCountdown={true}
-            displaySOL={true}
-          />
-          {showRedeemReclaimRefundBtn && redeemReclaimRefundBtn}
-          {showPlaceBidUI ? (
-            <AmountLabel
-              title="in your wallet"
-              displaySOL={true}
-              amount={formatAmount(balance.balance, 2)}
-              customPrefix={
-                <Identicon size={24} address={wallet?.publicKey?.toBase58()} />
-              }
-            />
-          ) : (
-            <>
-              <HowAuctionsWorkModal />
-              {showDefaultNonEndedAction &&
-                (showStartAuctionBtn ? startAuctionBtn : placeBidBtn)}
-            </>
+      <Card
+        bordered={false}
+        title={
+          auctionView.isInstantSale ? undefined : (
+            <Space direction="horizontal">
+              <span>Auction ends in</span>
+              <AuctionCountdown auctionView={auctionView} labels={false} />
+            </Space>
+          )
+        }
+      >
+        <Space
+          className="metaplex-fullwidth metaplex-space-align-stretch"
+          direction="vertical"
+        >
+          <Row gutter={8} align="middle">
+            <Col flex="1 0 auto">
+              <AuctionNumbers
+                auctionView={auctionView}
+                showAsRow={true}
+                hideCountdown={true}
+                displaySOL={true}
+              />
+            </Col>
+            {showRedeemReclaimRefundBtn && (
+              <Col flex="0 0 auto">{redeemReclaimRefundBtn}</Col>
+            )}
+            {showPlaceBidUI ? (
+              <Col flex="1 0 auto">
+                <AmountLabel
+                  title="in your wallet"
+                  displaySOL={true}
+                  amount={formatAmount(balance.balance, 2)}
+                  customPrefix={
+                    <Identicon
+                      size={24}
+                      address={wallet?.publicKey?.toBase58()}
+                    />
+                  }
+                />
+              </Col>
+            ) : (
+              <>
+                <Col flex="0 0 auto">
+                  <HowAuctionsWorkModal buttonSize="large" />
+                </Col>
+                {showStartOrPlaceBidBtns && (
+                  <Col flex="0 0 auto">
+                    {showStartAuctionBtn ? startAuctionBtn : placeBidBtn}
+                  </Col>
+                )}
+              </>
+            )}
+          </Row>
+
+          {showDefaultNonEndedAction &&
+            showPlaceBidUI &&
+            !auctionView.isInstantSale &&
+            placeBidUI}
+          {showDefaultNonEndedAction &&
+            (showStartAuctionBtn ? (
+              startAuctionBtn
+            ) : loading ? (
+              <Spin />
+            ) : (
+              auctionView.isInstantSale && instantSaleBtn
+            ))}
+          {!hideDefaultAction && !wallet.connected && (
+            <Button
+              className="metaplex-fullwidth"
+              type="primary"
+              size="large"
+              onClick={connect}
+            >
+              Connect wallet to{' '}
+              {auctionView.isInstantSale ? 'purchase' : 'place bid'}
+            </Button>
+          )}
+
+          {action}
+
+          {showRedemptionIssue && (
+            <Text type="danger">
+              There was an issue redeeming or refunding your bid. Please try
+              again.
+            </Text>
+          )}
+          {tickSizeInvalid && tickSize && (
+            <Text type="danger">
+              Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.
+            </Text>
+          )}
+          {gapBidInvalid && (
+            <Text type="danger">
+              Your bid needs to be at least {gapTick}% larger than an existing
+              bid during gap periods to be eligible.
+            </Text>
+          )}
+          {!loading && value !== undefined && showPlaceBidUI && invalidBid && (
+            <Text type="danger">Invalid amount</Text>
           )}
         </Space>
-
-        {showDefaultNonEndedAction &&
-          showPlaceBidUI &&
-          !auctionView.isInstantSale &&
-          placeBidUI}
-        {showDefaultNonEndedAction &&
-          (showStartAuctionBtn ? (
-            startAuctionBtn
-          ) : loading ? (
-            <Spin />
-          ) : (
-            auctionView.isInstantSale && instantSaleBtn
-          ))}
-        {!hideDefaultAction && !wallet.connected && (
-          <Button type="primary" size="large" onClick={connect}>
-            Connect wallet to{' '}
-            {auctionView.isInstantSale ? 'purchase' : 'place bid'}
-          </Button>
-        )}
-
-        {action}
-
-        {showRedemptionIssue && (
-          <span>
-            There was an issue redeeming or refunding your bid. Please try
-            again.
-          </span>
-        )}
-        {tickSizeInvalid && tickSize && (
-          <span>Tick size is ◎{tickSize.toNumber() / LAMPORTS_PER_SOL}.</span>
-        )}
-        {gapBidInvalid && (
-          <span>
-            Your bid needs to be at least {gapTick}% larger than an existing bid
-            during gap periods to be eligible.
-          </span>
-        )}
-        {!loading && value !== undefined && showPlaceBidUI && invalidBid && (
-          <span>Invalid amount</span>
-        )}
-      </Space>
+      </Card>
 
       <MetaplexOverlay visible={showBidPlaced}>
         <Confetti />

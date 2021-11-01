@@ -5,7 +5,7 @@ import {
   PriceFloorType,
   useMint,
 } from '@oyster/common';
-import { Card, CardProps } from 'antd';
+import { Card, CardProps, Divider, Space } from 'antd';
 import { BN } from 'bn.js';
 import React, { useEffect, useState } from 'react';
 import {
@@ -89,28 +89,26 @@ export const AuctionRenderCard = (props: AuctionCard) => {
 
   const card = (
     <Card hoverable={true} bordered={false}>
-      <div>
-        <div>
+      <Space direction="vertical">
+        <Space direction="horizontal">
           <MetaAvatar creators={[creators[0]]} />
           <span>
             {creators[0].name || creators[0].address?.substr(0, 6)}...
           </span>
-        </div>
-        <div>
-          <ArtContent preview={false} pubkey={id} allowMeshRender={false} />
-        </div>
-        <div>{name}</div>
-        {!ended && (
+        </Space>
+
+        <ArtContent preview={false} pubkey={id} allowMeshRender={false} />
+        <h3>{name}</h3>
+
+        {!auctionView.isInstantSale && !ended && (
           <div>
-            <span>ENDING IN</span>
+            <h5>ENDING IN</h5>
             <AuctionCountdown auctionView={auctionView} labels={false} />
           </div>
         )}
-      </div>
-      <div>
-        <span>{label}</span>
-        <AmountLabel title={label} amount={currentBid} />
-      </div>
+      </Space>
+      <Divider />
+      <AmountLabel key={0} title={label} amount={currentBid} />
     </Card>
   );
 

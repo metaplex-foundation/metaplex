@@ -31,6 +31,7 @@ export const ContentCard = (props: ContentCardProps) => {
 
 interface ModalProps {
   buttonType?: ButtonProps['type'];
+  buttonSize?: ButtonProps['size'];
   buttonText: string;
   modalTitle: string;
   cardProps: [ContentCardProps, ContentCardProps, ContentCardProps];
@@ -39,6 +40,7 @@ interface ModalProps {
 
 export const InstructionsModal: React.FC<ModalProps> = ({
   buttonType,
+  buttonSize,
   buttonText,
   modalTitle,
   cardProps,
@@ -61,7 +63,7 @@ export const InstructionsModal: React.FC<ModalProps> = ({
 
   return (
     <>
-      <Button type={buttonType} onClick={showModal}>
+      <Button type={buttonType} size={buttonSize} onClick={showModal}>
         {buttonText}
       </Button>
       <Modal

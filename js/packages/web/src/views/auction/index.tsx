@@ -10,7 +10,6 @@ import {
   StringPublicKey,
   toPublicKey,
   useConnection,
-  useConnectionConfig,
   useMint,
 } from '@oyster/common';
 import { AuctionViewItem } from '@oyster/common/dist/lib/models/metaplex/index';
@@ -27,6 +26,7 @@ import { ArtContent } from '../../components/ArtContent';
 import { AuctionCard } from '../../components/AuctionCard';
 import { ClickToCopy } from '../../components/ClickToCopy';
 import { MetaAvatar } from '../../components/MetaAvatar';
+import { ViewOn } from '../../components/ViewOn';
 import {
   AuctionView as Auction,
   useArt,
@@ -51,7 +51,6 @@ export const AuctionItem = ({
 
 export const AuctionView = () => {
   const { id } = useParams<{ id: string }>();
-  const { env } = useConnectionConfig();
   const auction = useAuction(id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const art = useArt(auction?.thumbnail.metadata.pubkey);
@@ -170,26 +169,7 @@ export const AuctionView = () => {
             </Space>
           </Col>
           <Col span={12} md={8}>
-            <div>
-              <h6>View on</h6>
-              <div>
-                <Button onClick={() => window.open(art.uri || '', '_blank')}>
-                  Arweave
-                </Button>
-                <Button
-                  onClick={() =>
-                    window.open(
-                      `https://explorer.solana.com/account/${art?.mint || ''}${
-                        env.indexOf('main') >= 0 ? '' : `?cluster=${env}`
-                      }`,
-                      '_blank',
-                    )
-                  }
-                >
-                  Solana
-                </Button>
-              </div>
-            </div>
+            <ViewOn art={art} />
           </Col>
         </Row>
 

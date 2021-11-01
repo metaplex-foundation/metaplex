@@ -1,10 +1,15 @@
-import { InstructionsModal } from '../InstructionsModal';
+import { ButtonProps } from 'antd';
 import React from 'react';
 import { LABELS } from '../../constants';
+import { InstructionsModal } from '../InstructionsModal';
 
-export const HowAuctionsWorkModal = () => {
+export const HowAuctionsWorkModal = (props: {
+  buttonSize?: ButtonProps['size'];
+  buttonType?: ButtonProps['type'];
+}) => {
   return (
     <InstructionsModal
+      {...props}
       buttonText="How Auctions Work"
       modalTitle="How Auctions Work"
       cardProps={[

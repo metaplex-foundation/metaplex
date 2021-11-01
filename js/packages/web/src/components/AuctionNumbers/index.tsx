@@ -5,11 +5,13 @@ import {
   PriceFloorType,
   useMint,
 } from '@oyster/common';
-import { Col, Row } from 'antd';
+import { Col, Row, Typography } from 'antd';
 import React from 'react';
 import { AuctionView, AuctionViewState, useBidsForAuction } from '../../hooks';
 import { useAuctionCountdown } from '../../hooks/useAuctionCountdown';
 import { AmountLabel } from '../AmountLabel';
+
+const { Text } = Typography;
 
 export const AuctionCountdown = (props: {
   auctionView: AuctionView;
@@ -99,33 +101,25 @@ const Countdown = ({ state }: { state?: CountdownState }) => {
     };
   }
   return (
-    <Row>
+    <Row gutter={8}>
       {localState.days > 0 && (
         <Col>
-          <div>
-            {localState.days}
-            <span>days</span>
-          </div>
+          {localState.days}
+          <Text type="secondary"> days</Text>
         </Col>
       )}
       <Col>
-        <div>
-          {localState.hours}
-          <span>hours</span>
-        </div>
+        {localState.hours}
+        <Text type="secondary"> hours</Text>
       </Col>
       <Col>
-        <div>
-          {localState.minutes}
-          <span>min</span>
-        </div>
+        {localState.minutes}
+        <Text type="secondary"> min</Text>
       </Col>
       {!localState.days && (
         <Col>
-          <div>
-            {localState.seconds}
-            <span>sec</span>
-          </div>
+          {localState.seconds}
+          <Text type="secondary"> sec</Text>
         </Col>
       )}
     </Row>

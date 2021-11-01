@@ -33,19 +33,21 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <Space direction="horizontal">
-      {PriceNaN === false && (
-        <Statistic
-          title={title || ''}
-          value={`${amount}${displaySOL ? ' SOL' : ''}`}
-          prefix={customPrefix || <SolCircle />}
-        />
-      )}
-      {displayUSD && (
-        <div>
-          {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
-        </div>
-      )}
-    </Space>
+    <>
+      <h5>{title}</h5>
+      <Space direction="horizontal" align="baseline">
+        {PriceNaN === false && (
+          <Statistic
+            value={`${amount}${displaySOL ? ' SOL' : ''}`}
+            prefix={customPrefix || <SolCircle />}
+          />
+        )}
+        {displayUSD && (
+          <div>
+            {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
+          </div>
+        )}
+      </Space>
+    </>
   );
 };
