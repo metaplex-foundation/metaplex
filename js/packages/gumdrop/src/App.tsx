@@ -60,7 +60,7 @@ const About = (
       </div>
 
       <div>
-      Gumpdrop (originally pioneered for token airdrops by{" "}
+      Gumdrop (originally pioneered for token airdrops by{" "}
       <HyperLink
         href="https://github.com/Uniswap/merkle-distributor"
         underline="none"
