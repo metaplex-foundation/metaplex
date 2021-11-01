@@ -272,10 +272,16 @@ const buildCandyClaim = async (
     MERKLE_DISTRIBUTOR_ID
   );
 
+  // atm the contract has a special case for when the temporal key is defaulted
+  // (aka always passes temporal check)
+  // TODO: more flexible
+  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default)
+      ? walletKey : distributorInfo.temporal;
+
   const setup : Array<TransactionInstruction> = [];
 
   const claimCountAccount = await connection.getAccountInfo(claimCount);
-  let nftsAlreadyMinted = 0, temporalSigner = MERKLE_TEMPORAL_SIGNER;
+  let nftsAlreadyMinted = 0;
   if (claimCountAccount === null) {
   } else {
     // TODO: subtract already minted?...
@@ -295,8 +301,8 @@ const buildCandyClaim = async (
 
   const nftsAvailable = amount;
   if (nftsAlreadyMinted >= nftsAvailable) {
-    throw new Error(`Cannot mint another NFT. ${nftsAvailable} were originally allocated`
-      + (nftsAlreadyMinted > 0 ? ` and ${nftsAlreadyMinted} were already minted` : ""));
+    throw new Error(`Cannot mint another NFT. ${nftsAvailable} NFT(s) were originally allocated`
+      + (nftsAlreadyMinted > 0 ? ` and ${nftsAlreadyMinted} NFT(s) were already minted` : ""));
   }
 
 
@@ -427,6 +433,58 @@ const buildSingleCandyMint = async (
   return [setup, candyMachineMint];
 }
 
+const fetchDistributor = async (
+  connection : RPCConnection,
+  distributorStr : string,
+) => {
+  let key;
+  try {
+    key = new PublicKey(distributorStr);
+  } catch (err) {
+    throw new Error(`Invalid distributor key ${err}`);
+  }
+  const account = await connection.getAccountInfo(key);
+  if (account === null) {
+    throw new Error(`Could not fetch distributor ${distributorStr}`);
+  }
+  if (!account.owner.equals(MERKLE_DISTRIBUTOR_ID)) {
+    const ownerStr = account.owner.toBase58();
+    throw new Error(`Invalid distributor owner ${ownerStr}`);
+  }
+  const info = coder.accounts.decode("MerkleDistributor", account.data);
+  return [key, info];
+};
+
+const fetchNeedsTemporalSigner = async (
+  connection : RPCConnection,
+  distributorStr : string,
+  indexStr : string,
+  claimMethod : string,
+) => {
+  const [key, info] = await fetchDistributor(connection, distributorStr);
+  if (!info.temporal.equals(MERKLE_TEMPORAL_SIGNER)) {
+    // default pubkey
+    return false;
+  } else if (claimMethod === "candy") {
+    const [claimCount, ] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("ClaimCount"),
+        Buffer.from(new BN(Number(indexStr)).toArray("le", 8)),
+        key.toBuffer(),
+      ],
+      MERKLE_DISTRIBUTOR_ID
+    );
+    // if someone (maybe us) has already claimed this, the contract will
+    // not check the existing temporal signer anymore since presumably
+    // they have already verified the OTP
+    const claimCountAccount = await connection.getAccountInfo(claimCount);
+    return claimCountAccount !== null;
+  } else {
+    // default to need one
+    return true;
+  }
+};
+
 export type ClaimProps = {};
 
 export const Claim = (
@@ -465,6 +523,21 @@ export const Claim = (
   const [transaction, setTransaction] = React.useState<Transaction | null>(null);
   const [OTPStr, setOTPStr] = React.useState("");
 
+  // async computed
+  const [asyncNeedsTemporalSigner, setNeedsTemporalSigner] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const wrap = async () => {
+      try {
+        setNeedsTemporalSigner(await fetchNeedsTemporalSigner(
+          connection, distributor, indexStr, claimMethod));
+      } catch {
+        // TODO: log?
+      }
+    };
+    wrap();
+  }, [connection, distributor, indexStr, claimMethod]);
+
   const client = new LambdaClient({
     region: "us-east-2",
     credentials: {
@@ -498,21 +571,11 @@ export const Claim = (
       throw new Error(`Could not parse pin ${pinStr}: ${err}`);
     }
 
-    let distributorKey : PublicKey;
-    try {
-      distributorKey = new PublicKey(distributor);
-    } catch (err) {
-      throw new Error(`Invalid distributor key ${err}`);
-    }
-    const distributorAccount = await connection.getAccountInfo(distributorKey);
-    if (distributorAccount === null) {
-      throw new Error(`Could not fetch distributor`);
-    }
+    // TODO: use cached?
+    const [distributorKey, distributorInfo] =
+        await fetchDistributor(connection, distributor);
 
-    const distributorInfo = coder.accounts.decode(
-      "MerkleDistributor", distributorAccount.data);
-
-    console.log(distributorInfo.temporal.toBase58());
+    console.log(`Distributor ${distributorInfo}`);
 
     const proof = proofStr === "" ? [] : proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
@@ -596,13 +659,13 @@ export const Claim = (
       });
     }
 
-    setTransaction(transaction);
+    return transaction;
   };
 
-  const needsTemporalSigner = transaction !== null
-    && transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
-
-  const verifyOTP = async (e : React.SyntheticEvent) => {
+  const verifyOTP = async (
+    e : React.SyntheticEvent,
+    transaction : Transaction | null,
+  ) => {
     e.preventDefault();
 
     if (!transaction) {
@@ -613,7 +676,9 @@ export const Claim = (
       throw new Error(`Wallet not connected`);
     }
 
-    if (needsTemporalSigner && !skipAWSWorkflow) {
+    const txnNeedsTemporalSigner =
+        transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
+    if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       // TODO: distinguish between OTP failure and transaction-error. We can try
       // again on the former but not the latter
       const OTP = Number(OTPStr);
@@ -698,26 +763,18 @@ export const Claim = (
 
   const verifyOTPC = (onClick) => (
     <React.Fragment>
-      {needsTemporalSigner
-      ? (<TextField
-          style={{width: "60ch"}}
-          id="otp-text-field"
-          label="OTP"
-          value={OTPStr}
-          onChange={(e) => setOTPStr(e.target.value)}
-        />)
-      : (<React.Fragment>
-          <Box />
-          <div style={{ fontSize: "1.1rem" }}>
-            The OTP is already verified for this account
-          </div>
-        </React.Fragment>)
-      }
+      <TextField
+        style={{width: "60ch"}}
+        id="otp-text-field"
+        label="OTP"
+        value={OTPStr}
+        onChange={(e) => setOTPStr(e.target.value)}
+      />
       <Box />
 
       <Box sx={{ position: "relative" }}>
       <Button
-        disabled={!wallet.connected || (needsTemporalSigner && !OTPStr) || loading}
+        disabled={!wallet.connected || !OTPStr || loading}
         variant="contained"
         color="success"
         style={{ width: "100%" }}
@@ -725,7 +782,7 @@ export const Claim = (
           setLoading(true);
           const wrap = async () => {
             try {
-              await verifyOTP(e);
+              await verifyOTP(e, transaction);
               setLoading(false);
               onClick();
             } catch (err) {
@@ -871,7 +928,14 @@ export const Claim = (
           setLoading(true);
           const wrap = async () => {
             try {
-              await sendOTP(e);
+              const needsTemporalSigner = await fetchNeedsTemporalSigner(
+                  connection, distributor, indexStr, claimMethod);
+              const transaction = await sendOTP(e);
+              if (!needsTemporalSigner) {
+                await verifyOTP(e, transaction);
+              } else {
+                setTransaction(transaction);
+              }
               setLoading(false);
               onClick();
             } catch (err) {
@@ -885,7 +949,7 @@ export const Claim = (
           wrap();
         }}
       >
-        Next
+        {asyncNeedsTemporalSigner ? "Next" : "Claim Airdrop"}
       </Button>
       {loading && loadingProgress()}
       </Box>
@@ -894,8 +958,12 @@ export const Claim = (
 
   const steps = [
     { name: "Populate Claim", inner: populateClaimC },
-    { name: "Verify OTP"    , inner: verifyOTPC     },
   ];
+  if (asyncNeedsTemporalSigner) {
+    steps.push(
+    { name: "Verify OTP"    , inner: verifyOTPC     }
+    );
+  }
 
   const [activeStep, setActiveStep] = React.useState(0);
 
@@ -906,8 +974,8 @@ export const Claim = (
     setActiveStep(prev => prev - 1);
   };
 
-  return (
-    <Stack spacing={2}>
+  const stepper = (
+    <React.Fragment>
       <Stepper activeStep={activeStep}>
         {steps.map((s, index) => {
           return (
@@ -918,6 +986,12 @@ export const Claim = (
         })}
       </Stepper>
       <Box />
+    </React.Fragment>
+  );
+
+  return (
+    <Stack spacing={2}>
+      {asyncNeedsTemporalSigner && stepper}
       {activeStep === steps.length
         ? (
           <React.Fragment>

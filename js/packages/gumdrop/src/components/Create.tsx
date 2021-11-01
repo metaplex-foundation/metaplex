@@ -58,6 +58,7 @@ import {
   getCandyMachine,
   getCandyMachineAddress,
   notify,
+  shortenAddress,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
 import { DragAndDrop } from "./DragAndDrop";
@@ -306,6 +307,7 @@ export const Create = (
   const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
 
   // auth state
+  const [otpAuth, setOtpAuth] = React.useState(localStorage.getItem("otpAuth") || "default");
   const [commMethod, setCommMethod] = React.useState(localStorage.getItem("commMethod") || "");
   const [commAuth, setCommAuth] = React.useState<AuthKeys>({});
   const [commSource, setCommSource] = React.useState(localStorage.getItem("commSource") || "");
@@ -593,6 +595,16 @@ export const Create = (
     setBaseKey(base);
     setClaimURLs(claimants);
 
+    // temporal auth is the AWS signer by 'default' and a no-op key otherwise
+    let temporalSigner;
+    if (otpAuth === "default") {
+      temporalSigner = MERKLE_TEMPORAL_SIGNER;
+    } else if (otpAuth === "none") {
+      temporalSigner = PublicKey.default;
+    } else {
+      throw new Error(`Unknown OTP authorization type ${otpAuth}`);
+    }
+
     // initial merkle-distributor state
     const instructions = Array<TransactionInstruction>();
     instructions.push(new TransactionInstruction({
@@ -607,7 +619,7 @@ export const Create = (
           ...Buffer.from(sha256.digest("global:new_distributor")).slice(0, 8),
           ...new BN(dbump).toArray("le", 1),
           ...root,
-          ...MERKLE_TEMPORAL_SIGNER.toBuffer(),
+          ...temporalSigner.toBuffer(),
         ])
     }));
 
@@ -959,6 +971,32 @@ export const Create = (
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}
+      <FormControl fullWidth>
+        <InputLabel id="otp-auth-label">OTP Authorization</InputLabel>
+        <Select
+          labelId="otp-auth-label"
+          id="otp-auth-select"
+          value={otpAuth}
+          label="OTP Authorization"
+          onChange={(e) => {
+            localStorage.setItem("otpAuth", e.target.value);
+            setOtpAuth(e.target.value);
+          }}
+          style={{textAlign: "left"}}
+        >
+          <MenuItem value={"default"}>
+            Default{WHITESPACE}
+            <HyperLink
+              href={explorerUrlFor(MERKLE_TEMPORAL_SIGNER)}
+              underline="none"
+              target="_blank" rel="noopener noreferrer"
+            >
+              ({shortenAddress(MERKLE_TEMPORAL_SIGNER.toBase58())})
+            </HyperLink>
+          </MenuItem>
+          <MenuItem value={"none"}>None</MenuItem>
+        </Select>
+      </FormControl>
       <FormControl fullWidth>
         <InputLabel id="comm-method-label">Distribution Method</InputLabel>
         <Select
