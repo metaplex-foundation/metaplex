@@ -32,6 +32,7 @@ import {
   MetaplexOverlay,
   MetadataFile,
   StringPublicKey,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { getAssetCostToStore, LAMPORT_MULTIPLIER } from '../../utils/assets';
@@ -46,6 +47,7 @@ import {
   MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
+import { useTokenList } from '../../contexts/tokenList';
 
 const { Step } = Steps;
 const { Dragger } = Upload;
@@ -1126,7 +1128,7 @@ const LaunchStep = (props: {
             suffix="%"
           />
           {cost ? (
-            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} />
+            <AmountLabel title="Cost to Create" amount={cost.toFixed(5)} tokenInfo={useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString())} />
           ) : (
             <Spin />
           )}
