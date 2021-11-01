@@ -476,9 +476,10 @@ const fetchNeedsTemporalSigner = async (
     );
     // if someone (maybe us) has already claimed this, the contract will
     // not check the existing temporal signer anymore since presumably
-    // they have already verified the OTP
+    // they have already verified the OTP. So we need to fetch the temporal
+    // signer if it is null
     const claimCountAccount = await connection.getAccountInfo(claimCount);
-    return claimCountAccount !== null;
+    return claimCountAccount === null;
   } else {
     // default to need one
     return true;
@@ -745,6 +746,12 @@ export const Claim = (
       ),
     });
     setTransaction(null);
+    try {
+      setNeedsTemporalSigner(await fetchNeedsTemporalSigner(
+        connection, distributor, indexStr, claimMethod));
+    } catch {
+      // TODO: log?
+    }
   };
 
   const [loading, setLoading] = React.useState(false);
@@ -924,6 +931,7 @@ export const Claim = (
         disabled={!wallet.connected || !allFieldsPopulated || loading}
         variant="contained"
         style={{ width: "100%" }}
+        color={asyncNeedsTemporalSigner ? "primary" : "success"}
         onClick={(e) => {
           setLoading(true);
           const wrap = async () => {
@@ -965,10 +973,20 @@ export const Claim = (
     );
   }
 
+  // TODO: better interaction between setting `asyncNeedsTemporalSigner` and
+  // the stepper... this is pretty jank
   const [activeStep, setActiveStep] = React.useState(0);
+  const stepToUse = Math.min(activeStep, steps.length - 1);
 
   const handleNext = () => {
-    setActiveStep(prev => prev + 1);
+    // return to start if going past the end (claim succeeded)
+    setActiveStep(prev => {
+      if (prev === steps.length - 1) {
+        return 0;
+      } else {
+        return prev + 1;
+      }
+    });
   };
   const handleBack = () => {
     setActiveStep(prev => prev - 1);
@@ -976,7 +994,7 @@ export const Claim = (
 
   const stepper = (
     <React.Fragment>
-      <Stepper activeStep={activeStep}>
+      <Stepper activeStep={stepToUse}>
         {steps.map((s, index) => {
           return (
             <Step key={s.name}>
@@ -992,35 +1010,15 @@ export const Claim = (
   return (
     <Stack spacing={2}>
       {asyncNeedsTemporalSigner && stepper}
-      {activeStep === steps.length
-        ? (
-          <React.Fragment>
-            <Box />
-            <div style={{ fontSize: "1.1rem" }}>
-              Airdrop claimed successfully!
-            </div>
-            <Button
-              color="info"
-              onClick={() => { setActiveStep(0); }}
-            >
-              Reset
-            </Button>
-          </React.Fragment>
-        )
-        : (
-          <React.Fragment>
-            {steps[activeStep].inner(handleNext)}
-            {activeStep > 0 && (
-              <Button
-                color="info"
-                onClick={handleBack}
-              >
-                Back
-              </Button>
-            )}
-          </React.Fragment>
-        )
-      }
+      {steps[stepToUse].inner(handleNext)}
+      {stepToUse > 0 && (
+        <Button
+          color="info"
+          onClick={handleBack}
+        >
+          Back
+        </Button>
+      )}
     </Stack>
   );
 };
