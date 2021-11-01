@@ -104,7 +104,7 @@ const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
   } else {
     return {
       subject: "Gumdrop NFT Drop",
-      message: `You received a Candy Machine pre-sale crank `
+      message: `You received ${info.amount} Candy Machine pre-sale mint `
              + `(click <a href="${drop.meta}">here</a> to view the config on explorer). `
              + `<a href="${info.url}">Click here to claim it!</a>`,
     };
