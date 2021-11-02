@@ -732,8 +732,8 @@ programCommand('update_candy_machine')
   });
 
 programCommand('withdraw')
-  .option('-ch, --charityAddy <string>', 'Which charity?', 'F9fER1Cb8hmjapWGZDukzcEYshAUDbSFpbXkj9QuBaQj') //TODO: Dear Metaplex team, insert default charity here
-  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '10') //TODO: Dear Metaplex team, insert default charity here
+  .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q') //TODO: Dear Metaplex team, insert default charity here
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0') //TODO: Dear Metaplex team, insert default charity here
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -745,17 +745,10 @@ programCommand('withdraw')
     const walletKeyPair = loadWalletKey(keypair);
 
     const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
-    const configOrCommitment = {commitment: 'confirmed', 
-    filters: [
-              {
-                  "memcmp": {
-                    "offset": 8,
-                    "bytes": walletKeyPair.publicKey.toBase58()
-                  }
-              }
-             ]}
+    const configOrCommitment = 'confirmed'
     
     const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
+    console.log(configs)
     let t = 0;
     let c = 0;
     for (var cg in configs){
@@ -770,33 +763,37 @@ programCommand('withdraw')
       log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
     }
     log.info('withdrawn. Now you rich again.');
-    log.info('Speaking of newfound wealth, this is where you donate 10% to charity :) the charity address and % are configurable.')
+    
+    if (parseFloat(charityPercent) > 0){
 
-    const tBN = new anchor.BN(t);
+      log.info('Speaking of newfound wealth, this is where you donate % to charity :) the charity address and % are configurable.')
 
-    const lamportsToCharity =
-          tBN
-      .div(new anchor.BN(100))
-      .mul(new anchor.BN(parseFloat(charityPercent)))
+      const tBN = new anchor.BN(t);
 
-      .toNumber();
+      const lamportsToCharity =
+            tBN
+        .div(new anchor.BN(100))
+        .mul(new anchor.BN(parseFloat(charityPercent)))
 
-    console.log(`Sending ${lamportsToCharity} / ${t} lamports to charity`);
+        .toNumber();
 
-    const tx = await sendTransactionWithRetryWithKeypair(
-      anchorProgram.provider.connection,
-      walletKeyPair,
-      [
-        await anchor.web3.SystemProgram.transfer({
-          fromPubkey: walletKeyPair.publicKey,
-          toPubkey: new PublicKey(charityAddy),
-          lamports: lamportsToCharity
-        })
-      ],
-      []
-    );
+      console.log(`Sending ${lamportsToCharity} / ${t} lamports to charity`);
 
-    log.info('send_to_charity finished', tx);
+      const tx = await sendTransactionWithRetryWithKeypair(
+        anchorProgram.provider.connection,
+        walletKeyPair,
+        [
+          await anchor.web3.SystemProgram.transfer({
+            fromPubkey: walletKeyPair.publicKey,
+            toPubkey: new PublicKey(charityAddy),
+            lamports: lamportsToCharity
+          })
+        ],
+        []
+      );
+
+      log.info('send_to_charity finished', tx);
+    }
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {
