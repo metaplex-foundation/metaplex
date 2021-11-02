@@ -42,7 +42,7 @@ export async function cacheAuctionIndexer(
     tokenMints,
   );
 
-  let above =
+  const above =
     storeIndexer.length == 0
       ? undefined
       : storeIndexer[0].info.auctionCaches[0];
@@ -85,8 +85,8 @@ async function propagateIndex(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let indexSigners: Keypair[] = [];
   let indexInstructions: TransactionInstruction[] = [];
@@ -163,8 +163,8 @@ async function createAuctionCache(
 
   const payer = wallet.publicKey.toBase58();
 
-  let currSignerBatch: Array<Keypair[]> = [];
-  let currInstrBatch: Array<TransactionInstruction[]> = [];
+  const currSignerBatch: Array<Keypair[]> = [];
+  const currInstrBatch: Array<TransactionInstruction[]> = [];
 
   let cacheSigners: Keypair[] = [];
   let cacheInstructions: TransactionInstruction[] = [];

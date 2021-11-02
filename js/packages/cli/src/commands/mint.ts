@@ -21,11 +21,12 @@ export async function mint(
   keypair: string,
   env: string,
   configAddress: PublicKey,
+  rpcUrl: string,
 ): Promise<string> {
   const mint = Keypair.generate();
 
   const userKeyPair = loadWalletKey(keypair);
-  const anchorProgram = await loadCandyProgram(userKeyPair, env);
+  const anchorProgram = await loadCandyProgram(userKeyPair, env, rpcUrl);
   const userTokenAccountAddress = await getTokenWallet(
     userKeyPair.publicKey,
     mint.publicKey,

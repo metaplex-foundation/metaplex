@@ -1,0 +1,35 @@
+version: "3.7"
+
+x-metaplex: &metaplex
+  build:
+    context: './'
+    dockerfile: metaplex-graphql.dockerfile
+  image: metaplex-graphql:0.1-dev
+
+services:
+  ingester:
+    <<: *metaplex
+    environment:
+      MONGO_DB: mongodb://root:example@mongo:27017/
+      ENTRY: mongo-ingester
+      NETWORK: devnet
+      NODE_OPTIONS: --max-old-space-size=8192
+
+  server:
+    <<: *metaplex
+    ports:
+      - 4000:4000
+    environment:
+      ENTRY: mongo-server
+      MONGO_DB: mongodb://root:example@mongo:27017/
+      PORT: 4000
+      INTROSPECTION: 1
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
