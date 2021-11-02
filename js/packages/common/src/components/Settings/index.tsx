@@ -1,6 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Tooltip } from 'antd';
+import { Divider, Space, Tooltip } from 'antd';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { shortenAddress } from '../../utils';
@@ -14,9 +14,9 @@ export const Settings = ({
   const { publicKey } = useWallet();
 
   return (
-    <>
-      <div>
-        <Identicon address={publicKey?.toBase58()} />
+    <div className="metaplex-settings">
+      <Space direction="vertical" align="center">
+        <Identicon address={publicKey?.toBase58()} size={48} />
         {publicKey && (
           <>
             <Tooltip title="Address copied">
@@ -33,9 +33,13 @@ export const Settings = ({
             <Link to={`/profile/${publicKey?.toBase58()}`}>View profile</Link>
           </>
         )}
-        <br />
-        {additionalSettings}
-      </div>
-    </>
+      </Space>
+      {additionalSettings && (
+        <>
+          <Divider />
+          {additionalSettings}
+        </>
+      )}
+    </div>
   );
 };

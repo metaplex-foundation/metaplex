@@ -5,7 +5,7 @@ import {
   shortenAddress,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Col, InputNumber, Row, Slider, Typography } from 'antd';
+import { Button, Col, InputNumber, Row, Slider, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { UserSearch, UserValue } from '../../components/UserSearch';
 
@@ -126,37 +126,35 @@ export const RoyaltiesStep = (props: {
   }, [royalties]);
 
   return (
-    <>
-      <Row>
+    <Space className="metaplex-fullwidth" direction="vertical">
+      <div>
         <h2>Set royalties and creator splits</h2>
         <p>
           Royalties ensure that you continue to get compensated for your work
           after its initial sale.
         </p>
-      </Row>
-      <Row>
-        <label>
-          <span>Royalty Percentage</span>
-          <p>
-            This is how much of each secondary sale will be paid out to the
-            creators.
-          </p>
-          <InputNumber
-            autoFocus
-            min={0}
-            max={100}
-            placeholder="Between 0 and 100"
-            onChange={(val: number) => {
-              props.setAttributes({
-                ...props.attributes,
-                seller_fee_basis_points: val * 100,
-              });
-            }}
-          />
-        </label>
-      </Row>
+      </div>
+      <label>
+        <span>Royalty Percentage</span>
+        <p>
+          This is how much of each secondary sale will be paid out to the
+          creators.
+        </p>
+        <InputNumber
+          autoFocus
+          min={0}
+          max={100}
+          placeholder="Between 0 and 100"
+          onChange={(val: number) => {
+            props.setAttributes({
+              ...props.attributes,
+              seller_fee_basis_points: val * 100,
+            });
+          }}
+        />
+      </label>
       {[...fixedCreators, ...creators].length > 0 && (
-        <Row>
+        <div>
           <label>
             <span>Creators Split</span>
             <p>
@@ -170,20 +168,23 @@ export const RoyaltiesStep = (props: {
               isShowErrors={isShowErrors}
             />
           </label>
-        </Row>
+        </div>
       )}
       <Row>
-        <span onClick={() => setShowCreatorsModal(true)}>
+        <Button type="text" onClick={() => setShowCreatorsModal(true)}>
           <span>+</span>
           <span>Add another creator</span>
-        </span>
+        </Button>
         <MetaplexModal
           visible={showCreatorsModal}
           onCancel={() => setShowCreatorsModal(false)}
         >
           <label>
             <span>Creators</span>
-            <UserSearch setCreators={setCreators} />
+            <UserSearch
+              className="metaplex-fullwidth"
+              setCreators={setCreators}
+            />
           </label>
         </MetaplexModal>
       </Row>
@@ -197,6 +198,7 @@ export const RoyaltiesStep = (props: {
       )}
       <Row>
         <Button
+          className="metaplex-fullwidth"
           type="primary"
           size="large"
           onClick={() => {
@@ -242,6 +244,6 @@ export const RoyaltiesStep = (props: {
           Continue to review
         </Button>
       </Row>
-    </>
+    </Space>
   );
 };

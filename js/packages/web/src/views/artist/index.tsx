@@ -1,19 +1,17 @@
-import { Col, Divider, Row } from 'antd';
-import React, { useEffect, useState } from 'react';
-import { Spin } from 'antd'
-import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { LoadingOutlined } from '@ant-design/icons';
 import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
+import { Col, Divider, Row, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
-import { useCreators, useCreatorArts } from '../../hooks';
-import { LoadingOutlined } from '@ant-design/icons';
 import { ArtistCard } from '../../components/ArtistCard';
-
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
-  const { whitelistedCreatorsByCreator, patchState } = useMeta()
-  const [loadingArt, setLoadingArt] = useState(true)
+  const { whitelistedCreatorsByCreator, patchState } = useMeta();
+  const [loadingArt, setLoadingArt] = useState(true);
   const artwork = useCreatorArts(id);
   const connection = useConnection();
   const creators = Object.values(whitelistedCreatorsByCreator);
@@ -26,13 +24,16 @@ export const ArtistView = () => {
     (async () => {
       setLoadingArt(true);
       const creator = whitelistedCreatorsByCreator[id];
-      
-      const artistMetadataState = await loadMetadataForCreator(connection, creator);
+
+      const artistMetadataState = await loadMetadataForCreator(
+        connection,
+        creator,
+      );
 
       patchState(artistMetadataState);
       setLoadingArt(false);
-    })()
-  }, [connection, id])
+    })();
+  }, [connection, id]);
 
   return (
     <Row>
@@ -73,8 +74,7 @@ export const ArtistView = () => {
                   <ArtCard key={id} pubkey={m.pubkey} preview={false} />
                 </Link>
               );
-            })
-            }
+            })}
           </MetaplexMasonry>
         )}
       </Col>

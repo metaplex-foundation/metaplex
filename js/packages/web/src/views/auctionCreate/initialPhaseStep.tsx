@@ -1,4 +1,4 @@
-import { Button, Col, Row, Radio } from 'antd';
+import { Button, Radio, Space } from 'antd';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { AuctionState } from '.';
@@ -52,96 +52,93 @@ export const InitialPhaseStep = (props: {
   }, [listNow]);
 
   return (
-    <>
-      <Row>
+    <Space className="metaplex-fullwidth" direction="vertical">
+      <div>
         <h2>Initial Phase</h2>
         <p>Set the terms for your auction.</p>
-      </Row>
-      <Row>
-        <Col xl={24}>
+      </div>
+
+      <label>
+        <h4>When do you want the auction to begin?</h4>
+        <Radio.Group
+          defaultValue="now"
+          onChange={info => setStartNow(info.target.value === 'now')}
+        >
+          <Radio value="now">Immediately</Radio>
+          <div>
+            Participants can buy the NFT as soon as you finish setting up the
+            auction.
+          </div>
+          <Radio value="later">At a specified date</Radio>
+          <div>Participants can start buying the NFT at a specified date.</div>
+        </Radio.Group>
+      </label>
+
+      {!startNow && (
+        <>
           <label>
-            <span>When do you want the auction to begin?</span>
+            <h4>Auction Start Date</h4>
+            {saleMoment && (
+              <DateTimePicker
+                momentObj={saleMoment}
+                setMomentObj={setSaleMoment}
+                datePickerProps={{
+                  disabledDate: (current: moment.Moment) =>
+                    current && current < moment().endOf('day'),
+                }}
+              />
+            )}
+          </label>
+
+          <label>
+            <h4>When do you want the listing to go live?</h4>
             <Radio.Group
               defaultValue="now"
-              onChange={info => setStartNow(info.target.value === 'now')}
+              onChange={info => setListNow(info.target.value === 'now')}
             >
-              <Radio value="now">Immediately</Radio>
+              <Radio value="now" defaultChecked={true}>
+                Immediately
+              </Radio>
               <div>
-                Participants can buy the NFT as soon as you finish setting up
-                the auction.
+                Participants will be able to view the listing with a countdown
+                to the start date as soon as you finish setting up the sale.
               </div>
               <Radio value="later">At a specified date</Radio>
               <div>
-                Participants can start buying the NFT at a specified date.
+                Participants will be able to view the listing with a countdown
+                to the start date at the specified date.
               </div>
             </Radio.Group>
           </label>
 
-          {!startNow && (
-            <>
-              <label>
-                <span>Auction Start Date</span>
-                {saleMoment && (
-                  <DateTimePicker
-                    momentObj={saleMoment}
-                    setMomentObj={setSaleMoment}
-                    datePickerProps={{
-                      disabledDate: (current: moment.Moment) =>
-                        current && current < moment().endOf('day'),
-                    }}
-                  />
-                )}
-              </label>
-
-              <label>
-                <span>When do you want the listing to go live?</span>
-                <Radio.Group
-                  defaultValue="now"
-                  onChange={info => setListNow(info.target.value === 'now')}
-                >
-                  <Radio value="now" defaultChecked={true}>
-                    Immediately
-                  </Radio>
-                  <div>
-                    Participants will be able to view the listing with a
-                    countdown to the start date as soon as you finish setting up
-                    the sale.
-                  </div>
-                  <Radio value="later">At a specified date</Radio>
-                  <div>
-                    Participants will be able to view the listing with a
-                    countdown to the start date at the specified date.
-                  </div>
-                </Radio.Group>
-              </label>
-
-              {!listNow && (
-                <label>
-                  <span>Preview Start Date</span>
-                  {listMoment && (
-                    <DateTimePicker
-                      momentObj={listMoment}
-                      setMomentObj={setListMoment}
-                      datePickerProps={{
-                        disabledDate: (current: moment.Moment) =>
-                          current &&
-                          saleMoment &&
-                          (current < moment().endOf('day') ||
-                            current > saleMoment),
-                      }}
-                    />
-                  )}
-                </label>
+          {!listNow && (
+            <label>
+              <h4>Preview Start Date</h4>
+              {listMoment && (
+                <DateTimePicker
+                  momentObj={listMoment}
+                  setMomentObj={setListMoment}
+                  datePickerProps={{
+                    disabledDate: (current: moment.Moment) =>
+                      current &&
+                      saleMoment &&
+                      (current < moment().endOf('day') || current > saleMoment),
+                  }}
+                />
               )}
-            </>
+            </label>
           )}
-        </Col>
-      </Row>
-      <Row>
-        <Button type="primary" size="large" onClick={props.confirm}>
-          Continue
-        </Button>
-      </Row>
-    </>
+        </>
+      )}
+
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        onClick={props.confirm}
+      >
+        Continue
+      </Button>
+    </Space>
   );
 };

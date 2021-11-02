@@ -1,17 +1,10 @@
 import { merge, uniqWith } from 'lodash';
-import React, {
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { ReactNode, useContext, useEffect, useState } from 'react';
 import { useConnection } from '../connection';
 import { useStore } from '../store';
 import { subscribeAccountsChange } from './subscribeAccountsChange';
 import { getEmptyMetaState } from './getEmptyMetaState';
-import {
-  loadAccounts,
-} from './loadAccounts';
+import { loadAccounts } from './loadAccounts';
 import { ParsedAccount } from '../accounts/types';
 import { Metadata } from '../../actions';
 import { MetaContextState, MetaState } from './types';
@@ -32,22 +25,24 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const patchState: MetaContextState['patchState'] = (...args: Partial<MetaState>[]) => {
+  const patchState: MetaContextState['patchState'] = (
+    ...args: Partial<MetaState>[]
+  ) => {
     setState(current => {
       const newState = merge({}, current, ...args, { store: current.store });
 
       const currentMetdata = current.metadata ?? [];
       const nextMetadata = args.reduce((memo, { metadata = [] }) => {
-        return [...memo, ...metadata]
-      }, [] as ParsedAccount<Metadata>[])
+        return [...memo, ...metadata];
+      }, [] as ParsedAccount<Metadata>[]);
 
       newState.metadata = uniqWith(
         [...currentMetdata, ...nextMetadata],
-        (a, b) => a.pubkey === b.pubkey
+        (a, b) => a.pubkey === b.pubkey,
       );
-        
-      return newState
-    })
+
+      return newState;
+    });
   };
 
   useEffect(() => {
@@ -60,13 +55,13 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
       } else if (!state.store) {
         setIsLoading(true);
       }
-  
-      const nextState = await loadAccounts(connection, ownerAddress)
-  
+
+      const nextState = await loadAccounts(connection, ownerAddress);
+
       setState(nextState);
-  
+
       setIsLoading(false);
-    })()
+    })();
   }, [storeAddress, isReady, ownerAddress]);
 
   useEffect(() => {
@@ -76,7 +71,6 @@ export function MetaProvider({ children = null }: { children: ReactNode }) {
 
     return subscribeAccountsChange(connection, patchState);
   }, [isLoading]);
-
 
   return (
     <MetaContext.Provider

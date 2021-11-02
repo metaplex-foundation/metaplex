@@ -4,20 +4,22 @@ import { getTokenIcon, KnownTokenMap } from '../../utils';
 import { useConnectionConfig } from '../../contexts/connection';
 import { Identicon } from '../Identicon';
 
-export const TokenIcon = (props: {
+export const TokenIcon = ({
+  mintAddress,
+  size = 20,
+  tokenMap,
+}: {
   mintAddress?: string | PublicKey;
   size?: number;
   tokenMap?: KnownTokenMap;
 }) => {
   let icon: string | undefined = '';
-  if (props.tokenMap) {
-    icon = getTokenIcon(props.tokenMap, props.mintAddress);
+  if (tokenMap) {
+    icon = getTokenIcon(tokenMap, mintAddress);
   } else {
     const { tokenMap } = useConnectionConfig();
-    icon = getTokenIcon(tokenMap, props.mintAddress);
+    icon = getTokenIcon(tokenMap, mintAddress);
   }
-
-  const size = props.size || 20;
 
   if (icon) {
     return (
@@ -30,7 +32,7 @@ export const TokenIcon = (props: {
       />
     );
   }
-  return <Identicon address={props.mintAddress} />;
+  return <Identicon address={mintAddress} />;
 };
 
 export const PoolIcon = (props: { mintA: string; mintB: string }) => {

@@ -38,6 +38,6 @@ export const Providers: FC<ProvidersProps> = ({ children, storefront }) => {
           </AccountsProvider>
         </WalletProvider>
       </StoreProvider>
-    </ConnectionProvider >
+    </ConnectionProvider>
   );
 };

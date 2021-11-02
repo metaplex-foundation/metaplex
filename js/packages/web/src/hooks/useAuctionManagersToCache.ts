@@ -35,7 +35,7 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
           .toNumber(),
       );
 
-    const indexedInStoreIndexer = {};
+    const indexedInStoreIndexer: Record<string, boolean | undefined> = {};
 
     storeIndexer.forEach(s => {
       s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
@@ -45,7 +45,7 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
       hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
 
       return hash;
-    }, {});
+    }, {} as Record<string, boolean | undefined>);
     auctionManagersToCache = auctionManagersToCache.filter(
       a => !alreadyIndexed[a.pubkey],
     );

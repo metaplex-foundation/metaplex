@@ -2,7 +2,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { IMetadataExtension, MAX_METADATA_LEN } from '@oyster/common';
 import { MintLayout } from '@solana/spl-token';
 import { Connection } from '@solana/web3.js';
-import { Button, Col, Row, Spin, Statistic } from 'antd';
+import { Button, Col, Row, Spin, Statistic, Space } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useArtworkFiles } from '.';
 import { AmountLabel } from '../../components/AmountLabel';
@@ -51,16 +51,14 @@ export const LaunchStep = (props: {
   }, [files, metadata, setCost]);
 
   return (
-    <>
-      <Row>
-        <h2>Launch your creation</h2>
-        <p>
-          Provide detailed description of your creative process to engage with
-          your audience.
-        </p>
-      </Row>
+    <Space className="metaplex-fullwidth" direction="vertical">
+      <h2>Launch your creation</h2>
+      <p>
+        Provide detailed description of your creative process to engage with
+        your audience.
+      </p>
       <Row justify="space-around">
-        <Col>
+        <Col span={6}>
           {props.attributes.image && (
             <ArtCard
               image={image}
@@ -72,7 +70,7 @@ export const LaunchStep = (props: {
             />
           )}
         </Col>
-        <Col>
+        <Col span={8}>
           <Statistic
             title="Royalty Percentage"
             value={props.attributes.seller_fee_basis_points / 100}
@@ -86,14 +84,23 @@ export const LaunchStep = (props: {
           )}
         </Col>
       </Row>
-      <Row>
-        <Button type="primary" size="large" onClick={props.confirm}>
-          Pay with SOL
-        </Button>
-        <Button disabled={true} size="large" onClick={props.confirm}>
-          Pay with Credit Card
-        </Button>
-      </Row>
-    </>
+
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        onClick={props.confirm}
+      >
+        Pay with SOL
+      </Button>
+      <Button
+        disabled={true}
+        className="metaplex-fullwidth"
+        size="large"
+        onClick={props.confirm}
+      >
+        Pay with Credit Card
+      </Button>
+    </Space>
   );
 };

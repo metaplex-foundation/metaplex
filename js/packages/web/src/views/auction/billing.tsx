@@ -54,13 +54,18 @@ export const BillingView = () => {
   useEffect(() => {
     (async () => {
       const billingState = await loadPayoutTickets(connection);
-      
+
       patchState(billingState);
       setLoadingBilling(false);
-    })()
+    })();
   }, [loadingBilling]);
 
-  return loading || loadingBilling || !auction || !wallet || !connection || !mint ? (
+  return loading ||
+    loadingBilling ||
+    !auction ||
+    !wallet ||
+    !connection ||
+    !mint ? (
     <div className="app-section--loading">
       <Spin indicator={<LoadingOutlined />} />
     </div>
@@ -136,18 +141,20 @@ function useWinnerPotsByBidderKey(
   return pots;
 }
 
-function usePayoutTickets(
-  auctionView: AuctionView,
-): {
-  payoutTickets: Record<string, { tickets: ParsedAccount<PayoutTicket>[]; sum: number }>;
-  loading: boolean
+function usePayoutTickets(auctionView: AuctionView): {
+  payoutTickets: Record<
+    string,
+    { tickets: ParsedAccount<PayoutTicket>[]; sum: number }
+  >;
+  loading: boolean;
 } {
   const { payoutTickets } = useMeta();
   const [foundPayoutTickets, setFoundPayoutTickets] = useState<
     Record<string, ParsedAccount<PayoutTicket>>
   >({});
 
-  const [loadingPayoutTickets, setLoadingPayoutTickets] = useState<boolean>(true);
+  const [loadingPayoutTickets, setLoadingPayoutTickets] =
+    useState<boolean>(true);
 
   useEffect(() => {
     (async () => {
@@ -169,9 +176,10 @@ function usePayoutTickets(
           ? [[auctionView.participationItem]]
           : []),
       ];
-      const payoutPromises: { key: string; promise: Promise<StringPublicKey> }[] =
-        [];
-      let total = 0;
+      const payoutPromises: {
+        key: string;
+        promise: Promise<StringPublicKey>;
+      }[] = [];
       for (let i = 0; i < prizeArrays.length; i++) {
         const items = prizeArrays[i];
         for (let j = 0; j < items.length; j++) {
@@ -179,14 +187,14 @@ function usePayoutTickets(
           const creators = item.metadata?.info?.data?.creators || [];
           const recipientAddresses = creators
             ? creators
-              .map(c => c.address)
-              .concat([auctionView.auctionManager.authority])
+                .map(c => c.address)
+                .concat([auctionView.auctionManager.authority])
             : [auctionView.auctionManager.authority];
-  
+
           for (let k = 0; k < recipientAddresses.length; k++) {
             // Ensure no clashes with tickets from other safety deposits in other winning configs even if from same creator by making long keys
             const key = `${auctionView.auctionManager.pubkey}-${i}-${j}-${item.safetyDeposit.pubkey}-${recipientAddresses[k]}-${k}`;
-  
+
             if (!currFound[key]) {
               payoutPromises.push({
                 key,
@@ -199,7 +207,6 @@ function usePayoutTickets(
                   recipientAddresses[k],
                 ),
               });
-              total += 1;
             }
           }
         }
@@ -210,13 +217,13 @@ function usePayoutTickets(
             if (payoutTickets[payoutKey])
               currFound[payoutPromises[i].key] = payoutTickets[payoutKey];
           });
-  
+
           setFoundPayoutTickets(pt => ({ ...pt, ...currFound }));
         },
       );
 
-      setLoadingPayoutTickets(false)
-    })()
+      setLoadingPayoutTickets(false);
+    })();
   }, [
     Object.values(payoutTickets).length,
     auctionView.items
@@ -277,7 +284,7 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
       ),
   );
 
-  let hasParticipation =
+  const hasParticipation =
     auctionView.auctionManager.participationConfig !== undefined &&
     auctionView.auctionManager.participationConfig !== null;
   let participationEligible = hasParticipation ? usableBids : [];
@@ -369,12 +376,12 @@ export function useBillingInfo({ auctionView }: { auctionView: AuctionView }) {
     metadata: ParsedAccount<BidderMetadata>;
     pot: ParsedAccount<BidderPot>;
   }[] = [
-      ...winnersThatCanBeEmptied.map(pot => ({
-        metadata:
-          bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
-        pot,
-      })),
-    ];
+    ...winnersThatCanBeEmptied.map(pot => ({
+      metadata:
+        bidderMetadataByAuctionAndBidder[`${auctionKey}-${pot.info.bidderAct}`],
+      pot,
+    })),
+  ];
 
   return {
     bidsToClaim,
@@ -441,16 +448,10 @@ export const InnerBillingView = ({
           style={{ margin: '0 30px', textAlign: 'left', fontSize: '1.4rem' }}
         >
           <Col span={12}>
-            <ArtContent
-              pubkey={id}
-              className="artwork-image"
-              allowMeshRender={true}
-            />
+            <ArtContent pubkey={id} allowMeshRender={true} />
           </Col>
           <Col span={12}>
-            <h1>
-              {art.title}
-            </h1>
+            <h1>{art.title}</h1>
             <br />
             <div className="info-header">TOTAL AUCTION VALUE</div>
             <div className="escrow">
@@ -466,8 +467,8 @@ export const InnerBillingView = ({
               ◎
               {fromLamports(
                 totalWinnerPayments +
-                participationPossibleTotal -
-                participationUnredeemedTotal,
+                  participationPossibleTotal -
+                  participationUnredeemedTotal,
                 mint,
               )}
             </div>
@@ -500,7 +501,11 @@ export const InnerBillingView = ({
             <br />
             <div className="info-header">TOTAL IN ESCROW</div>
             <div className="escrow">
-              {escrowBalance !== undefined ? `◎${escrowBalance}` : <Spin indicator={<LoadingOutlined />} />}
+              {escrowBalance !== undefined ? (
+                `◎${escrowBalance}`
+              ) : (
+                <Spin indicator={<LoadingOutlined />} />
+              )}
             </div>
             <br />
             {hasParticipation && (
@@ -532,7 +537,7 @@ export const InnerBillingView = ({
                   setEscrowBalanceRefreshCounter(ctr => ctr + 1);
                   setSettleErrorMessage(undefined);
                 } catch (e: any) {
-                  setSettleErrorMessage(e.message)
+                  setSettleErrorMessage(e.message);
                 }
               }}
             >

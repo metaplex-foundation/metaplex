@@ -30,9 +30,13 @@ interface AuctionStatusLabels {
 }
 
 export const getHumanStatus = (status: AuctionStatus): string => {
-  const { isInstantSale, isLive } = status;
-  if (isInstantSale) {
-    if (status.soldOut) {
+  // isInstantSale cannot be destructured due to TypeScript type limitations
+  const { isLive } = status;
+
+  if (status.isInstantSale) {
+    const { soldOut } = status;
+
+    if (soldOut) {
       return 'Sold Out';
     } else if (isLive) {
       return '';

@@ -1,11 +1,13 @@
-import { Button, ButtonProps, Modal, Row } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { Button, Card, Modal, Row } from 'antd';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
 import { useUserArts } from '../../hooks';
 import { ArtCard } from './../../components/ArtCard';
 
-export interface ArtSelectorProps extends ButtonProps {
+export interface ArtSelectorProps {
+  className?: string;
+  children?: ReactNode;
   selected: SafetyDepositDraft[];
   setSelected: (selected: SafetyDepositDraft[]) => void;
   allowMultiple: boolean;
@@ -13,6 +15,8 @@ export interface ArtSelectorProps extends ButtonProps {
 }
 
 export const ArtSelector = ({
+  className,
+  children,
   selected,
   setSelected,
   allowMultiple,
@@ -47,7 +51,7 @@ export const ArtSelector = ({
 
   return (
     <>
-      <MetaplexMasonry>
+      <MetaplexMasonry className={className}>
         {selected.map(m => {
           const key = m?.metadata.pubkey || '';
 
@@ -65,7 +69,9 @@ export const ArtSelector = ({
           );
         })}
         {(allowMultiple || selectedItems.size === 0) && (
-          <div onClick={open}>Add an NFT</div>
+          <Card hoverable onClick={open}>
+            {children ?? 'Add an NFT'}
+          </Card>
         )}
       </MetaplexMasonry>
 

@@ -15,8 +15,9 @@ export const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT artwork on Metaplex, check it out!",
-      url: `${window.location.origin
-        }/#/art/${props.nft?.metadataAccount.toString()}`,
+      url: `${
+        window.location.origin
+      }/#/art/${props.nft?.metadataAccount.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',
@@ -31,7 +32,9 @@ export const Congrats = (props: {
       <>
         <div>Sorry, there was an error!</div>
         <p>{props.alert}</p>
-        <Button onClick={_ => history.push("/artworks/new")}>Back to Create NFT</Button>
+        <Button onClick={() => history.push('/artworks/new')}>
+          Back to Create NFT
+        </Button>
       </>
     );
   }
@@ -45,9 +48,8 @@ export const Congrats = (props: {
           <span>&gt;</span>
         </Button>
         <Button
-          className="metaplex-button"
-          onClick={_ =>
-            history.push(`/artworks/${props.nft?.metadataAccount.toString()}`)
+          onClick={() =>
+            history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
         >
           <span>See it in your collection</span>

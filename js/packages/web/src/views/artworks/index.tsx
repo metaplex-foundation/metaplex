@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
-import { Spin, Button, Row, Col } from 'antd';
-import { Link } from 'react-router-dom';
-import { useUserArts } from '../../hooks';
-import { useMeta } from '../../contexts';
-import { MetaplexMasonry } from '../../components/MetaplexMasonry';
-import { loadMetadataForUsers, useUserAccounts, useConnection } from '@oyster/common';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { LoadingOutlined } from '@ant-design/icons';
+import {
+  loadMetadataForUsers,
+  useConnection,
+  useUserAccounts,
+} from '@oyster/common';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Button, Col, Row, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArtCard } from '../../components/ArtCard';
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useMeta } from '../../contexts';
+import { useUserArts } from '../../hooks';
 
 export const ArtworksView = () => {
   const ownedMetadata = useUserArts();
@@ -20,19 +24,23 @@ export const ArtworksView = () => {
   useEffect(() => {
     (async () => {
       setLoadingArt(true);
-      const metadataState = await loadMetadataForUsers(connection, userAccounts, whitelistedCreatorsByCreator);
+      const metadataState = await loadMetadataForUsers(
+        connection,
+        userAccounts,
+        whitelistedCreatorsByCreator,
+      );
 
       patchState(metadataState);
       setLoadingArt(false);
-    })()
-  }, [connection, wallet.connected, userAccounts])
+    })();
+  }, [connection, wallet.connected, userAccounts]);
 
   if (loadingArt) {
     return (
       <div className="app-section--loading">
         <Spin indicator={<LoadingOutlined />} />
       </div>
-    )
+    );
   }
 
   return (
@@ -45,9 +53,8 @@ export const ArtworksView = () => {
       </Row>
       <Row>
         <Col span={24}>
-          <MetaplexMasonry
-          >
-            {ownedMetadata.map((m, idx) => {
+          <MetaplexMasonry>
+            {ownedMetadata.map(m => {
               const id = m.metadata.pubkey;
               return (
                 <Link to={`/artworks/${id}`} key={id}>

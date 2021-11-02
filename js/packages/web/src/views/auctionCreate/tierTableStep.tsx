@@ -1,6 +1,6 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { Creator, MetadataKey, WinningConfigType } from '@oyster/common';
-import { Button, Card, Checkbox, Col, Input, Row, Select } from 'antd';
+import { Button, Card, Checkbox, Input, Select, Space } from 'antd';
 import React from 'react';
 import { Tier, TieredAuctionState } from '.';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
@@ -27,19 +27,17 @@ export const TierTableStep = (props: {
     options.push({ label: `Winner ${i + 1}`, value: i });
   }
   return (
-    <>
-      <Row>
+    <Space className="metaplex-fullwidth" direction="vertical">
+      <div>
         <h2>Add Winning Tiers and Their Prizes</h2>
         <p>
           Each row represents a tier. You can choose which winning spots get
           which tiers.
         </p>
-      </Row>
+      </div>
       {props.attributes.tiers.map((wcg, configIndex) => (
-        <Row key={configIndex}>
-          <Col xl={24}>
-            <h3>Tier #{configIndex + 1} Basket</h3>
-          </Col>
+        <Space key={configIndex} direction="horizontal" align="center">
+          <h3>Tier #{configIndex + 1} Basket</h3>
 
           <Checkbox.Group
             options={options}
@@ -56,9 +54,10 @@ export const TierTableStep = (props: {
           />
 
           {wcg.items.map((i, itemIndex) => (
-            <Col xl={8} key={itemIndex}>
-              <Card>
+            <Card key={itemIndex}>
+              <Space direction="vertical">
                 <ArtSelector
+                  className="metaplex-fullwidth"
                   filter={artistFilter}
                   selected={
                     i.safetyDepositBoxIndex !== undefined
@@ -85,14 +84,14 @@ export const TierTableStep = (props: {
                       if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                        MetadataKey.MasterEditionV1
+                          MetadataKey.MasterEditionV1
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV1;
                       } else if (
                         items[0].masterEdition &&
                         items[0].masterEdition.info.key ==
-                        MetadataKey.MasterEditionV2
+                          MetadataKey.MasterEditionV2
                       ) {
                         myNewTier.winningConfigType =
                           WinningConfigType.PrintingV2;
@@ -161,7 +160,7 @@ export const TierTableStep = (props: {
                           props.attributes.items[
                             myNewTier.safetyDepositBoxIndex
                           ].masterEdition?.info.key ==
-                          MetadataKey.MasterEditionV1
+                            MetadataKey.MasterEditionV1
                         ) {
                           value = WinningConfigType.PrintingV1;
                         }
@@ -220,36 +219,17 @@ export const TierTableStep = (props: {
                     )}
                   </>
                 )}
-              </Card>
-            </Col>
+              </Space>
+            </Card>
           ))}
-          <Col xl={4}>
-            <Button
-              type="primary"
-              size="large"
-              onClick={() => {
-                const newTiers = newImmutableTiers(props.attributes.tiers);
-                const myNewTier = newTiers[configIndex];
-                myNewTier.items.push({});
-                props.setAttributes({
-                  ...props.attributes,
-                  tiers: newTiers,
-                });
-              }}
-            >
-              <PlusCircleOutlined />
-            </Button>
-          </Col>
-        </Row>
-      ))}
-      <Row>
-        <Col xl={24}>
+
           <Button
             type="primary"
             size="large"
             onClick={() => {
               const newTiers = newImmutableTiers(props.attributes.tiers);
-              newTiers.push({ items: [], winningSpots: [] });
+              const myNewTier = newTiers[configIndex];
+              myNewTier.items.push({});
               props.setAttributes({
                 ...props.attributes,
                 tiers: newTiers,
@@ -258,13 +238,32 @@ export const TierTableStep = (props: {
           >
             <PlusCircleOutlined />
           </Button>
-        </Col>
-      </Row>
-      <Row>
-        <Button type="primary" size="large" onClick={props.confirm}>
-          Continue to Review
-        </Button>
-      </Row>
-    </>
+        </Space>
+      ))}
+
+      <Button
+        type="primary"
+        size="large"
+        onClick={() => {
+          const newTiers = newImmutableTiers(props.attributes.tiers);
+          newTiers.push({ items: [], winningSpots: [] });
+          props.setAttributes({
+            ...props.attributes,
+            tiers: newTiers,
+          });
+        }}
+      >
+        <PlusCircleOutlined />
+      </Button>
+
+      <Button
+        className="metaplex-fullwidth"
+        type="primary"
+        size="large"
+        onClick={props.confirm}
+      >
+        Continue to Review
+      </Button>
+    </Space>
   );
 };

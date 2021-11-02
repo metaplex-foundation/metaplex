@@ -17,7 +17,7 @@ import {
 } from '@oyster/common/dist/lib/models/metaplex/index';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, SystemProgram } from '@solana/web3.js';
-import { Button, Col, Row, Steps } from 'antd';
+import { Button, Col, Row, Space, Steps } from 'antd';
 import BN from 'bn.js';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -188,7 +188,7 @@ export const AuctionCreateView = () => {
         if (!editions) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-              (wallet?.publicKey || SystemProgram.programId).toBase58()
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -230,7 +230,7 @@ export const AuctionCreateView = () => {
         ) {
           item.winningConfigType =
             item.metadata.info.updateAuthority ===
-              (wallet?.publicKey || SystemProgram.programId).toBase58()
+            (wallet?.publicKey || SystemProgram.programId).toBase58()
               ? WinningConfigType.FullRightsTransfer
               : WinningConfigType.TokenOnlyTransfer;
         }
@@ -423,23 +423,23 @@ export const AuctionCreateView = () => {
       endAuctionAt: isInstantSale
         ? null
         : new BN(
-          (attributes.auctionDuration || 0) *
-          (attributes.auctionDurationType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.auctionDurationType == 'hours'
-              ? 60 * 60 // 1 hour in seconds
-              : 60), // 1 minute in seconds
-        ), // endAuctionAt is actually auction duration, poorly named, in seconds
+            (attributes.auctionDuration || 0) *
+              (attributes.auctionDurationType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.auctionDurationType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ), // endAuctionAt is actually auction duration, poorly named, in seconds
       auctionGap: isInstantSale
         ? null
         : new BN(
-          (attributes.gapTime || 0) *
-          (attributes.gapTimeType == 'days'
-            ? 60 * 60 * 24 // 1 day in seconds
-            : attributes.gapTimeType == 'hours'
-              ? 60 * 60 // 1 hour in seconds
-              : 60), // 1 minute in seconds
-        ),
+            (attributes.gapTime || 0) *
+              (attributes.gapTimeType == 'days'
+                ? 60 * 60 * 24 // 1 day in seconds
+                : attributes.gapTimeType == 'hours'
+                ? 60 * 60 // 1 hour in seconds
+                : 60), // 1 minute in seconds
+          ),
       priceFloor: new PriceFloor({
         type: attributes.priceFloor
           ? PriceFloorType.Minimum
@@ -463,8 +463,8 @@ export const AuctionCreateView = () => {
     const safetyDepositDrafts = isOpenEdition
       ? []
       : attributes.category !== AuctionCategory.Tiered
-        ? attributes.items
-        : tieredAttributes.items;
+      ? attributes.items
+      : tieredAttributes.items;
     const participationSafetyDepositDraft = isOpenEdition
       ? attributes.items[0]
       : attributes.participationNFT;
@@ -642,12 +642,17 @@ export const AuctionCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          {stepsByCategory[attributes.category][step][1]}
-          {0 < step && stepsVisible && (
-            <div>
-              <Button onClick={() => gotoNextStep(step - 1)}>Back</Button>
-            </div>
-          )}
+          <Space
+            className="metaplex-fullwidth metaplex-space-align-stretch"
+            direction="vertical"
+          >
+            {stepsByCategory[attributes.category][step][1]}
+            {0 < step && stepsVisible && (
+              <Row justify="center">
+                <Button onClick={() => gotoNextStep(step - 1)}>Back</Button>
+              </Row>
+            )}
+          </Space>
         </Col>
       </Row>
     </>

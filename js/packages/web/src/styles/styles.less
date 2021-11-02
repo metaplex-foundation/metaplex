@@ -1,4 +1,49 @@
+// Overrides and antd cleanup
+
 .ant-tabs.ant-tabs-top {
   // NOTE: hack override to fix a subtle bug with the display of masonry tab views
   overflow: visible;
+}
+
+// Global utility classes
+
+.metaplex-fullwidth {
+  // Leverage CSS specificity
+  &,
+  &.metaplex-masonry {
+    width: 100%;
+  }
+}
+
+.metaplex-square-w,
+.metaplex-square-h {
+  aspect-ratio: 1 / 1;
+}
+
+.metaplex-square-w,
+.metaplex-auto-width {
+  width: auto;
+}
+
+.metaplex-square-h,
+.metaplex-auto-height {
+  height: auto;
+}
+
+.ant-space.metaplex-space-justify-end {
+  justify-content: flex-end;
+}
+
+.ant-space.metaplex-space-align-stretch {
+  align-items: stretch;
+}
+
+.ant-btn-lg.metaplex-button-jumbo {
+  width: auto;
+  height: auto;
+  white-space: normal;
+
+  &.metaplex-fullwidth {
+    width: 100%;
+  }
 }

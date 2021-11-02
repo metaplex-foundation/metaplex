@@ -1,5 +1,5 @@
 import { MetadataCategory, StringPublicKey } from '@oyster/common';
-import { Badge, Button, Card, CardProps } from 'antd';
+import { Badge, Button, Card, CardProps, Space, Tag } from 'antd';
 import React from 'react';
 import { useArt } from '../../hooks';
 import { Artist, ArtType } from '../../types';
@@ -22,26 +22,27 @@ export interface ArtCardProps extends CardProps {
   creators?: Artist[];
   preview?: boolean;
   small?: boolean;
+  hoverable?: boolean;
   close?: () => void;
 
   height?: number;
   width?: number;
 }
 
-export const ArtCard = (props: ArtCardProps) => {
-  const {
-    category,
-    image,
-    animationURL,
-    name: nameProp,
-    preview,
-    creators: creatorsProp,
-    close,
-    pubkey,
-    height,
-    width,
-    ...rest
-  } = props;
+export const ArtCard = ({
+  category,
+  image,
+  animationURL,
+  name: nameProp,
+  preview,
+  creators: creatorsProp,
+  hoverable = true,
+  close,
+  pubkey,
+  height,
+  width,
+  ...rest
+}: ArtCardProps) => {
   const art = useArt(pubkey);
   const creators = art?.creators || creatorsProp || [];
   const name = art?.title || nameProp || ' ';
@@ -57,11 +58,12 @@ export const ArtCard = (props: ArtCardProps) => {
 
   const card = (
     <Card
-      hoverable={true}
+      hoverable={hoverable}
       cover={
         <>
           {close && (
             <Button
+              className="metaplex-square-w"
               shape="circle"
               onClick={e => {
                 e.stopPropagation();
@@ -88,7 +90,7 @@ export const ArtCard = (props: ArtCardProps) => {
       <Meta
         title={`${name}`}
         description={
-          <>
+          <Space direction="horizontal">
             <MetaAvatar creators={creators} size={32} />
             {/* {art.type === ArtType.Master && (
               <>
@@ -101,8 +103,8 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            <div>{badge}</div>
-          </>
+            {badge && <Tag>{badge}</Tag>}
+          </Space>
         }
       />
     </Card>

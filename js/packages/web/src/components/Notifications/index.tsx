@@ -14,7 +14,7 @@ import {
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { Badge, List, Popover } from 'antd';
+import { Badge, Button, ButtonProps, List, Popover } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { closePersonalEscrow } from '../../actions/closePersonalEscrow';
@@ -160,12 +160,12 @@ export function useCollapseWrappedSol({
   }
 }
 
-export function Notifications() {
-  const {
-    metadata,
-    whitelistedCreatorsByCreator,
-    store,
-  } = useMeta();
+export function Notifications({
+  buttonType,
+}: {
+  buttonType?: ButtonProps['type'];
+}) {
+  const { metadata, whitelistedCreatorsByCreator, store } = useMeta();
 
   const connection = useConnection();
   const wallet = useWallet();
@@ -190,7 +190,7 @@ export function Notifications() {
       }),
     [metadata, whitelistedCreatorsByCreator, walletPubkey],
   );
-  
+
   metaNeedsApproving.forEach(m => {
     notifications.push({
       id: m.pubkey,
@@ -257,8 +257,10 @@ export function Notifications() {
   );
 
   const justContent = (
-    <Popover placement="bottomLeft" content={content} trigger="click">
-      <img src="/bell.svg" />
+    <Popover placement="bottomRight" content={content} trigger="click">
+      <Button type={buttonType}>
+        <img src="/bell.svg" />
+      </Button>
     </Popover>
   );
 

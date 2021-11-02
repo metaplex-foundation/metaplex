@@ -1,15 +1,21 @@
-import { InstructionsModal } from '../InstructionsModal';
+import { ConnectButton } from '@oyster/common';
+import { ButtonProps } from 'antd';
 import React from 'react';
 import { LABELS } from '../../constants';
-import { ConnectButton } from '@oyster/common';
+import { InstructionsModal } from '../InstructionsModal';
 
 interface HowToBuyModalProps {
   onClick?: () => void;
+  buttonType?: ButtonProps['type'];
 }
 
-export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({ onClick }) => {
+export const HowToBuyModal: React.FC<HowToBuyModalProps> = ({
+  onClick,
+  buttonType,
+}) => {
   return (
     <InstructionsModal
+      buttonType={buttonType}
       buttonText="How to Buy"
       modalTitle={`Buying NFTs on ${LABELS.STORE_NAME}`}
       cardProps={[

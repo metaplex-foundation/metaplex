@@ -7,7 +7,7 @@ import {
   useConnectionConfig,
 } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Button, Col, Row, Steps } from 'antd';
+import { Button, Col, Row, Space, Steps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { mintNFT } from '../../actions';
@@ -88,7 +88,7 @@ export const ArtCreateView = () => {
       },
     };
     setStepsVisible(false);
-    setMinting(true)
+    setMinting(true);
     setAlertMessage(undefined);
 
     try {
@@ -133,68 +133,73 @@ export const ArtCreateView = () => {
           </Col>
         )}
         <Col span={24} {...(stepsVisible ? { md: 20 } : { md: 24 })}>
-          {step === 0 && (
-            <CategoryStep
-              confirm={(category: MetadataCategory) => {
-                setAttributes({
-                  ...attributes,
-                  properties: {
-                    ...attributes.properties,
-                    category,
-                  },
-                });
-                gotoStep(1);
-              }}
-            />
-          )}
-          {step === 1 && (
-            <UploadStep
-              onSetCoverFile={setCoverFile}
-              onSetMainFile={setMainFile}
-              attributes={attributes}
-              setAttributes={setAttributes}
-              files={files}
-              setFiles={setFiles}
-              confirm={() => gotoStep(2)}
-            />
-          )}
+          <Space
+            className="metaplex-fullwidth metaplex-space-align-stretch"
+            direction="vertical"
+          >
+            {step === 0 && (
+              <CategoryStep
+                confirm={(category: MetadataCategory) => {
+                  setAttributes({
+                    ...attributes,
+                    properties: {
+                      ...attributes.properties,
+                      category,
+                    },
+                  });
+                  gotoStep(1);
+                }}
+              />
+            )}
+            {step === 1 && (
+              <UploadStep
+                onSetCoverFile={setCoverFile}
+                onSetMainFile={setMainFile}
+                attributes={attributes}
+                setAttributes={setAttributes}
+                files={files}
+                setFiles={setFiles}
+                confirm={() => gotoStep(2)}
+              />
+            )}
 
-          {step === 2 && (
-            <InfoStep
-              attributes={attributes}
-              files={files}
-              setAttributes={setAttributes}
-              confirm={() => gotoStep(3)}
-            />
-          )}
-          {step === 3 && (
-            <RoyaltiesStep
-              attributes={attributes}
-              confirm={() => gotoStep(4)}
-              setAttributes={setAttributes}
-            />
-          )}
-          {step === 4 && (
-            <LaunchStep
-              attributes={attributes}
-              files={files}
-              confirm={() => gotoStep(5)}
-              connection={connection}
-            />
-          )}
-          {step === 5 && (
-            <WaitingStep
-              mint={mint}
-              minting={isMinting}
-              step={nftCreateProgress}
-              confirm={() => gotoStep(6)}
-            />
-          )}
-          {0 < step && step < 5 && (
-            <div>
-              <Button onClick={() => gotoStep(step - 1)}>Back</Button>
-            </div>
-          )}
+            {step === 2 && (
+              <InfoStep
+                attributes={attributes}
+                files={files}
+                setAttributes={setAttributes}
+                confirm={() => gotoStep(3)}
+              />
+            )}
+            {step === 3 && (
+              <RoyaltiesStep
+                attributes={attributes}
+                confirm={() => gotoStep(4)}
+                setAttributes={setAttributes}
+              />
+            )}
+            {step === 4 && (
+              <LaunchStep
+                attributes={attributes}
+                files={files}
+                confirm={() => gotoStep(5)}
+                connection={connection}
+              />
+            )}
+            {step === 5 && (
+              <WaitingStep
+                mint={mint}
+                minting={isMinting}
+                step={nftCreateProgress}
+                confirm={() => gotoStep(6)}
+              />
+            )}
+            {0 < step && step < 5 && (
+              <Row justify="center">
+                <Button onClick={() => gotoStep(step - 1)}>Back</Button>
+              </Row>
+            )}
+          </Space>
         </Col>
       </Row>
       <MetaplexOverlay visible={step === 6}>
@@ -204,7 +209,10 @@ export const ArtCreateView = () => {
   );
 };
 
-const useArtworkFiles = (files: File[], attributes: IMetadataExtension) => {
+export const useArtworkFiles = (
+  files: File[],
+  attributes: IMetadataExtension,
+) => {
   const [data, setData] = useState<{ image: string; animation_url: string }>({
     image: '',
     animation_url: '',

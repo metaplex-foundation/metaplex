@@ -63,6 +63,7 @@ export interface UserValue {
 }
 
 export const UserSearch = (props: {
+  className?: string;
   setCreators: (users: UserValue[]) => void;
 }) => {
   const { whitelistedCreatorsByCreator } = useMeta();
@@ -70,6 +71,7 @@ export const UserSearch = (props: {
 
   return (
     <DebounceSelect<UserValue[]>
+      className={props.className}
       mode="multiple"
       size="large"
       value={value}

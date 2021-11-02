@@ -6,7 +6,6 @@ import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
-import { ThreeDots } from '../MyLoader';
 
 const MeshArtContent = ({
   uri,
@@ -37,7 +36,7 @@ const CachedImageContent = ({
   uri?: string;
   preview?: boolean;
 }) => {
-  const [loaded, setLoaded] = useState<boolean>(false);
+  const [, /* loaded */ setLoaded] = useState<boolean>(false);
   const { cachedBlob } = useCachedImage(uri || '');
 
   return (
@@ -210,7 +209,7 @@ export const ArtContent = ({
   }
 
   const content =
-    (category === 'video' || category === 'audio') ? (
+    category === 'video' || category === 'audio' ? (
       <VideoArtContent
         files={files}
         uri={uri}

@@ -1,13 +1,6 @@
-import {
-  CountdownState,
-} from '@oyster/common';
-import { Card, CardProps } from 'antd';
-import React, { useEffect, useState } from 'react';
-import {
-  AuctionView,
-  useArt,
-  useCreators,
-} from '../../hooks';
+import { Card, CardProps, Divider, Space } from 'antd';
+import React from 'react';
+import { AuctionView, useArt, useCreators } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';
 import { ArtContent } from '../ArtContent';
 import { AuctionCountdown } from '../AuctionNumbers';
@@ -24,57 +17,32 @@ export const AuctionRenderCard = (props: AuctionCard) => {
   const art = useArt(id);
   const creators = useCreators(auctionView);
   const name = art?.title || ' ';
-  const [state, setState] = useState<CountdownState>();
-
-  const ended =
-    !auctionView.isInstantSale &&
-    state?.hours === 0 &&
-    state?.minutes === 0 &&
-    state?.seconds === 0;
-  const [countdown, setCountdown] = useState<CountdownState>();
 
   const { status, amount } = useAuctionStatus(auctionView);
   const humanStatus = getHumanStatus(status);
 
-  const auction = auctionView.auction.info;
-
-  useEffect(() => {
-    const calc = () => {
-      setCountdown(auction.timeToEnd());
-    };
-
-    const interval = setInterval(() => {
-      calc();
-    }, 1000);
-
-    calc();
-    return () => clearInterval(interval);
-  }, [auction, setCountdown]);
-
   const card = (
     <Card hoverable bordered={false}>
-      <div>
-      <div>
+      <Space direction="vertical">
+        <Space direction="horizontal">
           <MetaAvatar creators={[creators[0]]} />
           <span>
             {creators[0]?.name || creators[0]?.address?.substr(0, 6)}...
           </span>
-        </div>
-        <div>
-          <ArtContent preview={false} pubkey={id} allowMeshRender={false} />
-        </div>
-        <div>{name}</div>
-        {!ended && (
+        </Space>
+
+        <ArtContent preview={false} pubkey={id} allowMeshRender={false} />
+        <h3>{name}</h3>
+
+        {!status.isInstantSale && status.isLive && (
           <div>
-            <span>ENDING IN</span>
+            <h5>ENDING IN</h5>
             <AuctionCountdown auctionView={auctionView} labels={false} />
           </div>
         )}
-      </div>
-      <div>
-        <span>{humanStatus}</span>
-        <AmountLabel title={humanStatus} amount={amount} />
-      </div>
+      </Space>
+      <Divider />
+      <AmountLabel title={humanStatus} amount={amount} />
     </Card>
   );
 

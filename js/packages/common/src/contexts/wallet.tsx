@@ -11,7 +11,7 @@ import {
   getSolletWallet,
   getSolongWallet,
 } from '@solana/wallet-adapter-wallets';
-import { Button, Collapse } from 'antd';
+import { Button, Collapse, Space } from 'antd';
 import React, {
   createContext,
   FC,
@@ -51,9 +51,11 @@ export const WalletModal = () => {
 
   return (
     <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
-      <span>RECOMMENDED</span>
+      <h4>RECOMMENDED</h4>
 
       <Button
+        className="metaplex-button-jumbo"
+        size="large"
         onClick={() => {
           console.log(phatomWallet.name);
           select(phatomWallet.name);
@@ -101,22 +103,24 @@ export const WalletModal = () => {
           )
         }
       >
-        <Panel header={<span>Other Wallets</span>} key="1">
-          {wallets.map((wallet, idx) => {
-            if (wallet.name === 'Phantom') return null;
+        <Panel header={<strong>Other Wallets</strong>} key="1">
+          <Space wrap>
+            {wallets.map((wallet, idx) => {
+              if (wallet.name === 'Phantom') return null;
 
-            return (
-              <Button
-                key={idx}
-                onClick={() => {
-                  select(wallet.name);
-                  close();
-                }}
-              >
-                Connect to {wallet.name}
-              </Button>
-            );
-          })}
+              return (
+                <Button
+                  key={idx}
+                  onClick={() => {
+                    select(wallet.name);
+                    close();
+                  }}
+                >
+                  Connect to {wallet.name}
+                </Button>
+              );
+            })}
+          </Space>
         </Panel>
       </Collapse>
     </MetaplexModal>
@@ -136,9 +140,9 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const keyToDisplay =
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
-            base58.length - 7,
-            base58.length,
-          )}`
+              base58.length - 7,
+              base58.length,
+            )}`
           : base58;
 
       notify({

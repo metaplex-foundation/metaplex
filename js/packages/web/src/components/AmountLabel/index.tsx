@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Statistic } from 'antd';
-import { useSolPrice } from '../../contexts';
 import { formatUSD } from '@oyster/common';
+import { Space, Statistic } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
 
 interface IAmountLabel {
@@ -33,19 +33,21 @@ export const AmountLabel = (props: IAmountLabel) => {
   const PriceNaN = isNaN(amount);
 
   return (
-    <div>
-      {PriceNaN === false && (
-        <Statistic
-          title={title || ''}
-          value={`${amount}${displaySOL ? ' SOL' : ''}`}
-          prefix={customPrefix || <SolCircle />}
-        />
-      )}
-      {displayUSD && (
-        <div>
-          {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
-        </div>
-      )}
-    </div>
+    <>
+      <h5>{title}</h5>
+      <Space direction="horizontal" align="baseline">
+        {PriceNaN === false && (
+          <Statistic
+            value={`${amount}${displaySOL ? ' SOL' : ''}`}
+            prefix={customPrefix || <SolCircle />}
+          />
+        )}
+        {displayUSD && (
+          <div>
+            {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
+          </div>
+        )}
+      </Space>
+    </>
   );
 };

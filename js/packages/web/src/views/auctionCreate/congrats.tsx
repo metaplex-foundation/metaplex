@@ -16,8 +16,9 @@ export const Congrats = (props: {
   const newTweetURL = () => {
     const params = {
       text: "I've created a new NFT auction on Metaplex, check it out!",
-      url: `${window.location.origin
-        }/#/auction/${props.auction?.auction.toString()}`,
+      url: `${
+        window.location.origin
+      }/#/auction/${props.auction?.auction.toString()}`,
       hashtags: 'NFT,Crypto,Metaplex',
       // via: "Metaplex",
       related: 'Metaplex,Solana',

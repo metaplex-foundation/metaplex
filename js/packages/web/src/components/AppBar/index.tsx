@@ -13,56 +13,52 @@ export const AppBar = () => {
   const locationPath = location.pathname.toLowerCase();
   const { ownerAddress } = useStore();
 
+  const menuInfo = useMemo(() => {
+    let menu = [
+      {
+        key: 'listings',
+        link: '/',
+        alt: [{ path: '/', exact: true }],
+        title: 'Listings',
+        exact: true,
+      },
+      {
+        key: 'artists',
+        link: `/artists/${ownerAddress}`,
+        alt: [{ path: '/artists', exact: false }],
+        title: 'Artists',
+        exact: false,
+      },
+    ];
 
-  const menuInfo = useMemo(
-    () => {
-      let menu = [
+    if (connected) {
+      menu = [
+        ...menu,
         {
-          key: 'listings',
-          link: '/',
-          alt: [{ path: '/', exact: true }],
-          title: 'Listings',
+          key: 'owned',
+          link: '/owned',
+          alt: [{ path: '/owned', exact: true }],
+          title: 'Owned',
           exact: true,
         },
+      ];
+    }
+
+    if (publicKey?.toBase58() === ownerAddress) {
+      menu = [
+        ...menu,
         {
-          key: 'artists',
-          link: `/artists/${ownerAddress}`,
-          alt: [{ path:'/artists', exact: false }],
-          title: 'Artists',
-          exact: false,
+          key: 'admin',
+          link: '/admin',
+          alt: [{ path: '/admin', exact: true }],
+          title: 'Admin',
+          exact: true,
         },
-      ]
+      ];
+    }
 
-      if (connected) {
-        menu = [
-          ...menu,
-          {
-            key: 'owned',
-            link: '/owned',
-            alt: [{ path: '/owned', exact: true }],
-            title: 'Owned',
-            exact: true,
-          },
-        ]
-      }
-
-      if (publicKey?.toBase58() === ownerAddress) {
-        menu = [
-          ...menu,
-          {
-            key: 'admin',
-            link: '/admin',
-            alt: [{ path: '/admin', exact: true }],
-            title: 'Admin',
-            exact: true,
-          },
-        ]
-      }
-
-      return menu;
-    },
-    [connected],
-  );
+    return menu;
+  }, [connected]);
 
   const menuItems = useMemo(
     () =>
@@ -88,30 +84,29 @@ export const AppBar = () => {
 
   return (
     <>
-      <Row>
+      <Row wrap={false}>
         <Col flex="0 0 auto">
           <Link to="/" id="metaplex-header-logo">
             <img src="/metaplex-logo.svg" />
           </Link>
         </Col>
-        <Col flex="1 0 auto">
+        <Col flex="1 0 0" style={{ overflow: 'hidden' }}>
           <Menu theme="dark" mode="horizontal" selectedKeys={activeItems}>
             {menuItems}
           </Menu>
         </Col>
-        <Col flex="1" />
         <Col flex="0 1 auto">
           <Space align="center">
             {connected ? (
               <>
-                <CurrentUserBadge />
-                <Notifications />
-                <Cog />
+                <CurrentUserBadge showAddress={true} buttonType="text" />
+                <Notifications buttonType="text" />
+                <Cog buttonType="text" />
               </>
             ) : (
               <>
-                <HowToBuyModal />
-                <ConnectButton allowWalletChange />
+                <HowToBuyModal buttonType="text" />
+                <ConnectButton type="text" allowWalletChange />
               </>
             )}
           </Space>
