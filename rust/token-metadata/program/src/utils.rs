@@ -823,19 +823,21 @@ pub fn process_create_metadata_accounts_logic(
     let existing_mint_authority = get_mint_authority(mint_info)?;
     // IMPORTANT NOTE
     // This allows the Metaplex Foundation to Create but not update metadata for SPL tokens that have not populated their metadata.
-    assert_mint_authority_matches_mint(&existing_mint_authority, mint_authority_info).or_else(|e| {
-        // Allow seeding by the authority seed populator
-        if mint_authority_info.key == &SEED_AUTHORITY && mint_authority_info.is_signer {
-            // When metadata is seeded, the mint authority should be able to change it
-            if let COption::Some(auth) = existing_mint_authority {
-                update_authority_key = auth;
-                is_mutable = true;
+    assert_mint_authority_matches_mint(&existing_mint_authority, mint_authority_info).or_else(
+        |e| {
+            // Allow seeding by the authority seed populator
+            if mint_authority_info.key == &SEED_AUTHORITY && mint_authority_info.is_signer {
+                // When metadata is seeded, the mint authority should be able to change it
+                if let COption::Some(auth) = existing_mint_authority {
+                    update_authority_key = auth;
+                    is_mutable = true;
+                }
+                Ok(())
+            } else {
+                Err(e)
             }
-            Ok(())
-        } else {
-            Err(e)
-        }
-    })?;
+        },
+    )?;
     assert_owned_by(mint_info, &spl_token::id())?;
 
     let metadata_seeds = &[
@@ -898,6 +900,8 @@ pub fn process_create_metadata_accounts_logic(
     Ok(())
 }
 
+/// Strings need to be appended with `\0`s in order to have a deterministic length.
+/// This supports the `memcmp` filter  on get program account calls.
 pub fn puff_out_data_fields(metadata: &mut Metadata) {
     let mut array_of_zeroes = vec![];
     while array_of_zeroes.len() < MAX_NAME_LENGTH - metadata.data.name.len() {
