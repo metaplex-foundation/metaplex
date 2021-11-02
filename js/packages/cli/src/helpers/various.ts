@@ -2,6 +2,8 @@ import { LAMPORTS_PER_SOL, AccountInfo } from '@solana/web3.js';
 import fs from 'fs';
 import weighted from 'weighted';
 import path from 'path';
+import { Program, web3 } from '@project-serum/anchor';
+import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 const { readFile } = fs.promises;
 
@@ -197,4 +199,24 @@ const getMultipleAccountsCore = async (
 
   // TODO: fix
   throw new Error();
+};
+
+export const getPriceWithMantissa = async (
+  price: number,
+  mint: web3.PublicKey,
+  walletKeyPair: any,
+  anchorProgram: Program,
+): Promise<number> => {
+  const token = new Token(
+    anchorProgram.provider.connection,
+    new web3.PublicKey(mint),
+    TOKEN_PROGRAM_ID,
+    walletKeyPair,
+  );
+
+  const mintInfo = await token.getMintInfo();
+
+  const mantissa = 10 ** mintInfo.decimals;
+
+  return Math.ceil(price * mantissa);
 };

@@ -15,7 +15,6 @@ import {
   MAX_NAME_LENGTH,
   MAX_SYMBOL_LENGTH,
   MAX_URI_LENGTH,
-  METADATA_PREFIX,
   decodeMetadata,
   getAuctionExtended,
   getMetadata,
@@ -108,7 +107,7 @@ export const pullYourMetadata = async (
         const edition = await getEdition(
           userTokenAccounts[i].info.mint.toBase58(),
         );
-        let newAdd = [
+        const newAdd = [
           await getMetadata(userTokenAccounts[i].info.mint.toBase58()),
           edition,
         ];
@@ -318,7 +317,7 @@ export const pullAuctionSubaccounts = async (
     }).then(forEach(processVaultData)),
 
     // bid redemptions
-    ...WHITELISTED_AUCTION_MANAGER.map(a =>
+    ...WHITELISTED_AUCTION_MANAGER.map(() =>
       getProgramAccounts(connection, METAPLEX_ID, {
         filters: [
           {
@@ -450,7 +449,7 @@ export const pullPage = async (
           batches.push(currBatch);
           currBatch = [];
         } else {
-          let newAdd = [
+          const newAdd = [
             ...cache.info.metadata,
             cache.info.auction,
             cache.info.auctionManager,
@@ -862,10 +861,10 @@ const pullEditions = async (
   };
 
   for (const metadata of metadataArr) {
-    let editionKey: StringPublicKey;
+    // let editionKey: StringPublicKey;
     // TODO the nonce builder isnt working here, figure out why
     //if (metadata.info.editionNonce === null) {
-    editionKey = await getEdition(metadata.info.mint);
+    const editionKey = await getEdition(metadata.info.mint);
     /*} else {
       editionKey = (
         await PublicKey.createProgramAddress(
