@@ -2,7 +2,7 @@ import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
-import { ThreeDots, HTMLDots } from '../MyLoader';
+import { ThreeDots } from '../MyLoader';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
@@ -197,7 +197,17 @@ const HTMLContent = ({
         position: 'relative',
       }}
     >
-      {!loaded ? <HTMLDots /> : null}
+      {!loaded ? (
+        <ThreeDots
+          style={{
+            width: '100%',
+            height: '100%',
+            top: 0,
+            left: 0,
+            position: 'absolute',
+          }}
+        />
+      ) : null}
       <iframe
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
         sandbox="allow-scripts"
