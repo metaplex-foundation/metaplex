@@ -978,7 +978,7 @@ export const Create = (
         wrap();
       }}
     >
-      Create Airdrop
+      Create Gumdrop
     </Button>
     {loading && loadingProgress()}
     </Box>

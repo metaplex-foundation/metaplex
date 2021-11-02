@@ -200,7 +200,7 @@ export const Close = () => {
           wrap();
         }}
       >
-        Close Merkle Airdrop
+        Close Gumdrop
       </Button>
     </Stack>
   );

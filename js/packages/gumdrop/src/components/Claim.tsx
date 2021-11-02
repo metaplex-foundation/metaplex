@@ -830,7 +830,7 @@ export const Claim = (
           wrap();
         }}
       >
-        Claim Airdrop
+        Claim Gumdrop
       </Button>
       {loading && loadingProgress()}
       </Box>
@@ -984,7 +984,7 @@ export const Claim = (
           wrap();
         }}
       >
-        {asyncNeedsTemporalSigner ? "Next" : "Claim Airdrop"}
+        {asyncNeedsTemporalSigner ? "Next" : "Claim Gumdrop"}
       </Button>
       {loading && loadingProgress()}
       </Box>
