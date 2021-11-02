@@ -26,6 +26,7 @@ export interface ArtCardProps extends CardProps {
   close?: () => void;
 
   height?: number;
+  artView?: boolean;
   width?: number;
 }
 
@@ -43,6 +44,7 @@ export const ArtCard = (props: ArtCardProps) => {
     close,
     pubkey,
     height,
+    artView,
     width,
     ...rest
   } = props;
@@ -86,6 +88,7 @@ export const ArtCard = (props: ArtCardProps) => {
             preview={preview}
             height={height}
             width={width}
+            artView={artView}
           />
         </>
       }

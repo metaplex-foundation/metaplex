@@ -2,7 +2,7 @@ import React, { Ref, useCallback, useEffect, useState } from 'react';
 import { Image } from 'antd';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { MeshViewer } from '../MeshViewer';
-import { ThreeDots } from '../MyLoader';
+import { ThreeDots, HTMLDots } from '../MyLoader';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
@@ -175,6 +175,7 @@ const HTMLContent = ({
   files?: (MetadataFile | string)[];
   artView?: boolean;
 }) => {
+  const [loaded, setLoaded] = useState<boolean>(false);
   if (!artView) {
     return (
       <CachedImageContent
@@ -190,14 +191,32 @@ const HTMLContent = ({
       ? files[0]
       : animationUrl;
   return (
-    <iframe
-      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-      sandbox="allow-scripts"
-      frameBorder="0"
-      src={htmlURL}
-      className={className}
-      style={style}
-    ></iframe>
+    <div
+      style={{
+        paddingTop: '100%',
+        position: 'relative',
+      }}
+    >
+      {!loaded ? <HTMLDots /> : null}
+      <iframe
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        sandbox="allow-scripts"
+        frameBorder="0"
+        src={htmlURL}
+        className={className}
+        onLoad={() => {
+          setLoaded(true);
+        }}
+        style={{
+          ...style,
+          height: !loaded ? 0 : '100%',
+          width: '100%',
+          top: 0,
+          left: 0,
+          position: 'absolute',
+        }}
+      ></iframe>
+    </div>
   );
 };
 
@@ -266,6 +285,20 @@ export const ArtContent = ({
     );
   }
 
+  if (category === 'html' || animationUrlExt === 'html') {
+    return (
+      <HTMLContent
+        uri={uri}
+        animationUrl={animationURL}
+        className={className}
+        preview={preview}
+        style={style}
+        files={files}
+        artView={artView}
+      />
+    );
+  }
+
   const content =
     category === 'video' ? (
       <VideoArtContent
@@ -275,16 +308,6 @@ export const ArtContent = ({
         uri={uri}
         animationURL={animationURL}
         active={active}
-      />
-    ) : category === 'html' || animationUrlExt === 'html' ? (
-      <HTMLContent
-        uri={uri}
-        animationUrl={animationURL}
-        className={className}
-        preview={preview}
-        style={style}
-        files={files}
-        artView={artView}
       />
     ) : (
       <CachedImageContent
