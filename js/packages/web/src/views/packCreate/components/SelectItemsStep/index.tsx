@@ -10,7 +10,10 @@ const SelectItemsStep = ({
   selectedItems,
   items,
   showSupply,
+  emptyMessage,
 }: SelectItemsStepProps): ReactElement => {
+  const shouldShowEmptyMessage = !items?.length && emptyMessage;
+
   return (
     <div>
       {items.map(item => (
@@ -25,6 +28,7 @@ const SelectItemsStep = ({
           showSupply={showSupply}
         />
       ))}
+      {shouldShowEmptyMessage && <p>{emptyMessage}</p>}
     </div>
   );
 };

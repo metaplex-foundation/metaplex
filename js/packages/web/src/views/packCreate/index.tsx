@@ -172,6 +172,7 @@ export const PackCreateView = (): ReactElement => {
             selectedItems={selectedVouchers}
             handleSelectItem={handleSelectVoucher}
             showSupply
+            emptyMessage="You need to have minted supply of NFT to use it as a voucher."
           />
         )}
 
