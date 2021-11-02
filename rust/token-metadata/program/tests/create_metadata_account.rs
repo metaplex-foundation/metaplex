@@ -1,5 +1,6 @@
 mod utils;
 
+use borsh::BorshDeserialize;
 use num_traits::FromPrimitive;
 use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
@@ -9,34 +10,39 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use metaplex_token_metadata::error::MetadataError;
+use metaplex_token_metadata::{
+    error::MetadataError,
+    instruction::MetadataInstruction,
+    state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH},
+    utils::puffed_out_string,
+};
 use metaplex_token_metadata::state::Key;
-use metaplex_token_metadata::{id, instruction};
+use metaplex_token_metadata::instruction;
+use metaplex_token_metadata::id;
 use utils::*;
 
 #[tokio::test]
 async fn success() {
     let mut context = program_test().start_with_context().await;
     let test_metadata = Metadata::new();
+    let name = "Test".to_string();
+    let symbol = "TST".to_string();
+    let uri = "uri".to_string();
+
+    let puffed_name = puffed_out_string(&name, MAX_NAME_LENGTH);
+    let puffed_symbol = puffed_out_string(&symbol, MAX_SYMBOL_LENGTH);
+    let puffed_uri = puffed_out_string(&uri, MAX_URI_LENGTH);
 
     test_metadata
-        .create(
-            &mut context,
-            "Test".to_string(),
-            "TST".to_string(),
-            "uri".to_string(),
-            None,
-            10,
-            false,
-        )
+        .create(&mut context, name, symbol, uri, None, 10, false)
         .await
         .unwrap();
 
     let metadata = test_metadata.get_data(&mut context).await;
 
-    assert_eq!(metadata.data.name, "Test");
-    assert_eq!(metadata.data.symbol, "TST");
-    assert_eq!(metadata.data.uri, "uri");
+    assert_eq!(metadata.data.name, puffed_name,);
+    assert_eq!(metadata.data.symbol, puffed_symbol);
+    assert_eq!(metadata.data.uri, puffed_uri);
     assert_eq!(metadata.data.seller_fee_basis_points, 10);
     assert_eq!(metadata.data.creators, None);
 
@@ -76,22 +82,24 @@ async fn fail_invalid_mint_authority() {
     .await
     .unwrap();
 
+    let ix = instruction::create_metadata_accounts(
+        id(),
+        test_metadata.pubkey.clone(),
+        test_metadata.mint.pubkey(),
+        fake_mint_authority.pubkey(),
+        context.payer.pubkey().clone(),
+        context.payer.pubkey().clone(),
+        "Test".to_string(),
+        "TST".to_string(),
+        "uri".to_string(),
+        None,
+        10,
+        false,
+        false,
+    );
+
     let tx = Transaction::new_signed_with_payer(
-        &[instruction::create_metadata_accounts(
-            id(),
-            test_metadata.pubkey.clone(),
-            test_metadata.mint.pubkey(),
-            fake_mint_authority.pubkey(),
-            context.payer.pubkey().clone(),
-            context.payer.pubkey().clone(),
-            "Test".to_string(),
-            "TST".to_string(),
-            "uri".to_string(),
-            None,
-            10,
-            false,
-            false,
-        )],
+        &[ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &fake_mint_authority],
         context.last_blockhash,
