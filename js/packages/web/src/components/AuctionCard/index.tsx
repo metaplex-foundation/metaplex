@@ -640,7 +640,9 @@ export const AuctionCard = ({
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                         : ''
                     }
-                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more` }
+                    placeholder={
+                      minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more`
+                    }
                   />
                 </div>
                 <div className={'bid-buttons'}>
@@ -715,12 +717,13 @@ export const AuctionCard = ({
           ) : loading ? (
             <Spin />
           ) : (
-            auctionView.isInstantSale && (
+            auctionView.isInstantSale &&
+            !isAlreadyBought && (
               <Button
                 type="primary"
                 size="large"
                 className="ant-btn secondary-btn"
-                disabled={loading || isAlreadyBought}
+                disabled={loading}
                 onClick={instantSaleAction}
                 style={{ marginTop: 20, width: '100%' }}
               >

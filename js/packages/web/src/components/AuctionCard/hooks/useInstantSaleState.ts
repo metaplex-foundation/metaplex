@@ -24,10 +24,9 @@ export const useInstantSaleState = (
 
   const isOwner = auctionManager.authority === wallet?.publicKey?.toBase58();
   const isAuctionEnded = auction.info.endedAt;
-  const canClaimPurchasedItem = !!(
-    myBidderPot && !myBidderMetadata?.info.cancelled
-  );
-  const isAlreadyBought = !!(myBidderPot && myBidderMetadata?.info.cancelled);
+  const isBidCanceled = !!myBidderMetadata?.info.cancelled;
+  const canClaimPurchasedItem = !!(myBidderPot && !isBidCanceled);
+  const isAlreadyBought = !!(myBidderPot && isBidCanceled);
   const canClaimItem = !!(isOwner && isAuctionEnded);
   const canEndInstantSale = isOwner && !isAuctionEnded;
 
