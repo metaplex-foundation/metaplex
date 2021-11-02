@@ -7,6 +7,7 @@ import SelectCard from '../SelectCard';
 
 import { AdjustQuantitiesStepProps, InputType } from './interface';
 import { DISTRIBUTION_TYPES_DATA } from './data';
+import { SafetyDepositDraft } from '../../../../actions/createAuctionManager';
 
 const AdjustQuantitiesStep = ({
   allowedAmountToRedeem,
@@ -35,11 +36,12 @@ const AdjustQuantitiesStep = ({
   };
 
   const handleDistributionChange = (
-    pubKey: string,
+    item: SafetyDepositDraft,
     value: string,
     inputType: InputType,
   ): void => {
     const number = Number(value);
+    const pubKey = item.metadata.pubkey;
 
     if (inputType === InputType.weight) {
       return setPackState({
@@ -50,10 +52,13 @@ const AdjustQuantitiesStep = ({
       });
     }
 
+    const maxSupply = item.masterEdition?.info.maxSupply?.toNumber();
+
     setPackState({
       supplyByMetadataKey: {
         ...supplyByMetadataKey,
-        [pubKey]: number,
+        [pubKey]:
+          maxSupply !== undefined && number > maxSupply ? maxSupply : number,
       },
     });
   };
@@ -106,11 +111,7 @@ const AdjustQuantitiesStep = ({
                   max={item.masterEdition?.info.maxSupply?.toNumber()}
                   value={supplyByMetadataKey[item.metadata.pubkey]}
                   onChange={({ target: { value } }) =>
-                    handleDistributionChange(
-                      item.metadata.pubkey,
-                      value,
-                      InputType.maxSupply,
-                    )
+                    handleDistributionChange(item, value, InputType.maxSupply)
                   }
                 />
               </div>
@@ -123,11 +124,7 @@ const AdjustQuantitiesStep = ({
                   max={100}
                   value={weightByMetadataKey[item.metadata.pubkey]}
                   onChange={({ target: { value } }) =>
-                    handleDistributionChange(
-                      item.metadata.pubkey,
-                      value,
-                      InputType.weight,
-                    )
+                    handleDistributionChange(item, value, InputType.weight)
                   }
                 />
               </div>
