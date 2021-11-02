@@ -6,7 +6,6 @@ import {
   getTokenWallet,
   loadCandyProgram,
   loadWalletKey,
-  uuidFromConfigPubkey,
 } from '../helpers/accounts';
 import {
   TOKEN_METADATA_PROGRAM_ID,
@@ -21,6 +20,7 @@ export async function mint(
   keypair: string,
   env: string,
   configAddress: PublicKey,
+  uuid: string,
   rpcUrl: string,
 ): Promise<string> {
   const mint = Keypair.generate();
@@ -32,7 +32,6 @@ export async function mint(
     mint.publicKey,
   );
 
-  const uuid = uuidFromConfigPubkey(configAddress);
   const [candyMachineAddress] = await getCandyMachineAddress(
     configAddress,
     uuid,

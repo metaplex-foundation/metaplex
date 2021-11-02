@@ -6,6 +6,7 @@ use {
         prelude::*, solana_program::system_program, AnchorDeserialize, AnchorSerialize,
         Discriminator, Key,
     },
+    anchor_spl::token::Token,
     arrayref::array_ref,
     metaplex_token_metadata::{
         instruction::{create_master_edition, create_metadata_accounts, update_metadata_accounts},
@@ -13,7 +14,7 @@ use {
             MAX_CREATOR_LEN, MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
         },
     },
-    spl_token::state::{Account, Mint},
+    spl_token::state::Mint,
     std::cell::Ref,
 };
 anchor_lang::declare_id!("cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ");
@@ -55,7 +56,7 @@ pub mod nft_candy_machine {
         if let Some(mint) = candy_machine.token_mint {
             let token_account_info = &ctx.remaining_accounts[0];
             let transfer_authority_info = &ctx.remaining_accounts[1];
-            let token_account: Account = assert_initialized(&token_account_info)?;
+            let token_account: spl_token::state::Account = assert_initialized(&token_account_info)?;
 
             assert_owned_by(&token_account_info, &spl_token::id())?;
 
@@ -69,10 +70,10 @@ pub mod nft_candy_machine {
 
             spl_token_transfer(TokenTransferParams {
                 source: token_account_info.clone(),
-                destination: ctx.accounts.wallet.clone(),
+                destination: ctx.accounts.wallet.to_account_info(),
                 authority: transfer_authority_info.clone(),
                 authority_signer_seeds: &[],
-                token_program: ctx.accounts.token_program.clone(),
+                token_program: ctx.accounts.token_program.to_account_info(),
                 amount: candy_machine.data.price,
             })?;
         } else {
@@ -87,9 +88,9 @@ pub mod nft_candy_machine {
                     candy_machine.data.price,
                 ),
                 &[
-                    ctx.accounts.payer.clone(),
-                    ctx.accounts.wallet.clone(),
-                    ctx.accounts.system_program.clone(),
+                    ctx.accounts.payer.to_account_info(),
+                    ctx.accounts.wallet.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
                 ],
             )?;
         }
@@ -128,28 +129,28 @@ pub mod nft_candy_machine {
         }
 
         let metadata_infos = vec![
-            ctx.accounts.metadata.clone(),
-            ctx.accounts.mint.clone(),
-            ctx.accounts.mint_authority.clone(),
-            ctx.accounts.payer.clone(),
-            ctx.accounts.token_metadata_program.clone(),
-            ctx.accounts.token_program.clone(),
-            ctx.accounts.system_program.clone(),
-            ctx.accounts.rent.to_account_info().clone(),
-            candy_machine.to_account_info().clone(),
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.mint.to_account_info(),
+            ctx.accounts.mint_authority.to_account_info(),
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.token_metadata_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+            candy_machine.to_account_info(),
         ];
 
         let master_edition_infos = vec![
-            ctx.accounts.master_edition.clone(),
-            ctx.accounts.mint.clone(),
-            ctx.accounts.mint_authority.clone(),
-            ctx.accounts.payer.clone(),
-            ctx.accounts.metadata.clone(),
-            ctx.accounts.token_metadata_program.clone(),
-            ctx.accounts.token_program.clone(),
-            ctx.accounts.system_program.clone(),
-            ctx.accounts.rent.to_account_info().clone(),
-            candy_machine.to_account_info().clone(),
+            ctx.accounts.master_edition.to_account_info(),
+            ctx.accounts.mint.to_account_info(),
+            ctx.accounts.mint_authority.to_account_info(),
+            ctx.accounts.payer.to_account_info(),
+            ctx.accounts.metadata.to_account_info(),
+            ctx.accounts.token_metadata_program.to_account_info(),
+            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            ctx.accounts.rent.to_account_info(),
+            candy_machine.to_account_info(),
         ];
 
         invoke_signed(
@@ -203,9 +204,9 @@ pub mod nft_candy_machine {
                 Some(true),
             ),
             &[
-                ctx.accounts.token_metadata_program.clone(),
-                ctx.accounts.metadata.clone(),
-                candy_machine.to_account_info().clone(),
+                ctx.accounts.token_metadata_program.to_account_info(),
+                ctx.accounts.metadata.to_account_info(),
+                candy_machine.to_account_info(),
             ],
             &[&authority_seeds],
         )?;
@@ -384,7 +385,8 @@ pub mod nft_candy_machine {
         if ctx.remaining_accounts.len() > 0 {
             let token_mint_info = &ctx.remaining_accounts[0];
             let _token_mint: Mint = assert_initialized(&token_mint_info)?;
-            let token_account: Account = assert_initialized(&ctx.accounts.wallet)?;
+            let token_account: spl_token::state::Account =
+                assert_initialized(&ctx.accounts.wallet)?;
 
             assert_owned_by(&token_mint_info, &spl_token::id())?;
             assert_owned_by(&ctx.accounts.wallet, &spl_token::id())?;
@@ -464,7 +466,7 @@ pub struct AddConfigLines<'info> {
 
 #[derive(Accounts)]
 pub struct MintNFT<'info> {
-    config: ProgramAccount<'info, Config>,
+    config: Account<'info, Config>,
     #[account(
         mut,
         has_one = config,
@@ -472,29 +474,25 @@ pub struct MintNFT<'info> {
         seeds = [PREFIX.as_bytes(), config.key().as_ref(), candy_machine.data.uuid.as_bytes()],
         bump = candy_machine.bump,
     )]
-    candy_machine: ProgramAccount<'info, CandyMachine>,
-    #[account(mut, signer)]
-    payer: AccountInfo<'info>,
+    candy_machine: Account<'info, CandyMachine>,
     #[account(mut)]
-    wallet: AccountInfo<'info>,
+    payer: Signer<'info>,
+    #[account(mut)]
+    wallet: UncheckedAccount<'info>,
     // With the following accounts we aren't using anchor macros because they are CPI'd
     // through to token-metadata which will do all the validations we need on them.
     #[account(mut)]
-    metadata: AccountInfo<'info>,
+    metadata: UncheckedAccount<'info>,
     #[account(mut)]
-    mint: AccountInfo<'info>,
-    #[account(signer)]
-    mint_authority: AccountInfo<'info>,
-    #[account(signer)]
-    update_authority: AccountInfo<'info>,
+    mint: UncheckedAccount<'info>,
+    mint_authority: Signer<'info>,
+    update_authority: Signer<'info>,
     #[account(mut)]
-    master_edition: AccountInfo<'info>,
+    master_edition: UncheckedAccount<'info>,
     #[account(address = metaplex_token_metadata::id())]
-    token_metadata_program: AccountInfo<'info>,
-    #[account(address = spl_token::id())]
-    token_program: AccountInfo<'info>,
-    #[account(address = system_program::ID)]
-    system_program: AccountInfo<'info>,
+    token_metadata_program: UncheckedAccount<'info>,
+    token_program: Program<'info, Token>,
+    system_program: Program<'info, System>,
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
 }
