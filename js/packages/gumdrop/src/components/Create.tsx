@@ -322,7 +322,12 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
             <TableHead>
               <TableRow>
                 <TableCell>Handle</TableCell>
-                <TableCell>Tokens</TableCell>
+                <TableCell>
+                  {claimMethod === "edition"
+                    ? "Edition"
+                    : "Tokens"
+                  }
+                </TableCell>
                 {needsPin && <TableCell>Pin</TableCell>}
               </TableRow>
             </TableHead>
@@ -334,9 +339,9 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
                 >
                   <TableCell component="th" scope="row">{c.handle} </TableCell>
                   <TableCell>
-                    {claimMethod === "transfer"
-                      ? displayMintTokens(c.amount, claimInfo.mint.info)
-                      : c.amount
+                    { claimMethod === "transfer" ? displayMintTokens(c.amount, claimInfo.mint.info)
+                    : claimMethod === "candy"    ? c.amount
+                    : /* === "edition" */          c.edition
                     }
                   </TableCell>
                   {needsPin && <TableCell>{c.pin.toNumber()}</TableCell>}
@@ -512,17 +517,12 @@ export const Create = (
         throw new Error(`Candy machine authority does not match wallet public key`);
       }
     } else if (claimMethod === "edition") {
-      claimants.forEach((c, idx) => {
-        if (!c.edition) throw new Error(`Claimant ${idx} doesn't have edition`);
-      });
       claimInfo.masterMint = await getMintInfo(connection, masterMint);
-      [claimInfo.creatorTokenKey, ] = await PublicKey.findProgramAddress(
-        [
-          wallet.publicKey.toBuffer(),
-          TOKEN_PROGRAM_ID.toBuffer(),
-          claimInfo.masterMint.key.toBuffer(),
-        ],
-        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+      claimInfo.creatorTokenKey = await getCreatorTokenAccount(
+        wallet.publicKey,
+        connection,
+        claimInfo.masterMint.key,
+        1 // just check that the creator has the master mint
       );
       claimInfo.info = { type: "Edition", meta: explorerUrlFor(claimInfo.masterMint.key) };
 
@@ -533,18 +533,44 @@ export const Create = (
       }
       console.log("Master edition", masterEdition);
 
+      // TODO: check that editions within claimants are actually not filled?
+      // This is cursory check that the total number of editions specified is
+      // not greater than the max supply
+      //
       // maxSupply is an option, 9 bytes, first is 0 means is none
+      const currentSupply = new BN(masterEdition.data.slice(1, 1+8), 8, "le").toNumber();
       let maxSupply;
       if (masterEdition.data[9] === 0) {
           maxSupply = null;
       } else {
-          maxSupply = new BN(masterEdition.data.slice(10, 10+8), 8, "le");
+          maxSupply = new BN(masterEdition.data.slice(10, 10+8), 8, "le").toNumber();
       }
       console.log("Max supply", maxSupply);
+      console.log("Current supply", currentSupply);
 
-      if (maxSupply !== null && maxSupply.toNumber() < claimInfo.total) {
+      if (maxSupply !== null && maxSupply < claimInfo.total) {
         throw new Error(`Distributor is allocated more editions (${claimInfo.total}) `
-                      + `than the master has remaining (${maxSupply.toNumber()})`);
+                      + `than the master has total (${maxSupply})`);
+      }
+
+      const editions : { [key: number]: number } = {};
+      claimants.forEach((c, idx) => {
+        if (!c.edition) throw new Error(`Claimant ${idx} doesn't have edition`);
+        if (c.edition > maxSupply) {
+          throw new Error(`Claimant ${idx} assigned edition ${c.edition} which is greater than max supply`);
+        }
+        if (c.edition in editions) {
+          throw new Error(`Claimant ${idx} and ${editions[c.edition]} are both assigned to edition ${c.edition}`);
+        } else {
+          editions[c.edition] = idx;
+        }
+      });
+
+      if (currentSupply !== 0) {
+        notify({
+          message: `Warning: suspicious create`,
+          description: `Master edition has existing supply ${currentSupply}`
+        });
       }
     } else {
       throw new Error(`Unknown claim method ${claimMethod}`);
@@ -1078,7 +1104,7 @@ export const Create = (
         wrap();
       }}
     >
-      Create Gumdrop
+      Create{claimURLs.length > 0 ? " Another " : " "}Gumdrop
     </Button>
     {loading && loadingProgress()}
     </Box>
