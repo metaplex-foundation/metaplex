@@ -18,6 +18,22 @@ Metaplex now follows a release versioning process called semantic versioning. If
 
 https://github.com/metaplex-foundation/metaplex/releases
 
+### How to checkout a release
+```
+//If you are using a fork
+git fetch upstream --tags
+
+git checkout tags/<tag> // this will bring the contents of the tag into your current branch
+
+// OR 
+git checkout tags/<tag> -b <your local branch name> // this will make a new branch for you
+
+To swich to a new release
+
+git checkout tags/<tag> -b new_version_branch /// this will take the new tag and bring it into  anew branch
+//Switch back to the branch you want the new changes in
+git rebase new_version_branch
+```
 
 ## In Depth Developer's Guide
 
