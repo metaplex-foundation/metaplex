@@ -8,24 +8,35 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use metaplex_token_metadata::error::MetadataError;
-use metaplex_token_metadata::state::Key;
+use metaplex_token_metadata::{
+    error::MetadataError,
+    state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH},
+    utils::puffed_out_string,
+};
 use metaplex_token_metadata::{id, instruction};
 use utils::*;
 
 mod update_metadata_account {
+    use metaplex_token_metadata::state::Key;
+
     use super::*;
     #[tokio::test]
     async fn success() {
         let mut context = program_test().start_with_context().await;
         let test_metadata = Metadata::new();
+        let name = "Test".to_string();
+        let symbol = "TST".to_string();
+        let uri = "uri".to_string();
+
+        let puffed_symbol = puffed_out_string(&symbol, MAX_SYMBOL_LENGTH);
+        let puffed_uri = puffed_out_string(&uri, MAX_URI_LENGTH);
 
         test_metadata
             .create(
                 &mut context,
-                "Test".to_string(),
-                "TST".to_string(),
-                "uri".to_string(),
+                name,
+                symbol.clone(),
+                uri.clone(),
                 None,
                 10,
                 true,
@@ -33,23 +44,18 @@ mod update_metadata_account {
             .await
             .unwrap();
 
+        let updated_name = "Cool".to_string();
+        let puffed_updated_name = puffed_out_string(&updated_name, MAX_NAME_LENGTH);
         test_metadata
-            .update(
-                &mut context,
-                "Cool".to_string(),
-                "TST".to_string(),
-                "uri".to_string(),
-                None,
-                10,
-            )
+            .update(&mut context, updated_name, symbol, uri, None, 10)
             .await
             .unwrap();
 
         let metadata = test_metadata.get_data(&mut context).await;
 
-        assert_eq!(metadata.data.name, "Cool");
-        assert_eq!(metadata.data.symbol, "TST");
-        assert_eq!(metadata.data.uri, "uri");
+        assert_eq!(metadata.data.name, puffed_updated_name,);
+        assert_eq!(metadata.data.symbol, puffed_symbol);
+        assert_eq!(metadata.data.uri, puffed_uri);
         assert_eq!(metadata.data.seller_fee_basis_points, 10);
         assert_eq!(metadata.data.creators, None);
 

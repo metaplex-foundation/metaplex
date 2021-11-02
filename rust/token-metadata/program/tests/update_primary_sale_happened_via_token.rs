@@ -11,25 +11,29 @@ use solana_sdk::{
 use metaplex_token_metadata::error::MetadataError;
 use metaplex_token_metadata::state::Key;
 use metaplex_token_metadata::{id, instruction};
+use metaplex_token_metadata::{
+    state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH},
+    utils::puffed_out_string,
+};
 use utils::*;
 
 mod update_primary_sale_happened_via_token {
+
     use super::*;
     #[tokio::test]
     async fn success() {
         let mut context = program_test().start_with_context().await;
         let test_metadata = Metadata::new();
+        let name = "Test".to_string();
+        let symbol = "TST".to_string();
+        let uri = "uri".to_string();
+
+        let puffed_name = puffed_out_string(&name, MAX_NAME_LENGTH);
+        let puffed_symbol = puffed_out_string(&symbol, MAX_SYMBOL_LENGTH);
+        let puffed_uri = puffed_out_string(&uri, MAX_URI_LENGTH);
 
         test_metadata
-            .create(
-                &mut context,
-                "Test".to_string(),
-                "TST".to_string(),
-                "uri".to_string(),
-                None,
-                10,
-                false,
-            )
+            .create(&mut context, name, symbol, uri, None, 10, false)
             .await
             .unwrap();
 
@@ -40,9 +44,9 @@ mod update_primary_sale_happened_via_token {
 
         let metadata = test_metadata.get_data(&mut context).await;
 
-        assert_eq!(metadata.data.name, "Test");
-        assert_eq!(metadata.data.symbol, "TST");
-        assert_eq!(metadata.data.uri, "uri");
+        assert_eq!(metadata.data.name, puffed_name,);
+        assert_eq!(metadata.data.symbol, puffed_symbol);
+        assert_eq!(metadata.data.uri, puffed_uri);
         assert_eq!(metadata.data.seller_fee_basis_points, 10);
         assert_eq!(metadata.data.creators, None);
 
