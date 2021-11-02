@@ -33,6 +33,7 @@ import {
 import {
   CANDY_MACHINE_ID,
   MERKLE_DISTRIBUTOR_ID,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyConfig,
   getCandyMachineAddress,
   notify,
@@ -46,6 +47,7 @@ export const Close = () => {
   const [claimMethod, setClaimMethod] = React.useState(localStorage.getItem("claimMethod") || "transfer");
   const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
   const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
+  const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
 
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
@@ -86,6 +88,50 @@ export const Close = () => {
       extraKeys = [];
     }
 
+    const instructions = Array<TransactionInstruction>();
+    if (claimMethod === "edition") {
+      let masterMintKey: PublicKey;
+      try {
+        masterMintKey = new PublicKey(masterMint);
+      } catch (err) {
+        throw new Error(`Invalid mint key ${err}`);
+      }
+      const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
+        [
+          distributorKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          masterMintKey.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+      );
+
+      const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+        [
+          wallet.publicKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          masterMintKey.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+      );
+
+      instructions.push(new TransactionInstruction({
+          programId: MERKLE_DISTRIBUTOR_ID,
+          keys: [
+              { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
+              { pubkey: distributorKey          , isSigner: false , isWritable: false } ,
+              { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
+              { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
+              { pubkey: wallet.publicKey        , isSigner: false , isWritable: true  } ,
+              { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
+              { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
+          ],
+          data: Buffer.from([
+            ...Buffer.from(sha256.digest("global:close_distributor_token_account")).slice(0, 8),
+            ...new BN(dbump).toArray("le", 1),
+          ])
+      }));
+    }
+
     const closeDistributor = new TransactionInstruction({
         programId: MERKLE_DISTRIBUTOR_ID,
         keys: [
@@ -108,6 +154,7 @@ export const Close = () => {
       connection,
       wallet,
       [
+        ...instructions,
         closeDistributor
       ],
       [base]
@@ -153,6 +200,18 @@ export const Close = () => {
       );
     } else if (claimMethod === "transfer") {
       return null;
+    } else if (claimMethod === "edition") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="master-mint-text-field"
+            label="Master Mint"
+            value={masterMint}
+            onChange={(e) => setMasterMint(e.target.value)}
+          />
+        </React.Fragment>
+      );
     }
   };
 
@@ -180,6 +239,7 @@ export const Close = () => {
         >
           <MenuItem value={"transfer"}>Token Transfer</MenuItem>
           <MenuItem value={"candy"}>Candy Machine</MenuItem>
+          <MenuItem value={"edition"}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}

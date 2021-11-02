@@ -57,6 +57,7 @@ import {
   getCandyConfig,
   getCandyMachine,
   getCandyMachineAddress,
+  getEdition,
   notify,
   shortenAddress,
 } from "../utils";
@@ -77,6 +78,7 @@ const WHITESPACE = "\u00A0";
 export type ClaimantInfo = {
   handle : string,
   amount : number,
+  edition : number,
 
   pin    : BN,
   url    : string,
@@ -211,6 +213,7 @@ const parseClaimants = (
     return {
       handle : obj.handle,
       amount : obj.amount,
+      edition: obj.edition,
       url    : obj.url,
     };
   });
@@ -244,6 +247,126 @@ const reactModal = (renderModal) => {
     const onDismiss = () => {};
     hideModal({ onSubmit, onDismiss }, destroyModal);
   });
+};
+
+const resendOnlyRender = ({ show, onSubmit, onDismiss }) => {
+  const options = [
+    { click: () => onSubmit("create"), name: "Create and Send" },
+    { click: () => onSubmit("send")  , name: "Send only"       },
+  ];
+  return (
+    <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
+      <p style={{
+        color: "white",
+        fontSize: "1rem",
+        width: "50ch",
+        marginTop: 8,
+      }}>
+        Uploaded distribution list has URLs for all claimants.
+        Skip creation of airdrop and only re-send links?
+      </p>
+      <br />
+      <Stack direction="row" spacing={2}>
+      {options.map((opt) => {
+        return (
+          <Button
+            key={opt.name}
+            style={{
+              width: "30ch",
+              color: "white",
+              marginBottom: 8,
+            }}
+            variant="outlined"
+            onClick={opt.click}
+          >
+            {opt.name}
+          </Button>
+        );
+      })}
+      </Stack>
+    </DefaultModal>
+  );
+};
+
+const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
+  // TODO: better decimal rounding
+  return String(amount / Math.pow(10, mintInfo.decimals));
+};
+
+const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
+  return ({ show, onSubmit, onDismiss }) => {
+    const options = [
+      { click: () => onSubmit(false), name: "Cancel"  },
+      { click: () => onSubmit(true) , name: "Approve" },
+    ];
+    return (
+      <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
+        <h2
+          style={{
+            color: "white",
+            fontWeight: "bold",
+            fontSize: 20,
+          }}
+        >
+          Claim Distribution Preview
+        </h2>
+        <TableContainer
+          sx={{
+            "td, th": { color: "white" },
+            backgroundColor: "#444444",
+            borderRadius: "5px",
+            maxHeight: "30ch",
+          }}
+        >
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Handle</TableCell>
+                <TableCell>Tokens</TableCell>
+                {needsPin && <TableCell>Pin</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {claimants.map((c) => (
+                <TableRow
+                  key={c.secret.toBase58()}
+                  sx={{ 'td, th': { border: 0 } }}
+                >
+                  <TableCell component="th" scope="row">{c.handle} </TableCell>
+                  <TableCell>
+                    {claimMethod === "transfer"
+                      ? displayMintTokens(c.amount, claimInfo.mint.info)
+                      : c.amount
+                    }
+                  </TableCell>
+                  {needsPin && <TableCell>{c.pin.toNumber()}</TableCell>}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Box style={{ height: 10 }} />
+        <Stack direction="row" spacing={2}>
+        {options.map((opt) => {
+          return (
+            <Button
+              key={opt.name}
+              style={{
+                width: "30ch",
+                color: "white",
+                marginBottom: 8,
+              }}
+              variant="outlined"
+              onClick={opt.click}
+            >
+              {opt.name}
+            </Button>
+          );
+        })}
+        </Stack>
+      </DefaultModal>
+    );
+  }
 };
 
 const getMintInfo = async (
@@ -315,6 +438,7 @@ export const Create = (
   const [candyConfig, setCandyConfig] = React.useState(localStorage.getItem("candyConfig") || "");
   const [candyUUID, setCandyUUID] = React.useState(localStorage.getItem("candyUUID") || "");
   const [mint, setMint] = React.useState(localStorage.getItem("mint") || "");
+  const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
   const [baseKey, setBaseKey] = React.useState<Keypair | undefined>(undefined);
@@ -343,11 +467,6 @@ export const Create = (
       throw new Error(`Wallet not connected`);
     }
 
-    const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
-      // TODO: better decimal rounding
-      return String(amount / Math.pow(10, mintInfo.decimals));
-    };
-
     const claimants = parseClaimants(text);
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
@@ -361,9 +480,7 @@ export const Create = (
 
     const claimInfo : any = {};
     claimInfo.total = claimants.reduce((acc, c) => acc + c.amount, 0);
-    let isTokenAirdrop : boolean;
     if (claimMethod === "transfer") {
-      isTokenAirdrop = true;
       claimInfo.mint = await getMintInfo(connection, mint);
       claimInfo.source = await getCreatorTokenAccount(
         wallet.publicKey,
@@ -373,7 +490,6 @@ export const Create = (
       );
       claimInfo.info = { type: "Token", meta: explorerUrlFor(claimInfo.mint.key) };
     } else if (claimMethod === "candy") {
-      isTokenAirdrop = false;
       claimInfo.config = await getCandyConfig(connection, candyConfig);
       claimInfo.info = { type: "Candy", meta: explorerUrlFor(claimInfo.config) };
 
@@ -381,7 +497,7 @@ export const Create = (
         claimInfo.config, candyUUID);
       claimInfo.candyMachineKey = candyMachineKey;
       const candyMachine = await getCandyMachine(connection, candyMachineKey);
-      console.log(candyMachine);
+      console.log("Candy machine", candyMachine);
 
       const remaining = candyMachine.data.itemsAvailable.toNumber() - candyMachine.itemsRedeemed.toNumber();
       if (isNaN(remaining)) {
@@ -395,10 +511,45 @@ export const Create = (
       if (!candyMachine.authority.equals(wallet.publicKey)) {
         throw new Error(`Candy machine authority does not match wallet public key`);
       }
+    } else if (claimMethod === "edition") {
+      claimants.forEach((c, idx) => {
+        if (!c.edition) throw new Error(`Claimant ${idx} doesn't have edition`);
+      });
+      claimInfo.masterMint = await getMintInfo(connection, masterMint);
+      [claimInfo.creatorTokenKey, ] = await PublicKey.findProgramAddress(
+        [
+          wallet.publicKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          claimInfo.masterMint.key.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+      );
+      claimInfo.info = { type: "Edition", meta: explorerUrlFor(claimInfo.masterMint.key) };
+
+      const masterEditionKey = await getEdition(claimInfo.masterMint.key);
+      const masterEdition = await connection.getAccountInfo(masterEditionKey);
+      if (masterEdition === null) {
+        throw new Error(`Could not fetch master edition`);
+      }
+      console.log("Master edition", masterEdition);
+
+      // maxSupply is an option, 9 bytes, first is 0 means is none
+      let maxSupply;
+      if (masterEdition.data[9] === 0) {
+          maxSupply = null;
+      } else {
+          maxSupply = new BN(masterEdition.data.slice(10, 10+8), 8, "le");
+      }
+      console.log("Max supply", maxSupply);
+
+      if (maxSupply !== null && maxSupply.toNumber() < claimInfo.total) {
+        throw new Error(`Distributor is allocated more editions (${claimInfo.total}) `
+                      + `than the master has remaining (${maxSupply.toNumber()})`);
+      }
     } else {
       throw new Error(`Unknown claim method ${claimMethod}`);
     }
-    console.log(claimInfo);
+    console.log("Claims info", claimInfo);
 
 
     const mightHaveExisting = (info : ClaimantInfo) => {
@@ -409,45 +560,8 @@ export const Create = (
       // TODO: more validation of URLs? The creator is using they're own
       // credentials to re-send so if they're malicious it's not that bad
       // right?...
-      const resendOnly = await reactModal(({ show, onSubmit, onDismiss }) => {
-        const options = [
-          { click: () => onSubmit("create"), name: "Create and Send" },
-          { click: () => onSubmit("send")  , name: "Send only"       },
-        ];
-        return (
-          <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
-            <p style={{
-              color: "white",
-              fontSize: "1rem",
-              width: "50ch",
-              marginTop: 8,
-            }}>
-              Uploaded distribution list has URLs for all claimants.
-              Skip creation of airdrop and only re-send links?
-            </p>
-            <br />
-            <Stack direction="row" spacing={2}>
-            {options.map((opt) => {
-              return (
-                <Button
-                  key={opt.name}
-                  style={{
-                    width: "30ch",
-                    color: "white",
-                    marginBottom: 8,
-                  }}
-                  variant="outlined"
-                  onClick={opt.click}
-                >
-                  {opt.name}
-                </Button>
-              );
-            })}
-            </Stack>
-          </DefaultModal>
-        );
-      }) as string | undefined;
-      console.log(resendOnly);
+      const resendOnly = await reactModal(resendOnlyRender);
+      console.log("Resend only", resendOnly);
       if (resendOnly === "send") {
         setClaimURLs(claimants);
         const sender = setupSender(commMethod, commAuth, commSource);
@@ -465,7 +579,9 @@ export const Create = (
 
     claimants.forEach(c => {
       c.pin = new BN(randomBytes());
-      c.seed = isTokenAirdrop ? claimInfo.mint.key : claimInfo.config;
+      c.seed = claimMethod === "transfer" ? claimInfo.mint.key
+             : claimMethod === "candy"    ? claimInfo.config
+             : /* === edition */            claimInfo.masterMint.key;
     });
 
     const leafs : Array<Buffer> = [];
@@ -489,11 +605,19 @@ export const Create = (
             seeds, MERKLE_DISTRIBUTOR_ID);
         claimant.secret = claimantPda;
       }
+      // TODO: get this clarified with jordan... we can either just assign some
+      // range of editions to a user or give them an amount and just keep a
+      // counter on the distributor... the latter is much less work but we lose
+      // the ability to use gumdrop for auction house winnings and such?
+      const extra = claimMethod === "edition"
+        ? [...new BN(claimant.edition).toArray("le", 8)]
+        : []
       leafs.push(Buffer.from(
         [...new BN(idx).toArray("le", 8),
          ...claimant.secret.toBuffer(),
          ...claimant.seed.toBuffer(),
          ...new BN(claimant.amount).toArray("le", 8),
+         ...extra
         ]
       ));
     }
@@ -530,90 +654,23 @@ export const Create = (
       if (needsPin) {
         params.push(`pin=${claimant.pin.toNumber()}`);
       }
-      if (isTokenAirdrop) {
+      if (claimMethod === "transfer") {
         params.push(`tokenAcc=${claimInfo.source}`);
-      } else {
+      } else if (claimMethod === "candy") {
         params.push(`config=${candyConfig}`);
         params.push(`uuid=${candyUUID}`);
+      } else {
+        params.push(`master=${claimInfo.masterMint.key}`);
+        params.push(`edition=${claimant.edition}`);
       }
       const query = params.join("&");
 
       claimant.url = `${window.location.origin}${window.location.pathname}#/claim?${query}`;
     }
 
-    const shouldSend = await reactModal(({ show, onSubmit, onDismiss }) => {
-      const options = [
-        { click: () => onSubmit(false), name: "Cancel"  },
-        { click: () => onSubmit(true) , name: "Approve" },
-      ];
-      return (
-        <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
-          <h2
-            style={{
-              color: "white",
-              fontWeight: "bold",
-              fontSize: 20,
-            }}
-          >
-            Claim Distribution Preview
-          </h2>
-          <TableContainer
-            sx={{
-              "td, th": { color: "white" },
-              backgroundColor: "#444444",
-              borderRadius: "5px",
-              maxHeight: "30ch",
-            }}
-          >
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Handle</TableCell>
-                  <TableCell>Tokens</TableCell>
-                  {needsPin && <TableCell>Pin</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {claimants.map((c) => (
-                  <TableRow
-                    key={c.secret.toBase58()}
-                    sx={{ 'td, th': { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">{c.handle} </TableCell>
-                    <TableCell>
-                      {isTokenAirdrop
-                        ? displayMintTokens(c.amount, claimInfo.mint.info)
-                        : c.amount
-                      }
-                    </TableCell>
-                    {needsPin && <TableCell>{c.pin.toNumber()}</TableCell>}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box style={{ height: 10 }} />
-          <Stack direction="row" spacing={2}>
-          {options.map((opt) => {
-            return (
-              <Button
-                key={opt.name}
-                style={{
-                  width: "30ch",
-                  color: "white",
-                  marginBottom: 8,
-                }}
-                variant="outlined"
-                onClick={opt.click}
-              >
-                {opt.name}
-              </Button>
-            );
-          })}
-          </Stack>
-        </DefaultModal>
-      );
-    }) as boolean | undefined;
+    const shouldSend = await reactModal(
+      shouldSendRender(claimants, needsPin, claimMethod, claimInfo)
+    ) as boolean | undefined;
     if (shouldSend === true) {
     } else {
       // dismissed. don't use exceptions for control flow?
@@ -661,7 +718,7 @@ export const Create = (
         ])
     }));
 
-    if (isTokenAirdrop) {
+    if (claimMethod === "transfer") {
       instructions.push(Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
         claimInfo.source,
@@ -670,7 +727,7 @@ export const Create = (
         [],
         claimInfo.total
       ));
-    } else {
+    } else if (claimMethod === "candy") {
       const [distributorWalletKey, ] = await PublicKey.findProgramAddress(
         [
           Buffer.from("Wallet"),
@@ -691,6 +748,34 @@ export const Create = (
             ...distributorWalletKey.toBuffer(),
           ])
       }));
+    } else if (claimMethod === "edition") {
+      // transfer master edition to distributor
+      const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
+        [
+          distributor.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          claimInfo.masterMint.key.toBuffer(),
+        ],
+        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+      );
+
+      instructions.push(Token.createAssociatedTokenAccountInstruction(
+          SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          claimInfo.masterMint.key,
+          distributorTokenKey,
+          distributor,
+          wallet.publicKey
+        ));
+
+      instructions.push(Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          claimInfo.creatorTokenKey,
+          distributorTokenKey,
+          wallet.publicKey,
+          [],
+          1
+        ));
     }
 
     const createResult = await Connection.sendTransactionWithRetry(
@@ -802,6 +887,21 @@ export const Create = (
           onChange={(e) => {
             localStorage.setItem("mint", e.target.value);
             setMint(e.target.value);
+          }}
+        />
+      );
+    } else if (claimMethod === "edition") {
+      // transfers master mint token from this account to the distributor
+      // wallet ATA
+      return (
+        <TextField
+          style={{width: "60ch"}}
+          id="master-mint-text-field"
+          label="Master Mint"
+          value={masterMint}
+          onChange={(e) => {
+            localStorage.setItem("masterMint", e.target.value);
+            setMasterMint(e.target.value);
           }}
         />
       );
@@ -958,7 +1058,7 @@ export const Create = (
   const createAirdrop = (
     <Box sx={{ position: "relative" }}>
     <Button
-      disabled={!wallet.connected || !commMethod || !filename || loading || claimURLs.length > 0}
+      disabled={!wallet.connected || !commMethod || !filename || loading}
       variant="contained"
       style={{ width: "100%" }}
       onClick={(e) => {
@@ -1037,6 +1137,7 @@ export const Create = (
         >
           <MenuItem value={"transfer"}>Token Transfer</MenuItem>
           <MenuItem value={"candy"}>Candy Machine</MenuItem>
+          <MenuItem value={"edition"}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}

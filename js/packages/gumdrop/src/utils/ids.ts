@@ -56,7 +56,7 @@ export const SYSTEM = new PublicKey('11111111111111111111111111111111');
 
 export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 
-export const CANDY_MACHINE_ID = new PublicKey('DDnmBpiGYyeoPGqfjxEoANTP5x3WXzU4NYv8tdHmGyPi');
+export const CANDY_MACHINE_ID = new PublicKey('cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ');
 
 export const MERKLE_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
 
@@ -115,3 +115,35 @@ export const getCandyMachine = async (
   return candyMachineCoder.accounts.decode(
       "CandyMachine", candyMachineAccount.data);
 }
+
+export const getMetadata = async (
+  mint: PublicKey,
+): Promise<PublicKey> => {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+
+export const getEdition = async (
+  mint: PublicKey,
+): Promise<PublicKey> => {
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from('edition'),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+};
+

@@ -53,6 +53,8 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyMachine,
   getCandyMachineAddress,
+  getEdition,
+  getMetadata,
   notify,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
@@ -197,24 +199,15 @@ const buildMintClaim = async (
   return [[...setup, claimAirdrop], pdaSeeds, []];
 }
 
-const getMetadata = async (
+const getEditionMarkPda = async (
   mint: PublicKey,
-): Promise<PublicKey> => {
-  return (
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from('metadata'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID,
-    )
-  )[0];
-};
+  edition: BN,
+) : Promise<PublicKey> => {
+  // editions are divided into pages of 31-bytes (248-bits) for more efficient
+  // packing to check if an edition is occupied. The offset is determined from
+  // the edition passed in through data
+  const editionPageNumber = edition.div(new BN(248)).toNumber();
 
-const getMasterEdition = async (
-  mint: PublicKey,
-): Promise<PublicKey> => {
   return (
     await PublicKey.findProgramAddress(
       [
@@ -222,12 +215,12 @@ const getMasterEdition = async (
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
         Buffer.from('edition'),
+        Buffer.from(String(editionPageNumber)),
       ],
       TOKEN_METADATA_PROGRAM_ID,
     )
   )[0];
-};
-
+}
 
 const buildCandyClaim = async (
   connection : RPCConnection,
@@ -322,7 +315,7 @@ const buildCandyClaim = async (
 
   const [candyMachineKey, ] = await getCandyMachineAddress(configKey, candyUUID);
   const candyMachine = await getCandyMachine(connection, candyMachineKey);
-  console.log(candyMachine);
+  console.log("Candy Machine", candyMachine);
 
   const candyMachineMints : Array<Keypair> = [];
 
@@ -366,55 +359,10 @@ const buildSingleCandyMint = async (
 ) : Promise<[Array<TransactionInstruction>, Keypair]> => {
   const candyMachineMint = Keypair.generate();
   const candyMachineMetadata = await getMetadata(candyMachineMint.publicKey);
-  const candyMachineMaster = await getMasterEdition(candyMachineMint.publicKey);
-
-  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-    [
-      walletKey.toBuffer(),
-      TOKEN_PROGRAM_ID.toBuffer(),
-      candyMachineMint.publicKey.toBuffer(),
-    ],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-  );
+  const candyMachineMaster = await getEdition(candyMachineMint.publicKey);
 
   const setup : Array<TransactionInstruction> = [];
-  setup.push(SystemProgram.createAccount({
-    fromPubkey: walletKey,
-    newAccountPubkey: candyMachineMint.publicKey,
-    space: MintLayout.span,
-    lamports:
-      await connection.getMinimumBalanceForRentExemption(
-        MintLayout.span,
-      ),
-    programId: TOKEN_PROGRAM_ID,
-  }));
-
-  setup.push(Token.createInitMintInstruction(
-    TOKEN_PROGRAM_ID,
-    candyMachineMint.publicKey,
-    0,
-    walletKey,
-    walletKey,
-  ));
-
-  setup.push(Token.createAssociatedTokenAccountInstruction(
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    candyMachineMint.publicKey,
-    walletTokenKey,
-    walletKey,
-    walletKey
-  ));
-
-  setup.push(Token.createMintToInstruction(
-    TOKEN_PROGRAM_ID,
-    candyMachineMint.publicKey,
-    walletTokenKey,
-    walletKey,
-    [],
-    1,
-  ));
-
+  await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, setup);
   setup.push(new TransactionInstruction({
       programId: MERKLE_DISTRIBUTOR_ID,
       keys: [
@@ -445,6 +393,181 @@ const buildSingleCandyMint = async (
   }));
 
   return [setup, candyMachineMint];
+}
+
+const createMintAndAccount = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  mint : PublicKey,
+  setup : Array<TransactionInstruction>,
+) => {
+  const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      walletKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  setup.push(SystemProgram.createAccount({
+    fromPubkey: walletKey,
+    newAccountPubkey: mint,
+    space: MintLayout.span,
+    lamports:
+      await connection.getMinimumBalanceForRentExemption(
+        MintLayout.span,
+      ),
+    programId: TOKEN_PROGRAM_ID,
+  }));
+
+  setup.push(Token.createInitMintInstruction(
+    TOKEN_PROGRAM_ID,
+    mint,
+    0,
+    walletKey,
+    walletKey,
+  ));
+
+  setup.push(Token.createAssociatedTokenAccountInstruction(
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    walletTokenKey,
+    walletKey,
+    walletKey
+  ));
+
+  setup.push(Token.createMintToInstruction(
+    TOKEN_PROGRAM_ID,
+    mint,
+    walletTokenKey,
+    walletKey,
+    [],
+    1,
+  ));
+
+}
+
+const buildEditionClaim = async (
+  connection : RPCConnection,
+  walletKey : PublicKey,
+  distributorKey : PublicKey,
+  distributorInfo : any,
+  masterMint : string,
+  edition : number,
+  proof : Array<Buffer>,
+  handle : string,
+  amount : number,
+  index : number,
+  pin : BN | null,
+) : Promise<[Array<TransactionInstruction>, Array<Buffer>, Array<Keypair>]> => {
+
+  let masterMintKey : PublicKey;
+  try {
+    masterMintKey = new PublicKey(masterMint);
+  } catch (err) {
+    throw new Error(`Invalid master mint key ${err}`);
+  }
+
+  const [secret, pdaSeeds] = await walletKeyOrPda(walletKey, handle, pin, masterMintKey);
+
+  // should we assert that the amount is 1?
+  const leaf = Buffer.from(
+    [...new BN(index).toArray("le", 8),
+     ...secret.toBuffer(),
+     ...masterMintKey.toBuffer(),
+     ...new BN(amount).toArray("le", 8),
+     ...new BN(edition).toArray("le", 8),
+    ]
+  );
+
+  const matches = MerkleTree.verifyClaim(
+    leaf, proof, Buffer.from(distributorInfo.root)
+  );
+
+  if (!matches) {
+    throw new Error("Gumdrop merkle proof does not match");
+  }
+
+  const [claimCount, cbump] = await PublicKey.findProgramAddress(
+    [
+      Buffer.from("ClaimCount"),
+      Buffer.from(new BN(index).toArray("le", 8)),
+      distributorKey.toBuffer(),
+    ],
+    MERKLE_DISTRIBUTOR_ID
+  );
+
+  // atm the contract has a special case for when the temporal key is defaulted
+  // (aka always passes temporal check)
+  // TODO: more flexible
+  let temporalSigner = distributorInfo.temporal.equals(PublicKey.default) || secret.equals(walletKey)
+      ? walletKey : distributorInfo.temporal;
+
+  const claimCountAccount = await connection.getAccountInfo(claimCount);
+  if (claimCountAccount !== null) {
+    throw new Error(`This edition was already claimed`);
+  }
+
+  const setup : Array<TransactionInstruction> = [];
+
+  const newMint = Keypair.generate();
+  const newMetadataKey = await getMetadata(newMint.publicKey);
+  const masterMetadataKey = await getMetadata(masterMintKey);
+  const newEdition = await getEdition(newMint.publicKey);
+  const masterEdition = await getEdition(masterMintKey);
+
+  await createMintAndAccount(connection, walletKey, newMint.publicKey, setup);
+
+  const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
+    [
+      distributorKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      masterMintKey.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  const editionMarkKey = await getEditionMarkPda(masterMintKey, new BN(edition));
+
+  setup.push(new TransactionInstruction({
+      programId: MERKLE_DISTRIBUTOR_ID,
+      keys: [
+          { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
+          { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
+          { pubkey: temporalSigner            , isSigner: true  , isWritable: false } ,
+          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // payer
+
+          { pubkey: newMetadataKey            , isSigner: false , isWritable: true  } ,
+          { pubkey: newEdition                , isSigner: false , isWritable: true  } ,
+          { pubkey: masterEdition             , isSigner: false , isWritable: true  } ,
+          { pubkey: newMint.publicKey         , isSigner: false , isWritable: true  } ,
+          { pubkey: editionMarkKey            , isSigner: false , isWritable: true  } ,
+          { pubkey: walletKey                 , isSigner: true  , isWritable: false } , // `newMint` auth
+          { pubkey: distributorTokenKey       , isSigner: false , isWritable: false } ,
+          { pubkey: walletKey                 , isSigner: false , isWritable: false } , // new update auth
+          { pubkey: masterMetadataKey         , isSigner: false , isWritable: false } ,
+          { pubkey: masterMintKey             , isSigner: false , isWritable: false } ,
+
+          { pubkey: SystemProgram.programId   , isSigner: false , isWritable: false } ,
+          { pubkey: TOKEN_PROGRAM_ID          , isSigner: false , isWritable: false } ,
+          { pubkey: TOKEN_METADATA_PROGRAM_ID , isSigner: false , isWritable: false } ,
+          { pubkey: SYSVAR_RENT_PUBKEY        , isSigner: false , isWritable: false } ,
+      ],
+      data: Buffer.from([
+        ...Buffer.from(sha256.digest("global:claim_edition")).slice(0, 8),
+        ...new BN(cbump).toArray("le", 1),
+        ...new BN(index).toArray("le", 8),
+        ...new BN(amount).toArray("le", 8),
+        ...new BN(edition).toArray("le", 8),
+        ...secret.toBuffer(),
+        ...new BN(proof.length).toArray("le", 4),
+        ...Buffer.concat(proof),
+      ])
+  }));
+
+  return [setup, pdaSeeds, [newMint]];
 }
 
 const fetchDistributor = async (
@@ -510,10 +633,16 @@ export const Claim = (
 
   let params = queryString.parse(props.location.search);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
-  const [claimMethod, setClaimMethod] = React.useState(params.tokenAcc ? "transfer" : "candy");
+  const [claimMethod, setClaimMethod] = React.useState(
+        params.tokenAcc ? "transfer"
+      : params.config   ? "candy"
+      : params.master   ? "edition"
+      :                   "");
   const [tokenAcc, setTokenAcc] = React.useState(params.tokenAcc as string || "");
   const [candyConfig, setCandyConfig] = React.useState(params.config as string || "");
   const [candyUUID, setCandyUUID] = React.useState(params.uuid as string || "");
+  const [masterMint, setMasterMint] = React.useState(params.master as string || "");
+  const [editionStr, setEditionStr] = React.useState(params.edition as string || "");
   const [handle, setHandle] = React.useState(params.handle as string || "");
   const [amountStr, setAmount] = React.useState(params.amount as string || "");
   const [indexStr, setIndex] = React.useState(params.index as string || "");
@@ -522,9 +651,10 @@ export const Claim = (
 
   const allFieldsPopulated =
     distributor.length > 0
-    && ( params.tokenAcc
-       ? tokenAcc.length > 0
-       : candyConfig.length > 0 && candyUUID.length > 0
+    && ( claimMethod === "transfer" ? tokenAcc.length > 0
+       : claimMethod === "candy"    ? candyConfig.length > 0 && candyUUID.length > 0
+       : claimMethod === "edition"  ? masterMint.length > 0 && editionStr.length > 0
+       :                              false
        )
     && handle.length > 0
     && amountStr.length > 0
@@ -586,7 +716,7 @@ export const Claim = (
     const [distributorKey, distributorInfo] =
         await fetchDistributor(connection, distributor);
 
-    console.log(`Distributor ${distributorInfo}`);
+    console.log("Distributor", distributorInfo);
 
     const proof = proofStr === "" ? [] : proofStr.split(",").map(b => {
       const ret = Buffer.from(bs58.decode(b))
@@ -607,6 +737,16 @@ export const Claim = (
       [instructions, pdaSeeds, extraSigners] = await buildMintClaim(
         connection, wallet.publicKey, distributorKey, distributorInfo,
         tokenAcc,
+        proof, handle, amount, index, pin
+      );
+    } else if (claimMethod === "edition") {
+      const edition = Number(editionStr);
+      if (isNaN(edition)) {
+        throw new Error(`Could not parse edition ${editionStr}`);
+      }
+      [instructions, pdaSeeds, extraSigners] = await buildEditionClaim(
+        connection, wallet.publicKey, distributorKey, distributorInfo,
+        masterMint, edition,
         proof, handle, amount, index, pin
       );
     } else {
@@ -863,6 +1003,27 @@ export const Claim = (
           />
         </React.Fragment>
       );
+    } else if (claimMethod === "edition") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="master-mint-text-field"
+            label="Master Mint"
+            value={masterMint}
+            onChange={(e) => setMasterMint(e.target.value)}
+            disabled={!editable}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="edition-text-field"
+            label="Edition"
+            value={editionStr}
+            onChange={(e) => setEditionStr(e.target.value)}
+            disabled={!editable}
+          />
+        </React.Fragment>
+      );
     }
   };
 
@@ -883,26 +1044,24 @@ export const Claim = (
           id="claim-method-select"
           value={claimMethod}
           label="Claim Method"
-          onChange={(e) => {
-            localStorage.setItem("claimMethod", e.target.value);
-            setClaimMethod(e.target.value);
-          }}
+          onChange={(e) => { setClaimMethod(e.target.value); }}
           style={{textAlign: "left"}}
           disabled={!editable}
         >
           <MenuItem value={"transfer"}>Token Transfer</MenuItem>
           <MenuItem value={"candy"}>Candy Machine</MenuItem>
+          <MenuItem value={"edition"}>Limited Edition</MenuItem>
         </Select>
       </FormControl>
       {claimMethod !== "" && claimData(claimMethod)}
-      <TextField
+      {claimMethod !== "edition" && <TextField
         style={{width: "60ch"}}
         id="amount-text-field"
         label="Amount"
         value={amountStr}
         onChange={(e) => setAmount(e.target.value)}
         disabled={!editable}
-      />
+      />}
       <TextField
         style={{width: "60ch"}}
         id="handle-text-field"
