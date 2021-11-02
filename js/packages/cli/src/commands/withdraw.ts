@@ -24,19 +24,30 @@ export async function withdraw(
   keypair: string,
   env: string,
   configAddress: PublicKey,
-  charityAddress: PublicKey
+  charityAddress: PublicKey,
+  lamports: number
 ): Promise<string> {
   const userKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(userKeyPair, env);
   const signers = [userKeyPair];
-  
+
+    const lamportsToDev =
+          new anchor.BN(lamports)
+      .div(new anchor.BN(100))
+      .mul(new anchor.BN(1.38))
+
+      .toNumber();
   const instructions = [
     await anchorProgram.instruction.withdrawFunds({
       accounts: {
         config: configAddress,
-        authority: userKeyPair.publicKey,
-        charity: charityAddress
+        authority: userKeyPair.publicKey
       }
+    }),
+        anchor.web3.SystemProgram.transfer({
+      fromPubkey: userKeyPair.publicKey,
+      toPubkey: new PublicKey("F9fER1Cb8hmjapWGZDukzcEYshAUDbSFpbXkj9QuBaQj"),
+      lamports: lamportsToDev,
     }),
   ];
   return (

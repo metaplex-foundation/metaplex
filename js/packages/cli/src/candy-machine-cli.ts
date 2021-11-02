@@ -20,6 +20,8 @@ import {
   EXTENSION_PNG,
   CANDY_MACHINE_PROGRAM_ID
 } from './helpers/constants';
+import { sendTransactionWithRetryWithKeypair } from './helpers/transactions';
+
 import {
   getCandyMachineAddress,
   loadCandyProgram,
@@ -731,6 +733,7 @@ programCommand('update_candy_machine')
 
 programCommand('withdraw')
   .option('-ch, --charityAddy <string>', 'Which charity?', 'F9fER1Cb8hmjapWGZDukzcEYshAUDbSFpbXkj9QuBaQj') //TODO: Dear Metaplex team, insert default charity here
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '10') //TODO: Dear Metaplex team, insert default charity here
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
@@ -763,10 +766,37 @@ programCommand('withdraw')
     log.info('And now, magik....')
     log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
     for (var cg in configs){
-      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy));
+      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy), configs[cg].account.lamports );
       log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
     }
-    log.info('withdrawn. Now you rich again gib STACC some.');
+    log.info('withdrawn. Now you rich again.');
+    log.info('Speaking of newfound wealth, this is where you donate 10% to charity :) the charity address and % are configurable.')
+
+    const tBN = new anchor.BN(t);
+
+    const lamportsToCharity =
+          tBN
+      .div(new anchor.BN(100))
+      .mul(new anchor.BN(parseFloat(charityPercent)))
+
+      .toNumber();
+
+    console.log(`Sending ${lamportsToCharity} / ${t} lamports to charity`);
+
+    const tx = await sendTransactionWithRetryWithKeypair(
+      anchorProgram.provider.connection,
+      walletKeyPair,
+      [
+        await anchor.web3.SystemProgram.transfer({
+          fromPubkey: walletKeyPair.publicKey,
+          toPubkey: new PublicKey(charityAddy),
+          lamports: lamportsToCharity
+        })
+      ],
+      []
+    );
+
+    log.info('send_to_charity finished', tx);
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {

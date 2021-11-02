@@ -415,7 +415,7 @@ export async function loadCandyProgram(
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
   });
-  const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
+  const idl = JSON.parse((await fs.readFileSync("/home/jare/changelogedit/rust/target/idl/nft_candy_machine.json")).toString())//await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM_ID, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM_ID, provider);
   log.debug('program id from anchor', program.programId.toBase58());
