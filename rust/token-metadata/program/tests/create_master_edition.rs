@@ -1,17 +1,14 @@
 mod utils;
 
+use metaplex_token_metadata::{error::MetadataError, id, instruction, state::Key};
 use num_traits::FromPrimitive;
 use solana_program_test::*;
-use solana_sdk::signature::Keypair;
 use solana_sdk::{
     instruction::InstructionError,
-    signature::Signer,
+    signature::{Keypair, Signer},
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use metaplex_token_metadata::error::MetadataError;
-use metaplex_token_metadata::state::Key;
-use metaplex_token_metadata::{id, instruction};
 use utils::*;
 
 mod create_master_edition {

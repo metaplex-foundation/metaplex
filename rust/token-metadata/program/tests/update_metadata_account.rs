@@ -1,5 +1,11 @@
 mod utils;
 
+use metaplex_token_metadata::{
+    error::MetadataError,
+    id, instruction,
+    state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH},
+    utils::puffed_out_string,
+};
 use num_traits::FromPrimitive;
 use solana_program_test::*;
 use solana_sdk::{
@@ -8,12 +14,6 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use metaplex_token_metadata::{
-    error::MetadataError,
-    state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH},
-    utils::puffed_out_string,
-};
-use metaplex_token_metadata::{id, instruction};
 use utils::*;
 
 mod update_metadata_account {

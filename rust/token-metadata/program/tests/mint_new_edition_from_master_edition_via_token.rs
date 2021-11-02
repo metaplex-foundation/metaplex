@@ -1,5 +1,6 @@
 mod utils;
 
+use metaplex_token_metadata::{error::MetadataError, id, instruction, state::Key};
 use num_traits::FromPrimitive;
 use solana_program_test::*;
 use solana_sdk::{
@@ -8,9 +9,6 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
     transport::TransportError,
 };
-use metaplex_token_metadata::error::MetadataError;
-use metaplex_token_metadata::state::Key;
-use metaplex_token_metadata::{id, instruction};
 use utils::*;
 
 // NOTE: these tests depend on the token-vault program having been compiled

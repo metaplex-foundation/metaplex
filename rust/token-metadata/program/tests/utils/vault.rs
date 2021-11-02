@@ -1,4 +1,5 @@
 use super::{create_mint, create_token_account, ExternalPrice, Metadata};
+use metaplex_token_vault::{instruction, state::PREFIX};
 use solana_program::{pubkey::Pubkey, system_instruction};
 use solana_program_test::*;
 use solana_sdk::{
@@ -6,7 +7,6 @@ use solana_sdk::{
     transaction::Transaction,
     transport,
 };
-use metaplex_token_vault::{instruction, state::PREFIX};
 
 pub struct Vault {
     pub keypair: Keypair,
