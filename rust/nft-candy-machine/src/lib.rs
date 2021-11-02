@@ -409,6 +409,19 @@ pub mod nft_candy_machine {
 
         Ok(())
     }
+
+    pub fn update_authority(
+        ctx: Context<UpdateCandyMachine>,
+        new_authority: Option<Pubkey>,
+    ) -> ProgramResult {
+        let candy_machine = &mut ctx.accounts.candy_machine;
+
+        if let Some(new_auth) = new_authority {
+            candy_machine.authority = new_auth;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
