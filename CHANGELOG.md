@@ -18,7 +18,7 @@ incremented for features.
 
 ### Fixes
 
-- N/A
+- Fixes #840 - Claim button visible after claim.
 
 ### Breaking
 
