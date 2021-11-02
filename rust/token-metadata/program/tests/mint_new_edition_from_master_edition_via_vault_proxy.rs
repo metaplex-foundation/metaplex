@@ -15,6 +15,8 @@ use metaplex_token_metadata::{id, instruction};
 use metaplex_token_vault::state::PREFIX;
 use utils::*;
 
+// NOTE: these tests depend on the token-vault program having been compiled
+// via (cd ../../token-vault/program/ && cargo build-bpf)
 mod mint_new_edition_from_master_edition_via_vault_proxy {
     use super::*;
     #[tokio::test]
