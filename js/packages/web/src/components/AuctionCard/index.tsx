@@ -424,7 +424,8 @@ export const AuctionCard = ({
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
 
-  const { canEndInstantSale } = useInstantSaleState(auctionView);
+  const { canEndInstantSale, isAlreadyBought } =
+    useInstantSaleState(auctionView);
 
   const actionButtonContent = useActionButtonContent(auctionView);
 
@@ -719,7 +720,7 @@ export const AuctionCard = ({
                 type="primary"
                 size="large"
                 className="ant-btn secondary-btn"
-                disabled={loading}
+                disabled={loading || isAlreadyBought}
                 onClick={instantSaleAction}
                 style={{ marginTop: 20, width: '100%' }}
               >
