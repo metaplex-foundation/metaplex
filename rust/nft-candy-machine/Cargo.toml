@@ -19,3 +19,4 @@ anchor-lang = "0.17.0"
 arrayref = "0.3.6"
 spl-token = { version="3.1.1", features = [ "no-entrypoint" ] }
 metaplex-token-metadata = { path = "../token-metadata/program", features = [ "no-entrypoint" ] }
+anchor-spl = "0.17.0"
