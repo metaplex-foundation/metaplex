@@ -24,19 +24,19 @@ export async function withdraw(
   keypair: string,
   env: string,
   configAddress: PublicKey,
+  charityAddress: PublicKey
 ): Promise<string> {
   const userKeyPair = loadWalletKey(keypair);
   const anchorProgram = await loadCandyProgram(userKeyPair, env);
-
   const signers = [userKeyPair];
-
+  
   const instructions = [
     await anchorProgram.instruction.withdrawFunds({
       accounts: {
-        //candyMachine: candyMachineAddress,
         config: configAddress,
         authority: userKeyPair.publicKey,
-      },
+        charity: charityAddress
+      }
     }),
   ];
   return (

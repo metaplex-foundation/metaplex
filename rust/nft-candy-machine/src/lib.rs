@@ -27,17 +27,29 @@ pub mod nft_candy_machine {
     };
 
     use super::*;
-    pub fn withdraw_funds<'info>(
-        ctx: Context<'_, '_, '_, 'info, WithdrawFunds<'info>>,
-    ) -> ProgramResult {
+    pub fn withdraw_funds<'info>(ctx: Context<WithdrawFunds<'info>>) -> ProgramResult {
         let authority = &ctx.accounts.authority;
-        let pay = &ctx.accouts.config;
+        let charity = &ctx.accounts.charity;
+        let pay = &ctx.accounts.config.to_account_info();
         let snapshot: u64 = pay.lamports();
-        **pay.lamports.borrow_mut() = 0;
+        let auth_pot = snapshot
+            .checked_div(10)
+            .ok_or(ErrorCode::NumericalOverflowError)?
+            .checked_mul(9)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+        let charity_pot = snapshot
+            .checked_div(10)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+
+        **pay.lamports.borrow_mut() = 0; // Magic!
 
         **authority.lamports.borrow_mut() = authority
             .lamports()
-            .checked_add(snapshot)
+            .checked_add(auth_pot)
+            .ok_or(ErrorCode::NumericalOverflowError)?;
+        **charity.lamports.borrow_mut() = charity
+            .lamports()
+            .checked_add(charity_pot)
             .ok_or(ErrorCode::NumericalOverflowError)?;
 
         Ok(())
@@ -468,8 +480,10 @@ pub struct WithdrawFunds<'info> {
         mut,
         has_one = authority
     )]
-    config: Account<'info, Config>,
+    config: ProgramAccount<'info, Config>,
 
+    #[account(mut)]
+    charity: AccountInfo<'info>,
     #[account(mut, address = config.authority)]
     authority: Signer<'info>,
 }
@@ -649,4 +663,6 @@ pub enum ErrorCode {
     CandyMachineNotLiveYet,
     #[msg("Number of config lines must be at least number of items available")]
     ConfigLineMismatch,
+    #[msg("Nuh uh uh, you didn't say the magic word (you tried charity % that wasn't between 0 and 10000)")]
+    NuhUhUh,
 }

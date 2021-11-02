@@ -4,7 +4,6 @@ import * as path from 'path';
 import { program } from 'commander';
 import * as anchor from '@project-serum/anchor';
 import fetch from 'node-fetch';
-
 import {
   chunks,
   fromUTF8Array,
@@ -12,20 +11,21 @@ import {
   parsePrice,
 } from './helpers/various';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   CACHE_PATH,
   CONFIG_ARRAY_START,
   CONFIG_LINE_SIZE,
   EXTENSION_JSON,
   EXTENSION_PNG,
+  CANDY_MACHINE_PROGRAM_ID
 } from './helpers/constants';
 import {
   getCandyMachineAddress,
   loadCandyProgram,
   loadWalletKey,
 } from './helpers/accounts';
-import { Config } from './types';
+import { Config, AccountAndPubkey } from './types';
 import { upload } from './commands/upload';
 import { verifyTokenMetadata } from './commands/verifyTokenMetadata';
 import { generateConfigurations } from './commands/generateConfigurations';
@@ -37,6 +37,7 @@ import { signAllMetadataFromCandyMachine } from './commands/signAll';
 import log from 'loglevel';
 import { createMetadataFiles } from './helpers/metadata';
 import { createGenerativeArt } from './commands/createArt';
+type StringPublicKey = string;
 
 program.version('0.0.2');
 
@@ -45,6 +46,64 @@ if (!fs.existsSync(CACHE_PATH)) {
 }
 
 log.setLevel(log.levels.INFO);
+
+export async function getProgramAccounts(
+  connection: anchor.web3.Connection,
+  programId: StringPublicKey,
+  configOrCommitment?: any,
+): Promise<Array<AccountAndPubkey>> {
+  const extra: any = {};
+  let commitment;
+  //let encoding;
+
+  if (configOrCommitment) {
+    if (typeof configOrCommitment === 'string') {
+      commitment = configOrCommitment;
+    } else {
+      commitment = configOrCommitment.commitment;
+      //encoding = configOrCommitment.encoding;
+
+      if (configOrCommitment.dataSlice) {
+        extra.dataSlice = configOrCommitment.dataSlice;
+      }
+
+      if (configOrCommitment.filters) {
+        extra.filters = configOrCommitment.filters;
+      }
+    }
+  }
+
+  const args = connection._buildArgs([programId], commitment, 'base64', extra);
+  const unsafeRes = await (connection as any)._rpcRequest(
+    'getProgramAccounts',
+    args,
+  );
+
+  return unsafeResAccounts(unsafeRes.result);
+}
+
+function unsafeAccount(account: anchor.web3.AccountInfo<[string, string]>) {
+  return {
+    // TODO: possible delay parsing could be added here
+    data: Buffer.from(account.data[0], 'base64'),
+    executable: account.executable,
+    lamports: account.lamports,
+    // TODO: maybe we can do it in lazy way? or just use string
+    owner: account.owner,
+  } as anchor.web3.AccountInfo<Buffer>;
+}
+
+function unsafeResAccounts(
+  data: Array<{
+    account: anchor.web3.AccountInfo<[string, string]>;
+    pubkey: string;
+  }>,
+) {
+  return data.map(item => ({
+    account: unsafeAccount(item.account),
+    pubkey: item.pubkey,
+  }));
+}
 
 programCommand('upload')
   .argument(
@@ -671,17 +730,47 @@ programCommand('update_candy_machine')
   });
 
 programCommand('withdraw')
-  .option('-c, --configAddy <string>', 'Which config?')
+  .option('-ch, --charityAddy <string>', 'Which charity?', 'F9fER1Cb8hmjapWGZDukzcEYshAUDbSFpbXkj9QuBaQj') //TODO: Dear Metaplex team, insert default charity here
+  .option(
+    '-r, --rpc-url <string>',
+    'custom rpc url since this is a heavy command',
+  )
   .action(async (directory, cmd) => {
-    const { keypair, env, cacheName, configAddy } = cmd.opts();
-    console.log(configAddy);
-    const tx = await withdraw(keypair, env, new PublicKey(configAddy));
+    const { keypair, env, cacheName, charityAddy, charityPercent, rpcUrl } = cmd.opts();
+    
 
-    log.info('withdrawn. Now you rich again gib STACC some.', tx);
+    const walletKeyPair = loadWalletKey(keypair);
+
+    const anchorProgram = await loadCandyProgram(walletKeyPair, env, rpcUrl);
+    const configOrCommitment = {commitment: 'confirmed', 
+    filters: [
+              {
+                  "memcmp": {
+                    "offset": 8,
+                    "bytes": walletKeyPair.publicKey.toBase58()
+                  }
+              }
+             ]}
+    
+    const configs = await getProgramAccounts(anchorProgram.provider.connection, CANDY_MACHINE_PROGRAM_ID.toBase58(), configOrCommitment)
+    let t = 0;
+    let c = 0;
+    for (var cg in configs){
+      t+=configs[cg].account.lamports 
+      c+=1
+    }
+    log.info('Congrats, y\'all have ' + (t / LAMPORTS_PER_SOL).toString() + ' SOL locked up in configs, ' + (Math.floor((t / LAMPORTS_PER_SOL) / c * 10000) / 10000).toString() + ' SOL average :)')
+    log.info('And now, magik....')
+    log.info('Withdrawing ' + configs.length.toString() + ' times. Patience...')
+    for (var cg in configs){
+      const tx = await withdraw(keypair, env, new PublicKey(configs[cg].pubkey), new PublicKey(charityAddy));
+      log.info('Good awaiting, young padawan! ' + c.toString() + ' refunds complete! ', tx)
+    }
+    log.info('withdrawn. Now you rich again gib STACC some.');
   });
 
 programCommand('mint_one_token').action(async (directory, cmd) => {
-  const { keypair, env, cacheName } = cmd.opts();
+  const { keypair, env, cacheName, rpcUrl } = cmd.opts();
   const cacheContent = loadCache(cacheName, env);
     const configAddress = new PublicKey(cacheContent.program.config);
     const tx = await mint(keypair, env, configAddress, rpcUrl);
