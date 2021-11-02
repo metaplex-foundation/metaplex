@@ -903,25 +903,9 @@ pub fn process_create_metadata_accounts_logic(
 /// Strings need to be appended with `\0`s in order to have a deterministic length.
 /// This supports the `memcmp` filter  on get program account calls.
 pub fn puff_out_data_fields(metadata: &mut Metadata) {
-    let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_NAME_LENGTH - metadata.data.name.len() {
-        array_of_zeroes.push(0u8);
-    }
-    metadata.data.name =
-        metadata.data.name.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-
-    let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_SYMBOL_LENGTH - metadata.data.symbol.len() {
-        array_of_zeroes.push(0u8);
-    }
-    metadata.data.symbol =
-        metadata.data.symbol.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
-
-    let mut array_of_zeroes = vec![];
-    while array_of_zeroes.len() < MAX_URI_LENGTH - metadata.data.uri.len() {
-        array_of_zeroes.push(0u8);
-    }
-    metadata.data.uri = metadata.data.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
+    metadata.data.name = puffed_out_string(&metadata.data.name, MAX_NAME_LENGTH);
+    metadata.data.symbol = puffed_out_string(&metadata.data.symbol, MAX_SYMBOL_LENGTH);
+    metadata.data.uri = puffed_out_string(&metadata.data.uri, MAX_URI_LENGTH);
 }
 
 pub fn puffed_out_string(s: &String, size: usize) -> String {
