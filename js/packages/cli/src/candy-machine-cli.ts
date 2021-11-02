@@ -732,8 +732,8 @@ programCommand('update_candy_machine')
   });
 
 programCommand('withdraw')
-  .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q') //TODO: Dear Metaplex team, insert default charity here
-  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0') //TODO: Dear Metaplex team, insert default charity here
+  .option('-ch, --charityAddy <string>', 'Which charity?', 'DFF5wJR1puxPMKrPUxFvEZ5Qh6vNbbUhQzSQZ8o1q26q')
+  .option('-cp, --charityPercent <string>', 'Which percent to charity?', '0')
   .option(
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
