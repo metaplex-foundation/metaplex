@@ -41,9 +41,6 @@ import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
 
-// temporal signing
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda"
-
 import {
   useConnection,
   Connection,
@@ -556,13 +553,7 @@ export const Claim = (
     wrap();
   }, [connection, distributor, indexStr, claimMethod]);
 
-  const client = new LambdaClient({
-    region: "us-east-2",
-    credentials: {
-      accessKeyId: "AKIA4UZOKPKEBSISSXIX",
-      secretAccessKey: "Dtk94eSWGGkIwn5YEU8YMACJ42V2piqP0jd4m5v2",
-    },
-  });
+  const lambdaAPIEndpoint = "https://{PLACEHOLDER-API-ID}.execute-api.us-east-2.amazonaws.com/send-OTP";
 
   const skipAWSWorkflow = false;
 
@@ -651,34 +642,33 @@ export const Claim = (
         transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       const params = {
-        FunctionName: "send-OTP",
-        Payload: new Uint8Array(Buffer.from(JSON.stringify({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           method: "send",
           transaction: bs58.encode(transaction.serializeMessage()),
           seeds: pdaSeeds,
-        }))),
+        }),
       };
 
-      const res = await client.send(new InvokeCommand(params));
-      console.log(res);
+      const response = await fetch(lambdaAPIEndpoint, params);
+      console.log(response);
 
-      if (res.StatusCode !== 200) {
-        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(res)}`);
+      if (response.status !== 200) {
+        throw new Error(`Failed to send AWS OTP`);
       }
 
-      if (res.Payload === undefined) {
-        throw new Error("No response payload");
-      }
-
-      let resp;
+      let data;
       try {
-        resp = JSON.parse(Buffer.from(res.Payload).toString());
+        data = await response.json();
       } catch {
-        throw new Error(`Could not parse response ${res.Payload}`);
+        throw new Error(`Could not parse AWS OTP response`);
       }
 
-      if (!resp.MessageId) {
-        throw new Error(`Failed to send AWS OTP. ${JSON.stringify(resp)}`);
+      console.log("AWS OTP response data:", data);
+
+      if (!data.MessageId) {
+        throw new Error(`Failed to send AWS OTP`);
       }
 
       notify({
@@ -715,37 +705,38 @@ export const Claim = (
       }
 
       const params = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         FunctionName: "send-OTP",
-        Payload: new Uint8Array(Buffer.from(JSON.stringify({
+        body: JSON.stringify({
           method: "verify",
           otp: OTP,
           handle: handle,  // TODO?
-        }))),
+        }),
       };
 
-      const res = await client.send(new InvokeCommand(params));
-      console.log(res);
+      const response = await fetch(lambdaAPIEndpoint, params);
+      console.log(response);
 
-      if (res.StatusCode !== 200) {
-        const blob = JSON.stringify(res);
+      if (response.status !== 200) {
+        const blob = JSON.stringify(response);
         throw new Error(`Failed to verify AWS OTP. ${blob}`);
       }
 
-      if (res.Payload === undefined) {
-        throw new Error("No response payload");
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(`Could not parse AWS OTP verification response`);
       }
 
-      let resp, sig;
-      try {
-        resp = JSON.parse(Buffer.from(res.Payload).toString());
-      } catch {
-        throw new Error(`Could not parse response ${res.Payload}`);
-      }
+      console.log("AWS verify response data:", data);
 
+      let sig;
       try {
-        sig = bs58.decode(JSON.parse(resp.body));
+        sig = bs58.decode(data);
       } catch {
-        throw new Error(`Could not decode transaction signature ${resp.body}`);
+        throw new Error(`Could not decode transaction signature ${data.body}`);
       }
 
       transaction.addSignature(MERKLE_TEMPORAL_SIGNER, sig);

@@ -157,7 +157,23 @@ const verifyOTP = async (event) => {
   return response;
 };
 
-exports.handler = async (event) => {
+exports.handler = async (request) => {
+  // we need to populate these for pre-flight options requests or something...
+  // not sure why we need both this AND to set CORS in the API gateway but OK...
+  const amazing = {
+    headers: {
+      "Access-Control-Allow-Origin": '*',
+      "Access-Control-Allow-Methods": 'POST,OPTIONS',
+      "Access-Control-Allow-Headers" : "Content-Type",
+    }
+  }
+  if (request.requestContext.http.method === "OPTIONS") {
+    return {
+      statusCode: 200,
+      ...amazing,
+    }
+  }
+  const event = JSON.parse(request.body);
   if (event.method === "send") {
     return await sendOTP(event);
   } else if (event.method === "verify") {
