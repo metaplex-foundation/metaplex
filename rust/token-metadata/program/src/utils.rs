@@ -924,6 +924,15 @@ pub fn puff_out_data_fields(metadata: &mut Metadata) {
     metadata.data.uri = metadata.data.uri.clone() + std::str::from_utf8(&array_of_zeroes).unwrap();
 }
 
+pub fn puffed_out_string(s: &String, size: usize) -> String {
+    let mut array_of_zeroes = vec![];
+    let puff_amount = size - s.len();
+    while array_of_zeroes.len() < puff_amount {
+        array_of_zeroes.push(0u8);
+    }
+    s.clone() + std::str::from_utf8(&array_of_zeroes).unwrap()
+}
+
 pub struct MintNewEditionFromMasterEditionViaTokenLogicArgs<'a> {
     pub new_metadata_account_info: &'a AccountInfo<'a>,
     pub new_edition_account_info: &'a AccountInfo<'a>,
