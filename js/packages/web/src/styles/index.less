@@ -1,8 +1,39 @@
-// Default ant design variables
-@import '~antd/lib/style/themes/dark.less';
+@import '~antd/lib/style/variable.less';
 
-// Ant Design config
-// TODO: put Ant Design headers here
+// Theme variables
+@theme-base: var(--color-base, black);
+@theme-base-bold: var(--color-base-bold, #121212);
+@theme-base-faint: var(--color-base-faint, #121212);
+
+@theme-border: var(--color-border, #121212);
+
+@theme-accent: var(--color-accent, #00FFBD);
+@theme-accent-bold: var(--color-accent-bold, #00CC82);
+@theme-accent-faint: var(--color-accent-faint, #00CC82);
+
+@theme-text: var(--color-text, white);
+@theme-text-accent: var(--color-text-accent, black);
+
+// antd theme config
+html {
+  --ant-primary-color: @theme-accent;
+  --ant-primary-color-hover: @theme-accent-faint;
+  --ant-primary-color-active: @theme-accent-bold;
+
+  --ant-info-color-deprecated-bg: @theme-base-bold;
+}
+
+@body-background: @theme-base;
+@layout-header-background: @theme-base;
+@layout-body-background: @theme-base;
+@background-color-base: @theme-base;
+@background-color-light: @theme-base-faint;
+@component-background: @theme-base-bold;
+
+@border-color-base: @theme-border;
+
+@text-color: @theme-text;
+@heading-color: @theme-text;
 
 // Other config
 @content-padding: 32px;
@@ -13,7 +44,7 @@
 @masonry-gutter: 32px;
 
 // Dependency stylesheets
-@import '~antd/dist/antd.less';
+@import '~antd/lib/style/components.less';
 @import '@oyster/common/styles.css';
 
 // Global styles for web

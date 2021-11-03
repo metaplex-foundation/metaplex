@@ -18,6 +18,14 @@ export interface StorefrontMeta {
 export interface StorefrontTheme {
   logo?: string;
   stylesheet: string;
+  color: {
+    primary: string;
+    background: string;
+  };
+  font: {
+    title: string;
+    text: string;
+  };
 }
 
 export interface Storefront {

@@ -6,6 +6,7 @@ import { Storefront } from '@oyster/common';
 import { getStorefront } from './../actions/getStorefront';
 import Bugsnag from '@bugsnag/js';
 import BugsnagPluginReact from '@bugsnag/plugin-react';
+import { applyTheme } from '../actions/applyTheme';
 
 const CreateReactAppEntryPoint = dynamic(() => import('../App'), {
   ssr: false,
@@ -61,22 +62,11 @@ function App({ storefront }: AppProps) {
     }
   }, [hasLogo, hasStylesheet]);
 
-  // TODO: refactor
   useEffect(() => {
-    // const head = document.head;
-    const link = document.createElement('link');
+    const doc = document.documentElement;
 
-    link.type = 'text/css';
-    link.rel = 'stylesheet';
-    // link.href = storefront.theme.stylesheet;
-    // link.href = 'http://localhost:3000/demo-theme.css'
-
-    link.onload = () => {
-      setHasStylesheet(true);
-    };
-
+    applyTheme(storefront.theme, doc.style);
     setHasStylesheet(true);
-    // head.appendChild(link);
   }, []);
 
   useEffect(() => {
