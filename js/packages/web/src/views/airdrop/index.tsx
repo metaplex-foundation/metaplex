@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Col, Row, Select, Typography, Upload } from 'antd';
 import { ArtSelector } from "../auctionCreate/artSelector";
 import { SafetyDepositDraft } from "../../actions/createAuctionManager";
-import { Creator, useConnection, useUserAccounts } from "@oyster/common";
+import { Creator, MetaplexOverlay, StringPublicKey, useConnection, useUserAccounts } from "@oyster/common";
 import * as Papa from 'papaparse';
 import { PublicKey } from "@solana/web3.js";
 import { mintEditionsToWallet } from "../../actions/mintEditionsIntoWallet";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useArt } from "../../hooks";
+import { useHistory } from "react-router-dom";
+import { Confetti } from "../../components/Confetti";
 
 const { Dragger } = Upload;
 const { Text } = Typography;
@@ -29,6 +31,28 @@ const validateAddresses = (addresses: Array<string>) => {
   }
 }
 
+const Congrats = () => {
+  return (
+    <>
+      <div
+        style={{
+          marginTop: 70,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <div className="waiting-title">
+          Congratulations! Airdrop finished
+        </div>
+        <div className="congrats-button-container">
+
+        </div>
+      </div>
+      <Confetti />
+    </>
+  );
+};
 
 export const AirdropProcess = () => {
   const wallet = useWallet();
@@ -42,6 +66,8 @@ export const AirdropProcess = () => {
   const [selectedField, setSelectedField] = useState<string | any>()
   const [validAddresses, setValidAddresses] = useState<Array<string>>([])
   const [inValidAddresses, setInValidAddresses] = useState<Array<string>>([])
+  const [notMintedAddresses, setNotMintedAddresses] = useState<Array<string>>([])
+  const [showCongrats, setShowCongrats] = useState<Boolean>(false)
   const artistFilter = useCallback(
     (i: SafetyDepositDraft) =>
       !(i.metadata.info.data.creators || []).some((c: Creator) => !c.verified),
@@ -56,18 +82,18 @@ export const AirdropProcess = () => {
   }, [selectedField])
   const [mintNft] = useMemo(() => selectedNft, [selectedNft])
   const art = useArt(mintNft?.metadata?.pubkey);
-  const sendNfts = async () => {
-    console.log(validAddresses)
-    console.log(inValidAddresses)
+  const sendNfts = async (retry = false) => {
+    const addresses = retry ? notMintedAddresses : validAddresses
+    setNotMintedAddresses([])
+    const localNotMintedAddresses : Array<string>= []
     if(art){
       const artMintTokenAccount = accountByMint.get(art.mint!);
       let startingEdition = art.supply || 0;
-      for(let i = 0; i < validAddresses.length ; i++){
-        const address = validAddresses[i]
+      for(let i = 0; i < addresses.length ; i++){
+        const address = addresses[i]
         startingEdition += 1;
         console.log(`minting to ${address}`)
         try {
-
           await mintEditionsToWallet(
             art,
             wallet!,
@@ -78,14 +104,22 @@ export const AirdropProcess = () => {
             startingEdition,
           );
         } catch (e: any) {
-          console.log(`error mint to ${address}`)
+          localNotMintedAddresses.push(address)
         }
         console.log(`success mint to ${address}`)
       }
     }
+    setShowCongrats(true)
+    setNotMintedAddresses(localNotMintedAddresses)
   }
   return (
     <>
+      <MetaplexOverlay visible={showCongrats}>
+        <Congrats/>
+        <Button onClick={() => setShowCongrats(false)}>
+          GOT IT
+        </Button>
+      </MetaplexOverlay>
       <Row className="creator-base-page" style={{ paddingTop: 50 }}>
         <Col xl={12}>
           <h2>Select which item to airdrop:</h2>
@@ -174,17 +208,30 @@ export const AirdropProcess = () => {
                     {inValidAddresses.length} Invalid addresses
                   </Col>
                   <Col xl={12}>
-                    {selectedNft.length > 0 && validAddresses.length > 0 && (
-                      <Button
-                        type="primary"
-                        size="large"
-                        className="ant-btn secondary-btn"
-                        disabled={false}
-                        style={{ marginTop: 20, width: '100%' }}
-                        onClick={sendNfts}
-                      >
-                        Send {validAddresses.length} NFTS
-                      </Button>
+                    {selectedNft.length > 0 && validAddresses.length > 0 &&
+                    (notMintedAddresses.length > 0 ? (
+                          <Button
+                            type="primary"
+                            size="large"
+                            className="ant-btn secondary-btn"
+                            disabled={false}
+                            style={{ marginTop: 20, width: '100%' }}
+                            onClick={() => sendNfts(true)}
+                          >
+                            Retry {notMintedAddresses.length} NFTS
+                          </Button>
+                        ) : (
+                          <Button
+                            type="primary"
+                            size="large"
+                            className="ant-btn secondary-btn"
+                            disabled={false}
+                            style={{ marginTop: 20, width: '100%' }}
+                            onClick={() => sendNfts(false)}
+                          >
+                            Send {validAddresses.length} NFTS
+                          </Button>
+                        )
                     )}
                   </Col>
                 </Row>
