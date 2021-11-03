@@ -77,6 +77,10 @@ programCommand('upload')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option(
+    '-d, --rent-days <number>',
+    'Rent time in days. Only use this if you know what your are doing!',
+  )
   .action(async (files: string[], options, cmd) => {
     const {
       number,
@@ -90,6 +94,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      rentDays,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -152,6 +157,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        rentDays,
       );
 
       if (successful) {
