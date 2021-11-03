@@ -27,6 +27,7 @@ export async function upload(
   rpcUrl: string,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
+  rentTimeInDays: number,
 ): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -111,7 +112,9 @@ export async function upload(
                 share: creator.share,
               };
             }),
-          });
+          },
+          rentTimeInDays,
+          );
           cacheContent.program.uuid = res.uuid;
           cacheContent.program.config = res.config.toBase58();
           config = res.config;
