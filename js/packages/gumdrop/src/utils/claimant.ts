@@ -30,9 +30,6 @@ import {
 import {
   MerkleTree,
 } from "./merkleTree";
-import {
-  Connection,
-} from "../contexts";
 
 export type ClaimantInfo = {
   handle : string,
@@ -61,14 +58,15 @@ export const parseClaimants = (
   });
 };
 
-const explorerUrlFor = (connection : RPCConnection, key : PublicKey) => {
-  return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${Connection.envFor(connection)}`;
+const explorerUrlFor = (env : string, key : PublicKey) => {
+  return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${env}`;
 }
 
 export type ClaimInfo = { [key: string]: any };
 
 export const validateTransferClaims = async (
   connection : RPCConnection,
+  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   mintStr : string,
@@ -92,12 +90,13 @@ export const validateTransferClaims = async (
     total: total,
     mint: mint,
     source: source,
-    info: { type: "Token", meta: explorerUrlFor(connection, mint.key) },
+    info: { type: "Token", meta: explorerUrlFor(env, mint.key) },
   };
 }
 
 export const validateCandyClaims = async (
   connection : RPCConnection,
+  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   candyConfig : string,
@@ -132,13 +131,14 @@ export const validateCandyClaims = async (
     total: total,
     config: configKey,
     uuid: candyUuid,
-    candyMachine: candyMachineKey,
-    info: { type: "Candy", meta: explorerUrlFor(connection, configKey) },
+    candyMachineKey: candyMachineKey,
+    info: { type: "Candy", meta: explorerUrlFor(env, configKey) },
   };
 }
 
 export const validateEditionClaims = async (
   connection : RPCConnection,
+  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   masterMintStr : string,
@@ -203,7 +203,7 @@ export const validateEditionClaims = async (
     total: total,
     masterMint: masterMint,
     masterTokenAccount: masterTokenAccount,
-    info: { type: "Edition", meta: explorerUrlFor(connection, masterMint.key) },
+    info: { type: "Edition", meta: explorerUrlFor(env, masterMint.key) },
   };
 }
 

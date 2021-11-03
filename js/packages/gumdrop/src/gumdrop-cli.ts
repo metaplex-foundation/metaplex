@@ -21,10 +21,8 @@ import {
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
+import * as crypto from "crypto";
 
-import {
-  Connection,
-} from "./contexts";
 import {
   ClaimantInfo,
   buildGumdrop,
@@ -48,8 +46,17 @@ import {
 import {
   MerkleTree,
 } from "./utils/merkleTree";
+import {
+  sendSignedTransaction,
+} from "./utils/transactions";
 
 program.version('0.0.1');
+
+const LOG_PATH= "./.log";
+
+if (!fs.existsSync(LOG_PATH)) {
+  fs.mkdirSync(LOG_PATH);
+}
 
 log.setLevel(log.levels.INFO);
 
@@ -120,6 +127,10 @@ programCommand('create')
       }
     };
 
+    if (!options.host) {
+      throw new Error("No host website specified");
+    }
+
     let temporalSigner, sender;
     switch (options.distributionMethod) {
       case "wallets": {
@@ -168,6 +179,7 @@ programCommand('create')
       case "transfer": {
         claimInfo = await validateTransferClaims(
           connection,
+          options.env,
           wallet.publicKey,
           claimants,
           options.transferMint,
@@ -177,6 +189,7 @@ programCommand('create')
       case "candy": {
         claimInfo = await validateCandyClaims(
           connection,
+          options.env,
           wallet.publicKey,
           claimants,
           options.candyConfig,
@@ -187,6 +200,7 @@ programCommand('create')
       case "edition": {
         claimInfo = await validateEditionClaims(
           connection,
+          options.env,
           wallet.publicKey,
           claimants,
           options.editionMint,
@@ -218,7 +232,15 @@ programCommand('create')
 
 
     const base = Keypair.generate();
-    console.log(`base ${base.publicKey.toBase58()}`);
+
+    const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
+    console.log(`writing base to ${basePath}`);
+    fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
+
+    const urlPath = logPath(options.env, `urls-${base.publicKey.toBase58()}.json`);
+    console.log(`writing claims to ${urlPath}`);
+    fs.writeFileSync(urlPath, JSON.stringify(claimants));
+
 
     const instructions = await buildGumdrop(
       connection,
@@ -244,11 +266,12 @@ programCommand('create')
       throw new Error(createResult);
     } else {
       console.log(
-        'Distributor creation succeeded',
-        Connection.explorerLinkFor(createResult.txid, connection))
+        'gumdrop creation succeeded',
+        `https://explorer.solana.com/tx/${createResult.txid}?cluster=${options.env}`
+      );
     }
 
-    console.log("Distributing claim URLs");
+    console.log("distributing claim URLs");
     for (const c of claimants) {
       await sender(c, claimInfo.info);
     }
@@ -298,12 +321,18 @@ function loadWalletKey(keypair) : Keypair {
   return loaded;
 }
 
+function logPath(
+  env: string,
+  logName: string,
+  cPath: string = LOG_PATH,
+) {
+  return path.join(cPath, `${env}-${logName}`);
+}
+
 // NB: assumes no overflow
 function randomBytes() : Uint8Array {
   // TODO: some predictable seed? sha256?
-  const buf = new Uint8Array(4);
-  window.crypto.getRandomValues(buf);
-  return buf;
+  return crypto.randomBytes(4);
 }
 
 async function sendTransactionWithRetry(
@@ -331,11 +360,10 @@ async function sendTransactionWithRetry(
   }
   transaction.partialSign(wallet);
 
-  return Connection.sendSignedTransaction({
+  return sendSignedTransaction({
     connection,
     signedTransaction: transaction,
   });
 };
-
 
 program.parse(process.argv);

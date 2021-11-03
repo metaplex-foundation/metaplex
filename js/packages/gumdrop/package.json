@@ -31,6 +31,7 @@
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "@types/bs58": "^4.0.1",
     "@types/chart.js": "^2.9.29",
     "@types/echarts": "^4.9.0",
     "@types/react-router-dom": "^5.1.6",

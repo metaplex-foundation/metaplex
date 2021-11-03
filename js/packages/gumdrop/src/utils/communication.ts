@@ -1,3 +1,4 @@
+import log from 'loglevel';
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 
 import { ClaimantInfo } from "./claimant"
@@ -37,7 +38,7 @@ const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
 };
 
 export const setupSes = (auth : AuthKeys, source : string) => {
-  console.log(`SES auth ${auth}`);
+  log.debug("SES auth", auth);
   const client = new SESClient({
     region: "us-east-2",
     credentials: {
@@ -71,11 +72,10 @@ export const setupSes = (auth : AuthKeys, source : string) => {
       },
       Source: source,
     };
-    console.log(message);
 
     try {
       const response = await client.send(new SendEmailCommand(message));
-      console.log(response);
+      log.debug(response);
       if (response.$metadata.httpStatusCode !== 200) {
       //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
       }
@@ -92,7 +92,7 @@ export const setupManual = (auth : AuthKeys, source : string) => {
   ) => {
     // TODO duplicated work since claim URLs are available for download
     // regardless...
-    console.log({
+    log.debug({
       "handle": info.handle,
       "url": info.url,
     });

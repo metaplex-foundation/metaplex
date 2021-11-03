@@ -318,6 +318,7 @@ export const Create = (
       case "transfer": {
         claimInfo = await validateTransferClaims(
           connection,
+          Connection.envFor(connection),
           wallet.publicKey,
           claimants,
           mint,
@@ -327,6 +328,7 @@ export const Create = (
       case "candy": {
         claimInfo = await validateCandyClaims(
           connection,
+          Connection.envFor(connection),
           wallet.publicKey,
           claimants,
           candyConfig,
@@ -337,6 +339,7 @@ export const Create = (
       case "edition": {
         claimInfo = await validateEditionClaims(
           connection,
+          Connection.envFor(connection),
           wallet.publicKey,
           claimants,
           masterMint,
@@ -440,7 +443,7 @@ export const Create = (
       throw new Error(createResult);
     } else {
       notify({
-        message: "Distributor creation succeeded",
+        message: "Gumdrop creation succeeded",
         description: (
           <HyperLink href={Connection.explorerLinkFor(createResult.txid, connection)}>
             View transaction on explorer
