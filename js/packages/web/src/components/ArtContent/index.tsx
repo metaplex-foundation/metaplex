@@ -197,7 +197,7 @@ const HTMLContent = ({
         position: 'relative',
       }}
     >
-      {!loaded ? (
+      {!loaded && (
         <ThreeDots
           style={{
             width: '100%',
