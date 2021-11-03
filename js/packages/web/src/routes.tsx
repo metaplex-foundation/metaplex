@@ -14,6 +14,7 @@ import {
 } from './views';
 import { AdminView } from './views/admin';
 import { BillingView } from './views/auction/billing';
+import { AirdropProcess } from "./views/airdrop";
 
 export function Routes() {
   return (
@@ -22,6 +23,7 @@ export function Routes() {
         <Providers>
           <Switch>
             <Route exact path="/admin" component={() => <AdminView />} />
+            <Route exact path="/airdrop-process" component={() => <AirdropProcess />} />
             <Route
               exact
               path="/analytics"
