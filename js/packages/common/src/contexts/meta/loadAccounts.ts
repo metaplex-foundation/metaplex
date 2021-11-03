@@ -832,8 +832,6 @@ export const loadAccounts = async (connection: Connection) => {
 
   await Promise.all(loading);
 
-  console.log(state);
-
   state.metadata = uniqWith(
     state.metadata,
     (a: ParsedAccount<Metadata>, b: ParsedAccount<Metadata>) =>
