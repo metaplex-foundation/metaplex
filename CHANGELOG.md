@@ -16,7 +16,6 @@ incremented for features.
 - Added Token Entangler smart contract and CLI
 # Candy Machine
 - In Jares first useful contribution we see Jares second rust thing, refunding some millions $ back in unused candy configs to the authorities. Check 'withdraw' in the candy-machine-cli :)
-- Added Token Entangler Web GUI
 
 ### Fixes
 
