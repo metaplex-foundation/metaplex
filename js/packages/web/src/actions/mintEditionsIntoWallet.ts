@@ -23,6 +23,7 @@ export async function mintEditionsToWallet(
   mintTokenAccount: TokenAccount,
   editions: number = 1,
   mintDestination: StringPublicKey,
+  startingEdition?: number,
 ) {
   const signers: Array<Array<Keypair[]>> = [];
   const instructions: Array<Array<TransactionInstruction[]>> = [];
@@ -44,7 +45,9 @@ export async function mintEditionsToWallet(
       wallet,
       connection,
       mintTokenAccount,
-      new BN(art.supply! + 1 + i),
+      startingEdition
+        ? new BN(startingEdition + 1 + i)
+        : new BN(art.supply! + 1 + i),
       mintEditionIntoWalletInstructions,
       mintEditionIntoWalletSigners,
       mintDestination,
@@ -93,21 +96,14 @@ export async function mintEditionsToWallet(
         'single',
       );
     } else {
-      const { txid } = await sendTransactionWithRetry(
+      await sendTransactionWithRetry(
         connection,
         wallet,
         instructionBatch[0],
         signerBatch[0],
         'single',
       );
-      try {
-        await connection.confirmTransaction(txid, 'max');
-      } catch {
-        // ignore
-      }
-      await connection.getParsedConfirmedTransaction(txid, 'confirmed');
     }
-
 
     console.log('Done');
   }

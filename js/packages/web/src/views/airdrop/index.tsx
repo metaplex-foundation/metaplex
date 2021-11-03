@@ -61,17 +61,25 @@ export const AirdropProcess = () => {
     console.log(inValidAddresses)
     if(art){
       const artMintTokenAccount = accountByMint.get(art.mint!);
+      let startingEdition = art.supply || 0;
       for(let i = 0; i < validAddresses.length ; i++){
         const address = validAddresses[i]
+        startingEdition += 1;
         console.log(`minting to ${address}`)
-        await mintEditionsToWallet(
-          art,
-          wallet!,
-          connection,
-          artMintTokenAccount!,
-          1,
-          address,
-        );
+        try {
+
+          await mintEditionsToWallet(
+            art,
+            wallet!,
+            connection,
+            artMintTokenAccount!,
+            1,
+            address,
+            startingEdition,
+          );
+        } catch (e: any) {
+          console.log(`error mint to ${address}`)
+        }
         console.log(`success mint to ${address}`)
       }
     }
