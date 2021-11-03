@@ -75,6 +75,7 @@ export const createConfig = async function (
       share: number;
     }[];
   },
+  rentTimeInDays,
 ) {
   const configAccount = Keypair.generate();
   const uuid = uuidFromConfigPubkey(configAccount.publicKey);
@@ -115,6 +116,7 @@ export const createConfig = async function (
             configData,
             payerWallet.publicKey,
             configAccount.publicKey,
+            rentTimeInDays,
           ),
         ],
       },
