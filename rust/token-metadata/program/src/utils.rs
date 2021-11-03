@@ -490,6 +490,9 @@ pub fn calculate_supply_change<'a>(
     if reservation_list_info.is_none() {
         let new_supply: u64;
         if let Some(edition) = edition_override {
+            if edition == 0 {
+                return Err(MetadataError::EditionZeroIsInvalid.into());
+            }
             if edition > me_supply {
                 new_supply = edition;
             } else {
