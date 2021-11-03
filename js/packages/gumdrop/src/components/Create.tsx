@@ -293,12 +293,13 @@ const displayMintTokens = (amount : number, mintInfo : MintInfo) : string => {
   return String(amount / Math.pow(10, mintInfo.decimals));
 };
 
-const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
+const hyperLinkData = (data) => {
+  const encoded = encodeURIComponent(JSON.stringify(data));
+  return `data:text/plain;charset=utf-8,${encoded}`;
+};
+
+const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) => {
   return ({ show, onSubmit, onDismiss }) => {
-    const options = [
-      { click: () => onSubmit(false), name: "Cancel"  },
-      { click: () => onSubmit(true) , name: "Approve" },
-    ];
     return (
       <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
         <h2
@@ -310,6 +311,10 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
         >
           Claim Distribution Preview
         </h2>
+        <p style={{ color: "white", fontSize: 14, textAlign: "center" }}>
+          Approving will save the keypair authority generated for gumdrop
+          state. This keypair is necessary to close the gumdrop later!
+        </p>
         <TableContainer
           sx={{
             "td, th": { color: "white" },
@@ -350,24 +355,37 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo) => {
             </TableBody>
           </Table>
         </TableContainer>
-        <Box style={{ height: 10 }} />
+        <Box style={{ height: "3ch" }} />
         <Stack direction="row" spacing={2}>
-        {options.map((opt) => {
-          return (
+          <Button
+            style={{
+              width: "30ch",
+              color: "white",
+              marginBottom: 8,
+            }}
+            variant="outlined"
+            onClick={() => onSubmit(false)}
+          >
+            Cancel
+          </Button>
+          <HyperLink
+            href={hyperLinkData(Array.from(baseKey.secretKey))}
+            download={`${baseKey.publicKey.toBase58()}.json`}
+            underline="none"
+            style={{width: "30ch"}}
+          >
             <Button
-              key={opt.name}
               style={{
-                width: "30ch",
+                width: "100%",
                 color: "white",
                 marginBottom: 8,
               }}
               variant="outlined"
-              onClick={opt.click}
+              onClick={() => onSubmit(true)}
             >
-              {opt.name}
+              Approve
             </Button>
-          );
-        })}
+          </HyperLink>
         </Stack>
       </DefaultModal>
     );
@@ -446,7 +464,6 @@ export const Create = (
   const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
-  const [baseKey, setBaseKey] = React.useState<Keypair | undefined>(undefined);
   const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
 
   // auth state
@@ -465,7 +482,6 @@ export const Create = (
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
-    setBaseKey(undefined);
     setClaimURLs([]);
 
     if (!wallet.connected || wallet.publicKey === null) {
@@ -695,7 +711,7 @@ export const Create = (
     }
 
     const shouldSend = await reactModal(
-      shouldSendRender(claimants, needsPin, claimMethod, claimInfo)
+      shouldSendRender(claimants, needsPin, claimMethod, claimInfo, base)
     ) as boolean | undefined;
     if (shouldSend === true) {
     } else {
@@ -703,8 +719,6 @@ export const Create = (
       throw new Error("Claim distribution preview not approved");
     }
 
-    // TODO: defer until success?
-    setBaseKey(base);
     setClaimURLs(claimants);
 
     // temporal auth is the AWS signer by 'default' and a no-op key otherwise
@@ -1110,11 +1124,6 @@ export const Create = (
     </Box>
   );
 
-  const hyperLinkData = (data) => {
-    const encoded = encodeURIComponent(JSON.stringify(data));
-    return `data:text/plain;charset=utf-8,${encoded}`;
-  };
-
   const otpAuthC = (
     <React.Fragment>
       <FormControl fullWidth>
@@ -1189,21 +1198,6 @@ export const Create = (
       {commMethod !== "" && commMethod !== "Wallets" && otpAuthC}
       {fileUpload}
       {createAirdrop}
-      {baseKey !== undefined && (
-        <HyperLink
-          href={hyperLinkData(Array.from(baseKey.secretKey))}
-          download="basekey.json"
-          underline="none"
-          style={{width: "100%"}}
-        >
-          <Button
-            variant="contained"
-            style={{width: "100%"}}
-          >
-            Download Distributor Base Secret Key
-          </Button>
-        </HyperLink>
-      )}
       {claimURLs.length > 0 && (
         <HyperLink
           href={hyperLinkData(claimURLs)}
