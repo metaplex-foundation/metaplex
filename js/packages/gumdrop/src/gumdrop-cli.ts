@@ -26,6 +26,7 @@ import * as crypto from "crypto";
 import {
   ClaimantInfo,
   buildGumdrop,
+  closeGumdrop,
   parseClaimants,
   validateTransferClaims,
   validateCandyClaims,
@@ -109,6 +110,11 @@ programCommand('create')
   .option(
     '--resend-only',
     'Distribute list with off-chain method only. Assumes a validator and urls already exist'
+  )
+  .option(
+    '--host <string>',
+    'Website to claim gumdrop',
+    "https://lwus.github.io/gumdrop/"
   )
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
@@ -277,6 +283,88 @@ programCommand('create')
     }
   });
 
+
+programCommand('close')
+  .option(
+    '--claim-integration <method>',
+    'Backend for claims. Either `transfer` for token-transfers through approve-delegate, `candy` for minting through a candy-machine, or `edition` for minting through a master edition'
+  )
+  .option(
+    '--candy-config <config>',
+    'candy: public key of the candy machine config'
+  )
+  .option(
+    '--candy-uuid <uuid>',
+    'candy: uuid used to construct the candy machine'
+  )
+  .option(
+    '--edition-mint <mint>',
+    'edition: mint of the master edition'
+  )
+  .option(
+    '--base <path>',
+    'gumdrop authority generated on create'
+  )
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const base = loadWalletKey(options.base);
+    const connection = new anchor.web3.Connection(
+      //@ts-ignore
+      options.rpcUrl || anchor.web3.clusterApiUrl(options.env),
+    );
+
+    switch (options.claimIntegration) {
+      case "transfer": {
+        break;
+      }
+      case "candy": {
+        if (!options.candyConfig || !options.candyUuid) {
+          throw new Error("No candy-config or candy-uuid provided. Needed to transfer back candy-machine authority");
+        }
+        break;
+      }
+      case "edition": {
+        if (!options.editionMint) {
+          throw new Error("No master-mint provided. Needed to transfer back master");
+        }
+        break;
+      }
+      default:
+        throw new Error(
+          "Claim integration must either be 'transfer', 'candy', or 'edition'.",
+        );
+    }
+
+    const instructions = await closeGumdrop(
+      connection,
+      wallet.publicKey,
+      base,
+      options.claimIntegration,
+      options.candyConfig,
+      options.candyUuid,
+      options.editionMint,
+    );
+
+    const closeResult = await sendTransactionWithRetry(
+      connection,
+      wallet,
+      instructions,
+      [base]
+    );
+
+    console.log(closeResult);
+    if (typeof closeResult === "string") {
+      throw new Error(closeResult);
+    } else {
+      console.log(
+        'gumdrop close succeeded',
+        `https://explorer.solana.com/tx/${closeResult.txid}?cluster=${options.env}`
+      );
+    }
+  });
+
 function programCommand(name: string) {
   return program
     .command(name)
@@ -293,10 +381,6 @@ function programCommand(name: string) {
     .option(
       '-r, --rpc-url <string>',
       'Custom rpc url',
-    )
-    .option(
-      '--host <string>',
-      'Website to claim gumdrop',
     )
     .option('-l, --log-level <string>', 'log level', setLogLevel)
 };

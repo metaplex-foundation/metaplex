@@ -38,6 +38,9 @@ import {
   getCandyMachineAddress,
   notify,
 } from "../utils";
+import {
+  closeGumdrop,
+} from "../utils/claimant";
 
 export const Close = () => {
   const connection = useConnection();
@@ -59,104 +62,20 @@ export const Close = () => {
     const base = Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(baseKey)));
 
-    const [distributorKey, dbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("MerkleDistributor"),
-        base.publicKey.toBuffer(),
-      ],
-      GUMDROP_DISTRIBUTOR_ID);
-
-    const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("Wallet"),
-        distributorKey.toBuffer(),
-      ],
-      GUMDROP_DISTRIBUTOR_ID
+    const instructions = await closeGumdrop(
+      connection,
+      wallet.publicKey,
+      base,
+      claimMethod,
+      candyConfig,
+      candyUUID,
+      masterMint,
     );
-
-    let extraKeys;
-    if (claimMethod === "candy") {
-      const configKey = await getCandyConfig(connection, candyConfig);
-      const [candyMachineKey, ] = await getCandyMachineAddress(
-        configKey, candyUUID);
-
-     extraKeys = [
-            { pubkey: candyMachineKey         , isSigner: false , isWritable: true  } ,
-            { pubkey: CANDY_MACHINE_ID        , isSigner: false , isWritable: false } ,
-      ];
-    } else {
-      extraKeys = [];
-    }
-
-    const instructions = Array<TransactionInstruction>();
-    if (claimMethod === "edition") {
-      let masterMintKey: PublicKey;
-      try {
-        masterMintKey = new PublicKey(masterMint);
-      } catch (err) {
-        throw new Error(`Invalid mint key ${err}`);
-      }
-      const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
-        [
-          distributorKey.toBuffer(),
-          TOKEN_PROGRAM_ID.toBuffer(),
-          masterMintKey.toBuffer(),
-        ],
-        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-      );
-
-      const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-        [
-          wallet.publicKey.toBuffer(),
-          TOKEN_PROGRAM_ID.toBuffer(),
-          masterMintKey.toBuffer(),
-        ],
-        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-      );
-
-      instructions.push(new TransactionInstruction({
-          programId: GUMDROP_DISTRIBUTOR_ID,
-          keys: [
-              { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
-              { pubkey: distributorKey          , isSigner: false , isWritable: false } ,
-              { pubkey: distributorTokenKey     , isSigner: false , isWritable: true  } ,
-              { pubkey: walletTokenKey          , isSigner: false , isWritable: true  } ,
-              { pubkey: wallet.publicKey        , isSigner: false , isWritable: true  } ,
-              { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-              { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
-          ],
-          data: Buffer.from([
-            ...Buffer.from(sha256.digest("global:close_distributor_token_account")).slice(0, 8),
-            ...new BN(dbump).toArray("le", 1),
-          ])
-      }));
-    }
-
-    const closeDistributor = new TransactionInstruction({
-        programId: GUMDROP_DISTRIBUTOR_ID,
-        keys: [
-            { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
-            { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
-            { pubkey: distributorWalletKey    , isSigner: false , isWritable: true  } ,
-            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: true  } ,
-            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-            { pubkey: TOKEN_PROGRAM_ID        , isSigner: false , isWritable: false } ,
-            ...extraKeys,
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest("global:close_distributor")).slice(0, 8),
-          ...new BN(dbump).toArray("le", 1),
-          ...new BN(wbump).toArray("le", 1),
-        ])
-    })
 
     const closeResult = await Connection.sendTransactionWithRetry(
       connection,
       wallet,
-      [
-        ...instructions,
-        closeDistributor
-      ],
+      instructions,
       [base]
     );
 
