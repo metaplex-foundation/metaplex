@@ -239,15 +239,6 @@ programCommand('create')
 
     const base = Keypair.generate();
 
-    const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
-    console.log(`writing base to ${basePath}`);
-    fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
-
-    const urlPath = logPath(options.env, `urls-${base.publicKey.toBase58()}.json`);
-    console.log(`writing claims to ${urlPath}`);
-    fs.writeFileSync(urlPath, JSON.stringify(claimants));
-
-
     const instructions = await buildGumdrop(
       connection,
       wallet.publicKey,
@@ -259,6 +250,14 @@ programCommand('create')
       claimants,
       claimInfo
     );
+
+    const basePath = logPath(options.env, `${base.publicKey.toBase58()}.json`);
+    console.log(`writing base to ${basePath}`);
+    fs.writeFileSync(basePath, JSON.stringify([...base.secretKey]));
+
+    const urlPath = logPath(options.env, `urls-${base.publicKey.toBase58()}.json`);
+    console.log(`writing claims to ${urlPath}`);
+    fs.writeFileSync(urlPath, JSON.stringify(claimants));
 
     const createResult = await sendTransactionWithRetry(
       connection,
