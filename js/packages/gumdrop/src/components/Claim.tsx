@@ -58,6 +58,9 @@ import {
   notify,
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
+import {
+  sendSignedTransaction,
+} from "../utils/transactions";
 import { coder } from "../utils/merkleDistributor";
 
 const walletKeyOrPda = async (
@@ -889,7 +892,7 @@ export const Claim = (
       throw new Error("Failed to sign transaction");
     }
 
-    const claimResult = await Connection.sendSignedTransaction({
+    const claimResult = await sendSignedTransaction({
       connection,
       signedTransaction: fullySigned,
     });
