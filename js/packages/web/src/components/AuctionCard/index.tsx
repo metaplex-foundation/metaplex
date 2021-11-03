@@ -11,8 +11,8 @@ export const AuctionCard = props => {
 
   return (
     <div id="auction-sec" className="col-md-6 col-lg-3 col-sm-6 mt-4" key={keys}>
-      <Link to={auction.info.auction ? `/auction/${auction.info.auction}` : '#'}>
-        <div className="card p-3 ">
+      <Link to={auction.info.auction ? `/auction/${auction.info.auction}` : '#'} >
+        <div className="card p-3  justify-content-center ml-3">
           <div className="nft-img">
             <img
               style={{
@@ -47,9 +47,9 @@ export const AuctionCard = props => {
               }}
             ></div>
             <h5 className="card-title m-0 text-white">{auction.account?.name}</h5>
-            <p className="card-text">{auction.account?.description}</p>
+            <p className="card-text pb-0">{auction.account?.description}</p>
             <div className="btn btn-primary ">
-              <img src="/images/Vector.svg" style={{ backgroundColor: "blue", borderRadius: "50%", }} />
+              <img src="/images/solo.svg" style={{  borderRadius: "50%", }} />
               {price} Ninjia
             </div>
           </div>

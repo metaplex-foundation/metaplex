@@ -9,14 +9,59 @@
 .wallet-key {
   padding: 0.1rem 0.5rem 0.1rem 0.7rem;
   margin-left: 0.3rem;
-  border-radius: 0.5rem;
+  border-radius: 5px;
   display: flex;
   align-items: center;
+  display: flex;
+  flex-direction: row;
+  column-gap: 4px;
+  justify-content: space-evenly;
+  width: 100px;
+  font-size: 13px;
+
   span {
     color: white;
   }
 }
+
 .ant-btn-primary {
   background-color: #851cef !important;
   border: 0 !important;
+}
+
+.popover-dropdown {
+  color: #636363;
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+
+  .span-title {
+    margin-bottom: 5px;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 15;
+    line-height: 15px;
+  }
+
+  select {
+    border-radius: 5px !important;
+  }
+
+  .ant-select {
+    margin-bottom: 5px !important;
+
+  }
+
+  .app-btn {
+    width: 100%;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-radius: 4px !important;
 }

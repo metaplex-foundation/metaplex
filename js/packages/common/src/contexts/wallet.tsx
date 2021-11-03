@@ -50,7 +50,7 @@ export const WalletModal: FC = () => {
   }, [setVisible, setShowWallets]);
 
   return (
-    <MetaplexModal visible={visible} onCancel={close}>
+    <MetaplexModal visible={visible} onCancel={close} className="modal-meta">
       <div
         style={{
           borderRadius: 72,
@@ -64,7 +64,7 @@ export const WalletModal: FC = () => {
           marginBottom: 10,
         }}
       >
-        <img src='https://pbs.twimg.com/profile_images/1407897404142231554/ALsIjIq__400x400.jpg' />
+        <img src='https://ninjaprotocol.io/wp-content/uploads/2021/07/new-ninja.png' width="100" />
       </div>
 
       <h2 className="modal-name">{selected ? 'Change provider' : 'Welcome to NINJA  Marketplace '}</h2>

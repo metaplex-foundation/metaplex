@@ -22,45 +22,48 @@ export const Settings = ({
 
   return (
     <>
-      <div style={{ display: 'grid' }}>
-        Network:{' '}
-        <Select
-          onSelect={setEndpoint}
-          value={endpoint}
-          style={{ marginBottom: 20 }}
-        >
-          {ENDPOINTS.map(({ name, endpoint }) => (
-            <Select.Option value={endpoint} key={endpoint}>
-              {name}
-            </Select.Option>
-          ))}
-        </Select>
+      <div className="popover-dropdown">
+        <div>
+          <span className="span-title"> Network:{' '} </span>
+          <Select
+            onSelect={setEndpoint}
+            value={endpoint}
+            style={{ marginBottom: 20 }}
+          >
+            {ENDPOINTS.map(({ name, endpoint }) => (
+              <Select.Option value={endpoint} key={endpoint}>
+                {name}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
         {connected && (
           <>
+            <div>
+              <span className="span-title">Wallet:</span>
+              {publicKey && (
+                <Button
+                  style={{ marginBottom: 5 }}
+                  onClick={async () => {
+                    if (publicKey) {
+                      await navigator.clipboard.writeText(publicKey.toBase58());
+                      notify({
+                        message: 'Wallet update',
+                        description: 'Address copied to clipboard',
+                      });
+                    }
+                  }}
+                >
+                  <CopyOutlined />
+                  {shortenAddress(publicKey.toBase58())}
+                </Button>
+              )}
+            </div>
             {store && admin() && (
               <Link to={`/admin`}>
                 <Button className="app-btn">Admin</Button>
               </Link>
             )}
-            <span>Wallet:</span>
-            {publicKey && (
-              <Button
-                style={{ marginBottom: 5 }}
-                onClick={async () => {
-                  if (publicKey) {
-                    await navigator.clipboard.writeText(publicKey.toBase58());
-                    notify({
-                      message: 'Wallet update',
-                      description: 'Address copied to clipboard',
-                    });
-                  }
-                }}
-              >
-                <CopyOutlined />
-                {shortenAddress(publicKey.toBase58())}
-              </Button>
-            )}
-
             <Button onClick={open} style={{ marginBottom: 5 }}>
               Change
             </Button>

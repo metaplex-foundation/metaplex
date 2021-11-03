@@ -534,6 +534,7 @@ export const AuctionCard = ({
         visible={showBidModal}
         onCancel={() => setShowBidModal(false)}
         afterClose={() => modalHistory.replace('/placebid')}
+        bodyStyle={{background:" #2b355a !important"}}
       >
         <MemoryRouter>
           <Redirect to="/placebid" />
@@ -868,6 +869,7 @@ export const AuctionCard = ({
         onCancel={() => setShowWarningModal(false)}
         bodyStyle={{
           alignItems: 'start',
+          background: "#2b355a !important",
         }}
       >
         <h3 style={{ color: 'white' }}>

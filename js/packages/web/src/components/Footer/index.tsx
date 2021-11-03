@@ -22,7 +22,7 @@ export const Footer = () => {
     <section id="footer">
       <div className="container-fluid" style={{ margin: '0% 5%' }}>
         <div className="row">
-          <div className="col-12 col-md-6">
+          <div className="col-12 col-md-6 mt-2">
             <p className="m-0">© Ninja Protocol All Right Reserved. 2021</p>
           </div>
           <div className="col-12 col-md-5">
@@ -30,7 +30,7 @@ export const Footer = () => {
               <li className="mr-1">
                 <a href="#">
                   <img
-                    src="/socialLinkIcons/twtr.svg"
+                    src="/images/twiticon.svg"
                     alt="twitter"
                     className="img-fluid"
                   />
@@ -39,7 +39,7 @@ export const Footer = () => {
               <li className="mr-1">
                 <a href="#">
                   <img
-                    src="/socialLinkIcons/twitch.svg"
+                    src="/images/icondiscord.svg"
                     alt="twitch"
                     className="img-fluid"
                   />
@@ -48,7 +48,7 @@ export const Footer = () => {
               <li className="mr-1">
                 <a href="#">
                   <img
-                    src="/socialLinkIcons/discord.svg"
+                    src="/images/icon.svg"
                     alt="discord"
                     className="img-fluid"
                   />
@@ -57,8 +57,8 @@ export const Footer = () => {
               <li className="mr-1">
                 <a href="#">
                   <img
-                    src="/socialLinkIcons/insta.svg"
-                    alt="insta"
+                    src="/images/iconyout.svg"
+                    alt="youtube"
                     className="img-fluid"
                   />
                 </a>
@@ -66,8 +66,8 @@ export const Footer = () => {
               <li className="mr-1">
                 <a href="#">
                   <img
-                    src="/socialLinkIcons/youtube.svg"
-                    alt="youtube"
+                    src="/images/iconinsta.svg"
+                    alt="insta"
                     className="img-fluid"
                   />
                 </a>

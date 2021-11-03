@@ -20,22 +20,23 @@ export const CurrentUserBadge = (props: {
 
   const iconStyle: React.CSSProperties = props.showAddress
     ? {
-        marginLeft: '0.5rem',
-        display: 'flex',
-        width: props.iconSize || 20,
-        borderRadius: 50,
-      }
+      marginLeft: '0.5rem',
+      display: 'flex',
+      width: props.iconSize || 20,
+      borderRadius: 50,
+    }
     : {
-        display: 'flex',
-        width: props.iconSize || 20,
-        paddingLeft: 0,
-        borderRadius: 50,
-      };
+      display: 'flex',
+      width: props.iconSize || 20,
+      paddingLeft: 0,
+      borderRadius: 50,
+    };
 
   const baseWalletKey: React.CSSProperties = {
-    height: props.iconSize,
+    height: "33px",
     cursor: 'pointer',
     userSelect: 'none',
+    background: 'linear-gradient(90deg, #851CEF 5.96%, #24DDAF 100%)',
   };
   const walletKeyStyle: React.CSSProperties = props.showAddress
     ? baseWalletKey
@@ -56,8 +57,8 @@ export const CurrentUserBadge = (props: {
         trigger="click"
       >
         <div className="wallet-key" style={walletKeyStyle}>
-          <span style={{ marginRight: '0.5rem' }}>{wallet.name}</span>
           <img src={wallet.icon} style={iconStyle} />
+          <span>{wallet.name}</span>
         </div>
       </Popover>
     </div>

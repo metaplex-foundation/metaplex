@@ -38,10 +38,10 @@
 
 #market-sec .card .form-control {
   background: #282f3f;
-  border: 0px solid red;
   color: white;
   background-color: #2B3A6A !important;
   box-shadow: none;
+  border: none;
 }
 
 .container-fluid {
@@ -52,14 +52,18 @@
 }
 
 .refresh-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #5c5c5c;
   font-size: 25px;
-  padding: 0px 10px;
   color: #ffffff;
   border-radius: 5px;
   background-color: #2B3A6A;
   cursor: pointer;
-  width: 50px;
-  margin: 0 0 0 auto;
+  width: 64px;
+  margin: 0 0 0 105px;
+  height: 40px;
 }
 
 .exchange-white {
@@ -103,13 +107,13 @@
 
 #market-sec .dropdown .btn-secondary {
   background: #282f3f;
-  border-color: #282f3f;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 9px 15px;
   color: #ccc;
   height: 100%;
+  border: 1px solid #5c5c5c;
 }
 
 .pagination {
@@ -227,24 +231,21 @@
   justify-content: center;
 }
 
-.data_decription {
-  display: flex;
-  justify-content: center;
-
+.sort-dropdown {
+  max-width: 200px !important;
 }
 
 .descrition_buttons {
-  button {
-    width: 120px;
-  }
+  max-width: fit-content;
+  height: 50px;
+  background: #2B3A6A;
+  border-radius: 5px;
+  border: 0.75px solid rgba(255, 255, 255, 0.41);
+  box-sizing: border-box;
 
   strong {
     color: white,
   }
-}
-
-.descrition_buttons {
-  margin-bottom: 4px !important;
 }
 
 .name {
@@ -252,10 +253,14 @@
 }
 
 .data_description_buttons {
-  background: #2B3A6A;
-  border-radius: 10px;
-  border: 0.75px solid rgba(255, 255, 255, 0.41);
-  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+
+  .text-center {
+    min-width: 124px;
+    height: 49px;
+  }
+
 }
 
 #market-sec .container-fluid {
@@ -296,11 +301,17 @@
 
 .fillter-buttons {
   justify-content: space-between !important;
-}
 
-.fillter-buttons {
   .card {
-    margin-left: 13px;
+    margin-left: 30px;
+    border: 1px solid #5c5c5c;
+  }
+
+  .dropdown {
+    .form-control {
+      border: 1px solid #5c5c5c;
+    }
+
   }
 }
 

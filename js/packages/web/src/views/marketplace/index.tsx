@@ -134,43 +134,36 @@ export const MarketplaceView = () => {
                 </a>
               </button>
             </div>
-            <div className="data_decription">
               <div className="data_description_buttons">
                 <div
-                  className="btn-group mt-2  descrition_buttons"
+                  className="row  descrition_buttons"
                   role="group"
                   aria-label="Basic example"
                 >
-                  <button type="button" className="btn border-right text-center">
+                  <div className="border-right text-center d-flex align-items-center justify-content-center flex-column w-25">
                     <strong>{allAuction}</strong>
-                    <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       Items
                     </span>
-                  </button>
-                  <button type="button" className="btn border-right text-center">
+                  </div>
+                  <div  className="border-right text-center d-flex align-items-center justify-content-center flex-column w-25 ">
                     <strong>{ownerLen}</strong>
-                    <br />
                     <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                       Owner
                     </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn border-right text-center d-flex align-items-center justify-content-center"
+                  </div>
+                  <div
+                    className=" border-right text-center d-flex align-items-center justify-content-center flex-column  w-25 "
                   >
-                    <span>
                       <strong>{maxPrice}</strong>
-                      <br />
                       <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
                         Max Price
                       </span>
-                    </span>{' '}
+                    {' '}
 
-                  </button>
-                  <button
-                    type="button"
-                    className="btn  text-center d-flex align-items-center justify-content-center"
+                  </div>
+                  <div
+                    className="text-center d-flex align-items-center justify-content-center flex-column w-25"
                   >
                     <span>
                       <strong>{minPrice}</strong>
@@ -180,13 +173,12 @@ export const MarketplaceView = () => {
                       </span>
                     </span>{' '}
 
-                  </button>
-                </div>
+                  </div>
               </div>
             </div>
           </div>
           <div className="row fillter-buttons" >
-            <form className="card card-sm ">
+            <form className="card card-sm col-md-3">
               <div className="card-body row no-gutters align-items-center p-0">
                 <div className="col-auto">
                   <i className="fa fa-search" aria-hidden="true"></i>
@@ -212,7 +204,7 @@ export const MarketplaceView = () => {
               </div>
             </form>
             <div className="col-md-3">
-              <div className="dropdown">
+              <div className="dropdown  sort-dropdown">
                 <CustomSelect
                   option={optionData}
                   defaultParam="Price: Low to High"
@@ -235,7 +227,7 @@ export const MarketplaceView = () => {
                   }}
                 />
               </div>
-            </div>
+              </div>
             <div className="col-md-2">
               <div
                 className="refresh-button"
@@ -243,7 +235,7 @@ export const MarketplaceView = () => {
                   setCollectionUpdate(collectionUpdate + 1);
                 }}
               >
-                <i className="fas fa-redo-alt"></i>
+               <img src="/images/refreshh.svg"  height="30s"/>
               </div>
             </div>
           </div>

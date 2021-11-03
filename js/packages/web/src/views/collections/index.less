@@ -5,30 +5,37 @@
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-.collectionHeader{
+
+  .collectionHeader {
     color: white;
     text-align: center;
     margin: 30px auto;
     width: 100%;
-    
-}
-  .card-img-top{
-    max-height: 230px !important;
-      
   }
-  .card-section{
+
+  .card-img-top {
+    max-height: 190px !important;
+
+  }
+
+  .card-section {
     display: flex;
+    justify-content: center;
     flex-direction: row;
     flex-wrap: wrap;
     row-gap: 20px;
   }
-  .img-div{
+
+  .img-div {
     width: 95%;
     margin: 8px auto 0
   }
-  img{
-      object-fit: cover;
+
+  img {
+
+    object-fit: cover;
   }
+
   .card-body .card-text {
     color: rgba(255, 255, 255, 0.8) !important;
     font-family: 'Open Sans';
@@ -37,15 +44,28 @@
     line-height: 16px;
     text-align: center;
     letter-spacing: -0.017em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    height: 20 px;
+    width: 100%;
   }
 
   .card-body {
+    padding: 5px 5px 1.25rem;
     position: relative;
     display: flex;
     flex-direction: column;
     row-gap: 3px;
-    padding-left: 5px;
-    padding-right: 5px;
+
+    .btn {
+      font-size: 10px;
+      min-width: 136px;
+      height: 38px !important;
+      border: none;
+    }
   }
 
   .card-body .user {
@@ -58,32 +78,37 @@
     width: 50px;
 
   }
-  .card-container{
+
+  .card-container {
     background: linear-gradient(90deg, #2a1d33 5%, #0f282f 50%, #033143 100%);
-      max-width: 500px;
-      width: auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      -webkit-box-shadow: 0px 0px 10px #b4b4b4 !important;
-      box-shadow: 0px 0px 10px #a485c3 !important;
-      .below-heading-text{
-          margin: 10px auto !important;
-      }
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 300px !important;
+    height: 350px !important;
+    border: 1px solid rgb(214, 214, 214) !important;
+
+    .below-heading-text {
+      margin: 2px auto !important;
+    }
   }
-  .text-center{
+
+  .text-center {
     height: 100%;
   }
-  .collectionCard{
-    height: max-content !important;
+
+  .collectionCard {
+    max-width: 320px;
+    height: 350px !important;
   }
 }
 
 .card-container .btn {
-  background:linear-gradient(90deg, #851CEF 3%, #24DDAF 100%) !important;
+  background: linear-gradient(90deg, #851CEF 3%, #24DDAF 100%) !important;
 }
-@media only screen and (max-width: 992px) {
-  .card-container{
-    min-height: 499px;
-  }
-}
+
+// @media only screen and (max-width: 992px) {
+//   .card-container{
+//     min-height: 499px;
+//   }
+// }
