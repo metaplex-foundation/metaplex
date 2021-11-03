@@ -213,9 +213,9 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
               </TableRow>
             </TableHead>
             <TableBody>
-              {claimants.map((c) => (
+              {claimants.map((c, idx) => (
                 <TableRow
-                  key={c.secret.toBase58()}
+                  key={idx}
                   sx={{ 'td, th': { border: 0 } }}
                 >
                   <TableCell component="th" scope="row">{c.handle} </TableCell>

@@ -19,6 +19,7 @@ import {
   getCandyMachine,
   getCreatorTokenAccount,
   getEdition,
+  getEditionMarkerPda,
   getMintInfo,
 } from "./accounts";
 import {
@@ -137,6 +138,36 @@ export const validateCandyClaims = async (
   };
 }
 
+const getOffsetFromStart = (edition: BN) => {
+  return edition.mod(new BN(31 * 8));
+};
+
+const getIndex = (offsetFromStart: BN) => {
+  return offsetFromStart.div(new BN(8));
+};
+
+const getOffsetFromRight = (offsetFromStart: BN) => {
+  return new BN(7).sub(offsetFromStart.mod(new BN(8)));
+};
+
+const getIndexAndMask = (edition: BN) => {
+  const offsetFromStart = getOffsetFromStart(edition);
+  return {
+    index: getIndex(offsetFromStart).toNumber(),
+    mask: new BN(1).shln(getOffsetFromRight(offsetFromStart).toNumber()).toNumber(),
+  };
+};
+
+const editionTaken = (marker : Array<number>, edition : BN) : boolean => {
+  let m = getIndexAndMask(edition);
+  return (marker[m.index] & m.mask) !== 0;
+}
+
+const setEditionTaken = (marker : Array<number>, edition : BN) => {
+  let m = getIndexAndMask(edition);
+  marker[m.index] = marker[m.index] | m.mask;
+}
+
 export const validateEditionClaims = async (
   connection : RPCConnection,
   env : string,
@@ -167,10 +198,6 @@ export const validateEditionClaims = async (
   }
   console.log("Master edition", masterEdition);
 
-  // TODO: check that editions within claimants are actually not filled
-  // This is cursory check that the total number of editions specified is
-  // not greater than the max supply
-  //
   // maxSupply is an option, 9 bytes, first is 0 means is none
   const currentSupply = new BN(masterEdition.data.slice(1, 1+8), 8, "le").toNumber();
   let maxSupply;
@@ -187,18 +214,51 @@ export const validateEditionClaims = async (
                   + `than the master has total (${maxSupply})`);
   }
 
+  // Whether an edition has been claimed is a single bit in a paginated account
+  // (pda off of master mint). The following code does some sanity checks
+  // around max supply and internally whether the distribution list has
+  // duplicate editions, and also checks if the editions were already taken on
+  // chain.
+  //
+  // There is a race condition since the authority to mint is still currently
+  // the wallet but it seems like a user error to have other editions being
+  // minted while a gumdrop is being created
   const editions : { [key: number]: number } = {};
-  claimants.forEach((c, idx) => {
-    if (!c.edition) throw new Error(`Claimant ${idx} doesn't have edition`);
-    if (c.edition > maxSupply) {
-      throw new Error(`Claimant ${idx} assigned edition ${c.edition} which is greater than max supply`);
+  const editionMarkers : Array<[PublicKey, Array<number>]> = [];
+  for (let idx = 0; idx < claimants.length; ++idx ) {
+    const c = claimants[idx];
+    if (c.edition === undefined) throw new Error(`Claimant ${idx} doesn't have edition`);
+    if (c.edition >= maxSupply) {
+      throw new Error(`Claimant ${idx} assigned edition ${c.edition} which is beyond the max supply`);
     }
     if (c.edition in editions) {
       throw new Error(`Claimant ${idx} and ${editions[c.edition]} are both assigned to edition ${c.edition}`);
-    } else {
-      editions[c.edition] = idx;
     }
-  });
+    const edition = new BN(c.edition);
+    const markerKey = await getEditionMarkerPda(masterMint.key, edition);
+    let markerData = editionMarkers.find(pm => pm[0].equals(markerKey));
+    if (markerData === undefined) {
+      const markerAcc = await connection.getAccountInfo(markerKey);
+      if (markerAcc === null) {
+        editionMarkers.push([markerKey, Array<number>(31)]);
+      } else {
+        editionMarkers.push([markerKey, [...markerAcc.data.slice(1, 32)]]);
+      }
+      markerData = editionMarkers[editionMarkers.length - 1];
+    }
+
+    if (markerData === undefined) {
+      throw new Error(`Internal Error: Edition marker info still undefined ${c.edition}`);
+    }
+
+    if (editionTaken(markerData[1], edition)) {
+      throw new Error(`Claimant ${idx} is assigned to edition ${c.edition} which is already taken`);
+    }
+
+    setEditionTaken(markerData[1], edition);
+
+    editions[c.edition] = idx;
+  }
 
   return {
     total: total,

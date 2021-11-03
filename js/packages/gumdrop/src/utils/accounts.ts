@@ -155,3 +155,25 @@ export const getEdition = async (
   )[0];
 };
 
+export const getEditionMarkerPda = async (
+  mint: PublicKey,
+  edition: BN,
+) : Promise<PublicKey> => {
+  // editions are divided into pages of 31-bytes (248-bits) for more efficient
+  // packing to check if an edition is occupied. The offset is determined from
+  // the edition passed in through data
+  const editionPageNumber = edition.div(new BN(248)).toNumber();
+
+  return (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from('metadata'),
+        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+        Buffer.from('edition'),
+        Buffer.from(String(editionPageNumber)),
+      ],
+      TOKEN_METADATA_PROGRAM_ID,
+    )
+  )[0];
+}
