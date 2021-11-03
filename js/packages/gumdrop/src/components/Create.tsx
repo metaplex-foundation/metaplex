@@ -57,6 +57,10 @@ import {
   setupManual,
   setupWalletListUpload,
 } from "../utils/communication";
+import {
+  envFor,
+  explorerLinkFor,
+} from "../utils/transactions";
 import { DragAndDrop } from "./DragAndDrop";
 import { DefaultModal } from "./DefaultModal";
 
@@ -287,7 +291,7 @@ export const Create = (
   const [mailcAPIKey, setMailcAPIKey] = React.useState("");
 
   const explorerUrlFor = (key : PublicKey) => {
-    return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${Connection.envFor(connection)}`;
+    return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
   }
 
   const submit = async (e : React.SyntheticEvent) => {
@@ -309,7 +313,7 @@ export const Create = (
       case "transfer": {
         claimInfo = await validateTransferClaims(
           connection,
-          Connection.envFor(connection),
+          envFor(connection),
           wallet.publicKey,
           claimants,
           mint,
@@ -319,7 +323,7 @@ export const Create = (
       case "candy": {
         claimInfo = await validateCandyClaims(
           connection,
-          Connection.envFor(connection),
+          envFor(connection),
           wallet.publicKey,
           claimants,
           candyConfig,
@@ -330,7 +334,7 @@ export const Create = (
       case "edition": {
         claimInfo = await validateEditionClaims(
           connection,
-          Connection.envFor(connection),
+          envFor(connection),
           wallet.publicKey,
           claimants,
           masterMint,
@@ -436,7 +440,7 @@ export const Create = (
       notify({
         message: "Gumdrop creation succeeded",
         description: (
-          <HyperLink href={Connection.explorerLinkFor(createResult.txid, connection)}>
+          <HyperLink href={explorerLinkFor(createResult.txid, connection)}>
             View transaction on explorer
           </HyperLink>
         ),

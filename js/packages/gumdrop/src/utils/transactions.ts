@@ -25,6 +25,25 @@ export const getUnixTs = () => {
   return new Date().getTime() / 1000;
 };
 
+export const envFor = (
+  connection: Connection
+) : string => {
+  const endpoint = (connection as any)._rpcEndpoint;
+  const regex = /https:\/\/api.([^.]*).solana.com/;
+  const match = endpoint.match(regex);
+  if (match[1]) {
+    return match[1];
+  }
+  return "mainnet-beta";
+}
+
+export const explorerLinkFor = (
+  txid: TransactionSignature,
+  connection: Connection
+) : string => {
+  return `https://explorer.solana.com/tx/${txid}?cluster=${envFor(connection)}`;
+}
+
 export const sendTransactionWithRetryWithKeypair = async (
   connection: Connection,
   wallet: Keypair,
@@ -237,6 +256,7 @@ export async function awaitTransactionSignatureConfirmation(
             txid,
           ]);
           status = signatureStatuses && signatureStatuses.value[0];
+          console.log(explorerLinkFor(txid, connection));
           if (!done) {
             if (!status) {
               log.debug('REST null result for', txid, status);

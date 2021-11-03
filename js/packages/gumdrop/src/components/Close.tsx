@@ -28,6 +28,9 @@ import {
 import {
   closeGumdrop,
 } from "../utils/claimant";
+import {
+  explorerLinkFor,
+} from "../utils/transactions";
 
 export const Close = () => {
   const connection = useConnection();
@@ -76,7 +79,7 @@ export const Close = () => {
       notify({
         message: "Close succeeded",
         description: (
-          <HyperLink href={Connection.explorerLinkFor(closeResult.txid, connection)}>
+          <HyperLink href={explorerLinkFor(closeResult.txid, connection)}>
             View transaction on explorer
           </HyperLink>
         ),

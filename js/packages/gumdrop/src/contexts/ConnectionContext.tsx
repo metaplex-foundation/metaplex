@@ -5,7 +5,6 @@ import {
   Connection,
   Transaction,
   TransactionInstruction,
-  TransactionSignature,
   Blockhash,
   FeeCalculator,
 } from "@solana/web3.js";
@@ -242,23 +241,3 @@ export const sendTransactionWithRetry = async (
   }
 };
 
-export const envFor = (
-  connection: Connection
-) : string => {
-  let endpoint = (connection as any)._rpcEndpoint;
-  let env = "mainnet-beta";
-  for (const cfg of ENDPOINTS) {
-    if (cfg.endpoint === endpoint) {
-      env = cfg.name;
-      break;
-    }
-  }
-  return env;
-}
-
-export const explorerLinkFor = (
-  txid: TransactionSignature,
-  connection: Connection
-) : string => {
-  return `https://explorer.solana.com/tx/${txid}?cluster=${envFor(connection)}`;
-}

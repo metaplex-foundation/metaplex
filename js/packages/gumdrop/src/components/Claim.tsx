@@ -43,7 +43,6 @@ import * as bs58 from "bs58";
 
 import {
   useConnection,
-  Connection,
 } from "../contexts";
 import {
   CANDY_MACHINE_ID,
@@ -60,6 +59,7 @@ import {
 } from "../utils";
 import { MerkleTree } from "../utils/merkleTree";
 import {
+  explorerLinkFor,
   sendSignedTransaction,
 } from "../utils/transactions";
 import { coder } from "../utils/merkleDistributor";
@@ -879,7 +879,7 @@ export const Claim = (
     notify({
       message: "Claim succeeded",
       description: (
-        <HyperLink href={Connection.explorerLinkFor(claimResult.txid, connection)}>
+        <HyperLink href={explorerLinkFor(claimResult.txid, connection)}>
           View transaction on explorer
         </HyperLink>
       ),
