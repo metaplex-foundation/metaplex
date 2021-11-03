@@ -58,9 +58,9 @@ export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkY
 
 export const CANDY_MACHINE_ID = new PublicKey('cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ');
 
-export const MERKLE_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
+export const GUMDROP_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
 
-export const MERKLE_TEMPORAL_SIGNER = new PublicKey("MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV");
+export const GUMDROP_TEMPORAL_SIGNER = new PublicKey("MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV");
 
 export const fetchCoder = async (
   address : anchor.Address,

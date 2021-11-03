@@ -32,7 +32,7 @@ import {
 } from "../contexts";
 import {
   CANDY_MACHINE_ID,
-  MERKLE_DISTRIBUTOR_ID,
+  GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyConfig,
   getCandyMachineAddress,
@@ -64,14 +64,14 @@ export const Close = () => {
         Buffer.from("MerkleDistributor"),
         base.publicKey.toBuffer(),
       ],
-      MERKLE_DISTRIBUTOR_ID);
+      GUMDROP_DISTRIBUTOR_ID);
 
     const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
       [
         Buffer.from("Wallet"),
         distributorKey.toBuffer(),
       ],
-      MERKLE_DISTRIBUTOR_ID
+      GUMDROP_DISTRIBUTOR_ID
     );
 
     let extraKeys;
@@ -115,7 +115,7 @@ export const Close = () => {
       );
 
       instructions.push(new TransactionInstruction({
-          programId: MERKLE_DISTRIBUTOR_ID,
+          programId: GUMDROP_DISTRIBUTOR_ID,
           keys: [
               { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
               { pubkey: distributorKey          , isSigner: false , isWritable: false } ,
@@ -133,7 +133,7 @@ export const Close = () => {
     }
 
     const closeDistributor = new TransactionInstruction({
-        programId: MERKLE_DISTRIBUTOR_ID,
+        programId: GUMDROP_DISTRIBUTOR_ID,
         keys: [
             { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
             { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,

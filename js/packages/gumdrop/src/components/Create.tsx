@@ -51,8 +51,8 @@ import {
 } from "../contexts";
 import {
   CANDY_MACHINE_ID,
-  MERKLE_DISTRIBUTOR_ID,
-  MERKLE_TEMPORAL_SIGNER,
+  GUMDROP_DISTRIBUTOR_ID,
+  GUMDROP_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyConfig,
   getCandyMachine,
@@ -644,7 +644,7 @@ export const Create = (
           Buffer.from(claimant.pin.toArray("le", 4)),
         ];
         const [claimantPda, ] = await PublicKey.findProgramAddress(
-            seeds, MERKLE_DISTRIBUTOR_ID);
+            seeds, GUMDROP_DISTRIBUTOR_ID);
         claimant.secret = claimantPda;
       }
       // TODO: get this clarified with jordan... we can either just assign some
@@ -675,7 +675,7 @@ export const Create = (
         Buffer.from("MerkleDistributor"),
         base.publicKey.toBuffer(),
       ],
-      MERKLE_DISTRIBUTOR_ID);
+      GUMDROP_DISTRIBUTOR_ID);
 
     for (let idx = 0; idx < claimants.length; ++idx) {
       const proof = tree.getProof(idx);
@@ -729,9 +729,9 @@ export const Create = (
       // atm...
       // NB: We also need this to not be 'none' since there is a special check
       // for claimant_secret==accounts.temporal
-      temporalSigner = MERKLE_DISTRIBUTOR_ID;
+      temporalSigner = GUMDROP_DISTRIBUTOR_ID;
     } else if (otpAuth === "default") {
-      temporalSigner = MERKLE_TEMPORAL_SIGNER;
+      temporalSigner = GUMDROP_TEMPORAL_SIGNER;
     } else if (otpAuth === "none") {
       temporalSigner = PublicKey.default;
     } else {
@@ -743,7 +743,7 @@ export const Create = (
     // initial merkle-distributor state
     const instructions = Array<TransactionInstruction>();
     instructions.push(new TransactionInstruction({
-        programId: MERKLE_DISTRIBUTOR_ID,
+        programId: GUMDROP_DISTRIBUTOR_ID,
         keys: [
             { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
             { pubkey: distributor             , isSigner: false , isWritable: true  } ,
@@ -773,7 +773,7 @@ export const Create = (
           Buffer.from("Wallet"),
           distributor.toBuffer(),
         ],
-        MERKLE_DISTRIBUTOR_ID
+        GUMDROP_DISTRIBUTOR_ID
       );
 
       instructions.push(new TransactionInstruction({
@@ -1142,11 +1142,11 @@ export const Create = (
           <MenuItem value={"default"}>
             Default{WHITESPACE}
             <HyperLink
-              href={explorerUrlFor(MERKLE_TEMPORAL_SIGNER)}
+              href={explorerUrlFor(GUMDROP_TEMPORAL_SIGNER)}
               underline="none"
               target="_blank" rel="noopener noreferrer"
             >
-              ({shortenAddress(MERKLE_TEMPORAL_SIGNER.toBase58())})
+              ({shortenAddress(GUMDROP_TEMPORAL_SIGNER.toBase58())})
             </HyperLink>
           </MenuItem>
           <MenuItem value={"none"}>None</MenuItem>

@@ -47,8 +47,8 @@ import {
 } from "../contexts";
 import {
   CANDY_MACHINE_ID,
-  MERKLE_DISTRIBUTOR_ID,
-  MERKLE_TEMPORAL_SIGNER,
+  GUMDROP_DISTRIBUTOR_ID,
+  GUMDROP_TEMPORAL_SIGNER,
   TOKEN_METADATA_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   getCandyMachine,
@@ -85,7 +85,7 @@ const walletKeyOrPda = async (
 
     const [claimantPda, ] = await PublicKey.findProgramAddress(
       pdaSeeds,
-      MERKLE_DISTRIBUTOR_ID
+      GUMDROP_DISTRIBUTOR_ID
     );
     return [claimantPda, pdaSeeds];
   }
@@ -145,7 +145,7 @@ const buildMintClaim = async (
       Buffer.from(new BN(index).toArray("le", 8)),
       distributorKey.toBuffer(),
     ],
-    MERKLE_DISTRIBUTOR_ID
+    GUMDROP_DISTRIBUTOR_ID
   );
 
   const [walletTokenKey, ] = await PublicKey.findProgramAddress(
@@ -174,7 +174,7 @@ const buildMintClaim = async (
       ? walletKey : distributorInfo.temporal;
 
   const claimAirdrop = new TransactionInstruction({
-      programId: MERKLE_DISTRIBUTOR_ID,
+      programId: GUMDROP_DISTRIBUTOR_ID,
       keys: [
           { pubkey: distributorKey          , isSigner: false , isWritable: true  } ,
           { pubkey: claimStatus             , isSigner: false , isWritable: true  } ,
@@ -268,7 +268,7 @@ const buildCandyClaim = async (
       Buffer.from(new BN(index).toArray("le", 8)),
       distributorKey.toBuffer(),
     ],
-    MERKLE_DISTRIBUTOR_ID
+    GUMDROP_DISTRIBUTOR_ID
   );
 
   const [distributorWalletKey, wbump] = await PublicKey.findProgramAddress(
@@ -276,7 +276,7 @@ const buildCandyClaim = async (
       Buffer.from("Wallet"),
       distributorKey.toBuffer(),
     ],
-    MERKLE_DISTRIBUTOR_ID
+    GUMDROP_DISTRIBUTOR_ID
   );
 
   // atm the contract has a special case for when the temporal key is defaulted
@@ -364,7 +364,7 @@ const buildSingleCandyMint = async (
   const setup : Array<TransactionInstruction> = [];
   await createMintAndAccount(connection, walletKey, candyMachineMint.publicKey, setup);
   setup.push(new TransactionInstruction({
-      programId: MERKLE_DISTRIBUTOR_ID,
+      programId: GUMDROP_DISTRIBUTOR_ID,
       keys: [
           { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
           { pubkey: distributorWalletKey      , isSigner: false , isWritable: true  } ,
@@ -496,7 +496,7 @@ const buildEditionClaim = async (
       Buffer.from(new BN(index).toArray("le", 8)),
       distributorKey.toBuffer(),
     ],
-    MERKLE_DISTRIBUTOR_ID
+    GUMDROP_DISTRIBUTOR_ID
   );
 
   // atm the contract has a special case for when the temporal key is defaulted
@@ -532,7 +532,7 @@ const buildEditionClaim = async (
   const editionMarkKey = await getEditionMarkPda(masterMintKey, new BN(edition));
 
   setup.push(new TransactionInstruction({
-      programId: MERKLE_DISTRIBUTOR_ID,
+      programId: GUMDROP_DISTRIBUTOR_ID,
       keys: [
           { pubkey: distributorKey            , isSigner: false , isWritable: true  } ,
           { pubkey: claimCount                , isSigner: false , isWritable: true  } ,
@@ -584,7 +584,7 @@ const fetchDistributor = async (
   if (account === null) {
     throw new Error(`Could not fetch distributor ${distributorStr}`);
   }
-  if (!account.owner.equals(MERKLE_DISTRIBUTOR_ID)) {
+  if (!account.owner.equals(GUMDROP_DISTRIBUTOR_ID)) {
     const ownerStr = account.owner.toBase58();
     throw new Error(`Invalid distributor owner ${ownerStr}`);
   }
@@ -599,7 +599,7 @@ const fetchNeedsTemporalSigner = async (
   claimMethod : string,
 ) => {
   const [key, info] = await fetchDistributor(connection, distributorStr);
-  if (!info.temporal.equals(MERKLE_TEMPORAL_SIGNER)) {
+  if (!info.temporal.equals(GUMDROP_TEMPORAL_SIGNER)) {
     // default pubkey or program itself (distribution through wallets)
     return false;
   } else if (claimMethod === "candy") {
@@ -609,7 +609,7 @@ const fetchNeedsTemporalSigner = async (
         Buffer.from(new BN(Number(indexStr)).toArray("le", 8)),
         key.toBuffer(),
       ],
-      MERKLE_DISTRIBUTOR_ID
+      GUMDROP_DISTRIBUTOR_ID
     );
     // if someone (maybe us) has already claimed this, the contract will
     // not check the existing temporal signer anymore since presumably
@@ -779,7 +779,7 @@ export const Claim = (
     }
 
     const txnNeedsTemporalSigner =
-        transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
+        transaction.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       const params = {
         method: "POST",
@@ -835,7 +835,7 @@ export const Claim = (
     }
 
     const txnNeedsTemporalSigner =
-        transaction.signatures.some(s => s.publicKey.equals(MERKLE_TEMPORAL_SIGNER));
+        transaction.signatures.some(s => s.publicKey.equals(GUMDROP_TEMPORAL_SIGNER));
     if (txnNeedsTemporalSigner && !skipAWSWorkflow) {
       // TODO: distinguish between OTP failure and transaction-error. We can try
       // again on the former but not the latter
@@ -879,7 +879,7 @@ export const Claim = (
         throw new Error(`Could not decode transaction signature ${data.body}`);
       }
 
-      transaction.addSignature(MERKLE_TEMPORAL_SIGNER, sig);
+      transaction.addSignature(GUMDROP_TEMPORAL_SIGNER, sig);
     }
 
     let fullySigned;
