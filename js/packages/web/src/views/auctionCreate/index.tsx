@@ -182,6 +182,9 @@ export const AuctionCreateView = () => {
     items: [],
     tiers: [],
   });
+  const [quoteMintAddress, setQuoteMintAddress] = useState<string>()
+  const [quoteMintInfo, setQuoteMintInfo] = useState<MintInfo>()
+  const [quoteMintInfoExtended, setQuoteMintInfoExtended] = useState<TokenInfo>()
 
   useEffect(() => {
     if (step_param) setStep(parseInt(step_param));
@@ -591,9 +594,6 @@ export const AuctionCreateView = () => {
       attributes={tieredAttributes}
       setAttributes={setTieredAttributes}
       maxWinners={attributes.winnersCount}
-      quoteMintAddress={attributes.quoteMintAddress}
-      quoteMintInfo={attributes.quoteMintInfo}
-      quoteMintInfoExtended={attributes.quoteMintInfoExtended}
       confirm={() => gotoNextStep()}
     />
   );
@@ -1067,6 +1067,18 @@ const NumberOfWinnersStep = (props: {
   setAttributes: (attr: AuctionState) => void;
   confirm: () => void;
 }) => {
+  const [showTokenDialog, setShowTokenDialog] = useState(false);
+  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
+  // give default value to mint
+  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
+
+  props.attributes.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
+
+  if (props.attributes.quoteMintAddress) {
+    props.attributes.quoteMintInfo = useMint(props.attributes.quoteMintAddress)!
+    props.attributes.quoteMintInfoExtended = useTokenList().tokenMap.get(props.attributes.quoteMintAddress)!
+  }
+
   return (
     <>
       <Row className="call-to-action">
@@ -1095,6 +1107,21 @@ const NumberOfWinnersStep = (props: {
               }
             />
           </label>
+              
+              <label className="action-field">
+                <span className="field-title">Auction mint</span>
+                <span className="field-info">
+                  This will be the quote mint for your auction.
+                </span>
+                <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
+                <TokenDialog
+                  setMint={setMint}
+                  open={showTokenDialog}
+                  onClose={() => {
+                    setShowTokenDialog(false); 
+                  }}
+                />
+              </label>
         </Col>
       </Row>
       <Row>
@@ -1505,22 +1532,8 @@ const TierTableStep = (props: {
   attributes: TieredAuctionState;
   setAttributes: (attr: TieredAuctionState) => void;
   maxWinners: number;
-  quoteMintAddress: string;
-  quoteMintInfo: MintInfo;
-  quoteMintInfoExtended: TokenInfo;
   confirm: () => void;
 }) => {
-  const [showTokenDialog, setShowTokenDialog] = useState(false);
-  const [mint, setMint] = useState<PublicKey>(WRAPPED_SOL_MINT)
-  // give default value to mint
-  const mintInfo = useTokenList().tokenMap.get((!mint? QUOTE_MINT.toString(): mint.toString()))
-
-  props.quoteMintAddress = mint? mint.toBase58(): QUOTE_MINT.toBase58()
-  
-  if (props.quoteMintAddress) {
-    props.quoteMintInfo = useMint(props.quoteMintAddress)!
-    props.quoteMintInfoExtended = useTokenList().tokenMap.get(props.quoteMintAddress)!
-  }
 
   const newImmutableTiers = (tiers: Tier[]) => {
     return tiers.map(wc => ({
@@ -1785,18 +1798,6 @@ const TierTableStep = (props: {
         </Col>
       </Row>
       <Row>
-              
-        <label className="action-field">
-          <span className="field-title">Auction mint</span>
-          <TokenButton mint={mint} onClick={() => setShowTokenDialog(true)} />
-          <TokenDialog
-            setMint={setMint}
-            open={showTokenDialog}
-            onClose={() => {
-              setShowTokenDialog(false); 
-            }}
-          />
-        </label>
         <Button
           type="primary"
           size="large"
