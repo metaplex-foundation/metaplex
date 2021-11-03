@@ -6,7 +6,6 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
-  MintInfo,
   Token,
 } from "@solana/spl-token";
 import { sha256 } from "js-sha256";
@@ -24,7 +23,6 @@ import {
 } from "./accounts";
 import {
   CANDY_MACHINE_ID,
-  GUMDROP_TEMPORAL_SIGNER,
   GUMDROP_DISTRIBUTOR_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,

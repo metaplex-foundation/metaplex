@@ -16,26 +16,13 @@ import {
 } from "@solana/wallet-adapter-react";
 import {
   Keypair,
-  PublicKey,
-  SystemProgram,
-  TransactionInstruction,
 } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import BN from 'bn.js';
-import { sha256 } from "js-sha256";
 
 import {
   useConnection,
   Connection,
 } from "../contexts";
 import {
-  CANDY_MACHINE_ID,
-  GUMDROP_DISTRIBUTOR_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  getCandyConfig,
-  getCandyMachineAddress,
   notify,
 } from "../utils";
 import {

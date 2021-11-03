@@ -27,27 +27,19 @@ import {
 import {
   Keypair,
   PublicKey,
-  SystemProgram,
-  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   MintInfo,
-  Token,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { sha256 } from "js-sha256";
 import BN from 'bn.js';
-import * as bs58 from "bs58";
 
 import {
   useConnection,
   Connection,
 } from "../contexts";
 import {
-  CANDY_MACHINE_ID,
   GUMDROP_DISTRIBUTOR_ID,
   GUMDROP_TEMPORAL_SIGNER,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   notify,
   shortenAddress,
 } from "../utils";
@@ -65,7 +57,6 @@ import {
   setupManual,
   setupWalletListUpload,
 } from "../utils/communication";
-import { MerkleTree } from "../utils/merkleTree";
 import { DragAndDrop } from "./DragAndDrop";
 import { DefaultModal } from "./DefaultModal";
 
