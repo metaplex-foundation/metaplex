@@ -1,5 +1,4 @@
-import * as anchor from '@project-serum/anchor';
-import { Connection, PublicKey, AccountInfo } from '@solana/web3.js';
+import { PublicKey, AccountInfo } from '@solana/web3.js';
 
 export type StringPublicKey = string;
 
@@ -61,89 +60,4 @@ export const CANDY_MACHINE_ID = new PublicKey('cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL
 export const GUMDROP_DISTRIBUTOR_ID = new PublicKey("561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG");
 
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey("MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV");
-
-export const fetchCoder = async (
-  address : anchor.Address,
-  connection : Connection,
-) : Promise<anchor.Coder | null> => {
-  return new anchor.Coder(await anchor.Program.fetchIdl(
-      address, { connection: connection } as anchor.Provider));
-}
-
-export const getCandyConfig = async (
-  connection : Connection,
-  config : string
-) : Promise<PublicKey> => {
-  let configKey : PublicKey;
-  try {
-    configKey = new PublicKey(config);
-  } catch (err) {
-    throw new Error(`Invalid config key ${err}`);
-  }
-  const configAccount = await connection.getAccountInfo(configKey);
-  if (configAccount === null) {
-    throw new Error(`Could not fetch config`);
-  }
-  if (!configAccount.owner.equals(CANDY_MACHINE_ID)) {
-    throw new Error(`Invalid config owner ${configAccount.owner.toBase58()}`);
-  }
-  return configKey;
-};
-
-export const getCandyMachineAddress = async (
-  config: PublicKey,
-  uuid: string,
-) => {
-  return await PublicKey.findProgramAddress(
-    [Buffer.from("candy_machine"), config.toBuffer(), Buffer.from(uuid)],
-    CANDY_MACHINE_ID,
-  );
-};
-
-export const getCandyMachine = async (
-  connection : Connection,
-  candyMachineKey : PublicKey,
-) => {
-  const candyMachineCoder = await fetchCoder(CANDY_MACHINE_ID, connection);
-  if (candyMachineCoder === null) {
-    throw new Error(`Could not fetch candy machine IDL`);
-  }
-  const candyMachineAccount = await connection.getAccountInfo(candyMachineKey);
-  if (candyMachineAccount === null) {
-    throw new Error(`Could not fetch candy machine`);
-  }
-  return candyMachineCoder.accounts.decode(
-      "CandyMachine", candyMachineAccount.data);
-}
-
-export const getMetadata = async (
-  mint: PublicKey,
-): Promise<PublicKey> => {
-  return (
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from('metadata'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID,
-    )
-  )[0];
-};
-
-export const getEdition = async (
-  mint: PublicKey,
-): Promise<PublicKey> => {
-  return (
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from('metadata'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-        Buffer.from('edition'),
-      ],
-      TOKEN_METADATA_PROGRAM_ID,
-    )
-  )[0];
-};
 

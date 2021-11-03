@@ -25,25 +25,19 @@ import {
   useWallet,
 } from "@solana/wallet-adapter-react";
 import {
-  Connection as RPCConnection,
   Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
-  AccountLayout,
   MintInfo,
-  MintLayout,
   Token,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 import * as bs58 from "bs58";
-
-// claim distribution
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
 
 import {
   useConnection,
@@ -54,13 +48,23 @@ import {
   GUMDROP_DISTRIBUTOR_ID,
   GUMDROP_TEMPORAL_SIGNER,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-  getCandyConfig,
-  getCandyMachine,
-  getCandyMachineAddress,
-  getEdition,
   notify,
   shortenAddress,
 } from "../utils";
+import {
+  ClaimantInfo,
+  buildGumdrop,
+  parseClaimants,
+  validateTransferClaims,
+  validateCandyClaims,
+  validateEditionClaims,
+} from "../utils/claimant";
+import {
+  AuthKeys,
+  setupSes,
+  setupManual,
+  setupWalletListUpload,
+} from "../utils/communication";
 import { MerkleTree } from "../utils/merkleTree";
 import { DragAndDrop } from "./DragAndDrop";
 import { DefaultModal } from "./DefaultModal";
@@ -74,119 +78,6 @@ const randomBytes = () : Uint8Array => {
 }
 
 const WHITESPACE = "\u00A0";
-
-export type ClaimantInfo = {
-  handle : string,
-  amount : number,
-  edition : number,
-
-  pin    : BN,
-  url    : string,
-
-  seed   : PublicKey,
-  secret : PublicKey,
-};
-
-export type AuthKeys = { [key: string] : string }
-
-type DropInfo = {
-  type : string,
-  meta : string,
-};
-
-const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
-  if (drop.type === "Token") {
-    return {
-      subject: "Gumdrop Token Drop",
-      message: `You received ${info.amount} token(s) `
-             + `(click <a href="${drop.meta}">here</a> to view the mint on explorer). `
-             + `<a href="${info.url}">Click here to claim them!</a>`,
-    };
-  } else {
-    return {
-      subject: "Gumdrop NFT Drop",
-      message: `You received ${info.amount} Candy Machine pre-sale mint `
-             + `(click <a href="${drop.meta}">here</a> to view the config on explorer). `
-             + `<a href="${info.url}">Click here to claim it!</a>`,
-    };
-  }
-};
-
-const setupSes = (auth : AuthKeys, source : string) => {
-  console.log(`SES auth ${auth}`);
-  const client = new SESClient({
-    region: "us-east-2",
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
-  });
-
-  return async (
-    info : ClaimantInfo,
-    drop : DropInfo,
-  ) => {
-    const formatted = formatDropMessage(info, drop);
-    const message = {
-      Destination: {
-        ToAddresses: [
-          info.handle,
-        ]
-      },
-      Message: {
-        Subject: {
-          Data: formatted.subject,
-          Charset: "utf-8",
-        },
-        Body: {
-          Html: {
-            Data: formatted.message,
-            Charset: "utf-8",
-          },
-        },
-      },
-      Source: source,
-    };
-    console.log(message);
-
-    try {
-      const response = await client.send(new SendEmailCommand(message));
-      console.log(response);
-      if (response.$metadata.httpStatusCode !== 200) {
-      //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-}
-
-const setupManual = (auth : AuthKeys, source : string) => {
-  return async (
-    info : ClaimantInfo,
-    mintUrl: string,
-  ) => {
-    // TODO duplicated work since claim URLs are available for download
-    // regardless...
-    console.log({
-      "handle": info.handle,
-      "url": info.url,
-    });
-  };
-}
-
-const setupWalletListUpload = (auth : AuthKeys, source : string) => {
-  const toUpload = Array<{ [key: string] : string }>();
-  return async (
-    info : ClaimantInfo,
-    mintUrl: string,
-  ) => {
-    toUpload.push({
-      "handle": info.handle,
-      "url": info.url,
-    });
-  };
-}
 
 const setupSender = (
   method : string,
@@ -203,21 +94,6 @@ const setupSender = (
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
 }
-
-type Claimants = Array<ClaimantInfo>;
-const parseClaimants = (
-  input : string
-) : Claimants => {
-  const json = JSON.parse(input);
-  return json.map(obj => {
-    return {
-      handle : obj.handle,
-      amount : obj.amount,
-      edition: obj.edition,
-      url    : obj.url,
-    };
-  });
-};
 
 const reactModal = (renderModal) => {
   const container = document.createElement('div');
@@ -392,62 +268,6 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
   }
 };
 
-const getMintInfo = async (
-  connection : RPCConnection,
-  mint : string
-) : Promise<{ key: PublicKey, info: MintInfo }> => {
-  let mintKey : PublicKey;
-  try {
-    mintKey = new PublicKey(mint);
-  } catch (err) {
-    throw new Error(`Invalid mint key ${err}`);
-  }
-  const mintAccount = await connection.getAccountInfo(mintKey);
-  if (mintAccount === null) {
-    throw new Error(`Could not fetch mint`);
-  }
-  if (!mintAccount.owner.equals(TOKEN_PROGRAM_ID)) {
-    const mintOwner = mintAccount.owner.toBase58();
-    throw new Error(`Invalid mint owner ${mintOwner}`);
-  }
-  if (mintAccount.data.length !== MintLayout.span) {
-    throw new Error(`Invalid mint size ${mintAccount.data.length}`);
-  }
-  const mintInfo = MintLayout.decode(Buffer.from(mintAccount.data));
-  return {
-    key: mintKey,
-    info: mintInfo,
-  };
-};
-
-const getCreatorTokenAccount = async (
-  walletKey : PublicKey,
-  connection : RPCConnection,
-  mintKey : PublicKey,
-  totalClaim : number,
-) => {
-  const [creatorTokenKey, ] = await PublicKey.findProgramAddress(
-    [
-      walletKey.toBuffer(),
-      TOKEN_PROGRAM_ID.toBuffer(),
-      mintKey.toBuffer(),
-    ],
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-  );
-  const creatorTokenAccount = await connection.getAccountInfo(creatorTokenKey);
-  if (creatorTokenAccount === null) {
-    throw new Error(`Could not fetch creator token account`);
-  }
-  if (creatorTokenAccount.data.length !== AccountLayout.span) {
-    throw new Error(`Invalid token account size ${creatorTokenAccount.data.length}`);
-  }
-  const creatorTokenInfo = AccountLayout.decode(Buffer.from(creatorTokenAccount.data));
-  if (new BN(creatorTokenInfo.amount, 8, "le").toNumber() < totalClaim) {
-    throw new Error(`Creator token account does not have enough tokens`);
-  }
-  return creatorTokenKey;
-}
-
 export type CreateProps = {};
 
 export const Create = (
@@ -493,103 +313,38 @@ export const Create = (
       throw new Error(`No claimants provided`);
     }
 
-    claimants.forEach((c, idx) => {
-      if (!c.handle) throw new Error(`Claimant ${idx} doesn't have handle`);
-      if (!c.amount) throw new Error(`Claimant ${idx} doesn't have amount`);
-      if (c.amount === 0) throw new Error(`Claimant ${idx} amount is 0`);
-    });
-
-    const claimInfo : any = {};
-    claimInfo.total = claimants.reduce((acc, c) => acc + c.amount, 0);
-    if (claimMethod === "transfer") {
-      claimInfo.mint = await getMintInfo(connection, mint);
-      claimInfo.source = await getCreatorTokenAccount(
-        wallet.publicKey,
-        connection,
-        claimInfo.mint.key,
-        claimInfo.total
-      );
-      claimInfo.info = { type: "Token", meta: explorerUrlFor(claimInfo.mint.key) };
-    } else if (claimMethod === "candy") {
-      claimInfo.config = await getCandyConfig(connection, candyConfig);
-      claimInfo.info = { type: "Candy", meta: explorerUrlFor(claimInfo.config) };
-
-      const [candyMachineKey, ] = await getCandyMachineAddress(
-        claimInfo.config, candyUUID);
-      claimInfo.candyMachineKey = candyMachineKey;
-      const candyMachine = await getCandyMachine(connection, candyMachineKey);
-      console.log("Candy machine", candyMachine);
-
-      const remaining = candyMachine.data.itemsAvailable.toNumber() - candyMachine.itemsRedeemed.toNumber();
-      if (isNaN(remaining)) {
-        // TODO: should this have an override?
-        throw new Error(`Could not calculate how many candy machine items are remaining`);
+    let claimInfo;
+    switch (claimMethod) {
+      case "transfer": {
+        claimInfo = await validateTransferClaims(
+          connection,
+          wallet.publicKey,
+          claimants,
+          mint,
+        );
+        break;
       }
-      if (remaining < claimInfo.total) {
-        throw new Error(`Distributor is allocated more mints (${claimInfo.total}) `
-                      + `than the candy machine has remaining (${remaining})`);
+      case "candy": {
+        claimInfo = await validateCandyClaims(
+          connection,
+          wallet.publicKey,
+          claimants,
+          candyConfig,
+          candyUUID,
+        );
+        break;
       }
-      if (!candyMachine.authority.equals(wallet.publicKey)) {
-        throw new Error(`Candy machine authority does not match wallet public key`);
+      case "edition": {
+        claimInfo = await validateEditionClaims(
+          connection,
+          wallet.publicKey,
+          claimants,
+          masterMint,
+        );
+        break;
       }
-    } else if (claimMethod === "edition") {
-      claimInfo.masterMint = await getMintInfo(connection, masterMint);
-      claimInfo.creatorTokenKey = await getCreatorTokenAccount(
-        wallet.publicKey,
-        connection,
-        claimInfo.masterMint.key,
-        1 // just check that the creator has the master mint
-      );
-      claimInfo.info = { type: "Edition", meta: explorerUrlFor(claimInfo.masterMint.key) };
-
-      const masterEditionKey = await getEdition(claimInfo.masterMint.key);
-      const masterEdition = await connection.getAccountInfo(masterEditionKey);
-      if (masterEdition === null) {
-        throw new Error(`Could not fetch master edition`);
-      }
-      console.log("Master edition", masterEdition);
-
-      // TODO: check that editions within claimants are actually not filled?
-      // This is cursory check that the total number of editions specified is
-      // not greater than the max supply
-      //
-      // maxSupply is an option, 9 bytes, first is 0 means is none
-      const currentSupply = new BN(masterEdition.data.slice(1, 1+8), 8, "le").toNumber();
-      let maxSupply;
-      if (masterEdition.data[9] === 0) {
-          maxSupply = null;
-      } else {
-          maxSupply = new BN(masterEdition.data.slice(10, 10+8), 8, "le").toNumber();
-      }
-      console.log("Max supply", maxSupply);
-      console.log("Current supply", currentSupply);
-
-      if (maxSupply !== null && maxSupply < claimInfo.total) {
-        throw new Error(`Distributor is allocated more editions (${claimInfo.total}) `
-                      + `than the master has total (${maxSupply})`);
-      }
-
-      const editions : { [key: number]: number } = {};
-      claimants.forEach((c, idx) => {
-        if (!c.edition) throw new Error(`Claimant ${idx} doesn't have edition`);
-        if (c.edition > maxSupply) {
-          throw new Error(`Claimant ${idx} assigned edition ${c.edition} which is greater than max supply`);
-        }
-        if (c.edition in editions) {
-          throw new Error(`Claimant ${idx} and ${editions[c.edition]} are both assigned to edition ${c.edition}`);
-        } else {
-          editions[c.edition] = idx;
-        }
-      });
-
-      if (currentSupply !== 0) {
-        notify({
-          message: `Warning: suspicious create`,
-          description: `Master edition has existing supply ${currentSupply}`
-        });
-      }
-    } else {
-      throw new Error(`Unknown claim method ${claimMethod}`);
+      default:
+        throw new Error(`Unknown claim method ${claimMethod}`);
     }
     console.log("Claims info", claimInfo);
 
@@ -626,101 +381,6 @@ export const Create = (
              : /* === edition */            claimInfo.masterMint.key;
     });
 
-    const leafs : Array<Buffer> = [];
-    let needsPin = true;
-    for (let idx = 0; idx < claimants.length; ++idx ) {
-      const claimant = claimants[idx];
-      if (commMethod === "Wallets") {
-        needsPin = false;
-        try {
-          claimant.secret = new PublicKey(claimant.handle);
-        } catch (err) {
-          throw new Error(`Invalid claimant wallet handle ${err}`);
-        }
-      } else {
-        const seeds = [
-          claimant.seed.toBuffer(),
-          Buffer.from(claimant.handle),
-          Buffer.from(claimant.pin.toArray("le", 4)),
-        ];
-        const [claimantPda, ] = await PublicKey.findProgramAddress(
-            seeds, GUMDROP_DISTRIBUTOR_ID);
-        claimant.secret = claimantPda;
-      }
-      // TODO: get this clarified with jordan... we can either just assign some
-      // range of editions to a user or give them an amount and just keep a
-      // counter on the distributor... the latter is much less work but we lose
-      // the ability to use gumdrop for auction house winnings and such?
-      const extra = claimMethod === "edition"
-        ? [...new BN(claimant.edition).toArray("le", 8)]
-        : []
-      leafs.push(Buffer.from(
-        [...new BN(idx).toArray("le", 8),
-         ...claimant.secret.toBuffer(),
-         ...claimant.seed.toBuffer(),
-         ...new BN(claimant.amount).toArray("le", 8),
-         ...extra
-        ]
-      ));
-    }
-
-    const tree = new MerkleTree(leafs);
-    const root = tree.getRoot();
-
-
-    const base = Keypair.generate();
-    console.log(`Base ${base.publicKey.toBase58()}`);
-    const [distributor, dbump] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("MerkleDistributor"),
-        base.publicKey.toBuffer(),
-      ],
-      GUMDROP_DISTRIBUTOR_ID);
-
-    for (let idx = 0; idx < claimants.length; ++idx) {
-      const proof = tree.getProof(idx);
-      const verified = tree.verifyProof(idx, proof, root);
-
-      if (!verified) {
-        throw new Error("Gumdrop merkle tree verification failed");
-      }
-
-      const claimant = claimants[idx];
-      const params = [
-        `distributor=${distributor}`,
-        `handle=${claimant.handle}`,
-        `amount=${claimant.amount}`,
-        `index=${idx}`,
-        `proof=${proof.map(b => bs58.encode(b))}`,
-      ];
-      if (needsPin) {
-        params.push(`pin=${claimant.pin.toNumber()}`);
-      }
-      if (claimMethod === "transfer") {
-        params.push(`tokenAcc=${claimInfo.source}`);
-      } else if (claimMethod === "candy") {
-        params.push(`config=${candyConfig}`);
-        params.push(`uuid=${candyUUID}`);
-      } else {
-        params.push(`master=${claimInfo.masterMint.key}`);
-        params.push(`edition=${claimant.edition}`);
-      }
-      const query = params.join("&");
-
-      claimant.url = `${window.location.origin}${window.location.pathname}#/claim?${query}`;
-    }
-
-    const shouldSend = await reactModal(
-      shouldSendRender(claimants, needsPin, claimMethod, claimInfo, base)
-    ) as boolean | undefined;
-    if (shouldSend === true) {
-    } else {
-      // dismissed. don't use exceptions for control flow?
-      throw new Error("Claim distribution preview not approved");
-    }
-
-    setClaimURLs(claimants);
-
     // temporal auth is the AWS signer by 'default' and a no-op key otherwise
     let temporalSigner;
     if (commMethod === "Wallets") {
@@ -740,83 +400,33 @@ export const Create = (
 
     console.log(`Temporal signer: ${temporalSigner.toBase58()}`);
 
-    // initial merkle-distributor state
-    const instructions = Array<TransactionInstruction>();
-    instructions.push(new TransactionInstruction({
-        programId: GUMDROP_DISTRIBUTOR_ID,
-        keys: [
-            { pubkey: base.publicKey          , isSigner: true  , isWritable: false } ,
-            { pubkey: distributor             , isSigner: false , isWritable: true  } ,
-            { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,
-            { pubkey: SystemProgram.programId , isSigner: false , isWritable: false } ,
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest("global:new_distributor")).slice(0, 8),
-          ...new BN(dbump).toArray("le", 1),
-          ...root,
-          ...temporalSigner.toBuffer(),
-        ])
-    }));
+    const base = Keypair.generate();
+    console.log(`Base ${base.publicKey.toBase58()}`);
 
-    if (claimMethod === "transfer") {
-      instructions.push(Token.createApproveInstruction(
-        TOKEN_PROGRAM_ID,
-        claimInfo.source,
-        distributor,
-        wallet.publicKey,
-        [],
-        claimInfo.total
-      ));
-    } else if (claimMethod === "candy") {
-      const [distributorWalletKey, ] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("Wallet"),
-          distributor.toBuffer(),
-        ],
-        GUMDROP_DISTRIBUTOR_ID
-      );
+    const needsPin = commMethod !== "Wallets";
+    const instructions = await buildGumdrop(
+      connection,
+      wallet.publicKey,
+      needsPin,
+      claimMethod,
+      `${window.location.origin}${window.location.pathname}`,
+      base.publicKey,
+      temporalSigner,
+      claimants,
+      claimInfo
+    );
 
-      instructions.push(new TransactionInstruction({
-          programId: CANDY_MACHINE_ID,
-          keys: [
-              { pubkey: claimInfo.candyMachineKey,isSigner: false , isWritable: true  } ,
-              { pubkey: wallet.publicKey        , isSigner: true  , isWritable: false } ,
-          ],
-          data: Buffer.from([
-            ...Buffer.from(sha256.digest("global:update_authority")).slice(0, 8),
-            ...new BN(1).toArray("le", 1),  // optional exists...
-            ...distributorWalletKey.toBuffer(),
-          ])
-      }));
-    } else if (claimMethod === "edition") {
-      // transfer master edition to distributor
-      const [distributorTokenKey, ] = await PublicKey.findProgramAddress(
-        [
-          distributor.toBuffer(),
-          TOKEN_PROGRAM_ID.toBuffer(),
-          claimInfo.masterMint.key.toBuffer(),
-        ],
-        SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-      );
-
-      instructions.push(Token.createAssociatedTokenAccountInstruction(
-          SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          claimInfo.masterMint.key,
-          distributorTokenKey,
-          distributor,
-          wallet.publicKey
-        ));
-
-      instructions.push(Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          claimInfo.creatorTokenKey,
-          distributorTokenKey,
-          wallet.publicKey,
-          [],
-          1
-        ));
+    const shouldSend = await reactModal(
+      shouldSendRender(claimants, needsPin, claimMethod, claimInfo, base)
+    ) as boolean | undefined;
+    if (shouldSend === true) {
+    } else {
+      // dismissed. don't use exceptions for control flow?
+      throw new Error("Claim distribution preview not approved");
     }
+
+
+    setClaimURLs(claimants);
 
     const createResult = await Connection.sendTransactionWithRetry(
       connection,
