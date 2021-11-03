@@ -210,6 +210,7 @@ export async function createConfigAccount(
   configData,
   payerWallet,
   configAccount,
+  rentTimeInDays,
 ) {
   const size =
     CONFIG_ARRAY_START +
@@ -218,14 +219,25 @@ export async function createConfigAccount(
     4 +
     Math.ceil(configData.maxNumberOfLines.toNumber() / 8);
 
+  let rent = await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
+    size,
+  );
+  
+  // calculate rent
+  if (typeof rentTimeInDays !== 'undefined') {
+    console.log('Instead of paying ' + rent + ' Lamports for rent')
+    let rentMultiplier = rentTimeInDays / 30;
+    rent = rent / 24 * rentMultiplier;
+    console.log('only paying ' + rent  + ' Lamports for rent')
+  } else {
+    console.log('paying ' + rent + ' Lamports for rent')
+  }
+  
   return anchor.web3.SystemProgram.createAccount({
     fromPubkey: payerWallet,
     newAccountPubkey: configAccount,
     space: size,
-    lamports:
-      await anchorProgram.provider.connection.getMinimumBalanceForRentExemption(
-        size,
-      ),
+    lamports: rent,
     programId: CANDY_MACHINE_PROGRAM_ID,
   });
 }
