@@ -1,7 +1,7 @@
 import { ConnectButton, useStore } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Col, Menu, Row, Space } from 'antd';
-import React, { useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
@@ -13,21 +13,56 @@ export const AppBar = () => {
   const locationPath = location.pathname.toLowerCase();
   const { ownerAddress } = useStore();
 
-  const menuInfo = useMemo(() => {
+  // Array of menu item descriptions
+  const menuInfo: {
+    /** The React iterator key prop for this item */
+    key: string;
+    /** The content of this item */
+    title: ReactNode;
+    /**
+     * The link target for this item.
+     *
+     * Any routes matching this link (and, if `exact` is false, any child
+     * routes) will cause the menu item to appear highlighted.
+     */
+    link: string;
+    /** Whether child routes should match against the value of `link` */
+    exact: boolean;
+    /**
+     * Zero or more alternate routes to check against for highlighting this
+     * item.
+     *
+     * The item will never link to these routes, but they will be queried for
+     * highlighting similar to the `link` property.
+     */
+    alt: {
+      /**
+       * An alternate route path or prefix to match against.
+       *
+       * See the `link` property for more info.
+       */
+      path: string;
+      /** Whether child routes should match against the value of `path` */
+      exact: boolean;
+    }[];
+  }[] = useMemo(() => {
     let menu = [
       {
         key: 'listings',
-        link: '/',
-        alt: [{ path: '/', exact: true }],
         title: 'Listings',
+        link: '/',
         exact: true,
+        alt: [{ path: '/auction', exact: false }],
       },
       {
         key: 'artists',
-        link: `/artists/${ownerAddress}`,
-        alt: [{ path: '/artists', exact: false }],
         title: 'Artists',
-        exact: false,
+        link: `/artists/${ownerAddress}`,
+        exact: true,
+        alt: [
+          { path: '/artists', exact: false },
+          { path: '/artworks', exact: false },
+        ],
       },
     ];
 
@@ -36,10 +71,10 @@ export const AppBar = () => {
         ...menu,
         {
           key: 'owned',
-          link: '/owned',
-          alt: [{ path: '/owned', exact: true }],
           title: 'Owned',
+          link: '/owned',
           exact: true,
+          alt: [],
         },
       ];
     }
@@ -49,10 +84,10 @@ export const AppBar = () => {
         ...menu,
         {
           key: 'admin',
-          link: '/admin',
-          alt: [{ path: '/admin', exact: true }],
           title: 'Admin',
+          link: '/admin',
           exact: true,
+          alt: [],
         },
       ];
     }
