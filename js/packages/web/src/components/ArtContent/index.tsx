@@ -207,7 +207,7 @@ const HTMLContent = ({
             position: 'absolute',
           }}
         />
-      ) : null}
+      )}
       <iframe
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
         sandbox="allow-scripts"

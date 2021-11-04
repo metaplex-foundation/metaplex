@@ -373,6 +373,12 @@ const UploadStep = (props: {
     }
   };
 
+  const { category } = props.attributes.properties;
+
+  const urlPlaceholder = `http://example.com/path/to/${
+    category === MetadataCategory.Image ? 'image' : 'file'
+  }`;
+
   return (
     <>
       <Row className="call-to-action">
@@ -432,7 +438,7 @@ const UploadStep = (props: {
           )}
         </Dragger>
       </Row>
-      {props.attributes.properties?.category !== MetadataCategory.Image &&  (
+      {props.attributes.properties?.category !== MetadataCategory.Image && (
         <Row
           className="content-action"
           style={{ marginBottom: 5, marginTop: 30 }}
@@ -485,7 +491,7 @@ const UploadStep = (props: {
       >
         <Input
           disabled={!!mainFile}
-          placeholder={props.attributes.properties?.category !== MetadataCategory.Image?"http://example.com/path/to/file":"http://example.com/path/to/image"}
+          placeholder={urlPlaceholder}
           value={customURL}
           onChange={ev => setCustomURL(ev.target.value)}
           onFocus={() => setCustomURLErr('')}
@@ -643,7 +649,7 @@ const InfoStep = (props: {
               name={props.attributes.name}
               symbol={props.attributes.symbol}
               small={true}
-              artView={props.files.length>1?false:true}
+              artView={!(props.files.length > 1)}
             />
           )}
         </Col>
@@ -1119,7 +1125,7 @@ const LaunchStep = (props: {
               name={props.attributes.name}
               symbol={props.attributes.symbol}
               small={true}
-              artView={props.files[1]?.type !== "unknown" ? false:true}
+              artView={props.files[1]?.type === 'unknown'}
             />
           )}
         </Col>
