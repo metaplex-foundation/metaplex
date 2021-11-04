@@ -431,7 +431,6 @@ pub mod auction_house {
             FEE_PAYER.as_bytes(),
             &[auction_house.fee_payer_bump],
         ];
-        let auction_house_key = auction_house.key();
         let wallet_key = wallet.key();
 
         let escrow_signer_seeds = [
