@@ -1,0 +1,11 @@
+/dist
+/logs
+/node_modules
+/data
+/temp
+.eslintcache
+.vscode
+.snapshot
+.env
+!/src/bin
+!/src/schema/generated

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig.json to read more about this file */
+
+    /* Basic Options */
+    "target": "ES2019",
+    "module": "CommonJS",
+    "sourceMap": true,
+    // "outFile": "./",
+    "outDir": "./dist",
+    "noImplicitAny": true,
+    "rootDir": "./src",
+
+    "strict": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
+    "declaration": true,
+    /* Module Resolution Options */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "src/api"]
+}

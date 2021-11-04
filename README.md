@@ -1,16 +1,39 @@
 <p align="center">
   <a href="https://metaplex.com">
-    <img alt="Metaplex" src="https://metaplex.com/meta.svg" width="250" />
+    <img alt="Metaplex" src="https://metaplex.com/static/logos/metaplex.svg" width="250" />
   </a>
 </p>
 
 Metaplex is a protocol built on top of Solana that allows:
 
-- **Creating/Minting** non-fungible tokens;
-- **Starting** a variety of auctions for primary/secondary sales;
+- **Creating/Minting** Non-Fungible Tokens;
+- **Starting** A variety of auctions for primary/secondary sales;
 - and **Visualizing** NFTs in a standard way across wallets and applications.
 
 Metaplex is comprised of two core components: an on-chain program, and a self-hosted front-end web3 application.
+
+## Important NOTE
+
+Metaplex now follows a release versioning process called semantic versioning. If you are make a new market place, launching a candy machine or any live project that will handle real money, we recommend using a release tag. Using a release tag will ensure that new changes don't break your UI.
+
+https://github.com/metaplex-foundation/metaplex/releases
+
+### How to checkout a release
+```
+//If you are using a fork
+git fetch upstream --tags
+
+git checkout tags/<tag> // this will bring the contents of the tag into your current branch
+
+// OR 
+git checkout tags/<tag> -b <your local branch name> // this will make a new branch for you
+
+To swich to a new release
+
+git checkout tags/<tag> -b new_version_branch /// this will take the new tag and bring it into  anew branch
+//Switch back to the branch you want the new changes in
+git rebase new_version_branch
+```
 
 ## In Depth Developer's Guide
 
@@ -24,11 +47,8 @@ Clone the repo, and run `yarn start` to deploy.
 
 ```bash
 $ git clone https://github.com/metaplex-foundation/metaplex.git
-$ cd metaplex
-$ cd js
-$ yarn install
-$ yarn bootstrap
-$ yarn build
+$ cd metaplex/js
+$ yarn install && yarn bootstrap && yarn build
 $ yarn start
 ```
 
@@ -49,7 +69,7 @@ We have a few channels for contact:
 
 # Protocol
 
-## Non-fungible tokens
+## Non-fungible tokens(NFT)
 
 Metaplex's non-fungible-token standard is a part of the Solana Program Library (SPL), and can be characterized as a unique token with a fixed supply of 1 and 0 decimals. We extended the basic definition of an NFT on Solana to include additional metadata such as URI as defined in ERC-721 on Ethereum.
 
@@ -111,7 +131,7 @@ For each prize place, a Print will be minted in order of prize place, and awarde
 
 For example, the first place winner will win Print #1; the second place winner Print #2; and so on.
 
-It is required for limited supply NFTs that there is at least as much supply remaining as there are desired winners in the auction.
+It is required for limited supply NFTs that there is atleast as much supply remaining as there are desired winners in the auction.
 
 ### Tiered Auction
 
@@ -128,3 +148,60 @@ Tag each collaborator, set custom percentages, and you’re off to the races. Ea
 Metaplex's off-chain component allows creators to launch a custom storefront, similar to Shopify or WordPress. This open-source project provides a graphical interface to the on-chain Metaplex program, for creators, buyers, and curators of NFTs. The design and layout of storefronts can be customized to suit the needs of the entity creating it, either as a permanent storefront or an auction hub for a specific auction or collection.
 
 All identification on the Storefront is based on wallet addresses. Creators and store admins sign through their wallets, and users place bids from connected wallets. Custom storefronts allow creators to create unique experiences per auction. Additionally, the Metaplex Foundation is working on multiple partnerships that will enable building immersive storefronts using VR/AR.
+
+## Development
+
+### Testing
+
+Testing changes to a rust program
+
+```
+# Change to devnet
+solana config set --url devnet
+
+# Build the project (takes a few mins)
+cd rust
+cargo build-bpf
+
+# While you wait for the previous step to complete, find the current program id
+# of the program you plan to test by searching the code base.  Save this for
+# later.
+
+# After the build step completes, deploy the program to devnet
+solana program deploy ./path/to/the_program.so -u devnet
+
+# NOTE: If you receive an error stating insufficient funds, recoup the funds
+# used during the failed deployment. You may also see the following error which
+# also means insufficient funds:
+#     "Error: Deploying program failed: Error processing Instruction 1: custom program error: 0x1"
+solana program close --buffers
+
+# NOTE: If you had an insufficient funds, airdrop yourself some SOL, then run the deploy
+# command again. I needed roughly 5 SOL to deploy the auction contract.
+solana airdrop 5
+
+# After successful deploy, a new Program Id will be printed to your terminal. Copy this
+# and update the program's id everywhere in the code base. This way, during testing, we
+# always call the version of the program we are testing instead of the stable one.
+# DO NOT SKIP THIS STEP or you won't test your changes
+
+# Next, comment out your js/packages/web/.env variables to force creation of a fresh new store
+
+# Now start up the UI
+cd ../js/packages
+yarn && yarn bootstrap
+yarn start
+
+# Open the site in a browser in *incognito* mode http://localhost:3000
+
+# In the incognito browser, create a new wallet by visiting https://sollet.io
+# Copy the wallet address
+
+# You'll need SOL added to the new wallet
+solana airdrop 4 NEW_WALLET_ADDRESS
+
+# Now visit the site (in incognito mode)
+# Connect your new wallet
+# Create a new store
+# Test your program changes
+```

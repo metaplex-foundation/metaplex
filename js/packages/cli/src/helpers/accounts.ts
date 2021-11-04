@@ -6,23 +6,68 @@ import {
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   FAIR_LAUNCH_PROGRAM_ID,
+  AUCTION_HOUSE_PROGRAM_ID,
+  AUCTION_HOUSE,
+  FEE_PAYER,
+  TREASURY,
+  WRAPPED_SOL_MINT,
+  TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  TOKEN_ENTANGLER,
+  ESCROW,
+  B,
+  A,
 } from './constants';
 import * as anchor from '@project-serum/anchor';
 import fs from 'fs';
-import BN from 'bn.js';
 import { createConfigAccount } from './instructions';
 import { web3 } from '@project-serum/anchor';
 import log from 'loglevel';
+import { AccountLayout, u64 } from '@solana/spl-token';
+
+// TODO: expose in spl package
+export const deserializeAccount = (data: Buffer) => {
+  const accountInfo = AccountLayout.decode(data);
+  accountInfo.mint = new PublicKey(accountInfo.mint);
+  accountInfo.owner = new PublicKey(accountInfo.owner);
+  accountInfo.amount = u64.fromBuffer(accountInfo.amount);
+
+  if (accountInfo.delegateOption === 0) {
+    accountInfo.delegate = null;
+    accountInfo.delegatedAmount = new u64(0);
+  } else {
+    accountInfo.delegate = new PublicKey(accountInfo.delegate);
+    accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
+  }
+
+  accountInfo.isInitialized = accountInfo.state !== 0;
+  accountInfo.isFrozen = accountInfo.state === 2;
+
+  if (accountInfo.isNativeOption === 1) {
+    accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
+    accountInfo.isNative = true;
+  } else {
+    accountInfo.rentExemptReserve = null;
+    accountInfo.isNative = false;
+  }
+
+  if (accountInfo.closeAuthorityOption === 0) {
+    accountInfo.closeAuthority = null;
+  } else {
+    accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
+  }
+
+  return accountInfo;
+};
 
 export const createConfig = async function (
   anchorProgram: anchor.Program,
   payerWallet: Keypair,
   configData: {
-    maxNumberOfLines: BN;
+    maxNumberOfLines: anchor.BN;
     symbol: string;
     sellerFeeBasisPoints: number;
     isMutable: boolean;
-    maxSupply: BN;
+    maxSupply: anchor.BN;
     retainAuthority: boolean;
     creators: {
       address: PublicKey;
@@ -33,6 +78,19 @@ export const createConfig = async function (
 ) {
   const configAccount = Keypair.generate();
   const uuid = uuidFromConfigPubkey(configAccount.publicKey);
+
+  if (!configData.creators || configData.creators.length === 0) {
+    throw new Error(`Invalid config, there must be at least one creator.`);
+  }
+
+  const totalShare = (configData.creators || []).reduce(
+    (acc, curr) => acc + curr.share,
+    0,
+  );
+
+  if (totalShare !== 100) {
+    throw new Error(`Invalid config, creators shares must add up to 100`);
+  }
 
   return {
     config: configAccount.publicKey,
@@ -255,6 +313,123 @@ export const getEditionMarkPda = async (
   )[0];
 };
 
+export const getAuctionHouse = async (
+  creator: anchor.web3.PublicKey,
+  treasuryMint: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), creator.toBuffer(), treasuryMint.toBuffer()],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseProgramAsSigner = async (): Promise<
+  [PublicKey, number]
+> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), Buffer.from('signer')],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseFeeAcct = async (
+  auctionHouse: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      auctionHouse.toBuffer(),
+      Buffer.from(FEE_PAYER),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseTreasuryAcct = async (
+  auctionHouse: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      auctionHouse.toBuffer(),
+      Buffer.from(TREASURY),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseBuyerEscrow = async (
+  auctionHouse: anchor.web3.PublicKey,
+  wallet: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(AUCTION_HOUSE), auctionHouse.toBuffer(), wallet.toBuffer()],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getAuctionHouseTradeState = async (
+  auctionHouse: anchor.web3.PublicKey,
+  wallet: anchor.web3.PublicKey,
+  tokenAccount: anchor.web3.PublicKey,
+  treasuryMint: anchor.web3.PublicKey,
+  tokenMint: anchor.web3.PublicKey,
+  tokenSize: anchor.BN,
+  buyPrice: anchor.BN,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from(AUCTION_HOUSE),
+      wallet.toBuffer(),
+      auctionHouse.toBuffer(),
+      tokenAccount.toBuffer(),
+      treasuryMint.toBuffer(),
+      tokenMint.toBuffer(),
+      buyPrice.toBuffer('le', 8),
+      tokenSize.toBuffer('le', 8),
+    ],
+    AUCTION_HOUSE_PROGRAM_ID,
+  );
+};
+
+export const getTokenEntanglement = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await anchor.web3.PublicKey.findProgramAddress(
+    [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  );
+};
+
+export const getTokenEntanglementEscrows = async (
+  mintA: anchor.web3.PublicKey,
+  mintB: anchor.web3.PublicKey,
+): Promise<[PublicKey, number, PublicKey, number]> => {
+  return [
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(A),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+    ...(await anchor.web3.PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(B),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+  ];
+};
+
 export function loadWalletKey(keypair): Keypair {
   if (!keypair || keypair == '') {
     throw new Error('Keypair is required!');
@@ -266,9 +441,19 @@ export function loadWalletKey(keypair): Keypair {
   return loaded;
 }
 
-export async function loadCandyProgram(walletKeyPair: Keypair, env: string) {
+export async function loadCandyProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
   // @ts-ignore
-  const solConnection = new web3.Connection(web3.clusterApiUrl(env));
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+
   const walletWrapper = new anchor.Wallet(walletKeyPair);
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
@@ -299,4 +484,74 @@ export async function loadFairLaunchProgram(
   const idl = await anchor.Program.fetchIdl(FAIR_LAUNCH_PROGRAM_ID, provider);
 
   return new anchor.Program(idl, FAIR_LAUNCH_PROGRAM_ID, provider);
+}
+
+export async function loadAuctionHouseProgram(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(AUCTION_HOUSE_PROGRAM_ID, provider);
+
+  return new anchor.Program(idl, AUCTION_HOUSE_PROGRAM_ID, provider);
+}
+
+export async function loadTokenEntanglementProgream(
+  walletKeyPair: Keypair,
+  env: string,
+  customRpcUrl?: string,
+) {
+  if (customRpcUrl) console.log('USING CUSTOM URL', customRpcUrl);
+
+  // @ts-ignore
+  const solConnection = new anchor.web3.Connection(
+    //@ts-ignore
+    customRpcUrl || web3.clusterApiUrl(env),
+  );
+  const walletWrapper = new anchor.Wallet(walletKeyPair);
+  const provider = new anchor.Provider(solConnection, walletWrapper, {
+    preflightCommitment: 'recent',
+  });
+  const idl = await anchor.Program.fetchIdl(
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    provider,
+  );
+
+  return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
+}
+
+export async function getTokenAmount(
+  anchorProgram: anchor.Program,
+  account: anchor.web3.PublicKey,
+  mint: anchor.web3.PublicKey,
+): Promise<number> {
+  let amount = 0;
+  if (!mint.equals(WRAPPED_SOL_MINT)) {
+    try {
+      const token =
+        await anchorProgram.provider.connection.getTokenAccountBalance(account);
+      amount = token.value.uiAmount * Math.pow(10, token.value.decimals);
+    } catch (e) {
+      log.error(e);
+      log.info(
+        'Account ',
+        account.toBase58(),
+        'didnt return value. Assuming 0 tokens.',
+      );
+    }
+  } else {
+    amount = await anchorProgram.provider.connection.getBalance(account);
+  }
+  return amount;
 }

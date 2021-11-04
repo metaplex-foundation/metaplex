@@ -320,7 +320,7 @@ export function useSettlementAuctions({
               metadataByAuction,
               undefined,
             );
-            if(completeAuctionView) {
+            if (completeAuctionView) {
               await settle(
                 connection,
                 wallet,
@@ -571,7 +571,7 @@ export function Notifications() {
   else
     return (
       <Badge
-        count={notifications.length}
+        count={notifications.length - 1}
         style={{ backgroundColor: 'white', color: 'black' }}
       >
         {justContent}
