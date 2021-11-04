@@ -294,6 +294,21 @@ export const Create = (
     return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
   }
 
+  const distributeClaims = async (claimants, claimInfo) => {
+    const sender = setupSender(commMethod, commAuth, commSource);
+    for (const c of claimants) {
+      await sender(c, claimInfo.info);
+    }
+
+    // notify if the above routine is actually supposed to do any notification
+    // (manual and wallet do nothing atm)
+    if (commMethod === "AWS SES") {
+      notify({
+        message: "Gumdrop email distribution succeeded",
+      });
+    }
+  }
+
   const submit = async (e : React.SyntheticEvent) => {
     e.preventDefault();
 
@@ -359,10 +374,7 @@ export const Create = (
       console.log("Resend only", resendOnly);
       if (resendOnly === "send") {
         setClaimURLs(claimants);
-        const sender = setupSender(commMethod, commAuth, commSource);
-        for (const c of claimants) {
-          await sender(c, claimInfo.info);
-        }
+        await distributeClaims(claimants, claimInfo);
         return;
       } else if (resendOnly === "create") {
         // fallthrough to full create
@@ -448,10 +460,7 @@ export const Create = (
     }
 
     console.log("Distributing claim URLs");
-    const sender = setupSender(commMethod, commAuth, commSource);
-    for (const c of claimants) {
-      await sender(c, claimInfo.info);
-    }
+    await distributeClaims(claimants, claimInfo);
   };
 
   const handleFiles = (files) => {
