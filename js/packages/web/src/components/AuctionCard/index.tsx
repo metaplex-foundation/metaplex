@@ -24,6 +24,7 @@ import {
   useWalletModal,
   VaultState,
   BidStateType,
+  WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import {
   AuctionView,
@@ -59,6 +60,7 @@ import {
 import { useActionButtonContent } from './hooks/useActionButtonContent';
 import { endSale } from './utils/endSale';
 import { useInstantSaleState } from './hooks/useInstantSaleState';
+import { useTokenList } from '../../contexts/tokenList';
 
 async function calculateTotalCostOfRedeemingOtherPeoplesBids(
   connection: Connection,
@@ -230,7 +232,10 @@ export const AuctionCard = ({
 
   const mintKey = auctionView.auction.info.tokenMint;
   const balance = useUserBalance(mintKey);
+  const tokenInfo = useTokenList().mainnetTokens.filter(m=>m.address == mintKey)[0]
+  const symbol = tokenInfo? tokenInfo.symbol: mintKey == WRAPPED_SOL_MINT.toBase58()? "SOL": "CUSTOM"
 
+  //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
   let winnerIndex: number | null = null;
   if (auctionView.myBidderPot?.pubkey)
@@ -451,7 +456,7 @@ export const AuctionCard = ({
             auctionView={auctionView}
             showAsRow={true}
             hideCountdown={true}
-            displaySOL={true}
+            displaySymbol={true}
           />
           {showPlaceBid &&
             !hideDefaultAction &&
@@ -535,9 +540,10 @@ export const AuctionCard = ({
             <div className="show-place-bid">
               <AmountLabel
                 title="in your wallet"
-                displaySOL={true}
+                displaySymbol={tokenInfo?.symbol || "CUSTOM"}
                 style={{ marginBottom: 0 }}
-                amount={formatAmount(balance.balance, 2)}
+                amount={balance.balance}
+                tokenInfo={tokenInfo}
                 customPrefix={
                   <Identicon
                     address={wallet?.publicKey?.toBase58()}
@@ -640,9 +646,7 @@ export const AuctionCard = ({
                         ? `◎ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                         : ''
                     }
-                    placeholder={
-                      minBid === 0 ? `Place a Bid` : `Bid ${minBid} SOL or more`
-                    }
+                    placeholder={ minBid === 0 ? `Place a Bid` : `Bid ${minBid} ${symbol} or more` }
                   />
                 </div>
                 <div className={'bid-buttons'}>
