@@ -15,22 +15,22 @@ const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
     return {
       subject: "Gumdrop Token Drop",
       message: `You received ${info.amount} token(s) `
-             + `(click <a href="${drop.meta}">here</a> to view the mint on explorer). `
+             + `(click <a href="${drop.meta}">here</a> to view more information about the token mint). `
              + `<a href="${info.url}">Click here to claim them!</a>`,
     };
   } else if (drop.type === "Candy") {
     return {
       subject: "Gumdrop NFT Drop",
-      message: `You received ${info.amount} Candy Machine pre-sale mint `
-             + `(click <a href="${drop.meta}">here</a> to view the config on explorer). `
-             + `<a href="${info.url}">Click here to claim it!</a>`,
+      message: `You received ${info.amount} Candy Machine pre-sale mint(s) `
+             + `(click <a href="${drop.meta}">here</a> to view the candy machine configuration on explorer). `
+             + `<a href="${info.url}">Click here to claim them!</a>`,
     };
   } else if (drop.type === "Edition") {
     return {
       subject: "Gumdrop NFT Drop",
-      message: `You received ${info.amount} limited-edition print `
-             + `(click <a href="${drop.meta}">here</a> to view the master on explorer). `
-             + `<a href="${info.url}">Click here to claim it!</a>`,
+      message: `You received ${info.amount} limited-edition print(s) `
+             + `(click <a href="${drop.meta}">here</a> to view the master edition mint on explorer). `
+             + `<a href="${info.url}">Click here to claim them!</a>`,
     };
   } else {
     throw new Error(`Internal Error: Unknown drop type ${drop.type}`);
@@ -69,7 +69,7 @@ export const setupSes = (auth : AuthKeys, source : string) => {
               Data: formatted.message
                 + "<br><br>"
                 + "<div>"
-                +   "If you would like to unsubscribe from new gumdrops, "
+                +   "If you would like to unsubscribe from new Gumdrops, "
                 +   "change your subscription preferences here: "
                 +   "<a href='{{amazonSESUnsubscribeUrl}}'>AWS subscription preferences</a>"
                 + "</div>",
