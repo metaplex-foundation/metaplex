@@ -15,6 +15,7 @@ incremented for features.
 
 - Added Token Entangler smart contract and CLI
 - Add update authority command for candy machine
+- Implemented NFT Packs Creation and Viewing Flow
 
 ### Fixes
 
