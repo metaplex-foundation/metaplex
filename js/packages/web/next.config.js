@@ -34,6 +34,7 @@ module.exports = withPlugins(plugins, {
     NEXT_PUBLIC_STORE_ADDRESS: process.env.STORE_ADDRESS,
     NEXT_PUBLIC_BIG_STORE: process.env.REACT_APP_BIG_STORE,
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
+    NEXT_ENABLE_NFT_PACKS: process.env.REACT_APP_ENABLE_NFT_PACKS,
   },
   async rewrites() {
     return [

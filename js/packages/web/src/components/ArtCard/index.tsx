@@ -27,6 +27,8 @@ export interface ArtCardProps extends CardProps {
 
   height?: number;
   width?: number;
+
+  count?: string;
 }
 
 export const ArtCard = (props: ArtCardProps) => {
@@ -44,6 +46,7 @@ export const ArtCard = (props: ArtCardProps) => {
     pubkey,
     height,
     width,
+    count,
     ...rest
   } = props;
   const art = useArt(pubkey);
@@ -108,6 +111,9 @@ export const ArtCard = (props: ArtCardProps) => {
               </>
             )} */}
             <div className="edition-badge">{badge}</div>
+            {count && (
+              <div className="edition-badge">Selected count: {count}</div>
+            )}
           </>
         }
       />

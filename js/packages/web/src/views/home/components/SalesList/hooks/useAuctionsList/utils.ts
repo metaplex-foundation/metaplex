@@ -1,22 +1,13 @@
-import BN from 'bn.js';
 import { PublicKey } from '@solana/web3.js';
 
-import { AuctionViewState, AuctionView } from '../../../../hooks';
+import { AuctionViewState, AuctionView } from '../../../../../../hooks';
 
-import { LiveAuctionViewState } from '../../auctionList';
+import { LiveAuctionViewState } from '../..';
 
 // Check if the auction is primary sale or not
 const checkPrimarySale = (auction: AuctionView): boolean =>
   auction.items.some(item =>
     item.some(({ metadata }) => metadata.info.primarySaleHappened),
-  );
-
-export const sortAuctionsByDate = (auctions: AuctionView[]): AuctionView[] =>
-  auctions.sort(
-    (a, b) =>
-      a.auction.info.endedAt
-        ?.sub(b.auction.info.endedAt || new BN(0))
-        .toNumber() || 0,
   );
 
 // Removed resales from live auctions
