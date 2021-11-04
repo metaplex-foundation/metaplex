@@ -9,6 +9,7 @@ import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 import { BN } from '@project-serum/anchor';
 import { loadCache, saveCache } from '../helpers/cache';
+import { loadMaxSupply } from '../helpers/maxSupply';
 import log from 'loglevel';
 import { awsUpload } from '../helpers/upload/aws';
 import { arweaveUpload } from '../helpers/upload/arweave';
@@ -27,6 +28,7 @@ export async function upload(
   rpcUrl: string,
   ipfsCredentials: ipfsCreds,
   awsS3Bucket: string,
+  max_supply: string,
 ): Promise<boolean> {
   let uploadSuccessful = true;
 
@@ -70,6 +72,7 @@ export async function upload(
     ? new PublicKey(cacheContent.program.config)
     : undefined;
 
+  const max_supplies = loadMaxSupply(max_supply);
   for (let i = 0; i < SIZE; i++) {
     const image = images[i];
     const imageName = path.basename(image);
@@ -102,7 +105,7 @@ export async function upload(
             symbol: manifest.symbol,
             sellerFeeBasisPoints: manifest.seller_fee_basis_points,
             isMutable: mutable,
-            maxSupply: new BN(0),
+            maxSupply: new BN(max_supplies[i.toString()]),
             retainAuthority: retainAuthority,
             creators: manifest.properties.creators.map(creator => {
               return {

@@ -77,6 +77,10 @@ programCommand('upload')
     '-r, --rpc-url <string>',
     'custom rpc url since this is a heavy command',
   )
+  .option(
+    '-m, --max_supply <string>',
+    'max supply JSON file for each NFT (ex: {"0": 3, "1": 100})',
+  )
   .action(async (files: string[], options, cmd) => {
     const {
       number,
@@ -90,6 +94,7 @@ programCommand('upload')
       retainAuthority,
       mutable,
       rpcUrl,
+      max_supply,
     } = cmd.opts();
 
     if (storage === 'ipfs' && (!ipfsInfuraProjectId || !ipfsInfuraSecret)) {
@@ -152,6 +157,7 @@ programCommand('upload')
         rpcUrl,
         ipfsCredentials,
         awsS3Bucket,
+        max_supply,
       );
 
       if (successful) {
