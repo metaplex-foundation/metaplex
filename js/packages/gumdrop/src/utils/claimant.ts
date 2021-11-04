@@ -266,6 +266,20 @@ export const validateEditionClaims = async (
   };
 }
 
+export const chunk = (
+  arr : Buffer,
+  len : number,
+) : Array<Buffer> => {
+  let chunks : Array<Buffer> = [],
+      i = 0,
+      n = arr.length;
+
+  while (i < n) {
+    chunks.push(arr.slice(i, i += len));
+  }
+
+  return chunks;
+}
 
 export const buildGumdrop = async (
   connection : RPCConnection,
@@ -291,11 +305,11 @@ export const buildGumdrop = async (
     } else {
       const seeds = [
         claimant.seed.toBuffer(),
-        Buffer.from(claimant.handle),
+        ...chunk(Buffer.from(claimant.handle), 32),
         Buffer.from(claimant.pin.toArray("le", 4)),
       ];
       const [claimantPda, ] = await PublicKey.findProgramAddress(
-          seeds, GUMDROP_DISTRIBUTOR_ID);
+          seeds.map(s => s.slice(0, 32)), GUMDROP_DISTRIBUTOR_ID);
       claimant.secret = claimantPda;
     }
     // TODO: get this clarified with jordan... we can either just assign some

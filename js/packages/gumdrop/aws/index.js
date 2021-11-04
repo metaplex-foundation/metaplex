@@ -57,6 +57,18 @@ const logDB = async (handle, otp, txn) => {
   await ddb.put(params).promise();
 };
 
+const chunk = (arr, len) => {
+  let chunks = [],
+      i = 0,
+      n = arr.length;
+
+  while (i < n) {
+    chunks.push(arr.slice(i, i += len));
+  }
+
+  return chunks;
+}
+
 const sendOTP = async (event) => {
   if (!event.transaction) {
     throw new Error("No transaction found");
@@ -76,7 +88,6 @@ const sendOTP = async (event) => {
   if (!claim.programId.equals(MERKLE_DISTRIBUTOR_ID)) {
     throw new Error("Claim programId does not match");
   }
-  console.log(claim.data.slice(0, 8));
 
   let pda;
   if (Buffer.from(claim.data.slice(0, 8)).equals(CLAIM_INSTR)) {
@@ -90,7 +101,11 @@ const sendOTP = async (event) => {
   }
 
   const [claimantPda, ] = await PublicKey.findProgramAddress(
-    event.seeds.map(s => s.data),
+    [
+      event.seeds[0].data,
+      ...chunk(event.seeds[1].data, 32),
+      event.seeds[2].data,
+    ],
     MERKLE_DISTRIBUTOR_ID
   );
 

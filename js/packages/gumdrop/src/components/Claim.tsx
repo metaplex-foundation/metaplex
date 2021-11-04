@@ -62,6 +62,9 @@ import {
   explorerLinkFor,
   sendSignedTransaction,
 } from "../utils/transactions";
+import {
+  chunk,
+} from "../utils/claimant";
 import { coder } from "../utils/merkleDistributor";
 
 const walletKeyOrPda = async (
@@ -81,17 +84,21 @@ const walletKeyOrPda = async (
       throw new Error(`Invalid claimant wallet handle ${err}`);
     }
   } else {
-    const pdaSeeds = [
+    const seeds = [
       seed.toBuffer(),
       Buffer.from(handle),
       Buffer.from(pin.toArray("le", 4)),
     ];
 
     const [claimantPda, ] = await PublicKey.findProgramAddress(
-      pdaSeeds,
+      [
+        seeds[0],
+        ...chunk(seeds[1], 32),
+        seeds[2],
+      ],
       GUMDROP_DISTRIBUTOR_ID
     );
-    return [claimantPda, pdaSeeds];
+    return [claimantPda, seeds];
   }
 }
 
