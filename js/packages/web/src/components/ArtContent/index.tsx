@@ -7,6 +7,7 @@ import { useCachedImage, useExtendedArt } from '../../hooks';
 import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { PublicKey } from '@solana/web3.js';
 import { getLast } from '../../utils/utils';
+import styled from 'styled-components';
 
 const MeshArtContent = ({
   uri,
@@ -158,6 +159,11 @@ const VideoArtContent = ({
   return content;
 };
 
+const HTMLWrapper = styled.div`
+  padding-top: 100%;
+  position: relative;
+`;
+
 const HTMLContent = ({
   uri,
   animationUrl,
@@ -191,12 +197,7 @@ const HTMLContent = ({
       ? files[0]
       : animationUrl;
   return (
-    <div
-      style={{
-        paddingTop: '100%',
-        position: 'relative',
-      }}
-    >
+    <HTMLWrapper>
       {!loaded && (
         <ThreeDots
           style={{
@@ -226,7 +227,7 @@ const HTMLContent = ({
           position: 'absolute',
         }}
       ></iframe>
-    </div>
+    </HTMLWrapper>
   );
 };
 
