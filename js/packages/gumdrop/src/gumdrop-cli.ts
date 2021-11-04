@@ -4,6 +4,7 @@ import * as path from 'path';
 import { program } from 'commander';
 import log from 'loglevel';
 
+import { SESv2Client, CreateContactListCommand } from "@aws-sdk/client-sesv2"
 import * as anchor from '@project-serum/anchor';
 import {
   Commitment,
@@ -362,6 +363,47 @@ programCommand('close')
         `https://explorer.solana.com/tx/${closeResult.txid}?cluster=${options.env}`
       );
     }
+  });
+
+programCommand('create_contact_list')
+  .option('--cli-input-json <filename>')
+  .option(
+    '--aws-ses-access-key-id <string>',
+    'Access Key Id'
+  )
+  .option(
+    '--aws-ses-secret-access-key <string>',
+    'Secret Access Key'
+  )
+  .addHelpText('before', 'A thin wrapper mimicking `aws sesv2 create-contact-list`')
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    let message;
+    try {
+      message = JSON.parse(fs.readFileSync(options.cliInputJson).toString());
+    } catch (err) {
+      throw new Error(`Could not read distribution list ${err}`);
+    }
+
+    const client = new SESv2Client({
+      region: "us-east-2",
+      credentials: {
+        accessKeyId: options.awsSesAccessKeyId,
+        secretAccessKey: options.awsSesSecretAccessKey,
+      },
+    });
+
+    try {
+      const response = await client.send(new CreateContactListCommand(message));
+      log.debug(response);
+      if (response.$metadata.httpStatusCode !== 200) {
+      //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
+      }
+    } catch (err) {
+      log.error(err);
+    }
+    log.info(`Created contact list ${message.ContactListName}`);
   });
 
 function programCommand(name: string) {
