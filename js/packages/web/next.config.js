@@ -37,7 +37,7 @@ module.exports = withPlugins(plugins, {
     NEXT_PUBLIC_CLIENT_ID: process.env.REACT_APP_CLIENT_ID,
 
     NEXT_SPL_TOKEN_MINTS: process.env.SPL_TOKEN_MINTS,
-    NEXT_CG_SPL_TOKEN_IDS: process.env.CG_SPL_TOKEN_IDS
+    NEXT_CG_SPL_TOKEN_IDS: process.env.CG_SPL_TOKEN_IDS,
     NEXT_ENABLE_NFT_PACKS: process.env.REACT_APP_ENABLE_NFT_PACKS,
 
   },
