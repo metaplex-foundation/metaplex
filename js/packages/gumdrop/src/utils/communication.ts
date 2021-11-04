@@ -47,6 +47,7 @@ export const setupSes = (auth : AuthKeys, source : string) => {
     },
   });
 
+  // TODO: move to template + bulk message?
   return async (
     info : ClaimantInfo,
     drop : DropInfo,
@@ -102,24 +103,22 @@ export const setupManual = (auth : AuthKeys, source : string) => {
     info : ClaimantInfo,
     mintUrl: string,
   ) => {
-    // TODO duplicated work since claim URLs are available for download
-    // regardless...
-    log.debug({
-      "handle": info.handle,
-      "url": info.url,
-    });
   };
 }
 
 export const setupWalletListUpload = (auth : AuthKeys, source : string) => {
-  const toUpload = Array<{ [key: string] : string }>();
   return async (
     info : ClaimantInfo,
     mintUrl: string,
   ) => {
-    toUpload.push({
-      "handle": info.handle,
-      "url": info.url,
-    });
   };
+}
+
+export const urlAndHandleFor = (claimants : Array<ClaimantInfo>) => {
+  return claimants.map(info => {
+    return {
+      handle: info.handle,
+      url: info.url,
+    };
+  });
 }

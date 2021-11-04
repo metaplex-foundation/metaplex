@@ -56,6 +56,7 @@ import {
   setupSes,
   setupManual,
   setupWalletListUpload,
+  urlAndHandleFor,
 } from "../utils/communication";
 import {
   envFor,
@@ -279,7 +280,7 @@ export const Create = (
   const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
-  const [claimURLs, setClaimURLs] = React.useState<Array<ClaimantInfo>>([]);
+  const [claimURLs, setClaimURLs] = React.useState<Array<{ [key: string]: string }>>([]);
 
   // auth state
   const [otpAuth, setOtpAuth] = React.useState(localStorage.getItem("otpAuth") || "default");
@@ -373,7 +374,7 @@ export const Create = (
       const resendOnly = await reactModal(resendOnlyRender);
       console.log("Resend only", resendOnly);
       if (resendOnly === "send") {
-        setClaimURLs(claimants);
+        setClaimURLs(urlAndHandleFor(claimants));
         await distributeClaims(claimants, claimInfo);
         return;
       } else if (resendOnly === "create") {
@@ -436,7 +437,7 @@ export const Create = (
     }
 
 
-    setClaimURLs(claimants);
+    setClaimURLs(urlAndHandleFor(claimants));
 
     const createResult = await Connection.sendTransactionWithRetry(
       connection,

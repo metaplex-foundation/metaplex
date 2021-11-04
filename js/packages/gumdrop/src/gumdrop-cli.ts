@@ -37,6 +37,7 @@ import {
   setupSes,
   setupManual,
   setupWalletListUpload,
+  urlAndHandleFor,
 } from "./utils/communication";
 import {
   CANDY_MACHINE_ID,
@@ -258,7 +259,7 @@ programCommand('create')
 
     const urlPath = logPath(options.env, `urls-${base.publicKey.toBase58()}.json`);
     console.log(`writing claims to ${urlPath}`);
-    fs.writeFileSync(urlPath, JSON.stringify(claimants));
+    fs.writeFileSync(urlPath, JSON.stringify(urlAndHandleFor(claimants)));
 
     const createResult = await sendTransactionWithRetry(
       connection,
