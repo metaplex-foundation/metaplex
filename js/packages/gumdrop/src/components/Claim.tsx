@@ -692,7 +692,7 @@ export const Claim = (
     if (isNaN(index)) {
       throw new Error(`Could not parse index ${indexStr}`);
     }
-    if (pinStr.length > 0) {
+    if (params.pin !== "NA") {
       try {
         pin = new BN(pinStr);
       } catch (err) {
@@ -1066,14 +1066,14 @@ export const Claim = (
         onChange={(e) => setIndex(e.target.value)}
         disabled={!editable}
       />
-      <TextField
+      {params.pin !== "NA" && <TextField
         style={{width: "60ch"}}
         id="pin-text-field"
         label="Pin"
         value={pinStr}
         onChange={(e) => setPin(e.target.value)}
         disabled={!editable}
-      />
+      />}
       <TextField
         style={{width: "60ch"}}
         id="proof-text-field"

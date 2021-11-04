@@ -357,6 +357,8 @@ export const buildGumdrop = async (
     ];
     if (needsPin) {
       params.push(`pin=${claimant.pin.toNumber()}`);
+    } else {
+      params.push(`pin=NA`);
     }
     if (claimIntegration === "transfer") {
       params.push(`tokenAcc=${claimInfo.source}`);
