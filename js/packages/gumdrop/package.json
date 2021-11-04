@@ -5,7 +5,7 @@
   "homepage": "https://lwus.github.io/gumdrop/",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.38.0",
-    "@aws-sdk/client-ses": "^3.38.0",
+    "@aws-sdk/client-sesv2": "^3.38.0",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@fontsource/open-sans": "^4.5.0",

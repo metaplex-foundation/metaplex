@@ -1,5 +1,5 @@
 import log from 'loglevel';
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 
 import { ClaimantInfo } from "./claimant"
 
@@ -39,7 +39,7 @@ const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
 
 export const setupSes = (auth : AuthKeys, source : string) => {
   log.debug("SES auth", auth);
-  const client = new SESClient({
+  const client = new SESv2Client({
     region: "us-east-2",
     credentials: {
       accessKeyId: auth.accessKeyId,
@@ -58,19 +58,31 @@ export const setupSes = (auth : AuthKeys, source : string) => {
           info.handle,
         ]
       },
-      Message: {
-        Subject: {
-          Data: formatted.subject,
-          Charset: "utf-8",
-        },
-        Body: {
-          Html: {
-            Data: formatted.message,
+      Content: {
+        Simple: {
+          Subject: {
+            Data: formatted.subject,
             Charset: "utf-8",
+          },
+          Body: {
+            Html: {
+              Data: formatted.message
+                + "<br><br>"
+                + "<div>"
+                +   "If you would like to unsubscribe from new gumdrops, "
+                +   "change your subscription preferences here: "
+                +   "<a href='{{amazonSESUnsubscribeUrl}}'>AWS subscription preferences</a>"
+                + "</div>",
+              Charset: "utf-8",
+            },
           },
         },
       },
-      Source: source,
+      FromEmailAddress: source,
+      ListManagementOptions: {
+        ContactListName: "Gumdrop",
+        TopicName: drop.type,
+      },
     };
 
     try {
