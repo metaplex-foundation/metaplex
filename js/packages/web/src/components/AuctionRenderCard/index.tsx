@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardProps } from 'antd';
-import { BidStateType, CountdownState } from '@oyster/common';
 import { ArtContent } from '../ArtContent';
 import { AuctionView, useArt, useCreators } from '../../hooks';
 import { AmountLabel } from '../AmountLabel';

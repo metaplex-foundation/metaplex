@@ -195,6 +195,7 @@ pub fn process_update_metadata_accounts(
                 &metadata,
                 false,
                 update_authority_info.is_signer,
+                true
             )?;
             metadata.data = data;
         } else {

@@ -429,7 +429,8 @@ export const AuctionCard = ({
     (auctionView.vault.info.state === VaultState.Deactivated &&
       isBidderPotEmpty);
 
-  const { canEndInstantSale } = useInstantSaleState(auctionView);
+  const { canEndInstantSale, isAlreadyBought } =
+    useInstantSaleState(auctionView);
 
   const actionButtonContent = useActionButtonContent(auctionView);
 
@@ -720,7 +721,8 @@ export const AuctionCard = ({
           ) : loading ? (
             <Spin />
           ) : (
-            auctionView.isInstantSale && (
+            auctionView.isInstantSale &&
+            !isAlreadyBought && (
               <Button
                 type="primary"
                 size="large"
