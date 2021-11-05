@@ -7,8 +7,8 @@ import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
 type P = {
-  logo: string
-}
+  logo: string;
+};
 
 export const AppBar = (props: P) => {
   const { connected, publicKey } = useWallet();

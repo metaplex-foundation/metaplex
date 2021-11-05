@@ -369,18 +369,18 @@ function InnerAdminView({
             </Row>
           </Col>
           <Col span={24}>
-          <Table
-            columns={columns}
-            dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-              key,
-              address: uniqueCreatorsWithUpdates[key].address,
-              activated: uniqueCreatorsWithUpdates[key].activated,
-              name:
-                uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(uniqueCreatorsWithUpdates[key].address),
-              image: uniqueCreatorsWithUpdates[key].image,
-            }))}
-          />
+            <Table
+              columns={columns}
+              dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+                key,
+                address: uniqueCreatorsWithUpdates[key].address,
+                activated: uniqueCreatorsWithUpdates[key].activated,
+                name:
+                  uniqueCreatorsWithUpdates[key].name ||
+                  shortenAddress(uniqueCreatorsWithUpdates[key].address),
+                image: uniqueCreatorsWithUpdates[key].image,
+              }))}
+            />
           </Col>
         </Row>
       </Col>

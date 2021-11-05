@@ -1,7 +1,6 @@
 import { Storefront } from '@oyster/common';
 import { Layout } from 'antd';
 import React, { ReactNode } from 'react';
-import { StorefrontNotificationType } from '../../hooks';
 import { AppBar } from '../AppBar';
 
 const { Header, Content } = Layout;
