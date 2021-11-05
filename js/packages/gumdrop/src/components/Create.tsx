@@ -177,6 +177,7 @@ const hyperLinkData = (data) => {
 };
 
 const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) => {
+  const limit = 1000;
   return ({ show, onSubmit, onDismiss }) => {
     return (
       <DefaultModal visible={show} onCancel={onDismiss} width="70ch">
@@ -187,7 +188,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
             fontSize: 20,
           }}
         >
-          Claim Distribution Preview
+          Claim Distribution Preview{claimants.length > limit ? ` (First ${limit})` : ""}
         </h2>
         <p style={{ color: "white", fontSize: 14, textAlign: "center" }}>
           Approving will save the keypair authority generated for gumdrop
@@ -215,7 +216,7 @@ const shouldSendRender = (claimants, needsPin, claimMethod, claimInfo, baseKey) 
               </TableRow>
             </TableHead>
             <TableBody>
-              {claimants.map((c, idx) => (
+              {claimants.slice(0, limit).map((c, idx) => (
                 <TableRow
                   key={idx}
                   sx={{ 'td, th': { border: 0 } }}
