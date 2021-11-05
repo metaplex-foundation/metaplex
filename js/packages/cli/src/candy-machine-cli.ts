@@ -459,6 +459,8 @@ programCommand('show')
       log.info('price: ', machine.data.price.toNumber());
       //@ts-ignore
       log.info('itemsAvailable: ', machine.data.itemsAvailable.toNumber());
+      //@ts-ignore
+      log.info('itemsRedeemed: ', machine.itemsRedeemed.toNumber());
       log.info(
         'goLiveDate: ',
         //@ts-ignore
