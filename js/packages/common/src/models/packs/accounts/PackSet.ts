@@ -48,9 +48,9 @@ export class PackSet {
     this.key = PackKey.PackSet;
     this.store = args.store;
     this.authority = args.authority;
-    this.description = args.description;
-    this.uri = args.uri;
-    this.name = new TextDecoder().decode(args.name);
+    this.description = args.description.replace(/\0/g, '');
+    this.uri = args.uri.replace(/\0/g, '');
+    this.name = new TextDecoder().decode(args.name).replace(/\0/g, '');
     this.packCards = args.packCards;
     this.packVouchers = args.packVouchers;
     this.totalEditions = args.totalEditions;
