@@ -1,11 +1,10 @@
 {
-  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es5",
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "es5"
     ],
     "allowJs": true,
     "skipLibCheck": true,
