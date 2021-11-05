@@ -8,6 +8,11 @@ const where = <T extends { clone: () => T }>(t: T, by: (t: T) => void) => {
   return ret;
 };
 
+// Linear interpolation between a and b by t.
+const lerp = (a: number, b: number, t: number) => a + t * (b - a);
+const lerpVec = <T extends Vector3>(a: T, b: T, t: number): T =>
+  a.clone().addScaledVector(b.clone().sub(a), t);
+
 class Lab extends Vector3 {
   get l(): number {
     return this.x;
@@ -70,54 +75,76 @@ const WHITE = Object.freeze(new Color('white'));
 const BLACK_LAB = Object.freeze(oklab(BLACK));
 const WHITE_LAB = Object.freeze(oklab(WHITE));
 
+// https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
+const relativeLuma = (lab: Lab) => {
+  // TODO: unnecessary conversion
+  const { r, g, b } = unOklab(lab).convertSRGBToLinear();
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+// https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio
+const contrastRatio = (a: Lab, b: Lab) => {
+  let l1 = relativeLuma(a);
+  let l2 = relativeLuma(b);
+
+  if (l2 > l1) [l2, l1] = [l1, l2];
+
+  return (l1 + 0.05) / (l2 + 0.05);
+};
+
+/** Whether dark text or light text would work better against a background by the WCAG standard */
 const isLight = (clr: Lab) =>
-  clr.distanceTo(BLACK_LAB) > clr.distanceTo(WHITE_LAB);
+  contrastRatio(BLACK_LAB, clr) > contrastRatio(WHITE_LAB, clr);
 
+/** Generate a color further from the given background color */
 const bolder = (clr: Lab, by: number) =>
-  where(clr, c => (c.l += isLight(c) ? -by : by));
-const fainter = (clr: Lab, by: number) =>
-  where(clr, c => (c.l += isLight(c) ? by : -by));
+  where(clr, c => (c.l = lerp(c.l, isLight(c) ? 0 : 1, by)));
 
+/** Generate a color closer to the given background color */
+const fainter = (clr: Lab, by: number) =>
+  where(clr, c => (c.l = lerp(c.l, isLight(c) ? 1 : 0, by)));
+
+/** Generate a suitable text color from an intended background color */
+const textColor = (clr: Lab) =>
+  lerpVec(clr, isLight(clr) ? BLACK_LAB : WHITE_LAB, 0.85);
+
+/** Apply the relevant CSS variables for a storefront theme */
 export const applyTheme = (
   theme: StorefrontTheme,
   output: CSSStyleDeclaration,
 ) => {
-  const base = new Color(theme.color.background);
-  const accent = new Color(theme.color.primary);
+  const base = Object.freeze(new Color(theme.color.background));
+  const accent = Object.freeze(new Color(theme.color.primary));
 
-  const baseLab = oklab(base);
-  const accentLab = oklab(accent);
+  const baseLab = Object.freeze(oklab(base));
+  const accentLab = Object.freeze(oklab(accent));
 
-  const baseText = isLight(baseLab) ? BLACK : WHITE;
-  // const baseTextLab = isLight(baseLab) ? BLACK_LAB : WHITE_LAB;
+  const baseBoldLab = bolder(baseLab, 0.1);
+  const baseFaintLab = fainter(baseLab, 0.1);
+  const borderLab = bolder(baseLab, 0.2);
 
-  const accentText = isLight(accentLab) ? BLACK : WHITE;
+  const accentBoldLab = bolder(accentLab, 0.1);
+  const accentFaintLab = fainter(accentLab, 0.1);
+
+  const textLab = textColor(baseBoldLab);
+  const textFaintLab = lerpVec(textLab, baseLab, 0.4);
+  const textAccentLab = textColor(accentLab);
 
   output.setProperty('--color-base', base.getStyle());
-  output.setProperty(
-    '--color-base-bold',
-    unOklab(bolder(baseLab, 0.1)).getStyle(),
-  );
-  output.setProperty(
-    '--color-base-faint',
-    unOklab(fainter(baseLab, 0.1)).getStyle(),
-  );
+  output.setProperty('--color-base-bold', unOklab(baseBoldLab).getStyle());
+  output.setProperty('--color-base-faint', unOklab(baseFaintLab).getStyle());
 
-  output.setProperty(
-    '--color-border',
-    unOklab(bolder(baseLab, 0.2)).getStyle(),
-  );
+  output.setProperty('--color-border', unOklab(borderLab).getStyle());
 
   output.setProperty('--color-accent', accent.getStyle());
-  output.setProperty(
-    '--color-accent-bold',
-    unOklab(bolder(accentLab, 0.1)).getStyle(),
-  );
+  output.setProperty('--color-accent-bold', unOklab(accentBoldLab).getStyle());
   output.setProperty(
     '--color-accent-faint',
-    unOklab(fainter(accentLab, 0.1)).getStyle(),
+    unOklab(accentFaintLab).getStyle(),
   );
 
-  output.setProperty('--color-text', baseText.getStyle());
-  output.setProperty('--color-text-accent', accentText.getStyle());
+  output.setProperty('--color-text', unOklab(textLab).getStyle());
+  output.setProperty('--color-text-faint', unOklab(textFaintLab).getStyle());
+  output.setProperty('--color-text-accent', unOklab(textAccentLab).getStyle());
 };

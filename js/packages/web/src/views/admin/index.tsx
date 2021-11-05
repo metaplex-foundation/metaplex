@@ -478,6 +478,7 @@ function InnerAdminView({
           <Space direction="vertical" size="middle" align="center">
             <Progress
               type="circle"
+              status="normal"
               percent={(auctionCacheTotal / auctionManagerTotal) * 100}
               format={() => `${auctionManagersToCache.length} left`}
             />
