@@ -28,6 +28,24 @@
   border-color: @theme-color-border;
 }
 
+.ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-tail::after,
+.ant-steps-item-process
+  > .ant-steps-item-container
+  > .ant-steps-item-tail::after,
+.ant-steps-item-wait
+  .ant-steps-item-icon
+  > .ant-steps-icon
+  .ant-steps-icon-dot {
+  background-color: @theme-color-border;
+}
+
+.ant-steps-item-wait
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: @theme-color-text-faint;
+}
+
 .ant-select-item {
   transition-property: background, color;
 }
