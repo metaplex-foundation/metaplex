@@ -676,7 +676,10 @@ export const Create = (
             variant="text"
             component="label"
             disabled={true}
-            style={{padding: 0}}
+            style={{
+              padding: 0,
+              color: "#eee",
+            }}
           >
             or drag it here
           </Button>
@@ -689,7 +692,7 @@ export const Create = (
             disabled={true}
             style={{
               padding: 0,
-              // textTransform: 'none',
+              color: "#eee",
             }}
           >
             <FilePresentIcon />

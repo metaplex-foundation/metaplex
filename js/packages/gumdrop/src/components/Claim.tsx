@@ -1026,7 +1026,12 @@ export const Claim = (
         disabled={!editable}
       />
       <FormControl fullWidth>
-        <InputLabel id="claim-method-label">Claim Method</InputLabel>
+        <InputLabel
+          id="claim-method-label"
+          disabled={!editable}
+        >
+          Claim Method
+        </InputLabel>
         <Select
           labelId="claim-method-label"
           id="claim-method-select"
