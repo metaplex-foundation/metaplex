@@ -112,10 +112,20 @@ const textColor = (clr: Lab) =>
 /** Apply the relevant CSS variables for a storefront theme */
 export const applyTheme = (
   theme: StorefrontTheme,
-  output: CSSStyleDeclaration,
+  vars: CSSStyleDeclaration,
+  head: Node,
 ) => {
-  const base = Object.freeze(new Color(theme.color.background));
-  const accent = Object.freeze(new Color(theme.color.primary));
+  applyThemeColors(theme.color, vars);
+  return applyThemeFonts(theme.font, vars, head);
+};
+
+/** Apply the colors from a storefront theme */
+const applyThemeColors = (
+  { background, primary }: StorefrontTheme['color'],
+  vars: CSSStyleDeclaration,
+) => {
+  const base = Object.freeze(new Color(background));
+  const accent = Object.freeze(new Color(primary));
 
   const baseLab = Object.freeze(oklab(base));
   const accentLab = Object.freeze(oklab(accent));
@@ -131,20 +141,63 @@ export const applyTheme = (
   const textFaintLab = lerpVec(textLab, baseLab, 0.4);
   const textAccentLab = textColor(accentLab);
 
-  output.setProperty('--color-base', base.getStyle());
-  output.setProperty('--color-base-bold', unOklab(baseBoldLab).getStyle());
-  output.setProperty('--color-base-faint', unOklab(baseFaintLab).getStyle());
+  vars.setProperty('--color-base', base.getStyle());
+  vars.setProperty('--color-base-bold', unOklab(baseBoldLab).getStyle());
+  vars.setProperty('--color-base-faint', unOklab(baseFaintLab).getStyle());
 
-  output.setProperty('--color-border', unOklab(borderLab).getStyle());
+  vars.setProperty('--color-border', unOklab(borderLab).getStyle());
 
-  output.setProperty('--color-accent', accent.getStyle());
-  output.setProperty('--color-accent-bold', unOklab(accentBoldLab).getStyle());
-  output.setProperty(
-    '--color-accent-faint',
-    unOklab(accentFaintLab).getStyle(),
-  );
+  vars.setProperty('--color-accent', accent.getStyle());
+  vars.setProperty('--color-accent-bold', unOklab(accentBoldLab).getStyle());
+  vars.setProperty('--color-accent-faint', unOklab(accentFaintLab).getStyle());
 
-  output.setProperty('--color-text', unOklab(textLab).getStyle());
-  output.setProperty('--color-text-faint', unOklab(textFaintLab).getStyle());
-  output.setProperty('--color-text-accent', unOklab(textAccentLab).getStyle());
+  vars.setProperty('--color-text', unOklab(textLab).getStyle());
+  vars.setProperty('--color-text-faint', unOklab(textFaintLab).getStyle());
+  vars.setProperty('--color-text-accent', unOklab(textAccentLab).getStyle());
+};
+
+const FONTS_ID = '--holaplex-theme-fonts';
+
+const FONT_STACKS: Record<string, string[] | undefined> = {
+  Merriweather: ['serif'],
+  'Playfair Display': ['serif'],
+  'Noto Serif': ['serif'],
+  Domine: ['serif'],
+};
+
+const fontStack = (font: string) => [
+  font,
+  ...(FONT_STACKS[font] ?? ['sans-serif']),
+];
+
+const formatFontStack = (stack: string[]) =>
+  stack.map(s => (/\s/.test(s) ? `'${s.replace(/'/g, "\\'")}'` : s)).join(', ');
+
+const applyThemeFonts = (
+  { title, text }: StorefrontTheme['font'],
+  vars: CSSStyleDeclaration,
+  head: Node,
+) => {
+  const titleStack = fontStack(title);
+  const textStack = fontStack(text);
+
+  vars.setProperty('--family-title', formatFontStack(titleStack));
+  vars.setProperty('--family-text', formatFontStack(textStack));
+
+  const link =
+    (document.getElementById(FONTS_ID) as HTMLLinkElement) ??
+    document.createElement('link');
+
+  const fontIds = [title, text]
+    .map(s => s.replace(/\s+/g, '+'))
+    .join('&family=');
+
+  link.id = FONTS_ID;
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = `https://fonts.googleapis.com/css2?family=${fontIds}&display=swap`;
+
+  head.appendChild(link);
+
+  return () => link.remove();
 };
