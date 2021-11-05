@@ -1,12 +1,12 @@
 // This file contains patches to the antd stylesheet specifically for themed colors
 
 .ant-switch-checked .ant-switch-inner {
-  color: @theme-text-accent;
+  color: @theme-color-text-accent;
 }
 
 .ant-typography.ant-typography-secondary,
 .ant-select-single.ant-select-open .ant-select-selection-item {
-  color: @theme-text-faint;
+  color: @theme-color-text-faint;
 }
 
 .ant-btn-primary[disabled],
@@ -15,8 +15,8 @@
   &:hover,
   &:focus,
   &:active {
-    color: @theme-text-faint;
-    stroke: @theme-text-faint;
+    color: @theme-color-text-faint;
+    stroke: @theme-color-text-faint;
   }
 }
 
@@ -25,7 +25,7 @@
 .ant-card-bordered,
 .ant-table-thead > tr > th,
 .ant-table-tbody > tr > td {
-  border-color: @theme-border;
+  border-color: @theme-color-border;
 }
 
 .ant-select-item {
@@ -33,17 +33,17 @@
 }
 
 .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-  background: @theme-accent-bold;
-  color: @theme-text-accent;
+  background: @theme-color-accent-bold;
+  color: @theme-color-text-accent;
 }
 
 .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-  background: @theme-accent;
-  color: @theme-text-accent;
+  background: @theme-color-accent;
+  color: @theme-color-text-accent;
   font-weight: inherit;
 }
 
 .ant-progress-circle-trail {
-  stroke: @theme-text;
+  stroke: @theme-color-text;
   opacity: 0.1;
 }

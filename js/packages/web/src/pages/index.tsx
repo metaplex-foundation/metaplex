@@ -65,8 +65,10 @@ function App({ storefront }: AppProps) {
   useEffect(() => {
     const doc = document.documentElement;
 
-    applyTheme(storefront.theme, doc.style);
+    const cleanup = applyTheme(storefront.theme, doc.style, document.head);
     setHasStylesheet(true);
+
+    return cleanup;
   }, []);
 
   useEffect(() => {
