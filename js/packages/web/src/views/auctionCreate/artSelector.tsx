@@ -1,4 +1,4 @@
-import { Button, Card, Modal, Row } from 'antd';
+import { Button, Card, Col, Modal, Row } from 'antd';
 import React, { ReactNode, useMemo, useState } from 'react';
 import { SafetyDepositDraft } from '../../actions/createAuctionManager';
 import { MetaplexMasonry } from '../../components/MetaplexMasonry';
@@ -83,8 +83,9 @@ export const ArtSelector = ({
         footer={null}
       >
         <Row>
-          <h2>Select the NFT you want to sell</h2>
-          <p>Select the NFT that you want to sell copy/copies of.</p>
+          <Col> 
+            <h2>Select the NFT you want to sell</h2>
+          </Col>
         </Row>
         <Row>
           <MetaplexMasonry>

@@ -53,15 +53,6 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
                 </Button>
               </Link>
             )}
-            <Link to="/auction/create/0">
-              <Button
-                onClick={() => {
-                  props.onClick ? props.onClick() : null;
-                }}
-              >
-                Sell
-              </Button>
-            </Link>
           </div>
         ) : (
           <div>
@@ -73,9 +64,6 @@ const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
                 &nbsp;&nbsp;
               </>
             )}
-            <Link to="/auction/create/0">
-              <Button>Sell</Button>
-            </Link>
           </div>
         ))}
     </>
