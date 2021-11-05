@@ -23,6 +23,7 @@ import React, {
 import { Link } from 'react-router-dom';
 import { useMeta, useSolPrice } from '../../contexts';
 import { SolCircle } from '../Custom';
+import CogSvg from '../svgs/cog'
 
 const UserActions = (props: { mobile?: boolean; onClick?: () => void }) => {
   const { publicKey } = useWallet();
@@ -240,7 +241,7 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
       }
     >
       <Button type={buttonType}>
-        <img className="cog" src="/cog.svg" />
+        <CogSvg />
       </Button>
     </Popover>
   );
