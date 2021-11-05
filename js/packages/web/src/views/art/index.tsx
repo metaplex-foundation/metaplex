@@ -82,8 +82,6 @@ export const ArtView = () => {
     <Row ref={ref} gutter={32}>
       <Col xs={{ span: 24 }} md={{ span: 12 }}>
         <ArtContent
-          height={300}
-          width={300}
           pubkey={id}
           active={true}
           allowMeshRender={true}

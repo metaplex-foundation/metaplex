@@ -62,8 +62,6 @@ export const ArtworksView = () => {
                     key={id}
                     pubkey={m.metadata.pubkey}
                     preview={false}
-                    height={250}
-                    width={250}
                   />
                 </Link>
               );
