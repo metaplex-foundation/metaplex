@@ -20,6 +20,7 @@ export async function cacheAuctionIndexer(
   auctionManager: StringPublicKey,
   tokenMints: StringPublicKey[],
   storeIndexer: ParsedAccount<StoreIndexer>[],
+  offset: number,
   skipCache?: boolean,
 ): Promise<{
   instructions: TransactionInstruction[][];
@@ -43,9 +44,10 @@ export async function cacheAuctionIndexer(
   );
 
   const above =
-    storeIndexer.length == 0
+    storeIndexer.length === 0
       ? undefined
-      : storeIndexer[0].info.auctionCaches[0];
+      : storeIndexer[0].info.auctionCaches[offset];
+  const below = storeIndexer[0].info.auctionCaches[offset - 1];
 
   const storeIndexKey = await getStoreIndexer(0);
   await setStoreIndex(
@@ -53,9 +55,9 @@ export async function cacheAuctionIndexer(
     auctionCache,
     payer,
     new BN(0),
-    new BN(0),
+    new BN(offset),
     instructions,
-    undefined,
+    below,
     above,
   );
 

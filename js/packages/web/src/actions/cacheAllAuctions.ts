@@ -1,4 +1,5 @@
 import { Connection } from '@solana/web3.js';
+import { findIndex } from 'lodash';
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -32,18 +33,31 @@ export async function cacheAllAuctions(
     await loadSafeteyDepositBoxesForVaults(connection, vaultPubKeys);
   let storeIndex = [...storeIndexer];
   for (const auctionManager of auctionManagers) {
+    if (auctionManager.info.key !== MetaplexKey.AuctionManagerV2) {
+      return;
+    }
     const boxes: ParsedAccount<SafetyDepositBox>[] = buildListWhileNonZero(
       safetyDepositBoxesByVaultAndIndex,
       auctionManager.info.vault,
     );
 
-    if (auctionManager.info.key !== MetaplexKey.AuctionManagerV2) {
-      return;
-    }
-
     const auctionCachePubkey = await getAuctionCache(
       auctionManager.info.auction,
     );
+    const auctionCache = auctionCaches[auctionCachePubkey];
+    const cacheExists = !!auctionCache;
+    const activeIndex = storeIndex[0];
+    const offset = findIndex(activeIndex.info.auctionCaches, pubkey => {
+      const cache = auctionCaches[pubkey];
+
+      if (!cacheExists) {
+        return true;
+      }
+
+      return (
+        auctionCache.info.timestamp.toNumber() > cache.info.timestamp.toNumber()
+      );
+    });
 
     const { instructions, signers } = await cacheAuctionIndexer(
       wallet,
@@ -52,7 +66,8 @@ export async function cacheAllAuctions(
       auctionManager.pubkey,
       boxes.map(a => a.info.tokenMint),
       storeIndex,
-      !!auctionCaches[auctionCachePubkey],
+      offset,
+      cacheExists,
     );
 
     await sendTransactions(

@@ -73,6 +73,7 @@ export async function setStoreIndex(
       isWritable: false,
     });
   }
+
   instructions.push(
     new TransactionInstruction({
       keys,
