@@ -1,11 +1,15 @@
 import log from 'loglevel';
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 
-import { ClaimantInfo } from "./claimant"
+import {
+  ClaimantInfo,
+  Claimants,
+} from "./claimant"
 
 export type AuthKeys = { [key: string] : string }
+export type Response = { [key: string] : any }
 
-type DropInfo = {
+export type DropInfo = {
   type : string,
   meta : string,
 };
@@ -37,7 +41,15 @@ const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
   }
 };
 
-export const setupSes = (auth : AuthKeys, source : string) => {
+export const distributeAwsSes = async (
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) => {
+  if (!auth.accessKeyId || !auth.secretAccessKey) {
+    throw new Error("AWS SES auth keys not supplied");
+  }
   log.debug("SES auth", auth);
   const client = new SESv2Client({
     region: "us-east-2",
@@ -48,7 +60,7 @@ export const setupSes = (auth : AuthKeys, source : string) => {
   });
 
   // TODO: move to template + bulk message?
-  return async (
+  const single = async (
     info : ClaimantInfo,
     drop : DropInfo,
   ) => {
@@ -88,36 +100,50 @@ export const setupSes = (auth : AuthKeys, source : string) => {
 
     try {
       const response = await client.send(new SendEmailCommand(message));
-      log.debug(response);
-      if (response.$metadata.httpStatusCode !== 200) {
-      //   throw new Error(`AWS SES ssemed to fail to send email: ${response[0].reject_reason}`);
-      }
+      return {
+        status: "success",
+        handle: info.handle,
+        messageId: response.MessageId,
+      };
     } catch (err) {
-      console.error(err);
+      return {
+        status: "error",
+        handle: info.handle,
+        error: err,
+      };
     }
   };
+
+  const responses = Array<Response>();
+  for (const c of claimants) {
+    responses.push(await single(c, drop));
+  }
+  return responses;
 }
 
-export const setupManual = (auth : AuthKeys, source : string) => {
-  return async (
-    info : ClaimantInfo,
-    mintUrl: string,
-  ) => {
-  };
+export const distributeManual = async (
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) => {
+  return Array<Response>();
 }
 
-export const setupWalletListUpload = (auth : AuthKeys, source : string) => {
-  return async (
-    info : ClaimantInfo,
-    mintUrl: string,
-  ) => {
-  };
+export const distributeWallet = async (
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) => {
+  return Array<Response>();
 }
 
 export const urlAndHandleFor = (claimants : Array<ClaimantInfo>) => {
   return claimants.map(info => {
     return {
       handle: info.handle,
+      amount: info.amount,
       url: info.url,
     };
   });

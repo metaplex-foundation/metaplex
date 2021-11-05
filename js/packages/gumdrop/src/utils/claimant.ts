@@ -58,15 +58,33 @@ export const parseClaimants = (
   });
 };
 
-const explorerUrlFor = (env : string, key : PublicKey) => {
-  return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${env}`;
+const explorerUrlFor = (env : string, key : string) => {
+  return `https://explorer.solana.com/address/${key}?cluster=${env}`;
 }
 
 export type ClaimInfo = { [key: string]: any };
 
+export const dropInfoFor = (
+  env : string,
+  integration : string,
+  tokenMint : string,
+  candyConfig : string,
+  masterMint : string,
+) => {
+  switch (integration) {
+    case "transfer":
+      return { type: "Token", meta: explorerUrlFor(env, tokenMint) };
+    case "candy":
+      return { type: "Candy", meta: explorerUrlFor(env, candyConfig) };
+    case "edition":
+      return { type: "Edition", meta: explorerUrlFor(env, masterMint) };
+    default:
+      throw new Error(`Unknown claim integration method ${integration}`);
+  }
+}
+
 export const validateTransferClaims = async (
   connection : RPCConnection,
-  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   mintStr : string,
@@ -90,13 +108,11 @@ export const validateTransferClaims = async (
     total: total,
     mint: mint,
     source: source,
-    info: { type: "Token", meta: explorerUrlFor(env, mint.key) },
   };
 }
 
 export const validateCandyClaims = async (
   connection : RPCConnection,
-  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   candyConfig : string,
@@ -132,7 +148,6 @@ export const validateCandyClaims = async (
     config: configKey,
     uuid: candyUuid,
     candyMachineKey: candyMachineKey,
-    info: { type: "Candy", meta: explorerUrlFor(env, configKey) },
   };
 }
 
@@ -168,7 +183,6 @@ const setEditionTaken = (marker : Array<number>, edition : BN) => {
 
 export const validateEditionClaims = async (
   connection : RPCConnection,
-  env : string,
   walletKey : PublicKey,
   claimants : Claimants,
   masterMintStr : string,
@@ -262,7 +276,6 @@ export const validateEditionClaims = async (
     total: total,
     masterMint: masterMint,
     masterTokenAccount: masterTokenAccount,
-    info: { type: "Edition", meta: explorerUrlFor(env, masterMint.key) },
   };
 }
 

@@ -26,17 +26,21 @@ import * as crypto from "crypto";
 
 import {
   ClaimantInfo,
+  Claimants,
   buildGumdrop,
   closeGumdrop,
+  dropInfoFor,
   parseClaimants,
   validateTransferClaims,
   validateCandyClaims,
   validateEditionClaims,
 } from "./utils/claimant";
 import {
-  setupSes,
-  setupManual,
-  setupWalletListUpload,
+  AuthKeys,
+  DropInfo,
+  distributeAwsSes,
+  distributeManual,
+  distributeWallet,
   urlAndHandleFor,
 } from "./utils/communication";
 import {
@@ -139,26 +143,17 @@ programCommand('create')
       throw new Error("No host website specified");
     }
 
-    let temporalSigner, sender;
+    let temporalSigner;
     switch (options.distributionMethod) {
       case "wallets": {
-        sender = setupWalletListUpload({}, "");
         temporalSigner = GUMDROP_DISTRIBUTOR_ID;
         break;
       }
       case "manual": {
-        sender = setupManual({}, "");
         temporalSigner = getTemporalSigner(options.manualOtpAuth);
         break;
       }
       case "aws": {
-        sender = setupSes(
-          {
-            accessKeyId: options.awsSesAccessKeyId,
-            secretAccessKey: options.awsSesSecretAccessKey,
-          },
-          "santa@aws.metaplex.com",
-        );
         temporalSigner = getTemporalSigner(options.awsOtpAuth);
         break;
       }
@@ -182,12 +177,50 @@ programCommand('create')
       throw new Error(`No claimants provided`);
     }
 
+    const dropInfo = dropInfoFor(
+      options.env,
+      options.claimIntegration,
+      options.transferMint,
+      options.candyConfig,
+      options.editionMint
+    );
+
+    const distribute = (claimants : Claimants) => {
+      switch (options.distributionMethod) {
+        case "wallets":
+          return distributeWallet({}, "", claimants, dropInfo);
+        case "manual":
+          return distributeManual({}, "", claimants, dropInfo);
+        case "aws":
+          return distributeAwsSes(
+            {
+              accessKeyId: options.awsSesAccessKeyId,
+              secretAccessKey: options.awsSesSecretAccessKey,
+            },
+            "santa@aws.metaplex.com",
+            claimants,
+            dropInfo
+          );
+      }
+    }
+
+    if (options.resendOnly) {
+      if (claimants.some(c => typeof c.url !== "string")) {
+        throw new Error("Specified resend only but not all claimants have a 'url'");
+      }
+      const responses = distribute(claimants);
+      // TODO: old path.1?
+      const respPath = logPath(options.env, `resp-${Keypair.generate().publicKey.toBase58()}.json`);
+      console.log(`writing responses to ${respPath}`);
+      fs.writeFileSync(respPath, JSON.stringify(responses));
+      return;
+    }
+
     let claimInfo;
     switch (options.claimIntegration) {
       case "transfer": {
         claimInfo = await validateTransferClaims(
           connection,
-          options.env,
           wallet.publicKey,
           claimants,
           options.transferMint,
@@ -197,7 +230,6 @@ programCommand('create')
       case "candy": {
         claimInfo = await validateCandyClaims(
           connection,
-          options.env,
           wallet.publicKey,
           claimants,
           options.candyConfig,
@@ -208,7 +240,6 @@ programCommand('create')
       case "edition": {
         claimInfo = await validateEditionClaims(
           connection,
-          options.env,
           wallet.publicKey,
           claimants,
           options.editionMint,
@@ -219,15 +250,6 @@ programCommand('create')
         throw new Error(
           "Claim integration must either be 'transfer', 'candy', or 'edition'.",
         );
-    }
-
-    if (options.resendOnly) {
-      if (claimants.some(c => typeof c.url !== "string")) {
-        throw new Error("Specified resend only but not all claimants have a 'url'");
-      }
-      for (const c of claimants) {
-        await sender(c, claimInfo.info);
-      }
     }
 
     claimants.forEach(c => {
@@ -279,9 +301,10 @@ programCommand('create')
     }
 
     console.log("distributing claim URLs");
-    for (const c of claimants) {
-      await sender(c, claimInfo.info);
-    }
+    const responses = distribute(claimants);
+    const respPath = logPath(options.env, `resp-${base.publicKey.toBase58()}.json`);
+    console.log(`writing responses to ${respPath}`);
+    fs.writeFileSync(respPath, JSON.stringify(responses));
   });
 
 

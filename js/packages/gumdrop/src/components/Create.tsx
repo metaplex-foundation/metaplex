@@ -45,7 +45,9 @@ import {
 } from "../utils";
 import {
   ClaimantInfo,
+  Claimants,
   buildGumdrop,
+  dropInfoFor,
   parseClaimants,
   validateTransferClaims,
   validateCandyClaims,
@@ -53,9 +55,11 @@ import {
 } from "../utils/claimant";
 import {
   AuthKeys,
-  setupSes,
-  setupManual,
-  setupWalletListUpload,
+  DropInfo,
+  Response as DResponse,
+  distributeAwsSes,
+  distributeManual,
+  distributeWallet,
   urlAndHandleFor,
 } from "../utils/communication";
 import {
@@ -75,17 +79,19 @@ const randomBytes = () : Uint8Array => {
 
 const WHITESPACE = "\u00A0";
 
-const setupSender = (
+const distribute = (
   method : string,
   auth : AuthKeys,
   source : string,
+  claimants : Claimants,
+  drop : DropInfo,
 ) => {
   if (method === "AWS SES") {
-    return setupSes(auth, source);
+    return distributeAwsSes(auth, source, claimants, drop);
   } else if (method === "Manual") {
-    return setupManual(auth, source);
+    return distributeManual(auth, source, claimants, drop);
   } else if (method === "Wallets") {
-    return setupWalletListUpload(auth, source);
+    return distributeWallet(auth, source, claimants, drop);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
@@ -280,7 +286,10 @@ export const Create = (
   const [masterMint, setMasterMint] = React.useState(localStorage.getItem("masterMint") || "");
   const [filename, setFilename] = React.useState("");
   const [text, setText] = React.useState("");
-  const [claimURLs, setClaimURLs] = React.useState<Array<{ [key: string]: string }>>([]);
+
+  // response state
+  const [claimURLs, setClaimURLs] = React.useState<Array<{ [key: string]: any }>>([]);
+  const [responses, setResponses] = React.useState<Array<DResponse>>([]);
 
   // auth state
   const [otpAuth, setOtpAuth] = React.useState(localStorage.getItem("otpAuth") || "default");
@@ -295,17 +304,18 @@ export const Create = (
     return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
   }
 
-  const distributeClaims = async (claimants, claimInfo) => {
-    const sender = setupSender(commMethod, commAuth, commSource);
-    for (const c of claimants) {
-      await sender(c, claimInfo.info);
-    }
+  const distributeClaims = async (claimants, drop) => {
+    const responses = await distribute(
+      commMethod, commAuth, commSource, claimants, drop);
 
-    // notify if the above routine is actually supposed to do any notification
+    console.log("Responses", responses);
+    setResponses(responses);
+
+    // notify if the above routine is actually supposed to do anything
     // (manual and wallet do nothing atm)
     if (commMethod === "AWS SES") {
       notify({
-        message: "Gumdrop email distribution succeeded",
+        message: "Gumdrop email distribution completed",
       });
     }
   }
@@ -314,6 +324,7 @@ export const Create = (
     e.preventDefault();
 
     setClaimURLs([]);
+    setResponses([]);
 
     if (!wallet.connected || wallet.publicKey === null) {
       throw new Error(`Wallet not connected`);
@@ -324,12 +335,31 @@ export const Create = (
       throw new Error(`No claimants provided`);
     }
 
+    const dropInfo = dropInfoFor(envFor(connection), claimMethod, mint, candyConfig, masterMint);
+    const mightHaveExisting = (info : ClaimantInfo) => {
+      return info.url !== undefined && info.url !== null;
+    };
+    if (claimants.reduce((acc, c) => acc && mightHaveExisting(c), true)) {
+      const resendOnly = await reactModal(resendOnlyRender);
+      console.log("Resend only", resendOnly);
+      if (resendOnly === "send") {
+        setClaimURLs(urlAndHandleFor(claimants));
+        await distributeClaims(claimants, dropInfo);
+        return;
+      } else if (resendOnly === "create") {
+        // fallthrough to full create
+      } else {
+        // dismissed. don't use exceptions for control flow?
+        throw new Error("Dismissed");
+      }
+    }
+
+
     let claimInfo;
     switch (claimMethod) {
       case "transfer": {
         claimInfo = await validateTransferClaims(
           connection,
-          envFor(connection),
           wallet.publicKey,
           claimants,
           mint,
@@ -339,7 +369,6 @@ export const Create = (
       case "candy": {
         claimInfo = await validateCandyClaims(
           connection,
-          envFor(connection),
           wallet.publicKey,
           claimants,
           candyConfig,
@@ -350,7 +379,6 @@ export const Create = (
       case "edition": {
         claimInfo = await validateEditionClaims(
           connection,
-          envFor(connection),
           wallet.publicKey,
           claimants,
           masterMint,
@@ -361,29 +389,6 @@ export const Create = (
         throw new Error(`Unknown claim method ${claimMethod}`);
     }
     console.log("Claims info", claimInfo);
-
-
-    const mightHaveExisting = (info : ClaimantInfo) => {
-      // TODO: others?
-      return info.url !== undefined && info.url !== null;
-    };
-    if (claimants.reduce((acc, c) => acc && mightHaveExisting(c), true)) {
-      // TODO: more validation of URLs? The creator is using they're own
-      // credentials to re-send so if they're malicious it's not that bad
-      // right?...
-      const resendOnly = await reactModal(resendOnlyRender);
-      console.log("Resend only", resendOnly);
-      if (resendOnly === "send") {
-        setClaimURLs(urlAndHandleFor(claimants));
-        await distributeClaims(claimants, claimInfo);
-        return;
-      } else if (resendOnly === "create") {
-        // fallthrough to full create
-      } else {
-        // dismissed. don't use exceptions for control flow?
-        throw new Error("Dismissed");
-      }
-    }
 
     claimants.forEach(c => {
       c.pin = new BN(randomBytes());
@@ -461,7 +466,7 @@ export const Create = (
     }
 
     console.log("Distributing claim URLs");
-    await distributeClaims(claimants, claimInfo);
+    await distributeClaims(claimants, dropInfo);
   };
 
   const handleFiles = (files) => {
@@ -831,6 +836,21 @@ export const Create = (
             style={{width: "100%"}}
           >
             Download claim URLs
+          </Button>
+        </HyperLink>
+      )}
+      {responses.length > 0 && (
+        <HyperLink
+          href={hyperLinkData(responses)}
+          download="responses.json"
+          underline="none"
+          style={{width: "100%"}}
+        >
+          <Button
+            variant="contained"
+            style={{width: "100%"}}
+          >
+            Download distribution responses
           </Button>
         </HyperLink>
       )}
