@@ -240,7 +240,7 @@ export const Cog = ({ buttonType }: { buttonType?: ButtonProps['type'] }) => {
       }
     >
       <Button type={buttonType}>
-        <img src="/cog.svg" />
+        <img className="cog" src="/cog.svg" />
       </Button>
     </Popover>
   );

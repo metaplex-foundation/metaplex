@@ -259,7 +259,7 @@ export function Notifications({
   const justContent = (
     <Popover placement="bottomRight" content={content} trigger="click">
       <Button type={buttonType}>
-        <img src="/bell.svg" />
+        <img className="bell" src="/bell.svg" />
       </Button>
     </Popover>
   );

@@ -2,7 +2,7 @@ import React from 'react';
 
 export const SolCircle = () => {
   return (
-    <span>
+    <span className="sol-circle">
       <img src="/sol-circle.svg" />
     </span>
   );
