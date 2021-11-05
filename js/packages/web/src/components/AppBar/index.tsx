@@ -6,8 +6,11 @@ import { Link, matchPath, useLocation } from 'react-router-dom';
 import { Cog, CurrentUserBadge } from '../CurrentUserBadge';
 import { HowToBuyModal } from '../HowToBuyModal';
 import { Notifications } from '../Notifications';
+type P = {
+  logo: string
+}
 
-export const AppBar = () => {
+export const AppBar = (props: P) => {
   const { connected, publicKey } = useWallet();
   const location = useLocation();
   const locationPath = location.pathname.toLowerCase();
@@ -122,7 +125,7 @@ export const AppBar = () => {
       <Row wrap={false}>
         <Col flex="0 0 auto">
           <Link to="/" id="metaplex-header-logo">
-            <img src="/metaplex-logo.svg" />
+            <img src={props.logo} />
           </Link>
         </Col>
         <Col flex="1 0 0" style={{ overflow: 'hidden' }}>

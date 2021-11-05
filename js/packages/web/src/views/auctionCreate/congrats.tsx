@@ -1,5 +1,5 @@
 import { StringPublicKey } from '@oyster/common';
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { Confetti } from '../../components/Confetti';
@@ -29,21 +29,23 @@ export const Congrats = (props: {
 
   return (
     <>
-      <div>Congratulations! Your auction is now live.</div>
-      <div>
-        <Button onClick={() => window.open(newTweetURL(), '_blank')}>
+      <h2>Congratulations! Your auction is now live.</h2>
+      <Space className="metaplex-align-stretch">
+        <Button 
+          size="large"
+          type="primary" onClick={() => window.open(newTweetURL(), '_blank')}>
           <span>Share it on Twitter</span>
-          <span>&gt;</span>
         </Button>
         <Button
+          size="large"
+          type="primary"
           onClick={() =>
             history.push(`/auction/${props.auction?.auction.toString()}`)
           }
         >
           <span>See it in your auctions</span>
-          <span>&gt;</span>
         </Button>
-      </div>
+      </Space>
       <Confetti />
     </>
   );
