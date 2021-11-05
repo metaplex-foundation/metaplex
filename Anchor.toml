@@ -1,0 +1,12 @@
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[programs.localnet]
+gumdrop = "561gX85SDR4hYF2L7P4LcvdXsWSxWuY7Z1yGgznPwSXG"
+
+[scripts]
+test = "yarn ts-mocha -t 1000000"
