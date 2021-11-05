@@ -4,8 +4,12 @@ import { ENDPOINTS, useColorMode, useConnectionConfig } from "../../contexts";
 import { notify, shortenAddress } from "../../utils";
 import { CopyOutlined } from "@ant-design/icons";
 import { ModalEnum, useModal, useWalletModal } from "../../contexts";
-import { Box } from "@mui/system";
-import { Button, FormControl, NativeSelect } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  NativeSelect,
+  Stack,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
@@ -31,7 +35,17 @@ export const Settings = ({
 
   return (
     <>
-      <Box sx={{ display: "flex", minWidth: "100%" }}>
+      <Stack
+        spacing={2}
+        direction="row"
+        sx={{
+          display: "flex",
+          height: "62px",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          marginRight: "36px",
+        }}
+      >
         {!connected && (
           <>
             <FormControl>
@@ -50,7 +64,6 @@ export const Settings = ({
             <Button
               variant="contained"
               onClick={handleConnect}
-              sx={{ marginLeft: "10px" }}
             >
               Connect
             </Button>
@@ -78,17 +91,15 @@ export const Settings = ({
             <Button
               variant="outlined"
               onClick={open}
-              sx={{ marginLeft: "10px" }}
             >
-              Change Wallet
+              Change{"\u00A0"}Wallet
             </Button>
             <Button
               variant="contained"
               color="error"
               onClick={() => disconnect().catch()}
-              sx={{ marginLeft: "10px" }}
             >
-              Disconnect ({env})
+              Disconnect{"\u00A0"}({env})
             </Button>
           </>
         )}
@@ -104,7 +115,7 @@ export const Settings = ({
           )}
         </IconButton>
         {additionalSettings}
-      </Box>
+      </Stack>
     </>
   );
 };

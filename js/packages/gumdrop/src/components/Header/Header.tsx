@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -7,31 +7,17 @@ import {
 } from "@mui/material";
 import HomeIcon from '@mui/icons-material/Home';
 
-import ConnectButton from "../ConnectButton";
-import { ModalEnum, useModal, useWalletModal } from "../../contexts";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { AppBar } from "@mui/material";
+import { Settings } from "../Settings";
 
 export const Header: React.FC = () => {
-  const { setModal } = useModal();
-  const { setVisible } = useWalletModal();
-  const wallet = useWallet();
-  const connected = wallet.connected;
-
-  const handleChange = useCallback(() => setVisible(true), [setVisible]);
-
-  const handleConnect = useCallback(() => {
-    setModal(ModalEnum.WALLET);
-    setVisible(true);
-  }, [setModal, setVisible]);
   return (
-    <AppBar color="default">
     <Box
       sx={{
         display: "flex",
         bgcolor: "action.disabledBackground",
+        overflow: "auto",
       }}
-      minWidth="100%"
+      minWidth="60ch"
     >
       <Stack
         direction="row"
@@ -65,24 +51,9 @@ export const Header: React.FC = () => {
           </Button>
         </Link>
       </Stack>
-      <Box sx={{flexGrow: 1}}></Box>
-      <Box
-        sx={{
-          display: "flex",
-          height: "62px",
-          justifyContent: "flex-end",
-          alignItems: "center",
-        }}
-      >
-        <ConnectButton
-          isConnected={connected}
-          sx={{ marginRight: "36px" }}
-          onClickConnect={handleConnect}
-          onClickChange={handleChange}
-        />
-      </Box>
+      <Box sx={{flexGrow: 1, minWidth: "36px"}}></Box>
+      <Settings />
     </Box>
-</AppBar>
   );
 };
 

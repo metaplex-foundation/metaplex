@@ -18,7 +18,6 @@ import "./App.css";
 import {
   useColorMode,
 } from "./contexts";
-import Centered from "./components/Centered";
 import Header from "./components/Header/Header";
 import { Claim } from "./components/Claim";
 import { Close } from "./components/Close";
@@ -232,7 +231,14 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Header />
-        <Centered height={ `${height * 0.8}px` } width="60ch">
+        <Box
+          height={ `${height * 0.8}px` }
+          width="60ch"
+          style={{
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
           <Box height="60px" />
           <HashRouter>
             <Switch>
@@ -243,7 +249,7 @@ function App() {
             </Switch>
           </HashRouter>
           <Box height="80px" />
-        </Centered>
+        </Box>
       </ThemeProvider>
     </div>
   );
