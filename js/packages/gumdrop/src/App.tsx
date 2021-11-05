@@ -76,7 +76,7 @@ const About = (
       structure (the merkle tree) such that an on-chain program can validate
       whether the user is part of a whitelist. Moreover, Gumdrop
       allows creators to directly send whitelisted users an airdrop reclamation
-      link by building the tree with off-chain handles (e.g email, twitter,
+      link by building the tree with off-chain handles (e.g email, discord,
       etc) and allowing the user to redeem into any wallet.
       </div>
     </Stack>
@@ -96,7 +96,7 @@ const About = (
       <div>
       Creators must choose a mint or a candy-machine config and UUID, an
       off-chain notification method (based on the handles supplied below, e.g
-      email, twitter, etc), and supply a list of recipients and balances with
+      email, discord, etc), and supply a list of recipients and balances with
       the following JSON schema{WHITESPACE}
       <HyperLink
         href={`data:text/plain;charset=utf-8,${JSON.stringify(require("./example.json"))}`}
