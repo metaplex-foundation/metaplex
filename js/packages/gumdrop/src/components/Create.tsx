@@ -58,6 +58,7 @@ import {
   DropInfo,
   Response as DResponse,
   distributeAwsSes,
+  distributeDiscord,
   distributeManual,
   distributeWallet,
   urlAndHandleFor,
@@ -92,6 +93,8 @@ const distribute = (
     return distributeManual(auth, source, claimants, drop);
   } else if (method === "Wallets") {
     return distributeWallet(auth, source, claimants, drop);
+  } else if (method === "Discord") {
+    return distributeDiscord(auth, source, claimants, drop);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
@@ -298,7 +301,8 @@ export const Create = (
   const [commSource, setCommSource] = React.useState(localStorage.getItem("commSource") || "");
   const [awsAccessKeyId, setAwsAccessKeyId] = React.useState("");
   const [awsSecretKey, setAwsSecretKey] = React.useState("");
-  const [mailcAPIKey, setMailcAPIKey] = React.useState("");
+  const [discordBotToken, setDiscordBotToken] = React.useState("");
+  const [discordGuild, setDiscordGuild] = React.useState("");
 
   const explorerUrlFor = (key : PublicKey) => {
     return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
@@ -316,6 +320,10 @@ export const Create = (
     if (commMethod === "AWS SES") {
       notify({
         message: "Gumdrop email distribution completed",
+      });
+    } else if (commMethod === "Discord") {
+      notify({
+        message: "Gumdrop discord distribution completed",
       });
     }
   }
@@ -336,6 +344,10 @@ export const Create = (
     }
 
     const dropInfo = dropInfoFor(envFor(connection), claimMethod, mint, candyConfig, masterMint);
+    // check that auth is correct...
+    await distribute(
+      commMethod, commAuth, commSource, [], dropInfo);
+
     const mightHaveExisting = (info : ClaimantInfo) => {
       return info.url !== undefined && info.url !== null;
     };
@@ -572,10 +584,6 @@ export const Create = (
   };
 
   const commAuthorization = (commMethod) => {
-    if (commMethod === "Manual" || commMethod === "Wallets") {
-      return null;
-    }
-
     if (commMethod === "AWS SES") {
       return (
         <React.Fragment>
@@ -613,30 +621,35 @@ export const Create = (
       );
     }
 
-    return (
-      <React.Fragment>
-        <TextField
-          style={{width: "60ch"}}
-          id="comm-auth-field"
-          label={`${commMethod} API key`}
-          value={mailcAPIKey}
-          onChange={(e) => {
-            setCommAuth(prev => ({...prev, apiKey: e.target.value}));
-            setMailcAPIKey(e.target.value)
-          }}
-        />
-        <TextField
-          style={{width: "60ch"}}
-          id="comm-source-field"
-          label={`${commMethod} Source`}
-          value={commSource}
-          onChange={(e) => {
-            localStorage.setItem("commSource", e.target.value);
-            setCommSource(e.target.value)
-          }}
-        />
-      </React.Fragment>
-    );
+    if (commMethod === "Discord") {
+      return (
+        <React.Fragment>
+          <TextField
+            style={{width: "60ch"}}
+            id="comm-discord-token-field"
+            label={`${commMethod} Auth Token`}
+            value={discordBotToken}
+            onChange={(e) => {
+              setCommAuth(prev => ({...prev, botToken: e.target.value}));
+              setDiscordBotToken(e.target.value)
+            }}
+          />
+          <TextField
+            style={{width: "60ch"}}
+            id="comm-source-field"
+            label={`${commMethod} Guild`}
+            value={discordGuild}
+            onChange={(e) => {
+              setCommAuth(prev => ({...prev, guild: e.target.value}));
+              setDiscordGuild(e.target.value)
+            }}
+          />
+        </React.Fragment>
+      );
+    }
+
+    // commMethod === "Manual" || commMethod === "Wallets"
+    return null;
   };
 
   const fileUpload = (
@@ -816,8 +829,9 @@ export const Create = (
           style={{textAlign: "left"}}
         >
           <MenuItem value={"AWS SES"}>AWS SES</MenuItem>
-          <MenuItem value={"Manual"}>Manual</MenuItem>
+          <MenuItem value={"Discord"}>Discord</MenuItem>
           <MenuItem value={"Wallets"}>Wallets</MenuItem>
+          <MenuItem value={"Manual"}>Manual</MenuItem>
         </Select>
       </FormControl>
       {commMethod !== "" && commAuthorization(commMethod)}

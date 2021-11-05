@@ -1,5 +1,6 @@
 import log from 'loglevel';
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
+import * as discord from "discord.js"
 
 import {
   ClaimantInfo,
@@ -14,27 +15,38 @@ export type DropInfo = {
   meta : string,
 };
 
-const formatDropMessage = (info : ClaimantInfo, drop : DropInfo) => {
+const formatDropMessage = (
+  info : ClaimantInfo,
+  drop : DropInfo,
+  html : boolean,
+) => {
+  const wrap = (url, text) => {
+    if (html) {
+      return `<a href="${url}">${text}</a>`;
+    } else {
+      return `${text} ${url}`;
+    }
+  }
   if (drop.type === "Token") {
     return {
       subject: "Gumdrop Token Drop",
       message: `You received ${info.amount} token(s) `
-             + `(click <a href="${drop.meta}">here</a> to view more information about the token mint). `
-             + `<a href="${info.url}">Click here to claim them!</a>`,
+             + `(click ${wrap(drop.meta, "here")} to view more information about the token mint). `
+             +  wrap(info.url, "Click here to claim them!"),
     };
   } else if (drop.type === "Candy") {
     return {
       subject: "Gumdrop NFT Drop",
       message: `You received ${info.amount} Candy Machine pre-sale mint(s) `
-             + `(click <a href="${drop.meta}">here</a> to view the candy machine configuration on explorer). `
-             + `<a href="${info.url}">Click here to claim them!</a>`,
+             + `(click ${wrap(drop.meta, "here")} to view the candy machine configuration on explorer). `
+             +  wrap(info.url, "Click here to claim them!"),
     };
   } else if (drop.type === "Edition") {
     return {
       subject: "Gumdrop NFT Drop",
       message: `You received ${info.amount} limited-edition print(s) `
-             + `(click <a href="${drop.meta}">here</a> to view the master edition mint on explorer). `
-             + `<a href="${info.url}">Click here to claim them!</a>`,
+             + `(click ${wrap(drop.meta, "here")} to view the master edition mint on explorer). `
+             +  wrap(info.url, "Click here to claim them!"),
     };
   } else {
     throw new Error(`Internal Error: Unknown drop type ${drop.type}`);
@@ -50,6 +62,8 @@ export const distributeAwsSes = async (
   if (!auth.accessKeyId || !auth.secretAccessKey) {
     throw new Error("AWS SES auth keys not supplied");
   }
+  if (claimants.length === 0) return [];
+
   log.debug("SES auth", auth);
   const client = new SESv2Client({
     region: "us-east-2",
@@ -64,7 +78,7 @@ export const distributeAwsSes = async (
     info : ClaimantInfo,
     drop : DropInfo,
   ) => {
-    const formatted = formatDropMessage(info, drop);
+    const formatted = formatDropMessage(info, drop, true);
     const message = {
       Destination: {
         ToAddresses: [
@@ -118,6 +132,65 @@ export const distributeAwsSes = async (
   for (const c of claimants) {
     responses.push(await single(c, drop));
   }
+  return responses;
+}
+
+export const distributeDiscord = async (
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) => {
+  if (!auth.botToken || !auth.guild) {
+    throw new Error("Discord auth keys not supplied");
+  }
+  if (claimants.length === 0) return [];
+  log.debug("Discord auth", auth);
+
+  const client = new discord.Client({ intents: [discord.Intents.FLAGS.GUILDS] });
+  await client.login(auth.botToken);
+
+  const guild = await client.guilds.fetch(auth.guild);
+
+  const members = await guild.members.fetch({
+    user: claimants.map(c => c.handle),
+  });
+
+  const single = async (
+    info : ClaimantInfo,
+    drop : DropInfo,
+  ) => {
+    const user = members.get(info.handle);
+    if (user === undefined) {
+      return {
+        status: "error",
+        handle: info.handle,
+        error: "notfound",
+      };
+    }
+    const formatted = formatDropMessage(info, drop, false);
+    const response = await (user as any).send(formatted.message);
+    // canonoical way to check if message succeeded?
+    if (response.id) {
+      return {
+        status: "success",
+        handle: info.handle,
+        messageId: response.id,
+      };
+    } else {
+      return {
+        status: "error",
+        handle: info.handle,
+        error: response, // TODO
+      };
+    }
+  };
+
+  const responses = Array<Response>();
+  for (const c of claimants) {
+    responses.push(await single(c, drop));
+  }
+  client.destroy();
   return responses;
 }
 

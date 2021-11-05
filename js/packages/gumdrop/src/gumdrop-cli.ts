@@ -39,6 +39,7 @@ import {
   AuthKeys,
   DropInfo,
   distributeAwsSes,
+  distributeDiscord,
   distributeManual,
   distributeWallet,
   urlAndHandleFor,
@@ -91,11 +92,7 @@ programCommand('create')
   .option(
     '--distribution-method <method>',
     // TODO: more explanation
-    'Off-chain distribution of claims. Either `aws`, `manual`, or `wallets`'
-  )
-  .option(
-    '--aws-otp-auth <auth>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint (email) or `none` to skip OTP'
+    'Off-chain distribution of claims. Either `aws`, `discord`, `manual`, or `wallets`'
   )
   .option(
     '--aws-ses-access-key-id <string>',
@@ -106,12 +103,20 @@ programCommand('create')
     'Secret Access Key'
   )
   .option(
-    '--manual-otp-auth <auth>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint (email) or `none` to skip OTP'
+    '--discord-token <string>',
+    'Discord bot token'
+  )
+  .option(
+    '--discord-guild <string>',
+    'Discord guild with members'
+  )
+  .option(
+    '--otp-auth <auth>',
+    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint or `none` to skip OTP'
   )
   .option(
     '--distribution-list <path>',
-    'Off-chain OTP from claim. Either `default` for AWS OTP endpoint (email) or `none` to skip OTP'
+    'List of users to build gumdrop from.'
   )
   .option(
     '--resend-only',
@@ -145,21 +150,17 @@ programCommand('create')
 
     let temporalSigner;
     switch (options.distributionMethod) {
-      case "wallets": {
+      case "wallets":
         temporalSigner = GUMDROP_DISTRIBUTOR_ID;
         break;
-      }
-      case "manual": {
-        temporalSigner = getTemporalSigner(options.manualOtpAuth);
+      case "manual":
+      case "aws":
+      case "discord":
+        temporalSigner = getTemporalSigner(options.otpAuth);
         break;
-      }
-      case "aws": {
-        temporalSigner = getTemporalSigner(options.awsOtpAuth);
-        break;
-      }
       default:
         throw new Error(
-          "Distribution method must either be 'aws', 'manual', or 'wallets'.",
+          "Distribution method must either be 'aws', 'discord', 'manual', or 'wallets'.",
         );
     }
     console.log(`temporal signer: ${temporalSigner.toBase58()}`);
@@ -201,8 +202,19 @@ programCommand('create')
             claimants,
             dropInfo
           );
+        case "discord":
+          return distributeDiscord(
+            {
+              botToken: options.discordToken,
+              guild: options.discordGuild,
+            },
+            "",
+            claimants,
+            dropInfo
+          );
       }
     }
+    await distribute([]); // check that auth is correct...
 
     if (options.resendOnly) {
       if (claimants.some(c => typeof c.url !== "string")) {
