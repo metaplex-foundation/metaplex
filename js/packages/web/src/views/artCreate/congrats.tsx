@@ -1,5 +1,5 @@
 import { StringPublicKey } from '@oyster/common';
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { Confetti } from '../../components/Confetti';
@@ -41,21 +41,23 @@ export const Congrats = (props: {
 
   return (
     <>
-      <div>Congratulations, you created an NFT!</div>
-      <div>
-        <Button onClick={() => window.open(newTweetURL(), '_blank')}>
+      <h2>Congratulations, you created an NFT!</h2>
+      <Space className="metaplex-align-stretch">
+        <Button 
+          size="large"
+          type="primary" onClick={() => window.open(newTweetURL(), '_blank')}>
           <span>Share it on Twitter</span>
-          <span>&gt;</span>
         </Button>
         <Button
+          size="large"
+          type="primary"
           onClick={() =>
             history.push(`/art/${props.nft?.metadataAccount.toString()}`)
           }
         >
           <span>See it in your collection</span>
-          <span>&gt;</span>
         </Button>
-      </div>
+      </Space>
       <Confetti />
     </>
   );

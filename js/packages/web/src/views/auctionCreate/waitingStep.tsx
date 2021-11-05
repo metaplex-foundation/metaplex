@@ -21,7 +21,7 @@ export const WaitingStep = (props: {
   }, []);
 
   return (
-    <div>
+    <div className="auction-progress-indicator">
       <Progress type="circle" percent={progress} />
       <div>Your creation is being listed with Metaplex...</div>
       <div>This can take up to 30 seconds.</div>
