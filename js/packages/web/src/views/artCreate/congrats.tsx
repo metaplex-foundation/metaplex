@@ -43,9 +43,11 @@ export const Congrats = (props: {
     <>
       <h2>Congratulations, you created an NFT!</h2>
       <Space className="metaplex-align-stretch">
-        <Button 
+        <Button
           size="large"
-          type="primary" onClick={() => window.open(newTweetURL(), '_blank')}>
+          type="primary"
+          onClick={() => window.open(newTweetURL(), '_blank')}
+        >
           <span>Share it on Twitter</span>
         </Button>
         <Button
