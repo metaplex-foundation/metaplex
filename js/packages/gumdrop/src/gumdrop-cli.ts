@@ -222,7 +222,7 @@ programCommand('create')
       if (claimants.some(c => typeof c.url !== "string")) {
         throw new Error("Specified resend only but not all claimants have a 'url'");
       }
-      const responses = distribute(claimants);
+      const responses = await distribute(claimants);
       // TODO: old path.1?
       const respPath = logPath(options.env, `resp-${Keypair.generate().publicKey.toBase58()}.json`);
       console.log(`writing responses to ${respPath}`);
@@ -315,7 +315,7 @@ programCommand('create')
     }
 
     console.log("distributing claim URLs");
-    const responses = distribute(claimants);
+    const responses = await distribute(claimants);
     const respPath = logPath(options.env, `resp-${base.publicKey.toBase58()}.json`);
     console.log(`writing responses to ${respPath}`);
     fs.writeFileSync(respPath, JSON.stringify(responses));
