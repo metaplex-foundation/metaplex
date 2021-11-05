@@ -2,7 +2,7 @@ import { Stream, StreamPlayerApi } from '@cloudflare/stream-react';
 import { MetadataCategory, MetadataFile, pubkeyToString } from '@oyster/common';
 import { PublicKey } from '@solana/web3.js';
 import { Image } from 'antd';
-import React, { Ref, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useCachedImage, useExtendedArt } from '../../hooks';
 import { getLast } from '../../utils/utils';
 import { MeshViewer } from '../MeshViewer';
@@ -41,6 +41,7 @@ const CachedImageContent = ({
 
   return (
     <Image
+      wrapperClassName="metaplex-image-content"
       src={cachedBlob}
       preview={preview}
       loading="lazy"
@@ -89,16 +90,14 @@ const VideoArtContent = ({
   const content =
     likelyVideo &&
     likelyVideo.startsWith('https://watch.videodelivery.net/') ? (
-      <div className="metaplex-video-content">
-        <Stream
-          streamRef={(e: any) => playerRef(e)}
-          src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
-          loop={true}
-          controls={false}
-          autoplay={true}
-          muted={true}
-        />
-      </div>
+      <Stream
+        streamRef={(e: any) => playerRef(e)}
+        src={likelyVideo.replace('https://watch.videodelivery.net/', '')}
+        loop={true}
+        controls={false}
+        autoplay={true}
+        muted={true}
+      />
     ) : (
       <video
         className="metaplex-video-content"
@@ -120,7 +119,7 @@ const VideoArtContent = ({
       </video>
     );
 
-  return content;
+  return <div className="metaplex-video-content">{content}</div>;
 };
 
 const HTMLContent = ({
@@ -156,6 +155,7 @@ const HTMLContent = ({
 export const ArtContent = ({
   category,
   preview,
+  card,
   active,
   allowMeshRender,
   pubkey,
@@ -166,9 +166,7 @@ export const ArtContent = ({
 }: {
   category?: MetadataCategory;
   preview?: boolean;
-  width?: number;
-  height?: number;
-  ref?: Ref<HTMLDivElement>;
+  card?: boolean;
   active?: boolean;
   allowMeshRender?: boolean;
   pubkey?: PublicKey | string;
@@ -228,5 +226,12 @@ export const ArtContent = ({
       <CachedImageContent uri={uri} preview={preview} />
     );
 
-  return <div ref={ref}>{content}</div>;
+  return (
+    <div
+      className={`metaplex-art-content-${card ? 'card' : 'full'}`}
+      ref={ref}
+    >
+      {content}
+    </div>
+  );
 };

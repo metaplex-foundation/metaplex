@@ -24,9 +24,6 @@ export interface ArtCardProps extends CardProps {
   small?: boolean;
   hoverable?: boolean;
   close?: () => void;
-
-  height?: number;
-  width?: number;
 }
 
 export const ArtCard = ({
@@ -39,8 +36,6 @@ export const ArtCard = ({
   hoverable = true,
   close,
   pubkey,
-  height,
-  width,
   ...rest
 }: ArtCardProps) => {
   const art = useArt(pubkey);
@@ -80,8 +75,7 @@ export const ArtCard = ({
             animationURL={animationURL}
             category={category}
             preview={preview}
-            height={height}
-            width={width}
+            card
           />
         </>
       }
