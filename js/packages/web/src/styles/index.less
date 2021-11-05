@@ -12,6 +12,7 @@
 @theme-accent-faint: var(--color-accent-faint, #00CC82);
 
 @theme-text: var(--color-text, white);
+@theme-text-faint: var(--color-text-faint, #aaa);
 @theme-text-accent: var(--color-text-accent, black);
 
 // antd theme config
@@ -35,6 +36,13 @@ html {
 @text-color: @theme-text;
 @heading-color: @theme-text;
 
+@menu-item-color: @theme-text;
+@menu-dark-color: @theme-text; // For some reason ant uses the dark styles anyway
+
+@btn-primary-color: @theme-text-accent;
+@menu-highlight-color: @theme-text-accent;
+@menu-dark-highlight-color: @theme-text-accent;
+
 // Other config
 @content-padding: 32px;
 @content-max-width: 1440px;
@@ -45,6 +53,7 @@ html {
 
 // Dependency stylesheets
 @import '~antd/lib/style/components.less';
+@import './ant-overrides.less';
 @import '@oyster/common/styles.css';
 
 // Global styles for web
