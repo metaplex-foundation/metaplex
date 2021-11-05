@@ -323,7 +323,7 @@ function InnerAdminView({
       <Col>
         <Row>
           <h2>Whitelisted Creators</h2>
-          <Col span={21}>
+          <Col span={22}>
             <ArtistModal
               setUpdatedCreators={setUpdatedCreators}
               uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
@@ -350,20 +350,25 @@ function InnerAdminView({
               Submit
             </Button>
           </Col>
-          <Col span={3}>
-            <Switch
-              checkedChildren="Public"
-              unCheckedChildren="Whitelist Only"
-              checked={newStore.public}
-              onChange={val => {
-                setNewStore(() => {
-                  const newS = new Store(store.info);
-                  newS.public = val;
-                  return newS;
-                });
-              }}
-            />
+          <Col>
+            <Row justify="end">
+              <Col>
+                <Switch
+                  checkedChildren="Public"
+                  unCheckedChildren="Whitelist Only"
+                  checked={newStore.public}
+                  onChange={val => {
+                    setNewStore(() => {
+                      const newS = new Store(store.info);
+                      newS.public = val;
+                      return newS;
+                    });
+                  }}
+                />
+              </Col>
+            </Row>
           </Col>
+          <Col span={24}>
           <Table
             columns={columns}
             dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
@@ -376,6 +381,7 @@ function InnerAdminView({
               image: uniqueCreatorsWithUpdates[key].image,
             }))}
           />
+          </Col>
         </Row>
       </Col>
       <h2>Listing Notifications</h2>

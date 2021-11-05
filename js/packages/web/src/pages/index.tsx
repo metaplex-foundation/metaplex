@@ -18,7 +18,7 @@ interface AppProps {
 
 if (process.env.NEXT_PUBLIC_BUGSNAG_API_KEY) {
   Bugsnag.start({
-    apiKey: process.env.BUGSNAG_API_KEY || '',
+    apiKey: process.env.NEXT_PUBLIC_BUGSNAG_API_KEY || '',
     plugins: [new BugsnagPluginReact()],
   });
 }

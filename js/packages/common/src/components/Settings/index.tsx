@@ -30,7 +30,7 @@ export const Settings = ({
               </div>
             </Tooltip>
 
-            <Link to={`/profile/${publicKey?.toBase58()}`}>View profile</Link>
+            <Link to={`/owned`}>View Owned</Link>
           </>
         )}
       </Space>
