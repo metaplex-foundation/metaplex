@@ -6,6 +6,7 @@ import log from 'loglevel';
 
 import { SESv2Client, CreateContactListCommand } from "@aws-sdk/client-sesv2"
 import * as anchor from '@project-serum/anchor';
+import * as discord from "discord.js"
 import {
   Commitment,
   Connection as RPCConnection,
@@ -38,10 +39,11 @@ import {
 import {
   AuthKeys,
   DropInfo,
+  Response as DResponse,
   distributeAwsSes,
-  distributeDiscord,
   distributeManual,
   distributeWallet,
+  formatDropMessage,
   urlAndHandleFor,
 } from "./utils/communication";
 import {
@@ -526,5 +528,65 @@ async function sendTransactionWithRetry(
     signedTransaction: transaction,
   });
 };
+
+async function distributeDiscord(
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) {
+  if (!auth.botToken || !auth.guild) {
+    throw new Error("Discord auth keys not supplied");
+  }
+  if (claimants.length === 0) return [];
+  log.debug("Discord auth", auth);
+
+  const client = new discord.Client();
+  await client.login(auth.botToken);
+
+  const guild = await client.guilds.fetch(auth.guild);
+
+  const members = await guild.members.fetch({
+    user: claimants.map(c => c.handle),
+  });
+
+  const single = async (
+    info : ClaimantInfo,
+    drop : DropInfo,
+  ) => {
+    const user = members.get(info.handle);
+    if (user === undefined) {
+      return {
+        status: "error",
+        handle: info.handle,
+        error: "notfound",
+      };
+    }
+    const formatted = formatDropMessage(info, drop, false);
+    const response = await (user as any).send(formatted.message);
+    // canonoical way to check if message succeeded?
+    if (response.id) {
+      return {
+        status: "success",
+        handle: info.handle,
+        messageId: response.id,
+      };
+    } else {
+      return {
+        status: "error",
+        handle: info.handle,
+        error: response, // TODO
+      };
+    }
+  };
+
+  const responses = Array<DResponse>();
+  for (const c of claimants) {
+    responses.push(await single(c, drop));
+  }
+  client.destroy();
+  return responses;
+}
+
 
 program.parse(process.argv);

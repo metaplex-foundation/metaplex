@@ -1,6 +1,5 @@
 import log from 'loglevel';
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
-import * as discord from "discord.js"
 
 import {
   ClaimantInfo,
@@ -15,7 +14,7 @@ export type DropInfo = {
   meta : string,
 };
 
-const formatDropMessage = (
+export const formatDropMessage = (
   info : ClaimantInfo,
   drop : DropInfo,
   html : boolean,
@@ -132,65 +131,6 @@ export const distributeAwsSes = async (
   for (const c of claimants) {
     responses.push(await single(c, drop));
   }
-  return responses;
-}
-
-export const distributeDiscord = async (
-  auth : AuthKeys,
-  source : string,
-  claimants : Claimants,
-  drop : DropInfo,
-) => {
-  if (!auth.botToken || !auth.guild) {
-    throw new Error("Discord auth keys not supplied");
-  }
-  if (claimants.length === 0) return [];
-  log.debug("Discord auth", auth);
-
-  const client = new discord.Client({ intents: [discord.Intents.FLAGS.GUILDS] });
-  await client.login(auth.botToken);
-
-  const guild = await client.guilds.fetch(auth.guild);
-
-  const members = await guild.members.fetch({
-    user: claimants.map(c => c.handle),
-  });
-
-  const single = async (
-    info : ClaimantInfo,
-    drop : DropInfo,
-  ) => {
-    const user = members.get(info.handle);
-    if (user === undefined) {
-      return {
-        status: "error",
-        handle: info.handle,
-        error: "notfound",
-      };
-    }
-    const formatted = formatDropMessage(info, drop, false);
-    const response = await (user as any).send(formatted.message);
-    // canonoical way to check if message succeeded?
-    if (response.id) {
-      return {
-        status: "success",
-        handle: info.handle,
-        messageId: response.id,
-      };
-    } else {
-      return {
-        status: "error",
-        handle: info.handle,
-        error: response, // TODO
-      };
-    }
-  };
-
-  const responses = Array<Response>();
-  for (const c of claimants) {
-    responses.push(await single(c, drop));
-  }
-  client.destroy();
   return responses;
 }
 

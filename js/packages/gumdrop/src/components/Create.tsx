@@ -58,7 +58,6 @@ import {
   DropInfo,
   Response as DResponse,
   distributeAwsSes,
-  distributeDiscord,
   distributeManual,
   distributeWallet,
   urlAndHandleFor,
@@ -93,8 +92,6 @@ const distribute = (
     return distributeManual(auth, source, claimants, drop);
   } else if (method === "Wallets") {
     return distributeWallet(auth, source, claimants, drop);
-  } else if (method === "Discord") {
-    return distributeDiscord(auth, source, claimants, drop);
   } else {
     throw new Error(`Unrecognized claim distribution method ${method}`);
   }
@@ -301,8 +298,6 @@ export const Create = (
   const [commSource, setCommSource] = React.useState(localStorage.getItem("commSource") || "");
   const [awsAccessKeyId, setAwsAccessKeyId] = React.useState("");
   const [awsSecretKey, setAwsSecretKey] = React.useState("");
-  const [discordBotToken, setDiscordBotToken] = React.useState("");
-  const [discordGuild, setDiscordGuild] = React.useState("");
 
   const explorerUrlFor = (key : PublicKey) => {
     return `https://explorer.solana.com/address/${key.toBase58()}?cluster=${envFor(connection)}`;
@@ -320,10 +315,6 @@ export const Create = (
     if (commMethod === "AWS SES") {
       notify({
         message: "Gumdrop email distribution completed",
-      });
-    } else if (commMethod === "Discord") {
-      notify({
-        message: "Gumdrop discord distribution completed",
       });
     }
   }
@@ -621,33 +612,6 @@ export const Create = (
       );
     }
 
-    if (commMethod === "Discord") {
-      return (
-        <React.Fragment>
-          <TextField
-            style={{width: "60ch"}}
-            id="comm-discord-token-field"
-            label={`${commMethod} Auth Token`}
-            value={discordBotToken}
-            onChange={(e) => {
-              setCommAuth(prev => ({...prev, botToken: e.target.value}));
-              setDiscordBotToken(e.target.value)
-            }}
-          />
-          <TextField
-            style={{width: "60ch"}}
-            id="comm-source-field"
-            label={`${commMethod} Guild`}
-            value={discordGuild}
-            onChange={(e) => {
-              setCommAuth(prev => ({...prev, guild: e.target.value}));
-              setDiscordGuild(e.target.value)
-            }}
-          />
-        </React.Fragment>
-      );
-    }
-
     // commMethod === "Manual" || commMethod === "Wallets"
     return null;
   };
@@ -823,6 +787,13 @@ export const Create = (
           value={commMethod}
           label="Distribution Method"
           onChange={(e) => {
+            if (e.target.value === "Discord") {
+              notify({
+                message: "Discord distribution unavailable",
+                description: "Please use the CLI for this. Discord does not support browser-connection requests",
+              });
+              return;
+            }
             localStorage.setItem("commMethod", e.target.value);
             setCommMethod(e.target.value);
           }}
