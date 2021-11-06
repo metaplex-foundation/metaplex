@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [master,thlorenz/chore/ci-token-metadata-action]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+  SOLANA_VERSION: 1.8.2
+  RUST_STABLE: stable
+
+jobs:
+  # -----------------
+  # Main Task: Build + Test 
+  # -----------------
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs:
+      - test-token-metadata
+    steps:
+      - run: echo "Done"
+
+  # -----------------
+  # Test Token Metadata
+  # -----------------
+  test-token-metadata:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/install-linux-build-deps
+      - uses: ./.github/actions/install-solana
+      - uses: ./.github/actions/install-rust
+      - uses: ./.github/actions/build-token-vault
+
+      - name: Add Cargo, Solana bin to Path 
+        run: |
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: test-token-metadata-program
+        working-directory: ./rust/token-metadata/program
+        run: |
+          cargo +${{ env.RUST_STABLE }} test-bpf --version
+          cargo +${{ env.RUST_STABLE }} test-bpf
