@@ -18,10 +18,29 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     needs:
+      - test-token-vault
       - test-token-metadata
     steps:
       - run: echo "Done"
 
+  # -----------------
+  # Test Token Vault
+  # -----------------
+  test-token-vault:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/install-linux-build-deps
+      - uses: ./.github/actions/install-solana
+      - uses: ./.github/actions/install-rust
+
+      - name: test-token-vault-program
+        working-directory: ./rust/token-vault/program
+        run: |
+          cargo +${{ env.RUST_STABLE }} test-bpf --version
+          cargo +${{ env.RUST_STABLE }} test-bpf
+          
   # -----------------
   # Test Token Metadata
   # -----------------
@@ -34,11 +53,6 @@ jobs:
       - uses: ./.github/actions/install-solana
       - uses: ./.github/actions/install-rust
       - uses: ./.github/actions/build-token-vault
-
-      - name: Add Cargo, Solana bin to Path 
-        run: |
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: test-token-metadata-program
         working-directory: ./rust/token-metadata/program

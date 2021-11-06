@@ -27,11 +27,12 @@ runs:
       shell: bash
 
     - uses: actions/cache@v2
-      id: cache-stable-rust-installs
+      id: cache-stable-rust-installs-and-builds
       with:
         path: |
           ~/.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
+          ./rust/target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ steps.rust_toolchain.outputs.rustc_hash }}

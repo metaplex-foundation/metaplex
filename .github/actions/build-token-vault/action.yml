@@ -1,3 +1,9 @@
+# Implicit dependencies
+# - actions/checkout@v2
+# - ./.github/actions/install-linux-build-deps
+# - ./.github/actions/install-solana
+# - ./.github/actions/install-rust
+
 name: Build Token Vault 
 runs:
   using: "composite"
