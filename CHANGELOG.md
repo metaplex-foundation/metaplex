@@ -22,6 +22,7 @@ incremented for features.
 ### Fixes
 
 - Fixes #840 - Claim button visible after claim.
+- Improve Candy Machine CLI `create_generative_art` command performance. (@0xCryptoSheik in #899)
 
 ### Breaking
 
