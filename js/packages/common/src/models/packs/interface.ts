@@ -15,5 +15,5 @@ export interface InitPackSetParams {
 export interface AddCardToPackParams {
   maxSupply: BN | null;
   weight: BN | null;
-  index: BN;
+  index: number;
 }

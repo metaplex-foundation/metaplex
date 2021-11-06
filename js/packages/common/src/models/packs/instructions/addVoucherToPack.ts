@@ -4,7 +4,6 @@ import {
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
 } from '@solana/web3.js';
-import BN from 'bn.js';
 import { serialize } from 'borsh';
 
 import { TokenAccount } from '../..';
@@ -18,7 +17,7 @@ import {
 import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
 
 interface Params {
-  index: BN;
+  index: number;
   packSetKey: PublicKey;
   authority: StringPublicKey;
   mint: StringPublicKey;
@@ -31,7 +30,7 @@ export async function addVoucherToPack({
   authority,
   mint,
   tokenAccount,
-}: Params): Promise<TransactionInstruction> {
+}: Params): Promise<TransactionInstruction[]> {
   const PROGRAM_IDS = programIds();
 
   const value = new AddVoucherToPackArgs();
@@ -122,9 +121,11 @@ export async function addVoucherToPack({
     },
   ];
 
-  return new TransactionInstruction({
-    keys,
-    programId: toPublicKey(PROGRAM_IDS.pack_create),
-    data,
-  });
+  return [
+    new TransactionInstruction({
+      keys,
+      programId: toPublicKey(PROGRAM_IDS.pack_create),
+      data,
+    }),
+  ];
 }

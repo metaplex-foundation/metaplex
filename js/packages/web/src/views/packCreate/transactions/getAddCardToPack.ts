@@ -7,7 +7,7 @@ export const getAddCardToPack = async ({
   selectedItems,
   packSetKey,
   walletPublicKey,
-}: GetAddCardToPackParams): Promise<TransactionInstruction[]> => {
+}: GetAddCardToPackParams): Promise<TransactionInstruction[][]> => {
   const addCardsToPack = selectedItems.map(selectedItem => {
     return addCardToPack({
       ...selectedItem,

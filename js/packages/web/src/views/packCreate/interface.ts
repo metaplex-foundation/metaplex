@@ -29,13 +29,13 @@ export interface SelectedItem {
   weight: BN;
   tokenAccount: TokenAccount;
   toAccount: Keypair;
-  index: BN;
+  index: number;
 }
 
 export interface SelectedVoucher {
   mint: string;
   tokenAccount: TokenAccount;
-  index: BN;
+  index: number;
 }
 
 export interface MapSelectedItemsParams

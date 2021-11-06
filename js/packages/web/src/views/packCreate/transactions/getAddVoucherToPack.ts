@@ -7,7 +7,7 @@ export const getAddVoucherToPack = async ({
   selectedVouchers,
   packSetKey,
   walletPublicKey,
-}: GetAddVoucherToPackParams): Promise<TransactionInstruction[]> => {
+}: GetAddVoucherToPackParams): Promise<TransactionInstruction[][]> => {
   const addVouchersToPack = selectedVouchers.map(voucher => {
     return addVoucherToPack({
       ...voucher,

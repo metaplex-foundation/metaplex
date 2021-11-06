@@ -63,6 +63,7 @@ const generateCreatePackInstructions = async ({
     accountByMint,
     distributionType,
   });
+
   // Create accounts for token transfer
   const createTokenAccountsInstructions = await getCreateTokenAccounts({
     cardsToAdd,
@@ -96,11 +97,17 @@ const generateCreatePackInstructions = async ({
     instructions: [
       [createAccountInstruction, initPackSetInstruction],
       createTokenAccountsInstructions,
-      addCardToPackInstructions,
-      addVoucherToPackInstructions,
+      ...addCardToPackInstructions,
+      ...addVoucherToPackInstructions,
       [activateInstruction],
     ],
-    signers: [[packSet], cardsTokens, [], [], []],
+    signers: [
+      [packSet],
+      cardsTokens,
+      ...addCardToPackInstructions.map(() => []),
+      ...addVoucherToPackInstructions.map(() => []),
+      [],
+    ],
   };
 };
 
