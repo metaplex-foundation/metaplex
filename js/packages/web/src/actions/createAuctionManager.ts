@@ -58,7 +58,7 @@ import { setVaultAndAuctionAuthorities } from './setVaultAndAuctionAuthorities';
 import { markItemsThatArentMineAsSold } from './markItemsThatArentMineAsSold';
 import { validateSafetyDepositBoxV2 } from '@oyster/common/dist/lib/models/metaplex/validateSafetyDepositBoxV2';
 import { initAuctionManagerV2 } from '@oyster/common/dist/lib/models/metaplex/initAuctionManagerV2';
-import { cacheAuctionIndexer } from './cacheAuctionIndexer';
+import { cacheAuctionIndexer } from './cacheAuctionInIndexer';
 
 interface normalPattern {
   instructions: TransactionInstruction[];
