@@ -28,39 +28,34 @@ export async function getProgramAuthority(): Promise<StringPublicKey> {
 
 export async function findPackCardProgramAddress(
   pack: PublicKey,
-  index: BN,
+  index: number,
 ): Promise<StringPublicKey> {
   return findProgramAddressByPrefix(pack, index, CARD_PREFIX);
 }
 
 export async function findPackVoucherProgramAddress(
   pack: PublicKey,
-  index: BN,
+  index: number,
 ): Promise<StringPublicKey> {
   return findProgramAddressByPrefix(pack, index, VOUCHER_PREFIX);
 }
 
 async function findProgramAddressByPrefix(
   packSetKey: PublicKey,
-  index: BN,
+  index: number,
   prefix: string,
 ): Promise<StringPublicKey> {
   const PROGRAM_IDS = programIds();
 
+  const numberBuffer = Buffer.allocUnsafe(4);
+  numberBuffer.writeUInt16LE(index);
+
   return (
     await findProgramAddress(
-      [
-        Buffer.from(prefix),
-        new PublicKey(packSetKey).toBuffer(),
-        new Uint8Array(numberToBytesArray(index.toNumber(), 4)),
-      ],
+      [Buffer.from(prefix), new PublicKey(packSetKey).toBuffer(), numberBuffer],
       toPublicKey(PROGRAM_IDS.pack_create),
     )
   )[0];
-}
-
-function numberToBytesArray(number: number, length: number) {
-  return [...Array(length)].map((x, i) => (number >> i) & 1);
 }
 
 export class InitPackSetArgs {
@@ -90,7 +85,7 @@ export class AddCardToPackArgs {
   instruction = 1;
   maxSupply: BN | null;
   weight: BN | null;
-  index: BN;
+  index: number;
 
   constructor(args: AddCardToPackParams) {
     this.maxSupply = args.maxSupply;
