@@ -1,29 +1,35 @@
-import { sleep, useLocalStorageState } from '../utils/utils';
 import {
-  Keypair,
+  ENV as ChainId,
+  TokenInfo,
+  TokenListProvider,
+} from '@solana/spl-token-registry';
+import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import {
+  Blockhash,
   clusterApiUrl,
   Commitment,
   Connection,
+  FeeCalculator,
+  Keypair,
   RpcResponseAndContext,
   SignatureStatus,
   SimulatedTransactionResponse,
   Transaction,
   TransactionInstruction,
   TransactionSignature,
-  Blockhash,
-  FeeCalculator,
 } from '@solana/web3.js';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { notify } from '../utils/notifications';
+import React, {
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ExplorerLink } from '../components/ExplorerLink';
 import { useQuerySearch } from '../hooks';
-import {
-  TokenInfo,
-  TokenListProvider,
-  ENV as ChainId,
-} from '@solana/spl-token-registry';
+import { notify } from '../utils/notifications';
+import { sleep, useLocalStorageState } from '../utils/utils';
 import { WalletSigner } from './wallet';
-import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
 
 interface BlockhashAndFeeCalculator {
   blockhash: Blockhash;
@@ -39,29 +45,29 @@ export type ENV =
   | 'localnet'
   | 'lending';
 
-export const ENDPOINTS = [
+export const ENDPOINTS: { name: ENV; endpoint: string; ChainId: ChainId }[] = [
   {
-    name: 'mainnet-beta' as ENV,
+    name: 'mainnet-beta',
     endpoint: 'https://holaplex.rpcpool.com/',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Solana)' as ENV,
+    name: 'mainnet-beta (Solana)',
     endpoint: 'https://api.mainnet-beta.solana.com',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'mainnet-beta (Serum)' as ENV,
+    name: 'mainnet-beta (Serum)',
     endpoint: 'https://solana-api.projectserum.com/',
     ChainId: ChainId.MainnetBeta,
   },
   {
-    name: 'testnet' as ENV,
+    name: 'testnet',
     endpoint: clusterApiUrl('testnet'),
     ChainId: ChainId.Testnet,
   },
   {
-    name: 'devnet' as ENV,
+    name: 'devnet',
     endpoint: clusterApiUrl('devnet'),
     ChainId: ChainId.Devnet,
   },
@@ -87,7 +93,11 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   tokenMap: new Map<string, TokenInfo>(),
 });
 
-export function ConnectionProvider({ children = undefined as any }) {
+export function ConnectionProvider({
+  children = undefined,
+}: {
+  children: ReactNode;
+}) {
   const searchParams = useQuerySearch();
   const network = searchParams.get('network');
   const queryEndpoint =
@@ -166,8 +176,8 @@ export function ConnectionProvider({ children = undefined as any }) {
   );
 }
 
-export function useConnection() {
-  return useContext(ConnectionContext).connection as Connection;
+export function useConnection(): Connection {
+  return useContext(ConnectionContext).connection;
 }
 
 export function useConnectionConfig() {
@@ -226,7 +236,7 @@ export async function sendTransactionsWithManualRetry(
   let stopPoint = 0;
   let tries = 0;
   let lastInstructionsLength = null;
-  let toRemoveSigners: Record<number, boolean> = {};
+  const toRemoveSigners: Record<number, boolean> = {};
   instructions = instructions.filter((instr, i) => {
     if (instr.length > 0) {
       return true;
@@ -286,8 +296,8 @@ export const sendTransactions = async (
   signersSet: Keypair[][],
   sequenceType: SequenceType = SequenceType.Parallel,
   commitment: Commitment = 'singleGossip',
-  successCallback: (txid: string, ind: number) => void = (txid, ind) => {},
-  failCallback: (reason: string, ind: number) => boolean = (txid, ind) => false,
+  successCallback: (txid: string, ind: number) => void = () => {},
+  failCallback: (reason: string, ind: number) => boolean = () => false,
   block?: BlockhashAndFeeCalculator,
 ): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
@@ -306,7 +316,7 @@ export const sendTransactions = async (
       continue;
     }
 
-    let transaction = new Transaction();
+    const transaction = new Transaction();
     instructions.forEach(instruction => transaction.add(instruction));
     transaction.recentBlockhash = block.blockhash;
     transaction.setSigners(
@@ -326,7 +336,7 @@ export const sendTransactions = async (
 
   const pendingTxns: Promise<{ txid: string; slot: number }>[] = [];
 
-  let breakEarlyObject = { breakEarly: false, i: 0 };
+  const breakEarlyObject = { breakEarly: false, i: 0 };
   console.log(
     'Signed txns length',
     signedTxns.length,
@@ -340,10 +350,10 @@ export const sendTransactions = async (
     });
 
     signedTxnPromise
-      .then(({ txid, slot }) => {
+      .then(({ txid }) => {
         successCallback(txid, i);
       })
-      .catch(reason => {
+      .catch(() => {
         // @ts-ignore
         failCallback(signedTxns[i], i);
         if (sequenceType === SequenceType.StopOnFailure) {
@@ -410,7 +420,7 @@ export const sendTransaction = async (
   }
 
   const rawTransaction = transaction.serialize();
-  let options = {
+  const options = {
     skipPreflight: true,
     commitment,
   };
@@ -436,8 +446,8 @@ export const sendTransaction = async (
         message: 'Transaction failed...',
         description: (
           <>
-            {errors.map(err => (
-              <div>{err}</div>
+            {errors.map((err, i) => (
+              <div key={i}>{err}</div>
             ))}
             <ExplorerLink address={txid} type="transaction" />
           </>
@@ -558,9 +568,9 @@ export async function sendSignedTransaction({
     }
 
     slot = confirmation?.slot || 0;
-  } catch (err: any) {
+  } catch (err) {
     console.error('Timeout Error caught', err);
-    if (err.timeout) {
+    if (typeof err === 'object' && err && 'timeout' in err) {
       throw new Error('Timed out awaiting confirmation on transaction');
     }
     let simulateResult: SimulatedTransactionResponse | null = null;
@@ -568,7 +578,9 @@ export async function sendSignedTransaction({
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
-    } catch (e) {}
+    } catch (e) {
+      console.error(e);
+    }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
@@ -606,7 +618,7 @@ async function simulateTransaction(
   // @ts-ignore
   const wireTransaction = transaction._serialize(signData);
   const encodedTransaction = wireTransaction.toString('base64');
-  const config: any = { encoding: 'base64', commitment };
+  const config = { encoding: 'base64', commitment };
   const args = [encodedTransaction, config];
 
   // @ts-ignore
@@ -631,7 +643,7 @@ async function awaitTransactionSignatureConfirmation(
     err: null,
   };
   let subId = 0;
-  status = await new Promise(async (resolve, reject) => {
+  status = await new Promise((resolve, reject) => {
     setTimeout(() => {
       if (done) {
         return;
@@ -693,7 +705,7 @@ async function awaitTransactionSignatureConfirmation(
           }
         }
       })();
-      await sleep(2000);
+      return sleep(2000);
     }
   });
 

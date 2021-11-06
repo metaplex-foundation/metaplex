@@ -1,0 +1,9 @@
+#metaplex-layout-content {
+  margin: 0 auto;
+  padding: @content-padding;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: (@content-max-width + 2 * @content-padding);
+  // Clip the content, primarily to hide overflow from the homepage banner backdrop
+  overflow: hidden;
+}

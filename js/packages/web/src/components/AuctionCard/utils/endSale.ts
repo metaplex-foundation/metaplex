@@ -1,4 +1,3 @@
-import { Connection, PublicKey } from '@solana/web3.js';
 import {
   BidderMetadata,
   BidRedemptionTicket,
@@ -7,11 +6,16 @@ import {
   sendTransactions,
   TokenAccount,
 } from '@oyster/common';
-
-import { claimUnusedPrizes } from '../../../actions/claimUnusedPrizes';
-import { endAuction } from '../../../models/metaplex/endAuction';
-import { AuctionView } from '../../../hooks';
 import { WalletContextState } from '@solana/wallet-adapter-react';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js';
+import { claimUnusedPrizes } from '../../../actions/claimUnusedPrizes';
+import { AuctionView } from '../../../hooks';
+import { endAuction } from '../../../models/metaplex/endAuction';
 
 interface EndSaleParams {
   auctionView: AuctionView;
@@ -34,15 +38,15 @@ export async function endSale({
 }: EndSaleParams) {
   const { vault, auctionManager } = auctionView;
 
-  const endAuctionInstructions = [];
+  const endAuctionInstructions: TransactionInstruction[] = [];
   await endAuction(
     new PublicKey(vault.pubkey),
     new PublicKey(auctionManager.authority),
     endAuctionInstructions,
   );
 
-  const claimInstructions = [];
-  const claimSigners = [];
+  const claimInstructions: TransactionInstruction[][] = [];
+  const claimSigners: Keypair[][] = [];
   await claimUnusedPrizes(
     connection,
     wallet,

@@ -93,21 +93,23 @@ async function propagateIndex(
   let indexSigners: Keypair[] = [];
   let indexInstructions: TransactionInstruction[] = [];
 
-  let currPage: ParsedAccount<StoreIndexer> | null = storeIndexer[0];
-  let lastPage: ParsedAccount<StoreIndexer> | null = null;
+  let currPage: ParsedAccount<StoreIndexer> | undefined = storeIndexer[0];
+  let lastPage: ParsedAccount<StoreIndexer> | undefined = undefined;
   while (
     currPage &&
     currPage.info.auctionCaches.length == MAX_INDEXED_ELEMENTS
   ) {
     const cacheLeavingThePage =
       currPage.info.auctionCaches[currPage.info.auctionCaches.length - 1];
-    const nextPage = storeIndexer[currPage.info.page.toNumber() + 1];
+    const nextPage: ParsedAccount<StoreIndexer> | undefined =
+      storeIndexer[currPage.info.page.toNumber() + 1];
+
     if (nextPage) {
       lastPage = currPage;
       currPage = nextPage;
     } else {
       lastPage = currPage;
-      currPage = null;
+      currPage = undefined;
     }
 
     const storeIndexKey = currPage

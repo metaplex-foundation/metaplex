@@ -1,23 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Statistic } from 'antd';
-import { useSolPrice } from '../../contexts';
 import { formatUSD } from '@oyster/common';
+import { Space, Statistic } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useSolPrice } from '../../contexts';
+import { SolCircle } from '../Custom';
 
 interface IAmountLabel {
   amount: number | string;
   displayUSD?: boolean;
+  displaySOL?: boolean;
   title?: string;
-  style?: object;
-  containerStyle?: object;
+  customPrefix?: JSX.Element;
 }
 
 export const AmountLabel = (props: IAmountLabel) => {
   const {
     amount: _amount,
     displayUSD = true,
+    displaySOL = false,
     title = '',
-    style = {},
-    containerStyle = {},
+    customPrefix,
   } = props;
   const amount = typeof _amount === 'string' ? parseFloat(_amount) : _amount;
 
@@ -26,31 +27,27 @@ export const AmountLabel = (props: IAmountLabel) => {
   const [priceUSD, setPriceUSD] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    setPriceUSD(solPrice * amount);
+    if (solPrice !== undefined) setPriceUSD(solPrice * amount);
   }, [amount, solPrice]);
 
   const PriceNaN = isNaN(amount);
 
   return (
-    <div style={{ display: 'flex', ...containerStyle }}>
-      {PriceNaN === false && (
-        <Statistic
-          style={style}
-          className="create-statistic"
-          title={title || ''}
-          value={amount}
-          prefix="◎"
-        />
-      )}
-      {displayUSD && (
-        <div className="usd">
-          {PriceNaN === false ? (
-            formatUSD.format(priceUSD || 0)
-          ) : (
-            <div className="placebid">Place Bid</div>
-          )}
-        </div>
-      )}
-    </div>
+    <>
+      <h5>{title}</h5>
+      <Space direction="horizontal" align="baseline">
+        {PriceNaN === false && (
+          <Statistic
+            value={`${amount}${displaySOL ? ' SOL' : ''}`}
+            prefix={customPrefix || <SolCircle />}
+          />
+        )}
+        {displayUSD && (
+          <div>
+            {PriceNaN === false ? formatUSD.format(priceUSD || 0) : 'Place Bid'}
+          </div>
+        )}
+      </Space>
+    </>
   );
 };

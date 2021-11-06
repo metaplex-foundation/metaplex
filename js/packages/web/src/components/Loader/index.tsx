@@ -1,34 +1,24 @@
-import { useMeta } from '@oyster/common';
+import { LoadingOutlined } from '@ant-design/icons';
+import { useMeta, useStore } from '@oyster/common';
+import { Spin } from 'antd';
 import React, { FC } from 'react';
 
 export const LoaderProvider: FC = ({ children }) => {
   const { isLoading } = useMeta();
+  const { storefront } = useStore();
 
   return (
     <>
-      <div className={`loader-container ${isLoading ? 'active' : ''}`}>
-        <div className="loader-block">
-          <div className="loader-title">loading</div>
-          <Spinner />
-        </div>
+      <div id="metaplex-loading" className={isLoading ? 'loading' : undefined}>
+        <img id="metaplex-loading-icon" src={storefront.theme.logo} />
+        <div id="metaplex-loading-text">loading</div>
+        <Spinner />
       </div>
-      {children}
+      {!isLoading && children}
     </>
   );
 };
 
 export const Spinner = () => {
-  return (
-    <div className="spinner">
-      <span className="line line-1" />
-      <span className="line line-2" />
-      <span className="line line-3" />
-      <span className="line line-4" />
-      <span className="line line-5" />
-      <span className="line line-6" />
-      <span className="line line-7" />
-      <span className="line line-8" />
-      <span className="line line-9" />
-    </div>
-  );
+  return <Spin indicator={<LoadingOutlined />} />;
 };

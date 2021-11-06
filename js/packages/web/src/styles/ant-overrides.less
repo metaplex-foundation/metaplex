@@ -1,0 +1,67 @@
+// This file contains patches to the antd stylesheet specifically for themed colors
+
+.ant-switch-checked .ant-switch-inner {
+  color: @theme-color-text-accent;
+}
+
+.ant-typography.ant-typography-secondary,
+.ant-select-single.ant-select-open .ant-select-selection-item {
+  color: @theme-color-text-faint;
+}
+
+.ant-btn-primary[disabled],
+.ant-pagination-disabled .ant-pagination-item-link {
+  &,
+  &:hover,
+  &:focus,
+  &:active {
+    color: @theme-color-text-faint;
+    stroke: @theme-color-text-faint;
+  }
+}
+
+.ant-divider,
+.ant-card-head,
+.ant-card-bordered,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+  border-color: @theme-color-border;
+}
+
+.ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-tail::after,
+.ant-steps-item-process
+  > .ant-steps-item-container
+  > .ant-steps-item-tail::after,
+.ant-steps-item-wait
+  .ant-steps-item-icon
+  > .ant-steps-icon
+  .ant-steps-icon-dot {
+  background-color: @theme-color-border;
+}
+
+.ant-steps-item-wait
+  > .ant-steps-item-container
+  > .ant-steps-item-content
+  > .ant-steps-item-title {
+  color: @theme-color-text-faint;
+}
+
+.ant-select-item {
+  transition-property: background, color;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: @theme-color-accent-bold;
+  color: @theme-color-text-accent;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: @theme-color-accent;
+  color: @theme-color-text-accent;
+  font-weight: inherit;
+}
+
+.ant-progress-circle-trail {
+  stroke: @theme-color-text;
+  opacity: 0.1;
+}

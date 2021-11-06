@@ -1,45 +1,49 @@
-import React, { useEffect, useRef } from 'react';
+import React, { CSSProperties, useEffect, useMemo, useRef } from 'react';
 
-import Jazzicon from 'jazzicon';
-import bs58 from 'bs58';
+import jazzicon from '@metamask/jazzicon';
 import { PublicKey } from '@solana/web3.js';
 
-export const Identicon = (props: {
+export const Identicon = ({
+  size,
+  address,
+  alt,
+}: {
+  size?: CSSProperties['width'];
   address?: string | PublicKey;
-  style?: React.CSSProperties;
-  className?: string;
   alt?: string;
 }) => {
-  const { style, className, alt } = props;
-  const address =
-    typeof props.address === 'string'
-      ? props.address
-      : props.address?.toBase58();
-  const ref = useRef<HTMLDivElement>();
+  const pubkey = typeof address === 'string' ? new PublicKey(address) : address;
+  const ref = useRef<HTMLDivElement>(null);
+
+  const el = useMemo(() => {
+    if (!pubkey) return undefined;
+
+    const el = jazzicon(72, Array.from(new Uint32Array(pubkey.toBytes())));
+
+    // There's no need for jazzicon to dictate the element size, this allows
+    // auto-scaling the element and its contents
+    const svg = el.querySelector('svg');
+    if (svg) {
+      svg.setAttribute('viewBox', '0 0 72 72');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+      ['x', 'y', 'width', 'height'].forEach(a => svg.removeAttribute(a));
+    }
+
+    return el;
+  }, [pubkey]);
 
   useEffect(() => {
-    if (address && ref.current) {
-      try {
-        ref.current.innerHTML = '';
-        ref.current.className = className || '';
-        ref.current.appendChild(
-          Jazzicon(
-            style?.width || 16,
-            parseInt(bs58.decode(address).toString('hex').slice(5, 15), 16),
-          ),
-        );
-      } catch (err) {
-        // TODO
-      }
-    }
-  }, [address, style, className]);
+    // TODO: the current TSC toolchain does not have a correct definition for replaceChildren
+    // @ts-ignore
+    if (el && ref.current) ref.current.replaceChildren(el);
+  }, [el, ref.current]);
 
   return (
     <div
-      className="identicon-wrapper"
       title={alt}
-      ref={ref as any}
-      style={props.style}
+      ref={ref}
+      style={size ? { width: size, height: size } : {}}
+      className="metaplex-jazzicon"
     />
   );
 };

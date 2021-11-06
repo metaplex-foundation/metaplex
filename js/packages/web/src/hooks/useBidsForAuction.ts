@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   BidderMetadata,
-  BidderMetadataParser,
-  cache,
   ParsedAccount,
   StringPublicKey,
   useMeta,
@@ -35,7 +33,6 @@ export const useBidsForAuction = (auctionPubkey: StringPublicKey | string) => {
 
   useEffect(() => {
     setBids(getBids(bidderMetadataByAuctionAndBidder, id));
-
   }, [id, bidderMetadataByAuctionAndBidder]);
 
   return bids;
@@ -49,9 +46,9 @@ const getBids = (
   id?: StringPublicKey,
 ) => {
   const bids = Object.values(bidderMetadataByAuctionAndBidder).filter(
-      b => b.info.auctionPubkey === id,
-    );
-    
+    b => b.info.auctionPubkey === id,
+  );
+
   return bids
     .sort((a, b) => {
       const lastBidDiff = b.info.lastBid.sub(a.info.lastBid).toNumber();

@@ -1,0 +1,18 @@
+.metaplex-masonry {
+  display: flex;
+  box-sizing: content-box;
+  // Negative margin hack is required due to the column width being computed and hard-coded
+  margin-left: (-@masonry-gutter);
+  width: auto;
+}
+
+.metaplex-masonry-column {
+  flex: 0 0 auto;
+  padding-left: @masonry-gutter;
+  box-sizing: border-box;
+
+  > :not(:last-child) {
+    display: block; // TODO: stupid, result of problems elsewhere, should be removed eventually
+    margin-bottom: @masonry-gutter;
+  }
+}

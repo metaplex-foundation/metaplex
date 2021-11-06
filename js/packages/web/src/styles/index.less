@@ -1,26 +1,79 @@
-@import './fonts.less';
-@import './colors.less';
-@import './app.less';
+@import '~antd/lib/style/variable.less';
 
+// Theme variables
+@theme-color-base: var(--color-base, black);
+@theme-color-base-bold: var(--color-base-bold, #121212);
+@theme-color-base-faint: var(--color-base-faint, #121212);
+
+@theme-color-border: var(--color-border, #121212);
+
+@theme-color-accent: var(--color-accent, #00ffbd);
+@theme-color-accent-bold: var(--color-accent-bold, #00cc82);
+@theme-color-accent-faint: var(--color-accent-faint, #00cc82);
+
+@theme-color-text: var(--color-text, white);
+@theme-color-text-faint: var(--color-text-faint, #aaa);
+@theme-color-text-accent: var(--color-text-accent, black);
+
+@theme-family-title: var(--family-title, 'Graphik Web', sans-serif);
+@theme-family-text: var(--family-text, 'Graphik Web', sans-serif);
+
+// antd theme config
+html {
+  --ant-primary-color: @theme-color-accent;
+  --ant-primary-color-hover: @theme-color-accent-faint;
+  --ant-primary-color-active: @theme-color-accent-bold;
+
+  --ant-primary-5: @theme-color-accent-bold;
+
+  --ant-info-color-deprecated-bg: @theme-color-base-bold;
+}
+
+@body-background: @theme-color-base;
+@layout-header-background: @theme-color-base;
+@layout-body-background: @theme-color-base;
+@background-color-base: @theme-color-base;
+@background-color-light: @theme-color-base-faint;
+@component-background: @theme-color-base-bold;
+
+@border-color-base: @theme-color-border;
+
+@text-color: @theme-color-text;
+@heading-color: inherit;
+
+@menu-item-color: @theme-color-text;
+@menu-dark-color: @theme-color-text; // For some reason ant uses the dark styles anyway
+
+@btn-primary-color: @theme-color-text-accent;
+@menu-highlight-color: @theme-color-text-accent;
+@menu-dark-highlight-color: @theme-color-text-accent;
+
+@statistic-font-family: @theme-family-title;
+
+// Other config
+@content-padding: 32px;
+@content-max-width: 1440px;
+@loading-background: @body-background;
+@loading-filter: none;
+@overlay-filter: blur(32px);
+@masonry-gutter: 32px;
+
+// Dependency stylesheets
+@import '~antd/lib/style/components.less';
+@import './ant-overrides.less';
 @import '@oyster/common/styles.css';
 
-@import '../views/home/index.less';
-@import '../views/styles.less';
-@import '../views/auction/billing.less';
-@import '../views/auction/index.less';
-@import '../views/art/index.less';
-@import '../views/admin/index.less';
+// Global styles for web
+@import './styles.less';
 
-@import '../components/AuctionRenderCard/index.less';
-@import '../components/AppBar/index.less';
-@import '../components/AppBar/searchBox.less';
-@import '../components/Footer/index.less';
-@import '../components/AmountLabel/index.less';
-@import '../components/Layout/index.less';
-@import '../components/UserSearch/styles.less';
-@import '../components/PreSaleBanner/index.less';
-@import '../components/AuctionCard/index.less';
-@import '../components/ArtCard/index.less';
-@import '../components/ArtistCard/index.less';
-@import '../components/Notifications/index.less';
-@import '../components/Loader/index.less';
+// Component styles for web
+@import '../components/AppBar/styles.less';
+@import '../components/ArtContent/styles.less';
+@import '../components/ArtistCard/styles.less';
+@import '../components/Banner/styles.less';
+@import '../components/Confetti/styles.less';
+@import '../components/InstructionsModal/styles.less';
+@import '../components/Layout/styles.less';
+@import '../components/Loader/styles.less';
+@import '../components/MetaplexMasonry/styles.less';
+@import '../views/auctionCreate/styles.less';

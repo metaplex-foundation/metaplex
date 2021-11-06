@@ -1,31 +1,21 @@
-import React from 'react';
+import { Storefront } from '@oyster/common';
 import { Layout } from 'antd';
+import React, { ReactNode } from 'react';
 import { AppBar } from '../AppBar';
-import useWindowDimensions from '../../utils/layout';
+
 const { Header, Content } = Layout;
 
-const paddingForLayout = (width: number) => {
-  if (width <= 768) return '5px 10px';
-  if (width > 768) return '10px 30px';
-};
-
-export const AppLayout = React.memo((props: any) => {
-  const { width } = useWindowDimensions();
-
+export const AppLayout = React.memo(function AppLayout(props: {
+  children?: ReactNode;
+  storefront?: Storefront;
+}) {
   return (
     <>
-      <Layout
-        style={{
-          padding: paddingForLayout(width),
-          maxWidth: 1440,
-        }}
-      >
-        <Header className="App-Bar">
-          <AppBar />
+      <Layout>
+        <Header>
+          <AppBar logo={props.storefront?.theme?.logo || ''} />
         </Header>
-        <Content>
-          {props.children}
-        </Content>
+        <Content id="metaplex-layout-content">{props.children}</Content>
       </Layout>
     </>
   );

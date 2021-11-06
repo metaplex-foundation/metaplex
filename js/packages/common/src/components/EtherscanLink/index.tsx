@@ -6,7 +6,6 @@ export const EtherscanLink = (props: {
   address: string;
   type: string;
   code?: boolean;
-  style?: React.CSSProperties;
   length?: number;
 }) => {
   const { type, code } = props;
@@ -22,13 +21,12 @@ export const EtherscanLink = (props: {
   return (
     <a
       href={`https://etherscan.io/${type}/${address}`}
-      // eslint-disable-next-line react/jsx-no-target-blank
       target="_blank"
+      rel="noopener noreferrer"
       title={address}
-      style={props.style}
     >
       {code ? (
-        <Typography.Text style={props.style} code>
+        <Typography.Text code>
           {shortenAddress(address, length)}
         </Typography.Text>
       ) : (

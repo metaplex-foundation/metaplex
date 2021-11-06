@@ -3,22 +3,11 @@ import { Button } from 'antd';
 import { LABELS } from '../../constants';
 import { Link } from 'react-router-dom';
 
-export const ActionConfirmation = (props: {
-  className?: string;
-  onClose: () => void;
-}) => {
+export const ActionConfirmation = (props: { onClose: () => void }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-      }}
-    >
+    <div>
       <h2>Congratulations!</h2>
       <div>Your action has been successfully executed</div>
-      <div className="success-icon" />
       <Link to="/dashboard">
         <Button type="primary">{LABELS.DASHBOARD_ACTION}</Button>
       </Link>

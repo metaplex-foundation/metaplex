@@ -13,20 +13,15 @@ export const AppBar = (props: {
   useWalletBadge?: boolean;
   additionalSettings?: JSX.Element;
 }) => {
-  const { connected, wallet } = useWallet();
+  const { connected } = useWallet();
 
   const TopBar = (
-    <div className="App-Bar-right">
+    <div>
       {props.left}
       {connected ? (
         <CurrentUserBadge />
       ) : (
-        <ConnectButton
-          type="text"
-          size="large"
-          style={{ color: '#2abdd2' }}
-          allowWalletChange
-        />
+        <ConnectButton type="text" size="large" allowWalletChange />
       )}
       <Popover
         placement="topRight"

@@ -8,10 +8,9 @@ const CopyIcon = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    className="feather feather-copy"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <rect
       stroke="currentColor"
@@ -37,22 +36,15 @@ const Checkmark = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    className="feather feather-check"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
   >
     <polyline points="20 6 9 17 4 12"></polyline>
   </svg>
 );
 
-export const ClickToCopy = ({
-  copyText,
-  className,
-}: {
-  copyText: string;
-  className: string;
-}) => {
+export const ClickToCopy = ({ copyText }: { copyText: string }) => {
   const [clicked, setClicked] = useState(false);
 
   useEffect(() => {
@@ -68,7 +60,7 @@ export const ClickToCopy = ({
   };
 
   return (
-    <div className={className} onClick={onClick} title="Click to copy pubkey">
+    <div onClick={onClick} title="Click to copy pubkey">
       {clicked ? <Checkmark /> : <CopyIcon />}
     </div>
   );

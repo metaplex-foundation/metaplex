@@ -59,6 +59,14 @@ export const getStorefront = async (
       theme: {
         logo: maybeCDN(values['holaplex:theme:logo:url']),
         stylesheet: maybeCDN(`${ARWEAVE_URL}/${transaction.id}`),
+        color: {
+          background: values['holaplex:theme:color:background'],
+          primary: values['holaplex:theme:color:primary'],
+        },
+        font: {
+          title: values['holaplex:theme:font:title'],
+          text: values['holaplex:theme:font:text'],
+        },
       },
       meta: {
         favicon: maybeCDN(

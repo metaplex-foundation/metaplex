@@ -1,28 +1,20 @@
-import { Col, Divider, Row } from 'antd';
-import React, { useEffect, useState } from 'react';
-import Masonry from 'react-masonry-css';
-import { Spin } from 'antd'
+import { LoadingOutlined } from '@ant-design/icons';
 import { loadMetadataForCreator, useConnection, useMeta } from '@oyster/common';
+import { Col, Divider, Row, Spin } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArtCard } from '../../components/ArtCard';
-import { useCreator, useCreatorArts } from '../../hooks';
-import { LoadingOutlined } from '@ant-design/icons';
 import { ArtistCard } from '../../components/ArtistCard';
-
+import { MetaplexMasonry } from '../../components/MetaplexMasonry';
+import { useCreatorArts } from '../../hooks';
 
 export const ArtistView = () => {
   const { id } = useParams<{ id: string }>();
-  const { whitelistedCreatorsByCreator, patchState } = useMeta()
-  const [loadingArt, setLoadingArt] = useState(true)
+  const { whitelistedCreatorsByCreator, patchState } = useMeta();
+  const [loadingArt, setLoadingArt] = useState(true);
   const artwork = useCreatorArts(id);
   const connection = useConnection();
   const creators = Object.values(whitelistedCreatorsByCreator);
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
   useEffect(() => {
     if (!id) {
@@ -31,22 +23,23 @@ export const ArtistView = () => {
 
     (async () => {
       setLoadingArt(true);
-      const artistMetadataState = await loadMetadataForCreator(connection, whitelistedCreatorsByCreator[id]);
+      const creator = whitelistedCreatorsByCreator[id];
+
+      const artistMetadataState = await loadMetadataForCreator(
+        connection,
+        creator,
+      );
 
       patchState(artistMetadataState);
       setLoadingArt(false);
-    })()
-  }, [connection, id])
+    })();
+  }, [connection, id]);
 
   return (
     <Row>
       <Col span={24}>
         <h2>Artists</h2>
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="my-masonry-grid"
-          columnClassName="my-masonry-grid_column"
-        >
+        <MetaplexMasonry>
           {creators.map((m, idx) => {
             const address = m.info.address;
             return (
@@ -64,7 +57,7 @@ export const ArtistView = () => {
               </Link>
             );
           })}
-        </Masonry>
+        </MetaplexMasonry>
       </Col>
       <Col span={24}>
         <Divider />
@@ -73,11 +66,7 @@ export const ArtistView = () => {
             <Spin indicator={<LoadingOutlined />} />
           </div>
         ) : (
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
+          <MetaplexMasonry>
             {artwork.map((m, idx) => {
               const id = m.pubkey;
               return (
@@ -85,9 +74,8 @@ export const ArtistView = () => {
                   <ArtCard key={id} pubkey={m.pubkey} preview={false} />
                 </Link>
               );
-            })
-            }
-          </Masonry>
+            })}
+          </MetaplexMasonry>
         )}
       </Col>
     </Row>

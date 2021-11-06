@@ -27,9 +27,10 @@
     "test": "jest test --passWithNoTests",
     "clean": "rm -rf dist",
     "prepare": "run-s clean build",
-    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
+    "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|less|md)\""
   },
   "dependencies": {
+    "@metamask/jazzicon": "^2.0.0",
     "@project-serum/serum": "^0.13.52",
     "@solana/spl-token": "0.1.6",
     "@solana/spl-token-registry": "0.2.202",
@@ -44,7 +45,7 @@
     "@types/echarts": "^4.9.0",
     "@types/react-router-dom": "^5.1.6",
     "@welldone-software/why-did-you-render": "^6.0.5",
-    "antd": "^4.16.12",
+    "antd": "^4.17.0-alpha.9",
     "bignumber.js": "^9.0.1",
     "bn.js": "^5.1.3",
     "borsh": "^0.4.0",
@@ -53,7 +54,6 @@
     "crypto-hash": "^1.3.0",
     "eventemitter3": "^4.0.7",
     "identicon.js": "^2.3.3",
-    "jazzicon": "^1.5.0",
     "lodash": "^4.17.20",
     "react": "17.0.2",
     "react-dom": "17.0.2",

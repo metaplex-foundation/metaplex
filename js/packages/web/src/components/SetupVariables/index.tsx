@@ -1,7 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Card } from 'antd';
-import { FC } from 'react';
-import { useCallback, useRef } from 'react';
+import React, { FC, useCallback, useRef } from 'react';
 
 interface Variables {
   storeAddress?: string;

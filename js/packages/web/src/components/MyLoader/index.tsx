@@ -24,10 +24,6 @@ export const ThreeDots = () => (
     height={200}
     width={212}
     backgroundColor="transparent"
-    style={{
-      width: '100%',
-      margin: 'auto',
-    }}
   >
     <circle cx="86" cy="100" r="8" />
     <circle cx="106" cy="100" r="8" />

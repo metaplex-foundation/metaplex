@@ -10,10 +10,8 @@ import {
   getSolflareWallet,
   getSolletWallet,
   getSolongWallet,
-  getTorusWallet,
-  WalletName,
 } from '@solana/wallet-adapter-wallets';
-import { Button, Image } from 'antd';
+import { Button, Collapse, Space } from 'antd';
 import React, {
   createContext,
   FC,
@@ -24,105 +22,107 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { notify } from '../utils';
 import { MetaplexModal } from '../components';
-import { useStore } from './store';
+import { notify } from '../utils';
+const { Panel } = Collapse;
 
 export interface WalletModalContextState {
   visible: boolean;
   setVisible: (open: boolean) => void;
 }
 
-export const WalletModalContext = createContext<WalletModalContextState>(
-  {} as WalletModalContextState,
-);
+export const WalletModalContext = createContext<WalletModalContextState>({
+  visible: false,
+  setVisible: () => {},
+});
 
 export function useWalletModal(): WalletModalContextState {
   return useContext(WalletModalContext);
 }
 
 export const WalletModal = () => {
-  const { wallets, wallet: selected, select } = useWallet();
+  const { wallets, select } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const [showWallets, setShowWallets] = useState(false);
-  const { storefront } = useStore()
   const close = useCallback(() => {
     setVisible(false);
-    setShowWallets(false);
-  }, [setVisible, setShowWallets]);
+  }, [setVisible]);
+
+  const phatomWallet = useMemo(() => getPhantomWallet(), []);
 
   return (
-    <MetaplexModal visible={visible} onCancel={close}>
-      <Image preview={false} height={45} width={45} src={storefront.theme.logo} />
-      <h2>{selected ? 'Change provider' : 'Welcome!'}</h2>
-      <p>
-        {selected
-          ? 'Feel free to switch wallet provider'
-          : 'You must be signed in to place a bid'}
-      </p>
+    <MetaplexModal title="Connect Wallet" visible={visible} onCancel={close}>
+      <h4>RECOMMENDED</h4>
 
-      <br />
-      {selected || showWallets ? (
-        wallets.map(wallet => {
-          return (
-            <Button
-              key={wallet.name}
-              size="large"
-              type={wallet === selected ? 'primary' : 'ghost'}
-              onClick={() => {
-                select(wallet.name);
-                close();
-              }}
-              icon={
-                <img
-                  alt={`${wallet.name}`}
-                  width={20}
-                  height={20}
-                  src={wallet.icon}
-                  style={{ marginRight: 8 }}
-                />
-              }
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                marginBottom: 8,
-              }}
+      <Button
+        className="metaplex-button-jumbo"
+        size="large"
+        onClick={() => {
+          console.log(phatomWallet.name);
+          select(phatomWallet.name);
+          close();
+        }}
+      >
+        <img src={phatomWallet?.icon} />
+        &nbsp;Connect to Phantom
+      </Button>
+      <Collapse
+        ghost
+        expandIcon={panelProps =>
+          panelProps.isActive ? (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              {wallet.name}
-            </Button>
-          );
-        })
-      ) : (
-        <>
-          <Button
-            className="metaplex-button"
-            style={{
-              width: '80%',
-              fontWeight: 'unset',
-            }}
-            onClick={() => {
-              select(WalletName.Phantom);
-              close();
-            }}
-          >
-            <span>
-              <img
-                src="https://www.phantom.app/img/logo.png"
-                style={{ width: '1.2rem' }}
+              <path
+                d="M15 7.5L10 12.5L5 7.5"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-              &nbsp;Sign in with Phantom
-            </span>
-            <span>&gt;</span>
-          </Button>
-          <p
-            onClick={() => setShowWallets(true)}
-            style={{ cursor: 'pointer', marginTop: 10 }}
-          >
-            Select a different Solana wallet
-          </p>
-        </>
-      )}
+            </svg>
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.5 5L12.5 10L7.5 15"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )
+        }
+      >
+        <Panel header={<strong>Other Wallets</strong>} key="1">
+          <Space wrap>
+            {wallets.map((wallet, idx) => {
+              if (wallet.name === 'Phantom') return null;
+
+              return (
+                <Button
+                  key={idx}
+                  onClick={() => {
+                    select(wallet.name);
+                    close();
+                  }}
+                >
+                  Connect to {wallet.name}
+                </Button>
+              );
+            })}
+          </Space>
+        </Panel>
+      </Collapse>
     </MetaplexModal>
   );
 };
@@ -140,9 +140,9 @@ export const WalletModalProvider: FC<{ children: ReactNode }> = ({
       const keyToDisplay =
         base58.length > 20
           ? `${base58.substring(0, 7)}.....${base58.substring(
-            base58.length - 7,
-            base58.length,
-          )}`
+              base58.length - 7,
+              base58.length,
+            )}`
           : base58;
 
       notify({
@@ -180,13 +180,6 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     () => [
       getPhantomWallet(),
       getSolflareWallet(),
-      getTorusWallet({
-        options: {
-          // @FIXME: this should be changed for Metaplex, and by each Metaplex storefront
-          clientId:
-            'BOM5Cl7PXgE9Ylq1Z1tqzhpydY0RVr8k90QQ85N7AKI5QGSrr9iDC-3rvmy0K_hF0JfpLMiXoDhta68JwcxS1LQ',
-        },
-      }),
       getLedgerWallet(),
       getSolongWallet(),
       getMathWallet(),

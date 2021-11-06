@@ -22,14 +22,14 @@ export const processMetaData: ProcessAccountsFunc = async (
   try {
     if (isMetadataV1Account(account)) {
       const metadata = decodeMetadata(account.data);
-      
+
       if (isValidHttpUrl(metadata.data.uri)) {
         const parsedAccount: ParsedAccount<Metadata> = {
           pubkey,
           account,
           info: metadata,
         };
-        
+
         setter('metadataByMint', metadata.mint, parsedAccount);
         setter('metadataByMetadata', pubkey, parsedAccount);
       }

@@ -1,6 +1,4 @@
-import {
-  useMemo,
-} from 'react';
+import { useMemo } from 'react';
 import {
   AuctionManagerV1,
   AuctionManagerV2,
@@ -9,8 +7,7 @@ import {
   useMeta,
   useStore,
 } from '@oyster/common';
-import BN from 'bn.js'
-
+import BN from 'bn.js';
 
 interface AuctionCacheStatus {
   auctionManagersToCache: ParsedAccount<AuctionManagerV1 | AuctionManagerV2>[];
@@ -19,49 +16,42 @@ interface AuctionCacheStatus {
 }
 
 export const useAuctionManagersToCache = (): AuctionCacheStatus => {
-  const {
-    auctionManagersByAuction,
-    auctions,
-    auctionCaches,
-    storeIndexer,
-  } = useMeta();
-  const { storeAddress } = useStore()
+  const { auctionManagersByAuction, auctions, auctionCaches, storeIndexer } =
+    useMeta();
+  const { storeAddress } = useStore();
 
   const auctionManagersToCache = useMemo(() => {
     let auctionManagersToCache = Object.values(auctionManagersByAuction)
-      .filter(a => a.info.store == storeAddress && a.info.key === MetaplexKey.AuctionManagerV2)
+      .filter(
+        a =>
+          a.info.store == storeAddress &&
+          a.info.key === MetaplexKey.AuctionManagerV2,
+      )
       .sort((a, b) =>
-        (
-          auctions[b.info.auction].info.endedAt ||
-          new BN(Date.now() / 1000)
-        )
+        (auctions[b.info.auction].info.endedAt || new BN(Date.now() / 1000))
           .sub(
-            auctions[a.info.auction].info.endedAt ||
-            new BN(Date.now() / 1000),
+            auctions[a.info.auction].info.endedAt || new BN(Date.now() / 1000),
           )
           .toNumber(),
       );
 
-    const indexedInStoreIndexer = {};
+    const indexedInStoreIndexer: Record<string, boolean | undefined> = {};
 
     storeIndexer.forEach(s => {
       s.info.auctionCaches.forEach(a => (indexedInStoreIndexer[a] = true));
     });
 
-    const alreadyIndexed = Object.values(auctionCaches).reduce(
-      (hash, val) => {
-        hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
+    const alreadyIndexed = Object.values(auctionCaches).reduce((hash, val) => {
+      hash[val.info.auctionManager] = indexedInStoreIndexer[val.pubkey];
 
-        return hash;
-      },
-      {},
-    );
+      return hash;
+    }, {} as Record<string, boolean | undefined>);
     auctionManagersToCache = auctionManagersToCache.filter(
       a => !alreadyIndexed[a.pubkey],
     );
 
-    return auctionManagersToCache
-  }, [auctionManagersByAuction, auctions, auctionCaches, storeIndexer])
+    return auctionManagersToCache;
+  }, [auctionManagersByAuction, auctions, auctionCaches, storeIndexer]);
 
   const auctionCacheTotal = useMemo(() => {
     return storeIndexer.reduce((memo, storeIndexer) => {
@@ -71,25 +61,23 @@ export const useAuctionManagersToCache = (): AuctionCacheStatus => {
       }
 
       storeIndexer.info.auctionCaches.forEach(() => {
-        next++
-      })
+        next++;
+      });
 
       return next;
     }, 0);
   }, [storeIndexer, storeAddress]);
 
-
   const auctionManagerTotal = useMemo(() => {
-    return Object
-      .values(auctionManagersByAuction)
-      .filter(({ info: { store, key } }) => store === storeAddress && key === MetaplexKey.AuctionManagerV2)
-      .length;
-  }, [auctionManagersToCache, storeAddress])
-
+    return Object.values(auctionManagersByAuction).filter(
+      ({ info: { store, key } }) =>
+        store === storeAddress && key === MetaplexKey.AuctionManagerV2,
+    ).length;
+  }, [auctionManagersToCache, storeAddress]);
 
   return {
     auctionCacheTotal,
     auctionManagerTotal,
     auctionManagersToCache,
-  }
-}
+  };
+};

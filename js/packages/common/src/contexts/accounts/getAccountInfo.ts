@@ -5,7 +5,6 @@ export const getAccountInfo = async (
   connection: Connection,
   key: StringPublicKey,
 ) => {
-
   const account = await connection.getAccountInfo(new PublicKey(key));
 
   if (!account) {
@@ -16,6 +15,6 @@ export const getAccountInfo = async (
 
   return {
     ...rest,
-    data
-  } as AccountInfo<Buffer>
+    data,
+  } as AccountInfo<Buffer>;
 };

@@ -48,7 +48,8 @@ import Bugsnag from '@bugsnag/browser';
 
 const { Content } = Layout;
 export const AdminView = () => {
-  const { store, whitelistedCreatorsByCreator, isLoading, patchState } = useMeta();
+  const { store, whitelistedCreatorsByCreator, isLoading, patchState } =
+    useMeta();
   const connection = useConnection();
   const wallet = useWallet();
   const [loadingAdmin, setLoadingAdmin] = useState(true);
@@ -78,31 +79,34 @@ export const AdminView = () => {
       const [creatorsState, auctionManagerState] = await Promise.all([
         loadCreators(connection),
         loadAuctionManagers(connection, storeAddress as string),
-      ])
+      ]);
       const auctionsState = await loadAuctionsForAuctionManagers(
         connection,
         Object.values(auctionManagerState.auctionManagersByAuction),
       );
-      const vaultState = await loadVaultsAndContentForAuthority(connection, wallet.publicKey?.toBase58() as string);
-      
+      const vaultState = await loadVaultsAndContentForAuthority(
+        connection,
+        wallet.publicKey?.toBase58() as string,
+      );
+
       patchState(creatorsState, auctionManagerState, auctionsState, vaultState);
       setLoadingAdmin(false);
-    })()
-  }, [loadingAdmin, isLoading, storeAddress])
+    })();
+  }, [loadingAdmin, isLoading, storeAddress]);
 
   if (loadingAdmin) {
     return (
       <div className="app-section--loading">
         <Spin indicator={<LoadingOutlined />} />
       </div>
-    )
+    );
   }
 
   return (
     <>
       {!wallet.connected ? (
         <p>
-          <Button type="primary" className="app-btn" onClick={connect}>
+          <Button type="primary" onClick={connect}>
             Connect
           </Button>{' '}
           to admin store.
@@ -136,7 +140,7 @@ export const AdminView = () => {
       ) : (
         <>
           <p>Store is not initialized</p>
-          <Link to={`/`}>Go to initialize</Link>
+          <Link to="/">Go to initialize</Link>
         </>
       )}
     </>
@@ -199,12 +203,7 @@ function ArtistModal({
           onChange={e => setModalAddress(e.target.value)}
         />
       </Modal>
-      <Button
-        className="add-creator-button"
-        onClick={() => setModalOpen(true)}
-      >
-        Add Creator
-      </Button>
+      <Button onClick={() => setModalOpen(true)}>Add Creator</Button>
     </>
   );
 }
@@ -235,24 +234,20 @@ function InnerAdminView({
   const [newStore, setNewStore] = useState(
     store && store.info && new Store(store.info),
   );
-  const { storefront } = useStore()
+  const { storefront } = useStore();
   const [updatedCreators, setUpdatedCreators] = useState<
     Record<string, WhitelistedCreator>
   >({});
-  const [filteredMetadata, setFilteredMetadata] =
-    useState<{
-      available: ParsedAccount<MasterEditionV1>[];
-      unavailable: ParsedAccount<MasterEditionV1>[];
-    }>();
+  const [filteredMetadata, setFilteredMetadata] = useState<{
+    available: ParsedAccount<MasterEditionV1>[];
+    unavailable: ParsedAccount<MasterEditionV1>[];
+  }>();
   const [cachingAuctions, setCachingAuctions] = useState<boolean>();
-  const [convertingMasterEditions, setConvertMasterEditions] = useState<boolean>();
-  const {
-    auctionCaches,
-    storeIndexer,
-    metadata,
-    masterEditions,
-  } = useMeta();
-  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } = useAuctionManagersToCache();
+  const [convertingMasterEditions, setConvertMasterEditions] =
+    useState<boolean>();
+  const { auctionCaches, storeIndexer, metadata, masterEditions } = useMeta();
+  const { auctionManagersToCache, auctionManagerTotal, auctionCacheTotal } =
+    useAuctionManagersToCache();
   const notifications = useNotifications(wallet);
 
   const { accountByMint } = useUserAccounts();
@@ -328,7 +323,7 @@ function InnerAdminView({
       <Col>
         <Row>
           <h2>Whitelisted Creators</h2>
-          <Col span={21}>
+          <Col span={22}>
             <ArtistModal
               setUpdatedCreators={setUpdatedCreators}
               uniqueCreatorsWithUpdates={uniqueCreatorsWithUpdates}
@@ -355,33 +350,38 @@ function InnerAdminView({
               Submit
             </Button>
           </Col>
-          <Col span={3}>
-            <Switch
-              checkedChildren="Public"
-              unCheckedChildren="Whitelist Only"
-              checked={newStore.public}
-              onChange={val => {
-                setNewStore(_ => {
-                  const newS = new Store(store.info);
-                  newS.public = val;
-                  return newS;
-                });
-              }}
+          <Col>
+            <Row justify="end">
+              <Col>
+                <Switch
+                  checkedChildren="Public"
+                  unCheckedChildren="Whitelist Only"
+                  checked={newStore.public}
+                  onChange={val => {
+                    setNewStore(() => {
+                      const newS = new Store(store.info);
+                      newS.public = val;
+                      return newS;
+                    });
+                  }}
+                />
+              </Col>
+            </Row>
+          </Col>
+          <Col span={24}>
+            <Table
+              columns={columns}
+              dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
+                key,
+                address: uniqueCreatorsWithUpdates[key].address,
+                activated: uniqueCreatorsWithUpdates[key].activated,
+                name:
+                  uniqueCreatorsWithUpdates[key].name ||
+                  shortenAddress(uniqueCreatorsWithUpdates[key].address),
+                image: uniqueCreatorsWithUpdates[key].image,
+              }))}
             />
           </Col>
-          <Table
-            className="artist-whitelist-table"
-            columns={columns}
-            dataSource={Object.keys(uniqueCreatorsWithUpdates).map(key => ({
-              key,
-              address: uniqueCreatorsWithUpdates[key].address,
-              activated: uniqueCreatorsWithUpdates[key].activated,
-              name:
-                uniqueCreatorsWithUpdates[key].name ||
-                shortenAddress(uniqueCreatorsWithUpdates[key].address),
-              image: uniqueCreatorsWithUpdates[key].image,
-            }))}
-          />
         </Row>
       </Col>
       <h2>Listing Notifications</h2>
@@ -390,18 +390,20 @@ function InnerAdminView({
           {
             key: 'accountPubkey',
             title: 'Listing',
-            dataIndex: 'accountPubkey'
+            dataIndex: 'accountPubkey',
           },
           {
             key: 'description',
             title: 'Notification',
-            dataIndex: "description"
+            dataIndex: 'description',
           },
           {
             key: 'action',
             title: 'Action',
             render: ({ action, callToAction }) => {
-              const [status, setStatus] = useState<ListingNotificationStatus>(ListingNotificationStatus.Ready);
+              const [status, setStatus] = useState<ListingNotificationStatus>(
+                ListingNotificationStatus.Ready,
+              );
 
               const onSubmit = async () => {
                 try {
@@ -410,12 +412,12 @@ function InnerAdminView({
                   setStatus(ListingNotificationStatus.Complete);
                 } catch (e: any) {
                   Bugsnag.notify(e);
-                  setStatus(ListingNotificationStatus.Error)
+                  setStatus(ListingNotificationStatus.Error);
                 }
-              }
+              };
               const isComplete = status === ListingNotificationStatus.Complete;
 
-              const label = isComplete ? 'Done' : callToAction
+              const label = isComplete ? 'Done' : callToAction;
               return (
                 <Button
                   loading={status === ListingNotificationStatus.Submitting}
@@ -424,24 +426,23 @@ function InnerAdminView({
                 >
                   {label}
                 </Button>
-              )
-            }
-          }
+              );
+            },
+          },
         ]}
         dataSource={notifications}
       />
-      <Row>
-      </Row>
+      <Row></Row>
       <h2>Adminstrator Actions</h2>
       <Row>
         {!store.info.public && (
           <Col xs={24} md={12}>
             <h3>Convert Master Editions</h3>
             <p>
-              You have {filteredMetadata?.available.length} MasterEditionV1s that
-              can be converted right now and{' '}
-              {filteredMetadata?.unavailable.length} still in unfinished auctions
-              that cannot be converted yet.
+              You have {filteredMetadata?.available.length} MasterEditionV1s
+              that can be converted right now and{' '}
+              {filteredMetadata?.unavailable.length} still in unfinished
+              auctions that cannot be converted yet.
             </p>
             <Button
               size="large"
@@ -462,13 +463,31 @@ function InnerAdminView({
               Convert Eligible Master Editions
             </Button>
           </Col>
-        )
-        }
+        )}
         <Col span={11} offset={1}>
           <h3>Cache Auctions</h3>
-          <p>Activate your storefront listing caches by pressing "build cache". This will reduce page load times for your listings. Your storefront will start looking up listing using the cache on November 3rd. To preview the speed improvement visit the Holaplex <a rel="noopener noreferrer" target="_blank" href={`https://${storefront.subdomain}.holaxplex.dev`}> staging environment</a> for your storefront.</p>
+          <p>
+            Activate your storefront listing caches by pressing &ldquo;build
+            cache&rdquo;. This will reduce page load times for your listings.
+            Your storefront will start looking up listing using the cache on
+            November 3rd. To preview the speed improvement visit the Holaplex{' '}
+            <a
+              rel="noopener noreferrer"
+              target="_blank"
+              href={`https://${storefront.subdomain}.holaxplex.dev`}
+            >
+              {' '}
+              staging environment
+            </a>{' '}
+            for your storefront.
+          </p>
           <Space direction="vertical" size="middle" align="center">
-            <Progress type="circle" percent={auctionCacheTotal / auctionManagerTotal * 100} format={() => `${auctionManagersToCache.length} left`} />
+            <Progress
+              type="circle"
+              status="normal"
+              percent={(auctionCacheTotal / auctionManagerTotal) * 100}
+              format={() => `${auctionManagersToCache.length} left`}
+            />
             {auctionManagersToCache.length > 0 && (
               <Button
                 size="large"
