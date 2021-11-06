@@ -414,7 +414,7 @@ export const buildGumdrop = async (
     const claimant = claimants[idx];
     const params = [
       `distributor=${distributor}`,
-      `handle=${claimant.handle}`,
+      `handle=${encodeURIComponent(claimant.handle)}`,
       `amount=${claimant.amount}`,
       `index=${idx}`,
       `proof=${proof.map(b => bs58.encode(b))}`,
