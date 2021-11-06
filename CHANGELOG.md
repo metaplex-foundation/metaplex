@@ -30,6 +30,7 @@ incremented for features.
 - Fixes open sale button state issue
 - Fix Undefined value in Current Sale UI
 - Fix #830 - secondary sale flagging
+- Fix NFT Packs creation transaction failing when adding multiple items
 
 ### Breaking
 

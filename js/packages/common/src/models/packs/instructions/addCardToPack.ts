@@ -133,11 +133,9 @@ export async function addCardToPack({
     },
   ];
 
-  return [
-    new TransactionInstruction({
-      keys,
-      programId: toPublicKey(PROGRAM_IDS.pack_create),
-      data,
-    }),
-  ];
+  return new TransactionInstruction({
+    keys,
+    programId: toPublicKey(PROGRAM_IDS.pack_create),
+    data,
+  });
 }
