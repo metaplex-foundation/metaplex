@@ -17,6 +17,7 @@ incremented for features.
 - Add update authority command for candy machine
 - Implemented NFT Packs Creation and Viewing Flow
 - Display items redeemed when running Candy Machine Show command
+- Ability to create auctions with any SPL-token mint by @JuanRdBO
 
 ### Fixes
 
