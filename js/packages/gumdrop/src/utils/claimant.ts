@@ -43,19 +43,67 @@ export type ClaimantInfo = {
   secret : PublicKey,
 };
 
+const csvStringToArray = (strData) => {
+  const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
+  let arrMatches : RegExpExecArray | null = null;
+  let arrData : Array<Array<string>> = [[]];
+  while (arrMatches = objPattern.exec(strData)){
+    if (arrMatches[1].length && arrMatches[1] !== ",")
+      arrData.push([]);
+    arrData[arrData.length - 1].push(
+      arrMatches[2]
+        ? arrMatches[2].replace(new RegExp( "\"\"", "g" ), "\"")
+        : arrMatches[3]);
+  }
+  return arrData;
+}
+
 export type Claimants = Array<ClaimantInfo>;
 export const parseClaimants = (
-  input : string
+  input : string,
+  filename : string,
 ) : Claimants => {
-  const json = JSON.parse(input);
-  return json.map(obj => {
-    return {
-      handle : obj.handle,
-      amount : obj.amount,
-      edition: obj.edition,
-      url    : obj.url,
-    };
-  });
+  const extension = filename.match(/\.[0-9a-z]+$/i);
+  if (extension === null) {
+    throw new Error(`Could not parse file extension from ${filename}`);
+  }
+  switch (extension[0]) {
+    case ".csv": {
+      const arr = csvStringToArray(input);
+      console.log("CSV parsing only works for phones ATM");
+      const phoneColumnIdx = arr[0].findIndex(s => s.includes('phone number'));
+      if (phoneColumnIdx === -1)
+        throw new Error("Could not find phone number index");
+
+      const numbers = new Set(
+        arr.slice(1)
+           .filter(arr => arr[phoneColumnIdx].length > 0)
+           .map(arr => arr[phoneColumnIdx])
+      );
+
+      return [...numbers].map((n, idx) => {
+        return {
+          handle : n,
+          amount : 1,
+          edition : idx,
+        } as any;
+      });
+    }
+    case ".json": {
+      const json = JSON.parse(input);
+      return json.map(obj => {
+        return {
+          handle : obj.handle,
+          amount : obj.amount,
+          edition: obj.edition,
+          url    : obj.url,
+        };
+      });
+    }
+    default: {
+      throw new Error(`Cannot parse file format ${extension} from ${filename}`);
+    }
+  }
 };
 
 const explorerUrlFor = (env : string, key : string) => {

@@ -330,7 +330,7 @@ export const Create = (
       throw new Error(`Wallet not connected`);
     }
 
-    const claimants = parseClaimants(text);
+    const claimants = parseClaimants(text, filename);
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
     }
@@ -488,7 +488,7 @@ export const Create = (
       if (e !== null && e.target !== null) {
         if (typeof e.target.result === "string") {
           try {
-            parseClaimants(e.target.result);
+            parseClaimants(e.target.result, file.name);
           } catch {
             notify({
               message: `File upload failed for: ${file.name}`,
