@@ -41,6 +41,7 @@ import {
   DropInfo,
   Response as DResponse,
   distributeAwsSes,
+  distributeAwsSns,
   distributeManual,
   distributeWallet,
   formatDropMessage,
@@ -94,7 +95,7 @@ programCommand('create')
   .option(
     '--distribution-method <method>',
     // TODO: more explanation
-    'Off-chain distribution of claims. Either `aws`, `discord`, `manual`, or `wallets`'
+    'Off-chain distribution of claims. Either `aws-email`, `aws-sms`, `discord`, `manual`, or `wallets`'
   )
   .option(
     '--aws-ses-access-key-id <string>',
@@ -156,13 +157,14 @@ programCommand('create')
         temporalSigner = GUMDROP_DISTRIBUTOR_ID;
         break;
       case "manual":
-      case "aws":
+      case "aws-email":
+      case "aws-sms":
       case "discord":
         temporalSigner = getTemporalSigner(options.otpAuth);
         break;
       default:
         throw new Error(
-          "Distribution method must either be 'aws', 'discord', 'manual', or 'wallets'.",
+          "Distribution method must either be 'aws-email', 'aws-sms', 'discord', 'manual', or 'wallets'.",
         );
     }
     console.log(`temporal signer: ${temporalSigner.toBase58()}`);
@@ -194,13 +196,23 @@ programCommand('create')
           return distributeWallet({}, "", claimants, dropInfo);
         case "manual":
           return distributeManual({}, "", claimants, dropInfo);
-        case "aws":
+        case "aws-email":
           return distributeAwsSes(
             {
               accessKeyId: options.awsSesAccessKeyId,
               secretAccessKey: options.awsSesSecretAccessKey,
             },
             "santa@aws.metaplex.com",
+            claimants,
+            dropInfo
+          );
+        case "aws-sms":
+          return distributeAwsSns(
+            {
+              accessKeyId: options.awsSesAccessKeyId,
+              secretAccessKey: options.awsSesSecretAccessKey,
+            },
+            "",
             claimants,
             dropInfo
           );

@@ -1,5 +1,6 @@
 import log from 'loglevel';
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 
 import {
   ClaimantInfo,
@@ -51,6 +52,59 @@ export const formatDropMessage = (
     throw new Error(`Internal Error: Unknown drop type ${drop.type}`);
   }
 };
+
+export const distributeAwsSns = async (
+  auth : AuthKeys,
+  source : string,
+  claimants : Claimants,
+  drop : DropInfo,
+) => {
+  if (!auth.accessKeyId || !auth.secretAccessKey) {
+    throw new Error("AWS SES auth keys not supplied");
+  }
+  if (claimants.length === 0) return [];
+
+  log.debug("SES auth", auth);
+  const client = new SNSClient({
+    region: "us-east-2",
+    credentials: {
+      accessKeyId: auth.accessKeyId,
+      secretAccessKey: auth.secretAccessKey,
+    },
+  });
+
+  const single = async (
+    info : ClaimantInfo,
+    drop : DropInfo,
+  ) => {
+    const formatted = formatDropMessage(info, drop, true);
+    const message = {
+      Message: formatted.message,
+      PhoneNumber: info.handle,
+    };
+
+    try {
+      const response = await client.send(new PublishCommand(message));
+      return {
+        status: "success",
+        handle: info.handle,
+        messageId: response.MessageId,
+      };
+    } catch (err) {
+      return {
+        status: "error",
+        handle: info.handle,
+        error: err,
+      };
+    }
+  };
+
+  const responses = Array<Response>();
+  for (const c of claimants) {
+    responses.push(await single(c, drop));
+  }
+  return responses;
+}
 
 export const distributeAwsSes = async (
   auth : AuthKeys,

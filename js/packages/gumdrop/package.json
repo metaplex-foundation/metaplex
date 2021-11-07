@@ -6,6 +6,7 @@
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.38.0",
     "@aws-sdk/client-sesv2": "^3.38.0",
+    "@aws-sdk/client-sns": "^3.40.0",
     "@discordjs/rest": "^0.1.0-canary.0",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
