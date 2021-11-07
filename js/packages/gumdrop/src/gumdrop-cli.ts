@@ -177,7 +177,7 @@ programCommand('create')
       throw new Error(`Could not read distribution list ${err}`);
     }
 
-    const claimants = parseClaimants(claimantsStr, options.distributionList);
+    const claimants = parseClaimants(claimantsStr, options.distributionList, options.distributionMethod);
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
     }

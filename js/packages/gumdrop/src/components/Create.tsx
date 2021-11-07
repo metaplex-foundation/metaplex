@@ -330,7 +330,7 @@ export const Create = (
       throw new Error(`Wallet not connected`);
     }
 
-    const claimants = parseClaimants(text, filename);
+    const claimants = parseClaimants(text, filename, commMethod);
     if (claimants.length === 0) {
       throw new Error(`No claimants provided`);
     }
@@ -488,7 +488,7 @@ export const Create = (
       if (e !== null && e.target !== null) {
         if (typeof e.target.result === "string") {
           try {
-            parseClaimants(e.target.result, file.name);
+            parseClaimants(e.target.result, file.name, commMethod);
           } catch {
             notify({
               message: `File upload failed for: ${file.name}`,
@@ -808,7 +808,7 @@ export const Create = (
       </FormControl>
       {commMethod !== "" && commAuthorization(commMethod)}
       {commMethod !== "" && commMethod !== "Wallets" && otpAuthC}
-      {fileUpload}
+      {commMethod !== "" && fileUpload}
       {createAirdrop}
       {claimURLs.length > 0 && (
         <HyperLink

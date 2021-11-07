@@ -62,6 +62,7 @@ export type Claimants = Array<ClaimantInfo>;
 export const parseClaimants = (
   input : string,
   filename : string,
+  method : string,
 ) : Claimants => {
   const extension = filename.match(/\.[0-9a-z]+$/i);
   if (extension === null) {
@@ -70,15 +71,23 @@ export const parseClaimants = (
   switch (extension[0]) {
     case ".csv": {
       const arr = csvStringToArray(input);
-      console.log("CSV parsing only works for phones ATM");
-      const phoneColumnIdx = arr[0].findIndex(s => s.includes('phone number'));
-      if (phoneColumnIdx === -1)
-        throw new Error("Could not find phone number index");
+      // TODO: more robust
+      let search;
+      if (method === "aws-sms") {
+        search = "phone number";
+      } else if (method === "aws-email") {
+        search = "email";
+      } else {
+        throw new Error(`Cannot parse csv for ${search}`);
+      }
+      const foundIdx = arr[0].findIndex(s => s.includes(search));
+      if (foundIdx === -1)
+        throw new Error(`Could not find ${search} index`);
 
       const numbers = new Set(
         arr.slice(1)
-           .filter(arr => arr[phoneColumnIdx].length > 0)
-           .map(arr => arr[phoneColumnIdx])
+           .filter(arr => arr[foundIdx].length > 0)
+           .map(arr => arr[foundIdx])
       );
 
       return [...numbers].map((n, idx) => {
