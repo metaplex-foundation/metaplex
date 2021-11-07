@@ -131,7 +131,7 @@ export async function sendRedeemBid(
     winnerIndex = auctionView.auction.info.bidState.getWinnerIndex(
       auctionView.myBidderPot?.info.bidderAct,
     );
-  debugger;
+
   if (winnerIndex !== null) {
     // items is a prebuilt array of arrays where each entry represents one
     // winning spot, and each entry in it represents one type of item that can
