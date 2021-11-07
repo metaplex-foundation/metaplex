@@ -25,7 +25,6 @@ export function Routes() {
       <HashRouter basename={'/'}>
         <Providers>
           <Switch>
-            <Route exact path="/admin" component={() => <AdminView />} />
             {shouldEnableNftPacks && (
               <Route
                 exact
@@ -33,6 +32,21 @@ export function Routes() {
                 component={() => <PackCreateView />}
               />
             )}
+            {shouldEnableNftPacks && (
+              <Route
+                exact
+                path="/pack/:packId/:editionId"
+                component={() => <PackView />}
+              />
+            )}
+            {shouldEnableNftPacks && (
+              <Route
+                exact
+                path="/pack/:packId"
+                component={() => <PackView />}
+              />
+            )}
+            <Route exact path="/admin" component={() => <AdminView />} />
             <Route
               exact
               path="/analytics"
@@ -52,9 +66,6 @@ export function Routes() {
             <Route exact path="/artists/:id" component={() => <ArtistView />} />
             <Route exact path="/artists" component={() => <ArtistsView />} />
 
-            {shouldEnableNftPacks && (
-              <Route exact path="/pack/:id?" component={() => <PackView />} />
-            )}
             <Route
               exact
               path="/auction/create/:step_param?"

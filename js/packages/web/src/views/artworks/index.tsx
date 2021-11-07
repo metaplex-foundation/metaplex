@@ -1,42 +1,31 @@
+import { useWallet } from '@solana/wallet-adapter-react';
 import React, { useEffect, useState } from 'react';
-import { ArtCard } from '../../components/ArtCard';
 import { Layout, Row, Col, Tabs } from 'antd';
 import Masonry from 'react-masonry-css';
-import { Link } from 'react-router-dom';
-import { useCreatorArts, useUserArts } from '../../hooks';
+
 import { useMeta } from '../../contexts';
 import { CardLoader } from '../../components/MyLoader';
-import { useWallet } from '@solana/wallet-adapter-react';
+
+import { ArtworkViewState } from './types';
+import { useItems } from './hooks/useItems';
+import ItemCard from './components/ItemCard';
 
 const { TabPane } = Tabs;
-
 const { Content } = Layout;
 
-export enum ArtworkViewState {
-  Metaplex = '0',
-  Owned = '1',
-  Created = '2',
-}
+const breakpointColumnsObj = {
+  default: 4,
+  1100: 3,
+  700: 2,
+  500: 1,
+};
 
 export const ArtworksView = () => {
-  const { connected, publicKey } = useWallet();
-  const ownedMetadata = useUserArts();
-  const createdMetadata = useCreatorArts(publicKey?.toBase58() || '');
-  const { metadata, isLoading, pullAllMetadata, storeIndexer } = useMeta();
+  const { connected } = useWallet();
+  const { isLoading, pullAllMetadata, storeIndexer } = useMeta();
   const [activeKey, setActiveKey] = useState(ArtworkViewState.Metaplex);
-  const breakpointColumnsObj = {
-    default: 4,
-    1100: 3,
-    700: 2,
-    500: 1,
-  };
 
-  const items =
-    activeKey === ArtworkViewState.Owned
-      ? ownedMetadata.map(m => m.metadata)
-      : activeKey === ArtworkViewState.Created
-      ? createdMetadata
-      : metadata;
+  const userItems = useItems({ activeKey });
 
   useEffect(() => {
     if (connected) {
@@ -52,22 +41,9 @@ export const ArtworksView = () => {
       className="my-masonry-grid"
       columnClassName="my-masonry-grid_column"
     >
-      {!isLoading
-        ? items.map((m, idx) => {
-            const id = m.pubkey;
-            return (
-              <Link to={`/art/${id}`} key={idx}>
-                <ArtCard
-                  key={id}
-                  pubkey={m.pubkey}
-                  preview={false}
-                  height={250}
-                  width={250}
-                />
-              </Link>
-            );
-          })
-        : [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {isLoading && [...Array(10)].map((_, idx) => <CardLoader key={idx} />)}
+      {!isLoading &&
+        userItems.map(item => <ItemCard item={item} key={item.pubkey} />)}
     </Masonry>
   );
 

@@ -10,13 +10,9 @@ import { serialize } from 'borsh';
 import { TokenAccount } from '../..';
 import { getEdition, getMetadata } from '../../..';
 import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
-import {
-  findPackCardProgramAddress,
-  getProgramAuthority,
-  AddCardToPackArgs,
-  PACKS_SCHEMA,
-} from '../../../actions/packs';
+import { AddCardToPackArgs, PACKS_SCHEMA } from '../../../actions/packs';
 import { AddCardToPackParams } from '../interface';
+import { findPackCardProgramAddress, getProgramAuthority } from '../find';
 
 interface Params extends AddCardToPackParams {
   packSetKey: PublicKey;

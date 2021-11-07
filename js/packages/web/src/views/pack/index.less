@@ -1,3 +1,5 @@
+@scrollbar-color: #2c2c2c;
+
 .pack-view {
   &__list {
     display: flex;
@@ -10,10 +12,6 @@
     position: relative;
     width: 32%;
     margin: 1%;
-
-    background: @grey-50;
-    cursor: pointer;
-    border-radius: 12px;
 
     &:nth-child(3n + 3) {
       margin-right: 0;
@@ -37,10 +35,54 @@
     }
   }
 
+  &__block--hoverable:hover &__square {
+    transform: rotateY(180deg);
+  }
+
   &__square {
+    position: relative;
     width: 100%;
-    height: 0;
     padding-bottom: 100%;
+    background-color: transparent;
+    perspective: 1000px;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+
+    &__front,
+    &__back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden; /* Safari */
+      backface-visibility: hidden;
+    }
+
+    &__front,
+    &__back {
+      background: #313131;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+
+    &__back {
+      transform: rotateY(180deg);
+
+      span {
+        font-size: 24px;
+        color: @grey-30;
+      }
+    }
+  }
+
+  &__image {
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    cursor: pointer;
+    padding-bottom: 100%;
+    position: relative;
+    width: 100%;
   }
 
   &__sidebar {
@@ -190,6 +232,7 @@
     background: @grey-60;
     border-radius: 12px;
     padding: 20px 24px;
+    font-family: @fontFamilyInter;
 
     .body-title {
       font-size: 18px;
@@ -209,11 +252,82 @@
       line-height: 20px;
       margin-bottom: 16px;
     }
+
+    .finding-body {
+      display: block;
+      margin: 70px 0;
+      text-align: center;
+
+      &__spinner {
+        font-size: 60px;
+        color: #ddd;
+      }
+
+      &__check {
+        background-color: @grey-60;
+        display: inline-block;
+        height: 60px;
+        width: 60px;
+        border-radius: 60px;
+
+        .icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          height: 100%;
+          width: 100%;
+        }
+      }
+
+      &__title {
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      &__desc {
+        font-size: 18px;
+        font-style: normal;
+        font-weight: 200;
+      }
+
+      &__info {
+        border-radius: 12px;
+        background-color: @grey-60;
+
+        &__col {
+          color: @grey-20;
+          padding: 16px;
+
+          &.center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+        }
+      }
+    }
   }
 
   &__cards {
+    max-height: 500px;
+    overflow: auto;
     margin-top: 30px;
     margin-bottom: 16px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: @scrollbar-color;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: @metaplex-primary-color;
+    border-radius: 10px;
   }
 
   &__cards > p {

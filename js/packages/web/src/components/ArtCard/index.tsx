@@ -66,39 +66,40 @@ export const ArtCard = (props: ArtCardProps) => {
     <Card
       hoverable={true}
       className={`art-card ${small ? 'small' : ''} ${className ?? ''}`}
-      cover={
-        <>
-          {close && (
-            <Button
-              className="card-close-button"
-              shape="circle"
-              onClick={e => {
-                e.stopPropagation();
-                e.preventDefault();
-                close && close();
-              }}
-            >
-              X
-            </Button>
-          )}
-          <ArtContent
-            pubkey={pubkey}
-            uri={image}
-            animationURL={animationURL}
-            category={category}
-            preview={preview}
-            height={height}
-            width={width}
-          />
-        </>
-      }
       {...rest}
     >
+      {close && (
+        <Button
+          className="card-close-button"
+          shape="circle"
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
+            close && close();
+          }}
+        >
+          X
+        </Button>
+      )}
+      <div className="art-card__header">
+        <MetaAvatar creators={creators} size={32} />
+        <div className="edition-badge">{badge}</div>
+      </div>
+      <div className="art-content__wrapper">
+        <ArtContent
+          pubkey={pubkey}
+          uri={image}
+          animationURL={animationURL}
+          category={category}
+          preview={preview}
+          height={height}
+          width={width}
+        />
+      </div>
       <Meta
         title={`${name}`}
         description={
           <>
-            <MetaAvatar creators={creators} size={32} />
             {/* {art.type === ArtType.Master && (
               <>
                 <br />
@@ -110,7 +111,7 @@ export const ArtCard = (props: ArtCardProps) => {
                 )}
               </>
             )} */}
-            <div className="edition-badge">{badge}</div>
+
             {count && (
               <div className="edition-badge">Selected count: {count}</div>
             )}

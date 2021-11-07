@@ -9,12 +9,12 @@ import { serialize } from 'borsh';
 import { TokenAccount } from '../..';
 import {
   AddVoucherToPackArgs,
-  findPackVoucherProgramAddress,
   getEdition,
   getMetadata,
   PACKS_SCHEMA,
 } from '../../..';
 import { StringPublicKey, programIds, toPublicKey } from '../../../utils';
+import { findPackVoucherProgramAddress } from '../find';
 
 interface Params {
   index: number;

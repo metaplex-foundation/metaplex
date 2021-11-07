@@ -19,6 +19,7 @@ incremented for features.
 - Display items redeemed when running Candy Machine Show command
 - Ability to create auctions with any SPL-token mint by @JuanRdBO
 - Condenses Instant Sale to be one buy button not by then claim.
+- Implement NFT Packs Redeeming
 
 ### Fixes
 

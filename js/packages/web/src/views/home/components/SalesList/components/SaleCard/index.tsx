@@ -1,10 +1,10 @@
 import React, { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 
+import PackCard from '../../../../../../components/PackCard';
 import { AuctionRenderCard } from '../../../../../../components/AuctionRenderCard';
 import { Sale } from '../../types';
 import { isAuction } from '../../utils';
-import PackCard from '../PackCard';
 
 const SaleCard = ({ sale }: { sale: Sale }): ReactElement => {
   if (isAuction(sale)) {
@@ -23,12 +23,9 @@ const SaleCard = ({ sale }: { sale: Sale }): ReactElement => {
   } = sale;
 
   return (
-    <PackCard
-      pubkey={pubkey}
-      name={name}
-      posterUri={uri}
-      authority={authority}
-    />
+    <Link to={`/pack/${pubkey}`}>
+      <PackCard name={name} posterUri={uri} authority={authority} />
+    </Link>
   );
 };
 

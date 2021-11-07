@@ -17,3 +17,7 @@ export interface AddCardToPackParams {
   weight: BN | null;
   index: number;
 }
+
+export interface RequestCardToRedeemParams {
+  index: number;
+}

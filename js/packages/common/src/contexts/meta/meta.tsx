@@ -68,7 +68,9 @@ export function MetaProvider({ children = null as any }) {
       setIsLoading(true);
     }
     setIsLoading(true);
+
     const nextState = await pullStoreMetadata(connection, state);
+
     setIsLoading(false);
     setState(nextState);
     await updateMints(nextState.metadataByMint);
