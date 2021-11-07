@@ -253,6 +253,13 @@ export function MetaProvider({ children = null as any }) {
     await updateMints(nextState.metadataByMint);
 
     if (auctionAddress && bidderAddress) {
+      nextState = await pullAuctionSubaccounts(
+        connection,
+        auctionAddress,
+        nextState,
+      );
+      setState(nextState);
+
       const auctionBidderKey = auctionAddress + '-' + bidderAddress;
       return [
         nextState.auctions[auctionAddress],
