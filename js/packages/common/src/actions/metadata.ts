@@ -1,4 +1,6 @@
 import {
+  Connection,
+  PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
@@ -1237,3 +1239,15 @@ export async function getEditionMarkPda(
     )
   )[0];
 }
+
+export const getMetadataByPubkey = async (
+  connection: Connection,
+  pubkey: StringPublicKey,
+) => {
+  const info = await connection.getAccountInfo(new PublicKey(pubkey));
+  if (!info) {
+    throw new Error(`Unable to find account: ${pubkey}`);
+  }
+
+  return { ...info, data: decodeMetadata(Buffer.from(info?.data)) };
+};
