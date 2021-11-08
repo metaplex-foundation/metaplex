@@ -3,8 +3,12 @@ name: Build and Test Rust Programs
 on:
   push:
     branches: [master,thlorenz/chore/ci-token-metadata-action]
+    paths:
+      - rust/*
   pull_request:
     branches: [master]
+    paths:
+      - rust/*
 
 env:
   CARGO_TERM_COLOR: always
