@@ -4957,11 +4957,6 @@
   dependencies:
     "@types/react" "^17.0.16"
 
-"@solana/wallet-adapter-react@^0.7.1":
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.7.1.tgz#3b51028ff15a92f5cc6db990fbbc4d7b7db7f489"
-  integrity sha512-iqyMm7j5FNYOrn1hOYJtro07axEH7RQuMO93Q0gohiyu0zZEnNhbvch6e1EQMpfu2R+Z5qXJzEfbDT9X7G1aGg==
-
 "@solana/wallet-adapter-react@^0.7.2":
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/@solana/wallet-adapter-react/-/wallet-adapter-react-0.7.2.tgz#87336260b48422611aee0dea4664d7aeef17c575"
