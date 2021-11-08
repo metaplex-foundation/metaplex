@@ -58,8 +58,9 @@ jobs:
         id: run_test
         working-directory: ./rust/token-vault/program
         run: |
+          cargo +${{ env.RUST_TOOLCHAIN }} test -- --nocapture
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
-          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf -- --nocapture
           
   # -----------------
   # Test Token Metadata
@@ -99,6 +100,7 @@ jobs:
         id: run_test
         working-directory: ./rust/token-metadata/program
         run: |
+          cargo +${{ env.RUST_TOOLCHAIN }} test -- --nocapture
           cargo +${{ env.RUST_TOOLCHAIN }} test-bpf --version
-          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf
+          cargo +${{ env.RUST_TOOLCHAIN }} test-bpf -- --nocapture
 
