@@ -244,7 +244,9 @@ export const AuctionCard = ({
     ? 'SOL'
     : 'CUSTOM';
 
+
   const LAMPORTS_PER_MINT = tokenInfo? Math.ceil(10 ** tokenInfo.decimals): LAMPORTS_PER_SOL;
+
 
   //console.log("[--P]AuctionCard", tokenInfo, mintKey)
   const myPayingAccount = balance.accounts[0];
