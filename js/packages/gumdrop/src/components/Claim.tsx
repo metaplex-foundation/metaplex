@@ -619,7 +619,16 @@ export const Claim = (
   const connection = useConnection();
   const wallet = useWallet();
 
-  let params = queryString.parse(props.location.search);
+  let query = props.location.search;
+  if (query && query.length > 0) {
+    localStorage.setItem("claimQuery", query);
+  } else {
+    const stored = localStorage.getItem("claimQuery");
+    if (stored)
+      query = stored;
+  }
+
+  let params = queryString.parse(query);
   const [distributor, setDistributor] = React.useState(params.distributor as string || "");
   const [claimMethod, setClaimMethod] = React.useState(
         params.tokenAcc ? "transfer"

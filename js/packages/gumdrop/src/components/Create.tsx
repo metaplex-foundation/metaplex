@@ -429,7 +429,7 @@ export const Create = (
       wallet.publicKey,
       needsPin,
       claimMethod,
-      `${window.location.origin}${window.location.pathname}`,
+      `${window.location.origin}/gumdrop`,
       base.publicKey,
       temporalSigner,
       claimants,
